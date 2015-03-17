@@ -6,10 +6,10 @@
 //
 //
 
-#ifndef RadarKit_RKTypes_h
-#define RadarKit_RKTypes_h
+#ifndef __RadarKit_RKTypes__
+#define __RadarKit_RKTypes__
 
-#include "RKFoundation.h"
+#include <RadarKit/RKFoundation.h>
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
 typedef struct RKInt16 {

@@ -21,6 +21,8 @@
  
  */
 
-#include "RKRadar.h"
+#include <RadarKit/RKRadar.h>
+#include <RadarKit/RKServer.h>
+#include <RadarKit/RKClient.h>
 
 #endif /* defined(__RadarKit__) */

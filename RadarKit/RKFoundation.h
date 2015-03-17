@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef RadarKit_RKFoundation_h
-#define RadarKit_RKFoundation_h
+#ifndef __RadarKit_RKFoundation__
+#define __RadarKit_RKFoundation__
 
 #include <stdio.h>
 #include <stdlib.h>

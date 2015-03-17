@@ -5,6 +5,9 @@ RKLIB = libRadarKit.a
 
 all: $(RKLIB)
 
+$(OBJS): %.o: RadarKit/%.c RadarKit/%.h
+	gcc $(CFLAGS) -c $< -o $@
+
 .c:
 	gcc $(CFLAGS) -c $< -o $@
 
