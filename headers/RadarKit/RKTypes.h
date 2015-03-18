@@ -11,6 +11,10 @@
 
 #include <RadarKit/RKFoundation.h>
 
+typedef uint8_t   RKboolean;
+typedef int8_t    RKbyte;
+typedef uint64_t  RKenum;
+
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
 typedef struct RKInt16 {
     int16_t i;
@@ -85,6 +89,18 @@ typedef struct RKFloatPulse {
     RKFloat        X[2][RKGateCount];
 } RKFloatPulse;
 
+typedef struct RKRayHeader {
+    uint32_t       i;
+    uint32_t       n;
+    uint32_t       s;
+    uint32_t       marker;
+} RKRayHeader;
+
+typedef struct RKInt16Ray {
+    RKRayHeader    header;
+    RKInt16        data[RKGateCount];
+} RKInt16Ray;
+
 /*!
  * @typedef RKRadar
  * @brief The big structure that holds all the necessary buffers
@@ -94,9 +110,21 @@ typedef struct RKRadar {
     //
     // Buffers aligned to SIMD requirements
     //
-    RKInt16Pulse                 rawPulse[RKBuffer0SlotCount];
-    RKFloatPulse          compressedPulse[RKBuffer0SlotCount];
-    RKFloatPulse  filteredCompressedPulse[RKBuffer0SlotCount];
+    RKInt16Pulse    *rawPulses;
+    RKFloatPulse    *compressedPulses;
+    RKFloatPulse    *filteredCompressedPulses;
+    RKInt16Ray      *rays;
+    //
+    //
+    //
+    RKenum          initFlags;
+    RKboolean       rayBuffersInitialized;
+    RKboolean       pulseBuffersInitialized;
+    //
+    //
+    //
+    uint32_t        memoryUsage;
+    
 } RKRadar;
 
 

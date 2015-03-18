@@ -27,7 +27,12 @@
 #define RKBuffer2SlotCount    4000
 #define RKGateCount           8192
 #define RKSIMDAlignSize         64
-
 /*! @/definedblock */
+
+#ifndef TRUE
+#define TRUE  1
+#define FALSE 0
+#endif
+
 
 #endif /* defined(__RadarKit_RKFoundation__) */
