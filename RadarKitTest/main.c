@@ -14,6 +14,8 @@ int main(int argc, const char * argv[]) {
     
     RKRadar *radar = RKInit();
     
+    printf("radar occupies %d bytes\n", (int)radar->memoryUsage);
+    
     RKFree(radar);
     
     return 0;

@@ -7,18 +7,35 @@
 //
 
 #include <RadarKit/RKRadar.h>
-RKRadar *RKInitWithFlags(RKenum flags);
+
+RKRadar *RKInitWithFlags(const RKenum flags);
+
+//
+//
+//
+
+#pragma mark -
 
 RKRadar *RKInit(void) {
     return RKInitWithFlags(RKInitFlatWantEverything);
 }
 
-RKRadar *RKInitWithFlags(RKenum flags) {
+RKRadar *RKInitWithFlags(const RKenum flags) {
     RKRadar *radar;
     size_t bytes;
 
+    // Allocate itself
+    bytes = sizeof(RKRadar);
+    if (posix_memalign((void **)&radar, RKSIMDAlignSize, bytes)) {
+        fprintf(stderr, "Error allocation memory for radar.\n");
+        return NULL;
+    }
+    radar->memoryUsage += bytes;
+
+    // Copy over the input flags
     radar->initFlags = flags;
     
+    // Other allocatinos
     if (flags & RKInitFlagWantMomentBuffer) {
         bytes = RKBuffer1SlotCount * sizeof(RKInt16Ray);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
@@ -30,12 +47,6 @@ RKRadar *RKInitWithFlags(RKenum flags) {
     }
     
     if (flags & RKInitFlagWantRawIQBuffer) {
-        bytes = sizeof(RKRadar);
-        if (posix_memalign((void **)&radar, RKSIMDAlignSize, bytes)) {
-            return NULL;
-        }
-        radar->memoryUsage += bytes;
-        
         bytes = RKBuffer0SlotCount * sizeof(RKInt16Pulse);
         if (posix_memalign((void **)&radar->rawPulses, RKSIMDAlignSize, bytes)) {
             fprintf(stderr, "Error allocation memory for raw pulse");

@@ -54,10 +54,9 @@ typedef struct RKFloat {
  @param velDps                 Velocity of azimuth in degrees per second
  */
 typedef struct RKPulseHeader {
+    uint32_t    s;
     uint32_t    i;
     uint32_t    n;
-    uint16_t    s;
-    uint16_t    p;
     uint16_t    marker;
     uint16_t    pulseWidthSampleCount;
     
@@ -89,11 +88,35 @@ typedef struct RKFloatPulse {
     RKFloat        X[2][RKGateCount];
 } RKFloatPulse;
 
+/*!
+ @typedef RKRayHeader
+ @brief Fundamental unit of the ray header.
+ @param s                      Pulse Status
+ @param i                      Pulse Identity
+ @param n                      Pulse Network Counter
+ @param marker                 Volume / sweep / radial marker
+ @param reserved1              For future...
+ @param startTimeSec           Start time of the ray in UNIX time
+ @param startTimeUSec          Start time's microsecond portion
+ @param startTimeD             Start time in double representation
+ @param endTimeSec             End time of the ray in UNIX time
+ @param endTimeUSec            End time's microsecond portion
+ @param endTimeD               End time in double representation
+ */
 typedef struct RKRayHeader {
+    uint32_t       s;
     uint32_t       i;
     uint32_t       n;
-    uint32_t       s;
-    uint32_t       marker;
+    uint16_t       marker;
+    uint16_t       reserved1;
+    
+    uint32_t       startTimeSec;
+    uint32_t       startTimeUSec;
+    double         startTimeD;
+    
+    uint32_t       endTimeSec;
+    uint32_t       endTimeUSec;
+    double         endTimeD;
 } RKRayHeader;
 
 typedef struct RKInt16Ray {

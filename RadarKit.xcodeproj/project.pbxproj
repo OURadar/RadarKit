@@ -25,16 +25,16 @@
 		B5C1F34E1AB9C1BE004F88CD /* RKServer.c in Sources */ = {isa = PBXBuildFile; fileRef = B5324DEB1AB9B2E900C00517 /* RKServer.c */; };
 		B5C1F3511AB9C917004F88CD /* RKPulseCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F34F1AB9C917004F88CD /* RKPulseCompression.c */; };
 		B5C1F3521AB9C917004F88CD /* RKPulseCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F34F1AB9C917004F88CD /* RKPulseCompression.c */; };
-		B5C1F3531AB9C917004F88CD /* RKPulseCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3501AB9C917004F88CD /* RKPulseCompression.h */; };
+		B5C1F3531AB9C917004F88CD /* RKPulseCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3501AB9C917004F88CD /* RKPulseCompression.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5C1F3561AB9CB69004F88CD /* RKWindow.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3541AB9CB69004F88CD /* RKWindow.c */; };
 		B5C1F3571AB9CB69004F88CD /* RKWindow.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3541AB9CB69004F88CD /* RKWindow.c */; };
-		B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3551AB9CB69004F88CD /* RKWindow.h */; };
+		B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3551AB9CB69004F88CD /* RKWindow.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5C1F35B1AB9CBAA004F88CD /* RKDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3591AB9CBAA004F88CD /* RKDSP.c */; };
 		B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3591AB9CBAA004F88CD /* RKDSP.c */; };
-		B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */; };
+		B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5C1F3601AB9CC48004F88CD /* RKFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKFile.c */; };
 		B5C1F3611AB9CC48004F88CD /* RKFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKFile.c */; };
-		B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3631AB9CD34004F88CD /* RKFile.h */; };
+		B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3631AB9CD34004F88CD /* RKFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -164,15 +164,15 @@
 			files = (
 				B5324DE01AB8DA0800C00517 /* RadarKit.h in Headers */,
 				B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */,
-				B5C1F3531AB9C917004F88CD /* RKPulseCompression.h in Headers */,
 				B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */,
 				B5324DE31AB8DA0800C00517 /* RKNetwork.h in Headers */,
+				B5C1F3531AB9C917004F88CD /* RKPulseCompression.h in Headers */,
 				B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */,
 				B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */,
+				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
 				B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */,
 				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
-				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
