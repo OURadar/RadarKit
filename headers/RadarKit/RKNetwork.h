@@ -11,4 +11,4 @@
 
 #include <RadarKit/RKTypes.h>
 
-#endif /* defined(___RadarKit__RKNetwork__) */
+#endif /* defined(___RadarKit_RKNetwork__) */

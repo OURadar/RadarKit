@@ -100,4 +100,4 @@ typedef struct RKRadar {
 } RKRadar;
 
 
-#endif
+#endif /* defined(__RadarKit_RKTypes__) */

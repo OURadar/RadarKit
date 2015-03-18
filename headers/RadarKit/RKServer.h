@@ -9,6 +9,6 @@
 #ifndef __RadarKit_RKServer__
 #define __RadarKit_RKServer__
 
-#include <stdio.h>
+#include <RadarKit/RKNetwork.h>
 
-#endif /* defined(___RadarKit__RKServer__) */
+#endif /* defined(___RadarKit_RKServer__) */

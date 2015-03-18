@@ -30,4 +30,4 @@
 
 /*! @/definedblock */
 
-#endif
+#endif /* defined(__RadarKit_RKFoundation__) */

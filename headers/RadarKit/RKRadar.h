@@ -14,4 +14,4 @@
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
-#endif /* defined(__RadarKit__RKRadar__) */
+#endif /* defined(__RadarKit_RKRadar__) */
