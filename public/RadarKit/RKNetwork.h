@@ -6,9 +6,9 @@
 //
 //
 
-#ifndef __RadarKit__RKNetwork__
-#define __RadarKit__RKNetwork__
+#ifndef __RadarKit_RKNetwork__
+#define __RadarKit_RKNetwork__
 
-#include <stdio.h>
+#include <RadarKit/RKTypes.h>
 
 #endif /* defined(___RadarKit__RKNetwork__) */

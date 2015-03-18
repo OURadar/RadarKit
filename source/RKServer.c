@@ -1,9 +1,9 @@
 //
-//  RKClient.c
+//  RKServer.c
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/17/15.
 //
 //
 
-#include "RKClient.h"
+#include <RadarKit/RKServer.h>

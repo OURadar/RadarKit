@@ -6,12 +6,12 @@
 //
 //
 
-#ifndef __RadarKit__RKRadar__
-#define __RadarKit__RKRadar__
+#ifndef __RadarKit_RKRadar__
+#define __RadarKit_RKRadar__
 
-#include "RKTypes.h"
-#include "RKFoundation.h"
+#include <RadarKit/RKTypes.h>
 
 RKRadar *RKInit(void);
+int RKFree(RKRadar *radar);
 
 #endif /* defined(__RadarKit__RKRadar__) */

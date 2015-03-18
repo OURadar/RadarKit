@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef __RadarKit__RKClient__
-#define __RadarKit__RKClient__
+#ifndef __RadarKit_RKClient__
+#define __RadarKit_RKClient__
 
 #include <stdio.h>
 
