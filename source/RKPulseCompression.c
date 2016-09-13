@@ -21,8 +21,12 @@ int RKPulseCompressionEngineStart(RKRadar *radar) {
     for (i = 0; i < radar->pulseCompressionCoreCount; i++) {
         printf("Starting core %d ...\n", i);
         if ((r = pthread_create(&radar->tidPulseCompression[i], NULL, pulseCompressionCore, radar)) != 0) {
-            fprintf(stderr, "Error starting compression core.\n");
+            fprintf(stderr, "Error. Failed to start a compression core.\n");
             return -1;
+        }
+        if ((r = sem_init(&radar->semPulseCompression[i], 0, 0)) != 0) {
+            fprintf(stderr, "Error. Unable to initialize a semaphore.\n");
+            return -2;
         }
     }
 
@@ -32,7 +36,6 @@ int RKPulseCompressionEngineStart(RKRadar *radar) {
 int pulseId(RKRadar *radar) {
     int i;
     pthread_t id = pthread_self();
-    printf("id = %p\n", (void *)id);
     for (i = 0; i < radar->pulseCompressionCoreCount; i++) {
         if (id == radar->tidPulseCompression[i]) {
             return i;
@@ -51,12 +54,16 @@ void *pulseCompressionCore(void *in) {
         return NULL;
     }
 
-    printf("I am core %d\n", k);
+    //printf("I am core %d\n", k);
+
+    struct timespec ts;
 
     while (radar->active) {
         // Only process pulses that
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += 1;
 
-        sleep(1);
+        sem_timedwait(&radar->semPulseCompression[k], &ts);
     }
     return NULL;
 }

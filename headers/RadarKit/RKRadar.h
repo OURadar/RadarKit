@@ -9,7 +9,7 @@
 #ifndef __RadarKit_RKRadar__
 #define __RadarKit_RKRadar__
 
-#include <RadarKit/RKTypes.h>
+#include <RadarKit/RKFoundation.h>
 
 //#ifdef __cplusplus
 //extern "C" {
@@ -49,6 +49,7 @@ typedef struct RKRadar {
     //
     unsigned int    pulseCompressionCoreCount;
     pthread_t       tidPulseCompression[64];
+    sem_t           semPulseCompression[64];
 
 } RKRadar;
 

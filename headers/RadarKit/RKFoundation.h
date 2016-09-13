@@ -9,30 +9,11 @@
 #ifndef __RadarKit_RKFoundation__
 #define __RadarKit_RKFoundation__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <string.h>
-#include <time.h>
-#include <pthread.h>
+#include <RadarKit/RKTypes.h>
+#include <RadarKit/RKMisc.h>
 
-/*!
- @definedblock Memory Blocks
- @abstract Defines the number of slots and gates of each pulse of the RKRadar structure
- @define RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
- @define RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
- @define RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
- @define RKGateCount The maximum number of gates allocated for each pulse
- @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
- */
-#define RKBuffer0SlotCount    4000
-#define RKBuffer1SlotCount    4000
-#define RKBuffer2SlotCount    4000
-//#define RKGateCount           64 * 1024 * 1024
-#define RKGateCount           65536
-#define RKSIMDAlignSize         64
-/*! @/definedblock */
+
+#define RKNextBuffer0Slot(i)        (i == RKBuffer0SlotCount - 1 ? 0 : i + 1)
+#define RKPreviousBuffer0Slot(i)    (i == 0 ? RKBuffer0SlotCount - 1 : i - 1)
 
 #endif /* defined(__RadarKit_RKFoundation__) */

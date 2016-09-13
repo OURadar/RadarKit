@@ -9,7 +9,7 @@
 #ifndef __RadarKit_RKDSP__
 #define __RadarKit_RKDSP__
 
-#include <RadarKit/RKTypes.h>
+#include <RadarKit/RKFoundation.h>
 
 //#ifdef __cplusplus
 //extern "C" {

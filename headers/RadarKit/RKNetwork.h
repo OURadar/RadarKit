@@ -9,7 +9,7 @@
 #ifndef __RadarKit_RKNetwork__
 #define __RadarKit_RKNetwork__
 
-#include <RadarKit/RKTypes.h>
+#include <RadarKit/RKFoundation.h>
 
 //#ifdef __cplusplus
 //extern "C" {

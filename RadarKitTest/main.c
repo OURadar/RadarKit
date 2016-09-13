@@ -7,12 +7,17 @@
 //
 
 #include <RadarKit/RadarKit.h>
+#include <signal.h>
+
+RKRadar *radar;
+
+//RKGlobalParamters rkGlobalParameters = {{"radar"}, {"messages.log"}, 0, 0};
 
 int main(int argc, const char * argv[]) {
     // insert code here...
     printf("Hello, World!\n");
     
-    RKRadar *radar = RKInit();
+    radar = RKInit();
     
     printf("radar occupies %d bytes\n", (int)radar->memoryUsage);
 
