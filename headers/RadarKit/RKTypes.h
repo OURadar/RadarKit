@@ -89,6 +89,8 @@ typedef struct RKFloatPulse {
     RKComplex      X[2][RKGateCount];
 } RKFloatPulse;
 
+#pragma pack(push, 1)
+
 /*!
  @typedef RKRayHeader
  @brief Fundamental unit of the ray header.
@@ -127,34 +129,10 @@ typedef struct RKInt16Ray {
 
 typedef RKenum RKRadarState;
 enum RKRadarState {
-    RKRadarStateRayBufferInitiated,
-    RKRadarStatePulseBufferInitiated
+    RKRadarStateRayBufferInitiated     = 1,
+    RKRadarStatePulseBufferInitiated   = 1 << 1
 };
 
-/*!
- * @typedef RKRadar
- * @brief The big structure that holds all the necessary buffers
- * @param rawPulse
- */
-typedef struct RKRadar {
-    //
-    // Buffers aligned to SIMD requirements
-    //
-    RKInt16Pulse    *rawPulses;
-    RKFloatPulse    *compressedPulses;
-    RKFloatPulse    *filteredCompressedPulses;
-    RKInt16Ray      *rays;
-    //
-    //
-    //
-    RKenum          initFlags;
-    RKRadarState    state;
-    //
-    //
-    //
-    uint64_t        memoryUsage;
-    
-} RKRadar;
-
+#pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

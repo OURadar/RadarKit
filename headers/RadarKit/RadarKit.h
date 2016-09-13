@@ -23,10 +23,7 @@
  
  */
 
-#include <RadarKit/RKTypes.h>
 #include <RadarKit/RKRadar.h>
-#include <RadarKit/RKServer.h>
-#include <RadarKit/RKClient.h>
 #include <RadarKit/RKPulseCompression.h>
 
 #endif /* defined(__RadarKit__) */

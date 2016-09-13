@@ -9,13 +9,14 @@
 #ifndef __RadarKit_RKPulseCompression__
 #define __RadarKit_RKPulseCompression__
 
-#include <RadarKit/RKTypes.h>
+#include <RadarKit/RKRadar.h>
 
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
 
-    
+int RKPulseCompressionEngineStart(RKRadar *radar);
+
 //#ifdef __cplusplus
 //}
 //#endif

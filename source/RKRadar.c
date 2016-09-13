@@ -30,10 +30,15 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
         fprintf(stderr, "Error allocation memory for radar.\n");
         return NULL;
     }
+    memset(radar, 0, bytes);
     radar->memoryUsage += bytes;
 
     // Copy over the input flags
     radar->initFlags = flags;
+
+    // Set some non-zero variables
+    radar->active = true;
+    radar->pulseCompressionCoreCount = 4;
     
     // Other allocatinos
     if (flags & RKInitFlagAllocMomentBuffer) {
@@ -43,7 +48,7 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
             return NULL;
         }
         radar->memoryUsage += bytes;
-        radar->rayBuffersInitialized = TRUE;
+        radar->state |= RKRadarStateRayBufferInitiated;
     }
     
     if (flags & RKInitFlagAllocRawIQBuffer) {
@@ -67,21 +72,25 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
             return NULL;
         }
         radar->memoryUsage += bytes;
-        radar->pulseBuffersInitialized = TRUE;
+        radar->state |= RKRadarStatePulseBufferInitiated;
     }
 
     printf("Radar initialized\n");
     return radar;
 }
 
+int RKGoLive(RKRadar *radar) {
+    return 0;
+}
+
 int RKFree(RKRadar *radar) {
     printf("Freeing Radar\n");
-    if (radar->pulseBuffersInitialized) {
+    if (radar-> state & RKRadarStatePulseBufferInitiated) {
         free(radar->rawPulses);
         free(radar->compressedPulses);
         free(radar->filteredCompressedPulses);
     }
-    if (radar->rayBuffersInitialized) {
+    if (radar->state & RKRadarStateRayBufferInitiated) {
         free(radar->rays);
     }
     free(radar);

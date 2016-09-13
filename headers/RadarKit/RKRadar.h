@@ -21,6 +21,37 @@ enum RKInitFlag {
     RKInitFlagAllocEverything   = RKInitFlagAllocMomentBuffer | RKInitFlagAllocMomentBuffer
 };
 
+/*!
+ * @typedef RKRadar
+ * @brief The big structure that holds all the necessary buffers
+ * @param rawPulse
+ */
+typedef struct RKRadar {
+    //
+    // Buffers aligned to SIMD requirements
+    //
+    RKInt16Pulse    *rawPulses;
+    RKFloatPulse    *compressedPulses;
+    RKFloatPulse    *filteredCompressedPulses;
+    RKInt16Ray      *rays;
+    //
+    //
+    //
+    RKenum          initFlags;
+    RKRadarState    state;
+    bool            active;
+    //
+    //
+    //
+    unsigned int    memoryUsage;
+    //
+    //
+    //
+    unsigned int    pulseCompressionCoreCount;
+    pthread_t       tidPulseCompression[64];
+
+} RKRadar;
+
 extern RKRadar *RKInit(void);
 extern int RKFree(RKRadar *radar);
 

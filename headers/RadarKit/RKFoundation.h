@@ -12,6 +12,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
+#include <time.h>
+#include <pthread.h>
 
 /*!
  @definedblock Memory Blocks
@@ -25,17 +30,9 @@
 #define RKBuffer0SlotCount    4000
 #define RKBuffer1SlotCount    4000
 #define RKBuffer2SlotCount    4000
-#define RKGateCount           8192
+//#define RKGateCount           64 * 1024 * 1024
+#define RKGateCount           65536
 #define RKSIMDAlignSize         64
 /*! @/definedblock */
-
-#ifndef TRUE
-#define TRUE  1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 
 #endif /* defined(__RadarKit_RKFoundation__) */
