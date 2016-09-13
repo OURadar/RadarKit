@@ -96,9 +96,9 @@
 		B50A813F1AB89B6200E12E1F = {
 			isa = PBXGroup;
 			children = (
+				B5324D8B1AB8CC4200C00517 /* Makefile */,
 				B5324D8D1AB8CCEE00C00517 /* Headers */,
 				B5324DC91AB8D1A400C00517 /* Source */,
-				B5324D8B1AB8CC4200C00517 /* Makefile */,
 				B5C1F3451AB9C118004F88CD /* RadarKitTest */,
 				B5324D501AB8A5A000C00517 /* Products */,
 			);
@@ -116,10 +116,10 @@
 		B5324D8D1AB8CCEE00C00517 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
+				B5324DDF1AB8D9F100C00517 /* RKTypes.h */,
 				B5324DD91AB8D9F100C00517 /* RadarKit.h */,
 				B5324DDB1AB8D9F100C00517 /* RKFoundation.h */,
-				B5324DDF1AB8D9F100C00517 /* RKTypes.h */,
-				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B5324DDC1AB8D9F100C00517 /* RKNetwork.h */,
 				B5324DDE1AB8D9F100C00517 /* RKServer.h */,
 				B5324DDA1AB8D9F100C00517 /* RKClient.h */,
@@ -431,7 +431,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/Users/boonleng/Documents/RadarKit/public,
+					headers,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -472,7 +472,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/Users/boonleng/Documents/RadarKit/public,
+					headers,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -509,6 +509,7 @@
 				B5C1F3491AB9C118004F88CD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

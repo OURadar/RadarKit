@@ -16,9 +16,9 @@
 //#endif
 
 enum RKInitFlag {
-    RKInitFlagWantMomentBuffer = 1,
-    RKInitFlagWantRawIQBuffer  = 1 << 1,
-    RKInitFlatWantEverything   = RKInitFlagWantMomentBuffer | RKInitFlagWantMomentBuffer
+    RKInitFlagAllocMomentBuffer = 1,
+    RKInitFlagAllocRawIQBuffer  = 1 << 1,
+    RKInitFlagAllocEverything   = RKInitFlagAllocMomentBuffer | RKInitFlagAllocMomentBuffer
 };
 
 extern RKRadar *RKInit(void);

@@ -17,7 +17,7 @@ RKRadar *RKInitWithFlags(const RKenum flags);
 #pragma mark -
 
 RKRadar *RKInit(void) {
-    return RKInitWithFlags(RKInitFlatWantEverything);
+    return RKInitWithFlags(RKInitFlagAllocEverything);
 }
 
 RKRadar *RKInitWithFlags(const RKenum flags) {
@@ -36,7 +36,7 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
     radar->initFlags = flags;
     
     // Other allocatinos
-    if (flags & RKInitFlagWantMomentBuffer) {
+    if (flags & RKInitFlagAllocMomentBuffer) {
         bytes = RKBuffer1SlotCount * sizeof(RKInt16Ray);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
             fprintf(stderr, "Error allocation memory for raw pulse");
@@ -46,7 +46,7 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
         radar->rayBuffersInitialized = TRUE;
     }
     
-    if (flags & RKInitFlagWantRawIQBuffer) {
+    if (flags & RKInitFlagAllocRawIQBuffer) {
         bytes = RKBuffer0SlotCount * sizeof(RKInt16Pulse);
         if (posix_memalign((void **)&radar->rawPulses, RKSIMDAlignSize, bytes)) {
             fprintf(stderr, "Error allocation memory for raw pulse");

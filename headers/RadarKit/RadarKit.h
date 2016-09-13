@@ -23,6 +23,7 @@
  
  */
 
+#include <RadarKit/RKTypes.h>
 #include <RadarKit/RKRadar.h>
 #include <RadarKit/RKServer.h>
 #include <RadarKit/RKClient.h>
