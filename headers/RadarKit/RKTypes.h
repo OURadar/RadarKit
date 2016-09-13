@@ -14,6 +14,7 @@
 typedef uint8_t   RKboolean;
 typedef int8_t    RKbyte;
 typedef uint64_t  RKenum;
+typedef float     RKfloat;   // We can change this to double if we decided one day
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
 typedef struct RKInt16 {
@@ -22,10 +23,10 @@ typedef struct RKInt16 {
 } RKInt16;
 
 /// Fundamental unit of a (float) + (float) raw complex IQ sample
-typedef struct RKFloat {
-    float i;
-    float q;
-} RKFloat;
+typedef struct RKComplex {
+    RKfloat i;
+    RKfloat q;
+} RKComplex;
 
 
 /*!
@@ -85,7 +86,7 @@ typedef struct RKInt16Pulse {
 
 typedef struct RKFloatPulse {
     RKPulseHeader  header;
-    RKFloat        X[2][RKGateCount];
+    RKComplex      X[2][RKGateCount];
 } RKFloatPulse;
 
 /*!
@@ -124,6 +125,12 @@ typedef struct RKInt16Ray {
     RKInt16        data[RKGateCount];
 } RKInt16Ray;
 
+typedef RKenum RKRadarState;
+enum RKRadarState {
+    RKRadarStateRayBufferInitiated,
+    RKRadarStatePulseBufferInitiated
+};
+
 /*!
  * @typedef RKRadar
  * @brief The big structure that holds all the necessary buffers
@@ -141,12 +148,11 @@ typedef struct RKRadar {
     //
     //
     RKenum          initFlags;
-    RKboolean       rayBuffersInitialized;
-    RKboolean       pulseBuffersInitialized;
+    RKRadarState    state;
     //
     //
     //
-    uint32_t        memoryUsage;
+    uint64_t        memoryUsage;
     
 } RKRadar;
 

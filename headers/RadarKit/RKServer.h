@@ -11,13 +11,13 @@
 
 #include <RadarKit/RKNetwork.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
     
     
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif /* defined(___RadarKit_RKServer__) */
