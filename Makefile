@@ -3,19 +3,19 @@ LDFLAGS = -L /usr/local/lib -lRadarKit -lpthread
 OBJS = RadarKit.o RKRadar.o RKMisc.o RKPulseCompression.o
 RKLIB = libRadarKit.a
 
-all: $(RKLIB) install radarkittest
+all: $(RKLIB) install radar
 
 $(OBJS): %.o: source/%.c headers/RadarKit/%.h
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
 .c:
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-radarkittest: RadarKitTest/main.c
-	$(CC) -o radar $(CFLAGS) RadarKitTest/main.c $(LDFLAGS)
+radar: RadarKitTest/main.c
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 
 clean:
 	rm -f $(RKLIB)
