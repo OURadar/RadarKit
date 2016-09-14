@@ -26,6 +26,5 @@
 #include <RadarKit/RKRadar.h>
 #include <RadarKit/RKPulseCompression.h>
 
-RKGlobalParamters rkGlobalParameters = {{"radar"}, {"messages.log"}, 0, 0};
 
 #endif /* defined(__RadarKit__) */

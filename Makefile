@@ -1,6 +1,6 @@
 CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -D_GNU_SOURCE -msse -msse2 -msse3 -I /usr/local/include
 LDFLAGS = -L /usr/local/lib -lRadarKit -lpthread
-OBJS = RKRadar.o RKMisc.o RKPulseCompression.o
+OBJS = RadarKit.o RKRadar.o RKMisc.o RKPulseCompression.o
 RKLIB = libRadarKit.a
 
 all: $(RKLIB) install radarkittest
