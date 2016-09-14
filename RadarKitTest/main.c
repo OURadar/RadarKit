@@ -19,7 +19,7 @@ int main(int argc, const char * argv[]) {
     
     radar = RKInit();
     
-    printf("radar occupies %d bytes\n", (int)radar->memoryUsage);
+    printf("radar occupies %s bytes\n", RKIntegerToCommaStyleString(radar->memoryUsage));
 
     RKPulseCompressionEngineStart(radar);
 
