@@ -25,7 +25,7 @@ enum RKClientState {
     RKClientStateDisconnected
 };
 
-typedef struct RKNetworkClientDesc {
+typedef struct RKClientDesc {
     char                    hostname[RKMaximumStringLength];  // Hostname
     int                     port;                             // Port number of the server
     int                     timeoutInSeconds;                 // Timeout in seconds
@@ -35,9 +35,9 @@ typedef struct RKNetworkClientDesc {
     bool                    blocking;                         // Blocking read
     bool                    reconnect;
     int                     verb;
-} RKNetworkClientDesc;
+} RKClientDesc;
 
-typedef struct rk_client RKNetworkClient;
+typedef struct rk_client RKClient;
 
 struct rk_client {
     char                  hostname[RKMaximumStringLength];  // Hostname
@@ -50,8 +50,8 @@ struct rk_client {
     bool                  reconnect;
     int                   verb;
 
-    int                   (*i)(RKNetworkClient *);                // Initialization handler
-    int                   (*r)(RKNetworkClient *, const char *);  // Receive handler
+    int                   (*i)(RKClient *);                 // Initialization handler
+    int                   (*r)(RKClient *, const char *);   // Receive handler
 
     // Everything past here should be internal to the framework
   
