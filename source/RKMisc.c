@@ -9,10 +9,6 @@ char *RKNow() {
     return timestr;
 }
 
-void RKSetWantColor(const bool showColor) {
-    rkGlobalParameters.showColor = showColor;
-}
-
 int RKLog(const char *whatever, ...) {
     va_list args;
     int ret = 0;
@@ -59,6 +55,7 @@ int RKLog(const char *whatever, ...) {
             fprintf(rkGlobalParameters.stream, "\n");
         }
         va_end(args);
+        fflush(rkGlobalParameters.stream);
     }
     return ret;
 }
@@ -98,3 +95,24 @@ char *RKIntegerToCommaStyleString(long num) {
     ibuf = ibuf == 7 ? 0 : ibuf + 1;
     return stringBuffer[kdx];
 }
+
+void RKSetWantColor(const bool showColor) {
+    rkGlobalParameters.showColor = showColor;
+}
+
+int RKSetProgramName(const char *name) {
+    if (strlen(name) > 255) {
+        return 1;
+    }
+    snprintf(rkGlobalParameters.program, 256, "%s", name);
+    return 0;
+}
+
+int RKSetLogfile(const char *filename) {
+    if (strlen(filename) > 255) {
+        return 1;
+    }
+    snprintf(rkGlobalParameters.logfile, 256, "%s", filename);
+    return 0;
+}
+

@@ -10,20 +10,24 @@
 
 #include <RadarKit/RKTypes.h>
 
+
 typedef struct RKGlobalParameterStruct {
-    char program[64];
-    char logfile[64];
+    char program[256];
+    char logfile[256];
     char showColor;
     FILE *stream;
 } RKGlobalParamters;
 
 extern RKGlobalParamters rkGlobalParameters;
 
+
 // some RK functions here
 
 char *RKNow();
-void RKSetWantColor(const bool showColor);
-int RKLog(const char *whatever, ...);
 char *RKIntegerToCommaStyleString(long num);
+void RKSetWantColor(const bool showColor);
+int RKSetProgramName(const char *name);
+int RKSetLogfile(const char *file);
+int RKLog(const char *whatever, ...);
 
 #endif /* rk_misc_h */
