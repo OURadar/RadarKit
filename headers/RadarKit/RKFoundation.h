@@ -12,6 +12,7 @@
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>
 
+#define RKEOL                       "\r\n"
 
 #define RKNextBuffer0Slot(i)        (i == RKBuffer0SlotCount - 1 ? 0 : i + 1)
 #define RKPreviousBuffer0Slot(i)    (i == 0 ? RKBuffer0SlotCount - 1 : i - 1)

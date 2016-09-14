@@ -23,6 +23,9 @@
 //extern "C" {
 //#endif
 
+typedef int RKSocketType;
+typedef int RKMessageFormat;
+
 enum RKSocketType {
     RKSocketTypeTCP,
     RKSocketTypeUDP

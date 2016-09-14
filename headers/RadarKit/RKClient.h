@@ -15,6 +15,8 @@
 //extern "C" {
 //#endif
 
+typedef int RKClientState;
+
 enum RKClientState {
     RKClientStateNull,
     RKClientStateResolvingIP,
