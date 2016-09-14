@@ -15,7 +15,13 @@
 //extern "C" {
 //#endif
 
-    
+typedef struct {
+    uint32_t type;
+    uint32_t rawSize;
+    uint32_t userParameter1;
+    uint32_t userParameter2;
+} RKNetDelimiterPacket;
+
 //#ifdef __cplusplus
 //}
 //#endif
