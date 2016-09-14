@@ -16,9 +16,12 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
+#include <math.h>
 #include <time.h>
 #include <pthread.h>
 #include <semaphore.h>
+
 
 /*!
  @definedblock Memory Blocks
@@ -36,6 +39,8 @@
 #define RKGateCount           65536
 #define RKSIMDAlignSize         64
 /*! @/definedblock */
+
+#define RKMaximumStringLength  256
 
 typedef uint8_t   RKboolean;
 typedef int8_t    RKbyte;

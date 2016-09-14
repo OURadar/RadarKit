@@ -101,18 +101,18 @@ void RKSetWantColor(const bool showColor) {
 }
 
 int RKSetProgramName(const char *name) {
-    if (strlen(name) > 255) {
+    if (strlen(name) >= RKMaximumStringLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.program, 256, "%s", name);
+    snprintf(rkGlobalParameters.program, RKMaximumStringLength, "%s", name);
     return 0;
 }
 
 int RKSetLogfile(const char *filename) {
-    if (strlen(filename) > 255) {
+    if (strlen(filename) >= RKMaximumStringLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, 256, "%s", filename);
+    snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", filename);
     return 0;
 }
 

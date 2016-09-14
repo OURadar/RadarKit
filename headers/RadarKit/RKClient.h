@@ -15,7 +15,16 @@
 //extern "C" {
 //#endif
 
-    
+enum RKNetworkClientState {
+    RKNetworkClientStateNull,
+    RKNetworkClientStateResolvingIP,
+    RKNetworkClientStateConfiguringSocket,
+    RKNetworkClientStateConnecting,
+    RKNetworkClientStateConnected,
+    RKNetworkClientStateDisconnecting,
+    RKNetworkClientStateDisconnected
+};
+
 //#ifdef __cplusplus
 //}
 //#endif

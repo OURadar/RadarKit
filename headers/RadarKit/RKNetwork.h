@@ -11,9 +11,23 @@
 
 #include <RadarKit/RKFoundation.h>
 
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <sys/resource.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
+
+enum RKNetworkSocketType {
+    RKNetworkSocketTypeTCP,
+    RKNetworkSocketTypeUDP
+};
+
 
 typedef struct {
     uint32_t type;
@@ -21,6 +35,8 @@ typedef struct {
     uint32_t userParameter1;
     uint32_t userParameter2;
 } RKNetDelimiterPacket;
+
+
 
 //#ifdef __cplusplus
 //}

@@ -12,8 +12,8 @@
 
 
 typedef struct RKGlobalParameterStruct {
-    char program[256];
-    char logfile[256];
+    char program[RKMaximumStringLength];
+    char logfile[RKMaximumStringLength];
     char showColor;
     FILE *stream;
 } RKGlobalParamters;
