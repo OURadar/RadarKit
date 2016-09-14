@@ -1,0 +1,10 @@
+._*
+.DS_Store
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+*.o
+*.a
+
+radar
+messages.log
