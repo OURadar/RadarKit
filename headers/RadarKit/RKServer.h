@@ -37,7 +37,7 @@ struct RKNetworkServer {
     int              (*s)(RKOperator *);             //!< Function that keeps streaming content
     int              (*t)(RKOperator *);             //!< Function that terminates connection
     
-    void             *usr_ptr;                       //!< User pointer
+    void             *usr;                           //!< User pointer
 };
 
 struct rk_operator  {
@@ -56,7 +56,7 @@ struct rk_operator  {
 
     char             *cmd;                           //!< Latest command
 
-    void             *usr_ptr;                       //!< User pointer
+    void             *usr;                           //!< User pointer
 };
 
 

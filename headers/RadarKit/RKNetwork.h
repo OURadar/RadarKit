@@ -23,11 +23,16 @@
 //extern "C" {
 //#endif
 
-enum RKNetworkSocketType {
-    RKNetworkSocketTypeTCP,
-    RKNetworkSocketTypeUDP
+enum RKSocketType {
+    RKSocketTypeTCP,
+    RKSocketTypeUDP
 };
 
+enum RKMessageFormat {
+    RKMessageFormatNewLine,
+    RKMessageFormatFixedBlock,
+    RKMessageFormatFixedHeaderVariableBlock
+};
 
 typedef struct {
     uint32_t type;
