@@ -5,11 +5,8 @@ RKLIB = libRadarKit.a
 
 all: $(RKLIB) install radar
 
-$(OBJS): %.o: source/%.c headers/RadarKit/%.h
+$(OBJS): %.o: source/%.c
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
-
-.c:
-	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
@@ -22,10 +19,10 @@ clean:
 	rm $(OBJS)
 
 install:
-	sudo cp -rp headers/RadarKit /usr/local/include/
+	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
 	sudo cp -p libRadarKit.a /usr/local/lib/
 
 uninstall:
-	rm -rf /usr/local/include/RadarKit
+	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
 	rm -rf /usr/local/lib/libRadarKit.a
 
