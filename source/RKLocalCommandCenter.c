@@ -6,5 +6,15 @@
 //  Copyright © 2016 Boon Leng Cheong. All rights reserved.
 //
 
-#include "RKLocalCommandCenter.h"
+#include <RadarKit/RKLocalCommandCenter.h>
 
+int socketCommandHandler(RKOperator *O) {
+    switch (O->cmd[0]) {
+        case 'a':
+            RKOperatorSendString(O, "Hello\n");
+            break;
+        default:
+            break;
+    }
+    return 0;
+}

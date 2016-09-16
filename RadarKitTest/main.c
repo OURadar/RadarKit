@@ -24,6 +24,9 @@ int main(int argc, const char * argv[]) {
     //RKPulseCompressionEngineStart(radar);
 
     RKServer *M = RKServerInit();
+
+    RKServerSetCommandHandler(M, &socketCommandHandler);
+    
     RKServerActivate(M);
 
 

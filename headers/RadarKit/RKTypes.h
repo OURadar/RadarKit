@@ -167,13 +167,13 @@ enum RKRadarState {
 };
 
 enum RKResult {
-    RKResultNoError,
-    RKResultTimeout,
+    RKResultTimeout = -1000,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,
     RKResultSDToFDError,
-    RKResultTooBig
+    RKResultTooBig,
+    RKResultNoError = 0
 };
 
 #pragma pack(pop)

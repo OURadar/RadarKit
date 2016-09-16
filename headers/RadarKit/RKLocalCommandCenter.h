@@ -11,11 +11,7 @@
 
 #include <RadarKit/RKServer.h>
 
-struct RKLocalCommandCenter {
-    RKServer *LCC;
-};
-
-void RKLocalCommandCenterCommandHandler(void);
+int socketCommandHandler(RKOperator *O);
 
 #endif /* __RadarKit_RKLocalCommandCenter__ */
 

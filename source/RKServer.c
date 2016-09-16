@@ -115,8 +115,8 @@ void *RKServerRoutine(void *in) {
 
 void *RKOperatorRoutine(void *in) {
 
-    RKOperator      *A = (RKOperator *)in;
-    RKServer        *M = A->M;
+    RKOperator      *O = (RKOperator *)in;
+    RKServer        *M = O->M;
 
     int             r;
 
@@ -127,11 +127,11 @@ void *RKOperatorRoutine(void *in) {
 
     struct timeval  timeout;
 
-    RKLog("Op-%03d started for customer %d.\n", A->iid, M->ireq);
+    RKLog("Op-%03d started for customer %d.\n", O->iid, M->ireq);
 
     // Greet with welcome function
     if (M->w != NULL) {
-        M->w(A);
+        M->w(O);
     }
 
     int		        mwait = 0;
@@ -151,36 +151,36 @@ void *RKOperatorRoutine(void *in) {
      }
      */
     // Get a file descriptor for get line
-    fp = fdopen(A->sid, "r");
+    fp = fdopen(O->sid, "r");
     if (fp == NULL) {
         RKLog("Unable to get a file descriptor fro socket descriptor.\n");
         return (void *)RKResultSDToFDError;
     }
 
     // Run loop for the read/write
-    while (M->state == RKServerStateActive && A->state == RKServerStateActive) {
+    while (M->state == RKServerStateActive && O->state == RKServerStateActive) {
         FD_ZERO(&rfd);
         FD_ZERO(&wfd);
         FD_ZERO(&efd);
-        FD_SET(A->sid, &rfd);
-        FD_SET(A->sid, &wfd);
-        FD_SET(A->sid, &efd);
+        FD_SET(O->sid, &rfd);
+        FD_SET(O->sid, &wfd);
+        FD_SET(O->sid, &efd);
         //
         //  Stream worker
         //
         if (M->s != NULL) {
             timeout.tv_sec = 0;
             timeout.tv_usec = 1000;
-            r = select(A->sid + 1, NULL, &wfd, &efd, &timeout);
+            r = select(O->sid + 1, NULL, &wfd, &efd, &timeout);
             if (r > 0) {
-                if (FD_ISSET(A->sid, &efd)) {
+                if (FD_ISSET(O->sid, &efd)) {
                     // Exceptions
                     fprintf(stderr, "Exception(s) occurred.\n");
                     break;
-                } else if (FD_ISSET(A->sid, &wfd)) {
+                } else if (FD_ISSET(O->sid, &wfd)) {
                     // Ready to write (stream)
                     wwait = 0;
-                    M->s(A);
+                    M->s(O);
                 }
             } else if (r < 0) {
                 // Errors
@@ -196,27 +196,27 @@ void *RKOperatorRoutine(void *in) {
         //
         timeout.tv_sec = 0;
         timeout.tv_usec = 1000;
-        r = select(A->sid + 1, &rfd, NULL, &efd, &timeout);
+        r = select(O->sid + 1, &rfd, NULL, &efd, &timeout);
         if (r > 0) {
-            if (FD_ISSET(A->sid, &efd)) {
+            if (FD_ISSET(O->sid, &efd)) {
                 // Exceptions
                 RKLog("Error. Exception(s) occurred.\n");
                 break;
-            } else if (FD_ISSET(A->sid, &rfd)) {
+            } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
                 rwait = 0;
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
-                    A->cmd = NULL;
+                    O->cmd = NULL;
                     break;
                 }
                 stripTrailingUnwanted(str);
                 // Set the command so that a command handler can retrieve this
-                A->cmd = str;
+                O->cmd = str;
                 if (M->c) {
-                    M->c(A);
+                    M->c(O);
                 } else {
-                    RKLog("No command handler. cmd '%s' from Op-%03d (%s)\n", A->cmd, A->iid, A->ip);
+                    RKLog("No command handler. cmd '%s' from Op-%03d (%s)\n", O->cmd, O->iid, O->ip);
                 }
             }
         } else if (r < 0) {
@@ -229,23 +229,23 @@ void *RKOperatorRoutine(void *in) {
         }
         // Process the timeout
         mwait = wwait < rwait ? wwait : rwait;
-        if (mwait > M->timeoutInSec * 10 && !(A->option & RKOperatorOptionKeepAlive)) {
-            RKLog("Op-%03d encountered a timeout.\n", A->iid);
+        if (mwait > M->timeoutInSec * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
+            RKLog("Op-%03d encountered a timeout.\n", O->iid);
             // Dismiss with a terminate function
             if (M->t != NULL) {
-                M->t(A);
+                M->t(O);
             }
             break;
         }
     } // while () ...
 
-    RKLog("Op-%03d returning ...\n", A->iid);
+    RKLog("Op-%03d returning ...\n", O->iid);
 
     fclose(fp);
-    close(A->sid);
-    pthread_mutex_destroy(&A->lock);
+    close(O->sid);
+    pthread_mutex_destroy(&O->lock);
 
-    free(A);
+    free(O);
 
     pthread_mutex_lock(&M->lock);
     M->nclient--;
@@ -279,7 +279,11 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     pthread_mutex_init(&A->lock, NULL);
     snprintf(A->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(A->name, RKMaximumStringLength - 1, "Op-%03d", A->iid);
-    
+    A->delim.type = RKPacketTypePlainText;
+    A->delim.rawSize = 0;
+    A->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
+    A->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+
     if (pthread_create(&A->tid, NULL, RKOperatorRoutine, A)) {
         RKLog("Error. Failed to create RKOperatorRoutine().\n");
         pthread_mutex_unlock(&M->lock);
@@ -331,9 +335,9 @@ int RKDefaultWelcomeHandler(RKOperator *A) {
 }
 
 
-int RKDefaultTerminateHandler(RKOperator *A) {
+int RKDefaultTerminateHandler(RKOperator *O) {
     char str[] = "You are boring. I'm disconnecting you...\nBye." RKEOL;
-    send(A->sid, str, strlen(str), 0);
+    send(O->sid, str, strlen(str), 0);
     return 0;
 }
 
@@ -429,54 +433,62 @@ void RKServerStop(RKServer *M) {
 
 
 // In counts of 10ms, should be plenty, in-transit buffer should be able to hold it
-#define PS_MAX_TIMEOUT_COUNT  10
+#define RKSocketTimeCountOf10ms  10
 
-ssize_t RKOperatorSendPackets(RKOperator *A, ...) {
+// Use as:
+// RKOperatorSendPackets(operator, payload, size, payload, size, ..., NULL);
+
+ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
 
     va_list   arg;
 
     void      *payload;
-    ssize_t   payload_size = 1;
+    ssize_t   payloadSize = 1;
 
-    ssize_t   grant_total_sent_size = 0;
-    ssize_t   total_sent_size = 0;
-    ssize_t   sent_size = 0;
+    ssize_t   grandTotalSentSize = 0;
+    ssize_t   totalSentSize = 0;
+    ssize_t   sentSize = 0;
 
     int timeout_count = 0;
 
-    pthread_mutex_lock(&A->lock);
+    pthread_mutex_lock(&O->lock);
 
-    va_start(arg, A);
+    va_start(arg, O);
 
     // Parse the input arguments until payload = NULL (last input)
     payload = va_arg(arg, void *);
     while (payload != NULL) {
-        payload_size = va_arg(arg, ssize_t);
-        //printf("%d @ %p\n", (int)len, payload);
-        sent_size = 0;
-        total_sent_size = 0;
-        while (total_sent_size < payload_size && timeout_count++ < PS_MAX_TIMEOUT_COUNT) {
-            if ((sent_size = send(A->sid, payload+sent_size, payload_size-sent_size, 0)) > 0) {
-                total_sent_size += sent_size;
+        payloadSize = va_arg(arg, ssize_t);
+        //printf("%d @ %p\n", (int)payloadSize, payload);
+        sentSize = 0;
+        totalSentSize = 0;
+        while (totalSentSize < payloadSize && timeout_count++ < RKSocketTimeCountOf10ms) {
+            if ((sentSize = send(O->sid, payload + sentSize, payloadSize - sentSize, 0)) > 0) {
+                totalSentSize += sentSize;
             }
-            if (total_sent_size < payload_size) {
+            if (totalSentSize < payloadSize) {
                 usleep(10000);
-            } else if (sent_size == -1) {
-                pthread_mutex_unlock(&A->lock);
+            } else if (sentSize < 0) {
+                pthread_mutex_unlock(&O->lock);
                 return RKResultIncompleteSend;
             }
         }
-        grant_total_sent_size += total_sent_size;
+        grandTotalSentSize += totalSentSize;
         payload = va_arg(arg, void *);
     }
     
     va_end(arg);
     
-    pthread_mutex_unlock(&A->lock);
+    pthread_mutex_unlock(&O->lock);
     
-    if (timeout_count >= PS_MAX_TIMEOUT_COUNT) {
+    if (timeout_count >= RKSocketTimeCountOf10ms) {
         return RKResultTimeout;
     }
     
-    return payload_size;
+    return grandTotalSentSize;
+}
+
+ssize_t RKOperatorSendString(RKOperator *O, const char *string) {
+    O->delim.rawSize = (uint32_t)strlen(string);
+    return RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), string, O->delim.rawSize, NULL);
 }

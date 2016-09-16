@@ -24,6 +24,7 @@
 
 typedef int RKSocketType;
 typedef int RKMessageFormat;
+typedef uint32_t RKPacketType;
 
 enum RKSocketType {
     RKSocketTypeTCP,
@@ -36,13 +37,21 @@ enum RKMessageFormat {
     RKMessageFormatFixedHeaderVariableBlock
 };
 
-typedef struct {
-    uint32_t type;
-    uint32_t rawSize;
-    uint32_t userParameter1;
-    uint32_t userParameter2;
-} RKNetDelimiterPacket;
+enum RKPacketType {
+    RKPacketTypePlainText,
+    RKPacketTypePulseData,
+    RKPacketTypeRayData
+};
 
+typedef union rk_net_delimiter_packet {
+    struct {
+        uint32_t type;
+        uint32_t rawSize;
+        uint32_t userParameter1;
+        uint32_t userParameter2;
+    };
+    char bytes[128];
+} RKNetDelimiter;
 
 
 //#ifdef __cplusplus

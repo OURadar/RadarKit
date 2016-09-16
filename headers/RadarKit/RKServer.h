@@ -71,6 +71,8 @@ struct rk_operator  {
     char             name[RKMaximumStringLength];    //!< Attendant's name
     char             ip[RKMaximumStringLength];      //!< Client's IP address
 
+    RKNetDelimiter   delim;                          //!< Convenient delimiter for sending a string
+
     char             *cmd;                           //!< Latest command
 
     void             *usr;                           //!< User pointer
@@ -78,6 +80,7 @@ struct rk_operator  {
 
 
 ssize_t RKOperatorSendPackets(RKOperator *O, ...);
+ssize_t RKOperatorSendString(RKOperator *O, const char *string);
 
 RKServer *RKServerInit(void);
 void RKServerFree(RKServer *M);
