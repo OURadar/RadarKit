@@ -1,7 +1,17 @@
-CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -D_GNU_SOURCE -msse -msse2 -msse3 -mavx -I /usr/local/include
+UNAME := $(shell uname)
+
+CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I /usr/local/include
 LDFLAGS = -L /usr/local/lib -lRadarKit -lpthread
 OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o
 RKLIB = libRadarKit.a
+
+ifeq ($(UNAME), Darwin)
+# Mac OS X
+CC = clang
+CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
+else
+CFLAGS += -D_GNU_SOURCE
+endif
 
 all: $(RKLIB) install radar
 

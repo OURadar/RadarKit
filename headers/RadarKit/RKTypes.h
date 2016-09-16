@@ -23,7 +23,6 @@
 #include <semaphore.h>
 #include <signal.h>
 
-
 /*!
  @definedblock Memory Blocks
  @abstract Defines the number of slots and gates of each pulse of the RKRadar structure

@@ -59,11 +59,16 @@ void *pulseCompressionCore(void *in) {
     struct timespec ts;
 
     while (radar->active) {
+
+#if defined(__APPLE__)
+        usleep(1000);
+#else
         // Only process pulses that
         clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += 1;
 
         sem_timedwait(&radar->semPulseCompression[k], &ts);
+#endif
     }
     return NULL;
 }
