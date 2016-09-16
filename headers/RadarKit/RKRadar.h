@@ -50,6 +50,9 @@ typedef struct RKRadar {
     unsigned int    pulseCompressionCoreCount;
     pthread_t       tidPulseCompression[64];
     sem_t           semPulseCompression[64];
+    //
+    //
+    //
 
 } RKRadar;
 

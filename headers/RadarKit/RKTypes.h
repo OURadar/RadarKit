@@ -171,6 +171,8 @@ enum RKResult {
     RKResultTimeout,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
+    RKResultErrorCreatingOperatorRoutine,
+    RKResultSDToFDError,
     RKResultTooBig
 };
 

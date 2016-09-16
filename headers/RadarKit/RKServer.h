@@ -58,7 +58,7 @@ struct rk_server {
 };
 
 struct rk_operator  {
-    RKServer         *M;                              //!< Pointer to main server for common resources
+    RKServer         *M;                             //!< Pointer to main server for common resources
     RKOperatorOption option;                         //!< Keep alive flag
 
     int              iid;                            //!< Instant identifier
@@ -69,6 +69,7 @@ struct rk_operator  {
     pthread_mutex_t  lock;                           //!< Thread safety mutex of the attendant
 
     char             name[RKMaximumStringLength];    //!< Attendant's name
+    char             ip[RKMaximumStringLength];      //!< Client's IP address
 
     char             *cmd;                           //!< Latest command
 

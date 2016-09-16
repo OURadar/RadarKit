@@ -17,5 +17,6 @@
 #define RKNextBuffer0Slot(i)        (i == RKBuffer0SlotCount - 1 ? 0 : i + 1)
 #define RKPreviousBuffer0Slot(i)    (i == 0 ? RKBuffer0SlotCount - 1 : i - 1)
 
+void stripTrailingUnwanted(char *str);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

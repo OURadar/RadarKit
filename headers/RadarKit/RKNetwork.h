@@ -13,7 +13,6 @@
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
 #include <sys/resource.h>
 #include <arpa/inet.h>
 #include <netdb.h>

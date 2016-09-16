@@ -14,7 +14,7 @@
 
 void *RKServerRoutine(void *);
 void *RKOperatorRoutine(void *);
-int RKOperatorCreate(RKServer *, int);
+int RKOperatorCreate(RKServer *, int, const char *);
 int RKDefaultWelcomeHandler(RKOperator *);
 int RKDefaultTerminateHandler(RKOperator *);
 
@@ -78,7 +78,7 @@ void *RKServerRoutine(void *in) {
         // use select to prevent accept() from blocking
         FD_ZERO(&rfd);
         FD_SET(M->sd, &rfd);
-        timeout.tv_sec = 0; timeout.tv_usec = 250000;
+        timeout.tv_sec = 0; timeout.tv_usec = 100000;
         ii = select(M->sd + 1, &rfd, NULL, NULL, &timeout);
         if (ii > 0 && FD_ISSET(M->sd, &rfd)) {
             // accept a connection, this part shouldn't be blocked. Reuse sa since we no longer need it
@@ -93,7 +93,7 @@ void *RKServerRoutine(void *in) {
                 close(sid);
                 continue;
             } else {
-                RKOperatorCreate(M, sid);
+                RKOperatorCreate(M, sid, inet_ntoa(sa.sin_addr));
             }
         } else if (ii == 0) {
             // This isn't really an error, just mean no one is connecting & timeout...
@@ -138,7 +138,6 @@ void *RKOperatorRoutine(void *in) {
     int             rwait = 0;
     int             wwait = 0;
     char            str[RKMaximumStringLength];
-    char            *c;
 
     // Get whatever that is in-transit, should look at server options
     /*
@@ -153,6 +152,10 @@ void *RKOperatorRoutine(void *in) {
      */
     // Get a file descriptor for get line
     fp = fdopen(A->sid, "r");
+    if (fp == NULL) {
+        RKLog("Unable to get a file descriptor fro socket descriptor.\n");
+        return (void *)RKResultSDToFDError;
+    }
 
     // Run loop for the read/write
     while (M->state == RKServerStateActive && A->state == RKServerStateActive) {
@@ -181,7 +184,7 @@ void *RKOperatorRoutine(void *in) {
                 }
             } else if (r < 0) {
                 // Errors
-                fprintf(stderr, "Error(s) occurred.\n");
+                RKLog("Error. Something bad occurred.\n");
                 break;
             } else {
                 // Timeout (r == 0)
@@ -192,7 +195,7 @@ void *RKOperatorRoutine(void *in) {
         //  Command worker
         //
         timeout.tv_sec = 0;
-        timeout.tv_usec = 100;
+        timeout.tv_usec = 1000;
         r = select(A->sid + 1, &rfd, NULL, &efd, &timeout);
         if (r > 0) {
             if (FD_ISSET(A->sid, &efd)) {
@@ -204,23 +207,16 @@ void *RKOperatorRoutine(void *in) {
                 rwait = 0;
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
-                    //fprintf(stderr, "selected() indicated ready for read but nothing.\n");
                     A->cmd = NULL;
                     break;
                 }
-                if (M->c != NULL) {
-                    // Strip out \r, \n, white space, \10 (BS), etc.
-                    c = str + strlen(str) - 1;
-                    while (c >= str && (*c == '\r' || *c == '\n' || *c == ' ' || *c == 10)) {
-                        *c-- = '\0';
-                    }
-                    // Set the command so that handle_command function can retrieve this
-                    A->cmd = str;
-                    if (M->c) {
-                        M->c(A);
-                    } else {
-                        RKLog("cmd '%s' has no processor.\n", A->cmd);
-                    }
+                stripTrailingUnwanted(str);
+                // Set the command so that a command handler can retrieve this
+                A->cmd = str;
+                if (M->c) {
+                    M->c(A);
+                } else {
+                    RKLog("No command handler. cmd '%s' from Op-%03d (%s)\n", A->cmd, A->iid, A->ip);
                 }
             }
         } else if (r < 0) {
@@ -259,18 +255,18 @@ void *RKOperatorRoutine(void *in) {
 }
 
 
-int RKOperatorCreate(RKServer *M, int sid) {
+int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 
     RKOperator *A = (RKOperator *)malloc(sizeof(RKOperator));
-
     if (A == NULL) {
         RKLog("Error Failed to allocate RKOperator.\n");
         return 1;
     }
+    memset(A, 0, sizeof(RKOperator));
 
     pthread_mutex_lock(&M->lock);
 
-    // Default operator parameters
+    // Default operator parameters that should not be 0
     A->M = M;
     A->sid = sid;
     A->iid = sid - M->sd;
@@ -281,12 +277,13 @@ int RKOperatorCreate(RKServer *M, int sid) {
     RKServerSetWelcomeHandlerToDefault(M);
     PSServerSetTerminateHandlerToDefault(M);
     pthread_mutex_init(&A->lock, NULL);
+    snprintf(A->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(A->name, RKMaximumStringLength - 1, "Op-%03d", A->iid);
     
     if (pthread_create(&A->tid, NULL, RKOperatorRoutine, A)) {
         RKLog("Error. Failed to create RKOperatorRoutine().\n");
         pthread_mutex_unlock(&M->lock);
-        return 2;
+        return RKResultErrorCreatingOperatorRoutine;
     }
     
     M->nclient++;
