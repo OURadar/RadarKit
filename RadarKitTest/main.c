@@ -21,11 +21,17 @@ int main(int argc, const char * argv[]) {
 
     RKLog("Radar state machine occupies %s bytes\n", RKIntegerToCommaStyleString(radar->memoryUsage));
 
-    RKPulseCompressionEngineStart(radar);
+    //RKPulseCompressionEngineStart(radar);
+
+    RKServer *M = RKServerInit();
+    RKServerActivate(M);
+
 
     while (radar->active) {
         sleep(1);
     }
+
+    RKServerStop(M);
 
     RKFree(radar);
     

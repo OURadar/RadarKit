@@ -21,6 +21,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 
 
 /*!
@@ -46,6 +47,7 @@ typedef uint8_t   RKboolean;
 typedef int8_t    RKbyte;
 typedef uint64_t  RKenum;
 typedef float     RKfloat;   // We can change this to double if we decided one day
+typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
 typedef struct RKInt16 {
@@ -162,6 +164,14 @@ typedef RKenum RKRadarState;
 enum RKRadarState {
     RKRadarStateRayBufferInitiated     = 1,
     RKRadarStatePulseBufferInitiated   = 1 << 1
+};
+
+enum RKResult {
+    RKResultNoError,
+    RKResultTimeout,
+    RKResultIncompleteSend,
+    RKResultIncompleteReceive,
+    RKResultTooBig
 };
 
 #pragma pack(pop)

@@ -57,13 +57,13 @@ struct rk_client {
 
     // Everything past here should be internal to the framework
   
-    char                  host_IP[32];                      // Host IP in numbers
-    socklen_t             sa_len;                           // Address length (IPv4 / IPv6)
+    char                  hostIP[32];                       // Host IP in numbers
+    //socklen_t             sa_len;                           // Address length (IPv4 / IPv6)
     struct sockaddr_in    sa;                               // Socket address
     int                   sd;                               // Socket descriptor
   
     bool                  run;                              // A flag for infinite run
-    bool                  safe_to_close;                    // A flag indicating safe to close
+    bool                  safeToClose;                      // A flag indicating safe to close
     int                   ireq;                             // A global instance request
     RKClientState         state;                            // A global flag for infinite loop
 

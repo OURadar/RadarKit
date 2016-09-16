@@ -15,10 +15,27 @@
 //extern "C" {
 //#endif
 
-typedef struct rk_server    RKNetworkServer;
+typedef int RKServerState;
+
+enum RKServerState {
+    RKServerStateNull,
+    RKServerStateFree,
+    RKServerStateClosing,
+    RKServerStateActive
+};
+
+typedef int RKOperatorOption;
+
+enum RKOperatorOption {
+    RKOperatorOptionNone         = 0,
+    RKOperatorOptionKeepAlive    = 1
+};
+
+
+typedef struct rk_server    RKServer;
 typedef struct rk_operator  RKOperator;
 
-struct RKNetworkServer {
+struct rk_server {
     int              sd;                             //!< Socket descriptor
     int              port;                           //!< Port number of the server
     int              maxClient;                      //!< Maximum number of client connections
@@ -41,14 +58,13 @@ struct RKNetworkServer {
 };
 
 struct rk_operator  {
-    RKNetworkServer *M;                              //!< Pointer to main server for common resources
+    RKServer         *M;                              //!< Pointer to main server for common resources
+    RKOperatorOption option;                         //!< Keep alive flag
 
-    int              i;                              //!< Instant number
-    int              option;                         //!< Keep alive flag
+    int              iid;                            //!< Instant identifier
     int              timeoutInSec;                   //!< Timeout in seconds
-
     int              sid;                            //!< Socket identifier of the client
-    int              state;                          //!< Connection state
+    RKServerState    state;                          //!< Connection state
     pthread_t        tid;                            //!< Thread ID
     pthread_mutex_t  lock;                           //!< Thread safety mutex of the attendant
 
@@ -60,7 +76,21 @@ struct rk_operator  {
 };
 
 
-ssize_t RKSendPackets(RKOperator *O, ...);
+ssize_t RKOperatorSendPackets(RKOperator *O, ...);
+
+RKServer *RKServerInit(void);
+void RKServerFree(RKServer *M);
+
+void RKServerSetWelcomeHandler(RKServer *M, int (*function)(RKOperator *));
+void RKServerSetCommandHandler(RKServer *M, int (*function)(RKOperator *));
+void RKServerSetTerminateHandler(RKServer *M, int (*function)(RKOperator *));
+void RKServerSetStreamHandler(RKServer *M, int (*function)(RKOperator *));
+void RKServerSetWelcomeHandlerToDefault(RKServer *M);
+void PSServerSetTerminateHandlerToDefault(RKServer *M);
+
+void RKServerActivate(RKServer *M);
+void RKServerWait(RKServer *M);
+void RKServerStop(RKServer *M);
 
 //#ifdef __cplusplus
 //}
