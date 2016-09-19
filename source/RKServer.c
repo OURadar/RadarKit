@@ -150,6 +150,7 @@ void *RKOperatorRoutine(void *in) {
      //printf("Flushed : %s\n", str);
      }
      */
+
     // Get a file descriptor for get line
     fp = fdopen(O->sid, "r");
     if (fp == NULL) {

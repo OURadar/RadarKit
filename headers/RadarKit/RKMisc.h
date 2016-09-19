@@ -29,5 +29,6 @@ void RKSetWantColor(const bool showColor);
 int RKSetProgramName(const char *name);
 int RKSetLogfile(const char *file);
 int RKLog(const char *whatever, ...);
+double RKTimevalDiff(const struct timeval, const struct timeval);
 
 #endif /* rk_misc_h */

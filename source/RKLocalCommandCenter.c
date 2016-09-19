@@ -18,3 +18,24 @@ int socketCommandHandler(RKOperator *O) {
     }
     return 0;
 }
+
+int socketStreamHandler(RKOperator *O) {
+    struct timeval t0, t1;
+
+    gettimeofday(&t0, NULL);
+
+    // Check IQ
+    // Check MM
+    // Check system health
+
+    // Heart beat
+    char str[64];
+    double td = RKTimevalDiff(t1, t0);
+    if (td >= 1.0f) {
+        t1 = t0;
+        snprintf(str, 63, "beat %.3f\n", td);
+        RKOperatorSendString(O, str);
+    }
+
+    return 0;
+}

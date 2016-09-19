@@ -11,7 +11,8 @@
 
 #include <RadarKit/RKServer.h>
 
-int socketCommandHandler(RKOperator *O);
+int socketCommandHandler(RKOperator *);
+int socketStreamHandler(RKOperator *);
 
 #endif /* __RadarKit_RKLocalCommandCenter__ */
 
