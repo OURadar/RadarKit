@@ -24,6 +24,15 @@ enum RKServerState {
     RKServerStateActive
 };
 
+typedef int RKOperatorState;
+
+enum RKOperatorState {
+    RKOperatorStateNull,
+    RKOperatorStateFree,
+    RKOperatorStateClosing,
+    RKOperatorStateActive
+};
+
 typedef int RKOperatorOption;
 
 enum RKOperatorOption {
@@ -64,7 +73,7 @@ struct rk_operator  {
     int              iid;                            //!< Instant identifier
     int              timeoutInSec;                   //!< Timeout in seconds
     int              sid;                            //!< Socket identifier of the client
-    RKServerState    state;                          //!< Connection state
+    RKOperatorState  state;                          //!< Connection state
     pthread_t        tid;                            //!< Thread ID
     pthread_mutex_t  lock;                           //!< Thread safety mutex of the attendant
 
@@ -82,6 +91,8 @@ struct rk_operator  {
 
 ssize_t RKOperatorSendPackets(RKOperator *O, ...);
 ssize_t RKOperatorSendString(RKOperator *O, const char *string);
+ssize_t RKOperatorSendBeacon(RKOperator *O);
+void RKOperatorHangUp(RKOperator *O);
 
 RKServer *RKServerInit(void);
 void RKServerFree(RKServer *M);

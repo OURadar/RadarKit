@@ -75,12 +75,13 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
         radar->state |= RKRadarStatePulseBufferInitiated;
     }
 
+    radar->socketServer = RKServerInit();
+
+    RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
+    RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
+
     printf("Radar initialized\n");
     return radar;
-}
-
-int RKGoLive(RKRadar *radar) {
-    return 0;
 }
 
 int RKFree(RKRadar *radar) {
@@ -95,4 +96,9 @@ int RKFree(RKRadar *radar) {
     }
     free(radar);
     return EXIT_SUCCESS;
+}
+
+int RKGoLive(RKRadar *radar) {
+    RKServerActivate(radar->socketServer);
+    return 0;
 }

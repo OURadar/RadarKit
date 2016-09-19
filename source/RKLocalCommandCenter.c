@@ -11,7 +11,7 @@
 int socketCommandHandler(RKOperator *O) {
     switch (O->cmd[0]) {
         case 'a':
-            RKOperatorSendString(O, "Hello\n");
+            RKOperatorSendString(O, "Hello" RKEOL);
             break;
         default:
             break;
@@ -22,6 +22,8 @@ int socketCommandHandler(RKOperator *O) {
 int socketStreamHandler(RKOperator *O) {
     static struct timeval t0, t1;
 
+    ssize_t r;
+
     gettimeofday(&t0, NULL);
 
     // Check IQ
@@ -29,13 +31,14 @@ int socketStreamHandler(RKOperator *O) {
     // Check system health
 
     // Heart beat
-    char str[64];
     double td = RKTimevalDiff(t1, t0);
     if (td >= 1.0f) {
         t1 = t0;
-        //snprintf(str, 63, "beat %.4f", td);
-        //RKOperatorSendString(O, str);
-        RKOperatorSendBeacon(O);
+        r = RKOperatorSendBeacon(O);
+        if (r < 0) {
+            RKLog("Beacon failed (r = %d).\n", r);
+            RKOperatorHangUp(O);
+        }
     }
 
     return 0;

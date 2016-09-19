@@ -159,7 +159,7 @@ void *RKOperatorRoutine(void *in) {
     }
 
     // Run loop for the read/write
-    while (M->state == RKServerStateActive && O->state == RKServerStateActive) {
+    while (M->state == RKServerStateActive && O->state == RKOperatorStateActive) {
         FD_ZERO(&rfd);
         FD_ZERO(&wfd);
         FD_ZERO(&efd);
@@ -499,7 +499,11 @@ ssize_t RKOperatorSendString(RKOperator *O, const char *string) {
 }
 
 ssize_t RKOperatorSendBeacon(RKOperator *O) {
-    ssize_t s = RKOperatorSendPackets(O, &O->beacon, sizeof(RKNetDelimiter));
-    O->beacon.userParameter1++;
+    ssize_t s = RKOperatorSendPackets(O, &O->beacon, sizeof(RKNetDelimiter), NULL);
+    //O->beacon.userParameter1++;
     return s;
+}
+
+void RKOperatorHangUp(RKOperator *O) {
+    O->state = RKOperatorStateClosing;
 }

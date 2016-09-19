@@ -10,6 +10,7 @@
 #define __RadarKit_RKRadar__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKLocalCommandCenter.h>
 
 //#ifdef __cplusplus
 //extern "C" {
@@ -53,11 +54,14 @@ typedef struct RKRadar {
     //
     //
     //
+    RKServer        *socketServer;
 
 } RKRadar;
 
-extern RKRadar *RKInit(void);
-extern int RKFree(RKRadar *radar);
+RKRadar *RKInit(void);
+int RKFree(RKRadar *radar);
+
+int RKGoLive(RKRadar *radar);
 
 //#ifdef __cplusplus
 //}
