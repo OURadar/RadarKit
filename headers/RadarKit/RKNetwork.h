@@ -40,7 +40,8 @@ enum RKMessageFormat {
 enum RKPacketType {
     RKPacketTypePlainText,
     RKPacketTypePulseData,
-    RKPacketTypeRayData
+    RKPacketTypeRayData,
+    RKPacketTypeBeacon
 };
 
 typedef union rk_net_delimiter_packet {
@@ -50,7 +51,7 @@ typedef union rk_net_delimiter_packet {
         uint32_t userParameter1;
         uint32_t userParameter2;
     };
-    char bytes[128];
+    char bytes[16];
 } RKNetDelimiter;
 
 

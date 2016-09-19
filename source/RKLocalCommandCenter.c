@@ -20,7 +20,7 @@ int socketCommandHandler(RKOperator *O) {
 }
 
 int socketStreamHandler(RKOperator *O) {
-    struct timeval t0, t1;
+    static struct timeval t0, t1;
 
     gettimeofday(&t0, NULL);
 
@@ -33,8 +33,9 @@ int socketStreamHandler(RKOperator *O) {
     double td = RKTimevalDiff(t1, t0);
     if (td >= 1.0f) {
         t1 = t0;
-        snprintf(str, 63, "beat %.3f\n", td);
-        RKOperatorSendString(O, str);
+        //snprintf(str, 63, "beat %.4f", td);
+        //RKOperatorSendString(O, str);
+        RKOperatorSendBeacon(O);
     }
 
     return 0;

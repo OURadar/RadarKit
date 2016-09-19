@@ -72,6 +72,7 @@ struct rk_operator  {
     char             ip[RKMaximumStringLength];      //!< Client's IP address
 
     RKNetDelimiter   delim;                          //!< Convenient delimiter for sending a string
+    RKNetDelimiter   beacon;       
 
     char             *cmd;                           //!< Latest command
 

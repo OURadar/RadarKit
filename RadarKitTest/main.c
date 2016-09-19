@@ -26,6 +26,7 @@ int main(int argc, const char * argv[]) {
     RKServer *M = RKServerInit();
 
     RKServerSetCommandHandler(M, &socketCommandHandler);
+    RKServerSetStreamHandler(M, &socketStreamHandler);
     
     RKServerActivate(M);
 

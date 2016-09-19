@@ -284,6 +284,10 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     A->delim.rawSize = 0;
     A->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
     A->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    A->beacon.type = RKPacketTypeBeacon;
+    A->beacon.rawSize = 0;
+    A->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
+    A->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
     if (pthread_create(&A->tid, NULL, RKOperatorRoutine, A)) {
         RKLog("Error. Failed to create RKOperatorRoutine().\n");
@@ -490,6 +494,12 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
 }
 
 ssize_t RKOperatorSendString(RKOperator *O, const char *string) {
-    O->delim.rawSize = (uint32_t)strlen(string);
+    O->delim.rawSize = (uint32_t)strlen(string) + 1;
     return RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), string, O->delim.rawSize, NULL);
+}
+
+ssize_t RKOperatorSendBeacon(RKOperator *O) {
+    ssize_t s = RKOperatorSendPackets(O, &O->beacon, sizeof(RKNetDelimiter));
+    O->beacon.userParameter1++;
+    return s;
 }
