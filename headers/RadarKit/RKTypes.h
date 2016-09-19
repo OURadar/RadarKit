@@ -172,6 +172,8 @@ enum RKResult {
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,
     RKResultSDToFDError,
+    RKResultFailedToStartCompressionCore,
+    RKResultFailedToInitiateSemaphore,
     RKResultTooBig,
     RKResultNoError = 0
 };

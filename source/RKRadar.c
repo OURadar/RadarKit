@@ -38,7 +38,6 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
 
     // Set some non-zero variables
     radar->active = true;
-    radar->pulseCompressionCoreCount = 4;
     
     // Other allocatinos
     if (flags & RKInitFlagAllocMomentBuffer) {
@@ -75,8 +74,10 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
         radar->state |= RKRadarStatePulseBufferInitiated;
     }
 
-    radar->socketServer = RKServerInit();
+    radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
+    RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, radar->rawPulses, radar->compressedPulses, RKBuffer0SlotCount);
 
+    radar->socketServer = RKServerInit();
     RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
     RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
 
@@ -99,6 +100,8 @@ int RKFree(RKRadar *radar) {
 }
 
 int RKGoLive(RKRadar *radar) {
+    RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKServerActivate(radar->socketServer);
+
     return 0;
 }

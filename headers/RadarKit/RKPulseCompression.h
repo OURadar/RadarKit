@@ -9,13 +9,29 @@
 #ifndef __RadarKit_RKPulseCompression__
 #define __RadarKit_RKPulseCompression__
 
-#include <RadarKit/RKRadar.h>
+#include <RadarKit/RKFoundation.h>
 
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
 
-int RKPulseCompressionEngineStart(RKRadar *radar);
+typedef struct rk_pulse_compression_engine {
+    RKInt16Pulse    *input;
+    RKFloatPulse    *output;
+    uint32_t        pulseCount;
+
+    bool            active;
+
+    unsigned int    coreCount;
+    pthread_t       tid[64];
+    sem_t           sem[64];
+} RKPulseCompressionEngine;
+
+
+RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
+RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
+int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine, RKInt16Pulse *input, RKFloatPulse *output, const uint32_t count);
 
 //#ifdef __cplusplus
 //}

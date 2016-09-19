@@ -10,6 +10,7 @@
 #define __RadarKit_RKRadar__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKLocalCommandCenter.h>
 
 //#ifdef __cplusplus
@@ -48,9 +49,7 @@ typedef struct RKRadar {
     //
     //
     //
-    unsigned int    pulseCompressionCoreCount;
-    pthread_t       tidPulseCompression[64];
-    sem_t           semPulseCompression[64];
+    RKPulseCompressionEngine *pulseCompressionEngine;
     //
     //
     //
