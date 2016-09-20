@@ -11,7 +11,9 @@
 
 #include <RadarKit/RKFoundation.h>
 
-typdef struct RKMoment {
+typedef void RKMomentProcessor;
+
+typedef struct RKMoment {
     RKFloatPulse   *pulses;
     RKFloatRay     *rawRays;
     RKInt16Ray     *encodedRays;

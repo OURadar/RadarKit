@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B52E45C21D91749C00FC1113 /* RKMoment.h */; };
+		B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B52E45C21D91749C00FC1113 /* RKMoment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B52E45C51D9174A500FC1113 /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
 		B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDA1AB8D9F100C00517 /* RKClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDB1AB8D9F100C00517 /* RKFoundation.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -21,9 +21,14 @@
 		B5324DEF1AB9B2E900C00517 /* RKServer.c in Sources */ = {isa = PBXBuildFile; fileRef = B5324DEB1AB9B2E900C00517 /* RKServer.c */; };
 		B53AE7E91D88773500364467 /* RKFoundation.c in Sources */ = {isa = PBXBuildFile; fileRef = B53AE7E81D88773500364467 /* RKFoundation.c */; };
 		B53AE7EB1D88822000364467 /* RKMisc.c in Sources */ = {isa = PBXBuildFile; fileRef = B53AE7EA1D88822000364467 /* RKMisc.c */; };
-		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; };
+		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B54795231D91A84600E43F6A /* RKFoundation.c in Sources */ = {isa = PBXBuildFile; fileRef = B53AE7E81D88773500364467 /* RKFoundation.c */; };
+		B54795241D91A85100E43F6A /* RKMisc.c in Sources */ = {isa = PBXBuildFile; fileRef = B53AE7EA1D88822000364467 /* RKMisc.c */; };
+		B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */; };
+		B54795261D91A87200E43F6A /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
+		B54795271D91A87700E43F6A /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
 		B594718F1D89B43400EEE77C /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
-		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; };
+		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B59471991D8C4F0500EEE77C /* RKLocalCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */; };
 		B5C1F3471AB9C118004F88CD /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3461AB9C118004F88CD /* main.c */; };
 		B5C1F34B1AB9C1BE004F88CD /* RKRadar.c in Sources */ = {isa = PBXBuildFile; fileRef = B5324DEA1AB9B2E900C00517 /* RKRadar.c */; };
@@ -39,8 +44,6 @@
 		B5C1F35B1AB9CBAA004F88CD /* RKDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3591AB9CBAA004F88CD /* RKDSP.c */; };
 		B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3591AB9CBAA004F88CD /* RKDSP.c */; };
 		B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B5C1F3601AB9CC48004F88CD /* RKLocalCommandCenter.h in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKLocalCommandCenter.h */; };
-		B5C1F3611AB9CC48004F88CD /* RKLocalCommandCenter.h in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKLocalCommandCenter.h */; };
 		B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3631AB9CD34004F88CD /* RKFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
@@ -186,16 +189,16 @@
 				B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */,
 				B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */,
 				B5324DE31AB8DA0800C00517 /* RKNetwork.h in Headers */,
-				B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */,
 				B5C1F3531AB9C917004F88CD /* RKPulseCompression.h in Headers */,
 				B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */,
 				B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */,
 				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
 				B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */,
-				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
+				B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */,
 				B59471911D89B4D400EEE77C /* RadarKit.h in Headers */,
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
+				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,7 +247,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = RK;
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = "Boon Leng Cheong";
 				TargetAttributes = {
 					B5324D4E1AB8A5A000C00517 = {
@@ -303,7 +306,6 @@
 				B5324DEF1AB9B2E900C00517 /* RKServer.c in Sources */,
 				B5C1F3561AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B53AE7E91D88773500364467 /* RKFoundation.c in Sources */,
-				B5C1F3601AB9CC48004F88CD /* RKLocalCommandCenter.h in Sources */,
 				B53AE7EB1D88822000364467 /* RKMisc.c in Sources */,
 				B594718F1D89B43400EEE77C /* RadarKit.c in Sources */,
 				B5C1F3511AB9C917004F88CD /* RKPulseCompression.c in Sources */,
@@ -314,15 +316,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5C1F34B1AB9C1BE004F88CD /* RKRadar.c in Sources */,
+				B54795231D91A84600E43F6A /* RKFoundation.c in Sources */,
+				B54795241D91A85100E43F6A /* RKMisc.c in Sources */,
 				B5C1F34C1AB9C1BE004F88CD /* RKNetwork.c in Sources */,
-				B5C1F3571AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B5C1F34D1AB9C1BE004F88CD /* RKClient.c in Sources */,
-				B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */,
 				B5C1F34E1AB9C1BE004F88CD /* RKServer.c in Sources */,
-				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
-				B5C1F3611AB9CC48004F88CD /* RKLocalCommandCenter.h in Sources */,
+				B5C1F3571AB9CB69004F88CD /* RKWindow.c in Sources */,
+				B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */,
 				B5C1F3521AB9C917004F88CD /* RKPulseCompression.c in Sources */,
+				B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */,
+				B54795261D91A87200E43F6A /* RKMoment.c in Sources */,
+				B5C1F34B1AB9C1BE004F88CD /* RKRadar.c in Sources */,
+				B54795271D91A87700E43F6A /* RadarKit.c in Sources */,
+				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,14 +338,62 @@
 		B50A81441AB89B6200E12E1F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lfftw3f",
+					"-lm",
+				);
 			};
 			name = Debug;
 		};
 		B50A81451AB89B6200E12E1F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				OTHER_LDFLAGS = (
+					"-lfftw3f",
+					"-lm",
+				);
 			};
 			name = Release;
 		};

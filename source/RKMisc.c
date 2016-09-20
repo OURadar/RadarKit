@@ -33,28 +33,28 @@ int RKLog(const char *whatever, ...) {
     if (rkGlobalParameters.stream != NULL) {
         va_start(args, whatever);
         char msg[2048];
-        fprintf(rkGlobalParameters.stream, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
-        vsprintf(msg, whatever, args);
+        snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
+        vsprintf(msg + strlen(msg), whatever, args);
         int has_ok = (strstr(msg, " OK") != NULL);
         int has_not_ok = (strstr(msg, "ERROR") != NULL);
         int has_warning = (strstr(msg, "WARNING") != NULL);
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
-                fprintf(rkGlobalParameters.stream, "\033[1;32m");
+                strncat(msg, "\033[1;32m", 2048);
             } else if (has_not_ok) {
-                fprintf(rkGlobalParameters.stream, "\033[1;31m");
+                strncat(msg, "\033[1;31m", 2048);
             } else if (has_warning) {
-                fprintf(rkGlobalParameters.stream, "\033[1;33m");
+                strncat(msg, "\033[1;33m", 2048);
             }
         }
-        fprintf(rkGlobalParameters.stream, "%s", msg);
         if (rkGlobalParameters.showColor && (has_ok || has_not_ok || has_warning)) {
-            fprintf(rkGlobalParameters.stream, "\033[0m");
+            strncat(msg, "\033[0m", 2048);
         }
         if (whatever[strlen(whatever) - 1] != '\n') {
-            fprintf(rkGlobalParameters.stream, "\n");
+            strncat(msg, "\n", 2048);
         }
         va_end(args);
+        fprintf(rkGlobalParameters.stream, "%s", msg);
         fflush(rkGlobalParameters.stream);
     }
     return ret;

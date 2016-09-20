@@ -20,9 +20,12 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <errno.h>
 
 /*!
  @definedblock Memory Blocks
@@ -178,6 +181,7 @@ enum RKResult {
     RKResultErrorCreatingOperatorRoutine,
     RKResultSDToFDError,
     RKResultFailedToStartCompressionCore,
+    RKResultFailedToStartPulseWatcher,
     RKResultFailedToInitiateSemaphore,
     RKResultTooBig,
     RKResultNoError = 0

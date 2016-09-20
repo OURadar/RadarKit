@@ -20,12 +20,15 @@ typedef struct rk_pulse_compression_engine {
     RKInt16Pulse    *input;
     RKFloatPulse    *output;
     uint32_t        bufferSize;
+    uint32_t        index;
 
     bool            active;
 
     unsigned int    coreCount;
+    pthread_t       tidPulseWatcher;
     pthread_t       tid[64];
-    sem_t           sem[64];
+    sem_t           *sem[64];
+    char            sem_name[64][16];
 
     int             planCount;
     
