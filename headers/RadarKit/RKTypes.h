@@ -43,10 +43,10 @@
 
 #define RKMaximumStringLength  256
 
-typedef uint8_t   RKboolean;
-typedef int8_t    RKbyte;
-typedef uint64_t  RKenum;
-typedef float     RKfloat;   // We can change this to double if we decided one day
+typedef uint8_t   RKBoolean;
+typedef int8_t    RKByte;
+typedef uint64_t  RKEnum;
+typedef float     RKFloat;   // We can change this to double if we decided one day
 typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
@@ -57,8 +57,8 @@ typedef struct RKInt16 {
 
 /// Fundamental unit of a (float) + (float) raw complex IQ sample
 typedef struct RKComplex {
-    RKfloat i;
-    RKfloat q;
+    RKFloat i;
+    RKFloat q;
 } RKComplex;
 
 
@@ -160,7 +160,12 @@ typedef struct RKInt16Ray {
     RKInt16        data[RKGateCount];
 } RKInt16Ray;
 
-typedef RKenum RKRadarState;
+typedef struct RKFloatRay {
+    RKRayHeader    header;
+    RKFloat        data[RKGateCount];
+} RKFloatRay;
+
+typedef RKEnum RKRadarState;
 enum RKRadarState {
     RKRadarStateRayBufferInitiated     = 1,
     RKRadarStatePulseBufferInitiated   = 1 << 1

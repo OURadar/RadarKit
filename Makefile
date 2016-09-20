@@ -1,7 +1,7 @@
 UNAME := $(shell uname)
 
 CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I /usr/local/include
-LDFLAGS = -L /usr/local/lib -lRadarKit -lpthread
+LDFLAGS = -L /usr/local/lib -lRadarKit -lpthread -lfftw3f
 OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o
 RKLIB = libRadarKit.a
 

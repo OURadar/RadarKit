@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKRadar.h>
 
-RKRadar *RKInitWithFlags(const RKenum flags);
+RKRadar *RKInitWithFlags(const RKEnum flags);
 
 //
 //
@@ -20,7 +20,7 @@ RKRadar *RKInit(void) {
     return RKInitWithFlags(RKInitFlagAllocEverything);
 }
 
-RKRadar *RKInitWithFlags(const RKenum flags) {
+RKRadar *RKInitWithFlags(const RKEnum flags) {
     RKRadar *radar;
     size_t bytes;
 
@@ -41,7 +41,7 @@ RKRadar *RKInitWithFlags(const RKenum flags) {
     
     // Other allocatinos
     if (flags & RKInitFlagAllocMomentBuffer) {
-        bytes = RKBuffer1SlotCount * sizeof(RKInt16Ray);
+        bytes = RKBuffer0SlotCount * sizeof(RKInt16Ray);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
             fprintf(stderr, "Error allocation memory for raw pulse");
             return NULL;

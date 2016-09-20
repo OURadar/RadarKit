@@ -26,8 +26,8 @@ int pulseId(RKPulseCompressionEngine *engine) {
     return -1;
 }
 
-void *pulseCompressionCore(void *in) {
-    RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)in;
+void *pulseCompressionCore(void *_in) {
+    RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
 
     const int k = pulseId(engine);
 
@@ -37,6 +37,13 @@ void *pulseCompressionCore(void *in) {
     }
 
     //printf("I am core %d\n", k);
+
+    fftwf_complex *in = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+    fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+
+    fftwf_plan planFilterForward[engine->planCount];
+    fftwf_plan planDataFoward[engine->planCount];
+    fftwf_plan planDataBackward[engine->planCount];
 
     struct timespec ts;
 
@@ -52,6 +59,9 @@ void *pulseCompressionCore(void *in) {
         sem_timedwait(&engine->sem[k], &ts);
 #endif
     }
+
+    free(in);
+
     return NULL;
 }
 
@@ -79,10 +89,10 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
     free(engine);
 }
 
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine, RKInt16Pulse *input, RKFloatPulse *output, const uint32_t count) {
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine, RKInt16Pulse *input, RKFloatPulse *output, const uint32_t size) {
     engine->input = input;
     engine->output = output;
-    engine->pulseCount = count;
+    engine->bufferSize = size;
 }
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {

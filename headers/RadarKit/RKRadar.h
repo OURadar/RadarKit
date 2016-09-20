@@ -32,28 +32,23 @@ typedef struct RKRadar {
     //
     // Buffers aligned to SIMD requirements
     //
-    RKInt16Pulse    *rawPulses;
-    RKFloatPulse    *compressedPulses;
-    RKFloatPulse    *filteredCompressedPulses;
-    RKInt16Ray      *rays;
+    RKInt16Pulse               *rawPulses;
+    RKFloatPulse               *compressedPulses;
+    RKFloatPulse               *filteredCompressedPulses;
+    RKInt16Ray                 *rays;
     //
     //
     //
-    RKenum          initFlags;
-    RKRadarState    state;
-    bool            active;
+    RKEnum                     initFlags;
+    RKRadarState               state;
+    bool                       active;
+    //
+    unsigned int               memoryUsage;
     //
     //
     //
-    unsigned int    memoryUsage;
-    //
-    //
-    //
-    RKPulseCompressionEngine *pulseCompressionEngine;
-    //
-    //
-    //
-    RKServer        *socketServer;
+    RKPulseCompressionEngine   *pulseCompressionEngine;
+    RKServer                   *socketServer;
 
 } RKRadar;
 
