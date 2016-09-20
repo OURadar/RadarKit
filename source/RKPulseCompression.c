@@ -60,7 +60,8 @@ void *pulseCompressionCore(void *_in) {
 #endif
     }
 
-    free(in);
+    fftw_free(in);
+    fftw_free(out);
 
     return NULL;
 }
