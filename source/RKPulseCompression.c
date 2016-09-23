@@ -38,7 +38,6 @@ void *pulseCompressionCore(void *_in) {
 
     RKLog("Core %d started.\n", c);
 
-    int r;
     struct timespec t0, t1, t2;
 //    sem_t *sem = sem_open(engine->sem_name[c], O_RDWR, 0600, 0);
 //    if (sem == SEM_FAILED) {
@@ -50,11 +49,11 @@ void *pulseCompressionCore(void *_in) {
 //    sem_getvalue(sem, &r);
 //    RKLog("Core %d r = %d\n", c, r);
 //    sem_post(sem);
-    uint32_t tic = engine->tic[c];
 
     // Increase the tic once to indicate this processing core is created.
     engine->tic[c]++;
 
+    // Allocate local resources
     fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
     fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
 
@@ -80,6 +79,8 @@ void *pulseCompressionCore(void *_in) {
     //        [ t0 - t1 ]
     // [    t0 - t2     ]
 
+    uint32_t tic = engine->tic[c];
+
     while (engine->active) {
         while (tic == engine->tic[c] && engine->active) {
             usleep(1000);
@@ -89,25 +90,17 @@ void *pulseCompressionCore(void *_in) {
         // Something happened
         clock_gettime(CLOCK_REALTIME, &t1);
 
-        if (r == 0) {
-            // Start of this cycle
-            i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
+        // Start of this cycle
+        i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
 
-            // Do some work
-            //
-            //
+        // Do some work
+        //
+        //
 
 
-            // Done processing, get the time
-            clock_gettime(CLOCK_REALTIME, &t0);
-            printf("                    : [iRadar] Core %d got a pulse @ %d  dutyCycle = %.2f %%\n", c, i0, 100.0 * *dutyCycle);
-        } else if (errno == ETIMEDOUT) {
-            //printf("                    : [iRadar] Nothing ... %ld.%ld\n", t0.tv_sec, t0.tv_nsec);
-            t0 = t1;
-        } else {
-            RKLog("Error. Failed in sem_timedwait(). errno = %d\n", errno);
-            exit(EXIT_FAILURE);
-        }
+        // Done processing, get the time
+        clock_gettime(CLOCK_REALTIME, &t0);
+        printf("                    : [iRadar] Core %d got a pulse @ %d  dutyCycle = %.2f %%\n", c, i0, 100.0 * *dutyCycle);
 
         //*dutyCycle = 0.8 * *dutyCycle + 0.2 * (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
         *dutyCycle = (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
@@ -189,7 +182,10 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
             RKLog("Error. Failed to start a compression core.\n");
             return RKResultFailedToStartCompressionCore;
         }
-        // Wait for the worker to increase the tic count once
+    }
+
+    // Wait for the workers to increase the tic count once
+    for (i = 0; i < engine->coreCount; i++) {
         while (engine->tic[i] == 0) {
             usleep(1000);
         }
