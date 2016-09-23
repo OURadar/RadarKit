@@ -76,23 +76,25 @@ void *pulseCompressionCore(void *_in) {
         ts.tv_nsec = t1.tv_nsec;
         r = sem_timedwait(sem, &ts);
 
+        clock_gettime(CLOCK_REALTIME, &t1);
+
         if (r == 0) {
             // Start of this cycle
-            clock_gettime(CLOCK_REALTIME, &t1);
-
             i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
 
             // Done processing, get the time
             clock_gettime(CLOCK_REALTIME, &t0);
             printf("                    : [iRadar] Core %d got a pulse @ %d  dutyCycle = %.2f %%\n", c, i0, 100.0 * *dutyCycle);
         } else if (errno == ETIMEDOUT) {
-            t1 = t0;
+            //printf("                    : [iRadar] Nothing ... %ld.%ld\n", t0.tv_sec, t0.tv_nsec);
+            t0 = t1;
         } else {
             RKLog("Error. Failed in sem_timedwait(). errno = %d\n", errno);
             exit(EXIT_FAILURE);
         }
 
-        *dutyCycle = 0.8 * *dutyCycle + 0.2 * (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
+        //*dutyCycle = 0.8 * *dutyCycle + 0.2 * (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
+        *dutyCycle = (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
 
         t2 = t0;
     }

@@ -43,7 +43,7 @@ int main(int argc, const char * argv[]) {
 
     while (radar->active) {
         radar->pulseCompressionEngine->index = RKNextBuffer0Slot(radar->pulseCompressionEngine->index);
-        usleep(50000);
+        usleep(500000);
         if (radar->pulseCompressionEngine->index > 50) {
             radar->active = false;
             break;
