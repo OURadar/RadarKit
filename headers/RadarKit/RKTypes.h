@@ -127,6 +127,14 @@ typedef struct RKFloatPulse {
 
 #pragma pack(push, 1)
 
+typedef uint32_t RKPulseStatus;
+
+enum RKPulseStatus {
+    RKPulseStatusVacant      = 0,
+    RKPulseStatusHasIQData   = 1,
+    RKPulseStatusHasPosition = 1 << 1
+};
+
 /*!
  @typedef RKRayHeader
  @brief Fundamental unit of the ray header.
@@ -143,7 +151,7 @@ typedef struct RKFloatPulse {
  @param endTimeD               End time in double representation
  */
 typedef struct RKRayHeader {
-    uint32_t       s;
+    RKPulseStatus  s;
     uint32_t       i;
     uint32_t       n;
     uint16_t       marker;
@@ -183,6 +191,7 @@ enum RKResult {
     RKResultFailedToStartCompressionCore,
     RKResultFailedToStartPulseWatcher,
     RKResultFailedToInitiateSemaphore,
+    RKResultFailedToRetrieveSemaphore,
     RKResultTooBig,
     RKResultNoError = 0
 };

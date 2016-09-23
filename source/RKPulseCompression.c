@@ -36,12 +36,24 @@ void *pulseCompressionCore(void *_in) {
         return NULL;
     }
 
+    RKLog("Core %d started.\n", c);
+
     int r;
-    struct timespec ts, t0, t1, t2;
-    sem_t *sem = sem_open(engine->sem_name[c], O_RDONLY, 0600, 0);
+    struct timespec t0, t1, t2;
+//    sem_t *sem = sem_open(engine->sem_name[c], O_RDWR, 0600, 0);
+//    if (sem == SEM_FAILED) {
+//        RKLog("Error. Unable to retrieve the semaphore.\n");
+//        return (void *)RKResultFailedToRetrieveSemaphore;
+//    }
 
     // Post once to indicate this processing core is created.
-    sem_post(sem);
+//    sem_getvalue(sem, &r);
+//    RKLog("Core %d r = %d\n", c, r);
+//    sem_post(sem);
+    uint32_t tic = engine->tic[c];
+
+    // Increase the tic once to indicate this processing core is created.
+    engine->tic[c]++;
 
     fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
     fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
@@ -58,10 +70,8 @@ void *pulseCompressionCore(void *_in) {
     uint32_t i0 = RKBuffer0SlotCount - 1;
     i0 = (i0 / engine->coreCount) * engine->coreCount + c;
 
-    RKLog("Core %d starts @ %d\n", c, i0);
-
     double *dutyCycle = &engine->dutyCycle[c];
-    *dutyCycle = 0.1;
+    *dutyCycle = 0.0;
 
     //
     // free   busy       free   busy
@@ -71,16 +81,22 @@ void *pulseCompressionCore(void *_in) {
     // [    t0 - t2     ]
 
     while (engine->active) {
-        // Semaphore wait with timeout
-        ts.tv_sec = t1.tv_sec + 1;
-        ts.tv_nsec = t1.tv_nsec;
-        r = sem_timedwait(sem, &ts);
+        while (tic == engine->tic[c] && engine->active) {
+            usleep(1000);
+        }
+        tic = engine->tic[c];
 
+        // Something happened
         clock_gettime(CLOCK_REALTIME, &t1);
 
         if (r == 0) {
             // Start of this cycle
             i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
+
+            // Do some work
+            //
+            //
+
 
             // Done processing, get the time
             clock_gettime(CLOCK_REALTIME, &t0);
@@ -102,6 +118,8 @@ void *pulseCompressionCore(void *_in) {
     fftwf_free(in);
     fftwf_free(out);
 
+    RKLog("Core %d ended.\n", c);
+
     return NULL;
 }
 
@@ -111,24 +129,16 @@ void *pulseWatcher(void *_in) {
     uint32_t k = engine->index;
     uint32_t m;
 
-    sem_t *sem[engine->coreCount];
-    for (int i = 0; i < engine->coreCount; i++) {
-        sem[i] = sem_open(engine->sem_name[i], O_RDONLY, 0600, 0);
-    }
-
     RKLog("Pulse watcher started.\n");
     while (engine->active) {
-        // Wait until the engine index move to the next one for storage,
-        // which also means k is ready
+        // Wait until the engine index move to the next one for storage, which also means k is ready
         while (k == engine->index && engine->active) {
             usleep(1000);
         }
         if (engine->active) {
             m = k % engine->coreCount;
-            RKLog("pulseWatcher posting sem[%d] for %d\n", m, k);
-            if (sem_post(sem[m]) == -1) {
-                RKLog("Error. Unable to perform sem_post().\n");
-            }
+            RKLog("pulseWatcher posting core-%d for pulse %d\n", m, k);
+            engine->tic[m]++;
         }
         // Update k for the next watch
         k = engine->index;
@@ -158,7 +168,6 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
     int i;
     for (i = 0; i < engine->coreCount; i++) {
         pthread_join(engine->tid[i], NULL);
-        sem_unlink(engine->sem_name[i]);
     }
     free(engine);
 }
@@ -171,28 +180,23 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
 
-    int i, r;
-    sem_t *sem;
+    int i;
 
     // Spin off N workers to process I/Q pulses
     for (i = 0; i < engine->coreCount; i++) {
-        snprintf(engine->sem_name[i], 16, "rk-%02d", i);
-        //engine->sem[i] = sem_open(engine->sem_name[i], O_CREAT, 0600, 0);
-        sem = sem_open(engine->sem_name[i], O_CREAT, 0600, 0);
-        if (sem == SEM_FAILED) {
-            RKLog("Error. Unable to initialize a semaphore.\n");
-            return RKResultFailedToInitiateSemaphore;
-        }
-        if ((r = pthread_create(&engine->tid[i], NULL, pulseCompressionCore, engine)) != 0) {
+        engine->tic[i] = 0;
+        if (pthread_create(&engine->tid[i], NULL, pulseCompressionCore, engine) != 0) {
             RKLog("Error. Failed to start a compression core.\n");
             return RKResultFailedToStartCompressionCore;
         }
-        // Wait for each worker to post once
-        sem_wait(sem);
+        // Wait for the worker to increase the tic count once
+        while (engine->tic[i] == 0) {
+            usleep(1000);
+        }
     }
 
     RKLog("Starting pulse watcher ...\n");
-    if ((r = pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine)) != 0) {
+    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
         return RKResultFailedToStartPulseWatcher;
     }

@@ -10,6 +10,8 @@
 
 RKRadar *RKInitWithFlags(const RKEnum flags);
 
+//int RKSetPulseStatus(RKInt16Pulse *pulse, RKPulseStatus);
+
 //
 //
 //
@@ -43,7 +45,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     if (flags & RKInitFlagAllocMomentBuffer) {
         bytes = RKBuffer0SlotCount * sizeof(RKInt16Ray);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
-            fprintf(stderr, "Error allocation memory for raw pulse");
+            RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;
         }
         radar->memoryUsage += bytes;
@@ -53,21 +55,21 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     if (flags & RKInitFlagAllocRawIQBuffer) {
         bytes = RKBuffer0SlotCount * sizeof(RKInt16Pulse);
         if (posix_memalign((void **)&radar->rawPulses, RKSIMDAlignSize, bytes)) {
-            fprintf(stderr, "Error allocation memory for raw pulse");
+            RKLog("ERROR. Unable to allocate memory for raw pulses");
             return NULL;
         }
         radar->memoryUsage += bytes;
         
         bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
         if (posix_memalign((void **)&radar->compressedPulses, RKSIMDAlignSize, bytes)) {
-            fprintf(stderr, "Error allocation memory for compressed pulse");
+            RKLog("ERROR. Unable to allocate memory for compressed pulses");
             return NULL;
         }
         radar->memoryUsage += bytes;
         
         bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
         if (posix_memalign((void **)&radar->filteredCompressedPulses, RKSIMDAlignSize, bytes)) {
-            fprintf(stderr, "Error allocation memory for filtered compressed pulse");
+            RKLog("ERROR. Unable to allocate memory for filtered compressed pulse");
             return NULL;
         }
         radar->memoryUsage += bytes;
@@ -86,7 +88,6 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
 }
 
 int RKFree(RKRadar *radar) {
-    printf("Freeing Radar\n");
     if (radar-> state & RKRadarStatePulseBufferInitiated) {
         free(radar->rawPulses);
         free(radar->compressedPulses);
@@ -105,3 +106,6 @@ int RKGoLive(RKRadar *radar) {
 
     return 0;
 }
+
+
+

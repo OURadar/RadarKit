@@ -57,6 +57,10 @@ int RKFree(RKRadar *radar);
 
 int RKGoLive(RKRadar *radar);
 
+
+RKInt16Pulse *RKGetVacantPulse(RKRadar *radar);
+int RKSetPulseReady(RKInt16Pulse *pulse);
+
 //#ifdef __cplusplus
 //}
 //#endif

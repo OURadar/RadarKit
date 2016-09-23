@@ -11,17 +11,32 @@
 
 RKRadar *radar;
 
+void *exitAfterAWhile(void *s) {
+    sleep(1);
+    RKLog("Forced exit.\n");
+    exit(EXIT_SUCCESS);
+}
+
+static void handleSignals(int signal) {
+    RKLog("User int.\n");
+    radar->active = false;
+    pthread_t t;
+    pthread_create(&t, NULL, exitAfterAWhile, NULL);
+}
+
 int main(int argc, const char * argv[]) {
     // insert code here...
     radar = RKInit();
     RKSetProgramName("iRadar");
     rkGlobalParameters.stream = stdout;
 
-    RKLog("Hello, World!\n");
-
     RKLog("Radar state machine occupies %s bytes\n", RKIntegerToCommaStyleString(radar->memoryUsage));
 
-    //RKPulseCompressionEngineStart(radar);
+    // Catch Ctrl-C and exit gracefully
+    signal(SIGINT, handleSignals);
+//    signal(SIGKILL, handleSignals);
+//    signal(SIGTERM, handleSignals);
+//    signal(SIGQUIT, handleSignals);
 
 //    const int N = 4;
 //    int i = 0;
@@ -43,13 +58,14 @@ int main(int argc, const char * argv[]) {
 
     while (radar->active) {
         radar->pulseCompressionEngine->index = RKNextBuffer0Slot(radar->pulseCompressionEngine->index);
-        usleep(500000);
+        usleep(50000);
         if (radar->pulseCompressionEngine->index > 50) {
             radar->active = false;
             break;
         }
     }
 
+    RKLog("Freeing radar ...\n");
     RKFree(radar);
     
     return 0;
