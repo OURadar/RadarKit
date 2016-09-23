@@ -141,7 +141,7 @@ void *pulseWatcher(void *_in) {
             engine->tic[m]++;
         }
         // Update k for the next watch
-        k = engine->index;
+        k++;
     }
 
     RKLog("Pulse watcher ended\n");
