@@ -30,5 +30,6 @@ int RKSetProgramName(const char *name);
 int RKSetLogfile(const char *file);
 int RKLog(const char *whatever, ...);
 double RKTimevalDiff(const struct timeval, const struct timeval);
+double RKTimespecDiff(const struct timespec, const struct timespec);
 
 #endif /* rk_misc_h */

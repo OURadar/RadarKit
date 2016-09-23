@@ -116,6 +116,15 @@ int RKSetLogfile(const char *filename) {
     return 0;
 }
 
-double RKTimevalDiff(const struct timeval a, const struct timeval b) {
-    return (double)b.tv_sec - (double)a.tv_sec + 1.0e-6 * ((double)b.tv_usec - (double)a.tv_usec);
+// Timeval difference through subtraction
+// subtrahend is strubtracted from minuend
+// m - s
+double RKTimevalDiff(const struct timeval m, const struct timeval s) {
+    return (double)m.tv_sec - (double)s.tv_sec + 1.0e-6 * ((double)m.tv_usec - (double)s.tv_usec);
+}
+
+// Timespec difference through subtraction
+// m - s
+double RKTimespecDiff(const struct timespec m, const struct timespec s) {
+    return (double)m.tv_sec - (double)s.tv_sec + 1.0e-9 * ((double)m.tv_nsec - (double)s.tv_nsec);
 }

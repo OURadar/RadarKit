@@ -31,7 +31,7 @@ int socketStreamHandler(RKOperator *O) {
     // Check system health
 
     // Heart beat
-    double td = RKTimevalDiff(t1, t0);
+    double td = RKTimevalDiff(t0, t1);
     if (td >= 1.0f) {
         t1 = t0;
         r = RKOperatorSendBeacon(O);
