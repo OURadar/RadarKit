@@ -188,7 +188,8 @@ void *pulseCompressionCore(void *_in) {
         gettimeofday(&t1, NULL);
 
         // Start of this cycle
-        i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
+        //i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
+        i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
 
         // Do some work
         //
@@ -197,7 +198,8 @@ void *pulseCompressionCore(void *_in) {
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
-        printf("                    : [iRadar] Core %d got a pulse @ %d  dutyCycle = %.2f %%\n", c, i0, 100.0 * *dutyCycle);
+        RKInt16Pulse *pulse = &engine->input[i0];
+        printf("                    : [iRadar] Core %d pulse %d @ %d  dutyCycle = %.2f %%\n", c, pulse->header.i, i0, 100.0 * *dutyCycle);
 
         //*dutyCycle = 0.8 * *dutyCycle + 0.2 * (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
         //*dutyCycle = (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
@@ -226,11 +228,11 @@ void *pulseWatcher(void *_in) {
 //        sem[m] = sem_open(engine->sem_name[m], O_RDWR, 0600, 0);
 //    }
     
-    RKLog("Pulse watcher started.   c = %d   k = %d\n", c, k);
     c = 0;
+    RKLog("Pulse watcher started.   c = %d   k = %d\n", c, k);
     while (engine->active) {
         // Wait until the engine index move to the next one for storage, which also means k is ready
-        while (k == engine->index && engine->active) {
+        while (k == *(engine->index) && engine->active) {
             usleep(1000);
         }
         if (engine->active) {
@@ -243,7 +245,7 @@ void *pulseWatcher(void *_in) {
 //            sem_post(sem[m]);
         }
         // Update k for the next watch
-        k++;
+        k = k == engine->size - 1 ? 0 : k + 1;
     }
 
     RKLog("Pulse watcher ended\n");
@@ -265,19 +267,19 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     return RKPulseCompressionEngineInitWithCoreCount(4);
 }
 
-
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
-    int i;
-    for (i = 0; i < engine->coreCount; i++) {
-        pthread_join(engine->tid[i], NULL);
-    }
     free(engine);
 }
 
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine, RKInt16Pulse *input, RKFloatPulse *output, const uint32_t size) {
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
+                                                   RKInt16Pulse *input,
+                                                   RKFloatPulse *output,
+                                                   uint32_t *index,
+                                                   const uint32_t size) {
     engine->input = input;
     engine->output = output;
-    engine->bufferSize = size;
+    engine->index = index;
+    engine->size = size;
 }
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
@@ -334,3 +336,13 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
 
     return 0;
 }
+
+int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
+    int i, k = 0;
+    engine->active = false;
+    for (i = 0; i < engine->coreCount; i++) {
+        k += pthread_join(engine->tid[i], NULL);
+    }
+    return k;
+}
+

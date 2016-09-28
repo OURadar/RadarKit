@@ -36,11 +36,12 @@
  @define RKGateCount The maximum number of gates allocated for each pulse
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
-#define RKBuffer0SlotCount    4000
+#define RKBuffer0SlotCount    30
 #define RKBuffer1SlotCount    4000
 #define RKBuffer2SlotCount    4000
+#define RKGateCount           1024
 //#define RKGateCount           64 * 1024 * 1024
-#define RKGateCount           65536
+//#define RKGateCount           65536
 #define RKSIMDAlignSize         64
 /*! @/definedblock */
 
@@ -175,12 +176,6 @@ typedef struct RKFloatRay {
     RKRayHeader    header;
     RKFloat        data[RKGateCount];
 } RKFloatRay;
-
-typedef RKEnum RKRadarState;
-enum RKRadarState {
-    RKRadarStateRayBufferInitiated     = 1,
-    RKRadarStatePulseBufferInitiated   = 1 << 1
-};
 
 enum RKResult {
     RKResultTimeout = -1000,

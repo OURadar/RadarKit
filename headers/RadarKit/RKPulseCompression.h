@@ -19,8 +19,8 @@
 typedef struct rk_pulse_compression_engine {
     RKInt16Pulse    *input;
     RKFloatPulse    *output;
-    uint32_t        bufferSize;
-    uint32_t        index;
+    uint32_t        *index;
+    uint32_t        size;
 
     bool            active;
 
@@ -39,8 +39,13 @@ typedef struct rk_pulse_compression_engine {
 RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine, RKInt16Pulse *input, RKFloatPulse *output, const uint32_t size);
-
+int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
+void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
+                                                   RKInt16Pulse *input,
+                                                   RKFloatPulse *output,
+                                                   uint32_t *index,
+                                                   const uint32_t size);
 //#ifdef __cplusplus
 //}
 //#endif
