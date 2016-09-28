@@ -128,3 +128,18 @@ double RKTimevalDiff(const struct timeval m, const struct timeval s) {
 double RKTimespecDiff(const struct timespec m, const struct timespec s) {
     return (double)m.tv_sec - (double)s.tv_sec + 1.0e-9 * ((double)m.tv_nsec - (double)s.tv_nsec);
 }
+
+void RKUTCTime(struct timespec *t) {
+#ifdef __MACH__
+    // OS X does not have clock_gettime()
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    t->tv_sec = mts.tv_sec;
+    t->tv_nsec = mts.tv_nsec;
+#else
+    clock_gettime(CLOCK_REALTIME, ts);
+#endif
+}

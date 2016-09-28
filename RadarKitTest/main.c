@@ -54,6 +54,8 @@ int main(int argc, const char * argv[]) {
 //    i = 4;                      RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
 //
 
+    radar->pulseCompressionEngine->coreCount = 5;
+    
     RKGoLive(radar);
 
     while (radar->active) {

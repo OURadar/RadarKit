@@ -27,9 +27,9 @@ typedef struct rk_pulse_compression_engine {
     unsigned int    coreCount;
     pthread_t       tidPulseWatcher;
     pthread_t       tid[64];
-    //char            sem_name[64][16];
     uint32_t        tic[64];
     double          dutyCycle[64];
+    char            sem_name[64][16];
 
     int             planCount;
     
