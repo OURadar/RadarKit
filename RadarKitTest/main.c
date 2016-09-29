@@ -19,7 +19,7 @@ void *exitAfterAWhile(void *s) {
 
 static void handleSignals(int signal) {
     RKLog("User interrupt.\n");
-    radar->active = false;
+    RKStop(radar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
 }
@@ -58,7 +58,7 @@ int main(int argc, const char * argv[]) {
     
     RKGoLive(radar);
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 50 && radar->active; i++) {
         RKInt16Pulse *pulse = RKGetVacantPulse(radar);
         // Fill in the data...
         //

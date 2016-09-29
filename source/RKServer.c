@@ -258,38 +258,38 @@ void *RKOperatorRoutine(void *in) {
 
 int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 
-    RKOperator *A = (RKOperator *)malloc(sizeof(RKOperator));
-    if (A == NULL) {
+    RKOperator *O = (RKOperator *)malloc(sizeof(RKOperator));
+    if (O == NULL) {
         RKLog("Error Failed to allocate RKOperator.\n");
         return 1;
     }
-    memset(A, 0, sizeof(RKOperator));
+    memset(O, 0, sizeof(RKOperator));
 
     pthread_mutex_lock(&M->lock);
 
     // Default operator parameters that should not be 0
-    A->M = M;
-    A->sid = sid;
-    A->iid = sid - M->sd;
-    A->state = RKServerStateActive;
-    A->option = RKOperatorOptionNone;
-    A->timeoutInSec = 10;
-    A->usr = M->usr;
+    O->M = M;
+    O->sid = sid;
+    O->iid = sid - M->sd;
+    O->state = RKServerStateActive;
+    O->option = RKOperatorOptionNone;
+    O->timeoutInSec = 10;
+    O->usr = M->usr;
     RKServerSetWelcomeHandlerToDefault(M);
     PSServerSetTerminateHandlerToDefault(M);
-    pthread_mutex_init(&A->lock, NULL);
-    snprintf(A->ip, RKMaximumStringLength - 1, "%s", ip);
-    snprintf(A->name, RKMaximumStringLength - 1, "Op-%03d", A->iid);
-    A->delim.type = RKPacketTypePlainText;
-    A->delim.rawSize = 0;
-    A->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
-    A->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
-    A->beacon.type = RKPacketTypeBeacon;
-    A->beacon.rawSize = 0;
-    A->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
-    A->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    pthread_mutex_init(&O->lock, NULL);
+    snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
+    snprintf(O->name, RKMaximumStringLength - 1, "Op-%03d", O->iid);
+    O->delim.type = RKPacketTypePlainText;
+    O->delim.rawSize = 0;
+    O->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
+    O->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    O->beacon.type = RKPacketTypeBeacon;
+    O->beacon.rawSize = 0;
+    O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
+    O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
-    if (pthread_create(&A->tid, NULL, RKOperatorRoutine, A)) {
+    if (pthread_create(&O->tid, NULL, RKOperatorRoutine, O)) {
         RKLog("Error. Failed to create RKOperatorRoutine().\n");
         pthread_mutex_unlock(&M->lock);
         return RKResultErrorCreatingOperatorRoutine;
