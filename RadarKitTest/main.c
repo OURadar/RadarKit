@@ -18,7 +18,7 @@ void *exitAfterAWhile(void *s) {
 }
 
 static void handleSignals(int signal) {
-    RKLog("User interrupt.\n");
+    RKLog("User interrupt SIG=%d.\n", signal);
     RKStop(radar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
@@ -38,21 +38,25 @@ int main(int argc, const char * argv[]) {
 //    signal(SIGTERM, handleSignals);
 //    signal(SIGQUIT, handleSignals);
 
-//    const int N = 4;
-//    int i = 0;
-//
-//    i = 0;                      RKLog("i = %d --> Next N = %d\n", i, RKNextNBuffer0Slot(i, N));
-//    i = RKBuffer0SlotCount - 4; RKLog("i = %d --> Next N = %d\n", i, RKNextNBuffer0Slot(i, N));
-//    i = RKBuffer0SlotCount - 3; RKLog("i = %d --> Next N = %d\n", i, RKNextNBuffer0Slot(i, N));
-//    i = RKBuffer0SlotCount - 2; RKLog("i = %d --> Next N = %d\n", i, RKNextNBuffer0Slot(i, N));
-//    i = RKBuffer0SlotCount - 1; RKLog("i = %d --> Next N = %d\n", i, RKNextNBuffer0Slot(i, N));
-//    i = RKBuffer0SlotCount - 1; RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
-//    i = 0;                      RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
-//    i = 1;                      RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
-//    i = 2;                      RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
-//    i = 3;                      RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
-//    i = 4;                      RKLog("i = %d --> Prev N = %d\n", i, RKPreviousNBuffer0Slot(i, N));
-//
+    bool testModuloMath = false;
+    
+    if (testModuloMath) {
+        const int N = 4;
+        int i = 0;
+        
+        RKLog("Test with SlotCount = %d\n", RKBuffer0SlotCount);
+        i = 0;                      RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
+        i = RKBuffer0SlotCount - 4; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
+        i = RKBuffer0SlotCount - 3; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
+        i = RKBuffer0SlotCount - 2; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
+        i = RKBuffer0SlotCount - 1; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
+        i = RKBuffer0SlotCount - 1; RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+        i = 0;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+        i = 1;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+        i = 2;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+        i = 3;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+        i = 4;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+    }
 
     radar->pulseCompressionEngine->coreCount = 5;
     

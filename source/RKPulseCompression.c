@@ -258,8 +258,6 @@ void *pulseWatcher(void *_in) {
         k = k == engine->size - 1 ? 0 : k + 1;
     }
 
-    RKLog("Pulse watcher ended\n");
-
     return NULL;
 }
 
@@ -346,6 +344,8 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         k += pthread_join(engine->tid[i], NULL);
         RKLog("Core %d ended.\n", i);
     }
+    k += pthread_join(engine->tidPulseWatcher, NULL);
+    RKLog("pulseWatcher() ended\n");
     for (i = 0; i < engine->coreCount; i++) {
         sem_unlink(engine->semaphoreName[i]);
     }
