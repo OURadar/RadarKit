@@ -140,6 +140,6 @@ void RKUTCTime(struct timespec *t) {
     t->tv_sec = mts.tv_sec;
     t->tv_nsec = mts.tv_nsec;
 #else
-    clock_gettime(CLOCK_REALTIME, ts);
+    clock_gettime(CLOCK_REALTIME, t);
 #endif
 }

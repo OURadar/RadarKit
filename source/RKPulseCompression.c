@@ -27,108 +27,6 @@ int pulseId(RKPulseCompressionEngine *engine) {
 }
 
 
-#if !defined(__APPLE__)
-void *pulseCompressionCoreTS(void *_in) {
-    RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
-    const int c = pulseId(engine);
-    
-    if (c < 0) {
-        fprintf(stderr, "Unable to find my thread ID.\n");
-        return NULL;
-    }
-    
-    RKLog("CoreTS %d started.\n", c);
-    
-    struct timespec t0, t1, t2, ts;
-    
-    sem_t *sem = sem_open(engine->sem_name[c], O_RDWR, 0600, 0);
-    if (sem == SEM_FAILED) {
-        RKLog("Error. Unable to retrieve the semaphore.\n");
-        return (void *)RKResultFailedToRetrieveSemaphore;
-    }
-
-    // Allocate local resources
-    fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
-    fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
-    
-    fftwf_plan planFilterForward[engine->planCount];
-    fftwf_plan planDataFoward[engine->planCount];
-    fftwf_plan planDataBackward[engine->planCount];
-    
-    // Initialize some end-of-loop variables
-    //clock_gettime(CLOCK_REALTIME, &t0);
-    //clock_gettime(CLOCK_REALTIME, &t2);
-    RKUTCTime(&t0);
-    RKUTCTime(&t2);
-    
-    // The last pulse of the buffer
-    uint32_t i0 = RKBuffer0SlotCount - 1;
-    i0 = (i0 / engine->coreCount) * engine->coreCount + c;
-    
-    double *dutyCycle = &engine->dutyCycle[c];
-    *dutyCycle = 0.0;
-    
-    //
-    // free   busy       free   busy
-    // .......|||||||||||.......|||||||||
-    // t2 --- t1 --- t0/t2 --- t1 --- t0
-    //        [ t0 - t1 ]
-    // [    t0 - t2     ]
-    
-    uint32_t tic = engine->tic[c];
-    int r;
-    
-    while (engine->active) {
-        // Semaphore wait with timeout
-        //clock_gettime(CLOCK_REALTIME, &ts);
-        RKUTCTime(&ts);
-        ts.tv_nsec += 100000000;
-        if (ts.tv_nsec >= 1000000000) {
-            ts.tv_nsec -= 1000000000;
-            ts.tv_sec += 1;
-        }
-        r = sem_timedwait(sem, &ts);
-        
-        // Something happened
-        RKUTCTime(&t1);
-        
-        
-        if (r == 0) {
-            // Start of this cycle
-            i0 = RKNextNBuffer0Slot(i0, engine->coreCount);
-            
-            // Do some work
-            //
-            //
-            
-            // Done processing, get the time
-            //clock_gettime(CLOCK_REALTIME, &t0);
-            RKUTCTime(&t0);
-            printf("                    : [iRadar] Core %d got a pulse @ %d  dutyCycle = %.2f %%\n", c, i0, 100.0 * *dutyCycle);
-        } else if (errno == ETIMEDOUT) {
-            //printf("                    : [iRadar] Nothing ... %ld.%ld\n", t0.tv_sec, t0.tv_nsec);
-            t0 = t1;
-        } else {
-            RKLog("Error. Failed in sem_timedwait(). errno = %d\n", errno);
-            exit(EXIT_FAILURE);
-        }
-        
-        //*dutyCycle = 0.8 * *dutyCycle + 0.2 * (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
-        *dutyCycle = (RKTimespecDiff(t0, t1) / RKTimespecDiff(t0, t2));
-        
-        t2 = t0;
-    }
-    
-    fftwf_free(in);
-    fftwf_free(out);
-    
-    RKLog("Core %d ended.\n", c);
-    
-    return NULL;
-}
-#endif
-
-
 void *pulseCompressionCore(void *_in) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
 
@@ -276,7 +174,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
 }
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
-    return RKPulseCompressionEngineInitWithCoreCount(4);
+    return RKPulseCompressionEngineInitWithCoreCount(5);
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
