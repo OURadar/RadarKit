@@ -34,9 +34,9 @@ int main(int argc, const char * argv[]) {
 
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
+    signal(SIGQUIT, handleSignals);
 //    signal(SIGKILL, handleSignals);
 //    signal(SIGTERM, handleSignals);
-//    signal(SIGQUIT, handleSignals);
 
     bool testModuloMath = false;
     
