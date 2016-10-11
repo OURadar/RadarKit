@@ -2,7 +2,7 @@ UNAME := $(shell uname)
 
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I /usr/local/include -I /usr/include
 CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I headers -I /usr/local/include -I /usr/include
-LDFLAGS = -L /usr/local/lib -lRadarKit -lfftw3f -lpthread
+LDFLAGS = -L /usr/local/lib
 OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o
 RKLIB = libRadarKit.a
 
@@ -14,6 +14,7 @@ else
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
 endif
+LDFLAGS += -lRadarKit -lfftw3f -lpthread -lm
 
 all: $(RKLIB) install radar
 
