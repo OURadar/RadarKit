@@ -37,8 +37,9 @@ void *pulseCompressionCore(void *_in) {
         return NULL;
     }
 
-    RKLog("Core %d started.\n", c);
+    RKPulseCompressionWorker *me = &engine->workers[c];
 
+    int j, k, p;
     struct timeval t0, t1, t2;
     
     sem_t *sem = sem_open(engine->semaphoreName[c], O_RDWR);
@@ -47,14 +48,19 @@ void *pulseCompressionCore(void *_in) {
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
 
+    
     // Allocate local resources
-    fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
-    fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+    fftwf_complex *in, *out;
     
-    fftwf_plan planFilterForward[engine->planCount];
-    fftwf_plan planDataFoward[engine->planCount];
-    fftwf_plan planDataBackward[engine->planCount];
+    in = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+    out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+    k = RKGateCount * sizeof(fftwf_complex) * 2;
     
+    fftwf_plan planInForward[RKPulseCompressionDFTPlanCount];
+    fftwf_plan planOutBackward[RKPulseCompressionDFTPlanCount];
+    
+    RKLog("Core %d started.  planCount = %d  malloc %s\n", c, me->planCount, RKIntegerToCommaStyleString(k));
+
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
@@ -78,6 +84,8 @@ void *pulseCompressionCore(void *_in) {
     //
 
     uint32_t tic = engine->tic[c];
+    int planSize, planIndex;
+    bool found = false;
 
     while (engine->active) {
         if (engine->useSemaphore) {
@@ -99,19 +107,72 @@ void *pulseCompressionCore(void *_in) {
         // Start of this cycle
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
 
+        RKInt16Pulse *pulse = &engine->input[i0];
+
         // Do some work with this pulse
         //
         //
+        planSize = 1 << (uint32_t)ceilf(log2f((float)pulse->header.gateCount));
 
+        // DFT of the raw data is stored in *in
+        // DFT of the filter is stored in *out
+        // Their product is stored in *out using in-place multiplication so *out = *out * *in
+        // Then, the inverse DFT is performed to get out back to time domain (*in), which is the compressed pulse
+
+        // Find the right plan
+        k = me->planCount;
+        found = false;
+        while (k > 0) {
+            k--;
+            if (planSize == me->planSizes[k]) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            if (me->planCount >= RKPulseCompressionDFTPlanCount) {
+                RKLog("Error. Unable to create another DFT plan.\n");
+                exit(EXIT_FAILURE);
+            }
+            planIndex = k;
+            RKLog("Creating FFT plan of size %d @ k = %d\n", planSize, planIndex);
+            planInForward[k] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
+            planOutBackward[k] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+            me->planSizes[k] = planSize;
+            me->planCount++;
+        } else {
+            planIndex = k;
+            planSize = me->planSizes[k];
+            RKLog("Using FFT plan of size %d @ k = %d\n", planSize, planIndex);
+        }
+        
+        // Process each polarization separately and indepently
+        for (p = 0; p < 2; p++) {
+            // Convert the samples
+            for (k = 0; k < pulse->header.gateCount; k++) {
+                in[k][0] = (float)pulse->X[p][k].i;
+                in[k][1] = (float)pulse->X[p][k].q;
+            }
+            fftwf_execute(planInForward[planIndex]);
+            
+            
+            fftwf_execute(planOutBackward[planIndex]);
+        }
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
-        RKInt16Pulse *pulse = &engine->input[i0];
-        printf("                    : [iRadar] Core %d pulse %d @ %d  dutyCycle = %.2f %%\n", c, pulse->header.i, i0, 100.0 * *dutyCycle);
+        printf("                    : [iRadar] Core %d pulse %d @ %d  f = %d  dutyCycle = %.2f %%\n", c, pulse->header.i, i0, planSize, 100.0 * *dutyCycle);
+        
+        
 
         *dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
 
         t2 = t0;
+    }
+    
+    for (k = 0; k < me->planCount; k++) {
+        fftwf_destroy_plan(planInForward[k]);
+        fftwf_destroy_plan(planOutBackward[k]);
     }
 
     fftwf_free(in);
@@ -148,12 +209,11 @@ void *pulseWatcher(void *_in) {
             } else {
                 engine->tic[c]++;
             }
-
-            c = c == engine->coreCount - 1 ? 0 : c + 1;
+            c = RKNextModuloS(c, engine->coreCount);
             
         }
         // Update k for the next watch
-        k = k == engine->size - 1 ? 0 : k + 1;
+        k = RKNextModuloS(k, engine->size);
     }
 
     return NULL;
@@ -170,6 +230,8 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
     for (int i = 0; i < engine->coreCount; i++) {
         snprintf(engine->semaphoreName[i], 16, "rk-sem-%03d", i);
     }
+    engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
+    memset(engine->workers, 0, sizeof(RKPulseCompressionWorker));
     return engine;
 }
 
@@ -181,6 +243,7 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
     if (engine->active) {
         RKPulseCompressionEngineStop(engine);
     }
+    free(engine->workers);
     free(engine);
 }
 

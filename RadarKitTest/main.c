@@ -67,6 +67,8 @@ int main(int argc, const char * argv[]) {
         // Fill in the data...
         //
         //
+        pulse->header.gateCount = 1000;
+        
         RKSetPulseReady(pulse);
         usleep(50000);
     }

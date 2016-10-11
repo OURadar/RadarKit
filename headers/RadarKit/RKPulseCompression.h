@@ -12,9 +12,23 @@
 #include <RadarKit/RKFoundation.h>
 #include <fftw3.h>
 
+#define RKPulseCompressionDFTPlanCount   4
+#define RKMaxMatchedFilterCount          4
+#define RKMatchedFilterSetCount          8
+
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
+
+typedef struct rk_filter_rect {
+    int origin;
+    int length;
+} RKPulseCompressionFilterAnchor;
+
+typedef struct rk_pulse_compression_worker {
+    int             planCount;
+    int             planSizes[RKPulseCompressionDFTPlanCount];
+} RKPulseCompressionWorker;
 
 typedef struct rk_pulse_compression_engine {
     RKInt16Pulse    *input;
@@ -33,10 +47,11 @@ typedef struct rk_pulse_compression_engine {
     bool            useSemaphore;
     char            semaphoreName[256][16];
 
-    int             planCount;
-    
+    uint32_t        filterSets;
+    float           *filters[RKMatchedFilterSetCount][RKMaxMatchedFilterCount];
+    RKPulseCompressionFilterAnchor *anchors[RKMaxMatchedFilterCount];
+    RKPulseCompressionWorker *workers;
 } RKPulseCompressionEngine;
-
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
