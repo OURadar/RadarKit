@@ -178,6 +178,9 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
+    if (engine->active) {
+        RKPulseCompressionEngineStop(engine);
+    }
     free(engine);
 }
 
