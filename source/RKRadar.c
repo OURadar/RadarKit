@@ -133,5 +133,5 @@ RKInt16Pulse *RKGetVacantPulse(RKRadar *radar) {
 }
 
 void RKSetPulseReady(RKInt16Pulse *pulse) {
-    pulse->header.s |= RKPulseStatusHasIQData;
+    pulse->header.s = RKPulseStatusReady;
 }

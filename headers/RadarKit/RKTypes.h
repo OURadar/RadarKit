@@ -21,6 +21,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/param.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>
@@ -133,7 +134,8 @@ typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
     RKPulseStatusVacant      = 0,
     RKPulseStatusHasIQData   = 1,
-    RKPulseStatusHasPosition = 1 << 1
+    RKPulseStatusHasPosition = 1 << 1,
+    RKPulseStatusReady       = RKPulseStatusHasIQData | RKPulseStatusHasPosition
 };
 
 /*!
@@ -188,6 +190,7 @@ enum RKResult {
     RKResultFailedToInitiateSemaphore,
     RKResultFailedToRetrieveSemaphore,
     RKResultTooBig,
+    RKResultFailedToAddFilter,
     RKResultNoError = 0
 };
 

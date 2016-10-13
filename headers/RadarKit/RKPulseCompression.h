@@ -13,8 +13,8 @@
 #include <fftw3.h>
 
 #define RKPulseCompressionDFTPlanCount   4
-#define RKMaxMatchedFilterCount          4
-#define RKMatchedFilterSetCount          8
+#define RKMaxMatchedFilterCount          4   // Maximum filter count within each group
+#define RKMaxMatchedFilterGroupCount     8   // Maximum filter group
 
 //#ifdef __cplusplus
 //extern "C" {
@@ -26,31 +26,32 @@ typedef struct rk_filter_rect {
 } RKPulseCompressionFilterAnchor;
 
 typedef struct rk_pulse_compression_worker {
-    int             planCount;
-    int             planSizes[RKPulseCompressionDFTPlanCount];
+    int planCount;
+    int planSizes[RKPulseCompressionDFTPlanCount];
 } RKPulseCompressionWorker;
 
 typedef struct rk_pulse_compression_engine {
-    RKInt16Pulse    *input;
-    RKFloatPulse    *output;
-    uint32_t        *index;
-    uint32_t        size;
+    RKInt16Pulse                     *input;
+    RKFloatPulse                     *output;
+    uint32_t                         *index;
+    uint32_t                         size;
 
-    bool            active;
+    bool                             active;
 
-    unsigned int    coreCount;
-    pthread_t       tidPulseWatcher;
-    pthread_t       tid[256];
-    uint32_t        tic[256];
-    double          dutyCycle[256];
+    unsigned int                     coreCount;
+    pthread_t                        tidPulseWatcher;
+    pthread_t                        tid[256];
+    uint32_t                         tic[256];
+    double                           dutyCycle[256];
 
-    bool            useSemaphore;
-    char            semaphoreName[256][16];
+    bool                             useSemaphore;
+    char                             semaphoreName[256][16];
 
-    uint32_t        filterSets;
-    float           *filters[RKMatchedFilterSetCount][RKMaxMatchedFilterCount];
-    RKPulseCompressionFilterAnchor *anchors[RKMaxMatchedFilterCount];
-    RKPulseCompressionWorker *workers;
+    uint32_t                         filterGroupCount;
+    uint32_t                         filterCounts[RKMaxMatchedFilterCount];
+    RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+    RKPulseCompressionFilterAnchor   *anchors[RKMaxMatchedFilterCount];
+    RKPulseCompressionWorker         *workers;
 } RKPulseCompressionEngine;
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
@@ -63,6 +64,10 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
                                                    RKFloatPulse *output,
                                                    uint32_t *index,
                                                    const uint32_t size);
+int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
+int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int length, const int group, const int index);
+
 //#ifdef __cplusplus
 //}
 //#endif
