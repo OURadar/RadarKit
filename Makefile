@@ -1,10 +1,12 @@
 UNAME := $(shell uname)
 
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I /usr/local/include -I /usr/include
-CFLAGS = -std=gnu99 -g -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I headers -I /usr/local/include -I /usr/include
+CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I headers -I /usr/local/include -I /usr/include
 LDFLAGS = -L /usr/local/lib
 OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o
 RKLIB = libRadarKit.a
+
+#CFLAGS += -DDEBUG_IQ
 
 ifeq ($(UNAME), Darwin)
 # Mac OS X
@@ -25,7 +27,7 @@ $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
 radar: RadarKitTest/main.c
-	$(CC) -g -o $@ $(CFLAGS) $< $(LDFLAGS)
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 
 clean:
 	rm -f $(RKLIB)

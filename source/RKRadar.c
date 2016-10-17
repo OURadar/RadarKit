@@ -58,6 +58,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
             RKLog("ERROR. Unable to allocate memory for raw pulses");
             return NULL;
         }
+        memset(radar->rawPulses, 0, bytes);
         radar->memoryUsage += bytes;
         radar->state |= RKRadarStateRawIQBufferInitiated;
         for (int i = 0; i < RKBuffer0SlotCount; i++) {

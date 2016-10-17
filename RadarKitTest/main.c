@@ -62,6 +62,8 @@ int main(int argc, const char * argv[]) {
     
     RKGoLive(radar);
 
+    float phi = 0.0f;
+
     for (int i = 0; i < 50 && radar->active; i++) {
         RKInt16Pulse *pulse = RKGetVacantPulse(radar);
         // Fill in the data...
@@ -69,7 +71,14 @@ int main(int argc, const char * argv[]) {
         //
         pulse->header.gateCount = 2000;
         pulse->header.i = i;
-        
+
+        for (int k = 0; k < 100; k++) {
+            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
+            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+        }
+
+        phi += 0.02f;
+
         RKSetPulseReady(pulse);
         usleep(50000);
     }

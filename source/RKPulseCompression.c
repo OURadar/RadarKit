@@ -110,7 +110,7 @@ void *pulseCompressionCore(void *_in) {
 
     while (engine->active) {
         if (engine->useSemaphore) {
-            #ifdef DEBUG
+            #ifdef DEBUG_IQ
             printf(RK_CORE_PREFIX " sem_wait()\n", c + 1, c);
             #endif
             sem_wait(sem);
@@ -132,7 +132,9 @@ void *pulseCompressionCore(void *_in) {
 
         RKInt16Pulse *pulse = &engine->input[i0];
 
+        #ifdef DEBUG_IQ
         printf(RK_CORE_PREFIX " i0 = %d  s = %d\n", c + 1, c, i0, pulse->header.s);
+        #endif
 
         // Filter group id
         const int gid = pulse->header.i % engine->filterGroupCount;
@@ -176,7 +178,9 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     // FFTW's memory and plan allocation are not thread safe but others are.
                     pthread_mutex_lock(&engine->coreMutex);
+                    //#ifdef DEBUG_IQ
                     printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                    //#endif
                     me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
                     me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
                     me->planFilterForward[gid][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[gid][j], out, FFTW_FORWARD, FFTW_MEASURE);
@@ -186,10 +190,22 @@ void *pulseCompressionCore(void *_in) {
                 } else {
                     planIndex = k;
                     planSize = me->planSizes[k];
+                    #ifdef DEBUG_IQ
                     printf(RK_CORE_PREFIX " using FFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
+                    #endif
                 }
 
+//                printf(RK_CORE_PREFIX "  X = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
+//                       in[0][0], in[0][1],
+//                       in[1][0], in[1][1],
+//                       in[2][0], in[2][1],
+//                       in[99][0], in[99][1]);
                 fftwf_execute(me->planInForward[planIndex]);
+//                printf(RK_CORE_PREFIX " Xf = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
+//                       in[0][0], in[0][1],
+//                       in[1][0], in[1][1],
+//                       in[2][0], in[2][1],
+//                       in[99][0], in[99][1]);
 
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
@@ -230,8 +246,8 @@ void *pulseCompressionCore(void *_in) {
 void *pulseWatcher(void *_in) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
 
-    uint32_t k = 0;
     uint32_t c;
+    uint32_t k = 0;
 
     sem_t *sem[engine->coreCount];
     
@@ -244,7 +260,7 @@ void *pulseWatcher(void *_in) {
     c = 0;
     RKLog("pulseWatcher() started.   c = %d   k = %d\n", c, k);
     while (engine->active) {
-        // Wait until the engine index move to the next one for storage or the latest (index k) is ready.
+        // Wait until the engine index move to the next one for storage
         while (k == *(engine->index) && engine->active) {
             usleep(1000);
         }
@@ -253,11 +269,10 @@ void *pulseWatcher(void *_in) {
         while (engine->input[k].header.s != RKPulseStatusReady && engine->active) {
             usleep(1000);
         }
-//        while (engine->active && k == *(engine->index) && engine->input[k].header.s != RKPulseStatusReady) {
-//            usleep(1000);
-//        }
         if (engine->active) {
+            #ifdef DEBUG_IQ
             RKLog("pulseWatcher() posting core-%d for pulse %d\n", c, RKPreviousModuloS(k, engine->size));
+            #endif
             if (engine->useSemaphore) {
                 sem_post(sem[c]);
             } else {
