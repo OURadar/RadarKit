@@ -52,6 +52,7 @@ typedef struct rk_pulse_compression_engine {
 
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxMatchedFilterCount];
+    uint32_t                         filterLengths[RKMaxMatchedFilterCount];
     RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionFilterAnchor   anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionWorker         *workers;
@@ -71,7 +72,13 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
                                                    const uint32_t size);
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int origin, const int length, const int group, const int index);
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
+                                const RKComplex *filter,
+                                const int filterLength,
+                                const int dataOrigin,
+                                const int dataLength,
+                                const int group,
+                                const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus

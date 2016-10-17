@@ -138,52 +138,53 @@ void *pulseCompressionCore(void *_in) {
         // Their product is stored in *out using in-place multiplication so *out = *out * *in
         // Then, the inverse DFT is performed to get out back to time domain (*in), which is the compressed pulse
 
-        // Find the right plan
-        k = me->planCount;
-        found = false;
-        while (k > 0) {
-            k--;
-            if (planSize == me->planSizes[k]) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            if (me->planCount >= RKPulseCompressionDFTPlanCount) {
-                RKLog("Error. Unable to create another DFT plan.\n");
-                exit(EXIT_FAILURE);
-            }
-            planIndex = k;
-            printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
-            me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-            me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
-//            for (i = 0; i < engine->filterGroupCount; i++) {
-//                for (j = 0; j < engine->filterCounts[i]; j++) {
-//                    printf(RK_CORE_PREFIX " new filter plan.  gid = %d  fid = %d\n", c + 1, c, i, j);
-//                    me->planFilterForward[i][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[i][j], out, FFTW_FORWARD, FFTW_MEASURE);
-//                }
-//            }
-            me->planSizes[planIndex] = planSize;
-            me->planCount++;
-        } else {
-            planIndex = k;
-            planSize = me->planSizes[k];
-            printf(RK_CORE_PREFIX " using FFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
-        }
-        
         // Process each polarization separately and indepently
-//        for (p = 0; p < 2; p++) {
-//            // Convert the samples
-//            for (k = 0; k < pulse->header.gateCount; k++) {
-//                in[k][0] = (float)pulse->X[p][k].i;
-//                in[k][1] = (float)pulse->X[p][k].q;
-//            }
-//            fftwf_execute(me->planInForward[planIndex]);
-//            
-//            //fftwf_execute(me->planFilterForward[0][0][planIndex]);
-//
-//            fftwf_execute(me->planOutBackward[planIndex]);
-//        }
+        for (p = 0; p < 2; p++) {
+            // Convert the samples
+            for (k = 0; k < pulse->header.gateCount; k++) {
+                in[k][0] = (float)pulse->X[p][k].i;
+                in[k][1] = (float)pulse->X[p][k].q;
+            }
+
+            // Find the right plan
+            k = me->planCount;
+            found = false;
+            while (k > 0) {
+                k--;
+                if (planSize == me->planSizes[k]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                if (me->planCount >= RKPulseCompressionDFTPlanCount) {
+                    RKLog("Error. Unable to create another DFT plan.\n");
+                    exit(EXIT_FAILURE);
+                }
+                planIndex = k;
+                printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+                me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+    //            for (i = 0; i < engine->filterGroupCount; i++) {
+    //                for (j = 0; j < engine->filterCounts[i]; j++) {
+    //                    printf(RK_CORE_PREFIX " new filter plan.  gid = %d  fid = %d\n", c + 1, c, i, j);
+    //                    me->planFilterForward[i][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[i][j], out, FFTW_FORWARD, FFTW_MEASURE);
+    //                }
+    //            }
+                me->planSizes[planIndex] = planSize;
+                me->planCount++;
+            } else {
+                planIndex = k;
+                planSize = me->planSizes[k];
+                printf(RK_CORE_PREFIX " using FFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
+            }
+            
+    //            fftwf_execute(me->planInForward[planIndex]);
+    //            
+    //            //fftwf_execute(me->planFilterForward[0][0][planIndex]);
+    //
+    //            fftwf_execute(me->planOutBackward[planIndex]);
+        }
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -324,15 +325,13 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
             RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", engine->semaphoreName[i]);
             if (sem_unlink(engine->semaphoreName[i])) {
                 RKLog("Error. Unable to unlink semaphore %s.\n", engine->semaphoreName[i]);
-            } else {
-                RKLog("Info. Semaphore %s removed.\n", engine->semaphoreName[i]);
             }
             sem[i] = sem_open(engine->semaphoreName[i], O_CREAT | O_EXCL, 0600, 0);
             if (sem[i] == SEM_FAILED) {
                 RKLog("Error. Unable to remove then create semaphore %s\n", engine->semaphoreName[i]);
                 return RKResultFailedToInitiateSemaphore;
             } else {
-                RKLog("Info. Semaphore %s recreated.\n", engine->semaphoreName[i]);
+                RKLog("Info. Semaphore %s removed and recreated.\n", engine->semaphoreName[i]);
             }
         }
         if (pthread_create(&engine->tid[i], NULL, pulseCompressionCore, engine) != 0) {
@@ -394,7 +393,7 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
     return 0;
 }
 
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int origin, const int length, const int group, const int index) {
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int dataOrigin, const int dataLength, const int group, const int index) {
     if (engine->filterGroupCount >= RKMaxMatchedFilterGroupCount) {
         RKLog("Error. Unable to set anymore filters.\n");
         return RKResultFailedToAddFilter;
@@ -408,17 +407,17 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         return RKResultFailedToAllocateFilter;
     }
     memset(engine->filters[group][index], 0, RKGateCount * sizeof(RKComplex));
-    memcpy(engine->filters[group][index], filter, length * sizeof(RKComplex));
+    memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
-    engine->anchors[group][index].origin = origin;
-    engine->anchors[group][index].length = length;
+    engine->anchors[group][index].origin = dataOrigin;
+    engine->anchors[group][index].length = dataLength;
     return 0;
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    RKPulseCompressionSetFilter(engine, filter, 0, 1, 0, 0);
+    RKPulseCompressionSetFilter(engine, filter, 1, 0, 1000, 0, 0);
     RKLog("Impulse filter set.  group count = %d / count of group 0 = %d\n", engine->filterGroupCount, engine->filterCounts[0]);
     return 0;
 }
