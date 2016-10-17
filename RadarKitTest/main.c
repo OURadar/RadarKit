@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
         // Fill in the data...
         //
         //
-        pulse->header.gateCount = 1000;
+        pulse->header.gateCount = 2000;
         pulse->header.i = i;
         
         RKSetPulseReady(pulse);

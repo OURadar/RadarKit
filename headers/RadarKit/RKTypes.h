@@ -40,7 +40,7 @@
 #define RKBuffer0SlotCount    30
 #define RKBuffer1SlotCount    4000
 #define RKBuffer2SlotCount    4000
-#define RKGateCount           2048
+#define RKGateCount           4096
 //#define RKGateCount           64 * 1024 * 1024
 //#define RKGateCount           65536
 #define RKSIMDAlignSize         64

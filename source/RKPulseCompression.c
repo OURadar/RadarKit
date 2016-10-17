@@ -154,7 +154,7 @@ void *pulseCompressionCore(void *_in) {
                     in[k][0] = (float)pulse->X[p][i].i;
                     in[k][1] = (float)pulse->X[p][i].q;
                 }
-                // Zero pad the input; Filter is always zero-padded in the setter function.
+                // Zero pad the input; a filter is always zero-padded in the setter function.
                 memset(&in[k][0], 0, (RKGateCount - k) * sizeof(fftwf_complex));
 
                 // Find the right plan
@@ -426,7 +426,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    RKPulseCompressionSetFilter(engine, filter, 1, 0, 1000, 0, 0);
+    RKPulseCompressionSetFilter(engine, filter, 1, 0, RKGateCount, 0, 0);
     RKLog("Impulse filter set.  group count = %d / count of group 0 = %d\n", engine->filterGroupCount, engine->filterCounts[0]);
     return 0;
 }
