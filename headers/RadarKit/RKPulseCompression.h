@@ -13,7 +13,7 @@
 #include <fftw3.h>
 
 #define RKPulseCompressionDFTPlanCount   4
-#define RKMaxMatchedFilterCount          4   // Maximum filter count within each group
+#define RKMaxMatchedFilterCount          3   // Maximum filter count within each group
 #define RKMaxMatchedFilterGroupCount     8   // Maximum filter group
 
 //#ifdef __cplusplus
@@ -26,8 +26,11 @@ typedef struct rk_filter_rect {
 } RKPulseCompressionFilterAnchor;
 
 typedef struct rk_pulse_compression_worker {
-    int planCount;
-    int planSizes[RKPulseCompressionDFTPlanCount];
+    int         planCount;
+    int         planSizes[RKPulseCompressionDFTPlanCount];
+    fftwf_plan  planInForward[RKPulseCompressionDFTPlanCount];
+    fftwf_plan  planOutBackward[RKPulseCompressionDFTPlanCount];
+    fftwf_plan  planFilterForward[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount][RKPulseCompressionDFTPlanCount];
 } RKPulseCompressionWorker;
 
 typedef struct rk_pulse_compression_engine {
@@ -50,8 +53,10 @@ typedef struct rk_pulse_compression_engine {
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxMatchedFilterCount];
     RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
-    RKPulseCompressionFilterAnchor   *anchors[RKMaxMatchedFilterCount];
+    RKPulseCompressionFilterAnchor   anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionWorker         *workers;
+
+    pthread_mutex_t                  coreMutex;
 } RKPulseCompressionEngine;
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
@@ -66,7 +71,8 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
                                                    const uint32_t size);
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int length, const int group, const int index);
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int origin, const int length, const int group, const int index);
+int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus
 //}

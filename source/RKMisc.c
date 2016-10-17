@@ -66,34 +66,35 @@ int RKLog(const char *whatever, ...) {
  *  Integer to string with 3-digit grouping
  */
 char *RKIntegerToCommaStyleString(long num) {
-    int idx, jdx, kdx;
+    int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[8][32];
 
-    sprintf(stringBuffer[ibuf], "%ld", num);
+    const int r = ibuf;
+
+    ibuf = ibuf == 7 ? 0 : ibuf + 1;
+
+    sprintf(stringBuffer[r], "%ld", num);
     if (num < 1000) {
-        kdx = ibuf;
-        ibuf = ibuf == 7 ? 0 : ibuf + 1;
-        return stringBuffer[kdx];
+        return stringBuffer[r];
     } else {
-        kdx = (int)(strlen(stringBuffer[ibuf]) - 1) / 3;
-        idx = (int)(strlen(stringBuffer[ibuf]) + kdx);
-        jdx = 1;
-        stringBuffer[ibuf][idx] = '\0';
-        while (idx > 0) {
-            idx--;
-            stringBuffer[ibuf][idx] = stringBuffer[ibuf][idx - kdx];
-            if (jdx > 3) {
-                jdx = 0;
-                stringBuffer[ibuf][idx] = ',';
-                kdx--;
+        k = (int)(strlen(stringBuffer[r]) - 1) / 3;
+        i = (int)(strlen(stringBuffer[r]) + k);
+        j = 1;
+        stringBuffer[r][i] = '\0';
+        while (i > 0) {
+            i--;
+            stringBuffer[r][i] = stringBuffer[r][i - k];
+            if (j > 3) {
+                j = 0;
+                stringBuffer[r][i] = ',';
+                k--;
             }
-            jdx++;
+            j++;
         }
     }
-    kdx = ibuf;
-    ibuf = ibuf == 7 ? 0 : ibuf + 1;
-    return stringBuffer[kdx];
+    k = ibuf;
+    return stringBuffer[r];
 }
 
 void RKSetWantColor(const bool showColor) {
