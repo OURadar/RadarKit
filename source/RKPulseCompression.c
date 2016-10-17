@@ -85,11 +85,11 @@ void *pulseCompressionCore(void *_in) {
     sem_getvalue(sem, &sem_val);
 
     pthread_mutex_lock(&engine->coreMutex);
-    RKLog("Core %d started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
+    printf(RK_CORE_PREFIX " started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
-    //engine->tic[c]++;
+    engine->tic[c]++;
 
     //
     // free   busy       free   busy
@@ -105,7 +105,7 @@ void *pulseCompressionCore(void *_in) {
 
     while (engine->active) {
         if (engine->useSemaphore) {
-            printf("sem_wait()\n");
+            printf(RK_CORE_PREFIX " sem_wait()\n", c + 1, c);
             sem_wait(sem);
         } else {
             while (tic == engine->tic[c] && engine->active) {
@@ -154,15 +154,15 @@ void *pulseCompressionCore(void *_in) {
                 exit(EXIT_FAILURE);
             }
             planIndex = k;
-            printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex);
+            printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
             me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
             me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
-            for (i = 0; i < engine->filterGroupCount; i++) {
-                for (j = 0; j < engine->filterCounts[i]; j++) {
-                    printf(RK_CORE_PREFIX " gid = %d  fid = %d\n", c + 1, c, i, j);
-                    me->planFilterForward[i][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[i][j], out, FFTW_FORWARD, FFTW_MEASURE);
-                }
-            }
+//            for (i = 0; i < engine->filterGroupCount; i++) {
+//                for (j = 0; j < engine->filterCounts[i]; j++) {
+//                    printf(RK_CORE_PREFIX " new filter plan.  gid = %d  fid = %d\n", c + 1, c, i, j);
+//                    me->planFilterForward[i][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[i][j], out, FFTW_FORWARD, FFTW_MEASURE);
+//                }
+//            }
             me->planSizes[planIndex] = planSize;
             me->planCount++;
         } else {
@@ -172,18 +172,18 @@ void *pulseCompressionCore(void *_in) {
         }
         
         // Process each polarization separately and indepently
-        for (p = 0; p < 2; p++) {
-            // Convert the samples
-            for (k = 0; k < pulse->header.gateCount; k++) {
-                in[k][0] = (float)pulse->X[p][k].i;
-                in[k][1] = (float)pulse->X[p][k].q;
-            }
-            fftwf_execute(me->planInForward[planIndex]);
-            
-            fftwf_execute(me->planFilterForward[0][0][planIndex]);
-
-            fftwf_execute(me->planOutBackward[planIndex]);
-        }
+//        for (p = 0; p < 2; p++) {
+//            // Convert the samples
+//            for (k = 0; k < pulse->header.gateCount; k++) {
+//                in[k][0] = (float)pulse->X[p][k].i;
+//                in[k][1] = (float)pulse->X[p][k].q;
+//            }
+//            fftwf_execute(me->planInForward[planIndex]);
+//            
+//            //fftwf_execute(me->planFilterForward[0][0][planIndex]);
+//
+//            fftwf_execute(me->planOutBackward[planIndex]);
+//        }
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -247,7 +247,7 @@ void *pulseWatcher(void *_in) {
 //            usleep(1000);
 //        }
         if (engine->active) {
-            RKLog("pulseWatcher() posting core-%d for pulse %d\n", c, k);
+            RKLog("pulseWatcher() posting core-%d for pulse %d\n", c, RKPreviousModuloS(k, engine->size));
             if (engine->useSemaphore) {
                 sem_post(sem[c]);
             } else {
@@ -319,10 +319,21 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
 
     // Spin off N workers to process I/Q pulses
     for (i = 0; i < engine->coreCount; i++) {
-        sem[i] = sem_open(engine->semaphoreName[i], O_CREAT, 0600, 0);
+        sem[i] = sem_open(engine->semaphoreName[i], O_CREAT | O_EXCL, 0600, 0);
         if (sem[i] == SEM_FAILED) {
-            RKLog("Error. Unable to create semaphore %s\n", engine->semaphoreName[i]);
-            return RKResultFailedToInitiateSemaphore;
+            RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", engine->semaphoreName[i]);
+            if (sem_unlink(engine->semaphoreName[i])) {
+                RKLog("Error. Unable to unlink semaphore %s.\n", engine->semaphoreName[i]);
+            } else {
+                RKLog("Info. Semaphore %s removed.\n", engine->semaphoreName[i]);
+            }
+            sem[i] = sem_open(engine->semaphoreName[i], O_CREAT | O_EXCL, 0600, 0);
+            if (sem[i] == SEM_FAILED) {
+                RKLog("Error. Unable to remove then create semaphore %s\n", engine->semaphoreName[i]);
+                return RKResultFailedToInitiateSemaphore;
+            } else {
+                RKLog("Info. Semaphore %s recreated.\n", engine->semaphoreName[i]);
+            }
         }
         if (pthread_create(&engine->tid[i], NULL, pulseCompressionCore, engine) != 0) {
             RKLog("Error. Failed to start a compression core.\n");
@@ -330,7 +341,6 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         }
     }
 
-    RKLog("Waiting ... %d %d %d\n", engine->tic[0], engine->tic[1], engine->tic[2]);
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
     // Tested and removed on 9/29/2016
@@ -339,7 +349,6 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
             usleep(1000);
         }
     }
-    RKLog("Done waiting ... %d %d %d\n", engine->tic[0], engine->tic[1], engine->tic[2]);
 
     RKLog("Starting pulse watcher ...\n");
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
@@ -353,6 +362,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     int i, k = 0;
     if (engine->active == false) {
+        RKLog("Error. Pulse compression engine has stopped before.\n");
         return 1;
     }
     RKLog("RKPulseCompressionEngineStop()\n");
@@ -362,6 +372,7 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
             sem_t *sem = sem_open(engine->semaphoreName[i], O_RDWR, 0600, 0);
             sem_post(sem);
         }
+        RKLog("Waiting for core %d to end.\n", i);
         k += pthread_join(engine->tid[i], NULL);
         RKLog("Core %d ended.\n", i);
     }
