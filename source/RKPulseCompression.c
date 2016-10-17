@@ -41,9 +41,6 @@ void *pulseCompressionCore(void *_in) {
 
     //const fc = c % engine->filterGroupCount;
 
-    // Filter group id
-    //const gid = pulse->header.i % engine->filterGroupCount;
-
     RKPulseCompressionWorker *me = &engine->workers[c];
 
     int i, j, k, p;
@@ -60,10 +57,18 @@ void *pulseCompressionCore(void *_in) {
     fftwf_complex *in = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
     fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
     fftwf_complex *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+    if (in == NULL || out == NULL) {
+        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        return (void *)RKResultFailedToAllocateFFTSpace;
+    }
     k = 2 * RKGateCount * sizeof(fftwf_complex);
     for (i = 0; i < engine->filterGroupCount; i++) {
         for (j = 0; j < engine->filterCounts[i]; j++) {
             filters[i][j] = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+            if (filters[i][j] == NULL) {
+                RKLog("Error. Unable to allocate resources for FFTW.\n");
+                return (void *)RKResultFailedToAllocateFFTSpace;
+            }
             memset(filters[i][j], 0, RKGateCount * sizeof(fftwf_complex));
             memcpy(filters[i][j], engine->filters[i][j], engine->anchors[i][j].length * sizeof(fftwf_complex));
             k += RKGateCount * sizeof(fftwf_complex);
@@ -100,12 +105,14 @@ void *pulseCompressionCore(void *_in) {
     //
 
     uint32_t tic = engine->tic[c];
-    int planSize, planIndex;
+    int planSize = -1, planIndex;
     bool found = false;
 
     while (engine->active) {
         if (engine->useSemaphore) {
+            #ifdef DEBUG
             printf(RK_CORE_PREFIX " sem_wait()\n", c + 1, c);
+            #endif
             sem_wait(sem);
         } else {
             while (tic == engine->tic[c] && engine->active) {
@@ -117,7 +124,6 @@ void *pulseCompressionCore(void *_in) {
         }
         tic = engine->tic[c];
 
-        
         // Something happened
         gettimeofday(&t1, NULL);
 
@@ -128,11 +134,10 @@ void *pulseCompressionCore(void *_in) {
 
         printf(RK_CORE_PREFIX " i0 = %d  s = %d\n", c + 1, c, i0, pulse->header.s);
 
+        // Filter group id
+        const int gid = pulse->header.i % engine->filterGroupCount;
+        
         // Do some work with this pulse
-        //
-        //
-        planSize = 1 << (uint32_t)ceilf(log2f((float)pulse->header.gateCount));
-
         // DFT of the raw data is stored in *in
         // DFT of the filter is stored in *out
         // Their product is stored in *out using in-place multiplication so *out = *out * *in
@@ -140,63 +145,67 @@ void *pulseCompressionCore(void *_in) {
 
         // Process each polarization separately and indepently
         for (p = 0; p < 2; p++) {
-            // Convert the samples
-            for (k = 0; k < pulse->header.gateCount; k++) {
-                in[k][0] = (float)pulse->X[p][k].i;
-                in[k][1] = (float)pulse->X[p][k].q;
-            }
+            // Go through all the filters in this fitler group
+            for (j = 0; j < engine->filterCounts[gid]; j++) {
+                // Copy and convert the samples
+                for (k = 0, i = engine->anchors[gid][j].origin;
+                     k < pulse->header.gateCount && k < engine->anchors[gid][j].length;
+                     k++, i++) {
+                    in[k][0] = (float)pulse->X[p][i].i;
+                    in[k][1] = (float)pulse->X[p][i].q;
+                }
+                // Zero pad the input; Filter is always zero-padded in the setter function.
+                memset(&in[k][0], 0, (RKGateCount - k) * sizeof(fftwf_complex));
 
-            // Find the right plan
-            k = me->planCount;
-            found = false;
-            while (k > 0) {
-                k--;
-                if (planSize == me->planSizes[k]) {
-                    found = true;
-                    break;
+                // Find the right plan
+                planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].length)));
+                k = me->planCount;
+                found = false;
+                while (k > 0) {
+                    k--;
+                    if (planSize == me->planSizes[k]) {
+                        found = true;
+                        break;
+                    }
                 }
-            }
-            if (!found) {
-                if (me->planCount >= RKPulseCompressionDFTPlanCount) {
-                    RKLog("Error. Unable to create another DFT plan.\n");
-                    exit(EXIT_FAILURE);
+                if (!found) {
+                    if (me->planCount >= RKPulseCompressionDFTPlanCount) {
+                        RKLog("Error. Unable to create another DFT plan.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    planIndex = k;
+                    // FFTW's memory and plan allocation are not thread safe but others are.
+                    pthread_mutex_lock(&engine->coreMutex);
+                    printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                    me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+                    me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+                    me->planFilterForward[gid][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[gid][j], out, FFTW_FORWARD, FFTW_MEASURE);
+                    pthread_mutex_unlock(&engine->coreMutex);
+                    me->planSizes[planIndex] = planSize;
+                    me->planCount++;
+                } else {
+                    planIndex = k;
+                    planSize = me->planSizes[k];
+                    printf(RK_CORE_PREFIX " using FFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
                 }
-                planIndex = k;
-                printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
-                me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-                me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
-    //            for (i = 0; i < engine->filterGroupCount; i++) {
-    //                for (j = 0; j < engine->filterCounts[i]; j++) {
-    //                    printf(RK_CORE_PREFIX " new filter plan.  gid = %d  fid = %d\n", c + 1, c, i, j);
-    //                    me->planFilterForward[i][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[i][j], out, FFTW_FORWARD, FFTW_MEASURE);
-    //                }
-    //            }
-                me->planSizes[planIndex] = planSize;
-                me->planCount++;
-            } else {
-                planIndex = k;
-                planSize = me->planSizes[k];
-                printf(RK_CORE_PREFIX " using FFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
+
+                fftwf_execute(me->planInForward[planIndex]);
+
+                fftwf_execute(me->planFilterForward[gid][j][planIndex]);
+
+                fftwf_execute(me->planOutBackward[planIndex]);
             }
-            
-    //            fftwf_execute(me->planInForward[planIndex]);
-    //            
-    //            //fftwf_execute(me->planFilterForward[0][0][planIndex]);
-    //
-    //            fftwf_execute(me->planOutBackward[planIndex]);
         }
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
         printf(RK_CORE_PREFIX " id %d @ buf %d  f = %d  dutyCycle = %.2f %%\n", c + 1, c, pulse->header.i, i0, planSize, 100.0 * *dutyCycle);
-        
-        
 
         *dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
 
         t2 = t0;
     }
-    
+
     for (k = 0; k < me->planCount; k++) {
         fftwf_destroy_plan(me->planInForward[k]);
         fftwf_destroy_plan(me->planOutBackward[k]);

@@ -190,6 +190,7 @@ enum RKResult {
     RKResultFailedToInitiateSemaphore,
     RKResultFailedToRetrieveSemaphore,
     RKResultTooBig,
+    RKResultFailedToAllocateFFTSpace,
     RKResultFailedToAllocateFilter,
     RKResultFailedToAddFilter,
     RKResultNoError = 0
