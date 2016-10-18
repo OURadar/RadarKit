@@ -25,26 +25,14 @@ static void handleSignals(int signal) {
 }
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    radar = RKInit();
-    RKSetProgramName("iRadar");
-    rkGlobalParameters.stream = stdout;
-
-    RKLog("Radar state machine occupies %s bytes\n", RKIntegerToCommaStyleString(radar->memoryUsage));
-
-    // Catch Ctrl-C and exit gracefully
-    signal(SIGINT, handleSignals);
-    signal(SIGQUIT, handleSignals);
-//    signal(SIGKILL, handleSignals);
-//    signal(SIGTERM, handleSignals);
 
     bool testModuloMath = false;
     bool testSIMD = true;
-    
+
     if (testModuloMath) {
         const int N = 4;
         int i = 0;
-        
+
         RKLog("Test with SlotCount = %d\n", RKBuffer0SlotCount);
         i = 0;                      RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
         i = RKBuffer0SlotCount - 4; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
@@ -62,6 +50,22 @@ int main(int argc, const char * argv[]) {
     if (testSIMD) {
         RKSIMDDemo(0);
     }
+    
+
+    RKSetProgramName("iRadar");
+    rkGlobalParameters.stream = stdout;
+
+    RKLog("Initializing ...\n");
+
+    radar = RKInit();
+
+    RKLog("Radar state machine occupies %s bytes\n", RKIntegerToCommaStyleString(radar->memoryUsage));
+
+    // Catch Ctrl-C and exit gracefully
+    signal(SIGINT, handleSignals);
+    signal(SIGQUIT, handleSignals);
+//    signal(SIGKILL, handleSignals);
+//    signal(SIGTERM, handleSignals);
 
     RKGoLive(radar);
 

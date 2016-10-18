@@ -176,10 +176,10 @@ void *pulseCompressionCore(void *_in) {
                         exit(EXIT_FAILURE);
                     }
                     planIndex = k;
-                    // FFTW's memory and plan allocation are not thread safe but others are.
+                    // FFTW's memory allocation and plan initialization are not thread safe but others are.
                     pthread_mutex_lock(&engine->coreMutex);
                     //#ifdef DEBUG_IQ
-                    printf(RK_CORE_PREFIX " creating FFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                    printf(RK_CORE_PREFIX " creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
                     //#endif
                     me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
                     me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
@@ -191,7 +191,7 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     planSize = me->planSizes[k];
                     #ifdef DEBUG_IQ
-                    printf(RK_CORE_PREFIX " using FFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
+                    printf(RK_CORE_PREFIX " using DFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
                     #endif
                 }
 
@@ -209,7 +209,7 @@ void *pulseCompressionCore(void *_in) {
 
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
-                
+                RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
 
                 fftwf_execute(me->planOutBackward[planIndex]);
             }
@@ -266,12 +266,12 @@ void *pulseWatcher(void *_in) {
     while (engine->active) {
         // Wait until the engine index move to the next one for storage
         while (k == *(engine->index) && engine->active) {
-            usleep(1000);
+            usleep(200);
         }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->size);
         while (engine->input[k].header.s != RKPulseStatusReady && engine->active) {
-            usleep(1000);
+            usleep(200);
         }
         if (engine->active) {
             #ifdef DEBUG_IQ
@@ -439,12 +439,18 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     engine->anchors[group][index].origin = dataOrigin;
     engine->anchors[group][index].length = dataLength;
+    RKLog("Matched filter set.  group count = %d\n", engine->filterGroupCount);
+    for (int i = 0; i < engine->filterGroupCount; i++) {
+        RKLog(">Filter count of group[%d] = %d\n", i, engine->filterCounts[i]);
+        for (int j = 0; j < engine->filterCounts[i]; j++) {
+            RKLog(">   Filter[%d] @ origin = %d  maximum length = %s\n", j, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].length));
+        }
+    }
     return 0;
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
     RKPulseCompressionSetFilter(engine, filter, 1, 0, RKGateCount, 0, 0);
-    RKLog("Impulse filter set.  group count = %d / count of group 0 = %d\n", engine->filterGroupCount, engine->filterCounts[0]);
     return 0;
 }

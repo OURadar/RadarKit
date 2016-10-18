@@ -20,6 +20,8 @@ int RKLog(const char *whatever, ...) {
         if (whatever[0] != '.') {
             if (whatever[0] == '-' || whatever[0] == '*') {
                 fprintf(logFileID, "%s\n", RKNow());
+            } else if (whatever[0] == '>') {
+                fprintf(logFileID, "                    : [%s] ", rkGlobalParameters.program);
             } else {
                 fprintf(logFileID, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
             }
@@ -33,8 +35,13 @@ int RKLog(const char *whatever, ...) {
     if (rkGlobalParameters.stream != NULL) {
         va_start(args, whatever);
         char msg[2048];
-        snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
-        vsprintf(msg + strlen(msg), whatever, args);
+        if (whatever[0] == '>') {
+            snprintf(msg, 2048, "                    : [%s] ", rkGlobalParameters.program);
+            vsprintf(msg + strlen(msg), whatever + 1, args);
+        } else {
+            snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
+            vsprintf(msg + strlen(msg), whatever, args);
+        }
         int has_ok = (strstr(msg, " OK") != NULL);
         int has_not_ok = (strstr(msg, "ERROR") != NULL);
         int has_warning = (strstr(msg, "WARNING") != NULL);
@@ -59,7 +66,6 @@ int RKLog(const char *whatever, ...) {
     }
     return ret;
 }
-
 
 /*************************************************
  *

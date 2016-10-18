@@ -207,6 +207,31 @@ void RKSIMD_ssadd(float *src, const float f, float *dst, const int n) {
     return;
 }
 
+void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
+    int k;
+    RKFloat fi, fq;
+    for (k = 0; k < n; k++) {
+        fi = src->i * dst->i - src->q * dst->q;
+        fq = src->i * dst->q + src->q * dst->i;
+        dst->i = fi;
+        dst->q = fq;
+        dst++;
+        src++;
+    }
+//    __m128 qH, qL, s2s;
+//    __m128 *s = (__m128 *)src;
+//    __m128 *d = (__m128 *)dst;
+//    for (k = 0; k < (n + 1) / 2; k++) {
+//        qH = _mm_movehdup_ps(*d);
+//        qL = _mm_movehdup_ps(*d);
+//        s2s = _mm_shuffle_ps(*s, *s, _MM_SHUFFLE(2, 3, 0, 1));
+//        qH = _mm_mul_ps(qH, s2s);
+//        qL = _mm_mul_ps(qL, *s++);
+//        *d++ = _mm_addsub_ps(qL, qH);
+//    }
+    return;
+}
+
 void RKSIMDDemo(const int show) {
     RKSIMD_show_info();
 
@@ -367,6 +392,15 @@ void RKSIMDDemo(const int show) {
         
         printf("====\n");
    }
+
+    struct timeval t1, t2;
+    gettimeofday(&t1, NULL);
+    for (int i = 0; i < 1000000; i++) {
+        RKSIMD_iymul((RKComplex *)src, (RKComplex *)dst, RKGateCount);
+    }
+    gettimeofday(&t2, NULL);
+    printf("Regular multiplication time for 1M loops = %.3fs\n", RKTimevalDiff(t2, t1));
+
 
     free(src);
     free(dst);

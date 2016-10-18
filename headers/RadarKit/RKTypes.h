@@ -42,7 +42,7 @@
 #define RKBuffer2SlotCount     4000
 //#define RKGateCount           65536
 //#define RKGateCount           64 * 1024 * 1024
-#define RKGateCount            32768
+#define RKGateCount            32768               // Make this power of 2!
 #define RKSIMDAlignSize        64
 /*! @/definedblock */
 
