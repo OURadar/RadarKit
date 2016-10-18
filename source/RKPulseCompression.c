@@ -209,6 +209,8 @@ void *pulseCompressionCore(void *_in) {
 
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
+                
+
                 fftwf_execute(me->planOutBackward[planIndex]);
             }
         }

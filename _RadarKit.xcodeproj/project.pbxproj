@@ -27,6 +27,8 @@
 		B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */; };
 		B54795261D91A87200E43F6A /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
 		B54795271D91A87700E43F6A /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
+		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
+		B55E437F1DB6668F003C40CF /* RKSIMD.c in Sources */ = {isa = PBXBuildFile; fileRef = B55E437E1DB6668F003C40CF /* RKSIMD.c */; };
 		B594718F1D89B43400EEE77C /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B59471991D8C4F0500EEE77C /* RKLocalCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */; };
@@ -77,6 +79,8 @@
 		B53AE7E81D88773500364467 /* RKFoundation.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKFoundation.c; path = source/RKFoundation.c; sourceTree = SOURCE_ROOT; };
 		B53AE7EA1D88822000364467 /* RKMisc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKMisc.c; path = source/RKMisc.c; sourceTree = SOURCE_ROOT; };
 		B53AE7EC1D88824400364467 /* RKMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMisc.h; path = headers/RadarKit/RKMisc.h; sourceTree = "<group>"; };
+		B55E437C1DB66682003C40CF /* RKSIMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSIMD.h; path = headers/RadarKit/RKSIMD.h; sourceTree = "<group>"; };
+		B55E437E1DB6668F003C40CF /* RKSIMD.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSIMD.c; path = source/RKSIMD.c; sourceTree = SOURCE_ROOT; };
 		B594718E1D89B43400EEE77C /* RadarKit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RadarKit.c; path = source/RadarKit.c; sourceTree = SOURCE_ROOT; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKLocalCommandCenter.c; path = source/RKLocalCommandCenter.c; sourceTree = SOURCE_ROOT; };
@@ -146,6 +150,7 @@
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B5C1F3631AB9CD34004F88CD /* RKFile.h */,
 				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
+				B55E437C1DB66682003C40CF /* RKSIMD.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
 			name = Headers;
@@ -165,6 +170,7 @@
 				B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */,
 				B52E45C41D9174A500FC1113 /* RKMoment.c */,
 				B5324DEA1AB9B2E900C00517 /* RKRadar.c */,
+				B55E437E1DB6668F003C40CF /* RKSIMD.c */,
 				B594718E1D89B43400EEE77C /* RadarKit.c */,
 			);
 			name = Source;
@@ -198,6 +204,7 @@
 				B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */,
 				B59471911D89B4D400EEE77C /* RadarKit.h in Headers */,
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
+				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
 				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -303,6 +310,7 @@
 				B5324DEE1AB9B2E900C00517 /* RKRadar.c in Sources */,
 				B59471991D8C4F0500EEE77C /* RKLocalCommandCenter.c in Sources */,
 				B5C1F35B1AB9CBAA004F88CD /* RKDSP.c in Sources */,
+				B55E437F1DB6668F003C40CF /* RKSIMD.c in Sources */,
 				B5324DEF1AB9B2E900C00517 /* RKServer.c in Sources */,
 				B5C1F3561AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B53AE7E91D88773500364467 /* RKFoundation.c in Sources */,
@@ -438,6 +446,17 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-msse",
+					"-msse2",
+					"-msse3",
+					"-mavx",
+					"-mavx2",
+					"-mavx512f",
+					"-mavx512cd",
+					"-mavx512er",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "/include/$(PROJECT_NAME)";
 				SDKROOT = macosx;
@@ -479,6 +498,17 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-msse",
+					"-msse2",
+					"-msse3",
+					"-mavx",
+					"-mavx2",
+					"-mavx512f",
+					"-mavx512cd",
+					"-mavx512er",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "/include/$(PROJECT_NAME)";
 				SDKROOT = macosx;

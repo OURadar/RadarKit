@@ -66,6 +66,12 @@ typedef struct RKComplex {
     RKFloat q;
 } RKComplex;
 
+//! Split complex format for vector library
+typedef struct RKIQZ {
+    RKFloat i[RKGateCount];
+    RKFloat q[RKGateCount];
+} RKIQZ;
+
 
 /*!
  @typedef RKPulseHeader

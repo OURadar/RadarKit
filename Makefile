@@ -1,12 +1,13 @@
 UNAME := $(shell uname)
 
-#CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I /usr/local/include -I /usr/include
-CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -fPIC -msse -msse2 -msse3 -mavx -I headers -I /usr/local/include -I /usr/include
+#CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
+CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 LDFLAGS = -L /usr/local/lib
-OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o
+OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o RKSIMD.o
 RKLIB = libRadarKit.a
 
 #CFLAGS += -DDEBUG_IQ
+CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
 
 ifeq ($(UNAME), Darwin)
 # Mac OS X

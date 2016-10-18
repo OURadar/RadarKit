@@ -11,6 +11,7 @@
 
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>
+#include <RadarKit/RKSIMD.h>
 
 #define RKEOL                       "\r\n"
 

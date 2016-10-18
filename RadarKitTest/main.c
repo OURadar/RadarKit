@@ -39,6 +39,7 @@ int main(int argc, const char * argv[]) {
 //    signal(SIGTERM, handleSignals);
 
     bool testModuloMath = false;
+    bool testSIMD = true;
     
     if (testModuloMath) {
         const int N = 4;
@@ -56,6 +57,44 @@ int main(int argc, const char * argv[]) {
         i = 2;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
         i = 3;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
         i = 4;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+    }
+
+    if (testSIMD) {
+        RKSIMD_show_info();
+
+        RKIQZ *src, *dst;
+        posix_memalign((void *)&src, RKSIMDAlignSize, sizeof(RKIQZ));
+        posix_memalign((void *)&dst, RKSIMDAlignSize, sizeof(RKIQZ));
+        memset(dst, 0, sizeof(RKIQZ));
+        const int n = 32;
+        for (int i = 0; i < n; i++) {
+            src->i[i] = (RKFloat)i;
+            src->q[i] = (RKFloat)-i;
+        }
+        for (int i = 0; i < n; i++) {
+            printf("%9.2f%+9.2fi --> %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
+        }
+
+        RKSIMD_zcpy(src, dst, n);
+        printf("=========\n");
+        for (int i = 0; i < n; i++) {
+            printf("%9.2f%+9.2fi --> %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
+        }
+
+//        RKSIMD_zadd(src, dst, dst, n);
+//        printf("=========\n");
+//        for (int i = 0; i < n; i++) {
+//            printf("%9.2f%+9.2fi --> %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
+//        }
+//
+//        RKSIMD_zsmul(src, 3.0f, dst, n);
+//        printf("=========\n");
+//        for (int i = 0; i < n; i++) {
+//            printf("%9.2f%+9.2fi x 3.0 = %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
+//        }
+
+        free(src);
+        free(dst);
     }
 
     radar->pulseCompressionEngine->coreCount = 5;

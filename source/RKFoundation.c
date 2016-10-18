@@ -15,3 +15,4 @@ void stripTrailingUnwanted(char *str) {
         *c-- = '\0';
     }
 }
+
