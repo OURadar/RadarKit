@@ -118,11 +118,11 @@ void *pulseCompressionCore(void *_in) {
             while (tic == engine->tic[c] && engine->active) {
                 usleep(1000);
             }
+            tic = engine->tic[c];
         }
         if (engine->active != true) {
             break;
         }
-        tic = engine->tic[c];
 
         // Something happened
         gettimeofday(&t1, NULL);
@@ -215,9 +215,11 @@ void *pulseCompressionCore(void *_in) {
             }
         }
 
+        engine->pid[c] = i0;
+
         // Done processing, get the time
         gettimeofday(&t0, NULL);
-        printf(RK_CORE_PREFIX " id %d @ buf %d  f = %d  dutyCycle = %.2f %%\n", c + 1, c, pulse->header.i, i0, planSize, 100.0 * *dutyCycle);
+        //printf(RK_CORE_PREFIX " id %d @ buf %d  f = %d  dutyCycle = %.2f %%\n", c + 1, c, pulse->header.i, i0, planSize, 100.0 * *dutyCycle);
 
         *dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
 

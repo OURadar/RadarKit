@@ -45,6 +45,7 @@ typedef struct rk_pulse_compression_engine {
     pthread_t                        tidPulseWatcher;
     pthread_t                        tid[256];
     uint32_t                         tic[256];
+    uint32_t                         pid[256];
     double                           dutyCycle[256];
 
     bool                             useSemaphore;

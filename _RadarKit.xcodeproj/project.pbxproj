@@ -219,7 +219,6 @@
 				B5324D4B1AB8A5A000C00517 /* Sources */,
 				B5324D4C1AB8A5A000C00517 /* Frameworks */,
 				B5324D4D1AB8A5A000C00517 /* Headers */,
-				B5324DE71AB9B0B800C00517 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -282,22 +281,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		B5324DE71AB9B0B800C00517 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "TARGET_PATH=/Users/boonleng/Documents/transceiver\ncp -rp ${BUILT_PRODUCTS_DIR}/include/${TARGET_NAME} ${TARGET_PATH}/include/\ncp -p ${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME} ${TARGET_PATH}/lib\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B5324D4B1AB8A5A000C00517 /* Sources */ = {

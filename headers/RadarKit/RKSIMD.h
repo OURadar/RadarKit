@@ -42,12 +42,18 @@
 #endif
 
 #include <RadarKit/RKTypes.h>
+#include <RadarKit/RKMisc.h>
 
 void RKSIMD_show_info(void);
 void RKSIMD_zcpy(RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
+void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
+void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c);
+void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_zsmul(RKIQZ *src, const float f, RKIQZ *dst, const int n);
 void RKSIMD_ssadd(float *src, const float f, float *dst, const int n);
+
+void RKSIMDDemo(const int);
 
 #endif

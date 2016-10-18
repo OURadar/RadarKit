@@ -60,41 +60,7 @@ int main(int argc, const char * argv[]) {
     }
 
     if (testSIMD) {
-        RKSIMD_show_info();
-
-        RKIQZ *src, *dst;
-        posix_memalign((void *)&src, RKSIMDAlignSize, sizeof(RKIQZ));
-        posix_memalign((void *)&dst, RKSIMDAlignSize, sizeof(RKIQZ));
-        memset(dst, 0, sizeof(RKIQZ));
-        const int n = 32;
-        for (int i = 0; i < n; i++) {
-            src->i[i] = (RKFloat)i;
-            src->q[i] = (RKFloat)-i;
-        }
-        for (int i = 0; i < n; i++) {
-            printf("%9.2f%+9.2fi --> %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
-        }
-
-        RKSIMD_zcpy(src, dst, n);
-        printf("=========\n");
-        for (int i = 0; i < n; i++) {
-            printf("%9.2f%+9.2fi --> %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
-        }
-
-//        RKSIMD_zadd(src, dst, dst, n);
-//        printf("=========\n");
-//        for (int i = 0; i < n; i++) {
-//            printf("%9.2f%+9.2fi --> %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
-//        }
-//
-//        RKSIMD_zsmul(src, 3.0f, dst, n);
-//        printf("=========\n");
-//        for (int i = 0; i < n; i++) {
-//            printf("%9.2f%+9.2fi x 3.0 = %9.2f%+9.2fi\n", src->i[i], src->q[i], dst->i[i], dst->q[i]);
-//        }
-
-        free(src);
-        free(dst);
+        RKSIMDDemo(0);
     }
 
     radar->pulseCompressionEngine->coreCount = 5;
@@ -103,12 +69,12 @@ int main(int argc, const char * argv[]) {
 
     float phi = 0.0f;
 
-    for (int i = 0; i < 50 && radar->active; i++) {
+    for (int i = 0; i < 40000 && radar->active; i++) {
         RKInt16Pulse *pulse = RKGetVacantPulse(radar);
         // Fill in the data...
         //
         //
-        pulse->header.gateCount = 2000;
+        pulse->header.gateCount = 8000;
         pulse->header.i = i;
 
         for (int k = 0; k < 100; k++) {
@@ -119,9 +85,28 @@ int main(int argc, const char * argv[]) {
         phi += 0.02f;
 
         RKSetPulseReady(pulse);
-        usleep(50000);
+
+        if (i % 1000 == 0) {
+            printf("%.2f  %.2f  %.2f  %.2f  %.2f   %5u / %5d / %u %u %u %u %u\n",
+                   radar->pulseCompressionEngine->dutyCycle[0],
+                   radar->pulseCompressionEngine->dutyCycle[1],
+                   radar->pulseCompressionEngine->dutyCycle[2],
+                   radar->pulseCompressionEngine->dutyCycle[3],
+                   radar->pulseCompressionEngine->dutyCycle[4],
+                   *radar->pulseCompressionEngine->index,
+                   i % RKBuffer0SlotCount,
+                   radar->pulseCompressionEngine->pid[0],
+                   radar->pulseCompressionEngine->pid[1],
+                   radar->pulseCompressionEngine->pid[2],
+                   radar->pulseCompressionEngine->pid[3],
+                   radar->pulseCompressionEngine->pid[4]);
+        }
+
+        usleep(200);
     }
 
+    sleep(2);
+    
     RKStop(radar);
     
     RKLog("Freeing radar ...\n");
