@@ -43,7 +43,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     
     // Other allocatinos
     if (flags & RKInitFlagAllocMomentBuffer) {
-        bytes = RKBuffer0SlotCount * sizeof(RKInt16Ray);
+        bytes = RKBuffer2SlotCount * sizeof(RKInt16Ray);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
             RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;

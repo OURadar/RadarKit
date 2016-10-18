@@ -63,8 +63,6 @@ int main(int argc, const char * argv[]) {
         RKSIMDDemo(0);
     }
 
-    radar->pulseCompressionEngine->coreCount = 5;
-    
     RKGoLive(radar);
 
     float phi = 0.0f;
@@ -74,7 +72,7 @@ int main(int argc, const char * argv[]) {
         // Fill in the data...
         //
         //
-        pulse->header.gateCount = 8000;
+        pulse->header.gateCount = 10000;
         pulse->header.i = i;
 
         for (int k = 0; k < 100; k++) {
@@ -87,19 +85,26 @@ int main(int argc, const char * argv[]) {
         RKSetPulseReady(pulse);
 
         if (i % 1000 == 0) {
-            printf("%.2f  %.2f  %.2f  %.2f  %.2f   %5u / %5d / %u %u %u %u %u\n",
+            printf("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n",
+                   i % RKBuffer0SlotCount,
+                   *radar->pulseCompressionEngine->index,
+                   radar->pulseCompressionEngine->pid[0],
+                   radar->pulseCompressionEngine->pid[1],
+                   radar->pulseCompressionEngine->pid[2],
+                   radar->pulseCompressionEngine->pid[3],
+                   radar->pulseCompressionEngine->pid[4],
+                   radar->pulseCompressionEngine->pid[5],
+                   radar->pulseCompressionEngine->pid[6],
+                   radar->pulseCompressionEngine->pid[7],
                    radar->pulseCompressionEngine->dutyCycle[0],
                    radar->pulseCompressionEngine->dutyCycle[1],
                    radar->pulseCompressionEngine->dutyCycle[2],
                    radar->pulseCompressionEngine->dutyCycle[3],
                    radar->pulseCompressionEngine->dutyCycle[4],
-                   *radar->pulseCompressionEngine->index,
-                   i % RKBuffer0SlotCount,
-                   radar->pulseCompressionEngine->pid[0],
-                   radar->pulseCompressionEngine->pid[1],
-                   radar->pulseCompressionEngine->pid[2],
-                   radar->pulseCompressionEngine->pid[3],
-                   radar->pulseCompressionEngine->pid[4]);
+                   radar->pulseCompressionEngine->dutyCycle[5],
+                   radar->pulseCompressionEngine->dutyCycle[6],
+                   radar->pulseCompressionEngine->dutyCycle[7]
+                   );
         }
 
         usleep(200);

@@ -307,7 +307,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
 }
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
-    return RKPulseCompressionEngineInitWithCoreCount(5);
+    return RKPulseCompressionEngineInitWithCoreCount(8);
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
@@ -429,7 +429,6 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     if (engine->filters[group][index] != NULL) {
         free(engine->filters[group][index]);
     }
-    //engine->filters[group][index] = (RKComplex *)malloc(length * sizeof(RKComplex));
     if (posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, RKGateCount * sizeof(RKComplex))) {
         RKLog("Error. Unable to allocate filter memory.\n");
         return RKResultFailedToAllocateFilter;
