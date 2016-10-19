@@ -54,6 +54,7 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_zsmul(RKIQZ *src, const float f, RKIQZ *dst, const int n);
 void RKSIMD_ssadd(float *src, const float f, float *dst, const int n);
 
+void RKSIMD_iymul0(RKComplex *src, RKComplex *dst, const int n);
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n);
 
 void RKSIMDDemo(const int);

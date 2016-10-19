@@ -10,22 +10,44 @@
 
 #ifdef __AVX512F__
 typedef __m512 RKVec;
-#define _rk_mm_add_ps(a, b)  _mm512_add_ps(a, b)
-#define _rk_mm_sub_ps(a, b)  _mm512_sub_ps(a, b)
-#define _rk_mm_mul_ps(a, b)  _mm512_mul_ps(a, b)
-#define _rk_mm_set1_ps(a)    _mm512_set1_ps(a)
+#define _rk_mm_add_ps(a, b)          _mm512_add_ps(a, b)
+#define _rk_mm_sub_ps(a, b)          _mm512_sub_ps(a, b)
+#define _rk_mm_mul_ps(a, b)          _mm512_mul_ps(a, b)
+#define _rk_mm_set1_ps(a)            _mm512_set1_ps(a)
+#define _rk_mm_loadu_ps(a)           _mm512_loadu_ps(a)
+#define _rk_mm_unpacklo_ps(a, b)     _mm512_unpacklo_ps(a, b)
+#define _rk_mm_unpackhi_ps(a, b)     _mm512_unpackhi_ps(a, b)
+#define _rk_mm_movehdup_ps(a)        _mm512_movehdup_ps(a)
+#define _rk_mm_moveldup_ps(a)        _mm512_moveldup_ps(a)
+#define _rk_mm_shuffle_ps(a, b, m)   _mm512_shuffle_ps(a, b, m)
+#define _rk_mm_fmaddsub_ps(a, b, c)  _mm512_fmaddsub_ps(a, b, c)
 #elif __AVX__
 typedef __m256 RKVec;
-#define _rk_mm_add_ps(a, b)  _mm256_add_ps(a, b)
-#define _rk_mm_sub_ps(a, b)  _mm256_sub_ps(a, b)
-#define _rk_mm_mul_ps(a, b)  _mm256_mul_ps(a, b)
-#define _rk_mm_set1_ps(a)    _mm256_set1_ps(a)
+#define _rk_mm_add_ps(a, b)          _mm256_add_ps(a, b)
+#define _rk_mm_sub_ps(a, b)          _mm256_sub_ps(a, b)
+#define _rk_mm_mul_ps(a, b)          _mm256_mul_ps(a, b)
+#define _rk_mm_set1_ps(a)            _mm256_set1_ps(a)
+#define _rk_mm_loadu_ps(a)           _mm256_loadu_ps(a)
+#define _rk_mm_unpacklo_ps(a, b)     _mm256_unpacklo_ps(a, b)
+#define _rk_mm_unpackhi_ps(a, b)     _mm256_unpackhi_ps(a, b)
+#define _rk_mm_movehdup_ps(a)        _mm256_movehdup_ps(a)
+#define _rk_mm_moveldup_ps(a)        _mm256_moveldup_ps(a)
+#define _rk_mm_shuffle_ps(a, b, m)   _mm256_shuffle_ps(a, b, m)
+//#define _rk_mm_fmaddsub_ps(a, b, c)  _mm256_fmaddsub_ps(a, b, c)
+#define _rk_mm_fmaddsub_ps(a, b, c)  _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
 #else
 typedef __m128 RKVec;
-#define _rk_mm_add_ps(a, b)  _mm_add_ps(a, b)
-#define _rk_mm_sub_ps(a, b)  _mm_sub_ps(a, b)
-#define _rk_mm_mul_ps(a, b)  _mm_mul_ps(a, b)
-#define _rk_mm_set1_ps(a)    _mm_set1_ps(a)
+#define _rk_mm_add_ps(a, b)          _mm_add_ps(a, b)
+#define _rk_mm_sub_ps(a, b)          _mm_sub_ps(a, b)
+#define _rk_mm_mul_ps(a, b)          _mm_mul_ps(a, b)
+#define _rk_mm_set1_ps(a)            _mm_set1_ps(a)
+#define _rk_mm_loadu_ps(a)           _mm_loadu_ps(a)
+#define _rk_mm_unpacklo_ps(a, b)     _mm_unpacklo_ps(a, b)
+#define _rk_mm_unpackhi_ps(a, b)     _mm_unpackhi_ps(a, b)
+#define _rk_mm_movehdup_ps(a)        _mm_movehdup_ps(a)
+#define _rk_mm_moveldup_ps(a)        _mm_moveldup_ps(a)
+#define _rk_mm_shuffle_ps(a, b, m)   _mm_shuffle_ps(a, b, m)
+#define _rk_mm_fmaddsub_ps(a, b, c)  _mm_fmaddsub_ps(a, b, c)
 #endif
 
 #define OXSTR(x)   x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
@@ -33,7 +55,7 @@ typedef __m128 RKVec;
 void RKSIMD_show_info(void) {
     #ifdef __AVX512F__
     printf("AVX512F is active.\n");
-    #elif __AVX2__
+    #elif __AVX__
     printf("AVX2 256-bit is active.\n");
     #else
     printf("SSE 128-bit is active.\n");
@@ -207,7 +229,7 @@ void RKSIMD_ssadd(float *src, const float f, float *dst, const int n) {
     return;
 }
 
-void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
+void RKSIMD_iymul0(RKComplex *src, RKComplex *dst, const int n) {
     int k;
     RKFloat fi, fq;
     for (k = 0; k < n; k++) {
@@ -218,17 +240,23 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
         dst++;
         src++;
     }
-//    __m128 qH, qL, s2s;
-//    __m128 *s = (__m128 *)src;
-//    __m128 *d = (__m128 *)dst;
-//    for (k = 0; k < (n + 1) / 2; k++) {
-//        qH = _mm_movehdup_ps(*d);
-//        qL = _mm_movehdup_ps(*d);
-//        s2s = _mm_shuffle_ps(*s, *s, _MM_SHUFFLE(2, 3, 0, 1));
-//        qH = _mm_mul_ps(qH, s2s);
-//        qL = _mm_mul_ps(qL, *s++);
-//        *d++ = _mm_addsub_ps(qL, qH);
-//    }
+    return;
+}
+
+void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
+    int k;
+    RKVec r, i, x;
+    RKVec *s = (RKVec *)src;                                     // [a  b  x  y ]
+    RKVec *d = (RKVec *)dst;                                     // [c  d  z  w ]
+    for (k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
+        r = _rk_mm_moveldup_ps(*s);                              // [a  a  x  x ]
+        i = _rk_mm_movehdup_ps(*s);                              // [b  b  y  y ]
+        x = _rk_mm_shuffle_ps(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
+        i = _rk_mm_mul_ps(i, x);                                 // [bd bc yw yz]
+        *d = _rk_mm_fmaddsub_ps(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+        s++;
+        d++;
+    }
     return;
 }
 
@@ -236,9 +264,10 @@ void RKSIMDDemo(const int show) {
     RKSIMD_show_info();
 
     int i;
-    RKIQZ *src, *dst;
-    posix_memalign((void *)&src, RKSIMDAlignSize, sizeof(RKIQZ));
-    posix_memalign((void *)&dst, RKSIMDAlignSize, sizeof(RKIQZ));
+    RKIQZ *src, *dst, *cpy;
+    posix_memalign((void **)&src, RKSIMDAlignSize, sizeof(RKIQZ));
+    posix_memalign((void **)&dst, RKSIMDAlignSize, sizeof(RKIQZ));
+    posix_memalign((void **)&cpy, RKSIMDAlignSize, sizeof(RKIQZ));
     memset(dst, 0, sizeof(RKIQZ));
     const int n = 32;
 
@@ -372,35 +401,116 @@ void RKSIMDDemo(const int show) {
         printf("Vector Scaling \033[31mfailed\033[0m.\n");
     }
 
-    if (show > 1) {
-        printf("====\n");
+    RKComplex *cs = (RKComplex *)src;
+    RKComplex *cd = (RKComplex *)dst;
+    RKComplex *cc = (RKComplex *)cpy;
 
+    // Populate some numbers
+    for (i = 0; i < n; i++) {
+        cs[i].i = (RKFloat)i;
+        cs[i].q = (RKFloat)(-i);
+        cd[i].i = (RKFloat)(i + 1);
+        cd[i].q = (RKFloat)(-i);
+    }
+
+    memcpy(cc, cd, n * sizeof(RKComplex));
+    RKSIMD_iymul(cs, cd, n);
+
+    if (show) {
+        printf("====\n");
+    }
+    all_good = true;
+    for (i = 0; i < n; i++) {
+        // Answers should be  ... 0, 1-3i, 2-10i, 3-21i, ...
+        good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
+        if (show) {
+            printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
+        }
+        all_good &= good;
+    }
+    printf("Vector Complex Multiplication %s.\033[0m\n", all_good ? "\033[32msuccessful" : "\033[31mfailed");
+
+    // Repopulate
+    for (i = 0; i < n; i++) {
+        src->i[i] = (RKFloat)i;
+        src->q[i] = (RKFloat)(-i);
+        dst->i[i] = (RKFloat)(i + 1);
+        dst->q[i] = (RKFloat)(-i);
+    }
+    RKSIMD_zcpy(dst, cpy, n);
+    RKSIMD_izmul(src, dst, n, false);
+    if (show) {
+        printf("====\n");
+    }
+    all_good = true;
+    for (i = 0; i < n; i++) {
+        // Answers should be  ... 0, 1-3i, 2-10i, 3-21i, ...
+        good = fabsf(dst->i[i] - (RKFloat)i) < tiny && fabsf(dst->q[i] - (RKFloat)(-2 * i * i - i)) < tiny;
+        if (show) {
+            printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", src->i[i], src->q[i], cpy->i[i], cpy->q[i], dst->i[i], dst->q[i], OXSTR(good));
+        }
+        all_good &= good;
+    }
+    printf("Vector Deinterleave In-place Complex Multiplication %s.\033[0m\n", all_good ? "\033[32msuccessful" : "\033[31mfailed");
+
+    if (show > 1) {
+        printf("==== Performance test ====\n");
+
+        int k;
+        const int m = 100000;
         struct timeval t1, t2;
+
         gettimeofday(&t1, NULL);
-        for (int i = 0; i < 1000000; i++) {
+        for (k = 0; k < m; k++) {
             RKSIMD_zmul(src, src, dst, RKGateCount, false);
         }
         gettimeofday(&t2, NULL);
-        printf("Regular multiplication time for 1M loops = %.3fs\n", RKTimevalDiff(t2, t1));
+        printf("Regular SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
 
         gettimeofday(&t1, NULL);
-        for (int i = 0; i < 1000000; i++) {
+        for (k = 0; k < m; k++) {
             RKSIMD_izmul(src, dst, RKGateCount, false);
         }
         gettimeofday(&t2, NULL);
-        printf("In-place multiplication time for 1M loops = %.3fs\n", RKTimevalDiff(t2, t1));
-        
+        printf("In-place SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+
+        gettimeofday(&t1, NULL);
+        for (k = 0; k < m; k++) {
+            RKSIMD_iymul0(cs, cd, RKGateCount);
+        }
+        gettimeofday(&t2, NULL);
+        printf("Regular non-SIMD complex multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+
+        gettimeofday(&t1, NULL);
+        for (k = 0; k < m; k++) {
+            RKSIMD_iymul(cs, cd, RKGateCount);
+        }
+        gettimeofday(&t2, NULL);
+        printf("In-place SIMD complex multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+
+        gettimeofday(&t1, NULL);
+        for (k = 0; k < m; k++) {
+            RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, n, false);
+        }
+        gettimeofday(&t2, NULL);
+        printf("In-place SIMD deinterleaved complex multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+
+        gettimeofday(&t1, NULL);
+        for (k = 0; k < m; k++) {
+            for (i = 0; i < n; i++) {
+                src->i[i] = cc[i].i;
+                src->q[i] = cc[i].q;
+            }
+            RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, n, false);
+            for (i = 0; i < n; i++) {
+                cc[i].i = src->i[i];
+                cc[i].q = src->q[i];
+            }
+        }
+        gettimeofday(&t2, NULL);
+        printf("Data deinterleaving + multiplication + interleaving time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
         printf("====\n");
-   }
-
-    struct timeval t1, t2;
-    gettimeofday(&t1, NULL);
-    for (int i = 0; i < 1000000; i++) {
-        RKSIMD_iymul((RKComplex *)src, (RKComplex *)dst, RKGateCount);
     }
-    gettimeofday(&t2, NULL);
-    printf("Regular multiplication time for 1M loops = %.3fs\n", RKTimevalDiff(t2, t1));
-
 
     free(src);
     free(dst);
