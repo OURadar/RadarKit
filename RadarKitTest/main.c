@@ -72,50 +72,61 @@ int main(int argc, const char * argv[]) {
 
     float phi = 0.0f;
 
-    for (int i = 0; i < 40000 && radar->active; i++) {
-        RKInt16Pulse *pulse = RKGetVacantPulse(radar);
-        // Fill in the data...
-        //
-        //
-        pulse->header.gateCount = 10000;
-        pulse->header.i = i;
+//    for (int i = 0; i < 40000 && radar->active; i++) {
+//        RKInt16Pulse *pulse = RKGetVacantPulse(radar);
+//        // Fill in the data...
+//        //
+//        //
+//        pulse->header.gateCount = 10000;
+//
+//        for (int k = 0; k < 100; k++) {
+//            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
+//            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+//        }
+//
+//        phi += 0.02f;
+//
+//        RKSetPulseReady(pulse);
+//
+//        if (i % 1000 == 0) {
+//            printf("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n",
+//                   i % RKBuffer0SlotCount,
+//                   *radar->pulseCompressionEngine->index,
+//                   radar->pulseCompressionEngine->pid[0],
+//                   radar->pulseCompressionEngine->pid[1],
+//                   radar->pulseCompressionEngine->pid[2],
+//                   radar->pulseCompressionEngine->pid[3],
+//                   radar->pulseCompressionEngine->pid[4],
+//                   radar->pulseCompressionEngine->pid[5],
+//                   radar->pulseCompressionEngine->pid[6],
+//                   radar->pulseCompressionEngine->pid[7],
+//                   radar->pulseCompressionEngine->dutyCycle[0],
+//                   radar->pulseCompressionEngine->dutyCycle[1],
+//                   radar->pulseCompressionEngine->dutyCycle[2],
+//                   radar->pulseCompressionEngine->dutyCycle[3],
+//                   radar->pulseCompressionEngine->dutyCycle[4],
+//                   radar->pulseCompressionEngine->dutyCycle[5],
+//                   radar->pulseCompressionEngine->dutyCycle[6],
+//                   radar->pulseCompressionEngine->dutyCycle[7]
+//                   );
+//        }
+//
+//        usleep(200);
+//    }
 
-        for (int k = 0; k < 100; k++) {
-            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
-            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
-        }
-
-        phi += 0.02f;
-
-        RKSetPulseReady(pulse);
-
-        if (i % 1000 == 0) {
-            printf("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n",
-                   i % RKBuffer0SlotCount,
-                   *radar->pulseCompressionEngine->index,
-                   radar->pulseCompressionEngine->pid[0],
-                   radar->pulseCompressionEngine->pid[1],
-                   radar->pulseCompressionEngine->pid[2],
-                   radar->pulseCompressionEngine->pid[3],
-                   radar->pulseCompressionEngine->pid[4],
-                   radar->pulseCompressionEngine->pid[5],
-                   radar->pulseCompressionEngine->pid[6],
-                   radar->pulseCompressionEngine->pid[7],
-                   radar->pulseCompressionEngine->dutyCycle[0],
-                   radar->pulseCompressionEngine->dutyCycle[1],
-                   radar->pulseCompressionEngine->dutyCycle[2],
-                   radar->pulseCompressionEngine->dutyCycle[3],
-                   radar->pulseCompressionEngine->dutyCycle[4],
-                   radar->pulseCompressionEngine->dutyCycle[5],
-                   radar->pulseCompressionEngine->dutyCycle[6],
-                   radar->pulseCompressionEngine->dutyCycle[7]
-                   );
-        }
-
-        usleep(200);
-    }
+    RKInt16Pulse *pulse = RKGetVacantPulse(radar);
+    pulse->header.gateCount = 6;
+    pulse->X[0][0].i = 1.0f;
+    pulse->X[0][0].q = 0.0f;
+    pulse->X[0][1].i = 1.0f;
+    pulse->X[0][1].q = 0.0f;
 
     sleep(2);
+
+    RKComplex *X = radar->compressedPulses[0].X[0];
+
+    printf("X = %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f...\n",
+           X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q, X[3].i, X[3].q, X[4].i, X[4].q, X[5].i, X[5].q, X[6].i, X[6].q, X[7].i, X[7].q);
     
     RKStop(radar);
     

@@ -137,14 +137,15 @@ void *pulseCompressionCore(void *_in) {
         // Start of this cycle
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
 
-        RKInt16Pulse *pulse = &engine->input[i0];
+        RKInt16Pulse *input = &engine->input[i0];
+        RKFloatPulse *output = &engine->output[i0];
 
         #ifdef DEBUG_IQ
         printf(RK_CORE_PREFIX " i0 = %d  s = %d\n", c + 1, c, i0, pulse->header.s);
         #endif
 
         // Filter group id
-        const int gid = pulse->header.i % engine->filterGroupCount;
+        const int gid = input->header.i % engine->filterGroupCount;
         
         // Do some work with this pulse
         // DFT of the raw data is stored in *in
@@ -158,16 +159,16 @@ void *pulseCompressionCore(void *_in) {
             for (j = 0; j < engine->filterCounts[gid]; j++) {
                 // Copy and convert the samples
                 for (k = 0, i = engine->anchors[gid][j].origin;
-                     k < pulse->header.gateCount && k < engine->anchors[gid][j].length;
+                     k < input->header.gateCount && k < engine->anchors[gid][j].length;
                      k++, i++) {
-                    in[k][0] = (float)pulse->X[p][i].i;
-                    in[k][1] = (float)pulse->X[p][i].q;
+                    in[k][0] = (float)input->X[p][i].i;
+                    in[k][1] = (float)input->X[p][i].q;
                 }
                 // Zero pad the input; a filter is always zero-padded in the setter function.
                 memset(&in[k][0], 0, (RKGateCount - k) * sizeof(fftwf_complex));
 
                 // Find the right plan
-                planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].length)));
+                planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(input->header.gateCount, engine->anchors[gid][j].length)));
                 k = me->planCount;
                 found = false;
                 while (k > 0) {
@@ -186,7 +187,7 @@ void *pulseCompressionCore(void *_in) {
                     // FFTW's memory allocation and plan initialization are not thread safe but others are.
                     pthread_mutex_lock(&engine->coreMutex);
                     //#ifdef DEBUG_IQ
-                    printf(RK_CORE_PREFIX " creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                    printf(RK_CORE_PREFIX " creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, input->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
                     //#endif
                     me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
                     me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
@@ -236,6 +237,13 @@ void *pulseCompressionCore(void *_in) {
                 }
 
                 fftwf_execute(me->planOutBackward[planIndex]);
+
+                for (k = 0, i = engine->anchors[gid][j].length;
+                     k < input->header.gateCount - engine->anchors[gid][j].length && k < engine->anchors[gid][j].length;
+                     k++, i++) {
+                    output->X[p][k].i = out[i][0];
+                    output->X[p][k].q = out[i][1];
+                }
             }
         }
 
