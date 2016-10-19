@@ -74,6 +74,13 @@ void *pulseCompressionCore(void *_in) {
             k += RKGateCount * sizeof(fftwf_complex);
         }
     }
+    RKIQZ *zi = (RKIQZ *)fftwf_malloc(sizeof(RKIQZ));
+    RKIQZ *zo = (RKIQZ *)fftwf_malloc(sizeof(RKIQZ));
+    if (zi == NULL || zo == NULL) {
+        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        return (void *)RKResultFailedToAllocateFFTSpace;
+    }
+    k += 2 * sizeof(RKIQZ);
 
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
@@ -212,11 +219,21 @@ void *pulseCompressionCore(void *_in) {
                 //RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
 
                 // Deinterleave the data into RKIQZ format
+                for (k = 0; k < planSize; k++) {
+                    zi->i[k] = in[k][0];
+                    zi->q[k] = in[k][1];
+                    zo->i[k] = out[k][0];
+                    zo->q[k] = out[k][1];
+                }
 
                 // Multiply using SIMD
+                RKSIMD_izmul(zi, zo, planSize, true);
 
                 // Interleave the result back into RKComplex format
-
+                for (k = 0; k < planSize; k++) {
+                    out[k][0] = zo->i[k];
+                    out[k][1] = zo->q[k];
+                }
 
                 fftwf_execute(me->planOutBackward[planIndex]);
             }
@@ -250,6 +267,8 @@ void *pulseCompressionCore(void *_in) {
             fftwf_free(filters[i][j]);
         }
     }
+    free(zi);
+    free(zo);
 
     return NULL;
 }
