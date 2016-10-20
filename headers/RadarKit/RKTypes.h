@@ -37,12 +37,10 @@
  @define RKGateCount The maximum number of gates allocated for each pulse
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
-#define RKBuffer0SlotCount     20000
-#define RKBuffer1SlotCount     20000
+#define RKBuffer0SlotCount     200
+#define RKBuffer1SlotCount     200
 #define RKBuffer2SlotCount     4000
-//#define RKGateCount           65536
-//#define RKGateCount           64 * 1024 * 1024
-#define RKGateCount            32768               // Make this power of 2!
+#define RKGateCount            65536        // Must power of 2!
 #define RKSIMDAlignSize        64
 /*! @/definedblock */
 
@@ -53,6 +51,8 @@ typedef int8_t    RKByte;
 typedef uint64_t  RKEnum;
 typedef float     RKFloat;   // We can change this to double if we decided one day
 typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
+
+#pragma pack(push, 1)
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
 typedef struct RKInt16 {
@@ -66,7 +66,7 @@ typedef struct RKComplex {
     RKFloat q;
 } RKComplex;
 
-//! Split complex format for vector library
+//! Deinterleaved complex format for vector library
 typedef struct RKIQZ {
     RKFloat i[RKGateCount];
     RKFloat q[RKGateCount];
@@ -98,17 +98,20 @@ typedef struct RKIQZ {
  @param vazDps                 Velocity of azimuth in degrees per second
  @param velDps                 Velocity of azimuth in degrees per second
  */
-typedef struct RKPulseHeader {
+typedef struct rk_pulse_header {
+    // First 128-bit chunk
     uint32_t    s;
     uint32_t    i;
     uint32_t    n;
     uint16_t    marker;
     uint16_t    pulseWidthSampleCount;
     
+    // Second 128-bit chunk
     uint32_t    timeSec;
     uint32_t    timeUSec;
     double      timeDouble;
     
+    // Third 128-bit chunk
     uint16_t    az;
     uint16_t    el;
     uint16_t    prfHz;
@@ -117,23 +120,20 @@ typedef struct RKPulseHeader {
     uint16_t    azimuthBinIndex;
     float       gateSizeMeters;
     
+    // Fourth 128-bit chunk
     float       azimuthDegrees;
     float       elevationDegrees;
     float       vazDps;
     float       velDps;
 } RKPulseHeader;
 
-typedef struct RKInt16Pulse {
+typedef struct rk_pulse {
     RKPulseHeader  header;
     RKInt16        X[2][RKGateCount];
-} RKInt16Pulse;
+    RKComplex      Y[2][RKGateCount];
+    RKComplex      Z[2][RKGateCount];
+} RKPulse;
 
-typedef struct RKFloatPulse {
-    RKPulseHeader  header;
-    RKComplex      X[2][RKGateCount];
-} RKFloatPulse;
-
-#pragma pack(push, 1)
 
 typedef uint32_t RKPulseStatus;
 
@@ -141,7 +141,8 @@ enum RKPulseStatus {
     RKPulseStatusVacant      = 0,
     RKPulseStatusHasIQData   = 1,
     RKPulseStatusHasPosition = 1 << 1,
-    RKPulseStatusReady       = RKPulseStatusHasIQData | RKPulseStatusHasPosition
+    RKPulseStatusReady       = RKPulseStatusHasIQData | RKPulseStatusHasPosition,
+    RKPulseStatusCompressed  = 1 << 2
 };
 
 /*!

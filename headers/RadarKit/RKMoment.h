@@ -14,7 +14,7 @@
 typedef void RKMomentProcessor;
 
 typedef struct RKMoment {
-    RKFloatPulse   *pulses;
+    RKPulse        *pulses;
     RKFloatRay     *rawRays;
     RKInt16Ray     *encodedRays;
 

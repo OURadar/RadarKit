@@ -23,6 +23,7 @@
 typedef struct rk_filter_rect {
     int origin;
     int length;
+    int maxDataLength;
 } RKPulseCompressionFilterAnchor;
 
 typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
@@ -39,12 +40,12 @@ struct rk_pulse_compression_worker {
 };
 
 struct rk_pulse_compression_engine {
-    RKInt16Pulse                     *input;
-    RKFloatPulse                     *output;
+    RKPulse                          *pulses;
     uint32_t                         *index;
     uint32_t                         size;
 
     bool                             active;
+    int                              verbose;
 
     unsigned int                     coreCount;
     pthread_t                        tidPulseWatcher;
@@ -57,8 +58,7 @@ struct rk_pulse_compression_engine {
     char                             semaphoreName[256][16];
 
     uint32_t                         filterGroupCount;
-    uint32_t                         filterCounts[RKMaxMatchedFilterCount];
-    uint32_t                         filterLengths[RKMaxMatchedFilterCount];
+    uint32_t                         filterCounts[RKMaxMatchedFilterGroupCount];
     RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionFilterAnchor   anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionWorker         *workers;
@@ -72,8 +72,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   RKInt16Pulse *input,
-                                                   RKFloatPulse *output,
+                                                   RKPulse *pulses,
                                                    uint32_t *index,
                                                    const uint32_t size);
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);

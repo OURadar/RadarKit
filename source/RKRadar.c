@@ -10,8 +10,6 @@
 
 RKRadar *RKInitWithFlags(const RKEnum flags);
 
-//int RKSetPulseStatus(RKInt16Pulse *pulse, RKPulseStatus);
-
 //
 //
 //
@@ -53,37 +51,37 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     }
     
     if (flags & RKInitFlagAllocRawIQBuffer) {
-        bytes = RKBuffer0SlotCount * sizeof(RKInt16Pulse);
-        if (posix_memalign((void **)&radar->rawPulses, RKSIMDAlignSize, bytes)) {
-            RKLog("ERROR. Unable to allocate memory for raw pulses");
+        bytes = RKBuffer0SlotCount * sizeof(RKPulse);
+        if (posix_memalign((void **)&radar->pulses, RKSIMDAlignSize, bytes)) {
+            RKLog("ERROR. Unable to allocate memory for I/Q pulses");
             return NULL;
         }
-        memset(radar->rawPulses, 0, bytes);
+        memset(radar->pulses, 0, bytes);
         radar->memoryUsage += bytes;
         radar->state |= RKRadarStateRawIQBufferInitiated;
         for (int i = 0; i < RKBuffer0SlotCount; i++) {
-            radar->rawPulses[i].header.i = i - RKBuffer0SlotCount;
+            radar->pulses[i].header.i = i - RKBuffer0SlotCount;
         }
         
-        bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
-        if (posix_memalign((void **)&radar->compressedPulses, RKSIMDAlignSize, bytes)) {
-            RKLog("ERROR. Unable to allocate memory for compressed pulses");
-            return NULL;
-        }
-        radar->memoryUsage += bytes;
-        radar->state |= RKRadarStateCompressedIQBufferInitiated;
-
-        bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
-        if (posix_memalign((void **)&radar->filteredCompressedPulses, RKSIMDAlignSize, bytes)) {
-            RKLog("ERROR. Unable to allocate memory for filtered compressed pulse");
-            return NULL;
-        }
-        radar->memoryUsage += bytes;
-        radar->state |= RKRadarStateFilteredCompressedIQBufferInitiated;
+//        bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
+//        if (posix_memalign((void **)&radar->compressedPulses, RKSIMDAlignSize, bytes)) {
+//            RKLog("ERROR. Unable to allocate memory for compressed pulses");
+//            return NULL;
+//        }
+//        radar->memoryUsage += bytes;
+//        radar->state |= RKRadarStateCompressedIQBufferInitiated;
+//
+//        bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
+//        if (posix_memalign((void **)&radar->filteredCompressedPulses, RKSIMDAlignSize, bytes)) {
+//            RKLog("ERROR. Unable to allocate memory for filtered compressed pulse");
+//            return NULL;
+//        }
+//        radar->memoryUsage += bytes;
+//        radar->state |= RKRadarStateFilteredCompressedIQBufferInitiated;
     }
 
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
-    RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, radar->rawPulses, radar->compressedPulses, &radar->index, RKBuffer0SlotCount);
+    RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, radar->pulses, &radar->index, RKBuffer0SlotCount);
 
     radar->socketServer = RKServerInit();
     RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
@@ -95,9 +93,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
 
 int RKFree(RKRadar *radar) {
     if (radar-> state & RKRadarStateRawIQBufferInitiated) {
-        free(radar->rawPulses);
-        free(radar->compressedPulses);
-        free(radar->filteredCompressedPulses);
+        free(radar->pulses);
     }
     if (radar->state & RKRadarStateRayBufferInitiated) {
         free(radar->rays);
@@ -109,7 +105,6 @@ int RKFree(RKRadar *radar) {
 int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKServerActivate(radar->socketServer);
-
     return 0;
 }
 
@@ -121,18 +116,18 @@ int RKStop(RKRadar *radar) {
     return 0;
 }
 
-RKInt16Pulse *RKGetVacantPulse(RKRadar *radar) {
-    if (radar->rawPulses == NULL) {
-        RKLog("Error. Buffer for raw pulses is not allocated.\n");
+RKPulse *RKGetVacantPulse(RKRadar *radar) {
+    if (radar->pulses == NULL) {
+        RKLog("Error. Buffer for raw pulses has not been allocated.\n");
         exit(EXIT_FAILURE);
     }
-    RKInt16Pulse *pulse = &radar->rawPulses[radar->index];
+    RKPulse *pulse = &radar->pulses[radar->index];
     pulse->header.s = RKPulseStatusVacant;
     pulse->header.i += RKBuffer0SlotCount;
     radar->index = RKNextBuffer0Slot(radar->index);
     return pulse;
 }
 
-void RKSetPulseReady(RKInt16Pulse *pulse) {
+void RKSetPulseReady(RKPulse *pulse) {
     pulse->header.s = RKPulseStatusReady;
 }

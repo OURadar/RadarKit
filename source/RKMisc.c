@@ -74,7 +74,7 @@ int RKLog(const char *whatever, ...) {
  *
  *  Integer to string with 3-digit grouping
  */
-char *RKIntegerToCommaStyleString(long num) {
+char *RKIntegerToCommaStyleString(const long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[8][32];
@@ -104,6 +104,12 @@ char *RKIntegerToCommaStyleString(long num) {
     }
     k = ibuf;
     return stringBuffer[r];
+}
+
+char *RKFloatToCommaStyleString(const float num) {
+    char *intString = RKIntegerToCommaStyleString((long)num);
+    snprintf(intString + strlen(intString), 32 - strlen(intString), ".%03.0f", 1000.0f * (num - floorf(num))); 
+    return intString;
 }
 
 void RKSetWantColor(const bool showColor) {

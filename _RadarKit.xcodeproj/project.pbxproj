@@ -431,14 +431,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-fPIC",
-					"-msse",
-					"-msse2",
-					"-msse3",
-					"-mavx",
-					"-mavx2",
-					"-mavx512f",
-					"-mavx512cd",
-					"-mavx512er",
+					"-mfpmath=sse",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "/include/$(PROJECT_NAME)";
@@ -483,14 +476,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = (
 					"-fPIC",
-					"-msse",
-					"-msse2",
-					"-msse3",
-					"-mavx",
-					"-mavx2",
-					"-mavx512f",
-					"-mavx512cd",
-					"-mavx512er",
+					"-mfpmath=sse",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "/include/$(PROJECT_NAME)";

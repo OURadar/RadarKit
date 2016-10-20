@@ -26,9 +26,7 @@ enum RKInitFlag {
 typedef RKEnum RKRadarState;
 enum RKRadarState {
     RKRadarStateRayBufferInitiated                   = 1,
-    RKRadarStateRawIQBufferInitiated                 = 1 << 1,
-    RKRadarStateCompressedIQBufferInitiated          = 1 << 2,
-    RKRadarStateFilteredCompressedIQBufferInitiated  = 1 << 3,
+    RKRadarStateRawIQBufferInitiated                 = 1 << 1
 };
 
 
@@ -41,10 +39,8 @@ typedef struct RKRadar {
     //
     // Buffers aligned to SIMD requirements
     //
-    RKInt16Pulse               *rawPulses;
-    RKFloatPulse               *compressedPulses;
-    RKFloatPulse               *filteredCompressedPulses;
-    RKInt16Ray                 *rays;
+    RKPulse                    *pulses;
+    RKFloatRay                 *rays;
     //
     uint32_t                   index;
     //
@@ -68,8 +64,8 @@ int RKFree(RKRadar *radar);
 int RKGoLive(RKRadar *radar);
 int RKStop(RKRadar *radar);
 
-RKInt16Pulse *RKGetVacantPulse(RKRadar *radar);
-void RKSetPulseReady(RKInt16Pulse *pulse);
+RKPulse *RKGetVacantPulse(RKRadar *radar);
+void RKSetPulseReady(RKPulse *pulse);
 
 //#ifdef __cplusplus
 //}

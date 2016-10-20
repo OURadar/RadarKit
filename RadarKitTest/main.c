@@ -26,25 +26,25 @@ static void handleSignals(int signal) {
 
 int main(int argc, const char * argv[]) {
 
+    int k = 0;
     bool testModuloMath = false;
-    bool testSIMD = true;
+    bool testSIMD = false;
 
     if (testModuloMath) {
         const int N = 4;
-        int i = 0;
 
         RKLog("Test with SlotCount = %d\n", RKBuffer0SlotCount);
-        i = 0;                      RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
-        i = RKBuffer0SlotCount - 4; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
-        i = RKBuffer0SlotCount - 3; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
-        i = RKBuffer0SlotCount - 2; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
-        i = RKBuffer0SlotCount - 1; RKLog("i = %3d --> Next N = %3d\n", i, RKNextNModuloS(i, N, RKBuffer0SlotCount));
-        i = RKBuffer0SlotCount - 1; RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
-        i = 0;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
-        i = 1;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
-        i = 2;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
-        i = 3;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
-        i = 4;                      RKLog("i = %3d --> Prev N = %3d\n", i, RKPreviousNModuloS(i, N, RKBuffer0SlotCount));
+        k = 0;                      RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+        k = RKBuffer0SlotCount - 4; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+        k = RKBuffer0SlotCount - 3; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+        k = RKBuffer0SlotCount - 2; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+        k = RKBuffer0SlotCount - 1; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+        k = RKBuffer0SlotCount - 1; RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+        k = 0;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+        k = 1;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+        k = 2;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+        k = 3;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+        k = 4;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
     }
 
     if (testSIMD) {
@@ -58,27 +58,27 @@ int main(int argc, const char * argv[]) {
     //    signal(SIGTERM, handleSignals);
 
 
-//    RKSetProgramName("iRadar");
-//    rkGlobalParameters.stream = stdout;
-//
-//    RKLog("Initializing ...\n");
-//
-//    radar = RKInit();
-//
-//    RKLog("Radar state machine occupies %s bytes\n", RKIntegerToCommaStyleString(radar->memoryUsage));
-//
-//    RKGoLive(radar);
+    RKSetProgramName("iRadar");
+    rkGlobalParameters.stream = stdout;
+
+    RKLog("Initializing ...\n");
+
+    radar = RKInit();
+
+    RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+
+    RKGoLive(radar);
 
 //    float phi = 0.0f;
 //
 //    for (int i = 0; i < 40000 && radar->active; i++) {
-//        RKInt16Pulse *pulse = RKGetVacantPulse(radar);
+//        RKPulse *pulse = RKGetVacantPulse(radar);
 //        // Fill in the data...
 //        //
 //        //
 //        pulse->header.gateCount = 10000;
 //
-//        for (int k = 0; k < 100; k++) {
+//        for (k = 0; k < 100; k++) {
 //            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
 //            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
 //        }
@@ -113,29 +113,31 @@ int main(int argc, const char * argv[]) {
 //        usleep(200);
 //    }
 
-//    RKInt16Pulse *pulse = RKGetVacantPulse(radar);
-//    pulse->header.gateCount = 6;
-//    pulse->X[0][0].i = 1;
-//    pulse->X[0][0].q = 0;
-//    pulse->X[0][1].i = 1;
-//    pulse->X[0][1].q = 0;
-//
-//    RKInt16 *X = radar->rawPulses[0].X[0];
-//    
-//    printf("X = %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di...\n",
-//           X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q, X[3].i, X[3].q, X[4].i, X[4].q, X[5].i, X[5].q, X[6].i, X[6].q, X[7].i, X[7].q);
-//
-//    sleep(2);
-//
-//    RKComplex *Y = radar->compressedPulses[0].X[0];
-//
-//    printf("Xc = %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi...\n",
-//           Y[0].i, Y[0].q, Y[1].i, Y[1].q, Y[2].i, Y[2].q, Y[3].i, Y[3].q, Y[4].i, Y[4].q, Y[5].i, Y[5].q, Y[6].i, Y[6].q, Y[7].i, Y[7].q);
-//    
-//    RKStop(radar);
-//    
-//    RKLog("Freeing radar ...\n");
-//    RKFree(radar);
+    RKPulse *pulse = RKGetVacantPulse(radar);
+    pulse->header.gateCount = 6;
+    pulse->X[0][0].i = 1;
+    pulse->X[0][0].q = 0;
+    pulse->X[0][1].i = 1;
+    pulse->X[0][1].q = 0;
+    RKSetPulseReady(pulse);
+
+    RKInt16 *X = radar->pulses[0].X[0];
+
+    while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
+        usleep(1000);
+    }
+
+    RKComplex *Y = radar->pulses[0].Y[0];
+
+    printf("X =                    Y =\n");
+    for (k = 0; k < 8; k++) {
+        printf("  %5d%+5di            %9.2f%+9.2fi\n", X[k].i, X[k].q, Y[k].i, Y[k].q);
+    }
+
+    RKStop(radar);
+    
+    RKLog("Freeing radar ...\n");
+    RKFree(radar);
 
     return 0;
 }

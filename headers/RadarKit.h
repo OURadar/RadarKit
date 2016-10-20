@@ -28,8 +28,8 @@
 //#include <RadarKit/RKLocalCommandCenter.h>
 
 
-RKInt16Pulse *RKGetVacantInt16Pulse(RKRadar *radar);
+RKPulse *RKGetVacantInt16Pulse(RKRadar *radar);
 
-void RKSetInt16PulseComplete(RKInt16Pulse *pulse);
+void RKSetPulseComplete(RKPulse *pulse);
 
 #endif /* defined(__RadarKit__) */

@@ -29,7 +29,8 @@ extern RKGlobalParamters rkGlobalParameters;
 // some RK functions here
 
 char *RKNow();
-char *RKIntegerToCommaStyleString(long num);
+char *RKIntegerToCommaStyleString(const long num);
+char *RKFloatToCommaStyleString(const float num);
 void RKSetWantColor(const bool showColor);
 int RKSetProgramName(const char *name);
 int RKSetLogfile(const char *file);

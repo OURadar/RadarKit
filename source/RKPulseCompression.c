@@ -11,15 +11,15 @@
 // Internal functions
 
 void *pulseCompressionCore(void *in);
-int pulseId(RKPulseCompressionEngine *engine);
+int workerThreadId(RKPulseCompressionEngine *engine);
 
 // Implementations
 
-int pulseId(RKPulseCompressionEngine *engine) {
+int workerThreadId(RKPulseCompressionEngine *engine) {
     int i;
     pthread_t id = pthread_self();
     for (i = 0; i < engine->coreCount; i++) {
-        if (id == engine->tid[i]) {
+        if (pthread_equal(id, engine->tid[i]) == 0) {
             return i;
         }
     }
@@ -34,14 +34,14 @@ void *pulseCompressionCore(void *_in) {
     int i, j, k, p;
     struct timeval t0, t1, t2;
 
-    i = pulseId(engine);
+    i = workerThreadId(engine);
     if (i < 0) {
         i = me->id;
         RKLog("Warning. Unable to find my thread ID. Assume %d\n", me->id);
-    } else {
+    } else if (engine->verbose) {
         RKLog("Info. Thread ID %d = %d okay.\n", me->id, i);
     }
-    const int c = i;
+    const int c = me->id;
 
     //const fc = c % engine->filterGroupCount;
 
@@ -69,7 +69,6 @@ void *pulseCompressionCore(void *_in) {
                 return (void *)RKResultFailedToAllocateFFTSpace;
             }
             memset(filters[i][j], 0, RKGateCount * sizeof(fftwf_complex));
-            memcpy(filters[i][j], engine->filters[i][j], engine->anchors[i][j].length * sizeof(fftwf_complex));
             k += RKGateCount * sizeof(fftwf_complex);
         }
     }
@@ -136,15 +135,15 @@ void *pulseCompressionCore(void *_in) {
         // Start of this cycle
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
 
-        RKInt16Pulse *input = &engine->input[i0];
-        RKFloatPulse *output = &engine->output[i0];
+        RKPulse *pulse = &engine->pulses[i0];
 
         #ifdef DEBUG_IQ
         RKLog(">\033[3%dmCore %d\033[0m i0 = %d  stat = %d\n", c + 1, c, i0, input->header.s);
         #endif
 
         // Filter group id
-        const int gid = input->header.i % engine->filterGroupCount;
+        //const int gid = pulse->header.i % engine->filterGroupCount;
+        const int gid = 0;
         
         // Do some work with this pulse
         // DFT of the raw data is stored in *in
@@ -156,18 +155,8 @@ void *pulseCompressionCore(void *_in) {
         for (p = 0; p < 2; p++) {
             // Go through all the filters in this fitler group
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                // Copy and convert the samples
-                for (k = 0, i = engine->anchors[gid][j].origin;
-                     k < input->header.gateCount && k < engine->anchors[gid][j].length;
-                     k++, i++) {
-                    in[k][0] = (float)input->X[p][i].i;
-                    in[k][1] = (float)input->X[p][i].q;
-                }
-                // Zero pad the input; a filter is always zero-padded in the setter function.
-                memset(&in[k][0], 0, (RKGateCount - k) * sizeof(fftwf_complex));
-
                 // Find the right plan
-                planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(input->header.gateCount, engine->anchors[gid][j].length)));
+                planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
                 k = me->planCount;
                 found = false;
                 while (k > 0) {
@@ -185,12 +174,14 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     // FFTW's memory allocation and plan initialization are not thread safe but others are.
                     pthread_mutex_lock(&engine->coreMutex);
-                    #ifdef DEBUG_IQ
-                    RKLog(">\033[3%dmCore %d\033[0m creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, input->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
-                    #endif
+                    if (engine->verbose > 1) {
+                        RKLog(">\033[3%dmCore %d\033[0m creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                    }
                     me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
                     me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
                     me->planFilterForward[gid][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[gid][j], out, FFTW_FORWARD, FFTW_MEASURE);
+                    memset(filters[gid][j], 0, RKGateCount * sizeof(fftwf_complex));
+                    memcpy(filters[gid][j], engine->filters[gid][j], engine->anchors[gid][j].length * sizeof(fftwf_complex));
                     pthread_mutex_unlock(&engine->coreMutex);
                     me->planSizes[planIndex] = planSize;
                     me->planCount++;
@@ -202,17 +193,17 @@ void *pulseCompressionCore(void *_in) {
                     #endif
                 }
 
-//                RKLog(">\033[3%dmCore %d\033[0m  X = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
-//                       in[0][0], in[0][1],
-//                       in[1][0], in[1][1],
-//                       in[2][0], in[2][1],
-//                       in[99][0], in[99][1]);
+                // Copy and convert the samples
+                for (k = 0, i = engine->anchors[gid][j].origin;
+                     k < planSize && i < pulse->header.gateCount;
+                     k++, i++) {
+                    in[k][0] = (RKFloat)pulse->X[p][i].i;
+                    in[k][1] = (RKFloat)pulse->X[p][i].q;
+                }
+                // Zero pad the input; a filter is always zero-padded in the setter function.
+                memset(&in[k][0], 0, (RKGateCount - k) * sizeof(fftwf_complex));
+
                 fftwf_execute(me->planInForward[planIndex]);
-//                RKLog(">\033[3%dmCore %d\033[0m Xf = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
-//                       in[0][0], in[0][1],
-//                       in[1][0], in[1][1],
-//                       in[2][0], in[2][1],
-//                       in[99][0], in[99][1]);
 
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
@@ -226,16 +217,19 @@ void *pulseCompressionCore(void *_in) {
 
                 fftwf_execute(me->planOutBackward[planIndex]);
 
-                for (k = 0, i = engine->anchors[gid][j].length;
-                     k < input->header.gateCount - engine->anchors[gid][j].length && k < engine->anchors[gid][j].length;
+                RKSIMD_iyscl((RKComplex *)in, 1.0f / planSize, planSize);
+
+                for (k = 0, i = engine->anchors[gid][j].length - 1;
+                     k < MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
                      k++, i++) {
-                    output->X[p][k].i = out[i][0];
-                    output->X[p][k].q = out[i][1];
+                    pulse->Y[p][k].i = in[i][0];
+                    pulse->Y[p][k].q = in[i][1];
                 }
-            }
-        }
+            } // filterCount
+        } // p - polarization
 
         engine->pid[c] = i0;
+        pulse->header.s |= RKPulseStatusCompressed;
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -285,20 +279,18 @@ void *pulseWatcher(void *_in) {
     }
     
     c = 0;
-    RKLog("pulseWatcher() started.   c = %d   k = %d\n", c, k);
+    RKLog("pulseWatcher() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->index);
     while (engine->active) {
         // Wait until the engine index move to the next one for storage
-        while (k == *(engine->index) && engine->active) {
+        while (k == *engine->index && engine->active) {
             usleep(200);
         }
-        // Update k to catch up for the next watch
-        k = RKNextModuloS(k, engine->size);
-        while (engine->input[k].header.s != RKPulseStatusReady && engine->active) {
+        while (engine->pulses[k].header.s != RKPulseStatusReady && engine->active) {
             usleep(200);
         }
         if (engine->active) {
             #ifdef DEBUG_IQ
-            RKLog("pulseWatcher() posting core-%d for pulse %d\n", c, RKPreviousModuloS(k, engine->size));
+            RKLog("pulseWatcher() posting core-%d for pulse %d\n", c, k);
             #endif
             if (engine->useSemaphore) {
                 sem_post(sem[c]);
@@ -307,6 +299,8 @@ void *pulseWatcher(void *_in) {
             }
             c = RKNextModuloS(c, engine->coreCount);
         }
+        // Update k to catch up for the next watch
+        k = RKNextModuloS(k, engine->size);
     }
 
     return NULL;
@@ -319,6 +313,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
     engine->coreCount = count;
     engine->active = true;
+    engine->verbose = 2;
     engine->useSemaphore = true;
     for (int i = 0; i < engine->coreCount; i++) {
         snprintf(engine->semaphoreName[i], 16, "rk-sem-%03d", i);
@@ -349,12 +344,10 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
 }
 
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   RKInt16Pulse *input,
-                                                   RKFloatPulse *output,
+                                                   RKPulse *pulses,
                                                    uint32_t *index,
                                                    const uint32_t size) {
-    engine->input = input;
-    engine->output = output;
+    engine->pulses = pulses;
     engine->index = index;
     engine->size = size;
 }
@@ -373,7 +366,9 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     for (i = 0; i < engine->coreCount; i++) {
         sem[i] = sem_open(engine->semaphoreName[i], O_CREAT | O_EXCL, 0600, 0);
         if (sem[i] == SEM_FAILED) {
-            RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", engine->semaphoreName[i]);
+            if (engine->verbose > 1) {
+                RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", engine->semaphoreName[i]);
+            }
             if (sem_unlink(engine->semaphoreName[i])) {
                 RKLog("Error. Unable to unlink semaphore %s.\n", engine->semaphoreName[i]);
             }
@@ -381,7 +376,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
             if (sem[i] == SEM_FAILED) {
                 RKLog("Error. Unable to remove then create semaphore %s\n", engine->semaphoreName[i]);
                 return RKResultFailedToInitiateSemaphore;
-            } else {
+            } else if (engine->verbose > 1) {
                 RKLog("Info. Semaphore %s removed and recreated.\n", engine->semaphoreName[i]);
             }
         }
@@ -402,7 +397,9 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         }
     }
 
-    RKLog("Starting pulse watcher ...\n");
+    if (engine->verbose) {
+        RKLog("Starting pulse watcher ...\n");
+    }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
         return RKResultFailedToStartPulseWatcher;
@@ -417,19 +414,21 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         RKLog("Error. Pulse compression engine has stopped before.\n");
         return 1;
     }
-    RKLog("RKPulseCompressionEngineStop()\n");
+    if (engine->verbose) {
+        RKLog("RKPulseCompressionEngineStop()\n");
+    }
     engine->active = false;
     for (i = 0; i < engine->coreCount; i++) {
         if (engine->useSemaphore) {
             sem_t *sem = sem_open(engine->semaphoreName[i], O_RDWR, 0600, 0);
             sem_post(sem);
         }
-        //RKLog("Waiting for core %d to end.\n", i);
         k += pthread_join(engine->tid[i], NULL);
-        //RKLog("Core %d ended.\n", i);
     }
     k += pthread_join(engine->tidPulseWatcher, NULL);
-    RKLog("pulseWatcher() ended\n");
+    if (engine->verbose) {
+        RKLog("pulseWatcher() ended\n");
+    }
     for (i = 0; i < engine->coreCount; i++) {
         sem_unlink(engine->semaphoreName[i]);
     }
@@ -446,7 +445,7 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
     return 0;
 }
 
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int dataOrigin, const int dataLength, const int group, const int index) {
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int origin, const int maxDataLength, const int group, const int index) {
     if (engine->filterGroupCount >= RKMaxMatchedFilterGroupCount) {
         RKLog("Error. Unable to set anymore filters.\n");
         return RKResultFailedToAddFilter;
@@ -462,13 +461,16 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
-    engine->anchors[group][index].origin = dataOrigin;
-    engine->anchors[group][index].length = dataLength;
-    RKLog("Matched filter set.  group count = %d\n", engine->filterGroupCount);
-    for (int i = 0; i < engine->filterGroupCount; i++) {
-        RKLog(">Filter count of group[%d] = %d\n", i, engine->filterCounts[i]);
-        for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">   Filter[%d] @ origin = %d  maximum length = %s\n", j, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].length));
+    engine->anchors[group][index].origin = origin;
+    engine->anchors[group][index].length = filterLength;
+    engine->anchors[group][index].maxDataLength = maxDataLength;
+    if (engine->verbose) {
+        RKLog("Matched filter set.  group count = %d\n", engine->filterGroupCount);
+        for (int i = 0; i < engine->filterGroupCount; i++) {
+            RKLog(">Filter count of group[%d] = %d\n", i, engine->filterCounts[i]);
+            for (int j = 0; j < engine->filterCounts[i]; j++) {
+                RKLog(">   Filter[%d] @ length = %d  origin = %d  maximum data length = %s\n", j, engine->anchors[i][j].length, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].length));
+            }
         }
     }
     return 0;

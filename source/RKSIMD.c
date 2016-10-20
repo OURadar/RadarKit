@@ -47,7 +47,7 @@ typedef __m128 RKVec;
 #define _rk_mm_movehdup_ps(a)        _mm_movehdup_ps(a)
 #define _rk_mm_moveldup_ps(a)        _mm_moveldup_ps(a)
 #define _rk_mm_shuffle_ps(a, b, m)   _mm_shuffle_ps(a, b, m)
-#define _rk_mm_fmaddsub_ps(a, b, c)  _mm_fmaddsub_ps(a, b, c)
+#define _rk_mm_fmaddsub_ps(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)
 #endif
 
 #define OXSTR(x)   x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
@@ -256,6 +256,16 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
         *d = _rk_mm_fmaddsub_ps(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
         s++;
         d++;
+    }
+    return;
+}
+
+void RKSIMD_iyscl(RKComplex *src, const float m, const int n) {
+    int k;
+    RKVec *s = (RKVec *)src;
+    RKVec mv = _rk_mm_set1_ps(m);
+    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        *s++ *= mv;
     }
     return;
 }
