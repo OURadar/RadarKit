@@ -42,8 +42,7 @@ void *pulseCompressionCore(void *_in) {
         RKLog("Info. Thread ID %d = %d okay.\n", me->id, i);
     }
     const int c = me->id;
-
-    //const fc = c % engine->filterGroupCount;
+    const int gid = 0;
 
     // Find the semaphore
     sem_t *sem = sem_open(engine->semaphoreName[c], O_RDWR);
@@ -93,11 +92,28 @@ void *pulseCompressionCore(void *_in) {
     int sem_val;
     sem_getvalue(sem, &sem_val);
 
+    int planSize = -1, planIndex;
+
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
         RKLog(">\033[3%dmCore %d\033[0m started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
         pthread_mutex_unlock(&engine->coreMutex);
     }
+
+    // FFTW's memory allocation and plan initialization are not thread safe but others are.
+    planIndex = 0;
+    pthread_mutex_lock(&engine->coreMutex);
+    for (j = 0; j < engine->filterCounts[gid]; j++) {
+        planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(10000, engine->anchors[gid][j].maxDataLength)));
+        me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+        me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+        me->planFilterForward[gid][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[gid][j], out, FFTW_FORWARD, FFTW_MEASURE);
+        memset(filters[gid][j], 0, RKGateCount * sizeof(fftwf_complex));
+        memcpy(filters[gid][j], engine->filters[gid][j], engine->anchors[gid][j].length * sizeof(fftwf_complex));
+        me->planSizes[planIndex] = planSize;
+        me->planCount++;
+    }
+    pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
     engine->tic[c]++;
@@ -111,7 +127,6 @@ void *pulseCompressionCore(void *_in) {
     //
 
     uint32_t tic = engine->tic[c];
-    int planSize = -1, planIndex;
     bool found = false;
 
     while (engine->active) {
@@ -144,8 +159,7 @@ void *pulseCompressionCore(void *_in) {
 
         // Filter group id
         //const int gid = pulse->header.i % engine->filterGroupCount;
-        const int gid = 0;
-        
+
         // Do some work with this pulse
         // DFT of the raw data is stored in *in
         // DFT of the filter is stored in *out
@@ -399,7 +413,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     }
 
     if (engine->verbose) {
-        RKLog("Starting pulse watcher ...\n");
+        RKLog("Starting pulseWatcher() ...\n");
     }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");

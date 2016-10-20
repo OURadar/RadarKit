@@ -50,9 +50,12 @@ void pulseCompressionTest(Flag flag) {
     RKComplex *Y = radar->pulses[0].Y[0];
 
     if (flag & FlagShowResults) {
-        printf("X =                    F =                    Y =\n");
+        printf("X =                    F =                           Y =\n");
         for (int k = 0; k < 8; k++) {
-            printf("  %5d%+5di            %9.2f%+9.2fi            %9.2f%+9.2fi\n", X[k].i, X[k].q, F[k].i, F[k].q, Y[k].i, Y[k].q);
+            printf("    %6d %s %6di         %9.2f %s %9.2fi         %9.2f %s %9.2fi\n",
+                   X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
+                   F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
+                   Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q));
         }
     }
 }
@@ -102,51 +105,51 @@ int main(int argc, const char * argv[]) {
 
     RKGoLive(radar);
 
-//    float phi = 0.0f;
-//
-//    for (int i = 0; i < 40000 && radar->active; i++) {
-//        RKPulse *pulse = RKGetVacantPulse(radar);
-//        // Fill in the data...
-//        //
-//        //
-//        pulse->header.gateCount = 10000;
-//
-//        for (k = 0; k < 100; k++) {
-//            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
-//            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
-//        }
-//
-//        phi += 0.02f;
-//
-//        RKSetPulseReady(pulse);
-//
-//        if (i % 1000 == 0) {
-//            printf("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n",
-//                   i % RKBuffer0SlotCount,
-//                   *radar->pulseCompressionEngine->index,
-//                   radar->pulseCompressionEngine->pid[0],
-//                   radar->pulseCompressionEngine->pid[1],
-//                   radar->pulseCompressionEngine->pid[2],
-//                   radar->pulseCompressionEngine->pid[3],
-//                   radar->pulseCompressionEngine->pid[4],
-//                   radar->pulseCompressionEngine->pid[5],
-//                   radar->pulseCompressionEngine->pid[6],
-//                   radar->pulseCompressionEngine->pid[7],
-//                   radar->pulseCompressionEngine->dutyCycle[0],
-//                   radar->pulseCompressionEngine->dutyCycle[1],
-//                   radar->pulseCompressionEngine->dutyCycle[2],
-//                   radar->pulseCompressionEngine->dutyCycle[3],
-//                   radar->pulseCompressionEngine->dutyCycle[4],
-//                   radar->pulseCompressionEngine->dutyCycle[5],
-//                   radar->pulseCompressionEngine->dutyCycle[6],
-//                   radar->pulseCompressionEngine->dutyCycle[7]
-//                   );
-//        }
-//
-//        usleep(200);
-//    }
+    float phi = 0.0f;
 
-    pulseCompressionTest(FlagShowResults);
+    for (int i = 0; i < 40000 && radar->active; i++) {
+        RKPulse *pulse = RKGetVacantPulse(radar);
+        // Fill in the data...
+        //
+        //
+        pulse->header.gateCount = 10000;
+
+        for (k = 0; k < 100; k++) {
+            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
+            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+        }
+
+        phi += 0.02f;
+
+        RKSetPulseReady(pulse);
+
+        if (i % 1000 == 0) {
+            printf("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n",
+                   i % RKBuffer0SlotCount,
+                   *radar->pulseCompressionEngine->index,
+                   radar->pulseCompressionEngine->pid[0],
+                   radar->pulseCompressionEngine->pid[1],
+                   radar->pulseCompressionEngine->pid[2],
+                   radar->pulseCompressionEngine->pid[3],
+                   radar->pulseCompressionEngine->pid[4],
+                   radar->pulseCompressionEngine->pid[5],
+                   radar->pulseCompressionEngine->pid[6],
+                   radar->pulseCompressionEngine->pid[7],
+                   radar->pulseCompressionEngine->dutyCycle[0],
+                   radar->pulseCompressionEngine->dutyCycle[1],
+                   radar->pulseCompressionEngine->dutyCycle[2],
+                   radar->pulseCompressionEngine->dutyCycle[3],
+                   radar->pulseCompressionEngine->dutyCycle[4],
+                   radar->pulseCompressionEngine->dutyCycle[5],
+                   radar->pulseCompressionEngine->dutyCycle[6],
+                   radar->pulseCompressionEngine->dutyCycle[7]
+                   );
+        }
+
+        usleep(200);
+    }
+
+    //pulseCompressionTest(FlagShowResults);
 
     RKStop(radar);
     
