@@ -37,6 +37,7 @@ struct rk_pulse_compression_worker {
     fftwf_plan  planOutBackward[RKPulseCompressionDFTPlanCount];
     fftwf_plan  planFilterForward[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount][RKPulseCompressionDFTPlanCount];
     RKPulseCompressionEngine *parentEngine;
+    double      dutyBuff[1000];
 };
 
 struct rk_pulse_compression_engine {

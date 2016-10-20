@@ -132,6 +132,8 @@ void *pulseCompressionCore(void *_in) {
     uint32_t tic = engine->tic[c];
     bool found = false;
 
+    int d0 = 0;
+
     while (engine->active) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
@@ -226,6 +228,7 @@ void *pulseCompressionCore(void *_in) {
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
                 RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+
                 //RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
 
 //                // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
@@ -253,8 +256,14 @@ void *pulseCompressionCore(void *_in) {
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
+        me->dutyBuff[d0] = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
+
+        *dutyCycle = *dutyCycle + 0.001 * (me->dutyBuff[d0] - me->dutyBuff[RKPreviousModuloS(d0, 1000)]);
+
+        d0 = RKNextModuloS(d0, 1000);
+
         //*dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
-        *dutyCycle = 0.998 * *dutyCycle + 0.002 * RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
+        //*dutyCycle = 0.998 * *dutyCycle + 0.002 * RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
 
         t2 = t0;
     }
