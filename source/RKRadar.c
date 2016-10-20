@@ -49,7 +49,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         radar->memoryUsage += bytes;
         radar->state |= RKRadarStateRayBufferInitiated;
     }
-    
+
     if (flags & RKInitFlagAllocRawIQBuffer) {
         bytes = RKBuffer0SlotCount * sizeof(RKPulse);
         if (posix_memalign((void **)&radar->pulses, RKSIMDAlignSize, bytes)) {
@@ -62,22 +62,6 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         for (int i = 0; i < RKBuffer0SlotCount; i++) {
             radar->pulses[i].header.i = i - RKBuffer0SlotCount;
         }
-        
-//        bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
-//        if (posix_memalign((void **)&radar->compressedPulses, RKSIMDAlignSize, bytes)) {
-//            RKLog("ERROR. Unable to allocate memory for compressed pulses");
-//            return NULL;
-//        }
-//        radar->memoryUsage += bytes;
-//        radar->state |= RKRadarStateCompressedIQBufferInitiated;
-//
-//        bytes = RKBuffer0SlotCount * sizeof(RKFloatPulse);
-//        if (posix_memalign((void **)&radar->filteredCompressedPulses, RKSIMDAlignSize, bytes)) {
-//            RKLog("ERROR. Unable to allocate memory for filtered compressed pulse");
-//            return NULL;
-//        }
-//        radar->memoryUsage += bytes;
-//        radar->state |= RKRadarStateFilteredCompressedIQBufferInitiated;
     }
 
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();

@@ -49,7 +49,7 @@ typedef struct RKRadar {
     RKRadarState               state;
     bool                       active;
     //
-    unsigned int               memoryUsage;
+    size_t                     memoryUsage;
     //
     //
     //

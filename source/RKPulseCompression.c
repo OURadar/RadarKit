@@ -38,7 +38,7 @@ void *pulseCompressionCore(void *_in) {
     if (i < 0) {
         i = me->id;
         RKLog("Warning. Unable to find my thread ID. Assume %d\n", me->id);
-    } else if (engine->verbose) {
+    } else if (engine->verbose > 1) {
         RKLog("Info. Thread ID %d = %d okay.\n", me->id, i);
     }
     const int c = me->id;
@@ -68,7 +68,6 @@ void *pulseCompressionCore(void *_in) {
                 RKLog("Error. Unable to allocate resources for FFTW.\n");
                 return (void *)RKResultFailedToAllocateFFTSpace;
             }
-            memset(filters[i][j], 0, RKGateCount * sizeof(fftwf_complex));
             k += RKGateCount * sizeof(fftwf_complex);
         }
     }
@@ -94,9 +93,11 @@ void *pulseCompressionCore(void *_in) {
     int sem_val;
     sem_getvalue(sem, &sem_val);
 
-    pthread_mutex_lock(&engine->coreMutex);
-    RKLog(">\033[3%dmCore %d\033[0m started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
-    pthread_mutex_unlock(&engine->coreMutex);
+    if (engine->verbose) {
+        pthread_mutex_lock(&engine->coreMutex);
+        RKLog(">\033[3%dmCore %d\033[0m started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
+        pthread_mutex_unlock(&engine->coreMutex);
+    }
 
     // Increase the tic once to indicate this processing core is created.
     engine->tic[c]++;
@@ -313,7 +314,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
     engine->coreCount = count;
     engine->active = true;
-    engine->verbose = 2;
+    engine->verbose = 1;
     engine->useSemaphore = true;
     for (int i = 0; i < engine->coreCount; i++) {
         snprintf(engine->semaphoreName[i], 16, "rk-sem-%03d", i);
