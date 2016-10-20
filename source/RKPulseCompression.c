@@ -276,6 +276,8 @@ void *pulseCompressionCore(void *_in) {
     free(zi);
     free(zo);
 
+    RKLog(">\033[3%dmCore %d\033[0m ended.\n", c + 1, c);
+    
     return NULL;
 }
 
@@ -433,9 +435,9 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
             sem_t *sem = sem_open(engine->semaphoreName[i], O_RDWR, 0600, 0);
             sem_post(sem);
         }
-        RKLog("Waiting for core %d to end.\n", i);
+        //RKLog("Waiting for core %d to end.\n", i);
         k += pthread_join(engine->tid[i], NULL);
-        RKLog("Core %d ended.\n", i);
+        //RKLog("Core %d ended.\n", i);
     }
     k += pthread_join(engine->tidPulseWatcher, NULL);
     RKLog("pulseWatcher() ended\n");

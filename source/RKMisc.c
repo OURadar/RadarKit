@@ -17,19 +17,22 @@ int RKLog(const char *whatever, ...) {
     if (rkGlobalParameters.logfile[0] != 0)
         logFileID = fopen(rkGlobalParameters.logfile, "a");
     if (logFileID != NULL) {
+        va_start(args, whatever);
         if (whatever[0] != '.') {
             if (whatever[0] == '-' || whatever[0] == '*') {
                 fprintf(logFileID, "%s\n", RKNow());
+                ret = vfprintf(logFileID, whatever, args);
             } else if (whatever[0] == '>') {
                 fprintf(logFileID, "                    : [%s] ", rkGlobalParameters.program);
+                ret = vfprintf(logFileID, whatever, args);
             } else {
                 fprintf(logFileID, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
+                ret = vfprintf(logFileID, whatever + 1, args);
             }
         }
-        va_start(args, whatever);
-        ret = vfprintf(logFileID, whatever, args);
-        if (whatever[strlen(whatever) - 1] != '\n')
+        if (whatever[strlen(whatever) - 1] != '\n') {
             fprintf(logFileID, "\n");
+        }
         fclose(logFileID);
     }
     if (rkGlobalParameters.stream != NULL) {
