@@ -2,6 +2,9 @@
 //  RKSIMD.c
 //  RadarKit
 //
+//  This library of functions is incomplete.
+//  If RKFloat is double, more work will be needed.
+//
 //  Created by Boon Leng Cheong on 10/18/16.
 //
 //
@@ -10,44 +13,35 @@
 
 #ifdef __AVX512F__
 typedef __m512 RKVec;
-#define _rk_mm_add_ps(a, b)          _mm512_add_ps(a, b)
-#define _rk_mm_sub_ps(a, b)          _mm512_sub_ps(a, b)
-#define _rk_mm_mul_ps(a, b)          _mm512_mul_ps(a, b)
-#define _rk_mm_set1_ps(a)            _mm512_set1_ps(a)
-#define _rk_mm_loadu_ps(a)           _mm512_loadu_ps(a)
-#define _rk_mm_unpacklo_ps(a, b)     _mm512_unpacklo_ps(a, b)
-#define _rk_mm_unpackhi_ps(a, b)     _mm512_unpackhi_ps(a, b)
-#define _rk_mm_movehdup_ps(a)        _mm512_movehdup_ps(a)
-#define _rk_mm_moveldup_ps(a)        _mm512_moveldup_ps(a)
-#define _rk_mm_shuffle_ps(a, b, m)   _mm512_shuffle_ps(a, b, m)
-#define _rk_mm_fmaddsub_ps(a, b, c)  _mm512_fmaddsub_ps(a, b, c)
+#define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
+#define _rk_mm_sub_pf(a, b)          _mm512_sub_ps(a, b)
+#define _rk_mm_mul_pf(a, b)          _mm512_mul_ps(a, b)
+#define _rk_mm_set1_pf(a)            _mm512_set1_ps(a)
+#define _rk_mm_movehdup_pf(a)        _mm512_movehdup_ps(a)
+#define _rk_mm_moveldup_pf(a)        _mm512_moveldup_ps(a)
+#define _rk_mm_shuffle_pf(a, b, m)   _mm512_shuffle_ps(a, b, m)
+#define _rk_mm_fmaddsub_pf(a, b, c)  _mm512_fmaddsub_ps(a, b, c)
 #elif __AVX__
 typedef __m256 RKVec;
-#define _rk_mm_add_ps(a, b)          _mm256_add_ps(a, b)
-#define _rk_mm_sub_ps(a, b)          _mm256_sub_ps(a, b)
-#define _rk_mm_mul_ps(a, b)          _mm256_mul_ps(a, b)
-#define _rk_mm_set1_ps(a)            _mm256_set1_ps(a)
-#define _rk_mm_loadu_ps(a)           _mm256_loadu_ps(a)
-#define _rk_mm_unpacklo_ps(a, b)     _mm256_unpacklo_ps(a, b)
-#define _rk_mm_unpackhi_ps(a, b)     _mm256_unpackhi_ps(a, b)
-#define _rk_mm_movehdup_ps(a)        _mm256_movehdup_ps(a)
-#define _rk_mm_moveldup_ps(a)        _mm256_moveldup_ps(a)
-#define _rk_mm_shuffle_ps(a, b, m)   _mm256_shuffle_ps(a, b, m)
-//#define _rk_mm_fmaddsub_ps(a, b, c)  _mm256_fmaddsub_ps(a, b, c)
-#define _rk_mm_fmaddsub_ps(a, b, c)  _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
+#define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
+#define _rk_mm_sub_pf(a, b)          _mm256_sub_ps(a, b)
+#define _rk_mm_mul_pf(a, b)          _mm256_mul_ps(a, b)
+#define _rk_mm_set1_pf(a)            _mm256_set1_ps(a)
+#define _rk_mm_movehdup_pf(a)        _mm256_movehdup_ps(a)
+#define _rk_mm_moveldup_pf(a)        _mm256_moveldup_ps(a)
+#define _rk_mm_shuffle_pf(a, b, m)   _mm256_shuffle_ps(a, b, m)
+//#define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_fmaddsub_ps(a, b, c)
+#define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
 #else
 typedef __m128 RKVec;
-#define _rk_mm_add_ps(a, b)          _mm_add_ps(a, b)
-#define _rk_mm_sub_ps(a, b)          _mm_sub_ps(a, b)
-#define _rk_mm_mul_ps(a, b)          _mm_mul_ps(a, b)
-#define _rk_mm_set1_ps(a)            _mm_set1_ps(a)
-#define _rk_mm_loadu_ps(a)           _mm_loadu_ps(a)
-#define _rk_mm_unpacklo_ps(a, b)     _mm_unpacklo_ps(a, b)
-#define _rk_mm_unpackhi_ps(a, b)     _mm_unpackhi_ps(a, b)
-#define _rk_mm_movehdup_ps(a)        _mm_movehdup_ps(a)
-#define _rk_mm_moveldup_ps(a)        _mm_moveldup_ps(a)
-#define _rk_mm_shuffle_ps(a, b, m)   _mm_shuffle_ps(a, b, m)
-#define _rk_mm_fmaddsub_ps(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)
+#define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)
+#define _rk_mm_sub_pf(a, b)          _mm_sub_ps(a, b)
+#define _rk_mm_mul_pf(a, b)          _mm_mul_ps(a, b)
+#define _rk_mm_set1_pf(a)            _mm_set1_ps(a)
+#define _rk_mm_movehdup_pf(a)        _mm_movehdup_ps(a)
+#define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
+#define _rk_mm_shuffle_pf(a, b, m)   _mm_shuffle_ps(a, b, m)
+#define _rk_mm_fmaddsub_pf(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)
 #endif
 
 #define OXSTR(x)   x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
@@ -92,8 +86,8 @@ void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
     RKVec *di  = (RKVec *)dst->i;
     RKVec *dq  = (RKVec *)dst->q;
     for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-        *di++ = _rk_mm_add_ps(*s1i++, *s2i++);
-        *dq++ = _rk_mm_add_ps(*s1q++, *s2q++);
+        *di++ = _rk_mm_add_pf(*s1i++, *s2i++);
+        *dq++ = _rk_mm_add_pf(*s1q++, *s2q++);
     }
     return;
 }
@@ -109,16 +103,16 @@ void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
     if (c) {
         // Conjugate s2
         for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            *di = _rk_mm_add_ps(_rk_mm_mul_ps(*s1i, *s2i), _rk_mm_mul_ps(*s1q, *s2q)); // I = I1 * I2 + Q1 * Q2
-            *dq = _rk_mm_sub_ps(_rk_mm_mul_ps(*s1q, *s2i), _rk_mm_mul_ps(*s1i, *s2q)); // Q = Q1 * I2 - I1 * Q2
+            *di = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 + Q1 * Q2
+            *dq = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1q, *s2i), _rk_mm_mul_pf(*s1i, *s2q)); // Q = Q1 * I2 - I1 * Q2
             s1i++; s1q++;
             s2i++; s2q++;
             di++; dq++;
         }
     } else {
         for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            *di = _rk_mm_sub_ps(_rk_mm_mul_ps(*s1i, *s2i), _rk_mm_mul_ps(*s1q, *s2q)); // I = I1 * I2 - Q1 * Q2
-            *dq = _rk_mm_add_ps(_rk_mm_mul_ps(*s1i, *s2q), _rk_mm_mul_ps(*s1q, *s2i)); // Q = I1 * Q2 + Q1 * I2
+            *di = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 - Q1 * Q2
+            *dq = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2q), _rk_mm_mul_pf(*s1q, *s2i)); // Q = I1 * Q2 + Q1 * I2
             s1i++; s1q++;
             s2i++; s2q++;
             di++; dq++;
@@ -135,8 +129,8 @@ void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n) {
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
     for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-        *di = _rk_mm_add_ps(*di, *si++);
-        *dq = _rk_mm_add_ps(*dq, *sq++);
+        *di = _rk_mm_add_pf(*di, *si++);
+        *dq = _rk_mm_add_pf(*dq, *sq++);
         di++;
         dq++;
     }
@@ -154,16 +148,16 @@ void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
     if (c) {
         // Conjugate s2
         for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            i = _rk_mm_add_ps(_rk_mm_mul_ps(*di, *si), _rk_mm_mul_ps(*dq, *sq)); // I = I1 * I2 + Q1 * Q2
-            q = _rk_mm_sub_ps(_rk_mm_mul_ps(*dq, *si), _rk_mm_mul_ps(*di, *sq)); // Q = Q1 * I2 - I1 * Q2
+            i = _rk_mm_add_pf(_rk_mm_mul_pf(*di, *si), _rk_mm_mul_pf(*dq, *sq)); // I = I1 * I2 + Q1 * Q2
+            q = _rk_mm_sub_pf(_rk_mm_mul_pf(*dq, *si), _rk_mm_mul_pf(*di, *sq)); // Q = Q1 * I2 - I1 * Q2
             *di++ = i;
             *dq++ = q;
             si++; sq++;
         }
     } else {
         for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            i = _rk_mm_sub_ps(_rk_mm_mul_ps(*di, *si), _rk_mm_mul_ps(*dq, *sq)); // I = I1 * I2 - Q1 * Q2
-            q = _rk_mm_add_ps(_rk_mm_mul_ps(*di, *sq), _rk_mm_mul_ps(*dq, *si)); // Q = I1 * Q2 + Q1 * I2
+            i = _rk_mm_sub_pf(_rk_mm_mul_pf(*di, *si), _rk_mm_mul_pf(*dq, *sq)); // I = I1 * I2 - Q1 * Q2
+            q = _rk_mm_add_pf(_rk_mm_mul_pf(*di, *sq), _rk_mm_mul_pf(*dq, *si)); // Q = I1 * Q2 + Q1 * I2
             *di++ = i;
             *dq++ = q;
             si++; sq++;
@@ -184,16 +178,16 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
     if (c) {
         // Conjugate s2
         for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            *di = _rk_mm_add_ps(*di, _rk_mm_add_ps(_rk_mm_mul_ps(*s1i, *s2i), _rk_mm_mul_ps(*s1q, *s2q))); // I += I1 * I2 + Q1 * Q2
-            *dq = _rk_mm_add_ps(*dq, _rk_mm_sub_ps(_rk_mm_mul_ps(*s1q, *s2i), _rk_mm_mul_ps(*s1i, *s2q))); // Q += Q1 * I2 - I1 * Q2
+            *di = _rk_mm_add_pf(*di, _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q))); // I += I1 * I2 + Q1 * Q2
+            *dq = _rk_mm_add_pf(*dq, _rk_mm_sub_pf(_rk_mm_mul_pf(*s1q, *s2i), _rk_mm_mul_pf(*s1i, *s2q))); // Q += Q1 * I2 - I1 * Q2
             s1i++; s1q++;
             s2i++; s2q++;
             di++; dq++;
         }
     } else {
         for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            *di = _rk_mm_add_ps(*di, _rk_mm_sub_ps(_rk_mm_mul_ps(*s1i, *s2i), _rk_mm_mul_ps(*s1q, *s2q))); // I += I1 * I2 - Q1 * Q2
-            *dq = _rk_mm_add_ps(*dq, _rk_mm_add_ps(_rk_mm_mul_ps(*s1i, *s2q), _rk_mm_mul_ps(*s1q, *s2i))); // Q += I1 * Q2 + Q1 * I2
+            *di = _rk_mm_add_pf(*di, _rk_mm_sub_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q))); // I += I1 * I2 - Q1 * Q2
+            *dq = _rk_mm_add_pf(*dq, _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2q), _rk_mm_mul_pf(*s1q, *s2i))); // Q += I1 * Q2 + Q1 * I2
             s1i++; s1q++;
             s2i++; s2q++;
             di++; dq++;
@@ -205,26 +199,26 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 // Multiply by a scale
 void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
     int k;
-    const RKVec fv = _rk_mm_set1_ps(f);
+    const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
     for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-        *di++ = _rk_mm_mul_ps(*si++, fv);
-        *dq++ = _rk_mm_mul_ps(*sq++, fv);
+        *di++ = _rk_mm_mul_pf(*si++, fv);
+        *dq++ = _rk_mm_mul_pf(*sq++, fv);
     }
     return;
 }
 
 // Add by a float
-void RKSIMD_ssadd(float *src, const float f, float *dst, const int n) {
+void RKSIMD_ssadd(float *src, const RKFloat f, float *dst, const int n) {
     int k;
-    const RKVec fv = _rk_mm_set1_ps(f);
+    const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *s = (RKVec *)src;
     RKVec *d = (RKVec *)dst;
     for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-        *d++ = _rk_mm_add_ps(*s++, fv);
+        *d++ = _rk_mm_add_pf(*s++, fv);
     }
     return;
 }
@@ -249,21 +243,21 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     RKVec *s = (RKVec *)src;                                     // [a  b  x  y ]
     RKVec *d = (RKVec *)dst;                                     // [c  d  z  w ]
     for (k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
-        r = _rk_mm_moveldup_ps(*s);                              // [a  a  x  x ]
-        i = _rk_mm_movehdup_ps(*s);                              // [b  b  y  y ]
-        x = _rk_mm_shuffle_ps(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
-        i = _rk_mm_mul_ps(i, x);                                 // [bd bc yw yz]
-        *d = _rk_mm_fmaddsub_ps(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+        r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
+        i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
+        x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
+        i = _rk_mm_mul_pf(i, x);                                 // [bd bc yw yz]
+        *d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
         s++;
         d++;
     }
     return;
 }
 
-void RKSIMD_iyscl(RKComplex *src, const float m, const int n) {
+void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {
     int k;
     RKVec *s = (RKVec *)src;
-    RKVec mv = _rk_mm_set1_ps(m);
+    RKVec mv = _rk_mm_set1_pf(m);
     for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
         *s++ *= mv;
     }

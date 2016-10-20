@@ -52,9 +52,12 @@ void *pulseCompressionCore(void *_in) {
     };
 
     // Allocate local resources, use k to keep track of the total allocation
-    fftwf_complex *in = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
-    fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+    // Avoid fftwf_malloc() here so that if a non-avx-enabled libfftw is compatible
+    fftwf_complex *in;
+    fftwf_complex *out;
     fftwf_complex *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+    posix_memalign((void **)&in, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
+    posix_memalign((void **)&out, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
     if (in == NULL || out == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
@@ -62,7 +65,7 @@ void *pulseCompressionCore(void *_in) {
     k = 2 * RKGateCount * sizeof(fftwf_complex);
     for (i = 0; i < engine->filterGroupCount; i++) {
         for (j = 0; j < engine->filterCounts[i]; j++) {
-            filters[i][j] = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
+            posix_memalign((void **)&filters[i][j], RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
             if (filters[i][j] == NULL) {
                 RKLog("Error. Unable to allocate resources for FFTW.\n");
                 return (void *)RKResultFailedToAllocateFFTSpace;
@@ -223,6 +226,7 @@ void *pulseCompressionCore(void *_in) {
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
                 RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+                //RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
 
 //                // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
 //                RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
@@ -264,11 +268,11 @@ void *pulseCompressionCore(void *_in) {
         }
     }
 
-    fftwf_free(in);
-    fftwf_free(out);
+    free(in);
+    free(out);
     for (i = 0; i < engine->filterGroupCount; i++) {
         for (j = 0; j < engine->filterCounts[i]; j++) {
-            fftwf_free(filters[i][j]);
+            free(filters[i][j]);
         }
     }
     free(zi);
