@@ -253,7 +253,8 @@ void *pulseCompressionCore(void *_in) {
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
-        *dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
+        //*dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
+        *dutyCycle = 0.998 * *dutyCycle + 0.002 * RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
 
         t2 = t0;
     }

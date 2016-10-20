@@ -60,6 +60,24 @@ void pulseCompressionTest(Flag flag) {
     }
 }
 
+void moduloMathTest(void) {
+    int k;
+    const int N = 4;
+
+    RKLog("Test with SlotCount = %d\n", RKBuffer0SlotCount);
+    k = 0;                      RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 4; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 3; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 2; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 1; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 1; RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 0;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 1;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 2;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 3;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 4;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+}
+
 int main(int argc, const char * argv[]) {
 
     int k = 0;
@@ -67,20 +85,7 @@ int main(int argc, const char * argv[]) {
     bool testSIMD = false;
 
     if (testModuloMath) {
-        const int N = 4;
-
-        RKLog("Test with SlotCount = %d\n", RKBuffer0SlotCount);
-        k = 0;                      RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-        k = RKBuffer0SlotCount - 4; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-        k = RKBuffer0SlotCount - 3; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-        k = RKBuffer0SlotCount - 2; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-        k = RKBuffer0SlotCount - 1; RKLog("k = %3d --> Next N = %3d\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-        k = RKBuffer0SlotCount - 1; RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-        k = 0;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-        k = 1;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-        k = 2;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-        k = 3;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-        k = 4;                      RKLog("k = %3d --> Prev N = %3d\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+        moduloMathTest();
     }
 
     if (testSIMD) {
@@ -106,47 +111,57 @@ int main(int argc, const char * argv[]) {
     RKGoLive(radar);
 
     float phi = 0.0f;
+    struct timeval t0, t1;
+    double dt = 0.0;
+    const int chunkSize = 500;
 
-    for (int i = 0; i < 40000 && radar->active; i++) {
-        RKPulse *pulse = RKGetVacantPulse(radar);
-        // Fill in the data...
-        //
-        //
-        pulse->header.gateCount = 10000;
+    int g = 0;
 
-        for (k = 0; k < 100; k++) {
-            pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
-            pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
-        }
+    gettimeofday(&t0, NULL);
 
-        phi += 0.02f;
+    for (int i = 0; i < 50000 && radar->active; i += chunkSize) {
 
-        RKSetPulseReady(pulse);
+        for (int j = 0; j < chunkSize; j++) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            // Fill in the data...
+            pulse->header.gateCount = 10000;
+            for (k = 0; k < 1000; k++) {
+                pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
+                pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+            }
+            phi += 0.02f;
+            RKSetPulseReady(pulse);
+       }
 
-        if (i % 1000 == 0) {
-            printf("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f\n",
-                   i % RKBuffer0SlotCount,
-                   *radar->pulseCompressionEngine->index,
-                   radar->pulseCompressionEngine->pid[0],
-                   radar->pulseCompressionEngine->pid[1],
-                   radar->pulseCompressionEngine->pid[2],
-                   radar->pulseCompressionEngine->pid[3],
-                   radar->pulseCompressionEngine->pid[4],
-                   radar->pulseCompressionEngine->pid[5],
-                   radar->pulseCompressionEngine->pid[6],
-                   radar->pulseCompressionEngine->pid[7],
-                   radar->pulseCompressionEngine->dutyCycle[0],
-                   radar->pulseCompressionEngine->dutyCycle[1],
-                   radar->pulseCompressionEngine->dutyCycle[2],
-                   radar->pulseCompressionEngine->dutyCycle[3],
-                   radar->pulseCompressionEngine->dutyCycle[4],
-                   radar->pulseCompressionEngine->dutyCycle[5],
-                   radar->pulseCompressionEngine->dutyCycle[6],
-                   radar->pulseCompressionEngine->dutyCycle[7]
-                   );
-        }
+        RKLog("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f | %.5f %d\n",
+              (i + chunkSize) % RKBuffer0SlotCount,
+              *radar->pulseCompressionEngine->index,
+              radar->pulseCompressionEngine->pid[0],
+              radar->pulseCompressionEngine->pid[1],
+              radar->pulseCompressionEngine->pid[2],
+              radar->pulseCompressionEngine->pid[3],
+              radar->pulseCompressionEngine->pid[4],
+              radar->pulseCompressionEngine->pid[5],
+              radar->pulseCompressionEngine->pid[6],
+              radar->pulseCompressionEngine->pid[7],
+              radar->pulseCompressionEngine->dutyCycle[0],
+              radar->pulseCompressionEngine->dutyCycle[1],
+              radar->pulseCompressionEngine->dutyCycle[2],
+              radar->pulseCompressionEngine->dutyCycle[3],
+              radar->pulseCompressionEngine->dutyCycle[4],
+              radar->pulseCompressionEngine->dutyCycle[5],
+              radar->pulseCompressionEngine->dutyCycle[6],
+              radar->pulseCompressionEngine->dutyCycle[7], dt / chunkSize, g
+              );
 
-        usleep(200);
+        g = 0;
+        do {
+            gettimeofday(&t1, NULL);
+            dt = RKTimevalDiff(t1, t0);
+            usleep(1000);
+            g++;
+        } while (dt < 0.0002 * chunkSize);
+        t0 = t1;
     }
 
     //pulseCompressionTest(FlagShowResults);
