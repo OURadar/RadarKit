@@ -216,24 +216,13 @@ void *pulseCompressionCore(void *_in) {
 
                 fftwf_execute(me->planFilterForward[gid][j][planIndex]);
 
-                //RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+                RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
 
-                // Deinterleave the data into RKIQZ format
-                for (k = 0; k < planSize; k++) {
-                    zi->i[k] = in[k][0];
-                    zi->q[k] = in[k][1];
-                    zo->i[k] = out[k][0];
-                    zo->q[k] = out[k][1];
-                }
-
-                // Multiply using SIMD
-                RKSIMD_izmul(zi, zo, planSize, true);
-
-                // Interleave the result back into RKComplex format
-                for (k = 0; k < planSize; k++) {
-                    out[k][0] = zo->i[k];
-                    out[k][1] = zo->q[k];
-                }
+//                // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
+//                RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
+//                RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
+//                RKSIMD_izmul(zi, zo, planSize, true);
+//                RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
 
                 fftwf_execute(me->planOutBackward[planIndex]);
 

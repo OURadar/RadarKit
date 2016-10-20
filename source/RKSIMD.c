@@ -203,7 +203,7 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 }
 
 // Multiply by a scale
-void RKSIMD_zsmul(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
+void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
     int k;
     const RKVec fv = _rk_mm_set1_ps(f);
     RKVec *si = (RKVec *)src->i;
@@ -229,7 +229,7 @@ void RKSIMD_ssadd(float *src, const float f, float *dst, const int n) {
     return;
 }
 
-void RKSIMD_iymul0(RKComplex *src, RKComplex *dst, const int n) {
+void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
     int k;
     RKFloat fi, fq;
     for (k = 0; k < n; k++) {
@@ -260,7 +260,32 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     return;
 }
 
-void RKSIMDDemo(const int show) {
+void RKSIMD_IQZ2Complex(RKIQZ *src, RKComplex *dst, const int n) {
+    RKFloat *si = &src->i[0];
+    RKFloat *sq = &src->q[0];
+    RKFloat *d = &dst->i;
+    for (int i = 0; i < n; i++) {
+        *d++ = *si++;
+        *d++ = *sq++;
+    }
+    return;
+}
+
+void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n) {
+    RKFloat *s = &src[0].i;
+    RKFloat *di = &dst->i[0];
+    RKFloat *dq = &dst->q[0];
+    for (int i = 0; i < n; i++) {
+        *di++ = *s++;
+        *dq++ = *s++;
+    }
+    return;
+}
+
+#define RKSIMD_TEST_DESC_FORMAT        "%65s"
+#define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
+
+void RKSIMDDemo(const RKSIMDDemoFlag flag) {
     RKSIMD_show_info();
 
     int i;
@@ -275,6 +300,8 @@ void RKSIMDDemo(const int show) {
     bool good;
     bool all_good = true;
 
+    //
+
     for ( i = 0; i < n; i++) {
         src->i[i] = (RKFloat)i;
         src->q[i] = (RKFloat)-i;
@@ -282,124 +309,112 @@ void RKSIMDDemo(const int show) {
 
     RKSIMD_zcpy(src, dst, n);
 
-    if (show) {
+    if (flag & RKSIMDDemoFlagShowNumbers) {
         printf("====\n");
     }
     all_good = true;
     for (i = 0; i < n; i++) {
         good = src->i[i] == dst->i[i] && src->q[i] == dst->q[i];
-        if (show) {
+        if (flag & RKSIMDDemoFlagShowNumbers) {
             printf("src[%2d] = %9.2f%+9.2fi   dst[%2d] = %9.2f%+9.2fi\n", i, src->i[i], src->q[i], i, dst->i[i], dst->q[i]);
         }
         all_good &= good;
     }
-    if (all_good) {
-        printf("Vector Copy \033[32msuccessful\033[0m.\n");
-    } else {
-        printf("Vector Copy \033[31mfailed\033[0m.\n");
-    }
+    RKSIMD_TEST_RESULT("Complex Vector Copy -  zcpy", all_good);
 
-    RKSIMD_zadd(src, src, dst, n);
+    //
 
-    if (show) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, 2-2i, 3-3i, 4-4i, ...
-        good = fabsf(dst->i[i] - (float)(2 * i)) < tiny && fabs(dst->q[i] - (float)(-2 * i)) < tiny;
-        if (show) {
-            printf("%9.2f%+9.2fi ++ -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    if (all_good) {
-        printf("Vector Addition \033[32msuccessful\033[0m.\n");
-    } else {
-        printf("Vector Addition \033[31mfailed\033[0m.\n");
-    }
+    RKSIMD_zscl(src, 3.0f, dst, n);
 
-    RKSIMD_zcpy(src, dst, n);
-    RKSIMD_izadd(src, dst, n);
-
-    if (show) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (int i = 0; i < n; i++) {
-        // Answers should be 0, 2-2i, 3-3i, 4-4i, ...
-        good = fabsf(dst->i[i] - (float)(2 * i)) < tiny && fabs(dst->q[i] - (float)(-2 * i)) < tiny;
-        if (show) {
-            printf("%9.2f%+9.2fi ++ -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    if (all_good) {
-        printf("In-place Vector Addition \033[32msuccessful\033[0m.\n");
-    } else {
-        printf("In-place Vector Addition \033[31mfailed\033[0m.\n");
-    }
-
-    RKSIMD_zmul(src, src, dst, n, false);
-
-    if (show) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, -2i, -8i, -18i, ...
-        good = fabsf(dst->i[i]) < tiny && fabs(dst->q[i] - (float)(-2 * i * i)) < tiny;
-        if (show) {
-            printf("%9.2f%+9.2fi ** -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    if (all_good) {
-        printf("Vector Multiplication \033[32msuccessful\033[0m.\n");
-    } else {
-        printf("Vector Multiplication \033[31mfailed\033[0m.\n");
-    }
-
-    RKSIMD_zcpy(src, dst, n);
-    RKSIMD_izmul(src, dst, n, false);
-
-    if (show) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, -2i, -8i, -18i, ...
-        good = fabsf(dst->i[i]) < tiny && fabs(dst->q[i] - (float)(-2 * i * i)) < tiny;
-        if (show) {
-            printf("%9.2f%+9.2fi ** -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    if (all_good) {
-        printf("In-place Vector Multiplication \033[32msuccessful\033[0m.\n");
-    } else {
-        printf("In-place Vector Multiplication \033[31mfailed\033[0m.\n");
-    }
-
-    RKSIMD_zsmul(src, 3.0f, dst, n);
-
-    if (show) {
+    if (flag & RKSIMDDemoFlagShowNumbers) {
         printf("====\n");
     }
     all_good = true;
     for (i = 0; i < n; i++) {
         // Answers should be 0, 3-3i, 6-6i, 9-9i, ...
         good = fabsf(dst->i[i] - 3.0f * i) < tiny && fabs(dst->q[i] + 3.0f * i) < tiny;
-        if (show) {
+        if (flag & RKSIMDDemoFlagShowNumbers) {
             printf("%9.2f%+9.2fi x 3.0 -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
         }
         all_good &= good;
     }
-    if (all_good) {
-        printf("Vector Scaling \033[32msuccessful\033[0m.\n");
-    } else {
-        printf("Vector Scaling \033[31mfailed\033[0m.\n");
+    RKSIMD_TEST_RESULT("Complex Vector Scaling by a Float -  zscl", all_good);
+    
+    //
+
+    RKSIMD_zadd(src, src, dst, n);
+
+    if (flag & RKSIMDDemoFlagShowNumbers) {
+        printf("====\n");
     }
+    all_good = true;
+    for (i = 0; i < n; i++) {
+        // Answers should be 0, 2-2i, 3-3i, 4-4i, ...
+        good = fabsf(dst->i[i] - (float)(2 * i)) < tiny && fabs(dst->q[i] - (float)(-2 * i)) < tiny;
+        if (flag & RKSIMDDemoFlagShowNumbers) {
+            printf("%9.2f%+9.2fi ++ -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
+        }
+        all_good &= good;
+    }
+    RKSIMD_TEST_RESULT("Complex Vector Addition -  zadd", all_good);
+
+    //
+
+    RKSIMD_zcpy(src, dst, n);
+    RKSIMD_izadd(src, dst, n);
+
+    if (flag & RKSIMDDemoFlagShowNumbers) {
+        printf("====\n");
+    }
+    all_good = true;
+    for (int i = 0; i < n; i++) {
+        // Answers should be 0, 2-2i, 3-3i, 4-4i, ...
+        good = fabsf(dst->i[i] - (float)(2 * i)) < tiny && fabs(dst->q[i] - (float)(-2 * i)) < tiny;
+        if (flag & RKSIMDDemoFlagShowNumbers) {
+            printf("%9.2f%+9.2fi ++ -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
+        }
+        all_good &= good;
+    }
+    RKSIMD_TEST_RESULT("In-place Complex Vector Addition - izadd", all_good);
+
+    //
+
+    RKSIMD_zmul(src, src, dst, n, false);
+
+    if (flag & RKSIMDDemoFlagShowNumbers) {
+        printf("====\n");
+    }
+    all_good = true;
+    for (i = 0; i < n; i++) {
+        // Answers should be 0, -2i, -8i, -18i, ...
+        good = fabsf(dst->i[i]) < tiny && fabs(dst->q[i] - (float)(-2 * i * i)) < tiny;
+        if (flag & RKSIMDDemoFlagShowNumbers) {
+            printf("%9.2f%+9.2fi ** -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
+        }
+        all_good &= good;
+    }
+    RKSIMD_TEST_RESULT("Complex Vector Multiplication -  zmul", all_good);
+
+    //
+
+    RKSIMD_zcpy(src, dst, n);
+    RKSIMD_izmul(src, dst, n, false);
+
+    if (flag & RKSIMDDemoFlagShowNumbers) {
+        printf("====\n");
+    }
+    all_good = true;
+    for (i = 0; i < n; i++) {
+        // Answers should be 0, -2i, -8i, -18i, ...
+        good = fabsf(dst->i[i]) < tiny && fabs(dst->q[i] - (float)(-2 * i * i)) < tiny;
+        if (flag & RKSIMDDemoFlagShowNumbers) {
+            printf("%9.2f%+9.2fi ** -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
+        }
+        all_good &= good;
+    }
+    RKSIMD_TEST_RESULT("In-place Complex Vector Multiplication - izmul", all_good);
+
+    //
 
     RKComplex *cs = (RKComplex *)src;
     RKComplex *cd = (RKComplex *)dst;
@@ -416,45 +431,50 @@ void RKSIMDDemo(const int show) {
     memcpy(cc, cd, n * sizeof(RKComplex));
     RKSIMD_iymul(cs, cd, n);
 
-    if (show) {
+    if (flag & RKSIMDDemoFlagShowNumbers) {
         printf("====\n");
     }
     all_good = true;
     for (i = 0; i < n; i++) {
         // Answers should be  ... 0, 1-3i, 2-10i, 3-21i, ...
         good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
-        if (show) {
+        if (flag & RKSIMDDemoFlagShowNumbers) {
             printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
         }
         all_good &= good;
     }
-    printf("Vector Complex Multiplication %s.\033[0m\n", all_good ? "\033[32msuccessful" : "\033[31mfailed");
+    RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul", all_good);
 
-    // Repopulate
+    //
+
     for (i = 0; i < n; i++) {
-        src->i[i] = (RKFloat)i;
-        src->q[i] = (RKFloat)(-i);
-        dst->i[i] = (RKFloat)(i + 1);
-        dst->q[i] = (RKFloat)(-i);
+        cc[i].i = (RKFloat)i;
+        cc[i].q = (RKFloat)(-i);
     }
-    RKSIMD_zcpy(dst, cpy, n);
+    RKSIMD_Complex2IQZ(cc, src, n);
+    for (i = 0; i < n; i++) {
+        cc[i].i = (RKFloat)(i + 1);
+        cc[i].q = (RKFloat)(-i);
+    }
+    RKSIMD_Complex2IQZ(cc, dst, n);
     RKSIMD_izmul(src, dst, n, false);
-    if (show) {
+    RKSIMD_IQZ2Complex(dst, cc, n);
+    if (flag & RKSIMDDemoFlagShowNumbers) {
         printf("====\n");
     }
     all_good = true;
     for (i = 0; i < n; i++) {
         // Answers should be  ... 0, 1-3i, 2-10i, 3-21i, ...
-        good = fabsf(dst->i[i] - (RKFloat)i) < tiny && fabsf(dst->q[i] - (RKFloat)(-2 * i * i - i)) < tiny;
-        if (show) {
+        good = fabsf(cc[i].i - (RKFloat)i) < tiny && fabsf(cc[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
+        if (flag & RKSIMDDemoFlagShowNumbers) {
             printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", src->i[i], src->q[i], cpy->i[i], cpy->q[i], dst->i[i], dst->q[i], OXSTR(good));
         }
         all_good &= good;
     }
-    printf("Vector Deinterleave In-place Complex Multiplication %s.\033[0m\n", all_good ? "\033[32msuccessful" : "\033[31mfailed");
+    RKSIMD_TEST_RESULT("Deinterleave, Multiply Using iymul, and Interleave", all_good);
 
-    if (show > 1) {
-        printf("==== Performance test ====\n");
+    if (flag > 1) {
+        printf("\n==== Performance test ====\n\n");
 
         int k;
         const int m = 100000;
@@ -474,43 +494,38 @@ void RKSIMDDemo(const int show) {
         gettimeofday(&t2, NULL);
         printf("In-place SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
 
+        printf("Vectorized Complex Multiplication (%dK loops):\n", m / 1000);
         gettimeofday(&t1, NULL);
         for (k = 0; k < m; k++) {
-            RKSIMD_iymul0(cs, cd, RKGateCount);
+            RKSIMD_iymul_reg(cs, cd, RKGateCount);
         }
         gettimeofday(&t2, NULL);
-        printf("Regular non-SIMD complex multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+        printf("              -Os: %.3fs (compiler optimized)\n", RKTimevalDiff(t2, t1));
 
         gettimeofday(&t1, NULL);
         for (k = 0; k < m; k++) {
             RKSIMD_iymul(cs, cd, RKGateCount);
         }
         gettimeofday(&t2, NULL);
-        printf("In-place SIMD complex multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+        printf("            iymul: %.3fs (Normal interleaved I/Q)\n", RKTimevalDiff(t2, t1));
 
         gettimeofday(&t1, NULL);
         for (k = 0; k < m; k++) {
-            RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, n, false);
+            RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
         }
         gettimeofday(&t2, NULL);
-        printf("In-place SIMD deinterleaved complex multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+        printf("            izmul: %.3fs (Deinterleaved I/Q)\n", RKTimevalDiff(t2, t1));
 
         gettimeofday(&t1, NULL);
         for (k = 0; k < m; k++) {
-            for (i = 0; i < n; i++) {
-                src->i[i] = cc[i].i;
-                src->q[i] = cc[i].q;
-            }
-            RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, n, false);
-            for (i = 0; i < n; i++) {
-                cc[i].i = src->i[i];
-                cc[i].q = src->q[i];
-            }
+            RKSIMD_Complex2IQZ(cc, src, RKGateCount);
+            RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
+            RKSIMD_IQZ2Complex(dst, cc, RKGateCount);
         }
         gettimeofday(&t2, NULL);
-        printf("Data deinterleaving + multiplication + interleaving time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
-        printf("====\n");
-    }
+        printf("    E + izmul + D: %.3fs (D, Multiply, I)\n", RKTimevalDiff(t2, t1));
+        printf("\n==========================\n");
+}
 
     free(src);
     free(dst);

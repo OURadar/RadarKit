@@ -44,19 +44,28 @@
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>
 
+typedef int RKSIMDDemoFlag;
+enum RKSIMDDemoFlag {
+    RKSIMDDemoFlagNull               = 0,
+    RKSIMDDemoFlagShowNumbers        = 1,
+    RKSIMDDemoFlagPerformanceTest    = 1 << 1
+};
+
 void RKSIMD_show_info(void);
-void RKSIMD_zcpy(RKIQZ *src, RKIQZ *dst, const int n);
-void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
-void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
+void RKSIMD_zcpy (RKIQZ *src, RKIQZ *dst, const int n);
+void RKSIMD_zadd (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
+void RKSIMD_zmul (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n);
-void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
-void RKSIMD_zsmul(RKIQZ *src, const float f, RKIQZ *dst, const int n);
+void RKSIMD_zcma (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
+void RKSIMD_zscl (RKIQZ *src, const float f, RKIQZ *dst, const int n);
+void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n);
+void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n);
 void RKSIMD_ssadd(float *src, const float f, float *dst, const int n);
 
-void RKSIMD_iymul0(RKComplex *src, RKComplex *dst, const int n);
-void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n);
+void RKSIMD_IQZ2Complex(RKIQZ *src, RKComplex *dst, const int n);
+void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n);
 
-void RKSIMDDemo(const int);
+void RKSIMDDemo(const RKSIMDDemoFlag);
 
 #endif
