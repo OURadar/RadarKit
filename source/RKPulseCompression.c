@@ -484,7 +484,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         for (int i = 0; i < engine->filterGroupCount; i++) {
             RKLog(">Filter count of group[%d] = %d\n", i, engine->filterCounts[i]);
             for (int j = 0; j < engine->filterCounts[i]; j++) {
-                RKLog(">   Filter[%d] @ length = %d  origin = %d  maximum data length = %s\n", j, engine->anchors[i][j].length, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].length));
+                RKLog(">   Filter[%d] @ length = %d  origin = %d  maximum data length = %s\n", j, engine->anchors[i][j].length, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
             }
         }
     }
