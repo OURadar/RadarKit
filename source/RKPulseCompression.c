@@ -26,33 +26,32 @@ int pulseId(RKPulseCompressionEngine *engine) {
     return -1;
 }
 
-#define RK_CORE_PREFIX "                    : [iRadar] \033[3%dmCore %d\033[0m"
-
 
 void *pulseCompressionCore(void *_in) {
-    RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
-
-    const int c = pulseId(engine);
-
-    if (c < 0) {
-        fprintf(stderr, "Unable to find my thread ID.\n");
-        return NULL;
-    }
-
-    //const fc = c % engine->filterGroupCount;
-
-    RKPulseCompressionWorker *me = &engine->workers[c];
+    RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
+    RKPulseCompressionEngine *engine = me->parentEngine;
 
     int i, j, k, p;
     struct timeval t0, t1, t2;
-    
+
+    i = pulseId(engine);
+    if (i < 0) {
+        i = me->id;
+        RKLog("Warning. Unable to find my thread ID. Assume %d\n", me->id);
+    } else {
+        RKLog("Info. Thread ID %d = %d okay.\n", me->id, i);
+    }
+    const int c = i;
+
+    //const fc = c % engine->filterGroupCount;
+
+    // Find the semaphore
     sem_t *sem = sem_open(engine->semaphoreName[c], O_RDWR);
     if (sem == SEM_FAILED) {
         RKLog("Error. Unable to retrieve semaphore %d\n", c);
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
 
-    
     // Allocate local resources, use k to keep track of the total allocation
     fftwf_complex *in = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
     fftwf_complex *out = (fftwf_complex *)fftwf_malloc(RKGateCount * sizeof(fftwf_complex));
@@ -97,7 +96,7 @@ void *pulseCompressionCore(void *_in) {
     sem_getvalue(sem, &sem_val);
 
     pthread_mutex_lock(&engine->coreMutex);
-    printf(RK_CORE_PREFIX " started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
+    RKLog(">\033[3%dmCore %d\033[0m started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -118,7 +117,7 @@ void *pulseCompressionCore(void *_in) {
     while (engine->active) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
-            printf(RK_CORE_PREFIX " sem_wait()\n", c + 1, c);
+            RKLog(">\033[3%dmCore %d\033[0m sem_wait()\n", c + 1, c);
             #endif
             sem_wait(sem);
         } else {
@@ -141,7 +140,7 @@ void *pulseCompressionCore(void *_in) {
         RKFloatPulse *output = &engine->output[i0];
 
         #ifdef DEBUG_IQ
-        printf(RK_CORE_PREFIX " i0 = %d  s = %d\n", c + 1, c, i0, pulse->header.s);
+        RKLog(">\033[3%dmCore %d\033[0m i0 = %d  stat = %d\n", c + 1, c, i0, input->header.s);
         #endif
 
         // Filter group id
@@ -186,9 +185,9 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     // FFTW's memory allocation and plan initialization are not thread safe but others are.
                     pthread_mutex_lock(&engine->coreMutex);
-                    //#ifdef DEBUG_IQ
-                    printf(RK_CORE_PREFIX " creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, input->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
-                    //#endif
+                    #ifdef DEBUG_IQ
+                    RKLog(">\033[3%dmCore %d\033[0m creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, input->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                    #endif
                     me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
                     me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
                     me->planFilterForward[gid][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[gid][j], out, FFTW_FORWARD, FFTW_MEASURE);
@@ -199,17 +198,17 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     planSize = me->planSizes[k];
                     #ifdef DEBUG_IQ
-                    printf(RK_CORE_PREFIX " using DFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
+                    RKLog(">\033[3%dmCore %d\033[0m using DFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
                     #endif
                 }
 
-//                printf(RK_CORE_PREFIX "  X = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
+//                RKLog(">\033[3%dmCore %d\033[0m  X = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
 //                       in[0][0], in[0][1],
 //                       in[1][0], in[1][1],
 //                       in[2][0], in[2][1],
 //                       in[99][0], in[99][1]);
                 fftwf_execute(me->planInForward[planIndex]);
-//                printf(RK_CORE_PREFIX " Xf = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
+//                RKLog(">\033[3%dmCore %d\033[0m Xf = [ %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f ... %+9.2f%+9.2f ]\n", c + 1, c,
 //                       in[0][0], in[0][1],
 //                       in[1][0], in[1][1],
 //                       in[2][0], in[2][1],
@@ -251,7 +250,6 @@ void *pulseCompressionCore(void *_in) {
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
-        //printf(RK_CORE_PREFIX " id %d @ buf %d  f = %d  dutyCycle = %.2f %%\n", c + 1, c, pulse->header.i, i0, planSize, 100.0 * *dutyCycle);
 
         *dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
 
@@ -396,7 +394,9 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
                 RKLog("Info. Semaphore %s removed and recreated.\n", engine->semaphoreName[i]);
             }
         }
-        if (pthread_create(&engine->tid[i], NULL, pulseCompressionCore, engine) != 0) {
+        engine->workers[i].id = i;
+        engine->workers[i].parentEngine = engine;
+        if (pthread_create(&engine->tid[i], NULL, pulseCompressionCore, &engine->workers[i]) != 0) {
             RKLog("Error. Failed to start a compression core.\n");
             return RKResultFailedToStartCompressionCore;
         }

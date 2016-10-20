@@ -25,15 +25,20 @@ typedef struct rk_filter_rect {
     int length;
 } RKPulseCompressionFilterAnchor;
 
-typedef struct rk_pulse_compression_worker {
+typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
+typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
+
+struct rk_pulse_compression_worker {
+    int         id;
     int         planCount;
     int         planSizes[RKPulseCompressionDFTPlanCount];
     fftwf_plan  planInForward[RKPulseCompressionDFTPlanCount];
     fftwf_plan  planOutBackward[RKPulseCompressionDFTPlanCount];
     fftwf_plan  planFilterForward[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount][RKPulseCompressionDFTPlanCount];
-} RKPulseCompressionWorker;
+    RKPulseCompressionEngine *parentEngine;
+};
 
-typedef struct rk_pulse_compression_engine {
+struct rk_pulse_compression_engine {
     RKInt16Pulse                     *input;
     RKFloatPulse                     *output;
     uint32_t                         *index;
@@ -59,7 +64,7 @@ typedef struct rk_pulse_compression_engine {
     RKPulseCompressionWorker         *workers;
 
     pthread_mutex_t                  coreMutex;
-} RKPulseCompressionEngine;
+};
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);

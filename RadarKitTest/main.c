@@ -116,17 +116,22 @@ int main(int argc, const char * argv[]) {
 
     RKInt16Pulse *pulse = RKGetVacantPulse(radar);
     pulse->header.gateCount = 6;
-    pulse->X[0][0].i = 1.0f;
-    pulse->X[0][0].q = 0.0f;
-    pulse->X[0][1].i = 1.0f;
-    pulse->X[0][1].q = 0.0f;
+    pulse->X[0][0].i = 1;
+    pulse->X[0][0].q = 0;
+    pulse->X[0][1].i = 1;
+    pulse->X[0][1].q = 0;
+
+    RKInt16 *X = radar->rawPulses[0].X[0];
+    
+    printf("X = %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di  %5d%+5di...\n",
+           X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q, X[3].i, X[3].q, X[4].i, X[4].q, X[5].i, X[5].q, X[6].i, X[6].q, X[7].i, X[7].q);
 
     sleep(2);
 
-    RKComplex *X = radar->compressedPulses[0].X[0];
+    RKComplex *Y = radar->compressedPulses[0].X[0];
 
-    printf("X = %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f  %+9.2f%+9.2f...\n",
-           X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q, X[3].i, X[3].q, X[4].i, X[4].q, X[5].i, X[5].q, X[6].i, X[6].q, X[7].i, X[7].q);
+    printf("Xc = %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi  %9.2f%+9.2fi...\n",
+           Y[0].i, Y[0].q, Y[1].i, Y[1].q, Y[2].i, Y[2].q, Y[3].i, Y[3].q, Y[4].i, Y[4].q, Y[5].i, Y[5].q, Y[6].i, Y[6].q, Y[7].i, Y[7].q);
     
     RKStop(radar);
     
