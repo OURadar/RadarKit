@@ -24,6 +24,39 @@ static void handleSignals(int signal) {
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
 }
 
+typedef int Flag;
+enum Flag {
+    FlagNone        = 0,
+    FlagShowResults = 1
+};
+
+void pulseCompressionTest(Flag flag) {
+    RKPulse *pulse = RKGetVacantPulse(radar);
+    pulse->header.gateCount = 6;
+
+    RKInt16 *X = radar->pulses[0].X[0];
+    memset(X, 0, pulse->header.gateCount * sizeof(RKComplex));
+    pulse->X[0][0].i = 1;
+    pulse->X[0][0].q = 0;
+    pulse->X[0][1].i = 2;
+    pulse->X[0][1].q = 0;
+    RKSetPulseReady(pulse);
+
+    while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
+        usleep(1000);
+    }
+
+    RKComplex *F = &radar->pulseCompressionEngine->filters[0][0][0];
+    RKComplex *Y = radar->pulses[0].Y[0];
+
+    if (flag & FlagShowResults) {
+        printf("X =                    F =                    Y =\n");
+        for (int k = 0; k < 8; k++) {
+            printf("  %5d%+5di            %9.2f%+9.2fi            %9.2f%+9.2fi\n", X[k].i, X[k].q, F[k].i, F[k].q, Y[k].i, Y[k].q);
+        }
+    }
+}
+
 int main(int argc, const char * argv[]) {
 
     int k = 0;
@@ -113,26 +146,7 @@ int main(int argc, const char * argv[]) {
 //        usleep(200);
 //    }
 
-    RKPulse *pulse = RKGetVacantPulse(radar);
-    pulse->header.gateCount = 6;
-    pulse->X[0][0].i = 1;
-    pulse->X[0][0].q = 0;
-    pulse->X[0][1].i = 1;
-    pulse->X[0][1].q = 0;
-    RKSetPulseReady(pulse);
-
-    RKInt16 *X = radar->pulses[0].X[0];
-
-    while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
-        usleep(1000);
-    }
-
-    RKComplex *Y = radar->pulses[0].Y[0];
-
-    printf("X =                    Y =\n");
-    for (k = 0; k < 8; k++) {
-        printf("  %5d%+5di            %9.2f%+9.2fi\n", X[k].i, X[k].q, Y[k].i, Y[k].q);
-    }
+    pulseCompressionTest(FlagShowResults);
 
     RKStop(radar);
     
