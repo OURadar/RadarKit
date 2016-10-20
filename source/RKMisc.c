@@ -107,6 +107,14 @@ void RKSetWantColor(const bool showColor) {
     rkGlobalParameters.showColor = showColor;
 }
 
+void RKSetWantScreenOutput(const bool yes) {
+    if (yes) {
+        rkGlobalParameters.stream = stdout;
+    } else {
+        rkGlobalParameters.stream = NULL;
+    }
+}
+
 int RKSetProgramName(const char *name) {
     if (strlen(name) >= RKMaximumStringLength) {
         return 1;

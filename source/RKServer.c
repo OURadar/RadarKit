@@ -27,7 +27,7 @@ int RKDefaultTerminateHandler(RKOperator *);
 void *RKServerRoutine(void *in) {
     RKServer *M = (RKServer *)in;
 
-    M->state = RKServerStateActive;
+    M->state = RKServerStateOpening;
 
     // Create the socket
     if ((M->sd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -56,8 +56,8 @@ void *RKServerRoutine(void *in) {
     // Bind
     if (bind(M->sd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
         RKLog("Error. RKServerRoutine() failed at bind().\n");
-        close(M->sd);
         M->state = RKServerStateNull;
+        close(M->sd);
         return NULL;
     }
 
@@ -67,6 +67,8 @@ void *RKServerRoutine(void *in) {
         M->state = RKServerStateNull;
         return NULL;
     }
+
+    M->state = RKServerStateActive;
 
     int             sid;
     fd_set          rfd;
@@ -416,6 +418,9 @@ void PSServerSetTerminateHandlerToDefault(RKServer *M) {
 void RKServerActivate(RKServer *M) {
     if (pthread_create(&M->tid, NULL, RKServerRoutine, M)) {
         RKLog("Error. Unable to launch main server.\n");
+    }
+    while (M->state < RKServerStateOpening) {
+        usleep(10000);
     }
 }
 

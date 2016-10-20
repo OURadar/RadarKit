@@ -95,7 +95,7 @@ int main(int argc, const char * argv[]) {
 
 
     RKSetProgramName("iRadar");
-    rkGlobalParameters.stream = stdout;
+    RKSetWantScreenOutput(true);
 
     RKLog("Initializing ...\n");
 

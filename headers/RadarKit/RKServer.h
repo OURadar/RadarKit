@@ -20,6 +20,7 @@ typedef int RKServerState;
 enum RKServerState {
     RKServerStateNull,
     RKServerStateFree,
+    RKServerStateOpening,
     RKServerStateClosing,
     RKServerStateActive
 };

@@ -107,7 +107,7 @@ void *pulseCompressionCore(void *_in) {
     planIndex = 0;
     pthread_mutex_lock(&engine->coreMutex);
     for (j = 0; j < engine->filterCounts[gid]; j++) {
-        planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(10000, engine->anchors[gid][j].maxDataLength)));
+        planSize = 1 << (uint32_t)ceilf(log2f((float)MIN(RKGateCount, engine->anchors[gid][j].maxDataLength)));
         me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
         me->planFilterForward[gid][j][planIndex] = fftwf_plan_dft_1d(planSize, filters[gid][j], out, FFTW_FORWARD, FFTW_MEASURE);
@@ -430,7 +430,9 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     int i, k = 0;
     if (engine->active == false) {
-        RKLog("Error. Pulse compression engine has stopped before.\n");
+        if (engine->verbose > 1) {
+            RKLog("Info. Pulse compression engine has been called to stop before.\n");
+        }
         return 1;
     }
     if (engine->verbose) {

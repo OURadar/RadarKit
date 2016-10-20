@@ -32,6 +32,7 @@ char *RKNow();
 char *RKIntegerToCommaStyleString(const long num);
 char *RKFloatToCommaStyleString(const float num);
 void RKSetWantColor(const bool showColor);
+void RKSetWantScreenOutput(const bool yes);
 int RKSetProgramName(const char *name);
 int RKSetLogfile(const char *file);
 int RKLog(const char *whatever, ...);
