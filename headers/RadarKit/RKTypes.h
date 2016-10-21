@@ -200,6 +200,7 @@ enum RKResult {
     RKResultTooBig,
     RKResultFailedToAllocateFFTSpace,
     RKResultFailedToAllocateFilter,
+    RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAddFilter,
     RKResultNoError = 0
 };

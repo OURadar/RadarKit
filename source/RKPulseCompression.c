@@ -53,9 +53,7 @@ void *pulseCompressionCore(void *_in) {
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that if a non-avx-enabled libfftw is compatible
-    fftwf_complex *in;
-    fftwf_complex *out;
-    fftwf_complex *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+    fftwf_complex *in, *out, *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     posix_memalign((void **)&in, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
     posix_memalign((void **)&out, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
     if (in == NULL || out == NULL) {
@@ -73,22 +71,47 @@ void *pulseCompressionCore(void *_in) {
             k += RKGateCount * sizeof(fftwf_complex);
         }
     }
-    RKIQZ *zi = (RKIQZ *)fftwf_malloc(sizeof(RKIQZ));
-    RKIQZ *zo = (RKIQZ *)fftwf_malloc(sizeof(RKIQZ));
+    RKIQZ *zi, *zo;
+    posix_memalign((void **)&zi, RKSIMDAlignSize, sizeof(RKIQZ));
+    posix_memalign((void **)&zo, RKSIMDAlignSize, sizeof(RKIQZ));
     if (zi == NULL || zo == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     k += 2 * sizeof(RKIQZ);
+    double *busyPeriods, *fullPeriods;
+    posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
+    posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
+    if (busyPeriods == NULL || fullPeriods == NULL) {
+        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        return (void *)RKResultFailedToAllocateDutyCycleBuffer;
+    }
+    k += 2 * RKWorkerDutyCycleBufferSize * sizeof(double);
+    memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    double allBusyPeriods = 0.0, allFullPeriods = 0.0;
+
+    // Initiate a variable to store my name
+    char name[16];
+    if (rkGlobalParameters.showColor) {
+        i = snprintf(name, 16, "\033[3%dm", c % 8 + 1);
+    }
+    i += snprintf(name + i, 16 - i, "Core %d", c);
+    if (rkGlobalParameters.showColor) {
+        snprintf(name + i, 16 - i, "\033[0m");
+    }
 
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
     
-    // The last pulse of the buffer
+    // The last index of the pulse buffer
     uint32_t i0 = RKBuffer0SlotCount - 1;
     i0 = (i0 / engine->coreCount) * engine->coreCount + c;
-    
+
+    // The latest index in the dutyCycle buffer
+    int d0 = 0;
+
     double *dutyCycle = &engine->dutyCycle[c];
     *dutyCycle = 0.0;
 
@@ -96,12 +119,6 @@ void *pulseCompressionCore(void *_in) {
     sem_getvalue(sem, &sem_val);
 
     int planSize = -1, planIndex;
-
-    if (engine->verbose) {
-        pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">\033[3%dmCore %d\033[0m started.  planCount = %d  malloc %s  tic = %d  sem_val = %d\n", c + 1, c, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
-        pthread_mutex_unlock(&engine->coreMutex);
-    }
 
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     planIndex = 0;
@@ -118,6 +135,13 @@ void *pulseCompressionCore(void *_in) {
     }
     pthread_mutex_unlock(&engine->coreMutex);
 
+    // Log my initial state
+    if (engine->verbose) {
+        pthread_mutex_lock(&engine->coreMutex);
+        RKLog(">%s started.  planCount = %d  mem = %s  tic = %d  sem = %d\n", name, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
+        pthread_mutex_unlock(&engine->coreMutex);
+    }
+
     // Increase the tic once to indicate this processing core is created.
     engine->tic[c]++;
 
@@ -132,17 +156,11 @@ void *pulseCompressionCore(void *_in) {
     uint32_t tic = engine->tic[c];
     bool found = false;
 
-    int d0 = 0;
-    double *busyPeriods = (double *)malloc(RKWorkerDutyCycleBufferSize * sizeof(double));
-    double *workPeriods = (double *)malloc(RKWorkerDutyCycleBufferSize * sizeof(double));
-    double allBusyPeriods = 0.0, allWorkPeriods = 0.0;
-    memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
-    memset(workPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
 
     while (engine->active) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
-            RKLog(">\033[3%dmCore %d\033[0m sem_wait()\n", c + 1, c);
+            RKLog(">%s sem_wait()\n", coreName);
             #endif
             sem_wait(sem);
         } else {
@@ -164,7 +182,7 @@ void *pulseCompressionCore(void *_in) {
         RKPulse *pulse = &engine->pulses[i0];
 
         #ifdef DEBUG_IQ
-        RKLog(">\033[3%dmCore %d\033[0m i0 = %d  stat = %d\n", c % 8 + 1, c, i0, input->header.s);
+        RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
         #endif
 
         // Filter group id
@@ -200,7 +218,7 @@ void *pulseCompressionCore(void *_in) {
                     // FFTW's memory allocation and plan initialization are not thread safe but others are.
                     pthread_mutex_lock(&engine->coreMutex);
                     if (engine->verbose > 1) {
-                        RKLog(">\033[3%dmCore %d\033[0m creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", c + 1, c, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
+                        RKLog(">%s creating DFT plan of size %d (gateCount = %d) @ k = %d %d %d\n", name, planSize, pulse->header.gateCount, planIndex, engine->filterGroupCount, engine->filterCounts[0]);
                     }
                     me->planInForward[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
                     me->planOutBackward[planIndex] = fftwf_plan_dft_1d(planSize, out, in, FFTW_BACKWARD, FFTW_MEASURE);
@@ -214,7 +232,7 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     planSize = me->planSizes[k];
                     #ifdef DEBUG_IQ
-                    RKLog(">\033[3%dmCore %d\033[0m using DFT plan of size %d @ k = %d\n", c % 8 + 1, c, planSize, planIndex);
+                    RKLog(">%s using DFT plan of size %d @ k = %d\n", coreName, planSize, planIndex);
                     #endif
                 }
 
@@ -261,23 +279,21 @@ void *pulseCompressionCore(void *_in) {
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
-        // Drop the oldest reading
+        // Drop the oldest reading, replace it, and add to the calculation
         allBusyPeriods -= busyPeriods[d0];
-        allWorkPeriods -= workPeriods[d0];
+        allFullPeriods -= fullPeriods[d0];
+        busyPeriods[d0] = RKTimevalDiff(t0, t1);
+        fullPeriods[d0] = RKTimevalDiff(t0, t2);
+        allBusyPeriods += busyPeriods[d0];
+        allFullPeriods += fullPeriods[d0];
         d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
-        busyPeriods[d0] += RKTimevalDiff(t0, t1);
-        workPeriods[d0] += RKTimevalDiff(t0, t2);
-        *dutyCycle = allBusyPeriods / allWorkPeriods;
-
-//        if (pulse->header.i == 5000 && c == 0) {
-//           for (k = 0; k < RKWorkerDutyCycleBufferSize; k++) {
-//               printf("dutyBuff[%d] = %.4f\n", k, me->dutyBuff[k] * RKWorkerDutyCycleBufferSize);
-//           }
-//        }
+        *dutyCycle = allBusyPeriods / allFullPeriods;
 
         t2 = t0;
     }
 
+    // Destroy all the DFT plans
+    pthread_mutex_lock(&engine->coreMutex);
     for (k = 0; k < me->planCount; k++) {
         fftwf_destroy_plan(me->planInForward[k]);
         fftwf_destroy_plan(me->planOutBackward[k]);
@@ -287,6 +303,7 @@ void *pulseCompressionCore(void *_in) {
             }
         }
     }
+    pthread_mutex_unlock(&engine->coreMutex);
 
     free(in);
     free(out);
@@ -298,9 +315,9 @@ void *pulseCompressionCore(void *_in) {
     free(zi);
     free(zo);
     free(busyPeriods);
-    free(workPeriods);
+    free(fullPeriods);
 
-    RKLog(">\033[3%dmCore %d\033[0m ended.\n", c + 1, c);
+    RKLog(">%s ended.\n", name);
     
     return NULL;
 }
@@ -528,14 +545,21 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     int i, k;
     char string[RKMaximumStringLength];
+    float lag;
     i = *engine->index * 10 / engine->size;
     memset(string, '|', i);
     memset(string + i, '.', 10 - i);
     i = 10;
     i += snprintf(string + i, RKMaximumStringLength, " :");
-    //i = snprintf(string, 256, "i %4.2f :", (float)*engine->index / engine->size);
     for (k = 0; k < engine->coreCount; k++) {
-        i += snprintf(string + i, RKMaximumStringLength - i, " %4.2f", fmodf((float)(*engine->index - engine->pid[k] + engine->size) / engine->size, 1.0f));
+        lag = fmodf((float)(*engine->index - engine->pid[k] + engine->size) / engine->size, 1.0f);
+        if (rkGlobalParameters.showColor) {
+            i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
+                          lag > 0.7 ? 1 : (lag > 0.5 ? 3 : 2),
+                          lag);
+        } else {
+            i += snprintf(string + i, RKMaximumStringLength - i, " %4.2f", lag);
+        }
     }
     i += snprintf(string + i, RKMaximumStringLength - i, " |");
     for (k = 0; k < engine->coreCount; k++) {
@@ -544,8 +568,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
                           engine->dutyCycle[k] > 0.9 ? 1 : (engine->dutyCycle[k] > 0.75 ? 3 : 2),
                           engine->dutyCycle[k]);
         } else {
-            i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f",
-                          engine->dutyCycle[k]);
+            i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f", engine->dutyCycle[k]);
         }
     }
     RKLog("%s", string);

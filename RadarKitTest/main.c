@@ -60,6 +60,54 @@ void pulseCompressionTest(Flag flag) {
     }
 }
 
+void simulateDataStream(void) {
+    int k;
+    float phi = 0.0f;
+    struct timeval t0, t1;
+    double dt = 0.0;
+    const int chunkSize = 500;
+
+    int g = 0;
+
+    gettimeofday(&t0, NULL);
+
+    RKSetLogfile(NULL);
+
+    const int gateCount = (int)(75.0e3f / 3.0f);
+    //float bw = 50.0e6;
+    //const int gateCount = (int)(75.0e3 * 3.0e8 / bw * 0.5);
+
+    for (int i = 0; i < 500000 && radar->active; i += chunkSize) {
+
+        for (int j = 0; j < chunkSize; j++) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            // Fill in the data...
+            pulse->header.gateCount = gateCount;
+            for (k = 0; k < 1000; k++) {
+                pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
+                pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+            }
+            phi += 0.02f;
+            RKSetPulseReady(pulse);
+        }
+
+        //if (i % (2 * chunkSize) == 0) {
+        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
+        //}
+
+        // Wait to simulate 5000-Hz PRF
+        g = 0;
+        do {
+            gettimeofday(&t1, NULL);
+            dt = RKTimevalDiff(t1, t0);
+            usleep(1000);
+            g++;
+        } while (dt < 0.0002 * chunkSize);
+        t0 = t1;
+    }
+}
+
+
 void moduloMathTest(void) {
     int k;
     const int N = 4;
@@ -80,7 +128,6 @@ void moduloMathTest(void) {
 
 int main(int argc, const char * argv[]) {
 
-    int k = 0;
     bool testModuloMath = false;
     bool testSIMD = false;
 
@@ -110,45 +157,8 @@ int main(int argc, const char * argv[]) {
 
     RKGoLive(radar);
 
-    float phi = 0.0f;
-    struct timeval t0, t1;
-    double dt = 0.0;
-    const int chunkSize = 500;
-
-    int g = 0;
-
-    gettimeofday(&t0, NULL);
-
-    RKSetLogfile(NULL);
-
-    for (int i = 0; i < 500000 && radar->active; i += chunkSize) {
-
-        for (int j = 0; j < chunkSize; j++) {
-            RKPulse *pulse = RKGetVacantPulse(radar);
-            // Fill in the data...
-            pulse->header.gateCount = 20000;
-            for (k = 0; k < 1000; k++) {
-                pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
-            }
-            phi += 0.02f;
-            RKSetPulseReady(pulse);
-        }
-
-        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
-
-
-        g = 0;
-        do {
-            gettimeofday(&t1, NULL);
-            dt = RKTimevalDiff(t1, t0);
-            usleep(1000);
-            g++;
-        } while (dt < 0.0002 * chunkSize);
-        t0 = t1;
-    }
-
     //pulseCompressionTest(FlagShowResults);
+    simulateDataStream();
 
     RKStop(radar);
     
