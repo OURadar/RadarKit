@@ -92,13 +92,17 @@ void *pulseCompressionCore(void *_in) {
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
 
     // Initiate a variable to store my name
-    char name[16];
+    char name[20];
     if (rkGlobalParameters.showColor) {
-        i = snprintf(name, 16, "\033[3%dm", c % 8 + 1);
+        i = sprintf(name, "\033[3%dm", c % 8 + 1);
     }
-    i += snprintf(name + i, 16 - i, "Core %d", c);
+    if (engine->coreCount > 9) {
+        i += sprintf(name + i, "Core %02d", c);
+    } else {
+        i += sprintf(name + i, "Core %d", c);
+    }
     if (rkGlobalParameters.showColor) {
-        snprintf(name + i, 16 - i, "\033[0m");
+        sprintf(name + i, "\033[0m");
     }
 
     // Initialize some end-of-loop variables
@@ -106,17 +110,10 @@ void *pulseCompressionCore(void *_in) {
     gettimeofday(&t2, NULL);
     
     // The last index of the pulse buffer
-    uint32_t i0 = RKBuffer0SlotCount - 1;
-    i0 = (i0 / engine->coreCount) * engine->coreCount + c;
+    uint32_t i0 = RKBuffer0SlotCount - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
-
-    double *dutyCycle = &engine->dutyCycle[c];
-    *dutyCycle = 0.0;
-
-    int sem_val;
-    sem_getvalue(sem, &sem_val);
 
     int planSize = -1, planIndex;
 
@@ -138,7 +135,7 @@ void *pulseCompressionCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.  planCount = %d  mem = %s  tic = %d  sem = %d\n", name, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c], sem_val);
+        RKLog(">%s started.  i0 = %d   planCount = %d  mem = %s  tic = %d\n", name, i0, me->planCount, RKIntegerToCommaStyleString(k), engine->tic[c]);
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -210,8 +207,9 @@ void *pulseCompressionCore(void *_in) {
                     }
                 }
                 if (!found) {
+                    RKLog(">%s needs a new plan for DFT size %d ...\n", name, planSize);
                     if (me->planCount >= RKPulseCompressionDFTPlanCount) {
-                        RKLog("Error. Unable to create another DFT plan.\n");
+                        RKLog("Error. Unable to create another DFT plan.  me->planCount = %d\n", me->planCount);
                         exit(EXIT_FAILURE);
                     }
                     planIndex = k;
@@ -287,7 +285,7 @@ void *pulseCompressionCore(void *_in) {
         allBusyPeriods += busyPeriods[d0];
         allFullPeriods += fullPeriods[d0];
         d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
-        *dutyCycle = allBusyPeriods / allFullPeriods;
+        engine->dutyCycle[c] = allBusyPeriods / allFullPeriods;
 
         t2 = t0;
     }
@@ -348,7 +346,7 @@ void *pulseWatcher(void *_in) {
         }
         if (engine->active) {
             #ifdef DEBUG_IQ
-            RKLog("pulseWatcher() posting core-%d for pulse %d\n", c, k);
+            RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
             #endif
             if (engine->useSemaphore) {
                 sem_post(sem[c]);

@@ -76,7 +76,7 @@ void simulateDataStream(void) {
     //const int gateCount = (int)(75.0e3f / 3.0f);
 
     float bw = 50.0e6;
-    const int gateCount = (int)(75.0e3 * 3.0e8 / bw * 0.5);
+    const int gateCount = (int)(75.0e3 / 3.0e8 * bw * 2.0);
 
     for (int i = 0; i < 500000 && radar->active; i += chunkSize) {
 
