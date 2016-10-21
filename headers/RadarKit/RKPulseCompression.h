@@ -15,6 +15,7 @@
 #define RKPulseCompressionDFTPlanCount   4
 #define RKMaxMatchedFilterCount          3   // Maximum filter count within each group
 #define RKMaxMatchedFilterGroupCount     8   // Maximum filter group
+#define RKWorkerDutyCycleBufferSize      1000
 
 //#ifdef __cplusplus
 //extern "C" {

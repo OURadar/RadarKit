@@ -133,6 +133,11 @@ void *pulseCompressionCore(void *_in) {
     bool found = false;
 
     int d0 = 0;
+    double *busyPeriods = (double *)malloc(RKWorkerDutyCycleBufferSize * sizeof(double));
+    double *workPeriods = (double *)malloc(RKWorkerDutyCycleBufferSize * sizeof(double));
+    double allBusyPeriods = 0.0, allWorkPeriods = 0.0;
+    memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    memset(workPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
 
     while (engine->active) {
         if (engine->useSemaphore) {
@@ -153,7 +158,7 @@ void *pulseCompressionCore(void *_in) {
         // Something happened
         gettimeofday(&t1, NULL);
 
-        // Start of this cycle
+        // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
 
         RKPulse *pulse = &engine->pulses[i0];
@@ -256,14 +261,19 @@ void *pulseCompressionCore(void *_in) {
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
-        me->dutyBuff[d0] = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
+        // Drop the oldest reading
+        allBusyPeriods -= busyPeriods[d0];
+        allWorkPeriods -= workPeriods[d0];
+        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
+        busyPeriods[d0] += RKTimevalDiff(t0, t1);
+        workPeriods[d0] += RKTimevalDiff(t0, t2);
+        *dutyCycle = allBusyPeriods / allWorkPeriods;
 
-        *dutyCycle = *dutyCycle + 0.001 * (me->dutyBuff[d0] - me->dutyBuff[RKPreviousModuloS(d0, 1000)]);
-
-        d0 = RKNextModuloS(d0, 1000);
-
-        //*dutyCycle = RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
-        //*dutyCycle = 0.998 * *dutyCycle + 0.002 * RKTimevalDiff(t0, t1) / RKTimevalDiff(t0, t2);
+//        if (pulse->header.i == 5000 && c == 0) {
+//           for (k = 0; k < RKWorkerDutyCycleBufferSize; k++) {
+//               printf("dutyBuff[%d] = %.4f\n", k, me->dutyBuff[k] * RKWorkerDutyCycleBufferSize);
+//           }
+//        }
 
         t2 = t0;
     }
@@ -287,6 +297,8 @@ void *pulseCompressionCore(void *_in) {
     }
     free(zi);
     free(zo);
+    free(busyPeriods);
+    free(workPeriods);
 
     RKLog(">\033[3%dmCore %d\033[0m ended.\n", c + 1, c);
     
