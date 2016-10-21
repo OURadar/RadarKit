@@ -164,7 +164,7 @@ void *pulseCompressionCore(void *_in) {
         RKPulse *pulse = &engine->pulses[i0];
 
         #ifdef DEBUG_IQ
-        RKLog(">\033[3%dmCore %d\033[0m i0 = %d  stat = %d\n", c + 1, c, i0, input->header.s);
+        RKLog(">\033[3%dmCore %d\033[0m i0 = %d  stat = %d\n", c % 8 + 1, c, i0, input->header.s);
         #endif
 
         // Filter group id
@@ -214,7 +214,7 @@ void *pulseCompressionCore(void *_in) {
                     planIndex = k;
                     planSize = me->planSizes[k];
                     #ifdef DEBUG_IQ
-                    RKLog(">\033[3%dmCore %d\033[0m using DFT plan of size %d @ k = %d\n", c + 1, c, planSize, planIndex);
+                    RKLog(">\033[3%dmCore %d\033[0m using DFT plan of size %d @ k = %d\n", c % 8 + 1, c, planSize, planIndex);
                     #endif
                 }
 
@@ -366,7 +366,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
 }
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
-    return RKPulseCompressionEngineInitWithCoreCount(8);
+    return RKPulseCompressionEngineInitWithCoreCount(10);
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
@@ -523,4 +523,30 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
     RKPulseCompressionSetFilter(engine, filter, 1, 0, RKGateCount, 0, 0);
     return 0;
+}
+
+void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
+    int i, k;
+    char string[RKMaximumStringLength];
+    i = *engine->index * 10 / engine->size;
+    memset(string, '|', i);
+    memset(string + i, '.', 10 - i);
+    i = 10;
+    i += snprintf(string + i, RKMaximumStringLength, " :");
+    //i = snprintf(string, 256, "i %4.2f :", (float)*engine->index / engine->size);
+    for (k = 0; k < engine->coreCount; k++) {
+        i += snprintf(string + i, RKMaximumStringLength - i, " %4.2f", fmodf((float)(*engine->index - engine->pid[k] + engine->size) / engine->size, 1.0f));
+    }
+    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    for (k = 0; k < engine->coreCount; k++) {
+        if (rkGlobalParameters.showColor) {
+            i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
+                          engine->dutyCycle[k] > 0.9 ? 1 : (engine->dutyCycle[k] > 0.75 ? 3 : 2),
+                          engine->dutyCycle[k]);
+        } else {
+            i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f",
+                          engine->dutyCycle[k]);
+        }
+    }
+    RKLog("%s", string);
 }

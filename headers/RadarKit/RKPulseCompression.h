@@ -51,10 +51,10 @@ struct rk_pulse_compression_engine {
 
     unsigned int                     coreCount;
     pthread_t                        tidPulseWatcher;
-    pthread_t                        tid[256];
-    uint32_t                         tic[256];
-    uint32_t                         pid[256];
-    double                           dutyCycle[256];
+    pthread_t                        tid[256];         // Thread ID
+    uint32_t                         tic[256];         // Process count
+    uint32_t                         pid[256];         // Latest processed index of pulses buffer
+    double                           dutyCycle[256];   // Latest duty cycle estimate
 
     bool                             useSemaphore;
     char                             semaphoreName[256][16];
@@ -87,6 +87,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
                                 const int group,
                                 const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
+void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus
 //}

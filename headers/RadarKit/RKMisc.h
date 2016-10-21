@@ -15,7 +15,7 @@
 #include <mach/clock.h>
 #endif
 
-
+#define RKDefaultLogfile   "messages.log"
 
 typedef struct RKGlobalParameterStruct {
     char program[RKMaximumStringLength];
@@ -35,6 +35,7 @@ void RKSetWantColor(const bool showColor);
 void RKSetWantScreenOutput(const bool yes);
 int RKSetProgramName(const char *name);
 int RKSetLogfile(const char *file);
+int RKSetLogfileToDefault(void);
 int RKLog(const char *whatever, ...);
 double RKTimevalDiff(const struct timeval, const struct timeval);
 double RKTimespecDiff(const struct timespec, const struct timespec);

@@ -24,12 +24,5 @@
  */
 
 #include <RadarKit/RKRadar.h>
-//#include <RadarKit/RKPulseCompression.h>
-//#include <RadarKit/RKLocalCommandCenter.h>
-
-
-RKPulse *RKGetVacantInt16Pulse(RKRadar *radar);
-
-void RKSetPulseComplete(RKPulse *pulse);
 
 #endif /* defined(__RadarKit__) */

@@ -359,7 +359,7 @@ RKServer *RKServerInit(void) {
     }
     memset(M, 0, sizeof(RKServer));
     M->port = 10000;
-    M->maxClient = 2;
+    M->maxClient = 8;
     M->timeoutInSec = 5;
     pthread_mutex_init(&M->lock, NULL);
 

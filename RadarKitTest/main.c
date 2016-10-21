@@ -119,40 +119,24 @@ int main(int argc, const char * argv[]) {
 
     gettimeofday(&t0, NULL);
 
-    for (int i = 0; i < 50000 && radar->active; i += chunkSize) {
+    RKSetLogfile(NULL);
+
+    for (int i = 0; i < 500000 && radar->active; i += chunkSize) {
 
         for (int j = 0; j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             // Fill in the data...
-            pulse->header.gateCount = 10000;
+            pulse->header.gateCount = 20000;
             for (k = 0; k < 1000; k++) {
                 pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
                 pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
             }
             phi += 0.02f;
             RKSetPulseReady(pulse);
-       }
+        }
 
-        RKLog("dat @ %5u  eng @ %5d : %5u  %5u  %5u  %5u  %5u  %5u  %5u  %5u  |  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f | %.5f %d\n",
-              (i + chunkSize) % RKBuffer0SlotCount,
-              *radar->pulseCompressionEngine->index,
-              radar->pulseCompressionEngine->pid[0],
-              radar->pulseCompressionEngine->pid[1],
-              radar->pulseCompressionEngine->pid[2],
-              radar->pulseCompressionEngine->pid[3],
-              radar->pulseCompressionEngine->pid[4],
-              radar->pulseCompressionEngine->pid[5],
-              radar->pulseCompressionEngine->pid[6],
-              radar->pulseCompressionEngine->pid[7],
-              radar->pulseCompressionEngine->dutyCycle[0],
-              radar->pulseCompressionEngine->dutyCycle[1],
-              radar->pulseCompressionEngine->dutyCycle[2],
-              radar->pulseCompressionEngine->dutyCycle[3],
-              radar->pulseCompressionEngine->dutyCycle[4],
-              radar->pulseCompressionEngine->dutyCycle[5],
-              radar->pulseCompressionEngine->dutyCycle[6],
-              radar->pulseCompressionEngine->dutyCycle[7], dt / chunkSize, g
-              );
+        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
+
 
         g = 0;
         do {

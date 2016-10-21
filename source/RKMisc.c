@@ -14,30 +14,34 @@ int RKLog(const char *whatever, ...) {
         return 0;
     }
     // Construct the string
+    int i = 0;
     va_list args;
     va_start(args, whatever);
     char msg[2048];
     if (whatever[0] == '>') {
-        snprintf(msg, 2048, "                    : [%s] ", rkGlobalParameters.program);
-        vsprintf(msg + strlen(msg), whatever + 1, args);
+        i += snprintf(msg, 2048, "                    : [%s] ", rkGlobalParameters.program);
     } else {
-        snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
-        vsprintf(msg + strlen(msg), whatever, args);
+        i += snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
     }
-    int has_ok = (strstr(msg, " OK") != NULL);
-    int has_not_ok = (strstr(msg, "ERROR") != NULL);
-    int has_warning = (strstr(msg, "WARNING") != NULL);
+    bool has_ok = (strcasestr(msg, "OK") != NULL);
+    bool has_not_ok = (strcasestr(msg, "ERROR") != NULL);
+    bool has_warning = (strcasestr(msg, "WARNING") != NULL);
     if (rkGlobalParameters.showColor) {
         if (has_ok) {
-            strncat(msg, "\033[1;32m", 2048);
+            i += snprintf(msg + i, 2048 - i, "\033[1;32m");
         } else if (has_not_ok) {
-            strncat(msg, "\033[1;31m", 2048);
+            i += snprintf(msg + i, 2048 - i, "\033[1;31m");
         } else if (has_warning) {
-            strncat(msg, "\033[1;33m", 2048);
+            i += snprintf(msg + i, 2048 - i, "\033[1;33m");
         }
     }
+    if (whatever[0] == '>') {
+        i += vsprintf(msg + i, whatever + 1, args);
+    } else {
+        i += vsprintf(msg + i, whatever, args);
+    }
     if (rkGlobalParameters.showColor && (has_ok || has_not_ok || has_warning)) {
-        strncat(msg, "\033[0m", 2048);
+        i += snprintf(msg + i, 2048 - i, "\033[0m");
     }
     if (whatever[strlen(whatever) - 1] != '\n') {
         strncat(msg, "\n", 2048);
@@ -49,7 +53,7 @@ int RKLog(const char *whatever, ...) {
         fflush(rkGlobalParameters.stream);
     }
     // Write the string to a file if specified
-    if (rkGlobalParameters.logfile[0] != 0) {
+    if (rkGlobalParameters.logfile[0] != '\0' && strlen(rkGlobalParameters.logfile) > 0) {
         FILE *logFileID = fopen(rkGlobalParameters.logfile, "a");
         if (logFileID == NULL) {
             fprintf(stderr, "Unable to log.\n");
@@ -124,10 +128,18 @@ int RKSetProgramName(const char *name) {
 }
 
 int RKSetLogfile(const char *filename) {
-    if (strlen(filename) >= RKMaximumStringLength) {
+    if (filename == NULL) {
+        rkGlobalParameters.logfile[0] = '\0';
+        return 0;
+    } else if (strlen(filename) >= RKMaximumStringLength) {
         return 1;
     }
     snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", filename);
+    return 0;
+}
+
+int RKSetLogfileToDefault(void) {
+    snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", RKDefaultLogfile);
     return 0;
 }
 
