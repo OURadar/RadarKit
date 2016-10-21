@@ -158,9 +158,7 @@ int main(int argc, const char * argv[]) {
     RKGoLive(radar);
 
     //pulseCompressionTest(FlagShowResults);
-    //simulateDataStream();
-
-    sleep(30);
+    simulateDataStream();
 
     RKStop(radar);
     

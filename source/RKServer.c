@@ -290,7 +290,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
     O->beacon.type = RKPacketTypeBeacon;
     O->beacon.rawSize = 0;
-    O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
+    O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\0';
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
     if (pthread_create(&O->tid, NULL, RKOperatorRoutine, O)) {
