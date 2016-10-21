@@ -78,7 +78,9 @@ void simulateDataStream(void) {
     float bw = 50.0e6;
     const int gateCount = (int)(75.0e3 / 3.0e8 * bw * 2.0);
 
-    for (int i = 0; i < 500000 && radar->active; i += chunkSize) {
+    RKLog("Using gate count %s\n", RKIntegerToCommaStyleString(gateCount));
+
+    for (int i = 0; i < 10000000 && radar->active; i += chunkSize) {
 
         for (int j = 0; j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
@@ -143,9 +145,6 @@ int main(int argc, const char * argv[]) {
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
-    //    signal(SIGKILL, handleSignals);
-    //    signal(SIGTERM, handleSignals);
-
 
     RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);
@@ -159,7 +158,9 @@ int main(int argc, const char * argv[]) {
     RKGoLive(radar);
 
     //pulseCompressionTest(FlagShowResults);
-    simulateDataStream();
+    //simulateDataStream();
+
+    sleep(30);
 
     RKStop(radar);
     

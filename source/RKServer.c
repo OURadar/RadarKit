@@ -51,7 +51,6 @@ void *RKServerRoutine(void *in) {
         M->state = RKServerStateNull;
         return NULL;
     }
-    RKLog("RKServerRoutine() has SD = %d\n", M->sd);
 
     // Bind
     if (bind(M->sd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
@@ -67,6 +66,8 @@ void *RKServerRoutine(void *in) {
         M->state = RKServerStateNull;
         return NULL;
     }
+
+    RKLog("RKServerRoutine()  sd = %d  port = %d\n", M->sd, M->port);
 
     M->state = RKServerStateActive;
 
@@ -88,7 +89,7 @@ void *RKServerRoutine(void *in) {
                 RKLog("Error. RKServerRoutine() failed at accept().\n");
                 break;
             }
-            RKLog("RKServerRoutine() answering %s:%d (%d)\n", inet_ntoa(sa.sin_addr), sa.sin_port, M->nclient);
+            RKLog("RKServerRoutine() answering %s:%d  (nclient = %d  sd = %d)\n", inet_ntoa(sa.sin_addr), sa.sin_port, M->nclient, sid);
             if (M->nclient >= M->maxClient) {
                 RKLog("RKServerRoutine() busy (nclient = #%d)\n", M->nclient);
                 send(sid, busy_msg, strlen(busy_msg), 0);
@@ -211,6 +212,7 @@ void *RKOperatorRoutine(void *in) {
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
+                    RKLog("Error. Disconnected by client.\n");
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -273,7 +275,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->M = M;
     O->sid = sid;
     O->iid = sid - M->sd;
-    O->state = RKServerStateActive;
+    O->state = RKOperatorStateActive;
     O->option = RKOperatorOptionNone;
     O->timeoutInSec = 10;
     O->usr = M->usr;
@@ -420,7 +422,7 @@ void RKServerActivate(RKServer *M) {
         RKLog("Error. Unable to launch main server.\n");
     }
     while (M->state < RKServerStateOpening) {
-        usleep(10000);
+        usleep(25000);
     }
 }
 

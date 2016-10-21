@@ -479,7 +479,11 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     for (i = 0; i < engine->coreCount; i++) {
         if (engine->useSemaphore) {
             sem_t *sem = sem_open(engine->semaphoreName[i], O_RDWR, 0600, 0);
-            sem_post(sem);
+            if (sem != SEM_FAILED) {
+                sem_post(sem);
+            } else {
+                RKLog("Error. Unable to find semaphore named %s\n", engine->semaphoreName[i]);
+            }
         }
         k += pthread_join(engine->tid[i], NULL);
     }
