@@ -18,6 +18,9 @@ int RKLog(const char *whatever, ...) {
     va_list args;
     va_start(args, whatever);
     char msg[2048];
+    if (strlen(whatever) > 1600) {
+        fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
+    }
     if (whatever[0] == '>') {
         i += snprintf(msg, 2048, "                    : [%s] ", rkGlobalParameters.program);
     } else {

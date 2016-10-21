@@ -45,7 +45,7 @@
 #define RKSIMDAlignSize        64
 /*! @/definedblock */
 
-#define RKMaximumStringLength  256
+#define RKMaximumStringLength  1024
 
 typedef uint8_t   RKBoolean;
 typedef int8_t    RKByte;

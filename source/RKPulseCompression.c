@@ -383,7 +383,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
 }
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
-    return RKPulseCompressionEngineInitWithCoreCount(10);
+    return RKPulseCompressionEngineInitWithCoreCount(12);
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
@@ -547,6 +547,9 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     char string[RKMaximumStringLength];
     float lag;
     i = *engine->index * 10 / engine->size;
+
+    string[RKMaximumStringLength - 1] = '\0';
+    string[RKMaximumStringLength - 2] = '#';
     memset(string, '|', i);
     memset(string + i, '.', 10 - i);
     i = 10;
@@ -562,7 +565,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
         }
     }
     i += snprintf(string + i, RKMaximumStringLength - i, " |");
-    for (k = 0; k < engine->coreCount; k++) {
+    for (k = 0; k < engine->coreCount && i < RKMaximumStringLength - 13; k++) {
         if (rkGlobalParameters.showColor) {
             i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
                           engine->dutyCycle[k] > 0.9 ? 1 : (engine->dutyCycle[k] > 0.75 ? 3 : 2),
@@ -570,6 +573,9 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
         } else {
             i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f", engine->dutyCycle[k]);
         }
+    }
+    if (i > RKMaximumStringLength - 13) {
+        memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
     RKLog("%s", string);
 }

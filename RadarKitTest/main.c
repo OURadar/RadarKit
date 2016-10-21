@@ -73,9 +73,10 @@ void simulateDataStream(void) {
 
     RKSetLogfile(NULL);
 
-    const int gateCount = (int)(75.0e3f / 3.0f);
-    //float bw = 50.0e6;
-    //const int gateCount = (int)(75.0e3 * 3.0e8 / bw * 0.5);
+    //const int gateCount = (int)(75.0e3f / 3.0f);
+
+    float bw = 50.0e6;
+    const int gateCount = (int)(75.0e3 * 3.0e8 / bw * 0.5);
 
     for (int i = 0; i < 500000 && radar->active; i += chunkSize) {
 
@@ -91,9 +92,9 @@ void simulateDataStream(void) {
             RKSetPulseReady(pulse);
         }
 
-        //if (i % (2 * chunkSize) == 0) {
-        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
-        //}
+        if (i % (2 * chunkSize) == 0) {
+            RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
+        }
 
         // Wait to simulate 5000-Hz PRF
         g = 0;
