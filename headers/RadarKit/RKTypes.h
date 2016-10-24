@@ -42,7 +42,7 @@
 #define RKBuffer1SlotCount     200
 #define RKBuffer2SlotCount     4000
 #define RKGateCount            32768        // Must power of 2!
-#define RKSIMDAlignSize        64
+#define RKSIMDAlignSize        64           // SSE 16, AVX 32, AVX-512 64
 /*! @/definedblock */
 
 #define RKMaximumStringLength  1024
@@ -128,11 +128,21 @@ typedef struct rk_pulse_header {
     float       velDps;
 } RKPulseHeader;
 
+typedef union rk_pulse_parameters {
+    struct {
+        uint32_t    planSize;
+        uint32_t    planIndex;
+    };
+    char bytes[RKSIMDAlignSize];
+} RKPulseParameters;
+
+// RKPulse struct is carefully designed to obey the SIMD alignment
 typedef struct rk_pulse {
-    RKPulseHeader  header;
-    RKInt16        X[2][RKGateCount];
-    RKComplex      Y[2][RKGateCount];
-    RKComplex      Z[2][RKGateCount];
+    RKPulseHeader      header;
+    //RKPulseParameters  parameters[];
+    RKInt16            X[2][RKGateCount];
+    RKComplex          Y[2][RKGateCount];
+    RKIQZ              Z[2];
 } RKPulse;
 
 

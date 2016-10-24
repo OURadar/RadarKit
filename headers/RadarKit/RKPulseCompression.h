@@ -12,7 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <fftw3.h>
 
-#define RKPulseCompressionDFTPlanCount   4
+#define RKPulseCompressionDFTPlanCount   16
 #define RKMaxMatchedFilterCount          3   // Maximum filter count within each group
 #define RKMaxMatchedFilterGroupCount     8   // Maximum filter group
 #define RKWorkerDutyCycleBufferSize      1000
@@ -31,38 +31,44 @@ typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
 typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 
 struct rk_pulse_compression_worker {
-    int         id;
-    int         planCount;
-    int         planSizes[RKPulseCompressionDFTPlanCount];
-    fftwf_plan  planInForward[RKPulseCompressionDFTPlanCount];
-    fftwf_plan  planOutBackward[RKPulseCompressionDFTPlanCount];
-    fftwf_plan  planFilterForward[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount][RKPulseCompressionDFTPlanCount];
-    RKPulseCompressionEngine *parentEngine;
-    double      dutyBuff[1000];
+    int                        id;
+    uint32_t                   tic;
+    pthread_t                  tid;                                      // Thread ID
+    uint32_t                   pid;                                      // Latest processed index of pulses buffer
+    char                       semaphoreName[16];
+    double                     dutyBuff[RKWorkerDutyCycleBufferSize];
+    double                     dutyCycle;                                // Latest duty cycle estimate
+    RKPulseCompressionEngine   *parentEngine;
 };
+
+typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
 struct rk_pulse_compression_engine {
     RKPulse                          *pulses;
     uint32_t                         *index;
     uint32_t                         size;
+    uint32_t                         tic;              // Process count
 
     bool                             active;
     int                              verbose;
 
     unsigned int                     coreCount;
     pthread_t                        tidPulseWatcher;
-    pthread_t                        tid[256];         // Thread ID
-    uint32_t                         tic[256];         // Process count
-    uint32_t                         pid[256];         // Latest processed index of pulses buffer
-    double                           dutyCycle[256];   // Latest duty cycle estimate
 
     bool                             useSemaphore;
-    char                             semaphoreName[256][16];
 
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxMatchedFilterGroupCount];
     RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionFilterAnchor   anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+
+    int                              planCount;
+    int                              planSizes[RKPulseCompressionDFTPlanCount];
+    fftwf_plan                       planForwardInPlace[RKPulseCompressionDFTPlanCount];
+    fftwf_plan                       planForwardOutPlace[RKPulseCompressionDFTPlanCount];
+    fftwf_plan                       planBackwardInPlace[RKPulseCompressionDFTPlanCount];
+    RKPulseCompressionPlanIndex      *planIndices;
+
     RKPulseCompressionWorker         *workers;
 
     pthread_mutex_t                  coreMutex;
