@@ -23,6 +23,8 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>

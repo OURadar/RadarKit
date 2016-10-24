@@ -175,8 +175,14 @@ void RKUTCTime(struct timespec *t) {
 }
 
 bool RKFilenameExists(const char *filename) {
-    if (access(filename, R_OK | W_OK)) {
+    if (access(filename, R_OK | W_OK) == 0) {
         return true;
+    } else {
+        struct stat buf;
+        int r = stat(filename, &buf);
+        if (r == 0 && S_ISREG(buf.st_mode)) {
+            return true;
+        }
     }
     return false;
 }

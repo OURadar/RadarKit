@@ -258,7 +258,7 @@ void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {
     int k;
     RKVec *s = (RKVec *)src;
     RKVec mv = _rk_mm_set1_pf(m);
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
         *s++ *= mv;
     }
     return;

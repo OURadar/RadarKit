@@ -40,6 +40,8 @@ void pulseCompressionTest(Flag flag) {
     pulse->X[0][0].q = 0;
     pulse->X[0][1].i = 2;
     pulse->X[0][1].q = 0;
+    pulse->X[0][2].i = 1;
+    pulse->X[0][2].q = 0;
     RKSetPulseReady(pulse);
 
     while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
@@ -153,12 +155,14 @@ int main(int argc, const char * argv[]) {
 
     radar = RKInit();
 
+    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+    
     RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
 
     RKGoLive(radar);
 
-    pulseCompressionTest(FlagShowResults);
-    //simulateDataStream();
+//    pulseCompressionTest(FlagShowResults);
+    simulateDataStream();
 
     RKStop(radar);
     

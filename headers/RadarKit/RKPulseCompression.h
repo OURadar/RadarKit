@@ -95,6 +95,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
                                 const int group,
                                 const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
+int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus

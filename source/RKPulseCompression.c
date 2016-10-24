@@ -26,6 +26,11 @@ int workerThreadId(RKPulseCompressionEngine *engine) {
     return -1;
 }
 
+void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
+    for (int k = 0; k < n; k++) {
+        printf("    %6.2fd %s %6.2fdi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
+    }
+}
 
 void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
@@ -186,7 +191,11 @@ void *pulseCompressionCore(void *_in) {
 
                 fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
 
+                //printf("dft(in) =\n"); RKPulseCompressionShowBuffer(in, 8);
+
                 fftwf_execute_dft(engine->planForwardOutPlace[planIndex], (fftwf_complex *)engine->filters[gid][j], out);
+
+                //printf("dft(filt) =\n"); RKPulseCompressionShowBuffer(in, 8);
 
                 if (multiplyMethod == 1) {
                     // In-place SIMD multiplication using the interleaved format
@@ -202,10 +211,15 @@ void *pulseCompressionCore(void *_in) {
                     RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
                 }
 
+                //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
+
                 fftwf_execute_dft(engine->planBackwardInPlace[planIndex], out, out);
+
+                //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
                 // Scaling due to a net gain of planSize from forward + backward DFT
                 RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
+                //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
                 for (k = 0, i = engine->anchors[gid][j].length - 1;
                      k < MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
@@ -236,10 +250,10 @@ void *pulseCompressionCore(void *_in) {
     }
 
     // Clean up
-    free(in);
-    free(out);
     free(zi);
     free(zo);
+    free(in);
+    free(out);
     free(busyPeriods);
     free(fullPeriods);
 
@@ -260,7 +274,7 @@ void *pulseWatcher(void *_in) {
     int gid;
     int planSize;
     int planIndex = 0;
-    
+
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
     posix_memalign((void **)&in, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
@@ -272,11 +286,13 @@ void *pulseWatcher(void *_in) {
 
     planSize = 1 << (int)ceilf(log2f((float)RKGateCount));
     bool exportWisdom = false;
-    const char *wisdomFile = "fft-wisdom";
+    const char wisdomFile[] = "fft-wisdom";
 
     if (RKFilenameExists(wisdomFile)) {
+        RKLog("Loading DFT wisdom ...\n");
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
+        RKLog("DFT wisdom file not found.\n");
         exportWisdom = true;
     }
 
@@ -409,6 +425,7 @@ void *pulseWatcher(void *_in) {
 
     // Export wisdom
     if (exportWisdom) {
+        RKLog("Saving DFT wisdom ...\n");
         fftwf_export_wisdom_to_filename(wisdomFile);
     }
 
@@ -443,7 +460,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsign
 }
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
-    return RKPulseCompressionEngineInitWithCoreCount(12);
+    return RKPulseCompressionEngineInitWithCoreCount(8);
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
@@ -581,7 +598,13 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    RKPulseCompressionSetFilter(engine, filter, 1, 0, RKGateCount, 0, 0);
+    RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
+    return 0;
+}
+
+int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
+    RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
+    RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
     return 0;
 }
 
