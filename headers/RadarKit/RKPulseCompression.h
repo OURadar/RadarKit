@@ -67,6 +67,8 @@ struct rk_pulse_compression_engine {
     fftwf_plan                       planForwardInPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planForwardOutPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planBackwardInPlace[RKPulseCompressionDFTPlanCount];
+
+    int                              *filterGid;
     RKPulseCompressionPlanIndex      *planIndices;
 
     RKPulseCompressionWorker         *workers;

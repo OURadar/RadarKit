@@ -139,7 +139,7 @@ typedef union rk_pulse_parameters {
 // RKPulse struct is carefully designed to obey the SIMD alignment
 typedef struct rk_pulse {
     RKPulseHeader      header;
-    //RKPulseParameters  parameters[];
+    RKPulseParameters  parameters[4];
     RKInt16            X[2][RKGateCount];
     RKComplex          Y[2][RKGateCount];
     RKIQZ              Z[2];

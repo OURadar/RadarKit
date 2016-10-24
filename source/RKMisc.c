@@ -26,9 +26,9 @@ int RKLog(const char *whatever, ...) {
     } else {
         i += snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
     }
-    bool has_ok = (strcasestr(msg, "OK") != NULL);
-    bool has_not_ok = (strcasestr(msg, "ERROR") != NULL);
-    bool has_warning = (strcasestr(msg, "WARNING") != NULL);
+    bool has_ok = (strcasestr(whatever, "ok") != NULL);
+    bool has_not_ok = (strcasestr(whatever, "error") != NULL);
+    bool has_warning = (strcasestr(whatever, "warning") != NULL);
     if (rkGlobalParameters.showColor) {
         if (has_ok) {
             i += snprintf(msg + i, 2048 - i, "\033[1;32m");
