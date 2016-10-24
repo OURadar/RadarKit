@@ -162,6 +162,7 @@ int main(int argc, const char * argv[]) {
     RKGoLive(radar);
 
 //    pulseCompressionTest(FlagShowResults);
+
     simulateDataStream();
 
     RKStop(radar);

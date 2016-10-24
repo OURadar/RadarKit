@@ -40,11 +40,13 @@
  @define RKGateCount The maximum number of gates allocated for each pulse
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
-#define RKBuffer0SlotCount     5000
-#define RKBuffer1SlotCount     200
-#define RKBuffer2SlotCount     4000
-#define RKGateCount            32768        // Must power of 2!
-#define RKSIMDAlignSize        64           // SSE 16, AVX 32, AVX-512 64
+#define RKBuffer0SlotCount               5000
+#define RKBuffer1SlotCount               200
+#define RKBuffer2SlotCount               4000
+#define RKGateCount                      32768        // Must power of 2!
+#define RKSIMDAlignSize                  64           // SSE 16, AVX 32, AVX-512 64
+#define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
+#define RKMaxMatchedFilterGroupCount     8            // Maximum filter group count
 /*! @/definedblock */
 
 #define RKMaximumStringLength  1024
@@ -130,18 +132,20 @@ typedef struct rk_pulse_header {
     float       velDps;
 } RKPulseHeader;
 
+// Make sure the size (bytes) can cover all the struct elements and still conform to SIMD alignemt
 typedef union rk_pulse_parameters {
     struct {
-        uint32_t    planSize;
-        uint32_t    planIndex;
+        uint32_t    filterCounts[2];
+        uint32_t    planIndices[2][RKMaxMatchedFilterCount];
+        uint32_t    planSizes[2][RKMaxMatchedFilterCount];
     };
-    char bytes[RKSIMDAlignSize];
+    char bytes[RKSIMDAlignSize * 2];
 } RKPulseParameters;
 
 // RKPulse struct is carefully designed to obey the SIMD alignment
 typedef struct rk_pulse {
     RKPulseHeader      header;
-    RKPulseParameters  parameters[4];
+    RKPulseParameters  parameters;
     RKInt16            X[2][RKGateCount];
     RKComplex          Y[2][RKGateCount];
     RKIQZ              Z[2];

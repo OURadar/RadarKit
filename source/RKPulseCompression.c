@@ -227,7 +227,12 @@ void *pulseCompressionCore(void *_in) {
                     pulse->Y[p][k].i = out[i][0];
                     pulse->Y[p][k].q = out[i][1];
                 }
+
+                // Copy over the parameters used
+                pulse->parameters.planIndices[p][j] = planIndex;
+                pulse->parameters.planSizes[p][j] = planSize;
             } // filterCount
+            pulse->parameters.filterCounts[p] = j;
         } // p - polarization
 
         pulse->header.s |= RKPulseStatusCompressed;
@@ -620,7 +625,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     memset(string, '|', i);
     memset(string + i, '.', 10 - i);
     i = 10;
-    i += snprintf(string + i, RKMaximumStringLength, " :");
+    i += sprintf(string + i, " :");
     for (k = 0; k < engine->coreCount; k++) {
         lag = fmodf((float)(*engine->index - engine->workers[k].pid + engine->size) / engine->size, 1.0f);
         if (rkGlobalParameters.showColor) {
@@ -636,7 +641,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
         worker = &engine->workers[k];
         if (rkGlobalParameters.showColor) {
             i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
-                          worker->dutyCycle > 0.9 ? 1 : (worker->dutyCycle > 0.75 ? 3 : 2),
+                          worker->dutyCycle > 0.99 ? 1 : (worker->dutyCycle > 0.95 ? 3 : 2),
                           worker->dutyCycle);
         } else {
             i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f", worker->dutyCycle);
