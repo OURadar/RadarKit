@@ -111,7 +111,7 @@ void *pulseCompressionCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.  i0 = %d   planCount = %d  mem = %s  tic = %d\n", name, i0, engine->planCount, RKIntegerToCommaStyleString(k), me->tic);
+        RKLog(">%s started.  i0 = %d   mem = %s  tic = %d\n", name, i0, RKIntegerToCommaStyleString(k), me->tic);
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -260,8 +260,17 @@ void *pulseWatcher(void *_in) {
 
     planSize = 1 << (int)ceilf(log2f((float)RKGateCount));
 
+    bool exportWisdom = false;
+    const char *wisdomFile = "fft-wisdom";
+
+    if (RKFilenameExists(wisdomFile)) {
+        fftwf_import_wisdom_from_filename(wisdomFile);
+    } else {
+        exportWisdom = true;
+    }
+
     for (j = 0; j < 3; j++) {
-        RKLog("Pre-allocate FFTW resources for plan size %s\n", RKIntegerToCommaStyleString(planSize));
+        RKLog("Pre-allocate FFTW resources for plan size %s (%d)\n", RKIntegerToCommaStyleString(planSize), planIndex);
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
@@ -269,7 +278,6 @@ void *pulseWatcher(void *_in) {
         engine->planCount++;
         planSize /= 2;
     }
-
 
     // Spin off N workers to process I/Q pulses
     for (i = 0; i < engine->coreCount; i++) {
@@ -369,11 +377,17 @@ void *pulseWatcher(void *_in) {
 
     // Wait for workers to return
     for (i = 0; i < engine->coreCount; i++) {
+        RKPulseCompressionWorker *worker = &engine->workers[i];
         if (engine->useSemaphore) {
             sem_post(sem[i]);
         }
-        pthread_join(engine->workers[i].tid, NULL);
-        sem_unlink(engine->workers[i].semaphoreName);
+        pthread_join(worker->tid, NULL);
+        sem_unlink(worker->semaphoreName);
+    }
+
+    // Export wisdom
+    if (exportWisdom) {
+        fftwf_export_wisdom_to_filename(wisdomFile);
     }
 
     // Destroy all the DFT plans

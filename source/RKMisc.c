@@ -173,3 +173,10 @@ void RKUTCTime(struct timespec *t) {
     clock_gettime(CLOCK_REALTIME, t);
 #endif
 }
+
+bool RKFilenameExists(const char *filename) {
+    if (access(filename, R_OK | W_OK)) {
+        return true;
+    }
+    return false;
+}
