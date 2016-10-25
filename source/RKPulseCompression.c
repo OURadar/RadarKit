@@ -188,7 +188,7 @@ void *pulseCompressionCore(void *_in) {
                     in[k][1] = (RKFloat)pulse->X[p][i].q;
                 }
                 // Zero pad the input; a filter is always zero-padded in the setter function.
-                memset(&in[k][0], 0, (planSize - k) * sizeof(fftwf_complex));
+                memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
 
                 fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
 
@@ -604,14 +604,12 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
-    return 0;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
-    RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
-    return 0;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
 }
 
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {

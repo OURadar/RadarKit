@@ -115,3 +115,19 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
 void RKSetPulseReady(RKPulse *pulse) {
     pulse->header.s = RKPulseStatusReady;
 }
+
+// Function incomplete
+int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
+    // Load in the waveform
+    // Call a transceiver delegate function to fill in the DAC
+    RKComplex filter[] = {{1.0f, 0.0f}};
+    return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, 1, 0, maxDataLength, group, 0);
+}
+
+int RKSetWaveformToImpulse(RKRadar *radar) {
+    return RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+}
+
+int RKSetWaveformTo121(RKRadar *radar) {
+    return RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+}

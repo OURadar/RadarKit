@@ -132,9 +132,11 @@ void moduloMathTest(void) {
 
 int main(int argc, const char * argv[]) {
 
+    RKLog("Initializing ...\n");
+
     //moduloMathTest();
 
-//    RKSIMDDemo(RKSIMDDemoFlagPerformanceTestAll);
+    RKSIMDDemo(RKSIMDDemoFlagPerformanceTestAll);
 //    RKSIMDDemo(RKSIMDDemoFlagShowNumbers);
 
     // Catch Ctrl-C and exit gracefully
@@ -144,12 +146,9 @@ int main(int argc, const char * argv[]) {
     RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);
 
-    RKLog("Initializing ...\n");
 
     radar = RKInit();
 
-    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
-    
     RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
 
     RKGoLive(radar);

@@ -2,8 +2,11 @@
 //  RKSIMD.c
 //  RadarKit
 //
-//  This library of functions is incomplete.
-//  If RKFloat is double, more work will be needed.
+//  This library of functions is currently implemented on single precision, i.e., RKFloat = float
+//  It has only been tested on several machines that are SSE, SSE2, SSE3, SSE4.1, AVX, AVX2 capable.
+//  The AVX512 intrinsics are my best guess at the time of developement. They have not been tested.
+//
+//  IMPORTANT: If RKFloat is double, more (a lot more) work will be needed.
 //
 //  Created by Boon Leng Cheong on 10/18/16.
 //

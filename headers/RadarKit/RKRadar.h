@@ -67,6 +67,9 @@ int RKStop(RKRadar *radar);
 RKPulse *RKGetVacantPulse(RKRadar *radar);
 void RKSetPulseReady(RKPulse *pulse);
 
+int RKSetWaveformToImpulse(RKRadar *radar);
+int RKSetWaveformTo121(RKRadar *radar);
+
 //#ifdef __cplusplus
 //}
 //#endif

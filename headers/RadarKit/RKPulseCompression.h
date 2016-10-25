@@ -92,7 +92,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
                                 const RKComplex *filter,
                                 const int filterLength,
                                 const int dataOrigin,
-                                const int dataLength,
+                                const int maxDataLength,
                                 const int group,
                                 const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
