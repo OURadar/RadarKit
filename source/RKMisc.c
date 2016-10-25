@@ -186,3 +186,50 @@ bool RKFilenameExists(const char *filename) {
     }
     return false;
 }
+
+char *RKSignalString(const int signal) {
+    static char string[32];
+    switch (signal) {
+        case SIGHUP:    sprintf(string, "SIGHUP"); break;
+        case SIGINT:    sprintf(string, "SIGINT"); break;
+        case SIGQUIT:   sprintf(string, "SIGQUIT"); break;
+        case SIGILL:    sprintf(string, "SIGILL"); break;
+        case SIGTRAP:   sprintf(string, "SIGTRAP"); break;
+        case SIGABRT:   sprintf(string, "SIGABRT = SIGIOT"); break;
+#if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
+        case SIGPOLL:   sprintf(string, "SIGPOLL"); break;
+#else	/* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+        case SIGEMT:    sprintf(string, "SIGEMT"); break;
+#endif	/* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+        case SIGFPE:    sprintf(string, "SIGFPE"); break;
+        case SIGKILL:   sprintf(string, "SIGKILL"); break;
+        case SIGBUS:    sprintf(string, "SIGBUS"); break;
+        case SIGSEGV:   sprintf(string, "SIGSEGV"); break;
+        case SIGSYS:    sprintf(string, "SIGSYS"); break;
+        case SIGPIPE:   sprintf(string, "SIGPIPE"); break;
+        case SIGALRM:   sprintf(string, "SIGALRM"); break;
+        case SIGTERM:   sprintf(string, "SIGTERM"); break;
+        case SIGURG:    sprintf(string, "SIGURG"); break;
+        case SIGSTOP:   sprintf(string, "SIGSTOP"); break;
+        case SIGTSTP:   sprintf(string, "SIGTSTP"); break;
+        case SIGCONT:   sprintf(string, "SIGCONT"); break;
+        case SIGCHLD:   sprintf(string, "SIGCHLD"); break;
+        case SIGTTIN:   sprintf(string, "SIGTTIN"); break;
+        case SIGTTOU:   sprintf(string, "SIGTTOU"); break;
+#if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
+        case SIGIO: sprintf(string, "SIGIO"); break;
+#endif
+        case SIGXCPU:   sprintf(string, "SIGXCPU"); break;
+        case SIGXFSZ:   sprintf(string, "SIGXFSZ"); break;
+        case SIGVTALRM: sprintf(string, "SIGVTALRM"); break;
+        case SIGPROF:   sprintf(string, "SIGPROF"); break;
+#if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
+        case SIGWINCH:  sprintf(string, "SIGWINCH"); break;
+        case SIGINFO:   sprintf(string, "SIGINFO"); break;
+#endif
+        case SIGUSR1:   sprintf(string, "SIGUSR1"); break;
+        case SIGUSR2:   sprintf(string, "SIGUSR2"); break;
+        default: sprintf(string, "SIGUNKNOWN"); break;
+    }
+    return string;
+}

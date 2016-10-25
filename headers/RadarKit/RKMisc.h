@@ -41,5 +41,6 @@ double RKTimevalDiff(const struct timeval, const struct timeval);
 double RKTimespecDiff(const struct timespec, const struct timespec);
 void RKUTCTime(struct timespec *);
 bool RKFilenameExists(const char *filename);
+char *RKSignalString(const int signal);
 
 #endif /* rk_misc_h */

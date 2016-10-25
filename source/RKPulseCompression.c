@@ -616,6 +616,7 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
 
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     int i, k;
+    bool full = true;
     char string[RKMaximumStringLength];
     i = *engine->index * 10 / engine->size;
     RKPulseCompressionWorker *worker;
@@ -625,26 +626,44 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     memset(string, '|', i);
     memset(string + i, '.', 10 - i);
     i = 10;
-    i += sprintf(string + i, " :");
+    if (full) {
+        i += sprintf(string + i, " :");
+    }
     for (k = 0; k < engine->coreCount; k++) {
         worker = &engine->workers[k];
         if (rkGlobalParameters.showColor) {
-            i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
-                          worker->lag > 0.7 ? 1 : (worker->lag > 0.5 ? 3 : 2),
-                          worker->lag);
+            if (full) {
+                i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%02.0f\033[0m",
+                              worker->lag > 0.7 ? 1 : (worker->lag > 0.5 ? 3 : 2),
+                              99.0f * worker->lag);
+            } else {
+                i += snprintf(string + i, RKMaximumStringLength - i, "\033[3%dm%02.0f\033[0m",
+                              worker->lag > 0.7 ? 1 : (worker->lag > 0.5 ? 3 : 2),
+                              99.0f * worker->lag);
+            }
         } else {
-            i += snprintf(string + i, RKMaximumStringLength - i, " %4.2f", worker->lag);
+            i += snprintf(string + i, RKMaximumStringLength - i, " %2.0f", 99.0f * worker->lag);
         }
     }
-    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    if (full) {
+        i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    } else {
+        i += snprintf(string + i, RKMaximumStringLength - i, "|");
+    }
     for (k = 0; k < engine->coreCount && i < RKMaximumStringLength - 13; k++) {
         worker = &engine->workers[k];
         if (rkGlobalParameters.showColor) {
-            i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
-                          worker->dutyCycle > 0.99 ? 1 : (worker->dutyCycle > 0.95 ? 3 : 2),
-                          worker->dutyCycle);
+            if (full) {
+                i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%2.0f\033[0m",
+                              worker->dutyCycle > 0.99 ? 1 : (worker->dutyCycle > 0.95 ? 3 : 2),
+                              99.0f * worker->dutyCycle);
+            } else {
+                i += snprintf(string + i, RKMaximumStringLength - i, "\033[3%dm%2.0f\033[0m",
+                              worker->dutyCycle > 0.99 ? 1 : (worker->dutyCycle > 0.95 ? 3 : 2),
+                              99.0f * worker->dutyCycle);
+            }
         } else {
-            i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f", worker->dutyCycle);
+            i += snprintf(string + i, RKMaximumStringLength - i, " %2.0f", 99.0f * worker->dutyCycle);
         }
     }
     i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);

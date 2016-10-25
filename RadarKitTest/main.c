@@ -18,7 +18,8 @@ void *exitAfterAWhile(void *s) {
 }
 
 static void handleSignals(int signal) {
-    RKLog("User interrupt SIG=%d.\n", signal);
+    fprintf(stderr, "\n");
+    RKLog("Caught a %s (%d).\n", RKSignalString(signal), signal);
     RKStop(radar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
