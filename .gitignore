@@ -5,6 +5,8 @@ project.xcworkspace/
 xcuserdata/
 *.o
 *.a
+core.*
+*.log
 
 radar
-messages.log
+
