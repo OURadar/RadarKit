@@ -9,6 +9,7 @@
 #define __RadarKit_RKMisc__
 
 #include <RadarKit/RKTypes.h>
+#include <signal.h>
 
 #ifdef __MACH__
 #include <mach/mach.h>
@@ -29,18 +30,18 @@ extern RKGlobalParamters rkGlobalParameters;
 // some RK functions here
 
 char *RKNow();
-char *RKIntegerToCommaStyleString(const long num);
-char *RKFloatToCommaStyleString(const float num);
-void RKSetWantColor(const bool showColor);
-void RKSetWantScreenOutput(const bool yes);
-int RKSetProgramName(const char *name);
-int RKSetLogfile(const char *file);
+char *RKIntegerToCommaStyleString(const long);
+char *RKFloatToCommaStyleString(const float);
+void RKSetWantColor(const bool);
+void RKSetWantScreenOutput(const bool);
+int RKSetProgramName(const char *);
+int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
-int RKLog(const char *whatever, ...);
+int RKLog(const char *, ...);
 double RKTimevalDiff(const struct timeval, const struct timeval);
 double RKTimespecDiff(const struct timespec, const struct timespec);
 void RKUTCTime(struct timespec *);
-bool RKFilenameExists(const char *filename);
-char *RKSignalString(const int signal);
+bool RKFilenameExists(const char *);
+char *RKSignalString(const int);
 
 #endif /* rk_misc_h */

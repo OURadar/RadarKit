@@ -47,6 +47,9 @@
 		B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3591AB9CBAA004F88CD /* RKDSP.c */; };
 		B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3631AB9CD34004F88CD /* RKFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
+		B5F5AE3D1DBF996100CF643F /* RKTest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5F5AE3C1DBF996100CF643F /* RKTest.c */; };
+		B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5F5AE3C1DBF996100CF643F /* RKTest.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -94,6 +97,8 @@
 		B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKDSP.h; path = headers/RadarKit/RKDSP.h; sourceTree = SOURCE_ROOT; };
 		B5C1F35E1AB9CC48004F88CD /* RKLocalCommandCenter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKLocalCommandCenter.h; path = headers/RadarKit/RKLocalCommandCenter.h; sourceTree = SOURCE_ROOT; };
 		B5C1F3631AB9CD34004F88CD /* RKFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKFile.h; path = headers/RadarKit/RKFile.h; sourceTree = SOURCE_ROOT; };
+		B5F5AE3A1DBF994200CF643F /* RKTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKTest.h; path = headers/RadarKit/RKTest.h; sourceTree = "<group>"; };
+		B5F5AE3C1DBF996100CF643F /* RKTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKTest.c; path = source/RKTest.c; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -149,8 +154,9 @@
 				B5C1F35E1AB9CC48004F88CD /* RKLocalCommandCenter.h */,
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B5C1F3631AB9CD34004F88CD /* RKFile.h */,
-				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B55E437C1DB66682003C40CF /* RKSIMD.h */,
+				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
+				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
 			name = Headers;
@@ -169,8 +175,9 @@
 				B5C1F34F1AB9C917004F88CD /* RKPulseCompression.c */,
 				B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */,
 				B52E45C41D9174A500FC1113 /* RKMoment.c */,
-				B5324DEA1AB9B2E900C00517 /* RKRadar.c */,
 				B55E437E1DB6668F003C40CF /* RKSIMD.c */,
+				B5F5AE3C1DBF996100CF643F /* RKTest.c */,
+				B5324DEA1AB9B2E900C00517 /* RKRadar.c */,
 				B594718E1D89B43400EEE77C /* RadarKit.c */,
 			);
 			name = Source;
@@ -201,6 +208,7 @@
 				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
 				B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */,
+				B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */,
 				B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */,
 				B59471911D89B4D400EEE77C /* RadarKit.h in Headers */,
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
@@ -295,6 +303,7 @@
 				B5C1F35B1AB9CBAA004F88CD /* RKDSP.c in Sources */,
 				B55E437F1DB6668F003C40CF /* RKSIMD.c in Sources */,
 				B5324DEF1AB9B2E900C00517 /* RKServer.c in Sources */,
+				B5F5AE3D1DBF996100CF643F /* RKTest.c in Sources */,
 				B5C1F3561AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B53AE7E91D88773500364467 /* RKFoundation.c in Sources */,
 				B53AE7EB1D88822000364467 /* RKMisc.c in Sources */,
@@ -315,6 +324,7 @@
 				B5C1F3571AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */,
 				B5C1F3521AB9C917004F88CD /* RKPulseCompression.c in Sources */,
+				B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */,
 				B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */,
 				B54795261D91A87200E43F6A /* RKMoment.c in Sources */,
 				B5C1F34B1AB9C1BE004F88CD /* RKRadar.c in Sources */,

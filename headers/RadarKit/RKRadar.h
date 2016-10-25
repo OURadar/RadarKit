@@ -13,10 +13,6 @@
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKLocalCommandCenter.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 enum RKInitFlag {
     RKInitFlagAllocMomentBuffer = 1,
     RKInitFlagAllocRawIQBuffer  = 1 << 1,
@@ -25,8 +21,11 @@ enum RKInitFlag {
 
 typedef RKEnum RKRadarState;
 enum RKRadarState {
-    RKRadarStateRayBufferInitiated                   = 1,
-    RKRadarStateRawIQBufferInitiated                 = 1 << 1
+    RKRadarStateBaseAllocated                        = 1,
+    RKRadarStateRayBufferInitialized                 = 1 << 1,
+    RKRadarStateRawIQBufferInitialized               = 1 << 2,
+    RKRadarStatePulseCompressionEngineInitialized    = 1 << 3,
+    RKRadarStateSocketServerInitialized              = 1 << 4
 };
 
 
@@ -69,9 +68,5 @@ void RKSetPulseReady(RKPulse *pulse);
 
 int RKSetWaveformToImpulse(RKRadar *radar);
 int RKSetWaveformTo121(RKRadar *radar);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(__RadarKit_RKRadar__) */

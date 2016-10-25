@@ -32,6 +32,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     }
     memset(radar, 0, bytes);
     radar->memoryUsage += bytes;
+    radar->state |= RKRadarStateBaseAllocated;
 
     // Copy over the input flags
     radar->initFlags = flags;
@@ -47,8 +48,9 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
             return NULL;
         }
         radar->memoryUsage += bytes;
-        radar->state |= RKRadarStateRayBufferInitiated;
+        radar->state |= RKRadarStateRayBufferInitialized;
     }
+    RKLog("Radar moment.\n");
 
     if (flags & RKInitFlagAllocRawIQBuffer) {
         bytes = RKBuffer0SlotCount * sizeof(RKPulse);
@@ -58,28 +60,35 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         }
         memset(radar->pulses, 0, bytes);
         radar->memoryUsage += bytes;
-        radar->state |= RKRadarStateRawIQBufferInitiated;
+        radar->state |= RKRadarStateRawIQBufferInitialized;
         for (int i = 0; i < RKBuffer0SlotCount; i++) {
             radar->pulses[i].header.i = i - RKBuffer0SlotCount;
         }
+        RKLog("Raw I/Q buffer allocated.\n");
     }
+    RKLog("Radar IQ.\n");
 
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, radar->pulses, &radar->index, RKBuffer0SlotCount);
+    radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
     radar->socketServer = RKServerInit();
     RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
     RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
+    radar->state |= RKRadarStateSocketServerInitialized;
 
     RKLog("Radar initialized\n");
     return radar;
 }
 
 int RKFree(RKRadar *radar) {
-    if (radar-> state & RKRadarStateRawIQBufferInitiated) {
+    if (radar->active) {
+        RKStop(radar);
+    }
+    if (radar->state & RKRadarStateRawIQBufferInitialized) {
         free(radar->pulses);
     }
-    if (radar->state & RKRadarStateRayBufferInitiated) {
+    if (radar->state & RKRadarStateRayBufferInitialized) {
         free(radar->rays);
     }
     free(radar);

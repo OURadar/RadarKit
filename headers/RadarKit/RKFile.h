@@ -11,13 +11,4 @@
 
 #include <RadarKit/RKFoundation.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
-    
-//#ifdef __cplusplus
-//}
-//#endif
-
 #endif /* defined(__RadarKit_RKFile__) */

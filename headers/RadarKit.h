@@ -24,5 +24,6 @@
  */
 
 #include <RadarKit/RKRadar.h>
+#include <RadarKit/RKTest.h>
 
 #endif /* defined(__RadarKit__) */
