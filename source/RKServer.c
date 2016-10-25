@@ -421,7 +421,7 @@ void RKServerActivate(RKServer *M) {
     if (pthread_create(&M->tid, NULL, RKServerRoutine, M)) {
         RKLog("Error. Unable to launch main server.\n");
     }
-    while (M->state < RKServerStateOpening) {
+    while (M->state > RKServerStateNull && M->state < RKServerStateOpening) {
         usleep(25000);
     }
 }

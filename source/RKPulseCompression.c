@@ -90,7 +90,7 @@ void *pulseCompressionCore(void *_in) {
     // Initiate a variable to store my name
     char name[20];
     if (rkGlobalParameters.showColor) {
-        i = sprintf(name, "\033[3%dm", c % 8 + 1);
+        i = sprintf(name, "\033[3%dm", c % 7 + 1);
     }
     if (engine->coreCount > 9) {
         i += sprintf(name + i, "Core %02d", c);

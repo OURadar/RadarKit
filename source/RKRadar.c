@@ -67,7 +67,6 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         for (int i = 0; i < RKBuffer0SlotCount; i++) {
             radar->pulses[i].header.i = i - RKBuffer0SlotCount;
         }
-        RKLog("Raw I/Q buffer allocated.\n");
     }
 
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
