@@ -42,17 +42,19 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     
     // Other allocatinos
     if (flags & RKInitFlagAllocMomentBuffer) {
+        radar->state |= RKRadarStateRayBufferAllocating;
         bytes = RKBuffer2SlotCount * sizeof(RKInt16Ray);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
             RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;
         }
         radar->memoryUsage += bytes;
+        radar->state ^= RKRadarStateRayBufferAllocating;
         radar->state |= RKRadarStateRayBufferInitialized;
     }
-    RKLog("Radar moment.\n");
 
     if (flags & RKInitFlagAllocRawIQBuffer) {
+        radar->state |= RKRadarStateRawIQBufferAllocating;
         bytes = RKBuffer0SlotCount * sizeof(RKPulse);
         if (posix_memalign((void **)&radar->pulses, RKSIMDAlignSize, bytes)) {
             RKLog("ERROR. Unable to allocate memory for I/Q pulses");
@@ -60,13 +62,13 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         }
         memset(radar->pulses, 0, bytes);
         radar->memoryUsage += bytes;
+        radar->state ^= RKRadarStateRawIQBufferAllocating;
         radar->state |= RKRadarStateRawIQBufferInitialized;
         for (int i = 0; i < RKBuffer0SlotCount; i++) {
             radar->pulses[i].header.i = i - RKBuffer0SlotCount;
         }
         RKLog("Raw I/Q buffer allocated.\n");
     }
-    RKLog("Radar IQ.\n");
 
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, radar->pulses, &radar->index, RKBuffer0SlotCount);
@@ -85,11 +87,17 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
-    if (radar->state & RKRadarStateRawIQBufferInitialized) {
-        free(radar->pulses);
+    while (radar->state & RKRadarStateRayBufferAllocating) {
+        usleep(1000);
     }
     if (radar->state & RKRadarStateRayBufferInitialized) {
         free(radar->rays);
+    }
+    while (radar->state & RKRadarStateRawIQBufferAllocating) {
+        usleep(1000);
+    }
+    if (radar->state & RKRadarStateRawIQBufferInitialized) {
+        free(radar->pulses);
     }
     free(radar);
     return EXIT_SUCCESS;
@@ -102,10 +110,14 @@ int RKGoLive(RKRadar *radar) {
 }
 
 int RKStop(RKRadar *radar) {
-    RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
-    RKServerStop(radar->socketServer);
-    RKServerWait(radar->socketServer);
     radar->active = false;
+    if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
+        RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+    }
+    if (radar->state & RKRadarStateSocketServerInitialized) {
+        RKServerStop(radar->socketServer);
+        RKServerWait(radar->socketServer);
+    }
     return 0;
 }
 

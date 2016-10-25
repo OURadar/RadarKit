@@ -50,6 +50,8 @@ void RKTestSimulateDataStream(RKRadar *radar) {
 
     while (radar->active) {
 
+        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
+
         for (int j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             // Fill in the data...
@@ -62,8 +64,6 @@ void RKTestSimulateDataStream(RKRadar *radar) {
             RKSetPulseReady(pulse);
         }
 
-        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
-
         // Wait to simulate 5000-Hz PRF
         g = 0;
         do {
@@ -71,7 +71,7 @@ void RKTestSimulateDataStream(RKRadar *radar) {
             dt = RKTimevalDiff(t1, t0);
             usleep(1000);
             g++;
-        } while (dt < 0.0002 * chunkSize);
+        } while (radar->active && dt < 0.0002 * chunkSize);
         t0 = t1;
     }
 }

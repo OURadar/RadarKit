@@ -15,17 +15,19 @@
 
 enum RKInitFlag {
     RKInitFlagAllocMomentBuffer = 1,
-    RKInitFlagAllocRawIQBuffer  = 1 << 1,
+    RKInitFlagAllocRawIQBuffer  = (1 << 1),
     RKInitFlagAllocEverything   = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer
 };
 
 typedef RKEnum RKRadarState;
 enum RKRadarState {
-    RKRadarStateBaseAllocated                        = 1,
-    RKRadarStateRayBufferInitialized                 = 1 << 1,
-    RKRadarStateRawIQBufferInitialized               = 1 << 2,
-    RKRadarStatePulseCompressionEngineInitialized    = 1 << 3,
-    RKRadarStateSocketServerInitialized              = 1 << 4
+    RKRadarStateBaseAllocated                        = 1,          // 0x01
+    RKRadarStateRayBufferAllocating                  = (1 << 1),   // 0x02
+    RKRadarStateRayBufferInitialized                 = (1 << 2),   // 0x04
+    RKRadarStateRawIQBufferAllocating                = (1 << 3),   // 0x08
+    RKRadarStateRawIQBufferInitialized               = (1 << 4),   // 0x10
+    RKRadarStatePulseCompressionEngineInitialized    = (1 << 5),   // 0x20
+    RKRadarStateSocketServerInitialized              = (1 << 6)    // 0x40
 };
 
 

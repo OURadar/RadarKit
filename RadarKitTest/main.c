@@ -8,7 +8,7 @@
 
 #include <RadarKit.h>
 
-RKRadar *radar;
+RKRadar *radar = NULL;
 
 void *exitAfterAWhile(void *s) {
     sleep(1);
@@ -17,8 +17,11 @@ void *exitAfterAWhile(void *s) {
 }
 
 static void handleSignals(int signal) {
+    if (radar == NULL) {
+        return;
+    }
     fprintf(stderr, "\n");
-    RKLog("Caught a %s (%d)  radar->state = %d.\n", RKSignalString(signal), signal, radar->state);
+    RKLog("Caught a %s (%d)  radar->state = 0x%x.\n", RKSignalString(signal), signal, radar->state);
     RKStop(radar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
@@ -28,21 +31,20 @@ static void handleSignals(int signal) {
 
 int main(int argc, const char * argv[]) {
 
+    RKSetProgramName("iRadar");
+    RKSetWantScreenOutput(true);
 
 //    RKSIMDDemo(RKSIMDDemoFlagPerformanceTestAll);
 //    RKSIMDDemo(RKSIMDDemoFlagShowNumbers);
+//    RKTestModuloMath();
+
+    RKLog("Initializing ...\n");
+
+    radar = RKInit();
 
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
-
-    RKSetProgramName("iRadar");
-    RKSetWantScreenOutput(true);
-
-    RKLog("Initializing ...\n");
-    RKTestModuloMath();
-
-    radar = RKInit();
 
     RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
 
