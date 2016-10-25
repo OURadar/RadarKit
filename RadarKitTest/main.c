@@ -82,9 +82,9 @@ void simulateDataStream(void) {
 
     RKLog("Using gate count %s\n", RKIntegerToCommaStyleString(gateCount));
 
-    for (int i = 0; i < 10000000 && radar->active; i += chunkSize) {
+    while (radar->active) {
 
-        for (int j = 0; j < chunkSize; j++) {
+        for (int j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             // Fill in the data...
             pulse->header.gateCount = gateCount;
@@ -96,9 +96,7 @@ void simulateDataStream(void) {
             RKSetPulseReady(pulse);
         }
 
-        if (i % (2 * chunkSize) == 0) {
-            RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
-        }
+        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
 
         // Wait to simulate 5000-Hz PRF
         g = 0;

@@ -155,6 +155,7 @@ void *pulseCompressionCore(void *_in) {
 
         // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
+        me->lag = fmodf((float)(*engine->index - me->pid + engine->size) / engine->size, 1.0f);
 
         RKPulse *pulse = &engine->pulses[i0];
 
@@ -616,7 +617,6 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     int i, k;
     char string[RKMaximumStringLength];
-    float lag;
     i = *engine->index * 10 / engine->size;
     RKPulseCompressionWorker *worker;
 
@@ -627,13 +627,13 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     i = 10;
     i += sprintf(string + i, " :");
     for (k = 0; k < engine->coreCount; k++) {
-        lag = fmodf((float)(*engine->index - engine->workers[k].pid + engine->size) / engine->size, 1.0f);
+        worker = &engine->workers[k];
         if (rkGlobalParameters.showColor) {
             i += snprintf(string + i, RKMaximumStringLength - i, " \033[3%dm%4.2f\033[0m",
-                          lag > 0.7 ? 1 : (lag > 0.5 ? 3 : 2),
-                          lag);
+                          worker->lag > 0.7 ? 1 : (worker->lag > 0.5 ? 3 : 2),
+                          worker->lag);
         } else {
-            i += snprintf(string + i, RKMaximumStringLength - i, " %4.2f", lag);
+            i += snprintf(string + i, RKMaximumStringLength - i, " %4.2f", worker->lag);
         }
     }
     i += snprintf(string + i, RKMaximumStringLength - i, " |");
@@ -647,6 +647,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
             i += snprintf(string + i, RKMaximumStringLength - i, "  %4.2f", worker->dutyCycle);
         }
     }
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }

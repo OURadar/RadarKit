@@ -36,6 +36,7 @@ struct rk_pulse_compression_worker {
     char                       semaphoreName[16];
     double                     dutyBuff[RKWorkerDutyCycleBufferSize];
     double                     dutyCycle;                                // Latest duty cycle estimate
+    float                      lag;                                      // Lag relative to the latest index of engine
     RKPulseCompressionEngine   *parentEngine;
 };
 
@@ -71,6 +72,8 @@ struct rk_pulse_compression_engine {
 
     RKPulseCompressionWorker         *workers;
 
+    int                              almostFull;
+    
     pthread_mutex_t                  coreMutex;
 };
 
