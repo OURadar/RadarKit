@@ -13,7 +13,7 @@
 
 #if defined(__AVX512F__)
 typedef __m512 RKVec;
-typedef __m256 RKVecCvt;
+typedef __m256i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm512_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm512_mul_ps(a, b)
@@ -27,7 +27,7 @@ typedef __m256 RKVecCvt;
 #define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
 #elif defined(__AVX__)
 typedef __m256 RKVec;
-typedef __m128 RKVecCvt;
+typedef __m128i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm256_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm256_mul_ps(a, b)
