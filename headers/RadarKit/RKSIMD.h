@@ -34,9 +34,11 @@
 
 typedef int RKSIMDDemoFlag;
 enum RKSIMDDemoFlag {
-    RKSIMDDemoFlagNull               = 0,
-    RKSIMDDemoFlagShowNumbers        = 1,
-    RKSIMDDemoFlagPerformanceTest    = 1 << 1
+    RKSIMDDemoFlagNull                       = 0,
+    RKSIMDDemoFlagShowNumbers                = 1,
+    RKSIMDDemoFlagPerformanceTestArithmetic  = 1 << 1,
+    RKSIMDDemoFlagPerformanceTestConversion  = 1 << 2,
+    RKSIMDDemoFlagPerformanceTestAll         = RKSIMDDemoFlagPerformanceTestArithmetic | RKSIMDDemoFlagPerformanceTestConversion
 };
 
 void RKSIMD_show_info(void);

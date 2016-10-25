@@ -133,42 +133,36 @@ void moduloMathTest(void) {
 
 int main(int argc, const char * argv[]) {
 
-    bool testModuloMath = false;
-    bool testSIMD = false;
+    //moduloMathTest();
 
-    if (testModuloMath) {
-        moduloMathTest();
-    }
-
-    if (testSIMD) {
-        RKSIMDDemo(RKSIMDDemoFlagPerformanceTest);
-    }
+    RKSIMDDemo(RKSIMDDemoFlagPerformanceTestAll);
+//    RKSIMDDemo(RKSIMDDemoFlagShowNumbers);
 
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
 
-    RKSetProgramName("iRadar");
-    RKSetWantScreenOutput(true);
-
-    RKLog("Initializing ...\n");
-
-    radar = RKInit();
-
-    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
-    
-    RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
-
-    RKGoLive(radar);
-
-//    pulseCompressionTest(FlagShowResults);
-
-    simulateDataStream();
-
-    RKStop(radar);
-    
-    RKLog("Freeing radar ...\n");
-    RKFree(radar);
+//    RKSetProgramName("iRadar");
+//    RKSetWantScreenOutput(true);
+//
+//    RKLog("Initializing ...\n");
+//
+//    radar = RKInit();
+//
+//    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+//    
+//    RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+//
+//    RKGoLive(radar);
+//
+////    pulseCompressionTest(FlagShowResults);
+//
+//    simulateDataStream();
+//
+//    RKStop(radar);
+//    
+//    RKLog("Freeing radar ...\n");
+//    RKFree(radar);
 
     return 0;
 }
