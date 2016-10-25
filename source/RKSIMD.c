@@ -11,8 +11,9 @@
 
 #include <RadarKit/RKSIMD.h>
 
-#ifdef __AVX512F__
+#if defined(__AVX512F__)
 typedef __m512 RKVec;
+typedef __m256 RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm512_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm512_mul_ps(a, b)
@@ -21,8 +22,11 @@ typedef __m512 RKVec;
 #define _rk_mm_moveldup_pf(a)        _mm512_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm512_shuffle_ps(a, b, m)
 #define _rk_mm_fmaddsub_pf(a, b, c)  _mm512_fmaddsub_ps(a, b, c)
-#elif __AVX__
+#define _rk_mm_cvtepi16_epi32(a)     _mm512_cvtepi16_epi32(a)
+#define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)
+#elif defined(__AVX__)
 typedef __m256 RKVec;
+typedef __m128 RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm256_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm256_mul_ps(a, b)
@@ -32,8 +36,11 @@ typedef __m256 RKVec;
 #define _rk_mm_shuffle_pf(a, b, m)   _mm256_shuffle_ps(a, b, m)
 //#define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_fmaddsub_ps(a, b, c)
 #define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
+#define _rk_mm_cvtepi16_epi32(a)     _mm256_cvtepi16_epi32(a)
+#define _rk_mm_cvtepi32_pf(a)        _mm256_cvtepi32_ps(a)
 #else
 typedef __m128 RKVec;
+//typedef __m128 RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm_mul_ps(a, b)
@@ -42,6 +49,8 @@ typedef __m128 RKVec;
 #define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm_shuffle_ps(a, b, m)
 #define _rk_mm_fmaddsub_pf(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)
+//#define _rk_mm_cvtepi16_epi32(a)     _mm_cvtepi16_epi32(a)
+//#define _rk_mm_cvtepi32_pf(a)        _mm_cvtepi32_ps(a)
 #endif
 
 #define OXSTR(x)   x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
@@ -268,7 +277,7 @@ void RKSIMD_IQZ2Complex(RKIQZ *src, RKComplex *dst, const int n) {
     RKFloat *si = &src->i[0];
     RKFloat *sq = &src->q[0];
     RKFloat *d = &dst->i;
-    for (int i = 0; i < n; i++) {
+    for (int k = 0; k < n; k++) {
         *d++ = *si++;
         *d++ = *sq++;
     }
@@ -279,9 +288,29 @@ void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n) {
     RKFloat *s = &src[0].i;
     RKFloat *di = &dst->i[0];
     RKFloat *dq = &dst->q[0];
-    for (int i = 0; i < n; i++) {
+    for (int k = 0; k < n; k++) {
         *di++ = *s++;
         *dq++ = *s++;
+    }
+    return;
+}
+
+void RKSIMD_Int2Complex(RKInt16 *src, RKComplex *dst, const int n) {
+#if defined(__AVX512F__) || defined(__AVX__)
+    RKVec *s = (RKVecCvt *)src;
+    RKVec *d = (RKVec *)dst;
+    for (int k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
+        *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
+    }
+#else
+    return RKSIMD_Int2Complex_reg(src, dst, n);
+#endif
+}
+
+void RKSIMD_Int2Complex_reg(RKInt16 *src, RKComplex *dst, const int n) {
+    for (int i = 0; i < n; i++) {
+        dst[i].i = (RKFloat)src[i].i;
+        dst[i].q = (RKFloat)src[i].q;
     }
     return;
 }
