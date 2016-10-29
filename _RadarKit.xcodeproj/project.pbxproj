@@ -19,6 +19,7 @@
 		B5324DED1AB9B2E900C00517 /* RKNetwork.c in Sources */ = {isa = PBXBuildFile; fileRef = B5324DE91AB9B2E900C00517 /* RKNetwork.c */; };
 		B5324DEE1AB9B2E900C00517 /* RKRadar.c in Sources */ = {isa = PBXBuildFile; fileRef = B5324DEA1AB9B2E900C00517 /* RKRadar.c */; };
 		B5324DEF1AB9B2E900C00517 /* RKServer.c in Sources */ = {isa = PBXBuildFile; fileRef = B5324DEB1AB9B2E900C00517 /* RKServer.c */; };
+		B536146B1DC533F500DA5F70 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = B536146A1DC533F500DA5F70 /* README.md */; };
 		B53AE7E91D88773500364467 /* RKFoundation.c in Sources */ = {isa = PBXBuildFile; fileRef = B53AE7E81D88773500364467 /* RKFoundation.c */; };
 		B53AE7EB1D88822000364467 /* RKMisc.c in Sources */ = {isa = PBXBuildFile; fileRef = B53AE7EA1D88822000364467 /* RKMisc.c */; };
 		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -79,6 +80,7 @@
 		B5324DE91AB9B2E900C00517 /* RKNetwork.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKNetwork.c; path = source/RKNetwork.c; sourceTree = SOURCE_ROOT; };
 		B5324DEA1AB9B2E900C00517 /* RKRadar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKRadar.c; path = source/RKRadar.c; sourceTree = SOURCE_ROOT; };
 		B5324DEB1AB9B2E900C00517 /* RKServer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKServer.c; path = source/RKServer.c; sourceTree = SOURCE_ROOT; };
+		B536146A1DC533F500DA5F70 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B53AE7E81D88773500364467 /* RKFoundation.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKFoundation.c; path = source/RKFoundation.c; sourceTree = SOURCE_ROOT; };
 		B53AE7EA1D88822000364467 /* RKMisc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKMisc.c; path = source/RKMisc.c; sourceTree = SOURCE_ROOT; };
 		B53AE7EC1D88824400364467 /* RKMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMisc.h; path = headers/RadarKit/RKMisc.h; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 		B50A813F1AB89B6200E12E1F = {
 			isa = PBXGroup;
 			children = (
+				B536146A1DC533F500DA5F70 /* README.md */,
 				B5324D8B1AB8CC4200C00517 /* Makefile */,
 				B5324D8D1AB8CCEE00C00517 /* Headers */,
 				B5324DC91AB8D1A400C00517 /* Source */,
@@ -307,6 +310,7 @@
 				B5C1F3561AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B53AE7E91D88773500364467 /* RKFoundation.c in Sources */,
 				B53AE7EB1D88822000364467 /* RKMisc.c in Sources */,
+				B536146B1DC533F500DA5F70 /* README.md in Sources */,
 				B594718F1D89B43400EEE77C /* RadarKit.c in Sources */,
 				B5C1F3511AB9C917004F88CD /* RKPulseCompression.c in Sources */,
 			);
