@@ -50,7 +50,8 @@ int main(int argc, const char * argv[]) {
 
     // Set any parameters here:
     //RKSetWaveformToImpulse(radar);
-
+    RKSetProcessingCoreCounts(radar, 4, 0);
+    
     // Go live
     RKGoLive(radar);
 

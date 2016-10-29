@@ -151,3 +151,10 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
 int RKSetWaveformTo121(RKRadar *radar) {
     return RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
 }
+
+int RKSetProcessingCoreCounts(RKRadar *radar,
+                              const unsigned int pulseCompressionCoreCount,
+                              const unsigned int momentProcessorCoreCount) {
+    RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
+    return 0;
+}
