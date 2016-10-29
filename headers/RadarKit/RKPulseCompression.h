@@ -19,6 +19,16 @@
 //extern "C" {
 //#endif
 
+typedef int RKPulseCompressionEngineState;
+enum RKPulseCompressionEngineState {
+    RKPulseCompressionEngineStateNull,
+    RKPulseCompressionEngineStateAllocated,
+    RKPulseCompressionEngineStateActivating,
+    RKPulseCompressionEngineStateActive,
+    RKPulseCompressionEngineStateDeactivating,
+    RKPulseCompressionEngineStateSleep
+};
+
 typedef struct rk_filter_rect {
     int origin;
     int length;
@@ -48,7 +58,7 @@ struct rk_pulse_compression_engine {
     uint32_t                         size;
     uint32_t                         tic;              // Process count
 
-    bool                             active;
+    RKPulseCompressionEngineState    state;
     int                              verbose;
 
     unsigned int                     coreCount;
@@ -77,15 +87,14 @@ struct rk_pulse_compression_engine {
     pthread_mutex_t                  coreMutex;
 };
 
-RKPulseCompressionEngine *RKPulseCompressionEngineInitWithCoreCount(const unsigned int count);
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
-int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
-int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
+
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
                                                    RKPulse *pulses,
                                                    uint32_t *index,
                                                    const uint32_t size);
+void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count);
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
@@ -97,6 +106,10 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
                                 const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
+
+int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
+int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
+
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus

@@ -22,20 +22,20 @@ int RKLog(const char *whatever, ...) {
         fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
     }
     if (whatever[0] == '>') {
-        i += snprintf(msg, 2048, "                    : [%s] ", rkGlobalParameters.program);
+        i += snprintf(msg, 2040, "                    : [%s] ", rkGlobalParameters.program);
     } else {
-        i += snprintf(msg, 2048, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
+        i += snprintf(msg, 2040, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
     }
     bool has_ok = (strcasestr(whatever, "ok") != NULL);
     bool has_not_ok = (strcasestr(whatever, "error") != NULL);
     bool has_warning = (strcasestr(whatever, "warning") != NULL);
     if (rkGlobalParameters.showColor) {
         if (has_ok) {
-            i += snprintf(msg + i, 2048 - i, "\033[1;32m");
+            i += snprintf(msg + i, 2040 - i, "\033[1;32m");
         } else if (has_not_ok) {
-            i += snprintf(msg + i, 2048 - i, "\033[1;31m");
+            i += snprintf(msg + i, 2040 - i, "\033[1;31m");
         } else if (has_warning) {
-            i += snprintf(msg + i, 2048 - i, "\033[1;33m");
+            i += snprintf(msg + i, 2040 - i, "\033[1;33m");
         }
     }
     if (whatever[0] == '>') {
@@ -44,10 +44,10 @@ int RKLog(const char *whatever, ...) {
         i += vsprintf(msg + i, whatever, args);
     }
     if (rkGlobalParameters.showColor && (has_ok || has_not_ok || has_warning)) {
-        i += snprintf(msg + i, 2048 - i, "\033[0m");
+        snprintf(msg + i, 2040 - i, "\033[0m");
     }
     if (whatever[strlen(whatever) - 1] != '\n') {
-        strncat(msg, "\n", 2048);
+        strncat(msg, "\n", 2040);
     }
     va_end(args);
     // Produce the string to the specified stream
@@ -100,7 +100,6 @@ char *RKIntegerToCommaStyleString(const long num) {
             j++;
         }
     }
-    k = ibuf;
     return stringBuffer[r];
 }
 
