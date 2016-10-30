@@ -35,9 +35,13 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     double dt = 0.0;
     double prt = 1.0 / (double)prf;
     const int chunkSize = 500;
-
     int g = 0;
 
+    // Set to default value if prf = 0
+    if (prf == 0) {
+        prt = 0.002;
+    }
+    
     gettimeofday(&t0, NULL);
 
     RKSetLogfile(NULL);
