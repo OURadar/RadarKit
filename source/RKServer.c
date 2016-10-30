@@ -418,6 +418,7 @@ void PSServerSetTerminateHandlerToDefault(RKServer *M) {
 
 
 void RKServerActivate(RKServer *M) {
+    M->state = RKServerStateOpening;
     if (pthread_create(&M->tid, NULL, RKServerRoutine, M)) {
         RKLog("Error. Unable to launch main server.\n");
     }

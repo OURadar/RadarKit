@@ -549,7 +549,7 @@ void RKSIMDDemo(const RKSIMDDemoFlag flag) {
         // Answers should be 0-1i, 1-2i, 2-3i, 3-41i, ...
         good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(i - 1)) < tiny;
         if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%+3d%+3df -> %+5.1f%+5.1f  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
+            printf("%+3d%+3di -> %+5.1f%+5.1f  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
         }
         all_good &= good;
     }

@@ -33,13 +33,15 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     float phi = 0.0f;
     struct timeval t0, t1;
     double dt = 0.0;
-    double prt = 1.0 / (double)prf;
+    double prt;
     const int chunkSize = 500;
     int g = 0;
 
     // Set to default value if prf = 0
     if (prf == 0) {
-        prt = 0.002;
+        prt = 0.0002;
+    } else {
+        prt = 1.0 / (double)prf;
     }
     
     gettimeofday(&t0, NULL);
@@ -51,8 +53,9 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     float fs = 50.0e6;
     const int gateCount = (int)(75.0e3 / 3.0e8 * fs * 2.0);
 
-    RKLog("Using fs = %.1f MHz   gate count = %s (75 km)\n",
-          1.0e-6 * fs,
+    RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (75 km)\n",
+          RKFloatToCommaStyleString(1.0e-6 * fs),
+          RKIntegerToCommaStyleString(prf),
           RKIntegerToCommaStyleString(gateCount));
 
     while (radar->active) {

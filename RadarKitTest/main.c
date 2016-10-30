@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
 
     if (user.testSIMD) {
         RKSIMDDemoFlag flag = RKSIMDDemoFlagNull;
-        if (user.verbose > 1) {
+        if (user.verbose) {
             flag |= RKSIMDDemoFlagShowNumbers;
         }
         if (user.testSIMD > 1) {
@@ -163,8 +163,13 @@ int main(int argc, char *argv[]) {
     }
 //    RKTestModuloMath();
     
+    // In the case when no tests are performed, simulate the time-series
     if (user.simulate == false) {
-        return EXIT_SUCCESS;
+        if (user.testSIMD == false) {
+            user.simulate = true;
+        } else {
+            return EXIT_SUCCESS;
+        }
     }
 
     RKLog("Initializing ...\n");
