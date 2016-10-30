@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
 
     // Set any parameters here:
     if (user.coreCount) {
-        RKSetProcessingCoreCounts(radar, 4, 0);
+        RKSetProcessingCoreCounts(radar, user.coreCount, 0);
     }
     
     // Go live
