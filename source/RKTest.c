@@ -28,11 +28,12 @@ void RKTestModuloMath(void) {
     k = 4;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
 }
 
-void RKTestSimulateDataStream(RKRadar *radar) {
+void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     int k;
     float phi = 0.0f;
     struct timeval t0, t1;
     double dt = 0.0;
+    double prt = 1.0 / (double)prf;
     const int chunkSize = 500;
 
     int g = 0;
@@ -43,10 +44,12 @@ void RKTestSimulateDataStream(RKRadar *radar) {
 
     //const int gateCount = (int)(75.0e3f / 3.0f);
 
-    float bw = 50.0e6;
-    const int gateCount = (int)(75.0e3 / 3.0e8 * bw * 2.0);
+    float fs = 50.0e6;
+    const int gateCount = (int)(75.0e3 / 3.0e8 * fs * 2.0);
 
-    RKLog("Using gate count %s\n", RKIntegerToCommaStyleString(gateCount));
+    RKLog("Using fs = %.1f MHz   gate count = %s (75 km)\n",
+          1.0e-6 * fs,
+          RKIntegerToCommaStyleString(gateCount));
 
     while (radar->active) {
 
@@ -64,14 +67,14 @@ void RKTestSimulateDataStream(RKRadar *radar) {
             RKSetPulseReady(pulse);
         }
 
-        // Wait to simulate 5000-Hz PRF
+        // Wait to simulate the PRF
         g = 0;
         do {
             gettimeofday(&t1, NULL);
             dt = RKTimevalDiff(t1, t0);
             usleep(1000);
             g++;
-        } while (radar->active && dt < 0.0002 * chunkSize);
+        } while (radar->active && dt < prt * chunkSize);
         t0 = t1;
     }
 }

@@ -56,7 +56,7 @@ int main(int argc, const char * argv[]) {
     RKGoLive(radar);
 
 //    pulseCompressionTest(radar, RKTestFlagShowResults);
-    RKTestSimulateDataStream(radar);
+    RKTestSimulateDataStream(radar, 1000);
 
     RKLog("Freeing radar ...\n");
     RKFree(radar);
