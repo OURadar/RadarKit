@@ -43,12 +43,21 @@ void showHelp() {
            "\n"
            "  -c (--cpu) " UNDERLINE("count") "\n"
            "         Sets the number of CPU cores to " UNDERLINE("count") ".\n"
+           "         If not specified, the default core count is 8.\n"
            "\n"
            "  -f (--prf) " UNDERLINE("value") "\n"
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
+           "         If not specified, the default PRF is 5000 Hz.\n"
            "\n"
            "  -h (--help)\n"
            "         Shows this help text.\n"
+           "\n"
+           "  -s (--simulate)\n"
+           "         Sets the program to simulate data stream.\n"
+           "\n"
+           "  -S (--test-simd)\n"
+           "         Sets the program to test SIMD instructions.\n"
+           "         To test the SIMD performance, use --test-simd=2\n"
            "\n"
            );
 }
@@ -56,7 +65,10 @@ void showHelp() {
 typedef struct user_params {
     int   coreCount;
     int   prf;
+    int   verbose;
+    int   testSIMD;
     bool  quietMode;
+    bool  simulate;
 } UserParams;
 
 UserParams processInput(int argc, char **argv) {
@@ -68,10 +80,13 @@ UserParams processInput(int argc, char **argv) {
     
     static struct option long_options[] = {
         {"alarm"         , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
+        {"test-simd"     , optional_argument, 0, 'S'},
         {"azimuth"       , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
         {"cpu"           , required_argument, 0, 'c'},
         {"prf"           , required_argument, 0, 'f'},
         {"help"          , no_argument      , 0, 'h'},
+        {"sim"           , no_argument      , 0, 's'},
+        {"verbose"       , no_argument      , 0, 'v'},
         {0, 0, 0, 0}
     };
     
@@ -96,13 +111,29 @@ UserParams processInput(int argc, char **argv) {
                 showHelp();
                 exit(EXIT_SUCCESS);
                 break;
+            case 's':
+                user.simulate = true;
+                break;
             case 'A':
                 user.quietMode = false;
+                break;
+            case 'S':
+                if (optarg) {
+                    user.testSIMD = atoi(optarg);
+                } else {
+                    user.testSIMD = 1;
+                }
+                break;
+            case 'v':
+                user.verbose++;
                 break;
             default:
                 exit(EXIT_FAILURE);
                 break;
         }
+    }
+    if (user.prf > 0 && user.simulate == false) {
+        RKLog("Warning. PRF has no effects without simulation.\n");
     }
     
     return user;
@@ -120,9 +151,21 @@ int main(int argc, char *argv[]) {
     RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);
 
-//    RKSIMDDemo(RKSIMDDemoFlagPerformanceTestAll);
-//    RKSIMDDemo(RKSIMDDemoFlagShowNumbers);
+    if (user.testSIMD) {
+        RKSIMDDemoFlag flag = RKSIMDDemoFlagNull;
+        if (user.verbose > 1) {
+            flag |= RKSIMDDemoFlagShowNumbers;
+        }
+        if (user.testSIMD > 1) {
+            flag |= RKSIMDDemoFlagPerformanceTestAll;
+        }
+        RKSIMDDemo(flag);
+    }
 //    RKTestModuloMath();
+    
+    if (user.simulate == false) {
+        return EXIT_SUCCESS;
+    }
 
     RKLog("Initializing ...\n");
 
@@ -144,7 +187,9 @@ int main(int argc, char *argv[]) {
 
 //    pulseCompressionTest(radar, RKTestFlagShowResults);
 
-    RKTestSimulateDataStream(radar, user.prf);
+    if (user.simulate) {
+        RKTestSimulateDataStream(radar, user.prf);
+    }
 
     RKLog("Freeing radar ...\n");
     RKFree(radar);
