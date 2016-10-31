@@ -122,7 +122,7 @@ void *pulseCompressionCore(void *_in) {
     gettimeofday(&t2, NULL);
     
     // The last index of the pulse buffer
-    uint32_t i0 = RKBuffer0SlotCount - engine->coreCount + c;
+    uint32_t i0 = engine->size - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;

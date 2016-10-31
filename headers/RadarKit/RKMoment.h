@@ -26,7 +26,8 @@ typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
 struct rk_moment_source {
-    RKPulse                *pulses[RKMaxPulsesPerRay];
+    uint32_t origin;
+    uint32_t length;
 };
 
 struct rk_moment_worker {
@@ -55,6 +56,7 @@ struct rk_moment_engine {
     bool                   useSemaphore;
     int                    (*p)(RKMomentSource *);
 
+    RKMomentSource         *momentSource;
     RKMomentWorker         *workers;
 
     RKMomentEngineState    state;

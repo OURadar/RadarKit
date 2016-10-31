@@ -28,7 +28,7 @@ enum RKPulseCompressionEngineState {
     RKPulseCompressionEngineStateSleep
 };
 
-typedef struct rk_filter_rect {
+typedef struct rk_filter_anchor {
     int origin;
     int length;
     int maxDataLength;
