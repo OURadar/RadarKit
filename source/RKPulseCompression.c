@@ -283,6 +283,7 @@ void *pulseWatcher(void *_in) {
     int gid;
     int planSize;
     int planIndex = 0;
+    int skipCounter = 0;
 
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
@@ -379,7 +380,7 @@ void *pulseWatcher(void *_in) {
             gid = pulse->header.i % engine->filterGroupCount;
             engine->filterGid[k] = gid;
 
-            // Find the right plan
+            // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
                 planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
 
@@ -415,10 +416,21 @@ void *pulseWatcher(void *_in) {
             RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
             #endif
 
-            if (engine->useSemaphore) {
-                sem_post(sem[c]);
+            // Assess the buffer fullness
+            if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
+                engine->almostFull++;
+                skipCounter = engine->size;
+                RKLog("Warning. Buffer overflow.\n");
+            }
+
+            if (skipCounter > 0) {
+                skipCounter--;
             } else {
-                engine->workers[c].tic++;
+                if (engine->useSemaphore) {
+                    sem_post(sem[c]);
+                } else {
+                    engine->workers[c].tic++;
+                }
             }
             c = RKNextModuloS(c, engine->coreCount);
         }
@@ -641,6 +653,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     if (full) {
         i += sprintf(string + i, " :");
     }
+    // Lag from each core
     for (k = 0; k < engine->coreCount; k++) {
         worker = &engine->workers[k];
         if (rkGlobalParameters.showColor) {
@@ -662,6 +675,7 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
     } else {
         i += snprintf(string + i, RKMaximumStringLength - i, "|");
     }
+    // Duty cycle of each core
     for (k = 0; k < engine->coreCount && i < RKMaximumStringLength - 13; k++) {
         worker = &engine->workers[k];
         if (rkGlobalParameters.showColor) {
@@ -678,6 +692,20 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
             i += snprintf(string + i, RKMaximumStringLength - i, " %2.0f", 99.0f * worker->dutyCycle);
         }
     }
+    // Semaphore value of each core
+//    int v;
+//    if (full) {
+//        i += snprintf(string + i, RKMaximumStringLength - i, " |");
+//    } else {
+//        i += snprintf(string + i, RKMaximumStringLength - i, "|");
+//    }
+//    for (k = 0; k < engine->coreCount && i < RKMaximumStringLength - 13; k++) {
+//        worker = &engine->workers[k];
+//        sem_t *sem = sem_open(worker->semaphoreName, O_RDONLY);
+//        sem_getvalue(sem, &v);
+//        i += snprintf(string + i, RKMaximumStringLength - i, " %03d", v);
+//    }
+    // Almost Full flag
     i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
