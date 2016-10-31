@@ -105,6 +105,8 @@ void *pulseCompressionCore(void *_in) {
     char name[20];
     if (rkGlobalParameters.showColor) {
         i = sprintf(name, "\033[3%dm", c % 7 + 1);
+    } else {
+        i = 0;
     }
     if (engine->coreCount > 9) {
         i += sprintf(name + i, "Core %02d", c);
@@ -706,19 +708,6 @@ void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
             i += snprintf(string + i, RKMaximumStringLength - i, " %2.0f", 99.0f * worker->dutyCycle);
         }
     }
-    // Semaphore value of each core
-//    int v;
-//    if (full) {
-//        i += snprintf(string + i, RKMaximumStringLength - i, " |");
-//    } else {
-//        i += snprintf(string + i, RKMaximumStringLength - i, "|");
-//    }
-//    for (k = 0; k < engine->coreCount && i < RKMaximumStringLength - 13; k++) {
-//        worker = &engine->workers[k];
-//        sem_t *sem = sem_open(worker->semaphoreName, O_RDONLY);
-//        sem_getvalue(sem, &v);
-//        i += snprintf(string + i, RKMaximumStringLength - i, " %03d", v);
-//    }
     // Almost Full flag
     i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {

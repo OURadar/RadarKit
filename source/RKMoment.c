@@ -8,11 +8,98 @@
 
 #include <RadarKit/RKMoment.h>
 
-void *momentCore(void *in);
+void *momentCore(void *);
 
 #pragma mark -
 
-void *momentCore(void *in) {
+void *momentCore(void *_in) {
+    RKMomentWorker *me = (RKMomentWorker *)_in;
+    RKMomentEngine *engine = me->parentEngine;
+
+    int i, j, k, p;
+    struct timeval t0, t1, t2;
+
+    const int c = me->id;
+
+    // Find the semaphore
+    sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
+    if (sem == SEM_FAILED) {
+        RKLog("Error. Unable to retrieve semaphore %d\n", c);
+        return (void *)RKResultFailedToRetrieveSemaphore;
+    };
+
+    // Allocate local resources, use k to keep track of the total allocation
+    double *busyPeriods, *fullPeriods;
+    posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
+    posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
+    if (busyPeriods == NULL || fullPeriods == NULL) {
+        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        return (void *)RKResultFailedToAllocateDutyCycleBuffer;
+    }
+    k += 2 * RKWorkerDutyCycleBufferSize * sizeof(double);
+    memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    double allBusyPeriods = 0.0, allFullPeriods = 0.0;
+
+    // Initiate a variable to store my name
+    char name[20];
+    if (rkGlobalParameters.showColor) {
+        i = sprintf(name, "\033[3%dm", c % 7 + 1);
+    } else {
+        i = 0;
+    }
+    if (engine->coreCount > 9) {
+        i += sprintf(name + i, "MC%02d", c);
+    } else {
+        i += sprintf(name + i, "MC%d", c);
+    }
+    if (rkGlobalParameters.showColor) {
+        sprintf(name + i, "\033[0m");
+    }
+
+    // Initialize some end-of-loop variables
+    gettimeofday(&t0, NULL);
+    gettimeofday(&t2, NULL);
+
+    // The last index of the pulse buffer
+    uint32_t i0 = RKBuffer2SlotCount - engine->coreCount + c;
+
+    // The latest index in the dutyCycle buffer
+    int d0 = 0;
+
+    // Log my initial state
+    if (engine->verbose) {
+        pthread_mutex_lock(&engine->coreMutex);
+        RKLog(">%s started.  i0 = %d   mem = %s  tic = %d\n", name, i0, RKIntegerToCommaStyleString(k), me->tic);
+        pthread_mutex_unlock(&engine->coreMutex);
+    }
+
+    // Increase the tic once to indicate this processing core is created.
+    me->tic++;
+
+    while (engine->state == RKMomentEngineStateActive) {
+        // Process each polarization separately and indepently
+        for (p = 0; p < 2; p++) {
+        }
+
+        // Drop the oldest reading, replace it, and add to the calculation
+        allBusyPeriods -= busyPeriods[d0];
+        allFullPeriods -= fullPeriods[d0];
+        busyPeriods[d0] = RKTimevalDiff(t0, t1);
+        fullPeriods[d0] = RKTimevalDiff(t0, t2);
+        allBusyPeriods += busyPeriods[d0];
+        allFullPeriods += fullPeriods[d0];
+        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
+        me->dutyCycle = allBusyPeriods / allFullPeriods;
+
+        t2 = t0;
+    }
+
+    free(busyPeriods);
+    free(fullPeriods);
+
+    RKLog(">%s ended.\n", name);
+
     return NULL;
 }
 
