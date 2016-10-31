@@ -12,6 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKLocalCommandCenter.h>
+#include <RadarKit/RKMoment.h>
 
 enum RKInitFlag {
     RKInitFlagAllocMomentBuffer = 1,
@@ -27,7 +28,8 @@ enum RKRadarState {
     RKRadarStateRawIQBufferAllocating                = (1 << 3),   // 0x08
     RKRadarStateRawIQBufferInitialized               = (1 << 4),   // 0x10
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 5),   // 0x20
-    RKRadarStateSocketServerInitialized              = (1 << 6)    // 0x40
+    RKRadarStateMomentEngineInitialized              = (1 << 6),   // 0x40
+    RKRadarStateSocketServerInitialized              = (1 << 7)
 };
 
 
@@ -56,6 +58,7 @@ typedef struct RKRadar {
     //
     //
     RKPulseCompressionEngine   *pulseCompressionEngine;
+    RKMomentEngine             *momentEngine;
     RKServer                   *socketServer;
 
 } RKRadar;

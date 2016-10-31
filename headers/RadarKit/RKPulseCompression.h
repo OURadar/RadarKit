@@ -37,6 +37,8 @@ typedef struct rk_filter_rect {
 typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
 typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 
+typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
+
 struct rk_pulse_compression_worker {
     int                        id;
     pthread_t                  tid;                                      // Thread ID
@@ -48,8 +50,6 @@ struct rk_pulse_compression_worker {
     float                      lag;                                      // Lag relative to the latest index of engine
     RKPulseCompressionEngine   *parentEngine;
 };
-
-typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
 struct rk_pulse_compression_engine {
     RKPulse                          *pulses;

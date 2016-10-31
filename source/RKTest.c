@@ -31,11 +31,13 @@ void RKTestModuloMath(void) {
 void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     int k;
     float phi = 0.0f;
+    float tau = 0.0f;
+    float azimuth = 0.0f;
     struct timeval t0, t1;
     double dt = 0.0;
     double prt;
-    const int chunkSize = 500;
     int g = 0;
+    const int chunkSize = 500;
 
     // Set to default value if prf = 0
     if (prf == 0) {
@@ -66,12 +68,17 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             // Fill in the data...
             pulse->header.gateCount = gateCount;
+            pulse->header.azimuthDegrees = azimuth;
             for (k = 0; k < 1000; k++) {
                 pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
                 pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
             }
             phi += 0.02f;
+            azimuth = fmodf(180.0f * tau, 360.0f);
+
             RKSetPulseReady(pulse);
+
+            tau += prt;
         }
 
         // Wait to simulate the PRF

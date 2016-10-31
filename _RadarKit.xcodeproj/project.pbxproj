@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B506C1431DC7DF570007BAE0 /* RKSIMD.c in Sources */ = {isa = PBXBuildFile; fileRef = B55E437E1DB6668F003C40CF /* RKSIMD.c */; };
 		B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B52E45C21D91749C00FC1113 /* RKMoment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B52E45C51D9174A500FC1113 /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
 		B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDA1AB8D9F100C00517 /* RKClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -328,6 +329,7 @@
 				B5C1F3571AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */,
 				B5C1F3521AB9C917004F88CD /* RKPulseCompression.c in Sources */,
+				B506C1431DC7DF570007BAE0 /* RKSIMD.c in Sources */,
 				B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */,
 				B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */,
 				B54795261D91A87200E43F6A /* RKMoment.c in Sources */,
@@ -539,6 +541,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "-msse4.1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -579,6 +582,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "-msse4.1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};

@@ -71,8 +71,15 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     }
 
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
-    RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, radar->pulses, &radar->index, RKBuffer0SlotCount);
+    RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
+                                                  radar->pulses, &radar->index, RKBuffer0SlotCount);
     radar->state |= RKRadarStatePulseCompressionEngineInitialized;
+
+    radar->momentEngine = RKMomentEngineInit();
+    RKMomentEngineSetInputOutputBuffers(radar->momentEngine,
+                                        radar->pulses, &radar->index, RKBuffer0SlotCount,
+                                        radar->rays, &radar->rayIndex, RKBuffer2SlotCount);
+    radar->state |= RKRadarStateMomentEngineInitialized;
 
     radar->socketServer = RKServerInit();
     RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
@@ -87,6 +94,9 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
+    RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
+    RKMomentEngineFree(radar->momentEngine);
+    RKServerFree(radar->socketServer);
     while (radar->state & RKRadarStateRayBufferAllocating) {
         usleep(1000);
     }
@@ -132,6 +142,7 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
 
 int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+    RKMomentEngineStart(radar->momentEngine);
     RKServerActivate(radar->socketServer);
     return 0;
 }
@@ -140,6 +151,9 @@ int RKStop(RKRadar *radar) {
     radar->active = false;
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+    }
+    if (radar->state & RKRadarStateMomentEngineInitialized) {
+        RKMomentEngineStop(radar->momentEngine);
     }
     if (radar->state & RKRadarStateSocketServerInitialized) {
         RKServerStop(radar->socketServer);

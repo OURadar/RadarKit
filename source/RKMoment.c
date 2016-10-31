@@ -77,10 +77,47 @@ void *momentCore(void *_in) {
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
 
+    //
+    // Same as in RKPulseCompression.c
+    //
+    // free   busy       free   busy
+    // .......|||||||||||.......|||||||||
+    // t2 --- t1 --- t0/t2 --- t1 --- t0
+    //        [ t0 - t1 ]
+    // [    t0 - t2     ]
+    //
+    uint32_t tic = me->tic;
+
     while (engine->state == RKMomentEngineStateActive) {
+        if (engine->useSemaphore) {
+            #if defined(DEBUG_IQ)
+            RKLog(">%s sem_wait()\n", coreName);
+            #endif
+            sem_wait(sem);
+        } else {
+            while (tic == me->tic && engine->state == RKMomentEngineStateActive) {
+                usleep(1000);
+            }
+            tic = me->tic;
+        }
+        if (engine->state != RKMomentEngineStateActive) {
+            break;
+        }
+
+        // Something happened
+        gettimeofday(&t1, NULL);
+
+        // Start of getting busy
+        i0 = RKNextNModuloS(i0, engine->coreCount, engine->rayBufferSize);
+        me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
+
         // Process each polarization separately and indepently
         for (p = 0; p < 2; p++) {
+            usleep(3000);
         }
+
+        // Done processing, get the time
+        gettimeofday(&t0, NULL);
 
         // Drop the oldest reading, replace it, and add to the calculation
         allBusyPeriods -= busyPeriods[d0];
@@ -103,7 +140,7 @@ void *momentCore(void *_in) {
     return NULL;
 }
 
-void *pulseWatcher(void *_in) {
+void *pulseGatherer(void *_in) {
     RKMomentEngine *engine = (RKMomentEngine *)_in;
 
     int i, j, k;
@@ -111,7 +148,7 @@ void *pulseWatcher(void *_in) {
 
     sem_t *sem[engine->coreCount];
 
-//    int skipCounter = 0;
+    int skipCounter = 0;
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKMomentEngineStateActive;
@@ -157,26 +194,82 @@ void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
+    // Beam index at t = 0 and t = 1 (previous sample)
+    uint32_t i0, i1 = (uint32_t)-1;
+    uint32_t count = 0;
+    float deltaAzimuth, deltaElevation;
+
+    RKMomentSource *source = (RKMomentSource *)malloc(sizeof(RKMomentSource));
+
     // Here comes the busy loop
     k = 0;
     c = 0;
-    RKLog("pulseWatcher() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
+    RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
             usleep(200);
+            // Timeout and say "nothing" on the screen
         }
-        while (engine->pulses[k].header.s != RKPulseStatusCompressed && engine->state == RKMomentEngineStateActive) {
+        while ((engine->pulses[k].header.s & RKPulseStatusCompressed) == 0 && engine->state == RKMomentEngineStateActive) {
             usleep(200);
         }
-        if (engine->state == RKPulseStatusCompressed) {
-            // RKPulse *pulse = &engine->pulses[k];
+        if (engine->state == RKMomentEngineStateActive) {
+             RKPulse *pulse = &engine->pulses[k];
 
             // Gather the start and end pulses
             // Get the vacant ray
             // Post a worker to process for a ray
 
+            i0 = floorf(pulse->header.azimuthDegrees);
+            if (i1 != i0) {
+                i1 = i0;
 
+                if (count >= 5) {
+                    deltaAzimuth = source->pulses[count - 1]->header.azimuthDegrees - source->pulses[0]->header.azimuthDegrees;
+                    if (deltaAzimuth > 180.0f) {
+                        deltaAzimuth -= 360.0f;
+                    } else if (deltaAzimuth < -180.0f) {
+                        deltaAzimuth += 360.0f;
+                    }
+                    deltaAzimuth = fabsf(deltaAzimuth);
+                    deltaElevation = source->pulses[count - 1]->header.elevationDegrees - source->pulses[0]->header.elevationDegrees;
+                    if (deltaElevation > 180.0f) {
+                        deltaElevation -= 360.0f;
+                    } else if (deltaElevation < -180.0f) {
+                        deltaElevation += 360.0f;
+                    }
+                    deltaElevation = fabsf(deltaElevation);
+
+                    count--;
+//                    RKLog("%d   count = %d   EL %.2f - %.2f ^ %.2f   AZ %.2f - %.2f ^ %.2f\n",
+//                          i0, count,
+//                          source->pulses[0]->header.elevationDegrees, source->pulses[count]->header.elevationDegrees, deltaElevation,
+//                          source->pulses[0]->header.azimuthDegrees, source->pulses[count]->header.azimuthDegrees, deltaAzimuth);
+
+                    count = 0;
+                }
+                
+                // Assess the buffer fullness
+                if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
+                    engine->almostFull++;
+                    skipCounter = engine->pulseBufferSize;
+                    RKLog("Warning. Buffer overflow.\n");
+                }
+
+                if (skipCounter > 0) {
+                    skipCounter--;
+                } else {
+                    if (engine->useSemaphore) {
+                        sem_post(sem[c]);
+                    } else {
+                        engine->workers[c].tic++;
+                    }
+                    c = RKNextModuloS(c, engine->coreCount);
+                }
+            }
+            // Gather the pulses
+            source->pulses[count++] = pulse;
         }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->pulseBufferSize);
@@ -191,6 +284,8 @@ void *pulseWatcher(void *_in) {
         pthread_join(worker->tid, NULL);
         sem_unlink(worker->semaphoreName);
     }
+
+    free(source);
 
     return NULL;
 }
@@ -246,7 +341,7 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count
 int RKMomentEngineStart(RKMomentEngine *engine) {
     engine->state = RKMomentEngineStateActivating;
     if (engine->coreCount == 0) {
-        engine->coreCount = 2;
+        engine->coreCount = 4;
     }
     if (engine->workers != NULL) {
         RKLog("Error. RKMomentEngine->workers should be NULL here.\n");
@@ -254,11 +349,11 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
     if (engine->verbose) {
-        RKLog("Starting RKMoment pulseWatcher() ...\n");
+        RKLog("Starting pulseGatherer() ...\n");
     }
-    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
+    if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
-        return RKResultFailedToStartPulseWatcher;
+        return RKResultFailedToStartPulseGatherer;
     }
     while (engine->tic == 0) {
         usleep(1000);
@@ -275,9 +370,9 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
     engine->state = RKMomentEngineStateDeactivating;
-    pthread_join(engine->tidPulseWatcher, NULL);
+    pthread_join(engine->tidPulseGatherer, NULL);
     if (engine->verbose) {
-        RKLog("pulseWatcher() ended\n");
+        RKLog("pulseGatherer() ended\n");
     }
     free(engine->workers);
     engine->workers = NULL;

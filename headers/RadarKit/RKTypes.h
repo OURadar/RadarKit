@@ -49,6 +49,7 @@
 #define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
 #define RKMaxMatchedFilterGroupCount     8            // Maximum filter group count
 #define RKWorkerDutyCycleBufferSize      1000
+#define RKMaxPulsesPerRay                1000
 
 /*! @/definedblock */
 
@@ -228,6 +229,7 @@ enum RKResult {
     RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAddFilter,
     RKResultEngineDeactivatedMultipleTimes,
+    RKResultFailedToStartPulseGatherer,
     RKResultNoError = 0
 };
 
