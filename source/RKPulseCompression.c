@@ -59,6 +59,12 @@ void *pulseCompressionCore(void *_in) {
         RKLog("Error. Unable to retrieve semaphore %d\n", c);
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
+    // Set my CPU core
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(c, &cpuset);
+    sched_setaffinity(0, sizeof(cpuset), &cpuset);
+    pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that if a non-avx-enabled libfftw is compatible
