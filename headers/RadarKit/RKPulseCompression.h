@@ -13,7 +13,6 @@
 #include <fftw3.h>
 
 #define RKPulseCompressionDFTPlanCount   16
-#define RKWorkerDutyCycleBufferSize      1000
 
 //#ifdef __cplusplus
 //extern "C" {
@@ -40,8 +39,8 @@ typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 
 struct rk_pulse_compression_worker {
     int                        id;
-    uint32_t                   tic;
     pthread_t                  tid;                                      // Thread ID
+    uint32_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
     char                       semaphoreName[16];
     double                     dutyBuff[RKWorkerDutyCycleBufferSize];
@@ -56,14 +55,9 @@ struct rk_pulse_compression_engine {
     RKPulse                          *pulses;
     uint32_t                         *index;
     uint32_t                         size;
-    uint32_t                         tic;              // Process count
-
-    RKPulseCompressionEngineState    state;
-    int                              verbose;
-
-    unsigned int                     coreCount;
-    pthread_t                        tidPulseWatcher;
-
+    uint32_t                         tic;                                // Process count
+    uint32_t                         verbose;
+    uint32_t                         coreCount;
     bool                             useSemaphore;
 
     uint32_t                         filterGroupCount;
@@ -77,13 +71,13 @@ struct rk_pulse_compression_engine {
     fftwf_plan                       planForwardOutPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planBackwardInPlace[RKPulseCompressionDFTPlanCount];
 
-    int                              *filterGid;
+    uint32_t                         *filterGid;
     RKPulseCompressionPlanIndex      *planIndices;
-
     RKPulseCompressionWorker         *workers;
 
-    int                              almostFull;
-    
+    RKPulseCompressionEngineState    state;
+    int                              almostFull;   
+    pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  coreMutex;
 };
 

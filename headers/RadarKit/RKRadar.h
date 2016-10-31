@@ -44,6 +44,7 @@ typedef struct RKRadar {
     RKFloatRay                 *rays;
     //
     uint32_t                   index;
+    uint32_t                   rayIndex;
     //
     //
     RKEnum                     initFlags;
@@ -62,16 +63,20 @@ typedef struct RKRadar {
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
+int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
+int RKSetWaveformToImpulse(RKRadar *radar);
+int RKSetWaveformTo121(RKRadar *radar);
+int RKSetProcessingCoreCounts(RKRadar *radar,
+                              const unsigned int pulseCompressionCoreCount,
+                              const unsigned int momentProcessorCoreCount);
+
 int RKGoLive(RKRadar *radar);
 int RKStop(RKRadar *radar);
 
 RKPulse *RKGetVacantPulse(RKRadar *radar);
 void RKSetPulseReady(RKPulse *pulse);
 
-int RKSetWaveformToImpulse(RKRadar *radar);
-int RKSetWaveformTo121(RKRadar *radar);
-int RKSetProcessingCoreCounts(RKRadar *radar,
-                              const unsigned int pulseCompressionCoreCount,
-                              const unsigned int momentProcessorCoreCount);
+RKFloatRay *RKGetVacantRay(RKRadar *radar);
+void RKSetRayReady(RKFloatRay *ray);
 
 #endif /* defined(__RadarKit_RKRadar__) */

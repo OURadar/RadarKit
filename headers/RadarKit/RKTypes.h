@@ -48,6 +48,8 @@
 #define RKSIMDAlignSize                  64           // SSE 16, AVX 32, AVX-512 64
 #define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
 #define RKMaxMatchedFilterGroupCount     8            // Maximum filter group count
+#define RKWorkerDutyCycleBufferSize      1000
+
 /*! @/definedblock */
 
 #define RKMaximumStringLength  1024
@@ -154,13 +156,19 @@ typedef struct rk_pulse {
 
 
 typedef uint32_t RKPulseStatus;
-
 enum RKPulseStatus {
     RKPulseStatusVacant      = 0,
     RKPulseStatusHasIQData   = 1,
     RKPulseStatusHasPosition = 1 << 1,
     RKPulseStatusReady       = RKPulseStatusHasIQData | RKPulseStatusHasPosition,
     RKPulseStatusCompressed  = 1 << 2
+};
+
+typedef uint32_t RKRayStatus;
+enum RKRayStatus {
+    RKRayStatusVacant        = 0,
+    RKRayStatusReady         = 1,
+    RKRayStatusUsedOnce      = 1 << 1
 };
 
 /*!
@@ -179,7 +187,7 @@ enum RKPulseStatus {
  @param endTimeD               End time in double representation
  */
 typedef struct RKRayHeader {
-    RKPulseStatus  s;
+    RKRayStatus    s;
     uint32_t       i;
     uint32_t       n;
     uint16_t       marker;
@@ -196,12 +204,12 @@ typedef struct RKRayHeader {
 
 typedef struct RKInt16Ray {
     RKRayHeader    header;
-    RKInt16        data[RKGateCount];
+    int16_t        data[RKGateCount];
 } RKInt16Ray;
 
 typedef struct RKFloatRay {
     RKRayHeader    header;
-    RKFloat        data[RKGateCount];
+    float          data[RKGateCount];
 } RKFloatRay;
 
 enum RKResult {
@@ -219,6 +227,7 @@ enum RKResult {
     RKResultFailedToAllocateFilter,
     RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAddFilter,
+    RKResultEngineDeactivatedMultipleTimes,
     RKResultNoError = 0
 };
 

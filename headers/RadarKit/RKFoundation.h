@@ -13,7 +13,7 @@
 #include <RadarKit/RKMisc.h>
 #include <RadarKit/RKSIMD.h>
 
-#define RKEOL                       "\r\n"
+#define RKEOL                            "\r\n"
 
 // Compute the next/previous location in Buffer0
 #define RKNextBuffer0Slot(i)             (i == RKBuffer0SlotCount - 1 ? 0 : i + 1)

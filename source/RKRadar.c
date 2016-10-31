@@ -40,7 +40,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     // Set some non-zero variables
     radar->active = true;
     
-    // Other allocatinos
+    // Moment bufer
     if (flags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
         bytes = RKBuffer2SlotCount * sizeof(RKInt16Ray);
@@ -53,6 +53,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         radar->state |= RKRadarStateRayBufferInitialized;
     }
 
+    // I/Q buffer
     if (flags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
         bytes = RKBuffer0SlotCount * sizeof(RKPulse);
@@ -102,6 +103,33 @@ int RKFree(RKRadar *radar) {
     return EXIT_SUCCESS;
 }
 
+#pragma mark -
+
+// Function incomplete
+int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
+    // Load in the waveform
+    // Call a transceiver delegate function to fill in the DAC
+    RKComplex filter[] = {{1.0f, 0.0f}};
+    return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, 1, 0, maxDataLength, group, 0);
+}
+
+int RKSetWaveformToImpulse(RKRadar *radar) {
+    return RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+}
+
+int RKSetWaveformTo121(RKRadar *radar) {
+    return RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+}
+
+int RKSetProcessingCoreCounts(RKRadar *radar,
+                              const unsigned int pulseCompressionCoreCount,
+                              const unsigned int momentProcessorCoreCount) {
+    RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
+    return 0;
+}
+
+#pragma mark -
+
 int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKServerActivate(radar->socketServer);
@@ -136,25 +164,17 @@ void RKSetPulseReady(RKPulse *pulse) {
     pulse->header.s = RKPulseStatusReady;
 }
 
-// Function incomplete
-int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
-    // Load in the waveform
-    // Call a transceiver delegate function to fill in the DAC
-    RKComplex filter[] = {{1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, 1, 0, maxDataLength, group, 0);
+RKFloatRay *RKGetVacantRay(RKRadar *radar) {
+    if (radar->rays == NULL) {
+        RKLog("Error. Buffer for rays has not been allocated.\n");
+        exit(EXIT_FAILURE);
+    }
+    RKFloatRay *ray = &radar->rays[radar->rayIndex];
+    ray->header.s = RKRayStatusVacant;
+    radar->rayIndex = RKNextModuloS(radar->rayIndex, RKBuffer2SlotCount);
+    return ray;
 }
 
-int RKSetWaveformToImpulse(RKRadar *radar) {
-    return RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
-}
-
-int RKSetWaveformTo121(RKRadar *radar) {
-    return RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
-}
-
-int RKSetProcessingCoreCounts(RKRadar *radar,
-                              const unsigned int pulseCompressionCoreCount,
-                              const unsigned int momentProcessorCoreCount) {
-    RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
-    return 0;
+void RKSetRayReady(RKFloatRay *ray) {
+    ray->header.s = RKRayStatusReady;
 }

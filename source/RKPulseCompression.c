@@ -334,7 +334,7 @@ void *pulseWatcher(void *_in) {
     // Spin off N workers to process I/Q pulses
     for (i = 0; i < engine->coreCount; i++) {
         RKPulseCompressionWorker *worker = &engine->workers[i];
-        snprintf(worker->semaphoreName, 16, "rk-sem-%03d", i);
+        snprintf(worker->semaphoreName, 16, "rk-iq-%03d", i);
         sem[i] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[i] == SEM_FAILED) {
             if (engine->verbose > 1) {
@@ -482,6 +482,10 @@ void *pulseWatcher(void *_in) {
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)malloc(sizeof(RKPulseCompressionEngine));
+    if (engine == NULL) {
+        RKLog("Error. Unable to allocate a pulse compression engine.\n");
+        return NULL;
+    }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
     engine->state = RKPulseCompressionEngineStateAllocated;
     engine->verbose = 1;
@@ -526,7 +530,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     if (engine->filterGid != NULL) {
         free(engine->filterGid);
     }
-    engine->filterGid = (int *)malloc(size * sizeof(int));
+    engine->filterGid = (uint32_t *)malloc(size * sizeof(int));
     if (engine->filterGid == NULL) {
         RKLog("Error. Unable to allocate filterGid.\n");
         exit(EXIT_FAILURE);
@@ -561,12 +565,12 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         engine->coreCount = 8;
     }
     if (engine->workers != NULL) {
-        RKLog("Error. engine->workers should be NULL here.\n");
+        RKLog("Error. RKPulseCompressionEngine->workers should be NULL here.\n");
     }
     engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
-    memset(engine->workers, 0, sizeof(RKPulseCompressionWorker));
+    memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     if (engine->verbose) {
-        RKLog("Starting pulseWatcher() ...\n");
+        RKLog("Starting RKPulseCompression pulseWatcher() ...\n");
     }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
@@ -576,36 +580,35 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         usleep(1000);
     }
 
-    return 0;
+    return RKResultNoError;
 }
 
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
-    int k;
     if (engine->state != RKPulseCompressionEngineStateActive) {
         if (engine->verbose > 1) {
             RKLog("Info. Pulse compression engine is being or has been deactivated.\n");
         }
-        return 1;
+        return RKResultEngineDeactivatedMultipleTimes;
     }
     engine->state = RKPulseCompressionEngineStateDeactivating;
-    k = pthread_join(engine->tidPulseWatcher, NULL);
+    pthread_join(engine->tidPulseWatcher, NULL);
     if (engine->verbose) {
         RKLog("pulseWatcher() ended\n");
     }
     free(engine->workers);
     engine->workers = NULL;
     engine->state = RKPulseCompressionEngineStateNull;
-    return k;
+    return RKResultNoError;
 }
 
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count) {
     engine->filterCounts[group] = count;
-    return 0;
+    return RKResultNoError;
 }
 
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount) {
     engine->filterGroupCount = groupCount;
-    return 0;
+    return RKResultNoError;
 }
 
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int origin, const int maxDataLength, const int group, const int index) {
@@ -636,7 +639,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
             }
         }
     }
-    return 0;
+    return RKResultNoError;
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
