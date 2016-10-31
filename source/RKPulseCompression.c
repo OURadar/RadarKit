@@ -431,8 +431,8 @@ void *pulseWatcher(void *_in) {
                 } else {
                     engine->workers[c].tic++;
                 }
+                c = RKNextModuloS(c, engine->coreCount);
             }
-            c = RKNextModuloS(c, engine->coreCount);
         }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->size);
