@@ -92,7 +92,7 @@ void *momentCore(void *_in) {
 
     while (engine->state == RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
-            #if defined(DEBUG_IQ)
+            #if defined(DEBUG_MM)
             RKLog(">%s sem_wait()\n", coreName);
             #endif
             sem_wait(sem);
@@ -216,23 +216,22 @@ void *pulseGatherer(void *_in) {
             usleep(200);
         }
         if (engine->state == RKMomentEngineStateActive) {
-            // Gather the start and end pulses and post a worker to process for a ray
-            i0 = floorf(pulse->header.azimuthDegrees);
-            if (i1 != i0) {
-                i1 = i0;
-                // Inclusive count, the end pulse is used on both rays
-                engine->momentSource[j].length = count + 1;
+            // Assess the buffer fullness
+            if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
+                engine->almostFull++;
+                skipCounter = engine->pulseBufferSize;
+                RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
+            }
 
-                // Assess the buffer fullness
-                if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
-                    engine->almostFull++;
-                    skipCounter = engine->pulseBufferSize;
-                    RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
-                }
-
-                if (skipCounter > 0) {
-                    skipCounter--;
-                } else {
+            if (skipCounter > 0) {
+                skipCounter--;
+            } else {
+                // Gather the start and end pulses and post a worker to process for a ray
+                i0 = floorf(pulse->header.azimuthDegrees);
+                if (i1 != i0) {
+                    i1 = i0;
+                    // Inclusive count, the end pulse is used on both rays
+                    engine->momentSource[j].length = count + 1;
                     if (count > 0) {
                         if (engine->useSemaphore) {
                             sem_post(sem[c]);
@@ -247,16 +246,15 @@ void *pulseGatherer(void *_in) {
                     }
                     count = 0;
                 }
-
                 // Check finished rays
                 //printf("ray[%d].header.s = %d", *engine->rayIndex, engine->rays[*engine->rayIndex].header.s);
                 while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
                     *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
                     //printf(" --> %u\n", *engine->rayIndex);
                 }
+                // Keep counting up
+                count++;
             }
-            // Keep counting up
-            count++;
         }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->pulseBufferSize);
