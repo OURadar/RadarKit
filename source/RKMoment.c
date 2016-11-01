@@ -217,10 +217,10 @@ void *pulseGatherer(void *_in) {
         }
         if (engine->state == RKMomentEngineStateActive) {
             // Assess the buffer fullness
-            if (c == 0 && skipCounter == 0 && engine->workers[c].lag > 0.9f) {
+            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize;
-                engine->workers[c].lag = 0.89f;
+                engine->workers[0].lag = 0.89f;
                 RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
             }
 
