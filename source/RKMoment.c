@@ -16,7 +16,7 @@ void *momentCore(void *_in) {
     RKMomentWorker *me = (RKMomentWorker *)_in;
     RKMomentEngine *engine = me->parentEngine;
 
-    int i, j, k, p;
+    int k;
     struct timeval t0, t1, t2;
 
     const int c = me->id;
@@ -44,17 +44,17 @@ void *momentCore(void *_in) {
     // Initiate a variable to store my name
     char name[20];
     if (rkGlobalParameters.showColor) {
-        i = sprintf(name, "\033[3%dm", c % 7 + 1);
+        k = sprintf(name, "\033[3%dm", c % 7 + 1);
     } else {
-        i = 0;
+        k = 0;
     }
     if (engine->coreCount > 9) {
-        i += sprintf(name + i, "MC%02d", c);
+        k += sprintf(name + k, "MC%02d", c);
     } else {
-        i += sprintf(name + i, "MC%d", c);
+        k += sprintf(name + k, "MC%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + i, "\033[0m");
+        sprintf(name + k, "\033[0m");
     }
 
     float deltaAzimuth, deltaElevation;
@@ -64,7 +64,8 @@ void *momentCore(void *_in) {
     gettimeofday(&t2, NULL);
 
     // The last index of the pulse buffer and the last index of the ray buffer
-    uint32_t i0 = engine->rayBufferSize - engine->coreCount + c;
+    uint32_t is, ie;
+    uint32_t io = engine->rayBufferSize - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -72,7 +73,7 @@ void *momentCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.  i0 = %d   mem = %s  tic = %d\n", name, i0, RKIntegerToCommaStyleString(k), me->tic);
+        RKLog(">%s started.  i0 = %d   mem = %s  tic = %d\n", name, io, RKIntegerToCommaStyleString(k), me->tic);
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -110,36 +111,37 @@ void *momentCore(void *_in) {
         gettimeofday(&t1, NULL);
 
         // Start of getting busy
-        i0 = RKNextNModuloS(i0, engine->coreCount, engine->rayBufferSize);
+        io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
+        // Start and end indices of the I/Q data
+        is = engine->momentSource[io].origin;
+        ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->rayBufferSize);
+
+        deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
+        if (deltaAzimuth > 180.0f) {
+            deltaAzimuth -= 360.0f;
+        } else if (deltaAzimuth < -180.0f) {
+            deltaAzimuth += 360.0f;
+        }
+        deltaAzimuth = fabsf(deltaAzimuth);
+        deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
+        if (deltaElevation > 180.0f) {
+            deltaElevation -= 360.0f;
+        } else if (deltaElevation < -180.0f) {
+            deltaElevation += 360.0f;
+        }
+        deltaElevation = fabsf(deltaElevation);
+        
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog("%s  %u ... %u\n", name, engine->momentSource[i0].origin, engine->momentSource[i0].length);
+        RKLog("%s   %u   %u...%u   EL %.2f - %.2f ^ %.2f   AZ %.2f - %.2f ^ %.2f\n",
+              name, io, is, ie,
+              engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
+              engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
         pthread_mutex_unlock(&engine->coreMutex);
 
-//        deltaAzimuth = source->pulses[count - 1]->header.azimuthDegrees - source->pulses[0]->header.azimuthDegrees;
-//        if (deltaAzimuth > 180.0f) {
-//            deltaAzimuth -= 360.0f;
-//        } else if (deltaAzimuth < -180.0f) {
-//            deltaAzimuth += 360.0f;
-//        }
-//        deltaAzimuth = fabsf(deltaAzimuth);
-//        deltaElevation = source->pulses[count - 1]->header.elevationDegrees - source->pulses[0]->header.elevationDegrees;
-//        if (deltaElevation > 180.0f) {
-//            deltaElevation -= 360.0f;
-//        } else if (deltaElevation < -180.0f) {
-//            deltaElevation += 360.0f;
-//        }
-//        deltaElevation = fabsf(deltaElevation);
-//        RKLog("%d   count = %d   EL %.2f - %.2f ^ %.2f   AZ %.2f - %.2f ^ %.2f\n",
-//              i0, count,
-//              source->pulses[0]->header.elevationDegrees, source->pulses[count]->header.elevationDegrees, deltaElevation,
-//              source->pulses[0]->header.azimuthDegrees, source->pulses[count]->header.azimuthDegrees, deltaAzimuth);
-
         // Process each polarization separately and indepently
-        for (p = 0; p < 2; p++) {
-            usleep(3000);
-        }
+        usleep(3000);
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -220,10 +222,11 @@ void *pulseGatherer(void *_in) {
     engine->tic++;
 
     // Beam index at t = 0 and t = 1 (previous sample)
-    uint32_t i0, i1 = (uint32_t)-1;
+    uint32_t i0, i1 = 0;
     uint32_t count = 0;
 
     // Here comes the busy loop
+    j = 0;
     k = 0;
     c = 0;
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
@@ -246,7 +249,7 @@ void *pulseGatherer(void *_in) {
             i0 = floorf(pulse->header.azimuthDegrees);
             if (i1 != i0) {
                 i1 = i0;
-                engine->momentSource[k].length = count;
+                engine->momentSource[j].length = count;
 
                 // Assess the buffer fullness
                 if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
@@ -258,14 +261,17 @@ void *pulseGatherer(void *_in) {
                 if (skipCounter > 0) {
                     skipCounter--;
                 } else {
-                    if (engine->useSemaphore) {
-                        sem_post(sem[c]);
-                    } else {
-                        engine->workers[c].tic++;
+                    if (count > 0) {
+                        if (engine->useSemaphore) {
+                            sem_post(sem[c]);
+                        } else {
+                            engine->workers[c].tic++;
+                        }
+                        c = RKNextModuloS(c, engine->coreCount);
+                        // Start of ray
+                        j = RKNextModuloS(j, engine->rayBufferSize);
+                        engine->momentSource[j].origin = k;
                     }
-                    c = RKNextModuloS(c, engine->coreCount);
-                    // Start of ray
-                    engine->momentSource[k].origin = k;
                     count = 0;
                 }
             }
@@ -332,6 +338,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
         RKLog("Error. Unable to allocate momentSource.\n");
         exit(EXIT_FAILURE);
     }
+    memset(engine->momentSource, 0, rayBufferSize * sizeof(RKMomentSource));
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count) {

@@ -74,7 +74,7 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
                 pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
             }
             phi += 0.02f;
-            azimuth = fmodf(180.0f * tau, 360.0f);
+            azimuth = fmodf(5.0f * tau, 360.0f);
 
             RKSetPulseReady(pulse);
 
