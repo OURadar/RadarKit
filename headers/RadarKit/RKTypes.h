@@ -229,6 +229,7 @@ enum RKResult {
     RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAddFilter,
     RKResultEngineDeactivatedMultipleTimes,
+    RKResultFailedToStartMomentCore,
     RKResultFailedToStartPulseGatherer,
     RKResultNoError = 0
 };

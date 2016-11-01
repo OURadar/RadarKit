@@ -42,6 +42,7 @@ void *pulseCompressionCore(void *_in) {
     int i, j, k, p;
     struct timeval t0, t1, t2;
 
+    // Find the thread Id
     i = workerThreadId(engine);
     if (i < 0) {
         i = me->id;
@@ -60,6 +61,22 @@ void *pulseCompressionCore(void *_in) {
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
 
+    // Initiate a variable to store my name
+    char name[20];
+    if (rkGlobalParameters.showColor) {
+        k = sprintf(name, "\033[3%dm", c % 7 + 1);
+    } else {
+        k = 0;
+    }
+    if (engine->coreCount > 9) {
+        k += sprintf(name + k, "P%02d", c);
+    } else {
+        k += sprintf(name + k, "P%d", c);
+    }
+    if (rkGlobalParameters.showColor) {
+        sprintf(name + k, "\033[0m");
+    }
+
 #if defined(_GNU_SOURCE)
 
     // Set my CPU core
@@ -72,7 +89,7 @@ void *pulseCompressionCore(void *_in) {
 #endif
 
     // Allocate local resources, use k to keep track of the total allocation
-    // Avoid fftwf_malloc() here so that if a non-avx-enabled libfftw is compatible
+    // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
     fftwf_complex *in, *out;
     posix_memalign((void **)&in, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
     posix_memalign((void **)&out, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
@@ -100,22 +117,6 @@ void *pulseCompressionCore(void *_in) {
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
-
-    // Initiate a variable to store my name
-    char name[20];
-    if (rkGlobalParameters.showColor) {
-        i = sprintf(name, "\033[3%dm", c % 7 + 1);
-    } else {
-        i = 0;
-    }
-    if (engine->coreCount > 9) {
-        i += sprintf(name + i, "Core %02d", c);
-    } else {
-        i += sprintf(name + i, "Core %d", c);
-    }
-    if (rkGlobalParameters.showColor) {
-        sprintf(name + i, "\033[0m");
-    }
 
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);

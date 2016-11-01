@@ -28,6 +28,22 @@ void *momentCore(void *_in) {
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
 
+    // Initiate a variable to store my name
+    char name[20];
+    if (rkGlobalParameters.showColor) {
+        k = sprintf(name, "\033[3%dm", c % 7 + 1);
+    } else {
+        k = 0;
+    }
+    if (engine->coreCount > 9) {
+        k += sprintf(name + k, "M%02d", c);
+    } else {
+        k += sprintf(name + k, "M%d", c);
+    }
+    if (rkGlobalParameters.showColor) {
+        sprintf(name + k, "\033[0m");
+    }
+
     // Allocate local resources, use k to keep track of the total allocation
     double *busyPeriods, *fullPeriods;
     posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
@@ -40,22 +56,6 @@ void *momentCore(void *_in) {
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
-
-    // Initiate a variable to store my name
-    char name[20];
-    if (rkGlobalParameters.showColor) {
-        k = sprintf(name, "\033[3%dm", c % 7 + 1);
-    } else {
-        k = 0;
-    }
-    if (engine->coreCount > 9) {
-        k += sprintf(name + k, "MC%02d", c);
-    } else {
-        k += sprintf(name + k, "MC%d", c);
-    }
-    if (rkGlobalParameters.showColor) {
-        sprintf(name + k, "\033[0m");
-    }
 
     float deltaAzimuth, deltaElevation;
 
@@ -138,7 +138,7 @@ void *momentCore(void *_in) {
         deltaElevation = fabsf(deltaElevation);
         
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog("%s   %u   %u...%u   EL %.2f - %.2f ^ %.2f   AZ %.2f - %.2f ^ %.2f\n",
+        RKLog("%s %4u %04u...%04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
               name, io, is, ie,
               engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
               engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
@@ -210,8 +210,8 @@ void *pulseGatherer(void *_in) {
         worker->id = c;
         worker->parentEngine = engine;
         if (pthread_create(&worker->tid, NULL, momentCore, worker) != 0) {
-            RKLog("Error. Failed to start a compression core.\n");
-            return (void *)RKResultFailedToStartCompressionCore;
+            RKLog("Error. Failed to start a moment core.\n");
+            return (void *)RKResultFailedToStartMomentCore;
         }
     }
 
