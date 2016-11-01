@@ -668,7 +668,7 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
 
     // Use b characters to draw a bar
     const int b = 10;
-    i = *engine->index * b / engine->size;
+    i = *engine->index * (b + 1) / engine->size;
     memset(string, '|', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, "%s:", full ? " " : "");

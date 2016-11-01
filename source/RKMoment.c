@@ -428,7 +428,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
 
     // Use b characters to draw a bar
     const int b = 10;
-    i = *engine->rayIndex * b / engine->rayBufferSize;
+    i = *engine->rayIndex * (b + 1) / engine->rayBufferSize;
     memset(string, '|', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, "%s%04d%s|",
