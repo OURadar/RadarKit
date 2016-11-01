@@ -189,7 +189,7 @@ void *pulseGatherer(void *_in) {
     // Spin off N workers to process I/Q pulses
     for (c = 0; c < engine->coreCount; c++) {
         RKMomentWorker *worker = &engine->workers[c];
-        snprintf(worker->semaphoreName, 16, "rk-mm-%03d", c);
+        snprintf(worker->semaphoreName, 16, "rk-mm-%02d", c);
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {
