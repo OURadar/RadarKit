@@ -40,23 +40,6 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     // Set some non-zero variables
     radar->active = true;
     
-    // Moment bufer
-    if (flags & RKInitFlagAllocMomentBuffer) {
-        radar->state |= RKRadarStateRayBufferAllocating;
-        bytes = RKBuffer2SlotCount * sizeof(RKFloatRay);
-        if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
-            RKLog("ERROR. Unable to allocate memory for rays");
-            return NULL;
-        }
-        if (flags & RKInitFlagVerbose) {
-            RKLog("Level II buffer occupies %s B\n", bytes);
-        }
-        memset(radar->rays, 0, bytes);
-        radar->memoryUsage += bytes;
-        radar->state ^= RKRadarStateRayBufferAllocating;
-        radar->state |= RKRadarStateRayBufferInitialized;
-    }
-
     // I/Q buffer
     if (flags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
@@ -66,7 +49,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
             return NULL;
         }
         if (flags & RKInitFlagVerbose) {
-            RKLog("Level I buffer occupies %s B\n", bytes);
+            RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
         memset(radar->pulses, 0, bytes);
         radar->memoryUsage += bytes;
@@ -77,17 +60,37 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         }
     }
 
+    // Moment bufer
+    if (flags & RKInitFlagAllocMomentBuffer) {
+        radar->state |= RKRadarStateRayBufferAllocating;
+        bytes = RKBuffer2SlotCount * sizeof(RKFloatRay);
+        if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
+            RKLog("ERROR. Unable to allocate memory for rays");
+            return NULL;
+        }
+        if (flags & RKInitFlagVerbose) {
+            RKLog("Level II buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
+        }
+        memset(radar->rays, 0, bytes);
+        radar->memoryUsage += bytes;
+        radar->state ^= RKRadarStateRayBufferAllocating;
+        radar->state |= RKRadarStateRayBufferInitialized;
+    }
+
+    // Pulse compression engine
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
                                                   radar->pulses, &radar->index, RKBuffer0SlotCount);
     radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
+    // Moment engine
     radar->momentEngine = RKMomentEngineInit();
     RKMomentEngineSetInputOutputBuffers(radar->momentEngine,
                                         radar->pulses, &radar->index, RKBuffer0SlotCount,
                                         radar->rays, &radar->rayIndex, RKBuffer2SlotCount);
     radar->state |= RKRadarStateMomentEngineInitialized;
 
+    // TCP/IP socket server
     radar->socketServer = RKServerInit();
     RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
     RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
@@ -104,17 +107,17 @@ int RKFree(RKRadar *radar) {
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     RKMomentEngineFree(radar->momentEngine);
     RKServerFree(radar->socketServer);
-    while (radar->state & RKRadarStateRayBufferAllocating) {
-        usleep(1000);
-    }
-    if (radar->state & RKRadarStateRayBufferInitialized) {
-        free(radar->rays);
-    }
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
     if (radar->state & RKRadarStateRawIQBufferInitialized) {
         free(radar->pulses);
+    }
+    while (radar->state & RKRadarStateRayBufferAllocating) {
+        usleep(1000);
+    }
+    if (radar->state & RKRadarStateRayBufferInitialized) {
+        free(radar->rays);
     }
     free(radar);
     return EXIT_SUCCESS;
@@ -142,6 +145,7 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount) {
     RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
+    RKMomentEngineSetCoreCount(radar->momentEngine, momentProcessorCoreCount);
     return 0;
 }
 

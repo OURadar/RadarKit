@@ -41,9 +41,10 @@ void showHelp() {
            "     debris particle count is set for each type sequentially by repeating the\n"
            "     option multiple times for each debris type.\n"
            "\n"
-           "  -c (--cpu) " UNDERLINE("count") "\n"
-           "         Sets the number of CPU cores to " UNDERLINE("count") ".\n"
-           "         If not specified, the default core count is 8.\n"
+           "  -c (--cpu) " UNDERLINE("P, M") "\n"
+           "         Sets the number of threads for pulse compression to " UNDERLINE("P") "\n"
+           "         and the number of threads for moment calculation to " UNDERLINE("M") ".\n"
+           "         If not specified, the default core counts are 8 / 4.\n"
            "\n"
            "  -f (--prf) " UNDERLINE("value") "\n"
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
@@ -66,7 +67,8 @@ void showHelp() {
 }
 
 typedef struct user_params {
-    int   coreCount;
+    int   threadsPulseCompression;
+    int   threadsMoment;
     int   prf;
     int   verbose;
     int   testSIMD;
@@ -107,7 +109,8 @@ UserParams processInput(int argc, char **argv) {
     while ((opt = getopt_long(argc, argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'c':
-                user.coreCount = atoi(optarg);
+                sscanf(optarg, "%d,%d", &user.threadsPulseCompression, &user.threadsMoment);
+                //printf("core counts = %d / %d\n", user.threadsPulseCompression, user.threadsMoment);
                 break;
             case 'f':
                 user.prf = atoi(optarg);
@@ -200,10 +203,8 @@ int main(int argc, char *argv[]) {
     RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
 
     // Set any parameters here:
-    if (user.coreCount) {
-        RKSetProcessingCoreCounts(radar, user.coreCount, 0);
-    }
-    
+    RKSetProcessingCoreCounts(radar, user.threadsPulseCompression, user.threadsMoment);
+
     // Go live
     RKGoLive(radar);
 
