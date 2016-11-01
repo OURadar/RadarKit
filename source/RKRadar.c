@@ -48,6 +48,9 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
             RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;
         }
+        if (flags & RKInitFlagVerbose) {
+            RKLog("Level II buffer occupies %s B\n", bytes);
+        }
         memset(radar->rays, 0, bytes);
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRayBufferAllocating;
@@ -61,6 +64,9 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
         if (posix_memalign((void **)&radar->pulses, RKSIMDAlignSize, bytes)) {
             RKLog("ERROR. Unable to allocate memory for I/Q pulses");
             return NULL;
+        }
+        if (flags & RKInitFlagVerbose) {
+            RKLog("Level I buffer occupies %s B\n", bytes);
         }
         memset(radar->pulses, 0, bytes);
         radar->memoryUsage += bytes;

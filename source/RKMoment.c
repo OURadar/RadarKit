@@ -224,6 +224,7 @@ void *pulseGatherer(void *_in) {
                 RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
             }
 
+            // Skip posting if the buffer is getting full (there are ~0.9 * pulseBufferSize semaphores to be handled)
             if (skipCounter > 0) {
                 skipCounter--;
                 if (skipCounter == 0) {
@@ -251,10 +252,8 @@ void *pulseGatherer(void *_in) {
                     count = 0;
                 }
                 // Check finished rays
-                //printf("ray[%d].header.s = %d", *engine->rayIndex, engine->rays[*engine->rayIndex].header.s);
                 while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
                     *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
-                    //printf(" --> %u\n", *engine->rayIndex);
                 }
                 // Keep counting up
                 count++;

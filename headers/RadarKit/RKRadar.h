@@ -15,8 +15,10 @@
 #include <RadarKit/RKMoment.h>
 
 enum RKInitFlag {
-    RKInitFlagAllocMomentBuffer = 1,
-    RKInitFlagAllocRawIQBuffer  = (1 << 1),
+    RKInitFlagNone              = 0,
+    RKInitFlagVerbose           = 1,
+    RKInitFlagAllocMomentBuffer = (1 << 1),
+    RKInitFlagAllocRawIQBuffer  = (1 << 2),
     RKInitFlagAllocEverything   = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer
 };
 
