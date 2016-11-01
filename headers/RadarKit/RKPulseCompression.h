@@ -104,6 +104,7 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
 
+char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine);
 void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus

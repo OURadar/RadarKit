@@ -114,12 +114,10 @@ void *momentCore(void *_in) {
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
         // Call the assigned moment processor
-        if (engine->p) {
-            me->pid = engine->p(engine, io, name);
-        }
+        me->pid = engine->processor(engine, io, name);
 
-        // ray->header.s |= ...
-        //me->pid = ie;
+        // Indicate the ray status is ready
+        engine->rays[io].header.s = RKRayStatusReady;
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -203,7 +201,7 @@ void *pulseGatherer(void *_in) {
     uint32_t count = 0;
 
     // Here comes the busy loop
-    j = 0;   // ray index
+    j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
@@ -218,11 +216,7 @@ void *pulseGatherer(void *_in) {
             usleep(200);
         }
         if (engine->state == RKMomentEngineStateActive) {
-
-            // Gather the start and end pulses
-            // Get the vacant ray
-            // Post a worker to process for a ray
-
+            // Gather the start and end pulses and post a worker to process for a ray
             i0 = floorf(pulse->header.azimuthDegrees);
             if (i1 != i0) {
                 i1 = i0;
@@ -249,8 +243,16 @@ void *pulseGatherer(void *_in) {
                         // Start of ray
                         j = RKNextModuloS(j, engine->rayBufferSize);
                         engine->momentSource[j].origin = k;
+                        engine->rays[j].header.s = RKRayStatusVacant;
                     }
                     count = 0;
+                }
+
+                // Check finished rays
+                //printf("ray[%d].header.s = %d", *engine->rayIndex, engine->rays[*engine->rayIndex].header.s);
+                while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
+                    *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
+                    //printf(" --> %u\n", *engine->rayIndex);
                 }
             }
             // Keep counting up
@@ -278,10 +280,6 @@ int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name) {
     int is = engine->momentSource[io].origin;
     int ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
 
-    if (ie > engine->pulseBufferSize) {
-        RKLog("is = %d   ie = %d   %d %d\n", is, ie, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-        exit(EXIT_FAILURE);
-    }
     float deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
     if (deltaAzimuth > 180.0f) {
         deltaAzimuth -= 360.0f;
@@ -297,15 +295,25 @@ int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name) {
     }
     deltaElevation = fabsf(deltaElevation);
 
+    #if defined(DEBUG_MM)
     pthread_mutex_lock(&engine->coreMutex);
-    RKLog("%s %4u %04u...%04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
-          name, io, is, ie,
+    RKLog("%s %4u %04u...%04u  %04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
+          name, io, is, ie, *engine->pulseIndex,
           engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
           engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
     pthread_mutex_unlock(&engine->coreMutex);
+    #endif
 
     // Process each polarization separately and indepently
-    usleep(3000);
+    usleep(10000);
+
+    return ie;
+}
+
+int RKMomentMultiLag(RKMomentEngine *engine, const int io, char *name) {
+    // Start and end indices of the I/Q data
+    int is = engine->momentSource[io].origin;
+    int ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
 
     return ie;
 }
@@ -322,7 +330,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKMomentEngineStateAllocated;
     engine->verbose = 1;
     engine->useSemaphore = true;
-    engine->p = &RKMomentPulsePair;
+    engine->processor = &RKMomentPulsePair;
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
 }
@@ -345,7 +353,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
     engine->pulses = pulses;
     engine->pulseIndex = pulseIndex;
     engine->pulseBufferSize = pulseBufferSize;
-    engine->rawRays = rays;
+    engine->rays = rays;
     engine->rayIndex = rayIndex;
     engine->rayBufferSize = rayBufferSize;
     engine->encodedRays = NULL;
@@ -405,4 +413,54 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     engine->workers = NULL;
     engine->state = RKMomentEngineStateNull;
     return RKResultNoError;
+}
+
+char *RKMomentEngineStatusString(RKMomentEngine *engine) {
+    int i, c;
+    static char string[RKMaximumStringLength];
+
+    // Full / compact string: Some spaces
+    bool full = true;
+
+    // Always terminate the end of string buffer
+    string[RKMaximumStringLength - 1] = '\0';
+    string[RKMaximumStringLength - 2] = '#';
+
+    // Use b characters to draw a bar
+    const int b = 10;
+    i = *engine->rayIndex * b / engine->rayBufferSize;
+    memset(string, '|', i);
+    memset(string + i, '.', b - i);
+    i = b + sprintf(string + b, "%s%04d%s|",
+                    full ? " " : "",
+                    *engine->rayIndex,
+                    full ? " " : "");
+
+    RKMomentWorker *worker;
+
+    // Lag from each core
+    for (c = 0; c < engine->coreCount; c++) {
+        worker = &engine->workers[c];
+        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
+                      full ? " " : "",
+                      rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                      99.0f * worker->lag,
+                      rkGlobalParameters.showColor ? "\033[0m" : "");
+    }
+    i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
+    // Duty cycle of each core
+    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+        worker = &engine->workers[c];
+        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
+                      full ? " " : "",
+                      rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
+                      99.0f * worker->dutyCycle,
+                      rkGlobalParameters.showColor ? "\033[0m" : "");
+    }
+    // Almost Full flag
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKMaximumStringLength - 13) {
+        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    }
+    return string;
 }

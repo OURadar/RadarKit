@@ -64,7 +64,10 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
 
     while (radar->active) {
 
-        RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
+        //RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
+        RKLog("%s %s",
+              RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
+              RKMomentEngineStatusString(radar->momentEngine));
 
         for (int j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);

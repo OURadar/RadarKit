@@ -46,7 +46,7 @@ struct rk_moment_engine {
     RKPulse                *pulses;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
-    RKFloatRay             *rawRays;
+    RKFloatRay             *rays;
     RKInt16Ray             *encodedRays;
     uint32_t               *rayIndex;
     uint32_t               rayBufferSize;
@@ -54,7 +54,7 @@ struct rk_moment_engine {
     uint32_t               verbose;
     uint32_t               coreCount;
     bool                   useSemaphore;
-    int                    (*p)(RKMomentEngine *, const int, char *);
+    int                    (*processor)(RKMomentEngine *, const int, char *);
 
     RKMomentSource         *momentSource;
     RKMomentWorker         *workers;
@@ -79,5 +79,7 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count
 
 int RKMomentEngineStart(RKMomentEngine *engine);
 int RKMomentEngineStop(RKMomentEngine *engine);
+
+char *RKMomentEngineStatusString(RKMomentEngine *engine);
 
 #endif /* defined(___RadarKit_RKMoment__) */
