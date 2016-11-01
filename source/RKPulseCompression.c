@@ -431,14 +431,18 @@ void *pulseWatcher(void *_in) {
 #endif
 
             // Assess the buffer fullness
-            if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
+            if (c == 0 && skipCounter == 0 && engine->workers[c].lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size;
+                engine->workers[c].lag = 0.89f;
                 RKLog("Warning. I/Q Buffer overflow detected by pulseWatcher().\n");
             }
 
             if (skipCounter > 0) {
                 skipCounter--;
+                if (skipCounter == 0) {
+                    RKLog("Info. pulseWatcher() skipped a chunk.\n");
+                }
             } else {
                 if (engine->useSemaphore) {
                     sem_post(sem[c]);

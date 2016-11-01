@@ -217,14 +217,18 @@ void *pulseGatherer(void *_in) {
         }
         if (engine->state == RKMomentEngineStateActive) {
             // Assess the buffer fullness
-            if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
+            if (c == 0 && skipCounter == 0 && engine->workers[c].lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize;
+                engine->workers[c].lag = 0.89f;
                 RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
             }
 
             if (skipCounter > 0) {
                 skipCounter--;
+                if (skipCounter == 0) {
+                    RKLog("Info. pulseGatherer() skipped a chunk.\n");
+                }
             } else {
                 // Gather the start and end pulses and post a worker to process for a ray
                 i0 = floorf(pulse->header.azimuthDegrees);
@@ -232,18 +236,18 @@ void *pulseGatherer(void *_in) {
                     i1 = i0;
                     // Inclusive count, the end pulse is used on both rays
                     engine->momentSource[j].length = count + 1;
-                    if (count > 0) {
+                    if (count > 4) {
                         if (engine->useSemaphore) {
                             sem_post(sem[c]);
                         } else {
                             engine->workers[c].tic++;
                         }
+                        // Move to the next core, next ray
                         c = RKNextModuloS(c, engine->coreCount);
-                        // Start of ray
                         j = RKNextModuloS(j, engine->rayBufferSize);
-                        engine->momentSource[j].origin = k;
-                        engine->rays[j].header.s = RKRayStatusVacant;
                     }
+                    engine->momentSource[j].origin = k;
+                    engine->rays[j].header.s = RKRayStatusVacant;
                     count = 0;
                 }
                 // Check finished rays
