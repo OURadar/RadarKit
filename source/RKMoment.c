@@ -177,8 +177,7 @@ void *momentCore(void *_in) {
 void *pulseGatherer(void *_in) {
     RKMomentEngine *engine = (RKMomentEngine *)_in;
 
-    int i, j, k;
-    uint32_t c;
+    int c, j, k;
 
     sem_t *sem[engine->coreCount];
 
@@ -188,11 +187,11 @@ void *pulseGatherer(void *_in) {
     engine->state = RKMomentEngineStateActive;
 
     // Spin off N workers to process I/Q pulses
-    for (i = 0; i < engine->coreCount; i++) {
-        RKMomentWorker *worker = &engine->workers[i];
-        snprintf(worker->semaphoreName, 16, "rk-mm-%03d", i);
-        sem[i] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
-        if (sem[i] == SEM_FAILED) {
+    for (c = 0; c < engine->coreCount; c++) {
+        RKMomentWorker *worker = &engine->workers[c];
+        snprintf(worker->semaphoreName, 16, "rk-mm-%03d", c);
+        sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+        if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {
                 RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
             }
@@ -200,15 +199,15 @@ void *pulseGatherer(void *_in) {
                 RKLog("Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
             }
             // 2nd trial
-            sem[i] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
-            if (sem[i] == SEM_FAILED) {
+            sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+            if (sem[c] == SEM_FAILED) {
                 RKLog("Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
                 return (void *)RKResultFailedToInitiateSemaphore;
             } else if (engine->verbose > 1) {
                 RKLog("Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
             }
         }
-        worker->id = i;
+        worker->id = c;
         worker->parentEngine = engine;
         if (pthread_create(&worker->tid, NULL, momentCore, worker) != 0) {
             RKLog("Error. Failed to start a compression core.\n");
@@ -219,8 +218,8 @@ void *pulseGatherer(void *_in) {
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
     // See RKPulseCompression.c
-    for (i = 0; i < engine->coreCount; i++) {
-        while (engine->workers[i].tic == 0) {
+    for (c = 0; c < engine->coreCount; c++) {
+        while (engine->workers[c].tic == 0) {
             usleep(1000);
         }
     }
@@ -233,9 +232,9 @@ void *pulseGatherer(void *_in) {
     uint32_t count = 0;
 
     // Here comes the busy loop
-    j = 0;
-    k = 0;
-    c = 0;
+    j = 0;   // ray index
+    k = 0;   // pulse index
+    c = 0;   // core index
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
@@ -256,7 +255,8 @@ void *pulseGatherer(void *_in) {
             i0 = floorf(pulse->header.azimuthDegrees);
             if (i1 != i0) {
                 i1 = i0;
-                engine->momentSource[j].length = count;
+                // Inclusive count, the end pulse is used on both rays
+                engine->momentSource[j].length = count + 1;
 
                 // Assess the buffer fullness
                 if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
@@ -290,10 +290,10 @@ void *pulseGatherer(void *_in) {
     }
 
     // Wait for workers to return
-    for (i = 0; i < engine->coreCount; i++) {
-        RKMomentWorker *worker = &engine->workers[i];
+    for (c = 0; c < engine->coreCount; c++) {
+        RKMomentWorker *worker = &engine->workers[c];
         if (engine->useSemaphore) {
-            sem_post(sem[i]);
+            sem_post(sem[c]);
         }
         pthread_join(worker->tid, NULL);
         sem_unlink(worker->semaphoreName);
