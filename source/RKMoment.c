@@ -9,6 +9,8 @@
 #include <RadarKit/RKMoment.h>
 
 void *momentCore(void *);
+void *pulseGatherer(void *_in);
+int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name);
 
 #pragma mark -
 
@@ -57,14 +59,11 @@ void *momentCore(void *_in) {
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
 
-    float deltaAzimuth, deltaElevation;
-
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
 
-    // The last index of the pulse buffer and the last index of the ray buffer
-    uint32_t is, ie;
+    // Output index
     uint32_t io = engine->rayBufferSize - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
@@ -114,41 +113,13 @@ void *momentCore(void *_in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
-        // Start and end indices of the I/Q data
-        is = engine->momentSource[io].origin;
-        ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-
-        if (ie > engine->pulseBufferSize) {
-            RKLog("is = %d   ie = %d   %d %d\n", is, ie, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-            exit(EXIT_FAILURE);
+        // Call the assigned moment processor
+        if (engine->p) {
+            me->pid = engine->p(engine, io, name);
         }
-        deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
-        if (deltaAzimuth > 180.0f) {
-            deltaAzimuth -= 360.0f;
-        } else if (deltaAzimuth < -180.0f) {
-            deltaAzimuth += 360.0f;
-        }
-        deltaAzimuth = fabsf(deltaAzimuth);
-        deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
-        if (deltaElevation > 180.0f) {
-            deltaElevation -= 360.0f;
-        } else if (deltaElevation < -180.0f) {
-            deltaElevation += 360.0f;
-        }
-        deltaElevation = fabsf(deltaElevation);
-        
-        pthread_mutex_lock(&engine->coreMutex);
-        RKLog("%s %4u %04u...%04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
-              name, io, is, ie,
-              engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
-              engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
-        pthread_mutex_unlock(&engine->coreMutex);
-
-        // Process each polarization separately and indepently
-        usleep(3000);
 
         // ray->header.s |= ...
-        me->pid = ie;
+        //me->pid = ie;
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -302,6 +273,43 @@ void *pulseGatherer(void *_in) {
     return NULL;
 }
 
+int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name) {
+    // Start and end indices of the I/Q data
+    int is = engine->momentSource[io].origin;
+    int ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
+
+    if (ie > engine->pulseBufferSize) {
+        RKLog("is = %d   ie = %d   %d %d\n", is, ie, engine->momentSource[io].length - 1, engine->pulseBufferSize);
+        exit(EXIT_FAILURE);
+    }
+    float deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
+    if (deltaAzimuth > 180.0f) {
+        deltaAzimuth -= 360.0f;
+    } else if (deltaAzimuth < -180.0f) {
+        deltaAzimuth += 360.0f;
+    }
+    deltaAzimuth = fabsf(deltaAzimuth);
+    float deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
+    if (deltaElevation > 180.0f) {
+        deltaElevation -= 360.0f;
+    } else if (deltaElevation < -180.0f) {
+        deltaElevation += 360.0f;
+    }
+    deltaElevation = fabsf(deltaElevation);
+
+    pthread_mutex_lock(&engine->coreMutex);
+    RKLog("%s %4u %04u...%04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
+          name, io, is, ie,
+          engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
+          engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
+    pthread_mutex_unlock(&engine->coreMutex);
+
+    // Process each polarization separately and indepently
+    usleep(3000);
+
+    return ie;
+}
+
 #pragma mark -
 
 RKMomentEngine *RKMomentEngineInit(void) {
@@ -314,6 +322,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKMomentEngineStateAllocated;
     engine->verbose = 1;
     engine->useSemaphore = true;
+    engine->p = &RKMomentPulsePair;
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
 }

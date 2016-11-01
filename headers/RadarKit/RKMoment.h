@@ -54,7 +54,7 @@ struct rk_moment_engine {
     uint32_t               verbose;
     uint32_t               coreCount;
     bool                   useSemaphore;
-    int                    (*p)(RKMomentSource *);
+    int                    (*p)(RKMomentEngine *, const int, char *);
 
     RKMomentSource         *momentSource;
     RKMomentWorker         *workers;

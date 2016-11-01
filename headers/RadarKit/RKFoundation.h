@@ -31,6 +31,9 @@
 #define RKNextModuloS(i, S)              ((i) == (S) - 1 ? 0 : (i) + 1)
 #define RKPreviousModuloS(i, S)          ((i) == 0 ? (S) - 1 : (i) - 1)
 
+
+
+
 void stripTrailingUnwanted(char *str);
 
 #endif /* defined(__RadarKit_RKFoundation__) */
