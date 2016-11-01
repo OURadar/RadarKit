@@ -432,7 +432,7 @@ void *pulseWatcher(void *_in) {
             if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size;
-                RKLog("Warning. Buffer overflow.\n");
+                RKLog("Warning. I/Q Buffer overflow detected by pulseWatcher().\n");
             }
 
             if (skipCounter > 0) {

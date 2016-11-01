@@ -116,8 +116,12 @@ void *momentCore(void *_in) {
 
         // Start and end indices of the I/Q data
         is = engine->momentSource[io].origin;
-        ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->rayBufferSize);
+        ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
 
+        if (ie > engine->pulseBufferSize) {
+            RKLog("is = %d   ie = %d   %d %d\n", is, ie, engine->momentSource[io].length - 1, engine->pulseBufferSize);
+            exit(EXIT_FAILURE);
+        }
         deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
         if (deltaAzimuth > 180.0f) {
             deltaAzimuth -= 360.0f;
@@ -143,6 +147,9 @@ void *momentCore(void *_in) {
         // Process each polarization separately and indepently
         usleep(3000);
 
+        // ray->header.s |= ...
+        me->pid = ie;
+        
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
@@ -255,7 +262,7 @@ void *pulseGatherer(void *_in) {
                 if (c == 0 && skipCounter == 0 &&  engine->workers[c].lag > 0.9f) {
                     engine->almostFull++;
                     skipCounter = engine->pulseBufferSize;
-                    RKLog("Warning. Buffer overflow.\n");
+                    RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
                 }
 
                 if (skipCounter > 0) {

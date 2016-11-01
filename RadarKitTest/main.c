@@ -52,6 +52,9 @@ void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
+           "  -S (--test-mod)\n"
+           "         Sets the program to test modulo macros.\n"
+           "\n"
            "  -s (--simulate)\n"
            "         Sets the program to simulate data stream.\n"
            "\n"
@@ -67,6 +70,7 @@ typedef struct user_params {
     int   prf;
     int   verbose;
     int   testSIMD;
+    int   testModuloMath;
     bool  quietMode;
     bool  simulate;
 } UserParams;
@@ -80,6 +84,7 @@ UserParams processInput(int argc, char **argv) {
     
     static struct option long_options[] = {
         {"alarm"         , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
+        {"test-mod"      , no_argument      , 0, 'M'},
         {"test-simd"     , optional_argument, 0, 'S'},
         {"azimuth"       , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
         {"cpu"           , required_argument, 0, 'c'},
@@ -117,6 +122,13 @@ UserParams processInput(int argc, char **argv) {
             case 'A':
                 user.quietMode = false;
                 break;
+            case 'M':
+                if (optarg) {
+                    user.testModuloMath = atoi(optarg);
+                } else {
+                    user.testModuloMath = 1;
+                }
+                break;
             case 'S':
                 if (optarg) {
                     user.testSIMD = atoi(optarg);
@@ -151,6 +163,7 @@ int main(int argc, char *argv[]) {
     RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);
 
+    // SIMD Tests
     if (user.testSIMD) {
         RKSIMDDemoFlag flag = RKSIMDDemoFlagNull;
         if (user.verbose) {
@@ -161,11 +174,15 @@ int main(int argc, char *argv[]) {
         }
         RKSIMDDemo(flag);
     }
-//    RKTestModuloMath();
+  
+    // Modulo Macros Tests
+    if (user.testModuloMath) {
+        RKTestModuloMath();
+    }
     
     // In the case when no tests are performed, simulate the time-series
     if (user.simulate == false) {
-        if (user.testSIMD == false) {
+        if (user.testSIMD == false && user.testModuloMath == false) {
             user.simulate = true;
         } else {
             return EXIT_SUCCESS;

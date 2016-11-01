@@ -26,6 +26,8 @@ void RKTestModuloMath(void) {
     k = 2;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
     k = 3;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
     k = 4;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    
+    k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
 }
 
 void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
@@ -69,12 +71,13 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
             // Fill in the data...
             pulse->header.gateCount = gateCount;
             pulse->header.azimuthDegrees = azimuth;
+            pulse->header.elevationDegrees = 2.41f;
             for (k = 0; k < 1000; k++) {
                 pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
                 pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
             }
             phi += 0.02f;
-            azimuth = fmodf(5.0f * tau, 360.0f);
+            azimuth = fmodf(25.0f * tau, 360.0f);
 
             RKSetPulseReady(pulse);
 
