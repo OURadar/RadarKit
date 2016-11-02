@@ -173,7 +173,7 @@ void *pulseCompressionCore(void *_in) {
 
         // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
-        me->lag = fmodf((float)(*engine->index - me->pid + engine->size) / engine->size, 1.0f);
+        me->lag = fmodf((float)(*engine->index + engine->size - me->pid) / engine->size, 1.0f);
 
         RKPulse *pulse = &engine->pulses[i0];
 
@@ -186,13 +186,11 @@ void *pulseCompressionCore(void *_in) {
 
         // Now we process / skip
         if (gid < 0) {
-            pulse->parameters.planIndices[0][0] = 0;
-            pulse->parameters.planIndices[1][0] = 0;
             pulse->parameters.planSizes[0][0] = 0;
             pulse->parameters.planSizes[1][0] = 0;
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
-            pulse->header.s |= RKPulseStatusSkipped;
+            pulse->header.s |= RKPulseStatusSkipped | RKPulseStatusProcessed;
         } else {
             // Do some work with this pulse
             // DFT of the raw data is stored in *in
@@ -263,7 +261,7 @@ void *pulseCompressionCore(void *_in) {
                 } // filterCount
                 pulse->parameters.filterCounts[p] = j;
             } // p - polarization
-            pulse->header.s |= RKPulseStatusCompressed;
+            pulse->header.s |= RKPulseStatusCompressed | RKPulseStatusProcessed;
         }
         // Record down the latest processed pulse index
         me->pid = i0;
@@ -387,7 +385,7 @@ void *pulseWatcher(void *_in) {
     engine->tic++;
 
     // Here comes the busy loop
-    i = 0;   // plan index
+    i = 0;   // anonymous
     j = 0;   // filter index
     k = 0;   // pulse index
     c = 0;   // core index
@@ -401,22 +399,32 @@ void *pulseWatcher(void *_in) {
             usleep(200);
         }
         if (engine->state == RKPulseCompressionEngineStateActive) {
+            // Lag of the engine
+            engine->lag = fmodf((float)(*engine->index + engine->size - k) / engine->size, 1.0f);
+
             // Assess the buffer fullness
             if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
                 engine->almostFull++;
-                skipCounter = engine->size;
-                RKLog("Warning. I/Q Buffer overflow detected by pulseWatcher().\n");
+                skipCounter = engine->size / 10;
+                RKLog("Warning. I/Q Buffer overflow projected by pulseWatcher().\n");
+                i = RKPreviousModuloS(*engine->index, engine->size);
+                while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
+                    i = RKPreviousModuloS(i, engine->size);
+                    engine->filterGid[i] = -1;
+                    engine->planIndices[i][0] = 0;
+                }
             }
 
+            // The pulse
             RKPulse *pulse = &engine->pulses[k];
 
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             if (skipCounter > 0) {
-                skipCounter--;
-                if (skipCounter == 0) {
-                    RKLog("Info. pulseWatcher() skipped a chunk.\n");
-                }
                 engine->filterGid[k] = -1;
+                engine->planIndices[k][0] = 0;
+                if (--skipCounter == 0) {
+                    RKLog(">Info. pulseWatcher() skipped a chunk.\n");
+                }
             } else {
                 // Compute the filter group id to use
                 engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
@@ -424,7 +432,6 @@ void *pulseWatcher(void *_in) {
                 // Find the right plan; create it if it does not exist
                 for (j = 0; j < engine->filterCounts[gid]; j++) {
                     planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
-
                     found = false;
                     i = engine->planCount;
                     while (i > 0) {
@@ -435,7 +442,6 @@ void *pulseWatcher(void *_in) {
                             break;
                         }
                     }
-
                     if (!found) {
                         RKLog("A new DFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
                         if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
@@ -453,6 +459,10 @@ void *pulseWatcher(void *_in) {
                     engine->planIndices[k][j] = planIndex;
                 }
             }
+
+            // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
+            pulse->header.s |= RKPulseStatusInspected;
+
             // Now we post
             #ifdef DEBUG_IQ
             RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);

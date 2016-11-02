@@ -59,7 +59,7 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
 
     RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (75 km)\n",
           RKFloatToCommaStyleString(1.0e-6 * fs),
-          RKIntegerToCommaStyleString(prf),
+          RKIntegerToCommaStyleString((int)(1.0f / prt)),
           RKIntegerToCommaStyleString(gateCount));
 
     while (radar->active) {
