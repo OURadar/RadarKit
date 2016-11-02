@@ -155,7 +155,9 @@ void *pulseCompressionCore(void *_in) {
             #ifdef DEBUG_IQ
             RKLog(">%s sem_wait()\n", coreName);
             #endif
-            sem_wait(sem);
+            if (sem_wait(sem)) {
+                RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
+            }
         } else {
             while (tic == me->tic && engine->state == RKPulseCompressionEngineStateActive) {
                 usleep(1000);
@@ -396,61 +398,63 @@ void *pulseWatcher(void *_in) {
                 RKLog("Warning. I/Q Buffer overflow detected by pulseWatcher().\n");
             }
 
-            // Skip posting if the buffer is getting full
+            RKPulse *pulse = &engine->pulses[k];
+
+            // Compute the filter group id to use
+            gid = pulse->header.i % engine->filterGroupCount;
+            engine->filterGid[k] = gid;
+
+            // Find the right plan; create it if it does not exist
+            for (j = 0; j < engine->filterCounts[gid]; j++) {
+                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
+
+                found = false;
+                i = engine->planCount;
+                while (i > 0) {
+                    i--;
+                    if (planSize == engine->planSizes[i]) {
+                        planIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    RKLog("A new DFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
+                    if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
+                        RKLog("Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->planCount);
+                        exit(EXIT_FAILURE);
+                    }
+                    planIndex = engine->planCount;
+                    engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+                    engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
+                    engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
+                    engine->planSizes[planIndex] = planSize;
+                    engine->planCount++;
+                    RKLog("k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
+                }
+                engine->planIndices[k][j] = planIndex;
+            }
+            
+            // Skip posting if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             if (skipCounter > 0) {
                 skipCounter--;
                 if (skipCounter == 0) {
                     RKLog("Info. pulseWatcher() skipped a chunk.\n");
                 }
             } else {
-                RKPulse *pulse = &engine->pulses[k];
-
-                // Compute the filter group id to use
-                gid = pulse->header.i % engine->filterGroupCount;
-                engine->filterGid[k] = gid;
-
-                // Find the right plan; create it if it does not exist
-                for (j = 0; j < engine->filterCounts[gid]; j++) {
-                    planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
-
-                    found = false;
-                    i = engine->planCount;
-                    while (i > 0) {
-                        i--;
-                        if (planSize == engine->planSizes[i]) {
-                            planIndex = i;
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found) {
-                        RKLog("A new DFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
-                        if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
-                            RKLog("Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->planCount);
-                            exit(EXIT_FAILURE);
-                        }
-                        planIndex = engine->planCount;
-                        engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-                        engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
-                        engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-                        engine->planSizes[planIndex] = planSize;
-                        engine->planCount++;
-                        RKLog("k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
-                    }
-                    engine->planIndices[k][j] = planIndex;
-                }
-                
                 #ifdef DEBUG_IQ
                 RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
                 #endif
                 if (engine->useSemaphore) {
-                    sem_post(sem[c]);
+                    if (sem_post(sem[c])) {
+                        RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+                    }
                 } else {
                     engine->workers[c].tic++;
                 }
-                c = RKNextModuloS(c, engine->coreCount);
             }
+            c = RKNextModuloS(c, engine->coreCount);
         }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->size);

@@ -95,7 +95,9 @@ void *momentCore(void *_in) {
             #if defined(DEBUG_MM)
             RKLog(">%s sem_wait()\n", coreName);
             #endif
-            sem_wait(sem);
+            if (sem_wait(sem)) {
+                RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
+            }
         } else {
             while (tic == me->tic && engine->state == RKMomentEngineStateActive) {
                 usleep(1000);
@@ -116,7 +118,7 @@ void *momentCore(void *_in) {
         // Call the assigned moment processor
         me->pid = engine->processor(engine, io, name);
 
-        // Indicate the ray status is ready
+        // Set the ray status is ready
         engine->rays[io].header.s = RKRayStatusReady;
         
         // Done processing, get the time
@@ -217,46 +219,53 @@ void *pulseGatherer(void *_in) {
         }
         if (engine->state == RKMomentEngineStateActive) {
             // Assess the buffer fullness
-            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
-                engine->almostFull++;
-                skipCounter = engine->pulseBufferSize;
-                engine->workers[0].lag = 0.89f;
-                RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer().\n");
-            }
+//            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
+//                engine->almostFull++;
+//                skipCounter = engine->pulseBufferSize;
+//                engine->workers[0].lag = 0.89f;
+//                RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %u / %d.\n", *engine->pulseIndex, k);
+//            }
+//
+//            // Skip pulses if the buffer is getting full
+//            if (skipCounter > 0) {
+//                skipCounter--;
+//                if (skipCounter == 0) {
+//                    RKLog("Info. pulseGatherer() skipped a chunk.\n");
+//                }
+//                // Update k to catch up for the next watch
+//                k = RKNextModuloS(k, engine->pulseBufferSize);
+//                continue;
+//            }
+            
+            i0 = floorf(pulse->header.azimuthDegrees);
 
-            // Skip posting if the buffer is getting full (there are ~0.9 * pulseBufferSize semaphores to be handled)
-            if (skipCounter > 0) {
-                skipCounter--;
-                if (skipCounter == 0) {
-                    RKLog("Info. pulseGatherer() skipped a chunk.\n");
-                }
-            } else {
-                // Gather the start and end pulses and post a worker to process for a ray
-                i0 = floorf(pulse->header.azimuthDegrees);
-                if (i1 != i0) {
-                    i1 = i0;
-                    // Inclusive count, the end pulse is used on both rays
-                    engine->momentSource[j].length = count + 1;
-                    if (count > 4) {
-                        if (engine->useSemaphore) {
-                            sem_post(sem[c]);
-                        } else {
-                            engine->workers[c].tic++;
+            // Gather the start and end pulses and post a worker to process for a ray
+            if (i1 != i0) {
+                i1 = i0;
+                // Inclusive count, the end pulse is used on both rays
+                engine->momentSource[j].length = count + 1;
+                if (count > 4) {
+                    if (engine->useSemaphore) {
+                        if (sem_post(sem[c])) {
+                            RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
                         }
-                        // Move to the next core, next ray
-                        c = RKNextModuloS(c, engine->coreCount);
-                        j = RKNextModuloS(j, engine->rayBufferSize);
+                    } else {
+                        engine->workers[c].tic++;
                     }
-                    engine->momentSource[j].origin = k;
-                    engine->rays[j].header.s = RKRayStatusVacant;
-                    count = 0;
+                    // Move to the next core, gather the next ray
+                    c = RKNextModuloS(c, engine->coreCount);
+                    j = RKNextModuloS(j, engine->rayBufferSize);
                 }
-                // Check finished rays
-                while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
-                    *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
-                }
-                // Keep counting up
-                count++;
+                engine->momentSource[j].origin = k;
+                engine->rays[j].header.s = RKRayStatusVacant;
+                count = 0;
+            }
+            // Keep counting up
+            count++;
+
+            // Check finished rays
+            while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
+                *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
             }
         }
         // Update k to catch up for the next watch
