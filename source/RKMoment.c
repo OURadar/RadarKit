@@ -206,36 +206,26 @@ void *pulseGatherer(void *_in) {
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
+    int s = 0;
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
+        s = 1;
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
-            usleep(200);
+            usleep(1000);
+            if (s++ % 1000 == 0) {
+                printf("sleep 1.\n");
+            }
             // Timeout and say "nothing" on the screen
         }
         RKPulse *pulse = &engine->pulses[k];
         while ((pulse->header.s & RKPulseStatusCompressed) == 0 && engine->state == RKMomentEngineStateActive) {
-            usleep(200);
+            usleep(1000);
+            if (s++ % 1000 == 0) {
+                printf("sleep 2 s%d  k=%d  pulseIndex=%d  header.s=%d.\n", s, k, *engine->pulseIndex, pulse->header.s);
+            }
         }
         if (engine->state == RKMomentEngineStateActive) {
-            // Assess the buffer fullness
-//            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
-//                engine->almostFull++;
-//                skipCounter = engine->pulseBufferSize;
-//                engine->workers[0].lag = 0.89f;
-//                RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %u / %d.\n", *engine->pulseIndex, k);
-//            }
-//
-//            // Skip pulses if the buffer is getting full
-//            if (skipCounter > 0) {
-//                skipCounter--;
-//                if (skipCounter == 0) {
-//                    RKLog("Info. pulseGatherer() skipped a chunk.\n");
-//                }
-//                // Update k to catch up for the next watch
-//                k = RKNextModuloS(k, engine->pulseBufferSize);
-//                continue;
-//            }
             
             i0 = floorf(pulse->header.azimuthDegrees);
 
@@ -244,6 +234,10 @@ void *pulseGatherer(void *_in) {
                 i1 = i0;
                 // Inclusive count, the end pulse is used on both rays
                 engine->momentSource[j].length = count + 1;
+                printf("ray %u %d / %u %d  %d,%d c%d\n",
+                       j, engine->rays[j].header.s,
+                       *engine->rayIndex, engine->rays[*engine->rayIndex].header.s,
+                       engine->momentSource[j].origin, engine->momentSource[j].length, c);
                 if (count > 4) {
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
@@ -268,6 +262,28 @@ void *pulseGatherer(void *_in) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
             }
         }
+        // Assess the buffer fullness
+        float lag = fmodf((float)(*engine->pulseIndex - k + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
+        
+        if (lag > 0.9f) {
+            engine->almostFull++;
+            //skipCounter = engine->pulseBufferSize;
+            //engine->workers[0].lag = 0.89f;
+            RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %.2f   %u / %d.\n", lag, *engine->pulseIndex, k);
+            k = *engine->pulseIndex;
+            continue;
+        }
+
+        // Skip pulses if the buffer is getting full
+//        if (skipCounter > 0) {
+//            skipCounter--;
+//            if (skipCounter == 0) {
+//                RKLog("Info. pulseGatherer() skipped a chunk.\n");
+//            }
+//            // Update k to catch up for the next watch
+//            k = RKNextModuloS(k, engine->pulseBufferSize);
+//            continue;
+//        }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->pulseBufferSize);
     }
