@@ -158,11 +158,12 @@ typedef struct rk_pulse {
 
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
-    RKPulseStatusVacant      = 0,
-    RKPulseStatusHasIQData   = 1,
-    RKPulseStatusHasPosition = 1 << 1,
-    RKPulseStatusReady       = RKPulseStatusHasIQData | RKPulseStatusHasPosition,
-    RKPulseStatusCompressed  = 1 << 2
+    RKPulseStatusVacant       = 0,
+    RKPulseStatusHasIQData    = 1,                                                    // 0x01
+    RKPulseStatusHasPosition  = 1 << 1,                                               // 0x02
+    RKPulseStatusReady        = RKPulseStatusHasIQData | RKPulseStatusHasPosition,    // 0x03
+    RKPulseStatusCompressed   = 1 << 2,                                               // 0x04
+    RKPulseStatusSkipped      = 1 << 2 | 1 << 3                                       // 0x08 | 0x04 = 0x0C
 };
 
 typedef uint32_t RKRayStatus;

@@ -52,33 +52,35 @@ struct rk_pulse_compression_worker {
 };
 
 struct rk_pulse_compression_engine {
+    // User set variables
     RKPulse                          *pulses;
     uint32_t                         *index;
     uint32_t                         size;
-    uint32_t                         tic;                                // Process count
     uint32_t                         verbose;
     uint32_t                         coreCount;
     bool                             useSemaphore;
-
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxMatchedFilterGroupCount];
     RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
     RKPulseCompressionFilterAnchor   anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
 
+    // Program set variables
     int                              planCount;
     int                              planSizes[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planForwardInPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planForwardOutPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planBackwardInPlace[RKPulseCompressionDFTPlanCount];
-
-    uint32_t                         *filterGid;
+    int                              *filterGid;
     RKPulseCompressionPlanIndex      *planIndices;
     RKPulseCompressionWorker         *workers;
-
-    RKPulseCompressionEngineState    state;
-    int                              almostFull;   
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  coreMutex;
+
+    // Status / health
+    RKPulseCompressionEngineState    state;
+    uint32_t                         tic;
+    float                            lag;
+    int                              almostFull;
 };
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);

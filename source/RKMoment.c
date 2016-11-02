@@ -207,7 +207,6 @@ void *pulseGatherer(void *_in) {
     k = 0;   // pulse index
     c = 0;   // core index
     int s = 0;
-    float lag;
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
@@ -224,7 +223,7 @@ void *pulseGatherer(void *_in) {
         while ((pulse->header.s & RKPulseStatusCompressed) == 0 && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             if (s++ % 200 == 0) {
-                printf("sleep 2 s%d  k=%d  pulseIndex=%d  header.s=%d.\n", s, k, *engine->pulseIndex, pulse->header.s);
+                printf("sleep 2/%d  k=%d  pulseIndex=%d  header.s=%d.\n", s, k, *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKMomentEngineStateActive) {
@@ -264,18 +263,19 @@ void *pulseGatherer(void *_in) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
             }
         }
+
         // Assess the buffer fullness
-        lag = fmodf((float)(*engine->pulseIndex - k + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
+        engine->lag = fmodf((float)(*engine->pulseIndex - k + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
         
-        if (lag > 0.9f) {
-            engine->almostFull++;
-            //skipCounter = engine->pulseBufferSize;
-            //engine->workers[0].lag = 0.89f;
-            RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %.2f   %u / %d.\n",
-                  lag, *engine->pulseIndex, k);
-            k = *engine->pulseIndex;
-            continue;
-        }
+//        if (engine->lag > 0.9f) {
+//            engine->almostFull++;
+//            //skipCounter = engine->pulseBufferSize;
+//            //engine->workers[0].lag = 0.89f;
+//            RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %.2f   %u / %d.\n",
+//                  engine->lag, *engine->pulseIndex, k);
+//            k = *engine->pulseIndex;
+//            continue;
+//        }
 
         // Skip pulses if the buffer is getting full
 //        if (skipCounter > 0) {
@@ -450,6 +450,10 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
 
     // Full / compact string: Some spaces
     bool full = true;
+    char spacer[3] = "";
+    if (full) {
+        sprintf(spacer, " ");
+    }
 
     // Always terminate the end of string buffer
     string[RKMaximumStringLength - 1] = '\0';
@@ -461,9 +465,17 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     memset(string, '|', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, "%s%04d%s|",
-                    full ? " " : "",
+                    spacer,
                     *engine->rayIndex,
-                    full ? " " : "");
+                    spacer);
+
+    // Engine lag
+    i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
+                  spacer,
+                  rkGlobalParameters.showColor ? (engine->lag > 0.7 ? "\033[31m" : (engine->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                  99.0f * engine->lag,
+                  rkGlobalParameters.showColor ? "\033[0m" : "",
+                  spacer);
 
     RKMomentWorker *worker;
 
@@ -471,7 +483,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
-                      full ? " " : "",
+                      spacer,
                       rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
                       99.0f * worker->lag,
                       rkGlobalParameters.showColor ? "\033[0m" : "");
@@ -481,7 +493,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
-                      full ? " " : "",
+                      spacer,
                       rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
                       99.0f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? "\033[0m" : "");

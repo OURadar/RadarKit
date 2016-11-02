@@ -184,77 +184,88 @@ void *pulseCompressionCore(void *_in) {
         // Filter group id
         const int gid = engine->filterGid[i0];
 
-        // Do some work with this pulse
-        // DFT of the raw data is stored in *in
-        // DFT of the filter is stored in *out
-        // Their product is stored in *out using in-place multiplication: out[i] = out[i] * in[i]
-        // Then, the inverse DFT is performed to get out back to time domain, which is the compressed pulse
+        // Now we process / skip
+        if (gid < 0) {
+            pulse->parameters.planIndices[0][0] = 0;
+            pulse->parameters.planIndices[1][0] = 0;
+            pulse->parameters.planSizes[0][0] = 0;
+            pulse->parameters.planSizes[1][0] = 0;
+            pulse->parameters.filterCounts[0] = 0;
+            pulse->parameters.filterCounts[1] = 0;
+            pulse->header.s |= RKPulseStatusSkipped;
+        } else {
+            // Do some work with this pulse
+            // DFT of the raw data is stored in *in
+            // DFT of the filter is stored in *out
+            // Their product is stored in *out using in-place multiplication: out[i] = out[i] * in[i]
+            // Then, the inverse DFT is performed to get out back to time domain, which is the compressed pulse
 
-        // Process each polarization separately and indepently
-        for (p = 0; p < 2; p++) {
-            // Go through all the filters in this fitler group
-            for (j = 0; j < engine->filterCounts[gid]; j++) {
-                // Get the plan index and size from parent engine
-                planIndex = engine->planIndices[i0][j];
-                planSize = engine->planSizes[planIndex];
+            // Process each polarization separately and indepently
+            for (p = 0; p < 2; p++) {
+                // Go through all the filters in this fitler group
+                for (j = 0; j < engine->filterCounts[gid]; j++) {
+                    // Get the plan index and size from parent engine
+                    planIndex = engine->planIndices[i0][j];
+                    planSize = engine->planSizes[planIndex];
 
-                // Copy and convert the samples
-                for (k = 0, i = engine->anchors[gid][j].origin;
-                     k < planSize && i < pulse->header.gateCount;
-                     k++, i++) {
-                    in[k][0] = (RKFloat)pulse->X[p][i].i;
-                    in[k][1] = (RKFloat)pulse->X[p][i].q;
-                }
-                // Zero pad the input; a filter is always zero-padded in the setter function.
-                memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
+                    // Copy and convert the samples
+                    for (k = 0, i = engine->anchors[gid][j].origin;
+                         k < planSize && i < pulse->header.gateCount;
+                         k++, i++) {
+                        in[k][0] = (RKFloat)pulse->X[p][i].i;
+                        in[k][1] = (RKFloat)pulse->X[p][i].q;
+                    }
+                    // Zero pad the input; a filter is always zero-padded in the setter function.
+                    memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
 
-                fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
+                    fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
 
-                //printf("dft(in) =\n"); RKPulseCompressionShowBuffer(in, 8);
+                    //printf("dft(in) =\n"); RKPulseCompressionShowBuffer(in, 8);
 
-                fftwf_execute_dft(engine->planForwardOutPlace[planIndex], (fftwf_complex *)engine->filters[gid][j], out);
+                    fftwf_execute_dft(engine->planForwardOutPlace[planIndex], (fftwf_complex *)engine->filters[gid][j], out);
 
-                //printf("dft(filt) =\n"); RKPulseCompressionShowBuffer(in, 8);
+                    //printf("dft(filt) =\n"); RKPulseCompressionShowBuffer(in, 8);
 
-                if (multiplyMethod == 1) {
-                    // In-place SIMD multiplication using the interleaved format
-                    RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
-                } else if (multiplyMethod == 2) {
-                    // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
-                    RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
-                    RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
-                    RKSIMD_izmul(zi, zo, planSize, true);
-                    RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
-                } else {
-                    // Regular multiplication with compiler optimization -Os
-                    RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
-                }
+                    if (multiplyMethod == 1) {
+                        // In-place SIMD multiplication using the interleaved format
+                        RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+                    } else if (multiplyMethod == 2) {
+                        // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
+                        RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
+                        RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
+                        RKSIMD_izmul(zi, zo, planSize, true);
+                        RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
+                    } else {
+                        // Regular multiplication with compiler optimization -Os
+                        RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
+                    }
 
-                //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
+                    //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-                fftwf_execute_dft(engine->planBackwardInPlace[planIndex], out, out);
+                    fftwf_execute_dft(engine->planBackwardInPlace[planIndex], out, out);
 
-                //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
+                    //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-                // Scaling due to a net gain of planSize from forward + backward DFT
-                RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
-                //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
+                    // Scaling due to a net gain of planSize from forward + backward DFT
+                    RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
+                    //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-                for (k = 0, i = engine->anchors[gid][j].length - 1;
-                     k < MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
-                     k++, i++) {
-                    pulse->Y[p][k].i = out[i][0];
-                    pulse->Y[p][k].q = out[i][1];
-                }
+                    for (k = 0, i = engine->anchors[gid][j].length - 1;
+                         k < MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
+                         k++, i++) {
+                        pulse->Y[p][k].i = out[i][0];
+                        pulse->Y[p][k].q = out[i][1];
+                    }
 
-                // Copy over the parameters used
-                pulse->parameters.planIndices[p][j] = planIndex;
-                pulse->parameters.planSizes[p][j] = planSize;
-            } // filterCount
-            pulse->parameters.filterCounts[p] = j;
-        } // p - polarization
-
-        pulse->header.s |= RKPulseStatusCompressed;
+                    // Copy over the parameters used
+                    pulse->parameters.planIndices[p][j] = planIndex;
+                    pulse->parameters.planSizes[p][j] = planSize;
+                } // filterCount
+                pulse->parameters.filterCounts[p] = j;
+            } // p - polarization
+            pulse->header.s |= RKPulseStatusCompressed;
+        }
+        // Record down the latest processed pulse index
         me->pid = i0;
 
         // Done processing, get the time
@@ -394,65 +405,64 @@ void *pulseWatcher(void *_in) {
             if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size;
-                engine->workers[0].lag = 0.89f;
                 RKLog("Warning. I/Q Buffer overflow detected by pulseWatcher().\n");
             }
 
             RKPulse *pulse = &engine->pulses[k];
 
-            // Compute the filter group id to use
-            gid = pulse->header.i % engine->filterGroupCount;
-            engine->filterGid[k] = gid;
-
-            // Find the right plan; create it if it does not exist
-            for (j = 0; j < engine->filterCounts[gid]; j++) {
-                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
-
-                found = false;
-                i = engine->planCount;
-                while (i > 0) {
-                    i--;
-                    if (planSize == engine->planSizes[i]) {
-                        planIndex = i;
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    RKLog("A new DFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
-                    if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
-                        RKLog("Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->planCount);
-                        exit(EXIT_FAILURE);
-                    }
-                    planIndex = engine->planCount;
-                    engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-                    engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
-                    engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-                    engine->planSizes[planIndex] = planSize;
-                    engine->planCount++;
-                    RKLog("k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
-                }
-                engine->planIndices[k][j] = planIndex;
-            }
-            
-            // Skip posting if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
+            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             if (skipCounter > 0) {
                 skipCounter--;
                 if (skipCounter == 0) {
                     RKLog("Info. pulseWatcher() skipped a chunk.\n");
                 }
+                engine->filterGid[k] = -1;
             } else {
-                #ifdef DEBUG_IQ
-                RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
-                #endif
-                if (engine->useSemaphore) {
-                    if (sem_post(sem[c])) {
-                        RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+                // Compute the filter group id to use
+                engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
+
+                // Find the right plan; create it if it does not exist
+                for (j = 0; j < engine->filterCounts[gid]; j++) {
+                    planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
+
+                    found = false;
+                    i = engine->planCount;
+                    while (i > 0) {
+                        i--;
+                        if (planSize == engine->planSizes[i]) {
+                            planIndex = i;
+                            found = true;
+                            break;
+                        }
                     }
-                } else {
-                    engine->workers[c].tic++;
+
+                    if (!found) {
+                        RKLog("A new DFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
+                        if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
+                            RKLog("Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->planCount);
+                            exit(EXIT_FAILURE);
+                        }
+                        planIndex = engine->planCount;
+                        engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+                        engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
+                        engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
+                        engine->planSizes[planIndex] = planSize;
+                        engine->planCount++;
+                        RKLog("k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
+                    }
+                    engine->planIndices[k][j] = planIndex;
                 }
+            }
+            // Now we post
+            #ifdef DEBUG_IQ
+            RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
+            #endif
+            if (engine->useSemaphore) {
+                if (sem_post(sem[c])) {
+                    RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+                }
+            } else {
+                engine->workers[c].tic++;
             }
             c = RKNextModuloS(c, engine->coreCount);
         }
@@ -541,7 +551,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     if (engine->filterGid != NULL) {
         free(engine->filterGid);
     }
-    engine->filterGid = (uint32_t *)malloc(size * sizeof(int));
+    engine->filterGid = (int *)malloc(size * sizeof(int));
     if (engine->filterGid == NULL) {
         RKLog("Error. Unable to allocate filterGid.\n");
         exit(EXIT_FAILURE);
@@ -669,6 +679,10 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
 
     // Full / compact string: Some spaces
     bool full = true;
+    char spacer[2] = "";
+    if (full) {
+        sprintf(spacer, " ");
+    }
 
     // Always terminate the end of string buffer
     string[RKMaximumStringLength - 1] = '\0';
@@ -680,6 +694,14 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     memset(string, '|', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, "%s:", full ? " " : "");
+
+    // Engine lag
+    i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
+                  spacer,
+                  rkGlobalParameters.showColor ? (engine->lag > 0.7 ? "\033[31m" : (engine->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                  99.0f * engine->lag,
+                  rkGlobalParameters.showColor ? "\033[0m" : "",
+                  spacer);
 
     RKPulseCompressionWorker *worker;
 

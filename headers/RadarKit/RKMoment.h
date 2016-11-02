@@ -31,18 +31,19 @@ struct rk_moment_source {
 };
 
 struct rk_moment_worker {
-    int                    id;
+    RKMomentEngine         *parentEngine;
+    char                   semaphoreName[16];
     pthread_t              tid;
+    int                    id;
     uint32_t               tic;
     uint32_t               pid;
-    char                   semaphoreName[16];
     double                 dutyBuff[RKWorkerDutyCycleBufferSize];
     double                 dutyCycle;                                // Latest duty cycle estimate
     float                  lag;                                      // Lag relative to the latest index of engine
-    RKMomentEngine         *parentEngine;
 };
 
 struct rk_moment_engine {
+    // User set variables
     RKPulse                *pulses;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
@@ -50,19 +51,22 @@ struct rk_moment_engine {
     RKInt16Ray             *encodedRays;
     uint32_t               *rayIndex;
     uint32_t               rayBufferSize;
-    uint32_t               tic;
     uint32_t               verbose;
     uint32_t               coreCount;
     bool                   useSemaphore;
     int                    (*processor)(RKMomentEngine *, const int, char *);
 
+    // Program set variables
     RKMomentSource         *momentSource;
     RKMomentWorker         *workers;
-
-    RKMomentEngineState    state;
-    uint32_t               almostFull;
     pthread_t              tidPulseGatherer;
     pthread_mutex_t        coreMutex;
+
+    // Status / health
+    RKMomentEngineState    state;
+    uint32_t               tic;
+    float                  lag;
+    uint32_t               almostFull;
 };
 
 RKMomentEngine *RKMomentEngineInit(void);
