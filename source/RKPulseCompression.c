@@ -701,9 +701,9 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     // Use b characters to draw a bar
     const int b = 10;
     i = *engine->index * (b + 1) / engine->size;
-    memset(string, '|', i);
+    memset(string, '#', i);
     memset(string + i, '.', b - i);
-    i = b + sprintf(string + b, "%s:", full ? " " : "");
+    i = b + sprintf(string + b, "%s|", spacer);
 
     // Engine lag
     i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
@@ -718,31 +718,21 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        if (rkGlobalParameters.showColor) {
-            i += snprintf(string + i, RKMaximumStringLength - i, "%s\033[3%dm%02.0f\033[0m",
-                          full ? " " : "",
-                          worker->lag > 0.7 ? 1 : (worker->lag > 0.5 ? 3 : 2),
-                          99.0f * worker->lag);
-        } else {
-            i += snprintf(string + i, RKMaximumStringLength - i, "%s%2.0f",
-                          full ? " " : "",
-                          99.0f * worker->lag);
-        }
+        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
+                      spacer,
+                      rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                      99.0f * worker->lag,
+                      rkGlobalParameters.showColor ? "\033[0m" : "");
     }
     i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
     // Duty cycle of each core
     for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
         worker = &engine->workers[c];
-        if (rkGlobalParameters.showColor) {
-            i += snprintf(string + i, RKMaximumStringLength - i, "%s\033[3%dm%2.0f\033[0m",
-                          full ? " " : "",
-                          worker->dutyCycle > 0.99 ? 1 : (worker->dutyCycle > 0.95 ? 3 : 2),
-                          99.0f * worker->dutyCycle);
-        } else {
-            i += snprintf(string + i, RKMaximumStringLength - i, "%s%2.0f",
-                          full ? " " : "",
-                          99.0f * worker->dutyCycle);
-        }
+        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
+                      spacer,
+                      rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
+                      99.0f * worker->dutyCycle,
+                      rkGlobalParameters.showColor ? "\033[0m" : "");
     }
     // Almost Full flag
     i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);

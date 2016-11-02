@@ -152,8 +152,6 @@ void *pulseGatherer(void *_in) {
 
     sem_t *sem[engine->coreCount];
 
-    int skipCounter = 0;
-
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKMomentEngineStateActive;
 
@@ -212,13 +210,16 @@ void *pulseGatherer(void *_in) {
         // Wait until the engine index move to the next one for storage
         s = 0;
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
-            if (s++ % 1000 == 0) {
-                printf("sleep 1. k=%d  pulseIndex=%d  header.s=%d\n", k , *engine->pulseIndex, engine->pulses[k].header.s);
-            }
             usleep(1000);
             // Timeout and say "nothing" on the screen
+            if (++s % 1000 == 0) {
+                printf("sleep 1/%d. k=%d  pulseIndex=%d  header.s=x%02x\n", k , *engine->pulseIndex, engine->pulses[k].header.s);
+            }
         }
+
+        // The pulse
         RKPulse *pulse = &engine->pulses[k];
+
         s = 0;
         while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
@@ -237,10 +238,10 @@ void *pulseGatherer(void *_in) {
                 i1 = i0;
                 // Inclusive count, the end pulse is used on both rays
                 engine->momentSource[j].length = count + 1;
-                printf("ray %u %d / %u %d  %d,%d c%d\n",
-                       j, engine->rays[j].header.s,
-                       *engine->rayIndex, engine->rays[*engine->rayIndex].header.s,
-                       engine->momentSource[j].origin, engine->momentSource[j].length, c);
+//                printf("ray %u %d / %u %d  %d,%d c%d\n",
+//                       j, engine->rays[j].header.s,
+//                       *engine->rayIndex, engine->rays[*engine->rayIndex].header.s,
+//                       engine->momentSource[j].origin, engine->momentSource[j].length, c);
                 if (count > 4) {
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
@@ -312,7 +313,7 @@ int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name) {
     #endif
 
     // Process each polarization separately and indepently
-    usleep(10000);
+    usleep(50 * 1000);
 
     return ie;
 }
