@@ -171,10 +171,11 @@ enum RKPulseStatus {
 typedef uint32_t RKRayStatus;
 enum RKRayStatus {
     RKRayStatusVacant        = 0,
-    RKRayStatusProcessed     = 1,
-    RKRayStatusSkipped       = 1 << 1,
-    RKRayStatusReady         = 1 << 2,
-    RKRayStatusUsedOnce      = 1 << 1
+    RKRayStatusProcessing    = 1,
+    RKRayStatusProcessed     = 1 << 1,
+    RKRayStatusSkipped       = 1 << 2,
+    RKRayStatusReady         = 1 << 3,
+    RKRayStatusUsedOnce      = 1 << 4
 };
 
 /*!

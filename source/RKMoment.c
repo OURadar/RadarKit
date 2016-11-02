@@ -119,25 +119,45 @@ void *momentCore(void *_in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
-        // Start and end indices of the I/Q data
-        is = engine->momentSource[io].origin;
-        ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-        deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
-        if (deltaAzimuth > 180.0f) {
-            deltaAzimuth -= 360.0f;
-        } else if (deltaAzimuth < -180.0f) {
-            deltaAzimuth += 360.0f;
-        }
-        deltaAzimuth = fabsf(deltaAzimuth);
-        deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
-        if (deltaElevation > 180.0f) {
-            deltaElevation -= 360.0f;
-        } else if (deltaElevation < -180.0f) {
-            deltaElevation += 360.0f;
-        }
-        deltaElevation = fabsf(deltaElevation);
-
         RKFloatRay *ray = &engine->rays[io];
+
+        // Mark being processed so that pulseGatherer() will not override the length
+        ray->header.s = RKRayStatusProcessing;
+
+        // The length of this ray
+        const int length = engine->momentSource[io].length;
+
+        // Start index of the I/Q data for this ray
+        is = engine->momentSource[io].origin;
+
+        // Call the assigned moment processor if we are to process
+        if (length > 0) {
+            // End index of the I/Q for this ray
+            ie = RKNextNModuloS(is, length - 1, engine->pulseBufferSize);
+
+            // Beamwidth:
+            deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
+            if (deltaAzimuth > 180.0f) {
+                deltaAzimuth -= 360.0f;
+            } else if (deltaAzimuth < -180.0f) {
+                deltaAzimuth += 360.0f;
+            }
+            deltaAzimuth = fabsf(deltaAzimuth);
+            deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
+            if (deltaElevation > 180.0f) {
+                deltaElevation -= 360.0f;
+            } else if (deltaElevation < -180.0f) {
+                deltaElevation += 360.0f;
+            }
+            deltaElevation = fabsf(deltaElevation);
+
+            me->pid = engine->processor(engine, io, name);
+            ray->header.s |= RKRayStatusProcessed;
+        } else {
+            ie = io;
+            me->pid = engine->momentSource[io].origin;
+            ray->header.s |= RKRayStatusSkipped;
+        }
 
         // Set the ray headers
         ray->header.startTimeD     = engine->pulses[is].header.timeDouble;
@@ -146,15 +166,8 @@ void *momentCore(void *_in) {
         ray->header.endAzimuth     = engine->pulses[ie].header.azimuthDegrees;
         ray->header.startElevation = engine->pulses[is].header.elevationDegrees;
         ray->header.endElevation   = engine->pulses[ie].header.elevationDegrees;
-
-        // Call the assigned moment processor if we are to process
-        if (engine->momentSource[io].length > 0) {
-            me->pid = engine->processor(engine, io, name);
-            ray->header.s = RKRayStatusProcessed | RKRayStatusReady;
-        } else {
-            me->pid = engine->momentSource[io].origin;
-            ray->header.s = RKRayStatusSkipped | RKRayStatusReady;
-        }
+        ray->header.s |= RKRayStatusReady;
+        ray->header.s ^= RKRayStatusProcessing;
 
 #if defined(DEBUG_MM)
         pthread_mutex_lock(&engine->coreMutex);
@@ -268,7 +281,7 @@ void *pulseGatherer(void *_in) {
         RKPulse *pulse = &engine->pulses[k];
 
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKMomentEngineStateActive) {
+        while (pulse->header.s == RKPulseStatusVacant && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0) {
                 printf("sleep 2/%d  k=%d  pulseIndex=%d  header.s=x%02x.\n", s, k, *engine->pulseIndex, pulse->header.s);
@@ -285,8 +298,8 @@ void *pulseGatherer(void *_in) {
                 RKLog("Warning. Overflow projected by pulseGatherer().\n");
                 i = RKPreviousModuloS(j, engine->rayBufferSize);
                 while (!(engine->rays[i].header.s & RKRayStatusReady)) {
-                    i = RKPreviousModuloS(i, engine->rayBufferSize);
                     engine->momentSource[i].length = -1;
+                    i = RKPreviousModuloS(i, engine->rayBufferSize);
                 }
             }
 

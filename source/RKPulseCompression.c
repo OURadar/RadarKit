@@ -409,9 +409,9 @@ void *pulseWatcher(void *_in) {
                 RKLog("Warning. I/Q Buffer overflow projected by pulseWatcher().\n");
                 i = RKPreviousModuloS(*engine->index, engine->size);
                 while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
-                    i = RKPreviousModuloS(i, engine->size);
                     engine->filterGid[i] = -1;
                     engine->planIndices[i][0] = 0;
+                    i = RKPreviousModuloS(i, engine->size);
                 }
             }
 
