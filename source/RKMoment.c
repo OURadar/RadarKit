@@ -207,21 +207,23 @@ void *pulseGatherer(void *_in) {
     k = 0;   // pulse index
     c = 0;   // core index
     int s = 0;
+    float lag;
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
-        s = 1;
+        s = 0;
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
-            usleep(1000);
             if (s++ % 1000 == 0) {
-                printf("sleep 1.\n");
+                printf("sleep 1. k=%d  pulseIndex=%d  header.s=%d\n", k , *engine->pulseIndex, engine->pulses[k].header.s);
             }
+            usleep(1000);
             // Timeout and say "nothing" on the screen
         }
         RKPulse *pulse = &engine->pulses[k];
+        s = 1;
         while ((pulse->header.s & RKPulseStatusCompressed) == 0 && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
-            if (s++ % 1000 == 0) {
+            if (s++ % 200 == 0) {
                 printf("sleep 2 s%d  k=%d  pulseIndex=%d  header.s=%d.\n", s, k, *engine->pulseIndex, pulse->header.s);
             }
         }
@@ -263,13 +265,14 @@ void *pulseGatherer(void *_in) {
             }
         }
         // Assess the buffer fullness
-        float lag = fmodf((float)(*engine->pulseIndex - k + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
+        lag = fmodf((float)(*engine->pulseIndex - k + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
         
         if (lag > 0.9f) {
             engine->almostFull++;
             //skipCounter = engine->pulseBufferSize;
             //engine->workers[0].lag = 0.89f;
-            RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %.2f   %u / %d.\n", lag, *engine->pulseIndex, k);
+            RKLog("Warning. I/Q Buffer overflow detected by pulseGatherer()  %.2f   %u / %d.\n",
+                  lag, *engine->pulseIndex, k);
             k = *engine->pulseIndex;
             continue;
         }
