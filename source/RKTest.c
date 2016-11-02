@@ -39,7 +39,7 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     double dt = 0.0;
     double prt;
     int g = 0;
-    const int chunkSize = 200;
+    const int chunkSize = 400;
 
     // Set to default value if prf = 0
     if (prf == 0) {

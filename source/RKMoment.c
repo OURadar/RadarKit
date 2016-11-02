@@ -304,11 +304,6 @@ void *pulseGatherer(void *_in) {
                     i1 = i0;
                     // Inclusive count, the end pulse is used on both rays
                     engine->momentSource[j].length = count + 1;
-    //                printf("ray %u %d / %u %d  %d,%d c%d\n",
-    //                       j, engine->rays[j].header.s,
-    //                       *engine->rayIndex, engine->rays[*engine->rayIndex].header.s,
-    //                       engine->momentSource[j].origin, engine->momentSource[j].length, c);
-
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
@@ -328,7 +323,7 @@ void *pulseGatherer(void *_in) {
                 count++;
             }
             // Check finished rays
-            while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
+            while (engine->rays[*engine->rayIndex].header.s & RKRayStatusReady) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
             }
         }
