@@ -65,6 +65,10 @@ void *momentCore(void *_in) {
 
     // Output index
     uint32_t io = engine->rayBufferSize - engine->coreCount + c;
+    uint32_t is;
+    uint32_t ie;
+    float deltaAzimuth;
+    float deltaElevation;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -115,12 +119,52 @@ void *momentCore(void *_in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
-        // Call the assigned moment processor
-        me->pid = engine->processor(engine, io, name);
+        // Start and end indices of the I/Q data
+        is = engine->momentSource[io].origin;
+        ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
+        deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
+        if (deltaAzimuth > 180.0f) {
+            deltaAzimuth -= 360.0f;
+        } else if (deltaAzimuth < -180.0f) {
+            deltaAzimuth += 360.0f;
+        }
+        deltaAzimuth = fabsf(deltaAzimuth);
+        deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
+        if (deltaElevation > 180.0f) {
+            deltaElevation -= 360.0f;
+        } else if (deltaElevation < -180.0f) {
+            deltaElevation += 360.0f;
+        }
+        deltaElevation = fabsf(deltaElevation);
 
-        // Set the ray status is ready
-        engine->rays[io].header.s = RKRayStatusReady;
-        
+        RKFloatRay *ray = &engine->rays[io];
+
+        // Set the ray headers
+        ray->header.startTimeD     = engine->pulses[is].header.timeDouble;
+        ray->header.endTimeD       = engine->pulses[ie].header.timeDouble;
+        ray->header.startAzimuth   = engine->pulses[is].header.azimuthDegrees;
+        ray->header.endAzimuth     = engine->pulses[ie].header.azimuthDegrees;
+        ray->header.startElevation = engine->pulses[is].header.elevationDegrees;
+        ray->header.endElevation   = engine->pulses[ie].header.elevationDegrees;
+
+        // Call the assigned moment processor if we are to process
+        if (engine->momentSource[io].length > 0) {
+            me->pid = engine->processor(engine, io, name);
+            ray->header.s = RKRayStatusProcessed | RKRayStatusReady;
+        } else {
+            me->pid = engine->momentSource[io].origin;
+            ray->header.s = RKRayStatusSkipped | RKRayStatusReady;
+        }
+
+#if defined(DEBUG_MM)
+        pthread_mutex_lock(&engine->coreMutex);
+        RKLog("%s %4u %04u...%04u  %04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
+              name, io, is, ie, *engine->pulseIndex,
+              engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
+              engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
+        pthread_mutex_unlock(&engine->coreMutex);
+#endif
+
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
@@ -148,9 +192,15 @@ void *momentCore(void *_in) {
 void *pulseGatherer(void *_in) {
     RKMomentEngine *engine = (RKMomentEngine *)_in;
 
-    int c, j, k;
+    int c, i, j, k;
 
     sem_t *sem[engine->coreCount];
+
+    // Beam index at t = 0 and t = 1 (previous sample)
+    int i0;
+    int i1 = 0;
+    int count = 0;
+    int skipCounter = 0;
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKMomentEngineStateActive;
@@ -196,11 +246,8 @@ void *pulseGatherer(void *_in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
-    // Beam index at t = 0 and t = 1 (previous sample)
-    uint32_t i0, i1 = 0;
-    uint32_t count = 0;
-
     // Here comes the busy loop
+    i = 0;   // anonymous
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
@@ -213,7 +260,7 @@ void *pulseGatherer(void *_in) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0) {
-                printf("sleep 1/%d. k=%d  pulseIndex=%d  header.s=x%02x\n", k , *engine->pulseIndex, engine->pulses[k].header.s);
+                printf("sleep 1/%d  k=%d  pulseIndex=%d  header.s=x%02x\n", s, k , *engine->pulseIndex, engine->pulses[k].header.s);
             }
         }
 
@@ -231,18 +278,37 @@ void *pulseGatherer(void *_in) {
             // Lag of the engine
             engine->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
 
+            // Assess the lag of 1st worker
+            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
+                engine->almostFull++;
+                skipCounter = engine->pulseBufferSize / 10;
+                RKLog("Warning. Overflow projected by pulseGatherer().\n");
+                i = RKPreviousModuloS(j, engine->rayBufferSize);
+                while (!(engine->rays[i].header.s & RKRayStatusReady)) {
+                    i = RKPreviousModuloS(i, engine->rayBufferSize);
+                    engine->momentSource[i].length = -1;
+                }
+            }
+
+            // The ray bin
             i0 = floorf(pulse->header.azimuthDegrees);
 
-            // Gather the start and end pulses and post a worker to process for a ray
-            if (i1 != i0) {
-                i1 = i0;
-                // Inclusive count, the end pulse is used on both rays
-                engine->momentSource[j].length = count + 1;
-//                printf("ray %u %d / %u %d  %d,%d c%d\n",
-//                       j, engine->rays[j].header.s,
-//                       *engine->rayIndex, engine->rays[*engine->rayIndex].header.s,
-//                       engine->momentSource[j].origin, engine->momentSource[j].length, c);
-                if (count > 4) {
+            // Skip processing if it isgetting too busy
+            if (skipCounter > 0) {
+                if (--skipCounter == 0) {
+                    RKLog(">Info. pulseGatherer() skipped a chunk.\n");
+                }
+            } else {
+                // Gather the start and end pulses and post a worker to process for a ray
+                if (i1 != i0) {
+                    i1 = i0;
+                    // Inclusive count, the end pulse is used on both rays
+                    engine->momentSource[j].length = count + 1;
+    //                printf("ray %u %d / %u %d  %d,%d c%d\n",
+    //                       j, engine->rays[j].header.s,
+    //                       *engine->rayIndex, engine->rays[*engine->rayIndex].header.s,
+    //                       engine->momentSource[j].origin, engine->momentSource[j].length, c);
+
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
@@ -253,14 +319,14 @@ void *pulseGatherer(void *_in) {
                     // Move to the next core, gather the next ray
                     c = RKNextModuloS(c, engine->coreCount);
                     j = RKNextModuloS(j, engine->rayBufferSize);
+                    // New origin for the next ray
+                    engine->momentSource[j].origin = k;
+                    engine->rays[j].header.s = RKRayStatusVacant;
+                    count = 0;
                 }
-                engine->momentSource[j].origin = k;
-                engine->rays[j].header.s = RKRayStatusVacant;
-                count = 0;
+                // Keep counting up
+                count++;
             }
-            // Keep counting up
-            count++;
-
             // Check finished rays
             while (engine->rays[*engine->rayIndex].header.s == RKRayStatusReady) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
@@ -287,30 +353,6 @@ int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name) {
     // Start and end indices of the I/Q data
     int is = engine->momentSource[io].origin;
     int ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-
-    float deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
-    if (deltaAzimuth > 180.0f) {
-        deltaAzimuth -= 360.0f;
-    } else if (deltaAzimuth < -180.0f) {
-        deltaAzimuth += 360.0f;
-    }
-    deltaAzimuth = fabsf(deltaAzimuth);
-    float deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
-    if (deltaElevation > 180.0f) {
-        deltaElevation -= 360.0f;
-    } else if (deltaElevation < -180.0f) {
-        deltaElevation += 360.0f;
-    }
-    deltaElevation = fabsf(deltaElevation);
-
-    #if defined(DEBUG_MM)
-    pthread_mutex_lock(&engine->coreMutex);
-    RKLog("%s %4u %04u...%04u  %04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
-          name, io, is, ie, *engine->pulseIndex,
-          engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
-          engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
-    pthread_mutex_unlock(&engine->coreMutex);
-    #endif
 
     // Process each polarization separately and indepently
     usleep(50 * 1000);
@@ -441,7 +483,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     // Use b characters to draw a bar
     const int b = 10;
     i = *engine->rayIndex * (b + 1) / engine->rayBufferSize;
-    memset(string, '|', i);
+    memset(string, '#', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, "%s%04d%s|",
                     spacer,

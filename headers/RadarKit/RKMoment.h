@@ -26,8 +26,8 @@ typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
 struct rk_moment_source {
-    uint32_t origin;
-    uint32_t length;
+    int origin;
+    int length;
 };
 
 struct rk_moment_worker {

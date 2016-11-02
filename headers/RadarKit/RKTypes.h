@@ -171,7 +171,9 @@ enum RKPulseStatus {
 typedef uint32_t RKRayStatus;
 enum RKRayStatus {
     RKRayStatusVacant        = 0,
-    RKRayStatusReady         = 1,
+    RKRayStatusProcessed     = 1,
+    RKRayStatusSkipped       = 1 << 1,
+    RKRayStatusReady         = 1 << 2,
     RKRayStatusUsedOnce      = 1 << 1
 };
 
@@ -191,19 +193,28 @@ enum RKRayStatus {
  @param endTimeD               End time in double representation
  */
 typedef struct RKRayHeader {
+    // First 128-bit chunk
     RKRayStatus    s;
     uint32_t       i;
     uint32_t       n;
     uint16_t       marker;
     uint16_t       reserved1;
     
+    // Second 128-bit chunk
     uint32_t       startTimeSec;
     uint32_t       startTimeUSec;
     double         startTimeD;
     
+    // Third 128-bit chunk
     uint32_t       endTimeSec;
     uint32_t       endTimeUSec;
     double         endTimeD;
+
+    // Fourth 128-bit chunk
+    float          startAzimuth;
+    float          endAzimuth;
+    float          startElevation;
+    float          endElevation;
 } RKRayHeader;
 
 typedef struct RKInt16Ray {
