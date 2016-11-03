@@ -37,6 +37,10 @@ int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath pat
     #endif
     
     // Process
+    // Identify odd pulses and even pulses
+    // Calculate R0, R1
+    // R0, R1 --> Z, V, W
+    
     usleep(25 * 1000);
     
     return ie;
