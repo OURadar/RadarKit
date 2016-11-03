@@ -403,7 +403,7 @@ void *pulseWatcher(void *_in) {
             // Lag of the engine
             engine->lag = fmodf((float)(*engine->index + engine->size - k) / engine->size, 1.0f);
 
-            // Assess the lag of 1st worker
+            // Assess the lag of the workers
             lag = engine->workers[0].lag;
             for (i = 1; i < engine->coreCount; i++) {
                 lag = MAX(lag, engine->workers[i].lag);
