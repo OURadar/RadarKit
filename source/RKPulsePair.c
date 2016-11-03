@@ -37,7 +37,7 @@ int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath pat
     #endif
     
     // Process
-    usleep(50 * 1000);
+    usleep(25 * 1000);
     
     return ie;
 

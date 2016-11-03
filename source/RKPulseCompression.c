@@ -606,7 +606,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     if (engine->verbose) {
-        RKLog("Starting RKPulseCompression pulseWatcher() ...\n");
+        RKLog("Starting pulseWatcher() ...\n");
     }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
