@@ -22,6 +22,7 @@ void *momentCore(void *_in) {
     struct timeval t0, t1, t2;
 
     const int c = me->id;
+    uint32_t tag = c;
 
     // Find the semaphore
     sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
@@ -121,12 +122,13 @@ void *momentCore(void *_in) {
 
         // Mark being processed so that pulseGatherer() will not override the length
         ray->header.s = RKRayStatusProcessing;
+        ray->header.i = tag;
 
-        // The length of this ray
+        // The index path of the source of this ray
         const RKModuloPath path = engine->momentSource[io];
-        is = path.origin;
 
         // Call the assigned moment processor if we are to process
+        is = path.origin;
         if (path.length > 0) {
             // End index of the I/Q for this ray
             ie = engine->processor(ray, engine->pulses, path, name);
@@ -141,23 +143,14 @@ void *momentCore(void *_in) {
 
         // Set the ray headers
         ray->header.startTimeD     = engine->pulses[is].header.timeDouble;
-        ray->header.endTimeD       = engine->pulses[ie].header.timeDouble;
         ray->header.startAzimuth   = engine->pulses[is].header.azimuthDegrees;
-        ray->header.endAzimuth     = engine->pulses[ie].header.azimuthDegrees;
         ray->header.startElevation = engine->pulses[is].header.elevationDegrees;
+        ray->header.endTimeD       = engine->pulses[ie].header.timeDouble;
+        ray->header.endAzimuth     = engine->pulses[ie].header.azimuthDegrees;
         ray->header.endElevation   = engine->pulses[ie].header.elevationDegrees;
         ray->header.s |= RKRayStatusReady;
         ray->header.s ^= RKRayStatusProcessing;
-
-#if defined(DEBUG_MM)
-        pthread_mutex_lock(&engine->coreMutex);
-        RKLog("%s %4u %04u...%04u  %04u   E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
-              name, io, is, ie, *engine->pulseIndex,
-              engine->pulses[is].header.elevationDegrees, engine->pulses[ie].header.elevationDegrees, deltaElevation,
-              engine->pulses[is].header.azimuthDegrees, engine->pulses[ie].header.azimuthDegrees, deltaAzimuth);
-        pthread_mutex_unlock(&engine->coreMutex);
-#endif
-
+       
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
@@ -170,6 +163,8 @@ void *momentCore(void *_in) {
         allFullPeriods += fullPeriods[d0];
         d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
         me->dutyCycle = allBusyPeriods / allFullPeriods;
+
+        tag += engine->coreCount;
 
         t2 = t0;
     }

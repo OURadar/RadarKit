@@ -29,6 +29,13 @@ int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath pat
     }
     deltaElevation = fabsf(deltaElevation);
     
+    #if defined(DEBUG_MM)
+    RKLog("%s  %04u...%04u  %5u  E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
+          name, is, ie, output->header.i,
+          inputBuffer[is].header.elevationDegrees, inputBuffer[ie].header.elevationDegrees, deltaElevation,
+          inputBuffer[is].header.azimuthDegrees,   inputBuffer[ie].header.azimuthDegrees,   deltaAzimuth);
+    #endif
+    
     // Process
     usleep(50 * 1000);
     
