@@ -81,7 +81,4 @@ int RKStop(RKRadar *radar);
 RKPulse *RKGetVacantPulse(RKRadar *radar);
 void RKSetPulseReady(RKPulse *pulse);
 
-RKFloatRay *RKGetVacantRay(RKRadar *radar);
-void RKSetRayReady(RKFloatRay *ray);
-
 #endif /* defined(__RadarKit_RKRadar__) */

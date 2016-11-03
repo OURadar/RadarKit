@@ -22,7 +22,6 @@ enum RKMomentEngineState {
     RKMomentEngineStateSleep
 };
 
-//typedef struct rk_moment_source RKMomentSource;
 typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
@@ -35,7 +34,7 @@ struct rk_moment_worker {
     uint32_t               pid;
     double                 dutyBuff[RKWorkerDutyCycleBufferSize];
     double                 dutyCycle;                                // Latest duty cycle estimate
-    float                  lag;                                      // Lag relative to the latest index of engine
+    float                  lag;                                      // Relative lag from the latest index
 };
 
 struct rk_moment_engine {

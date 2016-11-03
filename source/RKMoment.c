@@ -337,15 +337,6 @@ void *pulseGatherer(void *_in) {
     return NULL;
 }
 
-
-int RKMomentMultiLag(RKMomentEngine *engine, const int io, char *name) {
-    // Start and end indices of the I/Q data
-    int is = engine->momentSource[io].origin;
-    int ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-
-    return ie;
-}
-
 #pragma mark -
 
 RKMomentEngine *RKMomentEngineInit(void) {
@@ -369,6 +360,14 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
     }
     free(engine->momentSource);
     free(engine);
+}
+
+void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
+    engine->processor = &RKPulsePair;
+}
+
+void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
+//    engine->processor = &RKMultilag;
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,

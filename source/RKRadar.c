@@ -188,18 +188,3 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
 void RKSetPulseReady(RKPulse *pulse) {
     pulse->header.s = RKPulseStatusReady;
 }
-
-RKFloatRay *RKGetVacantRay(RKRadar *radar) {
-    if (radar->rays == NULL) {
-        RKLog("Error. Buffer for rays has not been allocated.\n");
-        exit(EXIT_FAILURE);
-    }
-    RKFloatRay *ray = &radar->rays[radar->rayIndex];
-    ray->header.s = RKRayStatusVacant;
-    radar->rayIndex = RKNextModuloS(radar->rayIndex, RKBuffer2SlotCount);
-    return ray;
-}
-
-void RKSetRayReady(RKFloatRay *ray) {
-    ray->header.s = RKRayStatusReady;
-}
