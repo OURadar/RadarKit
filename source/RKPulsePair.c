@@ -7,3 +7,31 @@
 //
 
 #include <RadarKit/RKPulsePair.h>
+
+int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath path, const char *name) {
+    // Start and end indices of the I/Q data
+    int is = path.origin;
+    int ie = RKNextNModuloS(is, path.length - 1, path.modulo);
+    // Azimuth beamwidth
+    float deltaAzimuth = inputBuffer[ie].header.azimuthDegrees - inputBuffer[is].header.azimuthDegrees;
+    if (deltaAzimuth > 180.0f) {
+        deltaAzimuth -= 360.0f;
+    } else if (deltaAzimuth < -180.0f) {
+        deltaAzimuth += 360.0f;
+    }
+    deltaAzimuth = fabsf(deltaAzimuth);
+    // Elevation beamwidth
+    float deltaElevation = inputBuffer[ie].header.elevationDegrees - inputBuffer[is].header.elevationDegrees;
+    if (deltaElevation > 180.0f) {
+        deltaElevation -= 360.0f;
+    } else if (deltaElevation < -180.0f) {
+        deltaElevation += 360.0f;
+    }
+    deltaElevation = fabsf(deltaElevation);
+    
+    // Process
+    usleep(50 * 1000);
+    
+    return ie;
+
+}

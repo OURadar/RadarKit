@@ -10,6 +10,7 @@
 #define __RadarKit_RKMoment__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKPulsePair.h>
 
 typedef int RKMomentEngineState;
 enum RKMomentEngineState {
@@ -21,14 +22,9 @@ enum RKMomentEngineState {
     RKMomentEngineStateSleep
 };
 
-typedef struct rk_moment_source RKMomentSource;
+//typedef struct rk_moment_source RKMomentSource;
 typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
-
-struct rk_moment_source {
-    int origin;
-    int length;
-};
 
 struct rk_moment_worker {
     RKMomentEngine         *parentEngine;
@@ -54,10 +50,10 @@ struct rk_moment_engine {
     uint32_t               verbose;
     uint32_t               coreCount;
     bool                   useSemaphore;
-    int                    (*processor)(RKMomentEngine *, const int, char *);
+    int                    (*processor)(RKFloatRay *, RKPulse *, const RKModuloPath, const char *);
 
     // Program set variables
-    RKMomentSource         *momentSource;
+    RKModuloPath           *momentSource;
     RKMomentWorker         *workers;
     pthread_t              tidPulseGatherer;
     pthread_mutex_t        coreMutex;

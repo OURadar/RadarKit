@@ -249,6 +249,12 @@ enum RKResult {
     RKResultNoError = 0
 };
 
+typedef struct RKModuloPath {
+    uint32_t      origin;
+    uint32_t      length;
+    uint32_t      modulo;
+} RKModuloPath;
+
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

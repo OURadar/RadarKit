@@ -9,7 +9,8 @@
 #ifndef __RadarKit_RKPulsePair__
 #define __RadarKit_RKPulsePair__
 
-#include <RadarKit/RKMoment.h>
+#include <RadarKit/RKFoundation.h>
 
+int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath path, const char *name);
 
 #endif /* defined(__RadarKit_RKPulsePair__) */

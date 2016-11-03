@@ -4,7 +4,7 @@ UNAME := $(shell uname)
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 LDFLAGS = -L /usr/local/lib
-OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o RKSIMD.o RKMoment.o RKTest.o
+OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o RKSIMD.o RKMoment.o RKTest.o RKPulsePair.o
 RKLIB = libRadarKit.a
 
 #CFLAGS += -DDEBUG_IQ

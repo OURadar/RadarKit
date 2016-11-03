@@ -67,8 +67,6 @@ void *momentCore(void *_in) {
     uint32_t io = engine->rayBufferSize - engine->coreCount + c;
     uint32_t is;
     uint32_t ie;
-    float deltaAzimuth;
-    float deltaElevation;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -125,39 +123,21 @@ void *momentCore(void *_in) {
         ray->header.s = RKRayStatusProcessing;
 
         // The length of this ray
-        const int length = engine->momentSource[io].length;
-
-        // Start index of the I/Q data for this ray
-        is = engine->momentSource[io].origin;
+        const RKModuloPath path = engine->momentSource[io];
+        is = path.origin;
 
         // Call the assigned moment processor if we are to process
-        if (length > 0) {
+        if (path.length > 0) {
             // End index of the I/Q for this ray
-            ie = RKNextNModuloS(is, length - 1, engine->pulseBufferSize);
-
-            // Beamwidth:
-            deltaAzimuth = engine->pulses[ie].header.azimuthDegrees - engine->pulses[is].header.azimuthDegrees;
-            if (deltaAzimuth > 180.0f) {
-                deltaAzimuth -= 360.0f;
-            } else if (deltaAzimuth < -180.0f) {
-                deltaAzimuth += 360.0f;
-            }
-            deltaAzimuth = fabsf(deltaAzimuth);
-            deltaElevation = engine->pulses[ie].header.elevationDegrees - engine->pulses[is].header.elevationDegrees;
-            if (deltaElevation > 180.0f) {
-                deltaElevation -= 360.0f;
-            } else if (deltaElevation < -180.0f) {
-                deltaElevation += 360.0f;
-            }
-            deltaElevation = fabsf(deltaElevation);
-
-            me->pid = engine->processor(engine, io, name);
+            ie = engine->processor(ray, engine->pulses, path, name);
             ray->header.s |= RKRayStatusProcessed;
         } else {
-            ie = io;
-            me->pid = engine->momentSource[io].origin;
+            ie = is;
             ray->header.s |= RKRayStatusSkipped;
         }
+
+        // Update processed index
+        me->pid = ie;
 
         // Set the ray headers
         ray->header.startTimeD     = engine->pulses[is].header.timeDouble;
@@ -298,7 +278,7 @@ void *pulseGatherer(void *_in) {
                 RKLog("Warning. Overflow projected by pulseGatherer().\n");
                 i = RKPreviousModuloS(j, engine->rayBufferSize);
                 while (!(engine->rays[i].header.s & RKRayStatusReady)) {
-                    engine->momentSource[i].length = -1;
+                    engine->momentSource[i].length = 0;
                     i = RKPreviousModuloS(i, engine->rayBufferSize);
                 }
             }
@@ -357,16 +337,6 @@ void *pulseGatherer(void *_in) {
     return NULL;
 }
 
-int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name) {
-    // Start and end indices of the I/Q data
-    int is = engine->momentSource[io].origin;
-    int ie = RKNextNModuloS(is, engine->momentSource[io].length - 1, engine->pulseBufferSize);
-
-    // Process each polarization separately and indepently
-    usleep(50 * 1000);
-
-    return ie;
-}
 
 int RKMomentMultiLag(RKMomentEngine *engine, const int io, char *name) {
     // Start and end indices of the I/Q data
@@ -388,7 +358,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKMomentEngineStateAllocated;
     engine->verbose = 1;
     engine->useSemaphore = true;
-    engine->processor = &RKMomentPulsePair;
+    engine->processor = &RKPulsePair;
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
 }
@@ -415,12 +385,15 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
     engine->rayIndex = rayIndex;
     engine->rayBufferSize = rayBufferSize;
     engine->encodedRays = NULL;
-    engine->momentSource = (RKMomentSource *)malloc(rayBufferSize * sizeof(RKMomentSource));
+    engine->momentSource = (RKModuloPath *)malloc(rayBufferSize * sizeof(RKModuloPath));
     if (engine->momentSource == NULL) {
         RKLog("Error. Unable to allocate momentSource.\n");
         exit(EXIT_FAILURE);
     }
-    memset(engine->momentSource, 0, rayBufferSize * sizeof(RKMomentSource));
+    memset(engine->momentSource, 0, rayBufferSize * sizeof(RKModuloPath));
+    for (int i = 0; i < rayBufferSize; i++) {
+        engine->momentSource[i].modulo = pulseBufferSize;
+    }
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count) {
