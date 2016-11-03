@@ -307,6 +307,7 @@ void *pulseWatcher(void *_in) {
     int planSize;
     int planIndex = 0;
     int skipCounter = 0;
+    float lag;
 
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
@@ -403,7 +404,11 @@ void *pulseWatcher(void *_in) {
             engine->lag = fmodf((float)(*engine->index + engine->size - k) / engine->size, 1.0f);
 
             // Assess the lag of 1st worker
-            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
+            lag = engine->workers[0].lag;
+            for (i = 1; i < engine->coreCount; i++) {
+                lag = MAX(lag, engine->workers[i].lag);
+            }
+            if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
                 RKLog("Warning. I/Q Buffer overflow projected by pulseWatcher().\n");

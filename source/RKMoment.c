@@ -189,6 +189,7 @@ void *pulseGatherer(void *_in) {
     int i1 = 0;
     int count = 0;
     int skipCounter = 0;
+    float lag;
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKMomentEngineStateActive;
@@ -266,8 +267,12 @@ void *pulseGatherer(void *_in) {
             // Lag of the engine
             engine->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
 
-            // Assess the lag of 1st worker
-            if (skipCounter == 0 && engine->workers[0].lag > 0.9f) {
+            // Assess the lag of the workers
+            lag = engine->workers[0].lag;
+            for (i = 1; i < engine->coreCount; i++) {
+                lag = MAX(lag, engine->workers[i].lag);
+            }
+            if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
                 RKLog("Warning. Overflow projected by pulseGatherer().\n");
