@@ -20,7 +20,7 @@ else
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
 endif
-LDFLAGS += -lRadarKit -lfftw3f -lpthread -lm
+LDFLAGS += -lRadarKit -lfftw3f -lpthread -lm -lrt
 
 all: $(RKLIB) install radar
 

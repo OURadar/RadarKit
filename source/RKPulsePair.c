@@ -41,6 +41,10 @@ int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath pat
     // Calculate R0, R1
     // R0, R1 --> Z, V, W
     
+    while (is != ie) {
+        
+        is = RKNextModuloS(is, path.modulo);
+    }
     usleep(25 * 1000);
     
     return ie;
