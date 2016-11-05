@@ -118,7 +118,7 @@ void *momentCore(void *_in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
-        RKFloatRay *ray = &engine->rays[io];
+        RKRay *ray = &engine->rays[io];
 
         // Mark being processed so that pulseGatherer() will not override the length
         ray->header.s = RKRayStatusProcessing;
@@ -374,7 +374,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
                                          RKPulse *pulses,
                                          uint32_t *pulseIndex,
                                          const uint32_t pulseBufferSize,
-                                         RKFloatRay *rays,
+                                         RKRay *rays,
                                          uint32_t *rayIndex,
                                          const uint32_t rayBufferSize) {
     engine->pulses = pulses;
@@ -383,7 +383,6 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
     engine->rays = rays;
     engine->rayIndex = rayIndex;
     engine->rayBufferSize = rayBufferSize;
-    engine->encodedRays = NULL;
     engine->momentSource = (RKModuloPath *)malloc(rayBufferSize * sizeof(RKModuloPath));
     if (engine->momentSource == NULL) {
         RKLog("Error. Unable to allocate momentSource.\n");

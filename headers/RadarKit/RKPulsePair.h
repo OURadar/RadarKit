@@ -11,6 +11,6 @@
 
 #include <RadarKit/RKFoundation.h>
 
-int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath path, const char *name);
+int RKPulsePair(RKRay *output, RKPulse *inputBuffer, const RKModuloPath path, const char *name);
 
 #endif /* defined(__RadarKit_RKPulsePair__) */

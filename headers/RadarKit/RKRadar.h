@@ -45,7 +45,7 @@ typedef struct RKRadar {
     // Buffers aligned to SIMD requirements
     //
     RKPulse                    *pulses;
-    RKFloatRay                 *rays;
+    RKRay                      *rays;
     //
     uint32_t                   index;
     uint32_t                   rayIndex;

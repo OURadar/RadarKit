@@ -63,7 +63,7 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     // Moment bufer
     if (flags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
-        bytes = RKBuffer2SlotCount * sizeof(RKFloatRay);
+        bytes = RKBuffer2SlotCount * sizeof(RKRay);
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
             RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;

@@ -20,7 +20,11 @@ else
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
 endif
-LDFLAGS += -lRadarKit -lfftw3f -lpthread -lm -lrt
+LDFLAGS += -lRadarKit -lfftw3f -lpthread -lm
+ifeq ($(UNAME), Darwin)
+else
+LDFLAGS += -lrt
+endif
 
 all: $(RKLIB) install radar
 
