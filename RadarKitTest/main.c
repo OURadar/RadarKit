@@ -11,7 +11,7 @@
 
 #define CLEAR                       "\033[0m"
 #define UNDERLINE(x)                "\033[4m" x "\033[24m"
-#define PROGNAME                    "radartest"
+#define PROGNAME                    "rktest"
 
 // Special types
 typedef struct user_params {
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 
     UserParams user = processInput(argc, argv);
 
-    RKSetProgramName("Radar");
+    RKSetProgramName("RadarKitTest");
     RKSetWantScreenOutput(true);
 
     // SIMD Tests

@@ -10,4 +10,5 @@ core.*
 *.dSYM
 
 radar
+rktest
 fft-wisdom
