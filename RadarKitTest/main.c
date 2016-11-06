@@ -2,15 +2,34 @@
 //  main.c
 //  RadarKitTest
 //
-//  Created by Boon Leng Cheong on 3/18/15.
-//  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
+//  Created by Boon Leng Cheong
+//  Copyright (c) 2016 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>
 #include <getopt.h>
 
+#define CLEAR                       "\033[0m"
+#define UNDERLINE(x)                "\033[4m" x "\033[24m"
+#define PROGNAME                    "radartest"
+
+// Special types
+typedef struct user_params {
+    int   threadsPulseCompression;
+    int   threadsMoment;
+    int   prf;
+    int   verbose;
+    int   testSIMD;
+    int   testModuloMath;
+    int   testPulseCompression;
+    bool  quietMode;
+    bool  simulate;
+} UserParams;
+
+// Global variables
 RKRadar *radar = NULL;
 
+// Functions
 void *exitAfterAWhile(void *s) {
     sleep(1);
     RKLog("Forced exit.\n");
@@ -28,14 +47,10 @@ static void handleSignals(int signal) {
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
 }
 
-#define CLEAR                       "\033[0m"
-#define UNDERLINE(x)                "\033[4m" x "\033[24m"
-#define PROGNAME                    "radartest"
-
 void showHelp() {
     printf("RadarKit Test Program\n\n"
            PROGNAME " [options]\n\n"
-           "OPTIONS\n"
+           "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
            "     debris particle count is set for each type sequentially by repeating the\n"
@@ -54,7 +69,8 @@ void showHelp() {
            "         Shows this help text.\n"
            "\n"
            "  -s (--simulate)\n"
-           "         Sets the program to simulate data stream.\n"
+           "         Sets the program to simulate data stream (default, if none of the tests\n"
+           "         is specified).\n"
            "\n"
            "  --test-mod\n"
            "         Sets the program to test modulo macros.\n"
@@ -67,20 +83,19 @@ void showHelp() {
            "         Sets the program to test the pulse compression using a simple case with.\n"
            "         an impulse filter.\n"
            "\n"
+           "\n"
+           "EXAMPLES:\n"
+           "     Here are some examples of typical configurations.\n"
+           "\n"
+           "  radar\n"
+           "         Runs the program with every default, i.e., simulate a data stream with\n"
+           "         default PRF (5000 Hz), default core counts (8 compression, 4 products)\n"
+           "\n"
+           "  radar -f 2000\n"
+           "         Runs the program with PRF = 2000 Hz.\n"
+           "\n"
            );
 }
-
-typedef struct user_params {
-    int   threadsPulseCompression;
-    int   threadsMoment;
-    int   prf;
-    int   verbose;
-    int   testSIMD;
-    int   testModuloMath;
-    int   testPulseCompression;
-    bool  quietMode;
-    bool  simulate;
-} UserParams;
 
 UserParams processInput(int argc, char **argv) {
     int k;
