@@ -77,8 +77,8 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
         }
     }
 
-    const int gateCount = (int)(75.0e3 / 3.0e8 * fs * 2.0);
-    const int chunkSize = 400;
+    const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(75.0e3 / 3.0e8 * fs * 2.0));
+    const int chunkSize = (int)floor(0.1f / prt);
 
     RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (75 km)\n",
           RKFloatToCommaStyleString(1.0e-6 * fs),
@@ -98,9 +98,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             pulse->header.gateCount = gateCount;
             pulse->header.azimuthDegrees = azimuth;
             pulse->header.elevationDegrees = 2.41f;
+            RKInt16 *X = RKGetInt16DataFromPulse(pulse, 0);
             for (k = 0; k < 1000; k++) {
-                pulse->X[0][k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                pulse->X[0][k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+                X[k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
+                X[k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
             }
             phi += 0.02f;
             azimuth = fmodf(50.0f * tau, 360.0f);
@@ -127,14 +128,14 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     RKPulse *pulse = RKGetVacantPulse(radar);
     pulse->header.gateCount = 6;
 
-    RKInt16 *X = radar->pulses[0].X[0];
+    RKInt16 *X = RKGetInt16DataFromPulse(pulse, 0);
     memset(X, 0, pulse->header.gateCount * sizeof(RKComplex));
-    pulse->X[0][0].i = 1;
-    pulse->X[0][0].q = 0;
-    pulse->X[0][1].i = 2;
-    pulse->X[0][1].q = 0;
-    pulse->X[0][2].i = 1;
-    pulse->X[0][2].q = 0;
+    X[0].i = 1;
+    X[0].q = 0;
+    X[1].i = 2;
+    X[1].q = 0;
+    X[2].i = 1;
+    X[2].q = 0;
     RKSetPulseReady(pulse);
 
     while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
@@ -142,7 +143,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     }
 
     RKComplex *F = &radar->pulseCompressionEngine->filters[0][0][0];
-    RKComplex *Y = radar->pulses[0].Y[0];
+    RKComplex *Y = RKGetComplexDataFromPulse(pulse, 0);
 
     if (flag & RKTestFlagShowResults) {
         printf("X =                    F =                           Y =\n");

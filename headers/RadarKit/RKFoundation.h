@@ -36,4 +36,11 @@
 
 void stripTrailingUnwanted(char *str);
 
+size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots);
+
+RKPulse *RKGetPulse(void *, const int);
+RKInt16 *RKGetInt16DataFromPulse(RKPulse *, const int);
+RKComplex *RKGetComplexDataFromPulse(RKPulse *, const int);
+RKIQZ *RKGetSplitComplexDataFromPulse(RKPulse *, const int);
+
 #endif /* defined(__RadarKit_RKFoundation__) */

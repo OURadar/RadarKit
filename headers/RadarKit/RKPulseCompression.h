@@ -3,7 +3,7 @@
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/18/15.
-//  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
+//  Copyright (c) 2015-2017 Boon Leng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_RKPulseCompression__
@@ -53,9 +53,9 @@ struct rk_pulse_compression_worker {
 
 struct rk_pulse_compression_engine {
     // User set variables
-    RKPulse                          *pulses;
-    uint32_t                         *index;
-    uint32_t                         size;
+    void                             *buffer;                            // Buffer of raw pulses
+    uint32_t                         *index;                             // The refence index to watch for
+    uint32_t                         size;                               // Size of the buffer
     uint32_t                         verbose;
     uint32_t                         coreCount;
     bool                             useSemaphore;
@@ -87,7 +87,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
 
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   RKPulse *pulses,
+                                                   void *buffer,
                                                    uint32_t *index,
                                                    const uint32_t size);
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count);

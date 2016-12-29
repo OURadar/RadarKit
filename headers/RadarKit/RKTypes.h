@@ -78,8 +78,8 @@ typedef struct RKComplex {
 
 //! Deinterleaved complex format for vector library
 typedef struct RKIQZ {
-    RKFloat i[RKGateCount];
-    RKFloat q[RKGateCount];
+    RKFloat *i;
+    RKFloat *q;
 } RKIQZ;
 
 // A convenient way to convert bytes into several other types
@@ -93,13 +93,13 @@ union rk_user_data {
 typedef union rk_user_data RKFourByte;
 
 // A running configuration buffer
-typedef struct RKRadarConfig {
+typedef struct RKOperatingParameters {
     uint32_t                  n;
     uint32_t                  prf[RKMaxMatchedFilterCount];
     uint32_t                  gateCount[RKMaxMatchedFilterCount];
     uint32_t                  waveformId[RKMaxMatchedFilterCount];
     char                      vcpDefinition[RKMaximumStringLength];
-} RKRadarConfig;
+} RKOperatingParameters;
 
 /*!
  @typedef RKPulseHeader
@@ -128,18 +128,23 @@ typedef struct RKRadarConfig {
  */
 typedef struct rk_pulse_header {
     // First 128-bit chunk
+    uint32_t    capacity;
     uint32_t    s;
     uint32_t    i;
     uint32_t    n;
-    uint16_t    marker;
-    uint16_t    pulseWidthSampleCount;
-    
+
     // Second 128-bit chunk
+    uint32_t    marker;
+    uint32_t    pulseWidthSampleCount;
+    uint32_t    reserved1;
+    uint32_t    reserved2;
+
+    // Third 128-bit chunk
     uint32_t    timeSec;
     uint32_t    timeUSec;
     double      timeDouble;
     
-    // Third 128-bit chunk
+    // Fourth 128-bit chunk
     uint16_t    az;
     uint16_t    el;
     uint16_t    configIndex;
@@ -148,7 +153,7 @@ typedef struct rk_pulse_header {
     uint16_t    azimuthBinIndex;
     float       gateSizeMeters;
     
-    // Fourth 128-bit chunk
+    // Fif 128-bit chunk
     float       azimuthDegrees;
     float       elevationDegrees;
     float       vazDps;
@@ -166,12 +171,17 @@ typedef union rk_pulse_parameters {
 } RKPulseParameters;
 
 // RKPulse struct is carefully designed to obey the SIMD alignment
+//typedef struct rk_pulse {
+//    RKPulseHeader      header;
+//    RKPulseParameters  parameters;
+//    RKInt16            X[2][RKGateCount];
+//    RKComplex          Y[2][RKGateCount];
+//    RKIQZ              Z[2];
+//} RKPulse;
 typedef struct rk_pulse {
     RKPulseHeader      header;
     RKPulseParameters  parameters;
-    RKInt16            X[2][RKGateCount];
-    RKComplex          Y[2][RKGateCount];
-    RKIQZ              Z[2];
+    void               *data;
 } RKPulse;
 
 
@@ -239,8 +249,8 @@ typedef struct RKRayHeader {
 
 typedef struct RKRay {
     RKRayHeader    header;
-    float          data[RKGateCount];
-    int16_t        idata[RKGateCount];
+    float          *data;
+    int16_t        *idata;
 } RKRay;
 
 enum RKResult {

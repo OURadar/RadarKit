@@ -8,19 +8,13 @@
 
 #include <RadarKit/RKRadar.h>
 
-RKRadar *RKInitWithFlags(const RKEnum flags);
-
 //
 //
 //
 
 #pragma mark -
 
-RKRadar *RKInit(void) {
-    return RKInitWithFlags(RKInitFlagAllocEverything);
-}
-
-RKRadar *RKInitWithFlags(const RKEnum flags) {
+RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     RKRadar *radar;
     size_t bytes;
 
@@ -35,56 +29,53 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
     radar->state |= RKRadarStateBaseAllocated;
 
     // Copy over the input flags
-    radar->initFlags = flags;
+    radar->initFlags = desc.initFlags;
 
     // Set some non-zero variables
     radar->active = true;
 
     // Config buffer
     radar->state |= RKRadarSTateConfigBufferAllocating;
-    bytes = RKBufferCSlotCount * sizeof(RKRadarConfig);
-    radar->config = (RKRadarConfig *)malloc(bytes);
-    if (radar->config == NULL) {
-        RKLog("ERROR. Unable to allocate memory for config");
+    bytes = RKBufferCSlotCount * sizeof(RKOperatingParameters);
+    radar->parameters = (RKOperatingParameters *)malloc(bytes);
+    if (radar->parameters == NULL) {
+        RKLog("ERROR. Unable to allocate memory for pulse parameters");
         return NULL;
     }
-    if (flags & RKInitFlagVerbose) {
+    if (radar->initFlags & RKInitFlagVerbose) {
         RKLog("Config buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
     }
-    memset(radar->config, 0, bytes);
+    memset(radar->parameters, 0, bytes);
     radar->memoryUsage += bytes;
     radar->state ^= RKRadarSTateConfigBufferAllocating;
     radar->state |= RKRadarSTateConfigBufferIntialized;
 
     // I/Q buffer
-    if (flags & RKInitFlagAllocRawIQBuffer) {
+    if (radar->initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
-        bytes = RKBuffer0SlotCount * sizeof(RKPulse);
-        if (posix_memalign((void **)&radar->pulses, RKSIMDAlignSize, bytes)) {
+        bytes = RKPulseBufferAlloc((void **)&radar->pulses, desc.pulseCapacity, desc.pulseBufferDepth);
+        if (bytes == 0 || radar->pulses == NULL) {
             RKLog("ERROR. Unable to allocate memory for I/Q pulses");
             return NULL;
         }
-        if (flags & RKInitFlagVerbose) {
+        if (radar->initFlags & RKInitFlagVerbose) {
             RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
-        memset(radar->pulses, 0, bytes);
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRawIQBufferAllocating;
         radar->state |= RKRadarStateRawIQBufferInitialized;
-        for (int i = 0; i < RKBuffer0SlotCount; i++) {
-            radar->pulses[i].header.i = i - RKBuffer0SlotCount;
-        }
     }
 
     // Moment bufer
-    if (flags & RKInitFlagAllocMomentBuffer) {
+    if (radar->initFlags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
-        bytes = RKBuffer2SlotCount * sizeof(RKRay);
+        //bytes = RKBuffer2SlotCount * sizeof(RKRay);
+        bytes = RKBuffer2SlotCount * (sizeof(RKRayHeader) + radar->pulses->header.capacity * (sizeof(float) + sizeof(int16_t)));
         if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
             RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;
         }
-        if (flags & RKInitFlagVerbose) {
+        if (radar->initFlags & RKInitFlagVerbose) {
             RKLog("Level II buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
         memset(radar->rays, 0, bytes);
@@ -114,6 +105,16 @@ RKRadar *RKInitWithFlags(const RKEnum flags) {
 
     RKLog("Radar initialized\n");
     return radar;
+}
+
+RKRadar *RKInit(void) {
+    RKRadarInitDesc desc;
+    desc.initFlags = RKInitFlagAllocEverything;
+    desc.pulseCapacity = RKGateCount;
+    desc.pulseRayRatio = 1;
+    desc.pulseBufferDepth = RKBuffer0SlotCount;
+    desc.rayBufferDepth = RKBuffer2SlotCount;
+    return RKInitWithDesc(desc);
 }
 
 int RKFree(RKRadar *radar) {
@@ -173,6 +174,11 @@ int RKSetTransceiver(RKRadar *radar, RKTransceiver init(RKRadar *, void *), void
 
 int RKSetPRF(RKRadar *radar, const float prf) {
     return 0;
+}
+
+size_t RKGetPulseCapacity(RKRadar *radar) {
+    RKPulse *pulse = radar->pulses;
+    return pulse->header.capacity;
 }
 
 #pragma mark -

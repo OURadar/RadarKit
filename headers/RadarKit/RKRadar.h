@@ -38,6 +38,14 @@ enum RKRadarState {
     RKRadarStatePedestalInitialized                  = (1 << 11)
 };
 
+typedef struct rk_radar_desc {
+    uint32_t                 initFlags;
+    uint32_t                 pulseCapacity;
+    uint32_t                 pulseRayRatio;
+    uint32_t                 pulseBufferDepth;
+    uint32_t                 rayBufferDepth;
+} RKRadarInitDesc;
+
 /*!
  * @typedef RKRadar
  * @brief The big structure that holds all the necessary buffers
@@ -48,14 +56,14 @@ struct rk_radar {
     //
     // General buffers
     //
-    RKRadarConfig              *config;
+    RKOperatingParameters      *parameters;
     //
     // Special buffers, aligned to SIMD requirements
     //
     RKPulse                    *pulses;
     RKRay                      *rays;
     //
-    uint32_t                   configIndex;
+    uint32_t                   parameterIndex;
     uint32_t                   pulseIndex;
     uint32_t                   rayIndex;
     //
@@ -88,6 +96,7 @@ struct rk_radar {
     void                       *pedestalInitInput;
 };
 
+RKRadar *RKInitWithFlags(RKRadarInitDesc);
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
