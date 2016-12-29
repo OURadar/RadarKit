@@ -18,7 +18,7 @@ typedef struct user_params {
     int   threadsPulseCompression;
     int   threadsMoment;
     int   prf;
-    int   gateCount;
+    int   fs;
     int   verbose;
     int   testSIMD;
     int   testModuloMath;
@@ -111,13 +111,13 @@ UserParams processInput(int argc, char **argv) {
     
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
+        {"fs"                    , required_argument, 0, 'F'},
         {"test-mod"              , no_argument      , 0, 'M'},
         {"test-simd"             , optional_argument, 0, 'S'},
         {"test-pulse-compression", optional_argument, 0, 'T'},
         {"azimuth"               , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
         {"cpu"                   , required_argument, 0, 'c'},
         {"prf"                   , required_argument, 0, 'f'},
-        {"gate"          , required_argument, 0, 'g'},
         {"help"                  , no_argument      , 0, 'h'},
         {"sim"                   , no_argument      , 0, 's'},
         {"verbose"               , no_argument      , 0, 'v'},
@@ -142,9 +142,6 @@ UserParams processInput(int argc, char **argv) {
             case 'f':
                 user.prf = atoi(optarg);
                 break;
-            case 'g':
-                user.gateCount = atoi(optarg);
-                break;
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
@@ -154,6 +151,9 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'A':
                 user.quietMode = false;
+                break;
+            case 'F':
+                user.fs = atof(optarg);
                 break;
             case 'M':
                 if (optarg) {
@@ -247,26 +247,24 @@ int main(int argc, char *argv[]) {
     RKSetProcessingCoreCounts(radar, user.threadsPulseCompression, user.threadsMoment);
 
     if (user.simulate) {
-        if (user.prf != 0) {
-            char cmd[64];
-            sprintf(cmd, "%d", user.prf);
-            RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
+        char cmd[64] = "";
+        int i = 0;
+        if (user.prf) {
+            i += sprintf(cmd + i, " f %d", user.prf);
         }
-        RKSetTransceiver(radar, &RKTestSimulateDataStream, NULL);
+        if (user.fs) {
+            i += sprintf(cmd + i, " F %d", user.fs);
+        }
+        RKLog("Main input = '%s'", cmd);
+        RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
+    } else if (user.testPulseCompression) {
+        RKTestPulseCompression(radar, RKTestFlagShowResults);
     }
 
     // Go live
     RKGoLive(radar);
 
-//    pulseCompressionTest(radar, RKTestFlagShowResults);
-
     RKWaitWhileActive(radar);
-
-//    if (user.simulate) {
-//        RKTestSimulateDataStream(radar, user.prf);
-//    } else if (user.testPulseCompression) {
-//        RKTestPulseCompression(radar, RKTestFlagShowResults);
-//    }
 
     RKLog("Freeing radar ...\n");
     RKFree(radar);

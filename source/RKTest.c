@@ -7,6 +7,7 @@
 //
 
 #include <RadarKit/RKTest.h>
+#include <getopt.h>
 
 #define RKFMT  "%4d"
 
@@ -37,26 +38,47 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     float azimuth = 0.0f;
     struct timeval t0, t1;
     double dt = 0.0;
-    double prt;
+    double prt = 0.0002;
+    float fs = 50.0e6;
     int g = 0;
-    const int chunkSize = 400;
 
-    // Set to default value if prf = 0
-    if (input == NULL) {
-        prt = 0.0002;
-    } else {
-        prt = 1.0 / (double)atof((char *)input);
-    }
-    RKLog("input = '%s'", (char *)input);
-    
     gettimeofday(&t0, NULL);
 
     RKSetLogfile(NULL);
 
-    //const int gateCount = (int)(75.0e3f / 3.0f);
+    RKLog("RKTestSimulateDataStream%s", (char *)input);
 
-    float fs = 50.0e6;
+    // Parse out input parameters
+    if (input) {
+        char *sb = (char *)input, *se = NULL, *sv = NULL;
+        while (*sb == ' ') {
+            sb++;
+        }
+        while ((se = strchr(sb, ' ')) != NULL) {
+            sv = se + 1;
+            switch (*sb) {
+                case 'f':
+                    prt = 1.0 / (double)atof(sv);
+                    //RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / prt)));
+                    break;
+                case 'F':
+                    fs = atof(sv);
+                    //RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)fs));
+                    break;
+            }
+            sb = strchr(sv, ' ');
+            if (sb == NULL) {
+                break;
+            } else {
+                while (*sb == ' ') {
+                    sb++;
+                }
+            }
+        }
+    }
+
     const int gateCount = (int)(75.0e3 / 3.0e8 * fs * 2.0);
+    const int chunkSize = 400;
 
     RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (75 km)\n",
           RKFloatToCommaStyleString(1.0e-6 * fs),

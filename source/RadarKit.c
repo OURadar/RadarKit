@@ -9,4 +9,3 @@
 
 // Global variables
 RKGlobalParamters rkGlobalParameters = {{"radar"}, {RKDefaultLogfile}, true, 0};
-
