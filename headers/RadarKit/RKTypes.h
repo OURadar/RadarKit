@@ -41,9 +41,10 @@
  @define RKGateCount The maximum number of gates allocated for each pulse
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
-#define RKBuffer0SlotCount               5000
-#define RKBuffer1SlotCount               200
-#define RKBuffer2SlotCount               4000
+#define RKBufferCSlotCount               16           // Config
+#define RKBuffer0SlotCount               5000         // Raw I/Q
+#define RKBuffer1SlotCount               200          //
+#define RKBuffer2SlotCount               4000         // Ray
 #define RKGateCount                      32768        // Must power of 2!
 #define RKSIMDAlignSize                  64           // SSE 16, AVX 32, AVX-512 64
 #define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
@@ -53,7 +54,7 @@
 
 /*! @/definedblock */
 
-#define RKMaximumStringLength  1024
+#define RKMaximumStringLength            1024
 
 typedef uint8_t   RKBoolean;
 typedef int8_t    RKByte;
@@ -81,6 +82,24 @@ typedef struct RKIQZ {
     RKFloat q[RKGateCount];
 } RKIQZ;
 
+// A convenient way to convert bytes into several other types
+union rk_user_data {
+    struct { uint8_t byte[4]; };
+    struct { uint16_t u16, u16_2; };
+    struct { int16_t i16, i16_2; };
+    struct { uint32_t u32; };
+    struct { float f; };
+};
+typedef union rk_user_data RKFourByte;
+
+// A running configuration buffer
+typedef struct RKRadarConfig {
+    uint32_t                  n;
+    uint32_t                  prf[RKMaxMatchedFilterCount];
+    uint32_t                  gateCount[RKMaxMatchedFilterCount];
+    uint32_t                  waveformId[RKMaxMatchedFilterCount];
+    char                      vcpDefinition[RKMaximumStringLength];
+} RKRadarConfig;
 
 /*!
  @typedef RKPulseHeader
@@ -97,8 +116,8 @@ typedef struct RKIQZ {
  @param timeDouble             Double representation of the time
  @param az                     Azimuth raw reading
  @param el                     Elevation raw reading
- @param prfHz                  PRF (Pulse Repetition Frequency) in Hz since last pulse
- @param prfIdx                 PRF index for multi-PRF operations
+ @param configIndex            Configuration index
+ @param configSubIndex         Configuration sub-index
  @param gateCount              Number of usable gates in this pulse
  @param azimuthBinIndex        Azimuth bin index
  @param gateSizeMeters         Gate size in meters
@@ -123,8 +142,8 @@ typedef struct rk_pulse_header {
     // Third 128-bit chunk
     uint16_t    az;
     uint16_t    el;
-    uint16_t    prfHz;
-    uint16_t    prfIdx;
+    uint16_t    configIndex;
+    uint16_t    configSubIndex;
     uint16_t    gateCount;
     uint16_t    azimuthBinIndex;
     float       gateSizeMeters;
@@ -254,6 +273,9 @@ typedef struct RKModuloPath {
     uint32_t      length;
     uint32_t      modulo;
 } RKModuloPath;
+
+typedef void * RKTransceiver;
+typedef void * RKPedestal;
 
 #pragma pack(pop)
 

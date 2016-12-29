@@ -18,7 +18,9 @@ enum RKTestFlag {
 };
 
 void RKTestModuloMath(void);
-void RKTestSimulateDataStream(RKRadar *radar, const int prf);
+
+RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input);
+
 void RKTestPulseCompression(RKRadar *, RKTestFlag);
 
 #endif /* defined(__RadarKit_RKFile__) */

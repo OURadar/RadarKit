@@ -30,7 +30,7 @@ void RKTestModuloMath(void) {
     k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
 }
 
-void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
+RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     int k;
     float phi = 0.0f;
     float tau = 0.0f;
@@ -42,11 +42,12 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
     const int chunkSize = 400;
 
     // Set to default value if prf = 0
-    if (prf == 0) {
+    if (input == NULL) {
         prt = 0.0002;
     } else {
-        prt = 1.0 / (double)prf;
+        prt = 1.0 / (double)atof((char *)input);
     }
+    RKLog("input = '%s'", (char *)input);
     
     gettimeofday(&t0, NULL);
 
@@ -97,6 +98,7 @@ void RKTestSimulateDataStream(RKRadar *radar, const int prf) {
         } while (radar->active && dt < prt * chunkSize);
         t0 = t1;
     }
+    return NULL;
 }
 
 void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {

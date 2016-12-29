@@ -50,6 +50,10 @@ void showHelp() {
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
            "         If not specified, the default PRF is 5000 Hz.\n"
            "\n"
+           "  -g (--gate) " UNDERLINE("value") "\n"
+           "         Sets the number range gates to " UNDERLINE("value") ".\n"
+           "         If not specified, the default PRF is 8192 Hz.\n"
+           "\n"
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
@@ -70,6 +74,7 @@ typedef struct user_params {
     int   threadsPulseCompression;
     int   threadsMoment;
     int   prf;
+    int   gateCount;
     int   verbose;
     int   testSIMD;
     int   testModuloMath;
@@ -91,6 +96,7 @@ UserParams processInput(int argc, char **argv) {
         {"azimuth"       , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
         {"cpu"           , required_argument, 0, 'c'},
         {"prf"           , required_argument, 0, 'f'},
+        {"gate"          , required_argument, 0, 'g'},
         {"help"          , no_argument      , 0, 'h'},
         {"sim"           , no_argument      , 0, 's'},
         {"verbose"       , no_argument      , 0, 'v'},
@@ -114,6 +120,9 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'f':
                 user.prf = atoi(optarg);
+                break;
+            case 'g':
+                user.gateCount = atoi(optarg);
                 break;
             case 'h':
                 showHelp();
@@ -205,14 +214,22 @@ int main(int argc, char *argv[]) {
     // Set any parameters here:
     RKSetProcessingCoreCounts(radar, user.threadsPulseCompression, user.threadsMoment);
 
+    if (user.simulate) {
+        if (user.prf != 0) {
+            char cmd[64];
+            sprintf(cmd, "%d", user.prf);
+            RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
+        }
+        RKSetTransceiver(radar, &RKTestSimulateDataStream, NULL);
+    }
+
     // Go live
     RKGoLive(radar);
 
+    
 //    pulseCompressionTest(radar, RKTestFlagShowResults);
 
-    if (user.simulate) {
-        RKTestSimulateDataStream(radar, user.prf);
-    }
+    RKWaitWhileActive(radar);
 
     RKLog("Freeing radar ...\n");
     RKFree(radar);

@@ -51,6 +51,7 @@
 		B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3591AB9CBAA004F88CD /* RKDSP.c */; };
 		B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3631AB9CD34004F88CD /* RKFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5DE28671E1582B30071B640 /* RKPulsePair.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B519691DCA879300470924 /* RKPulsePair.c */; };
 		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
 		B5F5AE3D1DBF996100CF643F /* RKTest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5F5AE3C1DBF996100CF643F /* RKTest.c */; };
 		B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5F5AE3C1DBF996100CF643F /* RKTest.c */; };
@@ -341,6 +342,7 @@
 				B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */,
 				B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */,
 				B54795261D91A87200E43F6A /* RKMoment.c in Sources */,
+				B5DE28671E1582B30071B640 /* RKPulsePair.c in Sources */,
 				B5C1F34B1AB9C1BE004F88CD /* RKRadar.c in Sources */,
 				B54795271D91A87700E43F6A /* RadarKit.c in Sources */,
 				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
