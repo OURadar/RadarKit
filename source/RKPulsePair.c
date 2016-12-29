@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKPulsePair.h>
 
-int RKPulsePair(RKFloatRay *output, RKPulse *inputBuffer, const RKModuloPath path, const char *name) {
+int RKPulsePair(RKRay *output, RKPulse *inputBuffer, const RKModuloPath path, const char *name) {
     // Start and end indices of the I/Q data
     int is = path.origin;
     int ie = RKNextNModuloS(is, path.length - 1, path.modulo);

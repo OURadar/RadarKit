@@ -26,7 +26,7 @@ else
 LDFLAGS += -lrt
 endif
 
-all: $(RKLIB) install radar
+all: $(RKLIB) install rktest
 
 $(OBJS): %.o: source/%.c
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
@@ -34,7 +34,7 @@ $(OBJS): %.o: source/%.c
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-radar: RadarKitTest/main.c
+rktest: RadarKitTest/main.c /usr/local/lib/libRadarKit.a
 	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 
 clean:

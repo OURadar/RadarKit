@@ -42,14 +42,13 @@ struct rk_moment_engine {
     RKPulse                *pulses;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
-    RKFloatRay             *rays;
-    RKInt16Ray             *encodedRays;
+    RKRay                  *rays;
     uint32_t               *rayIndex;
     uint32_t               rayBufferSize;
     uint32_t               verbose;
     uint32_t               coreCount;
     bool                   useSemaphore;
-    int                    (*processor)(RKFloatRay *, RKPulse *, const RKModuloPath, const char *);
+    int                    (*processor)(RKRay *, RKPulse *, const RKModuloPath, const char *);
 
     // Program set variables
     RKModuloPath           *momentSource;
@@ -71,7 +70,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
                                          RKPulse *pulses,
                                          uint32_t *pulseIndex,
                                          const uint32_t pulseBufferSize,
-                                         RKFloatRay *rays,
+                                         RKRay *rays,
                                          uint32_t *rayIndex,
                                          const uint32_t rayBufferSize);
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count);

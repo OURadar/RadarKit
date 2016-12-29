@@ -53,7 +53,7 @@ struct rk_radar {
     // Special buffers, aligned to SIMD requirements
     //
     RKPulse                    *pulses;
-    RKFloatRay                 *rays;
+    RKRay                      *rays;
     //
     uint32_t                   configIndex;
     uint32_t                   pulseIndex;

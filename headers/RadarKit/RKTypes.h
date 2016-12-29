@@ -237,15 +237,11 @@ typedef struct RKRayHeader {
     float          endElevation;
 } RKRayHeader;
 
-typedef struct RKInt16Ray {
-    RKRayHeader    header;
-    int16_t        data[RKGateCount];
-} RKInt16Ray;
-
-typedef struct RKFloatRay {
+typedef struct RKRay {
     RKRayHeader    header;
     float          data[RKGateCount];
-} RKFloatRay;
+    int16_t        idata[RKGateCount];
+} RKRay;
 
 enum RKResult {
     RKResultTimeout = -1000,

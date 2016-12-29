@@ -2,15 +2,35 @@
 //  main.c
 //  RadarKitTest
 //
-//  Created by Boon Leng Cheong on 3/18/15.
-//  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
+//  Created by Boon Leng Cheong
+//  Copyright (c) 2016 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>
 #include <getopt.h>
 
+#define CLEAR                       "\033[0m"
+#define UNDERLINE(x)                "\033[4m" x "\033[24m"
+#define PROGNAME                    "rktest"
+
+// User parameters in a struct
+typedef struct user_params {
+    int   threadsPulseCompression;
+    int   threadsMoment;
+    int   prf;
+    int   gateCount;
+    int   verbose;
+    int   testSIMD;
+    int   testModuloMath;
+    int   testPulseCompression;
+    bool  quietMode;
+    bool  simulate;
+} UserParams;
+
+// Global variables
 RKRadar *radar = NULL;
 
+// Functions
 void *exitAfterAWhile(void *s) {
     sleep(1);
     RKLog("Forced exit.\n");
@@ -28,14 +48,10 @@ static void handleSignals(int signal) {
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
 }
 
-#define CLEAR                       "\033[0m"
-#define UNDERLINE(x)                "\033[4m" x "\033[24m"
-#define PROGNAME                    "radartest"
-
 void showHelp() {
     printf("RadarKit Test Program\n\n"
            PROGNAME " [options]\n\n"
-           "OPTIONS\n"
+           "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
            "     debris particle count is set for each type sequentially by repeating the\n"
@@ -57,30 +73,34 @@ void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
-           "  -S (--test-mod)\n"
+           "  -s (--simulate)\n"
+           "         Sets the program to simulate data stream (default, if none of the tests\n"
+           "         is specified).\n"
+           "\n"
+           "  --test-mod\n"
            "         Sets the program to test modulo macros.\n"
            "\n"
-           "  -s (--simulate)\n"
-           "         Sets the program to simulate data stream.\n"
-           "\n"
-           "  -S (--test-simd)\n"
+           "  --test-simd\n"
            "         Sets the program to test SIMD instructions.\n"
            "         To test the SIMD performance, use --test-simd=2\n"
            "\n"
+           "  --test-pulse-compression\n"
+           "         Sets the program to test the pulse compression using a simple case with.\n"
+           "         an impulse filter.\n"
+           "\n"
+           "\n"
+           "EXAMPLES:\n"
+           "     Here are some examples of typical configurations.\n"
+           "\n"
+           "  radar\n"
+           "         Runs the program with every default, i.e., simulate a data stream with\n"
+           "         default PRF (5000 Hz), default core counts (8 compression, 4 products)\n"
+           "\n"
+           "  radar -f 2000\n"
+           "         Runs the program with PRF = 2000 Hz.\n"
+           "\n"
            );
 }
-
-typedef struct user_params {
-    int   threadsPulseCompression;
-    int   threadsMoment;
-    int   prf;
-    int   gateCount;
-    int   verbose;
-    int   testSIMD;
-    int   testModuloMath;
-    bool  quietMode;
-    bool  simulate;
-} UserParams;
 
 UserParams processInput(int argc, char **argv) {
     int k;
@@ -90,16 +110,17 @@ UserParams processInput(int argc, char **argv) {
     memset(&user, 0, sizeof(UserParams));
     
     static struct option long_options[] = {
-        {"alarm"         , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
-        {"test-mod"      , no_argument      , 0, 'M'},
-        {"test-simd"     , optional_argument, 0, 'S'},
-        {"azimuth"       , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
-        {"cpu"           , required_argument, 0, 'c'},
-        {"prf"           , required_argument, 0, 'f'},
+        {"alarm"                 , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
+        {"test-mod"              , no_argument      , 0, 'M'},
+        {"test-simd"             , optional_argument, 0, 'S'},
+        {"test-pulse-compression", optional_argument, 0, 'T'},
+        {"azimuth"               , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
+        {"cpu"                   , required_argument, 0, 'c'},
+        {"prf"                   , required_argument, 0, 'f'},
         {"gate"          , required_argument, 0, 'g'},
-        {"help"          , no_argument      , 0, 'h'},
-        {"sim"           , no_argument      , 0, 's'},
-        {"verbose"       , no_argument      , 0, 'v'},
+        {"help"                  , no_argument      , 0, 'h'},
+        {"sim"                   , no_argument      , 0, 's'},
+        {"verbose"               , no_argument      , 0, 'v'},
         {0, 0, 0, 0}
     };
     
@@ -148,6 +169,13 @@ UserParams processInput(int argc, char **argv) {
                     user.testSIMD = 1;
                 }
                 break;
+            case 'T':
+                if (optarg) {
+                    user.testPulseCompression = atoi(optarg);
+                } else {
+                    user.testPulseCompression = 1;
+                }
+                break;
             case 'v':
                 user.verbose++;
                 break;
@@ -172,11 +200,13 @@ int main(int argc, char *argv[]) {
 
     UserParams user = processInput(argc, argv);
 
-    RKSetProgramName("iRadar");
+    RKSetProgramName("RadarKitTest");
     RKSetWantScreenOutput(true);
 
     // SIMD Tests
+    bool testAny = false;
     if (user.testSIMD) {
+        testAny = true;
         RKSIMDDemoFlag flag = RKSIMDDemoFlagNull;
         if (user.verbose) {
             flag |= RKSIMDDemoFlagShowNumbers;
@@ -189,16 +219,18 @@ int main(int argc, char *argv[]) {
   
     // Modulo Macros Tests
     if (user.testModuloMath) {
+        testAny = true;
         RKTestModuloMath();
     }
-    
+
+    // Pulse Compression Tests
+    if (user.testPulseCompression) {
+        testAny = true;
+    }
+
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false) {
-        if (user.testSIMD == false && user.testModuloMath == false) {
-            user.simulate = true;
-        } else {
-            return EXIT_SUCCESS;
-        }
+    if (user.simulate == false && testAny == false) {
+        user.simulate = true;
     }
 
     RKLog("Initializing ...\n");
@@ -226,10 +258,15 @@ int main(int argc, char *argv[]) {
     // Go live
     RKGoLive(radar);
 
-    
 //    pulseCompressionTest(radar, RKTestFlagShowResults);
 
     RKWaitWhileActive(radar);
+
+//    if (user.simulate) {
+//        RKTestSimulateDataStream(radar, user.prf);
+//    } else if (user.testPulseCompression) {
+//        RKTestPulseCompression(radar, RKTestFlagShowResults);
+//    }
 
     RKLog("Freeing radar ...\n");
     RKFree(radar);
