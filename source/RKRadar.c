@@ -44,7 +44,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->active = true;
 
     // Config buffer
-    radar->state |= RKRadarSTateConfigBufferAllocating;
+    radar->state |= RKRadarStateConfigBufferAllocating;
     bytes = RKBufferCSlotCount * sizeof(RKOperatingParameters);
     radar->parameters = (RKOperatingParameters *)malloc(bytes);
     if (radar->parameters == NULL) {
@@ -56,8 +56,8 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     }
     memset(radar->parameters, 0, bytes);
     radar->memoryUsage += bytes;
-    radar->state ^= RKRadarSTateConfigBufferAllocating;
-    radar->state |= RKRadarSTateConfigBufferIntialized;
+    radar->state ^= RKRadarStateConfigBufferAllocating;
+    radar->state |= RKRadarStateConfigBufferIntialized;
 
     // I/Q buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
@@ -70,6 +70,19 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
+        RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
+        //RKPulse *pulse = (RKPulse *)radar->pulses;
+        //RKLog(">Offset = %d  (%p %p)", (int)((unsigned long)pulse->data - (unsigned long)pulse), pulse, pulse->data);
+//        m += sizeof(pulse->headerBytes);
+//        RKLog("%p vs %p", pulse->data, m);
+        for (int i = 0; i < radar->desc.pulseBufferDepth; i++) {
+            RKPulse *pulse = RKGetPulse(radar->pulses, i);
+            size_t offset = (size_t)pulse->data - (size_t)pulse;
+            if (offset != 256) {
+                printf("Unexpected offset = %d != 256\n", (int)offset);
+            }
+        }
+        
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRawIQBufferAllocating;
         radar->state |= RKRadarStateRawIQBufferInitialized;
@@ -78,16 +91,10 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // Moment bufer
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
-        //bytes = RKBuffer2SlotCount * sizeof(RKRay);
-        bytes = RKBuffer2SlotCount * (sizeof(RKRayHeader) + radar->pulses->header.capacity * (sizeof(float) + sizeof(int16_t)));
-        if (posix_memalign((void **)&radar->rays, RKSIMDAlignSize, bytes)) {
-            RKLog("ERROR. Unable to allocate memory for rays");
-            return NULL;
-        }
+        bytes = RKRayBufferAlloc((void **)&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseRayRatio, radar->desc.rayBufferDepth);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level II buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
-        memset(radar->rays, 0, bytes);
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRayBufferAllocating;
         radar->state |= RKRadarStateRayBufferInitialized;

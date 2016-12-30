@@ -236,6 +236,8 @@ int main(int argc, char *argv[]) {
     RKLog("Initializing ...\n");
 
     radar = RKInitLean();
+    
+    RKShowTypeSizes();
 
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);

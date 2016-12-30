@@ -118,7 +118,7 @@ void *momentCore(void *_in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
-        RKRay *ray = &engine->rays[io];
+        RKRay *ray = RKGetRay(engine->rays, io);
 
         // Mark being processed so that pulseGatherer() will not override the length
         ray->header.s = RKRayStatusProcessing;
@@ -141,13 +141,16 @@ void *momentCore(void *_in) {
         // Update processed index
         me->pid = ie;
 
+        RKPulse *pulseStart = RKGetPulse(engine->pulses, is);
+        RKPulse *pulseEnd = RKGetPulse(engine->pulses, ie);
+        
         // Set the ray headers
-        ray->header.startTimeD     = engine->pulses[is].header.timeDouble;
-        ray->header.startAzimuth   = engine->pulses[is].header.azimuthDegrees;
-        ray->header.startElevation = engine->pulses[is].header.elevationDegrees;
-        ray->header.endTimeD       = engine->pulses[ie].header.timeDouble;
-        ray->header.endAzimuth     = engine->pulses[ie].header.azimuthDegrees;
-        ray->header.endElevation   = engine->pulses[ie].header.elevationDegrees;
+        ray->header.startTimeD     = pulseStart->header.timeDouble;
+        ray->header.startAzimuth   = pulseStart->header.azimuthDegrees;
+        ray->header.startElevation = pulseStart->header.elevationDegrees;
+        ray->header.endTimeD       = pulseEnd->header.timeDouble;
+        ray->header.endAzimuth     = pulseEnd->header.azimuthDegrees;
+        ray->header.endElevation   = pulseEnd->header.elevationDegrees;
         ray->header.s |= RKRayStatusReady;
         ray->header.s ^= RKRayStatusProcessing;
        
@@ -242,6 +245,7 @@ void *pulseGatherer(void *_in) {
     c = 0;   // core index
     int s = 0;
     RKPulse *pulse;
+    RKRay *ray;
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
@@ -276,11 +280,12 @@ void *pulseGatherer(void *_in) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
                 RKLog("Warning. Overflow projected by pulseGatherer().\n");
-                i = RKPreviousModuloS(j, engine->rayBufferSize);
-                while (!(engine->rays[i].header.s & RKRayStatusReady)) {
-                    engine->momentSource[i].length = 0;
+                i = j;
+                do {
                     i = RKPreviousModuloS(i, engine->rayBufferSize);
-                }
+                    engine->momentSource[i].length = 0;
+                    ray = RKGetRay(engine->rays, i);
+                } while (!(ray->header.s & RKRayStatusReady));
             }
 
             // The ray bin
@@ -309,15 +314,18 @@ void *pulseGatherer(void *_in) {
                     j = RKNextModuloS(j, engine->rayBufferSize);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
-                    engine->rays[j].header.s = RKRayStatusVacant;
+                    ray = RKGetRay(engine->rays, j);
+                    ray->header.s = RKRayStatusVacant;
                     count = 0;
                 }
                 // Keep counting up
                 count++;
             }
-            // Check finished rays -- TO_UPGRADE
-            while (engine->rays[*engine->rayIndex].header.s & RKRayStatusReady) {
+            // Check finished rays
+            ray = RKGetRay(engine->rays, *engine->rayIndex);
+            while (ray->header.s & RKRayStatusReady) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
+                ray = RKGetRay(engine->rays, *engine->rayIndex);
             }
         }
         // Update k to catch up for the next watch

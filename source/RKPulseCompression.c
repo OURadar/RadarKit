@@ -178,7 +178,6 @@ void *pulseCompressionCore(void *_in) {
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
         me->lag = fmodf((float)(*engine->index + engine->size - me->pid) / engine->size, 1.0f);
 
-//        RKPulse *pulse = &engine->pulses[i0];
         RKPulse *pulse = RKGetPulse(engine->buffer, i0);
 
         #ifdef DEBUG_IQ
@@ -213,7 +212,7 @@ void *pulseCompressionCore(void *_in) {
                     // Copy and convert the samples
                     RKInt16 *X = RKGetInt16DataFromPulse(pulse, p);
                     for (k = 0, i = engine->anchors[gid][j].origin;
-                         k < planSize && i < pulse->header.gateCount;
+                         k < pulse->header.gateCount && i < pulse->header.capacity;
                          k++, i++) {
                         //in[k][0] = (RKFloat)pulse->X[p][i].i;
                         //in[k][1] = (RKFloat)pulse->X[p][i].q;
@@ -447,7 +446,6 @@ void *pulseWatcher(void *_in) {
             }
 
             // The pulse
-            //pulse = &engine->pulses[k];
             pulse = RKGetPulse(engine->buffer, k);
 
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)

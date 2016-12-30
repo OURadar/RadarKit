@@ -100,10 +100,13 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             pulse->header.azimuthDegrees = azimuth;
             pulse->header.elevationDegrees = 2.41f;
             RKInt16 *X = RKGetInt16DataFromPulse(pulse, 0);
-            for (k = 0; k < 1000; k++) {
-                X[k].i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                X[k].q = (int16_t)(32767.0f * sinf(phi * (float)k));
+            for (k = 0; k < gateCount; k++) {
+                //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
+                X->i = k;
+                X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
+                X++;
             }
+            RKLog("%p vs %p vs %p vs %p %d", X, (void *)X - gateCount * sizeof(RKInt16), pulse->data, (void *)pulse + sizeof(pulse->headerBytes), (int)gateCount);
             phi += 0.02f;
             azimuth = fmodf(50.0f * tau, 360.0f);
 
@@ -130,7 +133,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     pulse->header.gateCount = 6;
 
     RKInt16 *X = RKGetInt16DataFromPulse(pulse, 0);
-    memset(X, 0, pulse->header.gateCount * sizeof(RKComplex));
+    memset(X, 0, pulse->header.gateCount * sizeof(RKInt16));
     X[0].i = 1;
     X[0].q = 0;
     X[1].i = 2;

@@ -12,8 +12,10 @@ int RKPulsePair(RKRay *output, RKPulse *inputBuffer, const RKModuloPath path, co
     // Start and end indices of the I/Q data
     int is = path.origin;
     int ie = RKNextNModuloS(is, path.length - 1, path.modulo);
+    RKPulse *pulseStart = RKGetPulse(inputBuffer, is);
+    RKPulse *pulseEnd = RKGetPulse(inputBuffer, ie);
     // Azimuth beamwidth
-    float deltaAzimuth = inputBuffer[ie].header.azimuthDegrees - inputBuffer[is].header.azimuthDegrees;
+    float deltaAzimuth = pulseEnd->header.azimuthDegrees - pulseStart->header.azimuthDegrees;
     if (deltaAzimuth > 180.0f) {
         deltaAzimuth -= 360.0f;
     } else if (deltaAzimuth < -180.0f) {
@@ -21,7 +23,7 @@ int RKPulsePair(RKRay *output, RKPulse *inputBuffer, const RKModuloPath path, co
     }
     deltaAzimuth = fabsf(deltaAzimuth);
     // Elevation beamwidth
-    float deltaElevation = inputBuffer[ie].header.elevationDegrees - inputBuffer[is].header.elevationDegrees;
+    float deltaElevation = pulseEnd->header.elevationDegrees - pulseStart->header.elevationDegrees;
     if (deltaElevation > 180.0f) {
         deltaElevation -= 360.0f;
     } else if (deltaElevation < -180.0f) {
@@ -32,8 +34,8 @@ int RKPulsePair(RKRay *output, RKPulse *inputBuffer, const RKModuloPath path, co
     #if defined(DEBUG_MM)
     RKLog("%s  %04u...%04u  %5u  E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
           name, is, ie, output->header.i,
-          inputBuffer[is].header.elevationDegrees, inputBuffer[ie].header.elevationDegrees, deltaElevation,
-          inputBuffer[is].header.azimuthDegrees,   inputBuffer[ie].header.azimuthDegrees,   deltaAzimuth);
+          pulseStart->header.elevationDegrees, pulseEnd->header.elevationDegrees, deltaElevation,
+          pulseStart->header.azimuthDegrees,   pulseEnd->header.azimuthDegrees,   deltaAzimuth);
     #endif
     
     // Process

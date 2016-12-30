@@ -232,3 +232,15 @@ char *RKSignalString(const int signal) {
     }
     return string;
 }
+
+void RKShowTypeSizes(void) {
+    RKPulse *pulse = NULL;
+    RKRay *ray = NULL;
+    RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
+    RKLog(">sizeof(RKInt16) = %d", (int)sizeof(RKInt16));
+    RKLog(">sizeof(RKPulseHeader) = %d", (int)sizeof(RKPulseHeader));
+    RKLog(">sizeof(RKPulseParameters) = %d", (int)sizeof(RKPulseParameters));
+    RKLog(">sizeof(pulse->headerBytes) = %d", (int)sizeof(pulse->headerBytes));
+    RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
+    RKLog(">sizeof(ray->headerBytes) = %d", (int)sizeof(ray->headerBytes));
+}

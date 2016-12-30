@@ -29,8 +29,8 @@ enum RKRadarState {
     RKRadarStateRayBufferInitialized                 = (1 << 2),   // 0x04
     RKRadarStateRawIQBufferAllocating                = (1 << 3),   // 0x08
     RKRadarStateRawIQBufferInitialized               = (1 << 4),   // 0x10
-    RKRadarSTateConfigBufferAllocating               = (1 << 5),   // 0x20
-    RKRadarSTateConfigBufferIntialized               = (1 << 6),   // 0x40
+    RKRadarStateConfigBufferAllocating               = (1 << 5),   // 0x20
+    RKRadarStateConfigBufferIntialized               = (1 << 6),   // 0x40
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 7),
     RKRadarStateMomentEngineInitialized              = (1 << 8),
     RKRadarStateSocketServerInitialized              = (1 << 9),

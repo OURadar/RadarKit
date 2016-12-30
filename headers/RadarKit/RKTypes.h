@@ -106,6 +106,11 @@ typedef struct RKOperatingParameters {
  @brief Fundamental unit of the pulse header that is designed to be SIMD alignment friendly.
  Changing this structure would have a major impacts on the workingness of the entiire framework.
  It is imperative to maintain the SIMD alignment whenever new fields are added.
+ 
+ 12/29/2016 - I think I have made this immunie to non-SIMD size header.
+            - As long as  sizeof(RKPulseHeader) + sizeof(RKPulseParameters) is multiples of 
+              SIMD align size, we should be okay the way the buffer is designed.
+ 
  @param s                      Pulse Status
  @param i                      Pulse Identity
  @param n                      Pulse Network Counter
@@ -149,11 +154,11 @@ typedef struct rk_pulse_header {
     uint16_t    el;
     uint16_t    configIndex;
     uint16_t    configSubIndex;
-    uint16_t    gateCount;
     uint16_t    azimuthBinIndex;
+    uint16_t    gateCount;
     float       gateSizeMeters;
     
-    // Fif 128-bit chunk
+    // Fifth 128-bit chunk
     float       azimuthDegrees;
     float       elevationDegrees;
     float       vazDps;
@@ -161,13 +166,10 @@ typedef struct rk_pulse_header {
 } RKPulseHeader;
 
 // Make sure the size (bytes) can cover all the struct elements and still conform to SIMD alignemt
-typedef union rk_pulse_parameters {
-    struct {
-        uint32_t    filterCounts[2];
-        uint32_t    planIndices[2][RKMaxMatchedFilterCount];
-        uint32_t    planSizes[2][RKMaxMatchedFilterCount];
-    };
-    char bytes[RKSIMDAlignSize * 2];
+typedef struct rk_pulse_parameters {
+    uint32_t    filterCounts[2];
+    uint32_t    planIndices[2][RKMaxMatchedFilterCount];
+    uint32_t    planSizes[2][RKMaxMatchedFilterCount];
 } RKPulseParameters;
 
 // RKPulse struct is carefully designed to obey the SIMD alignment
@@ -179,9 +181,14 @@ typedef union rk_pulse_parameters {
 //    RKIQZ              Z[2];
 //} RKPulse;
 typedef struct rk_pulse {
-    RKPulseHeader      header;
-    RKPulseParameters  parameters;
-    void               *data;
+    union {
+        struct {
+            RKPulseHeader      header;
+            RKPulseParameters  parameters;
+        };
+        char headerBytes[256];
+    };
+    void                       *data;
 } RKPulse;
 
 
@@ -224,23 +231,30 @@ enum RKRayStatus {
  */
 typedef struct RKRayHeader {
     // First 128-bit chunk
+    uint32_t       capacity;
     RKRayStatus    s;
     uint32_t       i;
     uint32_t       n;
-    uint16_t       marker;
-    uint16_t       reserved1;
     
     // Second 128-bit chunk
+    uint32_t       marker;
+    uint32_t       reserved1;
+    uint16_t       configIndex;
+    uint16_t       configSubIndex;
+    uint16_t       gateCount;
+    uint16_t       reserved2;
+
+    // Third 128-bit chunk
     uint32_t       startTimeSec;
     uint32_t       startTimeUSec;
     double         startTimeD;
     
-    // Third 128-bit chunk
+    // Fourth 128-bit chunk
     uint32_t       endTimeSec;
     uint32_t       endTimeUSec;
     double         endTimeD;
 
-    // Fourth 128-bit chunk
+    // Fifth 128-bit chunk
     float          startAzimuth;
     float          endAzimuth;
     float          startElevation;
@@ -248,9 +262,11 @@ typedef struct RKRayHeader {
 } RKRayHeader;
 
 typedef struct RKRay {
-    RKRayHeader    header;
-    float          *data;
-    int16_t        *idata;
+    union {
+        RKRayHeader  header;
+        char         headerBytes[128];
+    };
+    void             *data;
 } RKRay;
 
 enum RKResult {
