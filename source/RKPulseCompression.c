@@ -681,11 +681,11 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     if (engine->filters[group][index] != NULL) {
         free(engine->filters[group][index]);
     }
-    if (posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, RKGateCount * sizeof(RKComplex))) {
+    if (posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, maxDataLength * sizeof(RKComplex))) {
         RKLog("Error. Unable to allocate filter memory.\n");
         return RKResultFailedToAllocateFilter;
     }
-    memset(engine->filters[group][index], 0, RKGateCount * sizeof(RKComplex));
+    memset(engine->filters[group][index], 0, maxDataLength * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
@@ -706,12 +706,14 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
+    RKPulse *pulse = (RKPulse *)engine->buffer;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, RKGateCount, 0, 0);
+    RKPulse *pulse = (RKPulse *)engine->buffer;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
