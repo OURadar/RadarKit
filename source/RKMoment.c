@@ -47,7 +47,17 @@ void *momentCore(void *_in) {
         sprintf(name + k, "\033[0m");
     }
 
-    // Allocate local resources, use k to keep track of the total allocation
+    RKRay *ray = RKGetRay(engine->rays, 0);
+    const size_t capacity = ray->header.capacity;
+
+    // Allocate local resources and keep track of the total allocation
+    RKScratch *space = RKScratchInit(capacity);
+    if (space == NULL) {
+        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        return (void *)RKResultFailedToAllocateScratchSpace;
+    }
+    size_t mem = (2 * (4 + RKMaxLag * 3) + 4 + 2 * (2 * RKMaxLag - 1) * 3 + 1) * capacity * sizeof(RKFloat);
+
     double *busyPeriods, *fullPeriods;
     posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
     posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
@@ -55,7 +65,7 @@ void *momentCore(void *_in) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
     }
-    k = 2 * RKWorkerDutyCycleBufferSize * sizeof(double);
+    mem += 2 * RKWorkerDutyCycleBufferSize * sizeof(double);
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
@@ -75,7 +85,7 @@ void *momentCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.  i0 = %d   mem = %s  tic = %d\n", name, io, RKIntegerToCommaStyleString(k), me->tic);
+        RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -131,7 +141,7 @@ void *momentCore(void *_in) {
         is = path.origin;
         if (path.length > 0) {
             // End index of the I/Q for this ray
-            ie = engine->processor(ray, engine->pulses, path, name);
+            ie = engine->processor(space, engine->pulses, path, name);
             ray->header.s |= RKRayStatusProcessed;
         } else {
             ie = is;
@@ -141,16 +151,17 @@ void *momentCore(void *_in) {
         // Update processed index
         me->pid = ie;
 
-        RKPulse *pulseStart = RKGetPulse(engine->pulses, is);
-        RKPulse *pulseEnd = RKGetPulse(engine->pulses, ie);
+        // Start and end pulses to calculate this ray
+        RKPulse *ss = RKGetPulse(engine->pulses, is);
+        RKPulse *ee = RKGetPulse(engine->pulses, ie);
         
         // Set the ray headers
-        ray->header.startTimeD     = pulseStart->header.timeDouble;
-        ray->header.startAzimuth   = pulseStart->header.azimuthDegrees;
-        ray->header.startElevation = pulseStart->header.elevationDegrees;
-        ray->header.endTimeD       = pulseEnd->header.timeDouble;
-        ray->header.endAzimuth     = pulseEnd->header.azimuthDegrees;
-        ray->header.endElevation   = pulseEnd->header.elevationDegrees;
+        ray->header.startTimeD     = ss->header.timeDouble;
+        ray->header.startAzimuth   = ss->header.azimuthDegrees;
+        ray->header.startElevation = ss->header.elevationDegrees;
+        ray->header.endTimeD       = ee->header.timeDouble;
+        ray->header.endAzimuth     = ee->header.azimuthDegrees;
+        ray->header.endElevation   = ee->header.elevationDegrees;
         ray->header.s |= RKRayStatusReady;
         ray->header.s ^= RKRayStatusProcessing;
        
@@ -172,6 +183,7 @@ void *momentCore(void *_in) {
         t2 = t0;
     }
 
+    RKScratchFree(space);
     free(busyPeriods);
     free(fullPeriods);
 
@@ -369,6 +381,8 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
     free(engine->momentSource);
     free(engine);
 }
+
+#pragma mark -
 
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
     engine->processor = &RKPulsePair;

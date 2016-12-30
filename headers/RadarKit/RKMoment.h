@@ -48,7 +48,7 @@ struct rk_moment_engine {
     uint32_t               verbose;
     uint32_t               coreCount;
     bool                   useSemaphore;
-    int                    (*processor)(RKRay *, RKPulse *, const RKModuloPath, const char *);
+    int                    (*processor)(RKScratch *, RKPulse *, const RKModuloPath, const char *);
 
     // Program set variables
     RKModuloPath           *momentSource;
@@ -64,7 +64,7 @@ struct rk_moment_engine {
 };
 
 RKMomentEngine *RKMomentEngineInit(void);
-void RKMomentEngineFree(RKMomentEngine *engine);
+void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
                                          RKPulse *pulses,

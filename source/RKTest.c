@@ -136,8 +136,12 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     X[0].q = 0;
     X[1].i = 2;
     X[1].q = 0;
-    X[2].i = 1;
+    X[2].i = 4;
     X[2].q = 0;
+    X[3].i = 2;
+    X[3].q = 0;
+    X[4].i = 1;
+    X[4].q = 0;
     RKSetPulseReady(pulse);
 
     while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
@@ -146,14 +150,16 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
 
     RKComplex *F = &radar->pulseCompressionEngine->filters[0][0][0];
     RKComplex *Y = RKGetComplexDataFromPulse(pulse, 0);
+    RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, 0);
 
     if (flag & RKTestFlagShowResults) {
-        printf("X =                    F =                           Y =\n");
+        printf("X =                       F =                     Y =                             Z =\n");
         for (int k = 0; k < 8; k++) {
-            printf("    %6d %s %6di         %9.2f %s %9.2fi         %9.2f %s %9.2fi\n",
+            printf("    [ %6d %s %6di ]      [ %5.2f %s %5.2fi ]      [ %9.2f %s %9.2fi ]      [ %9.2f %s %9.2fi ]\n",
                    X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
                    F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
-                   Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q));
+                   Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),
+                   Z.i[k], Z.q[k] < 0.0f ? "-" : "+", fabs(Z.q[k]));
         }
     }
 }

@@ -39,6 +39,7 @@ void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
     RKPulseCompressionEngine *engine = me->parentEngine;
 
+    int bound;
     int i, j, k, p;
     struct timeval t0, t1, t2;
 
@@ -137,7 +138,7 @@ void *pulseCompressionCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.  i0 = %d   mem = %s  tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+        RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -211,13 +212,11 @@ void *pulseCompressionCore(void *_in) {
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16DataFromPulse(pulse, p);
-                    for (k = 0, i = engine->anchors[gid][j].origin;
-                         k < pulse->header.gateCount && i < pulse->header.capacity;
-                         k++, i++) {
-                        //in[k][0] = (RKFloat)pulse->X[p][i].i;
-                        //in[k][1] = (RKFloat)pulse->X[p][i].q;
-                        in[k][0] = (RKFloat)X[i].i;
-                        in[k][1] = (RKFloat)X[i].q;
+                    X += engine->anchors[gid][j].origin;
+                    bound = MIN(pulse->header.gateCount, pulse->header.capacity - engine->anchors[gid][j].origin);
+                    for (k = 0; k < bound; k++) {
+                        in[k][0] = (RKFloat)X->i;
+                        in[k][1] = (RKFloat)X++->q;
                     }
                     // Zero pad the input; a filter is always zero-padded in the setter function.
                     memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
@@ -252,16 +251,20 @@ void *pulseCompressionCore(void *_in) {
 
                     // Scaling due to a net gain of planSize from forward + backward DFT
                     RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
+
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
                     RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
-                    for (k = 0, i = engine->anchors[gid][j].length - 1;
-                         k < MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
-                         k++, i++) {
-                        //pulse->Y[p][k].i = out[i][0];
-                        //pulse->Y[p][k].q = out[i][1];
-                        Y[k].i = out[i][0];
-                        Y[k].q = out[i][1];
+                    RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                    Y += engine->anchors[gid][j].origin;
+                    Z.i += engine->anchors[gid][j].origin;
+                    Z.q += engine->anchors[gid][j].origin;
+                    bound = MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
+                    for (i = 0; i < bound; i++) {
+                        Y->i = out[i][0];
+                        Y++->q = out[i][1];
+                        *Z.i++ = out[i][0];
+                        *Z.q++ = out[i][1];
                     }
 
                     // Copy over the parameters used

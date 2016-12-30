@@ -35,17 +35,18 @@
 
 void stripTrailingUnwanted(char *str);
 
-size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots);
-
+size_t RKPulseBufferAlloc(void **, const int, const int);
 RKPulse *RKGetPulse(void *, const int);
-RKInt16 *RKGetInt16DataFromPulse(RKPulse *, const int);
+RKInt16C *RKGetInt16DataFromPulse(RKPulse *, const int);
 RKComplex *RKGetComplexDataFromPulse(RKPulse *, const int);
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const int);
 
-size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots);
-
+size_t RKRayBufferAlloc(void **, const int, const int);
 RKRay *RKGetRay(void *, const int);
 int16_t *RKGetInt16DataFromRay(RKRay *, const int);
 float *RKGetFloatDataFromRay(RKRay *, const int);
+
+RKScratch *RKScratchInit(const size_t);
+void RKScratchFree(RKScratch *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */
