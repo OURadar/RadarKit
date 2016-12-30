@@ -17,8 +17,12 @@ void stripTrailingUnwanted(char *str) {
 }
 
 //
-//    RKInt16            X[2][RKGateCount];
-//    RKComplex          Y[2][RKGateCount];
+// Each slot should have a structure as follows
+//
+//    RKPulseHeader      header;
+//    RKPulseParameters  parameters;
+//    RKInt16            X[2][capacity];
+//    RKComplex          Y[2][capacity];
 //    RKIQZ              Z[2];
 //
 size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
@@ -56,7 +60,6 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
         RKPulse *pulse = (RKPulse *)m;
         pulse->header.capacity = capacity;
         pulse->header.i = slots - i;
-        pulse->data = m + headerSize;
         m += pulseSize;
         i++;
     }
@@ -70,17 +73,12 @@ RKPulse *RKGetPulse(void *buffer, const int k) {
 }
 
 RKInt16 *RKGetInt16DataFromPulse(RKPulse *pulse, const int p) {
-    void *m = (void *)pulse;
-    m += sizeof(pulse->headerBytes);
-    //void *m = (void *)pulse->data;
-    //pulse->data = m;
+    char *m = (char *)pulse->data;
     return (RKInt16 *)(m + p * pulse->header.capacity * sizeof(RKInt16));
 }
 
 RKComplex *RKGetComplexDataFromPulse(RKPulse *pulse, const int p) {
-//    void *m = (void *)pulse->data;
-    void *m = (void *)pulse;
-    m += sizeof(pulse->headerBytes);
+    void *m = (void *)pulse->data;
     m += 2 * pulse->header.capacity * sizeof(RKInt16);
     return (RKComplex *)(m + p * pulse->header.capacity * sizeof(RKComplex));
 }
@@ -94,6 +92,9 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int p) {
 }
 
 //
+// Each slot should have a structure as follows
+//
+//    RayHeader          header;
 //    int16_t            idata[2][RKGateCount];
 //    float              fdata[2][RKGateCount];
 //
@@ -128,7 +129,6 @@ size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
         RKRay *ray = (RKRay *)m;
         ray->header.capacity = capacity;
         ray->header.i = slots - i;
-        ray->data = m + headerSize;
         m += raySize;
         i++;
     }

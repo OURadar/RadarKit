@@ -77,7 +77,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
         }
     }
 
-    const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(75.0e3 / 3.0e8 * fs * 2.0));
+    const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(60.0e3 / 3.0e8 * fs * 2.0));
     const int chunkSize = (int)floor(0.1f / prt);
 
     RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (%.1f km)\n",
@@ -101,12 +101,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             pulse->header.elevationDegrees = 2.41f;
             RKInt16 *X = RKGetInt16DataFromPulse(pulse, 0);
             for (k = 0; k < gateCount; k++) {
-                //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                X->i = k;
+                X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
                 X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
                 X++;
             }
-            RKLog("%p vs %p vs %p vs %p %d", X, (void *)X - gateCount * sizeof(RKInt16), pulse->data, (void *)pulse + sizeof(pulse->headerBytes), (int)gateCount);
             phi += 0.02f;
             azimuth = fmodf(50.0f * tau, 360.0f);
 

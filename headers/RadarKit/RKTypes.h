@@ -173,22 +173,15 @@ typedef struct rk_pulse_parameters {
 } RKPulseParameters;
 
 // RKPulse struct is carefully designed to obey the SIMD alignment
-//typedef struct rk_pulse {
-//    RKPulseHeader      header;
-//    RKPulseParameters  parameters;
-//    RKInt16            X[2][RKGateCount];
-//    RKComplex          Y[2][RKGateCount];
-//    RKIQZ              Z[2];
-//} RKPulse;
 typedef struct rk_pulse {
     union {
         struct {
             RKPulseHeader      header;
             RKPulseParameters  parameters;
         };
-        char headerBytes[256];
+        RKByte                 headerBytes[256];
     };
-    void                       *data;
+    RKByte                     data[0];
 } RKPulse;
 
 
@@ -264,9 +257,9 @@ typedef struct RKRayHeader {
 typedef struct RKRay {
     union {
         RKRayHeader  header;
-        char         headerBytes[128];
+        RKByte       headerBytes[128];
     };
-    void             *data;
+    RKByte           data[0];
 } RKRay;
 
 enum RKResult {

@@ -33,7 +33,6 @@
 
 
 
-
 void stripTrailingUnwanted(char *str);
 
 size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots);
