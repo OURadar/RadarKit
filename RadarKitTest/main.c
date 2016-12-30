@@ -23,6 +23,7 @@ typedef struct user_params {
     int   testSIMD;
     int   testModuloMath;
     int   testPulseCompression;
+    bool  noColor;
     bool  quietMode;
     bool  simulate;
 } UserParams;
@@ -111,6 +112,7 @@ UserParams processInput(int argc, char **argv) {
     
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
+        {"no-color"              , no_argument      , 0, 'C'},
         {"fs"                    , required_argument, 0, 'F'},
         {"test-mod"              , no_argument      , 0, 'M'},
         {"test-simd"             , optional_argument, 0, 'S'},
@@ -151,6 +153,9 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'A':
                 user.quietMode = false;
+                break;
+            case 'C':
+                user.noColor = true;
                 break;
             case 'F':
                 user.fs = atof(optarg);
@@ -202,6 +207,7 @@ int main(int argc, char *argv[]) {
 
     RKSetProgramName("RadarKitTest");
     RKSetWantScreenOutput(true);
+    RKSetWantColor(!user.noColor);
 
     // SIMD Tests
     bool testAny = false;

@@ -21,7 +21,7 @@ void stripTrailingUnwanted(char *str) {
 //
 //    RKPulseHeader      header;
 //    RKPulseParameters  parameters;
-//    RKInt16            X[2][capacity];
+//    RKInt16C           X[2][capacity];
 //    RKComplex          Y[2][capacity];
 //    RKIQZ              Z[2];
 //
@@ -41,7 +41,7 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
         return 0;
     }
     size_t channelCount = 2;
-    size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16) + 4 * sizeof(RKFloat));
+    size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     if (pulseSize != (pulseSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
         RKLog("ERROR. The resultant size does not conform to SIMD alignment.");
         return 0;
@@ -68,24 +68,24 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
 
 RKPulse *RKGetPulse(void *buffer, const int k) {
     RKPulse *pulse = (RKPulse *)buffer;
-    size_t pulseSize = sizeof(pulse->headerBytes) + 2 * pulse->header.capacity * (sizeof(RKInt16) + 4 * sizeof(RKFloat));
+    size_t pulseSize = sizeof(pulse->headerBytes) + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     return (RKPulse *)(buffer + k * pulseSize);
 }
 
-RKInt16 *RKGetInt16DataFromPulse(RKPulse *pulse, const int p) {
+RKInt16C *RKGetInt16DataFromPulse(RKPulse *pulse, const int p) {
     char *m = (char *)pulse->data;
-    return (RKInt16 *)(m + p * pulse->header.capacity * sizeof(RKInt16));
+    return (RKInt16C *)(m + p * pulse->header.capacity * sizeof(RKInt16C));
 }
 
 RKComplex *RKGetComplexDataFromPulse(RKPulse *pulse, const int p) {
     void *m = (void *)pulse->data;
-    m += 2 * pulse->header.capacity * sizeof(RKInt16);
+    m += 2 * pulse->header.capacity * sizeof(RKInt16C);
     return (RKComplex *)(m + p * pulse->header.capacity * sizeof(RKComplex));
 }
 
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int p) {
     void *m = (void *)pulse->data;
-    m += 2 * pulse->header.capacity * (sizeof(RKInt16) + sizeof(RKComplex));
+    m += 2 * pulse->header.capacity * (sizeof(RKInt16C) + sizeof(RKComplex));
     m += p * pulse->header.capacity * 2 * sizeof(RKFloat);
     RKIQZ data = {(RKFloat *)m, (RKFloat *)(m + pulse->header.capacity * sizeof(RKFloat))};
     return data;

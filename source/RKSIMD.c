@@ -308,7 +308,7 @@ void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n) {
     return;
 }
 
-void RKSIMD_Int2Complex(RKInt16 *src, RKComplex *dst, const int n) {
+void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
 #if defined(__AVX512F__) || defined(__AVX2__)
     RKVecCvt *s = (RKVecCvt *)src;
     RKVec *d = (RKVec *)dst;
@@ -327,7 +327,7 @@ void RKSIMD_Int2Complex(RKInt16 *src, RKComplex *dst, const int n) {
     return;
 }
 
-void RKSIMD_Int2Complex_reg(RKInt16 *src, RKComplex *dst, const int n) {
+void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n) {
     for (int i = 0; i < n; i++) {
         dst[i].i = (RKFloat)src[i].i;
         dst[i].q = (RKFloat)src[i].q;
@@ -531,7 +531,7 @@ void RKSIMDDemo(const RKSIMDDemoFlag flag) {
 
     //
     
-    RKInt16 *is = (RKInt16 *)src;
+    RKInt16C *is = (RKInt16C *)src;
     
     for (i = 0; i < n; i++) {
         is[i].i = i;

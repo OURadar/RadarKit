@@ -237,7 +237,10 @@ void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
     RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
-    RKLog(">sizeof(RKInt16) = %d", (int)sizeof(RKInt16));
+    RKLog(">sizeof(RKByte) = %d", (int)sizeof(RKByte));
+    RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
+    RKLog(">sizeof(RKFloat) = %d", (int)sizeof(RKFloat));
+    RKLog(">sizeof(RKComplex) = %d", (int)sizeof(RKComplex));
     RKLog(">sizeof(RKPulseHeader) = %d", (int)sizeof(RKPulseHeader));
     RKLog(">sizeof(RKPulseParameters) = %d", (int)sizeof(RKPulseParameters));
     RKLog(">sizeof(pulse->headerBytes) = %d", (int)sizeof(pulse->headerBytes));

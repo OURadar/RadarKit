@@ -65,10 +65,10 @@ typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors a
 #pragma pack(push, 1)
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
-typedef struct RKInt16 {
+typedef struct RKInt16C {
     int16_t i;
     int16_t q;
-} RKInt16;
+} RKInt16C;
 
 /// Fundamental unit of a (float) + (float) raw complex IQ sample
 typedef struct RKComplex {
