@@ -241,7 +241,8 @@ int main(int argc, char *argv[]) {
 
     RKLog("Initializing ...\n");
 
-    radar = RKInitLean();
+    //radar = RKInitLean();
+    radar = RKInitMean();
     
     RKShowTypeSizes();
 

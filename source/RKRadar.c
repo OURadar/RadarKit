@@ -14,6 +14,18 @@
 
 #pragma mark -
 
+RKTransceiver backgroundTransceiverInit(void *in) {
+    RKRadar *radar = (RKRadar *)in;
+    return radar->transceiverInit(radar, radar->transceiverInitInput);
+}
+
+RKPedestal backgroundPedestalInit(void *in) {
+    //RKRadar *radar = (RKRadar *)in;
+    return NULL;
+}
+
+#pragma mark -
+
 RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     RKRadar *radar;
     size_t bytes;
@@ -70,7 +82,6 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
-        RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         //RKPulse *pulse = (RKPulse *)radar->pulses;
         //RKLog(">Offset = %d  (%p %p)", (int)((unsigned long)pulse->data - (unsigned long)pulse), pulse, pulse->data);
 //        m += sizeof(pulse->headerBytes);
@@ -114,10 +125,13 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->state |= RKRadarStateMomentEngineInitialized;
 
     // TCP/IP socket server
-    radar->socketServer = RKServerInit();
-    RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
-    RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
-    radar->state |= RKRadarStateSocketServerInitialized;
+    //
+    // NOTE 2016/12/30 - Server should be on top of radar, managing a few radars.
+    //
+//    radar->socketServer = RKServerInit();
+//    RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
+//    RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
+//    radar->state |= RKRadarStateSocketServerInitialized;
 
     RKLog("Radar initialized\n");
     return radar;
@@ -133,7 +147,27 @@ RKRadar *RKInitLean(void) {
     return RKInitWithDesc(desc);
 }
 
-RKRadar *RKInit(void) {
+RKRadar *RKInitQuiet(void) {
+    RKRadarInitDesc desc;
+    desc.initFlags = RKInitFlagAllocEverythingQuiet;
+    desc.pulseCapacity = RKGateCount;
+    desc.pulseRayRatio = 1;
+    desc.pulseBufferDepth = RKBuffer0SlotCount;
+    desc.rayBufferDepth = RKBuffer2SlotCount;
+    return RKInitWithDesc(desc);
+}
+
+RKRadar *RKInitMean(void) {
+    RKRadarInitDesc desc;
+    desc.initFlags = RKInitFlagAllocEverything;
+    desc.pulseCapacity = RKGateCount / 2;
+    desc.pulseRayRatio = 2;
+    desc.pulseBufferDepth = RKBuffer0SlotCount;
+    desc.rayBufferDepth = RKBuffer2SlotCount;
+    return RKInitWithDesc(desc);
+}
+
+RKRadar *RKInitFull(void) {
     RKRadarInitDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = RKGateCount;
@@ -143,13 +177,17 @@ RKRadar *RKInit(void) {
     return RKInitWithDesc(desc);
 }
 
+RKRadar *RKInit(void) {
+    return RKInitFull();
+}
+
 int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     RKMomentEngineFree(radar->momentEngine);
-    RKServerFree(radar->socketServer);
+    //RKServerFree(radar->socketServer);
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
@@ -209,26 +247,20 @@ size_t RKGetPulseCapacity(RKRadar *radar) {
 
 #pragma mark -
 
-RKTransceiver backgroundTransceiverInit(void *in) {
-    RKRadar *radar = (RKRadar *)in;
-    return radar->transceiverInit(radar, radar->transceiverInitInput);
-}
-
-RKPedestal backgroundPedestalInit(void *in) {
-    //RKRadar *radar = (RKRadar *)in;
-    return NULL;
-}
-
 int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKMomentEngineStart(radar->momentEngine);
-    RKServerActivate(radar->socketServer);
+    //RKServerActivate(radar->socketServer);
 
     // Operation parameters
     if (radar->transceiverInit != NULL) {
         RKLog("Initializing transceiver ...");
-        pthread_t transceiverThreadId;
-        pthread_create(&transceiverThreadId, NULL, backgroundTransceiverInit, radar);
+        pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
+    }
+
+    if (radar->pedestalInit != NULL) {
+        RKLog("Initializing pedestal ...");
+        pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
     }
 
     return 0;
@@ -249,9 +281,15 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineStop(radar->momentEngine);
     }
-    if (radar->state & RKRadarStateSocketServerInitialized) {
-        RKServerStop(radar->socketServer);
-        RKServerWait(radar->socketServer);
+//    if (radar->state & RKRadarStateSocketServerInitialized) {
+//        RKServerStop(radar->socketServer);
+//        RKServerWait(radar->socketServer);
+//    }
+    if (radar->transceiverInit != NULL) {
+        pthread_join(radar->transceiverThreadId, NULL);
+    }
+    if (radar->pedestalInit != NULL) {
+        pthread_join(radar->pedestalThreadId, NULL);
     }
     return 0;
 }

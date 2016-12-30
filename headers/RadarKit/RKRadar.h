@@ -15,11 +15,12 @@
 #include <RadarKit/RKMoment.h>
 
 enum RKInitFlag {
-    RKInitFlagNone              = 0,
-    RKInitFlagVerbose           = 1,
-    RKInitFlagAllocMomentBuffer = (1 << 1),
-    RKInitFlagAllocRawIQBuffer  = (1 << 2),
-    RKInitFlagAllocEverything   = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer
+    RKInitFlagNone                  = 0,
+    RKInitFlagVerbose               = 1,
+    RKInitFlagAllocMomentBuffer     = (1 << 1),
+    RKInitFlagAllocRawIQBuffer      = (1 << 2),
+    RKInitFlagAllocEverything       = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose,
+    RKInitFlagAllocEverythingQuiet  = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer
 };
 
 typedef RKEnum RKRadarState;
@@ -33,9 +34,8 @@ enum RKRadarState {
     RKRadarStateConfigBufferIntialized               = (1 << 6),   // 0x40
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 7),
     RKRadarStateMomentEngineInitialized              = (1 << 8),
-    RKRadarStateSocketServerInitialized              = (1 << 9),
-    RKRadarStateTransceiverInitialized               = (1 << 10),
-    RKRadarStatePedestalInitialized                  = (1 << 11)
+    RKRadarStateTransceiverInitialized               = (1 << 16),
+    RKRadarStatePedestalInitialized                  = (1 << 24)
 };
 
 typedef struct rk_radar_desc {
@@ -88,19 +88,26 @@ struct rk_radar {
     int                        (*transceiverRead)(RKTransceiver, const char *, void *);
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
+    pthread_t                  transceiverThreadId;
     RKPedestal                 pedestal;
     RKPedestal                 (*pedestalInit)(RKRadar *, void *);
     int                        (*pedestalExec)(RKPedestal, const char *);
     int                        (*pedestalRead)(RKPedestal, const char *, void *);
     int                        (*pedestalFree)(RKPedestal);
     void                       *pedestalInitInput;
+    pthread_t                  pedestalThreadId;
 };
 
+// Life Cycle
 RKRadar *RKInitWithFlags(RKRadarInitDesc);
 RKRadar *RKInitLean(void);
+RKRadar *RKInitMean(void);
+RKRadar *RKInitFull(void);
+RKRadar *RKInitQuiet(void);
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
+// Properties
 int RKSetTransceiver(RKRadar *radar, RKTransceiver (RKRadar *, void *), void *);
 
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
@@ -110,6 +117,7 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);
 
+// Interaction
 int RKGoLive(RKRadar *radar);
 int RKWaitWhileActive(RKRadar *radar);
 int RKStop(RKRadar *radar);
