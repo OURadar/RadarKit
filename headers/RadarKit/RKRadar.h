@@ -39,7 +39,7 @@ enum RKRadarState {
 };
 
 typedef struct rk_radar_desc {
-    uint32_t                 initFlags;
+    RKEnum                   initFlags;
     uint32_t                 pulseCapacity;
     uint32_t                 pulseRayRatio;
     uint32_t                 pulseBufferDepth;
@@ -68,7 +68,7 @@ struct rk_radar {
     uint32_t                   rayIndex;
     //
     //
-    RKEnum                     initFlags;
+    RKRadarInitDesc            desc;
     RKRadarState               state;
     bool                       active;
     //
@@ -97,6 +97,7 @@ struct rk_radar {
 };
 
 RKRadar *RKInitWithFlags(RKRadarInitDesc);
+RKRadar *RKInitLean(void);
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 

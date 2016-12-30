@@ -50,7 +50,7 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
 RKPulse *RKGetPulse(void *buffer, const int k) {
     RKPulse *pulse = (RKPulse *)buffer;
     size_t pulseSize = (sizeof(RKPulseHeader) + sizeof(RKPulseParameters) + 2 * pulse->header.capacity * (sizeof(RKInt16) + sizeof(RKComplex) + 2 * sizeof(RKFloat)));
-    return (RKPulse *)(buffer + k * pulseSize + sizeof(RKPulseHeader));
+    return (RKPulse *)(buffer + k * pulseSize);
 }
 
 RKInt16 *RKGetInt16DataFromPulse(RKPulse *pulse, const int p) {

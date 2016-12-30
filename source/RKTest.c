@@ -80,10 +80,11 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(75.0e3 / 3.0e8 * fs * 2.0));
     const int chunkSize = (int)floor(0.1f / prt);
 
-    RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (75 km)\n",
+    RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (%.1f km)\n",
           RKFloatToCommaStyleString(1.0e-6 * fs),
           RKIntegerToCommaStyleString((int)(1.0f / prt)),
-          RKIntegerToCommaStyleString(gateCount));
+          RKIntegerToCommaStyleString(gateCount),
+          gateCount * 1.5e5 / fs);
 
     while (radar->active) {
 

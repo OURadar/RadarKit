@@ -319,18 +319,20 @@ void *pulseWatcher(void *_in) {
     int skipCounter = 0;
     float lag;
 
-    RKPulse *pulse;
+    // The beginning of the buffer is a pulse, it has the capacity info
+    RKPulse *pulse = (RKPulse *)engine->buffer;
 
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
-    posix_memalign((void **)&in, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
-    posix_memalign((void **)&out, RKSIMDAlignSize, RKGateCount * sizeof(fftwf_complex));
-    k = 2 * RKGateCount * sizeof(fftwf_complex);
+    posix_memalign((void **)&in, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
+    posix_memalign((void **)&out, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
+    k = 2 * pulse->header.capacity * sizeof(fftwf_complex);
     if (engine->verbose) {
         RKLog("pulseWatcher() allocated %s B\n", RKIntegerToCommaStyleString(k));
     }
 
-    planSize = 1 << (int)ceilf(log2f((float)RKGateCount));
+    // Maximum plan size
+    planSize = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
     bool exportWisdom = false;
     const char wisdomFile[] = "fft-wisdom";
 
@@ -342,6 +344,7 @@ void *pulseWatcher(void *_in) {
         exportWisdom = true;
     }
 
+    // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
         RKLog("Pre-allocate FFTW resources for plan size %s (%d)\n", RKIntegerToCommaStyleString(planSize), planIndex);
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
@@ -409,7 +412,6 @@ void *pulseWatcher(void *_in) {
             usleep(200);
         }
         pulse = RKGetPulse(engine->buffer, k);
-        //while (engine->pulses[k].header.s != RKPulseStatusReady && engine->state == RKPulseCompressionEngineStateActive) {
         while (pulse->header.s != RKPulseStatusReady && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
         }
@@ -426,14 +428,22 @@ void *pulseWatcher(void *_in) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
                 RKLog("Warning. I/Q Buffer overflow projected by pulseWatcher().\n");
-                i = RKPreviousModuloS(*engine->index, engine->size);
-                pulse = RKGetPulse(engine->buffer, i);
+                //i = RKPreviousModuloS(*engine->index, engine->size);
+                //pulse = RKGetPulse(engine->buffer, i);
                 //while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
-                while (!(pulse->header.s & RKPulseStatusProcessed)) {
-                    engine->filterGid[i] = -1;
-                    engine->planIndices[i][0] = 0;
+//                while (!(pulse->header.s & RKPulseStatusProcessed)) {
+//                    engine->filterGid[i] = -1;
+//                    engine->planIndices[i][0] = 0;
+//                    i = RKPreviousModuloS(i, engine->size);
+//                    pulse = RKGetPulse(engine->buffer, i);
+//                }
+                i = *engine->index;
+                do {
                     i = RKPreviousModuloS(i, engine->size);
-                }
+                    engine->filterGid[i] = -1;
+                    //engine->planIndices[i][0] = 0;   // What is this doing here?
+                    pulse = RKGetPulse(engine->buffer, i);
+                } while (!(pulse->header.s & RKPulseStatusProcessed));
             }
 
             // The pulse

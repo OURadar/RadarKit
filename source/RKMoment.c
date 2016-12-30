@@ -241,20 +241,20 @@ void *pulseGatherer(void *_in) {
     k = 0;   // pulse index
     c = 0;   // core index
     int s = 0;
+    RKPulse *pulse;
     RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
         s = 0;
+        // The pulse
+        pulse = RKGetPulse(engine->pulses, k);
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0) {
-                printf("sleep 1/%d  k=%d  pulseIndex=%d  header.s=x%02x\n", s, k , *engine->pulseIndex, engine->pulses[k].header.s);
+                printf("sleep 1/%d  k=%d  pulseIndex=%d  header.s=x%02x\n", s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-
-        // The pulse
-        RKPulse *pulse = &engine->pulses[k];
 
         s = 0;
         while (pulse->header.s == RKPulseStatusVacant && engine->state == RKMomentEngineStateActive) {
@@ -315,7 +315,7 @@ void *pulseGatherer(void *_in) {
                 // Keep counting up
                 count++;
             }
-            // Check finished rays
+            // Check finished rays -- TO_UPGRADE
             while (engine->rays[*engine->rayIndex].header.s & RKRayStatusReady) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
             }

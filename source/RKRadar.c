@@ -28,8 +28,17 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->memoryUsage += bytes;
     radar->state |= RKRadarStateBaseAllocated;
 
-    // Copy over the input flags
-    radar->initFlags = desc.initFlags;
+    // Copy over the input flags and constaint the depth
+    radar->desc = desc;
+    if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
+        radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
+    }
+    if (radar->desc.pulseCapacity > RKGateCount) {
+        radar->desc.pulseCapacity = RKGateCount;
+    }
+    if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
+        radar->desc.rayBufferDepth = RKBuffer2SlotCount;
+    }
 
     // Set some non-zero variables
     radar->active = true;
@@ -42,7 +51,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         RKLog("ERROR. Unable to allocate memory for pulse parameters");
         return NULL;
     }
-    if (radar->initFlags & RKInitFlagVerbose) {
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Config buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
     }
     memset(radar->parameters, 0, bytes);
@@ -51,14 +60,14 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->state |= RKRadarSTateConfigBufferIntialized;
 
     // I/Q buffer
-    if (radar->initFlags & RKInitFlagAllocRawIQBuffer) {
+    if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
-        bytes = RKPulseBufferAlloc((void **)&radar->pulses, desc.pulseCapacity, desc.pulseBufferDepth);
+        bytes = RKPulseBufferAlloc((void **)&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
         if (bytes == 0 || radar->pulses == NULL) {
             RKLog("ERROR. Unable to allocate memory for I/Q pulses");
             return NULL;
         }
-        if (radar->initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level I buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
         radar->memoryUsage += bytes;
@@ -67,7 +76,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     }
 
     // Moment bufer
-    if (radar->initFlags & RKInitFlagAllocMomentBuffer) {
+    if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
         //bytes = RKBuffer2SlotCount * sizeof(RKRay);
         bytes = RKBuffer2SlotCount * (sizeof(RKRayHeader) + radar->pulses->header.capacity * (sizeof(float) + sizeof(int16_t)));
@@ -75,7 +84,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
             RKLog("ERROR. Unable to allocate memory for rays");
             return NULL;
         }
-        if (radar->initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level II buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
         }
         memset(radar->rays, 0, bytes);
@@ -87,14 +96,14 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // Pulse compression engine
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
-                                                  radar->pulses, &radar->pulseIndex, RKBuffer0SlotCount);
+                                                  radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
     radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
     // Moment engine
     radar->momentEngine = RKMomentEngineInit();
     RKMomentEngineSetInputOutputBuffers(radar->momentEngine,
-                                        radar->pulses, &radar->pulseIndex, RKBuffer0SlotCount,
-                                        radar->rays, &radar->rayIndex, RKBuffer2SlotCount);
+                                        radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
+                                        radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
     radar->state |= RKRadarStateMomentEngineInitialized;
 
     // TCP/IP socket server
@@ -105,6 +114,16 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
 
     RKLog("Radar initialized\n");
     return radar;
+}
+
+RKRadar *RKInitLean(void) {
+    RKRadarInitDesc desc;
+    desc.initFlags = RKInitFlagAllocEverything;
+    desc.pulseCapacity = 2048;
+    desc.pulseRayRatio = 1;
+    desc.pulseBufferDepth = 5000;
+    desc.rayBufferDepth = 1000;
+    return RKInitWithDesc(desc);
 }
 
 RKRadar *RKInit(void) {
@@ -235,10 +254,10 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
         RKLog("Error. Buffer for raw pulses has not been allocated.\n");
         exit(EXIT_FAILURE);
     }
-    RKPulse *pulse = &radar->pulses[radar->pulseIndex];
+    RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
     pulse->header.s = RKPulseStatusVacant;
-    pulse->header.i += RKBuffer0SlotCount;
-    radar->pulseIndex = RKNextBuffer0Slot(radar->pulseIndex);
+    pulse->header.i += radar->desc.pulseBufferDepth;
+    radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     return pulse;
 }
 

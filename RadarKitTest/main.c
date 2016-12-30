@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 
     RKLog("Initializing ...\n");
 
-    radar = RKInit();
+    radar = RKInitLean();
 
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
@@ -247,6 +247,8 @@ int main(int argc, char *argv[]) {
     RKSetProcessingCoreCounts(radar, user.threadsPulseCompression, user.threadsMoment);
 
     if (user.simulate) {
+
+        // Build a series of options
         char cmd[64] = "";
         int i = 0;
         if (user.prf) {
@@ -256,15 +258,18 @@ int main(int argc, char *argv[]) {
             i += sprintf(cmd + i, " F %d", user.fs);
         }
         RKLog("Main input = '%s'", cmd);
+        // Now we use the frame work.
         RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
+        RKGoLive(radar);
+        RKWaitWhileActive(radar);
+
     } else if (user.testPulseCompression) {
+
+        RKLog("Testing pulse compression ...");
+        RKGoLive(radar);
         RKTestPulseCompression(radar, RKTestFlagShowResults);
+
     }
-
-    // Go live
-    RKGoLive(radar);
-
-    RKWaitWhileActive(radar);
 
     RKLog("Freeing radar ...\n");
     RKFree(radar);
