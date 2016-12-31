@@ -15,6 +15,9 @@
 //extern "C" {
 //#endif
 
+float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);
+float RKGetMinorSectorInDegrees(const float angle1, const float angle2);
+
 //
 // FIR + IIR Filters
 //

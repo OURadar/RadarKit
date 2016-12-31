@@ -58,7 +58,7 @@ void showHelp() {
            "     debris particle count is set for each type sequentially by repeating the\n"
            "     option multiple times for each debris type.\n"
            "\n"
-           "  -c (--cpu) " UNDERLINE("P, M") "\n"
+           "  -c (--core) " UNDERLINE("P, M") "\n"
            "         Sets the number of threads for pulse compression to " UNDERLINE("P") "\n"
            "         and the number of threads for moment calculation to " UNDERLINE("M") ".\n"
            "         If not specified, the default core counts are 8 / 4.\n"
@@ -73,6 +73,9 @@ void showHelp() {
            "\n"
            "  -h (--help)\n"
            "         Shows this help text.\n"
+           "\n"
+           "  -L (--test-lean-system)\n"
+           "         Run with arguments '-v -f 2000 -F 50e6 -c 4,2'.\n"
            "\n"
            "  -s (--simulate)\n"
            "         Sets the program to simulate data stream (default, if none of the tests\n"
@@ -114,11 +117,12 @@ UserParams processInput(int argc, char **argv) {
         {"alarm"                 , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
         {"no-color"              , no_argument      , 0, 'C'},
         {"fs"                    , required_argument, 0, 'F'},
+        {"lean-system-test"      , no_argument      , 0, 'L'},
         {"test-mod"              , no_argument      , 0, 'M'},
         {"test-simd"             , optional_argument, 0, 'S'},
         {"test-pulse-compression", optional_argument, 0, 'T'},
         {"azimuth"               , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
-        {"cpu"                   , required_argument, 0, 'c'},
+        {"core"                  , required_argument, 0, 'c'},
         {"prf"                   , required_argument, 0, 'f'},
         {"help"                  , no_argument      , 0, 'h'},
         {"sim"                   , no_argument      , 0, 's'},
@@ -159,6 +163,12 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'F':
                 user.fs = atof(optarg);
+                break;
+            case 'L':
+                user.fs = 5.0e6;
+                user.prf = 2000;
+                user.threadsPulseCompression = 2;
+                user.threadsMoment = 2;
                 break;
             case 'M':
                 if (optarg) {

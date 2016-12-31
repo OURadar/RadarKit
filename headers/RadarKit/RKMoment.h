@@ -69,16 +69,12 @@ void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
-                                         RKPulse *,
-                                         uint32_t *,
-                                         const uint32_t,
-                                         RKRay *,
-                                         uint32_t *,
-                                         const uint32_t);
-void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count);
+                                         RKPulse *, uint32_t *, const uint32_t,
+                                         RKRay *,   uint32_t *, const uint32_t);
+void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
 
-int RKMomentEngineStart(RKMomentEngine *engine);
-int RKMomentEngineStop(RKMomentEngine *engine);
+int RKMomentEngineStart(RKMomentEngine *);
+int RKMomentEngineStop(RKMomentEngine *);
 
 char *RKMomentEngineStatusString(RKMomentEngine *engine);
 

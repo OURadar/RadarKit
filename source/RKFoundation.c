@@ -59,7 +59,7 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
     while (i < slots) {
         RKPulse *pulse = (RKPulse *)m;
         pulse->header.capacity = capacity;
-        pulse->header.i = slots - i;
+        pulse->header.i = i - slots;
         m += pulseSize;
         i++;
     }
@@ -128,7 +128,7 @@ size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
     while (i < slots) {
         RKRay *ray = (RKRay *)m;
         ray->header.capacity = capacity;
-        ray->header.i = slots - i;
+        ray->header.i = i - slots;
         m += raySize;
         i++;
     }

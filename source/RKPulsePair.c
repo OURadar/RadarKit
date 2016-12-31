@@ -12,42 +12,32 @@ int RKPulsePair(RKScratch *space, RKPulse *input, const RKModuloPath path, const
     // Start and end indices of the I/Q data
     int is = path.origin;
     int ie = RKNextNModuloS(is, path.length - 1, path.modulo);
-    RKPulse *pulseStart = RKGetPulse(input, is);
-    RKPulse *pulseEnd = RKGetPulse(input, ie);
-    // Azimuth beamwidth
-    float deltaAzimuth = pulseEnd->header.azimuthDegrees - pulseStart->header.azimuthDegrees;
-    if (deltaAzimuth > 180.0f) {
-        deltaAzimuth -= 360.0f;
-    } else if (deltaAzimuth < -180.0f) {
-        deltaAzimuth += 360.0f;
-    }
-    deltaAzimuth = fabsf(deltaAzimuth);
-    // Elevation beamwidth
-    float deltaElevation = pulseEnd->header.elevationDegrees - pulseStart->header.elevationDegrees;
-    if (deltaElevation > 180.0f) {
-        deltaElevation -= 360.0f;
-    } else if (deltaElevation < -180.0f) {
-        deltaElevation += 360.0f;
-    }
-    deltaElevation = fabsf(deltaElevation);
+    RKPulse *S = RKGetPulse(input, is);
+    RKPulse *E = RKGetPulse(input, ie);
     
-    #if defined(DEBUG_MM)
-    RKLog("%s  %04u...%04u  %5u  E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
-          name, is, ie, output->header.i,
-          pulseStart->header.elevationDegrees, pulseEnd->header.elevationDegrees, deltaElevation,
-          pulseStart->header.azimuthDegrees,   pulseEnd->header.azimuthDegrees,   deltaAzimuth);
-    #endif
+    // Beamwidths of azimuth & elevation
+    float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
+    float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+    
+    //#if defined(DEBUG_MM)
+    RKLog("%s  %04u...%04u  %5u  E%4.2f-%.2f %% %4.2f   A%6.2f-%6.2f %% %4.2f\n",
+          name, is, ie, S->header.i,
+          S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+          S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth);
+    //#endif
     
     // Process
     // Identify odd pulses and even pulses
     // Calculate R0, R1
     // R0, R1 --> Z, V, W
     
-    while (is != ie) {
-        
+    do {
+        //
+        RKPulse *pulse = RKGetPulse(input, is);
         is = RKNextModuloS(is, path.modulo);
-    }
-    usleep(25 * 1000);
+    } while (is != ie);
+
+    usleep(20 * 1000);
     
     return ie;
 
@@ -57,31 +47,19 @@ int RKPulsePairHop(RKScratch *space, RKPulse *input, const RKModuloPath path, co
     // Start and end indices of the I/Q data
     int is = path.origin;
     int ie = RKNextNModuloS(is, path.length - 1, path.modulo);
+    
+    #if defined(DEBUG_MM)
     RKPulse *S = RKGetPulse(input, is);
     RKPulse *E = RKGetPulse(input, ie);
-    // Azimuth beamwidth
-    float deltaAzimuth = E->header.azimuthDegrees - S->header.azimuthDegrees;
-    if (deltaAzimuth > 180.0f) {
-        deltaAzimuth -= 360.0f;
-    } else if (deltaAzimuth < -180.0f) {
-        deltaAzimuth += 360.0f;
-    }
-    deltaAzimuth = fabsf(deltaAzimuth);
-    // Elevation beamwidth
-    float deltaElevation = E->header.elevationDegrees - S->header.elevationDegrees;
-    if (deltaElevation > 180.0f) {
-        deltaElevation -= 360.0f;
-    } else if (deltaElevation < -180.0f) {
-        deltaElevation += 360.0f;
-    }
-    deltaElevation = fabsf(deltaElevation);
-
-#if defined(DEBUG_MM)
-    RKLog("%s  %04u...%04u  %5u  E%4.2f-%.2f ^ %4.2f   A%6.2f-%6.2f ^ %4.2f\n",
-          name, is, ie, output->header.i,
-          pulseStart->header.elevationDegrees, pulseEnd->header.elevationDegrees, deltaElevation,
-          pulseStart->header.azimuthDegrees,   pulseEnd->header.azimuthDegrees,   deltaAzimuth);
-#endif
+    // Beamwidths of azimuth & elevation
+    float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
+    float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+    
+    RKLog("%s  %04u...%04u  %5u  E%4.2f-%.2f %% %4.2f   A%6.2f-%6.2f %% %4.2f\n",
+          name, is, ie, S->header.i,
+          S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+          S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth);
+    #endif
 
     // Process
     // Identify odd pulses and even pulses
@@ -93,7 +71,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse *input, const RKModuloPath path, co
     // Zero out the tail
 
     int n = 0;
-    while (is != ie) {
+    do {
         // Go through each lag
         for (k = 0; k < RKMaxLag; k++) {
             // Go through each polarization
@@ -105,8 +83,9 @@ int RKPulsePairHop(RKScratch *space, RKPulse *input, const RKModuloPath path, co
 
         is = RKNextModuloS(is, path.modulo);
         n++;
-    }
-    usleep(25 * 1000);
+    } while (is != ie);
+    
+    usleep(15 * 1000);
 
     return ie;
 

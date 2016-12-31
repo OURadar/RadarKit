@@ -10,7 +10,6 @@
 
 void *momentCore(void *);
 void *pulseGatherer(void *_in);
-int RKMomentPulsePair(RKMomentEngine *engine, const int io, char *name);
 
 #pragma mark -
 
@@ -404,12 +403,8 @@ void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
-                                         RKPulse *pulseBuffer,
-                                         uint32_t *pulseIndex,
-                                         const uint32_t pulseBufferSize,
-                                         RKRay *rayBuffer,
-                                         uint32_t *rayIndex,
-                                         const uint32_t rayBufferSize) {
+                                         RKPulse *pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferSize,
+                                         RKRay   *rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferSize) {
     engine->pulseBuffer = pulseBuffer;
     engine->pulseIndex = pulseIndex;
     engine->pulseBufferSize = pulseBufferSize;
@@ -427,7 +422,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
     }
 }
 
-void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count) {
+void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const int count) {
     if (engine->state == RKMomentEngineStateActive) {
         RKLog("Error. Core count cannot be changed when the engine is active.\n");
         return;
