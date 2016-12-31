@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
             i += sprintf(cmd + i, " F %d", user.fs);
         }
         if (!user.quietMode) {
-            RKLog("Main input = '%s'", cmd);
+            RKLog("Test input = '%s'", cmd + 1);
         }
         // Now we use the frame work.
         RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);

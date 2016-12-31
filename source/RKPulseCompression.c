@@ -44,13 +44,13 @@ void *pulseCompressionCore(void *_in) {
     struct timeval t0, t1, t2;
 
     // Find the thread Id
-    i = workerThreadId(engine);
-    if (i < 0) {
-        i = me->id;
-        RKLog("Warning. Unable to find my thread ID. Assume %d\n", me->id);
-    } else if (engine->verbose > 1) {
-        RKLog("Info. Thread ID %d = %d okay.\n", me->id, i);
-    }
+//    i = workerThreadId(engine);
+//    if (i < 0) {
+//        i = me->id;
+//        RKLog("Warning. Unable to find my thread ID. Assume %d\n", me->id);
+//    } else if (engine->verbose > 1) {
+//        RKLog(">    Info. ThreadId[%d] = %d okay.\n", me->id, i);
+//    }
     const int c = me->id;
 
     const int multiplyMethod = 1;
@@ -140,7 +140,7 @@ void *pulseCompressionCore(void *_in) {
         pthread_mutex_lock(&engine->coreMutex);
         engine->memoryUsage += mem;
         if (engine->verbose) {
-            RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+            RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
         }
         pthread_mutex_unlock(&engine->coreMutex);
     }
@@ -306,7 +306,7 @@ void *pulseCompressionCore(void *_in) {
     free(fullPeriods);
 
     if (engine->verbose) {
-        RKLog(">%s ended.\n", name);
+        RKLog(">    %s ended.\n", name);
     }
     
     return NULL;
@@ -342,12 +342,12 @@ void *pulseWatcher(void *_in) {
 
     if (RKFilenameExists(wisdomFile)) {
         if (engine->verbose) {
-            RKLog(">Loading DFT wisdom ...\n");
+            RKLog(">    Loading DFT wisdom ...\n");
         }
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
         if (engine->verbose) {
-            RKLog(">DFT wisdom file not found.\n");
+            RKLog(">    DFT wisdom file not found.\n");
         }
         exportWisdom = true;
     }
@@ -355,7 +355,7 @@ void *pulseWatcher(void *_in) {
     // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
         if (engine->verbose) {
-            RKLog(">Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", planIndex, RKIntegerToCommaStyleString(planSize));
+            RKLog(">    Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", planIndex, RKIntegerToCommaStyleString(planSize));
         }
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
@@ -670,10 +670,13 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (engine->verbose) {
+        RKLog("Stopping pulseWatcher() ...\n");
+    }
     engine->state = RKPulseCompressionEngineStateDeactivating;
     pthread_join(engine->tidPulseWatcher, NULL);
     if (engine->verbose) {
-        RKLog("pulseWatcher() ended\n");
+        RKLog("pulseWatcher() stopped\n");
     }
     free(engine->workers);
     engine->workers = NULL;
@@ -715,7 +718,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         for (int i = 0; i < engine->filterGroupCount; i++) {
             RKLog(">Filter count of group[%d] = %d\n", i, engine->filterCounts[i]);
             for (int j = 0; j < engine->filterCounts[i]; j++) {
-                RKLog(">   Filter[%d] @ length = %d  origin = %d  maximum data length = %s\n", j, engine->anchors[i][j].length, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
+                RKLog(">    Filter[%d] @ length = %d  origin = %d  maximum data length = %s\n", j, engine->anchors[i][j].length, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
             }
         }
     }

@@ -15,7 +15,12 @@
 //extern "C" {
 //#endif
 
-    
+
+// hamming
+// hanning
+// blackman
+// chebyshev
+
 //#ifdef __cplusplus
 //}
 //#endif

@@ -87,7 +87,7 @@ void *momentCore(void *_in) {
         pthread_mutex_lock(&engine->coreMutex);
         engine->memoryUsage += mem;
         if (engine->verbose) {
-            RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
+            RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
         }
         pthread_mutex_unlock(&engine->coreMutex);
     }
@@ -191,7 +191,7 @@ void *momentCore(void *_in) {
     free(fullPeriods);
 
     if (engine->verbose) {
-        RKLog(">%s ended.\n", name);
+        RKLog(">    %s ended.\n", name);
     }
 
     return NULL;
@@ -466,10 +466,13 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (engine->verbose) {
+        RKLog("Stopping pulseGatherer() ...\n");
+    }
     engine->state = RKMomentEngineStateDeactivating;
     pthread_join(engine->tidPulseGatherer, NULL);
     if (engine->verbose) {
-        RKLog("pulseGatherer() ended\n");
+        RKLog("pulseGatherer() stopped.\n");
     }
     free(engine->workers);
     engine->workers = NULL;

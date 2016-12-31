@@ -103,11 +103,11 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // Moment bufer
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
-        bytes = RKRayBufferAlloc((void **)&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseRayRatio, radar->desc.rayBufferDepth);
+        bytes = RKRayBufferAlloc((void **)&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseToRayRatio, radar->desc.rayBufferDepth);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level II buffer occupies %s B  (%s gates x %s rays)\n",
                   RKIntegerToCommaStyleString(bytes),
-                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity / radar->desc.pulseRayRatio),
+                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio),
                   RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
         }
         radar->memoryUsage += bytes;
@@ -138,7 +138,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
 //    radar->state |= RKRadarStateSocketServerInitialized;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar initialized. Data buffers occupiy %s B (%s GiB)\n",
+        RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }
@@ -150,7 +150,7 @@ RKRadar *RKInitQuiet(void) {
     RKRadarInitDesc desc;
     desc.initFlags = RKInitFlagAllocEverythingQuiet;
     desc.pulseCapacity = RKGateCount;
-    desc.pulseRayRatio = 1;
+    desc.pulseToRayRatio = 1;
     desc.pulseBufferDepth = RKBuffer0SlotCount;
     desc.rayBufferDepth = RKBuffer2SlotCount;
     return RKInitWithDesc(desc);
@@ -160,7 +160,7 @@ RKRadar *RKInitLean(void) {
     RKRadarInitDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 2048;
-    desc.pulseRayRatio = 1;
+    desc.pulseToRayRatio = 1;
     desc.pulseBufferDepth = 5000;
     desc.rayBufferDepth = 1000;
     return RKInitWithDesc(desc);
@@ -170,7 +170,7 @@ RKRadar *RKInitMean(void) {
     RKRadarInitDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = RKGateCount / 2;
-    desc.pulseRayRatio = 2;
+    desc.pulseToRayRatio = 2;
     desc.pulseBufferDepth = RKBuffer0SlotCount;
     desc.rayBufferDepth = RKBuffer2SlotCount;
     return RKInitWithDesc(desc);
@@ -180,7 +180,7 @@ RKRadar *RKInitFull(void) {
     RKRadarInitDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = RKGateCount;
-    desc.pulseRayRatio = 1;
+    desc.pulseToRayRatio = 1;
     desc.pulseBufferDepth = RKBuffer0SlotCount;
     desc.rayBufferDepth = RKBuffer2SlotCount;
     return RKInitWithDesc(desc);
