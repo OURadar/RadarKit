@@ -95,8 +95,8 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int c) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int16_t            idata[2][RKGateCount];
-//    float              fdata[2][RKGateCount];
+//    int16_t            idata[2][capacity];
+//    float              fdata[2][capacity];
 //
 size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
     if (capacity - (capacity / RKSIMDAlignSize) * RKSIMDAlignSize != 0) {

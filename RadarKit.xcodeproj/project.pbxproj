@@ -284,7 +284,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "_RadarKit" */;
+			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -603,7 +603,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "_RadarKit" */ = {
+		B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B50A81441AB89B6200E12E1F /* Debug */,

@@ -327,7 +327,7 @@ void *pulseWatcher(void *_in) {
     float lag;
 
     // The beginning of the buffer is a pulse, it has the capacity info
-    RKPulse *pulse = (RKPulse *)engine->buffer;
+    RKPulse *pulse = engine->buffer;
 
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
@@ -727,14 +727,17 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    RKPulse *pulse = (RKPulse *)engine->buffer;
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
-    RKPulse *pulse = (RKPulse *)engine->buffer;
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
+}
+
+int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
+    RKComplex filter[] = {{1.0f, 0.0f}, {1.0f, 0.0f}};
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
 }
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {

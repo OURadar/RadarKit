@@ -53,7 +53,7 @@ struct rk_pulse_compression_worker {
 
 struct rk_pulse_compression_engine {
     // User set variables
-    void                             *buffer;                            // Buffer of raw pulses
+    RKPulse                          *buffer;                            // Buffer of raw pulses
     uint32_t                         *index;                             // The refence index to watch for
     uint32_t                         size;                               // Size of the buffer
     uint8_t                          verbose;
@@ -104,6 +104,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
                                 const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
+int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine);
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
