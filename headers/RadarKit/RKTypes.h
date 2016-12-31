@@ -269,6 +269,10 @@ enum RKResult {
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,
     RKResultSDToFDError,
+    RKResultNoPulseBuffer,
+    RKResultNoRayBuffer,
+    RKResultNoPulseCompressionEngine,
+    RKResultNoMomentEngine,
     RKResultFailedToStartCompressionCore,
     RKResultFailedToStartPulseWatcher,
     RKResultFailedToInitiateSemaphore,
@@ -282,6 +286,7 @@ enum RKResult {
     RKResultEngineDeactivatedMultipleTimes,
     RKResultFailedToStartMomentCore,
     RKResultFailedToStartPulseGatherer,
+    RKResultUnableToChangeCoreCounts,
     RKResultNoError = 0
 };
 

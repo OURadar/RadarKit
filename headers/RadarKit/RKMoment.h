@@ -39,14 +39,14 @@ struct rk_moment_worker {
 
 struct rk_moment_engine {
     // User set variables
-    RKPulse                *pulses;
+    RKPulse                *pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
-    RKRay                  *rays;
+    RKRay                  *rayBuffer;
     uint32_t               *rayIndex;
     uint32_t               rayBufferSize;
-    uint32_t               verbose;
-    uint32_t               coreCount;
+    uint8_t                verbose;
+    uint8_t                coreCount;
     bool                   useSemaphore;
     int                    (*processor)(RKScratch *, RKPulse *, const RKModuloPath, const char *);
 
@@ -61,18 +61,20 @@ struct rk_moment_engine {
     uint32_t               tic;
     float                  lag;
     uint32_t               almostFull;
+    size_t                 memoryUsage;
 };
 
 RKMomentEngine *RKMomentEngineInit(void);
 void RKMomentEngineFree(RKMomentEngine *);
 
-void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
-                                         RKPulse *pulses,
-                                         uint32_t *pulseIndex,
-                                         const uint32_t pulseBufferSize,
-                                         RKRay *rays,
-                                         uint32_t *rayIndex,
-                                         const uint32_t rayBufferSize);
+void RKMomentEngineSetVerbose(RKMomentEngine *, const int);
+void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
+                                         RKPulse *,
+                                         uint32_t *,
+                                         const uint32_t,
+                                         RKRay *,
+                                         uint32_t *,
+                                         const uint32_t);
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const unsigned int count);
 
 int RKMomentEngineStart(RKMomentEngine *engine);

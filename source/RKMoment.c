@@ -47,7 +47,7 @@ void *momentCore(void *_in) {
         sprintf(name + k, "\033[0m");
     }
 
-    RKRay *ray = RKGetRay(engine->rays, 0);
+    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     const size_t capacity = ray->header.capacity;
 
     // Allocate local resources and keep track of the total allocation
@@ -85,7 +85,10 @@ void *momentCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
+        engine->memoryUsage += mem;
+        if (engine->verbose) {
+            RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
+        }
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -128,7 +131,7 @@ void *momentCore(void *_in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
 
-        RKRay *ray = RKGetRay(engine->rays, io);
+        RKRay *ray = RKGetRay(engine->rayBuffer, io);
 
         // Mark being processed so that pulseGatherer() will not override the length
         ray->header.s = RKRayStatusProcessing;
@@ -141,7 +144,7 @@ void *momentCore(void *_in) {
         is = path.origin;
         if (path.length > 0) {
             // End index of the I/Q for this ray
-            ie = engine->processor(space, engine->pulses, path, name);
+            ie = engine->processor(space, engine->pulseBuffer, path, name);
             ray->header.s |= RKRayStatusProcessed;
         } else {
             ie = is;
@@ -152,8 +155,8 @@ void *momentCore(void *_in) {
         me->pid = ie;
 
         // Start and end pulses to calculate this ray
-        RKPulse *ss = RKGetPulse(engine->pulses, is);
-        RKPulse *ee = RKGetPulse(engine->pulses, ie);
+        RKPulse *ss = RKGetPulse(engine->pulseBuffer, is);
+        RKPulse *ee = RKGetPulse(engine->pulseBuffer, ie);
         
         // Set the ray headers
         ray->header.startTimeD     = ss->header.timeDouble;
@@ -187,7 +190,9 @@ void *momentCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s ended.\n", name);
+    if (engine->verbose) {
+        RKLog(">%s ended.\n", name);
+    }
 
     return NULL;
 }
@@ -258,12 +263,14 @@ void *pulseGatherer(void *_in) {
     int s = 0;
     RKPulse *pulse;
     RKRay *ray;
-    RKLog("pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
+    if (engine->verbose) {
+        RKLog(">pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
+    }
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
         s = 0;
         // The pulse
-        pulse = RKGetPulse(engine->pulses, k);
+        pulse = RKGetPulse(engine->pulseBuffer, k);
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
@@ -296,7 +303,7 @@ void *pulseGatherer(void *_in) {
                 do {
                     i = RKPreviousModuloS(i, engine->rayBufferSize);
                     engine->momentSource[i].length = 0;
-                    ray = RKGetRay(engine->rays, i);
+                    ray = RKGetRay(engine->rayBuffer, i);
                 } while (!(ray->header.s & RKRayStatusReady));
             }
 
@@ -305,7 +312,7 @@ void *pulseGatherer(void *_in) {
 
             // Skip processing if it isgetting too busy
             if (skipCounter > 0) {
-                if (--skipCounter == 0) {
+                if (--skipCounter == 0 && engine->verbose) {
                     RKLog(">Info. pulseGatherer() skipped a chunk.\n");
                 }
             } else {
@@ -326,7 +333,7 @@ void *pulseGatherer(void *_in) {
                     j = RKNextModuloS(j, engine->rayBufferSize);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
-                    ray = RKGetRay(engine->rays, j);
+                    ray = RKGetRay(engine->rayBuffer, j);
                     ray->header.s = RKRayStatusVacant;
                     count = 0;
                 }
@@ -334,10 +341,10 @@ void *pulseGatherer(void *_in) {
                 count++;
             }
             // Check finished rays
-            ray = RKGetRay(engine->rays, *engine->rayIndex);
+            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             while (ray->header.s & RKRayStatusReady) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
-                ray = RKGetRay(engine->rays, *engine->rayIndex);
+                ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             }
         }
         // Update k to catch up for the next watch
@@ -367,9 +374,9 @@ RKMomentEngine *RKMomentEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKMomentEngine));
     engine->state = RKMomentEngineStateAllocated;
-    engine->verbose = 1;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePair;
+    engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
 }
@@ -384,6 +391,10 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
 
 #pragma mark -
 
+void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
+    engine->verbose = verbose;
+}
+
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
     engine->processor = &RKPulsePair;
 }
@@ -393,16 +404,16 @@ void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
-                                         RKPulse *pulses,
+                                         RKPulse *pulseBuffer,
                                          uint32_t *pulseIndex,
                                          const uint32_t pulseBufferSize,
-                                         RKRay *rays,
+                                         RKRay *rayBuffer,
                                          uint32_t *rayIndex,
                                          const uint32_t rayBufferSize) {
-    engine->pulses = pulses;
+    engine->pulseBuffer = pulseBuffer;
     engine->pulseIndex = pulseIndex;
     engine->pulseBufferSize = pulseBufferSize;
-    engine->rays = rays;
+    engine->rayBuffer = rayBuffer;
     engine->rayIndex = rayIndex;
     engine->rayBufferSize = rayBufferSize;
     engine->momentSource = (RKModuloPath *)malloc(rayBufferSize * sizeof(RKModuloPath));

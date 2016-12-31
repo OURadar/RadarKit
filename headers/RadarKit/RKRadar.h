@@ -17,8 +17,10 @@
 enum RKInitFlag {
     RKInitFlagNone                  = 0,
     RKInitFlagVerbose               = 1,
-    RKInitFlagAllocMomentBuffer     = (1 << 1),
-    RKInitFlagAllocRawIQBuffer      = (1 << 2),
+    RKInitFlagVeryVerbose           = (1 << 1),
+    RKInitFlagVeryVeryVerbose       = (1 << 2),
+    RKInitFlagAllocMomentBuffer     = (1 << 8),
+    RKInitFlagAllocRawIQBuffer      = (1 << 9),
     RKInitFlagAllocEverything       = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose,
     RKInitFlagAllocEverythingQuiet  = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer
 };
@@ -35,7 +37,8 @@ enum RKRadarState {
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 7),
     RKRadarStateMomentEngineInitialized              = (1 << 8),
     RKRadarStateTransceiverInitialized               = (1 << 16),
-    RKRadarStatePedestalInitialized                  = (1 << 24)
+    RKRadarStatePedestalInitialized                  = (1 << 24),
+    RKRadarStateLive                                 = (1 << 31)
 };
 
 typedef struct rk_radar_desc {
@@ -100,16 +103,16 @@ struct rk_radar {
 
 // Life Cycle
 RKRadar *RKInitWithFlags(RKRadarInitDesc);
+RKRadar *RKInitQuiet(void);
 RKRadar *RKInitLean(void);
 RKRadar *RKInitMean(void);
 RKRadar *RKInitFull(void);
-RKRadar *RKInitQuiet(void);
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
 // Properties
 int RKSetTransceiver(RKRadar *radar, RKTransceiver (RKRadar *, void *), void *);
-
+int RKSetVerbose(RKRadar *radar, const int verbose);
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
 int RKSetWaveformToImpulse(RKRadar *radar);
 int RKSetWaveformTo121(RKRadar *radar);

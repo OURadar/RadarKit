@@ -27,29 +27,29 @@ void stripTrailingUnwanted(char *str) {
 //
 size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
     if (capacity - (1 << (int)log2f((float)capacity))) {
-        RKLog("ERROR. Pulse capacity must of power of 2!");
+        RKLog("Error. Pulse capacity must of power of 2!");
         return 0;
     }
     if (capacity != (capacity / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("ERROR. Pulse capacity must be multiple of %d!", RKSIMDAlignSize);
+        RKLog("Error. Pulse capacity must be multiple of %d!", RKSIMDAlignSize);
         return 0;
     }
     RKPulse *pulse;
     size_t headerSize = sizeof(pulse->headerBytes);
     if (headerSize != (headerSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("ERROR. The framework has not been compiled with proper structure size.");
+        RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
     size_t channelCount = 2;
     size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     if (pulseSize != (pulseSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("ERROR. The resultant size does not conform to SIMD alignment.");
+        RKLog("Error. The resultant size does not conform to SIMD alignment.");
         return 0;
     }
     size_t bytes = slots * pulseSize;
     posix_memalign(mem, RKSIMDAlignSize, bytes);
     if (*mem == NULL) {
-        RKLog("ERROR. Unable to allocate pulse buffer.");
+        RKLog("Error. Unable to allocate pulse buffer.");
         return 0;
     }
     memset(*mem, 0, bytes);
@@ -100,25 +100,25 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int c) {
 //
 size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
     if (capacity - (capacity / RKSIMDAlignSize) * RKSIMDAlignSize != 0) {
-        RKLog("ERROR. Ray capacity must be multiple of %d!", RKSIMDAlignSize);
+        RKLog("Error. Ray capacity must be multiple of %d!", RKSIMDAlignSize);
         return 0;
     }
     RKRay *ray;
     size_t headerSize = sizeof(ray->headerBytes);
     if (headerSize != (headerSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("ERROR. The framework has not been compiled with proper structure size.");
+        RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
     size_t productCount = 7;
     size_t raySize = headerSize + productCount * capacity * (sizeof(int16_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("ERROR. The resultant size does not conform to SIMD alignment.");
+        RKLog("Error. The resultant size does not conform to SIMD alignment.");
         return 0;
     }
     size_t bytes = slots * raySize;
     posix_memalign(mem, RKSIMDAlignSize, bytes);
     if (*mem == NULL) {
-        RKLog("ERROR. Unable to allocate ray buffer.");
+        RKLog("Error. Unable to allocate ray buffer.");
         return 0;
     }
     memset(*mem, 0, bytes);

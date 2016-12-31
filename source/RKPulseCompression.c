@@ -138,7 +138,10 @@ void *pulseCompressionCore(void *_in) {
     // Log my initial state
     if (engine->verbose) {
         pthread_mutex_lock(&engine->coreMutex);
-        RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+        engine->memoryUsage += mem;
+        if (engine->verbose) {
+            RKLog(">%s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+        }
         pthread_mutex_unlock(&engine->coreMutex);
     }
 
@@ -302,7 +305,9 @@ void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s ended.\n", name);
+    if (engine->verbose) {
+        RKLog(">%s ended.\n", name);
+    }
     
     return NULL;
 }
@@ -328,10 +333,7 @@ void *pulseWatcher(void *_in) {
     fftwf_complex *in, *out;
     posix_memalign((void **)&in, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
     posix_memalign((void **)&out, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
-    k = 2 * pulse->header.capacity * sizeof(fftwf_complex);
-    if (engine->verbose) {
-        RKLog("pulseWatcher() allocated %s B\n", RKIntegerToCommaStyleString(k));
-    }
+    engine->memoryUsage += 2 * pulse->header.capacity * sizeof(fftwf_complex);
 
     // Maximum plan size
     planSize = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
@@ -339,16 +341,22 @@ void *pulseWatcher(void *_in) {
     const char wisdomFile[] = "fft-wisdom";
 
     if (RKFilenameExists(wisdomFile)) {
-        RKLog("Loading DFT wisdom ...\n");
+        if (engine->verbose) {
+            RKLog(">Loading DFT wisdom ...\n");
+        }
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
-        RKLog("DFT wisdom file not found.\n");
+        if (engine->verbose) {
+            RKLog(">DFT wisdom file not found.\n");
+        }
         exportWisdom = true;
     }
 
     // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
-        RKLog("Pre-allocate FFTW resources for plan size %s (%d)\n", RKIntegerToCommaStyleString(planSize), planIndex);
+        if (engine->verbose) {
+            RKLog(">Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", planIndex, RKIntegerToCommaStyleString(planSize));
+        }
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
@@ -407,7 +415,9 @@ void *pulseWatcher(void *_in) {
     j = 0;   // filter index
     k = 0;   // pulse index
     c = 0;   // core index
-    RKLog("pulseWatcher() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->index);
+    if (engine->verbose) {
+        RKLog(">pulseWatcher() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->index);
+    }
     while (engine->state == RKPulseCompressionEngineStateActive) {
         // Wait until the engine index move to the next one for storage
         while (k == *engine->index && engine->state == RKPulseCompressionEngineStateActive) {
@@ -430,20 +440,20 @@ void *pulseWatcher(void *_in) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
                 RKLog("Warning. I/Q Buffer overflow projected by pulseWatcher().\n");
-                //i = RKPreviousModuloS(*engine->index, engine->size);
-                //pulse = RKGetPulse(engine->buffer, i);
-                //while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
-//                while (!(pulse->header.s & RKPulseStatusProcessed)) {
+//
+//                i = RKPreviousModuloS(*engine->index, engine->size);
+//                pulse = RKGetPulse(engine->buffer, i);
+//                while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
 //                    engine->filterGid[i] = -1;
 //                    engine->planIndices[i][0] = 0;
 //                    i = RKPreviousModuloS(i, engine->size);
 //                    pulse = RKGetPulse(engine->buffer, i);
 //                }
+//
                 i = *engine->index;
                 do {
                     i = RKPreviousModuloS(i, engine->size);
                     engine->filterGid[i] = -1;
-                    //engine->planIndices[i][0] = 0;   // What is this doing here?
                     pulse = RKGetPulse(engine->buffer, i);
                 } while (!(pulse->header.s & RKPulseStatusProcessed));
             }
@@ -552,7 +562,6 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
     engine->state = RKPulseCompressionEngineStateAllocated;
-    engine->verbose = 1;
     engine->useSemaphore = true;
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
@@ -572,6 +581,12 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
     free(engine->filterGid);
     free(engine->planIndices);
     free(engine);
+}
+
+#pragma mark -
+
+void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const int verb) {
+    engine->verbose = verb;
 }
 
 //
@@ -604,6 +619,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
         free(engine->planIndices);
     }
     engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(size * sizeof(RKPulseCompressionPlanIndex));
+    engine->memoryUsage += size * sizeof(RKPulseCompressionPlanIndex);
     if (engine->planIndices == NULL) {
         RKLog("Error. Unable to allocate planIndices.\n");
         exit(EXIT_FAILURE);
@@ -631,6 +647,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         RKLog("Error. RKPulseCompressionEngine->workers should be NULL here.\n");
     }
     engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
+    engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     if (engine->verbose) {
         RKLog("Starting pulseWatcher() ...\n");

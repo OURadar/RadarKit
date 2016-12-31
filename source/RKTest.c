@@ -46,8 +46,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
     RKSetLogfile(NULL);
 
-    RKLog("RKTestSimulateDataStream%s", (char *)input);
-
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("RKTestSimulateDataStream%s", (char *)input);
+    }
+    
     // Parse out input parameters
     if (input) {
         char *sb = (char *)input, *se = NULL, *sv = NULL;
@@ -59,11 +61,15 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             switch (*sb) {
                 case 'f':
                     prt = 1.0 / (double)atof(sv);
-                    //RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / prt)));
+                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                        RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / prt)));
+                    }
                     break;
                 case 'F':
                     fs = atof(sv);
-                    //RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)fs));
+                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                        RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)fs));
+                    }
                     break;
             }
             sb = strchr(sv, ' ');
@@ -80,19 +86,22 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(60.0e3 / 3.0e8 * fs * 2.0));
     const int chunkSize = (int)floor(0.1f / prt);
 
-    RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (%.1f km)   chunk %d\n",
-          RKFloatToCommaStyleString(1.0e-6 * fs),
-          RKIntegerToCommaStyleString((int)(1.0f / prt)),
-          RKIntegerToCommaStyleString(gateCount),
-          gateCount * 1.5e5 / fs,
-          chunkSize);
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (%.1f km)   chunk %d\n",
+              RKFloatToCommaStyleString(1.0e-6 * fs),
+              RKIntegerToCommaStyleString((int)(1.0f / prt)),
+              RKIntegerToCommaStyleString(gateCount),
+              gateCount * 1.5e5 / fs,
+              chunkSize);
+    }
 
     while (radar->active) {
 
-        //RKPulseCompressionEngineLogStatus(radar->pulseCompressionEngine);
-        RKLog("%s %s",
-              RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
-              RKMomentEngineStatusString(radar->momentEngine));
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s %s",
+                  RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
+                  RKMomentEngineStatusString(radar->momentEngine));
+        }
 
         for (int j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);

@@ -239,18 +239,19 @@ int main(int argc, char *argv[]) {
         user.simulate = true;
     }
 
-    RKLog("Initializing ...\n");
-
-    //radar = RKInitLean();
-    radar = RKInitMean();
+    if (user.fs <= 5.0e6) {
+        radar = RKInitLean();
+    } else if (user.fs <= 20.0e6) {
+        radar = RKInitMean();
+    } else {
+        radar = RKInit();
+    }
     
-    RKShowTypeSizes();
-
+    RKSetVerbose(radar, user.verbose);
+    
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
-
-    RKLog("Radar state machine occupies %s B (%s GiB)\n", RKIntegerToCommaStyleString(radar->memoryUsage), RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
 
     // Set any parameters here:
     RKSetProcessingCoreCounts(radar, user.threadsPulseCompression, user.threadsMoment);
@@ -266,7 +267,9 @@ int main(int argc, char *argv[]) {
         if (user.fs) {
             i += sprintf(cmd + i, " F %d", user.fs);
         }
-        RKLog("Main input = '%s'", cmd);
+        if (!user.quietMode) {
+            RKLog("Main input = '%s'", cmd);
+        }
         // Now we use the frame work.
         RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
         RKGoLive(radar);
@@ -280,7 +283,6 @@ int main(int argc, char *argv[]) {
 
     }
 
-    RKLog("Freeing radar ...\n");
     RKFree(radar);
 
     return 0;

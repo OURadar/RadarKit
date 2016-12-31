@@ -56,8 +56,8 @@ struct rk_pulse_compression_engine {
     void                             *buffer;                            // Buffer of raw pulses
     uint32_t                         *index;                             // The refence index to watch for
     uint32_t                         size;                               // Size of the buffer
-    uint32_t                         verbose;
-    uint32_t                         coreCount;
+    uint8_t                          verbose;
+    uint8_t                          coreCount;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxMatchedFilterGroupCount];
@@ -81,11 +81,13 @@ struct rk_pulse_compression_engine {
     uint32_t                         tic;
     float                            lag;
     int                              almostFull;
+    size_t                           memoryUsage;
 };
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
 
+void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
                                                    void *buffer,
                                                    uint32_t *index,
