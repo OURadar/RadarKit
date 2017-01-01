@@ -50,7 +50,7 @@
 #define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
 #define RKMaxMatchedFilterGroupCount     8            // Maximum filter group count
 #define RKWorkerDutyCycleBufferSize      1000
-#define RKMaxPulsesPerRay                1000
+#define RKMaxPulsesPerRay                2000
 #define RKMaxLag                         5            // Maximum ACF / CCF lag = +/-4 and 0
 #define RKMaxProductCount                6
 

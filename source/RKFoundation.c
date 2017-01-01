@@ -8,12 +8,143 @@
 
 #include <RadarKit/RKFoundation.h>
 
-// Strip out \r, \n, white space, \10 (BS), etc.
-void stripTrailingUnwanted(char *str) {
-    char *c = str + strlen(str) - 1;
-    while (c >= str && (*c == '\r' || *c == '\n' || *c == ' ' || *c == 10)) {
-        *c-- = '\0';
+#pragma mark -
+
+int RKLog(const char *whatever, ...) {
+    if (rkGlobalParameters.stream == NULL && rkGlobalParameters.logfile[0] == 0) {
+        return 0;
     }
+    // Construct the string
+    int i = 0;
+    va_list args;
+    va_start(args, whatever);
+    char msg[2048];
+    if (strlen(whatever) > 1600) {
+        fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
+    }
+    if (whatever[0] == '>') {
+        i += snprintf(msg, 2040, "                    : [%s] ", rkGlobalParameters.program);
+    } else {
+        i += snprintf(msg, 2040, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
+    }
+    bool has_ok = (strcasestr(whatever, "ok") != NULL);
+    bool has_not_ok = (strcasestr(whatever, "error") != NULL);
+    bool has_warning = (strcasestr(whatever, "warning") != NULL);
+    if (rkGlobalParameters.showColor) {
+        if (has_ok) {
+            i += snprintf(msg + i, 2040 - i, "\033[1;32m");
+        } else if (has_not_ok) {
+            i += snprintf(msg + i, 2040 - i, "\033[1;31m");
+        } else if (has_warning) {
+            i += snprintf(msg + i, 2040 - i, "\033[1;33m");
+        }
+    }
+    if (whatever[0] == '>') {
+        i += vsprintf(msg + i, whatever + 1, args);
+    } else {
+        i += vsprintf(msg + i, whatever, args);
+    }
+    if (rkGlobalParameters.showColor && (has_ok || has_not_ok || has_warning)) {
+        snprintf(msg + i, 2040 - i, "\033[0m");
+    }
+    if (whatever[strlen(whatever) - 1] != '\n') {
+        strncat(msg, "\n", 2040);
+    }
+    va_end(args);
+    // Produce the string to the specified stream
+    if (rkGlobalParameters.stream) {
+        fprintf(rkGlobalParameters.stream, "%s", msg);
+        fflush(rkGlobalParameters.stream);
+    }
+    // Write the string to a file if specified
+    if (rkGlobalParameters.logfile[0] != '\0' && strlen(rkGlobalParameters.logfile) > 0) {
+        FILE *logFileID = fopen(rkGlobalParameters.logfile, "a");
+        if (logFileID == NULL) {
+            fprintf(stderr, "Unable to log.\n");
+            return 1;
+        }
+        fprintf(logFileID, "%s", msg);
+        fclose(logFileID);
+    }
+    return 0;
+}
+
+#pragma mark -
+
+void RKSetWantColor(const bool showColor) {
+    rkGlobalParameters.showColor = showColor;
+}
+
+void RKSetWantScreenOutput(const bool yes) {
+    if (yes) {
+        rkGlobalParameters.stream = stdout;
+    } else {
+        rkGlobalParameters.stream = NULL;
+    }
+}
+
+int RKSetProgramName(const char *name) {
+    if (strlen(name) >= RKMaximumStringLength) {
+        return 1;
+    }
+    snprintf(rkGlobalParameters.program, RKMaximumStringLength, "%s", name);
+    return 0;
+}
+
+int RKSetLogfile(const char *filename) {
+    if (filename == NULL) {
+        rkGlobalParameters.logfile[0] = '\0';
+        return 0;
+    } else if (strlen(filename) >= RKMaximumStringLength) {
+        return 1;
+    }
+    snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", filename);
+    return 0;
+}
+
+int RKSetLogfileToDefault(void) {
+    snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", RKDefaultLogfile);
+    return 0;
+}
+
+#pragma mark -
+
+void RKShowTypeSizes(void) {
+    RKPulse *pulse = NULL;
+    RKRay *ray = NULL;
+    RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
+    RKLog(">sizeof(RKByte) = %d", (int)sizeof(RKByte));
+    RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
+    RKLog(">sizeof(RKFloat) = %d", (int)sizeof(RKFloat));
+    RKLog(">sizeof(RKComplex) = %d", (int)sizeof(RKComplex));
+    RKLog(">sizeof(RKPulseHeader) = %d", (int)sizeof(RKPulseHeader));
+    RKLog(">sizeof(RKPulseParameters) = %d", (int)sizeof(RKPulseParameters));
+    RKLog(">sizeof(pulse->headerBytes) = %d", (int)sizeof(pulse->headerBytes));
+    RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
+    RKLog(">sizeof(ray->headerBytes) = %d", (int)sizeof(ray->headerBytes));
+}
+
+void RKShowVecFloat(const char *name, const float *p, const int n) {
+    int i = 0;
+    int k = 0;
+    char str[RKMaximumStringLength];
+    k = sprintf(str, "%s[", name);
+    while (i < n && k < RKMaximumStringLength - 20)
+        k += sprintf(str + k, " %5.1f       ", p[i++]);
+    sprintf(str + k, "]");
+    printf("%s\n", str);
+}
+
+
+void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
+    int i = 0;
+    int k = 0;
+    char str[RKMaximumStringLength];
+    k = sprintf(str, "%s[", name);
+    while (i < n && k < RKMaximumStringLength - 20)
+        k += sprintf(str + k, " %5.1f%+5.1fi ", p->i[i], p->q[i]);
+    sprintf(str + k, "]");
+    printf("%s\n", str);
 }
 
 #pragma mark -

@@ -8,34 +8,6 @@
 
 #include <RadarKit/RKPulsePair.h>
 
-/**************************************************
- *
- *   s h o w v
- *
- **************************************************/
-void showv(const char *name, float *p, int n) {
-    int i = 0;
-    printf("%s[", name);
-    while (i<n)
-        printf(" %5.1f       ", p[i++]);
-    printf("];\n");
-}
-
-
-/**************************************************
- *
- *   s h o w v z
- *
- **************************************************/
-void showvz(const char *name, RKIQZ *p, int n) {
-    int i = 0;
-    printf("%s[", name);
-    for (i=0; i<n; i++)
-        printf(" %5.1f%+5.1fi ", p->i[i], p->q[i]);
-    printf("];\n");
-}
-
-
 int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
     usleep(20 * 1000);
     
@@ -117,6 +89,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
         for (k = 0; k < MIN(count, RKMaxLag); k++) {
             RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                                   // R[k] /= (n - k)
             RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                                           // aR[k] = abs(R[k])
+
 #if defined(DEBUG_PULSE_PAIR)
             sprintf(varname, "R[%d][%d] = ", p, k);
             showvz(varname, &space->R[p][k], 8);
@@ -126,7 +99,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
         }
     }
     
-    usleep(15 * 1000);
+    usleep(10 * 1000);
 
     return count;
 
