@@ -130,7 +130,7 @@ void RKShowVecFloat(const char *name, const float *p, const int n) {
     char str[RKMaximumStringLength];
     k = sprintf(str, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20)
-        k += sprintf(str + k, " %7.2f          ", p[i++]);
+        k += sprintf(str + k, "%+9.4f           ", p[i++]);
     sprintf(str + k, "]");
     printf("%s\n", str);
 }
@@ -142,7 +142,7 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     char str[RKMaximumStringLength];
     k = sprintf(str, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20) {
-        k += sprintf(str + k, " %7.2f%+7.2fi ", p->i[i], p->q[i]);
+        k += sprintf(str + k, "%+9.4f%+9.4fi ", p->i[i], p->q[i]);
         i++;
     }
     sprintf(str + k, "]");
@@ -151,9 +151,18 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
 
 #pragma mark -
 
+void RKZeroOutFloat(RKFloat *data, const uint32_t capacity) {
+    memset(data, 0, capacity * sizeof(RKFloat));
+}
+
 void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity) {
     memset(data->i, 0, capacity * sizeof(RKFloat));
     memset(data->q, 0, capacity * sizeof(RKFloat));
+}
+
+void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) {
+    memset(&data->i[origin], 0, (capacity - origin) * sizeof(RKFloat));
+    memset(&data->q[origin], 0, (capacity - origin) * sizeof(RKFloat));
 }
 
 #pragma mark -

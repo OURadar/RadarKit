@@ -16,7 +16,10 @@ int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count, const c
 }
 
 int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
-    //#if defined(DEBUG_MM)
+//    struct timeval tic, toc;
+//    gettimeofday(&tic, NULL);
+    
+    #if defined(DEBUG_MM)
     RKPulse *S = input[0];
     RKPulse *E = input[count -1];
     // Beamwidths of azimuth & elevation
@@ -27,7 +30,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
           name, S->header.i, E->header.i,
           S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
           S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth);
-    //#endif
+    #endif
 
     // Process
     // Identify odd pulses and even pulses
@@ -63,7 +66,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
 
             RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
             // Go through each lag
-            for (k = 0; k < RKMaxLag; k++) {
+            for (k = 0; k < MIN(count, RKMaxLag); k++) {
                 //RKLog(">Lag %d\n", k);
                 if (n >= k) {
                     RKIQZ Xk = RKGetSplitComplexDataFromPulse(input[n - k], p);
@@ -84,16 +87,23 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     }
     
     RKSIMD_zmul(&space->mX[0], &space->mX[1], &space->ts, gateCount, 1);                 // E{Xh} * E{Xv}'
-    RKSIMD_zmul(&space->mX[0], &space->mX[0], &space->vX[0], gateCount, 1);              // E{Xh} * E{Xh}' --> varh  (not yet)  NOTE: Can be faster
-    RKSIMD_zmul(&space->mX[1], &space->mX[1], &space->vX[1], gateCount, 1);              // E{Xv} * E{Xv}' --> varv  (not yet)
+    RKSIMD_zsmul(&space->mX[0], &space->vX[0], gateCount, 1);                            // E{Xh} * E{Xh}' --> varh  (not yet)
+    RKSIMD_zsmul(&space->mX[1], &space->vX[1], gateCount, 1);                            // E{Xv} * E{Xv}' --> varv  (not yet)
     RKSIMD_izsub(&space->R[0][0], &space->vX[0], gateCount);                             // Rh[0] - varh   --> varh  (varh is now VAR(Xh))
     RKSIMD_izsub(&space->R[1][0], &space->vX[1], gateCount);                             // Rv[0] - varv   --> varv  (varv is now VAR(Xh))
 
+    for (p = 0; p < 2; p++) {
+        for (k = 0; k < MIN(count, RKMaxLag); k++) {
+            RKZeroOutFloat(&space->aR[p][k][0], gateCount);
+        }
+        RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
+    }
+    
     // NOTE: At this point, one can use space->vX[0] & space->vX[1] as signal power for H & V, respectively.
     // However, within the isodop regions, the zero-Doppler power is may have been filtered out by the clutter filter
     // so S & R are biased unless the filter is turned off. It's common problem with weather radars.
 
-    //#if defined(DEBUG_PULSE_PAIR)
+    #if defined(DEBUG_PULSE_PAIR)
     if (count < 8) {
         char variable[32];
         for (p = 0; p < 2; p++) {
@@ -124,9 +134,61 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     } else {
         RKLog("ERROR. Skipped printing a large array.\n");
     }
-    //#endif
+    #endif
     
-    usleep(10 * 1000);
+    //
+    //  CCF
+    //
+
+    RKZeroOutFloat(space->gC, capacity);
+    
+    const RKFloat N = (RKFloat)3; // Number of lag
+    RKFloat w = 0.0f;
+    
+    int nlag = 3;
+    RKIQZ Xh, Xv;
+    
+    for (int ic = 0; ic < 2 * nlag + 1; ic++) {
+        k = ic - nlag;
+        
+        // Numerator
+        if (k < 0) {
+            Xh = RKGetSplitComplexDataFromPulse(input[0], 0);
+            Xv = RKGetSplitComplexDataFromPulse(input[-k], 1);
+            RKSIMD_zmul(&Xh, &Xv, &space->C[ic], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
+            for (n = -k + 1; n < count; n++) {
+                Xh = RKGetSplitComplexDataFromPulse(input[n + k], 0);
+                Xv = RKGetSplitComplexDataFromPulse(input[n], 1);
+                RKSIMD_zcma(&Xh, &Xv, &space->C[ic], gateCount, 1);                      // C = C + Xh[] * Xv[]'
+            }
+            RKSIMD_izscl(&space->C[ic], 1.0f / (RKFloat)(count + k), gateCount);         // E{Xh * Xv'}
+        } else {
+            Xh = RKGetSplitComplexDataFromPulse(input[k], 0);
+            Xv = RKGetSplitComplexDataFromPulse(input[0], 1);
+            RKSIMD_zmul(&Xh, &Xv, &space->C[ic], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
+            for (n = k + 1; n < count; n++) {
+                Xh = RKGetSplitComplexDataFromPulse(input[n], 0);
+                Xv = RKGetSplitComplexDataFromPulse(input[n - k], 1);
+                RKSIMD_zcma(&Xh, &Xv, &space->C[ic], gateCount, 1);                      // C = C + Xh[] * Xv[]'
+            }
+            RKSIMD_izscl(&space->C[ic], 1.0f / (RKFloat)(count - k), gateCount);         // E{Xh * Xv'}
+        }
+        // Comment the following line to include the zero-Doppler signal
+        RKSIMD_zabs(&space->C[ic], space->aC[ic], gateCount);                            // | E{Xh * Xv'} - E{Xh} * E{Xv}' | --> absC[ic]
+        
+        w = (3.0f * N * N + 3.0f * N - 1.0f - 5.0f * (RKFloat)(k * k));
+        for (n = 0; n < gateCount; n++) {
+            space->gC[n] += w * logf(space->aC[ic][n]);
+        }
+    }
+    
+    w = 3.0f / ((2.0f * N - 1.0f) * (2.0f * N + 1.0f) * (2.0f * N + 3.0f));
+    for (n = 0; n < gateCount; n++) {
+        space->gC[n] = expf(w * space->gC[n]);
+    }
+
+//    gettimeofday(&toc, NULL);
+//    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
 
     return count;
 

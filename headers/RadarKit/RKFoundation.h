@@ -47,7 +47,9 @@ void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
 
+void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);
 void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity);
+void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin);
 
 size_t RKPulseBufferAlloc(void **, const int, const int);
 RKPulse *RKGetPulse(void *, const int);

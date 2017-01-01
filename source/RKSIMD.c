@@ -150,19 +150,40 @@ void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
     if (c) {
         // Conjugate s2
         for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            *di = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 + Q1 * Q2
-            *dq = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1q, *s2i), _rk_mm_mul_pf(*s1i, *s2q)); // Q = Q1 * I2 - I1 * Q2
+            *di++ = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 + Q1 * Q2
+            *dq++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1q, *s2i), _rk_mm_mul_pf(*s1i, *s2q)); // Q = Q1 * I2 - I1 * Q2
             s1i++; s1q++;
             s2i++; s2q++;
-            di++; dq++;
         }
     } else {
         for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
-            *di = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 - Q1 * Q2
-            *dq = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2q), _rk_mm_mul_pf(*s1q, *s2i)); // Q = I1 * Q2 + Q1 * I2
+            *di++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 - Q1 * Q2
+            *dq++ = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2q), _rk_mm_mul_pf(*s1q, *s2i)); // Q = I1 * Q2 + Q1 * I2
             s1i++; s1q++;
             s2i++; s2q++;
-            di++; dq++;
+        }
+    }
+    return;
+}
+
+// Complex Self Multiplication
+void RKSIMD_zsmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
+    RKVec *si = (RKVec *)src->i;
+    RKVec *sq = (RKVec *)src->q;
+    RKVec *di = (RKVec *)dst->i;
+    RKVec *dq = (RKVec *)dst->q;
+    if (c) {
+        // Conjugate s2
+        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+            *di++ = _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)); // I = I1 * I2 + Q1 * Q2
+            *dq++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*sq, *si), _rk_mm_mul_pf(*si, *sq)); // Q = Q1 * I2 - I1 * Q2
+            si++; sq++;
+        }
+    } else {
+        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+            *di++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)); // I = I1 * I2 - Q1 * Q2
+            *dq++ = _rk_mm_add_pf(_rk_mm_mul_pf(*si, *sq), _rk_mm_mul_pf(*sq, *si)); // Q = I1 * Q2 + Q1 * I2
+            si++; sq++;
         }
     }
     return;
