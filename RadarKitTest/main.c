@@ -15,8 +15,8 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    int   threadsPulseCompression;
-    int   threadsMoment;
+    int   coresForPulseCompression;
+    int   coresForProductGenerator;
     int   prf;
     int   fs;
     int   verbose;
@@ -58,9 +58,9 @@ void showHelp() {
            "     debris particle count is set for each type sequentially by repeating the\n"
            "     option multiple times for each debris type.\n"
            "\n"
-           "  -c (--core) " UNDERLINE("P, M") "\n"
+           "  -c (--core) " UNDERLINE("P,M") " (no space after comma)\n"
            "         Sets the number of threads for pulse compression to " UNDERLINE("P") "\n"
-           "         and the number of threads for moment calculation to " UNDERLINE("M") ".\n"
+           "         and the number of threads for product generator to " UNDERLINE("M") ".\n"
            "         If not specified, the default core counts are 8 / 4.\n"
            "\n"
            "  -f (--prf) " UNDERLINE("value") "\n"
@@ -75,7 +75,7 @@ void showHelp() {
            "         Shows this help text.\n"
            "\n"
            "  -L (--test-lean-system)\n"
-           "         Run with arguments '-v -f 2000 -F 50e6 -c 4,2'.\n"
+           "         Run with arguments '-v -f 2000 -F 50e6 -c 2,2'.\n"
            "\n"
            "  -s (--simulate)\n"
            "         Sets the program to simulate data stream (default, if none of the tests\n"
@@ -142,8 +142,7 @@ UserParams processInput(int argc, char **argv) {
     while ((opt = getopt_long(argc, argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'c':
-                sscanf(optarg, "%d,%d", &user.threadsPulseCompression, &user.threadsMoment);
-                //printf("core counts = %d / %d\n", user.threadsPulseCompression, user.threadsMoment);
+                sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
                 break;
             case 'f':
                 user.prf = atoi(optarg);
@@ -167,8 +166,9 @@ UserParams processInput(int argc, char **argv) {
             case 'L':
                 user.fs = 5.0e6;
                 user.prf = 2000;
-                user.threadsPulseCompression = 2;
-                user.threadsMoment = 2;
+                user.coresForPulseCompression = 2;
+                user.coresForProductGenerator = 2;
+                user.verbose = 1;
                 break;
             case 'M':
                 if (optarg) {
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
     signal(SIGQUIT, handleSignals);
 
     // Set any parameters here:
-    RKSetProcessingCoreCounts(radar, user.threadsPulseCompression, user.threadsMoment);
+    RKSetProcessingCoreCounts(radar, user.coresForPulseCompression, user.coresForProductGenerator);
 
     if (user.simulate) {
 

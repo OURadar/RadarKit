@@ -214,7 +214,7 @@ void *pulseCompressionCore(void *_in) {
                     planSize = engine->planSizes[planIndex];
 
                     // Copy and convert the samples
-                    RKInt16C *X = RKGetInt16DataFromPulse(pulse, p);
+                    RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                     X += engine->anchors[gid][j].origin;
                     bound = MIN(pulse->header.gateCount, pulse->header.capacity - engine->anchors[gid][j].origin);
                     for (k = 0; k < bound; k++) {
@@ -262,7 +262,7 @@ void *pulseCompressionCore(void *_in) {
                     Y += engine->anchors[gid][j].origin;
                     Z.i += engine->anchors[gid][j].origin;
                     Z.q += engine->anchors[gid][j].origin;
-                    bound = MIN(pulse->header.gateCount - engine->anchors[gid][j].length, engine->anchors[gid][j].maxDataLength);
+                    bound = MIN(pulse->header.gateCount - engine->anchors[gid][j].length + 1, engine->anchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = out[i][0];
                         Y++->q = out[i][1];

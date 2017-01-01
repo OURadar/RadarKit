@@ -16,6 +16,15 @@ void stripTrailingUnwanted(char *str) {
     }
 }
 
+#pragma mark -
+
+void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity) {
+    memset(data->i, 0, capacity * sizeof(RKFloat));
+    memset(data->q, 0, capacity * sizeof(RKFloat));
+}
+
+#pragma mark -
+
 //
 // Each slot should have a structure as follows
 //
@@ -72,7 +81,7 @@ RKPulse *RKGetPulse(void *buffer, const int k) {
     return (RKPulse *)(buffer + k * pulseSize);
 }
 
-RKInt16C *RKGetInt16DataFromPulse(RKPulse *pulse, const int c) {
+RKInt16C *RKGetInt16CDataFromPulse(RKPulse *pulse, const int c) {
     char *m = (char *)pulse->data;
     return (RKInt16C *)(m + c * pulse->header.capacity * sizeof(RKInt16C));
 }
@@ -90,6 +99,8 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int c) {
     RKIQZ data = {(RKFloat *)m, (RKFloat *)(m + pulse->header.capacity * sizeof(RKFloat))};
     return data;
 }
+
+#pragma mark -
 
 //
 // Each slot should have a structure as follows
@@ -109,8 +120,7 @@ size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t productCount = 7;
-    size_t raySize = headerSize + productCount * capacity * (sizeof(int16_t) + sizeof(float));
+    size_t raySize = headerSize + RKMaxProductCount * capacity * (sizeof(int16_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
         RKLog("Error. The resultant size does not conform to SIMD alignment.");
         return 0;

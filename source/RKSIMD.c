@@ -15,6 +15,7 @@
 #include <RadarKit/RKSIMD.h>
 
 #if defined(__AVX512F__)
+
 typedef __m512 RKVec;
 typedef __m256i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
@@ -28,7 +29,10 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_setzero_si()          _mm512_setzero_si512()
 #define _rk_mm_cvtepi16_epi32(a)     _mm512_cvtepi16_epi32(a)                // AVX512
 #define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
+#define _rk_mm_sqrt_pf(a)            _mm512_sqrt_ps(a)
+
 #elif defined(__AVX__)
+
 typedef __m256 RKVec;
 typedef __m128i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
@@ -45,7 +49,10 @@ typedef __m128i RKVecCvt;
 #        define _rk_mm_cvtepi16_epi32(a)     _mm256_cvtepi16_epi32(a)                 // AVX2
 #        define _rk_mm_cvtepi32_pf(a)        _mm256_cvtepi32_ps(a)                    // AVX
 #    endif
+#define _rk_mm_sqrt_pf(a)            _mm256_sqrt_ps(a)
+
 #else
+
 typedef __m128 RKVec;
 #define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm_sub_ps(a, b)
@@ -60,6 +67,8 @@ typedef __m128 RKVec;
 #define _rk_mm_unpackhi_epi16(a, b)  _mm_unpackhi_epi16(a, b)                // SSE2
 #define _rk_mm_cvtepi16_epi32(a)     _mm_cvtepi16_epi32(a)                   // SSE4.1
 #define _rk_mm_cvtepi32_pf(a)        _mm_cvtepi32_ps(a)                      // SSE2
+#define _rk_mm_sqrt_pf(a)            _mm_sqrt_ps(a)
+
 #endif
 
 #define OXSTR(x)   x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
@@ -231,6 +240,33 @@ void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
         *dq++ = _rk_mm_mul_pf(*sq++, fv);
     }
     return;
+}
+
+void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n) {
+    int k;
+    const RKVec fv = _rk_mm_set1_pf(f);
+    RKVec *si = (RKVec *)srcdst->i;
+    RKVec *sq = (RKVec *)srcdst->q;
+    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        *si = _rk_mm_mul_pf(*si, fv);
+        *sq = _rk_mm_mul_pf(*sq, fv);
+        si++;
+        sq++;
+    }
+    return;
+}
+
+// Absolute value of a complex number
+void RKSIMD_zabs(RKIQZ *src, float *dst, const int n) {
+    int k;
+    RKVec *si = (RKVec *)src->i;
+    RKVec *sq = (RKVec *)src->q;
+    RKVec *d = (RKVec *)dst;
+    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        *d++ = _rk_mm_sqrt_pf(_rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)));
+        si++;
+        sq++;
+    }
 }
 
 // Add by a float

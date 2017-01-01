@@ -105,8 +105,9 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         radar->state |= RKRadarStateRayBufferAllocating;
         bytes = RKRayBufferAlloc((void **)&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseToRayRatio, radar->desc.rayBufferDepth);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Level II buffer occupies %s B  (%s gates x %s rays)\n",
+            RKLog("Level II buffer occupies %s B  (%d products of %s gates x %s rays)\n",
                   RKIntegerToCommaStyleString(bytes),
+                  RKMaxProductCount,
                   RKIntegerToCommaStyleString(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio),
                   RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
         }
@@ -162,7 +163,7 @@ RKRadar *RKInitLean(void) {
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 1;
     desc.pulseBufferDepth = 5000;
-    desc.rayBufferDepth = 1000;
+    desc.rayBufferDepth = 2000;
     return RKInitWithDesc(desc);
 }
 

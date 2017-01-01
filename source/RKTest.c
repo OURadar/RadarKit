@@ -32,7 +32,7 @@ void RKTestModuloMath(void) {
 }
 
 RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
-    int k;
+    int j, k;
     float phi = 0.0f;
     float tau = 0.0f;
     float azimuth = 0.0f;
@@ -83,8 +83,9 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
         }
     }
 
-    const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(60.0e3 / 3.0e8 * fs * 2.0));
-    const int chunkSize = (int)floor(0.1f / prt);
+    //const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(60.0e3 / 3.0e8 * fs * 2.0));
+    const int gateCount = 8;
+    const int chunkSize = MAX(1, (int)floor(0.1f / prt));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (%.1f km)   chunk %d\n",
@@ -103,20 +104,30 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                   RKMomentEngineStatusString(radar->momentEngine));
         }
 
-        for (int j = 0; radar->active && j < chunkSize; j++) {
+        for (j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
-            // Fill in the data...
+            // Fill in the header
             pulse->header.gateCount = gateCount;
             pulse->header.azimuthDegrees = azimuth;
             pulse->header.elevationDegrees = 2.41f;
-            RKInt16C *X = RKGetInt16DataFromPulse(pulse, 0);
+            // Fill in the data...
+            RKInt16C *X = RKGetInt16CDataFromPulse(pulse, 1);
+            g = pulse->header.i % 4 * (pulse->header.i % 2 ? 1 : -1);
             for (k = 0; k < gateCount; k++) {
-                X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
+                //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
+                //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
+                if (k % 2 == 0) {
+                    X->i = (int16_t)(k * g) + 1;
+                    X->q = (int16_t)(-k * g);
+                } else {
+                    X->i = (int16_t)(-k * g);
+                    X->q = (int16_t)(k * g);
+                }
                 X++;
             }
             phi += 0.02f;
-            azimuth = fmodf(50.0f * tau, 360.0f);
+            //azimuth = fmodf(50.0f * tau, 360.0f);
+            azimuth = fmodf(1.0f * tau, 360.0f);
 
             RKSetPulseReady(pulse);
 
@@ -140,7 +151,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     RKPulse *pulse = RKGetVacantPulse(radar);
     pulse->header.gateCount = 6;
 
-    RKInt16C *X = RKGetInt16DataFromPulse(pulse, 0);
+    RKInt16C *X = RKGetInt16CDataFromPulse(pulse, 0);
     memset(X, 0, pulse->header.gateCount * sizeof(RKInt16C));
     X[0].i = 1;
     X[0].q = 0;

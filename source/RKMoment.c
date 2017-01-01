@@ -139,11 +139,21 @@ void *momentCore(void *_in) {
         // The index path of the source of this ray
         const RKModuloPath path = engine->momentSource[io];
 
+        // Duplicate a linear array for processor
+        RKPulse *pulses[RKMaxPulsesPerRay];
+        k = 0;
+        is = path.origin;
+        do {
+            pulses[k++] = RKGetPulse(engine->pulseBuffer, is);
+            is = RKNextModuloS(is, engine->pulseBufferSize);
+        } while (k < path.length);
+        
         // Call the assigned moment processor if we are to process
         is = path.origin;
-        if (path.length > 0) {
+        if (path.length > 3) {
             // End index of the I/Q for this ray
-            ie = engine->processor(space, engine->pulseBuffer, path, name);
+            k = engine->processor(space, pulses, path.length, name);
+            ie = RKNextNModuloS(is, k, engine->pulseBufferSize);
             ray->header.s |= RKRayStatusProcessed;
         } else {
             ie = is;
@@ -316,10 +326,10 @@ void *pulseGatherer(void *_in) {
                 }
             } else {
                 // Gather the start and end pulses and post a worker to process for a ray
-                if (i1 != i0) {
+                if (i1 != i0 || count == RKMaxPulsesPerRay) {
                     i1 = i0;
-                    // Inclusive count, the end pulse is used on both rays
-                    engine->momentSource[j].length = count + 1;
+                    // Number of samples in this ray
+                    engine->momentSource[j].length = count;
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
@@ -374,7 +384,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     memset(engine, 0, sizeof(RKMomentEngine));
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->processor = &RKPulsePair;
+    engine->processor = &RKPulsePairHop;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;

@@ -52,6 +52,7 @@
 #define RKWorkerDutyCycleBufferSize      1000
 #define RKMaxPulsesPerRay                1000
 #define RKMaxLag                         5            // Maximum ACF / CCF lag = +/-4 and 0
+#define RKMaxProductCount                6
 
 /*! @/definedblock */
 
