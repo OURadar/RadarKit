@@ -123,6 +123,22 @@ void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
     return;
 }
 
+// Complex Subtration
+void RKSIMD_zsub(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
+    int k;
+    RKVec *s1i = (RKVec *)s1->i;
+    RKVec *s1q = (RKVec *)s1->q;
+    RKVec *s2i = (RKVec *)s2->i;
+    RKVec *s2q = (RKVec *)s2->q;
+    RKVec *di  = (RKVec *)dst->i;
+    RKVec *dq  = (RKVec *)dst->q;
+    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        *di++ = _rk_mm_sub_pf(*s1i++, *s2i++);
+        *dq++ = _rk_mm_sub_pf(*s1q++, *s2q++);
+    }
+    return;
+}
+
 // Complex Multiplication
 void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
     RKVec *s1i = (RKVec *)s1->i;
@@ -162,6 +178,22 @@ void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n) {
     for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
         *di = _rk_mm_add_pf(*di, *si++);
         *dq = _rk_mm_add_pf(*dq, *sq++);
+        di++;
+        dq++;
+    }
+    return;
+}
+
+// In-place Complex Subtraction
+void RKSIMD_izsub(RKIQZ *src, RKIQZ *dst, const int n) {
+    int k;
+    RKVec *si = (RKVec *)src->i;
+    RKVec *sq = (RKVec *)src->q;
+    RKVec *di = (RKVec *)dst->i;
+    RKVec *dq = (RKVec *)dst->q;
+    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        *di = _rk_mm_sub_pf(*di, *si++);
+        *dq = _rk_mm_sub_pf(*dq, *sq++);
         di++;
         dq++;
     }

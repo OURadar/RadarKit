@@ -32,7 +32,7 @@ void RKTestModuloMath(void) {
 }
 
 RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
-    int j, k;
+    int j, g, p;
     float phi = 0.0f;
     float tau = 0.0f;
     float azimuth = 0.0f;
@@ -40,7 +40,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     double dt = 0.0;
     double prt = 0.0002;
     float fs = 50.0e6;
-    int g = 0;
+    int n = 0;
 
     gettimeofday(&t0, NULL);
 
@@ -111,19 +111,21 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             pulse->header.azimuthDegrees = azimuth;
             pulse->header.elevationDegrees = 2.41f;
             // Fill in the data...
-            RKInt16C *X = RKGetInt16CDataFromPulse(pulse, 1);
-            g = pulse->header.i % 4 * (pulse->header.i % 2 ? 1 : -1);
-            for (k = 0; k < gateCount; k++) {
-                //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
-                if (k % 2 == 0) {
-                    X->i = (int16_t)(k * g) + 1;
-                    X->q = (int16_t)(-k * g);
-                } else {
-                    X->i = (int16_t)(-k * g);
-                    X->q = (int16_t)(k * g);
+            for (p = 0; p < 2; p++) {
+                RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                n = pulse->header.i % 4 * (pulse->header.i % 2 ? 1 : -1) + p;
+                for (g = 0; g < gateCount; g++) {
+                    //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
+                    //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
+                    if (g % 2 == 0) {
+                        X->i = (int16_t)(g * n) + p;
+                        X->q = (int16_t)(-g * g);
+                    } else {
+                        X->i = (int16_t)(-g * n);
+                        X->q = (int16_t)(g * p) + n;
+                    }
+                    X++;
                 }
-                X++;
             }
             phi += 0.02f;
             //azimuth = fmodf(50.0f * tau, 360.0f);
@@ -135,12 +137,12 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
         }
 
         // Wait to simulate the PRF
-        g = 0;
+        n = 0;
         do {
             gettimeofday(&t1, NULL);
             dt = RKTimevalDiff(t1, t0);
             usleep(1000);
-            g++;
+            n++;
         } while (radar->active && dt < prt * chunkSize);
         t0 = t1;
     }

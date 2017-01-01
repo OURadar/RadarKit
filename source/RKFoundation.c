@@ -130,7 +130,7 @@ void RKShowVecFloat(const char *name, const float *p, const int n) {
     char str[RKMaximumStringLength];
     k = sprintf(str, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20)
-        k += sprintf(str + k, " %5.1f       ", p[i++]);
+        k += sprintf(str + k, " %7.2f          ", p[i++]);
     sprintf(str + k, "]");
     printf("%s\n", str);
 }
@@ -141,8 +141,10 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     int k = 0;
     char str[RKMaximumStringLength];
     k = sprintf(str, "%s[", name);
-    while (i < n && k < RKMaximumStringLength - 20)
-        k += sprintf(str + k, " %5.1f%+5.1fi ", p->i[i], p->q[i]);
+    while (i < n && k < RKMaximumStringLength - 20) {
+        k += sprintf(str + k, " %7.2f%+7.2fi ", p->i[i], p->q[i]);
+        i++;
+    }
     sprintf(str + k, "]");
     printf("%s\n", str);
 }

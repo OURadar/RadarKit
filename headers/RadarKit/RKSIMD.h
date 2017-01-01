@@ -44,9 +44,11 @@ enum RKSIMDDemoFlag {
 void RKSIMD_show_info(void);
 void RKSIMD_zcpy (RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zadd (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
+void RKSIMD_zsub (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
 void RKSIMD_zmul (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n);
+void RKSIMD_izsub(RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zcma (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c);
 void RKSIMD_zscl (RKIQZ *src, const float f, RKIQZ *dst, const int n);
 void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n);
