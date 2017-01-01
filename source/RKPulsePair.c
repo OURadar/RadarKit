@@ -37,7 +37,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     // Calculate R0, R1
     // R0, R1 --> Z, V, W
 
-    int n, k, p;
+    int n, j, k, p;
 
     // Get the start pulse to know the capacity
     RKPulse *pulse = input[0];
@@ -148,37 +148,37 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     int nlag = 3;
     RKIQZ Xh, Xv;
     
-    for (int ic = 0; ic < 2 * nlag + 1; ic++) {
-        k = ic - nlag;
+    for (j = 0; j < 2 * nlag + 1; j++) {
+        k = j - nlag;
         
         // Numerator
         if (k < 0) {
             Xh = RKGetSplitComplexDataFromPulse(input[0], 0);
             Xv = RKGetSplitComplexDataFromPulse(input[-k], 1);
-            RKSIMD_zmul(&Xh, &Xv, &space->C[ic], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
+            RKSIMD_zmul(&Xh, &Xv, &space->C[j], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
             for (n = -k + 1; n < count; n++) {
                 Xh = RKGetSplitComplexDataFromPulse(input[n + k], 0);
                 Xv = RKGetSplitComplexDataFromPulse(input[n], 1);
-                RKSIMD_zcma(&Xh, &Xv, &space->C[ic], gateCount, 1);                      // C = C + Xh[] * Xv[]'
+                RKSIMD_zcma(&Xh, &Xv, &space->C[j], gateCount, 1);                      // C = C + Xh[] * Xv[]'
             }
-            RKSIMD_izscl(&space->C[ic], 1.0f / (RKFloat)(count + k), gateCount);         // E{Xh * Xv'}
+            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(count + k), gateCount);         // E{Xh * Xv'}
         } else {
             Xh = RKGetSplitComplexDataFromPulse(input[k], 0);
             Xv = RKGetSplitComplexDataFromPulse(input[0], 1);
-            RKSIMD_zmul(&Xh, &Xv, &space->C[ic], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
+            RKSIMD_zmul(&Xh, &Xv, &space->C[j], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
             for (n = k + 1; n < count; n++) {
                 Xh = RKGetSplitComplexDataFromPulse(input[n], 0);
                 Xv = RKGetSplitComplexDataFromPulse(input[n - k], 1);
-                RKSIMD_zcma(&Xh, &Xv, &space->C[ic], gateCount, 1);                      // C = C + Xh[] * Xv[]'
+                RKSIMD_zcma(&Xh, &Xv, &space->C[j], gateCount, 1);                      // C = C + Xh[] * Xv[]'
             }
-            RKSIMD_izscl(&space->C[ic], 1.0f / (RKFloat)(count - k), gateCount);         // E{Xh * Xv'}
+            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(count - k), gateCount);         // E{Xh * Xv'}
         }
         // Comment the following line to include the zero-Doppler signal
-        RKSIMD_zabs(&space->C[ic], space->aC[ic], gateCount);                            // | E{Xh * Xv'} - E{Xh} * E{Xv}' | --> absC[ic]
+        RKSIMD_zabs(&space->C[j], space->aC[j], gateCount);                             // | E{Xh * Xv'} - E{Xh} * E{Xv}' | --> absC[ic]
         
         w = (3.0f * N * N + 3.0f * N - 1.0f - 5.0f * (RKFloat)(k * k));
         for (n = 0; n < gateCount; n++) {
-            space->gC[n] += w * logf(space->aC[ic][n]);
+            space->gC[n] += w * logf(space->aC[j][n]);
         }
     }
     
