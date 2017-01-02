@@ -3,7 +3,7 @@
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 9/20/15.
-//
+//  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKMoment.h>
@@ -409,7 +409,7 @@ void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
 }
 
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
-//    engine->processor = &RKMultilag;
+    engine->processor = &RKMultiLag;
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
