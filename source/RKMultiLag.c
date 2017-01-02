@@ -95,7 +95,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     
     RKZeroOutFloat(space->gC, capacity);
     
-    const RKFloat N = (RKFloat)lagCount; // Number of lag
+    const RKFloat N = (RKFloat)lagCount; // Number of lags
     RKFloat w = 0.0f;
     
     RKIQZ Xh, Xv;
@@ -134,6 +134,15 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         }
     }
     
+    /*  MATLAB can be very simple:
+     
+     g = 1; % gate 1
+     C = xcorr(Xh(g, :), Xv(g, :), 4, 'unbiased') .'
+     wn = 3 * N^2 + 3 * N - 1 - 5 * (-N + 1 : N - 1).^2;
+     wd = 3 / ((2 * N - 1) * (2 * N + 1) * (2 * N + 3));
+     gC = exp(wd * sum(wn(:) .* log(abs(C))))
+     
+     */
     w = 3.0f / ((2.0f * N - 1.0f) * (2.0f * N + 1.0f) * (2.0f * N + 3.0f));
     for (n = 0; n < gateCount; n++) {
         space->gC[n] = expf(w * space->gC[n]);
@@ -154,16 +163,31 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     
     if (count < 8) {
         char variable[32];
+        char line[2048];
+        RKIQZ X[count];
         for (p = 0; p < 2; p++) {
             printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
             for (n = 0; n < count; n++) {
-                RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
+                X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
+            }
+            
+            j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
+            for (k = 0; k < gateCount; k++) {
+                for (n = 0; n < count; n++) {
+                    j += sprintf(line + j, " %.4f%+.4fj,", X[n].i[k], X[n].q[k]);
+                }
+                j += sprintf(line + j - 1, ";...\n") - 1;
+            }
+            sprintf(line + j - 5, "]\n");
+            printf("%s\n", line);
+            
+            for (n = 0; n < count; n++) {
                 sprintf(variable, "  X[%d] = ", n);
-                RKShowVecIQZ(variable, &Xn, gateCount);
+                RKShowVecIQZ(variable, &X[n], gateCount);
             }
             printf(RKEOL);
-            RKShowVecIQZ("    mX = ", &space->mX[p], gateCount);
-            RKShowVecIQZ("    vX = ", &space->vX[p], gateCount);
+            RKShowVecIQZ("    mX = ", &space->mX[p], gateCount);                              // mean(X) in MATLAB
+            RKShowVecIQZ("    vX = ", &space->vX[p], gateCount);                              // var(X, 1) in MATLAB
             printf(RKEOL);
             for (k = 0; k < lagCount; k++) {
                 sprintf(variable, "  R[%d] = ", k);
@@ -180,7 +204,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         for (j = 0; j < 2 * lagCount - 1; j++) {
             k = j - lagCount + 1;
             sprintf(variable, " C[%2d] = ", k);
-            RKShowVecIQZ(variable, &space->C[j], gateCount);
+            RKShowVecIQZ(variable, &space->C[j], gateCount);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
         }
         printf(RKEOL);
         RKShowVecFloat("    gC = ", space->gC, gateCount);

@@ -264,7 +264,10 @@ int main(int argc, char *argv[]) {
     } else {
         radar = RKInit();
     }
-    
+    if (radar == NULL) {
+        exit(EXIT_FAILURE);
+    }
+
     RKSetVerbose(radar, user.verbose);
     
     // Catch Ctrl-C and exit gracefully
