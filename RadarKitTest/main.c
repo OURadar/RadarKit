@@ -114,19 +114,20 @@ UserParams processInput(int argc, char **argv) {
     memset(&user, 0, sizeof(UserParams));
     
     static struct option long_options[] = {
-        {"alarm"                 , no_argument      , 0, 'A'}, // ASCII 65 - 90 : A - Z
-        {"no-color"              , no_argument      , 0, 'C'},
-        {"fs"                    , required_argument, 0, 'F'},
-        {"lean-system-test"      , no_argument      , 0, 'L'},
-        {"test-mod"              , no_argument      , 0, 'M'},
-        {"test-simd"             , optional_argument, 0, 'S'},
-        {"test-pulse-compression", optional_argument, 0, 'T'},
-        {"azimuth"               , required_argument, 0, 'a'}, // ASCII 97 - 122 : a - z
-        {"core"                  , required_argument, 0, 'c'},
-        {"prf"                   , required_argument, 0, 'f'},
-        {"help"                  , no_argument      , 0, 'h'},
-        {"sim"                   , no_argument      , 0, 's'},
-        {"verbose"               , no_argument      , 0, 'v'},
+        {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
+        {"no-color"              , no_argument      , NULL, 'C'},
+        {"debug-demo"            , no_argument      , NULL, 'D'},
+        {"fs"                    , required_argument, NULL, 'F'},
+        {"lean-system-test"      , no_argument      , NULL, 'L'},
+        {"test-mod"              , no_argument      , NULL, 'M'},
+        {"test-simd"             , optional_argument, NULL, 'S'},
+        {"test-pulse-compression", optional_argument, NULL, 'T'},
+        {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
+        {"core"                  , required_argument, NULL, 'c'},
+        {"prf"                   , required_argument, NULL, 'f'},
+        {"help"                  , no_argument      , NULL, 'h'},
+        {"sim"                   , no_argument      , NULL, 's'},
+        {"verbose"               , no_argument      , NULL, 'v'},
         {0, 0, 0, 0}
     };
     
@@ -159,6 +160,13 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'C':
                 user.noColor = true;
+                break;
+            case 'D':
+                user.fs = 5.0e6;
+                user.prf = 6;
+                user.coresForPulseCompression = 2;
+                user.coresForProductGenerator = 2;
+                user.verbose = 3;
                 break;
             case 'F':
                 user.fs = atof(optarg);

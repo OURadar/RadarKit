@@ -77,7 +77,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // IQ buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
-        bytes = RKPulseBufferAlloc((void **)&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
+        bytes = RKPulseBufferAlloc(&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
         if (bytes == 0 || radar->pulses == NULL) {
             RKLog("Error. Unable to allocate memory for I/Q pulses");
             return NULL;
@@ -103,7 +103,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // Moment bufer
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
-        bytes = RKRayBufferAlloc((void **)&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseToRayRatio, radar->desc.rayBufferDepth);
+        bytes = RKRayBufferAlloc(&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseToRayRatio, radar->desc.rayBufferDepth);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level II buffer occupies %s B  (%d products of %s gates x %s rays)\n",
                   RKIntegerToCommaStyleString(bytes),

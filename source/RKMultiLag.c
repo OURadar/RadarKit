@@ -12,7 +12,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     //    struct timeval tic, toc;
     //    gettimeofday(&tic, NULL);
     
-#if defined(DEBUG_MM)
+//#if defined(DEBUG_MM)
     RKPulse *S = input[0];
     RKPulse *E = input[count -1];
     // Beamwidths of azimuth & elevation
@@ -23,7 +23,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
           name, S->header.i, E->header.i,
           S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
           S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth);
-#endif
+//#endif
     
     // Process
     // Identify odd pulses and even pulses
@@ -36,7 +36,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     RKPulse *pulse = input[0];
     const uint32_t capacity = pulse->header.capacity;
     const uint32_t gateCount = pulse->header.gateCount;
-    
+    const int lagCount = MIN(count, space->lagCount);
     //
     //  ACF
     //
@@ -46,7 +46,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         
         // Initializes the storage
         RKZeroOutIQZ(&space->mX[p], capacity);
-        for (k = 0; k < RKMaxLag; k++) {
+        for (k = 0; k < lagCount; k++) {
             RKZeroOutIQZ(&space->R[p][k], capacity);
         }
         
@@ -59,7 +59,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
             
             RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
             // Go through each lag
-            for (k = 0; k < MIN(count, RKMaxLag); k++) {
+            for (k = 0; k < lagCount; k++) {
                 //RKLog(">Lag %d\n", k);
                 if (n >= k) {
                     RKIQZ Xk = RKGetSplitComplexDataFromPulse(input[n - k], p);
@@ -73,7 +73,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         RKSIMD_izscl(&space->mX[p], 1.0f / (float)n, gateCount);                         // mX /= n
         
         // ACF
-        for (k = 0; k < MIN(count, RKMaxLag); k++) {
+        for (k = 0; k < lagCount; k++) {
             RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)
             RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                              // aR[k] = abs(R[k])
         }
@@ -85,49 +85,9 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     RKSIMD_izsub(&space->R[0][0], &space->vX[0], gateCount);                             // Rh[0] - varh   --> varh  (varh is now VAR(Xh))
     RKSIMD_izsub(&space->R[1][0], &space->vX[1], gateCount);                             // Rv[0] - varv   --> varv  (varv is now VAR(Xh))
     
-    for (p = 0; p < 2; p++) {
-        for (k = 0; k < MIN(count, RKMaxLag); k++) {
-            RKZeroOutFloat(&space->aR[p][k][0], gateCount);
-        }
-        RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
-    }
-    
     // NOTE: At this point, one can use space->vX[0] & space->vX[1] as signal power for H & V, respectively.
     // However, within the isodop regions, the zero-Doppler power is may have been filtered out by the clutter filter
     // so S & R are biased unless the filter is turned off. It's common problem with weather radars.
-    
-#if defined(DEBUG_PULSE_PAIR)
-    if (count < 8) {
-        char variable[32];
-        for (p = 0; p < 2; p++) {
-            printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
-            for (n = 0; n < count; n++) {
-                RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
-                sprintf(variable, "  X[%d] = ", n);
-                RKShowVecIQZ(variable, &Xn, 8);
-            }
-            printf(RKEOL);
-            for (k = 0; k < MIN(count, RKMaxLag); k++) {
-                sprintf(variable, "  R[%d] = ", k);
-                RKShowVecIQZ(variable, &space->R[p][k], 8);
-            }
-            printf(RKEOL);
-            for (k = 0; k < MIN(count, RKMaxLag); k++) {
-                sprintf(variable, " aR[%d] = ", k);
-                RKShowVecFloat(variable, space->aR[p][k], 8);
-            }
-            printf(RKEOL);
-        }
-        printf("\033[4mMean and Variance:\033[24m\n");
-        
-        RKShowVecIQZ("  mX[0] = ", &space->mX[0], 8);
-        RKShowVecIQZ("  vX[0] = ", &space->vX[0], 8);
-        RKShowVecIQZ("  mX[1] = ", &space->mX[1], 8);
-        RKShowVecIQZ("  vX[1] = ", &space->vX[1], 8);
-    } else {
-        RKLog("ERROR. Skipped printing a large array.\n");
-    }
-#endif
     
     //
     //  CCF
@@ -135,14 +95,13 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     
     RKZeroOutFloat(space->gC, capacity);
     
-    const RKFloat N = (RKFloat)3; // Number of lag
+    const RKFloat N = (RKFloat)lagCount; // Number of lag
     RKFloat w = 0.0f;
     
-    int nlag = 3;
     RKIQZ Xh, Xv;
     
-    for (j = 0; j < 2 * nlag + 1; j++) {
-        k = j - nlag;
+    for (j = 0; j < 2 * lagCount - 1; j++) {
+        k = j - lagCount + 1;
         
         // Numerator
         if (k < 0) {
@@ -179,7 +138,57 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     for (n = 0; n < gateCount; n++) {
         space->gC[n] = expf(w * space->gC[n]);
     }
+
+    // Zero out the tails
+    for (p = 0; p < 2; p++) {
+        for (k = 0; k < lagCount; k++) {
+            RKZeroTailFloat(space->aR[p][k], capacity, gateCount);
+        }
+        RKZeroTailIQZ(&space->mX[p], capacity, gateCount);
+        RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
+        for (j = 0; j < 2 * lagCount - 1; j++) {
+            k = j - lagCount + 1;
+            RKZeroTailFloat(&space->gC[j], capacity, gateCount);
+        }
+    }
     
+    if (count < 8) {
+        char variable[32];
+        for (p = 0; p < 2; p++) {
+            printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
+            for (n = 0; n < count; n++) {
+                RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
+                sprintf(variable, "  X[%d] = ", n);
+                RKShowVecIQZ(variable, &Xn, gateCount);
+            }
+            printf(RKEOL);
+            RKShowVecIQZ("    mX = ", &space->mX[p], gateCount);
+            RKShowVecIQZ("    vX = ", &space->vX[p], gateCount);
+            printf(RKEOL);
+            for (k = 0; k < lagCount; k++) {
+                sprintf(variable, "  R[%d] = ", k);
+                RKShowVecIQZ(variable, &space->R[p][k], gateCount);
+            }
+            printf(RKEOL);
+            for (k = 0; k < lagCount; k++) {
+                sprintf(variable, " aR[%d] = ", k);
+                RKShowVecFloat(variable, space->aR[p][k], gateCount);
+            }
+            printf(RKEOL);
+        }
+        printf("\033[4mCross-channel:\033[24m\n");
+        for (j = 0; j < 2 * lagCount - 1; j++) {
+            k = j - lagCount + 1;
+            sprintf(variable, " C[%2d] = ", k);
+            RKShowVecIQZ(variable, &space->C[j], gateCount);
+        }
+        printf(RKEOL);
+        RKShowVecFloat("    gC = ", space->gC, gateCount);
+        printf(RKEOL);
+    } else {
+        RKLog("ERROR. Skipped printing a large array.\n");
+    }
+
     //    gettimeofday(&toc, NULL);
     //    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
     

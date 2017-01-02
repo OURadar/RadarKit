@@ -160,6 +160,10 @@ void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity) {
     memset(data->q, 0, capacity * sizeof(RKFloat));
 }
 
+void RKZeroTailFloat(RKFloat *data, const uint32_t capacity, const uint32_t origin) {
+    memset(&data[origin], 0, (capacity - origin) * sizeof(RKFloat));
+}
+
 void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) {
     memset(&data->i[origin], 0, (capacity - origin) * sizeof(RKFloat));
     memset(&data->q[origin], 0, (capacity - origin) * sizeof(RKFloat));
@@ -176,9 +180,9 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
 //    RKComplex          Y[2][capacity];
 //    RKIQZ              Z[2];
 //
-size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
+size_t RKPulseBufferAlloc(RKPulse **mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity - (1 << (int)log2f((float)capacity))) {
-        RKLog("Error. Pulse capacity must of power of 2!");
+        RKLog("Error. Pulse capacity must be power of 2!");
         return 0;
     }
     if (capacity != (capacity / RKSIMDAlignSize) * RKSIMDAlignSize) {
@@ -198,7 +202,7 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
         return 0;
     }
     size_t bytes = slots * pulseSize;
-    posix_memalign(mem, RKSIMDAlignSize, bytes);
+    posix_memalign((void **)mem, RKSIMDAlignSize, bytes);
     if (*mem == NULL) {
         RKLog("Error. Unable to allocate pulse buffer.");
         return 0;
@@ -217,24 +221,23 @@ size_t RKPulseBufferAlloc(void **mem, const int capacity, const int slots) {
     return bytes;
 }
 
-RKPulse *RKGetPulse(void *buffer, const int k) {
-    RKPulse *pulse = (RKPulse *)buffer;
+RKPulse *RKGetPulse(RKPulse *pulse, const uint32_t k) {
     size_t pulseSize = sizeof(pulse->headerBytes) + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
-    return (RKPulse *)(buffer + k * pulseSize);
+    return (RKPulse *)((void *)pulse + k * pulseSize);
 }
 
-RKInt16C *RKGetInt16CDataFromPulse(RKPulse *pulse, const int c) {
-    char *m = (char *)pulse->data;
+RKInt16C *RKGetInt16CDataFromPulse(RKPulse *pulse, const uint32_t c) {
+    void *m = (void *)pulse->data;
     return (RKInt16C *)(m + c * pulse->header.capacity * sizeof(RKInt16C));
 }
 
-RKComplex *RKGetComplexDataFromPulse(RKPulse *pulse, const int c) {
+RKComplex *RKGetComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     void *m = (void *)pulse->data;
     m += 2 * pulse->header.capacity * sizeof(RKInt16C);
     return (RKComplex *)(m + c * pulse->header.capacity * sizeof(RKComplex));
 }
 
-RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int c) {
+RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     void *m = (void *)pulse->data;
     m += 2 * pulse->header.capacity * (sizeof(RKInt16C) + sizeof(RKComplex));
     m += c * pulse->header.capacity * 2 * sizeof(RKFloat);
@@ -251,7 +254,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const int c) {
 //    int16_t            idata[2][capacity];
 //    float              fdata[2][capacity];
 //
-size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
+size_t RKRayBufferAlloc(RKRay **mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity - (capacity / RKSIMDAlignSize) * RKSIMDAlignSize != 0) {
         RKLog("Error. Ray capacity must be multiple of %d!", RKSIMDAlignSize);
         return 0;
@@ -268,7 +271,7 @@ size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
         return 0;
     }
     size_t bytes = slots * raySize;
-    posix_memalign(mem, RKSIMDAlignSize, bytes);
+    posix_memalign((void **)mem, RKSIMDAlignSize, bytes);
     if (*mem == NULL) {
         RKLog("Error. Unable to allocate ray buffer.");
         return 0;
@@ -287,18 +290,17 @@ size_t RKRayBufferAlloc(void **mem, const int capacity, const int slots) {
     return bytes;
 }
 
-RKRay *RKGetRay(void *buffer, const int k) {
-    RKRay *ray = (RKRay *)buffer;
+RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
     size_t raySize = sizeof(ray->headerBytes) + 2 * ray->header.capacity * (sizeof(int16_t) + sizeof(float));
-    return (RKRay *)(buffer + k * raySize);
+    return (RKRay *)((void *)ray + k * raySize);
 }
 
-int16_t *RKGetInt16DataFromRay(RKRay *ray, const int p) {
+int16_t *RKGetInt16DataFromRay(RKRay *ray, const uint32_t p) {
     void *m = (void *)ray->data;
     return (int16_t *)(m + p * ray->header.capacity * sizeof(int16_t));
 }
 
-float *RKGetFloatDataFromRay(RKRay *ray, const int p) {
+float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t p) {
     void *m = (void *)ray->data;
     m += 2 * ray->header.capacity * sizeof(int16_t);
     return (float *)(m + p * ray->header.capacity * sizeof(float));
@@ -306,43 +308,56 @@ float *RKGetFloatDataFromRay(RKRay *ray, const int p) {
 
 #pragma mark -
 
-RKScratch *RKScratchInit(const size_t capacity) {
-    RKScratch *space = (RKScratch *)malloc(sizeof(RKScratch));
-    if (space == NULL) {
-        RKLog("Error. Unable to allocate a momment scratch space.\n");
-        return NULL;
+size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount) {
+    if (capacity - (1 << (int)log2f((float)capacity))) {
+        RKLog("Error. Scratch space capacity must be power of 2!");
+        return 0;
     }
-    int j, k;
-    size_t mem = 0;
+    if (lagCount > RKLagCount) {
+        RKLog("Error. Lag count must not exceed the hard-coded limit %d\n", lagCount);
+        return 0;
+    }
+    *buffer = malloc(sizeof(RKScratch));
+    if (*buffer == NULL) {
+        RKLog("Error. Unable to allocate a momment scratch space.\n");
+        return 0;
+    }
+    memset(*buffer, 0, sizeof(RKScratch));
 
+    RKScratch *space = *buffer;
+    space->lagCount = lagCount;
+    
+    int j, k;
+    size_t bytes = 0;
     for (k = 0; k < 2; k++) {
         posix_memalign((void **)&space->mX[k].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
         posix_memalign((void **)&space->mX[k].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
         posix_memalign((void **)&space->vX[k].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
         posix_memalign((void **)&space->vX[k].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        mem += 4;
-        for (j = 0; j < RKMaxLag; j++) {
+        bytes += 4;
+        for (j = 0; j < RKLagCount; j++) {
             posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
             posix_memalign((void **)&space->R[k][j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
             posix_memalign((void **)&space->aR[k][j], RKSIMDAlignSize, capacity * sizeof(RKFloat));
-            mem += 3;
+            bytes += 3;
         }
     }
     posix_memalign((void **)&space->sC.i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
     posix_memalign((void **)&space->sC.q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
     posix_memalign((void **)&space->ts.i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
     posix_memalign((void **)&space->ts.q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-    mem += 4;
-    for (j = 0; j < 2 * RKMaxLag - 1; j++) {
+    bytes += 4;
+    for (j = 0; j < 2 * RKLagCount - 1; j++) {
         posix_memalign((void **)&space->C[j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
         posix_memalign((void **)&space->C[j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
         posix_memalign((void **)&space->aC[j], RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        mem += 3 ;
+        bytes += 3 ;
     }
     posix_memalign((void **)&space->gC, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-    mem++;
-    mem *= capacity * sizeof(RKFloat);
-    return space;
+    bytes++;
+    bytes *= capacity * sizeof(RKFloat);
+    bytes += sizeof(RKScratch);
+    return bytes;
 }
 
 void RKScratchFree(RKScratch *space) {
@@ -352,7 +367,7 @@ void RKScratchFree(RKScratch *space) {
         free(space->mX[k].q);
         free(space->vX[k].i);
         free(space->vX[k].q);
-        for (j = 0; j < RKMaxLag; j++) {
+        for (j = 0; j < RKLagCount; j++) {
             free(space->R[k][j].i);
             free(space->R[k][j].q);
             free(space->aR[k][j]);
@@ -362,7 +377,7 @@ void RKScratchFree(RKScratch *space) {
     free(space->sC.q);
     free(space->ts.i);
     free(space->ts.q);
-    for (j = 0; j < 2 * RKMaxLag - 1; j++) {
+    for (j = 0; j < 2 * RKLagCount - 1; j++) {
         free(space->C[j].i);
         free(space->C[j].q);
         free(space->aC[j]);

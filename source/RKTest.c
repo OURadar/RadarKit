@@ -113,15 +113,15 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                n = pulse->header.i % 4 * (pulse->header.i % 2 ? 1 : -1) + p;
+                n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < gateCount; g++) {
                     //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
                     //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
                     if (g % 2 == 0) {
                         X->i = (int16_t)(g * n) + p;
-                        X->q = (int16_t)(-g * g);
+                        X->q = (int16_t)((n - 2) * (g - 1));
                     } else {
-                        X->i = (int16_t)(-g * n);
+                        X->i = (int16_t)(-g * (n - 1));
                         X->q = (int16_t)(g * p) + n;
                     }
                     X++;

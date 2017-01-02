@@ -46,12 +46,12 @@
 #define RKBuffer1SlotCount               200          //
 #define RKBuffer2SlotCount               4000         // Ray
 #define RKGateCount                      32768        // Must power of 2!
+#define RKLagCount                       5            // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64           // SSE 16, AVX 32, AVX-512 64
 #define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
 #define RKMaxMatchedFilterGroupCount     8            // Maximum filter group count
 #define RKWorkerDutyCycleBufferSize      1000
 #define RKMaxPulsesPerRay                2000
-#define RKMaxLag                         5            // Maximum ACF / CCF lag = +/-4 and 0
 #define RKMaxProductCount                6
 
 /*! @/definedblock */
@@ -301,14 +301,15 @@ typedef void * RKTransceiver;
 typedef void * RKPedestal;
 
 typedef struct rk_scratch {
+    uint8_t          lagCount;
     RKIQZ            mX[2];                                // Mean of X, 2 for dual-pol
     RKIQZ            vX[2];                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
-    RKIQZ            R[2][RKMaxLag];                       // ACF up to RKMaxLag - 1 for each polarization
-    RKIQZ            C[2 * RKMaxLag - 1];                  // CCF in [ -RKMaxLag + 1, ..., -1, 0, 1, ..., RKMaxLag - 1 ]
+    RKIQZ            R[2][RKLagCount];                     // ACF up to RKLagCount - 1 for each polarization
+    RKIQZ            C[2 * RKLagCount - 1];                // CCF in [ -RKLagCount + 1, ..., -1, 0, 1, ..., RKLagCount - 1 ]
     RKIQZ            sC;                                   // Summation of Xh * Xv'
     RKIQZ            ts;                                   // Temporary scratch space
-    RKFloat          *aR[2][RKMaxLag];                     // abs(ACF)
-    RKFloat          *aC[2 * RKMaxLag - 1];                // abs(CCF)
+    RKFloat          *aR[2][RKLagCount];                   // abs(ACF)
+    RKFloat          *aC[2 * RKLagCount - 1];              // abs(CCF)
     RKFloat          *gC;                                  // Gaussian fitted CCF(0)
 } RKScratch;
 

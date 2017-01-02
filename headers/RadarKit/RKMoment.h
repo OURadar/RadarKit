@@ -56,7 +56,8 @@ struct rk_moment_engine {
     RKMomentWorker         *workers;
     pthread_t              tidPulseGatherer;
     pthread_mutex_t        coreMutex;
-
+    uint8_t                processorLagCount;
+    
     // Status / health
     RKMomentEngineState    state;
     uint32_t               tic;
@@ -73,6 +74,9 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
                                          RKPulse *, uint32_t *, const uint32_t,
                                          RKRay *,   uint32_t *, const uint32_t);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
+void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine);
+void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine);
+void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

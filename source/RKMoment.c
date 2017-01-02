@@ -46,16 +46,16 @@ void *momentCore(void *_in) {
         sprintf(name + k, "\033[0m");
     }
 
-    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
-    const size_t capacity = ray->header.capacity;
-
     // Allocate local resources and keep track of the total allocation
-    RKScratch *space = RKScratchInit(capacity);
+    RKScratch *space;
+    size_t mem = RKScratchAlloc(&space, engine->rayBuffer[0].header.capacity, engine->processorLagCount);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateScratchSpace;
     }
-    size_t mem = (2 * (4 + RKMaxLag * 3) + 4 + 2 * (2 * RKMaxLag - 1) * 3 + 1) * capacity * sizeof(RKFloat);
+    if (engine->verbose) {
+        RKLog(">    scratch @ %s B", RKIntegerToCommaStyleString(mem));
+    }
 
     double *busyPeriods, *fullPeriods;
     posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
@@ -384,7 +384,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
     memset(engine, 0, sizeof(RKMomentEngine));
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->processor = &RKPulsePairHop;
+    engine->processor = &RKMultiLag;
+    engine->processorLagCount = RKLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
@@ -402,14 +403,6 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
 
 void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
     engine->verbose = verbose;
-}
-
-void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
-    engine->processor = &RKPulsePair;
-}
-
-void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
-    engine->processor = &RKMultiLag;
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
@@ -438,6 +431,21 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const int count) {
         return;
     }
     engine->coreCount = count;
+}
+
+void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
+    engine->processor = &RKMultiLag;
+    engine->processorLagCount = RKLagCount;
+}
+
+void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
+    engine->processor = &RKPulsePair;
+    engine->processorLagCount = 3;
+}
+
+void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
+    engine->processor = &RKPulsePairHop;
+    engine->processorLagCount = 2;
 }
 
 int RKMomentEngineStart(RKMomentEngine *engine) {
