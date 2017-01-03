@@ -32,15 +32,6 @@
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>
 
-typedef int RKSIMDDemoFlag;
-enum RKSIMDDemoFlag {
-    RKSIMDDemoFlagNull                       = 0,
-    RKSIMDDemoFlagShowNumbers                = 1,
-    RKSIMDDemoFlagPerformanceTestArithmetic  = 1 << 1,
-    RKSIMDDemoFlagPerformanceTestConversion  = 1 << 2,
-    RKSIMDDemoFlagPerformanceTestAll         = RKSIMDDemoFlagPerformanceTestArithmetic | RKSIMDDemoFlagPerformanceTestConversion
-};
-
 void RKSIMD_show_info(void);
 void RKSIMD_zcpy (RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zadd (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
@@ -63,7 +54,5 @@ void RKSIMD_IQZ2Complex(RKIQZ *src, RKComplex *dst, const int n);
 void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n);
 void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n);
 void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n);
-
-void RKSIMDDemo(const RKSIMDDemoFlag);
 
 #endif

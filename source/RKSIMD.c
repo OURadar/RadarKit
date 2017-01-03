@@ -71,8 +71,6 @@ typedef __m128 RKVec;
 
 #endif
 
-#define OXSTR(x)   x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
-
 void RKSIMD_show_info(void) {
     #if defined(__AVX512F__)
     printf("AVX512F is active.\n");
@@ -85,7 +83,7 @@ void RKSIMD_show_info(void) {
     #else
     printf("SSE 128-bit is active.\n");
     #endif
-    printf("sizeof(RKVec) = %zu (%zu floats)\n", sizeof(RKVec), sizeof(RKVec) / 4);
+    printf("sizeof(RKVec) = %zu B (%zu RKFloats)\n", sizeof(RKVec), sizeof(RKVec) / 4);
     return;
 }
 
@@ -95,12 +93,12 @@ void RKSIMD_show_info(void) {
 
 // Complex copy
 void RKSIMD_zcpy(RKIQZ *src, RKIQZ *dst, const int n) {
-    int k;
+    int k, N = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < N; k++) {
         *di++ = *si++;
         *dq++ = *sq++;
     }
@@ -109,14 +107,14 @@ void RKSIMD_zcpy(RKIQZ *src, RKIQZ *dst, const int n) {
 
 // Complex Addition
 void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
     RKVec *s2q = (RKVec *)s2->q;
     RKVec *di  = (RKVec *)dst->i;
     RKVec *dq  = (RKVec *)dst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *di++ = _rk_mm_add_pf(*s1i++, *s2i++);
         *dq++ = _rk_mm_add_pf(*s1q++, *s2q++);
     }
@@ -125,14 +123,14 @@ void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
 
 // Complex Subtration
 void RKSIMD_zsub(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
     RKVec *s2q = (RKVec *)s2->q;
     RKVec *di  = (RKVec *)dst->i;
     RKVec *dq  = (RKVec *)dst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *di++ = _rk_mm_sub_pf(*s1i++, *s2i++);
         *dq++ = _rk_mm_sub_pf(*s1q++, *s2q++);
     }
@@ -141,6 +139,7 @@ void RKSIMD_zsub(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
 
 // Complex Multiplication
 void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
@@ -149,14 +148,14 @@ void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
     RKVec *dq  = (RKVec *)dst->q;
     if (c) {
         // Conjugate s2
-        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             *di++ = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 + Q1 * Q2
             *dq++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1q, *s2i), _rk_mm_mul_pf(*s1i, *s2q)); // Q = Q1 * I2 - I1 * Q2
             s1i++; s1q++;
             s2i++; s2q++;
         }
     } else {
-        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             *di++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q)); // I = I1 * I2 - Q1 * Q2
             *dq++ = _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2q), _rk_mm_mul_pf(*s1q, *s2i)); // Q = I1 * Q2 + Q1 * I2
             s1i++; s1q++;
@@ -168,19 +167,20 @@ void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 
 // Complex Self Multiplication
 void RKSIMD_zsmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
+    int k, K = (n + 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
     if (c) {
         // Conjugate s2
-        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             *di++ = _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)); // I = I1 * I2 + Q1 * Q2
             *dq++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*sq, *si), _rk_mm_mul_pf(*si, *sq)); // Q = Q1 * I2 - I1 * Q2
             si++; sq++;
         }
     } else {
-        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             *di++ = _rk_mm_sub_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)); // I = I1 * I2 - Q1 * Q2
             *dq++ = _rk_mm_add_pf(_rk_mm_mul_pf(*si, *sq), _rk_mm_mul_pf(*sq, *si)); // Q = I1 * Q2 + Q1 * I2
             si++; sq++;
@@ -191,12 +191,12 @@ void RKSIMD_zsmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
 
 // In-place Complex Addition
 void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *di = _rk_mm_add_pf(*di, *si++);
         *dq = _rk_mm_add_pf(*dq, *sq++);
         di++;
@@ -207,12 +207,12 @@ void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n) {
 
 // In-place Complex Subtraction
 void RKSIMD_izsub(RKIQZ *src, RKIQZ *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *di = _rk_mm_sub_pf(*di, *si++);
         *dq = _rk_mm_sub_pf(*dq, *sq++);
         di++;
@@ -223,6 +223,7 @@ void RKSIMD_izsub(RKIQZ *src, RKIQZ *dst, const int n) {
 
 // In-place Complex Multiplication (~50% faster!)
 void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
@@ -231,7 +232,7 @@ void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
     RKVec q;
     if (c) {
         // Conjugate s2
-        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             i = _rk_mm_add_pf(_rk_mm_mul_pf(*di, *si), _rk_mm_mul_pf(*dq, *sq)); // I = I1 * I2 + Q1 * Q2
             q = _rk_mm_sub_pf(_rk_mm_mul_pf(*dq, *si), _rk_mm_mul_pf(*di, *sq)); // Q = Q1 * I2 - I1 * Q2
             *di++ = i;
@@ -239,7 +240,7 @@ void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
             si++; sq++;
         }
     } else {
-        for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             i = _rk_mm_sub_pf(_rk_mm_mul_pf(*di, *si), _rk_mm_mul_pf(*dq, *sq)); // I = I1 * I2 - Q1 * Q2
             q = _rk_mm_add_pf(_rk_mm_mul_pf(*di, *sq), _rk_mm_mul_pf(*dq, *si)); // Q = I1 * Q2 + Q1 * I2
             *di++ = i;
@@ -252,7 +253,7 @@ void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
 
 // Accumulate multiply add
 void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
@@ -261,7 +262,7 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
     RKVec *dq  = (RKVec *)dst->q;
     if (c) {
         // Conjugate s2
-        for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             *di = _rk_mm_add_pf(*di, _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q))); // I += I1 * I2 + Q1 * Q2
             *dq = _rk_mm_add_pf(*dq, _rk_mm_sub_pf(_rk_mm_mul_pf(*s1q, *s2i), _rk_mm_mul_pf(*s1i, *s2q))); // Q += Q1 * I2 - I1 * Q2
             s1i++; s1q++;
@@ -269,7 +270,7 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
             di++; dq++;
         }
     } else {
-        for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+        for (k = 0; k < K; k++) {
             *di = _rk_mm_add_pf(*di, _rk_mm_sub_pf(_rk_mm_mul_pf(*s1i, *s2i), _rk_mm_mul_pf(*s1q, *s2q))); // I += I1 * I2 - Q1 * Q2
             *dq = _rk_mm_add_pf(*dq, _rk_mm_add_pf(_rk_mm_mul_pf(*s1i, *s2q), _rk_mm_mul_pf(*s1q, *s2i))); // Q += I1 * Q2 + Q1 * I2
             s1i++; s1q++;
@@ -282,13 +283,13 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 
 // Multiply by a scale
 void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
     RKVec *dq = (RKVec *)dst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *di++ = _rk_mm_mul_pf(*si++, fv);
         *dq++ = _rk_mm_mul_pf(*sq++, fv);
     }
@@ -296,11 +297,11 @@ void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
 }
 
 void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *si = (RKVec *)srcdst->i;
     RKVec *sq = (RKVec *)srcdst->q;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *si = _rk_mm_mul_pf(*si, fv);
         *sq = _rk_mm_mul_pf(*sq, fv);
         si++;
@@ -311,11 +312,11 @@ void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n) {
 
 // Absolute value of a complex number
 void RKSIMD_zabs(RKIQZ *src, float *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *d = (RKVec *)dst;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *d++ = _rk_mm_sqrt_pf(_rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)));
         si++;
         sq++;
@@ -324,11 +325,11 @@ void RKSIMD_zabs(RKIQZ *src, float *dst, const int n) {
 
 // Add by a float
 void RKSIMD_ssadd(float *src, const RKFloat f, float *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *s = (RKVec *)src;
     RKVec *d = (RKVec *)dst;
-    for (k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *d++ = _rk_mm_add_pf(*s++, fv);
     }
     return;
@@ -349,11 +350,11 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec);
     RKVec r, i, x;
     RKVec *s = (RKVec *)src;                                     // [a  b  x  y ]
     RKVec *d = (RKVec *)dst;                                     // [c  d  z  w ]
-    for (k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
         i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
         x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
@@ -366,10 +367,10 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {
-    int k;
+    int k, K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec);
     RKVec *s = (RKVec *)src;
     RKVec mv = _rk_mm_set1_pf(m);
-    for (k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
+    for (k = 0; k < K; k++) {
         *s++ *= mv;
     }
     return;
@@ -398,17 +399,20 @@ void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n) {
 }
 
 void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
+    int k;
 #if defined(__AVX512F__) || defined(__AVX2__)
     RKVecCvt *s = (RKVecCvt *)src;
     RKVec *d = (RKVec *)dst;
-    for (int k = 0; k < (n + 1) * sizeof(RKComplex) / sizeof(RKVec); k++) {
+    int K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec)
+    for (k = 0; k < K; k++) {
         *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
     }
 #else
     __m128i *s = (__m128i *)src;
     __m128  *d = (__m128 *) dst;
     __m128i  z = _mm_setzero_si128();
-    for (int k = 0; k < (n + 1) * sizeof(RKFloat) / sizeof(__m128); k++) {
+    int K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(__m128);
+    for (k = 0; k < K; k++) {
         *d++ = _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_unpacklo_epi16(*s, z)));
         *d++ = _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_unpackhi_epi16(*s++, z)));
     }
@@ -422,318 +426,4 @@ void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n) {
         dst[i].q = (RKFloat)src[i].q;
     }
     return;
-}
-
-#define RKSIMD_TEST_DESC_FORMAT        "%65s"
-#define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
-
-void RKSIMDDemo(const RKSIMDDemoFlag flag) {
-    RKSIMD_show_info();
-
-    int i;
-    RKIQZ *src, *dst, *cpy;
-    posix_memalign((void **)&src, RKSIMDAlignSize, sizeof(RKIQZ));
-    posix_memalign((void **)&dst, RKSIMDAlignSize, sizeof(RKIQZ));
-    posix_memalign((void **)&cpy, RKSIMDAlignSize, sizeof(RKIQZ));
-    memset(dst, 0, sizeof(RKIQZ));
-    const int n = 32;
-
-    const RKFloat tiny = 1.0e-3f;
-    bool good;
-    bool all_good = true;
-
-    //
-
-    for (i = 0; i < n; i++) {
-        src->i[i] = (RKFloat)i;
-        src->q[i] = (RKFloat)-i;
-    }
-    memset(dst, 0, n * sizeof(RKComplex));
-
-    RKSIMD_zcpy(src, dst, n);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        good = src->i[i] == dst->i[i] && src->q[i] == dst->q[i];
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("src[%2d] = %9.2f%+9.2fi   dst[%2d] = %9.2f%+9.2fi\n", i, src->i[i], src->q[i], i, dst->i[i], dst->q[i]);
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("Complex Vector Copy -  zcpy", all_good);
-
-    //
-
-    memset(dst, 0, n * sizeof(RKComplex));
-    
-    RKSIMD_zscl(src, 3.0f, dst, n);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, 3-3i, 6-6i, 9-9i, ...
-        good = fabsf(dst->i[i] - 3.0f * i) < tiny && fabs(dst->q[i] + 3.0f * i) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%9.2f%+9.2fi x 3.0 -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("Complex Vector Scaling by a Float -  zscl", all_good);
-    
-    //
-
-    RKSIMD_zadd(src, src, dst, n);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, 2-2i, 3-3i, 4-4i, ...
-        good = fabsf(dst->i[i] - (float)(2 * i)) < tiny && fabs(dst->q[i] - (float)(-2 * i)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%9.2f%+9.2fi ++ -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("Complex Vector Addition -  zadd", all_good);
-
-    //
-
-    RKSIMD_zcpy(src, dst, n);
-    RKSIMD_izadd(src, dst, n);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (int i = 0; i < n; i++) {
-        // Answers should be 0, 2-2i, 3-3i, 4-4i, ...
-        good = fabsf(dst->i[i] - (float)(2 * i)) < tiny && fabs(dst->q[i] - (float)(-2 * i)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%9.2f%+9.2fi ++ -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Addition - izadd", all_good);
-
-    //
-
-    RKSIMD_zmul(src, src, dst, n, false);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, -2i, -8i, -18i, ...
-        good = fabsf(dst->i[i]) < tiny && fabs(dst->q[i] - (float)(-2 * i * i)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%9.2f%+9.2fi ** -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("Complex Vector Multiplication -  zmul", all_good);
-
-    //
-
-    RKSIMD_zcpy(src, dst, n);
-    RKSIMD_izmul(src, dst, n, false);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, -2i, -8i, -18i, ...
-        good = fabsf(dst->i[i]) < tiny && fabs(dst->q[i] - (float)(-2 * i * i)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%9.2f%+9.2fi ** -> %9.2f%+9.2fi  %s\n", src->i[i], src->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Multiplication - izmul", all_good);
-
-    //
-
-    RKComplex *cs = (RKComplex *)src;
-    RKComplex *cd = (RKComplex *)dst;
-    RKComplex *cc = (RKComplex *)cpy;
-
-    // Populate some numbers
-    for (i = 0; i < n; i++) {
-        cs[i].i = (RKFloat)i;
-        cs[i].q = (RKFloat)(-i);
-        cd[i].i = (RKFloat)(i + 1);
-        cd[i].q = (RKFloat)(-i);
-    }
-    memcpy(cc, cd, n * sizeof(RKComplex));
-
-    RKSIMD_iymul(cs, cd, n);
-
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, 1-3i, 2-10i, 3-21i, ...
-        good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul", all_good);
-
-    //
-
-    for (i = 0; i < n; i++) {
-        cc[i].i = (RKFloat)i;
-        cc[i].q = (RKFloat)(-i);
-    }
-    RKSIMD_Complex2IQZ(cc, src, n);
-    for (i = 0; i < n; i++) {
-        cc[i].i = (RKFloat)(i + 1);
-        cc[i].q = (RKFloat)(-i);
-    }
-    RKSIMD_Complex2IQZ(cc, dst, n);
-    RKSIMD_izmul(src, dst, n, false);
-    RKSIMD_IQZ2Complex(dst, cc, n);
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0, 1-3i, 2-10i, 3-21i, ...
-        good = fabsf(cc[i].i - (RKFloat)i) < tiny && fabsf(cc[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", src->i[i], src->q[i], cpy->i[i], cpy->q[i], dst->i[i], dst->q[i], OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("Deinterleave, Multiply Using iymul, and Interleave", all_good);
-
-    //
-    
-    RKInt16C *is = (RKInt16C *)src;
-    
-    for (i = 0; i < n; i++) {
-        is[i].i = i;
-        is[i].q = i - 1;
-    }
-    memset(cd, 0, n * sizeof(RKComplex));
-    
-    RKSIMD_Int2Complex_reg(is, cd, n);
-    
-    if (flag & RKSIMDDemoFlagShowNumbers) {
-        printf("====\n");
-    }
-    all_good = true;
-    for (i = 0; i < n; i++) {
-        // Answers should be 0-1i, 1-2i, 2-3i, 3-41i, ...
-        good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(i - 1)) < tiny;
-        if (flag & RKSIMDDemoFlagShowNumbers) {
-            printf("%+3d%+3di -> %+5.1f%+5.1f  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
-        }
-        all_good &= good;
-    }
-    RKSIMD_TEST_RESULT("Conversion from i16 to float", all_good);
-
-    if (flag & RKSIMDDemoFlagPerformanceTestAll) {
-        printf("\n==== Performance test ====\n\n");
-
-        int k;
-        const int m = 100000;
-        struct timeval t1, t2;
-
-        if (flag & RKSIMDDemoFlagPerformanceTestArithmetic) {
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_zmul(src, src, dst, RKGateCount, false);
-            }
-            gettimeofday(&t2, NULL);
-            printf("Regular SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
-            
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_izmul(src, dst, RKGateCount, false);
-            }
-            gettimeofday(&t2, NULL);
-            printf("In-place SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
-            
-            printf("Vectorized Complex Multiplication (%dK loops):\n", m / 1000);
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_iymul_reg(cs, cd, RKGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("              -Os: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
-            
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_iymul(cs, cd, RKGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("            iymul: %.3fs (Normal interleaved I/Q)\n", RKTimevalDiff(t2, t1));
-            
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
-            }
-            gettimeofday(&t2, NULL);
-            printf("            izmul: %.3fs (Deinterleaved I/Q)\n", RKTimevalDiff(t2, t1));
-            
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_Complex2IQZ(cc, src, RKGateCount);
-                RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
-                RKSIMD_IQZ2Complex(dst, cc, RKGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("    E + izmul + D: %.3fs (D, Multiply, I)\n", RKTimevalDiff(t2, t1));
-        }
-
-        if (flag & RKSIMDDemoFlagPerformanceTestConversion) {
-            printf("Copy (%dK loops):\n", m / 1000);
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                memcpy(src->i, dst->i, RKGateCount * sizeof(RKFloat));
-                memcpy(src->q, dst->q, RKGateCount * sizeof(RKFloat));
-            }
-            gettimeofday(&t2, NULL);
-            printf("       memcpy x 2: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
-
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_zcpy(src, dst, RKGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("             zcpy: %.3fs (SIMD)\n", RKTimevalDiff(t2, t1));
-
-            printf("Conversions (%dK loops):\n", m / 1000);
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_Int2Complex_reg(is, cd, RKGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("              -Os: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
-            
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_Int2Complex(is, cd, RKGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("      cvtepi32_ps: %.3fs (SIMD)\n", RKTimevalDiff(t2, t1));
-        }
-
-        printf("\n==========================\n");
-}
-
-    free(src);
-    free(dst);
 }

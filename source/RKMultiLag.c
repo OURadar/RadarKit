@@ -74,7 +74,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         
         // ACF
         for (k = 0; k < lagCount; k++) {
-            RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)
+            RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)   (unbiased)
             RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                              // aR[k] = abs(R[k])
         }
     }
@@ -82,8 +82,8 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     RKSIMD_zmul(&space->mX[0], &space->mX[1], &space->ts, gateCount, 1);                 // E{Xh} * E{Xv}'
     RKSIMD_zsmul(&space->mX[0], &space->vX[0], gateCount, 1);                            // E{Xh} * E{Xh}' --> varh  (not yet)
     RKSIMD_zsmul(&space->mX[1], &space->vX[1], gateCount, 1);                            // E{Xv} * E{Xv}' --> varv  (not yet)
-    RKSIMD_izsub(&space->R[0][0], &space->vX[0], gateCount);                             // Rh[0] - varh   --> varh  (varh is now VAR(Xh))
-    RKSIMD_izsub(&space->R[1][0], &space->vX[1], gateCount);                             // Rv[0] - varv   --> varv  (varv is now VAR(Xh))
+    RKSIMD_izsub(&space->R[0][0], &space->vX[0], gateCount);                             // Rh[0] - varh   --> varh  (varh is now var(Xh, 1))
+    RKSIMD_izsub(&space->R[1][0], &space->vX[1], gateCount);                             // Rv[0] - varv   --> varv  (varv is now var(Xv, 1))
     
     // NOTE: At this point, one can use space->vX[0] & space->vX[1] as signal power for H & V, respectively.
     // However, within the isodop regions, the zero-Doppler power is may have been filtered out by the clutter filter
@@ -153,7 +153,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         for (k = 0; k < lagCount; k++) {
             RKZeroTailFloat(space->aR[p][k], capacity, gateCount);
         }
-        RKZeroTailIQZ(&space->mX[p], capacity, gateCount);
         RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
         for (j = 0; j < 2 * lagCount - 1; j++) {
             k = j - lagCount + 1;
@@ -165,6 +164,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         char variable[32];
         char line[2048];
         RKIQZ X[count];
+        const int gateShown = 8;
         for (p = 0; p < 2; p++) {
             printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
             for (n = 0; n < count; n++) {
@@ -183,20 +183,20 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
             
             for (n = 0; n < count; n++) {
                 sprintf(variable, "  X[%d] = ", n);
-                RKShowVecIQZ(variable, &X[n], gateCount);
+                RKShowVecIQZ(variable, &X[n], gateShown);
             }
             printf(RKEOL);
-            RKShowVecIQZ("    mX = ", &space->mX[p], gateCount);                              // mean(X) in MATLAB
-            RKShowVecIQZ("    vX = ", &space->vX[p], gateCount);                              // var(X, 1) in MATLAB
+            RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                              // mean(X) in MATLAB
+            RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                              // var(X, 1) in MATLAB
             printf(RKEOL);
             for (k = 0; k < lagCount; k++) {
                 sprintf(variable, "  R[%d] = ", k);
-                RKShowVecIQZ(variable, &space->R[p][k], gateCount);
+                RKShowVecIQZ(variable, &space->R[p][k], gateShown);
             }
             printf(RKEOL);
             for (k = 0; k < lagCount; k++) {
                 sprintf(variable, " aR[%d] = ", k);
-                RKShowVecFloat(variable, space->aR[p][k], gateCount);
+                RKShowVecFloat(variable, space->aR[p][k], gateShown);
             }
             printf(RKEOL);
         }
@@ -204,10 +204,10 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         for (j = 0; j < 2 * lagCount - 1; j++) {
             k = j - lagCount + 1;
             sprintf(variable, " C[%2d] = ", k);
-            RKShowVecIQZ(variable, &space->C[j], gateCount);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
+            RKShowVecIQZ(variable, &space->C[j], gateShown);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
         }
         printf(RKEOL);
-        RKShowVecFloat("    gC = ", space->gC, gateCount);
+        RKShowVecFloat("    gC = ", space->gC, gateShown);
         printf(RKEOL);
     } else {
         RKLog("ERROR. Skipped printing a large array.\n");

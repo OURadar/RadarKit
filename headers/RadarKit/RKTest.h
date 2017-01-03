@@ -1,5 +1,5 @@
 //
-//  RKFile.h
+//  RKTest.h
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/18/15.
@@ -17,7 +17,17 @@ enum RKTestFlag {
     RKTestFlagShowResults  = 1
 };
 
+typedef int RKTestSIMDFlag;
+enum RKTestSIMDFlag {
+    RKTestSIMDFlagNull                       = 0,
+    RKTestSIMDFlagShowNumbers                = 1,
+    RKTestSIMDFlagPerformanceTestArithmetic  = 1 << 1,
+    RKTestSIMDFlagPerformanceTestConversion  = 1 << 2,
+    RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
+};
+
 void RKTestModuloMath(void);
+void RKTestSIMD(const RKTestSIMDFlag);
 
 RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input);
 

@@ -231,14 +231,14 @@ int main(int argc, char *argv[]) {
     bool testAny = false;
     if (user.testSIMD) {
         testAny = true;
-        RKSIMDDemoFlag flag = RKSIMDDemoFlagNull;
+        RKTestSIMDFlag flag = RKTestSIMDFlagNull;
         if (user.verbose) {
-            flag |= RKSIMDDemoFlagShowNumbers;
+            flag |= RKTestSIMDFlagShowNumbers;
         }
         if (user.testSIMD > 1) {
-            flag |= RKSIMDDemoFlagPerformanceTestAll;
+            flag |= RKTestSIMDFlagPerformanceTestAll;
         }
-        RKSIMDDemo(flag);
+        RKTestSIMD(flag);
     }
   
     // Modulo Macros Tests
