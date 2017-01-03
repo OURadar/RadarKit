@@ -301,6 +301,7 @@ typedef void * RKTransceiver;
 typedef void * RKPedestal;
 
 typedef struct rk_scratch {
+    bool             showNumbers;
     uint8_t          lagCount;
     RKIQZ            mX[2];                                // Mean of X, 2 for dual-pol
     RKIQZ            vX[2];                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}

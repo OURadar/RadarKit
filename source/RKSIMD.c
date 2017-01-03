@@ -167,7 +167,7 @@ void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 
 // Complex Self Multiplication
 void RKSIMD_zsmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
-    int k, K = (n + 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;

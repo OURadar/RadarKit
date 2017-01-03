@@ -49,6 +49,7 @@ struct rk_moment_engine {
     uint8_t                verbose;
     uint8_t                coreCount;
     bool                   useSemaphore;
+    bool                   developerMode;
     int                    (*processor)(RKScratch *, RKPulse **, const uint16_t, const char *);
 
     // Program set variables
@@ -70,6 +71,7 @@ RKMomentEngine *RKMomentEngineInit(void);
 void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int);
+void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
                                          RKPulse *, uint32_t *, const uint32_t,
                                          RKRay *,   uint32_t *, const uint32_t);

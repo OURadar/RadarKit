@@ -77,13 +77,14 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
             RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)   (unbiased)
             RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                              // aR[k] = abs(R[k])
         }
+        
+        // Mean and variance (2nd moment)
+        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                        // E{Xh} * E{Xh}' --> var  (step 1)
+        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                         // Rh[] - var     --> var  (step 2)
     }
     
+    // Cross-channel
     RKSIMD_zmul(&space->mX[0], &space->mX[1], &space->ts, gateCount, 1);                 // E{Xh} * E{Xv}'
-    RKSIMD_zsmul(&space->mX[0], &space->vX[0], gateCount, 1);                            // E{Xh} * E{Xh}' --> varh  (not yet)
-    RKSIMD_zsmul(&space->mX[1], &space->vX[1], gateCount, 1);                            // E{Xv} * E{Xv}' --> varv  (not yet)
-    RKSIMD_izsub(&space->R[0][0], &space->vX[0], gateCount);                             // Rh[0] - varh   --> varh  (varh is now var(Xh, 1))
-    RKSIMD_izsub(&space->R[1][0], &space->vX[1], gateCount);                             // Rv[0] - varv   --> varv  (varv is now var(Xv, 1))
     
     // NOTE: At this point, one can use space->vX[0] & space->vX[1] as signal power for H & V, respectively.
     // However, within the isodop regions, the zero-Doppler power is may have been filtered out by the clutter filter
@@ -133,16 +134,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
             space->gC[n] += w * logf(space->aC[j][n]);
         }
     }
-    
-    /*  MATLAB can be very simple:
-     
-     g = 1; % gate 1
-     C = xcorr(Xh(g, :), Xv(g, :), 4, 'unbiased') .'
-     wn = 3 * N^2 + 3 * N - 1 - 5 * (-N + 1 : N - 1).^2;
-     wd = 3 / ((2 * N - 1) * (2 * N + 1) * (2 * N + 3));
-     gC = exp(wd * sum(wn(:) .* log(abs(C))))
-     
-     */
     w = 3.0f / ((2.0f * N - 1.0f) * (2.0f * N + 1.0f) * (2.0f * N + 3.0f));
     for (n = 0; n < gateCount; n++) {
         space->gC[n] = expf(w * space->gC[n]);
@@ -160,7 +151,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         }
     }
     
-    if (count < 8) {
+    if (space->showNumbers) {
         char variable[32];
         char line[2048];
         RKIQZ X[count];
@@ -171,10 +162,24 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
                 X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
             }
             
+            /* A block ready for MATLAB
+             
+             - Copy and paste X = [ 0+2j, 0+1j, ...
+            
+            Then, all the previous calculations can be extremely easy.
+             
+             N = 4; % lag count 5 (max lag 4)
+             g = 1; % gate 1
+             C = xcorr(Xh(g, :), Xv(g, :), 4, 'unbiased') .';
+             wn = 3 * N^2 + 3 * N - 1 - 5 * (-N + 1 : N - 1).^2;
+             wd = 3 / ((2 * N - 1) * (2 * N + 1) * (2 * N + 3));
+             gC = exp(wd * sum(wn(:) .* log(abs(C))))
+             
+             */
             j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
             for (k = 0; k < gateCount; k++) {
                 for (n = 0; n < count; n++) {
-                    j += sprintf(line + j, " %.4f%+.4fj,", X[n].i[k], X[n].q[k]);
+                    j += sprintf(line + j, " %.0f%+.0fj,", X[n].i[k], X[n].q[k]);
                 }
                 j += sprintf(line + j - 1, ";...\n") - 1;
             }
@@ -209,8 +214,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         printf(RKEOL);
         RKShowVecFloat("    gC = ", space->gC, gateShown);
         printf(RKEOL);
-    } else {
-        RKLog("ERROR. Skipped printing a large array.\n");
     }
 
     //    gettimeofday(&toc, NULL);

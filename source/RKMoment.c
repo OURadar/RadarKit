@@ -48,15 +48,11 @@ void *momentCore(void *_in) {
 
     // Allocate local resources and keep track of the total allocation
     RKScratch *space;
-    size_t mem = RKScratchAlloc(&space, engine->rayBuffer[0].header.capacity, engine->processorLagCount);
+    size_t mem = RKScratchAlloc(&space, engine->rayBuffer[0].header.capacity, engine->processorLagCount, engine->developerMode);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateScratchSpace;
     }
-    if (engine->verbose) {
-        RKLog(">    scratch @ %s B", RKIntegerToCommaStyleString(mem));
-    }
-
     double *busyPeriods, *fullPeriods;
     posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
     posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
@@ -82,14 +78,12 @@ void *momentCore(void *_in) {
     int d0 = 0;
 
     // Log my initial state
+    pthread_mutex_lock(&engine->coreMutex);
+    engine->memoryUsage += mem;
     if (engine->verbose) {
-        pthread_mutex_lock(&engine->coreMutex);
-        engine->memoryUsage += mem;
-        if (engine->verbose) {
-            RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
-        }
-        pthread_mutex_unlock(&engine->coreMutex);
+        RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
     }
+    pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
@@ -403,6 +397,10 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
 
 void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
     engine->verbose = verbose;
+}
+
+void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine) {
+    engine->developerMode = true;
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,

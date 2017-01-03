@@ -21,8 +21,9 @@ enum RKInitFlag {
     RKInitFlagVeryVeryVerbose       = (1 << 2),
     RKInitFlagAllocMomentBuffer     = (1 << 8),
     RKInitFlagAllocRawIQBuffer      = (1 << 9),
-    RKInitFlagAllocEverything       = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose,
-    RKInitFlagAllocEverythingQuiet  = RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer
+    RKInitFlagAllocEverything       = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
+    RKInitFlagAllocEverythingQuiet  = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
+    RKInitFlagDeveloperMode         = (1 << 16)
 };
 
 typedef RKEnum RKRadarState;
@@ -113,6 +114,7 @@ int RKFree(RKRadar *radar);
 // Properties
 int RKSetTransceiver(RKRadar *radar, RKTransceiver (RKRadar *, void *), void *);
 int RKSetVerbose(RKRadar *radar, const int verbose);
+int RKSetDeveloperMode(RKRadar *radar);
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
 int RKSetWaveformToImpulse(RKRadar *radar);
 int RKSetWaveformTo121(RKRadar *radar);

@@ -25,6 +25,7 @@ typedef struct user_params {
     int   testPulseCompression;
     bool  noColor;
     bool  quietMode;
+    bool  developerMode;
     bool  simulate;
 } UserParams;
 
@@ -166,6 +167,7 @@ UserParams processInput(int argc, char **argv) {
                 user.prf = 6;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
+                user.developerMode = true;
                 user.verbose = 3;
                 break;
             case 'F':
@@ -269,6 +271,10 @@ int main(int argc, char *argv[]) {
     }
 
     RKSetVerbose(radar, user.verbose);
+    
+    if (user.developerMode) {
+        RKSetDeveloperMode(radar);
+    }
     
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);

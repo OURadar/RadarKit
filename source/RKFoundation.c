@@ -308,7 +308,7 @@ float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t p) {
 
 #pragma mark -
 
-size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount) {
+size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount, const bool showNumbers) {
     if (capacity - (1 << (int)log2f((float)capacity))) {
         RKLog("Error. Scratch space capacity must be power of 2!");
         return 0;
@@ -326,6 +326,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
 
     RKScratch *space = *buffer;
     space->lagCount = lagCount;
+    space->showNumbers = showNumbers;
     
     int j, k;
     size_t bytes = 0;

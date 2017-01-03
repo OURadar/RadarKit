@@ -136,14 +136,12 @@ void *pulseCompressionCore(void *_in) {
     int planSize = -1, planIndex;
 
     // Log my initial state
+    pthread_mutex_lock(&engine->coreMutex);
+    engine->memoryUsage += mem;
     if (engine->verbose) {
-        pthread_mutex_lock(&engine->coreMutex);
-        engine->memoryUsage += mem;
-        if (engine->verbose) {
-            RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
-        }
-        pthread_mutex_unlock(&engine->coreMutex);
+        RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
     }
+    pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
