@@ -63,14 +63,14 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
         j = 0;
         for (; n < count; n += 2) {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
-            RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);               // mX += X
-            RKSIMD_zcma(&Xn, &Xn, &space->R[p][0], pulse->header.gateCount, 1);      // R[0] += X[n] * X[n]'
+            RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
+            RKSIMD_zcma(&Xn, &Xn, &space->R[p][0], pulse->header.gateCount, 1);          // R[0] += X[n] * X[n]'
             j++;
         }
         // Divide by n for the average
-        RKSIMD_izscl(&space->mX[p], 1.0f / (float)(j), gateCount);                   // mX /= j
-        RKSIMD_izscl(&space->R[p][0], 1.0f / (float)(j), gateCount);                 // R[0] /= j   (unbiased)
-        RKSIMD_zabs(&space->R[p][0], space->aR[p][0], gateCount);                    // aR[0] = abs(R[0])
+        RKSIMD_izscl(&space->mX[p], 1.0f / (float)(j), gateCount);                       // mX /= j
+        RKSIMD_izscl(&space->R[p][0], 1.0f / (float)(j), gateCount);                     // R[0] /= j   (unbiased)
+        RKSIMD_zabs(&space->R[p][0], space->aR[p][0], gateCount);                        // aR[0] = abs(R[0])
 
         // Now we get the odd pulses for R(1)
         n = 1;
@@ -82,15 +82,15 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
         for (; n < count; n += 2) {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
             RKIQZ Xk = RKGetSplitComplexDataFromPulse(input[n - 1], p);
-            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], pulse->header.gateCount, 1);      // R[k] += X[n] * X[n - k]'
+            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], pulse->header.gateCount, 1);          // R[k] += X[n] * X[n - k]'
             j++;
         }
-        RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                 // R[1] /= j   (unbiased)
-        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                    // aR[0] = abs(R[0])
+        RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                     // R[1] /= j   (unbiased)
+        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                        // aR[0] = abs(R[0])
 
         // Mean and variance (2nd moment)
-        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                    // E{Xh} * E{Xh}' --> var  (step 1)
-        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                     // Rh[] - var     --> var  (step 2)
+        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                        // E{Xh} * E{Xh}' --> var  (step 1)
+        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                         // Rh[] - var     --> var  (step 2)
     }
 
     // Cross-channel
@@ -110,16 +110,16 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     }
     Xh = RKGetSplitComplexDataFromPulse(input[n], 0);
     Xv = RKGetSplitComplexDataFromPulse(input[n], 1);
-    RKSIMD_zmul(&Xh, &Xv, &space->C[0], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
+    RKSIMD_zmul(&Xh, &Xv, &space->C[0], gateCount, 1);                                   // C = Xh * Xv', flag 1 = conjugate
     j = 1;
     n += 2;
     for (; n < count; n += 2) {
         Xh = RKGetSplitComplexDataFromPulse(input[n], 0);
         Xv = RKGetSplitComplexDataFromPulse(input[n], 1);
-        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                      // C = C + Xh[] * Xv[]'
+        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                               // C += Xh[] * Xv[]'
         j++;
     }
-    RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                   // C /= j   (unbiased)
+    RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
 
     if (space->showNumbers) {
         char variable[32];
@@ -138,10 +138,10 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
 
              Then, all the previous calculations can be extremely easy.
 
-             N = 4; % lag count 5 (max lag 4)
              g = 1; % gate 1
-             mX = mean(Xh(:, 1:2:end), 2).'
-             C = xcorr(Xh(g, 1:2:end), Xv(g, 1:2:end), 0, 'unbiased')
+             k = 1; % even is correct, change to 2 for even is 1-off
+             mX = mean(Xh(:, k:2:end), 2).'
+             for g = 1:6, C(g) = xcorr(Xh(g, k:2:end), Xv(g, k:2:end), 0, 'unbiased'); end; disp(C)
 
              */
             j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");

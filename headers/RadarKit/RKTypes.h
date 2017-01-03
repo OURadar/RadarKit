@@ -85,14 +85,13 @@ typedef struct RKIQZ {
 } RKIQZ;
 
 // A convenient way to convert bytes into several other types
-union rk_user_data {
+typedef union rk_user_data {
     struct { uint8_t byte[4]; };
     struct { uint16_t u16, u16_2; };
     struct { int16_t i16, i16_2; };
     struct { uint32_t u32; };
     struct { float f; };
-};
-typedef union rk_user_data RKFourByte;
+} RKFourByte;
 
 // A running configuration buffer
 typedef struct RKOperatingParameters {
@@ -134,24 +133,17 @@ typedef struct RKOperatingParameters {
  @param velDps                 Velocity of azimuth in degrees per second
  */
 typedef struct rk_pulse_header {
-    // First 128-bit chunk
     uint32_t    capacity;
     uint32_t    s;
     uint32_t    i;
     uint32_t    n;
-
-    // Second 128-bit chunk
     uint32_t    marker;
     uint32_t    pulseWidthSampleCount;
     uint32_t    reserved1;
     uint32_t    reserved2;
-
-    // Third 128-bit chunk
     uint32_t    timeSec;
     uint32_t    timeUSec;
     double      timeDouble;
-    
-    // Fourth 128-bit chunk
     uint16_t    az;
     uint16_t    el;
     uint16_t    configIndex;
@@ -159,8 +151,6 @@ typedef struct rk_pulse_header {
     uint16_t    azimuthBinIndex;
     uint16_t    gateCount;
     float       gateSizeMeters;
-    
-    // Fifth 128-bit chunk
     float       azimuthDegrees;
     float       elevationDegrees;
     float       vazDps;
@@ -225,31 +215,22 @@ enum RKRayStatus {
  @param endTimeD               End time in double representation
  */
 typedef struct RKRayHeader {
-    // First 128-bit chunk
     uint32_t       capacity;
     RKRayStatus    s;
     uint32_t       i;
     uint32_t       n;
-    
-    // Second 128-bit chunk
     uint32_t       marker;
     uint32_t       reserved1;
     uint16_t       configIndex;
     uint16_t       configSubIndex;
     uint16_t       gateCount;
     uint16_t       reserved2;
-
-    // Third 128-bit chunk
     uint32_t       startTimeSec;
     uint32_t       startTimeUSec;
     double         startTimeD;
-    
-    // Fourth 128-bit chunk
     uint32_t       endTimeSec;
     uint32_t       endTimeUSec;
     double         endTimeD;
-
-    // Fifth 128-bit chunk
     float          startAzimuth;
     float          endAzimuth;
     float          startElevation;
@@ -288,6 +269,7 @@ enum RKResult {
     RKResultFailedToStartMomentCore,
     RKResultFailedToStartPulseGatherer,
     RKResultUnableToChangeCoreCounts,
+    RKResultSuccess = 0,
     RKResultNoError = 0
 };
 
@@ -311,8 +293,34 @@ typedef struct rk_scratch {
     RKIQZ            ts;                                   // Temporary scratch space
     RKFloat          *aR[2][RKLagCount];                   // abs(ACF)
     RKFloat          *aC[2 * RKLagCount - 1];              // abs(CCF)
-    RKFloat          *gC;                                  // Gaussian fitted CCF(0)
+    RKFloat          *gC;                                  // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
 } RKScratch;
+
+typedef struct rk_position {
+    uint64_t      c;                                       // Counter
+    uint32_t      tic;                                     // Time tic
+    RKFourByte    rawElevation;                            // Raw elevation readout
+    RKFourByte    rawAzimuth;                              // Raw azimuth readout
+    RKFourByte    rawElevationVelocity;                    // Raw velocity of elevation readout
+    RKFourByte    rawAzimuthVelocity;                      // Raw velocity of azimuth readout
+    RKFourByte    rawElevationStatus;                      // Raw status of elevation readout
+    RKFourByte    rawAzimuthStatus;                        // Raw status of azimuth readout
+    uint8_t       queueSize;                               // Queue size of the readout buffer
+    uint8_t       elevationMode;                           // Positioning mode of elevation
+    uint8_t       azimuthMode;                             // Positioning mode of azimuth
+    uint8_t       sequence;                                // DEBUG command sequence
+    uint32_t      flag;                                    // Position flag
+    float         elevationDegrees;                        // Decoded elevation
+    float         azimuthDegrees;                          // Decoded elevation
+    float         elevationVelocityDegreesPerSecond;       // Decoded velocity of elevation
+    float         azimuthVelocityDegreesPerSecond;         // Decoded velocity of azimuth
+    float         elevationCounter;                        // Progress counter (of target) of the elevation
+    float         elevationTarget;                         // Targeted progress counter of the elevation
+    float         azimuthCounter;                          // Progress counter (of target) of the azimuth
+    float         azimuthTarget;                           // Targeted progress counter of the azimuth
+    float         sweepElevationDegrees;                   // Set elevation for current sweep
+    float         sweepAzimuthDegrees;                     // Set azimuth for current sweep
+} RKPosition;
 
 #pragma pack(pop)
 

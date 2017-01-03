@@ -14,19 +14,72 @@ int workerThreadId(RKPulseCompressionEngine *engine);
 void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n);
 void *pulseCompressionCore(void *in);
 
-#pragma mark -
-
 // Implementations
 
-int workerThreadId(RKPulseCompressionEngine *engine) {
-    int i;
-    pthread_t id = pthread_self();
-    for (i = 0; i < engine->coreCount; i++) {
-        if (pthread_equal(id, engine->workers[i].tid) == 0) {
-            return i;
-        }
+#pragma mark -
+#pragma mark Helper Functions
+
+char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
+    int i, c;
+    static char string[RKMaximumStringLength];
+
+    // Full / compact string: Some spaces
+    bool full = true;
+    char spacer[2] = "";
+    if (full) {
+        sprintf(spacer, " ");
     }
-    return -1;
+
+    // Always terminate the end of string buffer
+    string[RKMaximumStringLength - 1] = '\0';
+    string[RKMaximumStringLength - 2] = '#';
+
+    // Use b characters to draw a bar
+    const int b = 10;
+    i = *engine->index * (b + 1) / engine->size;
+    memset(string, '#', i);
+    memset(string + i, '.', b - i);
+    i = b + sprintf(string + b, "%s|", spacer);
+
+    // Engine lag
+    i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
+                  spacer,
+                  rkGlobalParameters.showColor ? (engine->lag > 0.7 ? "\033[31m" : (engine->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                  99.0f * engine->lag,
+                  rkGlobalParameters.showColor ? "\033[0m" : "",
+                  spacer);
+
+    RKPulseCompressionWorker *worker;
+
+    // Lag from each core
+    for (c = 0; c < engine->coreCount; c++) {
+        worker = &engine->workers[c];
+        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
+                      spacer,
+                      rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                      99.0f * worker->lag,
+                      rkGlobalParameters.showColor ? "\033[0m" : "");
+    }
+    i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
+    // Duty cycle of each core
+    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+        worker = &engine->workers[c];
+        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
+                      spacer,
+                      rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
+                      99.0f * worker->dutyCycle,
+                      rkGlobalParameters.showColor ? "\033[0m" : "");
+    }
+    // Almost Full flag
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKMaximumStringLength - 13) {
+        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    }
+    return string;
+}
+
+void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
+    RKLog(RKPulseCompressionEngineStatusString(engine));
 }
 
 void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
@@ -34,6 +87,9 @@ void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
         printf("    %6.2fd %s %6.2fdi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
     }
 }
+
+#pragma mark -
+#pragma mark Threads
 
 void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
@@ -549,8 +605,8 @@ void *pulseWatcher(void *_in) {
     return NULL;
 }
 
-//
 #pragma mark -
+#pragma mark Life Cycle
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)malloc(sizeof(RKPulseCompressionEngine));
@@ -582,6 +638,7 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
 }
 
 #pragma mark -
+#pragma mark Properties
 
 void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const int verb) {
     engine->verbose = verb;
@@ -630,56 +687,6 @@ void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, cons
         return;
     }
     engine->coreCount = count;
-}
-
-int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
-    engine->state = RKPulseCompressionEngineStateActivating;
-    if (engine->filterGroupCount == 0) {
-        // Set to default impulse as matched filter
-        RKPulseCompressionSetFilterToImpulse(engine);
-    }
-    if (engine->coreCount == 0) {
-        engine->coreCount = 8;
-    }
-    if (engine->workers != NULL) {
-        RKLog("Error. RKPulseCompressionEngine->workers should be NULL here.\n");
-    }
-    engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
-    engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
-    memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
-    if (engine->verbose) {
-        RKLog("Starting pulseWatcher() ...\n");
-    }
-    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
-        RKLog("Error. Failed to start a pulse watcher.\n");
-        return RKResultFailedToStartPulseWatcher;
-    }
-    while (engine->tic == 0) {
-        usleep(1000);
-    }
-
-    return RKResultNoError;
-}
-
-int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
-    if (engine->state != RKPulseCompressionEngineStateActive) {
-        if (engine->verbose > 1) {
-            RKLog("Info. Pulse compression engine is being or has been deactivated.\n");
-        }
-        return RKResultEngineDeactivatedMultipleTimes;
-    }
-    if (engine->verbose) {
-        RKLog("Stopping pulseWatcher() ...\n");
-    }
-    engine->state = RKPulseCompressionEngineStateDeactivating;
-    pthread_join(engine->tidPulseWatcher, NULL);
-    if (engine->verbose) {
-        RKLog("pulseWatcher() stopped\n");
-    }
-    free(engine->workers);
-    engine->workers = NULL;
-    engine->state = RKPulseCompressionEngineStateNull;
-    return RKResultNoError;
 }
 
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count) {
@@ -738,65 +745,55 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
 }
 
-char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
-    int i, c;
-    static char string[RKMaximumStringLength];
+#pragma mark -
+#pragma mark Interactions
 
-    // Full / compact string: Some spaces
-    bool full = true;
-    char spacer[2] = "";
-    if (full) {
-        sprintf(spacer, " ");
+int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
+    engine->state = RKPulseCompressionEngineStateActivating;
+    if (engine->filterGroupCount == 0) {
+        // Set to default impulse as matched filter
+        RKPulseCompressionSetFilterToImpulse(engine);
+    }
+    if (engine->coreCount == 0) {
+        engine->coreCount = 8;
+    }
+    if (engine->workers != NULL) {
+        RKLog("Error. RKPulseCompressionEngine->workers should be NULL here.\n");
+    }
+    engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
+    engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
+    memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
+    if (engine->verbose) {
+        RKLog("Starting pulseWatcher() ...\n");
+    }
+    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
+        RKLog("Error. Failed to start a pulse watcher.\n");
+        return RKResultFailedToStartPulseWatcher;
+    }
+    while (engine->tic == 0) {
+        usleep(1000);
     }
 
-    // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
-
-    // Use b characters to draw a bar
-    const int b = 10;
-    i = *engine->index * (b + 1) / engine->size;
-    memset(string, '#', i);
-    memset(string + i, '.', b - i);
-    i = b + sprintf(string + b, "%s|", spacer);
-
-    // Engine lag
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
-                  spacer,
-                  rkGlobalParameters.showColor ? (engine->lag > 0.7 ? "\033[31m" : (engine->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
-                  99.0f * engine->lag,
-                  rkGlobalParameters.showColor ? "\033[0m" : "",
-                  spacer);
-
-    RKPulseCompressionWorker *worker;
-
-    // Lag from each core
-    for (c = 0; c < engine->coreCount; c++) {
-        worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
-                      spacer,
-                      rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
-                      99.0f * worker->lag,
-                      rkGlobalParameters.showColor ? "\033[0m" : "");
-    }
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
-    // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
-        worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
-                      spacer,
-                      rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
-                      99.0f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? "\033[0m" : "");
-    }
-    // Almost Full flag
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
-    }
-    return string;
+    return RKResultNoError;
 }
 
-void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
-    RKLog(RKPulseCompressionEngineStatusString(engine));
+int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
+    if (engine->state != RKPulseCompressionEngineStateActive) {
+        if (engine->verbose > 1) {
+            RKLog("Info. Pulse compression engine is being or has been deactivated.\n");
+        }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (engine->verbose) {
+        RKLog("Stopping pulseWatcher() ...\n");
+    }
+    engine->state = RKPulseCompressionEngineStateDeactivating;
+    pthread_join(engine->tidPulseWatcher, NULL);
+    if (engine->verbose) {
+        RKLog("pulseWatcher() stopped\n");
+    }
+    free(engine->workers);
+    engine->workers = NULL;
+    engine->state = RKPulseCompressionEngineStateNull;
+    return RKResultNoError;
 }

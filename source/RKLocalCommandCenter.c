@@ -1,9 +1,9 @@
 //
 //  RKLocalCommandCenter.c
-//  _RadarKit
+//  RadarKit
 //
 //  Created by Boon Leng Cheong on 9/16/16.
-//  Copyright © 2016 Boon Leng Cheong. All rights reserved.
+//  Copyright (c) 2016-2017 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKLocalCommandCenter.h>

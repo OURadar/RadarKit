@@ -13,6 +13,7 @@
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKLocalCommandCenter.h>
 #include <RadarKit/RKMoment.h>
+#include <RadarKit/RKPedestal.h>
 
 enum RKInitFlag {
     RKInitFlagNone                  = 0,
@@ -82,7 +83,8 @@ struct rk_radar {
     //
     RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
-    RKServer                   *socketServer;
+    //RKServer                   *socketServer;
+    RKPedestalEngine           *pedestalEngine;
     //
     // Hardware protocols for controls
     //
@@ -93,13 +95,6 @@ struct rk_radar {
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
     pthread_t                  transceiverThreadId;
-    RKPedestal                 pedestal;
-    RKPedestal                 (*pedestalInit)(RKRadar *, void *);
-    int                        (*pedestalExec)(RKPedestal, const char *);
-    int                        (*pedestalRead)(RKPedestal, const char *, void *);
-    int                        (*pedestalFree)(RKPedestal);
-    void                       *pedestalInitInput;
-    pthread_t                  pedestalThreadId;
 };
 
 // Life Cycle
