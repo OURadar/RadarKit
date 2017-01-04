@@ -22,9 +22,9 @@ struct rk_pedzy {
     // RKClient
 };
 
-void *RKPedestalPedzyInit(void *);
-int RKPedestalPedzyRead(void *, RKPosition *);
-int RKPedestalPedzyExec(void *, const char *);
-int RKPedestalPedzyFree(void *);
+RKPedestal RKPedestalPedzyInit(void *);
+int RKPedestalPedzyRead(RKPedestal, RKPosition *);
+int RKPedestalPedzyExec(RKPedestal, const char *);
+int RKPedestalPedzyFree(RKPedestal);
 
 #endif /* __RadarKit_RKPedestal__ */

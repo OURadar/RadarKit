@@ -107,7 +107,7 @@ RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
 // Properties
-int RKSetTransceiver(RKRadar *radar, RKTransceiver (RKRadar *, void *), void *);
+int RKSetTransceiver(RKRadar *radar, RKTransceiver(RKRadar *, void *), void *);
 int RKSetVerbose(RKRadar *radar, const int verbose);
 int RKSetDeveloperMode(RKRadar *radar);
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);

@@ -2,42 +2,6 @@
 //  RKPedestal.c
 //  RadarKit
 //
-//  RKPedestal provides a wrapper to interact with RadarKit, tag each raw time-series pulse with a set
-//  of proper position that contains azimuth and elevation. It manages the run-loop that continuously
-//  monitor the incoming position read, where you would supply the actual read function to interpret
-//  the binary stream, decode the stream into an RKPosition slot, which is supplied. Each call of the
-//  function expects a proper return of RKPosition. If you expect mutiple read for a complete position
-//  description, issue your own internal run-loop to satisfy this requirement. This protocol must be
-//  strictly followed. It also serves as a bridge to forward the necessary control command, which will
-//  be text form. They will be described in the pedestal control language. Finally, a resource clean
-//  up routine is called when the program terminates.
-//
-//  The main protocols are:
-//
-//   - Initialize a pointer to a structure to communicate with the hardware (void *),
-//     you provide the input through RKPedestalEngineSetHardwareInitInput(). Typecast it to void *.
-//     It must be in the form of
-//
-//         RKPedestal routine(void *);
-//
-//   - A continuous run loop that continuously ingest position data,
-//     you provide a reader delegate routine through RKPedestalEngineSetHardwareRead(). It must be
-//     in the form of
-//
-//         int routine(RKPedestal, RKPosition *);
-//
-//   - Manages and forwards the current control command in the command queue,
-//     you provide a execution delegate routine through RKPedestalEngineSetHardwareExec(). Imust be
-//     in the form of
-//
-//         int routine(RKPedestal, const char *);
-//
-//   - Close the hardware interaction when it is appropriate
-//     you provide a resource deallocation delegate routine through RKPedestalEngineSetHardwareFree().
-//     It must be in the form of
-//
-//         int routine(RKPedestal);
-//
 //  Created by Boon Leng Cheong on 1/3/17.
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
@@ -59,7 +23,17 @@ void *pedestalWorker(void *in);
 void *pedestalWorker(void *in) {
     RKPedestalEngine *engine = (RKPedestalEngine *)in;
 
+    int k = 0;
+
     // Get the latest pulse
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
+    while (pulse->header.s & RKPulseStatusVacant) {
+        usleep(1000);
+    }
+    double t = pulse->header.timeDouble;
+
+    // Search until a time I need
+
     // Wait until the latest position arrives
     // find the latest position, tag the pulse with the appropriate position
     // linearly interpolate between the best two readings
@@ -86,8 +60,21 @@ void RKPedestalEngineFree(RKPedestalEngine *engine) {
 #pragma mark -
 #pragma mark Properties
 
-void RKPedestalEngineSetHardwareInit() {
+void RKPedestalEngineSetHardwareInit(RKPedestalEngine *engine, RKPedestal hardwareInit(void *), void *hardwareInitInput) {
+    engine->hardwareInit = hardwareInit;
+    engine->hardwareInitInput = hardwareInitInput;
+}
 
+void RKPedestalEngineSetHardwareExec(RKPedestalEngine *engine, int hardwareExec(RKPedestal, const char *)) {
+    engine->hardwareExec = hardwareExec;
+}
+
+void RKPedestalEngineSetHardwareRead(RKPedestalEngine *engine, int hardwareRead(RKPedestal, RKPosition *)) {
+    engine->hardwareRead = hardwareRead;
+}
+
+void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(RKPedestal)) {
+    engine->hardwareFree = hardwareFree;
 }
 
 #pragma mark -

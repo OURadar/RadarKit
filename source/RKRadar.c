@@ -305,12 +305,12 @@ int RKGoLive(RKRadar *radar) {
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
     }
 
-    if (radar->pedestalInit != NULL) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Initializing pedestal ...");
-        }
-        pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
-    }
+//    if (radar->pedestalInit != NULL) {
+//        if (radar->desc.initFlags & RKInitFlagVerbose) {
+//            RKLog("Initializing pedestal ...");
+//        }
+//        pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
+//    }
 
     return 0;
 }
@@ -337,9 +337,9 @@ int RKStop(RKRadar *radar) {
     if (radar->transceiverInit != NULL) {
         pthread_join(radar->transceiverThreadId, NULL);
     }
-    if (radar->pedestalInit != NULL) {
-        pthread_join(radar->pedestalThreadId, NULL);
-    }
+//    if (radar->pedestalInit != NULL) {
+//        pthread_join(radar->pedestalThreadId, NULL);
+//    }
     return 0;
 }
 
