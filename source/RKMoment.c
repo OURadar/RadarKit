@@ -532,7 +532,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
     if (engine->verbose) {
-        RKLog("Starting <pulseGatherer> ...\n");
+        RKLog("<pulseGatherer> starting ...\n");
     }
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");

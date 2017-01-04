@@ -422,7 +422,7 @@ void *pulseWatcher(void *_in) {
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKPulseCompressionEngineStateActive;
-    
+
     // Spin off N workers to process I/Q pulses
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseCompressionWorker *worker = &engine->workers[c];
@@ -464,14 +464,15 @@ void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
+    if (engine->verbose) {
+        RKLog("><pulseWatcher> started.  mem = %s   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
+    }
+
     // Here comes the busy loop
     i = 0;   // anonymous
     j = 0;   // filter index
     k = 0;   // pulse index
     c = 0;   // core index
-    if (engine->verbose) {
-        RKLog("><pulseWatcher> started.  mem = %s   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
-    }
     while (engine->state == RKPulseCompressionEngineStateActive) {
         // Wait until the engine index move to the next one for storage
         while (k == *engine->index && engine->state == RKPulseCompressionEngineStateActive) {
@@ -765,7 +766,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     if (engine->verbose) {
-        RKLog("Starting <pulseWatcher> ...\n");
+        RKLog("<pulseWatcher> starting ...\n");
     }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");

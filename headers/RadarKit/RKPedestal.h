@@ -65,6 +65,7 @@ struct rk_pedestal_engine {
     RKPulse                *pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
+    uint8_t                verbose;
     RKPedestal             pedestal;
     RKPedestal             (*hardwareInit)(void *);
     int                    (*hardwareExec)(RKPedestal, const char *);
@@ -91,6 +92,7 @@ struct rk_pedestal_engine {
 RKPedestalEngine *RKPedestalEngineInit();
 void RKPedestalEngineFree(RKPedestalEngine *);
 
+void RKPedestalEngineSetVerbose(RKPedestalEngine *, const int);
 void RKPedestalEngineSetInputOutputBuffers(RKPedestalEngine *, RKBuffer, uint32_t *, const uint32_t);
 void RKPedestalEngineSetHardwareInit(RKPedestalEngine *, RKPedestal(void *), void *);
 void RKPedestalEngineSetHardwareExec(RKPedestalEngine *, int(RKPedestal, const char *));

@@ -166,8 +166,8 @@ void *theClient(void *in) {
             readOkay = false;
             r = select(C->sd + 1, &C->rfd, NULL, &C->efd, &timeout);
             if (C->verbose > 3) {
-                RKLog("RKClient : select() returned r = %d   FD_ISSET(rfd) = %d   FD_ISSET(efd) = %d   errno = %d.\n",
-                        r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
+                RKLog("%s select() returned r = %d   FD_ISSET(rfd) = %d   FD_ISSET(efd) = %d   errno = %d.\n",
+                        C->name, r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
             }
             if (r == 0) {
                 // Socket established but nothing from the server.

@@ -25,15 +25,17 @@ void *pulseTagger(void *in) {
 
     uint32_t index = *engine->pulseIndex;
 
-    RKLog("<pulseTagger> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), index);
-
 //    // Search until a time I need
 //
 //    // Wait until the latest position arrives
 //    // find the latest position, tag the pulse with the appropriate position
 //    // linearly interpolate between the best two readings
-//    // at some point, implement something sophisticated like Klaman filter
+//    // at some point, implement something sophisticated like Kalman filter
 //
+    if (engine->verbose) {
+        RKLog("<pulseTagger> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), index);
+    }
+
     engine->state = RKPedestalEngineStateActive;
 
     // Set the pulse to have position
@@ -71,6 +73,10 @@ void RKPedestalEngineFree(RKPedestalEngine *engine) {
 #pragma mark -
 #pragma mark Properties
 
+void RKPedestalEngineSetVerbose(RKPedestalEngine *engine, const int verb) {
+    engine->verbose = verb;
+}
+
 void RKPedestalEngineSetInputOutputBuffers(RKPedestalEngine *engine,
                                            RKBuffer buffer, uint32_t *index, const uint32_t size) {
     engine->pulseBuffer = buffer;
@@ -99,10 +105,13 @@ void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(
 #pragma mark Interactions
 
 int RKPedestalEngineStart(RKPedestalEngine *engine) {
-    RKLog("Starting <pulseTagger> ...\n");
+    RKLog("<pulseTagger> starting ...\n");
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start pedestal engine.\n");
         return RKResultFailedToStartPedestalWorker;
+    }
+    while (engine->state < RKPedestalEngineStateActive) {
+        usleep(1000);
     }
     return RKResultNoError;
 }

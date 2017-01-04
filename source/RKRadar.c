@@ -236,6 +236,7 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     }
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
+    RKPedestalEngineSetVerbose(radar->pedestalEngine, verbose);
     return RKResultNoError;
 }
 
