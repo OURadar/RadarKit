@@ -299,6 +299,9 @@ int main(int argc, char *argv[]) {
         }
         // Now we use the frame work.
         RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
+
+        const char pedzyHost[] = "localhost:9000";
+        RKSetPedestal(radar, &RKPedestalPedzyInit, (void *)pedzyHost);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
 

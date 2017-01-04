@@ -41,7 +41,7 @@ enum RKClientSocketType {
 enum RKClientMessageFormat {
     RKClientMessageFormatNewLine,                             // Line-by-line reading
     RKClientMessageFormatConstantSize,                        // Fixed length packets
-    RKClientMessageFormatHeaderDefinedPayload                 // The header is of type RKBlockHeader
+    RKClientMessageFormatHeaderDefinedPayload                 // The header is of type RKNetDelimiter
 };
 
 typedef struct rk_client_desc {
@@ -102,7 +102,7 @@ RKClient *RKClientInitWithDesc(RKClientDesc);
 RKClient *RKClientInitWithHostnamePort(const char *, const int);
 void RKClientFree(RKClient *);
 
-void RKClientSetUserResrouce(RKClient *, void *);
+void RKClientSetUserResource(RKClient *, void *);
 void RKClientSetGreetHandler(RKClient *, int (*)(RKClient *));
 void RKClientSetReceiveHandler(RKClient *, int (*)(RKClient *));
 

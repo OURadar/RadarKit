@@ -20,8 +20,8 @@ RKTransceiver backgroundTransceiverInit(void *in) {
 }
 
 RKPedestal backgroundPedestalInit(void *in) {
-    //RKRadar *radar = (RKRadar *)in;
-    return NULL;
+    RKRadar *radar = (RKRadar *)in;
+    return radar->pedestalInit(radar, radar->pedestalInitInput);
 }
 
 #pragma mark -
@@ -138,6 +138,12 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
 //    RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
 //    radar->state |= RKRadarStateSocketServerInitialized;
 
+    // Pedestal engine
+    radar->pedestalEngine = RKPedestalEngineInit();
+    RKPedestalEngineSetInputOutputBuffers(radar->pedestalEngine,
+                                          radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+//    RKPedestalEngineSetHardwareToPedzy(radar->pedestalEngine);
+    
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
@@ -201,6 +207,7 @@ int RKFree(RKRadar *radar) {
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     RKMomentEngineFree(radar->momentEngine);
     //RKServerFree(radar->socketServer);
+    RKPedestalEngineFree(radar->pedestalEngine);
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
@@ -279,6 +286,12 @@ int RKSetTransceiver(RKRadar *radar, RKTransceiver init(RKRadar *, void *), void
     return RKResultNoError;
 }
 
+int RKSetPedestal(RKRadar *radar, RKPedestal init(RKRadar *, void *), void *initInput) {
+    radar->pedestalInit = init;
+    radar->pedestalInitInput = initInput;
+    return RKResultNoError;
+}
+
 int RKSetPRF(RKRadar *radar, const float prf) {
     return RKResultNoError;
 }
@@ -287,7 +300,8 @@ size_t RKGetPulseCapacity(RKRadar *radar) {
     if (radar->pulses == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    return radar->pulses[0].header.capacity;
+    RKPulse *pulse = RKGetPulse(radar->pulses, 0);
+    return pulse->header.capacity;
 }
 
 #pragma mark -
@@ -296,6 +310,7 @@ int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKMomentEngineStart(radar->momentEngine);
     //RKServerActivate(radar->socketServer);
+    RKPedestalEngineStart(radar->pedestalEngine);
 
     // Operation parameters
     if (radar->transceiverInit != NULL) {
@@ -305,12 +320,12 @@ int RKGoLive(RKRadar *radar) {
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
     }
 
-//    if (radar->pedestalInit != NULL) {
-//        if (radar->desc.initFlags & RKInitFlagVerbose) {
-//            RKLog("Initializing pedestal ...");
-//        }
-//        pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
-//    }
+    if (radar->pedestalInit != NULL) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Initializing pedestal ...");
+        }
+        pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
+    }
 
     return 0;
 }
@@ -335,11 +350,17 @@ int RKStop(RKRadar *radar) {
 //        RKServerWait(radar->socketServer);
 //    }
     if (radar->transceiverInit != NULL) {
+        if (radar->transceiverExec != NULL) {
+            radar->transceiverExec(radar->transceiver, "stop");
+        }
         pthread_join(radar->transceiverThreadId, NULL);
     }
-//    if (radar->pedestalInit != NULL) {
-//        pthread_join(radar->pedestalThreadId, NULL);
-//    }
+    if (radar->pedestalInit != NULL) {
+        if (radar->pedestalExec != NULL) {
+            radar->pedestalExec(radar->pedestal, "stop");
+        }
+        pthread_join(radar->pedestalThreadId, NULL);
+    }
     return 0;
 }
 
@@ -355,6 +376,29 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     return pulse;
 }
 
+void RKSetPulseHasData(RKPulse *pulse) {
+    pulse->header.s |= RKPulseStatusHasIQData;
+}
+
 void RKSetPulseReady(RKPulse *pulse) {
     pulse->header.s = RKPulseStatusReady;
+}
+
+RKPosition *RKGetVacantPosition(RKRadar *radar) {
+    if (radar->pedestalEngine == NULL) {
+        RKLog("Error. Pedestal engine has not started.\n");
+        exit(EXIT_FAILURE);
+    }
+    RKPedestalEngine *engine = radar->pedestalEngine;
+    RKPosition *position = &engine->positionBuffer[engine->positionIndex];
+    position->flag = RKPositionFlagVacant;
+    engine->positionIndex = RKNextModuloS(engine->positionIndex, engine->positionBufferSize);
+    return position;
+}
+
+void RKSetPositionReady(RKPosition *position) {
+    if (position->flag & ~RKPositionFlagHardwareMask) {
+        RKLog("Error. Ingested position has a flag (0x%032x) outside of allowable value.\n", position->flag);
+    }
+    position->flag |= RKPositionFlagReady;
 }

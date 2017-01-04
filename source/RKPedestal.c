@@ -23,23 +23,33 @@ void *pedestalWorker(void *in);
 void *pedestalWorker(void *in) {
     RKPedestalEngine *engine = (RKPedestalEngine *)in;
 
-    int k = 0;
+    uint32_t index = *engine->pulseIndex;
 
-    // Get the latest pulse
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
-    while (pulse->header.s & RKPulseStatusVacant) {
-        usleep(1000);
-    }
-    double t = pulse->header.timeDouble;
+    RKLog("pedestalWorker() stared.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), index);
 
-    // Search until a time I need
-
-    // Wait until the latest position arrives
-    // find the latest position, tag the pulse with the appropriate position
-    // linearly interpolate between the best two readings
-    // at some point, implement something sophisticated like Klaman filter
+//    // Search until a time I need
+//
+//    // Wait until the latest position arrives
+//    // find the latest position, tag the pulse with the appropriate position
+//    // linearly interpolate between the best two readings
+//    // at some point, implement something sophisticated like Klaman filter
+//
+    engine->state = RKPedestalEngineStateActive;
 
     // Set the pulse to have position
+    while (engine->state == RKPedestalEngineStateActive) {
+        while (index == *engine->pulseIndex) {
+            usleep(10000);
+        }
+        // Get the latest pulse
+        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, index);
+        while ((pulse->header.s & RKPulseStatusHasIQData) == 0) {
+            usleep(1000);
+        }
+
+        // printf("Tagging pulse %d / %d ...\n", pulse->header.i, index);
+        index = RKNextModuloS(index, engine->pulseBufferSize);
+    }
 
     return (void *)NULL;
 }
@@ -50,6 +60,7 @@ void *pedestalWorker(void *in) {
 RKPedestalEngine *RKPedestalEngineInit() {
     RKPedestalEngine *engine = (RKPedestalEngine *)malloc(sizeof(RKPedestalEngine));
     memset(engine, 0, sizeof(RKPedestalEngine));
+    engine->memoryUsage = sizeof(RKPedestalEngine);
     return engine;
 }
 
@@ -60,6 +71,13 @@ void RKPedestalEngineFree(RKPedestalEngine *engine) {
 #pragma mark -
 #pragma mark Properties
 
+void RKPedestalEngineSetInputOutputBuffers(RKPedestalEngine *engine,
+                                           RKBuffer buffer, uint32_t *index, const uint32_t size) {
+    engine->pulseBuffer = buffer;
+    engine->pulseIndex = index;
+    engine->pulseBufferSize = size;
+}
+
 void RKPedestalEngineSetHardwareInit(RKPedestalEngine *engine, RKPedestal hardwareInit(void *), void *hardwareInitInput) {
     engine->hardwareInit = hardwareInit;
     engine->hardwareInitInput = hardwareInitInput;
@@ -69,9 +87,9 @@ void RKPedestalEngineSetHardwareExec(RKPedestalEngine *engine, int hardwareExec(
     engine->hardwareExec = hardwareExec;
 }
 
-void RKPedestalEngineSetHardwareRead(RKPedestalEngine *engine, int hardwareRead(RKPedestal, RKPosition *)) {
-    engine->hardwareRead = hardwareRead;
-}
+//void RKPedestalEngineSetHardwareRead(RKPedestalEngine *engine, int hardwareRead(RKPedestal, RKPosition *)) {
+//    engine->hardwareRead = hardwareRead;
+//}
 
 void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(RKPedestal)) {
     engine->hardwareFree = hardwareFree;
@@ -81,7 +99,10 @@ void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(
 #pragma mark Interactions
 
 int RKPedestalEngineStart(RKPedestalEngine *engine) {
-    //pthread_create() ...
+    if (pthread_create(&engine->threadId, NULL, pedestalWorker, engine)) {
+        RKLog("Error. Unable to start pedestal engine.\n");
+        return RKResultFailedToStartPedestalWorker;
+    }
     return RKResultNoError;
 }
 

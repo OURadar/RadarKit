@@ -180,7 +180,7 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
 //    RKComplex          Y[2][capacity];
 //    RKIQZ              Z[2];
 //
-size_t RKPulseBufferAlloc(RKPulse **mem, const uint32_t capacity, const uint32_t slots) {
+size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity - (1 << (int)log2f((float)capacity))) {
         RKLog("Error. Pulse capacity must be power of 2!");
         return 0;
@@ -221,9 +221,10 @@ size_t RKPulseBufferAlloc(RKPulse **mem, const uint32_t capacity, const uint32_t
     return bytes;
 }
 
-RKPulse *RKGetPulse(RKPulse *pulse, const uint32_t k) {
-    size_t pulseSize = sizeof(pulse->headerBytes) + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
-    return (RKPulse *)((void *)pulse + k * pulseSize);
+RKPulse *RKGetPulse(RKBuffer buffer, const uint32_t k) {
+    RKPulse *pulse = (RKPulse *)buffer;
+    size_t pulseSize = RKPulseHeaderSize + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
+    return (RKPulse *)(buffer + k * pulseSize);
 }
 
 RKInt16C *RKGetInt16CDataFromPulse(RKPulse *pulse, const uint32_t c) {
@@ -254,7 +255,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 //    int16_t            idata[2][capacity];
 //    float              fdata[2][capacity];
 //
-size_t RKRayBufferAlloc(RKRay **mem, const uint32_t capacity, const uint32_t slots) {
+size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity - (capacity / RKSIMDAlignSize) * RKSIMDAlignSize != 0) {
         RKLog("Error. Ray capacity must be multiple of %d!", RKSIMDAlignSize);
         return 0;

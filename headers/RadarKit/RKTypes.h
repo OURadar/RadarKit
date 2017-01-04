@@ -54,7 +54,7 @@
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                6
 #define RKMaxPacketSize                  1024 * 1024
-#define RKClientDefaultTimeoutSeconds    10
+#define RKNetworkTimeoutSeconds          20
 
 /*! @/definedblock */
 
@@ -167,13 +167,14 @@ typedef struct rk_pulse_parameters {
 } RKPulseParameters;
 
 // RKPulse struct is carefully designed to obey the SIMD alignment
+#define RKPulseHeaderSize       256
 typedef struct rk_pulse {
     union {
         struct {
             RKPulseHeader      header;
             RKPulseParameters  parameters;
         };
-        RKByte                 headerBytes[256];
+        RKByte                 headerBytes[RKPulseHeaderSize];
     };
     RKByte                     data[0];
 } RKPulse;
@@ -272,6 +273,7 @@ enum RKResult {
     RKResultFailedToStartMomentCore,
     RKResultFailedToStartPulseGatherer,
     RKResultUnableToChangeCoreCounts,
+    RKResultFailedToStartPedestalWorker,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -284,6 +286,7 @@ typedef struct RKModuloPath {
 
 typedef void * RKTransceiver;
 typedef void * RKPedestal;
+typedef void * RKBuffer;
 
 typedef struct rk_scratch {
     bool             showNumbers;
@@ -298,6 +301,25 @@ typedef struct rk_scratch {
     RKFloat          *aC[2 * RKLagCount - 1];              // abs(CCF)
     RKFloat          *gC;                                  // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
 } RKScratch;
+
+enum RKPositionFlag {
+    RKPositionFlagVacant             = 0,
+    RKPositionFlagAzimuthEnabled     = 1,
+    RKPositionFlagAzimuthSafety      = (1 << 1),
+    RKPositionFlagAzimuthError       = (1 << 2),
+    RKPositionFlagAzimuthSweep       = (1 << 8),
+    RKPositionFlagAzimuthPoint       = (1 << 9),
+    RKPositionFlagAzimuthComplete    = (1 << 10),
+    RKPositionFlagElevationEnabled   = (1 << 16),
+    RKPositionFlagElevationSafety    = (1 << 17),
+    RKPositionFlagElevationError     = (1 << 18),
+    RKPositionFlagElevationSweep     = (1 << 24),
+    RKPositionFlagElevationPoint     = (1 << 26),
+    RKPositionFlagElevationComplete  = (1 << 26),
+    RKPositionFlagActive             = (1 << 28),
+    RKPositionFlagHardwareMask       = 0x3FFFFFFF,
+    RKPositionFlagReady              = (1 << 31)
+};
 
 typedef struct rk_position {
     uint64_t         c;                                    // Counter
@@ -324,16 +346,6 @@ typedef struct rk_position {
     float            sweepElevationDegrees;                // Set elevation for current sweep
     float            sweepAzimuthDegrees;                  // Set azimuth for current sweep
 } RKPosition;
-
-typedef union rk_block_header {
-    struct {
-        uint16_t     type;                                 // Type
-        uint16_t     subtype;                              // Sub-type
-        uint32_t     size;                                 // Raw size in bytes to read / skip ahead
-        uint32_t     decodedSize;                          // Decided size if this is a compressed block
-    };
-    RKByte bytes[32];                                      // Make this struct always 32 bytes
-} RKBlockHeader;
 
 #pragma pack(pop)
 

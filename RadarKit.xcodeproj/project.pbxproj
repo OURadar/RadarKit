@@ -59,6 +59,8 @@
 		B5E6D94E1E1C4A2B00DFBBA9 /* RKPedestal.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E6D94D1E1C4A2B00DFBBA9 /* RKPedestal.c */; };
 		B5E6D94F1E1C4A2B00DFBBA9 /* RKPedestal.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E6D94D1E1C4A2B00DFBBA9 /* RKPedestal.c */; };
 		B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */; };
+		B5E6D9531E1D627B00DFBBA9 /* RKPedestalPedzy.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E6D9521E1D627B00DFBBA9 /* RKPedestalPedzy.c */; };
+		B5E6D9541E1D627B00DFBBA9 /* RKPedestalPedzy.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E6D9521E1D627B00DFBBA9 /* RKPedestalPedzy.c */; };
 		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
 		B5F5AE3D1DBF996100CF643F /* RKTest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5F5AE3C1DBF996100CF643F /* RKTest.c */; };
 		B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5F5AE3C1DBF996100CF643F /* RKTest.c */; };
@@ -117,6 +119,7 @@
 		B5E6D94B1E1C4A1200DFBBA9 /* RKPedestal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPedestal.h; path = headers/RadarKit/RKPedestal.h; sourceTree = "<group>"; };
 		B5E6D94D1E1C4A2B00DFBBA9 /* RKPedestal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKPedestal.c; path = source/RKPedestal.c; sourceTree = SOURCE_ROOT; };
 		B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPedestalPedzy.h; path = headers/RadarKit/RKPedestalPedzy.h; sourceTree = SOURCE_ROOT; };
+		B5E6D9521E1D627B00DFBBA9 /* RKPedestalPedzy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKPedestalPedzy.c; path = source/RKPedestalPedzy.c; sourceTree = SOURCE_ROOT; };
 		B5F5AE3A1DBF994200CF643F /* RKTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKTest.h; path = headers/RadarKit/RKTest.h; sourceTree = "<group>"; };
 		B5F5AE3C1DBF996100CF643F /* RKTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKTest.c; path = source/RKTest.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 /* End PBXFileReference section */
@@ -178,9 +181,9 @@
 				B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */,
 				B5C1F35E1AB9CC48004F88CD /* RKLocalCommandCenter.h */,
 				B5C1F3631AB9CD34004F88CD /* RKFile.h */,
-				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
 				B5E6D94B1E1C4A1200DFBBA9 /* RKPedestal.h */,
 				B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */,
+				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
 				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
@@ -203,8 +206,9 @@
 				B5B519691DCA879300470924 /* RKPulsePair.c */,
 				B5DDE7E11E1AB55400C5D16D /* RKMultiLag.c */,
 				B59471981D8C4F0500EEE77C /* RKLocalCommandCenter.c */,
-				B5F5AE3C1DBF996100CF643F /* RKTest.c */,
 				B5E6D94D1E1C4A2B00DFBBA9 /* RKPedestal.c */,
+				B5E6D9521E1D627B00DFBBA9 /* RKPedestalPedzy.c */,
+				B5F5AE3C1DBF996100CF643F /* RKTest.c */,
 				B5324DEA1AB9B2E900C00517 /* RKRadar.c */,
 				B594718E1D89B43400EEE77C /* RadarKit.c */,
 			);
@@ -337,6 +341,7 @@
 				B55E437F1DB6668F003C40CF /* RKSIMD.c in Sources */,
 				B5E6D94E1E1C4A2B00DFBBA9 /* RKPedestal.c in Sources */,
 				B5324DEF1AB9B2E900C00517 /* RKServer.c in Sources */,
+				B5E6D9531E1D627B00DFBBA9 /* RKPedestalPedzy.c in Sources */,
 				B5F5AE3D1DBF996100CF643F /* RKTest.c in Sources */,
 				B5C1F3561AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B5DDE7E21E1AB55400C5D16D /* RKMultiLag.c in Sources */,
@@ -362,6 +367,7 @@
 				B5C1F3521AB9C917004F88CD /* RKPulseCompression.c in Sources */,
 				B5E6D94F1E1C4A2B00DFBBA9 /* RKPedestal.c in Sources */,
 				B506C1431DC7DF570007BAE0 /* RKSIMD.c in Sources */,
+				B5E6D9541E1D627B00DFBBA9 /* RKPedestalPedzy.c in Sources */,
 				B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */,
 				B54795251D91A86F00E43F6A /* RKLocalCommandCenter.c in Sources */,
 				B54795261D91A87200E43F6A /* RKMoment.c in Sources */,

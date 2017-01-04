@@ -10,10 +10,12 @@
 #define __RadarKit_RKRadar__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKServer.h>
+#include <RadarKit/RKClient.h>
 #include <RadarKit/RKPulseCompression.h>
-#include <RadarKit/RKLocalCommandCenter.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKPedestal.h>
+#include <RadarKit/RKLocalCommandCenter.h>
 
 enum RKInitFlag {
     RKInitFlagNone                  = 0,
@@ -65,8 +67,8 @@ struct rk_radar {
     //
     // Special buffers, aligned to SIMD requirements
     //
-    RKPulse                    *pulses;
-    RKRay                      *rays;
+    RKBuffer                   pulses;
+    RKBuffer                   rays;
     //
     uint32_t                   parameterIndex;
     uint32_t                   pulseIndex;
@@ -91,10 +93,15 @@ struct rk_radar {
     RKTransceiver              transceiver;
     RKTransceiver              (*transceiverInit)(RKRadar *, void *);
     int                        (*transceiverExec)(RKTransceiver, const char *);
-    int                        (*transceiverRead)(RKTransceiver, const char *, void *);
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
     pthread_t                  transceiverThreadId;
+    RKPedestal                 pedestal;
+    RKPedestal                 (*pedestalInit)(RKRadar *, void *);
+    int                        (*pedestalExec)(RKPedestal, const char *);
+    int                        (*pedestalFree)(RKPedestal);
+    void                       *pedestalInitInput;
+    pthread_t                  pedestalThreadId;
 };
 
 // Life Cycle
@@ -108,6 +115,7 @@ int RKFree(RKRadar *radar);
 
 // Properties
 int RKSetTransceiver(RKRadar *radar, RKTransceiver(RKRadar *, void *), void *);
+int RKSetPedestal(RKRadar *radar, RKPedestal(RKRadar *, void *), void *);
 int RKSetVerbose(RKRadar *radar, const int verbose);
 int RKSetDeveloperMode(RKRadar *radar);
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
@@ -123,6 +131,10 @@ int RKWaitWhileActive(RKRadar *radar);
 int RKStop(RKRadar *radar);
 
 RKPulse *RKGetVacantPulse(RKRadar *radar);
+void RKSetPulseHasData(RKPulse *pulse);
 void RKSetPulseReady(RKPulse *pulse);
+
+RKPosition *RKGetVacantPosition(RKRadar *radar);
+void RKSetPositionReady(RKPosition *position);
 
 #endif /* defined(__RadarKit_RKRadar__) */

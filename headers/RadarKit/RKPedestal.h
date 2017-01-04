@@ -20,9 +20,8 @@
 //
 //         RKPedestal routine(void *);
 //
-//   - A continuous run loop that continuously ingest position data,
-//     you provide a reader delegate routine through RKPedestalEngineSetHardwareRead(). It must be
-//     in the form of
+//   - A continuous run loop that monitors your input position,
+//     you keep filling in the buffer
 //
 //         int routine(RKPedestal, RKPosition *);
 //
@@ -46,7 +45,6 @@
 #define __RadarKit_RKPedestal__
 
 #include <RadarKit/RKFoundation.h>
-#include <RadarKit/RKPedestalPedzy.h>
 
 #define RKPedestalBufferSize    4096
 
@@ -93,11 +91,9 @@ struct rk_pedestal_engine {
 RKPedestalEngine *RKPedestalEngineInit();
 void RKPedestalEngineFree(RKPedestalEngine *);
 
-void RKPedestalEngineSetHardwareToPedzy(RKPedestalEngine *);
-
+void RKPedestalEngineSetInputOutputBuffers(RKPedestalEngine *, RKBuffer, uint32_t *, const uint32_t);
 void RKPedestalEngineSetHardwareInit(RKPedestalEngine *, RKPedestal(void *), void *);
 void RKPedestalEngineSetHardwareExec(RKPedestalEngine *, int(RKPedestal, const char *));
-void RKPedestalEngineSetHardwareRead(RKPedestalEngine *, int(RKPedestal, RKPosition *));
 void RKPedestalEngineSetHardwareFree(RKPedestalEngine *, int(RKPedestal));
 
 int RKPedestalEngineStart(RKPedestalEngine *);

@@ -285,11 +285,11 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(O->name, RKMaximumStringLength - 1, "Op-%03d", O->iid);
     O->delim.type = RKPacketTypePlainText;
-    O->delim.rawSize = 0;
+    O->delim.size = 0;
     O->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
     O->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
     O->beacon.type = RKPacketTypeBeacon;
-    O->beacon.rawSize = 0;
+    O->beacon.size = 0;
     O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\0';
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
@@ -501,9 +501,9 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
     return grandTotalSentSize;
 }
 
-ssize_t RKOperatorSendString(RKOperator *O, const char *string) {
-    O->delim.rawSize = (uint32_t)strlen(string) + 1;
-    return RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), string, O->delim.rawSize, NULL);
+ssize_t RKOperatorSendBeaconAndString(RKOperator *O, const char *string) {
+    O->delim.size = (uint32_t)strlen(string) + 1;
+    return RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), string, O->delim.size, NULL);
 }
 
 ssize_t RKOperatorSendBeacon(RKOperator *O) {

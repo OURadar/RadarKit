@@ -34,13 +34,13 @@ void *theClient(void *in) {
         return (void *)RKResultErrorCreatingOperatorRoutine;
     }
 
-    RKBlockHeader *header = (RKBlockHeader *)buf;
+    RKNetDelimiter *header = (RKNetDelimiter *)buf;
 
     RKClient *C = (RKClient *)in;
     C->userPayload = buf;
 
     if (C->verbose > 1) {
-        RKLog("Client %s working hard ...\n", C->name);
+        RKLog("RKClient : %s is working hard ...\n", C->name);
     }
 
     // Here comes the infinite loop until being stopped
@@ -49,7 +49,7 @@ void *theClient(void *in) {
         C->state = RKClientStateConnecting;
 
         if (C->verbose > 1) {
-            RKLog("Opening socket ...\n");
+            RKLog("RKClient : Opening socket ...\n");
         }
         if (C->type == RKClientSocketTypeTCP) {
             if ((C->sd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -77,8 +77,8 @@ void *theClient(void *in) {
         }
 
         // Resolve hostname to IP address
-        if (C->verbose) {
-            RKLog("Resolving IP address ...\n");
+        if (C->verbose > 1) {
+            RKLog("RKClient : Resolving IP address ...\n");
         }
         struct hostent *h = gethostbyname2(C->hostname, AF_INET);
         if (h == NULL) {
@@ -96,14 +96,14 @@ void *theClient(void *in) {
         C->sa.sin_addr.s_addr = inet_addr(C->hostIP);
 
         if (C->verbose > 1) {
-            RKLog("Configuring socket ...\n");
+            RKLog("RKClient : Configuring socket ...\n");
         }
 
         C->state = RKClientStateConnecting;
 
         // Connect through the IP address and port number
-        if (C->verbose > 1) {
-            RKLog("Connecting %s:%d ...\n", C->hostIP, C->port);
+        if (C->verbose) {
+            RKLog("RKClient : Connecting %s:%d ...\n", C->hostIP, C->port);
         }
         if ((r = connect(C->sd, (struct sockaddr *)&C->sa, sizeof(struct sockaddr))) < 0) {
             // In progress is not a true failure
@@ -112,7 +112,7 @@ void *theClient(void *in) {
                 k = 3;
                 do {
                     if (C->verbose > 1) {
-                        RKLog("Connection failed (errno = %d). Retry in %d second%s ...\n", k, k > 1 ? "s" : "");
+                        RKLog("RKClient : Connection failed (errno = %d). Retry in %d second%s ...\n", k, k > 1 ? "s" : "");
                     }
                     k--;
                     sleep(1);
@@ -166,7 +166,7 @@ void *theClient(void *in) {
             readOkay = false;
             r = select(C->sd + 1, &C->rfd, NULL, &C->efd, &timeout);
             if (C->verbose > 3) {
-                RKLog("(C->state < RKClientStateReconnecting) - select() returned r = %d   FD_ISSET(rfd) = %d   FD_ISSET(efd) = %d   errno = %d.\n",
+                RKLog("RKClient : select() returned r = %d   FD_ISSET(rfd) = %d   FD_ISSET(efd) = %d   errno = %d.\n",
                         r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
             }
             if (r == 0) {
@@ -182,16 +182,16 @@ void *theClient(void *in) {
 
                         k = 0;
                         timeoutCount = 0;
-                        while (timeoutCount++ < C->timeoutSeconds / 10) {
+                        while (timeoutCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, buf + k, C->blockLength - k)) > 0) {
                                 k += r;
                                 if (k >= C->blockLength) {
                                     break;
                                 } else {
-                                    usleep(100000);
+                                    usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                RKLog("<RKClient> : RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)\n",
+                                RKLog("RKClient : RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)\n",
                                         r, k, errno, RKErrnoString(errno));
                                 if (r == 0) {
                                     timeoutCount--;
@@ -200,8 +200,8 @@ void *theClient(void *in) {
                             }
                             RKLog("... errno = %d ...\n", errno);
                         }
-                        if (timeoutCount >= C->timeoutSeconds / 10) {
-                            RKLog("<RKClient> : Not a proper frame.  timeoutCount = %d  errno = %d\n", timeoutCount, errno);
+                        if (timeoutCount >= C->timeoutSeconds * 100) {
+                            RKLog("RKClient : Not a proper frame.  timeoutCount = %d  errno = %d\n", timeoutCount, errno);
                             break;
                         }
                         readOkay = true;
@@ -211,30 +211,30 @@ void *theClient(void *in) {
 
                         k = 0;
                         timeoutCount = 0;
-                        while (timeoutCount++ < C->timeoutSeconds / 10) {
-                            if ((r = (int)read(C->sd, buf + k, sizeof(RKBlockHeader) - k)) > 0) {
+                        while (timeoutCount++ < C->timeoutSeconds * 100) {
+                            if ((r = (int)read(C->sd, buf + k, sizeof(RKNetDelimiter) - k)) > 0) {
                                 k += r;
-                                if (k > sizeof(RKBlockHeader)) {
-                                    RKLog("Error. <RKClient> should not read larger than sizeof(RKBlockHeader) = %zu\n", sizeof(RKBlockHeader));
+                                if (k > sizeof(RKNetDelimiter)) {
+                                    RKLog("RKClient : Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", sizeof(RKNetDelimiter));
                                     break;
-                                } else if (k == sizeof(RKBlockHeader)) {
+                                } else if (k == sizeof(RKNetDelimiter)) {
                                     break;
                                 } else {
                                     usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                fprintf(stderr, "<RKClient> : RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
+                                fprintf(stderr, "RKClient : RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
                                         r, k, errno, RKErrnoString(errno));
                                 break;
                             }
                         }
-                        if (k != sizeof(RKBlockHeader) || timeoutCount > C->timeoutSeconds / 10 || errno != ETIMEDOUT) {
+                        if (k != sizeof(RKNetDelimiter) || timeoutCount > C->timeoutSeconds * 100 || errno != ETIMEDOUT) {
                             break;
                         }
                         k = 0;
                         timeoutCount = 0;
-                        while (k < header->size && timeoutCount++ < C->timeoutSeconds / 10) {
-                            if ((r = (int)read(C->sd, buf + sizeof(RKBlockHeader) + k, header->size - k)) > 0) {
+                        while (k < header->size && timeoutCount++ < C->timeoutSeconds * 100) {
+                            if ((r = (int)read(C->sd, buf + sizeof(RKNetDelimiter) + k, header->size - k)) > 0) {
                                 k += r;
                                 if (k >= header->size) {
                                     break;
@@ -242,12 +242,12 @@ void *theClient(void *in) {
                                     usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                fprintf(stderr, "PC : PCMessageFormatFixedHeaderVariableBlock:2  r=%d  k=%d  errno=%d (%s)\n",
+                                fprintf(stderr, "RKClient : PCMessageFormatFixedHeaderVariableBlock:2  r=%d  k=%d  errno=%d (%s)\n",
                                         r, k, errno, RKErrnoString(errno));
                                 break;
                             }
                         }
-                        if (timeoutCount >= RKClientDefaultTimeoutSeconds / 10 || errno != EAGAIN) {
+                        if (timeoutCount >= RKNetworkTimeoutSeconds * 100 || errno != EAGAIN) {
                             break;
                         }
                         readOkay = true;
@@ -259,7 +259,7 @@ void *theClient(void *in) {
                         if (fid == NULL) {
                             fid = fdopen(C->sd, "r");
                             if (fid < 0) {
-                                fprintf(stderr, "Error. <RKCLient> unable to open a file descriptor for socket.\n");
+                                fprintf(stderr, "RKClient : Error. Unable to open a file descriptor for socket.\n");
                                 return (void *)-1;
                             }
                         }
@@ -269,10 +269,10 @@ void *theClient(void *in) {
                         break;
                 }
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
-                fprintf(stderr, "PC : Error occurred.  r=%d  errno=%d (%s)\n", r, errno, RKErrnoString(errno));
+                fprintf(stderr, "RKClient : Error occurred.  r=%d  errno=%d (%s)\n", r, errno, RKErrnoString(errno));
                 break;
             } else {
-                fprintf(stderr, "PC : r=%d  errno=%d (%s)\n", r, errno, RKErrnoString(errno));
+                fprintf(stderr, "RKClient : r=%d  errno=%d (%s)\n", r, errno, RKErrnoString(errno));
                 fclose(fid);
                 break;
             }
@@ -309,9 +309,9 @@ RKClient *RKClientInit(void) {
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.hostname, "localhost");
     desc.port = 9000;
-    desc.timeoutSeconds = RKClientDefaultTimeoutSeconds;
     desc.blocking = true;
     desc.reconnect = true;
+    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     return RKClientInitWithDesc(desc);
 }
 
@@ -330,6 +330,9 @@ RKClient *RKClientInitWithDesc(RKClientDesc desc) {
     }
     memset(C, 0, sizeof(RKClient));
     // Copy the first part in which the first part must be identical
+    if (desc.timeoutSeconds == 0) {
+        desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    }
     memcpy(C, &desc, sizeof(RKClientDesc));
 
     return C;
@@ -340,7 +343,7 @@ RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
     memset(&desc, 0, sizeof(RKClientDesc));
     strncpy(desc.hostname, hostname, RKMaximumStringLength - 1);
     desc.port = port;
-    desc.timeoutSeconds = RKClientDefaultTimeoutSeconds;
+    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.blocking = true;
     desc.reconnect = true;
     return RKClientInitWithDesc(desc);
@@ -359,7 +362,7 @@ void RKClientFree(RKClient *C) {
 #pragma mark Properties
 
 
-void RKClientSetUserResrouce(RKClient *C, void *resource) {
+void RKClientSetUserResource(RKClient *C, void *resource) {
     C->userResource = resource;
 }
 

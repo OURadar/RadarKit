@@ -44,16 +44,21 @@ enum RKPacketType {
     RKPacketTypeBeacon
 };
 
-typedef union rk_net_delimiter_packet {
+#pragma pack(push, 1)
+
+typedef union rk_net_delimiter {
     struct {
-        uint32_t type;
-        uint32_t rawSize;
-        uint32_t userParameter1;
-        uint32_t userParameter2;
+        uint16_t     type;                                 // Type
+        uint16_t     subtype;                              // Sub-type
+        uint32_t     size;                                 // Raw size in bytes to read / skip ahead
+        uint32_t     decodedSize;                          // Decided size if this is a compressed block
     };
-    char bytes[16];
+    RKByte bytes[32];                                      // Make this struct always 32 bytes
 } RKNetDelimiter;
 
+#pragma pack(pop)
+
+ssize_t RKNetworkSendPackets(int, ...);
 
 //#ifdef __cplusplus
 //}

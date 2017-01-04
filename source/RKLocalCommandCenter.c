@@ -12,11 +12,11 @@ int socketCommandHandler(RKOperator *O) {
     char string[RKMaximumStringLength];
     switch (O->cmd[0]) {
         case 'a':
-            RKOperatorSendString(O, "Hello" RKEOL);
+            RKOperatorSendBeaconAndString(O, "Hello" RKEOL);
             break;
         default:
             snprintf(string, RKMaximumStringLength, "Unknown command '%s'." RKEOL, O->cmd);
-            RKOperatorSendString(O, string);
+            RKOperatorSendBeaconAndString(O, string);
             break;
     }
     return 0;

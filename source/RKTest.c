@@ -419,7 +419,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
         }
     }
 
-    //const int gateCount = MIN(radar->pulses[0].header.capacity, (int)(60.0e3 / 3.0e8 * fs * 2.0));
+    //const int gateCount = RKGetPulseCapacity(radar);
     const int gateCount = 6;
     const int chunkSize = MAX(1, (int)floor(0.1f / prt));
 

@@ -654,9 +654,7 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const 
 // size - number of slots in *pulses
 //
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   void *buffer,
-                                                   uint32_t *index,
-                                                   const uint32_t size) {
+                                                   RKBuffer buffer, uint32_t *index, const uint32_t size) {
     engine->buffer = buffer;
     engine->index = index;
     engine->size = size;
@@ -732,17 +730,20 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
+    RKPulse *pulse = (RKPulse *)engine->buffer;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
+    RKPulse *pulse = (RKPulse *)engine->buffer;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, engine->buffer[0].header.capacity, 0, 0);
+    RKPulse *pulse = (RKPulse *)engine->buffer;
+    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 #pragma mark -

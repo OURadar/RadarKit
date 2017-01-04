@@ -90,24 +90,24 @@ struct rk_operator  {
 };
 
 
-ssize_t RKOperatorSendPackets(RKOperator *O, ...);
-ssize_t RKOperatorSendString(RKOperator *O, const char *string);
-ssize_t RKOperatorSendBeacon(RKOperator *O);
-void RKOperatorHangUp(RKOperator *O);
+ssize_t RKOperatorSendPackets(RKOperator *, ...);
+ssize_t RKOperatorSendBeaconAndString(RKOperator *, const char *);
+ssize_t RKOperatorSendBeacon(RKOperator *);
+void RKOperatorHangUp(RKOperator *);
 
 RKServer *RKServerInit(void);
-void RKServerFree(RKServer *M);
+void RKServerFree(RKServer *);
 
-void RKServerSetWelcomeHandler(RKServer *M, int (*function)(RKOperator *));
-void RKServerSetCommandHandler(RKServer *M, int (*function)(RKOperator *));
-void RKServerSetTerminateHandler(RKServer *M, int (*function)(RKOperator *));
-void RKServerSetStreamHandler(RKServer *M, int (*function)(RKOperator *));
-void RKServerSetWelcomeHandlerToDefault(RKServer *M);
-void PSServerSetTerminateHandlerToDefault(RKServer *M);
+void RKServerSetWelcomeHandler(RKServer *, int (*)(RKOperator *));
+void RKServerSetCommandHandler(RKServer *, int (*)(RKOperator *));
+void RKServerSetTerminateHandler(RKServer *, int (*)(RKOperator *));
+void RKServerSetStreamHandler(RKServer *, int (*)(RKOperator *));
+void RKServerSetWelcomeHandlerToDefault(RKServer *);
+void PSServerSetTerminateHandlerToDefault(RKServer *);
 
-void RKServerActivate(RKServer *M);
-void RKServerWait(RKServer *M);
-void RKServerStop(RKServer *M);
+void RKServerActivate(RKServer *);
+void RKServerWait(RKServer *);
+void RKServerStop(RKServer *);
 
 //#ifdef __cplusplus
 //}

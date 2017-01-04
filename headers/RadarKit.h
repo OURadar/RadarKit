@@ -25,5 +25,6 @@
 
 #include <RadarKit/RKRadar.h>
 #include <RadarKit/RKTest.h>
+#include <RadarKit/RKPedestalPedzy.h>
 
 #endif /* defined(__RadarKit__) */

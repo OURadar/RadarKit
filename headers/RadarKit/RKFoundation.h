@@ -52,13 +52,13 @@ void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity);
 void RKZeroTailFloat(RKFloat *data, const uint32_t capacity, const uint32_t origin);
 void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin);
 
-size_t RKPulseBufferAlloc(RKPulse **, const uint32_t, const uint32_t);
-RKPulse *RKGetPulse(RKPulse *, const uint32_t);
+size_t RKPulseBufferAlloc(RKBuffer *, const uint32_t, const uint32_t);
+RKPulse *RKGetPulse(RKBuffer, const uint32_t);
 RKInt16C *RKGetInt16CDataFromPulse(RKPulse *, const uint32_t);
 RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t);
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
 
-size_t RKRayBufferAlloc(RKRay **, const uint32_t, const uint32_t);
+size_t RKRayBufferAlloc(RKBuffer *, const uint32_t, const uint32_t);
 RKRay *RKGetRay(RKRay *, const uint32_t);
 int16_t *RKGetInt16DataFromRay(RKRay *, const uint32_t);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t);
