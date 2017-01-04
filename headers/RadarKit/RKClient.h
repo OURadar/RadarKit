@@ -2,9 +2,11 @@
 //  RKClient.h
 //  RadarKit
 //
-//  This collection is copied and modified from PortClient.
+//  This collection is ported and slightly modified from PortClient.
+//  Most changes are to accomodate the design philosophy of RadarKit.
+//  RKClient and PortClient are not interchangeable!
 //
-//  Created by Boon Leng Cheong on 1/3/17.
+//  Created by Boon Leng Cheong on 1/4/17.
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
@@ -21,67 +23,91 @@ typedef int RKClientState;
 
 enum RKClientState {
     RKClientStateNull,
+    RKClientStateCreating,
     RKClientStateResolvingIP,
     RKClientStateConfiguringSocket,
     RKClientStateConnecting,
     RKClientStateConnected,
+    RKClientStateReconnecting,
     RKClientStateDisconnecting,
     RKClientStateDisconnected
 };
 
-typedef struct RKClientDesc {
-    char                    hostname[RKMaximumStringLength];  // Hostname
-    int                     port;                             // Port number of the server
-    int                     timeoutInSeconds;                 // Timeout in seconds
-    RKSocketType            type;                             // Socket type
-    RKMessageFormat         format;                           // Payload format
-    int                     blockLength;                      // Payload length
-    bool                    blocking;                         // Blocking read
-    bool                    reconnect;
-    int                     verb;
+enum RKClientSocketType {
+    RKClientSocketTypeTCP,
+    RKClientSocketTypeUDP
+};
+
+enum RKClientMessageFormat {
+    RKClientMessageFormatNewLine,                             // Line-by-line reading
+    RKClientMessageFormatConstantSize,                        // Fixed length packets
+    RKClientMessageFormatHeaderDefinedPayload                 // The header is of type RKBlockHeader
+};
+
+typedef struct rk_client_desc {
+    char                  name[RKMaximumStringLength];        // A program name
+    char                  hostname[RKMaximumStringLength];    // Hostname
+    int                   port;                               // Port number of the server
+    int                   timeoutSeconds;                     // Timeout in seconds
+    RKSocketType          type;                               // Socket type
+    RKMessageFormat       format;                             // Payload format
+    int                   blockLength;                        // Payload length
+    bool                  blocking;                           // Blocking read
+    bool                  reconnect;                          // Reconnect if connection fails
+    int                   verbose;                            // Verbosity level
+    void                  *userResource;                      // A pointer to user resource
 } RKClientDesc;
 
 typedef struct rk_client RKClient;
 
 struct rk_client {
-    char                  hostname[RKMaximumStringLength];  // Hostname
-    int                   port;                             // Port number of the server
-    int                   timeoutInSeconds;                 // Timeout in seconds
-    RKSocketType          type;                             // Socket type
-    RKMessageFormat       format;                           // Payload format
-    int                   blockLength;                      // Payload length
-    bool                  blocking;                         // Blocking read
-    bool                  reconnect;
-    int                   verb;
+    // User set parameters
+    //    struct rk_client_desc;                              // Need -fms-extension to compile this properly
+    char                  name[RKMaximumStringLength];        // A program name
+    char                  hostname[RKMaximumStringLength];    // Hostname
+    int                   port;                               // Port number of the server
+    int                   timeoutSeconds;                     // Timeout in seconds
+    RKSocketType          type;                               // Socket type
+    RKMessageFormat       format;                             // Payload format
+    int                   blockLength;                        // Payload length
+    bool                  blocking;                           // Blocking read
+    bool                  reconnect;                          // Reconnect if connection fails
+    int                   verbose;                            // Verbosity level
+    void                  *userResource;                      // A pointer to user (shared) resource
+    void                  *userPayload;                       // A pointer to user payload
 
-    int                   (*i)(RKClient *);                 // Initialization handler
-    int                   (*r)(RKClient *, const char *);   // Receive handler
+    int                   (*init)(RKClient *);                // Connection initialization handler
+    int                   (*recv)(RKClient *);                // Receive handler
 
-    // Everything past here should be internal to the framework
-  
-    char                  hostIP[32];                       // Host IP in numbers
-    //socklen_t             sa_len;                           // Address length (IPv4 / IPv6)
-    struct sockaddr_in    sa;                               // Socket address
-    int                   sd;                               // Socket descriptor
-  
-    bool                  run;                              // A flag for infinite run
-    bool                  safeToClose;                      // A flag indicating safe to close
-    int                   ireq;                             // A global instance request
-    RKClientState         state;                            // A global flag for infinite loop
+    // Program set parameters
+    char                  hostIP[32];                         // Host IP in numbers
+    struct sockaddr_in    sa;                                 // Socket address
+    int                   sd;                                 // Socket descriptor
 
-    pthread_t             tid;                              // Own thread ID
-    pthread_attr_t        tattr;                            // Thread attributes
-    pthread_mutex_t       tlock;                            // Thread safety mutex of the server
+    int                   ireq;                               // A global instance request
+    RKClientState         state;                              // A global flag for infinite loop
+    bool                  safeToClose;                        // A flag indicating safe to close
 
-    fd_set                rfd;                              // Read ready
-    fd_set                wfd;                              // Write ready
-    fd_set                efd;                              // Error occurred
+    pthread_t             threadId;                           // Own thread ID
+    pthread_attr_t        threadAttributes;                   // Thread attributes
+    pthread_mutex_t       lock;                               // Thread safety mutex of the server
 
-    char                  name[RKMaximumStringLength];      // A program name
-
-    void                  *usr;                             // User pointer
+    fd_set                rfd;                                // Read ready
+    fd_set                wfd;                                // Write ready
+    fd_set                efd;                                // Error occurred
 };
 
+RKClient *RKClientInit(void);
+RKClient *RKClientInitWithDesc(RKClientDesc);
+RKClient *RKClientInitWithHostnamePort(const char *, const int);
+void RKClientFree(RKClient *);
+
+void RKClientSetUserResrouce(RKClient *, void *);
+void RKClientSetGreetHandler(RKClient *, int (*)(RKClient *));
+void RKClientSetReceiveHandler(RKClient *, int (*)(RKClient *));
+
+void RKClientStart(RKClient *);
+void RKClientStop(RKClient *);
 
 //#ifdef __cplusplus
 //}

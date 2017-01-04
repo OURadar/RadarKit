@@ -53,6 +53,8 @@
 #define RKWorkerDutyCycleBufferSize      1000
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                6
+#define RKMaxPacketSize                  1024 * 1024
+#define RKClientDefaultTimeoutSeconds    10
 
 /*! @/definedblock */
 
@@ -250,6 +252,7 @@ enum RKResult {
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,
+    RKResultErrorCreatingClientRoutine,
     RKResultSDToFDError,
     RKResultNoPulseBuffer,
     RKResultNoRayBuffer,
@@ -297,30 +300,40 @@ typedef struct rk_scratch {
 } RKScratch;
 
 typedef struct rk_position {
-    uint64_t      c;                                       // Counter
-    uint32_t      tic;                                     // Time tic
-    RKFourByte    rawElevation;                            // Raw elevation readout
-    RKFourByte    rawAzimuth;                              // Raw azimuth readout
-    RKFourByte    rawElevationVelocity;                    // Raw velocity of elevation readout
-    RKFourByte    rawAzimuthVelocity;                      // Raw velocity of azimuth readout
-    RKFourByte    rawElevationStatus;                      // Raw status of elevation readout
-    RKFourByte    rawAzimuthStatus;                        // Raw status of azimuth readout
-    uint8_t       queueSize;                               // Queue size of the readout buffer
-    uint8_t       elevationMode;                           // Positioning mode of elevation
-    uint8_t       azimuthMode;                             // Positioning mode of azimuth
-    uint8_t       sequence;                                // DEBUG command sequence
-    uint32_t      flag;                                    // Position flag
-    float         elevationDegrees;                        // Decoded elevation
-    float         azimuthDegrees;                          // Decoded elevation
-    float         elevationVelocityDegreesPerSecond;       // Decoded velocity of elevation
-    float         azimuthVelocityDegreesPerSecond;         // Decoded velocity of azimuth
-    float         elevationCounter;                        // Progress counter (of target) of the elevation
-    float         elevationTarget;                         // Targeted progress counter of the elevation
-    float         azimuthCounter;                          // Progress counter (of target) of the azimuth
-    float         azimuthTarget;                           // Targeted progress counter of the azimuth
-    float         sweepElevationDegrees;                   // Set elevation for current sweep
-    float         sweepAzimuthDegrees;                     // Set azimuth for current sweep
+    uint64_t         c;                                    // Counter
+    uint32_t         tic;                                  // Time tic
+    RKFourByte       rawElevation;                         // Raw elevation readout
+    RKFourByte       rawAzimuth;                           // Raw azimuth readout
+    RKFourByte       rawElevationVelocity;                 // Raw velocity of elevation readout
+    RKFourByte       rawAzimuthVelocity;                   // Raw velocity of azimuth readout
+    RKFourByte       rawElevationStatus;                   // Raw status of elevation readout
+    RKFourByte       rawAzimuthStatus;                     // Raw status of azimuth readout
+    uint8_t          queueSize;                            // Queue size of the readout buffer
+    uint8_t          elevationMode;                        // Positioning mode of elevation
+    uint8_t          azimuthMode;                          // Positioning mode of azimuth
+    uint8_t          sequence;                             // DEBUG command sequence
+    uint32_t         flag;                                 // Position flag
+    float            elevationDegrees;                     // Decoded elevation
+    float            azimuthDegrees;                       // Decoded elevation
+    float            elevationVelocityDegreesPerSecond;    // Decoded velocity of elevation
+    float            azimuthVelocityDegreesPerSecond;      // Decoded velocity of azimuth
+    float            elevationCounter;                     // Progress counter (of target) of the elevation
+    float            elevationTarget;                      // Targeted progress counter of the elevation
+    float            azimuthCounter;                       // Progress counter (of target) of the azimuth
+    float            azimuthTarget;                        // Targeted progress counter of the azimuth
+    float            sweepElevationDegrees;                // Set elevation for current sweep
+    float            sweepAzimuthDegrees;                  // Set azimuth for current sweep
 } RKPosition;
+
+typedef union rk_block_header {
+    struct {
+        uint16_t     type;                                 // Type
+        uint16_t     subtype;                              // Sub-type
+        uint32_t     size;                                 // Raw size in bytes to read / skip ahead
+        uint32_t     decodedSize;                          // Decided size if this is a compressed block
+    };
+    RKByte bytes[32];                                      // Make this struct always 32 bytes
+} RKBlockHeader;
 
 #pragma pack(pop)
 

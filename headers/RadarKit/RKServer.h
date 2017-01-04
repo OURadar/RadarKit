@@ -46,47 +46,47 @@ typedef struct rk_server    RKServer;
 typedef struct rk_operator  RKOperator;
 
 struct rk_server {
-    int              sd;                             //!< Socket descriptor
-    int              port;                           //!< Port number of the server
-    int              maxClient;                      //!< Maximum number of client connections
-    int              timeoutInSec;                   //!< Timeout in seconds
+    int              sd;                             // Socket descriptor
+    int              port;                           // Port number of the server
+    int              maxClient;                      // Maximum number of client connections
+    int              timeoutSeconds;                 // Timeout in seconds
 
-    int              nclient;                        //!< Number of clients
-    int              ireq;                           //!< A global instance request
-    int              state;                          //!< A global flag for infinite loop
-    pthread_t        tid;                            //!< Own thread ID
-    pthread_mutex_t  lock;                           //!< Thread safety mutex of the server
+    int              nclient;                        // Number of clients
+    int              ireq;                           // A global instance request
+    int              state;                          // A global flag for infinite loop
+    pthread_t        threadId;                       // Own thread ID
+    pthread_mutex_t  lock;                           // Thread safety mutex of the server
 
-    char             name[RKMaximumStringLength];    //!< A program name
+    char             name[RKMaximumStringLength];    // A program name
 
-    int              (*w)(RKOperator *);             //!< Function that sends welcome message
-    int              (*c)(RKOperator *);             //!< Function that answers command
-    int              (*s)(RKOperator *);             //!< Function that keeps streaming content
-    int              (*t)(RKOperator *);             //!< Function that terminates connection
+    int              (*w)(RKOperator *);             // Function that sends welcome message
+    int              (*c)(RKOperator *);             // Function that answers command
+    int              (*s)(RKOperator *);             // Function that keeps streaming content
+    int              (*t)(RKOperator *);             // Function that terminates connection
     
-    void             *usr;                           //!< User pointer
+    void             *usr;                           // User pointer
 };
 
 struct rk_operator  {
-    RKServer         *M;                             //!< Pointer to main server for common resources
-    RKOperatorOption option;                         //!< Keep alive flag
+    RKServer         *M;                             // Pointer to main server for common resources
+    RKOperatorOption option;                         // Keep alive flag
 
-    int              iid;                            //!< Instant identifier
-    int              timeoutInSec;                   //!< Timeout in seconds
-    int              sid;                            //!< Socket identifier of the client
-    RKOperatorState  state;                          //!< Connection state
-    pthread_t        tid;                            //!< Thread ID
-    pthread_mutex_t  lock;                           //!< Thread safety mutex of the attendant
+    int              iid;                            // Instant identifier
+    int              timeoutSeconds;                 // Timeout in seconds
+    int              sid;                            // Socket identifier of the client
+    RKOperatorState  state;                          // Connection state
+    pthread_t        threadId;                       // Thread ID
+    pthread_mutex_t  lock;                           // Thread safety mutex of the attendant
 
-    char             name[RKMaximumStringLength];    //!< Attendant's name
-    char             ip[RKMaximumStringLength];      //!< Client's IP address
+    char             name[RKMaximumStringLength];    // Attendant's name
+    char             ip[RKMaximumStringLength];      // Client's IP address
 
-    RKNetDelimiter   delim;                          //!< Convenient delimiter for sending a string
+    RKNetDelimiter   delim;                          // Convenient delimiter for sending a string
     RKNetDelimiter   beacon;       
 
-    char             *cmd;                           //!< Latest command
+    char             *cmd;                           // Latest command
 
-    void             *usr;                           //!< User pointer
+    void             *usr;                           // User pointer
 };
 
 

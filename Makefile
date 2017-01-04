@@ -3,6 +3,7 @@ UNAME := $(shell uname)
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+#CFLAGS += -fms-extensions -Wno-microsoft
 LDFLAGS = -L /usr/local/lib
 OBJS = RadarKit.o RKRadar.o RKFoundation.o RKMisc.o RKPulseCompression.o RKServer.o RKLocalCommandCenter.o RKDSP.o RKSIMD.o RKMoment.o RKTest.o RKPulsePair.o RKMultiLag.o RKPedestal.o
 RKLIB = libRadarKit.a

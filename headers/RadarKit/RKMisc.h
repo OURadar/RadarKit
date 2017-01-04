@@ -34,6 +34,15 @@
 #include <mach/clock.h>
 #endif
 
+#define RKErrnoString(A)  \
+(errno == EAGAIN       ? "EAGAIN"       : \
+(errno == EBADF        ? "EBADF"        : \
+(errno == EFAULT       ? "EFAULT"       : \
+(errno == EINTR        ? "EINTR"        : \
+(errno == EINVAL       ? "EINVAL"       : \
+(errno == ECONNREFUSED ? "ECONNREFUSED" : \
+(errno == EIO          ? "EIO"          : "OTHERS")))))))
+
 void stripTrailingUnwanted(char *str);
 
 char *RKNow();

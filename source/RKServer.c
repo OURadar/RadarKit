@@ -234,7 +234,7 @@ void *RKOperatorRoutine(void *in) {
         }
         // Process the timeout
         mwait = wwait < rwait ? wwait : rwait;
-        if (mwait > M->timeoutInSec * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
+        if (mwait > M->timeoutSeconds * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
             RKLog("Op-%03d encountered a timeout.\n", O->iid);
             // Dismiss with a terminate function
             if (M->t != NULL) {
@@ -277,7 +277,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->iid = sid - M->sd;
     O->state = RKOperatorStateActive;
     O->option = RKOperatorOptionNone;
-    O->timeoutInSec = 10;
+    O->timeoutSeconds = 10;
     O->usr = M->usr;
     RKServerSetWelcomeHandlerToDefault(M);
     PSServerSetTerminateHandlerToDefault(M);
@@ -293,7 +293,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\0';
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
-    if (pthread_create(&O->tid, NULL, RKOperatorRoutine, O)) {
+    if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
         RKLog("Error. Failed to create RKOperatorRoutine().\n");
         pthread_mutex_unlock(&M->lock);
         return RKResultErrorCreatingOperatorRoutine;
@@ -362,7 +362,7 @@ RKServer *RKServerInit(void) {
     memset(M, 0, sizeof(RKServer));
     M->port = 10000;
     M->maxClient = 8;
-    M->timeoutInSec = 5;
+    M->timeoutSeconds = 5;
     pthread_mutex_init(&M->lock, NULL);
 
     // Ignore broken pipe for clients that disconnect unexpectedly
@@ -419,7 +419,7 @@ void PSServerSetTerminateHandlerToDefault(RKServer *M) {
 
 void RKServerActivate(RKServer *M) {
     M->state = RKServerStateOpening;
-    if (pthread_create(&M->tid, NULL, RKServerRoutine, M)) {
+    if (pthread_create(&M->threadId, NULL, RKServerRoutine, M)) {
         RKLog("Error. Unable to launch main server.\n");
     }
     while (M->state > RKServerStateNull && M->state < RKServerStateActive) {
