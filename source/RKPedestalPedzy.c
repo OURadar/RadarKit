@@ -29,8 +29,6 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
         return NULL;
     }
     memset(me, 0, sizeof(RKPedestalPedzy));
-
-    RKLog("Pedestal input = %s", input);
     
     RKClientDesc desc;
     strncpy(desc.hostname, (char *)input, RKMaximumStringLength - 1);
@@ -41,8 +39,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     } else {
         desc.port = 9000;
     }
-    strcpy(desc.name, "PZ");
-    RKLog("PedestalPedzy @ %s:%d", desc.hostname, desc.port);
+    strcpy(desc.name, "<RKPedestalPedzy>");
     desc.format = RKMessageFormatFixedBlock;
     desc.blockLength = sizeof(RKPosition);
     desc.blocking = true;

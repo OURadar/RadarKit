@@ -127,7 +127,10 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
         RKIQZ X[count];
         const int gateShown = 8;
         for (p = 0; p < 2; p++) {
-            printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
+            printf("\%sChannel %d (%s pol):%s\n",
+                   rkGlobalParameters.showColor ? "\033[4m" : "",
+                   p, p == 0 ? "H" : (p == 1 ? "V" : "X"),
+                   rkGlobalParameters.showColor ? "\033[24m" : "");
             for (n = 0; n < count; n++) {
                 X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
             }
@@ -173,7 +176,9 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
             }
             printf(RKEOL);
         }
-        printf("\033[4mCross-channel:\033[24m\n");
+        printf("%sCross-channel:%s\n",
+               rkGlobalParameters.showColor ? "\033[4m" : "",
+               rkGlobalParameters.showColor ? "\033[24m" : "");
         RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
     }

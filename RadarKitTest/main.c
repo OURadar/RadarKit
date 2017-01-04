@@ -285,9 +285,11 @@ int main(int argc, char *argv[]) {
 
     if (user.simulate) {
 
-        // Build a series of options
-        char cmd[64] = "";
+        // Now we use the frame work.
+
+        // Build a series of options for transceiver
         int i = 0;
+        char cmd[64] = "";
         if (user.prf) {
             i += sprintf(cmd + i, " f %d", user.prf);
         }
@@ -295,12 +297,15 @@ int main(int argc, char *argv[]) {
             i += sprintf(cmd + i, " F %d", user.fs);
         }
         if (!user.quietMode) {
-            RKLog("Test input = '%s'", cmd + 1);
+            RKLog("Transceiver input = '%s'", cmd + 1);
         }
-        // Now we use the frame work.
         RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
 
+        // Build a series of options for pedestal
         const char pedzyHost[] = "localhost:9000";
+        if (!user.quietMode) {
+            RKLog("Pedestal input = '%s'", pedzyHost);
+        }
         RKSetPedestal(radar, &RKPedestalPedzyInit, (void *)pedzyHost);
         RKGoLive(radar);
         RKWaitWhileActive(radar);

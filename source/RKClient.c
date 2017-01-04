@@ -78,7 +78,7 @@ void *theClient(void *in) {
 
         // Resolve hostname to IP address
         if (C->verbose > 1) {
-            RKLog("RKClient : Resolving IP address ...\n");
+            RKLog("%s Resolving IP address ...\n", C->name);
         }
         struct hostent *h = gethostbyname2(C->hostname, AF_INET);
         if (h == NULL) {
@@ -96,14 +96,14 @@ void *theClient(void *in) {
         C->sa.sin_addr.s_addr = inet_addr(C->hostIP);
 
         if (C->verbose > 1) {
-            RKLog("RKClient : Configuring socket ...\n");
+            RKLog("%s Configuring socket ...\n", C->name);
         }
 
         C->state = RKClientStateConnecting;
 
         // Connect through the IP address and port number
         if (C->verbose) {
-            RKLog("RKClient : Connecting %s:%d ...\n", C->hostIP, C->port);
+            RKLog("%s Connecting %s:%d ...\n", C->name, C->hostIP, C->port);
         }
         if ((r = connect(C->sd, (struct sockaddr *)&C->sa, sizeof(struct sockaddr))) < 0) {
             // In progress is not a true failure
@@ -112,7 +112,7 @@ void *theClient(void *in) {
                 k = 3;
                 do {
                     if (C->verbose > 1) {
-                        RKLog("RKClient : Connection failed (errno = %d). Retry in %d second%s ...\n", k, k > 1 ? "s" : "");
+                        RKLog("%s Connection failed (errno = %d). Retry in %d second%s ...\n", C->name, k, k > 1 ? "s" : "");
                     }
                     k--;
                     sleep(1);
@@ -149,8 +149,8 @@ void *theClient(void *in) {
                 }
                 continue;
             }
-        } else {
-            RKLog("RKClient : Initialized.\n");
+        } else if (C->verbose) {
+            RKLog("%s Initialized.\n", C->name);
         }
 
         // Actively receive
@@ -172,7 +172,7 @@ void *theClient(void *in) {
             if (r == 0) {
                 // Socket established but nothing from the server.
                 if (C->verbose > 1) {
-                    RKLog("Timeout during select() for read.\n");
+                    RKLog("%s Timeout during select() for read.\n", C->name);
                 }
                 break;
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
@@ -182,17 +182,17 @@ void *theClient(void *in) {
 
                         k = 0;
                         timeoutCount = 0;
-                        while (timeoutCount++ < C->timeoutSeconds * 100) {
+                        while (timeoutCount++ < C->timeoutSeconds * 1000) {
                             if ((r = (int)read(C->sd, buf + k, C->blockLength - k)) > 0) {
                                 k += r;
                                 if (k >= C->blockLength) {
                                     break;
                                 } else {
-                                    usleep(10000);
+                                    usleep(1000);
                                 }
                             } else if (errno != EAGAIN) {
-                                RKLog("RKClient : RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)\n",
-                                        r, k, errno, RKErrnoString(errno));
+                                RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)\n",
+                                        C->name, r, k, errno, RKErrnoString(errno));
                                 if (r == 0) {
                                     timeoutCount--;
                                 }
@@ -200,8 +200,8 @@ void *theClient(void *in) {
                             }
                             RKLog("... errno = %d ...\n", errno);
                         }
-                        if (timeoutCount >= C->timeoutSeconds * 100) {
-                            RKLog("RKClient : Not a proper frame.  timeoutCount = %d  errno = %d\n", timeoutCount, errno);
+                        if (timeoutCount >= C->timeoutSeconds * 1000) {
+                            RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", C->name, timeoutCount, errno);
                             break;
                         }
                         readOkay = true;
@@ -215,7 +215,7 @@ void *theClient(void *in) {
                             if ((r = (int)read(C->sd, buf + k, sizeof(RKNetDelimiter) - k)) > 0) {
                                 k += r;
                                 if (k > sizeof(RKNetDelimiter)) {
-                                    RKLog("RKClient : Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", sizeof(RKNetDelimiter));
+                                    RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
                                     break;
                                 } else if (k == sizeof(RKNetDelimiter)) {
                                     break;
@@ -223,8 +223,8 @@ void *theClient(void *in) {
                                     usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                fprintf(stderr, "RKClient : RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
-                                        r, k, errno, RKErrnoString(errno));
+                                RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
+                                        C->name, r, k, errno, RKErrnoString(errno));
                                 break;
                             }
                         }
@@ -242,8 +242,8 @@ void *theClient(void *in) {
                                     usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                fprintf(stderr, "RKClient : PCMessageFormatFixedHeaderVariableBlock:2  r=%d  k=%d  errno=%d (%s)\n",
-                                        r, k, errno, RKErrnoString(errno));
+                                RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  r=%d  k=%d  errno=%d (%s)\n",
+                                        C->name, r, k, errno, RKErrnoString(errno));
                                 break;
                             }
                         }
@@ -259,7 +259,7 @@ void *theClient(void *in) {
                         if (fid == NULL) {
                             fid = fdopen(C->sd, "r");
                             if (fid < 0) {
-                                fprintf(stderr, "RKClient : Error. Unable to open a file descriptor for socket.\n");
+                                RKLog("%s Error. Unable to open a file descriptor for socket.\n", C->name);
                                 return (void *)-1;
                             }
                         }
@@ -269,10 +269,10 @@ void *theClient(void *in) {
                         break;
                 }
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
-                fprintf(stderr, "RKClient : Error occurred.  r=%d  errno=%d (%s)\n", r, errno, RKErrnoString(errno));
+                RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
             } else {
-                fprintf(stderr, "RKClient : r=%d  errno=%d (%s)\n", r, errno, RKErrnoString(errno));
+                RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 fclose(fid);
                 break;
             }

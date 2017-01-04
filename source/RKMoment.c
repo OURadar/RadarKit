@@ -196,7 +196,7 @@ void *momentCore(void *in) {
 
         RKRay *ray = RKGetRay(engine->rayBuffer, io);
 
-        // Mark being processed so that pulseGatherer() will not override the length
+        // Mark being processed so that <pulseGatherer> will not override the length
         ray->header.s = RKRayStatusProcessing;
         ray->header.i = tag;
 
@@ -337,7 +337,7 @@ void *pulseGatherer(void *in) {
     RKPulse *pulse;
     RKRay *ray;
     if (engine->verbose) {
-        RKLog(">pulseGatherer() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->pulseIndex);
+        RKLog("><pulseGatherer> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
@@ -371,7 +371,7 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
-                RKLog("Warning. Overflow projected by pulseGatherer().\n");
+                RKLog("Warning. Overflow projected by <pulseGatherer>.\n");
                 i = j;
                 do {
                     i = RKPreviousModuloS(i, engine->rayBufferSize);
@@ -386,7 +386,7 @@ void *pulseGatherer(void *in) {
             // Skip processing if it isgetting too busy
             if (skipCounter > 0) {
                 if (--skipCounter == 0 && engine->verbose) {
-                    RKLog(">Info. pulseGatherer() skipped a chunk.\n");
+                    RKLog(">Info. <pulseGatherer> skipped a chunk.\n");
                 }
             } else {
                 // Gather the start and end pulses and post a worker to process for a ray
@@ -532,7 +532,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
     if (engine->verbose) {
-        RKLog("Starting pulseGatherer() ...\n");
+        RKLog("Starting <pulseGatherer> ...\n");
     }
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
@@ -553,12 +553,12 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
-        RKLog("Stopping pulseGatherer() ...\n");
+        RKLog("Stopping <pulseGatherer> ...\n");
     }
     engine->state = RKMomentEngineStateDeactivating;
     pthread_join(engine->tidPulseGatherer, NULL);
     if (engine->verbose) {
-        RKLog("pulseGatherer() stopped.\n");
+        RKLog("<pulseGatherer> stopped.\n");
     }
     free(engine->workers);
     engine->workers = NULL;

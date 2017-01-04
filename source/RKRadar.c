@@ -313,18 +313,21 @@ int RKGoLive(RKRadar *radar) {
     RKPedestalEngineStart(radar->pedestalEngine);
 
     // Operation parameters
-    if (radar->transceiverInit != NULL) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Initializing transceiver ...");
-        }
-        pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
-    }
 
+    // Transceiver
     if (radar->pedestalInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing pedestal ...");
         }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
+    }
+
+    // Pedestal
+    if (radar->transceiverInit != NULL) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Initializing transceiver ...");
+        }
+        pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
     }
 
     return 0;

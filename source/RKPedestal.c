@@ -10,7 +10,7 @@
 
 // Internal functions
 
-void *pedestalWorker(void *in);
+void *pulseTagger(void *in);
 
 // Implementations
 
@@ -20,12 +20,12 @@ void *pedestalWorker(void *in);
 #pragma mark -
 #pragma mark Threads
 
-void *pedestalWorker(void *in) {
+void *pulseTagger(void *in) {
     RKPedestalEngine *engine = (RKPedestalEngine *)in;
 
     uint32_t index = *engine->pulseIndex;
 
-    RKLog("pedestalWorker() stared.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), index);
+    RKLog("<pulseTagger> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), index);
 
 //    // Search until a time I need
 //
@@ -47,7 +47,7 @@ void *pedestalWorker(void *in) {
             usleep(1000);
         }
 
-        // printf("Tagging pulse %d / %d ...\n", pulse->header.i, index);
+        printf("Tagging pulse %d / %d ...\n", pulse->header.i, index);
         index = RKNextModuloS(index, engine->pulseBufferSize);
     }
 
@@ -99,7 +99,8 @@ void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(
 #pragma mark Interactions
 
 int RKPedestalEngineStart(RKPedestalEngine *engine) {
-    if (pthread_create(&engine->threadId, NULL, pedestalWorker, engine)) {
+    RKLog("Starting <pulseTagger> ...\n");
+    if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start pedestal engine.\n");
         return RKResultFailedToStartPedestalWorker;
     }
@@ -107,5 +108,6 @@ int RKPedestalEngineStart(RKPedestalEngine *engine) {
 }
 
 int RKPedestalEngineStop(RKPedestalEngine *engine) {
+    RKLog("Stopping <pedestalWorker>\n");
     return RKResultNoError;
 }

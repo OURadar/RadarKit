@@ -470,7 +470,7 @@ void *pulseWatcher(void *_in) {
     k = 0;   // pulse index
     c = 0;   // core index
     if (engine->verbose) {
-        RKLog(">pulseWatcher() started.   c = %d   k = %d   engine->index = %d\n", c, k, *engine->index);
+        RKLog("><pulseWatcher> started.  mem = %s   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
     }
     while (engine->state == RKPulseCompressionEngineStateActive) {
         // Wait until the engine index move to the next one for storage
@@ -493,7 +493,7 @@ void *pulseWatcher(void *_in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
-                RKLog("Warning. I/Q Buffer overflow projected by pulseWatcher().\n");
+                RKLog("Warning. I/Q Buffer overflow projected by <pulseWatcher>.\n");
 //
 //                i = RKPreviousModuloS(*engine->index, engine->size);
 //                pulse = RKGetPulse(engine->buffer, i);
@@ -520,7 +520,7 @@ void *pulseWatcher(void *_in) {
                 engine->filterGid[k] = -1;
                 engine->planIndices[k][0] = 0;
                 if (--skipCounter == 0) {
-                    RKLog(">Info. pulseWatcher() skipped a chunk.\n");
+                    RKLog(">Info. <pulseWatcher> skipped a chunk.\n");
                 }
             } else {
                 // Compute the filter group id to use
@@ -540,7 +540,7 @@ void *pulseWatcher(void *_in) {
                         }
                     }
                     if (!found) {
-                        RKLog("A new DFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
+                        RKLog("A new FFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
                         if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
                             RKLog("Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->planCount);
                             exit(EXIT_FAILURE);
@@ -551,7 +551,7 @@ void *pulseWatcher(void *_in) {
                         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
                         engine->planSizes[planIndex] = planSize;
                         engine->planCount++;
-                        RKLog("k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
+                        RKLog(">    k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
                     }
                     engine->planIndices[k][j] = planIndex;
                 }
@@ -562,7 +562,7 @@ void *pulseWatcher(void *_in) {
 
             // Now we post
             #ifdef DEBUG_IQ
-            RKLog("pulseWatcher() posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
+            RKLog("<pulseWatcher> posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
             #endif
             if (engine->useSemaphore) {
                 if (sem_post(sem[c])) {
@@ -765,7 +765,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     if (engine->verbose) {
-        RKLog("Starting pulseWatcher() ...\n");
+        RKLog("Starting <pulseWatcher> ...\n");
     }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
@@ -786,12 +786,12 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
-        RKLog("Stopping pulseWatcher() ...\n");
+        RKLog("Stopping <pulseWatcher> ...\n");
     }
     engine->state = RKPulseCompressionEngineStateDeactivating;
     pthread_join(engine->tidPulseWatcher, NULL);
     if (engine->verbose) {
-        RKLog("pulseWatcher() stopped\n");
+        RKLog("<pulseWatcher> stopped\n");
     }
     free(engine->workers);
     engine->workers = NULL;

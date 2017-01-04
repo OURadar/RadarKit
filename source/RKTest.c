@@ -382,10 +382,6 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
     RKSetLogfile(NULL);
 
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("RKTestSimulateDataStream%s", (char *)input);
-    }
-    
     // Parse out input parameters
     if (input) {
         char *sb = (char *)input, *se = NULL, *sv = NULL;
@@ -424,7 +420,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     const int chunkSize = MAX(1, (int)floor(0.1f / prt));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Using fs = %s MHz   PRF = %s Hz   gate count = %s (%.1f km)   chunk %d\n",
+        RKLog("<RKTestSimulateDataStream> fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)   chunk %d\n",
               RKFloatToCommaStyleString(1.0e-6 * fs),
               RKIntegerToCommaStyleString((int)(1.0f / prt)),
               RKIntegerToCommaStyleString(gateCount),
