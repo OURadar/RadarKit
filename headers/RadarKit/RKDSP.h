@@ -28,6 +28,9 @@ typedef struct rk_clock {
     double           initTime;
     uint32_t         index;
     uint64_t         count;
+    double           typicalPeriod;
+    uint32_t         burstPeriod;
+    
 } RKClock;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);
@@ -38,8 +41,9 @@ RKClock *RKClockInit(void);
 void RKClockFree(RKClock *);
 
 void RKClockSetOffset(RKClock *, double);
-double RKClockGetTime(RKClock *, const uint64_t);
+double RKClockGetTime(RKClock *clock, const uint64_t, struct timeval *);
 double RKClockGetTimeSinceInit(RKClock *clock, const double time);
+
 //
 // FIR + IIR Filters
 //

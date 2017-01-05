@@ -235,6 +235,9 @@ int RKFree(RKRadar *radar) {
 #pragma mark -
 
 int RKSetVerbose(RKRadar *radar, const int verbose) {
+    if (verbose) {
+        RKLog("Setting verbose level to %d ...\n", verbose);
+    }
     if (verbose == 1) {
         radar->desc.initFlags |= RKInitFlagVerbose;
     } else if (verbose == 2) {
@@ -242,7 +245,6 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     } else if (verbose >= 3) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-    RKLog("Setting verbose level to %d ...\n", verbose);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
@@ -391,7 +393,7 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
 }
 
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
-    pulse->header.timeDouble = RKClockGetTime(radar->clock, pulse->header.i);
+    pulse->header.timeDouble = RKClockGetTime(radar->clock, pulse->header.i, &pulse->header.time);
     pulse->header.s |= RKPulseStatusHasIQData;
     radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
 }

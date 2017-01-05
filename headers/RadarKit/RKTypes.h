@@ -97,66 +97,33 @@ typedef union rk_user_data {
 
 // A running configuration buffer
 typedef struct RKOperatingParameters {
-    uint32_t                  n;
-    uint32_t                  prf[RKMaxMatchedFilterCount];
-    uint32_t                  gateCount[RKMaxMatchedFilterCount];
-    uint32_t                  waveformId[RKMaxMatchedFilterCount];
-    char                      vcpDefinition[RKMaximumStringLength];
+    uint32_t         n;
+    uint32_t         prf[RKMaxMatchedFilterCount];
+    uint32_t         gateCount[RKMaxMatchedFilterCount];
+    uint32_t         waveformId[RKMaxMatchedFilterCount];
+    char             vcpDefinition[RKMaximumStringLength];
 } RKOperatingParameters;
 
-/*!
- @typedef RKPulseHeader
- @brief Fundamental unit of the pulse header that is designed to be SIMD alignment friendly.
- Changing this structure would have a major impacts on the workingness of the entiire framework.
- It is imperative to maintain the SIMD alignment whenever new fields are added.
- 
- 12/29/2016 - I think I have made this immunie to non-SIMD size header.
-            - As long as  sizeof(RKPulseHeader) + sizeof(RKPulseParameters) is multiples of 
-              SIMD align size, we should be okay the way the buffer is designed.
- 
- @param s                      Pulse Status
- @param i                      Pulse Identity
- @param n                      Pulse Network Counter
- @param marker                 Volume / sweep / radial marker
- @param pulseWidthSampleCount  Pulse width in number of samples
- @param timeSec                UNIX time, seconds since Epoch 1970
- @param timeUSec               Microsecond part of the time
- @param timeDouble             Double representation of the time
- @param az                     Azimuth raw reading
- @param el                     Elevation raw reading
- @param configIndex            Configuration index
- @param configSubIndex         Configuration sub-index
- @param gateCount              Number of usable gates in this pulse
- @param azimuthBinIndex        Azimuth bin index
- @param gateSizeMeters         Gate size in meters
- @param azimuthDegrees         Azimuth in degrees
- @param elevationDegrees       Elevation in degrees
- @param vazDps                 Velocity of azimuth in degrees per second
- @param velDps                 Velocity of azimuth in degrees per second
- */
 typedef struct rk_pulse_header {
-    uint32_t    capacity;
-    uint32_t    s;
-    uint32_t    i;
-    uint32_t    n;
-    uint32_t    marker;
-    uint32_t    pulseWidthSampleCount;
-    uint32_t    reserved1;
-    uint32_t    reserved2;
-    uint32_t    timeSec;
-    uint32_t    timeUSec;
-    double      timeDouble;
-    uint16_t    az;
-    uint16_t    el;
-    uint16_t    configIndex;
-    uint16_t    configSubIndex;
-    uint16_t    azimuthBinIndex;
-    uint16_t    gateCount;
-    float       gateSizeMeters;
-    float       azimuthDegrees;
-    float       elevationDegrees;
-    float       vazDps;
-    float       velDps;
+    uint64_t         i;                                    // Identity counter
+    uint64_t         n;                                    // Network counter
+    uint32_t         s;                                    // Status flag
+    uint32_t         capacity;                             // Allocated capacity
+    uint32_t         gateCount;                            // Number of range gates
+    uint32_t         marker;                               // Position Marker
+    uint32_t         pulseWidthSampleCount;                // Pulsewidth
+    struct timeval   time;                                 // UNIX time in seconds since 1970/1/1 12:00am
+    double           timeDouble;                           // Time in double representation
+    RKFourByte       rawAzimuth;                           // Raw azimuth reading, which may take up to 4 bytes
+    RKFourByte       rawElevation;                         // Raw elevation reading, which may take up to 4 bytes
+    uint16_t         configIndex;                          // Configuration index
+    uint16_t         configSubIndex;                       // Configuration sub-index
+    uint16_t         azimuthBinIndex;                      // Ray bin
+    float            gateSizeMeters;                       // Size of range gates
+    float            elevationDegrees;                     // Elevation in degrees
+    float            azimuthDegrees;                       // Azimuth in degrees
+    float            elevationVelocityDegreesPerSecond;    // Velocity of elevation in degrees / second
+    float            azimuthVelocityDegreesPerSecond;      // Velocity of azimuth in degrees / second
 } RKPulseHeader;
 
 // Make sure the size (bytes) can cover all the struct elements and still conform to SIMD alignemt

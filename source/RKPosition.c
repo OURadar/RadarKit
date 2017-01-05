@@ -114,9 +114,6 @@ RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
     engine->clock = RKClockInit();
-    for (int k = 0; k < RKPositionBufferSize; k++) {
-        engine->positionTime[k] = RKClockGetTime(engine->clock, 0);
-    }
     engine->memoryUsage = sizeof(RKPositionEngine) + sizeof(RKClock);
     return engine;
 }
@@ -184,7 +181,7 @@ void RKPositionEngineSetPositionReady(RKPositionEngine *engine, RKPosition *posi
     if (position->flag & ~RKPositionFlagHardwareMask) {
         RKLog("Error. Ingested position has a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
-    engine->positionTimeLatest = RKClockGetTime(engine->clock, position->c);
+    engine->positionTimeLatest = RKClockGetTime(engine->clock, position->c, NULL);
     engine->positionTime[engine->positionIndex] = engine->positionTimeLatest;
     position->flag |= RKPositionFlagReady;
     engine->positionIndex = RKNextModuloS(engine->positionIndex, RKPositionBufferSize);

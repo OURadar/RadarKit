@@ -377,6 +377,8 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     double prt = 0.0002;
     float fs = 50.0e6;
     int n = 0;
+    bool simulatePosition = false;
+    uint64_t counter = 0;
 
     gettimeofday(&t0, NULL);
 
@@ -402,6 +404,9 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
                         RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)fs));
                     }
+                    break;
+                case 'P':
+                    simulatePosition = true;
                     break;
             }
             sb = strchr(sv, ' ');
@@ -440,10 +445,15 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             // Fill in the header
             pulse->header.gateCount = gateCount;
-            pulse->header.azimuthDegrees = azimuth;
-            pulse->header.elevationDegrees = 2.41f;
-
-            // Stamp the pulse
+            pulse->header.i = counter++;
+            
+            if (simulatePosition) {
+                pulse->header.azimuthDegrees = azimuth;
+                pulse->header.elevationDegrees = 2.41f;
+                phi += 0.02f;
+                //azimuth = fmodf(50.0f * tau, 360.0f);
+                azimuth = fmodf(1.0f * tau, 360.0f);
+            }
 
             // Fill in the data...
             for (p = 0; p < 2; p++) {
@@ -464,9 +474,6 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                     X++;
                 }
             }
-            phi += 0.02f;
-            //azimuth = fmodf(50.0f * tau, 360.0f);
-            azimuth = fmodf(1.0f * tau, 360.0f);
 
             RKSetPulseHasData(radar, pulse);
 
