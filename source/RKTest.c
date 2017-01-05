@@ -442,9 +442,13 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             pulse->header.gateCount = gateCount;
             pulse->header.azimuthDegrees = azimuth;
             pulse->header.elevationDegrees = 2.41f;
+
+            // Stamp the pulse
+
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                // Some seemingly random pattern for testing
                 n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < gateCount; g++) {
                     //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
@@ -463,7 +467,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             //azimuth = fmodf(50.0f * tau, 360.0f);
             azimuth = fmodf(1.0f * tau, 360.0f);
 
-            RKSetPulseReady(pulse);
+            RKSetPulseHasData(pulse);
 
             tau += prt;
         }
