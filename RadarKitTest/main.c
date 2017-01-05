@@ -168,7 +168,6 @@ UserParams processInput(int argc, char **argv) {
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 user.developerMode = true;
-                user.verbose = 3;
                 break;
             case 'F':
                 user.fs = atof(optarg);
@@ -178,7 +177,6 @@ UserParams processInput(int argc, char **argv) {
                 user.prf = 2000;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
-                user.verbose = 1;
                 break;
             case 'M':
                 if (optarg) {

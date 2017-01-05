@@ -14,7 +14,7 @@
 #include <RadarKit/RKClient.h>
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKMoment.h>
-#include <RadarKit/RKPedestal.h>
+#include <RadarKit/RKPosition.h>
 #include <RadarKit/RKLocalCommandCenter.h>
 
 enum RKInitFlag {
@@ -39,7 +39,8 @@ enum RKRadarState {
     RKRadarStateConfigBufferAllocating               = (1 << 5),   // 0x20
     RKRadarStateConfigBufferIntialized               = (1 << 6),   // 0x40
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 7),
-    RKRadarStateMomentEngineInitialized              = (1 << 8),
+    RKRadarStatePositionEngineInitialized            = (1 << 8),
+    RKRadarStateMomentEngineInitialized              = (1 << 9),
     RKRadarStateTransceiverInitialized               = (1 << 16),
     RKRadarStatePedestalInitialized                  = (1 << 24),
     RKRadarStateLive                                 = (1 << 31)
@@ -83,10 +84,10 @@ struct rk_radar {
     //
     // Internal engines
     //
+    RKClock                    *clock;
     RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
-    //RKServer                   *socketServer;
-    RKPedestalEngine           *pedestalEngine;
+    RKPositionEngine           *positionEngine;
     //
     // Hardware protocols for controls
     //
@@ -131,10 +132,10 @@ int RKWaitWhileActive(RKRadar *radar);
 int RKStop(RKRadar *radar);
 
 RKPulse *RKGetVacantPulse(RKRadar *radar);
-void RKSetPulseHasData(RKPulse *pulse);
-void RKSetPulseReady(RKPulse *pulse);
+void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse);
+void RKSetPulseReady(RKRadar *radar, RKPulse *pulse);
 
 RKPosition *RKGetVacantPosition(RKRadar *radar);
-void RKSetPositionReady(RKPosition *position);
+void RKSetPositionReady(RKRadar *radar, RKPosition *position);
 
 #endif /* defined(__RadarKit_RKRadar__) */

@@ -451,16 +451,15 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                 
                 // Some seemingly random pattern for testing
                 n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
-                printf("n = %d\n", n);
                 for (g = 0; g < gateCount; g++) {
                     //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
                     //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
                     if (g % 2 == 0) {
-                        X->i = (int16_t)(g * n) + p;
+                        X->i = (int16_t)((g * n) + p);
                         X->q = (int16_t)((n - 2) * (g - 1));
                     } else {
                         X->i = (int16_t)(-g * (n - 1));
-                        X->q = (int16_t)(g * p) + n;
+                        X->q = (int16_t)((g * p) + n);
                     }
                     X++;
                 }
@@ -469,7 +468,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             //azimuth = fmodf(50.0f * tau, 360.0f);
             azimuth = fmodf(1.0f * tau, 360.0f);
 
-            RKSetPulseHasData(pulse);
+            RKSetPulseHasData(radar, pulse);
 
             tau += prt;
         }
@@ -503,7 +502,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     X[3].q = 0;
     X[4].i = 1;
     X[4].q = 0;
-    RKSetPulseReady(pulse);
+    RKSetPulseReady(radar, pulse);
 
     while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
         usleep(1000);

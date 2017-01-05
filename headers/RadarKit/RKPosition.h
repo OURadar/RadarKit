@@ -1,8 +1,8 @@
 //
-//  RKPedestal.h
+//  RKPosition.h
 //  RadarKit
 //
-//  RKPedestal provides a wrapper to interact with RadarKit, tag each raw time-series pulse with a set
+//  RKPosition provides a wrapper to interact with RadarKit, tag each raw time-series pulse with a set
 //  of proper position that contains azimuth and elevation. It manages the run-loop that continuously
 //  monitor the incoming position read, where you would supply the actual read function to interpret
 //  the binary stream, decode the stream into an RKPosition slot, which is supplied. Each call of the
@@ -15,7 +15,7 @@
 //  The main protocols are:
 //
 //   - Initialize a pointer to a structure to communicate with the hardware (void *),
-//     you provide the input through RKPedestalEngineSetHardwareInitInput(). Typecast it to void *.
+//     you provide the input through RKPositionEngineSetHardwareInitInput(). Typecast it to void *.
 //     It must be in the form of
 //
 //         RKPedestal routine(void *);
@@ -26,13 +26,13 @@
 //         int routine(RKPedestal, RKPosition *);
 //
 //   - Manages and forwards the current control command in the command queue,
-//     you provide a execution delegate routine through RKPedestalEngineSetHardwareExec(). It must be
+//     you provide a execution delegate routine through RKPositionEngineSetHardwareExec(). It must be
 //     in the form of
 //
 //         int routine(RKPedestal, const char *);
 //
 //   - Close the hardware interaction when it is appropriate
-//     you provide a resource deallocation delegate routine through RKPedestalEngineSetHardwareFree().
+//     you provide a resource deallocation delegate routine through RKPositionEngineSetHardwareFree().
 //     It must be in the form of
 //
 //         int routine(RKPedestal);
@@ -41,26 +41,27 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKPedestal__
-#define __RadarKit_RKPedestal__
+#ifndef __RadarKit_RKPosition__
+#define __RadarKit_RKPosition__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKDSP.h>
 
-#define RKPedestalBufferSize    4096
+#define RKPositionBufferSize    4096
 
-typedef int RKPedestalEngineState;
-enum RKPedestalEngineState {
-    RKPedestalEngineStateNull,
-    RKPedestalEngineStateAllocated,
-    RKPedestalEngineStateActivating,
-    RKPedestalEngineStateActive,
-    RKPedestalEngineStateDeactivating,
-    RKPedestalEngineStateSleep
+typedef int RKPositionEngineState;
+enum RKPositionEngineState {
+    RKPositionEngineStateNull,
+    RKPositionEngineStateAllocated,
+    RKPositionEngineStateActivating,
+    RKPositionEngineStateActive,
+    RKPositionEngineStateDeactivating,
+    RKPositionEngineStateSleep
 };
 
-typedef struct rk_pedestal_engine RKPedestalEngine;
+typedef struct rk_position_engine RKPositionEngine;
 
-struct rk_pedestal_engine {
+struct rk_position_engine {
     // User set variables
     RKPulse                *pulseBuffer;
     uint32_t               *pulseIndex;
@@ -74,31 +75,36 @@ struct rk_pedestal_engine {
     void                   *hardwareInitInput;
 
     // Program set variables
-    RKPosition             positionBuffer[RKPedestalBufferSize];
+    RKPosition             positionBuffer[RKPositionBufferSize];
+    double                 positionTime[RKPositionBufferSize];
+    double                 positionTimeLatest;
     uint32_t               positionIndex;
-    uint32_t               positionBufferSize;
     pthread_t              threadId;
+    RKClock                *clock;
 
     // Status / health
-    RKPedestalEngineState  state;
+    RKPositionEngineState  state;
     uint32_t               tic;
     float                  lag;
     uint32_t               almostFull;
     size_t                 memoryUsage;
 };
 
-//typedef RKPedestalEngine* RKPedestalHandle;
+//typedef RKPositionEngine* RKPedestalHandle;
 
-RKPedestalEngine *RKPedestalEngineInit();
-void RKPedestalEngineFree(RKPedestalEngine *);
+RKPositionEngine *RKPositionEngineInit();
+void RKPositionEngineFree(RKPositionEngine *);
 
-void RKPedestalEngineSetVerbose(RKPedestalEngine *, const int);
-void RKPedestalEngineSetInputOutputBuffers(RKPedestalEngine *, RKBuffer, uint32_t *, const uint32_t);
-void RKPedestalEngineSetHardwareInit(RKPedestalEngine *, RKPedestal(void *), void *);
-void RKPedestalEngineSetHardwareExec(RKPedestalEngine *, int(RKPedestal, const char *));
-void RKPedestalEngineSetHardwareFree(RKPedestalEngine *, int(RKPedestal));
+void RKPositionEngineSetVerbose(RKPositionEngine *, const int);
+void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *, RKBuffer, uint32_t *, const uint32_t);
+void RKPositionEngineSetHardwareInit(RKPositionEngine *, RKPedestal(void *), void *);
+void RKPositionEngineSetHardwareExec(RKPositionEngine *, int(RKPedestal, const char *));
+void RKPositionEngineSetHardwareFree(RKPositionEngine *, int(RKPedestal));
 
-int RKPedestalEngineStart(RKPedestalEngine *);
-int RKPedestalEngineStop(RKPedestalEngine *);
+int RKPositionEngineStart(RKPositionEngine *);
+int RKPositionEngineStop(RKPositionEngine *);
+
+RKPosition *RKPositionEngineGetVacantPosition(RKPositionEngine *);
+void RKPositionEngineSetPositionReady(RKPositionEngine *, RKPosition *);
 
 #endif /* __RadarKit_RKPedestal__ */

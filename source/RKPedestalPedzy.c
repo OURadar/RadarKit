@@ -15,12 +15,12 @@ int RKPedestalPedzyRead(RKClient *client) {
 
     RKPosition *position = (RKPosition *)client->userPayload;
 
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+    if (radar->desc.initFlags & RKInitFlagDeveloperMode) {
         RKLog("Position %08x EL %.2f  AZ %.2f\n", position->flag, position->elevationDegrees, position->azimuthDegrees);
     }
     RKPosition *newPosition = RKGetVacantPosition(radar);
     memcpy(newPosition, position, sizeof(RKPosition));
-    RKSetPositionReady(newPosition);
+    RKSetPositionReady(radar, newPosition);
 
     return 0;
 }
@@ -50,8 +50,6 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     desc.blockLength = sizeof(RKPosition);
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.verbose = 1;
-
-    RKLog("desc.type = %d\n", desc.type);
     
     me->client = RKClientInitWithDesc(desc);
 

@@ -25,16 +25,21 @@ typedef struct rk_clock {
     double           offsetSeconds;
 
     // Some internal states or variables for time derivation
+    double           initTime;
     uint32_t         index;
     uint64_t         count;
-
 } RKClock;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);
 float RKGetMinorSectorInDegrees(const float angle1, const float angle2);
+float RKInterpolateAngles(const float angleLeft, const float angleRight, const float alpha);
 
-double RKClockGetTime(RKClock *, struct timeval *, const uint64_t);
+RKClock *RKClockInit(void);
+void RKClockFree(RKClock *);
 
+void RKClockSetOffset(RKClock *, double);
+double RKClockGetTime(RKClock *, const uint64_t);
+double RKClockGetTimeSinceInit(RKClock *clock, const double time);
 //
 // FIR + IIR Filters
 //

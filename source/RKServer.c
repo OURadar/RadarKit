@@ -284,11 +284,11 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(O->name, RKMaximumStringLength - 1, "Op-%03d", O->iid);
-    O->delim.type = RKPacketTypePlainText;
+    O->delim.type = RKNetworkPacketTypePlainText;
     O->delim.size = 0;
     O->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
     O->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
-    O->beacon.type = RKPacketTypeBeacon;
+    O->beacon.type = RKNetworkPacketTypeBeacon;
     O->beacon.size = 0;
     O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\0';
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';

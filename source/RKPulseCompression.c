@@ -474,14 +474,12 @@ void *pulseWatcher(void *_in) {
     k = 0;   // pulse index
     c = 0;   // core index
     while (engine->state == RKPulseCompressionEngineStateActive) {
-        // Wait until the engine index move to the next one for storage
+        // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
+        // The pulse may not have position yet but that is okay. It may get tagged with position while being processed.
         while (k == *engine->index && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
         }
         pulse = RKGetPulse(engine->buffer, k);
-        while (pulse->header.s != RKPulseStatusReady && engine->state == RKPulseCompressionEngineStateActive) {
-            usleep(200);
-        }
         if (engine->state == RKPulseCompressionEngineStateActive) {
             // Lag of the engine
             engine->lag = fmodf((float)(*engine->index + engine->size - k) / engine->size, 1.0f);

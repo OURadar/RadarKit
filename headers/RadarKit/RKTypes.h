@@ -347,6 +347,12 @@ typedef struct rk_position {
     float            sweepAzimuthDegrees;                  // Set azimuth for current sweep
 } RKPosition;
 
+//typedef struct rk_timed_position {
+//    struct timeval   time;
+//    double           timeD;
+//    RKPosition       position;
+//} RKTimedPosition;
+//
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

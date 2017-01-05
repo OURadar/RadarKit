@@ -116,17 +116,30 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         radar->state |= RKRadarStateRayBufferInitialized;
     }
 
+    // Clock
+    radar->clock = RKClockInit();
+    radar->memoryUsage += sizeof(RKClock);
+    
     // Pulse compression engine
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
                                                   radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+    radar->memoryUsage += sizeof(RKPulseCompressionEngine);
     radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
+    // Position engine
+    radar->positionEngine = RKPositionEngineInit();
+    RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
+                                          radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+    radar->memoryUsage += sizeof(RKPositionEngine);
+    radar->state |= RKRadarStatePositionEngineInitialized;
+    
     // Moment engine
     radar->momentEngine = RKMomentEngineInit();
     RKMomentEngineSetInputOutputBuffers(radar->momentEngine,
                                         radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
                                         radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+    radar->memoryUsage += sizeof(RKMomentEngine);
     radar->state |= RKRadarStateMomentEngineInitialized;
 
     // TCP/IP socket server
@@ -138,11 +151,6 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
 //    RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
 //    radar->state |= RKRadarStateSocketServerInitialized;
 
-    // Pedestal engine
-    radar->pedestalEngine = RKPedestalEngineInit();
-    RKPedestalEngineSetInputOutputBuffers(radar->pedestalEngine,
-                                          radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
-    
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
@@ -203,10 +211,11 @@ int RKFree(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Freeing radar ...\n");
     }
-    RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
+    RKClockFree(radar->clock);
     RKMomentEngineFree(radar->momentEngine);
+    RKPositionEngineFree(radar->positionEngine);
+    RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     //RKServerFree(radar->socketServer);
-    RKPedestalEngineFree(radar->pedestalEngine);
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
@@ -230,12 +239,13 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
         radar->desc.initFlags |= RKInitFlagVerbose;
     } else if (verbose == 2) {
         radar->desc.initFlags |= RKInitFlagVeryVerbose;
-    } else if (verbose == 3) {
+    } else if (verbose >= 3) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
+    RKLog("Setting verbose level to %d ...\n", verbose);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
+    RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
-    RKPedestalEngineSetVerbose(radar->pedestalEngine, verbose);
     return RKResultNoError;
 }
 
@@ -308,9 +318,8 @@ size_t RKGetPulseCapacity(RKRadar *radar) {
 
 int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+    RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
-    //RKServerActivate(radar->socketServer);
-    RKPedestalEngineStart(radar->pedestalEngine);
 
     // Operation parameters
 
@@ -345,6 +354,9 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
     }
+    if (radar->state & RKRadarStatePositionEngineInitialized) {
+        RKPositionEngineStop(radar->positionEngine);
+    }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineStop(radar->momentEngine);
     }
@@ -375,33 +387,27 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
     pulse->header.s = RKPulseStatusVacant;
     pulse->header.i += radar->desc.pulseBufferDepth;
-    radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     return pulse;
 }
 
-void RKSetPulseHasData(RKPulse *pulse) {
+void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
+    pulse->header.timeDouble = RKClockGetTime(radar->clock, pulse->header.i);
     pulse->header.s |= RKPulseStatusHasIQData;
+    radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
 }
 
-void RKSetPulseReady(RKPulse *pulse) {
-    pulse->header.s = RKPulseStatusReady;
+void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
+    pulse->header.s |= RKPulseStatusReady;
 }
 
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
-    if (radar->pedestalEngine == NULL) {
+    if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
         exit(EXIT_FAILURE);
     }
-    RKPedestalEngine *engine = radar->pedestalEngine;
-    RKPosition *position = &engine->positionBuffer[engine->positionIndex];
-    position->flag = RKPositionFlagVacant;
-    engine->positionIndex = RKNextModuloS(engine->positionIndex, engine->positionBufferSize);
-    return position;
+    return RKPositionEngineGetVacantPosition(radar->positionEngine);
 }
 
-void RKSetPositionReady(RKPosition *position) {
-    if (position->flag & ~RKPositionFlagHardwareMask) {
-        RKLog("Error. Ingested position has a flag (0x%08x) outside of allowable value.\n", position->flag);
-    }
-    position->flag |= RKPositionFlagReady;
+void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
+    return RKPositionEngineSetPositionReady(radar->positionEngine, position);
 }
