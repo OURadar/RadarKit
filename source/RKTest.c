@@ -448,8 +448,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                
                 // Some seemingly random pattern for testing
                 n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
+                printf("n = %d\n", n);
                 for (g = 0; g < gateCount; g++) {
                     //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
                     //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));

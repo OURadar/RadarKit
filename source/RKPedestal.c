@@ -52,7 +52,9 @@ void *pulseTagger(void *in) {
         printf("Tagging pulse %d / %d ...\n", pulse->header.i, index);
         index = RKNextModuloS(index, engine->pulseBufferSize);
     }
-
+    if (engine->verbose) {
+        RKLog("<pulseTagger> stopped.\n");
+    }
     return (void *)NULL;
 }
 
@@ -93,10 +95,6 @@ void RKPedestalEngineSetHardwareExec(RKPedestalEngine *engine, int hardwareExec(
     engine->hardwareExec = hardwareExec;
 }
 
-//void RKPedestalEngineSetHardwareRead(RKPedestalEngine *engine, int hardwareRead(RKPedestal, RKPosition *)) {
-//    engine->hardwareRead = hardwareRead;
-//}
-
 void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(RKPedestal)) {
     engine->hardwareFree = hardwareFree;
 }
@@ -107,7 +105,7 @@ void RKPedestalEngineSetHardwareFree(RKPedestalEngine *engine, int hardwareFree(
 int RKPedestalEngineStart(RKPedestalEngine *engine) {
     RKLog("<pulseTagger> starting ...\n");
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
-        RKLog("Error. Unable to start pedestal engine.\n");
+        RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
     }
     while (engine->state < RKPedestalEngineStateActive) {
@@ -117,6 +115,7 @@ int RKPedestalEngineStart(RKPedestalEngine *engine) {
 }
 
 int RKPedestalEngineStop(RKPedestalEngine *engine) {
-    RKLog("Stopping <pedestalWorker>\n");
+    RKLog("<pulseTagger> stopping ...\n");
+    engine->state = RKPedestalEngineStateDeactivating;
     return RKResultNoError;
 }

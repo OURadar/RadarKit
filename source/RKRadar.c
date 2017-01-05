@@ -142,7 +142,6 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->pedestalEngine = RKPedestalEngineInit();
     RKPedestalEngineSetInputOutputBuffers(radar->pedestalEngine,
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
-//    RKPedestalEngineSetHardwareToPedzy(radar->pedestalEngine);
     
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
@@ -402,7 +401,7 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
 
 void RKSetPositionReady(RKPosition *position) {
     if (position->flag & ~RKPositionFlagHardwareMask) {
-        RKLog("Error. Ingested position has a flag (0x%032x) outside of allowable value.\n", position->flag);
+        RKLog("Error. Ingested position has a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
     position->flag |= RKPositionFlagReady;
 }

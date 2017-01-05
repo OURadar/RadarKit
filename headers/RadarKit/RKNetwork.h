@@ -22,26 +22,26 @@
 //extern "C" {
 //#endif
 
-typedef int RKSocketType;
-typedef int RKMessageFormat;
-typedef uint32_t RKPacketType;
+typedef int RKNetworkSocketType;
+typedef int RKNetworkMessageFormat;
+typedef uint32_t RKNetworkPacketType;
 
-enum RKSocketType {
-    RKSocketTypeTCP,
-    RKSocketTypeUDP
+enum RKNetworkSocketType {
+    RKNetworkSocketTypeTCP = 1,
+    RKNetworkSocketTypeUDP
 };
 
-enum RKMessageFormat {
-    RKMessageFormatNewLine,
-    RKMessageFormatFixedBlock,
-    RKMessageFormatFixedHeaderVariableBlock
+enum RKNetworkMessageFormat {
+    RKNetworkMessageFormatNewLine,                         // Line-by-line reading
+    RKNetworkMessageFormatConstantSize,                    // Fixed length packets
+    RKNetworkMessageFormatHeaderDefinedSize                // The header is of type RKNetDelimiter
 };
 
-enum RKPacketType {
-    RKPacketTypePlainText,
-    RKPacketTypePulseData,
-    RKPacketTypeRayData,
-    RKPacketTypeBeacon
+enum RKNetworkPacketType {
+    RKNetworkPacketTypePlainText,
+    RKNetworkPacketTypePulseData,
+    RKNetworkPacketTypeRayData,
+    RKNetworkPacketTypeBeacon
 };
 
 #pragma pack(push, 1)

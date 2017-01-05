@@ -40,7 +40,7 @@ void *theClient(void *in) {
     C->userPayload = buf;
 
     if (C->verbose > 1) {
-        RKLog("RKClient : %s is working hard ...\n", C->name);
+        RKLog("%s is working hard ...\n", C->name);
     }
 
     // Here comes the infinite loop until being stopped
@@ -48,30 +48,32 @@ void *theClient(void *in) {
 
         C->state = RKClientStateConnecting;
 
-        if (C->verbose > 1) {
-            RKLog("RKClient : Opening socket ...\n");
-        }
-        if (C->type == RKClientSocketTypeTCP) {
+        //if (C->verbose > 1) {
+            RKLog("%s opening a %s socket ...\n", C->name,
+                  C->type == RKNetworkSocketTypeTCP ? "TCP" :
+                  (C->type == RKNetworkSocketTypeUDP ? "UDP" : "(NULL)"));
+        //}
+        if (C->type == RKNetworkSocketTypeTCP) {
             if ((C->sd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 RKLog("Error. Unable to create a TCP socket.\n");
                 C->state = RKClientStateDisconnected;
                 return NULL;
             }
-        } else if (C->type == RKClientSocketTypeUDP) {
+        } else if (C->type == RKNetworkSocketTypeUDP) {
             if ((C->sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
                 RKLog("Error. Unable to create a UDP socket.\n");
                 C->state = RKClientStateDisconnected;
                 return NULL;
             }
         } else {
-            RKLog("Error. Unable to determine the socket type.\n");
+            RKLog("Error. Unable to determine the socket type %d.\n", C->type);
             C->state = RKClientStateDisconnected;
             return NULL;
         }
         if (C->blocking == false) {
             fcntl(C->sd, F_SETFL, O_NONBLOCK);
         }
-        if (C->type == RKClientSocketTypeUDP) {
+        if (C->type == RKNetworkSocketTypeUDP) {
             r = 1;
             setsockopt(C->sd, SOL_SOCKET, SO_BROADCAST, &r, sizeof(r));
         }
@@ -178,7 +180,7 @@ void *theClient(void *in) {
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
                 switch (C->format) {
 
-                    case RKMessageFormatFixedBlock:
+                    case RKNetworkMessageFormatConstantSize:
 
                         k = 0;
                         timeoutCount = 0;
@@ -207,7 +209,7 @@ void *theClient(void *in) {
                         readOkay = true;
                         break;
 
-                    case RKMessageFormatFixedHeaderVariableBlock:
+                    case RKNetworkMessageFormatHeaderDefinedSize:
 
                         k = 0;
                         timeoutCount = 0;
@@ -253,7 +255,7 @@ void *theClient(void *in) {
                         readOkay = true;
                         break;
 
-                    case RKMessageFormatNewLine:
+                    case RKNetworkMessageFormatNewLine:
                     default:
 
                         if (fid == NULL) {
@@ -316,10 +318,10 @@ RKClient *RKClientInit(void) {
 }
 
 RKClient *RKClientInitWithDesc(RKClientDesc desc) {
-    if (desc.format == RKClientMessageFormatConstantSize && desc.blockLength == 0) {
+    if (desc.format == RKNetworkMessageFormatConstantSize && desc.blockLength == 0) {
         RKLog("Block length may not be 0 for constant packet size.\n");
         return NULL;
-    } else if (desc.format != RKClientMessageFormatConstantSize && desc.blockLength > 0) {
+    } else if (desc.format != RKNetworkMessageFormatConstantSize && desc.blockLength > 0) {
         RKLog("Block length is ignored for variable packet size.\n");
         return NULL;
     }
@@ -343,9 +345,10 @@ RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
     memset(&desc, 0, sizeof(RKClientDesc));
     strncpy(desc.hostname, hostname, RKMaximumStringLength - 1);
     desc.port = port;
-    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    desc.type = RKNetworkSocketTypeTCP;
     desc.blocking = true;
     desc.reconnect = true;
+    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     return RKClientInitWithDesc(desc);
 }
 

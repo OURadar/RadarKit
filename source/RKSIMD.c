@@ -403,7 +403,7 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
 #if defined(__AVX512F__) || defined(__AVX2__)
     RKVecCvt *s = (RKVecCvt *)src;
     RKVec *d = (RKVec *)dst;
-    int K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec)
+    int K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec);
     for (k = 0; k < K; k++) {
         *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
     }
