@@ -121,7 +121,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     }
     RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
 
-    if (space->showNumbers && gateCount < 50) {
+    if (space->showNumbers && count < 50) {
         char variable[32];
         char line[4096];
         RKIQZ X[count];

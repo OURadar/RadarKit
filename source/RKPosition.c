@@ -190,4 +190,9 @@ void RKPositionEngineSetPositionReady(RKPositionEngine *engine, RKPosition *posi
     engine->positionTime[engine->positionIndex] = engine->positionTimeLatest;
     position->flag |= RKPositionFlagReady;
     engine->positionIndex = RKNextModuloS(engine->positionIndex, RKPositionBufferSize);
+    if (engine->clock->count > RKPositionBufferSize) {
+        engine->positionTimeOldest = engine->positionTime[engine->positionIndex];
+    } else {
+        engine->positionTimeOldest = engine->positionTime[0];
+    }
 }

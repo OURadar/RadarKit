@@ -78,6 +78,7 @@ struct rk_position_engine {
     RKPosition             positionBuffer[RKPositionBufferSize];
     double                 positionTime[RKPositionBufferSize];
     double                 positionTimeLatest;
+    double                 positionTimeOldest;
     uint32_t               positionIndex;
     pthread_t              threadId;
     RKClock                *clock;

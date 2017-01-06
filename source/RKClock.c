@@ -56,19 +56,23 @@ double RKClockGetTime(RKClock *clock, const double input, struct timeval *timeva
     clock->inputBuffer[clock->index] = input;
     clock->latestTime = time;
     
-    if (clock->count > RKClockBufferSize) {
+    // Assess the frequency of burst
+    j = RKPreviousModuloS(clock->index, RKClockBufferSize);
+    period = time - clock->timeBuffer[j];
+    clock->accumulatedPeriod += period;
+
+    if (clock->count > 100) {
         // Subtract the oldest period (before it gets replaced as the newest)
-        clock->accumulatedPeriod -= clock->periodBuffer[clock->index];
+        j = RKPreviousNModuloS(clock->index, 100, RKClockBufferSize);
+        clock->accumulatedPeriod -= clock->periodBuffer[j];
         
-        // Assess the frequency of burst
-        j = RKPreviousModuloS(clock->index, RKClockBufferSize);
-        period = time - clock->timeBuffer[j];
-        
-        // Now add the newest period
-        clock->accumulatedPeriod += period;
-        clock->typicalPeriod = 1.0 / RKClockBufferSize * clock->accumulatedPeriod;;
-        RKLog(">typicalPeriod = %.3f ms   mv = xxx ms\n", 1.0e3 * clock->typicalPeriod);
+        clock->typicalPeriod = 1.0 / 100.0 * clock->accumulatedPeriod;;
+        RKLog(">%d / %d   typicalPeriod = %.3f ms   period = %.3f / %.3f ms   mv = xxx ms\n",
+              clock->index, clock->count,
+              1.0e3 * clock->typicalPeriod, 1.0e3 * period, 1.0e3 * clock->periodBuffer[j]);
     }
+    
+    clock->periodBuffer[clock->index] = period;
 
 //    // Do some math to get the actual time based on td & counter
 //    double mv = time;
