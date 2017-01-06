@@ -107,6 +107,7 @@ typedef struct RKOperatingParameters {
 typedef struct rk_pulse_header {
     uint64_t         i;                                    // Identity counter
     uint64_t         n;                                    // Network counter
+    uint64_t         t;                                    // Hardware clock tic
     uint32_t         s;                                    // Status flag
     uint32_t         capacity;                             // Allocated capacity
     uint32_t         gateCount;                            // Number of range gates

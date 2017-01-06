@@ -1,12 +1,12 @@
 //
-//  RKLocalCommandCenter.c
+//  RKCommandCenter.c
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 9/16/16.
-//  Copyright (c) 2016-2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boon Leng Cheong on 1/5/17.
+//  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKLocalCommandCenter.h>
+#include <RadarKit/RKCommandCenter.h>
 
 int socketCommandHandler(RKOperator *O) {
     char string[RKMaximumStringLength];

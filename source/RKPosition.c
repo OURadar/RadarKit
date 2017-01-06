@@ -24,28 +24,32 @@ void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
     int k;
     uint32_t j = 0;
-
-//    // Search until a time I need
-//
-//    // Wait until the latest position arrives
-//    // find the latest position, tag the pulse with the appropriate position
-//    // linearly interpolate between the best two readings
-//    // at some point, implement something sophisticated like Kalman filter
-//
-    if (engine->verbose) {
-        RKLog("<pulseTagger> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), j);
-    }
-
-    engine->state = RKPositionEngineStateActive;
-
     RKPosition *positionBefore;
     RKPosition *positionAfter;
     double timeBefore;
     double timeAfter;
     double alpha;
+
+    // Search until a time I need
+
+    // Wait until the latest position arrives
+    // find the latest position, tag the pulse with the appropriate position
+    // linearly interpolate between the best two readings
+    // at some point, implement something sophisticated like Kalman filter
+
+    if (engine->verbose) {
+        RKLog("<pulseTagger> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), j);
+    }
     
+    engine->state = RKPositionEngineStateActive;
+
+    // Wait until there are at least two position readings.
+    while (engine->clock->count < 2) {
+        usleep(1000);
+    }
+
     // Set the pulse to have position
-    uint32_t pulseIndex = *engine->pulseIndex;
+    uint32_t pulseIndex = 0;
     while (engine->state == RKPositionEngineStateActive) {
         while (pulseIndex == *engine->pulseIndex) {
             usleep(1000);
@@ -64,7 +68,6 @@ void *pulseTagger(void *in) {
             j = RKNextModuloS(j, RKPositionBufferSize);
             k++;
         }
-        //printf("Tagging pulse %d / %d    %d...\n", pulse->header.i, pulseIndex, engine->positionIndex);
         if (k == engine->pulseBufferSize) {
             RKLog("Could not find an appropriate position. All readings have expired.");
             continue;
@@ -73,7 +76,7 @@ void *pulseTagger(void *in) {
         j = RKPreviousModuloS(j, RKPositionBufferSize);
         positionBefore = &engine->positionBuffer[j];   timeBefore = engine->positionTime[j];
         
-        // Linear interpololation : V_mid = V_before + alpha * (V_after - V_before)
+        // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
         alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
         pulse->header.azimuthDegrees = RKInterpolateAngles(positionBefore->azimuthDegrees,
                                                            positionAfter->azimuthDegrees,
@@ -83,10 +86,12 @@ void *pulseTagger(void *in) {
                                                              alpha);
         
         if (engine->verbose > 2) {
-            RKLog("pulse time since init : %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+            RKLog("pulse[%d] time : %.4f %s [%.4f, %.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+                  pulse->header.i,
                   RKClockGetTimeSinceInit(engine->clock, timeBefore),
                   timeBefore <= pulse->header.timeDouble ? "<" : ">=",
                   RKClockGetTimeSinceInit(engine->clock, pulse->header.timeDouble),
+                  RKClockGetTimeSinceInit(engine->clock, engine->clock->latestTime),
                   pulse->header.timeDouble <= timeAfter ? "<" : ">=",
                   RKClockGetTimeSinceInit(engine->clock, timeAfter),
                   positionBefore->azimuthDegrees,
@@ -181,7 +186,7 @@ void RKPositionEngineSetPositionReady(RKPositionEngine *engine, RKPosition *posi
     if (position->flag & ~RKPositionFlagHardwareMask) {
         RKLog("Error. Ingested position has a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
-    engine->positionTimeLatest = RKClockGetTime(engine->clock, position->c, NULL);
+    engine->positionTimeLatest = RKClockGetTime(engine->clock, (double)position->c, NULL);
     engine->positionTime[engine->positionIndex] = engine->positionTimeLatest;
     position->flag |= RKPositionFlagReady;
     engine->positionIndex = RKNextModuloS(engine->positionIndex, RKPositionBufferSize);

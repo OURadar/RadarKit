@@ -389,11 +389,16 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
     pulse->header.s = RKPulseStatusVacant;
     pulse->header.i += radar->desc.pulseBufferDepth;
+    pulse->header.timeDouble = 0.0;
+    pulse->header.time.tv_sec = 0;
+    pulse->header.time.tv_usec = 0;
     return pulse;
 }
 
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
-    pulse->header.timeDouble = RKClockGetTime(radar->clock, pulse->header.i, &pulse->header.time);
+    if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
+        pulse->header.timeDouble = RKClockGetTime(radar->clock, (double)pulse->header.t, &pulse->header.time);
+    }
     pulse->header.s |= RKPulseStatusHasIQData;
     radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
 }

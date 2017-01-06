@@ -5,8 +5,8 @@ UNAME := $(shell uname)
 CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS += -fms-extensions -Wno-microsoft
 LDFLAGS = -L /usr/local/lib
-OBJS = RadarKit.o RKRadar.o RKLocalCommandCenter.o RKTest.o
-OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKPulseCompression.o RKMoment.o
+OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
+OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKPulseCompression.o RKMoment.o
 OBJS += RKNetwork.o RKServer.o RKClient.o
 OBJS += RKPulsePair.o RKMultiLag.o
 OBJS += RKPosition.o RKPedestalPedzy.o
@@ -53,4 +53,3 @@ install:
 uninstall:
 	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
 	rm -rf /usr/local/lib/libRadarKit.a
-

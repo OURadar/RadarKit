@@ -41,7 +41,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     
     int i;
     const int n = 32;
-    
+
     // PKIQZ struct variables are usually allocated somewhere else
     RKIQZ s, d, c;
 
@@ -379,6 +379,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     int n = 0;
     bool simulatePosition = false;
     uint64_t counter = 0;
+    uint64_t tic = 0;
 
     gettimeofday(&t0, NULL);
 
@@ -423,6 +424,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     //const int gateCount = RKGetPulseCapacity(radar);
     const int gateCount = 6;
     const int chunkSize = MAX(1, (int)floor(0.1f / prt));
+    uint64_t ticDelta = (uint16_t)(1.0e6 * prt);
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("<RKTestSimulateDataStream> fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)   chunk %d\n",
@@ -446,6 +448,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             // Fill in the header
             pulse->header.gateCount = gateCount;
             pulse->header.i = counter++;
+            pulse->header.t = tic;
             
             if (simulatePosition) {
                 pulse->header.azimuthDegrees = azimuth;
@@ -478,6 +481,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             RKSetPulseHasData(radar, pulse);
 
             tau += prt;
+            tic += ticDelta;
         }
 
         // Wait to simulate the PRF
