@@ -107,7 +107,7 @@ typedef struct RKOperatingParameters {
 typedef struct rk_pulse_header {
     uint64_t         i;                                    // Identity counter
     uint64_t         n;                                    // Network counter
-    uint64_t         t;                                    // Hardware clock tic
+    uint64_t         t;                                    // A clean clock-related tic count
     uint32_t         s;                                    // Status flag
     uint32_t         capacity;                             // Allocated capacity
     uint32_t         gateCount;                            // Number of range gates
@@ -152,7 +152,7 @@ typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
     RKPulseStatusVacant       = 0,
     RKPulseStatusHasIQData    = 1,                                                      // 0x01
-    RKPulseStatusHasPosition  = (1 << 1),                                                 // 0x02
+    RKPulseStatusHasPosition  = (1 << 1),                                               // 0x02
     RKPulseStatusReady        = (RKPulseStatusHasIQData | RKPulseStatusHasPosition),    // 0x03
     RKPulseStatusInspected    = (1 << 2),
     RKPulseStatusCompressed   = (1 << 3),

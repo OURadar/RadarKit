@@ -40,10 +40,10 @@ struct rk_moment_worker {
 
 struct rk_moment_engine {
     // User set variables
-    RKPulse                *pulseBuffer;
+    RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
-    RKRay                  *rayBuffer;
+    RKBuffer               rayBuffer;
     uint32_t               *rayIndex;
     uint32_t               rayBufferSize;
     uint8_t                verbose;

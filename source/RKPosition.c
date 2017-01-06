@@ -49,13 +49,26 @@ void *pulseTagger(void *in) {
     }
 
     // Set the pulse to have position
+    int s = 0;
     uint32_t pulseIndex = 0;
     while (engine->state == RKPositionEngineStateActive) {
-        while (pulseIndex == *engine->pulseIndex) {
-            usleep(1000);
-        }
         // Get the latest pulse
         RKPulse *pulse = RKGetPulse(engine->pulseBuffer, pulseIndex);
+        // Wait until a thread check out this pulse.
+        while (pulseIndex == *engine->pulseIndex) {
+            usleep(1000);
+            if (++s % 200 == 0) {
+                printf("<pulseTagger> sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, pulseIndex , *engine->pulseIndex, pulse->header.s);
+            }
+        }
+        // Wait until it has data. Otherwise, time stamp may not be good.
+        s = 0;
+        while ((pulse->header.s & RKPulseStatusHasIQData) == 0) {
+            usleep(1000);
+            if (++s % 200 == 0) {
+                printf("<pulseTagger> sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, pulseIndex , *engine->pulseIndex, pulse->header.s);
+            }
+        }
 
         // If we do not have a position newer than pulse time, just wait a little.
         while (engine->positionTimeLatest < pulse->header.timeDouble) {
@@ -86,12 +99,12 @@ void *pulseTagger(void *in) {
                                                              alpha);
         
         if (engine->verbose > 2) {
-            RKLog("pulse[%d] time : %.4f %s [%.4f, %.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+            RKLog("pulse[%d] %d time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
                   pulse->header.i,
+                  pulse->header.t,
                   RKClockGetTimeSinceInit(engine->clock, timeBefore),
                   timeBefore <= pulse->header.timeDouble ? "<" : ">=",
                   RKClockGetTimeSinceInit(engine->clock, pulse->header.timeDouble),
-                  RKClockGetTimeSinceInit(engine->clock, engine->clock->latestTime),
                   pulse->header.timeDouble <= timeAfter ? "<" : ">=",
                   RKClockGetTimeSinceInit(engine->clock, timeAfter),
                   positionBefore->azimuthDegrees,
@@ -118,7 +131,11 @@ void *pulseTagger(void *in) {
 RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
+    
     engine->clock = RKClockInit();
+    RKClockSetName(engine->clock, "<positionClock>");
+//    RKClockSetVerbose(engine->clock, 1);
+
     engine->memoryUsage = sizeof(RKPositionEngine) + sizeof(RKClock);
     return engine;
 }

@@ -480,6 +480,9 @@ void *pulseWatcher(void *_in) {
             usleep(200);
         }
         pulse = RKGetPulse(engine->buffer, k);
+        while (pulse->header.s != RKPulseStatusReady && engine->state == RKPulseCompressionEngineStateActive) {
+            usleep(200);
+        }
         if (engine->state == RKPulseCompressionEngineStateActive) {
             // Lag of the engine
             engine->lag = fmodf((float)(*engine->index + engine->size - k) / engine->size, 1.0f);

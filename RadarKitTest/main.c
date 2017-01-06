@@ -163,6 +163,7 @@ UserParams processInput(int argc, char **argv) {
                 user.noColor = true;
                 break;
             case 'D':
+                user.simulate = true;
                 user.fs = 5.0e6;
                 user.prf = 6;
                 user.coresForPulseCompression = 2;
@@ -173,6 +174,7 @@ UserParams processInput(int argc, char **argv) {
                 user.fs = atof(optarg);
                 break;
             case 'L':
+                user.simulate = true;
                 user.fs = 5.0e6;
                 user.prf = 2000;
                 user.coresForPulseCompression = 2;

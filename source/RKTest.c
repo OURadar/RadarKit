@@ -427,12 +427,14 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     uint64_t ticDelta = (uint16_t)(1.0e6 * prt);
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("<RKTestSimulateDataStream> fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)   chunk %d\n",
+        RKLog("<RKTestSimulateDataStream> fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
               RKFloatToCommaStyleString(1.0e-6 * fs),
               RKIntegerToCommaStyleString((int)(1.0f / prt)),
               RKIntegerToCommaStyleString(gateCount),
-              gateCount * 1.5e5 / fs,
-              chunkSize);
+              gateCount * 1.5e5 / fs);
+        RKLog("<RKTestSimulateDataStream> chunk size = %d   ticDelta = %d\n",
+              chunkSize,
+              ticDelta);
     }
 
     while (radar->active) {
@@ -445,6 +447,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
         for (j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
+
             // Fill in the header
             pulse->header.gateCount = gateCount;
             pulse->header.i = counter++;
@@ -489,7 +492,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
         do {
             gettimeofday(&t1, NULL);
             dt = RKTimevalDiff(t1, t0);
-            usleep(1000);
+            usleep(100);
             n++;
         } while (radar->active && dt < prt * chunkSize);
         t0 = t1;

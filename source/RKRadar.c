@@ -117,7 +117,9 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     }
 
     // Clock
-    radar->clock = RKClockInit();
+    radar->clock = RKClockInitWithSize(5000, 1000);
+    RKClockSetName(radar->clock, "<pulseClock>");
+    //RKClockSetVerbose(radar->clock, 1);
     radar->memoryUsage += sizeof(RKClock);
     
     // Pulse compression engine
@@ -399,12 +401,12 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
     if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
         pulse->header.timeDouble = RKClockGetTime(radar->clock, (double)pulse->header.t, &pulse->header.time);
     }
-    pulse->header.s |= RKPulseStatusHasIQData;
+    pulse->header.s = RKPulseStatusHasIQData;
     radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
 }
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
-    pulse->header.s |= RKPulseStatusReady;
+    pulse->header.s = RKPulseStatusReady;
 }
 
 RKPosition *RKGetVacantPosition(RKRadar *radar) {

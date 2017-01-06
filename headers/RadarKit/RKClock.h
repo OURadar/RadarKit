@@ -12,34 +12,45 @@
 #include <RadarKit/RKFoundation.h>
 
 // A clock derived from counter and request time
-#define RKClockBufferSize         1024
+#define RKClockDefaultBufferSize         1024
+#define RKClockDefaultStride             100
 
 typedef struct rk_clock {
     // User set parameters
     double           offsetSeconds;
-    uint16_t         depth;                                 // Maybe a user changeable depth? Let me think about this...
+    char             name[RKMaximumStringLength];
+    int              verbose;
+    bool             autoSync;
+    uint32_t         size;                        // User changeable depth
+    uint32_t         stride;                      // Size to compute average
 
     // Program set parameters
-    struct timeval   tvBuffer[RKClockBufferSize];           // The time which a request was made (dirty)
-    double           timeBuffer[RKClockBufferSize];         // A ldouble representation of timeval
-    double           inputBuffer[RKClockBufferSize];        // Clean driving reference
-    double           periodBuffer[RKClockBufferSize];       // Period derived from dirty time
+    struct timeval   *tvBuffer;                   // The time which a request was made (dirty)
+    double           *xBuffer;                    // A ldouble representation of timeval
+    double           *uBuffer;                    // Clean driving reference
     
     uint32_t         index;
     uint64_t         count;
     double           initTime;
     double           latestTime;
-    double           accumulatedPeriod;
     double           typicalPeriod;
-    uint32_t         burstPeriod;
+    double           x0;
+    double           u0;
+    double           dxdu;
     
 } RKClock;
 
+RKClock *RKClockInitWithSize(const uint32_t, const uint32_t);
+RKClock *RKClockInitWitName(const char *);
 RKClock *RKClockInit(void);
 void RKClockFree(RKClock *);
 
-void RKClockSetOffset(RKClock *, double);
-double RKClockGetTime(RKClock *clock, const double, struct timeval *);
-double RKClockGetTimeSinceInit(RKClock *clock, const double time);
+void RKClockSetName(RKClock *, const char *);
+void RKClockSetVerbose(RKClock *, const int);
+void RKClockSetManualSync(RKClock *clock);
+void RKClockSetOffset(RKClock *, const double);
+
+double RKClockGetTime(RKClock *, const double, struct timeval *);
+double RKClockGetTimeSinceInit(RKClock *, const double);
 
 #endif /* __RadarKit_RKClock_h__ */

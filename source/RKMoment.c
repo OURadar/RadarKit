@@ -118,7 +118,8 @@ void *momentCore(void *in) {
 
     // Allocate local resources and keep track of the total allocation
     RKScratch *space;
-    size_t mem = RKScratchAlloc(&space, engine->rayBuffer[0].header.capacity, engine->processorLagCount, engine->developerMode);
+    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
+    size_t mem = RKScratchAlloc(&space, ray->header.capacity, engine->processorLagCount, engine->developerMode);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateScratchSpace;
@@ -344,19 +345,20 @@ void *pulseGatherer(void *in) {
         s = 0;
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
+        // Wait until the buffer is advanced, then wait until the pulse has both data and position, i.e., RKPulseStatusReady
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0) {
-                printf("sleep 1/%d  k=%d  pulseIndex=%d  header.s=x%02x\n", s, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("<pulseGatherer> sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-
+        // At this point, a separate thread has checked out a pulse, filling it with data; another thread will fill it in with position
         s = 0;
-        while (pulse->header.s == RKPulseStatusVacant && engine->state == RKMomentEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusProcessed) == 0 && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0) {
-                printf("sleep 2/%d  k=%d  pulseIndex=%d  header.s=x%02x.\n", s, k, *engine->pulseIndex, pulse->header.s);
+                RKLog("<pulseGatherer> sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKMomentEngineStateActive) {
