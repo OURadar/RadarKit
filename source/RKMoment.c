@@ -373,7 +373,7 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
-                RKLog("Warning. Overflow projected by <pulseGatherer>.\n");
+                RKLog("Warning. <pulseGatherer> projected an overflow.\n");
                 i = j;
                 do {
                     i = RKPreviousModuloS(i, engine->rayBufferSize);
@@ -398,7 +398,7 @@ void *pulseGatherer(void *in) {
                     engine->momentSource[j].length = count;
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
-                            RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+                            RKLog("Error. <pulseGatherer> failed in sem_post(), errno = %d\n", errno);
                         }
                     } else {
                         engine->workers[c].tic++;

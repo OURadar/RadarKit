@@ -125,6 +125,7 @@ int RKSetWaveformTo121(RKRadar *radar);
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);
+uint32_t RKGetPulseCapacity(RKRadar *radar);
 
 // Interaction
 int RKGoLive(RKRadar *radar);

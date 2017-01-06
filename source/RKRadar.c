@@ -310,7 +310,7 @@ int RKSetPRF(RKRadar *radar, const float prf) {
     return RKResultNoError;
 }
 
-size_t RKGetPulseCapacity(RKRadar *radar) {
+uint32_t RKGetPulseCapacity(RKRadar *radar) {
     if (radar->pulses == NULL) {
         return RKResultNoPulseCompressionEngine;
     }

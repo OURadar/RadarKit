@@ -114,8 +114,10 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
             clock->x0 = clock->xBuffer[j];
             clock->u0 = clock->uBuffer[j];
             clock->dxdu = dx / du;
-            RKLog("%s pre-synchronized.   period = %.2f ms   dx/du = %.2f ms\n",
-                  clock->name, 1.0e3 / (double)clock->count * dx, 1.0e3 * clock->dxdu);
+            if (clock->verbose) {
+                RKLog("%s pre-synchronized.   period = %.2f ms   dx/du = %.2f ms\n",
+                      clock->name, 1.0e3 / (double)clock->count * dx, 1.0e3 * clock->dxdu);
+            }
         }
     }
     if (clock->x0) {
