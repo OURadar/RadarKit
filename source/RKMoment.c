@@ -480,7 +480,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
-    sprintf(engine->name, "%s<pulseGatherer>%s",
+    sprintf(engine->name, "%s<productGenerator>%s",
             rkGlobalParameters.showColor ? "\033[1;30;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;
