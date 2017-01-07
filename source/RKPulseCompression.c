@@ -178,11 +178,6 @@ void *pulseCompressionCore(void *_in) {
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
 
-    RKLog(">    %s created busyPeriods %p, fullPeriods %p ...\n", name, busyPeriods, fullPeriods);
-    
-    struct timeval *t0buff = (struct timeval *)malloc(RKWorkerDutyCycleBufferSize * sizeof(struct timeval));
-    struct timeval *t1buff = (struct timeval *)malloc(RKWorkerDutyCycleBufferSize * sizeof(struct timeval));
-
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
@@ -235,9 +230,8 @@ void *pulseCompressionCore(void *_in) {
         }
 
         // Something happened
-        if (gettimeofday(&t1, NULL)) {
-            RKLog("Error in gettimeofday() for t1   errno = %d\n", errno);
-        }
+        gettimeofday(&t1, NULL);
+
         // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
         me->lag = fmodf((float)(*engine->index + engine->size - me->pid) / engine->size, 1.0f);
@@ -342,46 +336,29 @@ void *pulseCompressionCore(void *_in) {
         me->pid = i0;
 
         // Done processing, get the time
-        if (gettimeofday(&t0, NULL)) {
-            RKLog("Error in gettimeofday() for t0   errno = %d\n", errno);
-        }
+        gettimeofday(&t0, NULL);
 
         // Drop the oldest reading, replace it, and add to the calculation
-        double d01 = RKTimevalDiff(t0, t1);
-        double d02 = RKTimevalDiff(t0, t2);
-        allBusyPeriods = allBusyPeriods - busyPeriods[d0] + d01;
-        allFullPeriods = allFullPeriods - fullPeriods[d0] + d02;
-        busyPeriods[d0] = d01;
-        fullPeriods[d0] = d02;
-        t0buff[d0] = t0;
-        t1buff[d0] = t1;
-        me->dutyCycle = allBusyPeriods / allFullPeriods;
-        if (!isfinite(me->dutyCycle) || busyPeriods[d0] > 0.1 || fullPeriods[d0] > 1.0e6) {
-            RKLog("d0 = %d\n", d0);
-            for (i = 0; i < RKWorkerDutyCycleBufferSize; i++) {
-                printf("i = %d   busyPeriods = %.4f    fullPeriods = %.4f  t0 = %ld.%06d  t1 = %ld.%06d    %.4f\n",
-                       i, busyPeriods[i], fullPeriods[i], t0buff[i].tv_sec, t0buff[i].tv_usec, t1buff[i].tv_sec, t1buff[i].tv_usec,
-                       RKTimevalDiff(t0buff[i], t1buff[i]));
-            }
-            RKLog("nan dutyCycle = %.2f / %.2f   t0 = %d.%06d   t1 = %d.%06d   t2 = %d.%06d\n", allBusyPeriods, allFullPeriods,
-                  t0.tv_sec, t0.tv_usec, t1.tv_sec, t1.tv_usec, t2.tv_sec, t2.tv_usec);
-            exit(EXIT_FAILURE);
-        }
+        allBusyPeriods -= busyPeriods[d0];
+        allFullPeriods -= fullPeriods[d0];
+        busyPeriods[d0] = RKTimevalDiff(t0, t1);
+        fullPeriods[d0] = RKTimevalDiff(t0, t2);
+        allBusyPeriods += busyPeriods[d0];
+        allFullPeriods += fullPeriods[d0];
         d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
+        me->dutyCycle = allBusyPeriods / allFullPeriods;
+
         t2 = t0;
     }
 
     // Clean up
+    RKLog(">    %s freeing reources ...\n", name);
     free(zi);
     free(zo);
     free(in);
     free(out);
-    RKLog(">    %s freeing busyPeriods %p, fullPeriods %p ...\n", name, busyPeriods, fullPeriods);
     free(busyPeriods);
     free(fullPeriods);
-    RKLog(">    %s free t0buff %p, t1buff %p ...\n", name, t0buff, t1buff);
-    free(t0buff);
-    free(t1buff);
 
     if (engine->verbose) {
         RKLog(">    %s ended.\n", name);

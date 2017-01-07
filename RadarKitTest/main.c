@@ -317,6 +317,7 @@ int main(int argc, char *argv[]) {
         RKSetPedestal(radar, &RKPedestalPedzyInit, (void *)pedzyHost);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
+        RKStop(radar);
 
     } else if (user.testPulseCompression) {
 

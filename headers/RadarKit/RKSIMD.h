@@ -29,10 +29,10 @@
 #include <spe.h>
 #endif
 
-#include <RadarKit/RKTypes.h>
-#include <RadarKit/RKMisc.h>
+#include <RadarKit/RKFoundation.h>
 
 void RKSIMD_show_info(void);
+void RKSIMD_show_count(const int n);
 void RKSIMD_zcpy (RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zadd (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
 void RKSIMD_zsub (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);

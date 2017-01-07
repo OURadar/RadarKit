@@ -16,6 +16,8 @@
 
 #if defined(__AVX512F__)
 
+// NOTE: Still need to define a lot of _mmXXX_XXX_pd equivalence for double precision calculations
+
 typedef __m512 RKVec;
 typedef __m256i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
@@ -72,6 +74,7 @@ typedef __m128 RKVec;
 #endif
 
 void RKSIMD_show_info(void) {
+    printf("SIMD Info:\n==========\n");
     #if defined(__AVX512F__)
     printf("AVX512F is active.\n");
     #elif defined(__AVX__)
@@ -83,17 +86,22 @@ void RKSIMD_show_info(void) {
     #else
     printf("SSE 128-bit is active.\n");
     #endif
-    printf("sizeof(RKVec) = %zu B (%zu RKFloats)\n", sizeof(RKVec), sizeof(RKVec) / 4);
+    printf("sizeof(RKVec) = %zu B (%zu RKFloats)\n", sizeof(RKVec), sizeof(RKVec) / sizeof(RKFloat));
     return;
 }
 
+void RKSIMD_show_count(const int n) {
+    int KF = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    int KC = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    printf("n = %d   K = %d / %d\n", n, KF, KC);
+}
 //
 // Complex operations
 //
 
 // Complex copy
 void RKSIMD_zcpy(RKIQZ *src, RKIQZ *dst, const int n) {
-    int k, N = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, N = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
@@ -107,7 +115,7 @@ void RKSIMD_zcpy(RKIQZ *src, RKIQZ *dst, const int n) {
 
 // Complex Addition
 void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
@@ -123,7 +131,7 @@ void RKSIMD_zadd(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
 
 // Complex Subtration
 void RKSIMD_zsub(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
@@ -139,7 +147,7 @@ void RKSIMD_zsub(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
 
 // Complex Multiplication
 void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
@@ -167,7 +175,7 @@ void RKSIMD_zmul(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 
 // Complex Self Multiplication
 void RKSIMD_zsmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
@@ -191,7 +199,7 @@ void RKSIMD_zsmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
 
 // In-place Complex Addition
 void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
@@ -207,7 +215,7 @@ void RKSIMD_izadd(RKIQZ *src, RKIQZ *dst, const int n) {
 
 // In-place Complex Subtraction
 void RKSIMD_izsub(RKIQZ *src, RKIQZ *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
@@ -223,7 +231,7 @@ void RKSIMD_izsub(RKIQZ *src, RKIQZ *dst, const int n) {
 
 // In-place Complex Multiplication (~50% faster!)
 void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *di = (RKVec *)dst->i;
@@ -253,7 +261,7 @@ void RKSIMD_izmul(RKIQZ *src, RKIQZ *dst, const int n, const bool c) {
 
 // Accumulate multiply add
 void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s1i = (RKVec *)s1->i;
     RKVec *s1q = (RKVec *)s1->q;
     RKVec *s2i = (RKVec *)s2->i;
@@ -283,7 +291,7 @@ void RKSIMD_zcma(RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n, const bool c) {
 
 // Multiply by a scale
 void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
@@ -297,7 +305,7 @@ void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
 }
 
 void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *si = (RKVec *)srcdst->i;
     RKVec *sq = (RKVec *)srcdst->q;
@@ -312,7 +320,7 @@ void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n) {
 
 // Absolute value of a complex number
 void RKSIMD_zabs(RKIQZ *src, float *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *si = (RKVec *)src->i;
     RKVec *sq = (RKVec *)src->q;
     RKVec *d = (RKVec *)dst;
@@ -325,7 +333,7 @@ void RKSIMD_zabs(RKIQZ *src, float *dst, const int n) {
 
 // Add by a float
 void RKSIMD_ssadd(float *src, const RKFloat f, float *dst, const int n) {
-    int k, K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
     RKVec *s = (RKVec *)src;
     RKVec *d = (RKVec *)dst;
@@ -350,7 +358,7 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
-    int k, K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec r, i, x;
     RKVec *s = (RKVec *)src;                                     // [a  b  x  y ]
     RKVec *d = (RKVec *)dst;                                     // [c  d  z  w ]
@@ -367,7 +375,7 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {
-    int k, K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s = (RKVec *)src;
     RKVec mv = _rk_mm_set1_pf(m);
     for (k = 0; k < K; k++) {
@@ -403,7 +411,7 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
 #if defined(__AVX512F__) || defined(__AVX2__)
     RKVecCvt *s = (RKVecCvt *)src;
     RKVec *d = (RKVec *)dst;
-    int K = (n + sizeof(RKComplex) - 1) * sizeof(RKComplex) / sizeof(RKVec);
+    int K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     for (k = 0; k < K; k++) {
         *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
     }
@@ -411,7 +419,7 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
     __m128i *s = (__m128i *)src;
     __m128  *d = (__m128 *) dst;
     __m128i  z = _mm_setzero_si128();
-    int K = (n + sizeof(RKFloat) - 1) * sizeof(RKFloat) / sizeof(__m128);
+    int K = (n * sizeof(RKFloat) + sizeof(__m128) - 1) / sizeof(__m128);
     for (k = 0; k < K; k++) {
         *d++ = _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_unpacklo_epi16(*s, z)));
         *d++ = _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_unpackhi_epi16(*s++, z)));

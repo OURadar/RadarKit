@@ -279,6 +279,7 @@ void *momentCore(void *in) {
         t2 = t0;
     }
 
+    RKLog(">    %s freeing reources ...\n", name);
     RKScratchFree(space);
     free(busyPeriods);
     free(fullPeriods);
