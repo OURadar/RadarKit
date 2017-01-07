@@ -14,6 +14,7 @@
 // A clock derived from counter and request time
 #define RKClockDefaultBufferSize         1024
 #define RKClockDefaultStride             100
+#define RKClockAWhile                    2.0
 
 typedef struct rk_clock {
     // User set parameters
@@ -21,13 +22,14 @@ typedef struct rk_clock {
     char             name[RKMaximumStringLength];
     int              verbose;
     bool             autoSync;
+    bool             hasWisdom;                   // User provided dudt
     uint32_t         size;                        // User changeable depth
     uint32_t         stride;                      // Size to compute average
 
     // Program set parameters
-    struct timeval   *tvBuffer;                   // The time which a request was made (dirty)
-    double           *xBuffer;                    // A ldouble representation of timeval
-    double           *uBuffer;                    // Clean driving reference
+    struct timeval   *tBuffer;                    // The time which a request was made (dirty)
+    double           *xBuffer;                    // A double representation of timeval (dirty)
+    double           *uBuffer;                    // Driving reference (clean)
     
     uint32_t         index;
     uint64_t         count;
@@ -49,6 +51,9 @@ void RKClockSetName(RKClock *, const char *);
 void RKClockSetVerbose(RKClock *, const int);
 void RKClockSetManualSync(RKClock *clock);
 void RKClockSetOffset(RKClock *, const double);
+void RKClockSetDxDu(RKClock *, const double);
+
+void RKClockSync(RKClock *clock, const double u);
 
 double RKClockGetTime(RKClock *, const double, struct timeval *);
 double RKClockGetTimeSinceInit(RKClock *, const double);

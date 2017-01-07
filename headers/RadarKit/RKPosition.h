@@ -63,6 +63,7 @@ typedef struct rk_position_engine RKPositionEngine;
 
 struct rk_position_engine {
     // User set variables
+    char                   name[64];
     RKPulse                *pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;

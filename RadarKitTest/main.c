@@ -19,6 +19,7 @@ typedef struct user_params {
     int   coresForProductGenerator;
     int   prf;
     int   fs;
+    int   g;
     int   verbose;
     int   testSIMD;
     int   testModuloMath;
@@ -126,6 +127,7 @@ UserParams processInput(int argc, char **argv) {
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"core"                  , required_argument, NULL, 'c'},
         {"prf"                   , required_argument, NULL, 'f'},
+        {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"verbose"               , no_argument      , NULL, 'v'},
@@ -143,19 +145,6 @@ UserParams processInput(int argc, char **argv) {
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
-            case 'c':
-                sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
-                break;
-            case 'f':
-                user.prf = atoi(optarg);
-                break;
-            case 'h':
-                showHelp();
-                exit(EXIT_SUCCESS);
-                break;
-            case 's':
-                user.simulate = true;
-                break;
             case 'A':
                 user.quietMode = false;
                 break;
@@ -200,6 +189,22 @@ UserParams processInput(int argc, char **argv) {
                 } else {
                     user.testPulseCompression = 1;
                 }
+                break;
+            case 'c':
+                sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
+                break;
+            case 'f':
+                user.prf = atoi(optarg);
+                break;
+            case 'g':
+                user.g = atoi(optarg);
+                break;
+            case 'h':
+                showHelp();
+                exit(EXIT_SUCCESS);
+                break;
+            case 's':
+                user.simulate = true;
                 break;
             case 'v':
                 user.verbose++;
@@ -259,9 +264,9 @@ int main(int argc, char *argv[]) {
         user.simulate = true;
     }
 
-    if (user.fs <= 5.0e6) {
+    if (user.fs <= 10.0e6) {
         radar = RKInitLean();
-    } else if (user.fs <= 20.0e6) {
+    } else if (user.fs <= 25.0e6) {
         radar = RKInitMean();
     } else {
         radar = RKInit();
@@ -287,17 +292,20 @@ int main(int argc, char *argv[]) {
 
         // Now we use the frame work.
 
-        // Build a series of options for transceiver
+        // Build a series of options for transceiver, only pass down the relevant parameters
         int i = 0;
         char cmd[64] = "";
         if (user.prf) {
             i += sprintf(cmd + i, " f %d", user.prf);
         }
+        if (user.g) {
+            i += sprintf(cmd + i, " g %d", user.g);
+        }
         if (user.fs) {
             i += sprintf(cmd + i, " F %d", user.fs);
         }
         if (!user.quietMode) {
-            RKLog("Transceiver input = '%s'", cmd + 1);
+            RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
         }
         RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
 

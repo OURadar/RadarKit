@@ -12,7 +12,7 @@
 //
 //
 
-#pragma mark -
+#pragma mark - Helper Functions
 
 RKTransceiver backgroundTransceiverInit(void *in) {
     RKRadar *radar = (RKRadar *)in;
@@ -24,7 +24,7 @@ RKPedestal backgroundPedestalInit(void *in) {
     return radar->pedestalInit(radar, radar->pedestalInitInput);
 }
 
-#pragma mark -
+#pragma mark - Life Cycle
 
 RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     RKRadar *radar;
@@ -119,7 +119,6 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // Clock
     radar->clock = RKClockInitWithSize(5000, 1000);
     RKClockSetName(radar->clock, "<pulseClock>");
-    //RKClockSetVerbose(radar->clock, 1);
     radar->memoryUsage += sizeof(RKClock);
     
     // Pulse compression engine
@@ -177,7 +176,7 @@ RKRadar *RKInitLean(void) {
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 1;
-    desc.pulseBufferDepth = 5000;
+    desc.pulseBufferDepth = 10000;
     desc.rayBufferDepth = 2000;
     return RKInitWithDesc(desc);
 }
@@ -234,7 +233,21 @@ int RKFree(RKRadar *radar) {
     return EXIT_SUCCESS;
 }
 
-#pragma mark -
+#pragma mark - Hardware Hooks
+
+int RKSetTransceiver(RKRadar *radar, RKTransceiver init(RKRadar *, void *), void *initInput) {
+    radar->transceiverInit = init;
+    radar->transceiverInitInput = initInput;
+    return RKResultNoError;
+}
+
+int RKSetPedestal(RKRadar *radar, RKPedestal init(RKRadar *, void *), void *initInput) {
+    radar->pedestalInit = init;
+    radar->pedestalInitInput = initInput;
+    return RKResultNoError;
+}
+
+#pragma mark - Properties
 
 int RKSetVerbose(RKRadar *radar, const int verbose) {
     if (verbose) {
@@ -247,6 +260,7 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     } else if (verbose >= 3) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
+    RKClockSetVerbose(radar->clock, verbose);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
@@ -258,7 +272,10 @@ int RKSetDeveloperMode(RKRadar *radar) {
     return RKResultNoError;
 }
 
-// Function incomplete
+//
+// NOTE: Function incomplete, need to define file format
+// ingest the samples, convert, etc.
+//
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
@@ -294,18 +311,6 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
     return RKResultNoError;
 }
 
-int RKSetTransceiver(RKRadar *radar, RKTransceiver init(RKRadar *, void *), void *initInput) {
-    radar->transceiverInit = init;
-    radar->transceiverInitInput = initInput;
-    return RKResultNoError;
-}
-
-int RKSetPedestal(RKRadar *radar, RKPedestal init(RKRadar *, void *), void *initInput) {
-    radar->pedestalInit = init;
-    radar->pedestalInitInput = initInput;
-    return RKResultNoError;
-}
-
 int RKSetPRF(RKRadar *radar, const float prf) {
     return RKResultNoError;
 }
@@ -318,7 +323,15 @@ uint32_t RKGetPulseCapacity(RKRadar *radar) {
     return pulse->header.capacity;
 }
 
-#pragma mark -
+void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta) {
+    RKClockSetDxDu(radar->clock, 1.0 / delta);
+}
+
+void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
+    RKClockSetDxDu(radar->positionEngine->clock, 1.0 / delta);
+}
+
+#pragma mark - Interaction / State Change
 
 int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
@@ -327,15 +340,18 @@ int RKGoLive(RKRadar *radar) {
 
     // Operation parameters
 
-    // Transceiver
+    // Pedestal
     if (radar->pedestalInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing pedestal ...");
         }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
+        while (radar->positionEngine->clock->count < 10) {
+            usleep(1000);
+        }
     }
 
-    // Pedestal
+    // Transceiver
     if (radar->transceiverInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing transceiver ...");
@@ -356,18 +372,20 @@ int RKWaitWhileActive(RKRadar *radar) {
 int RKStop(RKRadar *radar) {
     radar->active = false;
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
+        // Expect <pulseWatcher> stopped
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+        radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
     }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
+        // Expect <pulseTagger> stopped
         RKPositionEngineStop(radar->positionEngine);
+        radar->state ^= RKRadarStatePositionEngineInitialized;
     }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
+        // Expect <pulseGatherer> stopped
         RKMomentEngineStop(radar->momentEngine);
+        radar->state ^= RKRadarStateMomentEngineInitialized;
     }
-//    if (radar->state & RKRadarStateSocketServerInitialized) {
-//        RKServerStop(radar->socketServer);
-//        RKServerWait(radar->socketServer);
-//    }
     if (radar->transceiverInit != NULL) {
         if (radar->transceiverExec != NULL) {
             radar->transceiverExec(radar->transceiver, "stop");
@@ -382,6 +400,9 @@ int RKStop(RKRadar *radar) {
     }
     return 0;
 }
+
+#pragma mark -
+#pragma mark Pulses and Rays
 
 RKPulse *RKGetVacantPulse(RKRadar *radar) {
     if (radar->pulses == NULL) {

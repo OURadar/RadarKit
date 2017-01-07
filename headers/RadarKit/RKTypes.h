@@ -55,6 +55,15 @@
 #define RKMaxProductCount                6
 #define RKMaxPacketSize                  1024 * 1024
 #define RKNetworkTimeoutSeconds          20
+#define RKLagRedThreshold                0.5
+#define RKLagOrangeThreshold             0.7
+#define RKDutyCyleRedThreshold           0.95
+#define RKDutyCyleOrangeThreshold        0.90
+
+#define RKNoColor            "\033[0m"
+
+#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[31m" : (x > RKDutyCyleOrangeThreshold ? "\033[33m" : "\033[32m"))
+#define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[31m" : (x > RKLagOrangeThreshold      ? "\033[33m" : "\033[32m"))
 
 /*! @/definedblock */
 

@@ -146,7 +146,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
         }
         RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
         for (j = 0; j < 2 * lagCount - 1; j++) {
-            k = j - lagCount + 1;
             RKZeroTailFloat(&space->gC[j], capacity, gateCount);
         }
     }

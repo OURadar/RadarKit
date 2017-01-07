@@ -2,7 +2,7 @@ UNAME := $(shell uname)
 
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
-CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+CFLAGS = -ggdb -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS += -fms-extensions -Wno-microsoft
 LDFLAGS = -L /usr/local/lib
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
@@ -25,13 +25,14 @@ else
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
 endif
-LDFLAGS += -lRadarKit -lfftw3f -lpthread -lm
+LDFLAGS += -lfftw3f -lpthread -lm
 ifeq ($(UNAME), Darwin)
 else
 LDFLAGS += -lrt
 endif
 
-all: $(RKLIB) install rktest
+#all: $(RKLIB) install rktest
+all: $(RKLIB) rktest
 
 $(OBJS): %.o: source/%.c
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
@@ -39,8 +40,10 @@ $(OBJS): %.o: source/%.c
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-rktest: RadarKitTest/main.c /usr/local/lib/libRadarKit.a
-	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+#rktest: RadarKitTest/main.c /usr/local/lib/libRadarKit.a
+#	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+rktest: RadarKitTest/main.c libRadarKit.a
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 clean:
 	rm -f $(RKLIB)

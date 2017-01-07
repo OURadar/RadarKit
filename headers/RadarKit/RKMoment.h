@@ -36,6 +36,7 @@ struct rk_moment_worker {
     double                 dutyBuff[RKWorkerDutyCycleBufferSize];
     double                 dutyCycle;                                // Latest duty cycle estimate
     float                  lag;                                      // Relative lag from the latest index
+    sem_t                  *sem;
 };
 
 struct rk_moment_engine {

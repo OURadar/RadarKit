@@ -8,6 +8,12 @@
 
 #include <RadarKit/RKCommandCenter.h>
 
+
+int socketCommandHandler(RKOperator *);
+int socketStreamHandler(RKOperator *);
+
+// Implementation
+
 int socketCommandHandler(RKOperator *O) {
     char string[RKMaximumStringLength];
     switch (O->cmd[0]) {

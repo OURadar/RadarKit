@@ -44,9 +44,9 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     // Engine lag
     i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
                   spacer,
-                  rkGlobalParameters.showColor ? (engine->lag > 0.7 ? "\033[31m" : (engine->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
-                  99.0f * engine->lag,
-                  rkGlobalParameters.showColor ? "\033[0m" : "",
+                  rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+                  99.9f * engine->lag,
+                  rkGlobalParameters.showColor ? RKNoColor : "",
                   spacer);
 
     RKPulseCompressionWorker *worker;
@@ -56,9 +56,9 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
                       spacer,
-                      rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
-                      99.0f * worker->lag,
-                      rkGlobalParameters.showColor ? "\033[0m" : "");
+                      rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
+                      99.9f * worker->lag,
+                      rkGlobalParameters.showColor ? RKNoColor : "");
     }
     i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
     // Duty cycle of each core
@@ -66,9 +66,9 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
                       spacer,
-                      rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
-                      99.0f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? "\033[0m" : "");
+                      rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
+                      99.9f * worker->dutyCycle,
+                      rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost Full flag
     i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
@@ -89,7 +89,7 @@ void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
 }
 
 #pragma mark -
-#pragma mark Threads
+#pragma mark Delegate Workers
 
 void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
@@ -177,6 +177,12 @@ void *pulseCompressionCore(void *_in) {
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
+    
+    RKLog("Created busyPeriods %p ...\n", busyPeriods);
+    RKLog("Created busyPeriods %p ...\n", fullPeriods);
+    
+    struct timeval *t0buff = (struct timeval *)malloc(RKWorkerDutyCycleBufferSize * sizeof(struct timeval));
+    struct timeval *t1buff = (struct timeval *)malloc(RKWorkerDutyCycleBufferSize * sizeof(struct timeval));
 
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
@@ -230,8 +236,9 @@ void *pulseCompressionCore(void *_in) {
         }
 
         // Something happened
-        gettimeofday(&t1, NULL);
-
+        if (gettimeofday(&t1, NULL)) {
+            RKLog("Error in gettimeofday() for t1   errno = %d\n", errno);
+        }
         // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
         me->lag = fmodf((float)(*engine->index + engine->size - me->pid) / engine->size, 1.0f);
@@ -336,18 +343,38 @@ void *pulseCompressionCore(void *_in) {
         me->pid = i0;
 
         // Done processing, get the time
-        gettimeofday(&t0, NULL);
+        if (gettimeofday(&t0, NULL)) {
+            RKLog("Error in gettimeofday() for t0   errno = %d\n", errno);
+        }
 
         // Drop the oldest reading, replace it, and add to the calculation
-        allBusyPeriods -= busyPeriods[d0];
-        allFullPeriods -= fullPeriods[d0];
-        busyPeriods[d0] = RKTimevalDiff(t0, t1);
-        fullPeriods[d0] = RKTimevalDiff(t0, t2);
-        allBusyPeriods += busyPeriods[d0];
-        allFullPeriods += fullPeriods[d0];
-        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
+        double d01 = RKTimevalDiff(t0, t1);
+        double d02 = RKTimevalDiff(t0, t2);
+        allBusyPeriods = allBusyPeriods - busyPeriods[d0] + d01;
+        allFullPeriods = allFullPeriods - fullPeriods[d0] + d02;
+        busyPeriods[d0] = d01;
+        fullPeriods[d0] = d02;
+//        allBusyPeriods -= busyPeriods[d0];
+//        allFullPeriods -= fullPeriods[d0];
+//        busyPeriods[d0] = RKTimevalDiff(t0, t1);
+//        fullPeriods[d0] = RKTimevalDiff(t0, t2);
+//        allBusyPeriods += busyPeriods[d0];
+//        allFullPeriods += fullPeriods[d0];
+        t0buff[d0] = t0;
+        t1buff[d0] = t1;
         me->dutyCycle = allBusyPeriods / allFullPeriods;
-
+        if (!isfinite(me->dutyCycle) || busyPeriods[d0] > 0.1 || fullPeriods[d0] > 1.0e6) {
+            RKLog("d0 = %d\n", d0);
+            for (i = 0; i < RKWorkerDutyCycleBufferSize; i++) {
+                printf("i = %d   busyPeriods = %.4f    fullPeriods = %.4f  t0 = %ld.%06d  t1 = %ld.%06d    %.4f\n",
+                       i, busyPeriods[i], fullPeriods[i], t0buff[i].tv_sec, t0buff[i].tv_usec, t1buff[i].tv_sec, t1buff[i].tv_usec,
+                       RKTimevalDiff(t0buff[i], t1buff[i]));
+            }
+            RKLog("nan dutyCycle = %.2f / %.2f   t0 = %d.%06d   t1 = %d.%06d   t2 = %d.%06d\n", allBusyPeriods, allFullPeriods,
+                  t0.tv_sec, t0.tv_usec, t1.tv_sec, t1.tv_usec, t2.tv_sec, t2.tv_usec);
+            exit(EXIT_FAILURE);
+        }
+        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
         t2 = t0;
     }
 
@@ -356,8 +383,12 @@ void *pulseCompressionCore(void *_in) {
     free(zo);
     free(in);
     free(out);
+    RKLog("Freeing busyPeriods %p ...\n", busyPeriods);
     free(busyPeriods);
+    RKLog("Freeing fullPeriods %p ...\n", fullPeriods);
     free(fullPeriods);
+    RKLog("Free t0buff t1buff ...\n");
+    free(t0buff); free(t1buff);
 
     if (engine->verbose) {
         RKLog(">    %s ended.\n", name);
@@ -430,24 +461,24 @@ void *pulseWatcher(void *_in) {
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {
-                RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
+                RKLog(">    Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
             }
             if (sem_unlink(worker->semaphoreName)) {
-                RKLog("Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
+                RKLog(">    Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
             }
             // 2nd trial
             sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
             if (sem[c] == SEM_FAILED) {
-                RKLog("Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
+                RKLog(">    Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
                 return (void *)RKResultFailedToInitiateSemaphore;
             } else if (engine->verbose > 1) {
-                RKLog("Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
+                RKLog(">    Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
             }
         }
         worker->id = c;
         worker->parentEngine = engine;
         if (pthread_create(&worker->tid, NULL, pulseCompressionCore, worker) != 0) {
-            RKLog("Error. Failed to start a compression core.\n");
+            RKLog(">    Error. Failed to start a compression core.\n");
             return (void *)RKResultFailedToStartCompressionCore;
         }
     }
@@ -465,12 +496,12 @@ void *pulseWatcher(void *_in) {
     engine->tic++;
 
     if (engine->verbose) {
-        RKLog("><pulseWatcher> started.  mem = %s   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
+        RKLog(">%s started.  mem = %s   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
     }
 
     // Here comes the busy loop
-    i = 0;   // anonymous
-    j = 0;   // filter index
+    // i  anonymous
+    // j  filter index
     k = 0;   // pulse index
     c = 0;   // core index
     while (engine->state == RKPulseCompressionEngineStateActive) {
@@ -486,7 +517,11 @@ void *pulseWatcher(void *_in) {
         }
         if (engine->state == RKPulseCompressionEngineStateActive) {
             // Lag of the engine
-            engine->lag = fmodf((float)(*engine->index + engine->size - k) / engine->size, 1.0f);
+            engine->lag = fmodf(((float)*engine->index + engine->size - k) / engine->size, 1.0f);
+            if (!isfinite(engine->lag)) {
+                RKLog("%s %d + %d - %d = %d",
+                      engine->name, *engine->index, engine->size, k, *engine->index + engine->size - k, engine->lag);
+            }
 
             // Assess the lag of the workers
             lag = engine->workers[0].lag;
@@ -496,7 +531,7 @@ void *pulseWatcher(void *_in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
-                RKLog("Warning. I/Q Buffer overflow projected by <pulseWatcher>.\n");
+                RKLog("Warning. %s projected an I/Q Buffer overflow.\n", engine->name);
 //
 //                i = RKPreviousModuloS(*engine->index, engine->size);
 //                pulse = RKGetPulse(engine->buffer, i);
@@ -523,7 +558,7 @@ void *pulseWatcher(void *_in) {
                 engine->filterGid[k] = -1;
                 engine->planIndices[k][0] = 0;
                 if (--skipCounter == 0) {
-                    RKLog(">Info. <pulseWatcher> skipped a chunk.\n");
+                    RKLog(">Info. %s skipped a chunk.\n", engine->name);
                 }
             } else {
                 // Compute the filter group id to use
@@ -543,9 +578,9 @@ void *pulseWatcher(void *_in) {
                         }
                     }
                     if (!found) {
-                        RKLog("A new FFT plan of size %d is needed ...  gid = %d   planCount = %d\n", planSize, gid, engine->planCount);
+                        RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
                         if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
-                            RKLog("Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->planCount);
+                            RKLog("Error. %s unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
                             exit(EXIT_FAILURE);
                         }
                         planIndex = engine->planCount;
@@ -565,7 +600,7 @@ void *pulseWatcher(void *_in) {
 
             // Now we post
             #ifdef DEBUG_IQ
-            RKLog("<pulseWatcher> posting core-%d for pulse %d gate %d\n", c, k, engine->pulses[k].header.gateCount);
+            RKLog("%s posting core-%d for pulse %d gate %d\n", engine->name, c, k, engine->pulses[k].header.gateCount);
             #endif
             if (engine->useSemaphore) {
                 if (sem_post(sem[c])) {
@@ -618,6 +653,8 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
+    sprintf(engine->name, "%s<pulseWatcher>%s",
+            rkGlobalParameters.showColor ? "\033[1;30;43m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKPulseCompressionEngineStateAllocated;
     engine->useSemaphore = true;
     pthread_mutex_init(&engine->coreMutex, NULL);
@@ -768,10 +805,10 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     if (engine->verbose) {
-        RKLog("<pulseWatcher> starting ...\n");
+        RKLog("%s starting ...\n", engine->name);
     }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
-        RKLog("Error. Failed to start a pulse watcher.\n");
+        RKLog("Error. Failed to start %s.\n", engine->name);
         return RKResultFailedToStartPulseWatcher;
     }
     while (engine->tic == 0) {
@@ -789,12 +826,12 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
-        RKLog("Stopping <pulseWatcher> ...\n");
+        RKLog("%s stopping ...\n", engine->name);
     }
     engine->state = RKPulseCompressionEngineStateDeactivating;
     pthread_join(engine->tidPulseWatcher, NULL);
     if (engine->verbose) {
-        RKLog("<pulseWatcher> stopped\n");
+        RKLog("%s stopped\n", engine->name);
     }
     free(engine->workers);
     engine->workers = NULL;

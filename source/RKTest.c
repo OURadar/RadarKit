@@ -370,21 +370,21 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     int j, g, p;
     float phi = 0.0f;
-    float tau = 0.0f;
     float azimuth = 0.0f;
     struct timeval t0, t1;
+    double t = 0.0f;
     double dt = 0.0;
     double prt = 0.0002;
     float fs = 50.0e6;
     int n = 0;
     bool simulatePosition = false;
     uint64_t counter = 0;
-    uint64_t tic = 0;
 
     gettimeofday(&t0, NULL);
 
     RKSetLogfile(NULL);
-
+    int gateCount = RKGetPulseCapacity(radar);
+    
     // Parse out input parameters
     if (input) {
         char *sb = (char *)input, *se = NULL, *sv = NULL;
@@ -409,6 +409,12 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                 case 'P':
                     simulatePosition = true;
                     break;
+                case 'g':
+                    gateCount = atoi(sv);
+                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                        RKLog(">gateCount = %s", RKIntegerToCommaStyleString((long)gateCount));
+                    }
+                    break;
             }
             sb = strchr(sv, ' ');
             if (sb == NULL) {
@@ -420,11 +426,11 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             }
         }
     }
-
-    const int gateCount = RKGetPulseCapacity(radar);
-//    const int gateCount = 6;
+    
     const int chunkSize = MAX(1, (int)floor(0.1f / prt));
-    uint64_t ticDelta = (uint16_t)(1.0e6 * prt);
+
+    // Use a counter that mimics microsend increments
+    RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("<RKTestSimulateDataStream> fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
@@ -432,9 +438,9 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
               RKIntegerToCommaStyleString((int)(1.0f / prt)),
               RKIntegerToCommaStyleString(gateCount),
               gateCount * 1.5e5 / fs);
-        RKLog("<RKTestSimulateDataStream> chunk size = %d   ticDelta = %d\n",
+        RKLog("<RKTestSimulateDataStream> chunk size = %d   tics = %s\n",
               chunkSize,
-              ticDelta);
+              RKFloatToCommaStyleString(1.0e6 * prt));
     }
 
     while (radar->active) {
@@ -451,14 +457,14 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             // Fill in the header
             pulse->header.gateCount = gateCount;
             pulse->header.i = counter++;
-            pulse->header.t = tic;
+            pulse->header.t = (uint64_t)(1.0e6 * t);
             
             if (simulatePosition) {
                 pulse->header.azimuthDegrees = azimuth;
                 pulse->header.elevationDegrees = 2.41f;
                 phi += 0.02f;
                 //azimuth = fmodf(50.0f * tau, 360.0f);
-                azimuth = fmodf(1.0f * tau, 360.0f);
+                azimuth = fmodf(1.0f * t, 360.0f);
             }
 
             // Fill in the data...
@@ -483,8 +489,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
             RKSetPulseHasData(radar, pulse);
 
-            tau += prt;
-            tic += ticDelta;
+            t += prt;
         }
 
         // Wait to simulate the PRF

@@ -15,7 +15,6 @@
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKPosition.h>
-#include <RadarKit/RKLocalCommandCenter.h>
 
 enum RKInitFlag {
     RKInitFlagNone                  = 0,
@@ -105,7 +104,10 @@ struct rk_radar {
     pthread_t                  pedestalThreadId;
 };
 
+//
 // Life Cycle
+//
+
 RKRadar *RKInitWithFlags(RKRadarInitDesc);
 RKRadar *RKInitQuiet(void);
 RKRadar *RKInitLean(void);
@@ -114,28 +116,44 @@ RKRadar *RKInitFull(void);
 RKRadar *RKInit(void);
 int RKFree(RKRadar *radar);
 
+//
 // Properties
+//
+
+// Set the transceiver / pedestal with their initialization handler and initial input
 int RKSetTransceiver(RKRadar *radar, RKTransceiver(RKRadar *, void *), void *);
 int RKSetPedestal(RKRadar *radar, RKPedestal(RKRadar *, void *), void *);
+
+// Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
 int RKSetDeveloperMode(RKRadar *radar);
-int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
-int RKSetWaveformToImpulse(RKRadar *radar);
-int RKSetWaveformTo121(RKRadar *radar);
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);
+// Some operating parameters
+int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
+int RKSetWaveformToImpulse(RKRadar *radar);
+int RKSetWaveformTo121(RKRadar *radar);
 uint32_t RKGetPulseCapacity(RKRadar *radar);
 
-// Interaction
+// If there is a tic count from firmware, use it as clean reference for time derivation
+void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta);
+void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
+
+//
+// Interactions
+//
+
 int RKGoLive(RKRadar *radar);
 int RKWaitWhileActive(RKRadar *radar);
 int RKStop(RKRadar *radar);
 
+// Pulses
 RKPulse *RKGetVacantPulse(RKRadar *radar);
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse);
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse);
 
+// Rays
 RKPosition *RKGetVacantPosition(RKRadar *radar);
 void RKSetPositionReady(RKRadar *radar, RKPosition *position);
 

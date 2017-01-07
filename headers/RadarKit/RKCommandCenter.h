@@ -16,9 +16,6 @@ typedef struct rk_command_center {
     RKServer  *server;
 } RKCommandCenter;
 
-int socketCommandHandler(RKOperator *);
-int socketStreamHandler(RKOperator *);
-
 void RKCommandCenterAddRadar(RKCommandCenter *, RKRadar *);
 void RKCommandCenterRemoveRadar(RKCommandCenter *, RKRadar *);
 

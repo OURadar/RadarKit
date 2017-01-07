@@ -46,9 +46,9 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     // Engine lag
     i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
                   spacer,
-                  rkGlobalParameters.showColor ? (engine->lag > 0.7 ? "\033[31m" : (engine->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
+                  rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                   99.0f * engine->lag,
-                  rkGlobalParameters.showColor ? "\033[0m" : "",
+                  rkGlobalParameters.showColor ? RKNoColor : "",
                   spacer);
 
     RKMomentWorker *worker;
@@ -58,9 +58,9 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
                       spacer,
-                      rkGlobalParameters.showColor ? (worker->lag > 0.7 ? "\033[31m" : (worker->lag > 0.5 ? "\033[33m" : "\033[32m")) : "",
-                      99.0f * worker->lag,
-                      rkGlobalParameters.showColor ? "\033[0m" : "");
+                      rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
+                      99.9f * worker->lag,
+                      rkGlobalParameters.showColor ? RKNoColor : "");
     }
     i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
     // Duty cycle of each core
@@ -68,9 +68,9 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
                       spacer,
-                      rkGlobalParameters.showColor ? (worker->dutyCycle > 0.99 ? "\033[31m" : (worker->dutyCycle > 0.95 ? "\033[33m" : "\033[32m")) : "",
-                      99.0f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? "\033[0m" : "");
+                      rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
+                      99.8f * worker->dutyCycle,
+                      rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost Full flag
     i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
@@ -81,7 +81,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
 }
 
 #pragma mark -
-#pragma mark Threads
+#pragma mark Delegate Workers
 
 void *momentCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
@@ -90,18 +90,17 @@ void *momentCore(void *in) {
     int k;
     struct timeval t0, t1, t2;
 
+    // My ID that is suppose to be constant
     const int c = me->id;
+    
+    // A tag for header identification, will increase by engine->coreCount later
     uint32_t tag = c;
 
-    // Find the semaphore
-    sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
-    if (sem == SEM_FAILED) {
-        RKLog("Error. Unable to retrieve semaphore %d\n", c);
-        return (void *)RKResultFailedToRetrieveSemaphore;
-    };
+    // Grab the semaphore
+    sem_t *sem = me->sem;
 
     // Initiate a variable to store my name
-    char name[20];
+    char name[32];
     if (rkGlobalParameters.showColor) {
         k = sprintf(name, "\033[3%dm", c % 7 + 1);
     } else {
@@ -140,8 +139,10 @@ void *momentCore(void *in) {
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
 
-    // Output index
+    // Output index for current ray
     uint32_t io = engine->rayBufferSize - engine->coreCount + c;
+    
+    // Start and end indices of the input pulses
     uint32_t is;
     uint32_t ie;
 
@@ -152,7 +153,7 @@ void *momentCore(void *in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
     if (engine->verbose) {
-        RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, io, RKIntegerToCommaStyleString(mem), me->tic);
+        RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
     }
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -172,9 +173,6 @@ void *momentCore(void *in) {
 
     while (engine->state == RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
-            #if defined(DEBUG_MM)
-            RKLog(">%s sem_wait()\n", coreName);
-            #endif
             if (sem_wait(sem)) {
                 RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
             }
@@ -204,25 +202,42 @@ void *momentCore(void *in) {
         // The index path of the source of this ray
         const RKModuloPath path = engine->momentSource[io];
 
-        // Duplicate a linear array for processor
-        RKPulse *pulses[RKMaxPulsesPerRay];
-        k = 0;
+        // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
-        do {
-            pulses[k++] = RKGetPulse(engine->pulseBuffer, is);
-            is = RKNextModuloS(is, engine->pulseBufferSize);
-        } while (k < path.length);
         
-        // Call the assigned moment processor if we are to process
-        is = path.origin;
+        // Beamwidths of azimuth & elevation
+        if (engine->verbose) {
+            RKPulse *S = RKGetPulse(engine->pulseBuffer, path.origin);
+            RKPulse *E = RKGetPulse(engine->pulseBuffer, RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize));
+            float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
+            float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+            
+            RKLog("%s   %05u...%05u (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)\n",
+                  name, S->header.i, E->header.i, path.length,
+                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth);
+        }
+
         if (path.length > 3) {
+            // Duplicate a linear array for processor
+            RKPulse *pulses[RKMaxPulsesPerRay];
+            k = 0;
+            is = path.origin;
+            do {
+                pulses[k++] = RKGetPulse(engine->pulseBuffer, is);
+                is = RKNextModuloS(is, engine->pulseBufferSize);
+            } while (k < path.length);
             // End index of the I/Q for this ray
             k = engine->processor(space, pulses, path.length, name);
-            ie = RKNextNModuloS(is, k, engine->pulseBufferSize);
+            if (k != path.length) {
+                RKLog("Numer of processed samples are not expected.  k = %d != %d\n", k, path.length);
+            }
+            ie = RKNextNModuloS(is, path.length, engine->pulseBufferSize);
             ray->header.s |= RKRayStatusProcessed;
         } else {
             ie = is;
             ray->header.s |= RKRayStatusSkipped;
+            RKLog("Skipped a ray with %d sampples.\n", path.length);
         }
 
         // Update processed index
@@ -241,7 +256,7 @@ void *momentCore(void *in) {
         ray->header.endElevation   = ee->header.elevationDegrees;
         ray->header.s |= RKRayStatusReady;
         ray->header.s ^= RKRayStatusProcessing;
-       
+
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
@@ -295,24 +310,28 @@ void *pulseGatherer(void *in) {
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {
-                RKLog("Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
+                RKLog(">    Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
             }
             if (sem_unlink(worker->semaphoreName)) {
-                RKLog("Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
+                RKLog(">    Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
             }
             // 2nd trial
             sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
             if (sem[c] == SEM_FAILED) {
-                RKLog("Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
+                RKLog(">    Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
                 return (void *)RKResultFailedToInitiateSemaphore;
             } else if (engine->verbose > 1) {
-                RKLog("Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
+                RKLog(">    Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
             }
         }
         worker->id = c;
+        worker->sem = sem[c];
         worker->parentEngine = engine;
+        if (engine->verbose > 1) {
+            RKLog(">    %s @ %p\n", worker->semaphoreName, worker->sem);
+        }
         if (pthread_create(&worker->tid, NULL, momentCore, worker) != 0) {
-            RKLog("Error. Failed to start a moment core.\n");
+            RKLog(">    Error. Failed to start a moment core.\n");
             return (void *)RKResultFailedToStartMomentCore;
         }
     }
@@ -330,7 +349,6 @@ void *pulseGatherer(void *in) {
     engine->tic++;
 
     // Here comes the busy loop
-    i = 0;   // anonymous
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
@@ -363,7 +381,7 @@ void *pulseGatherer(void *in) {
         }
         if (engine->state == RKMomentEngineStateActive) {
             // Lag of the engine
-            engine->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
+            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
 
             // Assess the lag of the workers
             lag = engine->workers[0].lag;
@@ -373,44 +391,49 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
-                RKLog("Warning. <pulseGatherer> projected an overflow.\n");
+                RKLog("Warning. <pulseGatherer> projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n", engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
+                
+                // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
                 i = j;
                 do {
                     i = RKPreviousModuloS(i, engine->rayBufferSize);
-                    engine->momentSource[i].length = 0;
+                    engine->momentSource[j].length = 0;
                     ray = RKGetRay(engine->rayBuffer, i);
-                } while (!(ray->header.s & RKRayStatusReady));
-            }
-
-            // The ray bin
-            i0 = floorf(pulse->header.azimuthDegrees);
-
-            // Skip processing if it isgetting too busy
-            if (skipCounter > 0) {
+                } while (!(ray->header.s & (RKRayStatusReady | RKRayStatusProcessing)));
+            } else if (skipCounter > 0) {
+                // Skip processing if we are in skipping mode
                 if (--skipCounter == 0 && engine->verbose) {
-                    RKLog(">Info. <pulseGatherer> skipped a chunk.\n");
+                    RKLog(">Info. <pulseGatherer> skipped a chunk.   engine->index = %d vs %d\n", *engine->pulseIndex, k);
+                    for (i = 0; i < engine->coreCount; i++) {
+                        engine->workers[i].lag = 0.0f;
+                    }
                 }
             } else {
                 // Gather the start and end pulses and post a worker to process for a ray
+                i0 = floorf(pulse->header.azimuthDegrees);
                 if (i1 != i0 || count == RKMaxPulsesPerRay) {
                     i1 = i0;
-                    // Number of samples in this ray
-                    engine->momentSource[j].length = count;
-                    if (engine->useSemaphore) {
-                        if (sem_post(sem[c])) {
-                            RKLog("Error. <pulseGatherer> failed in sem_post(), errno = %d\n", errno);
+                    if (count > 0) {
+                        // Number of samples in this ray
+                        engine->momentSource[j].length = count;
+                        if (engine->useSemaphore) {
+                            if (sem_post(sem[c])) {
+                                RKLog("Error. <pulseGatherer> failed in sem_post(), errno = %d\n", errno);
+                            }
+                        } else {
+                            engine->workers[c].tic++;
                         }
+                        // Move to the next core, gather the next ray
+                        c = RKNextModuloS(c, engine->coreCount);
+                        j = RKNextModuloS(j, engine->rayBufferSize);
+                        // New origin for the next ray
+                        engine->momentSource[j].origin = k;
+                        ray = RKGetRay(engine->rayBuffer, j);
+                        ray->header.s = RKRayStatusVacant;
+                        count = 0;
                     } else {
-                        engine->workers[c].tic++;
+                        // Just started, i0 could be any azimuth bin
                     }
-                    // Move to the next core, gather the next ray
-                    c = RKNextModuloS(c, engine->coreCount);
-                    j = RKNextModuloS(j, engine->rayBufferSize);
-                    // New origin for the next ray
-                    engine->momentSource[j].origin = k;
-                    ray = RKGetRay(engine->rayBuffer, j);
-                    ray->header.s = RKRayStatusVacant;
-                    count = 0;
                 }
                 // Keep counting up
                 count++;
@@ -555,7 +578,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
-        RKLog("Stopping <pulseGatherer> ...\n");
+        RKLog("<pulseGatherer> stopping ...\n");
     }
     engine->state = RKMomentEngineStateDeactivating;
     pthread_join(engine->tidPulseGatherer, NULL);

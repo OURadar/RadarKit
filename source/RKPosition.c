@@ -58,7 +58,7 @@ void *pulseTagger(void *in) {
         while (pulseIndex == *engine->pulseIndex) {
             usleep(1000);
             if (++s % 200 == 0) {
-                printf("<pulseTagger> sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, pulseIndex , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 1/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, pulseIndex , *engine->pulseIndex, pulse->header.s);
             }
         }
         // Wait until it has data. Otherwise, time stamp may not be good.
@@ -66,14 +66,19 @@ void *pulseTagger(void *in) {
         while ((pulse->header.s & RKPulseStatusHasIQData) == 0) {
             usleep(1000);
             if (++s % 200 == 0) {
-                printf("<pulseTagger> sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, pulseIndex , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 2/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, pulseIndex , *engine->pulseIndex, pulse->header.s);
             }
         }
-
-        // If we do not have a position newer than pulse time, just wait a little.
-        while (engine->positionTimeLatest < pulse->header.timeDouble) {
+        // Wait until we have a position newer than pulse time.
+        s = 0;
+        while (engine->positionTimeLatest <= pulse->header.timeDouble) {
             usleep(1000);
+            if (++s % 200 == 0) {
+                RKLog("%s sleep 3/%d  k = %d   latestTime = %s < %s = header.timeDouble\n", engine->name, s, pulseIndex ,
+                      RKFloatToCommaStyleString(engine->positionTimeLatest), RKFloatToCommaStyleString(pulse->header.timeDouble));
+            }
         }
+  
         // Search until the time just after the pulse was acquired.
         // Then, roll back one slot, which should be the position just before the pulse was acquired.
         k = 0;
@@ -82,7 +87,10 @@ void *pulseTagger(void *in) {
             k++;
         }
         if (k == engine->pulseBufferSize) {
-            RKLog("Could not find an appropriate position. All readings have expired.");
+            RKLog("Could not find an appropriate position.  %.2f %s %.2f",
+                  pulse->header.timeDouble,
+                  pulse->header.timeDouble < engine->positionTimeLatest ? "<" : ">=",
+                  engine->positionTimeLatest);
             continue;
         }
         positionAfter  = &engine->positionBuffer[j];   timeAfter  = engine->positionTime[j];
@@ -99,7 +107,7 @@ void *pulseTagger(void *in) {
                                                              alpha);
         
         if (engine->verbose > 2) {
-            RKLog("pulse[%d] %d time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+            RKLog("<pulseTagger> pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
                   pulse->header.i,
                   pulse->header.t,
                   RKClockGetTimeSinceInit(engine->clock, timeBefore),
@@ -119,9 +127,6 @@ void *pulseTagger(void *in) {
         
         pulseIndex = RKNextModuloS(pulseIndex, engine->pulseBufferSize);
     }
-    if (engine->verbose) {
-        RKLog("<pulseTagger> stopped.\n");
-    }
     return (void *)NULL;
 }
 
@@ -131,6 +136,7 @@ void *pulseTagger(void *in) {
 RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
+    strcpy(engine->name, "<pulseTagger>");
     
     engine->clock = RKClockInit();
     RKClockSetName(engine->clock, "<positionClock>");
@@ -148,8 +154,9 @@ void RKPositionEngineFree(RKPositionEngine *engine) {
 #pragma mark -
 #pragma mark Properties
 
-void RKPositionEngineSetVerbose(RKPositionEngine *engine, const int verb) {
-    engine->verbose = verb;
+void RKPositionEngineSetVerbose(RKPositionEngine *engine, const int verbose) {
+    engine->verbose = verbose;
+    RKClockSetVerbose(engine->clock, verbose);
 }
 
 void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
@@ -190,6 +197,10 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 int RKPositionEngineStop(RKPositionEngine *engine) {
     RKLog("<pulseTagger> stopping ...\n");
     engine->state = RKPositionEngineStateDeactivating;
+    pthread_join(engine->threadId, NULL);
+    if (engine->verbose) {
+        RKLog("<pulseTagger> stopped.\n");
+    }
     return RKResultNoError;
 }
 

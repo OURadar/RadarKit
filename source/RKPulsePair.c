@@ -19,7 +19,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
 //    struct timeval tic, toc;
 //    gettimeofday(&tic, NULL);
     
-    // Beamwidths of azimuth & elevation
+//    // Beamwidths of azimuth & elevation
 //    RKPulse *S = input[0];
 //    RKPulse *E = input[count -1];
 //    float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
@@ -121,7 +121,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     }
     RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
 
-    if (space->showNumbers && count < 50) {
+    if (space->showNumbers && count < 50 && gateCount < 50) {
         char variable[32];
         char line[4096];
         RKIQZ X[count];

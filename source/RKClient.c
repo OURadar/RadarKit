@@ -152,7 +152,12 @@ void *theClient(void *in) {
                 continue;
             }
         } else if (C->verbose) {
-            RKLog("%s Initialized.\n", C->name);
+            if (C->type == RKNetworkSocketTypeTCP) {
+                RKLog("%s connected.\n", C->name);
+            } else {
+                // UDP may not mean connected at this point
+                RKLog("%s initialized.\n", C->name);
+            }
         }
 
         // Actively receive
@@ -167,7 +172,7 @@ void *theClient(void *in) {
             timeout.tv_usec = 0;
             readOkay = false;
             r = select(C->sd + 1, &C->rfd, NULL, &C->efd, &timeout);
-            if (C->verbose > 3) {
+            if (C->verbose > 3 || FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s select() returned r = %d   FD_ISSET(rfd) = %d   FD_ISSET(efd) = %d   errno = %d.\n",
                         C->name, r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
             }
@@ -193,11 +198,11 @@ void *theClient(void *in) {
                                     usleep(1000);
                                 }
                             } else if (errno != EAGAIN) {
-                                RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)\n",
-                                        C->name, r, k, errno, RKErrnoString(errno));
-                                if (r == 0) {
-                                    timeoutCount--;
-                                }
+                                RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
+                                        C->name, r, k, errno, RKErrnoString(errno), timeoutCount);
+//                                if (r == 0) {
+//                                    timeoutCount--;
+//                                }
                                 continue;
                             }
                             RKLog("... errno = %d ...\n", errno);
