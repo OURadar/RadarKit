@@ -38,7 +38,7 @@ void *pulseTagger(void *in) {
     // at some point, implement something sophisticated like Kalman filter
 
     if (engine->verbose) {
-        RKLog("<pulseTagger> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), j);
+        RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), j);
     }
     
     engine->state = RKPositionEngineStateActive;
@@ -107,7 +107,8 @@ void *pulseTagger(void *in) {
                                                              alpha);
         
         if (engine->verbose > 2) {
-            RKLog("<pulseTagger> pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+            RKLog("%s pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+                  engine->name,
                   pulse->header.i,
                   pulse->header.t,
                   RKClockGetTimeSinceInit(engine->clock, timeBefore),
@@ -136,11 +137,11 @@ void *pulseTagger(void *in) {
 RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
-    strcpy(engine->name, "<pulseTagger>");
+    sprintf(engine->name, "%s<pulseTagger>%s",
+            rkGlobalParameters.showColor ? "\033[1;30;46m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     
     engine->clock = RKClockInit();
     RKClockSetName(engine->clock, "<positionClock>");
-//    RKClockSetVerbose(engine->clock, 1);
 
     engine->memoryUsage = sizeof(RKPositionEngine) + sizeof(RKClock);
     return engine;
@@ -183,7 +184,7 @@ void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(
 #pragma mark Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
-    RKLog("<pulseTagger> starting ...\n");
+    RKLog("%s starting ...\n", engine->name);
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
@@ -195,11 +196,11 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 }
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
-    RKLog("<pulseTagger> stopping ...\n");
+    RKLog("%s stopping ...\n", engine->name);
     engine->state = RKPositionEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
     if (engine->verbose) {
-        RKLog("<pulseTagger> stopped.\n");
+        RKLog("%s stopped.\n", engine->name);
     }
     return RKResultNoError;
 }

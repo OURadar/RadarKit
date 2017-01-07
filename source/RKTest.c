@@ -384,6 +384,11 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
     RKSetLogfile(NULL);
     int gateCount = RKGetPulseCapacity(radar);
+
+    char name[32];
+    sprintf(name, "%s<Transceiver>%s",
+            rkGlobalParameters.showColor ? "\033[1;45m" : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     
     // Parse out input parameters
     if (input) {
@@ -433,12 +438,14 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("<RKTestSimulateDataStream> fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
+        RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
+              name,
               RKFloatToCommaStyleString(1.0e-6 * fs),
               RKIntegerToCommaStyleString((int)(1.0f / prt)),
               RKIntegerToCommaStyleString(gateCount),
               gateCount * 1.5e5 / fs);
-        RKLog("<RKTestSimulateDataStream> chunk size = %d   tics = %s\n",
+        RKLog("%s chunk size = %d   tics = %s\n",
+              name,
               chunkSize,
               RKFloatToCommaStyleString(1.0e6 * prt));
     }
@@ -489,6 +496,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
             RKSetPulseHasData(radar, pulse);
 
+            if (counter % 1000 == 0) {
+                RKLog("%s sleeping ...", name);
+                sleep(3);
+            }
             t += prt;
         }
 

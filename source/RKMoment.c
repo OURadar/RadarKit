@@ -195,7 +195,7 @@ void *momentCore(void *in) {
 
         RKRay *ray = RKGetRay(engine->rayBuffer, io);
 
-        // Mark being processed so that <pulseGatherer> will not override the length
+        // Mark being processed so that the other thread will not override the length
         ray->header.s = RKRayStatusProcessing;
         ray->header.i = tag;
 
@@ -356,7 +356,7 @@ void *pulseGatherer(void *in) {
     RKPulse *pulse;
     RKRay *ray;
     if (engine->verbose) {
-        RKLog("><pulseGatherer> started.   mem = %s B   engine->index = %d\n", RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+        RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     while (engine->state == RKMomentEngineStateActive) {
         // Wait until the engine index move to the next one for storage
@@ -368,15 +368,18 @@ void *pulseGatherer(void *in) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0) {
-                RKLog("<pulseGatherer> sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        // At this point, a separate thread has checked out a pulse, filling it with data; another thread will fill it in with position
+        // At this point, two things are happening:
+        // A separate thread has checked out a pulse, filling it with data;
+        // A separate thread waits until it has data and time, then give it a position
         s = 0;
         while ((pulse->header.s & RKPulseStatusProcessed) == 0 && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0) {
-                RKLog("<pulseGatherer> sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", s, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n",
+                      engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKMomentEngineStateActive) {
@@ -391,7 +394,8 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
-                RKLog("Warning. <pulseGatherer> projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n", engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
+                RKLog("Warning. %s projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n",
+                      engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
                 
                 // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
                 i = j;
@@ -403,7 +407,7 @@ void *pulseGatherer(void *in) {
             } else if (skipCounter > 0) {
                 // Skip processing if we are in skipping mode
                 if (--skipCounter == 0 && engine->verbose) {
-                    RKLog(">Info. <pulseGatherer> skipped a chunk.   engine->index = %d vs %d\n", *engine->pulseIndex, k);
+                    RKLog(">Info. %s skipped a chunk.   engine->index = %d vs %d\n", engine->name, *engine->pulseIndex, k);
                     for (i = 0; i < engine->coreCount; i++) {
                         engine->workers[i].lag = 0.0f;
                     }
@@ -418,7 +422,7 @@ void *pulseGatherer(void *in) {
                         engine->momentSource[j].length = count;
                         if (engine->useSemaphore) {
                             if (sem_post(sem[c])) {
-                                RKLog("Error. <pulseGatherer> failed in sem_post(), errno = %d\n", errno);
+                                RKLog("Error. %s failed in sem_post(), errno = %d\n", engine->name, errno);
                             }
                         } else {
                             engine->workers[c].tic++;
@@ -472,6 +476,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
+    sprintf(engine->name, "%s<pulseGatherer>%s",
+            rkGlobalParameters.showColor ? "\033[1;30;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;
@@ -557,7 +563,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
     if (engine->verbose) {
-        RKLog("<pulseGatherer> starting ...\n");
+        RKLog("%s starting ...\n", engine->name);
     }
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
@@ -578,12 +584,12 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
-        RKLog("<pulseGatherer> stopping ...\n");
+        RKLog("%s stopping ...\n", engine->name);
     }
     engine->state = RKMomentEngineStateDeactivating;
     pthread_join(engine->tidPulseGatherer, NULL);
     if (engine->verbose) {
-        RKLog("<pulseGatherer> stopped.\n");
+        RKLog("%s stopped.\n", engine->name);
     }
     free(engine->workers);
     engine->workers = NULL;

@@ -177,9 +177,8 @@ void *pulseCompressionCore(void *_in) {
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
-    
-    RKLog("Created busyPeriods %p ...\n", busyPeriods);
-    RKLog("Created busyPeriods %p ...\n", fullPeriods);
+
+    RKLog(">    %s created busyPeriods %p, fullPeriods %p ...\n", name, busyPeriods, fullPeriods);
     
     struct timeval *t0buff = (struct timeval *)malloc(RKWorkerDutyCycleBufferSize * sizeof(struct timeval));
     struct timeval *t1buff = (struct timeval *)malloc(RKWorkerDutyCycleBufferSize * sizeof(struct timeval));
@@ -354,12 +353,6 @@ void *pulseCompressionCore(void *_in) {
         allFullPeriods = allFullPeriods - fullPeriods[d0] + d02;
         busyPeriods[d0] = d01;
         fullPeriods[d0] = d02;
-//        allBusyPeriods -= busyPeriods[d0];
-//        allFullPeriods -= fullPeriods[d0];
-//        busyPeriods[d0] = RKTimevalDiff(t0, t1);
-//        fullPeriods[d0] = RKTimevalDiff(t0, t2);
-//        allBusyPeriods += busyPeriods[d0];
-//        allFullPeriods += fullPeriods[d0];
         t0buff[d0] = t0;
         t1buff[d0] = t1;
         me->dutyCycle = allBusyPeriods / allFullPeriods;
@@ -383,12 +376,12 @@ void *pulseCompressionCore(void *_in) {
     free(zo);
     free(in);
     free(out);
-    RKLog("Freeing busyPeriods %p ...\n", busyPeriods);
+    RKLog(">    %s freeing busyPeriods %p, fullPeriods %p ...\n", name, busyPeriods, fullPeriods);
     free(busyPeriods);
-    RKLog("Freeing fullPeriods %p ...\n", fullPeriods);
     free(fullPeriods);
-    RKLog("Free t0buff t1buff ...\n");
-    free(t0buff); free(t1buff);
+    RKLog(">    %s free t0buff %p, t1buff %p ...\n", name, t0buff, t1buff);
+    free(t0buff);
+    free(t1buff);
 
     if (engine->verbose) {
         RKLog(">    %s ended.\n", name);

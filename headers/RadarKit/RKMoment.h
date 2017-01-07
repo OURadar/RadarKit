@@ -41,6 +41,7 @@ struct rk_moment_worker {
 
 struct rk_moment_engine {
     // User set variables
+    char                   name[64];
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;

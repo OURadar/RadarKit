@@ -42,7 +42,9 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     } else {
         desc.port = 9000;
     }
-    strcpy(desc.name, "<RKPedestalPedzy>");
+    sprintf(desc.name, "%s<RKPedestalPedzy>%s",
+            rkGlobalParameters.showColor ? "\033[1;45m" : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatConstantSize;
     desc.blocking = true;
