@@ -22,8 +22,7 @@ void *pulseTagger(void *in);
 
 void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
-    int k;
-    uint32_t j = 0;
+    int i, j, k;
     RKPosition *positionBefore;
     RKPosition *positionAfter;
     double timeBefore;
@@ -38,7 +37,7 @@ void *pulseTagger(void *in) {
     // at some point, implement something sophisticated like Kalman filter
 
     if (engine->verbose) {
-        RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), j);
+        RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     
     engine->state = RKPositionEngineStateActive;
@@ -49,84 +48,86 @@ void *pulseTagger(void *in) {
     }
 
     // Set the pulse to have position
+    j = 0;   // position index
+    k = 0;   // pulse index;
     int s = 0;
-    uint32_t pulseIndex = 0;
     while (engine->state == RKPositionEngineStateActive) {
         // Get the latest pulse
-        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, pulseIndex);
+        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until a thread check out this pulse.
-        while (pulseIndex == *engine->pulseIndex) {
+        while (k == *engine->pulseIndex && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            if (++s % 200 == 0) {
-                RKLog("%s sleep 1/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, pulseIndex , *engine->pulseIndex, pulse->header.s);
+            if (++s % 500 == 0 && engine->verbose) {
+                RKLog("%s sleep 1/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         // Wait until it has data. Otherwise, time stamp may not be good.
         s = 0;
-        while ((pulse->header.s & RKPulseStatusHasIQData) == 0) {
+        while ((pulse->header.s & RKPulseStatusHasIQData) == 0 && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            if (++s % 200 == 0) {
-                RKLog("%s sleep 2/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, pulseIndex , *engine->pulseIndex, pulse->header.s);
+            if (++s % 500 == 0 && engine->verbose) {
+                RKLog("%s sleep 2/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         // Wait until we have a position newer than pulse time.
         s = 0;
-        while (engine->positionTimeLatest <= pulse->header.timeDouble) {
+        while (engine->positionTimeLatest <= pulse->header.timeDouble && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            if (++s % 200 == 0) {
-                RKLog("%s sleep 3/%d  k = %d   latestTime = %s < %s = header.timeDouble\n", engine->name, s, pulseIndex ,
+            if (++s % 500 == 0 && engine->verbose) {
+                RKLog("%s sleep 3/%d  k = %d   latestTime = %s <= %s = header.timeDouble\n", engine->name, s, k ,
                       RKFloatToCommaStyleString(engine->positionTimeLatest), RKFloatToCommaStyleString(pulse->header.timeDouble));
             }
         }
-  
-        // Search until the time just after the pulse was acquired.
-        // Then, roll back one slot, which should be the position just before the pulse was acquired.
-        k = 0;
-        while (engine->positionTime[j] <= pulse->header.timeDouble && k < engine->pulseBufferSize) {
-            j = RKNextModuloS(j, RKPositionBufferSize);
-            k++;
+        if (engine->state == RKPositionEngineStateActive) {
+            // Search until the time just after the pulse was acquired.
+            // Then, roll back one slot, which should be the position just before the pulse was acquired.
+            i = 0;
+            while (engine->positionTime[j] <= pulse->header.timeDouble && i < engine->pulseBufferSize) {
+                j = RKNextModuloS(j, RKPositionBufferSize);
+                i++;
+            }
+            if (i == engine->pulseBufferSize) {
+                RKLog("Could not find an appropriate position.  %.2f %s %.2f",
+                      pulse->header.timeDouble,
+                      pulse->header.timeDouble < engine->positionTimeLatest ? "<" : ">=",
+                      engine->positionTimeLatest);
+                continue;
+            }
+            positionAfter  = &engine->positionBuffer[j];   timeAfter  = engine->positionTime[j];
+            j = RKPreviousModuloS(j, RKPositionBufferSize);
+            positionBefore = &engine->positionBuffer[j];   timeBefore = engine->positionTime[j];
+            
+            // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
+            alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
+            pulse->header.azimuthDegrees = RKInterpolateAngles(positionBefore->azimuthDegrees,
+                                                               positionAfter->azimuthDegrees,
+                                                               alpha);
+            pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
+                                                                 positionAfter->elevationDegrees,
+                                                                 alpha);
+            
+            if (engine->verbose > 2) {
+                RKLog("%s pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+                      engine->name,
+                      pulse->header.i,
+                      pulse->header.t,
+                      RKClockGetTimeSinceInit(engine->clock, timeBefore),
+                      timeBefore <= pulse->header.timeDouble ? "<" : ">=",
+                      RKClockGetTimeSinceInit(engine->clock, pulse->header.timeDouble),
+                      pulse->header.timeDouble <= timeAfter ? "<" : ">=",
+                      RKClockGetTimeSinceInit(engine->clock, timeAfter),
+                      positionBefore->azimuthDegrees,
+                      pulse->header.azimuthDegrees,
+                      positionAfter->azimuthDegrees,
+                      positionBefore->elevationDegrees,
+                      pulse->header.elevationDegrees,
+                      positionAfter->elevationDegrees, engine->verbose);
+            }
+            
+            pulse->header.s |= RKPulseStatusHasPosition;
         }
-        if (k == engine->pulseBufferSize) {
-            RKLog("Could not find an appropriate position.  %.2f %s %.2f",
-                  pulse->header.timeDouble,
-                  pulse->header.timeDouble < engine->positionTimeLatest ? "<" : ">=",
-                  engine->positionTimeLatest);
-            continue;
-        }
-        positionAfter  = &engine->positionBuffer[j];   timeAfter  = engine->positionTime[j];
-        j = RKPreviousModuloS(j, RKPositionBufferSize);
-        positionBefore = &engine->positionBuffer[j];   timeBefore = engine->positionTime[j];
-        
-        // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
-        alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
-        pulse->header.azimuthDegrees = RKInterpolateAngles(positionBefore->azimuthDegrees,
-                                                           positionAfter->azimuthDegrees,
-                                                           alpha);
-        pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
-                                                             positionAfter->elevationDegrees,
-                                                             alpha);
-        
-        if (engine->verbose > 2) {
-            RKLog("%s pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
-                  engine->name,
-                  pulse->header.i,
-                  pulse->header.t,
-                  RKClockGetTimeSinceInit(engine->clock, timeBefore),
-                  timeBefore <= pulse->header.timeDouble ? "<" : ">=",
-                  RKClockGetTimeSinceInit(engine->clock, pulse->header.timeDouble),
-                  pulse->header.timeDouble <= timeAfter ? "<" : ">=",
-                  RKClockGetTimeSinceInit(engine->clock, timeAfter),
-                  positionBefore->azimuthDegrees,
-                  pulse->header.azimuthDegrees,
-                  positionAfter->azimuthDegrees,
-                  positionBefore->elevationDegrees,
-                  pulse->header.elevationDegrees,
-                  positionAfter->elevationDegrees, engine->verbose);
-        }
-
-        pulse->header.s |= RKPulseStatusHasPosition;
-        
-        pulseIndex = RKNextModuloS(pulseIndex, engine->pulseBufferSize);
+        // Update pulseIndex for the next watch
+        k = RKNextModuloS(k, engine->pulseBufferSize);
     }
     return (void *)NULL;
 }
@@ -184,7 +185,9 @@ void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(
 #pragma mark Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
-    RKLog("%s starting ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s starting ...\n", engine->name);
+    }
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
@@ -196,7 +199,9 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 }
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
-    RKLog("%s stopping ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s stopping ...\n", engine->name);
+    }
     engine->state = RKPositionEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
     if (engine->verbose) {

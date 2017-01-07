@@ -25,7 +25,7 @@ int RKLog(const char *whatever, ...) {
     if (whatever[0] == '>') {
         i += snprintf(msg, 2040, "                    : [%s] ", rkGlobalParameters.program);
     } else {
-        i += snprintf(msg, 2040, "%s : [%s] ", RKNow(), rkGlobalParameters.program);
+        i += snprintf(msg, 2040, "%19s : [%s] ", RKNow(), rkGlobalParameters.program);
     }
     bool has_ok = (strcasestr(whatever, "ok") != NULL);
     bool has_not_ok = (strcasestr(whatever, "error") != NULL);

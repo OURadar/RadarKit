@@ -216,7 +216,6 @@ int RKFree(RKRadar *radar) {
     RKMomentEngineFree(radar->momentEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
-    //RKServerFree(radar->socketServer);
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
@@ -338,8 +337,6 @@ int RKGoLive(RKRadar *radar) {
     RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
 
-    // Operation parameters
-
     // Pedestal
     if (radar->pedestalInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -358,13 +355,14 @@ int RKGoLive(RKRadar *radar) {
         }
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
     }
+    radar->state |= RKRadarStateLive;
 
     return 0;
 }
 
 int RKWaitWhileActive(RKRadar *radar) {
     while (radar->active) {
-        sleep(1);
+        usleep(100000);
     }
     return 0;
 }
@@ -427,7 +425,7 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 }
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
-    pulse->header.s = RKPulseStatusReady;
+    pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
 }
 
 RKPosition *RKGetVacantPosition(RKRadar *radar) {

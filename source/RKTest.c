@@ -434,9 +434,6 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     
     const int chunkSize = MAX(1, (int)floor(0.1f / prt));
 
-    // Use a counter that mimics microsend increments
-    RKSetPulseTicsPerSeconds(radar, 1.0e6);
-
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
               name,
@@ -450,9 +447,12 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
               RKFloatToCommaStyleString(1.0e6 * prt));
     }
 
+    // Use a counter that mimics microsend increments
+    RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    
     while (radar->active) {
 
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVerbose && radar->pulseIndex > 0) {
             RKLog("%s %s",
                   RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
                   RKMomentEngineStatusString(radar->momentEngine));
@@ -496,7 +496,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
             RKSetPulseHasData(radar, pulse);
 
-            if (counter % 1000 == 0) {
+            if (counter % 5000 == 0) {
                 RKLog("%s sleeping ...", name);
                 sleep(3);
             }

@@ -73,7 +73,7 @@ void RKClockSetOffset(RKClock *clock, double offset) {
 void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     clock->hasWisdom = true;
     clock->dxdu = dxdu;
-    RKLog("%s received dxdu = %s as wisdom\n", clock->name, RKFloatToCommaStyleString(dxdu));
+    RKLog("%s received dx/du = %.2e as wisdom\n", clock->name, dxdu);
 }
 
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
@@ -101,7 +101,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         clock->tBuffer[k] = t;
         clock->xBuffer[k] = x;
         clock->uBuffer[k] = u;
-        if (clock->autoSync && clock->count % clock->stride == 0) {
+        if (clock->autoSync && clock->count > clock->stride && clock->count % clock->stride == 0) {
             // Compute dx & du at (clock->stride) samples apart
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
             dx = clock->xBuffer[k] - clock->xBuffer[j];
@@ -112,7 +112,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
             clock->x0 = clock->xBuffer[j];
             clock->u0 = clock->uBuffer[j];
             clock->dxdu = dx / du;
-            if (clock->verbose > 1) {
+            if (clock->verbose > 2) {
                 RKLog("%s auto-sync.   period = %.2f ms   dx/du = %.3e ms  count = %ld   du = %.2e   dx = %.2e ms\n",
                       clock->name, 1.0e3 / (double)clock->stride * dx, 1.0e3 * clock->dxdu, clock->count, 1.0e3 * du, 1.0e3 * dx);
             }
@@ -124,9 +124,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->x0 = clock->xBuffer[j];
                 clock->u0 = clock->uBuffer[j];
                 clock->dxdu = dx / du;
-                if (clock->verbose > 1) {
-                    RKLog("%s pre-sync.   period = %.2f ms   dx/du = %.2f ms\n",
-                          clock->name, 1.0e3 / (double)clock->count * dx, 1.0e3 * clock->dxdu);
+                if (clock->verbose > 2) {
+                    RKLog("%s pre-sync.   period = %.2f ms   dx/du = %.2f ms  count = %ld   du = %.2e   dx = %.2e ms\n",
+                          clock->name, 1.0e3 / (double)clock->stride * dx, 1.0e3 * clock->dxdu, clock->count, 1.0e3 * du, 1.0e3 * dx);
                 }
             }
         }
@@ -136,9 +136,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     }
     
     if (clock->verbose > 2) {
-        RKLog(">%s %d / %d   dx/du = %.2f ms   x = %.3f\n",
+        RKLog(">%s %d / %d   dx/du = %.2e s   x = %.3f\n",
               clock->name, clock->index, clock->count,
-              1.0e3 * clock->dxdu, RKClockGetTimeSinceInit(clock, x));
+              clock->dxdu, RKClockGetTimeSinceInit(clock, x));
     }
     // Update the slot index for next call
     clock->index = RKNextModuloS(k, clock->size);

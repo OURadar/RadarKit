@@ -497,16 +497,25 @@ void *pulseWatcher(void *_in) {
     // j  filter index
     k = 0;   // pulse index
     c = 0;   // core index
+    int s = 0;
     while (engine->state == RKPulseCompressionEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->buffer, k);
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
-        // The pulse may not have position yet but that is okay. It may get tagged with position while being processed.
+        s = 0;
         while (k == *engine->index && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
+            if (++s % 1000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->index, pulse->header.s);
+            }
         }
-        while (pulse->header.s != RKPulseStatusReady && engine->state == RKPulseCompressionEngineStateActive) {
+        // The pulse may not have position yet but that is okay. It may get tagged with position while being processed.
+        s = 0;
+        while ((pulse->header.s & RKPulseStatusHasIQData) == 0 && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
+            if (++s % 1000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->index, pulse->header.s);
+            }
         }
         if (engine->state == RKPulseCompressionEngineStateActive) {
             // Lag of the engine
@@ -526,6 +535,7 @@ void *pulseWatcher(void *_in) {
                 skipCounter = engine->size / 10;
                 RKLog("Warning. %s projected an I/Q Buffer overflow.\n", engine->name);
 //
+//  while loop implementation.... replaced by a dowhile
 //                i = RKPreviousModuloS(*engine->index, engine->size);
 //                pulse = RKGetPulse(engine->buffer, i);
 //                while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
@@ -646,7 +656,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
-    sprintf(engine->name, "%s<pulseWatcher>%s",
+    sprintf(engine->name, "%s<pulseCompressor>%s",
             rkGlobalParameters.showColor ? "\033[1;30;43m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKPulseCompressionEngineStateAllocated;
     engine->useSemaphore = true;

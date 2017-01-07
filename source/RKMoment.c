@@ -191,7 +191,10 @@ void *momentCore(void *in) {
 
         // Start of getting busy
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
-        me->lag = fmodf((float)(*engine->pulseIndex - me->pid + engine->pulseBufferSize) / engine->pulseBufferSize, 1.0f);
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferSize - me->pid) / engine->pulseBufferSize, 1.0f);
+        if (me->lag > 0.9) {
+            RKLog("(%d + %d - %d) / N= %.2f", *engine->pulseIndex, engine->pulseBufferSize, me->pid, me->lag);
+        }
 
         RKRay *ray = RKGetRay(engine->rayBuffer, io);
 
@@ -207,7 +210,7 @@ void *momentCore(void *in) {
         
         // Beamwidths of azimuth & elevation
         if (engine->verbose) {
-            RKPulse *S = RKGetPulse(engine->pulseBuffer, path.origin);
+            RKPulse *S = RKGetPulse(engine->pulseBuffer, is);
             RKPulse *E = RKGetPulse(engine->pulseBuffer, RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize));
             float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
             float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
@@ -227,17 +230,18 @@ void *momentCore(void *in) {
                 pulses[k++] = RKGetPulse(engine->pulseBuffer, is);
                 is = RKNextModuloS(is, engine->pulseBufferSize);
             } while (k < path.length);
-            // End index of the I/Q for this ray
+            ie = is;
             k = engine->processor(space, pulses, path.length, name);
             if (k != path.length) {
-                RKLog("Numer of processed samples are not expected.  k = %d != %d\n", k, path.length);
+                RKLog("%s processed %d samples, which is not expected (%d)\n", name, k, path.length);
             }
-            ie = RKNextNModuloS(is, path.length, engine->pulseBufferSize);
             ray->header.s |= RKRayStatusProcessed;
         } else {
             ie = is;
             ray->header.s |= RKRayStatusSkipped;
-            RKLog("Skipped a ray with %d sampples.\n", path.length);
+            if (engine->verbose) {
+                RKLog("%s skipped a ray with %d sampples.\n", name, path.length);
+            }
         }
 
         // Update processed index
@@ -359,27 +363,26 @@ void *pulseGatherer(void *in) {
         RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     while (engine->state == RKMomentEngineStateActive) {
-        // Wait until the engine index move to the next one for storage
-        s = 0;
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
-        // Wait until the buffer is advanced, then wait until the pulse has both data and position, i.e., RKPulseStatusReady
+        // Wait until the buffer is advanced
+        s = 0;
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
-            if (++s % 1000 == 0) {
+            if (++s % 1000 == 0 && engine->verbose) {
                 RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        // At this point, two things are happening:
-        // A separate thread has checked out a pulse, filling it with data;
-        // A separate thread waits until it has data and time, then give it a position
+        // At this point, three things are happening:
+        // A separate thread has checked out a pulse, filling it with data (RKPulseStatusHasIQData);
+        // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
+        // A separate thread applies matched filter to the data (RKPulseStatusProcessed).
         s = 0;
-        while ((pulse->header.s & RKPulseStatusProcessed) == 0 && engine->state == RKMomentEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
-            if (++s % 200 == 0) {
-                RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n",
-                      engine->name, s, k , *engine->pulseIndex, pulse->header.s);
+            if (++s % 200 == 0 && engine->verbose) {
+                RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKMomentEngineStateActive) {
@@ -411,10 +414,11 @@ void *pulseGatherer(void *in) {
                     for (i = 0; i < engine->coreCount; i++) {
                         engine->workers[i].lag = 0.0f;
                     }
+                    k = *engine->pulseIndex;
                 }
             } else {
                 // Gather the start and end pulses and post a worker to process for a ray
-                i0 = floorf(pulse->header.azimuthDegrees);
+                i0 = (int)floorf(pulse->header.azimuthDegrees);
                 if (i1 != i0 || count == RKMaxPulsesPerRay) {
                     i1 = i0;
                     if (count > 0) {
