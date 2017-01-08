@@ -22,6 +22,7 @@ typedef struct rk_command_center {
     // Program set variables
     RKServer  *server;
     int       radarCount;
+    char      user[RKCommandCenterMaxConnections][64];
     bool      authorized[RKCommandCenterMaxConnections];
     int       radarSelection[RKCommandCenterMaxConnections];
     

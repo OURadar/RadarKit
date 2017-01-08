@@ -42,9 +42,10 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     memset(radar, 0, bytes);
 
     // Set some non-zero variables
-    radar->memoryUsage += bytes;
+    strcpy(radar->name, "Radar");
     radar->state |= RKRadarStateBaseAllocated;
     radar->active = true;
+    radar->memoryUsage += bytes;
 
     // Copy over the input flags and constaint the capacity and depth to hard-coded limits
     radar->desc = desc;

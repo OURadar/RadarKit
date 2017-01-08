@@ -11,7 +11,6 @@
 
 #define CLEAR                       "\033[0m"
 #define UNDERLINE(x)                "\033[4m" x "\033[24m"
-#define PROGNAME                    "rktest"
 
 // User parameters in a struct
 typedef struct user_params {
@@ -54,7 +53,7 @@ static void handleSignals(int signal) {
 
 void showHelp() {
     printf("RadarKit Test Program\n\n"
-           PROGNAME " [options]\n\n"
+           "rktest [options]\n\n"
            "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
@@ -292,6 +291,7 @@ int main(int argc, char *argv[]) {
     
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
+    RKCommandCenterAddRadar(center, radar);
     RKCommandCenterStart(center);
     
     // Catch Ctrl-C and exit gracefully
@@ -343,6 +343,7 @@ int main(int argc, char *argv[]) {
 
     }
     
+    RKCommandCenterRemoveRadar(center, radar);
     RKCommandCenterFree(center);
 
     RKFree(radar);

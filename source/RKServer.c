@@ -213,7 +213,7 @@ void *RKOperatorRoutine(void *in) {
         if (r > 0) {
             if (FD_ISSET(O->sid, &efd)) {
                 // Exceptions
-                RKLog("%s encountered an exception error.\n", M->name);
+                RKLog("%s has %s encountered an exception error.\n", M->name, O->name);
                 break;
             } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
@@ -221,7 +221,7 @@ void *RKOperatorRoutine(void *in) {
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
-                    RKLog("%s / %s disconnected.\n", M->name, O->name);
+                    RKLog("%s has %s disconnected.\n", M->name, O->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -235,7 +235,7 @@ void *RKOperatorRoutine(void *in) {
             }
         } else if (r < 0) {
             // Errors
-            RKLog("Error. %s/%s encountered an unexpected error.\n", M->name, O->name);
+            RKLog("Error. %s has %s encountered an unexpected error.\n", M->name, O->name);
             break;
         } else {
             // Timeout (r == 0)
@@ -244,7 +244,7 @@ void *RKOperatorRoutine(void *in) {
         // Process the timeout
         mwait = wwait < rwait ? wwait : rwait;
         if (mwait > M->timeoutSeconds * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
-            RKLog("%s encountered a timeout.\n", O->name);
+            RKLog("%s has %d encountered a timeout.\n", M->name, O->name);
             // Dismiss with a terminate function
             if (M->t != NULL) {
                 M->t(O);
@@ -253,7 +253,9 @@ void *RKOperatorRoutine(void *in) {
         }
     } // while () ...
 
-    RKLog("Op-%03d returning ...\n", O->iid);
+    if (M->verbose) {
+        RKLog("%s has %s returning ...\n", M->name, O->name);
+    }
     M->ids[O->iid] = false;
 
     fclose(fp);

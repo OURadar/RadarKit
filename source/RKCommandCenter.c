@@ -17,13 +17,36 @@ int socketStreamHandler(RKOperator *);
 
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
-    char string[RKMaximumStringLength];
     
-    RKLog("%s / %s has server @ %p with %d radars\n", engine->name, O->name, engine, engine->radarCount);
+    int i, j, k;
+    
+    char string[RKMaximumStringLength];
+    char input[RKMaximumStringLength];
+    
+    const int c = O->iid;
+    
+    RKLog("%s has %d radar\n", engine->name, engine->radarCount);
+    
+    sscanf(O->cmd + 1, "%s", input);
+    
+    // Delimited reading ...
     
     switch (O->cmd[0]) {
         case 'a':
             RKOperatorSendBeaconAndString(O, "Hello" RKEOL);
+            // Authenticate
+            j = 0;
+            for (k = 0; k < engine->radarCount; k++) {
+                RKRadar *radar = engine->radars[k];
+                j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->name);
+            }
+            snprintf(string + j, RKMaximumStringLength - j - 1, "Select 1-%d" RKEOL, k);
+            RKOperatorSendBeaconAndString(O, string);
+            break;
+        case 'r':
+            RKLog("%s/%s selected radar %s\n", engine->name, O->name, input);
+            snprintf(string, RKMaximumStringLength - 1, "Radar %s selected." RKEOL, input);
+            RKOperatorSendBeaconAndString(O, string);
             break;
         default:
             snprintf(string, RKMaximumStringLength, "Unknown command '%s'." RKEOL, O->cmd);
@@ -93,11 +116,28 @@ void RKCommandCenterSetVerbose(RKCommandCenter *engine, const int verbose) {
 }
 
 void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
-    
+    if (engine->radarCount >= 4) {
+        RKLog("%s unable to add another radar.\n", engine->name);
+    }
+    engine->radars[engine->radarCount++] = radar;
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
-    
+    for (int i = 0; i < engine->radarCount; i++) {
+        if (engine->radars[i] == radar) {
+            RKLog("%s removing %s radar ...\n", engine->name, radar->name);
+            while (i < engine->radarCount - 1) {
+                engine->radars[i] = engine->radars[i + 1];
+            }
+        }
+    }
+    int j = 0;
+    char string[RKMaximumStringLength];
+    for (int k = 0; k < engine->radarCount; k++) {
+        RKRadar *radar = engine->radars[k];
+        j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->name);
+    }
+    printf("%s\n", string);
 }
 
 #pragma mark - Interactions
