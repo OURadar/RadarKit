@@ -63,7 +63,7 @@ struct rk_server {
     pthread_t        threadId;                       // Own thread ID
     pthread_mutex_t  lock;                           // Thread safety mutex of the server
 
-    int              (*w)(RKOperator *);             // Function that sends welcome message
+    int              (*w)(RKOperator *);             // Function that sends initial welcome message
     int              (*c)(RKOperator *);             // Function that answers command
     int              (*s)(RKOperator *);             // Function that keeps streaming content
     int              (*t)(RKOperator *);             // Function that terminates connection

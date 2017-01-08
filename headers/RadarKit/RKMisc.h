@@ -50,8 +50,8 @@ char *RKNow();
 char *RKIntegerToCommaStyleString(const long);
 char *RKFloatToCommaStyleString(const float);
 
-double RKTimevalDiff(const struct timeval, const struct timeval);
-double RKTimespecDiff(const struct timespec, const struct timespec);
+double RKTimevalDiff(const struct timeval miuend, const struct timeval subtrahend);
+double RKTimespecDiff(const struct timespec miuend, const struct timespec subtrahend);
 void RKUTCTime(struct timespec *);
 bool RKFilenameExists(const char *);
 char *RKSignalString(const int);

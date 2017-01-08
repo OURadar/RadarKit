@@ -43,8 +43,8 @@
  */
 #define RKVersionString                  "1.0"
 #define RKBufferCSlotCount               16           // Config
+#define RKBufferSSlotCount               90           // Status strings
 #define RKBuffer0SlotCount               5000         // Raw I/Q
-#define RKBuffer1SlotCount               200          //
 #define RKBuffer2SlotCount               4000         // Ray
 #define RKGateCount                      32768        // Must power of 2!
 #define RKLagCount                       5            // Number lags of ACF / CCF lag = +/-4 and 0
@@ -61,14 +61,14 @@
 #define RKDutyCyleRedThreshold           0.95
 #define RKDutyCyleOrangeThreshold        0.90
 
-#define RKNoColor            "\033[0m"
+#define RKNoColor                        "\033[0m"
+#define RKMaximumStringLength            4096
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[31m" : (x > RKDutyCyleOrangeThreshold ? "\033[33m" : "\033[32m"))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[31m" : (x > RKLagOrangeThreshold      ? "\033[33m" : "\033[32m"))
 
 /*! @/definedblock */
 
-#define RKMaximumStringLength            1024
 
 typedef uint8_t   RKBoolean;
 typedef int8_t    RKByte;

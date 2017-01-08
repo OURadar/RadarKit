@@ -18,9 +18,9 @@ void *pulseGatherer(void *);
 #pragma mark -
 #pragma mark Helper Functions
 
-char *RKMomentEngineStatusString(RKMomentEngine *engine) {
+void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     int i, c;
-    static char string[RKMaximumStringLength];
+    char *string = engine->statusBuffer[engine->statusBufferIndex];
 
     // Full / compact string: Some spaces
     bool full = true;
@@ -47,7 +47,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
                   spacer,
                   rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-                  99.0f * engine->lag,
+                  99.9f * engine->lag,
                   rkGlobalParameters.showColor ? RKNoColor : "",
                   spacer);
 
@@ -69,7 +69,7 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
         i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
                       spacer,
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.8f * worker->dutyCycle,
+                      99.9f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost Full flag
@@ -77,7 +77,11 @@ char *RKMomentEngineStatusString(RKMomentEngine *engine) {
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
-    return string;
+    engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
+}
+
+void RKMomentUpdateProductStatusString(RKMomentEngine *engine) {
+    
 }
 
 #pragma mark -
@@ -142,6 +146,9 @@ void *momentCore(void *in) {
     // Output index for current ray
     uint32_t io = engine->rayBufferSize - engine->coreCount + c;
     
+    // Update index of the status for current ray
+    uint32_t iu = RKBufferSSlotCount - engine->coreCount + c;
+
     // Start and end indices of the input pulses
     uint32_t is;
     uint32_t ie;
@@ -171,6 +178,9 @@ void *momentCore(void *in) {
     //
     uint32_t tic = me->tic;
 
+    RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
+    float deltaAzimuth, deltaElevation;
+
     while (engine->state == RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
             if (sem_wait(sem)) {
@@ -196,7 +206,7 @@ void *momentCore(void *in) {
             RKLog("(%d + %d - %d) / N= %.2f", *engine->pulseIndex, engine->pulseBufferSize, me->pid, me->lag);
         }
 
-        RKRay *ray = RKGetRay(engine->rayBuffer, io);
+        ray = RKGetRay(engine->rayBuffer, io);
 
         // Mark being processed so that the other thread will not override the length
         ray->header.s = RKRayStatusProcessing;
@@ -208,22 +218,21 @@ void *momentCore(void *in) {
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
         
-        // Beamwidths of azimuth & elevation
-        if (engine->verbose) {
-            RKPulse *S = RKGetPulse(engine->pulseBuffer, is);
-            RKPulse *E = RKGetPulse(engine->pulseBuffer, RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize));
-            float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
-            float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
-            
-            RKLog("%s   %05u...%05u (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)\n",
-                  name, S->header.i, E->header.i, path.length,
-                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
-                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth);
-        }
+        // Status of the ray
+        iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
+        S = RKGetPulse(engine->pulseBuffer, is);
+        E = RKGetPulse(engine->pulseBuffer, RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize));
+        deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
+        deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+        snprintf(engine->rayStatusBuffer[iu], RKMaximumStringLength,
+                 "%s   %05llu...%05llu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
+                 name, S->header.i, E->header.i, path.length,
+                 S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu);
+        engine->rayStatusBufferIndex = iu;
 
+        // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3) {
-            // Duplicate a linear array for processor
-            RKPulse *pulses[RKMaxPulsesPerRay];
             k = 0;
             is = path.origin;
             do {
@@ -304,6 +313,10 @@ void *pulseGatherer(void *in) {
     int count = 0;
     int skipCounter = 0;
     float lag;
+    struct timeval t0, t1;
+
+    RKPulse *pulse;
+    RKRay *ray;
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKMomentEngineStateActive;
@@ -353,16 +366,17 @@ void *pulseGatherer(void *in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
+    if (engine->verbose) {
+        RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    }
+
+    gettimeofday(&t1, 0); t1.tv_sec -= 1;
+
     // Here comes the busy loop
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
     int s = 0;
-    RKPulse *pulse;
-    RKRay *ray;
-    if (engine->verbose) {
-        RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    }
     while (engine->state == RKMomentEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -447,11 +461,19 @@ void *pulseGatherer(void *in) {
                 // Keep counting up
                 count++;
             }
+            
             // Check finished rays
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             while (ray->header.s & RKRayStatusReady) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
                 ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            }
+
+            // Log a message if it has been a while
+            gettimeofday(&t0, NULL);
+            if (RKTimevalDiff(t0, t1) > 0.2) {
+                t1 = t0;
+                RKMomentUpdateStatusString(engine);
             }
         }
         // Update k to catch up for the next watch
@@ -600,4 +622,8 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     engine->workers = NULL;
     engine->state = RKMomentEngineStateNull;
     return RKResultNoError;
+}
+
+char *RKMomentEngineStatusString(RKMomentEngine *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, 1)];
 }

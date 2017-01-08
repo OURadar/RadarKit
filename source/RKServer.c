@@ -298,8 +298,6 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->option = RKOperatorOptionNone;
     O->timeoutSeconds = 10;
     O->userResource = M->userResource;
-    RKServerSetWelcomeHandlerToDefault(M);
-    RKServerSetTerminateHandlerToDefault(M);
     pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(O->name, RKMaximumStringLength - 1, "Op-%03d", O->iid);
@@ -326,11 +324,11 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 }
 
 
-int RKDefaultWelcomeHandler(RKOperator *A) {
+int RKDefaultWelcomeHandler(RKOperator *O) {
 
     char msg[6 * RKMaximumStringLength];
 
-    char *c = A->M->name;
+    char *c = O->M->name;
     
     int ii;
     // Count the characters between two escape characters
@@ -376,8 +374,8 @@ int RKDefaultWelcomeHandler(RKOperator *A) {
             "Hello there, my name is %s.\n"
             "What can I do for you?" RKEOL,
             border,
-            A->name);
-    send(A->sid, msg, strlen(msg), 0);
+            O->name);
+    send(O->sid, msg, strlen(msg), 0);
     return 0;
 }
 
@@ -401,6 +399,8 @@ RKServer *RKServerInit(void) {
     M->port = 10000;
     M->maxClient = RKServerMaximumOperators;
     M->timeoutSeconds = 5;
+    M->w = &RKDefaultWelcomeHandler;
+    M->t = &RKDefaultTerminateHandler;
     pthread_mutex_init(&M->lock, NULL);
 
     // Ignore broken pipe for clients that disconnect unexpectedly

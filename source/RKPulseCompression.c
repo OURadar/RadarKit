@@ -10,8 +10,8 @@
 
 // Internal functions
 
-int workerThreadId(RKPulseCompressionEngine *engine);
 void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n);
+void updateStatusString(RKPulseCompressionEngine *engine);
 void *pulseCompressionCore(void *in);
 
 // Implementations
@@ -19,28 +19,33 @@ void *pulseCompressionCore(void *in);
 #pragma mark -
 #pragma mark Helper Functions
 
-char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
-    int i, c;
-    static char string[RKMaximumStringLength];
+void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
+    for (int k = 0; k < n; k++) {
+        printf("    %6.2fd %s %6.2fdi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
+    }
+}
 
+void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
+    int i, c;
+    char *string = engine->statusBuffer[engine->statusBufferIndex];
     // Full / compact string: Some spaces
     bool full = true;
     char spacer[2] = "";
     if (full) {
         sprintf(spacer, " ");
     }
-
+    
     // Always terminate the end of string buffer
     string[RKMaximumStringLength - 1] = '\0';
     string[RKMaximumStringLength - 2] = '#';
-
+    
     // Use b characters to draw a bar
     const int b = 10;
     i = *engine->index * (b + 1) / engine->size;
     memset(string, '#', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, "%s|", spacer);
-
+    
     // Engine lag
     i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
                   spacer,
@@ -48,9 +53,9 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
                   99.9f * engine->lag,
                   rkGlobalParameters.showColor ? RKNoColor : "",
                   spacer);
-
+    
     RKPulseCompressionWorker *worker;
-
+    
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
@@ -75,17 +80,7 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
-    return string;
-}
-
-void RKPulseCompressionEngineLogStatus(RKPulseCompressionEngine *engine) {
-    RKLog(RKPulseCompressionEngineStatusString(engine));
-}
-
-void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
-    for (int k = 0; k < n; k++) {
-        printf("    %6.2fd %s %6.2fdi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
-    }
+    engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
 #pragma mark -
@@ -99,16 +94,7 @@ void *pulseCompressionCore(void *_in) {
     int i, j, k, p;
     struct timeval t0, t1, t2;
 
-    // Find the thread Id
-//    i = workerThreadId(engine);
-//    if (i < 0) {
-//        i = me->id;
-//        RKLog("Warning. Unable to find my thread ID. Assume %d\n", me->id);
-//    } else if (engine->verbose > 1) {
-//        RKLog(">    Info. ThreadId[%d] = %d okay.\n", me->id, i);
-//    }
     const int c = me->id;
-
     const int multiplyMethod = 1;
 
     // Find the semaphore
@@ -380,10 +366,12 @@ void *pulseWatcher(void *_in) {
     int planIndex = 0;
     int skipCounter = 0;
     float lag;
+    struct timeval t0, t1;
 
     // The beginning of the buffer is a pulse, it has the capacity info
-    RKPulse *pulse = engine->buffer;
-
+    RKPulse *pulse = RKGetPulse(engine->buffer, 0);
+    RKPulse *pulseToSkip;
+    
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
     posix_memalign((void **)&in, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
@@ -469,6 +457,8 @@ void *pulseWatcher(void *_in) {
         RKLog(">%s started.  mem = %s   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
     }
 
+    gettimeofday(&t1, 0); t1.tv_sec -= 1;
+
     // Here comes the busy loop
     // i  anonymous
     // j  filter index
@@ -526,12 +516,9 @@ void *pulseWatcher(void *_in) {
                 do {
                     i = RKPreviousModuloS(i, engine->size);
                     engine->filterGid[i] = -1;
-                    pulse = RKGetPulse(engine->buffer, i);
-                } while (!(pulse->header.s & RKPulseStatusProcessed));
+                    pulseToSkip = RKGetPulse(engine->buffer, i);
+                } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
             }
-
-            // The pulse
-            pulse = RKGetPulse(engine->buffer, k);
 
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             if (skipCounter > 0) {
@@ -590,6 +577,13 @@ void *pulseWatcher(void *_in) {
                 engine->workers[c].tic++;
             }
             c = RKNextModuloS(c, engine->coreCount);
+            
+            // Log a message if it has been a while
+            gettimeofday(&t0, NULL);
+            if (RKTimevalDiff(t0, t1) > 0.05) {
+                t1 = t0;
+                RKPulseCompressionUpdateStatusString(engine);
+            }
         }
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->size);
@@ -815,3 +809,8 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     engine->state = RKPulseCompressionEngineStateNull;
     return RKResultNoError;
 }
+
+char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, 1)];
+}
+

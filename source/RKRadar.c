@@ -24,6 +24,28 @@ RKPedestal backgroundPedestalInit(void *in) {
     return radar->pedestalInit(radar, radar->pedestalInitInput);
 }
 
+void *radarCoPilot(void *in) {
+    RKRadar *radar = (RKRadar *)in;
+    RKMomentEngine *productGenerator = radar->momentEngine;
+    int k = 0;
+    int s = 0;
+
+    RKLog("CoPilot started.  %d\n", productGenerator->rayStatusBufferIndex);
+    
+    while (radar->active) {
+        s = 0;
+        while (k == productGenerator->rayStatusBufferIndex && radar->active) {
+            usleep(1000);
+            if (++s % 200 == 0) {
+                RKLog("Nothing ...\n");
+            }
+        }
+        RKLog(productGenerator->rayStatusBuffer[k]);
+        k = RKNextModuloS(k, RKBufferSSlotCount);
+    }
+    return NULL;
+}
+
 #pragma mark - Life Cycle
 
 RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
@@ -143,15 +165,6 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
                                         radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
     radar->memoryUsage += sizeof(RKMomentEngine);
     radar->state |= RKRadarStateMomentEngineInitialized;
-
-    // TCP/IP socket server
-    //
-    // NOTE 2016/12/30 - Server should be on top of radar, managing a few radars.
-    //
-//    radar->socketServer = RKServerInit();
-//    RKServerSetCommandHandler(radar->socketServer, &socketCommandHandler);
-//    RKServerSetStreamHandler(radar->socketServer, &socketStreamHandler);
-//    radar->state |= RKRadarStateSocketServerInitialized;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
@@ -358,6 +371,12 @@ int RKGoLive(RKRadar *radar) {
     }
     radar->state |= RKRadarStateLive;
 
+    // Launch a co-pilot to monitor status of various engines
+//    if (radar->momentEngine != NULL && radar->desc.initFlags & RKInitFlagVerbose) {
+//        RKLog("Initializing status monitor ...");
+//        pthread_create(&radar->monitorThreadId, NULL, radarCoPilot, radar);
+//    }
+    
     return 0;
 }
 

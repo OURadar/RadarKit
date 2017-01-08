@@ -481,11 +481,11 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     
     while (radar->active) {
 
-        if (radar->desc.initFlags & RKInitFlagVerbose && radar->pulseIndex > 0) {
-            RKLog("%s %s",
-                  RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
-                  RKMomentEngineStatusString(radar->momentEngine));
-        }
+//        if (radar->desc.initFlags & RKInitFlagVerbose && radar->pulseIndex > 0) {
+//            RKLog("%s %s",
+//                  RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
+//                  RKMomentEngineStatusString(radar->momentEngine));
+//        }
 
         for (j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);

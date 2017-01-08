@@ -64,12 +64,14 @@ struct rk_radar {
     // General buffers
     //
     char                       name[64];
+    //
+    // Buffers
+    //
     RKOperatingParameters      *parameters;
-    //
-    // Special buffers, aligned to SIMD requirements
-    //
     RKBuffer                   pulses;
     RKBuffer                   rays;
+    //
+    // Anchor indices of the buffers
     //
     uint32_t                   parameterIndex;
     uint32_t                   pulseIndex;
@@ -89,6 +91,8 @@ struct rk_radar {
     RKMomentEngine             *momentEngine;
     RKPositionEngine           *positionEngine;
     //
+    pthread_t                  monitorThreadId;
+    //
     // Hardware protocols for controls
     //
     RKTransceiver              transceiver;
@@ -97,6 +101,7 @@ struct rk_radar {
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
     pthread_t                  transceiverThreadId;
+    //
     RKPedestal                 pedestal;
     RKPedestal                 (*pedestalInit)(RKRadar *, void *);
     int                        (*pedestalExec)(RKPedestal, const char *);
