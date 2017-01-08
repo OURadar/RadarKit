@@ -46,6 +46,9 @@ typedef struct rk_server    RKServer;
 typedef struct rk_operator  RKOperator;
 
 struct rk_server {
+    char             name[RKMaximumStringLength];    // A program name
+    int              verbose;
+    
     int              sd;                             // Socket descriptor
     int              port;                           // Port number of the server
     int              maxClient;                      // Maximum number of client connections
@@ -57,14 +60,12 @@ struct rk_server {
     pthread_t        threadId;                       // Own thread ID
     pthread_mutex_t  lock;                           // Thread safety mutex of the server
 
-    char             name[RKMaximumStringLength];    // A program name
-
     int              (*w)(RKOperator *);             // Function that sends welcome message
     int              (*c)(RKOperator *);             // Function that answers command
     int              (*s)(RKOperator *);             // Function that keeps streaming content
     int              (*t)(RKOperator *);             // Function that terminates connection
     
-    void             *usr;                           // User pointer
+    void             *userResource;                  // User pointer
 };
 
 struct rk_operator  {
@@ -86,7 +87,7 @@ struct rk_operator  {
 
     char             *cmd;                           // Latest command
 
-    void             *usr;                           // User pointer
+    void             *userResource;                  // User pointer
 };
 
 
@@ -103,7 +104,8 @@ void RKServerSetCommandHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetTerminateHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetStreamHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetWelcomeHandlerToDefault(RKServer *);
-void PSServerSetTerminateHandlerToDefault(RKServer *);
+void RKServerSetTerminateHandlerToDefault(RKServer *);
+void RKServerSetSharedResource(RKServer *, void *);
 
 void RKServerActivate(RKServer *);
 void RKServerWait(RKServer *);

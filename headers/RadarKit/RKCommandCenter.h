@@ -11,12 +11,28 @@
 
 #include <RadarKit/RKRadar.h>
 
+#define RKCommandCenterMaxConnections 4
+
 typedef struct rk_command_center {
-    RKRadar   *radars;
+    // User set variables
+    char      name[64];
+    int       verbose;
+    RKRadar   *radars[4];
+    
+    // Program set variables
     RKServer  *server;
+    int       radarCount;
+    bool      authorized[RKCommandCenterMaxConnections];
+    int       radarSelection[RKCommandCenterMaxConnections];
+    
 } RKCommandCenter;
+
+RKCommandCenter *RKCommandCenterInit(void);
+void RKCommandCenterFree(RKCommandCenter *);
 
 void RKCommandCenterAddRadar(RKCommandCenter *, RKRadar *);
 void RKCommandCenterRemoveRadar(RKCommandCenter *, RKRadar *);
 
-#endif /* __RadarKit_RKLocalCommandCenter__ */
+void RKCommandCenterStart(RKCommandCenter *);
+
+#endif /* __RadarKit_RKCommandCenter__ */

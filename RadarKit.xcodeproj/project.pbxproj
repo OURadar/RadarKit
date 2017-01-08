@@ -380,12 +380,12 @@
 				B5DE28671E1582B30071B640 /* RKPulsePair.c in Sources */,
 				B5DDE7E51E1AB6B900C5D16D /* RKMultiLag.c in Sources */,
 				B5C1F34B1AB9C1BE004F88CD /* RKRadar.c in Sources */,
-				B54795251D91A86F00E43F6A /* RKCommandCenter.c in Sources */,
 				B5F5AE3E1DBF996100CF643F /* RKTest.c in Sources */,
 				B5E6D9541E1D627B00DFBBA9 /* RKPedestalPedzy.c in Sources */,
 				B54795271D91A87700E43F6A /* RadarKit.c in Sources */,
 				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
 				B5DD6F241E1F3F1000FAE2E3 /* RKClock.c in Sources */,
+				B54795251D91A86F00E43F6A /* RKCommandCenter.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -418,8 +418,11 @@
 					"${SRCROOT}/headers",
 					/usr/local/include,
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					/usr/local/lib,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
@@ -453,8 +456,11 @@
 					"${SRCROOT}/headers",
 					/usr/local/include,
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					/usr/local/lib,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
 					"-lm",
@@ -497,10 +503,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INSTALL_PATH = /lib;
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -543,10 +549,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INSTALL_PATH = /lib;
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = (
 					"-fPIC",
@@ -596,7 +602,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					headers,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-msse4.1";
@@ -638,7 +644,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					headers,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = "-msse4.1";
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -31,7 +31,7 @@ void *RKServerRoutine(void *in) {
 
     // Create the socket
     if ((M->sd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        RKLog("RKServerRoutine() failed at socket().\n");
+        RKLog("%s failed at socket().\n", M->name);
         M->state = RKServerStateNull;
         return NULL;
     }
@@ -47,14 +47,14 @@ void *RKServerRoutine(void *in) {
     // Avoid "Address already in use" error
     ii = 1;
     if (setsockopt(M->sd, SOL_SOCKET, SO_REUSEADDR, &ii, sizeof(ii)) == -1) {
-        RKLog("Error. RKServerRoutine() failed at setsockopt().\n");
+        RKLog("Error. %s failed at setsockopt().\n", M->name);
         M->state = RKServerStateNull;
         return NULL;
     }
 
     // Bind
     if (bind(M->sd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-        RKLog("Error. RKServerRoutine() failed at bind().\n");
+        RKLog("Error. %s failed at bind().\n", M->name);
         M->state = RKServerStateNull;
         close(M->sd);
         return NULL;
@@ -62,12 +62,14 @@ void *RKServerRoutine(void *in) {
 
     // Listen
     if (listen(M->sd, M->maxClient + 1) < 0) {
-        RKLog("Error. RKServerRoutine() failed at listen().\n");
+        RKLog("Error. %s failed at listen().\n", M->name);
         M->state = RKServerStateNull;
         return NULL;
     }
 
-    RKLog("RKServerRoutine()  sd = %d  port = %d\n", M->sd, M->port);
+    if (M->verbose) {
+        RKLog("%s  sd = %d  port = %d\n", M->name, M->sd, M->port);
+    }
 
     M->state = RKServerStateActive;
 
@@ -86,12 +88,15 @@ void *RKServerRoutine(void *in) {
         if (ii > 0 && FD_ISSET(M->sd, &rfd)) {
             // accept a connection, this part shouldn't be blocked. Reuse sa since we no longer need it
             if ((sid = accept(M->sd, (struct sockaddr *)&sa, &sa_len)) == -1) {
-                RKLog("Error. RKServerRoutine() failed at accept().\n");
+                RKLog("Error. %s failed at accept().\n", M->name);
                 break;
             }
-            RKLog("RKServerRoutine() answering %s:%d  (nclient = %d  sd = %d)\n", inet_ntoa(sa.sin_addr), sa.sin_port, M->nclient, sid);
+            if (M->verbose) {
+                RKLog("%s answering %s:%d  (nclient = %d  sd = %d)\n",
+                      M->name, inet_ntoa(sa.sin_addr), sa.sin_port, M->nclient, sid);
+            }
             if (M->nclient >= M->maxClient) {
-                RKLog("RKServerRoutine() busy (nclient = #%d)\n", M->nclient);
+                RKLog("%s busy (nclient = #%d)\n", M->name, M->nclient);
                 send(sid, busy_msg, strlen(busy_msg), 0);
                 close(sid);
                 continue;
@@ -102,13 +107,15 @@ void *RKServerRoutine(void *in) {
             // This isn't really an error, just mean no one is connecting & timeout...
             continue;
         } else if (ii == -1) {
-            RKLog("Error. RKServerRoutine() failed at select().\n");
+            RKLog("Error. %s failed at select().\n", M->name);
         } else {
-            RKLog("Error. RKServerRoutine at an unknown state.\n");
+            RKLog("Error. %s at an unknown state.\n", M->name);
         }
     }
     
-    RKLog("RKServerRoutine() retiring ...\n");
+    if (M->verbose) {
+        RKLog("%s retiring ...\n", M->name);
+    }
     
     M->state = RKServerStateFree;
     
@@ -130,7 +137,7 @@ void *RKOperatorRoutine(void *in) {
 
     struct timeval  timeout;
 
-    RKLog("Op-%03d started for customer %d.\n", O->iid, M->ireq);
+    RKLog("%s Op-%03d started for customer %d.\n", M->name, O->iid, M->ireq);
 
     // Greet with welcome function
     if (M->w != NULL) {
@@ -157,7 +164,7 @@ void *RKOperatorRoutine(void *in) {
     // Get a file descriptor for get line
     fp = fdopen(O->sid, "r");
     if (fp == NULL) {
-        RKLog("Unable to get a file descriptor fro socket descriptor.\n");
+        RKLog("%s unable to get a file descriptor fro socket descriptor.\n", M->name);
         return (void *)RKResultSDToFDError;
     }
 
@@ -179,7 +186,7 @@ void *RKOperatorRoutine(void *in) {
             if (r > 0) {
                 if (FD_ISSET(O->sid, &efd)) {
                     // Exceptions
-                    fprintf(stderr, "Exception(s) occurred.\n");
+                    RKLog("%s encountered an exception error.\n", M->name);
                     break;
                 } else if (FD_ISSET(O->sid, &wfd)) {
                     // Ready to write (stream)
@@ -188,7 +195,7 @@ void *RKOperatorRoutine(void *in) {
                 }
             } else if (r < 0) {
                 // Errors
-                RKLog("Error. Something bad occurred.\n");
+                RKLog("Error. %s encountered something bad.\n", M->name);
                 break;
             } else {
                 // Timeout (r == 0)
@@ -204,7 +211,7 @@ void *RKOperatorRoutine(void *in) {
         if (r > 0) {
             if (FD_ISSET(O->sid, &efd)) {
                 // Exceptions
-                RKLog("Error. Exception(s) occurred.\n");
+                RKLog("%s encountered an exception error.\n", M->name);
                 break;
             } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
@@ -212,7 +219,7 @@ void *RKOperatorRoutine(void *in) {
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
-                    RKLog("Error. Disconnected by client.\n");
+                    RKLog("Info. %s disconnected by client.\n", M->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -221,12 +228,12 @@ void *RKOperatorRoutine(void *in) {
                 if (M->c) {
                     M->c(O);
                 } else {
-                    RKLog("No command handler. cmd '%s' from Op-%03d (%s)\n", O->cmd, O->iid, O->ip);
+                    RKLog("%s has no command handler. cmd '%s' from Op-%03d (%s)\n", M->name, O->cmd, O->iid, O->ip);
                 }
             }
         } else if (r < 0) {
             // Errors
-            RKLog("Error. Something bad occurred in RKOperatorRoutine().\n");
+            RKLog("Error. %s/%s encountered an unexpected error.\n", M->name, O->name);
             break;
         } else {
             // Timeout (r == 0)
@@ -235,7 +242,7 @@ void *RKOperatorRoutine(void *in) {
         // Process the timeout
         mwait = wwait < rwait ? wwait : rwait;
         if (mwait > M->timeoutSeconds * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
-            RKLog("Op-%03d encountered a timeout.\n", O->iid);
+            RKLog("%s encountered a timeout.\n", O->name);
             // Dismiss with a terminate function
             if (M->t != NULL) {
                 M->t(O);
@@ -264,7 +271,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 
     RKOperator *O = (RKOperator *)malloc(sizeof(RKOperator));
     if (O == NULL) {
-        RKLog("Error Failed to allocate RKOperator.\n");
+        RKLog("%s failed to allocate an operator.\n", M->name);
         return 1;
     }
     memset(O, 0, sizeof(RKOperator));
@@ -278,9 +285,9 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->state = RKOperatorStateActive;
     O->option = RKOperatorOptionNone;
     O->timeoutSeconds = 10;
-    O->usr = M->usr;
+    O->userResource = M->userResource;
     RKServerSetWelcomeHandlerToDefault(M);
-    PSServerSetTerminateHandlerToDefault(M);
+    RKServerSetTerminateHandlerToDefault(M);
     pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(O->name, RKMaximumStringLength - 1, "Op-%03d", O->iid);
@@ -294,7 +301,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
     if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
-        RKLog("Error. Failed to create RKOperatorRoutine().\n");
+        RKLog("Error. %s failed to create RKOperatorRoutine().\n", M->name);
         pthread_mutex_unlock(&M->lock);
         return RKResultErrorCreatingOperatorRoutine;
     }
@@ -351,7 +358,7 @@ int RKDefaultTerminateHandler(RKOperator *O) {
 }
 
 #pragma mark -
-#pragma mark Initialization and deallocation
+#pragma mark Life Cycle
 
 RKServer *RKServerInit(void) {
     RKServer *M = (RKServer *)malloc(sizeof(RKServer));
@@ -408,10 +415,13 @@ void RKServerSetWelcomeHandlerToDefault(RKServer *M) {
 }
 
 
-void PSServerSetTerminateHandlerToDefault(RKServer *M) {
+void RKServerSetTerminateHandlerToDefault(RKServer *M) {
     M->t = &RKDefaultTerminateHandler;
 }
 
+void RKServerSetSharedResource(RKServer *M, void *resource) {
+    M->userResource = resource;
+}
 
 #pragma mark -
 #pragma mark Server actions
@@ -420,7 +430,7 @@ void PSServerSetTerminateHandlerToDefault(RKServer *M) {
 void RKServerActivate(RKServer *M) {
     M->state = RKServerStateOpening;
     if (pthread_create(&M->threadId, NULL, RKServerRoutine, M)) {
-        RKLog("Error. Unable to launch main server.\n");
+        RKLog("Error. %s unable to launch main server.\n", M->name);
     }
     while (M->state > RKServerStateNull && M->state < RKServerStateActive) {
         usleep(25000);

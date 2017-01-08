@@ -24,6 +24,7 @@ typedef struct user_params {
     int   testSIMD;
     int   testModuloMath;
     int   testPulseCompression;
+    int   sleepInterval;
     bool  noColor;
     bool  quietMode;
     bool  developerMode;
@@ -131,6 +132,7 @@ UserParams processInput(int argc, char **argv) {
         {"help"                  , no_argument      , NULL, 'h'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"verbose"               , no_argument      , NULL, 'v'},
+        {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
     
@@ -209,6 +211,13 @@ UserParams processInput(int argc, char **argv) {
             case 'v':
                 user.verbose++;
                 break;
+            case 'z':
+                if (optarg) {
+                    user.sleepInterval = atoi(optarg);
+                } else {
+                    user.sleepInterval = 1000;
+                }
+                break;
             default:
                 exit(EXIT_FAILURE);
                 break;
@@ -281,6 +290,9 @@ int main(int argc, char *argv[]) {
         RKSetDeveloperMode(radar);
     }
     
+    RKCommandCenter *center = RKCommandCenterInit();
+    RKCommandCenterStart(center);
+    
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
@@ -304,6 +316,9 @@ int main(int argc, char *argv[]) {
         if (user.fs) {
             i += sprintf(cmd + i, " F %d", user.fs);
         }
+        if (user.sleepInterval) {
+            i += sprintf(cmd + i, " z %d", user.sleepInterval);
+        }
         if (!user.quietMode) {
             RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
         }
@@ -326,6 +341,8 @@ int main(int argc, char *argv[]) {
         RKTestPulseCompression(radar, RKTestFlagShowResults);
 
     }
+    
+    RKCommandCenterFree(center);
 
     RKFree(radar);
 

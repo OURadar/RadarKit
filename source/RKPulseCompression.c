@@ -623,8 +623,7 @@ void *pulseWatcher(void *_in) {
     return NULL;
 }
 
-#pragma mark -
-#pragma mark Life Cycle
+#pragma mark - Life Cycle
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)malloc(sizeof(RKPulseCompressionEngine));
@@ -657,8 +656,7 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
     free(engine);
 }
 
-#pragma mark -
-#pragma mark Properties
+#pragma mark - Properties
 
 void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const int verb) {
     engine->verbose = verb;
@@ -684,7 +682,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     }
     engine->filterGid = (int *)malloc(size * sizeof(int));
     if (engine->filterGid == NULL) {
-        RKLog("Error. Unable to allocate filterGid.\n");
+        RKLog("Error. %s unable to allocate filterGid.\n", engine->name);
         exit(EXIT_FAILURE);
     }
 
@@ -694,14 +692,14 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(size * sizeof(RKPulseCompressionPlanIndex));
     engine->memoryUsage += size * sizeof(RKPulseCompressionPlanIndex);
     if (engine->planIndices == NULL) {
-        RKLog("Error. Unable to allocate planIndices.\n");
+        RKLog("Error. %s unable to allocate planIndices.\n", engine->name);
         exit(EXIT_FAILURE);
     }
 }
 
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count) {
     if (engine->state == RKPulseCompressionEngineStateActive) {
-        RKLog("Error. Core count cannot be changed when the engine is active.\n");
+        RKLog("Error. %s does not allow core count change when the engine is active.\n", engine->name);
         return;
     }
     engine->coreCount = count;
@@ -766,8 +764,7 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
-#pragma mark -
-#pragma mark Interactions
+#pragma mark - Interactions
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->state = RKPulseCompressionEngineStateActivating;

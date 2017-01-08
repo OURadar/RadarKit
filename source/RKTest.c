@@ -400,6 +400,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     float fs = 50.0e6;
     int n = 0;
     bool simulatePosition = false;
+    int sleepInterval = 0;
     uint64_t counter = 0;
 
     gettimeofday(&t0, NULL);
@@ -440,6 +441,12 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                     gateCount = atoi(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
                         RKLog(">gateCount = %s", RKIntegerToCommaStyleString((long)gateCount));
+                    }
+                    break;
+                case 'z':
+                    sleepInterval = atoi(sv);
+                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                        RKLog(">sleepInterval = %s", RKIntegerToCommaStyleString((long)sleepInterval));
                     }
                     break;
             }
@@ -518,8 +525,8 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
             RKSetPulseHasData(radar, pulse);
 
-            if (counter % 5000 == 0) {
-                RKLog("%s sleeping ...", name);
+            if (sleepInterval > 0 && counter % sleepInterval == 0) {
+                RKLog("%s sleeping at counter = %s / %s ...", name, RKIntegerToCommaStyleString(counter), RKIntegerToCommaStyleString(sleepInterval));
                 sleep(3);
             }
             t += prt;
