@@ -63,6 +63,7 @@ struct rk_radar {
     //
     // General buffers
     //
+    char                       name[64];
     RKOperatingParameters      *parameters;
     //
     // Special buffers, aligned to SIMD requirements

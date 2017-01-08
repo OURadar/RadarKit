@@ -11,6 +11,8 @@
 
 #include <RadarKit/RKNetwork.h>
 
+#define RKServerMaximumOperators    16
+
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
@@ -54,6 +56,7 @@ struct rk_server {
     int              maxClient;                      // Maximum number of client connections
     int              timeoutSeconds;                 // Timeout in seconds
 
+    bool             ids[RKServerMaximumOperators];  // Operator IDs
     int              nclient;                        // Number of clients
     int              ireq;                           // A global instance request
     int              state;                          // A global flag for infinite loop
@@ -99,6 +102,7 @@ void RKOperatorHangUp(RKOperator *);
 RKServer *RKServerInit(void);
 void RKServerFree(RKServer *);
 
+void RKServerSetName(RKServer *, const char *);
 void RKServerSetWelcomeHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetCommandHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetTerminateHandler(RKServer *, int (*)(RKOperator *));

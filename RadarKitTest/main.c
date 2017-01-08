@@ -291,6 +291,7 @@ int main(int argc, char *argv[]) {
     }
     
     RKCommandCenter *center = RKCommandCenterInit();
+    RKCommandCenterSetVerbose(center, user.verbose);
     RKCommandCenterStart(center);
     
     // Catch Ctrl-C and exit gracefully

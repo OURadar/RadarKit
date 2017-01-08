@@ -34,7 +34,7 @@ int socketCommandHandler(RKOperator *O) {
 }
 
 int socketStreamHandler(RKOperator *O) {
-    RKCommandCenter *engine = O->userResource;
+//    RKCommandCenter *engine = O->userResource;
     
     static struct timeval t0, t1;
 
@@ -73,6 +73,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
             rkGlobalParameters.showColor ? "\033[1;44m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->server = RKServerInit();
+    RKServerSetName(engine->server, engine->name);
     RKServerSetCommandHandler(engine->server, &socketCommandHandler);
     RKServerSetStreamHandler(engine->server, &socketStreamHandler);
     RKServerSetSharedResource(engine->server, engine);
@@ -85,8 +86,10 @@ void RKCommandCenterFree(RKCommandCenter *engine) {
 
 #pragma mark - Properties
 
-void RKCommandCenterSetVerbose(RKCommandCenter *engine, const int verb) {
-    engine->verbose = verb;
+void RKCommandCenterSetVerbose(RKCommandCenter *engine, const int verbose) {
+    RKServer *server = engine->server;
+    server->verbose = verbose;
+    engine->verbose = verbose;
 }
 
 void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
@@ -104,8 +107,4 @@ void RKCommandCenterStart(RKCommandCenter *center) {
         RKLog("%s starting ...\n", center->name);
     }
     RKServerActivate(center->server);
-    RKServer *server = center->server;
-    while (server->state < RKServerStateActive) {
-        usleep(1000);
-    }
 }

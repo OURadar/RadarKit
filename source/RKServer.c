@@ -72,6 +72,8 @@ void *RKServerRoutine(void *in) {
     }
 
     M->state = RKServerStateActive;
+    
+    RKLog("%s listening on port %d\n", M->name, M->port);
 
     int             sid;
     fd_set          rfd;
@@ -137,7 +139,7 @@ void *RKOperatorRoutine(void *in) {
 
     struct timeval  timeout;
 
-    RKLog("%s Op-%03d started for customer %d.\n", M->name, O->iid, M->ireq);
+    RKLog("%s started %s for a connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq);
 
     // Greet with welcome function
     if (M->w != NULL) {
@@ -160,7 +162,7 @@ void *RKOperatorRoutine(void *in) {
      //printf("Flushed : %s\n", str);
      }
      */
-
+    
     // Get a file descriptor for get line
     fp = fdopen(O->sid, "r");
     if (fp == NULL) {
@@ -219,7 +221,7 @@ void *RKOperatorRoutine(void *in) {
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
-                    RKLog("Info. %s disconnected by client.\n", M->name);
+                    RKLog("%s / %s disconnected.\n", M->name, O->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -252,6 +254,7 @@ void *RKOperatorRoutine(void *in) {
     } // while () ...
 
     RKLog("Op-%03d returning ...\n", O->iid);
+    M->ids[O->iid] = false;
 
     fclose(fp);
     close(O->sid);
@@ -278,10 +281,17 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 
     pthread_mutex_lock(&M->lock);
 
+    int k = 0;
+    while (M->ids[k]) {
+        k++;
+    }
+    M->ids[k] = true;
+
     // Default operator parameters that should not be 0
     O->M = M;
     O->sid = sid;
-    O->iid = sid - M->sd;
+    //O->iid = sid - M->sd;
+    O->iid = k;
     O->state = RKOperatorStateActive;
     O->option = RKOperatorOptionNone;
     O->timeoutSeconds = 10;
@@ -318,11 +328,30 @@ int RKDefaultWelcomeHandler(RKOperator *A) {
 
     char msg[6 * RKMaximumStringLength];
 
-    char *line_array[] = {A->M->name, "v1.0"};
-    size_t max_len = 0, len;
+    char *c = A->M->name;
+    
     int ii;
-    int nlines = sizeof(line_array)/sizeof(void *);
-    for (ii=0; ii<nlines; ii++) {
+    // Count the characters between two escape characters
+    if (*c == '\033') {
+        while (*c != 'm') {
+            c++;
+        }
+        c++;
+        char *e = c;
+        while (*e != '\033') {
+            e++;
+        }
+        ii = (int)(e - c) + 1;
+    } else {
+        ii = RKMaximumStringLength - 1;
+    }
+    
+    int nlines = 2;
+    char line_array[nlines][RKMaximumStringLength];
+    snprintf(line_array[0], ii, "%s", c);
+    sprintf(line_array[1], RKVersionString);
+    size_t max_len = 0, len;
+    for (ii = 0; ii < nlines; ii++) {
         len = strlen(line_array[ii]);
         if (max_len < len) {
             max_len = len;
@@ -368,7 +397,7 @@ RKServer *RKServerInit(void) {
     }
     memset(M, 0, sizeof(RKServer));
     M->port = 10000;
-    M->maxClient = 8;
+    M->maxClient = RKServerMaximumOperators;
     M->timeoutSeconds = 5;
     pthread_mutex_init(&M->lock, NULL);
 
@@ -389,6 +418,9 @@ void RKServerFree(RKServer *M) {
 #pragma mark -
 #pragma mark Delegate functions
 
+void RKServerSetName(RKServer *M, const char *name) {
+    strcpy(M->name, name);
+}
 
 void RKServerSetWelcomeHandler(RKServer *M, int (*function)(RKOperator *)) {
     M->w = function;
@@ -434,6 +466,9 @@ void RKServerActivate(RKServer *M) {
     }
     while (M->state > RKServerStateNull && M->state < RKServerStateActive) {
         usleep(25000);
+    }
+    if (M->verbose) {
+        RKLog("%s started.\n", M->name);
     }
 }
 

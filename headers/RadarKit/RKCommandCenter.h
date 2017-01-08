@@ -30,6 +30,7 @@ typedef struct rk_command_center {
 RKCommandCenter *RKCommandCenterInit(void);
 void RKCommandCenterFree(RKCommandCenter *);
 
+void RKCommandCenterSetVerbose(RKCommandCenter *, const int);
 void RKCommandCenterAddRadar(RKCommandCenter *, RKRadar *);
 void RKCommandCenterRemoveRadar(RKCommandCenter *, RKRadar *);
 

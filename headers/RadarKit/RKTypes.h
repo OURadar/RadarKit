@@ -41,6 +41,7 @@
  @define RKGateCount The maximum number of gates allocated for each pulse
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
+#define RKVersionString                  "1.0"
 #define RKBufferCSlotCount               16           // Config
 #define RKBuffer0SlotCount               5000         // Raw I/Q
 #define RKBuffer1SlotCount               200          //
