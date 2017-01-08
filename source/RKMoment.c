@@ -625,5 +625,5 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
 }
 
 char *RKMomentEngineStatusString(RKMomentEngine *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, 1)];
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

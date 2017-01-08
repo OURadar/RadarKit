@@ -173,7 +173,7 @@ int socketStreamHandler(RKOperator *O) {
     // Check MM
     // Check system health
 
-    if (user->streams & user->access & RKUserFlagStatusPulses && td >= 0.1) {
+    if (user->streams & user->access & RKUserFlagStatusPulses && td >= 0.05) {
         snprintf(user->string, RKMaximumStringLength - 1, "%s %s" RKEOL,
                  RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                  RKMomentEngineStatusString(user->radar->momentEngine));

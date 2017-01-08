@@ -811,6 +811,6 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
 }
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, 1)];
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
 
