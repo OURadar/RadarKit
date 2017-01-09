@@ -230,7 +230,7 @@ int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    RKLog("%s %s prearing user %d ...\n", engine->name, O->name, O->iid);
+    RKLog("%s %s preparing user %d ...\n", engine->name, O->name, O->iid);
     memset(user, 0, sizeof(RKUser));
     user->access = RKUserFlagStatusHealth | RKUserFlagStatusPulses| RKUserFlagStatusRays;
     user->access |= RKUserFlagDisplayZVWDPRKS;

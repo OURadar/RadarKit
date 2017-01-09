@@ -226,7 +226,7 @@ void *momentCore(void *in) {
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(engine->rayStatusBuffer[iu], RKMaximumStringLength,
                  "%s   %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
-                 name, S->header.i, E->header.i, path.length,
+                 name, (unsigned long)S->header.i, (unsigned long)E->header.i, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu);
         engine->rayStatusBufferIndex = iu;

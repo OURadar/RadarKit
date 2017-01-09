@@ -22,7 +22,7 @@ void *theClient(void *in);
 void *theClient(void *in) {
     int r;
     int k;
-    int timeoutCount;
+    int readCount, timeoutCount;
     struct timeval timeout;
     bool readOkay;
 
@@ -162,6 +162,7 @@ void *theClient(void *in) {
         }
 
         // Actively receive
+        timeoutCount = 0;
         while (C->state < RKClientStateReconnecting) {
             FD_ZERO(&C->rfd);
             FD_ZERO(&C->wfd);
@@ -169,8 +170,8 @@ void *theClient(void *in) {
             FD_SET(C->sd, &C->rfd);
             FD_SET(C->sd, &C->wfd);
             FD_SET(C->sd, &C->efd);
-            timeout.tv_sec = C->timeoutSeconds;
-            timeout.tv_usec = 0;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 100000;
             readOkay = false;
             r = select(C->sd + 1, &C->rfd, NULL, &C->efd, &timeout);
             if (C->verbose > 3 || FD_ISSET(C->sd, &C->efd)) {
@@ -178,19 +179,22 @@ void *theClient(void *in) {
                         C->name, r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
             }
             if (r == 0) {
-                // Socket established but nothing from the server.
-                if (C->verbose > 1) {
-                    RKLog("%s Timeout during select() for read.\n", C->name);
+                if (timeoutCount++ / 10 > C->timeoutSeconds) {
+                    // Socket established but nothing from the server.
+                    if (C->verbose > 1) {
+                        RKLog("%s Timeout during select() for read.\n", C->name);
+                    }
+                    break;
                 }
-                break;
+                continue;
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
                 switch (C->format) {
 
                     case RKNetworkMessageFormatConstantSize:
 
                         k = 0;
-                        timeoutCount = 0;
-                        while (timeoutCount++ < C->timeoutSeconds * 1000) {
+                        readCount = 0;
+                        while (readCount++ < C->timeoutSeconds * 1000) {
                             if ((r = (int)read(C->sd, buf + k, C->blockLength - k)) > 0) {
                                 k += r;
                                 if (k >= C->blockLength) {
@@ -201,18 +205,18 @@ void *theClient(void *in) {
                             } else if (errno != EAGAIN) {
                                 if (C->verbose > 1) {
                                     RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
-                                          C->name, r, k, errno, RKErrnoString(errno), timeoutCount);
+                                          C->name, r, k, errno, RKErrnoString(errno), readCount);
                                 }
-                                timeoutCount = C->timeoutSeconds * 1000;
+                                readCount = C->timeoutSeconds * 1000;
                                 C->state = RKClientStateReconnecting;
                             }
                             if (C->verbose > 1) {
                                 RKLog("... errno = %d ...\n", errno);
                             }
                         }
-                        if (timeoutCount >= C->timeoutSeconds * 1000) {
+                        if (readCount >= C->timeoutSeconds * 1000) {
                             if (C->verbose > 1) {
-                                RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", C->name, timeoutCount, errno);
+                                RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", C->name, readCount, errno);
                             }
                             break;
                         }
@@ -222,8 +226,8 @@ void *theClient(void *in) {
                     case RKNetworkMessageFormatHeaderDefinedSize:
 
                         k = 0;
-                        timeoutCount = 0;
-                        while (timeoutCount++ < C->timeoutSeconds * 100) {
+                        readCount = 0;
+                        while (readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, buf + k, sizeof(RKNetDelimiter) - k)) > 0) {
                                 k += r;
                                 if (k > sizeof(RKNetDelimiter)) {
@@ -239,17 +243,17 @@ void *theClient(void *in) {
                                     RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
                                           C->name, r, k, errno, RKErrnoString(errno));
                                 }
-                                timeoutCount = C->timeoutSeconds * 1000;
+                                readCount = C->timeoutSeconds * 1000;
                                 C->state = RKClientStateReconnecting;
                                 break;
                             }
                         }
-                        if (k != sizeof(RKNetDelimiter) || timeoutCount > C->timeoutSeconds * 100 || errno != ETIMEDOUT) {
+                        if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100 || errno != ETIMEDOUT) {
                             break;
                         }
                         k = 0;
-                        timeoutCount = 0;
-                        while (k < header->size && timeoutCount++ < C->timeoutSeconds * 100) {
+                        readCount = 0;
+                        while (k < header->size && readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, buf + sizeof(RKNetDelimiter) + k, header->size - k)) > 0) {
                                 k += r;
                                 if (k >= header->size) {
@@ -263,7 +267,7 @@ void *theClient(void *in) {
                                 break;
                             }
                         }
-                        if (timeoutCount >= RKNetworkTimeoutSeconds * 100 || errno != EAGAIN) {
+                        if (readCount >= RKNetworkTimeoutSeconds * 100 || errno != EAGAIN) {
                             break;
                         }
                         readOkay = true;
@@ -294,7 +298,9 @@ void *theClient(void *in) {
 
             if (readOkay == false) {
                 RKLog("%s Server disconnected.\n", C->name);
-                C->state = RKClientStateReconnecting;
+                if (C->state < RKClientStateDisconnecting) {
+                    C->state = RKClientStateReconnecting;
+                }
                 close(C->sd);
                 continue;
             }
