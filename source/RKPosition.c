@@ -57,7 +57,7 @@ void *pulseTagger(void *in) {
         // Wait until a thread check out this pulse.
         while (k == *engine->pulseIndex && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            if (++s % 500 == 0 && engine->verbose) {
+            if (++s % 500 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
@@ -65,7 +65,7 @@ void *pulseTagger(void *in) {
         s = 0;
         while ((pulse->header.s & RKPulseStatusHasIQData) == 0 && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            if (++s % 500 == 0 && engine->verbose) {
+            if (++s % 500 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%d  k = %d   pulseIndex = %d   header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
@@ -73,7 +73,7 @@ void *pulseTagger(void *in) {
         s = 0;
         while (engine->positionTimeLatest <= pulse->header.timeDouble && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            if (++s % 500 == 0 && engine->verbose) {
+            if (++s % 500 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 3/%d  k = %d   latestTime = %s <= %s = header.timeDouble\n", engine->name, s, k ,
                       RKFloatToCommaStyleString(engine->positionTimeLatest), RKFloatToCommaStyleString(pulse->header.timeDouble));
             }

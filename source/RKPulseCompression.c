@@ -181,7 +181,7 @@ void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
     if (engine->verbose) {
-        RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d\n", name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+        RKLog("%s %s started.   i0 = %d   mem = %s B   tic = %d\n", engine->name, name, i0, RKIntegerToCommaStyleString(mem), me->tic);
     }
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -203,7 +203,7 @@ void *pulseCompressionCore(void *_in) {
             RKLog(">%s sem_wait()\n", coreName);
             #endif
             if (sem_wait(sem)) {
-                RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
+                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, name, errno);
             }
         } else {
             while (tic == me->tic && engine->state == RKPulseCompressionEngineStateActive) {
@@ -338,7 +338,10 @@ void *pulseCompressionCore(void *_in) {
     }
 
     // Clean up
-    RKLog(">    %s freeing reources ...\n", name);
+    if (engine->verbose) {
+        RKLog("%s %s freeing reources ...\n", engine->name, name);
+    }
+
     free(zi);
     free(zo);
     free(in);
@@ -347,7 +350,7 @@ void *pulseCompressionCore(void *_in) {
     free(fullPeriods);
 
     if (engine->verbose) {
-        RKLog(">    %s ended.\n", name);
+        RKLog("%s %s ended.\n", engine->name, name);
     }
     
     return NULL;
@@ -385,12 +388,12 @@ void *pulseWatcher(void *_in) {
 
     if (RKFilenameExists(wisdomFile)) {
         if (engine->verbose) {
-            RKLog(">    Loading DFT wisdom ...\n");
+            RKLog("%s Loading DFT wisdom ...\n", engine->name);
         }
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
         if (engine->verbose) {
-            RKLog(">    DFT wisdom file not found.\n");
+            RKLog("%s DFT wisdom file not found.\n", engine->name);
         }
         exportWisdom = true;
     }
@@ -398,7 +401,7 @@ void *pulseWatcher(void *_in) {
     // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
         if (engine->verbose) {
-            RKLog(">    Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", planIndex, RKIntegerToCommaStyleString(planSize));
+            RKLog("%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         }
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
@@ -419,18 +422,18 @@ void *pulseWatcher(void *_in) {
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {
-                RKLog(">    Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
+                RKLog(">%s Info. Semaphore %s exists. Try to remove and recreate.\n", engine->name, worker->semaphoreName);
             }
             if (sem_unlink(worker->semaphoreName)) {
-                RKLog(">    Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
+                RKLog(">%s Error. Unable to unlink semaphore %s.\n", engine->name, worker->semaphoreName);
             }
             // 2nd trial
             sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
             if (sem[c] == SEM_FAILED) {
-                RKLog(">    Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
+                RKLog(">%s Error. Unable to remove then create semaphore %s\n", engine->name, worker->semaphoreName);
                 return (void *)RKResultFailedToInitiateSemaphore;
             } else if (engine->verbose > 1) {
-                RKLog(">    Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
+                RKLog(">%s Info. Semaphore %s removed and recreated.\n", engine->name, worker->semaphoreName);
             }
         }
         worker->id = c;
@@ -454,7 +457,7 @@ void *pulseWatcher(void *_in) {
     engine->tic++;
 
     if (engine->verbose) {
-        RKLog(">%s started.  mem = %s   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
+        RKLog(">%s started.   mem = %s   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
     }
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;

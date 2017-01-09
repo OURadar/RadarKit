@@ -216,10 +216,13 @@ int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    RKLog("%s %s resetting user %d ...\n", engine->name, O->name, O->iid);
+    RKLog("%s %s prearing user %d ...\n", engine->name, O->name, O->iid);
     memset(user, 0, sizeof(RKUser));
     user->access = RKUserFlagStatusHealth | RKUserFlagStatusPulses| RKUserFlagStatusRays;
-    user->access |= RKUserFlagDisplayZ | RKUserFlagDisplayV | RKUserFlagDisplayW;
+    user->access |= RKUserFlagDisplayZVWDPRKS;
+    user->access |= RKUserFlagProductZVWDPRKS;
+    user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;
+    user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
     return RKResultNoError;
 }

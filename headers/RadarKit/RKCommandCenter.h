@@ -16,36 +16,38 @@
 typedef uint64_t RKUserFlag;
 
 enum RKUserFlag {
-    RKUserFlagNull            = 0,
-	RKUserFlagStatusHealth    = 1,
-    RKUserFlagStatusPulses    = (1 << 1),
-    RKUserFlagStatusRays      = (1 << 2),
-	RKUserFlagDisplayZ        = (1 << 8),        // Display
-	RKUserFlagDisplayV        = (1 << 9),
-	RKUserFlagDisplayW        = (1 << 10),
-	RKUserFlagDisplayD        = (1 << 11),
-	RKUserFlagDisplayP        = (1 << 12),
-	RKUserFlagDisplayR        = (1 << 13),
-	RKUserFlagDisplayK        = (1 << 14),
-	RKUserFlagDisplayS        = (1 << 15),
-    RKUserFlagDisplayIQ       = (1 << 24),       // Low rate IQ
-    RKUserFlagProductZ        = (1 << 32),       // Products
-    RKUserFlagProductV        = (1 << 33),
-    RKUserFlagProductW        = (1 << 34),
-    RKUserFlagProductD        = (1 << 35),
-    RKUserFlagProductP        = (1 << 36),
-    RKUserFlagProductR        = (1 << 37),
-    RKUserFlagProductK        = (1 << 38),
-    RKUserFlagProductS        = (1 << 39),
-    RKUserFlagProductIQ       = (1 << 48),      // Full rate IQ
-    RKUserFlagControl         = (1 << 24)       // Controls
-};    
+    RKUserFlagNull               = 0,              //
+    RKUserFlagControl            = 1,              // Controls
+    RKUserFlagStatusHealth       = (1 << 1),       //
+    RKUserFlagStatusPulses       = (1 << 2),       //
+    RKUserFlagStatusRays         = (1 << 3),       //
+    RKUserFlagStatusAll          = 0x0E,           //
+    RKUserFlagDisplayIQ          = (1 << 8),       // Low rate IQ
+    RKUserFlagProductIQ          = (1 << 9),       // Full rate IQ
+    RKUserFlagDisplayZ           = (1 << 16),      // Display
+    RKUserFlagDisplayV           = (1 << 17),      //
+    RKUserFlagDisplayW           = (1 << 18),      //
+    RKUserFlagDisplayD           = (1 << 19),      //
+    RKUserFlagDisplayP           = (1 << 20),      //
+    RKUserFlagDisplayR           = (1 << 21),      //
+    RKUserFlagDisplayK           = (1 << 22),      //
+    RKUserFlagDisplayS           = (1 << 23),      //
+    RKUserFlagDisplayZVWDPRKS    = 0x0000FF0000,   //
+    RKUserFlagProductZ           = (1 << 32),      // Products
+    RKUserFlagProductV           = (1 << 33),      //
+    RKUserFlagProductW           = (1 << 34),      //
+    RKUserFlagProductD           = (1 << 35),      //
+    RKUserFlagProductP           = (1 << 36),      //
+    RKUserFlagProductR           = (1 << 37),      //
+    RKUserFlagProductK           = (1 << 38),      //
+    RKUserFlagProductS           = (1 << 39),      //
+    RKUserFlagProductZVWDPRKS    = 0xFF00000000    //
+};
 
 typedef struct  rk_user {
-	char         login[64];
-	RKUserFlag   access;             // Authorized access priviledge
-	RKUserFlag   streams;
-	int          radarId;
+    char         login[64];
+    RKUserFlag   access;             // Authorized access priviledge
+    RKUserFlag   streams;
     double       timeLastOut;
     double       timeLastIn;
     uint32_t     rayStatusIndex;

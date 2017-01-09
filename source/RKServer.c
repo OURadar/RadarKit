@@ -68,7 +68,7 @@ void *RKServerRoutine(void *in) {
     }
 
     if (M->verbose) {
-        RKLog("%s  sd = %d  port = %d\n", M->name, M->sd, M->port);
+        RKLog("%s sd = %d   port = %d\n", M->name, M->sd, M->port);
     }
 
     M->state = RKServerStateActive;
@@ -139,7 +139,7 @@ void *RKOperatorRoutine(void *in) {
 
     struct timeval  timeout;
 
-    RKLog("%s started %s for a connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq);
+    RKLog("%s started %s for a connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq++);
 
     // Greet with welcome function
     if (M->w != NULL) {

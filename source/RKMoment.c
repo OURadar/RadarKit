@@ -160,7 +160,7 @@ void *momentCore(void *in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
     if (engine->verbose) {
-        RKLog(">    %s started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
+        RKLog(">%s %s started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", engine->name, name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
     }
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -242,14 +242,14 @@ void *momentCore(void *in) {
             ie = is;
             k = engine->processor(space, pulses, path.length, name);
             if (k != path.length) {
-                RKLog("%s processed %d samples, which is not expected (%d)\n", name, k, path.length);
+                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
             }
             ray->header.s |= RKRayStatusProcessed;
         } else {
             ie = is;
             ray->header.s |= RKRayStatusSkipped;
             if (engine->verbose) {
-                RKLog("%s skipped a ray with %d sampples.\n", name, path.length);
+                RKLog("%s %s skipped a ray with %d sampples.\n", engine->name, name, path.length);
             }
         }
 
@@ -288,13 +288,16 @@ void *momentCore(void *in) {
         t2 = t0;
     }
 
-    RKLog(">    %s freeing reources ...\n", name);
+    if (engine->verbose) {
+        RKLog("%s %s freeing reources ...\n", engine->name, name);
+    }
+    
     RKScratchFree(space);
     free(busyPeriods);
     free(fullPeriods);
 
     if (engine->verbose) {
-        RKLog(">    %s ended.\n", name);
+        RKLog("%s %s ended.\n", engine->name, name);
     }
 
     return NULL;
@@ -385,7 +388,7 @@ void *pulseGatherer(void *in) {
         while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
-            if (++s % 1000 == 0 && engine->verbose) {
+            if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }
@@ -396,7 +399,7 @@ void *pulseGatherer(void *in) {
         s = 0;
         while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
-            if (++s % 200 == 0 && engine->verbose) {
+            if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
             }
         }

@@ -64,7 +64,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     memset(radar, 0, bytes);
 
     // Set some non-zero variables
-    strcpy(radar->name, "Radar");
+    strcpy(radar->name, "PX-10k");
     radar->state |= RKRadarStateBaseAllocated;
     radar->active = true;
     radar->memoryUsage += bytes;
