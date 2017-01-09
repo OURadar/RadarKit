@@ -408,7 +408,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     RKSetLogfile(NULL);
     int gateCount = RKGetPulseCapacity(radar);
 
-    char name[64];
+    char name[RKNameLength];
     //
     //    http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //

@@ -53,7 +53,7 @@ struct rk_pulse_compression_worker {
 
 struct rk_pulse_compression_engine {
     // User set variables
-    char                             name[64];
+    char                             name[RKNameLength];
     RKBuffer                         buffer;                             // Buffer of raw pulses
     uint32_t                         *index;                             // The refence index to watch for
     uint32_t                         size;                               // Size of the buffer

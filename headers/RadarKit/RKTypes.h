@@ -63,6 +63,7 @@
 
 #define RKNoColor                        "\033[0m"
 #define RKMaximumStringLength            4096
+#define RKNameLength                     64
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[31m" : (x > RKDutyCyleOrangeThreshold ? "\033[33m" : "\033[32m"))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[31m" : (x > RKLagOrangeThreshold      ? "\033[33m" : "\033[32m"))

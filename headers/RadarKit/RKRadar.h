@@ -63,7 +63,7 @@ struct rk_radar {
     //
     // General buffers
     //
-    char                       name[64];
+    char                       name[RKNameLength];
     //
     // Buffers
     //

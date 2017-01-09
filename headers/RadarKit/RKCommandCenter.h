@@ -13,7 +13,7 @@
 
 #define RKCommandCenterMaxConnections 32
 
-typedef uint64_t RKUserFlag;
+typedef long long unsigned int RKUserFlag;
 
 enum RKUserFlag {
     RKUserFlagNull               = 0,              //
@@ -58,7 +58,7 @@ typedef struct  rk_user {
 
 typedef struct rk_command_center {
     // User set variables
-    char         name[64];
+    char         name[RKNameLength];
     int          verbose;
     RKRadar      *radars[4];
     

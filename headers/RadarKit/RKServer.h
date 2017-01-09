@@ -48,7 +48,7 @@ typedef struct rk_server    RKServer;
 typedef struct rk_operator  RKOperator;
 
 struct rk_server {
-    char             name[RKMaximumStringLength];    // A program name
+    char             name[RKNameLength];             // A program name
     int              verbose;
     
     int              sd;                             // Socket descriptor
@@ -82,7 +82,7 @@ struct rk_operator  {
     pthread_t        threadId;                       // Thread ID
     pthread_mutex_t  lock;                           // Thread safety mutex of the attendant
 
-    char             name[RKMaximumStringLength];    // Attendant's name
+    char             name[RKNameLength];             // Operator name
     char             ip[RKMaximumStringLength];      // Client's IP address
 
     RKNetDelimiter   delim;                          // Convenient delimiter for sending a string

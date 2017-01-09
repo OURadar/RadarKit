@@ -19,7 +19,7 @@
 typedef struct rk_clock {
     // User set parameters
     double           offsetSeconds;
-    char             name[RKMaximumStringLength];
+    char             name[RKNameLength];
     int              verbose;
     bool             autoSync;
     bool             hasWisdom;                   // User provided dudt

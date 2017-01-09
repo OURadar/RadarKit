@@ -104,9 +104,9 @@ void *momentCore(void *in) {
     sem_t *sem = me->sem;
 
     // Initiate a variable to store my name
-    char name[64];
+    char name[RKNameLength];
     if (rkGlobalParameters.showColor) {
-        k = snprintf(name, 63, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
     } else {
         k = 0;
     }
@@ -225,7 +225,7 @@ void *momentCore(void *in) {
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(engine->rayStatusBuffer[iu], RKMaximumStringLength,
-                 "%s   %05llu...%05llu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
+                 "%s   %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
                  name, S->header.i, E->header.i, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu);
