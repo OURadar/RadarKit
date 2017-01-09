@@ -66,9 +66,8 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     memset(radar, 0, bytes);
 
     // Set some non-zero variables
-    strcpy(radar->name, "PX-10k");
+    strncpy(radar->name, "PX-10k", RKNameLength - 1);
     radar->state |= RKRadarStateBaseAllocated;
-    radar->active = true;
     radar->memoryUsage += bytes;
 
     // Copy over the input flags and constaint the capacity and depth to hard-coded limits
@@ -76,11 +75,11 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
     }
-    if (radar->desc.pulseCapacity > RKGateCount) {
-        radar->desc.pulseCapacity = RKGateCount;
-    }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
+    }
+    if (radar->desc.pulseCapacity > RKGateCount) {
+        radar->desc.pulseCapacity = RKGateCount;
     }
 
     // Config buffer
@@ -108,16 +107,16 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
             return NULL;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Level I buffer occupies %s B  (%s gates x %s pulses)\n",
+            RKLog("Level I buffer occupies %s B  (%s gates x %s pulses) %p\n",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
-                  RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
+                  RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth), radar->pulses);
         }
         for (int i = 0; i < radar->desc.pulseBufferDepth; i++) {
             RKPulse *pulse = RKGetPulse(radar->pulses, i);
             size_t offset = (size_t)pulse->data - (size_t)pulse;
-            if (offset != 256) {
-                printf("Unexpected offset = %d != 256\n", (int)offset);
+            if (offset != RKPulseHeaderSize) {
+                printf("Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderSize);
             }
         }
         radar->memoryUsage += bytes;
@@ -145,7 +144,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->clock = RKClockInitWithSize(5000, 1000);
     RKClockSetName(radar->clock, "<pulseClock>");
     radar->memoryUsage += sizeof(RKClock);
-    
+
     // Pulse compression engine
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
@@ -370,6 +369,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
 #pragma mark - Interaction / State Change
 
 int RKGoLive(RKRadar *radar) {
+    radar->active = true;
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
@@ -380,6 +380,8 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Initializing pedestal ...");
         }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
+        radar->state ^= RKRadarStatePedestalInitialized;
+        RKLog("radar->pedestalThreadId = %p\n", &radar->pedestalThreadId);
     }
 
     // Transceiver
@@ -388,6 +390,8 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Initializing transceiver ...");
         }
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
+        radar->state |= RKRadarStateTransceiverInitialized;
+        RKLog("radar->transceiverThreadId = %p\n", &radar->pedestalThreadId);
     }
 
     // Wait for both pedestal to properly start
@@ -414,20 +418,30 @@ int RKWaitWhileActive(RKRadar *radar) {
 
 int RKStop(RKRadar *radar) {
     radar->active = false;
-    pthread_join(radar->transceiverThreadId, NULL);
-    pthread_join(radar->pedestalThreadId, NULL);
+
+    RKLog("radar->transceiverThreadId @ %p\n", &radar->transceiverThreadId);
+
+    if (radar->state & RKRadarStateTransceiverInitialized) {
+        if (pthread_join(radar->transceiverThreadId, NULL)) {
+            RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
+        }
+        radar->state ^= RKRadarStateTransceiverInitialized;
+    }
+    if (radar->state & RKRadarStatePedestalInitialized) {
+        if (pthread_join(radar->pedestalThreadId, NULL)) {
+            RKLog("Error. Failed at the pedestal return.   errno = %d\n", errno);
+        }
+        radar->state ^= RKRadarStatePedestalInitialized;
+    }
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
-        // Expect <pulseWatcher> stopped
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
     }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
-        // Expect <pulseTagger> stopped
         RKPositionEngineStop(radar->positionEngine);
         radar->state ^= RKRadarStatePositionEngineInitialized;
     }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
-        // Expect <pulseGatherer> stopped
         RKMomentEngineStop(radar->momentEngine);
         radar->state ^= RKRadarStateMomentEngineInitialized;
     }

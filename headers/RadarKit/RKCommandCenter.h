@@ -13,7 +13,7 @@
 
 #define RKCommandCenterMaxConnections 32
 
-typedef long long unsigned int RKUserFlag;
+typedef uint64_t RKUserFlag;
 
 enum RKUserFlag {
     RKUserFlagNull               = 0,              //

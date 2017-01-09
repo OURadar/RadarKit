@@ -145,7 +145,7 @@ int socketCommandHandler(RKOperator *O) {
             break;
         case 's':
             user->streams = RKStringToFlag(O->cmd + 1);
-            sprintf(string, "{\"access\": 0x%llux, \"streams\": 0x%llx}" RKEOL, user->access, (long long unsigned int)user->streams);
+            sprintf(string, "{\"access\": 0x%lux, \"streams\": 0x%lux}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
             // Fast foward some indices
             user->rayStatusIndex = user->radar->momentEngine->rayStatusBufferIndex;
             RKOperatorSendBeaconAndString(O, string);

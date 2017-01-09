@@ -31,7 +31,7 @@ typedef struct user_params {
 } UserParams;
 
 // Global variables
-RKRadar *radar = NULL;
+RKRadar *myRadar = NULL;
 
 // Functions
 void *exitAfterAWhile(void *s) {
@@ -41,12 +41,12 @@ void *exitAfterAWhile(void *s) {
 }
 
 static void handleSignals(int signal) {
-    if (radar == NULL) {
+    if (myRadar == NULL) {
         return;
     }
     fprintf(stderr, "\n");
-    RKLog("Caught a %s (%d)  radar->state = 0x%x.\n", RKSignalString(signal), signal, radar->state);
-    RKStop(radar);
+    RKLog("Caught a %s (%d)  radar->state = 0x%x.\n", RKSignalString(signal), signal, myRadar->state);
+    RKStop(myRadar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
 }
@@ -273,25 +273,26 @@ int main(int argc, char *argv[]) {
     }
 
     if (user.fs <= 10.0e6) {
-        radar = RKInitLean();
+        myRadar = RKInitLean();
     } else if (user.fs <= 25.0e6) {
-        radar = RKInitMean();
+        myRadar = RKInitMean();
     } else {
-        radar = RKInit();
+        myRadar = RKInit();
     }
-    if (radar == NULL) {
+    if (myRadar == NULL) {
+        RKLog("Error. Could not allocate radar.\n");
         exit(EXIT_FAILURE);
     }
 
-    RKSetVerbose(radar, user.verbose);
+    RKSetVerbose(myRadar, user.verbose);
     
     if (user.developerMode) {
-        RKSetDeveloperMode(radar);
+        RKSetDeveloperMode(myRadar);
     }
     
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
-    RKCommandCenterAddRadar(center, radar);
+    RKCommandCenterAddRadar(center, myRadar);
     RKCommandCenterStart(center);
     
     // Catch Ctrl-C and exit gracefully
@@ -299,7 +300,7 @@ int main(int argc, char *argv[]) {
     signal(SIGQUIT, handleSignals);
 
     // Set any parameters here:
-    RKSetProcessingCoreCounts(radar, user.coresForPulseCompression, user.coresForProductGenerator);
+    RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
 
     if (user.simulate) {
 
@@ -323,32 +324,32 @@ int main(int argc, char *argv[]) {
         if (!user.quietMode) {
             RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
         }
-        RKSetTransceiver(radar, &RKTestSimulateDataStream, cmd);
+        RKSetTransceiver(myRadar, &RKTestSimulateDataStream, cmd);
 
         // Build a series of options for pedestal
         const char pedzyHost[] = "localhost:9000";
         if (!user.quietMode) {
             RKLog("Pedestal input = '%s'", pedzyHost);
         }
-        RKSetPedestal(radar, &RKPedestalPedzyInit, (void *)pedzyHost);
-        RKSetPedestalExec(radar, &RKPedestalPedzyExec);
-        RKSetPedestalFree(radar, &RKPedestalPedzyFree);
-        RKGoLive(radar);
-        RKWaitWhileActive(radar);
-        RKStop(radar);
+        RKSetPedestal(myRadar, &RKPedestalPedzyInit, (void *)pedzyHost);
+        RKSetPedestalExec(myRadar, &RKPedestalPedzyExec);
+        RKSetPedestalFree(myRadar, &RKPedestalPedzyFree);
+        RKGoLive(myRadar);
+        RKWaitWhileActive(myRadar);
+        RKStop(myRadar);
 
     } else if (user.testPulseCompression) {
 
         RKLog("Testing pulse compression ...");
-        RKGoLive(radar);
-        RKTestPulseCompression(radar, RKTestFlagShowResults);
+        RKGoLive(myRadar);
+        RKTestPulseCompression(myRadar, RKTestFlagShowResults);
 
     }
     
-    RKCommandCenterRemoveRadar(center, radar);
+    RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterFree(center);
 
-    RKFree(radar);
+    RKFree(myRadar);
 
     return 0;
 }

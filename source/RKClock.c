@@ -55,7 +55,7 @@ void RKClockFree(RKClock *clock) {
 #pragma mark Properties
 
 void RKClockSetName(RKClock *clock, const char *name) {
-    strncpy(clock->name, name, RKMaximumStringLength - 1);
+    strncpy(clock->name, name, RKNameLength - 1);
 }
 
 void RKClockSetVerbose(RKClock *clock, const int verbose) {
