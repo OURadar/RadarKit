@@ -198,8 +198,10 @@ void *theClient(void *in) {
                                     usleep(1000);
                                 }
                             } else if (errno != EAGAIN) {
-                                RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
-                                        C->name, r, k, errno, RKErrnoString(errno), timeoutCount);
+                                if (timeoutCount % 1000 == 0) {
+                                    RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
+                                          C->name, r, k, errno, RKErrnoString(errno), timeoutCount);
+                                }
 //                                if (r == 0) {
 //                                    timeoutCount--;
 //                                }
@@ -280,7 +282,7 @@ void *theClient(void *in) {
                 break;
             } else {
                 RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                fclose(fid);
+                //fclose(fid);
                 break;
             }
 

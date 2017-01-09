@@ -260,6 +260,12 @@ int RKSetPedestal(RKRadar *radar, RKPedestal init(RKRadar *, void *), void *init
     return RKResultNoError;
 }
 
+int RKSetPedestalExec(RKRadar *radar, int exec(RKPedestal, const char *)) {
+    RKLog("Assing PEDZY ...\n");
+    radar->pedestalExec = exec;
+    return RKResultNoError;
+}
+
 #pragma mark - Properties
 
 int RKSetVerbose(RKRadar *radar, const int verbose) {
@@ -412,6 +418,7 @@ int RKStop(RKRadar *radar) {
     }
     if (radar->pedestalInit != NULL) {
         if (radar->pedestalExec != NULL) {
+            RKLog("Sending stop command to pedestal");
             radar->pedestalExec(radar->pedestal, "stop");
         }
         pthread_join(radar->pedestalThreadId, NULL);

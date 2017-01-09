@@ -47,14 +47,14 @@ void *RKServerRoutine(void *in) {
     // Avoid "Address already in use" error
     ii = 1;
     if (setsockopt(M->sd, SOL_SOCKET, SO_REUSEADDR, &ii, sizeof(ii)) == -1) {
-        RKLog("Error. %s failed at setsockopt().\n", M->name);
+        RKLog("%s Error. Failed at setsockopt().\n", M->name);
         M->state = RKServerStateNull;
         return NULL;
     }
 
     // Bind
     if (bind(M->sd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-        RKLog("Error. %s failed at bind().\n", M->name);
+        RKLog("%s Error. Failed at bind().\n", M->name);
         M->state = RKServerStateNull;
         close(M->sd);
         return NULL;
@@ -62,7 +62,7 @@ void *RKServerRoutine(void *in) {
 
     // Listen
     if (listen(M->sd, M->maxClient + 1) < 0) {
-        RKLog("Error. %s failed at listen().\n", M->name);
+        RKLog("%s Error. Gailed at listen().\n", M->name);
         M->state = RKServerStateNull;
         return NULL;
     }
@@ -90,7 +90,7 @@ void *RKServerRoutine(void *in) {
         if (ii > 0 && FD_ISSET(M->sd, &rfd)) {
             // accept a connection, this part shouldn't be blocked. Reuse sa since we no longer need it
             if ((sid = accept(M->sd, (struct sockaddr *)&sa, &sa_len)) == -1) {
-                RKLog("Error. %s failed at accept().\n", M->name);
+                RKLog("%s Error. Failed at accept().\n", M->name);
                 break;
             }
             if (M->verbose) {
@@ -109,9 +109,9 @@ void *RKServerRoutine(void *in) {
             // This isn't really an error, just mean no one is connecting & timeout...
             continue;
         } else if (ii == -1) {
-            RKLog("Error. %s failed at select().\n", M->name);
+            RKLog("%s Error. Failed at select().\n", M->name);
         } else {
-            RKLog("Error. %s at an unknown state.\n", M->name);
+            RKLog("%s Error. At an unknown state.\n", M->name);
         }
     }
     
@@ -197,7 +197,7 @@ void *RKOperatorRoutine(void *in) {
                 }
             } else if (r < 0) {
                 // Errors
-                RKLog("Error. %s encountered something bad.\n", M->name);
+                RKLog("%s Error. Encountered something bad.\n", M->name);
                 break;
             } else {
                 // Timeout (r == 0)
@@ -235,7 +235,7 @@ void *RKOperatorRoutine(void *in) {
             }
         } else if (r < 0) {
             // Errors
-            RKLog("Error. %s has %s encountered an unexpected error.\n", M->name, O->name);
+            RKLog("%s %s Error. Encountered an unexpected error.\n", M->name, O->name);
             break;
         } else {
             // Timeout (r == 0)
@@ -311,7 +311,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
     if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
-        RKLog("Error. %s failed to create RKOperatorRoutine().\n", M->name);
+        RKLog("%s Error. Failed to create RKOperatorRoutine().\n", M->name);
         pthread_mutex_unlock(&M->lock);
         return RKResultErrorCreatingOperatorRoutine;
     }
@@ -464,7 +464,7 @@ void RKServerSetSharedResource(RKServer *M, void *resource) {
 void RKServerActivate(RKServer *M) {
     M->state = RKServerStateOpening;
     if (pthread_create(&M->threadId, NULL, RKServerRoutine, M)) {
-        RKLog("Error. %s unable to launch main server.\n", M->name);
+        RKLog("%s Error. Unable to launch main server.\n", M->name);
     }
     while (M->state > RKServerStateNull && M->state < RKServerStateActive) {
         usleep(25000);

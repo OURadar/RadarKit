@@ -503,7 +503,7 @@ void *pulseWatcher(void *_in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
-                RKLog("Warning. %s projected an I/Q Buffer overflow.\n", engine->name);
+                RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
 //
 //  while loop implementation.... replaced by a dowhile
 //                i = RKPreviousModuloS(*engine->index, engine->size);
@@ -528,7 +528,7 @@ void *pulseWatcher(void *_in) {
                 engine->filterGid[k] = -1;
                 engine->planIndices[k][0] = 0;
                 if (--skipCounter == 0) {
-                    RKLog(">Info. %s skipped a chunk.\n", engine->name);
+                    RKLog(">%s Info. Skipped a chunk.\n", engine->name);
                 }
             } else {
                 // Compute the filter group id to use
@@ -550,7 +550,7 @@ void *pulseWatcher(void *_in) {
                     if (!found) {
                         RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
                         if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
-                            RKLog("Error. %s unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
+                            RKLog("%s Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
                             exit(EXIT_FAILURE);
                         }
                         planIndex = engine->planCount;
@@ -679,7 +679,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     }
     engine->filterGid = (int *)malloc(size * sizeof(int));
     if (engine->filterGid == NULL) {
-        RKLog("Error. %s unable to allocate filterGid.\n", engine->name);
+        RKLog("%s Error. Unable to allocate filterGid.\n", engine->name);
         exit(EXIT_FAILURE);
     }
 
@@ -689,14 +689,14 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(size * sizeof(RKPulseCompressionPlanIndex));
     engine->memoryUsage += size * sizeof(RKPulseCompressionPlanIndex);
     if (engine->planIndices == NULL) {
-        RKLog("Error. %s unable to allocate planIndices.\n", engine->name);
+        RKLog("%s Error. Unable to allocate planIndices.\n", engine->name);
         exit(EXIT_FAILURE);
     }
 }
 
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count) {
     if (engine->state == RKPulseCompressionEngineStateActive) {
-        RKLog("Error. %s does not allow core count change when the engine is active.\n", engine->name);
+        RKLog("%s Error. Core count cannot change when the engine is active.\n", engine->name);
         return;
     }
     engine->coreCount = count;

@@ -16,9 +16,10 @@ int RKLog(const char *whatever, ...) {
     }
     // Construct the string
     int i = 0;
+    size_t len;
     va_list args;
-    va_start(args, whatever);
     char msg[2048];
+    va_start(args, whatever);
     if (strlen(whatever) > 1600) {
         fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
     }
@@ -27,26 +28,58 @@ int RKLog(const char *whatever, ...) {
     } else {
         i += snprintf(msg, 2040, "%19s : [%s] ", RKNow(), rkGlobalParameters.program);
     }
-    bool has_ok = (strcasestr(whatever, "ok") != NULL);
-    bool has_not_ok = (strcasestr(whatever, "error") != NULL);
-    bool has_warning = (strcasestr(whatever, "warning") != NULL);
-    if (rkGlobalParameters.showColor) {
+    char *okay_str = strcasestr(whatever, "ok");
+    char *info_str = strcasestr(whatever, "info");
+    char *error_str = strcasestr(whatever, "error");
+    char *warning_str = strcasestr(whatever, "warning");
+    bool has_ok = okay_str != NULL;
+    bool has_info = info_str != NULL;
+    bool has_error =  error_str != NULL;
+    bool has_warning = warning_str != NULL;
+    
+    char *anchor = (char *)whatever + (whatever[0] == '>' ? 1 : 0);
+
+    if (has_ok || has_info || has_error || has_warning) {
+        char colored_whatever[2048];
+        
         if (has_ok) {
-            i += snprintf(msg + i, 2040 - i, "\033[1;32m");
-        } else if (has_not_ok) {
-            i += snprintf(msg + i, 2040 - i, "\033[1;31m");
+            len = (size_t)(okay_str - anchor);
+        } else if (has_info) {
+            len = (size_t)(info_str - anchor);
+        } else if (has_error) {
+            len = (size_t)(error_str - anchor);
         } else if (has_warning) {
-            i += snprintf(msg + i, 2040 - i, "\033[1;33m");
+            len = (size_t)(warning_str - anchor);
+        } else {
+            len = 0;
         }
-    }
-    if (whatever[0] == '>') {
-        i += vsprintf(msg + i, whatever + 1, args);
+        
+        strncpy(colored_whatever, anchor, len);
+        colored_whatever[len] = '\0';
+        anchor += len;
+        
+        if (rkGlobalParameters.showColor) {
+            if (has_ok) {
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;32m");
+            } else if (has_info) {
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;36m");
+            } else if (has_error) {
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;31m");
+            } else if (has_warning) {
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;33m");
+            }
+        }
+        strncpy(colored_whatever + len, anchor, 2048 - len);
+        
+        i += vsprintf(msg + i, colored_whatever, args);
+        
+        if (rkGlobalParameters.showColor) {
+            snprintf(msg + i, 2040 - i, "\033[0m");
+        }
     } else {
-        i += vsprintf(msg + i, whatever, args);
+        i += vsprintf(msg + i, anchor, args);
     }
-    if (rkGlobalParameters.showColor && (has_ok || has_not_ok || has_warning)) {
-        snprintf(msg + i, 2040 - i, "\033[0m");
-    }
+    
     if (whatever[strlen(whatever) - 1] != '\n') {
         strncat(msg, "\n", 2040);
     }

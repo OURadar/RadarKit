@@ -415,7 +415,7 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
-                RKLog("Warning. %s projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n",
+                RKLog("%s Warning. Projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n",
                       engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
                 
                 // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
@@ -428,7 +428,7 @@ void *pulseGatherer(void *in) {
             } else if (skipCounter > 0) {
                 // Skip processing if we are in skipping mode
                 if (--skipCounter == 0 && engine->verbose) {
-                    RKLog(">Info. %s skipped a chunk.   engine->index = %d vs %d\n", engine->name, *engine->pulseIndex, k);
+                    RKLog(">%s Info. Skipped a chunk.   engine->index = %d vs %d\n", engine->name, *engine->pulseIndex, k);
                     for (i = 0; i < engine->coreCount; i++) {
                         engine->workers[i].lag = 0.0f;
                     }
@@ -444,7 +444,7 @@ void *pulseGatherer(void *in) {
                         engine->momentSource[j].length = count;
                         if (engine->useSemaphore) {
                             if (sem_post(sem[c])) {
-                                RKLog("Error. %s failed in sem_post(), errno = %d\n", engine->name, errno);
+                                RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
                             }
                         } else {
                             engine->workers[c].tic++;

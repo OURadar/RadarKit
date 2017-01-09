@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
 
     UserParams user = processInput(argc, argv);
 
-    RKSetProgramName("RadarKitTest");
+    RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);
     RKSetWantColor(!user.noColor);
 
@@ -331,6 +331,7 @@ int main(int argc, char *argv[]) {
             RKLog("Pedestal input = '%s'", pedzyHost);
         }
         RKSetPedestal(radar, &RKPedestalPedzyInit, (void *)pedzyHost);
+        RKSetPedestalExec(radar, &RKPedestalPedzyExec);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
         RKStop(radar);

@@ -65,6 +65,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
 int RKPedestalPedzyExec(RKPedestal input, const char *command) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
+    RKLog("%s received '%s'", me->client->name, command);
     RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
     return RKResultNoError;
 }
