@@ -199,21 +199,21 @@ void *theClient(void *in) {
                                     usleep(1000);
                                 }
                             } else if (errno != EAGAIN) {
-                                //if (timeoutCount % 1000 == 0) {
+                                if (C->verbose > 1) {
                                     RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
                                           C->name, r, k, errno, RKErrnoString(errno), timeoutCount);
+                                }
                                 timeoutCount = C->timeoutSeconds * 1000;
-                                //}
-//                                if (r == 0) {
-//                                    timeoutCount--;
-//                                }
-//                                continue;
                                 C->state = RKClientStateReconnecting;
                             }
-                            RKLog("... errno = %d ...\n", errno);
+                            if (C->verbose > 1) {
+                                RKLog("... errno = %d ...\n", errno);
+                            }
                         }
                         if (timeoutCount >= C->timeoutSeconds * 1000) {
-                            RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", C->name, timeoutCount, errno);
+                            if (C->verbose > 1) {
+                                RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", C->name, timeoutCount, errno);
+                            }
                             break;
                         }
                         readOkay = true;
@@ -235,8 +235,12 @@ void *theClient(void *in) {
                                     usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
-                                        C->name, r, k, errno, RKErrnoString(errno));
+                                if (C->verbose > 1) {
+                                    RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
+                                          C->name, r, k, errno, RKErrnoString(errno));
+                                }
+                                timeoutCount = C->timeoutSeconds * 1000;
+                                C->state = RKClientStateReconnecting;
                                 break;
                             }
                         }
@@ -285,11 +289,11 @@ void *theClient(void *in) {
                 break;
             } else {
                 RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                //fclose(fid);
                 break;
             }
 
             if (readOkay == false) {
+                RKLog("%s Server disconnected.\n", C->name);
                 C->state = RKClientStateReconnecting;
                 close(C->sd);
                 continue;

@@ -46,6 +46,8 @@
 void stripTrailingUnwanted(char *str);
 
 char *RKNow();
+char *RKGetColor();
+char *RKGetColorOfIndex(const int i);
 
 char *RKIntegerToCommaStyleString(const long);
 char *RKFloatToCommaStyleString(const float);

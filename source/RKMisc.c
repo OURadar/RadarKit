@@ -13,10 +13,27 @@ void stripTrailingUnwanted(char *str) {
 char *RKNow() {
     static char timestr[32];
     time_t utc;
-    /* Here is a nice reference: http://www.cplusplus.com/ref/ctime/time.html */
+    //
+    // Here is a nice reference: http://www.cplusplus.com/ref/ctime/time.html
+    //
     time(&utc);
     strftime(timestr, 32, "%Y/%m/%d %T", localtime(&utc));
     return timestr;
+}
+
+char *RKGetColor() {
+    static int c = 0;
+    return RKGetColorOfIndex(c++);
+}
+
+char *RKGetColorOfIndex(const int i) {
+    //
+    // Here is a reference: http://misc.flogisoft.com/bash/tip_colors_and_formatting
+    //
+    const uint8_t colors[] = {197, 214, 226, 46, 50, 33, 99, 164};
+    static char str[32];
+    snprintf(str, 31, "\033[1;38;5;%dm", colors[i % sizeof(colors)]);
+    return str;
 }
 
 #pragma mark -

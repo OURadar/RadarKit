@@ -104,9 +104,9 @@ void *momentCore(void *in) {
     sem_t *sem = me->sem;
 
     // Initiate a variable to store my name
-    char name[32];
+    char name[64];
     if (rkGlobalParameters.showColor) {
-        k = sprintf(name, "\033[9%dm", c % 7 + 1);
+        k = snprintf(name, 63, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
     } else {
         k = 0;
     }
@@ -116,7 +116,7 @@ void *momentCore(void *in) {
         k += sprintf(name + k, "M%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, "\033[0m");
+        sprintf(name + k, RKNoColor);
     }
 
     // Allocate local resources and keep track of the total allocation

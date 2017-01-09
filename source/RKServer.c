@@ -139,7 +139,7 @@ void *RKOperatorRoutine(void *in) {
 
     struct timeval  timeout;
 
-    RKLog("%s started %s for a connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq++);
+    RKLog("%s %s started for the connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq++);
 
     // Greet with welcome function
     if (M->w != NULL) {
@@ -213,7 +213,7 @@ void *RKOperatorRoutine(void *in) {
         if (r > 0) {
             if (FD_ISSET(O->sid, &efd)) {
                 // Exceptions
-                RKLog("%s has %s encountered an exception error.\n", M->name, O->name);
+                RKLog("%s %s encountered an exception error.\n", M->name, O->name);
                 break;
             } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
@@ -221,7 +221,7 @@ void *RKOperatorRoutine(void *in) {
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
-                    RKLog("%s has %s disconnected.\n", M->name, O->name);
+                    RKLog("%s %s disconnected.\n", M->name, O->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -244,7 +244,7 @@ void *RKOperatorRoutine(void *in) {
         // Process the timeout
         mwait = wwait < rwait ? wwait : rwait;
         if (mwait > M->timeoutSeconds * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
-            RKLog("%s has %d encountered a timeout.\n", M->name, O->name);
+            RKLog("%s %d encountered a timeout.\n", M->name, O->name);
             // Dismiss with a terminate function
             if (M->t != NULL) {
                 M->t(O);
@@ -254,7 +254,7 @@ void *RKOperatorRoutine(void *in) {
     } // while () ...
 
     if (M->verbose) {
-        RKLog("%s has %s returning ...\n", M->name, O->name);
+        RKLog("%s %s returning ...\n", M->name, O->name);
     }
     M->ids[O->iid] = false;
 
@@ -291,16 +291,18 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 
     // Default operator parameters that should not be 0
     O->M = M;
-    O->sid = sid;
-    //O->iid = sid - M->sd;
     O->iid = k;
+    O->sid = sid;
     O->state = RKOperatorStateActive;
     O->option = RKOperatorOptionNone;
     O->timeoutSeconds = 10;
     O->userResource = M->userResource;
     pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
-    snprintf(O->name, RKMaximumStringLength - 1, "Op-%03d", O->iid);
+    snprintf(O->name, RKMaximumStringLength - 1, "%sO%d%s",
+             rkGlobalParameters.showColor ? RKGetColorOfIndex(O->iid) : "",
+             O->iid,
+             rkGlobalParameters.showColor ? RKNoColor : "");
     O->delim.type = RKNetworkPacketTypePlainText;
     O->delim.size = 0;
     O->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';

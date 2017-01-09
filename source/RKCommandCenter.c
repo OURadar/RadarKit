@@ -112,8 +112,12 @@ int socketCommandHandler(RKOperator *O) {
     int j, k;
     char input[RKMaximumStringLength];
     char string[RKMaximumStringLength];
-    
-    RKLog("%s has %d radar\n", engine->name, engine->radarCount);
+
+    j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
+    for (k = 0; k < engine->radarCount; k++) {
+        RKRadar *radar = engine->radars[k];
+        j += snprintf(string + j, RKMaximumStringLength - j - 1, " %s", radar->name);
+    }
 
     //int ival;
     char sval1[64], sval2[64];
@@ -237,7 +241,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     }
     memset(engine, 0, sizeof(RKCommandCenter));
     sprintf(engine->name, "%s<CommandCenter>%s",
-            rkGlobalParameters.showColor ? "\033[1;48;5;27m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? "\033[1;97;48;5;27m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->server = RKServerInit();
     RKServerSetName(engine->server, engine->name);

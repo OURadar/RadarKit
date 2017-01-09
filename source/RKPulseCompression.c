@@ -105,9 +105,9 @@ void *pulseCompressionCore(void *_in) {
     };
 
     // Initiate a variable to store my name
-    char name[20];
+    char name[64];
     if (rkGlobalParameters.showColor) {
-        k = sprintf(name, "\033[9%dm", c % 7 + 1);
+        k = snprintf(name, 63, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
     } else {
         k = 0;
     }
@@ -117,7 +117,7 @@ void *pulseCompressionCore(void *_in) {
         k += sprintf(name + k, "P%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, "\033[0m");
+        sprintf(name + k, RKNoColor);
     }
 
 #if defined(_GNU_SOURCE)
