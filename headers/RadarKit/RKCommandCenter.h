@@ -33,15 +33,15 @@ enum RKUserFlag {
     RKUserFlagDisplayK           = (1 << 22),      //
     RKUserFlagDisplayS           = (1 << 23),      //
     RKUserFlagDisplayZVWDPRKS    = 0x0000FF0000,   //
-    RKUserFlagProductZ           = (1 << 32),      // Products
-    RKUserFlagProductV           = (1 << 33),      //
-    RKUserFlagProductW           = (1 << 34),      //
-    RKUserFlagProductD           = (1 << 35),      //
-    RKUserFlagProductP           = (1 << 36),      //
-    RKUserFlagProductR           = (1 << 37),      //
-    RKUserFlagProductK           = (1 << 38),      //
-    RKUserFlagProductS           = (1 << 39),      //
-    RKUserFlagProductZVWDPRKS    = 0xFF00000000    //
+    RKUserFlagProductZ           = (1ULL << 32),      // Products
+    RKUserFlagProductV           = (1ULL << 33),      //
+    RKUserFlagProductW           = (1ULL << 34),      //
+    RKUserFlagProductD           = (1ULL << 35),      //
+    RKUserFlagProductP           = (1ULL << 36),      //
+    RKUserFlagProductR           = (1ULL << 37),      //
+    RKUserFlagProductK           = (1ULL << 38),      //
+    RKUserFlagProductS           = (1ULL << 39),      //
+    RKUserFlagProductZVWDPRKS    = 0xFF00000000ULL    //
 };
 
 typedef struct  rk_user {
