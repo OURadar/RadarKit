@@ -331,28 +331,28 @@ void *pulseGatherer(void *in) {
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {
-                RKLog(">    Info. Semaphore %s exists. Try to remove and recreate.\n", worker->semaphoreName);
+                RKLog(">%s Info. Semaphore %s exists. Try to remove and recreate.\n", engine->name, worker->semaphoreName);
             }
             if (sem_unlink(worker->semaphoreName)) {
-                RKLog(">    Error. Unable to unlink semaphore %s.\n", worker->semaphoreName);
+                RKLog(">%s Error. Unable to unlink semaphore %s.\n", engine->name, worker->semaphoreName);
             }
             // 2nd trial
             sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
             if (sem[c] == SEM_FAILED) {
-                RKLog(">    Error. Unable to remove then create semaphore %s\n", worker->semaphoreName);
+                RKLog(">%s Error. Unable to remove then create semaphore %s\n", engine->name, worker->semaphoreName);
                 return (void *)RKResultFailedToInitiateSemaphore;
             } else if (engine->verbose > 1) {
-                RKLog(">    Info. Semaphore %s removed and recreated.\n", worker->semaphoreName);
+                RKLog(">%s Info. Semaphore %s removed and recreated.\n", engine->name, worker->semaphoreName);
             }
         }
         worker->id = c;
         worker->sem = sem[c];
         worker->parentEngine = engine;
         if (engine->verbose > 1) {
-            RKLog(">    %s @ %p\n", worker->semaphoreName, worker->sem);
+            RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
         }
         if (pthread_create(&worker->tid, NULL, momentCore, worker) != 0) {
-            RKLog(">    Error. Failed to start a moment core.\n");
+            RKLog(">%s Error. Failed to start a moment core.\n", engine->name);
             return (void *)RKResultFailedToStartMomentCore;
         }
     }

@@ -35,7 +35,7 @@ RKRadar *radar = NULL;
 
 // Functions
 void *exitAfterAWhile(void *s) {
-    sleep(1);
+    sleep(2);
     RKLog("Forced exit.\n");
     exit(EXIT_SUCCESS);
 }
@@ -332,6 +332,7 @@ int main(int argc, char *argv[]) {
         }
         RKSetPedestal(radar, &RKPedestalPedzyInit, (void *)pedzyHost);
         RKSetPedestalExec(radar, &RKPedestalPedzyExec);
+        RKSetPedestalFree(radar, &RKPedestalPedzyFree);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
         RKStop(radar);

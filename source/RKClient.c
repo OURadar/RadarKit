@@ -46,7 +46,7 @@ void *theClient(void *in) {
     // Here comes the infinite loop until being stopped
     while (C->state < RKClientStateReconnecting) {
 
-        C->state = RKClientStateConnecting;
+        C->state = RKClientStateResolvingIP;
 
         //if (C->verbose > 1) {
             RKLog("%s opening a %s socket ...\n", C->name,
@@ -111,14 +111,14 @@ void *theClient(void *in) {
             // In progress is not a true failure
             if (errno != EINPROGRESS) {
                 close(C->sd);
-                k = 3;
+                k = 30;
                 do {
-                    if (C->verbose > 1) {
+                    if (C->verbose > 1 && k % 10 == 0) {
                         RKLog("%s Connection failed (errno = %d). Retry in %d second%s ...\n", C->name, k, k > 1 ? "s" : "");
                     }
                     k--;
-                    sleep(1);
-                } while (k > 0);
+                    usleep(100000);
+                } while (k > 0 && C->state < RKClientStateReconnecting);
                 continue;
             }
         }
@@ -154,6 +154,7 @@ void *theClient(void *in) {
         } else if (C->verbose) {
             if (C->type == RKNetworkSocketTypeTCP) {
                 RKLog("%s connected.\n", C->name);
+                C->state = RKClientStateConnected;
             } else {
                 // UDP may not mean connected at this point
                 RKLog("%s initialized.\n", C->name);
@@ -205,6 +206,7 @@ void *theClient(void *in) {
 //                                if (r == 0) {
 //                                    timeoutCount--;
 //                                }
+                                // C->state = RKClientStateReconnecting;
                                 continue;
                             }
                             RKLog("... errno = %d ...\n", errno);
@@ -287,17 +289,19 @@ void *theClient(void *in) {
             }
 
             if (readOkay == false) {
+                C->state = RKClientStateReconnecting;
                 close(C->sd);
                 break;
             }
             C->recv(C);
         }
 
-        C->state = RKClientStateConnecting;
-
+        RKLog("%s state = %d", C->name, C->state);
         // Wait a while before trying to reconnect
-        sleep(3);
-
+        k = 0;
+        do {
+            sleep(100000);
+        } while (k < 30 && C->state < RKClientStateDisconnecting);
     }
     free(buf);
 
@@ -360,10 +364,12 @@ RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
 }
 
 void RKClientFree(RKClient *C) {
-    if (C->state > RKClientStateConnecting && C->state < RKClientStateDisconnecting) {
+    RKLog("%s Disconnecting ...\n", C->name);
+    if (C->state > RKClientStateResolvingIP && C->state < RKClientStateDisconnecting) {
         C->state = RKClientStateDisconnecting;
     }
     pthread_join(C->threadId, NULL);
+    RKLog("%s thread joined.\n", C->name);
     free(C);
     return;
 }
@@ -399,7 +405,7 @@ void RKClientStart(RKClient *C) {
     return;
 }
 void RKClientStop(RKClient *C) {
-    if (C->state > RKClientStateConnecting && C->state < RKClientStateDisconnecting) {
+    if (C->state > RKClientStateResolvingIP && C->state < RKClientStateDisconnecting) {
         C->state = RKClientStateDisconnecting;
     } else {
         RKLog("Error. Client does not seem to be running.\n");

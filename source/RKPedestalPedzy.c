@@ -76,4 +76,3 @@ int RKPedestalPedzyFree(RKPedestal input) {
     free(me);
     return RKResultNoError;
 }
-

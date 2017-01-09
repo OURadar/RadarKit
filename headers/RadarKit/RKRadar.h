@@ -128,9 +128,12 @@ int RKFree(RKRadar *radar);
 
 // Set the transceiver / pedestal with their initialization handler and initial input
 int RKSetTransceiver(RKRadar *radar, RKTransceiver(RKRadar *, void *), void *);
+int RKSetTransceiverExec(RKRadar *radar, int routine(RKTransceiver, const char *));
+int RKSetTransceiverFree(RKRadar *radar, int routine(RKTransceiver));
 
 int RKSetPedestal(RKRadar *radar, RKPedestal(RKRadar *, void *), void *);
 int RKSetPedestalExec(RKRadar *radar, int(RKPedestal, const char *));
+int RKSetPedestalFree(RKRadar *radar, int(RKPedestal));
 
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);

@@ -43,7 +43,7 @@ void *pulseTagger(void *in) {
     engine->state = RKPositionEngineStateActive;
 
     // Wait until there are at least two position readings.
-    while (engine->clock->count < 2) {
+    while (engine->clock->count < 2 && engine->state == RKPositionEngineStateActive) {
         usleep(1000);
     }
 

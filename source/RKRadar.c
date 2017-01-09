@@ -14,14 +14,16 @@
 
 #pragma mark - Helper Functions
 
-RKTransceiver backgroundTransceiverInit(void *in) {
+void *backgroundTransceiverInit(void *in) {
     RKRadar *radar = (RKRadar *)in;
-    return radar->transceiverInit(radar, radar->transceiverInitInput);
+    radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
+    return NULL;
 }
 
-RKPedestal backgroundPedestalInit(void *in) {
+void *backgroundPedestalInit(void *in) {
     RKRadar *radar = (RKRadar *)in;
-    return radar->pedestalInit(radar, radar->pedestalInitInput);
+    radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
+    return NULL;
 }
 
 void *radarCoPilot(void *in) {
@@ -230,6 +232,7 @@ int RKFree(RKRadar *radar) {
     RKMomentEngineFree(radar->momentEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
+    radar->pedestalFree(radar->pedestal);
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
@@ -248,21 +251,35 @@ int RKFree(RKRadar *radar) {
 
 #pragma mark - Hardware Hooks
 
-int RKSetTransceiver(RKRadar *radar, RKTransceiver init(RKRadar *, void *), void *initInput) {
-    radar->transceiverInit = init;
+int RKSetTransceiver(RKRadar *radar, RKTransceiver routine(RKRadar *, void *), void *initInput) {
+    radar->transceiverInit = routine;
     radar->transceiverInitInput = initInput;
     return RKResultNoError;
 }
 
-int RKSetPedestal(RKRadar *radar, RKPedestal init(RKRadar *, void *), void *initInput) {
-    radar->pedestalInit = init;
+int RKSetTransceiverExec(RKRadar *radar, int routine(RKTransceiver, const char *)) {
+    radar->transceiverExec = routine;
+    return RKResultNoError;
+}
+
+int RKSetTransceiverFree(RKRadar *radar, int routine(RKTransceiver)) {
+    radar->transceiverFree = routine;
+    return RKResultNoError;
+}
+
+int RKSetPedestal(RKRadar *radar, RKPedestal routine(RKRadar *, void *), void *initInput) {
+    radar->pedestalInit = routine;
     radar->pedestalInitInput = initInput;
     return RKResultNoError;
 }
 
-int RKSetPedestalExec(RKRadar *radar, int exec(RKPedestal, const char *)) {
-    RKLog("Assing PEDZY ...\n");
-    radar->pedestalExec = exec;
+int RKSetPedestalExec(RKRadar *radar, int routine(RKPedestal, const char *)) {
+    radar->pedestalExec = routine;
+    return RKResultNoError;
+}
+
+int RKSetPedestalFree(RKRadar *radar, int routine(RKPedestal)) {
+    radar->pedestalFree = routine;
     return RKResultNoError;
 }
 
@@ -363,9 +380,6 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Initializing pedestal ...");
         }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
-        while (radar->positionEngine->clock->count < 10) {
-            usleep(1000);
-        }
     }
 
     // Transceiver
@@ -375,7 +389,11 @@ int RKGoLive(RKRadar *radar) {
         }
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
     }
-    radar->state |= RKRadarStateLive;
+
+    // Wait for both pedestal to properly start
+    while (radar->positionEngine->clock->count < 10 && radar->active) {
+        usleep(1000);
+    }
 
     // Launch a co-pilot to monitor status of various engines
 //    if (radar->momentEngine != NULL && radar->desc.initFlags & RKInitFlagVerbose) {
@@ -383,6 +401,7 @@ int RKGoLive(RKRadar *radar) {
 //        pthread_create(&radar->monitorThreadId, NULL, radarCoPilot, radar);
 //    }
     
+    radar->state |= RKRadarStateLive;
     return 0;
 }
 
@@ -409,19 +428,6 @@ int RKStop(RKRadar *radar) {
         // Expect <pulseGatherer> stopped
         RKMomentEngineStop(radar->momentEngine);
         radar->state ^= RKRadarStateMomentEngineInitialized;
-    }
-    if (radar->transceiverInit != NULL) {
-        if (radar->transceiverExec != NULL) {
-            radar->transceiverExec(radar->transceiver, "stop");
-        }
-        pthread_join(radar->transceiverThreadId, NULL);
-    }
-    if (radar->pedestalInit != NULL) {
-        if (radar->pedestalExec != NULL) {
-            RKLog("Sending stop command to pedestal");
-            radar->pedestalExec(radar->pedestal, "stop");
-        }
-        pthread_join(radar->pedestalThreadId, NULL);
     }
     return 0;
 }
