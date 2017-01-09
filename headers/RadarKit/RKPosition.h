@@ -79,12 +79,11 @@ struct rk_position_engine {
     void                   *hardwareInitInput;
 
     // Program set variables
-//    RKPosition             positionBuffer[RKPositionBufferSize];
+    RKClock                *clock;
     double                 *positionTime;
     double                 positionTimeLatest;
     double                 positionTimeOldest;
     pthread_t              threadId;
-    RKClock                *clock;
 
     // Status / health
     uint32_t               processedPulseIndex;

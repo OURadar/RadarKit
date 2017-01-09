@@ -415,9 +415,9 @@ int RKGoLive(RKRadar *radar) {
     }
 
     // Wait for both pedestal to properly start
-    while (radar->positionEngine->clock->count < 10 && radar->active) {
-        usleep(1000);
-    }
+//    while (radar->positionEngine->clock->count < 10 && radar->active) {
+//        usleep(1000);
+//    }
 
     // Launch a co-pilot to monitor status of various engines
 //    if (radar->momentEngine != NULL && radar->desc.initFlags & RKInitFlagVerbose) {

@@ -105,7 +105,7 @@ void *pulseTagger(void *in) {
         }
         // Wait until it has data. Otherwise, time stamp may not be good.
         s = 0;
-        while ((pulse->header.s & RKPulseStatusHasIQData) == 0 && engine->state == RKPositionEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",

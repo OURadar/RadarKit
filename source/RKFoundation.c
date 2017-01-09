@@ -77,7 +77,7 @@ int RKLog(const char *whatever, ...) {
             snprintf(msg + i, 2040 - i, "\033[0m");
         }
     } else {
-        i += vsprintf(msg + i, anchor, args);
+        vsprintf(msg + i, anchor, args);
     }
     
     if (whatever[strlen(whatever) - 1] != '\n') {

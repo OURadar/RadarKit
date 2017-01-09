@@ -299,7 +299,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->userResource = M->userResource;
     pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
-    snprintf(O->name, RKMaximumStringLength - 1, "%sO%d%s",
+    snprintf(O->name, RKNameLength - 1, "%sO%d%s",
              rkGlobalParameters.showColor ? RKGetColorOfIndex(O->iid) : "",
              O->iid,
              rkGlobalParameters.showColor ? RKNoColor : "");

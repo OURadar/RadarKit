@@ -135,7 +135,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         }
     }
     
-    if (clock->verbose > 2) {
+    if (clock->verbose > 3) {
         RKLog(">%s %d / %d   dx/du = %.2e s   x = %.3f\n",
               clock->name, clock->index, clock->count,
               clock->dxdu, RKClockGetTimeSinceInit(clock, x));

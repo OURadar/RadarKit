@@ -402,7 +402,7 @@ void *pulseGatherer(void *in) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.001, k , *engine->pulseIndex, pulse->header.s);
+                      engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKMomentEngineStateActive) {

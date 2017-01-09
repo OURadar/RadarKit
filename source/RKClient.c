@@ -55,18 +55,18 @@ void *theClient(void *in) {
         }
         if (C->type == RKNetworkSocketTypeTCP) {
             if ((C->sd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                RKLog("Error. Unable to create a TCP socket.\n");
+                RKLog("%s Error. Unable to create a TCP socket.\n", C->name);
                 C->state = RKClientStateDisconnected;
                 return NULL;
             }
         } else if (C->type == RKNetworkSocketTypeUDP) {
             if ((C->sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-                RKLog("Error. Unable to create a UDP socket.\n");
+                RKLog("%s Error. Unable to create a UDP socket.\n", C->name);
                 C->state = RKClientStateDisconnected;
                 return NULL;
             }
         } else {
-            RKLog("Error. Unable to determine the socket type %d.\n", C->type);
+            RKLog("%s Error. Unable to determine the socket type %d.\n", C->name, C->type);
             C->state = RKClientStateDisconnected;
             return NULL;
         }

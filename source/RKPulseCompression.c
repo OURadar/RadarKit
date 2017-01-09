@@ -476,7 +476,8 @@ void *pulseWatcher(void *_in) {
         while (k == *engine->index && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->index, pulse->header.s);
+                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.0002f, k , *engine->index, pulse->header.s);
             }
         }
         // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
@@ -484,7 +485,8 @@ void *pulseWatcher(void *_in) {
         while ((pulse->header.s & RKPulseStatusHasPosition) == 0 && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->index, pulse->header.s);
+                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.0002f, k , *engine->index, pulse->header.s);
             }
         }
         if (engine->state == RKPulseCompressionEngineStateActive) {

@@ -101,7 +101,7 @@ int RKFlagToString(char *string, RKUserFlag flag) {
     if (flag & RKUserFlagDisplayK)     { j += sprintf(string + j, "k"); }
     if (flag & RKUserFlagProductK)     { j += sprintf(string + j, "K"); }
     if (flag & RKUserFlagDisplayIQ)    { j += sprintf(string + j, "i"); }
-    if (flag & RKUserFlagProductIQ)    { j += sprintf(string + j, "I"); }
+    if (flag & RKUserFlagProductIQ)    {      sprintf(string + j, "I"); }
     return 0;
 }
 
@@ -178,7 +178,6 @@ int socketStreamHandler(RKOperator *O) {
     // Check system health
 
     if (engine->radarCount < 1) {
-        RKLog("No more radar.\n");
         return 0;
     }
 
@@ -284,6 +283,7 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
+    engine->suspendHandler = true;
     int i;
     for (i = 0; i < engine->radarCount; i++) {
         if (engine->radars[i] == radar) {
@@ -309,6 +309,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
         }
         printf("Remaining radars\n================\n%s", string);
     }
+    engine->suspendHandler = false;
 }
 
 #pragma mark - Interactions
