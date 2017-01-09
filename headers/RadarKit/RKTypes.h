@@ -44,6 +44,7 @@
 #define RKVersionString                  "1.0"
 #define RKBufferCSlotCount               16           // Config
 #define RKBufferSSlotCount               90           // Status strings
+#define RKBufferPSlotCount               2000         // Positions
 #define RKBuffer0SlotCount               5000         // Raw I/Q
 #define RKBuffer2SlotCount               4000         // Ray
 #define RKGateCount                      32768        // Must power of 2!

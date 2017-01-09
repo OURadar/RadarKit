@@ -73,7 +73,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost Full flag
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d] %d", engine->almostFull, engine->rayStatusBufferIndex);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
@@ -389,7 +389,8 @@ void *pulseGatherer(void *in) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         // At this point, three things are happening:
@@ -397,10 +398,11 @@ void *pulseGatherer(void *in) {
         // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
         // A separate thread applies matched filter to the data (RKPulseStatusProcessed).
         s = 0;
-        while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state == RKMomentEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.001, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKMomentEngineStateActive) {
@@ -474,7 +476,7 @@ void *pulseGatherer(void *in) {
 
             // Log a message if it has been a while
             gettimeofday(&t0, NULL);
-            if (RKTimevalDiff(t0, t1) > 0.2) {
+            if (RKTimevalDiff(t0, t1) > 0.05) {
                 t1 = t0;
                 RKMomentUpdateStatusString(engine);
             }

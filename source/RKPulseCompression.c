@@ -479,9 +479,9 @@ void *pulseWatcher(void *_in) {
                 RKLog("%s sleep 1/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->index, pulse->header.s);
             }
         }
-        // The pulse may not have position yet but that is okay. It may get tagged with position while being processed.
+        // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
         s = 0;
-        while ((pulse->header.s & RKPulseStatusHasIQData) == 0 && engine->state == RKPulseCompressionEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusHasPosition) == 0 && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%d  k = %d  pulseIndex = %d  header.s = 0x%02x\n", engine->name, s, k , *engine->index, pulse->header.s);

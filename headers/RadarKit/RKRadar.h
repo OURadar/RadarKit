@@ -37,9 +37,11 @@ enum RKRadarState {
     RKRadarStateRawIQBufferInitialized               = (1 << 4),   // 0x10
     RKRadarStateConfigBufferAllocating               = (1 << 5),   // 0x20
     RKRadarStateConfigBufferIntialized               = (1 << 6),   // 0x40
-    RKRadarStatePulseCompressionEngineInitialized    = (1 << 7),
-    RKRadarStatePositionEngineInitialized            = (1 << 8),
-    RKRadarStateMomentEngineInitialized              = (1 << 9),
+    RKRadarStatePositionBufferAllocating             = (1 << 7),
+    RKRadarStatePositionBufferInitialized            = (1 << 8),
+    RKRadarStatePulseCompressionEngineInitialized    = (1 << 9),
+    RKRadarStatePositionEngineInitialized            = (1 << 10),
+    RKRadarStateMomentEngineInitialized              = (1 << 11),
     RKRadarStateTransceiverInitialized               = (1 << 16),
     RKRadarStatePedestalInitialized                  = (1 << 24),
     RKRadarStateLive                                 = (1 << 31)
@@ -68,12 +70,14 @@ struct rk_radar {
     // Buffers
     //
     RKOperatingParameters      *parameters;
+    RKPosition                 *positions;
     RKBuffer                   pulses;
     RKBuffer                   rays;
     //
     // Anchor indices of the buffers
     //
     uint32_t                   parameterIndex;
+    uint32_t                   positionIndex;
     uint32_t                   pulseIndex;
     uint32_t                   rayIndex;
     //

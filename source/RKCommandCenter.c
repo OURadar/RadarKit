@@ -177,17 +177,28 @@ int socketStreamHandler(RKOperator *O) {
     // Check MM
     // Check system health
 
+    if (engine->radarCount < 1) {
+        RKLog("No more radar.\n");
+        return 0;
+    }
+
+    if (user->radar == NULL) {
+        RKLog("User %s has no associated radar.\n", user->login);
+        return 0;
+    }
+
     if (user->streams & user->access & RKUserFlagStatusPulses && td >= 0.05) {
-        snprintf(user->string, RKMaximumStringLength - 1, "%s %s" RKEOL,
+        snprintf(user->string, RKMaximumStringLength - 1, "%s %s %s" RKEOL,
                  RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
+                 RKPositionEngineStatusString(user->radar->positionEngine),
                  RKMomentEngineStatusString(user->radar->momentEngine));
         RKOperatorSendBeaconAndString(O, user->string);
         user->timeLastOut = time;
     }
     
-    j = 0;
-    k = 0;
     if (user->streams & user->access & RKUserFlagStatusRays) {
+        j = 0;
+        k = 0;
         endIndex = user->radar->momentEngine->rayStatusBufferIndex;
         while (user->rayStatusIndex != endIndex) {
             c = user->radar->momentEngine->rayStatusBuffer[user->rayStatusIndex];
@@ -228,6 +239,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
+    snprintf(user->login, 63, "radarop");
     return RKResultNoError;
 }
 
@@ -272,13 +284,20 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
-    for (int i = 0; i < engine->radarCount; i++) {
+    int i;
+    for (i = 0; i < engine->radarCount; i++) {
         if (engine->radars[i] == radar) {
             RKLog("%s Removing '%s' ...\n", engine->name, radar->name);
             while (i < engine->radarCount - 1) {
                 engine->radars[i] = engine->radars[i + 1];
             }
             engine->radarCount--;
+        }
+    }
+    for (i = 0; i < engine->server->nclient; i++) {
+        if (engine->users[i].radar == radar) {
+            RKLog("%s Removing %s from user %s ...\n", engine->name, radar->name, engine->users[i].login);
+            engine->users[i].radar = NULL;
         }
     }
     if (engine->radarCount) {

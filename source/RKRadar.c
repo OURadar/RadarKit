@@ -98,19 +98,38 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->state ^= RKRadarStateConfigBufferAllocating;
     radar->state |= RKRadarStateConfigBufferIntialized;
 
+    // Position buffer
+    if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
+        radar->state |= RKRadarStatePositionBufferAllocating;
+        bytes = RKBufferPSlotCount * sizeof(RKPosition);
+        radar->positions = (RKPosition *)malloc(bytes);
+        if (radar->positions == NULL) {
+            RKLog("Error. Unable to allocate memory for positions.");
+            return NULL;
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Position buffer occupies %s B  (%s)\n",
+                  RKIntegerToCommaStyleString(bytes),
+                  RKIntegerToCommaStyleString(RKBufferPSlotCount));
+        }
+        radar->memoryUsage += bytes;
+        radar->state ^= RKRadarStatePositionBufferAllocating;
+        radar->state |= RKRadarStatePositionBufferInitialized;
+    }
+
     // IQ buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
         bytes = RKPulseBufferAlloc(&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
         if (bytes == 0 || radar->pulses == NULL) {
-            RKLog("Error. Unable to allocate memory for I/Q pulses");
+            RKLog("Error. Unable to allocate memory for I/Q pulses.");
             return NULL;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Level I buffer occupies %s B  (%s gates x %s pulses) %p\n",
+            RKLog("Level I buffer occupies %s B  (%s gates x %s pulses)\n",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
-                  RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth), radar->pulses);
+                  RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
         }
         for (int i = 0; i < radar->desc.pulseBufferDepth; i++) {
             RKPulse *pulse = RKGetPulse(radar->pulses, i);
@@ -155,6 +174,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     // Position engine
     radar->positionEngine = RKPositionEngineInit();
     RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
+                                          radar->positions, &radar->positionIndex, RKBufferPSlotCount,
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
     radar->memoryUsage += sizeof(RKPositionEngine);
     radar->state |= RKRadarStatePositionEngineInitialized;
@@ -418,8 +438,6 @@ int RKWaitWhileActive(RKRadar *radar) {
 
 int RKStop(RKRadar *radar) {
     radar->active = false;
-
-    RKLog("radar->transceiverThreadId @ %p\n", &radar->transceiverThreadId);
 
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (pthread_join(radar->transceiverThreadId, NULL)) {

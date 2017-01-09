@@ -47,7 +47,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
 
-#define RKPositionBufferSize    4096
+//#define RKPositionBufferSize    4096
 
 typedef int RKPositionEngineState;
 enum RKPositionEngineState {
@@ -64,9 +64,12 @@ typedef struct rk_position_engine RKPositionEngine;
 struct rk_position_engine {
     // User set variables
     char                   name[RKNameLength];
-    RKPulse                *pulseBuffer;
+    RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferSize;
+    RKPosition             *positionBuffer;
+    uint32_t               *positionIndex;
+    uint32_t               positionBufferSize;
     uint8_t                verbose;
     RKPedestal             pedestal;
     RKPedestal             (*hardwareInit)(void *);
@@ -76,15 +79,17 @@ struct rk_position_engine {
     void                   *hardwareInitInput;
 
     // Program set variables
-    RKPosition             positionBuffer[RKPositionBufferSize];
-    double                 positionTime[RKPositionBufferSize];
+//    RKPosition             positionBuffer[RKPositionBufferSize];
+    double                 *positionTime;
     double                 positionTimeLatest;
     double                 positionTimeOldest;
-    uint32_t               positionIndex;
     pthread_t              threadId;
     RKClock                *clock;
 
     // Status / health
+    uint32_t               processedPulseIndex;
+    char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    uint32_t               statusBufferIndex;
     RKPositionEngineState  state;
     uint32_t               tic;
     float                  lag;
@@ -98,7 +103,9 @@ RKPositionEngine *RKPositionEngineInit();
 void RKPositionEngineFree(RKPositionEngine *);
 
 void RKPositionEngineSetVerbose(RKPositionEngine *, const int);
-void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *, RKBuffer, uint32_t *, const uint32_t);
+void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *,
+                                           RKPosition *, uint32_t *, const uint32_t,
+                                           RKPulse *,    uint32_t *, const uint32_t);
 void RKPositionEngineSetHardwareInit(RKPositionEngine *, RKPedestal(void *), void *);
 void RKPositionEngineSetHardwareExec(RKPositionEngine *, int(RKPedestal, const char *));
 void RKPositionEngineSetHardwareFree(RKPositionEngine *, int(RKPedestal));
@@ -108,5 +115,7 @@ int RKPositionEngineStop(RKPositionEngine *);
 
 RKPosition *RKPositionEngineGetVacantPosition(RKPositionEngine *);
 void RKPositionEngineSetPositionReady(RKPositionEngine *, RKPosition *);
+
+char *RKPositionEngineStatusString(RKPositionEngine *engine);
 
 #endif /* __RadarKit_RKPedestal__ */
