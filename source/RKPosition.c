@@ -139,7 +139,7 @@ RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
     sprintf(engine->name, "%s<pulsePositioner>%s",
-            rkGlobalParameters.showColor ? "\033[1;30;46m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? "\033[1;97;46m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     
     engine->clock = RKClockInit();
     RKClockSetName(engine->clock, "<positionClock>");
@@ -199,7 +199,7 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 }
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
-    if (engine->verbose) {
+    if (engine->verbose > 1) {
         RKLog("%s stopping ...\n", engine->name);
     }
     engine->state = RKPositionEngineStateDeactivating;

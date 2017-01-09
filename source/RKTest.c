@@ -408,9 +408,12 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     RKSetLogfile(NULL);
     int gateCount = RKGetPulseCapacity(radar);
 
-    char name[32];
+    char name[64];
+    //
+    //    http://misc.flogisoft.com/bash/tip_colors_and_formatting
+    //
     sprintf(name, "%s<Transceiver>%s",
-            rkGlobalParameters.showColor ? "\033[1;45m" : "",
+            rkGlobalParameters.showColor ? "\033[1;97;48;5;98m" : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     
     // Parse out input parameters
@@ -541,6 +544,9 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             n++;
         } while (radar->active && dt < prt * chunkSize);
         t0 = t1;
+    }
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("%s stopped.\n", name);
     }
     return NULL;
 }

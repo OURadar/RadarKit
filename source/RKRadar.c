@@ -225,14 +225,14 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Freeing radar ...\n");
-    }
     RKClockFree(radar->clock);
     RKMomentEngineFree(radar->momentEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     radar->pedestalFree(radar->pedestal);
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Freeing radar ...\n");
+    }
     while (radar->state & RKRadarStateRawIQBufferAllocating) {
         usleep(1000);
     }
@@ -414,6 +414,8 @@ int RKWaitWhileActive(RKRadar *radar) {
 
 int RKStop(RKRadar *radar) {
     radar->active = false;
+    pthread_join(radar->transceiverThreadId, NULL);
+    pthread_join(radar->pedestalThreadId, NULL);
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         // Expect <pulseWatcher> stopped
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);

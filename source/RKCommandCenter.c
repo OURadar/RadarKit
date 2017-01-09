@@ -237,7 +237,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     }
     memset(engine, 0, sizeof(RKCommandCenter));
     sprintf(engine->name, "%s<CommandCenter>%s",
-            rkGlobalParameters.showColor ? "\033[1;44m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? "\033[1;48;5;27m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->server = RKServerInit();
     RKServerSetName(engine->server, engine->name);
@@ -270,19 +270,22 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
     for (int i = 0; i < engine->radarCount; i++) {
         if (engine->radars[i] == radar) {
-            RKLog("%s removing %s radar ...\n", engine->name, radar->name);
+            RKLog("%s Removing '%s' ...\n", engine->name, radar->name);
             while (i < engine->radarCount - 1) {
                 engine->radars[i] = engine->radars[i + 1];
             }
+            engine->radarCount--;
         }
     }
-    int j = 0;
-    char string[RKMaximumStringLength];
-    for (int k = 0; k < engine->radarCount; k++) {
-        RKRadar *radar = engine->radars[k];
-        j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->name);
+    if (engine->radarCount) {
+        int j = 0;
+        char string[RKMaximumStringLength];
+        for (int k = 0; k < engine->radarCount; k++) {
+            RKRadar *radar = engine->radars[k];
+            j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->name);
+        }
+        printf("Remaining radars\n================\n%s", string);
     }
-    printf("%s\n", string);
 }
 
 #pragma mark - Interactions

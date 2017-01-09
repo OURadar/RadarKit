@@ -106,7 +106,7 @@ void *momentCore(void *in) {
     // Initiate a variable to store my name
     char name[32];
     if (rkGlobalParameters.showColor) {
-        k = sprintf(name, "\033[3%dm", c % 7 + 1);
+        k = sprintf(name, "\033[9%dm", c % 7 + 1);
     } else {
         k = 0;
     }
@@ -288,7 +288,7 @@ void *momentCore(void *in) {
         t2 = t0;
     }
 
-    if (engine->verbose) {
+    if (engine->verbose > 1) {
         RKLog("%s %s freeing reources ...\n", engine->name, name);
     }
     
@@ -366,12 +366,12 @@ void *pulseGatherer(void *in) {
         }
     }
 
-    // Increase the tic once to indicate the watcher is ready
-    engine->tic++;
-
     if (engine->verbose) {
         RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
+    
+    // Increase the tic once to indicate the watcher is ready
+    engine->tic++;
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
@@ -507,7 +507,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKMomentEngine));
     sprintf(engine->name, "%s<productGenerator>%s",
-            rkGlobalParameters.showColor ? "\033[1;30;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? "\033[1;97;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;
@@ -613,7 +613,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose) {
+    if (engine->verbose > 1) {
         RKLog("%s stopping ...\n", engine->name);
     }
     engine->state = RKMomentEngineStateDeactivating;

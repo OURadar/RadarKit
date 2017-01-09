@@ -107,7 +107,7 @@ void *pulseCompressionCore(void *_in) {
     // Initiate a variable to store my name
     char name[20];
     if (rkGlobalParameters.showColor) {
-        k = sprintf(name, "\033[3%dm", c % 7 + 1);
+        k = sprintf(name, "\033[9%dm", c % 7 + 1);
     } else {
         k = 0;
     }
@@ -338,7 +338,7 @@ void *pulseCompressionCore(void *_in) {
     }
 
     // Clean up
-    if (engine->verbose) {
+    if (engine->verbose > 1) {
         RKLog("%s %s freeing reources ...\n", engine->name, name);
     }
 
@@ -629,8 +629,11 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
+    //
+    // http://misc.flogisoft.com/bash/tip_colors_and_formatting
+    //
     sprintf(engine->name, "%s<pulseCompressor>%s",
-            rkGlobalParameters.showColor ? "\033[1;30;43m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? "\033[1;97;48;5;100m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKPulseCompressionEngineStateAllocated;
     engine->useSemaphore = true;
     pthread_mutex_init(&engine->coreMutex, NULL);
@@ -799,7 +802,7 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose) {
+    if (engine->verbose > 1) {
         RKLog("%s stopping ...\n", engine->name);
     }
     engine->state = RKPulseCompressionEngineStateDeactivating;

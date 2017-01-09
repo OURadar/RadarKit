@@ -42,8 +42,11 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     } else {
         desc.port = 9000;
     }
+    //
+    // http://misc.flogisoft.com/bash/tip_colors_and_formatting
+    //
     sprintf(desc.name, "%s<PedzyRelay>%s",
-            rkGlobalParameters.showColor ? "\033[1;45m" : "",
+            rkGlobalParameters.showColor ? "\033[1;97;48;5;90m" : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatConstantSize;
