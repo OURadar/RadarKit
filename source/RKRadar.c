@@ -252,17 +252,17 @@ int RKFree(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Freeing radar ...\n");
     }
-    while (radar->state & RKRadarStateRawIQBufferAllocating) {
-        usleep(1000);
-    }
     if (radar->state & RKRadarStateRawIQBufferInitialized) {
         free(radar->pulses);
     }
-    while (radar->state & RKRadarStateRayBufferAllocating) {
-        usleep(1000);
-    }
     if (radar->state & RKRadarStateRayBufferInitialized) {
         free(radar->rays);
+    }
+    if (radar->state & RKRadarStateConfigBufferIntialized) {
+        free(radar->parameters);
+    }
+    if (radar->state & RKRadarStatePositionBufferInitialized) {
+        free(radar->positions);
     }
     free(radar);
     return EXIT_SUCCESS;

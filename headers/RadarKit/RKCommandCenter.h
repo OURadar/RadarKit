@@ -63,6 +63,7 @@ typedef struct rk_command_center {
     RKRadar      *radars[4];
     
     // Program set variables
+    bool         suspendHandler;
     RKServer     *server;
     int          radarCount;
     RKUser       users[RKCommandCenterMaxConnections];
