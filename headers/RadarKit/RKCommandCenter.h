@@ -21,7 +21,8 @@ enum RKUserFlag {
     RKUserFlagStatusHealth       = (1 << 1),       //
     RKUserFlagStatusPulses       = (1 << 2),       //
     RKUserFlagStatusRays         = (1 << 3),       //
-    RKUserFlagStatusAll          = 0x0E,           //
+    RKUserFlagStatusPositions    = (1 << 4),       //
+    RKUserFlagStatusAll          = 0x1E,           //
     RKUserFlagDisplayIQ          = (1 << 8),       // Low rate IQ
     RKUserFlagProductIQ          = (1 << 9),       // Full rate IQ
     RKUserFlagDisplayZ           = (1 << 16),      // Display

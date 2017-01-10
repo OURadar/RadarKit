@@ -31,6 +31,9 @@ RKUserFlag RKStringToFlag(const char * string) {
             case '2':
                 flag |= RKUserFlagStatusRays;
                 break;
+            case '3':
+                flag |= RKUserFlagStatusPositions;
+                break;
             case 'z':
                 flag |= RKUserFlagDisplayZ;
                 break;
@@ -83,25 +86,26 @@ RKUserFlag RKStringToFlag(const char * string) {
 
 int RKFlagToString(char *string, RKUserFlag flag) {
     int j = 0;
-    if (flag & RKUserFlagStatusHealth) { j += sprintf(string + j, "h"); }
-    if (flag & RKUserFlagStatusPulses) { j += sprintf(string + j, "1"); }
-    if (flag & RKUserFlagStatusRays)   { j += sprintf(string + j, "2"); }
-    if (flag & RKUserFlagDisplayZ)     { j += sprintf(string + j, "z"); }
-    if (flag & RKUserFlagProductZ)     { j += sprintf(string + j, "Z"); }
-    if (flag & RKUserFlagDisplayV)     { j += sprintf(string + j, "v"); }
-    if (flag & RKUserFlagProductV)     { j += sprintf(string + j, "V"); }
-    if (flag & RKUserFlagDisplayW)     { j += sprintf(string + j, "w"); }
-    if (flag & RKUserFlagProductW)     { j += sprintf(string + j, "W"); }
-    if (flag & RKUserFlagDisplayD)     { j += sprintf(string + j, "d"); }
-    if (flag & RKUserFlagProductD)     { j += sprintf(string + j, "D"); }
-    if (flag & RKUserFlagDisplayP)     { j += sprintf(string + j, "p"); }
-    if (flag & RKUserFlagProductP)     { j += sprintf(string + j, "P"); }
-    if (flag & RKUserFlagDisplayR)     { j += sprintf(string + j, "r"); }
-    if (flag & RKUserFlagProductR)     { j += sprintf(string + j, "R"); }
-    if (flag & RKUserFlagDisplayK)     { j += sprintf(string + j, "k"); }
-    if (flag & RKUserFlagProductK)     { j += sprintf(string + j, "K"); }
-    if (flag & RKUserFlagDisplayIQ)    { j += sprintf(string + j, "i"); }
-    if (flag & RKUserFlagProductIQ)    {      sprintf(string + j, "I"); }
+    if (flag & RKUserFlagStatusHealth)    { j += sprintf(string + j, "h"); }
+    if (flag & RKUserFlagStatusPulses)    { j += sprintf(string + j, "1"); }
+    if (flag & RKUserFlagStatusRays)      { j += sprintf(string + j, "2"); }
+    if (flag & RKUserFlagStatusPositions) { j += sprintf(string + j, "3"); }
+    if (flag & RKUserFlagDisplayZ)        { j += sprintf(string + j, "z"); }
+    if (flag & RKUserFlagProductZ)        { j += sprintf(string + j, "Z"); }
+    if (flag & RKUserFlagDisplayV)        { j += sprintf(string + j, "v"); }
+    if (flag & RKUserFlagProductV)        { j += sprintf(string + j, "V"); }
+    if (flag & RKUserFlagDisplayW)        { j += sprintf(string + j, "w"); }
+    if (flag & RKUserFlagProductW)        { j += sprintf(string + j, "W"); }
+    if (flag & RKUserFlagDisplayD)        { j += sprintf(string + j, "d"); }
+    if (flag & RKUserFlagProductD)        { j += sprintf(string + j, "D"); }
+    if (flag & RKUserFlagDisplayP)        { j += sprintf(string + j, "p"); }
+    if (flag & RKUserFlagProductP)        { j += sprintf(string + j, "P"); }
+    if (flag & RKUserFlagDisplayR)        { j += sprintf(string + j, "r"); }
+    if (flag & RKUserFlagProductR)        { j += sprintf(string + j, "R"); }
+    if (flag & RKUserFlagDisplayK)        { j += sprintf(string + j, "k"); }
+    if (flag & RKUserFlagProductK)        { j += sprintf(string + j, "K"); }
+    if (flag & RKUserFlagDisplayIQ)       { j += sprintf(string + j, "i"); }
+    if (flag & RKUserFlagProductIQ)       {      sprintf(string + j, "I"); }
     return 0;
 }
 
@@ -145,7 +149,7 @@ int socketCommandHandler(RKOperator *O) {
             break;
         case 's':
             user->streams = RKStringToFlag(O->cmd + 1);
-            sprintf(string, "{\"access\": 0x%lux, \"streams\": 0x%lux}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
+            sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
             // Fast foward some indices
             user->rayStatusIndex = user->radar->momentEngine->rayStatusBufferIndex;
             RKOperatorSendBeaconAndString(O, string);
@@ -194,6 +198,13 @@ int socketStreamHandler(RKOperator *O) {
         RKOperatorSendBeaconAndString(O, user->string);
         user->timeLastOut = time;
     }
+
+    if (user->streams & user->access & RKUserFlagStatusPositions && td >= 0.05) {
+        snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                 RKPositionEnginePositionString(user->radar->positionEngine));
+        RKOperatorSendBeaconAndString(O, user->string);
+        user->timeLastOut = time;
+    }
     
     if (user->streams & user->access & RKUserFlagStatusRays) {
         j = 0;
@@ -230,9 +241,9 @@ int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    RKLog("%s %s preparing user %d ...\n", engine->name, O->name, O->iid);
+    RKLog(">%s %s preparing user %d ...\n", engine->name, O->name, O->iid);
     memset(user, 0, sizeof(RKUser));
-    user->access = RKUserFlagStatusHealth | RKUserFlagStatusPulses| RKUserFlagStatusRays;
+    user->access = RKUserFlagStatusAll;
     user->access |= RKUserFlagDisplayZVWDPRKS;
     user->access |= RKUserFlagProductZVWDPRKS;
     user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;

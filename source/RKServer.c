@@ -253,8 +253,8 @@ void *RKOperatorRoutine(void *in) {
         }
     } // while () ...
 
-    if (M->verbose) {
-        RKLog("%s %s returning ...\n", M->name, O->name);
+    if (M->verbose > 1) {
+        RKLog(">%s %s returning ...\n", M->name, O->name);
     }
     M->ids[O->iid] = false;
 

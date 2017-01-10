@@ -121,7 +121,7 @@ UserParams processInput(int argc, char **argv) {
         {"debug-demo"            , no_argument      , NULL, 'D'},
         {"fs"                    , required_argument, NULL, 'F'},
         {"lean-system-test"      , no_argument      , NULL, 'L'},
-        {"test-mod"              , no_argument      , NULL, 'M'},
+        {"medium-system-test"    , no_argument      , NULL, 'M'},
         {"test-simd"             , optional_argument, NULL, 'S'},
         {"test-pulse-compression", optional_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
@@ -129,6 +129,7 @@ UserParams processInput(int argc, char **argv) {
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
+        {"test-mod"              , no_argument      , NULL, 'm'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
@@ -171,11 +172,11 @@ UserParams processInput(int argc, char **argv) {
                 user.coresForProductGenerator = 2;
                 break;
             case 'M':
-                if (optarg) {
-                    user.testModuloMath = atoi(optarg);
-                } else {
-                    user.testModuloMath = 1;
-                }
+                user.simulate = true;
+                user.fs = 20.0e6;
+                user.prf = 5000;
+                user.coresForPulseCompression = 2;
+                user.coresForProductGenerator = 2;
                 break;
             case 'S':
                 if (optarg) {
@@ -195,14 +196,21 @@ UserParams processInput(int argc, char **argv) {
                 sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
                 break;
             case 'f':
-                user.prf = atoi(optarg);
+                user.prf = (int)atof(optarg);
                 break;
             case 'g':
-                user.g = atoi(optarg);
+                user.g = (int)atof(optarg);
                 break;
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
+                break;
+            case 'm':
+                if (optarg) {
+                    user.testModuloMath = atoi(optarg);
+                } else {
+                    user.testModuloMath = 1;
+                }
                 break;
             case 's':
                 user.simulate = true;

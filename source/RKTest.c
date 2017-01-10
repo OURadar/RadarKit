@@ -406,7 +406,8 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     gettimeofday(&t0, NULL);
 
     RKSetLogfile(NULL);
-    int gateCount = RKGetPulseCapacity(radar);
+    int capacity = RKGetPulseCapacity(radar);
+    int gateCount = capacity;
 
     char name[RKNameLength];
     //
@@ -442,6 +443,11 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                     break;
                 case 'g':
                     gateCount = atoi(sv);
+                    if (gateCount > capacity) {
+                        RKLog("Warning. gateCount %s is clamped to the capacity %s",
+                              RKIntegerToCommaStyleString(gateCount), RKIntegerToCommaStyleString(capacity));
+                        gateCount = capacity;
+                    }
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
                         RKLog(">gateCount = %s", RKIntegerToCommaStyleString((long)gateCount));
                     }

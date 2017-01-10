@@ -22,13 +22,6 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
 
-    // Full / compact string: Some spaces
-    bool full = true;
-    char spacer[3] = "";
-    if (full) {
-        sprintf(spacer, " ");
-    }
-
     // Always terminate the end of string buffer
     string[RKMaximumStringLength - 1] = '\0';
     string[RKMaximumStringLength - 2] = '#';
@@ -38,42 +31,36 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     i = *engine->rayIndex * (b + 1) / engine->rayBufferSize;
     memset(string, '#', i);
     memset(string + i, '.', b - i);
-    i = b + sprintf(string + b, "%s%04d%s|",
-                    spacer,
-                    *engine->rayIndex,
-                    spacer);
+    i = b + sprintf(string + b, " %04d |", *engine->rayIndex);
 
     // Engine lag
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
-                  spacer,
+    i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s |",
                   rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                   99.9f * engine->lag,
-                  rkGlobalParameters.showColor ? RKNoColor : "",
-                  spacer);
+                  rkGlobalParameters.showColor ? RKNoColor : "");
 
     RKMomentWorker *worker;
 
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s",
-                      spacer,
+        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
                       99.9f * worker->lag,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s|", full ? " " : "");
+    // Put a separator
+    i += snprintf(string + i, RKMaximumStringLength - i, " |");
     // Duty cycle of each core
     for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%2.0f%s",
-                      spacer,
+        i += snprintf(string + i, RKMaximumStringLength - i, " %s%2.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
                       99.9f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
-    // Almost Full flag
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d] %d", engine->almostFull, engine->rayStatusBufferIndex);
+    // Almost full count
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }

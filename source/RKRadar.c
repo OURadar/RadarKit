@@ -88,7 +88,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->parameters = (RKOperatingParameters *)malloc(bytes);
     if (radar->parameters == NULL) {
         RKLog("Error. Unable to allocate memory for pulse parameters");
-        return NULL;
+        exit(EXIT_FAILURE);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Config buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
@@ -105,7 +105,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         radar->positions = (RKPosition *)malloc(bytes);
         if (radar->positions == NULL) {
             RKLog("Error. Unable to allocate memory for positions.");
-            return NULL;
+            exit(EXIT_FAILURE);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Position buffer occupies %s B  (%s)\n",
@@ -123,7 +123,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         bytes = RKPulseBufferAlloc(&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
         if (bytes == 0 || radar->pulses == NULL) {
             RKLog("Error. Unable to allocate memory for I/Q pulses.");
-            return NULL;
+            exit(EXIT_FAILURE);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level I buffer occupies %s B  (%s gates x %s pulses)\n",
@@ -212,14 +212,14 @@ RKRadar *RKInitLean(void) {
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 1;
     desc.pulseBufferDepth = 10000;
-    desc.rayBufferDepth = 2000;
+    desc.rayBufferDepth = 1080;
     return RKInitWithDesc(desc);
 }
 
 RKRadar *RKInitMean(void) {
     RKRadarInitDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
-    desc.pulseCapacity = RKGateCount / 2;
+    desc.pulseCapacity = 8192;
     desc.pulseToRayRatio = 2;
     desc.pulseBufferDepth = RKBuffer0SlotCount;
     desc.rayBufferDepth = RKBuffer2SlotCount;
@@ -401,7 +401,6 @@ int RKGoLive(RKRadar *radar) {
         }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
         radar->state ^= RKRadarStatePedestalInitialized;
-        RKLog("radar->pedestalThreadId = %p\n", &radar->pedestalThreadId);
     }
 
     // Transceiver
@@ -411,13 +410,7 @@ int RKGoLive(RKRadar *radar) {
         }
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
         radar->state |= RKRadarStateTransceiverInitialized;
-        RKLog("radar->transceiverThreadId = %p\n", &radar->pedestalThreadId);
     }
-
-    // Wait for both pedestal to properly start
-//    while (radar->positionEngine->clock->count < 10 && radar->active) {
-//        usleep(1000);
-//    }
 
     // Launch a co-pilot to monitor status of various engines
 //    if (radar->momentEngine != NULL && radar->desc.initFlags & RKInitFlagVerbose) {
@@ -486,6 +479,11 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
     if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
         pulse->header.timeDouble = RKClockGetTime(radar->clock, (double)pulse->header.t, &pulse->header.time);
+    }
+    if (pulse->header.gateCount > pulse->header.capacity) {
+        RKLog("Error. gateCount should not be larger than the capacity %s > %s",
+              RKIntegerToCommaStyleString(pulse->header.gateCount), RKIntegerToCommaStyleString(pulse->header.capacity));
+        pulse->header.gateCount = pulse->header.capacity;
     }
     pulse->header.s = RKPulseStatusHasIQData;
     radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);

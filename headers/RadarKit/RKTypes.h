@@ -44,9 +44,9 @@
 #define RKVersionString                  "1.0"
 #define RKBufferCSlotCount               16           // Config
 #define RKBufferSSlotCount               90           // Status strings
-#define RKBufferPSlotCount               2000         // Positions
+#define RKBufferPSlotCount               500          // Positions
 #define RKBuffer0SlotCount               5000         // Raw I/Q
-#define RKBuffer2SlotCount               4000         // Ray
+#define RKBuffer2SlotCount               1440         // Ray
 #define RKGateCount                      32768        // Must power of 2!
 #define RKLagCount                       5            // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64           // SSE 16, AVX 32, AVX-512 64
@@ -66,8 +66,8 @@
 #define RKMaximumStringLength            4096
 #define RKNameLength                     64
 
-#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[31m" : (x > RKDutyCyleOrangeThreshold ? "\033[33m" : "\033[32m"))
-#define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[31m" : (x > RKLagOrangeThreshold      ? "\033[33m" : "\033[32m"))
+#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[91m" : (x > RKDutyCyleOrangeThreshold ? "\033[93m" : "\033[92m"))
+#define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[91m" : (x > RKLagOrangeThreshold      ? "\033[93m" : "\033[92m"))
 
 /*! @/definedblock */
 

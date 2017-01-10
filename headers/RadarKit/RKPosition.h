@@ -88,6 +88,7 @@ struct rk_position_engine {
     // Status / health
     uint32_t               processedPulseIndex;
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                   positionStringBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
     RKPositionEngineState  state;
     uint32_t               tic;
@@ -115,6 +116,7 @@ int RKPositionEngineStop(RKPositionEngine *);
 RKPosition *RKPositionEngineGetVacantPosition(RKPositionEngine *);
 void RKPositionEngineSetPositionReady(RKPositionEngine *, RKPosition *);
 
-char *RKPositionEngineStatusString(RKPositionEngine *engine);
+char *RKPositionEngineStatusString(RKPositionEngine *);
+char *RKPositionEnginePositionString(RKPositionEngine *);
 
 #endif /* __RadarKit_RKPedestal__ */

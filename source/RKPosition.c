@@ -18,40 +18,60 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine);
 #pragma mark -
 #pragma mark Helper Functions
 
-void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
-    int i;
-    char *string = engine->statusBuffer[engine->statusBufferIndex];
-    // Full / compact string: Some spaces
-    bool full = true;
-    char spacer[2] = "";
-    if (full) {
-        sprintf(spacer, " ");
-    }
+#define RKPositionAzimuthFlagColor(x)                           \
+(x & RKPositionFlagAzimuthError ? "\033[91m" :                  \
+(x & RKPositionFlagAzimuthEnabled ? "\033[92m" : "\033[91m"))
 
+#define RKPositionElevationFlagColor(x)                         \
+(x & RKPositionFlagElevationError ? "\033[91m" :                \
+(x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[91m"))
+
+void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
+    int i, k;
+    char *string;
+
+    // Status string
+    string = engine->statusBuffer[engine->statusBufferIndex];
+    
     // Always terminate the end of string buffer
     string[RKMaximumStringLength - 1] = '\0';
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
     const int b = 10;
-    i = engine->processedPulseIndex * (b + 1) / engine->pulseBufferSize;
-    memset(string, '#', i);
-    memset(string + i, '.', b - i);
-    i = b + sprintf(string + b, "%s|", spacer);
+    k = engine->processedPulseIndex * (b + 1) / engine->pulseBufferSize;
+    memset(string, '#', k);
+    memset(string + k, '.', b - k);
+    i = b + sprintf(string + b, " | ");
 
     // Engine lag
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s%s%02.0f%s%s|",
-                  spacer,
+    i += snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s |",
                   rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                   99.9f * engine->lag,
-                  rkGlobalParameters.showColor ? RKNoColor : "",
-                  spacer);
+                  rkGlobalParameters.showColor ? RKNoColor : "");
+    
+    // Position string
+    string = engine->positionStringBuffer[engine->statusBufferIndex];
 
-    // Almost Full flag
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
-    }
+    // Always terminate the end of string buffer
+    string[RKMaximumStringLength - 1] = '\0';
+    string[RKMaximumStringLength - 2] = '#';
+
+    // Same as previous status, use b characters to draw a bar
+    k = *engine->positionIndex * (b + 1) / engine->positionBufferSize;
+    memset(string, '#', k);
+    memset(string + k, '.', b - k);
+    i = b + sprintf(string + b, " %04d |", *engine->positionIndex);
+    RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferSize)];
+    i += snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s   %sEL%s %6.2f° @ %+6.2f°/s",
+                  (unsigned long long)position->c,
+                  rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+                  rkGlobalParameters.showColor ? RKNoColor : "",
+                  position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
+                  rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
+                  rkGlobalParameters.showColor ? RKNoColor : "",
+                  position->elevationDegrees, position->elevationVelocityDegreesPerSecond);
+
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
@@ -294,4 +314,8 @@ void RKPositionEngineSetPositionReady(RKPositionEngine *engine, RKPosition *posi
 
 char *RKPositionEngineStatusString(RKPositionEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
+}
+
+char *RKPositionEnginePositionString(RKPositionEngine *engine) {
+    return engine->positionStringBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
