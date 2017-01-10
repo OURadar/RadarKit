@@ -14,7 +14,7 @@
 // A clock derived from counter and request time
 #define RKClockDefaultBufferSize         1024
 #define RKClockDefaultStride             100
-#define RKClockAWhile                    2.0
+#define RKClockAWhile                    60.0
 
 typedef struct rk_clock {
     // User set parameters

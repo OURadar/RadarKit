@@ -57,6 +57,7 @@
 #define RKMaxProductCount                6
 #define RKMaxPacketSize                  1024 * 1024
 #define RKNetworkTimeoutSeconds          20
+#define RKNetworkReconnectSeconds        3
 #define RKLagRedThreshold                0.5
 #define RKLagOrangeThreshold             0.7
 #define RKDutyCyleRedThreshold           0.95

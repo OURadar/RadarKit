@@ -91,8 +91,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     if (x - clock->latestTime > RKClockAWhile) {
         RKClockSync(clock, u);
     }
-    clock->latestTime = x;
-    
+
     if (clock->hasWisdom) {
         // Derive time using a simplified Kalman filter, covariance of u and time is identity
         x = clock->x0 + clock->dxdu * (u - clock->u0) + clock->offsetSeconds;
@@ -107,7 +106,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
             dx = clock->xBuffer[k] - clock->xBuffer[j];
             du = clock->uBuffer[k] - clock->uBuffer[j];
             if (du <= 1.0e-6 || du > 1.0e9) {
-                RKLog("Error. Pulse tic change of %.e per second is unexpected.\n", du);
+                RKLog("Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", du, clock->count, clock->stride);
             }
             clock->x0 = clock->xBuffer[j];
             clock->u0 = clock->uBuffer[j];

@@ -111,7 +111,7 @@ void *theClient(void *in) {
             // In progress is not a true failure
             if (errno != EINPROGRESS) {
                 close(C->sd);
-                k = 30;
+                k = RKNetworkReconnectSeconds * 10;
                 do {
                     if (C->verbose > 1 && k % 10 == 0) {
                         RKLog("%s Connection failed (errno = %d). Retry in %d second%s ...\n", C->name, k, k > 1 ? "s" : "");
