@@ -166,7 +166,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     
     radar->positionClock = RKClockInit();
     RKClockSetName(radar->positionClock, "<positionClock>");
-    RKClockSetOffset(radar->positionClock, -0.1);
+    RKClockSetOffset(radar->positionClock, -0.2);
     radar->memoryUsage += sizeof(RKClock);
     
     // Pulse compression engine

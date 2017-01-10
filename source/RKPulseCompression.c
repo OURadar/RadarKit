@@ -59,7 +59,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     // Duty cycle of each core
     for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%2.0f%s",
+        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
                       99.9f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
@@ -610,7 +610,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
     //
-    // http://misc.flogisoft.com/bash/tip_colors_and_formatting
+    //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //
     sprintf(engine->name, "%s<pulseCompressor>%s",
             rkGlobalParameters.showColor ? "\033[1;97;48;5;100m" : "", rkGlobalParameters.showColor ? RKNoColor : "");

@@ -52,7 +52,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     // Duty cycle of each core
     for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%2.0f%s",
+        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
                       99.9f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
@@ -165,7 +165,8 @@ void *momentCore(void *in) {
 
     RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
     float deltaAzimuth, deltaElevation;
-
+    char *string;
+    
     while (engine->state == RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
             if (sem_wait(sem)) {
@@ -247,7 +248,7 @@ void *momentCore(void *in) {
 
         // Status of the ray
         iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
-        char *string = engine->rayStatusBuffer[iu];
+        string = engine->rayStatusBuffer[iu];
         i = io * (RKStatusBarWidth + 1) / engine->rayBufferSize;
         memset(string, '#', i);
         memset(string + i, '.', RKStatusBarWidth - i);
@@ -389,7 +390,7 @@ void *pulseGatherer(void *in) {
         // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
         // A separate thread applies matched filter to the data (RKPulseStatusProcessed).
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKMomentEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state == RKMomentEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -499,6 +500,9 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
+    //
+    //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
+    //
     sprintf(engine->name, "%s<productGenerator>%s",
             rkGlobalParameters.showColor ? "\033[1;97;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;

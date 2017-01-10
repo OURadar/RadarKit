@@ -167,11 +167,11 @@ enum RKPulseStatus {
     RKPulseStatusVacant         = 0,
     RKPulseStatusHasIQData      = 1,                                                      // 0x01
     RKPulseStatusHasPosition    = (1 << 1),                                               // 0x02
-    RKPulseStatusReadyForMoment = (RKPulseStatusHasIQData | RKPulseStatusHasPosition),
     RKPulseStatusInspected      = (1 << 2),
     RKPulseStatusCompressed     = (1 << 3),
     RKPulseStatusSkipped        = (1 << 4),
-    RKPulseStatusProcessed      = (1 << 5)
+    RKPulseStatusProcessed      = (1 << 5),
+    RKPulseStatusReadyForMoment = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
 };
 
 typedef uint32_t RKRayStatus;
