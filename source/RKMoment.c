@@ -28,7 +28,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
 
     // Use b characters to draw a bar
     const int b = 10;
-    i = *engine->rayIndex * (b + 1) / engine->rayBufferSize;
+    i = engine->processedPulseIndex * (b + 1) / engine->pulseBufferSize;
     memset(string, '#', i);
     memset(string + i, '.', b - i);
     i = b + sprintf(string + b, " %04d |", *engine->rayIndex);
@@ -406,7 +406,7 @@ void *pulseGatherer(void *in) {
                 skipCounter = engine->pulseBufferSize / 10;
                 RKLog("%s Warning. Projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n",
                       engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
-                
+//                RKLog("%s Warning. Projected an overflow.", engine->name);
                 // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
                 i = j;
                 do {
@@ -465,6 +465,7 @@ void *pulseGatherer(void *in) {
             gettimeofday(&t0, NULL);
             if (RKTimevalDiff(t0, t1) > 0.05) {
                 t1 = t0;
+                engine->processedPulseIndex = k;
                 RKMomentUpdateStatusString(engine);
             }
         }

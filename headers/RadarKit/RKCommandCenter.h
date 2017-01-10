@@ -54,6 +54,7 @@ typedef struct  rk_user {
     uint32_t     rayStatusIndex;
     uint32_t     pulseStatusIndex;
     char         string[RKMaximumStringLength];
+    RKOperator   *serverOperator;
     RKRadar      *radar;
 } RKUser;
 
@@ -78,5 +79,6 @@ void RKCommandCenterAddRadar(RKCommandCenter *, RKRadar *);
 void RKCommandCenterRemoveRadar(RKCommandCenter *, RKRadar *);
 
 void RKCommandCenterStart(RKCommandCenter *);
+void RKCommandCenterStop(RKCommandCenter *);
 
 #endif /* __RadarKit_RKCommandCenter__ */

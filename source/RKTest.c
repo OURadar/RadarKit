@@ -490,12 +490,6 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     
     while (radar->active) {
 
-//        if (radar->desc.initFlags & RKInitFlagVerbose && radar->pulseIndex > 0) {
-//            RKLog("%s %s",
-//                  RKPulseCompressionEngineStatusString(radar->pulseCompressionEngine),
-//                  RKMomentEngineStatusString(radar->momentEngine));
-//        }
-
         for (j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
 
@@ -507,12 +501,11 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
             if (simulatePosition) {
                 pulse->header.azimuthDegrees = azimuth;
                 pulse->header.elevationDegrees = 2.41f;
-                phi += 0.02f;
-                //azimuth = fmodf(50.0f * tau, 360.0f);
-                azimuth = fmodf(1.0f * t, 360.0f);
+                azimuth = fmodf(25.0f * t, 360.0f);
             }
 
             // Fill in the data...
+            // phi += 0.02f;
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 

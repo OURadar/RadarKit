@@ -250,6 +250,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
     snprintf(user->login, 63, "radarop");
+    user->serverOperator = O;
     return RKResultNoError;
 }
 
@@ -275,6 +276,8 @@ RKCommandCenter *RKCommandCenterInit(void) {
 }
 
 void RKCommandCenterFree(RKCommandCenter *engine) {
+    RKServerFree(engine->server);
+    RKLog("%s ended.\n", engine->name);
     free(engine);
 }
 
@@ -294,6 +297,17 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
+    if (engine->suspendHandler) {
+        RKLog("Wait for command center.\n");
+        int s = 0;
+        while (++s < 10 && engine->suspendHandler) {
+            usleep(100000);
+        }
+        if (s == 10) {
+            RKLog("Should not happen.");
+            exit(EXIT_FAILURE);
+        }
+    }
     engine->suspendHandler = true;
     int i;
     for (i = 0; i < engine->radarCount; i++) {
@@ -307,7 +321,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
     }
     for (i = 0; i < engine->server->nclient; i++) {
         if (engine->users[i].radar == radar) {
-            RKLog("%s Removing %s from user %s ...\n", engine->name, radar->name, engine->users[i].login);
+            RKLog("%s Removing '%s' from user %s %s ...\n", engine->name, radar->name, engine->users[i].serverOperator->name, engine->users[i].login);
             engine->users[i].radar = NULL;
         }
     }
@@ -329,5 +343,13 @@ void RKCommandCenterStart(RKCommandCenter *center) {
     if (center->verbose) {
         RKLog("%s starting ...\n", center->name);
     }
-    RKServerActivate(center->server);
+    RKServerStart(center->server);
+}
+
+void RKCommandCenterStop(RKCommandCenter *center) {
+    if (center->verbose > 1) {
+        RKLog("%s stopping ...\n", center->name);
+    }
+    RKServerStop(center->server);
+    RKLog("%s stopped.\n", center->name);
 }

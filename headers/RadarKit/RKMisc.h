@@ -50,7 +50,7 @@ char *RKGetColor();
 char *RKGetColorOfIndex(const int i);
 
 char *RKIntegerToCommaStyleString(const long);
-char *RKFloatToCommaStyleString(const float);
+char *RKFloatToCommaStyleString(const double);
 
 double RKTimevalDiff(const struct timeval miuend, const struct timeval subtrahend);
 double RKTimespecDiff(const struct timespec miuend, const struct timespec subtrahend);

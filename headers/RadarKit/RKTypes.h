@@ -304,7 +304,7 @@ enum RKPositionFlag {
 
 typedef struct rk_position {
     uint64_t         c;                                    // Counter
-    uint32_t         tic;                                  // Time tic
+    uint64_t         tic;                                  // Time tic
     RKFourByte       rawElevation;                         // Raw elevation readout
     RKFourByte       rawAzimuth;                           // Raw azimuth readout
     RKFourByte       rawElevationVelocity;                 // Raw velocity of elevation readout
@@ -326,6 +326,8 @@ typedef struct rk_position {
     float            azimuthTarget;                        // Targeted progress counter of the azimuth
     float            sweepElevationDegrees;                // Set elevation for current sweep
     float            sweepAzimuthDegrees;                  // Set azimuth for current sweep
+    struct timeval   time;                                 // Time in struct timeval
+    double           timeDouble;                           // Time in double;
 } RKPosition;
 
 //typedef struct rk_timed_position {

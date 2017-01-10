@@ -35,7 +35,7 @@ RKRadar *myRadar = NULL;
 
 // Functions
 void *exitAfterAWhile(void *s) {
-    sleep(10);
+    sleep(3);
     RKLog("Forced exit.\n");
     exit(EXIT_SUCCESS);
 }
@@ -355,6 +355,7 @@ int main(int argc, char *argv[]) {
     }
     
     RKCommandCenterRemoveRadar(center, myRadar);
+    RKCommandCenterStop(center);
     RKCommandCenterFree(center);
 
     RKFree(myRadar);

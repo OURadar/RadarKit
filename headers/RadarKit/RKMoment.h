@@ -62,6 +62,7 @@ struct rk_moment_engine {
     uint8_t                processorLagCount;
     
     // Status / health
+    uint32_t               processedPulseIndex;
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     char                   rayStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;

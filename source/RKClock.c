@@ -131,14 +131,14 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         }
         if (clock->count > (clock->stride / 4)) {
             x = clock->x0 + clock->dxdu * (u - clock->u0) + clock->offsetSeconds;
+            if (clock->verbose > 3) {
+                RKLog(">%s %d / %d   dx/du = %.2e s   x = %.3f / %s\n",
+                      clock->name, clock->index, clock->count,
+                      clock->dxdu, RKClockGetTimeSinceInit(clock, x), RKFloatToCommaStyleString(x));
+            }
         }
     }
     
-    if (clock->verbose > 3) {
-        RKLog(">%s %d / %d   dx/du = %.2e s   x = %.3f\n",
-              clock->name, clock->index, clock->count,
-              clock->dxdu, RKClockGetTimeSinceInit(clock, x));
-    }
     // Update the slot index for next call
     clock->index = RKNextModuloS(k, clock->size);
     clock->count++;

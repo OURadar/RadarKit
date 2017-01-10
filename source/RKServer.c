@@ -115,8 +115,8 @@ void *RKServerRoutine(void *in) {
         }
     }
     
-    if (M->verbose) {
-        RKLog("%s retiring ...\n", M->name);
+    if (M->verbose > 1) {
+        RKLog("%s returning ...\n", M->name);
     }
     
     M->state = RKServerStateFree;
@@ -463,7 +463,7 @@ void RKServerSetSharedResource(RKServer *M, void *resource) {
 #pragma mark Server actions
 
 
-void RKServerActivate(RKServer *M) {
+void RKServerStart(RKServer *M) {
     M->state = RKServerStateOpening;
     if (pthread_create(&M->threadId, NULL, RKServerRoutine, M)) {
         RKLog("%s Error. Unable to launch main server.\n", M->name);

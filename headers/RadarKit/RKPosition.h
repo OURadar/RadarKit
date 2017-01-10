@@ -79,10 +79,6 @@ struct rk_position_engine {
     void                   *hardwareInitInput;
 
     // Program set variables
-    RKClock                *clock;
-    double                 *positionTime;
-    double                 positionTimeLatest;
-    double                 positionTimeOldest;
     pthread_t              threadId;
 
     // Status / health
@@ -112,9 +108,6 @@ void RKPositionEngineSetHardwareFree(RKPositionEngine *, int(RKPedestal));
 
 int RKPositionEngineStart(RKPositionEngine *);
 int RKPositionEngineStop(RKPositionEngine *);
-
-RKPosition *RKPositionEngineGetVacantPosition(RKPositionEngine *);
-void RKPositionEngineSetPositionReady(RKPositionEngine *, RKPosition *);
 
 char *RKPositionEngineStatusString(RKPositionEngine *);
 char *RKPositionEnginePositionString(RKPositionEngine *);

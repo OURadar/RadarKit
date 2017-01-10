@@ -111,7 +111,7 @@ void RKServerSetWelcomeHandlerToDefault(RKServer *);
 void RKServerSetTerminateHandlerToDefault(RKServer *);
 void RKServerSetSharedResource(RKServer *, void *);
 
-void RKServerActivate(RKServer *);
+void RKServerStart(RKServer *);
 void RKServerWait(RKServer *);
 void RKServerStop(RKServer *);
 

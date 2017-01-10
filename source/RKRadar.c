@@ -159,11 +159,15 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         radar->state |= RKRadarStateRayBufferInitialized;
     }
 
-    // Clock
-    radar->clock = RKClockInitWithSize(5000, 1000);
-    RKClockSetName(radar->clock, "<pulseClock>");
+    // Clocks
+    radar->pulseClock = RKClockInitWithSize(5000, 1000);
+    RKClockSetName(radar->pulseClock, "<pulseClock>");
     radar->memoryUsage += sizeof(RKClock);
-
+    
+    radar->positionClock = RKClockInit();
+    RKClockSetName(radar->positionClock, "<positionClock>");
+    radar->memoryUsage += sizeof(RKClock);
+    
     // Pulse compression engine
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
@@ -244,7 +248,8 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
-    RKClockFree(radar->clock);
+    RKClockFree(radar->pulseClock);
+    RKClockFree(radar->positionClock);
     RKMomentEngineFree(radar->momentEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
@@ -315,7 +320,8 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     } else if (verbose >= 3) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-    RKClockSetVerbose(radar->clock, verbose);
+    RKClockSetVerbose(radar->pulseClock, verbose);
+    RKClockSetVerbose(radar->positionClock, verbose);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
@@ -379,11 +385,11 @@ uint32_t RKGetPulseCapacity(RKRadar *radar) {
 }
 
 void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta) {
-    RKClockSetDxDu(radar->clock, 1.0 / delta);
+    RKClockSetDxDu(radar->pulseClock, 1.0 / delta);
 }
 
 void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
-    RKClockSetDxDu(radar->positionEngine->clock, 1.0 / delta);
+    RKClockSetDxDu(radar->positionClock, 1.0 / delta);
 }
 
 #pragma mark - Interaction / State Change
@@ -473,12 +479,13 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
+    radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     return pulse;
 }
 
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
     if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
-        pulse->header.timeDouble = RKClockGetTime(radar->clock, (double)pulse->header.t, &pulse->header.time);
+        pulse->header.timeDouble = RKClockGetTime(radar->pulseClock, (double)pulse->header.t, &pulse->header.time);
     }
     if (pulse->header.gateCount > pulse->header.capacity) {
         RKLog("Error. gateCount should not be larger than the capacity %s > %s",
@@ -486,7 +493,7 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
         pulse->header.gateCount = pulse->header.capacity;
     }
     pulse->header.s = RKPulseStatusHasIQData;
-    radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
+    return;
 }
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
@@ -498,9 +505,19 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
         RKLog("Error. Pedestal engine has not started.\n");
         exit(EXIT_FAILURE);
     }
-    return RKPositionEngineGetVacantPosition(radar->positionEngine);
+    RKPosition *position = &radar->positions[radar->positionIndex];
+    position->c = 0;
+    position->tic = 0;
+    position->flag = RKPositionFlagVacant;
+    return position;
 }
 
 void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
-    return RKPositionEngineSetPositionReady(radar->positionEngine, position);
+    if (position->flag & ~RKPositionFlagHardwareMask) {
+        RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
+    }
+    position->flag |= RKPositionFlagReady;
+    position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->c, &position->time);
+    radar->positionIndex = RKNextModuloS(radar->positionIndex, RKBufferPSlotCount);
+    return;
 }

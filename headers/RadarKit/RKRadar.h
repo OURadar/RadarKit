@@ -90,7 +90,8 @@ struct rk_radar {
     //
     // Internal engines
     //
-    RKClock                    *clock;
+    RKClock                    *pulseClock;
+    RKClock                    *positionClock;
     RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
     RKPositionEngine           *positionEngine;

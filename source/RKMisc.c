@@ -77,7 +77,7 @@ char *RKIntegerToCommaStyleString(const long num) {
 //
 //  Float to string with 3-digit grouping
 //
-char *RKFloatToCommaStyleString(const float num) {
+char *RKFloatToCommaStyleString(const double num) {
     char *intString = RKIntegerToCommaStyleString((long)num);
     snprintf(intString + strlen(intString), 32 - strlen(intString), ".%03.0f", 1000.0f * (num - floorf(num))); 
     return intString;
