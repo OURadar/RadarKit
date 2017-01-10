@@ -33,18 +33,16 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     string[RKMaximumStringLength - 1] = '\0';
     string[RKMaximumStringLength - 2] = '#';
     
-    // Use b characters to draw a bar
-    const int b = 10;
-    i = *engine->index * (b + 1) / engine->size;
+    // Use RKStatusBarWidth characters to draw a bar
+    i = *engine->index * (RKStatusBarWidth + 1) / engine->size;
     memset(string, '#', i);
-    memset(string + i, '.', b - i);
-    i = b + sprintf(string + b, " | ");
+    memset(string + i, '.', RKStatusBarWidth - i);
     
     // Engine lag
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s |",
-                  rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-                  99.9f * engine->lag,
-                  rkGlobalParameters.showColor ? RKNoColor : "");
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+                                    rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+                                    99.9f * engine->lag,
+                                    rkGlobalParameters.showColor ? RKNoColor : "");
     
     RKPulseCompressionWorker *worker;
     
@@ -67,7 +65,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d] |", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
@@ -497,17 +495,6 @@ void *pulseWatcher(void *_in) {
                 engine->almostFull++;
                 skipCounter = engine->size / 10;
                 RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
-//
-//  while loop implementation.... replaced by a dowhile
-//                i = RKPreviousModuloS(*engine->index, engine->size);
-//                pulse = RKGetPulse(engine->buffer, i);
-//                while (!(engine->pulses[i].header.s & RKPulseStatusProcessed)) {
-//                    engine->filterGid[i] = -1;
-//                    engine->planIndices[i][0] = 0;
-//                    i = RKPreviousModuloS(i, engine->size);
-//                    pulse = RKGetPulse(engine->buffer, i);
-//                }
-//
                 i = *engine->index;
                 do {
                     i = RKPreviousModuloS(i, engine->size);

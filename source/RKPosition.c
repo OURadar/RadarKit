@@ -80,7 +80,10 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
 
 void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
+    
     int i, j, k;
+    
+    RKPulse *pulse;
     RKPosition *positionBefore;
     RKPosition *positionAfter;
     double timeBefore;
@@ -89,23 +92,13 @@ void *pulseTagger(void *in) {
     double alpha;
     struct timeval t0, t1;
 
-    // Search until a time I need
-
-    // Wait until the latest position arrives
-    // find the latest position, tag the pulse with the appropriate position
-    // linearly interpolate between the best two readings
-    // at some point, implement something sophisticated like Kalman filter
-
     if (engine->verbose) {
         RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     
     engine->state = RKPositionEngineStateActive;
-
-    // Wait until there are at least two position readings.
-//    while (engine->clock->count < 2 && engine->state == RKPositionEngineStateActive) {
-//        usleep(1000);
-//    }
+    
+    // If multiple workers are needed, here will be the time to launch them.
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
@@ -115,7 +108,7 @@ void *pulseTagger(void *in) {
     int s = 0;
     while (engine->state == RKPositionEngineStateActive) {
         // Get the latest pulse
-        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until a thread check out this pulse.
         while (k == *engine->pulseIndex && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
@@ -135,32 +128,25 @@ void *pulseTagger(void *in) {
         }
         // Wait until we have a position newer than pulse time.
         s = 0;
-//        i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
-//        while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state == RKPositionEngineStateActive) {
-//            usleep(1000);
-//            if (++s % 200 == 0 && engine->verbose > 1) {
-//                RKLog("%s sleep 3/%.1f s   k = %d   latestTime = %s <= %s = header.timeDouble\n",
-//                      engine->name, (float)s * 0.001f, k ,
-//                      RKFloatToCommaStyleString(engine->positionTimeLatest), RKFloatToCommaStyleString(pulse->header.timeDouble));
-//            }
-//            i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
-//        }
-        do {
+        i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
+        while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
-            i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 3/%.1f s   k = %d   latestTime = %s <= %s = header.timeDouble\n",
                       engine->name, (float)s * 0.001f, k ,
                       RKFloatToCommaStyleString(engine->positionBuffer[i].timeDouble), RKFloatToCommaStyleString(pulse->header.timeDouble));
             }
-        } while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state == RKPositionEngineStateActive);
+            i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
+        }
         
         // Record down the latest time
         timeLatest = engine->positionBuffer[i].timeDouble;
         
         if (engine->state == RKPositionEngineStateActive) {
+            // Lag of the engine
+            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
+            
             // Search until the time just after the pulse was acquired.
-            // Then, roll back one slot, which should be the position just before the pulse was acquired.
             i = 0;
             while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->pulseBufferSize) {
                 j = RKNextModuloS(j, engine->positionBufferSize);
@@ -174,6 +160,8 @@ void *pulseTagger(void *in) {
                 continue;
             }
             positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;
+            
+            // Roll back one slot, which should be the position just before the pulse was acquired.
             j = RKPreviousModuloS(j, engine->positionBufferSize);
             positionBefore = &engine->positionBuffer[j];   timeBefore = positionBefore->timeDouble;
             
@@ -191,8 +179,6 @@ void *pulseTagger(void *in) {
             if (RKTimevalDiff(t0, t1) > 0.05) {
                 t1 = t0;
                 engine->processedPulseIndex = k;
-                // Lag of the engine
-                engine->lag = fmodf(((float)k + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
                 RKPositionnUpdateStatusString(engine);
             }
 

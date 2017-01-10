@@ -62,6 +62,7 @@
 #define RKLagOrangeThreshold             0.7
 #define RKDutyCyleRedThreshold           0.95
 #define RKDutyCyleOrangeThreshold        0.90
+#define RKStatusBarWidth                 10
 
 #define RKNoColor                        "\033[0m"
 #define RKMaximumStringLength            4096

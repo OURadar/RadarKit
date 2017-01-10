@@ -502,10 +502,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
                 pulse->header.azimuthDegrees = azimuth;
                 pulse->header.elevationDegrees = 2.41f;
                 azimuth = fmodf(25.0f * t, 360.0f);
+                phi += 0.02f;
             }
 
             // Fill in the data...
-            // phi += 0.02f;
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 

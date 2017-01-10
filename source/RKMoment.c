@@ -27,17 +27,15 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
-    const int b = 10;
-    i = engine->processedPulseIndex * (b + 1) / engine->pulseBufferSize;
+    i = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferSize;
     memset(string, '#', i);
-    memset(string + i, '.', b - i);
-    i = b + sprintf(string + b, " %04d |", *engine->rayIndex);
+    memset(string + i, '.', RKStatusBarWidth - i);
 
     // Engine lag
-    i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s |",
-                  rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-                  99.9f * engine->lag,
-                  rkGlobalParameters.showColor ? RKNoColor : "");
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+                                    rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+                                    99.9f * engine->lag,
+                                    rkGlobalParameters.showColor ? RKNoColor : "");
 
     RKMomentWorker *worker;
 
@@ -60,7 +58,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d] |", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
@@ -78,7 +76,7 @@ void *momentCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
     RKMomentEngine *engine = me->parentEngine;
 
-    int k;
+    int i, k;
     struct timeval t0, t1, t2;
 
     // My ID that is suppose to be constant
@@ -205,35 +203,25 @@ void *momentCore(void *in) {
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
         
-        // Status of the ray
-        iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
-        S = RKGetPulse(engine->pulseBuffer, is);
-        E = RKGetPulse(engine->pulseBuffer, RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize));
-        deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees, E->header.azimuthDegrees);
-        deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
-        snprintf(engine->rayStatusBuffer[iu], RKMaximumStringLength,
-                 "%s   %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
-                 name, (unsigned long)S->header.i, (unsigned long)E->header.i, path.length,
-                 S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
-                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu);
+        // Latest rayStatusBufferIndex the other end should check (I know there is a horse raise here)
         engine->rayStatusBufferIndex = iu;
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3) {
             k = 0;
-            is = path.origin;
+            i = is;
             do {
-                pulses[k++] = RKGetPulse(engine->pulseBuffer, is);
-                is = RKNextModuloS(is, engine->pulseBufferSize);
+                pulses[k++] = RKGetPulse(engine->pulseBuffer, i);
+                i = RKNextModuloS(i, engine->pulseBufferSize);
             } while (k < path.length);
-            ie = is;
+            ie = i;
             k = engine->processor(space, pulses, path.length, name);
             if (k != path.length) {
                 RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
             }
             ray->header.s |= RKRayStatusProcessed;
         } else {
-            ie = is;
+            ie = RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize);
             ray->header.s |= RKRayStatusSkipped;
             if (engine->verbose) {
                 RKLog("%s %s skipped a ray with %d sampples.\n", engine->name, name, path.length);
@@ -244,19 +232,35 @@ void *momentCore(void *in) {
         me->pid = ie;
 
         // Start and end pulses to calculate this ray
-        RKPulse *ss = RKGetPulse(engine->pulseBuffer, is);
-        RKPulse *ee = RKGetPulse(engine->pulseBuffer, ie);
+        S = RKGetPulse(engine->pulseBuffer, is);
+        E = RKGetPulse(engine->pulseBuffer, ie);
         
         // Set the ray headers
-        ray->header.startTimeD     = ss->header.timeDouble;
-        ray->header.startAzimuth   = ss->header.azimuthDegrees;
-        ray->header.startElevation = ss->header.elevationDegrees;
-        ray->header.endTimeD       = ee->header.timeDouble;
-        ray->header.endAzimuth     = ee->header.azimuthDegrees;
-        ray->header.endElevation   = ee->header.elevationDegrees;
+        ray->header.startTimeD     = S->header.timeDouble;
+        ray->header.startAzimuth   = S->header.azimuthDegrees;
+        ray->header.startElevation = S->header.elevationDegrees;
+        ray->header.endTimeD       = E->header.timeDouble;
+        ray->header.endAzimuth     = E->header.azimuthDegrees;
+        ray->header.endElevation   = E->header.elevationDegrees;
         ray->header.s |= RKRayStatusReady;
         ray->header.s ^= RKRayStatusProcessing;
 
+        // Status of the ray
+        iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
+        char *string = engine->rayStatusBuffer[iu];
+        i = io * (RKStatusBarWidth + 1) / engine->rayBufferSize;
+        memset(string, '#', i);
+        memset(string + i, '.', RKStatusBarWidth - i);
+        i = RKStatusBarWidth;
+
+        deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
+        deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+        snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
+                 (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
+                 S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu);
+        
         // Done processing, get the time
         gettimeofday(&t0, NULL);
 
@@ -421,7 +425,6 @@ void *pulseGatherer(void *in) {
                     for (i = 0; i < engine->coreCount; i++) {
                         engine->workers[i].lag = 0.0f;
                     }
-                    k = *engine->pulseIndex;
                 }
             } else {
                 // Gather the start and end pulses and post a worker to process for a ray
