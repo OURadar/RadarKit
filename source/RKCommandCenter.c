@@ -142,18 +142,33 @@ int socketCommandHandler(RKOperator *O) {
             snprintf(string + j, RKMaximumStringLength - j - 1, "Select 1-%d" RKEOL, k);
             RKOperatorSendBeaconAndString(O, string);
             break;
+            
+        case 'p':
+            // Change PRT
+            
+            break;
+            
         case 'r':
             RKLog("%s/%s selected radar %s\n", engine->name, O->name, input);
             snprintf(string, RKMaximumStringLength - 1, "Radar %s selected." RKEOL, input);
             RKOperatorSendBeaconAndString(O, string);
             break;
+            
         case 's':
+            // Stream varrious data
             user->streams = RKStringToFlag(O->cmd + 1);
             sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
             // Fast foward some indices
             user->rayStatusIndex = user->radar->momentEngine->rayStatusBufferIndex;
+            user->pulseIndex = user->radar->pulseIndex;
+            user->rayIndex = user->radar->rayIndex;
             RKOperatorSendBeaconAndString(O, string);
             break;
+            
+        case 'w':
+            // Change waveform
+            break;
+            
         default:
             snprintf(string, RKMaximumStringLength, "Unknown command '%s'." RKEOL, O->cmd);
             RKOperatorSendBeaconAndString(O, string);
@@ -190,19 +205,19 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
-    if (user->streams & user->access & RKUserFlagStatusPulses && td >= 0.05) {
-        snprintf(user->string, RKMaximumStringLength - 1, "%s %s %s" RKEOL,
-                 RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
-                 RKPositionEngineStatusString(user->radar->positionEngine),
-                 RKMomentEngineStatusString(user->radar->momentEngine));
-        RKOperatorSendBeaconAndString(O, user->string);
-        user->timeLastOut = time;
-    }
-
-    if (user->streams & user->access & RKUserFlagStatusPositions && td >= 0.05) {
-        snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
-                 RKPositionEnginePositionString(user->radar->positionEngine));
-        RKOperatorSendBeaconAndString(O, user->string);
+    if (user->streams & user->access && td >= 0.05) {
+        if (user->streams & RKUserFlagStatusPulses) {
+            snprintf(user->string, RKMaximumStringLength - 1, "%s %s %s" RKEOL,
+                     RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
+                     RKPositionEngineStatusString(user->radar->positionEngine),
+                     RKMomentEngineStatusString(user->radar->momentEngine));
+            RKOperatorSendBeaconAndString(O, user->string);
+        }
+        if (user->streams & RKUserFlagStatusPositions) {
+            snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                     RKPositionEnginePositionString(user->radar->positionEngine));
+            RKOperatorSendBeaconAndString(O, user->string);
+        }
         user->timeLastOut = time;
     }
     
@@ -220,7 +235,6 @@ int socketStreamHandler(RKOperator *O) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
             RKOperatorSendBeaconAndString(O, user->string);
-            user->timeLastOut = time;
         }
     }
 

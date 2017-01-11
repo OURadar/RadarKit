@@ -249,6 +249,8 @@ int main(int argc, char *argv[]) {
     RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);
     RKSetWantColor(!user.noColor);
+    
+    RKShowTypeSizes();
 
     // SIMD Tests
     bool testAny = false;

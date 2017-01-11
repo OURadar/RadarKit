@@ -155,6 +155,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(pulse->headerBytes) = %d", (int)sizeof(pulse->headerBytes));
     RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
     RKLog(">sizeof(ray->headerBytes) = %d", (int)sizeof(ray->headerBytes));
+    RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
 }
 
 void RKShowVecFloat(const char *name, const float *p, const int n) {

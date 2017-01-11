@@ -52,7 +52,8 @@ typedef struct  rk_user {
     double       timeLastOut;
     double       timeLastIn;
     uint32_t     rayStatusIndex;
-    uint32_t     pulseStatusIndex;
+    uint32_t     pulseIndex;
+    uint32_t     rayIndex;
     char         string[RKMaximumStringLength];
     RKOperator   *serverOperator;
     RKRadar      *radar;

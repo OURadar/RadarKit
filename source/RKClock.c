@@ -160,6 +160,8 @@ void RKClockSync(RKClock *clock, const double u) {
     clock->x0 = x;
     clock->u0 = u;
     clock->latestTime = x;
-    RKLog("%s sync  u = %s   u0 = %s   x0 = %s",
-          clock->name, RKFloatToCommaStyleString(u), RKFloatToCommaStyleString(clock->u0), RKFloatToCommaStyleString(clock->x0));
+    if (clock->verbose) {
+        RKLog("%s sync  u = %s   u0 = %s   x0 = %s",
+              clock->name, RKFloatToCommaStyleString(u), RKFloatToCommaStyleString(clock->u0), RKFloatToCommaStyleString(clock->x0));
+    }
 }
