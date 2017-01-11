@@ -83,19 +83,19 @@ typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors a
 #pragma pack(push, 1)
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
-typedef struct RKInt16C {
+typedef struct rk_int16c {
     int16_t i;
     int16_t q;
 } RKInt16C;
 
 /// Fundamental unit of a (float) + (float) raw complex IQ sample
-typedef struct RKComplex {
+typedef struct rk_complex {
     RKFloat i;
     RKFloat q;
 } RKComplex;
 
 //! Deinterleaved complex format for vector library
-typedef struct RKIQZ {
+typedef struct rk_iqz {
     RKFloat *i;
     RKFloat *q;
 } RKIQZ;
@@ -110,7 +110,7 @@ typedef union rk_user_data {
 } RKFourByte;
 
 // A running configuration buffer
-typedef struct RKOperatingParameters {
+typedef struct rk_operating_parameters {
     uint32_t         n;
     uint32_t         prf[RKMaxMatchedFilterCount];
     uint32_t         gateCount[RKMaxMatchedFilterCount];
@@ -199,7 +199,7 @@ enum RKRayStatus {
  @param endTimeUSec            End time's microsecond portion
  @param endTimeD               End time in double representation
  */
-typedef struct RKRayHeader {
+typedef struct rk_ray_header {
     uint32_t       capacity;
     RKRayStatus    s;
     uint32_t       i;
@@ -222,7 +222,7 @@ typedef struct RKRayHeader {
     float          endElevation;
 } RKRayHeader;
 
-typedef struct RKRay {
+typedef struct rk_ray {
     union {
         RKRayHeader  header;
         RKByte       headerBytes[128];
@@ -260,7 +260,7 @@ enum RKResult {
     RKResultNoError = 0
 };
 
-typedef struct RKModuloPath {
+typedef struct rk_modulo_path {
     uint32_t      origin;
     uint32_t      length;
     uint32_t      modulo;
@@ -334,12 +334,6 @@ typedef union rk_position {
     RKByte               bytes[128];
 } RKPosition;
 
-//typedef struct rk_timed_position {
-//    struct timeval   time;
-//    double           timeD;
-//    RKPosition       position;
-//} RKTimedPosition;
-//
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

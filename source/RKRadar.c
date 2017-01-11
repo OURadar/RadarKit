@@ -246,12 +246,15 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
-    RKClockFree(radar->pulseClock);
-    RKClockFree(radar->positionClock);
     RKMomentEngineFree(radar->momentEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
-    radar->pedestalFree(radar->pedestal);
+    if (radar->pedestal) {
+        radar->pedestalFree(radar->pedestal);
+    }
+    if (radar->transceiver) {
+        radar->transceiverFree(radar->transceiver);
+    }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Freeing radar ...\n");
     }
@@ -267,6 +270,8 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStatePositionBufferInitialized) {
         free(radar->positions);
     }
+    RKClockFree(radar->pulseClock);
+    RKClockFree(radar->positionClock);
     free(radar);
     return EXIT_SUCCESS;
 }
@@ -403,6 +408,10 @@ int RKGoLive(RKRadar *radar) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing pedestal ...");
         }
+        if (radar->pedestalFree == NULL) {
+            RKLog("Error. Pedestal incomplete.");
+            exit(EXIT_FAILURE);
+        }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
         radar->state ^= RKRadarStatePedestalInitialized;
     }
@@ -411,6 +420,10 @@ int RKGoLive(RKRadar *radar) {
     if (radar->transceiverInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing transceiver ...");
+        }
+        if (radar->transceiverFree == NULL) {
+            RKLog("Error. Transceiver incomplete.");
+            exit(EXIT_FAILURE);
         }
         pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
         radar->state |= RKRadarStateTransceiverInitialized;

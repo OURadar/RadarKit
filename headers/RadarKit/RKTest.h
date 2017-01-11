@@ -29,7 +29,8 @@ enum RKTestSIMDFlag {
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 
-RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input);
+RKTransceiver RKTestSimulateDataStream(RKRadar *, void *);
+int RKTestSimulateDataStreamFree(RKTransceiver);
 
 void RKTestPulseCompression(RKRadar *, RKTestFlag);
 

@@ -334,6 +334,7 @@ int main(int argc, char *argv[]) {
         }
         RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
         RKSetTransceiver(myRadar, &RKTestSimulateDataStream, cmd);
+        RKSetTransceiverFree(myRadar, &RKTestSimulateDataStreamFree);
 
         // Build a series of options for pedestal
         const char pedzyHost[] = "localhost:9000";

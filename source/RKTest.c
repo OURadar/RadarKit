@@ -549,6 +549,10 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     return NULL;
 }
 
+int RKTestSimulateDataStreamFree(RKTransceiver transceiver) {
+    return 0;
+}
+
 void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     RKPulse *pulse = RKGetVacantPulse(radar);
     pulse->header.gateCount = 6;

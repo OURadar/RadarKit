@@ -188,9 +188,6 @@ void *momentCore(void *in) {
         // Start of getting busy
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
         me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferSize - me->pid) / engine->pulseBufferSize, 1.0f);
-        if (me->lag > 0.9) {
-            RKLog("(%d + %d - %d) / N= %.2f", *engine->pulseIndex, engine->pulseBufferSize, me->pid, me->lag);
-        }
 
         ray = RKGetRay(engine->rayBuffer, io);
 

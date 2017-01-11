@@ -61,7 +61,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
 
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t, const uint32_t);
 RKRay *RKGetRay(RKRay *, const uint32_t);
-int16_t *RKGetInt16DataFromRay(RKRay *, const uint32_t);
+uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t);
 
 size_t RKScratchAlloc(RKScratch **, const uint32_t, const uint8_t, const bool);

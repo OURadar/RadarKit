@@ -288,7 +288,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int16_t            idata[2][capacity];
+//    int8 _t            idata[2][capacity];
 //    float              fdata[2][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
@@ -302,7 +302,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = headerSize + RKMaxProductCount * capacity * (sizeof(int16_t) + sizeof(float));
+    size_t raySize = headerSize + RKMaxProductCount * capacity * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
         RKLog("Error. The resultant size does not conform to SIMD alignment.");
         return 0;
@@ -327,18 +327,18 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
 }
 
 RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
-    size_t raySize = sizeof(ray->headerBytes) + 2 * ray->header.capacity * (sizeof(int16_t) + sizeof(float));
+    size_t raySize = sizeof(ray->headerBytes) + 2 * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
-int16_t *RKGetInt16DataFromRay(RKRay *ray, const uint32_t p) {
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const uint32_t p) {
     void *m = (void *)ray->data;
-    return (int16_t *)(m + p * ray->header.capacity * sizeof(int16_t));
+    return (uint8_t *)(m + p * ray->header.capacity * sizeof(uint8_t));
 }
 
 float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t p) {
     void *m = (void *)ray->data;
-    m += 2 * ray->header.capacity * sizeof(int16_t);
+    m += 2 * ray->header.capacity * sizeof(uint8_t);
     return (float *)(m + p * ray->header.capacity * sizeof(float));
 }
 
