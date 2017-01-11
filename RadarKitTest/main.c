@@ -251,13 +251,11 @@ int main(int argc, char *argv[]) {
     UserParams user = processInput(argc, argv);
 
     RKSetProgramName("iRadar");
-//    if (user.verbose) {
+    if (user.verbose) {
         RKSetWantScreenOutput(true);
-//    }
+    }
     RKSetWantColor(!user.noColor);
     
-    RKShowTypeSizes();
-
     // SIMD Tests
     bool testAny = false;
     if (user.testSIMD) {

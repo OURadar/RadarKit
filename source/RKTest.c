@@ -405,7 +405,6 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
 
     gettimeofday(&t0, NULL);
 
-    RKSetLogfile(NULL);
     int capacity = RKGetPulseCapacity(radar);
     int gateCount = capacity;
 
