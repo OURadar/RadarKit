@@ -36,6 +36,8 @@ void RKTestModuloMath(void) {
 #define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 
+#define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
+
 void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKSIMD_show_info();
     
@@ -57,15 +59,15 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKComplex *cd;
     RKComplex *cc;
     
-    posix_memalign((void **)&src->i, RKSIMDAlignSize, n * sizeof(RKFloat));
-    posix_memalign((void **)&src->q, RKSIMDAlignSize, n * sizeof(RKFloat));
-    posix_memalign((void **)&dst->i, RKSIMDAlignSize, n * sizeof(RKFloat));
-    posix_memalign((void **)&dst->q, RKSIMDAlignSize, n * sizeof(RKFloat));
-    posix_memalign((void **)&cpy->i, RKSIMDAlignSize, n * sizeof(RKFloat));
-    posix_memalign((void **)&cpy->q, RKSIMDAlignSize, n * sizeof(RKFloat));
-    posix_memalign((void **)&cs, RKSIMDAlignSize, n * sizeof(RKComplex));
-    posix_memalign((void **)&cd, RKSIMDAlignSize, n * sizeof(RKComplex));
-    posix_memalign((void **)&cc, RKSIMDAlignSize, n * sizeof(RKComplex));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, n * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, n * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, n * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, n * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, n * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, n * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, n * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, n * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, n * sizeof(RKComplex)));
 
     const RKFloat tiny = 1.0e-3f;
     bool good;
@@ -281,15 +283,15 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         free(cs);
         free(cd);
         free(cc);
-        posix_memalign((void **)&src->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat));
-        posix_memalign((void **)&src->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat));
-        posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat));
-        posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat));
-        posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat));
-        posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat));
-        posix_memalign((void **)&cs, RKSIMDAlignSize, RKGateCount * sizeof(RKComplex));
-        posix_memalign((void **)&cd, RKSIMDAlignSize, RKGateCount * sizeof(RKComplex));
-        posix_memalign((void **)&cc, RKSIMDAlignSize, RKGateCount * sizeof(RKComplex));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
 
         int k;
         const int m = 100000;
