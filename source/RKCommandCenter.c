@@ -291,8 +291,9 @@ RKCommandCenter *RKCommandCenterInit(void) {
 
 void RKCommandCenterFree(RKCommandCenter *engine) {
     RKServerFree(engine->server);
-    RKLog("%s ended.\n", engine->name);
     free(engine);
+    
+    return;
 }
 
 #pragma mark - Properties
@@ -354,9 +355,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
 #pragma mark - Interactions
 
 void RKCommandCenterStart(RKCommandCenter *center) {
-    if (center->verbose) {
-        RKLog("%s starting ...\n", center->name);
-    }
+    RKLog("%s starting ...\n", center->name);
     RKServerStart(center->server);
 }
 

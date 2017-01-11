@@ -108,7 +108,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
             exit(EXIT_FAILURE);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Position buffer occupies %s B  (%s)\n",
+            RKLog("Position buffer occupies %s B  (%s positions)\n",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(RKBufferPSlotCount));
         }

@@ -91,7 +91,9 @@ void *momentCore(void *in) {
     // Initiate a variable to store my name
     char name[RKNameLength];
     if (rkGlobalParameters.showColor) {
+        pthread_mutex_lock(&engine->coreMutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        pthread_mutex_unlock(&engine->coreMutex);
     } else {
         k = 0;
     }
@@ -144,9 +146,7 @@ void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
-    if (engine->verbose) {
-        RKLog(">%s %s started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", engine->name, name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
-    }
+    RKLog(">%s %s started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", engine->name, name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -288,9 +288,7 @@ void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    if (engine->verbose) {
-        RKLog("%s %s ended.\n", engine->name, name);
-    }
+    RKLog("%s %s ended.\n", engine->name, name);
 
     return NULL;
 }
@@ -358,9 +356,7 @@ void *pulseGatherer(void *in) {
         }
     }
 
-    if (engine->verbose) {
-        RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    }
+    RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
@@ -589,9 +585,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
-    if (engine->verbose) {
-        RKLog("%s starting ...\n", engine->name);
-    }
+    RKLog("%s starting ...\n", engine->name);
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
         return RKResultFailedToStartPulseGatherer;
@@ -615,9 +609,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     }
     engine->state = RKMomentEngineStateDeactivating;
     pthread_join(engine->tidPulseGatherer, NULL);
-    if (engine->verbose) {
-        RKLog("%s stopped.\n", engine->name);
-    }
+    RKLog("%s stopped.\n", engine->name);
     free(engine->workers);
     engine->workers = NULL;
     engine->state = RKMomentEngineStateNull;

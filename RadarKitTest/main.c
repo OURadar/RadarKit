@@ -122,8 +122,9 @@ UserParams processInput(int argc, char **argv) {
         {"fs"                    , required_argument, NULL, 'F'},
         {"lean-system-test"      , no_argument      , NULL, 'L'},
         {"medium-system-test"    , no_argument      , NULL, 'M'},
+        {"test-pulse-compression", optional_argument, NULL, 'P'},
         {"test-simd"             , optional_argument, NULL, 'S'},
-        {"test-pulse-compression", optional_argument, NULL, 'T'},
+        {"show-types"            , no_argument      , NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"core"                  , required_argument, NULL, 'c'},
         {"prf"                   , required_argument, NULL, 'f'},
@@ -186,6 +187,9 @@ UserParams processInput(int argc, char **argv) {
                 }
                 break;
             case 'T':
+                RKShowTypeSizes();
+                break;
+            case 'P':
                 if (optarg) {
                     user.testPulseCompression = atoi(optarg);
                 } else {
@@ -247,7 +251,9 @@ int main(int argc, char *argv[]) {
     UserParams user = processInput(argc, argv);
 
     RKSetProgramName("iRadar");
-    RKSetWantScreenOutput(true);
+//    if (user.verbose) {
+        RKSetWantScreenOutput(true);
+//    }
     RKSetWantColor(!user.noColor);
     
     RKShowTypeSizes();
@@ -331,16 +337,12 @@ int main(int argc, char *argv[]) {
         if (user.sleepInterval) {
             i += sprintf(cmd + i, " z %d", user.sleepInterval);
         }
-        if (!user.quietMode) {
-            RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
-        }
+        RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
         RKSetTransceiver(myRadar, &RKTestSimulateDataStream, cmd);
 
         // Build a series of options for pedestal
         const char pedzyHost[] = "localhost:9000";
-        if (!user.quietMode) {
-            RKLog("Pedestal input = '%s'", pedzyHost);
-        }
+        RKLog("Pedestal input = '%s'", pedzyHost);
         RKSetPedestal(myRadar, &RKPedestalPedzyInit, (void *)pedzyHost);
         RKSetPedestalExec(myRadar, &RKPedestalPedzyExec);
         RKSetPedestalFree(myRadar, &RKPedestalPedzyFree);

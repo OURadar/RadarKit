@@ -92,9 +92,7 @@ void *pulseTagger(void *in) {
     double alpha;
     struct timeval t0, t1;
 
-    if (engine->verbose) {
-        RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    }
+    RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
     engine->state = RKPositionEngineStateActive;
     
@@ -263,9 +261,7 @@ void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(
 #pragma mark Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
-    if (engine->verbose) {
-        RKLog("%s starting ...\n", engine->name);
-    }
+    RKLog("%s starting ...\n", engine->name);
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
@@ -282,9 +278,8 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
     }
     engine->state = RKPositionEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
-    if (engine->verbose) {
-        RKLog("%s stopped.\n", engine->name);
-    }
+    RKLog("%s stopped.\n", engine->name);
+    engine->state = RKPositionEngineStateNull;
     return RKResultNoError;
 }
 
