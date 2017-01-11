@@ -26,7 +26,6 @@ typedef struct user_params {
     int   sleepInterval;
     bool  noColor;
     bool  quietMode;
-    bool  developerMode;
     bool  simulate;
 } UserParams;
 
@@ -160,7 +159,6 @@ UserParams processInput(int argc, char **argv) {
                 user.prf = 6;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
-                user.developerMode = true;
                 break;
             case 'F':
                 user.fs = atof(optarg);
@@ -187,7 +185,9 @@ UserParams processInput(int argc, char **argv) {
                 }
                 break;
             case 'T':
+                printf("Option T\n");
                 RKShowTypeSizes();
+                exit(EXIT_FAILURE);
                 break;
             case 'P':
                 if (optarg) {
@@ -248,9 +248,10 @@ UserParams processInput(int argc, char **argv) {
 //
 int main(int argc, char *argv[]) {
 
+    RKSetProgramName("iRadar");
+
     UserParams user = processInput(argc, argv);
 
-    RKSetProgramName("iRadar");
     if (user.verbose) {
         RKSetWantScreenOutput(true);
     }
@@ -299,10 +300,6 @@ int main(int argc, char *argv[]) {
     }
 
     RKSetVerbose(myRadar, user.verbose);
-    
-    if (user.developerMode) {
-        RKSetDeveloperMode(myRadar);
-    }
     
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);

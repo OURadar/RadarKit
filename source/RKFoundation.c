@@ -145,6 +145,8 @@ int RKSetLogfileToDefault(void) {
 void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
+    FILE *stream = rkGlobalParameters.stream;
+    rkGlobalParameters.stream = stdout;
     RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
     RKLog(">sizeof(RKByte) = %d", (int)sizeof(RKByte));
     RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
@@ -156,6 +158,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
     RKLog(">sizeof(ray->headerBytes) = %d", (int)sizeof(ray->headerBytes));
     RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
+    rkGlobalParameters.stream = stream;
 }
 
 void RKShowVecFloat(const char *name, const float *p, const int n) {
