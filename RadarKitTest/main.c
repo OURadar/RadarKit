@@ -255,6 +255,9 @@ UserParams processInput(int argc, char **argv) {
     if (user.prf > 0 && user.simulate == false) {
         RKLog("Warning. PRF has no effects without simulation.\n");
     }
+    if (user.g == 0 && user.fs > 0) {
+        user.g = (int)(2.0 * 60.0e3 * (float)user.fs / 3.0e8);
+    }
     
     return user;
 }
@@ -305,13 +308,19 @@ int main(int argc, char *argv[]) {
         user.simulate = true;
     }
 
-    if (user.fs <= 10.0e6) {
-        myRadar = RKInitLean();
-    } else if (user.fs <= 25.0e6) {
-        myRadar = RKInitMean();
+    // Build an initialization description
+    RKRadarInitDesc desc;
+    desc.initFlags = RKInitFlagAllocEverything;
+    desc.pulseCapacity = 1 << (int)ceilf(log2f(user.g));
+    desc.pulseToRayRatio = 1;
+    if (user.fs > 10000) {
+        desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
-        myRadar = RKInit();
+        desc.pulseBufferDepth = 10000;
     }
+    desc.rayBufferDepth = 1080;
+    myRadar = RKInitWithDesc(desc);
+    
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate radar.\n");
         exit(EXIT_FAILURE);

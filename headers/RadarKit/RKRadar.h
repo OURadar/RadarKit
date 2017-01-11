@@ -119,7 +119,7 @@ struct rk_radar {
 // Life Cycle
 //
 
-RKRadar *RKInitWithFlags(RKRadarInitDesc);
+RKRadar *RKInitWithDesc(RKRadarInitDesc);
 RKRadar *RKInitQuiet(void);
 RKRadar *RKInitLean(void);
 RKRadar *RKInitMean(void);
