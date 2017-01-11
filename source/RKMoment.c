@@ -106,10 +106,13 @@ void *momentCore(void *in) {
         sprintf(name + k, RKNoColor);
     }
 
-    // Allocate local resources and keep track of the total allocation
+    RKRay *ray;
+    RKPulse *pulse;
     RKScratch *space;
-    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
-    size_t mem = RKScratchAlloc(&space, ray->header.capacity, engine->processorLagCount, engine->developerMode);
+
+    // Allocate local resources and keep track of the total allocation
+    pulse = RKGetPulse(engine->pulseBuffer, 0);
+    size_t mem = RKScratchAlloc(&space, pulse->header.capacity, engine->processorLagCount, engine->developerMode);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateScratchSpace;

@@ -78,9 +78,15 @@ void showHelp() {
            "  -L (--test-lean-system)\n"
            "         Run with arguments '-v -f 2000 -F 50e6 -c 2,2'.\n"
            "\n"
+           "  -q (--quiet)\n"
+           "         Decreases verbosity level, which can be specified multiple times.\n"
+           "\n"
            "  -s (--simulate)\n"
            "         Sets the program to simulate data stream (default, if none of the tests\n"
            "         is specified).\n"
+           "\n"
+           "  -v (--verbose)\n"
+           "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
            "  --test-mod\n"
            "         Sets the program to test modulo macros.\n"
@@ -130,6 +136,7 @@ UserParams processInput(int argc, char **argv) {
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
         {"test-mod"              , no_argument      , NULL, 'm'},
+        {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
@@ -215,6 +222,9 @@ UserParams processInput(int argc, char **argv) {
                 } else {
                     user.testModuloMath = 1;
                 }
+                break;
+            case 'q':
+                user.verbose = MAX(user.verbose - 1, 0);
                 break;
             case 's':
                 user.simulate = true;
