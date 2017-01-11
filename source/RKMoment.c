@@ -288,7 +288,7 @@ void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog("%s %s ended.\n", engine->name, name);
+    RKLog(">%s %s ended.\n", engine->name, name);
 
     return NULL;
 }

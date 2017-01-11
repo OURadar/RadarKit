@@ -172,7 +172,7 @@ void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
 
-    RKLog("%s %s started.   i0 = %d   mem = %s B   tic = %d\n", engine->name, name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+    RKLog(">%s %s started.   i0 = %d   mem = %s B   tic = %d\n", engine->name, name, i0, RKIntegerToCommaStyleString(mem), me->tic);
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -340,7 +340,7 @@ void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog("%s %s ended.\n", engine->name, name);
+    RKLog(">%s %s ended.\n", engine->name, name);
     
     return NULL;
 }
@@ -376,16 +376,16 @@ void *pulseWatcher(void *_in) {
     const char wisdomFile[] = "fft-wisdom";
 
     if (RKFilenameExists(wisdomFile)) {
-        RKLog("%s Loading DFT wisdom ...\n", engine->name);
+        RKLog(">%s Loading DFT wisdom ...\n", engine->name);
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
-        RKLog("%s DFT wisdom file not found.\n", engine->name);
+        RKLog(">%s DFT wisdom file not found.\n", engine->name);
         exportWisdom = true;
     }
 
     // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
-        RKLog("%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
+        RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
@@ -531,7 +531,8 @@ void *pulseWatcher(void *_in) {
                         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
                         engine->planSizes[planIndex] = planSize;
                         engine->planCount++;
-                        RKLog(">    k = %d   j = %d  planIndex = %d\n", k, j, planIndex);
+                        RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
+                        exportWisdom = true;
                     }
                     engine->planIndices[k][j] = planIndex;
                 }
@@ -576,7 +577,7 @@ void *pulseWatcher(void *_in) {
 
     // Export wisdom
     if (exportWisdom) {
-        RKLog("Saving DFT wisdom ...\n");
+        RKLog("%s Saving DFT wisdom ...\n", engine->name);
         fftwf_export_wisdom_to_filename(wisdomFile);
     }
 
