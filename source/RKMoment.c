@@ -356,7 +356,7 @@ void *pulseGatherer(void *in) {
         }
     }
 
-    RKLog(">%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
