@@ -236,10 +236,9 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
         return 0;
     }
     size_t bytes = slots * pulseSize;
-    posix_memalign((void **)mem, RKSIMDAlignSize, bytes);
-    if (*mem == NULL) {
+    if (posix_memalign((void **)mem, RKSIMDAlignSize, bytes)) {
         RKLog("Error. Unable to allocate pulse buffer.");
-        return 0;
+        exit(EXIT_FAILURE);
     }
     memset(*mem, 0, bytes);
     // Set the pulse capacity
@@ -306,10 +305,9 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
         return 0;
     }
     size_t bytes = slots * raySize;
-    posix_memalign((void **)mem, RKSIMDAlignSize, bytes);
-    if (*mem == NULL) {
+    if (posix_memalign((void **)mem, RKSIMDAlignSize, bytes)) {
         RKLog("Error. Unable to allocate ray buffer.");
-        return 0;
+        exit(EXIT_FAILURE);
     }
     memset(*mem, 0, bytes);
     // Set the ray capacity
@@ -366,30 +364,30 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     int j, k;
     size_t bytes = 0;
     for (k = 0; k < 2; k++) {
-        posix_memalign((void **)&space->mX[k].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        posix_memalign((void **)&space->mX[k].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        posix_memalign((void **)&space->vX[k].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        posix_memalign((void **)&space->vX[k].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
         bytes += 4;
         for (j = 0; j < RKLagCount; j++) {
-            posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-            posix_memalign((void **)&space->R[k][j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-            posix_memalign((void **)&space->aR[k][j], RKSIMDAlignSize, capacity * sizeof(RKFloat));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j], RKSIMDAlignSize, capacity * sizeof(RKFloat)));
             bytes += 3;
         }
     }
-    posix_memalign((void **)&space->sC.i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-    posix_memalign((void **)&space->sC.q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-    posix_memalign((void **)&space->ts.i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-    posix_memalign((void **)&space->ts.q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
     bytes += 4;
     for (j = 0; j < 2 * RKLagCount - 1; j++) {
-        posix_memalign((void **)&space->C[j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        posix_memalign((void **)&space->C[j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat));
-        posix_memalign((void **)&space->aC[j], RKSIMDAlignSize, capacity * sizeof(RKFloat));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j], RKSIMDAlignSize, capacity * sizeof(RKFloat)));
         bytes += 3 ;
     }
-    posix_memalign((void **)&space->gC, RKSIMDAlignSize, capacity * sizeof(RKFloat));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
     bytes++;
     bytes *= capacity * sizeof(RKFloat);
     bytes += sizeof(RKScratch);

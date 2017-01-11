@@ -128,24 +128,24 @@ void *pulseCompressionCore(void *_in) {
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
     fftwf_complex *in, *out;
-    posix_memalign((void **)&in, RKSIMDAlignSize, nfft * sizeof(fftwf_complex));
-    posix_memalign((void **)&out, RKSIMDAlignSize, nfft * sizeof(fftwf_complex));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
     if (in == NULL || out == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     size_t mem = 2 * nfft * sizeof(fftwf_complex);
     RKIQZ *zi, *zo;
-    posix_memalign((void **)&zi, RKSIMDAlignSize, nfft * sizeof(RKFloat));
-    posix_memalign((void **)&zo, RKSIMDAlignSize, nfft * sizeof(RKFloat));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&zi, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&zo, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
     if (zi == NULL || zo == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     mem += 2 * nfft * sizeof(RKFloat);
     double *busyPeriods, *fullPeriods;
-    posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
-    posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
@@ -366,8 +366,8 @@ void *pulseWatcher(void *_in) {
     
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
-    posix_memalign((void **)&in, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
-    posix_memalign((void **)&out, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex)))
     engine->memoryUsage += 2 * pulse->header.capacity * sizeof(fftwf_complex);
 
     // Maximum plan size
@@ -695,10 +695,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     if (engine->filters[group][index] != NULL) {
         free(engine->filters[group][index]);
     }
-    if (posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, maxDataLength * sizeof(RKComplex))) {
-        RKLog("Error. Unable to allocate filter memory.\n");
-        return RKResultFailedToAllocateFilter;
-    }
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, maxDataLength * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, maxDataLength * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);

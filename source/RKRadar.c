@@ -59,10 +59,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     }
     // Allocate self
     bytes = sizeof(RKRadar);
-    if (posix_memalign((void **)&radar, RKSIMDAlignSize, bytes)) {
-        fprintf(stderr, "Error allocation memory for radar.\n");
-        return NULL;
-    }
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&radar, RKSIMDAlignSize, bytes))
     memset(radar, 0, bytes);
 
     // Set some non-zero variables

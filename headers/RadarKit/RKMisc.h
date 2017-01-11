@@ -43,6 +43,8 @@
 (errno == ECONNREFUSED ? "ECONNREFUSED" : \
 (errno == EIO          ? "EIO"          : "OTHERS")))))))
 
+#define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
+
 void stripTrailingUnwanted(char *str);
 
 char *RKNow();
