@@ -76,7 +76,10 @@ void showHelp() {
            "         Shows this help text.\n"
            "\n"
            "  -L (--test-lean-system)\n"
-           "         Run with arguments '-v -f 2000 -F 50e6 -c 2,2'.\n"
+           "         Run with arguments '-v -f 2000 -F 5e6 -c 2,2'.\n"
+           "\n"
+           "  -M (--test-medium-system)\n"
+           "         Run with arguments '-v -f 5000 -F 20e6 -c 4,2'.\n"
            "\n"
            "  -q (--quiet)\n"
            "         Decreases verbosity level, which can be specified multiple times.\n"
@@ -119,6 +122,9 @@ UserParams processInput(int argc, char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     memset(&user, 0, sizeof(UserParams));
+    user.fs = 50000000;
+    user.coresForPulseCompression = 10;
+    user.coresForProductGenerator = 4;
     
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
@@ -131,6 +137,7 @@ UserParams processInput(int argc, char **argv) {
         {"test-simd"             , optional_argument, NULL, 'S'},
         {"show-types"            , no_argument      , NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
+        {"bandwidth"             , required_argument, NULL, 'b'},
         {"core"                  , required_argument, NULL, 'c'},
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
@@ -162,26 +169,27 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'D':
                 user.simulate = true;
-                user.fs = 5.0e6;
+                user.fs = 5000000;
                 user.prf = 6;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 break;
+            case 'b':
             case 'F':
                 user.fs = atof(optarg);
                 break;
             case 'L':
                 user.simulate = true;
-                user.fs = 5.0e6;
+                user.fs = 5000000;
                 user.prf = 2000;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 break;
             case 'M':
                 user.simulate = true;
-                user.fs = 20.0e6;
+                user.fs = 20000000;
                 user.prf = 5000;
-                user.coresForPulseCompression = 2;
+                user.coresForPulseCompression = 4;
                 user.coresForProductGenerator = 2;
                 break;
             case 'S':
