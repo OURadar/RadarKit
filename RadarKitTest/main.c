@@ -302,6 +302,7 @@ int main(int argc, char *argv[]) {
     // Modulo Macros Tests
     if (user.testModuloMath) {
         testAny = true;
+        user.verbose = MAX(user.verbose, 1);
         RKTestModuloMath();
     }
 
@@ -312,7 +313,9 @@ int main(int argc, char *argv[]) {
 
     // In the case when no tests are performed, simulate the time-series
     if (user.simulate == false && testAny == false) {
-        user.simulate = true;
+        RKSetWantScreenOutput(true);
+        RKLog("No options specified. Don't want to do anything?\n");
+        exit(EXIT_FAILURE);
     }
 
     // Build an initialization description
