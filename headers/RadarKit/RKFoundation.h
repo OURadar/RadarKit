@@ -53,16 +53,16 @@ void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity);
 void RKZeroTailFloat(RKFloat *data, const uint32_t capacity, const uint32_t origin);
 void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin);
 
-size_t RKPulseBufferAlloc(RKBuffer *, const uint32_t, const uint32_t);
-RKPulse *RKGetPulse(RKBuffer, const uint32_t);
-RKInt16C *RKGetInt16CDataFromPulse(RKPulse *, const uint32_t);
-RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t);
-RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
+size_t RKPulseBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t pulseCount);
+RKPulse *RKGetPulse(RKBuffer, const uint32_t pulseIndex);
+RKInt16C *RKGetInt16CDataFromPulse(RKPulse *, const uint32_t channelIndex);
+RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
+RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
 
-size_t RKRayBufferAlloc(RKBuffer *, const uint32_t, const uint32_t);
-RKRay *RKGetRay(RKRay *, const uint32_t);
-uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t);
-float *RKGetFloatDataFromRay(RKRay *, const uint32_t);
+size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t rayCount);
+RKRay *RKGetRay(RKRay *, const uint32_t rayIndex);
+uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t productIndex);
+float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 
 size_t RKScratchAlloc(RKScratch **, const uint32_t, const uint8_t, const bool);
 void RKScratchFree(RKScratch *);

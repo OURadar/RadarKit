@@ -20,8 +20,6 @@ typedef struct user_params {
     int   fs;
     int   g;
     int   verbose;
-    int   testSIMD;
-    int   testModuloMath;
     int   testPulseCompression;
     int   sleepInterval;
     bool  noColor;
@@ -197,11 +195,20 @@ UserParams processInput(int argc, char **argv) {
                 user.coresForProductGenerator = 2;
                 break;
             case 'S':
+                // SIMD Tests
+                k = RKTestSIMDFlagNull;
                 if (optarg) {
-                    user.testSIMD = atoi(optarg);
-                } else {
-                    user.testSIMD = 1;
+                    if (atoi(optarg) > 1) {
+                        k |= RKTestSIMDFlagPerformanceTestAll;
+                    } else {
+                        user.verbose = MAX(1, user.verbose);
+                    }
                 }
+                if (user.verbose) {
+                    k |= RKTestSIMDFlagShowNumbers;
+                }
+                RKTestSIMD(k);
+                exit(EXIT_SUCCESS);
                 break;
             case 'T':
                 printf("Option T\n");
@@ -229,11 +236,10 @@ UserParams processInput(int argc, char **argv) {
                 exit(EXIT_SUCCESS);
                 break;
             case 'm':
-                if (optarg) {
-                    user.testModuloMath = atoi(optarg);
-                } else {
-                    user.testModuloMath = 1;
-                }
+                // Modulo-math test
+                RKSetWantScreenOutput(true);
+                RKTestModuloMath();
+                exit(EXIT_SUCCESS);
                 break;
             case 'p':
                 strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
@@ -280,43 +286,18 @@ int main(int argc, char *argv[]) {
 
     UserParams user = processInput(argc, argv);
 
-    if (user.verbose) {
-        RKSetWantScreenOutput(true);
-    }
-    RKSetWantColor(!user.noColor);
-    
-    // SIMD Tests
-    bool testAny = false;
-    if (user.testSIMD) {
-        testAny = true;
-        RKTestSIMDFlag flag = RKTestSIMDFlagNull;
-        if (user.verbose) {
-            flag |= RKTestSIMDFlagShowNumbers;
-        }
-        if (user.testSIMD > 1) {
-            flag |= RKTestSIMDFlagPerformanceTestAll;
-        }
-        RKTestSIMD(flag);
-    }
-  
-    // Modulo Macros Tests
-    if (user.testModuloMath) {
-        testAny = true;
-        user.verbose = MAX(user.verbose, 1);
-        RKTestModuloMath();
-    }
-
-    // Pulse Compression Tests
-    if (user.testPulseCompression) {
-        testAny = true;
-    }
-
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && testAny == false) {
+    if (user.simulate == false && user.testPulseCompression == 0) {
         RKSetWantScreenOutput(true);
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
     }
+
+    // Screen output based on verbosity level
+    if (user.verbose) {
+        RKSetWantScreenOutput(true);
+    }
+    RKSetWantColor(!user.noColor);
 
     // Build an initialization description
     RKRadarInitDesc desc;
@@ -337,7 +318,7 @@ int main(int argc, char *argv[]) {
     }
 
     RKSetVerbose(myRadar, user.verbose);
-    
+
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
     RKCommandCenterAddRadar(center, myRadar);

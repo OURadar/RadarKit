@@ -293,7 +293,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity - (capacity / RKSIMDAlignSize) * RKSIMDAlignSize != 0) {
-        RKLog("Error. Ray capacity must be multiple of %d!", RKSIMDAlignSize);
+        RKLog("Error. Ray capacity must be a multiple of %d!", RKSIMDAlignSize);
         return 0;
     }
     RKRay *ray;
@@ -331,15 +331,15 @@ RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
     return (RKRay *)((void *)ray + k * raySize);
 }
 
-uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const uint32_t p) {
-    void *m = (void *)ray->data;
-    return (uint8_t *)(m + p * ray->header.capacity * sizeof(uint8_t));
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const uint32_t m) {
+    void *d = (void *)ray->data;
+    return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
-float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t p) {
-    void *m = (void *)ray->data;
-    m += 2 * ray->header.capacity * sizeof(uint8_t);
-    return (float *)(m + p * ray->header.capacity * sizeof(float));
+float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t m) {
+    void *d = (void *)ray->data;
+    d += 2 * ray->header.capacity * sizeof(uint8_t);
+    return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
 #pragma mark -

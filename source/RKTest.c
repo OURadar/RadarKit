@@ -554,39 +554,70 @@ int RKTestSimulateDataStreamFree(RKTransceiver transceiver) {
 }
 
 void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
-    RKPulse *pulse = RKGetVacantPulse(radar);
-    pulse->header.gateCount = 6;
+    RKPulse *pulse;
+    RKInt16C *X;
+    RKComplex *F;
+    RKComplex *Y;
+    RKIQZ Z;
 
-    RKInt16C *X = RKGetInt16CDataFromPulse(pulse, 0);
-    memset(X, 0, pulse->header.gateCount * sizeof(RKInt16C));
-    X[0].i = 1;
-    X[0].q = 0;
-    X[1].i = 2;
-    X[1].q = 0;
-    X[2].i = 4;
-    X[2].q = 0;
-    X[3].i = 2;
-    X[3].q = 0;
-    X[4].i = 1;
-    X[4].q = 0;
-    RKSetPulseReady(radar, pulse);
+    // Change filter to [1, 1i] for case 2
+    RKComplex filter[] = {{1.0f, 0.0f}, {0.0f, 1.0f}};
 
-    while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
-        usleep(1000);
-    }
+    for (int k = 0; k < 3; k++) {
+        printf("\n");
 
-    RKComplex *F = &radar->pulseCompressionEngine->filters[0][0][0];
-    RKComplex *Y = RKGetComplexDataFromPulse(pulse, 0);
-    RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, 0);
+        switch (k) {
+            case 1:
+                // Range average [1 1]
+                printf("Filter [1, 1]:\n\n");
+                RKPulseCompressionSetFilterTo11(radar->pulseCompressionEngine);
+                break;
+            case 2:
+                // Change filter to [1, 1i]
+                printf("Filter [1, i]:\n\n");
+                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, sizeof(filter) / sizeof(RKComplex), 0, 8, 0, 0);
+                break;
+            default:
+                // Default is impulse [1];
+                printf("Pulse filter [1]:\n\n");
+                RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+                break;
+        }
 
-    if (flag & RKTestFlagShowResults) {
-        printf("X =                       F =                     Y =                             Z =\n");
-        for (int k = 0; k < 8; k++) {
-            printf("    [ %6d %s %6di ]      [ %5.2f %s %5.2fi ]      [ %9.2f %s %9.2fi ]      [ %9.2f %s %9.2fi ]\n",
-                   X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
-                   F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
-                   Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),
-                   Z.i[k], Z.q[k] < 0.0f ? "-" : "+", fabs(Z.q[k]));
+        pulse = RKGetVacantPulse(radar);
+        pulse->header.gateCount = 6;
+
+        X = RKGetInt16CDataFromPulse(pulse, 0);
+        memset(X, 0, pulse->header.gateCount * sizeof(RKInt16C));
+        X[0].i = 1;
+        X[0].q = 0;
+        X[1].i = 2;
+        X[1].q = 0;
+        X[2].i = 4;
+        X[2].q = 0;
+        X[3].i = 2;
+        X[3].q = 0;
+        X[4].i = 1;
+        X[4].q = 0;
+        RKSetPulseReady(radar, pulse);
+
+        while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
+            usleep(1000);
+        }
+
+        F = &radar->pulseCompressionEngine->filters[0][0][0];
+        Y = RKGetComplexDataFromPulse(pulse, 0);
+        Z = RKGetSplitComplexDataFromPulse(pulse, 0);
+
+        if (flag & RKTestFlagShowResults) {
+            printf("X =                       F =                     Y =                             Z =\n");
+            for (int k = 0; k < 8; k++) {
+                printf("    [ %6d %s %6di ]      [ %5.2f %s %5.2fi ]      [ %9.2f %s %9.2fi ]      [ %9.2f %s %9.2fi ]\n",
+                       X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
+                       F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
+                       Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),
+                       Z.i[k], Z.q[k] < 0.0f ? "-" : "+", fabs(Z.q[k]));
+            }
         }
     }
 }

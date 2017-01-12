@@ -88,7 +88,8 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         exit(EXIT_FAILURE);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Config buffer occupies %s B\n", RKIntegerToCommaStyleString(bytes));
+        RKLog("Config buffer occupies %s B  (%s sets)\n",
+              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(RKBufferCSlotCount));
     }
     memset(radar->parameters, 0, bytes);
     radar->memoryUsage += bytes;
@@ -106,8 +107,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Position buffer occupies %s B  (%s positions)\n",
-                  RKIntegerToCommaStyleString(bytes),
-                  RKIntegerToCommaStyleString(RKBufferPSlotCount));
+                  RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(RKBufferPSlotCount));
         }
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStatePositionBufferAllocating;
@@ -123,10 +123,10 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
             exit(EXIT_FAILURE);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Level I buffer occupies %s B  (%s gates x %s pulses)\n",
+            RKLog("Level I buffer occupies %s B  (%s pulses x %s gates)\n",
                   RKIntegerToCommaStyleString(bytes),
-                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
-                  RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
+                  RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth),
+                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
         }
         for (int i = 0; i < radar->desc.pulseBufferDepth; i++) {
             RKPulse *pulse = RKGetPulse(radar->pulses, i);
@@ -145,11 +145,11 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         radar->state |= RKRadarStateRayBufferAllocating;
         bytes = RKRayBufferAlloc(&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseToRayRatio, radar->desc.rayBufferDepth);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Level II buffer occupies %s B  (%d products of %s gates x %s rays)\n",
+            RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
                   RKIntegerToCommaStyleString(bytes),
+                  RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
                   RKMaxProductCount,
-                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio),
-                  RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
+                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio));
         }
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRayBufferAllocating;
