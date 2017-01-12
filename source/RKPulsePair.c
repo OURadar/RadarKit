@@ -8,9 +8,34 @@
 
 #include <RadarKit/RKPulsePair.h>
 
+
+void RKUpdateReflectivityInScratchSpace(RKScratch *space, const int gateCount) {
+    float *z, *s;
+    RKVec ten = _rk_mm_set1_pf(10.0f);
+    RKVec cal = _rk_mm_set1_pf(-30.0f);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    for (p = 0; p < 2; p++) {
+        // log10(S) --> Z
+        float *z = space->Z[p];
+        float *s = space->S[p];
+        for (k = 0; k < K; k++) {
+            *d++ = log10f(*s++);
+        }
+        // 10 * (previous) + rcr --> Z; same as Z = 10 * log10(S) + rangeCorrection + ZCal;
+        z = space->Z[p];
+        for (k = 0; k < K; k++) {
+            z = _rk_mm_add_pf(_rk_mm_mul_pf(ten, z), cal);
+            z++;
+        }
+    }
+}
+void RKUpdateVelocityInScratchSpace(RKScratch *space) {
+    
+}
+
 int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
     usleep(20 * 1000);
-    
+
     return 0;
 
 }
@@ -18,7 +43,7 @@ int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count, const c
 int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
 //    struct timeval tic, toc;
 //    gettimeofday(&tic, NULL);
-    
+
     // Process
     // Identify odd pulses and even pulses
     // Calculate R0, R1
@@ -175,6 +200,16 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     //    gettimeofday(&toc, NULL);
 //    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
 
+    
+    //
+    //  ACF & CCF to S Z V W D P R K
+    //
+
+    for (p = 0; p < 2; p++) {
+        RKSIMD_subc(space->R[p][0], space->noise[0], space->S[p], gateCount);
+
+        
+    }
     return count;
 
 }

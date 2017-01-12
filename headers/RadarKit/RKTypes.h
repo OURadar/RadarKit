@@ -141,7 +141,7 @@ typedef struct rk_pulse_header {
     float            azimuthVelocityDegreesPerSecond;      // Velocity of azimuth in degrees / second
 } RKPulseHeader;
 
-// Make sure the size (bytes) can cover all the struct elements and still conform to SIMD alignemt
+// Pulse parameters for matched filters
 typedef struct rk_pulse_parameters {
     uint32_t    filterCounts[2];
     uint32_t    planIndices[2][RKMaxMatchedFilterCount];
@@ -282,6 +282,17 @@ typedef struct rk_scratch {
     RKFloat          *aR[2][RKLagCount];                   // abs(ACF)
     RKFloat          *aC[2 * RKLagCount - 1];              // abs(CCF)
     RKFloat          *gC;                                  // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
+    RKFloat          noise[2];                             // Noise floor of each channel
+    RKFloat          aliasingVelocity;                     // Aliasing velocity
+    RKFloat          *rcor;                                // Reflectivity range correction factor
+    RKFloat          *S[2];                                // Signal
+    RKFloat          *Z[2];                                // Reflectivity in dB
+    RKFloat          *V[2];                                // Velocity in same units as aliasing velocity
+    RKFloat          *W[2];                                // Spectrum width in same units as aliasing velocity
+    RKFloat          *ZDR;                                 // Differential reflectivity ZDR
+    RKFloat          *PhiDP;                               // Differential phase PhiDP
+    RKFloat          *RhoHV;                               // Cross-correlation coefficient RhoHV
+    RKFloat          *KDP;                                 // Specific phase KDP
 } RKScratch;
 
 enum RKPositionFlag {
