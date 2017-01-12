@@ -40,13 +40,13 @@ void RKSIMD_show_count(const int n) {
 //
 // Single operations
 //
-void RKSIMD_mul(RKFLoat *src1, RKFloat *src2, RKFloat *dst, const int n) {
+void RKSIMD_mul(RKFloat *src1, RKFloat *src2, RKFloat *dst, const int n) {
     int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s1 = (RKVec *)src1;
     RKVec *s2 = (RKVec *)src2;
     RKVec *d  = (RKVec *)dst;
     for (k = 0; k < K; k++) {
-        *dst++ = s1++ * s2++;
+        *d++ = _rk_mm_mul_pf(*s1++, *s2++);
     }
     return;
 }
@@ -392,14 +392,14 @@ void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n) {
     return;
 }
 
-// Add by a float
+// Subtract by a float
 void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n) {
     int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     const RKVec fv = _rk_mm_set1_pf(f);
-    RKFloat *s = (RKVec *)src;
-    RKFloat *d = (RKVec *)dst;
+    RKVec *s = (RKVec *)src;
+    RKVec *d = (RKVec *)dst;
     for (k = 0; k < K; k++) {
-        *d++ = *s++ + fv;
+        *d++ = _rk_mm_sub_pf(*s++, fv);
     }
     return;
 }

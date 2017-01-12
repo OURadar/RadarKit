@@ -9,28 +9,71 @@
 #include <RadarKit/RKPulsePair.h>
 
 
-void RKUpdateReflectivityInScratchSpace(RKScratch *space, const int gateCount) {
-    float *z, *s;
-    RKVec ten = _rk_mm_set1_pf(10.0f);
-    RKVec cal = _rk_mm_set1_pf(-30.0f);
-    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
+    const RKFloat va = 15.0f;
+    const RKFloat wa = 0.3 / (2.0f * sqrt(2.0) * M_PI) * 2000.0f;
+    const RKVec va_pf = _rk_mm_set1_pf(va);
+    const RKVec wa_pf = _rk_mm_set1_pf(wa);
+    const RKVec ten = _rk_mm_set1_pf(10.0f);
+    const RKVec cal = _rk_mm_set1_pf(-30.0f);
+    RKFloat *s;
+    RKFloat *z;
+    RKFloat *v;
+    RKFloat *w;
+    RKVec *s_pf;
+    RKVec *z_pf;
+    RKVec *v_pf;
+    RKVec *w_pf;
+    RKFloat *r1i;
+    RKFloat *r1q;
+    int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     for (p = 0; p < 2; p++) {
-        // log10(S) --> Z
-        float *z = space->Z[p];
-        float *s = space->S[p];
-        for (k = 0; k < K; k++) {
-            *d++ = log10f(*s++);
-        }
-        // 10 * (previous) + rcr --> Z; same as Z = 10 * log10(S) + rangeCorrection + ZCal;
+        // log10(S) --> Z (temp)
+        s = space->S[p];
         z = space->Z[p];
+        v = (RKFloat *)space->V[p];
+        r1i = (RKFloat *)space->R[p][1].i;
+        r1q = (RKFloat *)space->R[p][1].q;
+        // Regular math, no intrinsic options
+        for (k = 0; k < gateCount; k++) {
+#if !defined(_rk_mm_log10_pf)
+            *z++ = log10f(*s++);
+#endif
+            *v++ = atan2f(*r1q++, *r1i++);
+        }
+        z_pf = (RKVec *)space->Z[p];
+        v_pf = (RKVec *)space->V[p];
+        w_pf = (RKVec *)space->W[p];
+        s_pf = (RKVec *)space->S[p];
+        // Packed single math
         for (k = 0; k < K; k++) {
-            z = _rk_mm_add_pf(_rk_mm_mul_pf(ten, z), cal);
-            z++;
+            // Z:  10 * (previous) + rcr --> Z; =>  Z = 10 * log10(S) + rangeCorrection + ZCal;
+#if defined(_rk_mm_log10_pf)
+            *z_pf = _rk_mm_add_pf(_rk_mm_mul_pf(ten, _rk_mm_log10_ps(*z_pf), cal));
+#else
+            *z_pf = _rk_mm_add_pf(_rk_mm_mul_pf(ten, *z_pf), cal);
+#endif
+            z_pf++;
+            // V: V = Va * (previous) --> V; => V = angle(R1)
+            *v_pf = _rk_mm_mul_pf(va_pf, *v_pf);
+            v_pf++;
+            // W: w = S / W
+            *w_pf = _rk_mm_div_pf(*s_pf, *w_pf);
+            s_pf++;
+            w_pf++;
+        }
+        w = space->W[p];
+        for (k = 0; k < gateCount; k++) {
+            // W: = (log10f(previous))
+            *w = log10f(*w);
+            w++;
+        }
+        w_pf = (RKVec *)space->W[p];
+        for (k = 0; k < K; k++) {
+            *w_pf = _rk_mm_mul_pf(wa_pf, _rk_mm_sqrt_pf(*w_pf));
+            w_pf++;
         }
     }
-}
-void RKUpdateVelocityInScratchSpace(RKScratch *space) {
-    
 }
 
 int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
@@ -205,11 +248,8 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, cons
     //  ACF & CCF to S Z V W D P R K
     //
 
-    for (p = 0; p < 2; p++) {
-        RKSIMD_subc(space->R[p][0], space->noise[0], space->S[p], gateCount);
+    RKUpdateZVWInScratchSpace(space, gateCount);
 
-        
-    }
     return count;
 
 }

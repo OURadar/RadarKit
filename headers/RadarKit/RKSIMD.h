@@ -40,6 +40,7 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm512_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm512_mul_ps(a, b)
+#define _rk_mm_div_pf(a, b)          _mm512_div_ps(a, b)
 #define _rk_mm_set1_pf(a)            _mm512_set1_ps(a)
 #define _rk_mm_movehdup_pf(a)        _mm512_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm512_moveldup_ps(a)
@@ -49,6 +50,9 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_cvtepi16_epi32(a)     _mm512_cvtepi16_epi32(a)                // AVX512
 #define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
 #define _rk_mm_sqrt_pf(a)            _mm512_sqrt_ps(a)
+#if defined(_mm512_mul_ps)
+#define _rk_mm_log10_pf(a)           _mm512_log10_ps(a)
+#endif
 
 #elif defined(__AVX__)
 
@@ -57,6 +61,7 @@ typedef __m128i RKVecCvt;
 #define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm256_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm256_mul_ps(a, b)
+#define _rk_mm_div_pf(a, b)          _mm256_div_ps(a, b)
 #define _rk_mm_set1_pf(a)            _mm256_set1_ps(a)
 #define _rk_mm_movehdup_pf(a)        _mm256_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm256_moveldup_ps(a)
@@ -69,6 +74,9 @@ typedef __m128i RKVecCvt;
 #        define _rk_mm_cvtepi32_pf(a)        _mm256_cvtepi32_ps(a)                    // AVX
 #    endif
 #define _rk_mm_sqrt_pf(a)            _mm256_sqrt_ps(a)
+#if defined(_mm256_mul_ps)
+#define _rk_mm_log10_pf(a)           _mm256_log10_ps(a)
+#endif
 
 #else
 
@@ -76,6 +84,7 @@ typedef __m128 RKVec;
 #define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm_mul_ps(a, b)
+#define _rk_mm_div_pf(a, b)          _mm_div_ps(a, b)
 #define _rk_mm_set1_pf(a)            _mm_set1_ps(a)
 #define _rk_mm_movehdup_pf(a)        _mm_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
@@ -87,13 +96,16 @@ typedef __m128 RKVec;
 #define _rk_mm_cvtepi16_epi32(a)     _mm_cvtepi16_epi32(a)                   // SSE4.1
 #define _rk_mm_cvtepi32_pf(a)        _mm_cvtepi32_ps(a)                      // SSE2
 #define _rk_mm_sqrt_pf(a)            _mm_sqrt_ps(a)
+#if defined(_mm_mul_ps)
+#define _rk_mm_log10_pf(a)           _mm_log10_ps(a)
+#endif
 
 #endif
 
 void RKSIMD_show_info(void);
 void RKSIMD_show_count(const int n);
 
-void RKSIMD_mul(RKFLoat *s1, RKFloat *s2, RKFloat *dst, const int n);
+void RKSIMD_mul(RKFloat *s1, RKFloat *s2, RKFloat *dst, const int n);
 
 void RKSIMD_zcpy (RKIQZ *src, RKIQZ *dst, const int n);
 void RKSIMD_zadd (RKIQZ *s1, RKIQZ *s2, RKIQZ *dst, const int n);
