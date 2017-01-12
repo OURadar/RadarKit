@@ -499,7 +499,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     //
     //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //
-    sprintf(engine->name, "%s<productGenerator>%s",
+    sprintf(engine->name, "%s<productRoutines>%s",
             rkGlobalParameters.showColor ? "\033[1;97;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;

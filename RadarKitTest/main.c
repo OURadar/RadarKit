@@ -27,6 +27,7 @@ typedef struct user_params {
     bool  noColor;
     bool  quietMode;
     bool  simulate;
+    char  pedzyHost[256];
 } UserParams;
 
 // Global variables
@@ -122,9 +123,9 @@ UserParams processInput(int argc, char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     memset(&user, 0, sizeof(UserParams));
-    user.fs = 50000000;
-    user.coresForPulseCompression = 10;
-    user.coresForProductGenerator = 4;
+    user.fs = 5000000;
+    user.coresForPulseCompression = 2;
+    user.coresForProductGenerator = 2;
     
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
@@ -143,6 +144,7 @@ UserParams processInput(int argc, char **argv) {
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
         {"test-mod"              , no_argument      , NULL, 'm'},
+        {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"verbose"               , no_argument      , NULL, 'v'},
@@ -230,6 +232,9 @@ UserParams processInput(int argc, char **argv) {
                 } else {
                     user.testModuloMath = 1;
                 }
+                break;
+            case 'p':
+                strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
                 break;
             case 'q':
                 user.verbose = MAX(user.verbose - 1, 0);
@@ -364,9 +369,11 @@ int main(int argc, char *argv[]) {
         RKSetTransceiverFree(myRadar, &RKTestSimulateDataStreamFree);
 
         // Build a series of options for pedestal
-        const char pedzyHost[] = "localhost:9000";
-        RKLog("Pedestal input = '%s'", pedzyHost);
-        RKSetPedestal(myRadar, &RKPedestalPedzyInit, (void *)pedzyHost);
+        if (!strlen(user.pedzyHost)) {
+            strcpy(user.pedzyHost, "localhost");
+        }
+        RKLog("Pedestal input = '%s'", user.pedzyHost);
+        RKSetPedestal(myRadar, &RKPedestalPedzyInit, (void *)user.pedzyHost);
         RKSetPedestalExec(myRadar, &RKPedestalPedzyExec);
         RKSetPedestalFree(myRadar, &RKPedestalPedzyFree);
         RKGoLive(myRadar);
