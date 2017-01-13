@@ -12,10 +12,12 @@
 void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
     const RKFloat va = 15.0f;
     const RKFloat wa = 0.3 / (2.0f * sqrt(2.0) * M_PI) * 2000.0f;
+    const RKFloat pcal = 3.3f;
     const RKVec va_pf = _rk_mm_set1_pf(va);
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
-    const RKVec ten = _rk_mm_set1_pf(10.0f);
-    const RKVec cal = _rk_mm_set1_pf(-30.0f);
+    const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
+    const RKVec one_pf = _rk_mm_set1_pf(1.0f);
+    const RKVec zcal_pf = _rk_mm_set1_pf(-30.0f);
     RKFloat *s;
     RKFloat *z;
     RKFloat *v;
@@ -24,43 +26,49 @@ void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
     RKVec *z_pf;
     RKVec *v_pf;
     RKVec *w_pf;
-    RKFloat *r1i;
-    RKFloat *r1q;
+    RKVec *r_pf;
+    RKVec n_pf;
+    RKVec *snr_pf;
+    RKFloat *ri;
+    RKFloat *rq;
     int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    // S Z V W
     for (p = 0; p < 2; p++) {
+        RKSIMD_subc(space->S[p], space->noise[p], space->Z[p], gateCount);
         // log10(S) --> Z (temp)
         s = space->S[p];
         z = space->Z[p];
         v = (RKFloat *)space->V[p];
-        r1i = (RKFloat *)space->R[p][1].i;
-        r1q = (RKFloat *)space->R[p][1].q;
+        ri = (RKFloat *)space->R[p][1].i;
+        rq = (RKFloat *)space->R[p][1].q;
         // Regular math, no intrinsic options
         for (k = 0; k < gateCount; k++) {
-#if !defined(_rk_mm_log10_pf)
             *z++ = log10f(*s++);
-#endif
-            *v++ = atan2f(*r1q++, *r1i++);
+            *v++ = atan2f(*rq++, *ri++);
         }
+        s_pf = (RKVec *)space->S[p];
         z_pf = (RKVec *)space->Z[p];
         v_pf = (RKVec *)space->V[p];
         w_pf = (RKVec *)space->W[p];
-        s_pf = (RKVec *)space->S[p];
+        r_pf = (RKVec *)space->rcor;
+        n_pf = _rk_mm_set1_pf(space->noise[p]);
+        snr_pf = (RKVec *)space->SNR[p];
         // Packed single math
         for (k = 0; k < K; k++) {
+            // SNR: S / N
+            *snr_pf = _rk_mm_div_pf(*s_pf, n_pf);
             // Z:  10 * (previous) + rcr --> Z; =>  Z = 10 * log10(S) + rangeCorrection + ZCal;
-#if defined(_rk_mm_log10_pf)
-            *z_pf = _rk_mm_add_pf(_rk_mm_mul_pf(ten, _rk_mm_log10_ps(*z_pf), cal));
-#else
-            *z_pf = _rk_mm_add_pf(_rk_mm_mul_pf(ten, *z_pf), cal);
-#endif
-            z_pf++;
+            *z_pf = _rk_mm_add_pf(_rk_mm_add_pf(_rk_mm_mul_pf(ten_pf, *z_pf), *r_pf), zcal_pf);
             // V: V = Va * (previous) --> V; => V = angle(R1)
             *v_pf = _rk_mm_mul_pf(va_pf, *v_pf);
-            v_pf++;
             // W: w = S / W
             *w_pf = _rk_mm_div_pf(*s_pf, *w_pf);
             s_pf++;
+            z_pf++;
+            v_pf++;
             w_pf++;
+            r_pf++;
+            snr_pf++;
         }
         w = space->W[p];
         for (k = 0; k < gateCount; k++) {
@@ -73,6 +81,36 @@ void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
             *w_pf = _rk_mm_mul_pf(wa_pf, _rk_mm_sqrt_pf(*w_pf));
             w_pf++;
         }
+    }
+    // D P R K
+    z_pf = (RKVec *)space->ZDR;
+    r_pf = (RKVec *)space->RhoHV;
+    s_pf = (RKVec *)space->aC[0];
+    w_pf = (RKVec *)space->SNR[0];
+    v_pf = (RKVec *)space->SNR[1];
+    for (k = 0; k < K; k++) {
+        *z_pf = _rk_mm_div_pf(*w_pf, *v_pf);
+
+        *r_pf = _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*w_pf));                         // (1 + 1 / SNR-h)
+        *r_pf = _rk_mm_mul_pf(*r_pf, _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*v_pf)));   // (1 + 1 / SNR-h) * (1 + 1 / SNR-v)
+        *r_pf = _rk_mm_mul_pf(*s_pf, _rk_mm_sqrt_pf(*r_pf));                         // C[0] * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
+
+        r_pf++;
+        s_pf++;
+        v_pf++;
+        w_pf++;
+    }
+    z = space->ZDR;
+    s = space->PhiDP;
+    v = space->KDP;
+    ri = space->C[0].i;
+    rq = space->C[0].q;
+    *v++ = 0.0f;
+    for (k = 0; k < gateCount; k++) {
+        *z = 10.0f * log10f(*z);
+        z++;
+        *s++ = atan2f(*rq++, *ri++) + pcal;
+        *v++ = *s - *(s - 1);
     }
 }
 
@@ -236,7 +274,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
         printf("%sCross-channel:%s\n",
                rkGlobalParameters.showColor ? "\033[4m" : "",
                rkGlobalParameters.showColor ? "\033[24m" : "");
-        RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
+        RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                  // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
     }
     

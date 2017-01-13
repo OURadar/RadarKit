@@ -331,11 +331,6 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     return RKResultNoError;
 }
 
-int RKSetDeveloperMode(RKRadar *radar) {
-    RKMomentEngineSetDeveloperMode(radar->momentEngine);
-    return RKResultNoError;
-}
-
 //
 // NOTE: Function incomplete, need to define file format
 // ingest the samples, convert, etc.

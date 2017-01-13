@@ -25,7 +25,6 @@ enum RKInitFlag {
     RKInitFlagAllocRawIQBuffer      = (1 << 9),
     RKInitFlagAllocEverything       = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
     RKInitFlagAllocEverythingQuiet  = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
-    RKInitFlagDeveloperMode         = (1 << 16)
 };
 
 typedef RKEnum RKRadarState;
@@ -142,7 +141,6 @@ int RKSetPedestalFree(RKRadar *radar, int(RKPedestal));
 
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
-int RKSetDeveloperMode(RKRadar *radar);
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);

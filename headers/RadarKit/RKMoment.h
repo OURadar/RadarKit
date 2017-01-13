@@ -78,7 +78,6 @@ RKMomentEngine *RKMomentEngineInit(void);
 void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int);
-void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
                                          RKPulse *, uint32_t *, const uint32_t,
                                          RKRay *,   uint32_t *, const uint32_t);
@@ -86,6 +85,7 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine);
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine);
 void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine);
+void RKMomentENgineSetProcessParameters(RKMomentEngine *, RKMomentParameters *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

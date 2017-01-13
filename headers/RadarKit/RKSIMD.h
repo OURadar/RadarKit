@@ -50,9 +50,10 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_cvtepi16_epi32(a)     _mm512_cvtepi16_epi32(a)                // AVX512
 #define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
 #define _rk_mm_sqrt_pf(a)            _mm512_sqrt_ps(a)
-#if defined(_mm512_mul_ps)
-#define _rk_mm_log10_pf(a)           _mm512_log10_ps(a)
-#endif
+#define _rk_mm_rcp_pf(a)             _mm512_rcp_ps(a)
+//#if defined(_mm512_mul_ps)
+//#define _rk_mm_log10_pf(a)           _mm512_log10_ps(a)
+//#endif
 
 #elif defined(__AVX__)
 
@@ -74,9 +75,10 @@ typedef __m128i RKVecCvt;
 #        define _rk_mm_cvtepi32_pf(a)        _mm256_cvtepi32_ps(a)                    // AVX
 #    endif
 #define _rk_mm_sqrt_pf(a)            _mm256_sqrt_ps(a)
-#if defined(_mm256_mul_ps)
-#define _rk_mm_log10_pf(a)           _mm256_log10_ps(a)
-#endif
+#define _rk_mm_rcp_pf(a)             _mm256_rcp_ps(a)
+//#if defined(_mm256_mul_ps)
+//#define _rk_mm_log10_pf(a)           _mm256_log10_ps(a)
+//#endif
 
 #else
 
@@ -96,9 +98,10 @@ typedef __m128 RKVec;
 #define _rk_mm_cvtepi16_epi32(a)     _mm_cvtepi16_epi32(a)                   // SSE4.1
 #define _rk_mm_cvtepi32_pf(a)        _mm_cvtepi32_ps(a)                      // SSE2
 #define _rk_mm_sqrt_pf(a)            _mm_sqrt_ps(a)
-#if defined(_mm_mul_ps)
-#define _rk_mm_log10_pf(a)           _mm_log10_ps(a)
-#endif
+#define _rk_mm_rcp_pf(a)             _mm_rcp_ps(a)
+//#if defined(_mm_mul_ps)
+//#define _rk_mm_log10_pf(a)           _mm_log10_ps(a)
+//#endif
 
 #endif
 

@@ -79,6 +79,10 @@ typedef int8_t    RKByte;
 typedef uint64_t  RKEnum;
 typedef float     RKFloat;   // We can change this to double if we decided one day
 typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
+typedef void *    RKTransceiver;
+typedef void *    RKPedestal;
+typedef void *    RKBuffer;
+
 
 #pragma pack(push, 1)
 
@@ -266,13 +270,9 @@ typedef struct rk_modulo_path {
     uint32_t      modulo;
 } RKModuloPath;
 
-typedef void * RKTransceiver;
-typedef void * RKPedestal;
-typedef void * RKBuffer;
-
 typedef struct rk_scratch {
     bool             showNumbers;
-    uint8_t          lagCount;
+    uint8_t          lagCount;                             // Number of lags of R & C
     RKIQZ            mX[2];                                // Mean of X, 2 for dual-pol
     RKIQZ            vX[2];                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
     RKIQZ            R[2][RKLagCount];                     // ACF up to RKLagCount - 1 for each polarization
@@ -289,6 +289,7 @@ typedef struct rk_scratch {
     RKFloat          *Z[2];                                // Reflectivity in dB
     RKFloat          *V[2];                                // Velocity in same units as aliasing velocity
     RKFloat          *W[2];                                // Spectrum width in same units as aliasing velocity
+    RKFloat          *SNR[2];                              // Signal-to-noise ratio
     RKFloat          *ZDR;                                 // Differential reflectivity ZDR
     RKFloat          *PhiDP;                               // Differential phase PhiDP
     RKFloat          *RhoHV;                               // Cross-correlation coefficient RhoHV
@@ -344,6 +345,12 @@ typedef union rk_position {
     };
     RKByte               bytes[128];
 } RKPosition;
+
+typedef struct rk_moment_paramters {
+    RKFloat              noise[2];
+    RKFloat              ZCal[2];
+    RKFloat              PCal[2];
+} RKMomentParameters;
 
 #pragma pack(pop)
 

@@ -101,7 +101,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
                 Xv = RKGetSplitComplexDataFromPulse(input[n    ], 1);
                 RKSIMD_zcma(&Xh, &Xv, &space->C[j], gateCount, 1);                      // C = C + Xh[] * Xv[]'
             }
-            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(pulseCount + k), gateCount);         // E{Xh * Xv'}   (unbiased)
+            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(pulseCount + k), gateCount);    // E{Xh * Xv'}   (unbiased)
         } else {
             Xh = RKGetSplitComplexDataFromPulse(input[k], 0);
             Xv = RKGetSplitComplexDataFromPulse(input[0], 1);
@@ -111,7 +111,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
                 Xv = RKGetSplitComplexDataFromPulse(input[n - k], 1);
                 RKSIMD_zcma(&Xh, &Xv, &space->C[j], gateCount, 1);                      // C = C + Xh[] * Xv[]'
             }
-            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(pulseCount - k), gateCount);         // E{Xh * Xv'}   (unbiased)
+            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(pulseCount - k), gateCount);    // E{Xh * Xv'}   (unbiased)
         }
         // Comment the following line to include the zero-Doppler signal
         RKSIMD_zabs(&space->C[j], space->aC[j], gateCount);                             // |E{Xh * Xv'} - E{Xh} * E{Xv}'| --> absC[ic]
@@ -137,7 +137,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
         }
     }
     
-    if (space->showNumbers) {
+    if (space->showNumbers && gateCount < 16 && pulseCount < 32) {
         char variable[32];
         char line[2048];
         RKIQZ X[pulseCount];

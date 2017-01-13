@@ -632,7 +632,7 @@ void RKTestProcessor(void) {
 
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
 
-    RKScratchAlloc(&space, pulseCapacity, 3, true);
+    RKScratchAlloc(&space, pulseCapacity, 4, true);
 
     RKPulse *pulses[pulseCount];
     for (k = 0; k < pulseCount; k++) {
@@ -647,6 +647,7 @@ void RKTestProcessor(void) {
     gettimeofday(&tic, NULL);
     for (k = 0; k < testCount; k++) {
         RKPulsePairHop(space, pulses, pulseCount);
+        //RKMultiLag(space, pulses, pulseCount);
     }
     gettimeofday(&toc, NULL);
 
@@ -656,5 +657,7 @@ void RKTestProcessor(void) {
           RKIntegerToCommaStyleString(pulseCount),
           RKIntegerToCommaStyleString(pulseCapacity),
           1.0e3 * t / testCount);
+
+    RKScratchFree(space);
     return;
 }
