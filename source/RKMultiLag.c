@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKMultiLag.h>
 
-int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
+int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     //    struct timeval tic, toc;
     //    gettimeofday(&tic, NULL);
         
@@ -23,7 +23,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     RKPulse *pulse = input[0];
     const uint32_t capacity = pulse->header.capacity;
     const uint32_t gateCount = pulse->header.gateCount;
-    const int lagCount = MIN(count, space->lagCount);
+    const int lagCount = MIN(pulseCount, space->lagCount);
     //
     //  ACF
     //
@@ -54,7 +54,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
                 }
             }
             n++;
-        } while (n != count);
+        } while (n != pulseCount);
         
         // Divide by n for the average
         RKSIMD_izscl(&space->mX[p], 1.0f / (float)n, gateCount);                         // mX /= n
@@ -96,22 +96,22 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
             Xh = RKGetSplitComplexDataFromPulse(input[ 0], 0);
             Xv = RKGetSplitComplexDataFromPulse(input[-k], 1);
             RKSIMD_zmul(&Xh, &Xv, &space->C[j], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
-            for (n = -k + 1; n < count; n++) {
+            for (n = -k + 1; n < pulseCount; n++) {
                 Xh = RKGetSplitComplexDataFromPulse(input[n + k], 0);
                 Xv = RKGetSplitComplexDataFromPulse(input[n    ], 1);
                 RKSIMD_zcma(&Xh, &Xv, &space->C[j], gateCount, 1);                      // C = C + Xh[] * Xv[]'
             }
-            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(count + k), gateCount);         // E{Xh * Xv'}   (unbiased)
+            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(pulseCount + k), gateCount);         // E{Xh * Xv'}   (unbiased)
         } else {
             Xh = RKGetSplitComplexDataFromPulse(input[k], 0);
             Xv = RKGetSplitComplexDataFromPulse(input[0], 1);
             RKSIMD_zmul(&Xh, &Xv, &space->C[j], gateCount, 1);                          // C = Xh * Xv', flag 1 = conjugate
-            for (n = k + 1; n < count; n++) {
+            for (n = k + 1; n < pulseCount; n++) {
                 Xh = RKGetSplitComplexDataFromPulse(input[n    ], 0);
                 Xv = RKGetSplitComplexDataFromPulse(input[n - k], 1);
                 RKSIMD_zcma(&Xh, &Xv, &space->C[j], gateCount, 1);                      // C = C + Xh[] * Xv[]'
             }
-            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(count - k), gateCount);         // E{Xh * Xv'}   (unbiased)
+            RKSIMD_izscl(&space->C[j], 1.0f / (RKFloat)(pulseCount - k), gateCount);         // E{Xh * Xv'}   (unbiased)
         }
         // Comment the following line to include the zero-Doppler signal
         RKSIMD_zabs(&space->C[j], space->aC[j], gateCount);                             // |E{Xh * Xv'} - E{Xh} * E{Xv}'| --> absC[ic]
@@ -140,11 +140,11 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     if (space->showNumbers) {
         char variable[32];
         char line[2048];
-        RKIQZ X[count];
+        RKIQZ X[pulseCount];
         const int gateShown = 8;
         for (p = 0; p < 2; p++) {
             printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
-            for (n = 0; n < count; n++) {
+            for (n = 0; n < pulseCount; n++) {
                 X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
             }
             
@@ -164,7 +164,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
              */
             j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
             for (k = 0; k < gateCount; k++) {
-                for (n = 0; n < count; n++) {
+                for (n = 0; n < pulseCount; n++) {
                     j += sprintf(line + j, " %.0f%+.0fj,", X[n].i[k], X[n].q[k]);
                 }
                 j += sprintf(line + j - 1, ";...\n") - 1;
@@ -172,7 +172,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
             sprintf(line + j - 5, "]\n");
             printf("%s\n", line);
             
-            for (n = 0; n < count; n++) {
+            for (n = 0; n < pulseCount; n++) {
                 sprintf(variable, "  X[%d] = ", n);
                 RKShowVecIQZ(variable, &X[n], gateShown);
             }
@@ -205,6 +205,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t count, const ch
     //    gettimeofday(&toc, NULL);
     //    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
     
-    return count;
+    return pulseCount;
     
 }

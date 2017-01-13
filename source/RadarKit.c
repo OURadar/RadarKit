@@ -8,4 +8,4 @@
 #include <RadarKit.h>
 
 // Global variables
-RKGlobalParamters rkGlobalParameters = {{"radar"}, {RKDefaultLogfile}, false, 0};
+RKGlobalParamters rkGlobalParameters = {{"radar"}, {RKDefaultLogfile}, true, 0};

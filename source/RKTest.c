@@ -621,3 +621,40 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
         }
     }
 }
+
+void RKTestProcessor(void) {
+    int k;
+    RKScratch *space;
+    RKBuffer pulseBuffer;
+    const int testCount = 1000;
+    const int pulseCount = 100;
+    const int pulseCapacity = 4096;
+
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+
+    RKScratchAlloc(&space, pulseCapacity, 3, true);
+
+    RKPulse *pulses[pulseCount];
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
+        pulse->header.t = k;
+        pulse->header.gateCount = pulseCapacity;
+        pulses[k] = pulse;
+    }
+
+    struct timeval tic, toc;
+
+    gettimeofday(&tic, NULL);
+    for (k = 0; k < testCount; k++) {
+        RKPulsePairHop(space, pulses, pulseCount);
+    }
+    gettimeofday(&toc, NULL);
+
+    double t = RKTimevalDiff(toc, tic);
+    RKLog("Total elapsed time: %.3f s\n", t);
+    RKLog("Time for each ray (%s pulses x %s gates) = %.3f ms\n",
+          RKIntegerToCommaStyleString(pulseCount),
+          RKIntegerToCommaStyleString(pulseCapacity),
+          1.0e3 * t / testCount);
+    return;
+}

@@ -52,7 +52,7 @@ struct rk_moment_engine {
     uint8_t                coreCount;
     bool                   useSemaphore;
     bool                   developerMode;
-    int                    (*processor)(RKScratch *, RKPulse **, const uint16_t, const char *);
+    int                    (*processor)(RKScratch *, RKPulse **, const uint16_t);
 
     // Program set variables
     RKModuloPath           *momentSource;

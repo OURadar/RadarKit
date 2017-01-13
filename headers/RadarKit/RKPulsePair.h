@@ -12,7 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
 
-int RKPulsePair(RKScratch *, RKPulse **, const uint16_t, const char *);
-int RKPulsePairHop(RKScratch *, RKPulse **, const uint16_t, const char *);
+int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t gateCount);
+int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t gateCount);
 
 #endif /* defined(__RadarKit_RKPulsePair__) */

@@ -76,14 +76,14 @@ void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
     }
 }
 
-int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
+int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
     usleep(20 * 1000);
 
     return 0;
 
 }
 
-int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count, const char *name) {
+int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
 //    struct timeval tic, toc;
 //    gettimeofday(&tic, NULL);
 

@@ -64,7 +64,7 @@ RKRay *RKGetRay(RKRay *, const uint32_t rayIndex);
 uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t productIndex);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 
-size_t RKScratchAlloc(RKScratch **, const uint32_t, const uint8_t, const bool);
+size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const bool);
 void RKScratchFree(RKScratch *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

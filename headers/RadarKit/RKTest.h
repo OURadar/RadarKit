@@ -33,5 +33,6 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *, void *);
 int RKTestSimulateDataStreamFree(RKTransceiver);
 
 void RKTestPulseCompression(RKRadar *, RKTestFlag);
+void RKTestProcessor(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

@@ -22,8 +22,6 @@ typedef struct user_params {
     int   verbose;
     int   testPulseCompression;
     int   sleepInterval;
-    bool  noColor;
-    bool  quietMode;
     bool  simulate;
     char  pedzyHost[256];
 } UserParams;
@@ -83,9 +81,6 @@ void showHelp() {
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
            "\n"
-           "  -q (--quiet)\n"
-           "         Decreases verbosity level, which can be specified multiple times.\n"
-           "\n"
            "  -s (--simulate)\n"
            "         Sets the program to simulate data stream (default, if none of the tests\n"
            "         is specified).\n"
@@ -135,6 +130,7 @@ UserParams processInput(int argc, char **argv) {
         {"lean-system-test"      , no_argument      , NULL, 'L'},
         {"medium-system-test"    , no_argument      , NULL, 'M'},
         {"test-pulse-compression", optional_argument, NULL, 'P'},
+        {"test-processor"        , no_argument      , NULL, 'Q'},
         {"test-simd"             , optional_argument, NULL, 'S'},
         {"show-types"            , no_argument      , NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
@@ -163,11 +159,8 @@ UserParams processInput(int argc, char **argv) {
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
-            case 'A':
-                user.quietMode = false;
-                break;
             case 'C':
-                user.noColor = true;
+                RKSetWantColor(false);
                 break;
             case 'D':
                 user.simulate = true;
@@ -210,6 +203,10 @@ UserParams processInput(int argc, char **argv) {
                 RKTestSIMD(k);
                 exit(EXIT_SUCCESS);
                 break;
+            case 'Q':
+                RKTestProcessor();
+                exit(EXIT_SUCCESS);
+                break;
             case 'T':
                 printf("Option T\n");
                 RKShowTypeSizes();
@@ -237,7 +234,6 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'm':
                 // Modulo-math test
-                RKSetWantScreenOutput(true);
                 RKTestModuloMath();
                 exit(EXIT_SUCCESS);
                 break;
@@ -283,21 +279,20 @@ UserParams processInput(int argc, char **argv) {
 int main(int argc, char *argv[]) {
 
     RKSetProgramName("iRadar");
+    RKSetWantScreenOutput(true);
 
     UserParams user = processInput(argc, argv);
 
     // In the case when no tests are performed, simulate the time-series
     if (user.simulate == false && user.testPulseCompression == 0) {
-        RKSetWantScreenOutput(true);
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
     }
 
     // Screen output based on verbosity level
-    if (user.verbose) {
-        RKSetWantScreenOutput(true);
+    if (!user.verbose) {
+        RKSetWantScreenOutput(false);
     }
-    RKSetWantColor(!user.noColor);
 
     // Build an initialization description
     RKRadarInitDesc desc;

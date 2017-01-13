@@ -216,7 +216,7 @@ void *momentCore(void *in) {
                 i = RKNextModuloS(i, engine->pulseBufferSize);
             } while (k < path.length);
             ie = i;
-            k = engine->processor(space, pulses, path.length, name);
+            k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
                 RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
             }
