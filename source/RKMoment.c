@@ -111,6 +111,7 @@ void *momentCore(void *in) {
     RKScratch *space;
 
     // Allocate local resources and keep track of the total allocation
+    ray = RKGetRay(engine->rayBuffer, 0);
     pulse = RKGetPulse(engine->pulseBuffer, 0);
     size_t mem = RKScratchAlloc(&space, pulse->header.capacity, engine->processorLagCount, engine->developerMode);
     if (space == NULL) {
@@ -169,7 +170,9 @@ void *momentCore(void *in) {
     RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
     float deltaAzimuth, deltaElevation;
     char *string;
-    
+    float *rayData;
+    int stride = pulse->header.capacity / ray->header.capacity;
+
     while (engine->state == RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
             if (sem_wait(sem)) {
@@ -203,39 +206,15 @@ void *momentCore(void *in) {
 
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
-        
+        ie = RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize);
+
         // Latest rayStatusBufferIndex the other end should check (I know there is a horse raise here)
         engine->rayStatusBufferIndex = iu;
-
-        // Duplicate a linear array for processor if we are to process; otherwise just skip this group
-        if (path.length > 3) {
-            k = 0;
-            i = is;
-            do {
-                pulses[k++] = RKGetPulse(engine->pulseBuffer, i);
-                i = RKNextModuloS(i, engine->pulseBufferSize);
-            } while (k < path.length);
-            ie = i;
-            k = engine->processor(space, pulses, path.length);
-            if (k != path.length) {
-                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
-            }
-            ray->header.s |= RKRayStatusProcessed;
-        } else {
-            ie = RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize);
-            ray->header.s |= RKRayStatusSkipped;
-            if (engine->verbose) {
-                RKLog("%s %s skipped a ray with %d sampples.\n", engine->name, name, path.length);
-            }
-        }
-
-        // Update processed index
-        me->pid = ie;
 
         // Start and end pulses to calculate this ray
         S = RKGetPulse(engine->pulseBuffer, is);
         E = RKGetPulse(engine->pulseBuffer, ie);
-        
+
         // Set the ray headers
         ray->header.startTimeD     = S->header.timeDouble;
         ray->header.startAzimuth   = S->header.azimuthDegrees;
@@ -245,6 +224,39 @@ void *momentCore(void *in) {
         ray->header.endElevation   = E->header.elevationDegrees;
         ray->header.s |= RKRayStatusReady;
         ray->header.s ^= RKRayStatusProcessing;
+
+        // Duplicate a linear array for processor if we are to process; otherwise just skip this group
+        if (path.length > 3) {
+            k = 0;
+            i = is;
+            do {
+                pulses[k++] = RKGetPulse(engine->pulseBuffer, i);
+                i = RKNextModuloS(i, engine->pulseBufferSize);
+            } while (k < path.length);
+            if (ie != RKPreviousModuloS(i, engine->pulseBufferSize)) {
+                RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
+            }
+            // Call the processor
+            k = engine->processor(space, pulses, path.length);
+            if (k != path.length) {
+                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
+            }
+            ray->header.s |= RKRayStatusProcessed;
+        } else {
+            ray->header.s |= RKRayStatusSkipped;
+            if (engine->verbose) {
+                RKLog("%s %s skipped a ray with %d sampples.\n", engine->name, name, path.length);
+            }
+        }
+
+        i = 0;
+        rayData = RKGetFloatDataFromRay(ray, 0);
+        for (k = 0; k < pulse->header.gateCount; k += stride) {
+            rayData[i++] = space->Z[0][k];
+        }
+
+        // Update processed index
+        me->pid = ie;
 
         // Status of the ray
         iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
@@ -257,10 +269,10 @@ void *momentCore(void *in) {
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d]",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d] <%d>",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
-                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu);
+                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu, stride);
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);

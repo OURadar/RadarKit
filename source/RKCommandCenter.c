@@ -149,19 +149,25 @@ int socketCommandHandler(RKOperator *O) {
             break;
             
         case 'r':
-            RKLog("%s/%s selected radar %s\n", engine->name, O->name, input);
+            RKLog("%s %s selected radar %s\n", engine->name, O->name, input);
             snprintf(string, RKMaximumStringLength - 1, "Radar %s selected." RKEOL, input);
             RKOperatorSendBeaconAndString(O, string);
             break;
-            
+
+        case 'm':
+            RKLog("%s %s display data\n", engine->name, O->name);
+            user->streams |= RKUserFlagDisplayZ;
+            user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+            break;
+
         case 's':
             // Stream varrious data
             user->streams = RKStringToFlag(O->cmd + 1);
             sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
             // Fast foward some indices
-            user->rayStatusIndex = user->radar->momentEngine->rayStatusBufferIndex;
-            user->pulseIndex = user->radar->pulseIndex;
-            user->rayIndex = user->radar->rayIndex;
+            user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+            //user->pulseIndex = user->radar->pulseIndex;
+            //user->rayIndex = user->radar->rayIndex;
             RKOperatorSendBeaconAndString(O, string);
             break;
             
@@ -191,6 +197,9 @@ int socketStreamHandler(RKOperator *O) {
     gettimeofday(&t0, NULL);
     double time = (double)t0.tv_sec + 1.0e-6 * (double)t0.tv_usec;
     double td = time - user->timeLastOut;
+
+    RKRay *ray;
+    uint8_t *data;
 
     // Check IQ
     // Check MM
@@ -224,7 +233,7 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKUserFlagStatusRays) {
         j = 0;
         k = 0;
-        endIndex = user->radar->momentEngine->rayStatusBufferIndex;
+        endIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
         while (user->rayStatusIndex != endIndex) {
             c = user->radar->momentEngine->rayStatusBuffer[user->rayStatusIndex];
             k += snprintf(user->string + k, RKMaximumStringLength - k - 1, "%s\n", c);
@@ -235,6 +244,23 @@ int socketStreamHandler(RKOperator *O) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
             RKOperatorSendBeaconAndString(O, user->string);
+        }
+    }
+
+    if (user->streams & user->access & RKUserFlagDisplayZ) {
+        endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+        while (user->rayIndex != endIndex) {
+            RKLog("%s %s ray %d -> %d\n", engine->name, O->name, user->rayIndex, endIndex);
+            ray = RKGetRay(user->radar->rays, user->rayIndex);
+            data = RKGetUInt8DataFromRay(ray, 0);
+            O->delim.type = 'm';
+            O->delim.size = sizeof(ray->header);
+            RKOperatorSendPackets(O, O->delim, sizeof(RKNetDelimiter), ray->header, O->delim.size, NULL);
+            O->delim.type = 'd';
+            O->delim.subtype = 'Z';
+            O->delim.size = ray->header.gateCount * sizeof(uint8_t);
+            RKOperatorSendPackets(O, O->delim, sizeof(RKNetDelimiter), data, O->delim.size, NULL);
+            user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
         }
     }
 

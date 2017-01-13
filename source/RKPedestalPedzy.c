@@ -15,7 +15,7 @@ int RKPedestalPedzyRead(RKClient *client) {
 
     RKPosition *position = (RKPosition *)client->userPayload;
 
-    if (radar->desc.initFlags & RKInitFlagDeveloperMode) {
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Position %08x EL %.2f  AZ %.2f\n", position->flag, position->elevationDegrees, position->azimuthDegrees);
     }
     RKPosition *newPosition = RKGetVacantPosition(radar);

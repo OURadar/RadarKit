@@ -529,7 +529,7 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
                 totalSentSize += sentSize;
             }
             if (totalSentSize < payloadSize) {
-                usleep(10000);
+                usleep(1000);
             } else if (sentSize < 0) {
                 pthread_mutex_unlock(&O->lock);
                 return RKResultIncompleteSend;
@@ -551,11 +551,14 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
 }
 
 ssize_t RKOperatorSendBeaconAndString(RKOperator *O, const char *string) {
+    O->delim.type = 't';
     O->delim.size = (uint32_t)strlen(string) + 1;
     return RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), string, O->delim.size, NULL);
 }
 
 ssize_t RKOperatorSendBeacon(RKOperator *O) {
+    O->delim.type = 'e';
+    O->delim.size = 0;
     ssize_t s = RKOperatorSendPackets(O, &O->beacon, sizeof(RKNetDelimiter), NULL);
     //O->beacon.userParameter1++;
     return s;
