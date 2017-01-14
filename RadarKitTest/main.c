@@ -130,6 +130,7 @@ UserParams processInput(int argc, char **argv) {
         {"lean-system-test"      , no_argument      , NULL, 'L'},
         {"medium-system-test"    , no_argument      , NULL, 'M'},
         {"test-pulse-compression", optional_argument, NULL, 'P'},
+        {"test-one-ray"          , no_argument      , NULL, 'R'},
         {"test-processor"        , no_argument      , NULL, 'Q'},
         {"test-simd"             , optional_argument, NULL, 'S'},
         {"show-types"            , no_argument      , NULL, 'T'},
@@ -187,6 +188,10 @@ UserParams processInput(int argc, char **argv) {
                 user.coresForPulseCompression = 4;
                 user.coresForProductGenerator = 2;
                 break;
+            case 'R':
+                RKTestOneRay();
+                exit(EXIT_SUCCESS);
+                break;
             case 'S':
                 // SIMD Tests
                 k = RKTestSIMDFlagNull;
@@ -204,7 +209,7 @@ UserParams processInput(int argc, char **argv) {
                 exit(EXIT_SUCCESS);
                 break;
             case 'Q':
-                RKTestProcessor();
+                RKTestProcessorSpeed();
                 exit(EXIT_SUCCESS);
                 break;
             case 'T':

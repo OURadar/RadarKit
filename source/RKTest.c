@@ -622,7 +622,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     }
 }
 
-void RKTestProcessor(void) {
+void RKTestProcessorSpeed(void) {
     int k;
     RKScratch *space;
     RKBuffer pulseBuffer;
@@ -659,5 +659,52 @@ void RKTestProcessor(void) {
           1.0e3 * t / testCount);
 
     RKScratchFree(space);
+    return;
+}
+
+void RKTestOneRay(void) {
+    int k, p, n, g;
+    RKScratch *space;
+    RKBuffer pulseBuffer;
+    const int gateCount = 6;
+    const int pulseCount = 6;
+    const int pulseCapacity = 64;
+    
+    RKLog("Allocating buffers ...\n");
+    
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    
+    RKScratchAlloc(&space, pulseCapacity, 4, true);
+    
+    RKPulse *pulses[pulseCount];
+    
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
+        pulse->header.i = k;
+        pulse->header.t = k;
+        pulse->header.gateCount = gateCount;
+        pulses[k] = pulse;
+        // Fill in the data...
+        for (p = 0; p < 2; p++) {
+            RKIQZ X = RKGetSplitComplexDataFromPulse(pulse, p);
+            
+            // Some seemingly random pattern for testing
+            n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
+            for (g = 0; g < gateCount; g++) {
+                if (g % 2 == 0) {
+                    X.i[g] = (int16_t)((g * n) + p);
+                    X.q[g] = (int16_t)((n - 2) * (g - 1));
+                } else {
+                    X.i[g] = (int16_t)(-g * (n - 1));
+                    X.q[g] = (int16_t)((g * p) + n);
+                }
+            }
+        }
+    }
+    
+    RKPulsePairHop(space, pulses, pulseCount);
+    
+    RKScratchFree(space);
+    free(pulseBuffer);
     return;
 }

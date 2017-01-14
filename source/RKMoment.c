@@ -113,7 +113,7 @@ void *momentCore(void *in) {
     // Allocate local resources and keep track of the total allocation
     ray = RKGetRay(engine->rayBuffer, 0);
     pulse = RKGetPulse(engine->pulseBuffer, 0);
-    size_t mem = RKScratchAlloc(&space, pulse->header.capacity, engine->processorLagCount, engine->developerMode);
+    size_t mem = RKScratchAlloc(&space, pulse->header.capacity, engine->processorLagCount, engine->verbose > 3);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateScratchSpace;
@@ -222,8 +222,7 @@ void *momentCore(void *in) {
         ray->header.endTimeD       = E->header.timeDouble;
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
-        ray->header.s |= RKRayStatusReady;
-        ray->header.s ^= RKRayStatusProcessing;
+        //ray->header.gateCount      = (S->header.gateCount + stride - 1) / stride;
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3) {
@@ -254,6 +253,13 @@ void *momentCore(void *in) {
         for (k = 0; k < pulse->header.gateCount; k += stride) {
             rayData[i++] = space->Z[0][k];
         }
+        ray->header.gateCount = i;
+        if (i != (S->header.gateCount + stride - 1) / stride) {
+            RKLog("Equation 1 does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
+                  S->header.gateCount, stride, i, (S->header.gateCount + stride - 1) / stride);
+        }
+        ray->header.s ^= RKRayStatusProcessing;
+        ray->header.s |= RKRayStatusReady;
 
         // Update processed index
         me->pid = ie;

@@ -521,7 +521,7 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
     payload = va_arg(arg, void *);
     while (payload != NULL) {
         payloadSize = va_arg(arg, ssize_t);
-        //printf("%d @ %p\n", (int)payloadSize, payload);
+        //printf("size %d @ %p\n", (int)payloadSize, payload);
         sentSize = 0;
         totalSentSize = 0;
         while (totalSentSize < payloadSize && timeout_count++ < RKSocketTimeCountOf10ms) {

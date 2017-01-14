@@ -377,7 +377,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->W[k], RKSIMDAlignSize, capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->SNR[k], RKSIMDAlignSize, capacity * sizeof(RKFloat)));
         bytes += 9;
-        for (j = 0; j < RKLagCount; j++) {
+        for (j = 0; j < space->lagCount; j++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j], RKSIMDAlignSize, capacity * sizeof(RKFloat)));
@@ -394,7 +394,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->RhoHV, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->KDP,   RKSIMDAlignSize, capacity * sizeof(RKFloat)));
     bytes += 8;
-    for (j = 0; j < 2 * RKLagCount - 1; j++) {
+    for (j = 0; j < 2 * space->lagCount - 1; j++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKSIMDAlignSize, capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j], RKSIMDAlignSize, capacity * sizeof(RKFloat)));
@@ -414,17 +414,27 @@ void RKScratchFree(RKScratch *space) {
         free(space->mX[k].q);
         free(space->vX[k].i);
         free(space->vX[k].q);
-        for (j = 0; j < RKLagCount; j++) {
+        free(space->S[k]);
+        free(space->Z[k]);
+        free(space->V[k]);
+        free(space->W[k]);
+        free(space->SNR[k]);
+        for (j = 0; j < space->lagCount; j++) {
             free(space->R[k][j].i);
             free(space->R[k][j].q);
             free(space->aR[k][j]);
         }
     }
+    free(space->rcor);
     free(space->sC.i);
     free(space->sC.q);
     free(space->ts.i);
     free(space->ts.q);
-    for (j = 0; j < 2 * RKLagCount - 1; j++) {
+    free(space->ZDR);
+    free(space->PhiDP);
+    free(space->RhoHV);
+    free(space->KDP);
+    for (j = 0; j < 2 * space->lagCount - 1; j++) {
         free(space->C[j].i);
         free(space->C[j].q);
         free(space->aC[j]);

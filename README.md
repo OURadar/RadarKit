@@ -11,8 +11,7 @@ rktest [options]
 OPTIONS:
      Unless specifically stated, all options are interpreted in sequence. Some
      options can be specified multiples times for repetitions. For example, the
-     debris particle count is set for each type sequentially by repeating the
-     option multiple times for each debris type.
+     verbosity level increaes by one for every -v.
 
   -c (--core) P,M (no space after comma)
          Sets the number of threads for pulse compression to P
@@ -23,13 +22,13 @@ OPTIONS:
          Sets the pulse repetition frequency (PRF) to value in Hz.
          If not specified, the default PRF = 5000 Hz.
 
-  -F (--fs) value
-         Sets the sampling frequency to value in Hz.
-         If not specified, the default fs = 5e6 Hz = 5 MHz.
+  -F (--fs or -b) value
+         Sets the sampling frequency (bandwidth) to value in Hz.
+         If not specified, the default will be used.
 
   -g (--gate) value
-         Sets the number range gates to value.
-         If not specified, the default PRF is 8192 Hz.
+         Sets the number of range gates to value.
+         If not specified, the default gate count is 8192.
 
   -h (--help)
          Shows this help text.
@@ -42,9 +41,6 @@ OPTIONS:
 
   -p (--pedzy-host) hostname
          Sets the host of pedzy pedestal controller.
-
-  -q (--quiet)
-         Decreases verbosity level, which can be specified multiple times.
 
   -s (--simulate)
          Sets the program to simulate data stream (default, if none of the tests
@@ -63,6 +59,9 @@ OPTIONS:
   --test-pulse-compression
          Sets the program to test the pulse compression using a simple case with.
          an impulse filter.
+
+  --test-processor
+         Sets the program to test the moment processor.
 
 
 EXAMPLES:

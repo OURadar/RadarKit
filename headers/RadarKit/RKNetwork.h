@@ -53,7 +53,7 @@ typedef union rk_net_delimiter {
         uint32_t     size;                                 // Raw size in bytes to read / skip ahead
         uint32_t     decodedSize;                          // Decided size if this is a compressed block
     };
-    RKByte bytes[32];                                      // Make this struct always 32 bytes
+    RKByte bytes[16];                                      // Make this struct always 32 bytes
 } RKNetDelimiter;
 
 #pragma pack(pop)

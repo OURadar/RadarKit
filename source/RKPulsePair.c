@@ -9,7 +9,7 @@
 #include <RadarKit/RKPulsePair.h>
 
 
-void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
+void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) {
     const RKFloat va = 15.0f;
     const RKFloat wa = 0.3 / (2.0f * sqrt(2.0) * M_PI) * 2000.0f;
     const RKFloat pcal = 3.3f;
@@ -18,67 +18,72 @@ void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
     const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
     const RKVec one_pf = _rk_mm_set1_pf(1.0f);
     const RKVec zcal_pf = _rk_mm_set1_pf(-30.0f);
+    RKVec n_pf;
     RKFloat *s;
     RKFloat *z;
     RKFloat *v;
     RKFloat *w;
     RKVec *s_pf;
     RKVec *z_pf;
+    RKVec *h_pf;
     RKVec *v_pf;
     RKVec *w_pf;
     RKVec *r_pf;
-    RKVec n_pf;
-    RKVec *snr_pf;
+    RKVec *a_pf;
     RKFloat *ri;
     RKFloat *rq;
     int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     // S Z V W
     for (p = 0; p < 2; p++) {
-        RKSIMD_subc(space->S[p], space->noise[p], space->Z[p], gateCount);
+        n_pf = _rk_mm_set1_pf(space->noise[p]);
+        s_pf = (RKVec *)space->S[p];
+        r_pf = (RKVec *)space->R[p][0].i;
+        w_pf = (RKVec *)space->aR[p][1];
+        a_pf = (RKVec *)space->SNR[p];
+        for (k = 0; k < K; k++) {
+            // S: R[0] - N
+            *s_pf = _rk_mm_sub_pf(*r_pf, n_pf);
+            // SNR: S / N
+            *a_pf = _rk_mm_div_pf(*s_pf, n_pf);
+            // W: S / R(1)
+            *w_pf = _rk_mm_div_pf(*s_pf, *w_pf);
+            s_pf++;
+            r_pf++;
+            a_pf++;
+            w_pf++;
+        }
         // log10(S) --> Z (temp)
         s = space->S[p];
         z = space->Z[p];
+        w = space->W[p];
         v = (RKFloat *)space->V[p];
         ri = (RKFloat *)space->R[p][1].i;
         rq = (RKFloat *)space->R[p][1].q;
         // Regular math, no intrinsic options
         for (k = 0; k < gateCount; k++) {
+            // Z: log10(previous) = log10(R[0] - N)
             *z++ = log10f(*s++);
+            // V: angle(R[1])
             *v++ = atan2f(*rq++, *ri++);
+            // W: log10(previous) = log10(S / R[1])
+            *w = log10(*w);
+            w++;
         }
-        s_pf = (RKVec *)space->S[p];
         z_pf = (RKVec *)space->Z[p];
         v_pf = (RKVec *)space->V[p];
         w_pf = (RKVec *)space->W[p];
         r_pf = (RKVec *)space->rcor;
-        n_pf = _rk_mm_set1_pf(space->noise[p]);
-        snr_pf = (RKVec *)space->SNR[p];
         // Packed single math
         for (k = 0; k < K; k++) {
-            // SNR: S / N
-            *snr_pf = _rk_mm_div_pf(*s_pf, n_pf);
-            // Z:  10 * (previous) + rcr --> Z; =>  Z = 10 * log10(S) + rangeCorrection + ZCal;
+            // Z:  10 * (previous) + rcr + zcal  =  10 * log10(S) + rangeCorrection + ZCal;
             *z_pf = _rk_mm_add_pf(_rk_mm_add_pf(_rk_mm_mul_pf(ten_pf, *z_pf), *r_pf), zcal_pf);
-            // V: V = Va * (previous) --> V; => V = angle(R1)
+            // V: V = va * (previous) = va * angle(R1)
             *v_pf = _rk_mm_mul_pf(va_pf, *v_pf);
-            // W: w = S / W
-            *w_pf = _rk_mm_div_pf(*s_pf, *w_pf);
-            s_pf++;
-            z_pf++;
-            v_pf++;
-            w_pf++;
-            r_pf++;
-            snr_pf++;
-        }
-        w = space->W[p];
-        for (k = 0; k < gateCount; k++) {
-            // W: = (log10f(previous))
-            *w = log10f(*w);
-            w++;
-        }
-        w_pf = (RKVec *)space->W[p];
-        for (k = 0; k < K; k++) {
+            // W: w = wa * sqrt(previous) = wa * sqrt(log10(S / R[1]))
             *w_pf = _rk_mm_mul_pf(wa_pf, _rk_mm_sqrt_pf(*w_pf));
+            z_pf++;
+            r_pf++;
+            v_pf++;
             w_pf++;
         }
     }
@@ -86,32 +91,36 @@ void RKUpdateZVWInScratchSpace(RKScratch *space, const int gateCount) {
     z_pf = (RKVec *)space->ZDR;
     r_pf = (RKVec *)space->RhoHV;
     s_pf = (RKVec *)space->aC[0];
-    w_pf = (RKVec *)space->SNR[0];
+    h_pf = (RKVec *)space->SNR[0];
     v_pf = (RKVec *)space->SNR[1];
+    a_pf = (RKVec *)space->Z[0];
+    w_pf = (RKVec *)space->Z[1];
     for (k = 0; k < K; k++) {
-        *z_pf = _rk_mm_div_pf(*w_pf, *v_pf);
+        // D: Zh - Zv
+        *z_pf = _rk_mm_sub_pf(*a_pf, *w_pf);
 
-        *r_pf = _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*w_pf));                         // (1 + 1 / SNR-h)
-        *r_pf = _rk_mm_mul_pf(*r_pf, _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*v_pf)));   // (1 + 1 / SNR-h) * (1 + 1 / SNR-v)
-        *r_pf = _rk_mm_mul_pf(*s_pf, _rk_mm_sqrt_pf(*r_pf));                         // C[0] * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
+        // R: |C[0]| * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
+        *r_pf = _rk_mm_mul_pf(_rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*h_pf)), _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*v_pf)));
+        *r_pf = _rk_mm_mul_pf(*s_pf, _rk_mm_sqrt_pf(*r_pf));
 
+        z_pf++;
+        a_pf++;
+        w_pf++;
+        h_pf++;
+        v_pf++;
         r_pf++;
         s_pf++;
-        v_pf++;
-        w_pf++;
     }
-    z = space->ZDR;
     s = space->PhiDP;
     v = space->KDP;
     ri = space->C[0].i;
     rq = space->C[0].q;
     *v++ = 0.0f;
-    for (k = 0; k < gateCount; k++) {
-        *z = 10.0f * log10f(*z);
-        z++;
-        *s++ = atan2f(*rq++, *ri++) + pcal;
-        *v++ = *s - *(s - 1);
+    for (k = 0; k < gateCount - 1; k++) {
+        *s = atan2f(*rq++, *ri++) + pcal;
+        *v++ = -*s + ++*s;
     }
+    *s++ = atan2f(*rq++, *ri++) + pcal;
 }
 
 int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
@@ -122,8 +131,6 @@ int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
 }
 
 int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
-//    struct timeval tic, toc;
-//    gettimeofday(&tic, NULL);
 
     // Process
     // Identify odd pulses and even pulses
@@ -131,6 +138,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
     // R0, R1 --> Z, V, W
 
     int n, j, k, p;
+    int K = (count * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
     // Get the start pulse to know the capacity
     RKPulse *pulse = input[0];
@@ -158,14 +166,42 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
         j = 0;
         for (; n < count; n += 2) {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
-            RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
-            RKSIMD_zcma(&Xn, &Xn, &space->R[p][0], pulse->header.gateCount, 1);          // R[0] += X[n] * X[n]'
+//            RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
+//            RKSIMD_zcma(&Xn, &Xn, &space->R[p][0], pulse->header.gateCount, 1);          // R[0] += X[n] * X[n]'
+            RKVec *si = (RKVec *)Xn.i;
+            RKVec *sq = (RKVec *)Xn.q;
+            RKVec *mi = (RKVec *)space->mX[p].i;
+            RKVec *mq = (RKVec *)space->mX[p].q;
+            RKVec *r0 = (RKVec *)space->R[p][0].i;
+            for (k = 0; k < K; k++) {
+                *mi = _rk_mm_add_pf(*mi, *si);
+                *mq = _rk_mm_add_pf(*mq, *sq);
+                *r0 = _rk_mm_add_pf(*r0, _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq))); // I += I1 * I2 + Q1 * Q2
+                si++;
+                sq++;
+                mi++;
+                mq++;
+                r0++;
+            }
             j++;
         }
         // Divide by n for the average
-        RKSIMD_izscl(&space->mX[p], 1.0f / (float)(j), gateCount);                       // mX /= j
-        RKSIMD_izscl(&space->R[p][0], 1.0f / (float)(j), gateCount);                     // R[0] /= j   (unbiased)
-        RKSIMD_zabs(&space->R[p][0], space->aR[p][0], gateCount);                        // aR[0] = abs(R[0])
+        //        RKSIMD_izscl(&space->mX[p], 1.0f / (float)(j), gateCount);                       // mX /= j
+        //        RKSIMD_izscl(&space->R[p][0], 1.0f / (float)(j), gateCount);                     // R[0] /= j   (unbiased)
+        //        RKSIMD_zabs(&space->R[p][0], space->aR[p][0], gateCount);                        // aR[0] = abs(R[0])
+        RKVec ss = _rk_mm_set1_pf(1.0 / (float)j);
+        RKVec *si = (RKVec *)space->R[p][0].i;
+        RKVec *mi = (RKVec *)space->mX[p].i;
+        RKVec *mq = (RKVec *)space->mX[p].q;
+        RKVec *r0 = (RKVec *)space->aR[p][0];
+        for (k = 0; k < K; k++) {
+            *mi = _rk_mm_mul_pf(*mi, ss);                                                 // mX /= j
+            *mq = _rk_mm_mul_pf(*mq, ss);                                                 // mX /= j
+            *si = _rk_mm_mul_pf(*si, ss);                                                 // R[0] /= j
+            *r0 = *si++;                                                                  // aR[0] = abs(R[0])
+            mi++;
+            mq++;
+        }
 
         // Now we get the odd pulses for R(1)
         n = 1;
@@ -181,7 +217,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
             j++;
         }
         RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                     // R[1] /= j   (unbiased)
-        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                        // aR[0] = abs(R[0])
+        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                        // aR[1] = abs(R[1])
 
         // Mean and variance (2nd moment)
         RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                        // E{Xh} * E{Xh}' --> var  (step 1)
@@ -238,7 +274,12 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
 
              g = 1; % gate 1
              k = 1; % even is correct, change to 2 for even is 1-off
-             mX = mean(Xh(:, k:2:end), 2).'
+             mXh = mean(Xh(:, k:2:end), 2).'
+             mXv = mean(Xv(:, k:2:end), 2).'
+             R0h = mean(Xh(:, k:2:end) .* conj(Xh(:, k:2:end)), 2).'
+             R1h = mean(Xh(:, k+1:2:end) .* conj(Xh(:, k:2:end)), 2).'
+             R0v = mean(Xv(:, k:2:end) .* conj(Xv(:, k:2:end)), 2).'
+             R1v = mean(Xv(:, k+1:2:end) .* conj(Xv(:, k:2:end)), 2).'
              for g = 1:6, C(g) = xcorr(Xh(g, k:2:end), Xv(g, k:2:end), 0, 'unbiased'); end; disp(C)
 
              */
@@ -278,15 +319,11 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
         printf(RKEOL);
     }
     
-    //    gettimeofday(&toc, NULL);
-//    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
-
-    
     //
     //  ACF & CCF to S Z V W D P R K
     //
 
-    RKUpdateZVWInScratchSpace(space, gateCount);
+    RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
     return count;
 

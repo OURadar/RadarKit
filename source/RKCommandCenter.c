@@ -250,16 +250,17 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKUserFlagDisplayZ) {
         endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
         while (user->rayIndex != endIndex) {
-            RKLog("%s %s ray %d -> %d\n", engine->name, O->name, user->rayIndex, endIndex);
             ray = RKGetRay(user->radar->rays, user->rayIndex);
             data = RKGetUInt8DataFromRay(ray, 0);
             O->delim.type = 'm';
-            O->delim.size = sizeof(ray->header);
-            RKOperatorSendPackets(O, O->delim, sizeof(RKNetDelimiter), ray->header, O->delim.size, NULL);
+            O->delim.size = (uint32_t)sizeof(RKRayHeader);
+            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &ray->header, O->delim.size, NULL);
             O->delim.type = 'd';
             O->delim.subtype = 'Z';
             O->delim.size = ray->header.gateCount * sizeof(uint8_t);
-            RKOperatorSendPackets(O, O->delim, sizeof(RKNetDelimiter), data, O->delim.size, NULL);
+            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), data, O->delim.size, NULL);
+            RKLog("%s %s ray %d -> %d  gateCount = %d  size %d\n",
+                  engine->name, O->name, user->rayIndex, endIndex, ray->header.gateCount, O->delim.size);
             user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
         }
     }
