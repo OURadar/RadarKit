@@ -10,7 +10,7 @@ void stripTrailingUnwanted(char *str) {
 
 #pragma mark -
 
-char *RKNow() {
+char *RKNow(void) {
     static char timestr[32];
     time_t utc;
     //
@@ -21,7 +21,7 @@ char *RKNow() {
     return timestr;
 }
 
-char *RKGetColor() {
+char *RKGetColor(void) {
     static int c = 0;
     return RKGetColorOfIndex(c++);
 }
@@ -33,6 +33,18 @@ char *RKGetColorOfIndex(const int i) {
     const uint8_t colors[] = {197, 214, 226, 46, 50, 33, 99, 164};
     static char str[32];
     snprintf(str, 31, "\033[1;38;5;%dm", colors[i % sizeof(colors)]);
+    return str;
+}
+
+char *RKGetBackgroundColor(void) {
+    static int c = 0;
+    return RKGetBackgroundColorOfIndex(c++);
+}
+
+char *RKGetBackgroundColorOfIndex(const int i) {
+    const uint8_t colors[] = {136, 70, 6, 27, 98, 90};
+    static char str[32];
+    snprintf(str, 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
     return str;
 }
 

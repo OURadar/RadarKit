@@ -217,7 +217,7 @@ RKPositionEngine *RKPositionEngineInit() {
     //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //
     sprintf(engine->name, "%s<pulsePositioner>%s",
-            rkGlobalParameters.showColor ? "\033[1;97;46m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine) + sizeof(RKClock);
     return engine;
 }

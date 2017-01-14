@@ -12,6 +12,7 @@
 
 void *momentCore(void *);
 void *pulseGatherer(void *);
+void makeRayFromScratch(RKScratch *, RKRay *);
 
 // Implementations
 
@@ -65,8 +66,12 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-void RKMomentUpdateProductStatusString(RKMomentEngine *engine) {
-    
+void makeRayFromScratch(RKScratch *space, RKRay *ray) {
+//    RKFloat *f = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+//    RKFloat *u = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+//    RKFloat lhc[2], mac[2];
+//    ZLHCMAC
+//    int k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 }
 
 #pragma mark -
@@ -222,7 +227,6 @@ void *momentCore(void *in) {
         ray->header.endTimeD       = E->header.timeDouble;
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
-        //ray->header.gateCount      = (S->header.gateCount + stride - 1) / stride;
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3) {
@@ -249,15 +253,20 @@ void *momentCore(void *in) {
         }
 
         i = 0;
-        rayData = RKGetFloatDataFromRay(ray, 0);
+        rayData = RKGetFloatDataFromRay(ray, RKProductIndexZ);
         for (k = 0; k < pulse->header.gateCount; k += stride) {
             rayData[i++] = space->Z[0][k];
         }
         ray->header.gateCount = i;
         if (i != (S->header.gateCount + stride - 1) / stride) {
-            RKLog("Equation 1 does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
+            RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
                   S->header.gateCount, stride, i, (S->header.gateCount + stride - 1) / stride);
         }
+        
+        // Clip the range of values?
+        
+        
+        
         ray->header.s ^= RKRayStatusProcessing;
         ray->header.s |= RKRayStatusReady;
 
@@ -514,11 +523,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
-    //
-    //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
-    //
     sprintf(engine->name, "%s<productRoutines>%s",
-            rkGlobalParameters.showColor ? "\033[1;97;42m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;

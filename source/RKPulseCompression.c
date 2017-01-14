@@ -606,7 +606,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //
     sprintf(engine->name, "%s<pulseCompressor>%s",
-            rkGlobalParameters.showColor ? "\033[1;97;48;5;100m" : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKPulseCompressionEngineStateAllocated;
     engine->useSemaphore = true;
     pthread_mutex_init(&engine->coreMutex, NULL);

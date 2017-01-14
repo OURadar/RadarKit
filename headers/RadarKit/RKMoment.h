@@ -52,7 +52,7 @@ struct rk_moment_engine {
     uint8_t                coreCount;
     bool                   useSemaphore;
     bool                   developerMode;
-    int                    (*processor)(RKScratch *, RKPulse **, const uint16_t);
+    int                    (*processor)(RKScratch *, RKPulse **, const uint16_t pulseCount);
 
     // Program set variables
     RKModuloPath           *momentSource;
@@ -77,19 +77,19 @@ struct rk_moment_engine {
 RKMomentEngine *RKMomentEngineInit(void);
 void RKMomentEngineFree(RKMomentEngine *);
 
-void RKMomentEngineSetVerbose(RKMomentEngine *, const int);
+void RKMomentEngineSetVerbose(RKMomentEngine *, const int verbose);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
-                                         RKPulse *, uint32_t *, const uint32_t,
-                                         RKRay *,   uint32_t *, const uint32_t);
+                                         RKPulse *, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
+                                         RKRay *,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
-void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine);
-void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine);
-void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine);
-void RKMomentENgineSetProcessParameters(RKMomentEngine *, RKMomentParameters *);
+void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
+void RKMomentENgineSetProcessParameters(RKMomentEngine *, RKOperatingParameters *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
 
-char *RKMomentEngineStatusString(RKMomentEngine *engine);
+char *RKMomentEngineStatusString(RKMomentEngine *);
 
 #endif /* defined(___RadarKit_RKMoment__) */

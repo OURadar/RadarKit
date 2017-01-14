@@ -444,29 +444,29 @@ int RKWaitWhileActive(RKRadar *radar) {
 int RKStop(RKRadar *radar) {
     radar->active = false;
 
-    if (radar->state & RKRadarStateTransceiverInitialized) {
-        if (pthread_join(radar->transceiverThreadId, NULL)) {
-            RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
-        }
-        radar->state ^= RKRadarStateTransceiverInitialized;
-    }
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (pthread_join(radar->pedestalThreadId, NULL)) {
             RKLog("Error. Failed at the pedestal return.   errno = %d\n", errno);
         }
         radar->state ^= RKRadarStatePedestalInitialized;
     }
-    if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
-        RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
-        radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
+    if (radar->state & RKRadarStateTransceiverInitialized) {
+        if (pthread_join(radar->transceiverThreadId, NULL)) {
+            RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
+        }
+        radar->state ^= RKRadarStateTransceiverInitialized;
+    }
+    if (radar->state & RKRadarStateMomentEngineInitialized) {
+        RKMomentEngineStop(radar->momentEngine);
+        radar->state ^= RKRadarStateMomentEngineInitialized;
     }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
         RKPositionEngineStop(radar->positionEngine);
         radar->state ^= RKRadarStatePositionEngineInitialized;
     }
-    if (radar->state & RKRadarStateMomentEngineInitialized) {
-        RKMomentEngineStop(radar->momentEngine);
-        radar->state ^= RKRadarStateMomentEngineInitialized;
+    if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
+        RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+        radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
     }
     return 0;
 }

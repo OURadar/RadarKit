@@ -413,7 +413,7 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     //    http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //
     sprintf(name, "%s<Transceiver>%s",
-            rkGlobalParameters.showColor ? "\033[1;97;48;5;98m" : "",
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     
     // Parse out input parameters

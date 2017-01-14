@@ -42,19 +42,19 @@
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
 #define RKVersionString                  "1.0"
-#define RKBufferCSlotCount               16           // Config
-#define RKBufferSSlotCount               90           // Status strings
-#define RKBufferPSlotCount               500          // Positions
-#define RKBuffer0SlotCount               5000         // Raw I/Q
-#define RKBuffer2SlotCount               1440         // Ray
-#define RKGateCount                      32768        // Must power of 2!
-#define RKLagCount                       5            // Number lags of ACF / CCF lag = +/-4 and 0
-#define RKSIMDAlignSize                  64           // SSE 16, AVX 32, AVX-512 64
-#define RKMaxMatchedFilterCount          4            // Maximum filter count within each filter group. Check RKPulseParameters
-#define RKMaxMatchedFilterGroupCount     8            // Maximum filter group count
+#define RKBufferCSlotCount               16                          // Config
+#define RKBufferSSlotCount               90                          // Status strings
+#define RKBufferPSlotCount               500                         // Positions
+#define RKBuffer0SlotCount               5000                        // Raw I/Q
+#define RKBuffer2SlotCount               1440                        // Ray
+#define RKGateCount                      32768                       // Must power of 2!
+#define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
+#define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
+#define RKMaxMatchedFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters
+#define RKMaxMatchedFilterGroupCount     8                           // Maximum filter group count
 #define RKWorkerDutyCycleBufferSize      1000
 #define RKMaxPulsesPerRay                2000
-#define RKMaxProductCount                6
+#define RKMaxProductCount                10
 #define RKMaxPacketSize                  1024 * 1024
 #define RKNetworkTimeoutSeconds          20
 #define RKNetworkReconnectSeconds        3
@@ -120,36 +120,39 @@ typedef struct rk_operating_parameters {
     uint32_t         gateCount[RKMaxMatchedFilterCount];
     uint32_t         waveformId[RKMaxMatchedFilterCount];
     char             vcpDefinition[RKMaximumStringLength];
+    RKFloat          noise[2];
+    RKFloat          ZCal[2];
+    RKFloat          PCal[2];
 } RKOperatingParameters;
 
 typedef struct rk_pulse_header {
-    uint64_t         i;                                    // Identity counter
-    uint64_t         n;                                    // Network counter
-    uint64_t         t;                                    // A clean clock-related tic count
-    uint32_t         s;                                    // Status flag
-    uint32_t         capacity;                             // Allocated capacity
-    uint32_t         gateCount;                            // Number of range gates
-    uint32_t         marker;                               // Position Marker
-    uint32_t         pulseWidthSampleCount;                // Pulsewidth
-    struct timeval   time;                                 // UNIX time in seconds since 1970/1/1 12:00am
-    double           timeDouble;                           // Time in double representation
-    RKFourByte       rawAzimuth;                           // Raw azimuth reading, which may take up to 4 bytes
-    RKFourByte       rawElevation;                         // Raw elevation reading, which may take up to 4 bytes
-    uint16_t         configIndex;                          // Configuration index
-    uint16_t         configSubIndex;                       // Configuration sub-index
-    uint16_t         azimuthBinIndex;                      // Ray bin
-    float            gateSizeMeters;                       // Size of range gates
-    float            elevationDegrees;                     // Elevation in degrees
-    float            azimuthDegrees;                       // Azimuth in degrees
-    float            elevationVelocityDegreesPerSecond;    // Velocity of elevation in degrees / second
-    float            azimuthVelocityDegreesPerSecond;      // Velocity of azimuth in degrees / second
+    uint64_t         i;                                              // Identity counter
+    uint64_t         n;                                              // Network counter
+    uint64_t         t;                                              // A clean clock-related tic count
+    uint32_t         s;                                              // Status flag
+    uint32_t         capacity;                                       // Allocated capacity
+    uint32_t         gateCount;                                      // Number of range gates
+    uint32_t         marker;                                         // Position Marker
+    uint32_t         pulseWidthSampleCount;                          // Pulsewidth
+    struct timeval   time;                                           // UNIX time in seconds since 1970/1/1 12:00am
+    double           timeDouble;                                     // Time in double representation
+    RKFourByte       rawAzimuth;                                     // Raw azimuth reading, which may take up to 4 bytes
+    RKFourByte       rawElevation;                                   // Raw elevation reading, which may take up to 4 bytes
+    uint16_t         operatingParametersIndex;                       // Operating parameter index
+    uint16_t         operatingParemetersSubIndex;                    // Operating parameter sub-index
+    uint16_t         azimuthBinIndex;                                // Ray bin
+    float            gateSizeMeters;                                 // Size of range gates
+    float            elevationDegrees;                               // Elevation in degrees
+    float            azimuthDegrees;                                 // Azimuth in degrees
+    float            elevationVelocityDegreesPerSecond;              // Velocity of elevation in degrees / second
+    float            azimuthVelocityDegreesPerSecond;                // Velocity of azimuth in degrees / second
 } RKPulseHeader;
 
-// Pulse parameters for matched filters
+// Pulse parameters for matched filters (pulseCompressionCore)
 typedef struct rk_pulse_parameters {
-    uint32_t    filterCounts[2];
-    uint32_t    planIndices[2][RKMaxMatchedFilterCount];
-    uint32_t    planSizes[2][RKMaxMatchedFilterCount];
+    uint32_t         filterCounts[2];
+    uint32_t         planIndices[2][RKMaxMatchedFilterCount];
+    uint32_t         planSizes[2][RKMaxMatchedFilterCount];
 } RKPulseParameters;
 
 // RKPulse struct is carefully designed to obey the SIMD alignment
@@ -188,42 +191,25 @@ enum RKRayStatus {
     RKRayStatusUsedOnce      = (1 << 4)
 };
 
-/*!
- @typedef RKRayHeader
- @brief Fundamental unit of the ray header.
- @param s                      Pulse Status
- @param i                      Pulse Identity
- @param n                      Pulse Network Counter
- @param marker                 Volume / sweep / radial marker
- @param reserved1              For future...
- @param startTimeSec           Start time of the ray in UNIX time
- @param startTimeUSec          Start time's microsecond portion
- @param startTimeD             Start time in double representation
- @param endTimeSec             End time of the ray in UNIX time
- @param endTimeUSec            End time's microsecond portion
- @param endTimeD               End time in double representation
- */
 typedef struct rk_ray_header {
-    uint32_t       capacity;
-    RKRayStatus    s;
-    uint32_t       i;
-    uint32_t       n;
-    uint32_t       marker;
-    uint32_t       reserved1;
-    uint16_t       configIndex;
-    uint16_t       configSubIndex;
-    uint16_t       gateCount;
-    uint16_t       reserved2;
-    uint32_t       startTimeSec;
-    uint32_t       startTimeUSec;
-    double         startTimeD;
-    uint32_t       endTimeSec;
-    uint32_t       endTimeUSec;
-    double         endTimeD;
-    float          startAzimuth;
-    float          endAzimuth;
-    float          startElevation;
-    float          endElevation;
+    uint32_t         capacity;                                       //
+    RKRayStatus      s;                                              // Ray status
+    uint32_t         i;                                              // Ray indentity
+    uint32_t         n;                                              // Ray network counter
+    uint32_t         marker;                                         // Volume / sweep / radial marker
+    uint32_t         reserved1;                                      //
+    uint16_t         configIndex;                                    //
+    uint16_t         configSubIndex;                                 //
+    uint16_t         gateCount;                                      //
+    uint16_t         reserved2;                                      //
+    struct timeval   startTime;                                      // Start time of the ray in UNIX time
+    double           startTimeD;                                     // Start time in double representation
+    double           endTimeD;                                       //
+    struct timeval   endTime;                                        // End time of the ray in UNIX time
+    float            startAzimuth;                                   // End time in double representation
+    float            endAzimuth;                                     // 
+    float            startElevation;                                 //
+    float            endElevation;                                   //
 } RKRayHeader;
 
 typedef struct rk_ray {
@@ -272,28 +258,28 @@ typedef struct rk_modulo_path {
 
 typedef struct rk_scratch {
     bool             showNumbers;
-    uint8_t          lagCount;                             // Number of lags of R & C
-    RKIQZ            mX[2];                                // Mean of X, 2 for dual-pol
-    RKIQZ            vX[2];                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
-    RKIQZ            R[2][RKLagCount];                     // ACF up to RKLagCount - 1 for each polarization
-    RKIQZ            C[2 * RKLagCount - 1];                // CCF in [ -RKLagCount + 1, ..., -1, 0, 1, ..., RKLagCount - 1 ]
-    RKIQZ            sC;                                   // Summation of Xh * Xv'
-    RKIQZ            ts;                                   // Temporary scratch space
-    RKFloat          *aR[2][RKLagCount];                   // abs(ACF)
-    RKFloat          *aC[2 * RKLagCount - 1];              // abs(CCF)
-    RKFloat          *gC;                                  // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
-    RKFloat          noise[2];                             // Noise floor of each channel
-    RKFloat          aliasingVelocity;                     // Aliasing velocity
-    RKFloat          *rcor;                                // Reflectivity range correction factor
-    RKFloat          *S[2];                                // Signal
-    RKFloat          *Z[2];                                // Reflectivity in dB
-    RKFloat          *V[2];                                // Velocity in same units as aliasing velocity
-    RKFloat          *W[2];                                // Spectrum width in same units as aliasing velocity
-    RKFloat          *SNR[2];                              // Signal-to-noise ratio
-    RKFloat          *ZDR;                                 // Differential reflectivity ZDR
-    RKFloat          *PhiDP;                               // Differential phase PhiDP
-    RKFloat          *RhoHV;                               // Cross-correlation coefficient RhoHV
-    RKFloat          *KDP;                                 // Specific phase KDP
+    uint8_t          lagCount;                                       // Number of lags of R & C
+    RKIQZ            mX[2];                                          // Mean of X, 2 for dual-pol
+    RKIQZ            vX[2];                                          // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
+    RKIQZ            R[2][RKLagCount];                               // ACF up to RKLagCount - 1 for each polarization
+    RKIQZ            C[2 * RKLagCount - 1];                          // CCF in [ -RKLagCount + 1, ..., -1, 0, 1, ..., RKLagCount - 1 ]
+    RKIQZ            sC;                                             // Summation of Xh * Xv'
+    RKIQZ            ts;                                             // Temporary scratch space
+    RKFloat          *aR[2][RKLagCount];                             // abs(ACF)
+    RKFloat          *aC[2 * RKLagCount - 1];                        // abs(CCF)
+    RKFloat          *gC;                                            // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
+    RKFloat          noise[2];                                       // Noise floor of each channel
+    RKFloat          aliasingVelocity;                               // Aliasing velocity
+    RKFloat          *rcor;                                          // Reflectivity range correction factor
+    RKFloat          *S[2];                                          // Signal
+    RKFloat          *Z[2];                                          // Reflectivity in dB
+    RKFloat          *V[2];                                          // Velocity in same units as aliasing velocity
+    RKFloat          *W[2];                                          // Spectrum width in same units as aliasing velocity
+    RKFloat          *SNR[2];                                        // Signal-to-noise ratio
+    RKFloat          *ZDR;                                           // Differential reflectivity ZDR
+    RKFloat          *PhiDP;                                         // Differential phase PhiDP
+    RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
+    RKFloat          *KDP;                                           // Specific phase KDP
 } RKScratch;
 
 enum RKPositionFlag {
@@ -317,40 +303,47 @@ enum RKPositionFlag {
 
 typedef union rk_position {
     struct {
-        uint64_t         c;                                    // Counter
-        uint64_t         tic;                                  // Time tic
-        RKFourByte       rawElevation;                         // Raw elevation readout
-        RKFourByte       rawAzimuth;                           // Raw azimuth readout
-        RKFourByte       rawElevationVelocity;                 // Raw velocity of elevation readout
-        RKFourByte       rawAzimuthVelocity;                   // Raw velocity of azimuth readout
-        RKFourByte       rawElevationStatus;                   // Raw status of elevation readout
-        RKFourByte       rawAzimuthStatus;                     // Raw status of azimuth readout
-        uint8_t          queueSize;                            // Queue size of the readout buffer
-        uint8_t          elevationMode;                        // Positioning mode of elevation
-        uint8_t          azimuthMode;                          // Positioning mode of azimuth
-        uint8_t          sequence;                             // DEBUG command sequence
-        uint32_t         flag;                                 // Position flag
-        float            elevationDegrees;                     // Decoded elevation
-        float            azimuthDegrees;                       // Decoded elevation
-        float            elevationVelocityDegreesPerSecond;    // Decoded velocity of elevation
-        float            azimuthVelocityDegreesPerSecond;      // Decoded velocity of azimuth
-        float            elevationCounter;                     // Progress counter (of target) of the elevation
-        float            elevationTarget;                      // Targeted progress counter of the elevation
-        float            azimuthCounter;                       // Progress counter (of target) of the azimuth
-        float            azimuthTarget;                        // Targeted progress counter of the azimuth
-        float            sweepElevationDegrees;                // Set elevation for current sweep
-        float            sweepAzimuthDegrees;                  // Set azimuth for current sweep
-        struct timeval   time;                                 // Time in struct timeval
-        double           timeDouble;                           // Time in double;
+        uint64_t         c;                                          // Counter
+        uint64_t         tic;                                        // Time tic
+        RKFourByte       rawElevation;                               // Raw elevation readout
+        RKFourByte       rawAzimuth;                                 // Raw azimuth readout
+        RKFourByte       rawElevationVelocity;                       // Raw velocity of elevation readout
+        RKFourByte       rawAzimuthVelocity;                         // Raw velocity of azimuth readout
+        RKFourByte       rawElevationStatus;                         // Raw status of elevation readout
+        RKFourByte       rawAzimuthStatus;                           // Raw status of azimuth readout
+        uint8_t          queueSize;                                  // Queue size of the readout buffer
+        uint8_t          elevationMode;                              // Positioning mode of elevation
+        uint8_t          azimuthMode;                                // Positioning mode of azimuth
+        uint8_t          sequence;                                   // DEBUG command sequence
+        uint32_t         flag;                                       // Position flag
+        float            elevationDegrees;                           // Decoded elevation
+        float            azimuthDegrees;                             // Decoded elevation
+        float            elevationVelocityDegreesPerSecond;          // Decoded velocity of elevation
+        float            azimuthVelocityDegreesPerSecond;            // Decoded velocity of azimuth
+        float            elevationCounter;                           // Progress counter (of target) of the elevation
+        float            elevationTarget;                            // Targeted progress counter of the elevation
+        float            azimuthCounter;                             // Progress counter (of target) of the azimuth
+        float            azimuthTarget;                              // Targeted progress counter of the azimuth
+        float            sweepElevationDegrees;                      // Set elevation for current sweep
+        float            sweepAzimuthDegrees;                        // Set azimuth for current sweep
+        struct timeval   time;                                       // Time in struct timeval
+        double           timeDouble;                                 // Time in double;
     };
     RKByte               bytes[128];
 } RKPosition;
 
-typedef struct rk_moment_paramters {
-    RKFloat              noise[2];
-    RKFloat              ZCal[2];
-    RKFloat              PCal[2];
-} RKMomentParameters;
+enum RKProductIndex {
+    RKProductIndexZ,
+    RKProductIndexV,
+    RKProductIndexW,
+    RKProductIndexZv,
+    RKProductIndexVv,
+    RKProductIndexWv,
+    RKProductIndexD,
+    RKProductIndexP,
+    RKProductIndexR,
+    RKProductIndexK
+};
 
 #pragma pack(pop)
 
