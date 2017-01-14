@@ -622,15 +622,19 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     }
 }
 
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
+
 void RKTestProcessorSpeed(void) {
     int k;
     RKScratch *space;
     RKBuffer pulseBuffer;
+    RKBuffer rayBuffer;
     const int testCount = 1000;
     const int pulseCount = 100;
     const int pulseCapacity = 4096;
 
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
 
     RKScratchAlloc(&space, pulseCapacity, 4, true);
 
@@ -644,10 +648,12 @@ void RKTestProcessorSpeed(void) {
 
     struct timeval tic, toc;
 
+    RKRay *ray;
     gettimeofday(&tic, NULL);
     for (k = 0; k < testCount; k++) {
         RKPulsePairHop(space, pulses, pulseCount);
         //RKMultiLag(space, pulses, pulseCount);
+         makeRayFromScratch(space, ray, pulseCapacity, 1);
     }
     gettimeofday(&toc, NULL);
 
@@ -659,6 +665,8 @@ void RKTestProcessorSpeed(void) {
           1.0e3 * t / testCount);
 
     RKScratchFree(space);
+    free(pulseBuffer);
+    free(rayBuffer);
     return;
 }
 
