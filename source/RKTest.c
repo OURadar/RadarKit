@@ -409,12 +409,8 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     int gateCount = capacity;
 
     char name[RKNameLength];
-    //
-    //    http://misc.flogisoft.com/bash/tip_colors_and_formatting
-    //
     sprintf(name, "%s<Transceiver>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     
     // Parse out input parameters
     if (input) {
@@ -648,7 +644,8 @@ void RKTestProcessorSpeed(void) {
 
     struct timeval tic, toc;
 
-    RKRay *ray;
+    RKRay *ray = RKGetRay(rayBuffer, 0);
+    
     gettimeofday(&tic, NULL);
     for (k = 0; k < testCount; k++) {
         RKPulsePairHop(space, pulses, pulseCount);

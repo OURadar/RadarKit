@@ -213,10 +213,7 @@ void *pulseTagger(void *in) {
 RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
-    //
-    //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
-    //
-    sprintf(engine->name, "%s<pulsePositioner>%s",
+    sprintf(engine->name, "%s<PulsePositioner>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine) + sizeof(RKClock);
     return engine;

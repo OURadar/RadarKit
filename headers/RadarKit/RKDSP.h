@@ -41,8 +41,7 @@
 #define V2LHCMAC { lhma[0] = -32.0f;     lhma[1] = 31.75f;      lhma[2] = 4.0f;      lhma[3] = 128.0f; }  //
 #define V3LHCMAC { lhma[0] = -64.0f;     lhma[1] = 63.5f;       lhma[2] = 2.0f;      lhma[3] = 128.0f; }  //
 
-#define RHO2CHAR(r)    (unsigned char)(r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
-//#define RHO2CHAR(r)  (unsigned char)(roundf((1.0f - sqrtf(1.0f - r)) * 255.0f))
+#define RHO2CHAR(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 
 
 

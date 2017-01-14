@@ -602,10 +602,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
-    //
-    //  http://misc.flogisoft.com/bash/tip_colors_and_formatting
-    //
-    sprintf(engine->name, "%s<pulseCompressor>%s",
+    sprintf(engine->name, "%s<PulseCompressor>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKPulseCompressionEngineStateAllocated;
     engine->useSemaphore = true;
@@ -744,7 +741,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         engine->coreCount = 8;
     }
     if (engine->workers != NULL) {
-        RKLog("Error. RKPulseCompressionEngine->workers should be NULL here.\n");
+        RKLog("%s Error. workers should be NULL here.\n", engine->name);
     }
     engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);

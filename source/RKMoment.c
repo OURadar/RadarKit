@@ -89,28 +89,25 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
               gateCount, stride, i, (gateCount + stride - 1) / stride);
     }
-    // Convert float to color representation (0.0 - 255.0) using M * (value) + A
+    // Convert float to color representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKFloat lhma[4];
     int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    ZLHCMAC  RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
-    VLHCMAC  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
-    WLHCMAC  RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
-    DLHCMAC  RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
-    PLHCMAC  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
-    RLHCMAC  RKVec rm = _rk_mm_set1_pf(lhma[2]);  RKVec ra = _rk_mm_set1_pf(lhma[3]);
+    ZLHCMAC   RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
+    V2LHCMAC  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
+    WLHCMAC   RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
+    DLHCMAC   RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
+    PLHCMAC   RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
     RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
-    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     for (k = 0; k < K; k++) {
         *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(zm, *Zi_pf++), za);
         *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(vm, *Vi_pf++), va);
         *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(wm, *Wi_pf++), wa);
         *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(dm, *Di_pf++), da);
         *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(pm, *Pi_pf++), pa);
-        *Ro_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(rm, *Ri_pf++), ra);
     }
     // Convert to uint8 type
     uint8_t *zu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Zi = space->Z[0];
@@ -125,7 +122,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         *wu++ = (uint8_t)Wi++;
         *du++ = (uint8_t)Di++;
         *pu++ = (uint8_t)Pi++;
-        *ru++ = (uint8_t)Ri++;
+        *ru++ = (uint8_t)RHO2CHAR(*Ri++);
     }
     return i;
 }
@@ -566,7 +563,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
-    sprintf(engine->name, "%s<productRoutines>%s",
+    sprintf(engine->name, "%s<ProductGatherer>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKMomentEngineStateAllocated;
     engine->useSemaphore = true;

@@ -259,8 +259,8 @@ int socketStreamHandler(RKOperator *O) {
             O->delim.subtype = 'Z';
             O->delim.size = ray->header.gateCount * sizeof(uint8_t);
             RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), data, O->delim.size, NULL);
-            RKLog("%s %s ray %d -> %d  gateCount = %d  size %d\n",
-                  engine->name, O->name, user->rayIndex, endIndex, ray->header.gateCount, O->delim.size);
+//            RKLog("%s %s ray %d -> %d  gateCount = %d  size %d\n",
+//                  engine->name, O->name, user->rayIndex, endIndex, ray->header.gateCount, O->delim.size);
             user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
         }
     }
