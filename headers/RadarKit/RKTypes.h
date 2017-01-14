@@ -212,10 +212,11 @@ typedef struct rk_ray_header {
     float            endElevation;                                   //
 } RKRayHeader;
 
+#define RKRayHeaderSize       128
 typedef struct rk_ray {
     union {
         RKRayHeader  header;
-        RKByte       headerBytes[128];
+        RKByte       headerBytes[RKRayHeaderSize];
     };
     RKByte           data[0];
 } RKRay;
@@ -336,13 +337,13 @@ enum RKProductIndex {
     RKProductIndexZ,
     RKProductIndexV,
     RKProductIndexW,
-    RKProductIndexZv,
-    RKProductIndexVv,
-    RKProductIndexWv,
     RKProductIndexD,
     RKProductIndexP,
     RKProductIndexR,
-    RKProductIndexK
+    RKProductIndexK,
+    RKProductIndexZv,
+    RKProductIndexVv,
+    RKProductIndexWv
 };
 
 #pragma pack(pop)

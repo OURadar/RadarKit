@@ -91,6 +91,7 @@ typedef __m128 RKVec;
 #define _rk_mm_movehdup_pf(a)        _mm_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm_shuffle_ps(a, b, m)
+#define _rk_mm_fmadd_pf(a, b, c)     _mm_add_ps(_mm_mul_ps(a, b), c)         // FMA
 #define _rk_mm_fmaddsub_pf(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)      // SSE3
 #define _rk_mm_setzero_si()          _mm_setzero_si128()
 #define _rk_mm_unpacklo_epi16(a, b)  _mm_unpacklo_epi16(a, b)                // SSE2

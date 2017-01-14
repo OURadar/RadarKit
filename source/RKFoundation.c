@@ -327,7 +327,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
 }
 
 RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
-    size_t raySize = sizeof(ray->headerBytes) + 2 * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = RKRayHeaderSize + RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
@@ -338,7 +338,7 @@ uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const uint32_t m) {
 
 float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t m) {
     void *d = (void *)ray->data;
-    d += 2 * ray->header.capacity * sizeof(uint8_t);
+    d += RKMaxProductCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 

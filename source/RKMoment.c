@@ -12,7 +12,7 @@
 
 void *momentCore(void *);
 void *pulseGatherer(void *);
-void makeRayFromScratch(RKScratch *, RKRay *);
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
 
 // Implementations
 
@@ -66,12 +66,68 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-void makeRayFromScratch(RKScratch *space, RKRay *ray) {
-//    RKFloat *f = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-//    RKFloat *u = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-//    RKFloat lhc[2], mac[2];
-//    ZLHCMAC
-//    int k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const int stride) {
+    int i, k;
+    // Grab the data from scratch space and perform down-sampling, if stride > 1
+    float *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+    float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKProductIndexV);
+    float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKProductIndexW);
+    float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKProductIndexD);
+    float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKProductIndexP);
+    float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKProductIndexR);
+    for (i = 0, k = 0; k < gateCount; i++, k += stride) {
+        *Zo++ = *Zi; Zi += stride;
+        *Vo++ = *Zi; Vi += stride;
+        *Wo++ = *Zi; Wi += stride;
+        *Do++ = *Zi; Di += stride;
+        *Po++ = *Zi; Pi += stride;
+        *Ro++ = *Zi; Ri += stride;
+    }
+    // Record down the down-sampled gate count
+    ray->header.gateCount = i;
+    if (i != (gateCount + stride - 1) / stride) {
+        RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
+              gateCount, stride, i, (gateCount + stride - 1) / stride);
+    }
+    // Convert float to color representation (0.0 - 255.0) using M * (value) + A
+    RKFloat lhma[4];
+    int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    ZLHCMAC  RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
+    VLHCMAC  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
+    WLHCMAC  RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
+    DLHCMAC  RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
+    PLHCMAC  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
+    RLHCMAC  RKVec rm = _rk_mm_set1_pf(lhma[2]);  RKVec ra = _rk_mm_set1_pf(lhma[3]);
+    RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
+    RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
+    RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
+    RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
+    RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
+    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
+    for (k = 0; k < K; k++) {
+        *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(zm, *Zi_pf++), za);
+        *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(vm, *Vi_pf++), va);
+        *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(wm, *Wi_pf++), wa);
+        *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(dm, *Di_pf++), da);
+        *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(pm, *Pi_pf++), pa);
+        *Ro_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(rm, *Ri_pf++), ra);
+    }
+    // Convert to uint8 type
+    uint8_t *zu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Zi = space->Z[0];
+    uint8_t *vu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Vi = space->V[0];
+    uint8_t *wu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Wi = space->W[0];
+    uint8_t *du = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Di = space->ZDR;
+    uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Pi = space->PhiDP;
+    uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Ri = space->RhoHV;
+    for (k = 0; k < ray->header.gateCount; k++) {
+        *zu++ = (uint8_t)Zi++;
+        *vu++ = (uint8_t)Vi++;
+        *wu++ = (uint8_t)Wi++;
+        *du++ = (uint8_t)Di++;
+        *pu++ = (uint8_t)Pi++;
+        *ru++ = (uint8_t)Ri++;
+    }
+    return i;
 }
 
 #pragma mark -
@@ -175,7 +231,6 @@ void *momentCore(void *in) {
     RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
     float deltaAzimuth, deltaElevation;
     char *string;
-    float *rayData;
     int stride = pulse->header.capacity / ray->header.capacity;
 
     while (engine->state == RKMomentEngineStateActive) {
@@ -252,20 +307,8 @@ void *momentCore(void *in) {
             }
         }
 
-        i = 0;
-        rayData = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-        for (k = 0; k < pulse->header.gateCount; k += stride) {
-            rayData[i++] = space->Z[0][k];
-        }
-        ray->header.gateCount = i;
-        if (i != (S->header.gateCount + stride - 1) / stride) {
-            RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
-                  S->header.gateCount, stride, i, (S->header.gateCount + stride - 1) / stride);
-        }
-        
+        makeRayFromScratch(space, ray, S->header.gateCount, stride);
         // Clip the range of values?
-        
-        
         
         ray->header.s ^= RKRayStatusProcessing;
         ray->header.s |= RKRayStatusReady;

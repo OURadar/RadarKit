@@ -42,7 +42,7 @@ char *RKGetBackgroundColor(void) {
 }
 
 char *RKGetBackgroundColorOfIndex(const int i) {
-    const uint8_t colors[] = {136, 70, 6, 27, 98, 90};
+    const uint8_t colors[] = {136, 28, 30, 27, 98, 90};
     static char str[32];
     snprintf(str, 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
     return str;

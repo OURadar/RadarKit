@@ -350,7 +350,7 @@ int main(int argc, char *argv[]) {
         if (user.sleepInterval) {
             i += sprintf(cmd + i, " z %d", user.sleepInterval);
         }
-        RKLog("Transceiver input = '%s' (%d / %d)", cmd + 1, i, RKMaximumStringLength);
+        RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
         RKSetTransceiver(myRadar, &RKTestSimulateDataStream, cmd);
         RKSetTransceiverFree(myRadar, &RKTestSimulateDataStreamFree);
 
