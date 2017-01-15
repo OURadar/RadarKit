@@ -13,8 +13,9 @@
 #include <RadarKit/RKServer.h>
 #include <RadarKit/RKClient.h>
 #include <RadarKit/RKPulseCompression.h>
-#include <RadarKit/RKMoment.h>
 #include <RadarKit/RKPosition.h>
+#include <RadarKit/RKMoment.h>
+#include <RadarKit/RKSweep.h>
 
 enum RKInitFlag {
     RKInitFlagNone                  = 0,
@@ -41,6 +42,7 @@ enum RKRadarState {
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 9),
     RKRadarStatePositionEngineInitialized            = (1 << 10),
     RKRadarStateMomentEngineInitialized              = (1 << 11),
+    RKRadarStateSweepEngineInitialized               = (1 << 12),
     RKRadarStateTransceiverInitialized               = (1 << 16),
     RKRadarStatePedestalInitialized                  = (1 << 24),
     RKRadarStateLive                                 = (1 << 31)
@@ -94,6 +96,7 @@ struct rk_radar {
     RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
     RKPositionEngine           *positionEngine;
+    RKSweepEngine              *sweepEngine;
     //
     pthread_t                  monitorThreadId;
     //

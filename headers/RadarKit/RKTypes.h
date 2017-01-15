@@ -260,6 +260,7 @@ enum RKResult {
     RKResultUnableToChangeCoreCounts,
     RKResultFailedToStartPedestalWorker,
     RKResultFailedToGetVacantPosition,
+    RKResultFailedToStartRayGatherer,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };

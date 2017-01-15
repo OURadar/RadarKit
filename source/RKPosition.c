@@ -317,7 +317,7 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
         return RKResultFailedToStartPedestalWorker;
     }
     while (engine->state < RKPositionEngineStateActive) {
-        usleep(1000);
+        usleep(10000);
     }
     struct timeval t;
     gettimeofday(&t, NULL);

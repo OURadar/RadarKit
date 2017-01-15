@@ -286,6 +286,7 @@ void *momentCore(void *in) {
         ray->header.endTimeD       = E->header.timeDouble;
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
+        ray->header.n = c;
 
         marker = RKMarkerNull;
 
@@ -569,8 +570,7 @@ void *pulseGatherer(void *in) {
     return NULL;
 }
 
-#pragma mark -
-#pragma mark Life Cycle
+#pragma mark - Life Cycle
 
 RKMomentEngine *RKMomentEngineInit(void) {
     RKMomentEngine *engine = (RKMomentEngine *)malloc(sizeof(RKMomentEngine));
@@ -598,8 +598,7 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
     free(engine);
 }
 
-#pragma mark -
-#pragma mark Properties
+#pragma mark - Properties
 
 void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -610,8 +609,8 @@ void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine) {
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
-                                         RKPulse *pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferSize,
-                                         RKRay   *rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferSize) {
+                                         RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferSize,
+                                         RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferSize) {
     engine->pulseBuffer = pulseBuffer;
     engine->pulseIndex = pulseIndex;
     engine->pulseBufferSize = pulseBufferSize;
@@ -652,8 +651,7 @@ void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
     engine->processorLagCount = 2;
 }
 
-#pragma mark -
-#pragma mark Interactions
+#pragma mark - Interactions
 
 int RKMomentEngineStart(RKMomentEngine *engine) {
     engine->state = RKMomentEngineStateActivating;
@@ -671,7 +669,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
         return RKResultFailedToStartPulseGatherer;
     }
     while (engine->tic == 0) {
-        usleep(1000);
+        usleep(10000);
     }
 
     return RKResultNoError;

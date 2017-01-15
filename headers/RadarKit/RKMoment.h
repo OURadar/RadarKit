@@ -13,7 +13,7 @@
 #include <RadarKit/RKPulsePair.h>
 #include <RadarKit/RKMultiLag.h>
 
-typedef int RKMomentEngineState;
+typedef uint32_t RKMomentEngineState;
 enum RKMomentEngineState {
     RKMomentEngineStateNull,
     RKMomentEngineStateAllocated,
@@ -79,8 +79,8 @@ void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int verbose);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
-                                         RKPulse *, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
-                                         RKRay *,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
+                                         RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
+                                         RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);

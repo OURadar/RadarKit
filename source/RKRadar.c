@@ -188,6 +188,13 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
                                         radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
     radar->memoryUsage += sizeof(RKMomentEngine);
     radar->state |= RKRadarStateMomentEngineInitialized;
+    
+    // Sweep engine
+    radar->sweepEngine = RKSweepEngineInit();
+    RKSweepEngineSetInputBuffer(radar->sweepEngine,
+                                radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+    radar->memoryUsage += sizeof(RKSweepEngine);
+    radar->state |= RKRadarStateSweepEngineInitialized;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
@@ -246,6 +253,7 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
+    RKSweepEngineFree(radar->sweepEngine);
     RKMomentEngineFree(radar->momentEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
@@ -389,6 +397,7 @@ int RKGoLive(RKRadar *radar) {
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
+    RKSweepEngineStart(radar->sweepEngine);
 
     // Pedestal
     if (radar->pedestalInit != NULL) {
@@ -453,6 +462,10 @@ int RKStop(RKRadar *radar) {
             RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
+    }
+    if (radar->state & RKRadarStateSweepEngineInitialized) {
+        RKSweepEngineStop(radar->sweepEngine);
+        radar->state ^= RKRadarStateSweepEngineInitialized;
     }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineStop(radar->momentEngine);
