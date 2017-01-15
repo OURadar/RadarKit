@@ -80,6 +80,7 @@ struct rk_position_engine {
 
     // Program set variables
     pthread_t              threadId;
+    double                 startTime;
 
     // Status / health
     uint32_t               processedPulseIndex;

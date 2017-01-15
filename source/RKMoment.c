@@ -226,10 +226,16 @@ void *momentCore(void *in) {
     uint32_t tic = me->tic;
 
     RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
-//    uint32_t marker0, marker1;
+    uint32_t marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
     int stride = pulse->header.capacity / ray->header.capacity;
+
+    char sweepBeginMarker[RKNameLength] = "S", sweepEndMarker[RKNameLength] = "E";
+    if (rkGlobalParameters.showColor) {
+        sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
+        sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
+    }
 
     while (engine->state == RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
@@ -281,12 +287,16 @@ void *momentCore(void *in) {
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
 
+        marker = RKMarkerNull;
+
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3) {
             k = 0;
             i = is;
             do {
-                pulses[k++] = RKGetPulse(engine->pulseBuffer, i);
+                pulse = RKGetPulse(engine->pulseBuffer, i);
+                marker |= pulse->header.marker;
+                pulses[k++] = pulse;
                 i = RKNextModuloS(i, engine->pulseBufferSize);
             } while (k < path.length);
             if (ie != RKPreviousModuloS(i, engine->pulseBufferSize)) {
@@ -308,6 +318,8 @@ void *momentCore(void *in) {
         makeRayFromScratch(space, ray, S->header.gateCount, stride);
         // Clip the range of values?
         
+        // Update the rest of the ray header
+        ray->header.marker = marker;
         ray->header.s ^= RKRayStatusProcessing;
         ray->header.s |= RKRayStatusReady;
 
@@ -325,11 +337,13 @@ void *momentCore(void *in) {
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
-                 S->header.marker);
+                 ray->header.marker,
+                 ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
+                 ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);

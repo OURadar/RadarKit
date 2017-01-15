@@ -92,6 +92,7 @@ void *pulseTagger(void *in) {
     double alpha;
     struct timeval t0, t1;
     RKMarker marker0, marker1;
+    bool hasSweepComplete;
 
     RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
@@ -100,7 +101,7 @@ void *pulseTagger(void *in) {
     // If multiple workers are needed, here will be the time to launch them.
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
-    marker1 = RKMarkerNull;
+    marker1 = RKMarkerSweepEnd;
 
     // Set the pulse to have position
     j = 0;   // position index
@@ -148,7 +149,9 @@ void *pulseTagger(void *in) {
             
             // Search until the time just after the pulse was acquired.
             i = 0;
+            hasSweepComplete = false;
             while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->pulseBufferSize) {
+                hasSweepComplete |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
                 j = RKNextModuloS(j, engine->positionBufferSize);
                 i++;
             }
@@ -175,23 +178,47 @@ void *pulseTagger(void *in) {
                                                                  alpha);
             // Consolidate markers from the positions
             marker0 = RKMarkerNull;
+            
             // First set of logics are purely from position
-            if (positionBefore->flag & RKPositionFlagAzimuthComplete) {
-                marker0 |= RKMarkerSweepEnd;
-            }
             if (positionBefore->flag & RKPositionFlagActive) {
                 marker0 |= RKMarkerSweepMiddle;
             }
+            if ((positionBefore->flag & RKPositionFlagElevationPoint) && (positionBefore->flag & RKPositionFlagAzimuthSweep)) {
+                marker0 |= RKMarkerPPIScan;
+            } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationSweep)) {
+                marker0 |= RKMarkerRHIScan;
+            } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationPoint)) {
+                marker0 |= RKMarkerPointScan;
+            }
+            
             // Second set of logics are derived from marker change
+            // NOTE: hasComplete indicates that a sweep complete has been encountered during the search, which may be prior to positionBefore
+            // NOTE: i = 1 means this loop is still using the same pair of positionBefore and positionAfter
+            //       i = 2 means the next pair was valid, this is the case when pulses come in equal or faster than positions
+            //       i > 2 means the next pair was invalid, this is the case when pulses come in slower than positions
+            if (i == 2 && (positionBefore->flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete))) {
+                marker0 |= RKMarkerSweepEnd;
+            } else if (i > 2 && hasSweepComplete && !(marker1 & RKMarkerSweepEnd)) {
+                marker0 |= RKMarkerSweepEnd;
+            }
             if (!(marker1 & RKMarkerSweepMiddle) && (marker0 & RKMarkerSweepMiddle)) {
                 marker0 |= RKMarkerSweepBegin;
             }
             if ((marker1 & RKMarkerSweepMiddle) && !(marker0 & RKMarkerSweepMiddle)) {
                 marker0 |= RKMarkerSweepEnd;
             }
-            if (marker1 & RKMarkerSweepEnd) {
+            if ((marker1 & RKMarkerSweepEnd) && (marker0 & RKMarkerSweepMiddle)) {
                 marker0 |= RKMarkerSweepBegin;
             }
+//            if ((marker0 & RKMarkerSweepEnd) || (marker0 & RKMarkerSweepBegin) || positionBefore->flag & RKMarkerSweepEnd) {
+//                RKLog(">%s %d %.2f 0x%08x < 0x%08x < 0x%08x   %d %d\n",
+//                      engine->name, pulse->header.i, pulse->header.azimuthDegrees,
+//                      positionBefore->flag,
+//                      marker0,
+//                      positionAfter->flag,
+//                      hasSweepComplete, i);
+//            }
+            
             pulse->header.marker = marker0;
             marker1 = marker0;
             
@@ -204,22 +231,25 @@ void *pulseTagger(void *in) {
             }
 
             if (engine->verbose > 2) {
-                RKLog("%s pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %08x\n",
+                RKLog("%s pulse[%04llu]  T [ %.4f %s %.4f %s %.4f ]   A [ %7.2f < %7.2f < %7.2f ]   E [ %.2f < %+7.2f < %+7.2f ]  %d %08x < \033[3%dm%08x\033[0m < %08x\n",
                       engine->name,
                       pulse->header.i,
-                      pulse->header.t,
-                      timeBefore,
+                      timeBefore - engine->startTime,
                       timeBefore <= pulse->header.timeDouble ? "<" : ">=",
-                      pulse->header.timeDouble,
+                      pulse->header.timeDouble - engine->startTime,
                       pulse->header.timeDouble <= timeAfter ? "<" : ">=",
-                      timeAfter,
+                      timeAfter - engine->startTime,
                       positionBefore->azimuthDegrees,
                       pulse->header.azimuthDegrees,
                       positionAfter->azimuthDegrees,
                       positionBefore->elevationDegrees,
                       pulse->header.elevationDegrees,
                       positionAfter->elevationDegrees,
-                      marker0);
+                      (int)hasSweepComplete,
+                      positionBefore->flag,
+                      marker0 & 0x7,
+                      marker0,
+                      positionAfter->flag);
             }
             
             pulse->header.s |= RKPulseStatusHasPosition;
@@ -289,6 +319,9 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
     while (engine->state < RKPositionEngineStateActive) {
         usleep(1000);
     }
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    engine->startTime = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
     return RKResultNoError;
 }
 
