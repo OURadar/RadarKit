@@ -143,6 +143,23 @@ int socketCommandHandler(RKOperator *O) {
             RKOperatorSendBeaconAndString(O, string);
             break;
             
+        case 'd':
+            // DSP related
+            switch (O->cmd[1]) {
+                case 'f':
+                    // 'df' - DSP filter
+                    break;
+                case 'n':
+                    // 'dn' - DSP noise override
+                    break;
+                case 'N':
+                    // 'dN' - DSP noise override in dB
+                    break;
+                default:
+                    break;
+            }
+            break;
+            
         case 'p':
             // Change PRT
             

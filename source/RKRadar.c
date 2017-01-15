@@ -482,6 +482,7 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
+    pulse->header.parameterIndex = radar->parameterIndex;
     radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     return pulse;
 }

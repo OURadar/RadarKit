@@ -91,6 +91,7 @@ void *pulseTagger(void *in) {
     double timeLatest;
     double alpha;
     struct timeval t0, t1;
+    RKMarker marker0, marker1;
 
     RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
@@ -99,6 +100,7 @@ void *pulseTagger(void *in) {
     // If multiple workers are needed, here will be the time to launch them.
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
+    marker1 = RKMarkerNull;
 
     // Set the pulse to have position
     j = 0;   // position index
@@ -171,6 +173,27 @@ void *pulseTagger(void *in) {
             pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
                                                                  positionAfter->elevationDegrees,
                                                                  alpha);
+            // Consolidate markers from the positions
+            marker0 = RKMarkerNull;
+            // First set of logics are purely from position
+            if (positionBefore->flag & RKPositionFlagAzimuthComplete) {
+                marker0 |= RKMarkerSweepEnd;
+            }
+            if (positionBefore->flag & RKPositionFlagActive) {
+                marker0 |= RKMarkerSweepMiddle;
+            }
+            // Second set of logics are derived from marker change
+            if (!(marker1 & RKMarkerSweepMiddle) && (marker0 & RKMarkerSweepMiddle)) {
+                marker0 |= RKMarkerSweepBegin;
+            }
+            if ((marker1 & RKMarkerSweepMiddle) && !(marker0 & RKMarkerSweepMiddle)) {
+                marker0 |= RKMarkerSweepEnd;
+            }
+            if (marker1 & RKMarkerSweepEnd) {
+                marker0 |= RKMarkerSweepBegin;
+            }
+            pulse->header.marker = marker0;
+            marker1 = marker0;
             
             // Log a message if it has been a while
             gettimeofday(&t0, NULL);
@@ -181,7 +204,7 @@ void *pulseTagger(void *in) {
             }
 
             if (engine->verbose > 2) {
-                RKLog("%s pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %d\n",
+                RKLog("%s pulse[%llu] %llu time %.4f %s [%.4f] %s %.4f   az %.2f < [%.2f] < %.2f   el %.2f < [%.2f] < %.2f  %08x\n",
                       engine->name,
                       pulse->header.i,
                       pulse->header.t,
@@ -196,7 +219,7 @@ void *pulseTagger(void *in) {
                       positionBefore->elevationDegrees,
                       pulse->header.elevationDegrees,
                       positionAfter->elevationDegrees,
-                      engine->verbose);
+                      marker0);
             }
             
             pulse->header.s |= RKPulseStatusHasPosition;

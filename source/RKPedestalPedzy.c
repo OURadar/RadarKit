@@ -13,18 +13,26 @@
 // Internal Implementations
 
 int RKPedestalPedzyRead(RKClient *client) {
+    // The shared user resource pointer
     RKRadar *radar = client->userResource;
 
+    // The payload just was just read by RKClient
     RKPosition *position = (RKPosition *)client->userPayload;
 
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Position %08x EL %.2f  AZ %.2f\n", position->flag, position->elevationDegrees, position->azimuthDegrees);
     }
+    
+    // Get a vacant slot for position from Radar, copy over the data, then set it ready
     RKPosition *newPosition = RKGetVacantPosition(radar);
+    if (newPosition == NULL) {
+        RKLog("%s failed to get a vacant position.\n", client->name);
+        return RKResultFailedToGetVacantPosition;
+    }
     memcpy(newPosition, position, sizeof(RKPosition));
     RKSetPositionReady(radar, newPosition);
 
-    return 0;
+    return RKResultNoError;
 }
 
 #pragma mark - Protocol Implementations
@@ -39,11 +47,11 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     }
     memset(me, 0, sizeof(RKPedestalPedzy));
     
+    // Pedzy use a TCP socket server at port 9000. The payload is always sizeof(RKPosition)
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.name, "%s<PedzyRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKMaximumStringLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {

@@ -83,7 +83,6 @@ typedef void *    RKTransceiver;
 typedef void *    RKPedestal;
 typedef void *    RKBuffer;
 
-
 #pragma pack(push, 1)
 
 /// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
@@ -113,6 +112,42 @@ typedef union rk_user_data {
     struct { float f; };
 } RKFourByte;
 
+typedef uint32_t RKMarker;
+enum RKMarker {
+    RKMarkerNull                = 0,
+    RKMarkerSweepMiddle         = 1,
+    RKMarkerSweepBegin          = (1 << 1),
+    RKMarkerSweepEnd            = (1 << 2),
+    RKMarkerVolumeBegin         = (1 << 3),
+    RKMarkerVolumeEnd           = (1 << 4),
+    RKMarkerPPIScan             = (1 << 8),
+    RKMarkerRHIScan             = (1 << 9),
+    RKMarkerPointScan           = (1 << 10)
+};
+
+typedef uint32_t RKPulseStatus;
+enum RKPulseStatus {
+    RKPulseStatusVacant         = 0,
+    RKPulseStatusHasIQData      = 1,                                                      // 0x01
+    RKPulseStatusHasPosition    = (1 << 1),                                               // 0x02
+    RKPulseStatusInspected      = (1 << 2),
+    RKPulseStatusCompressed     = (1 << 3),
+    RKPulseStatusSkipped        = (1 << 4),
+    RKPulseStatusProcessed      = (1 << 5),
+    RKPulseStatusReadyForMoment = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
+};
+
+typedef uint32_t RKRayStatus;
+enum RKRayStatus {
+    RKRayStatusVacant           = 0,
+    RKRayStatusProcessing       = 1,
+    RKRayStatusProcessed        = (1 << 1),
+    RKRayStatusSkipped          = (1 << 2),
+    RKRayStatusReady            = (1 << 3),
+    RKRayStatusUsedOnce         = (1 << 4)
+};
+
+
 // A running configuration buffer
 typedef struct rk_operating_parameters {
     uint32_t         n;
@@ -132,14 +167,14 @@ typedef struct rk_pulse_header {
     uint32_t         s;                                              // Status flag
     uint32_t         capacity;                                       // Allocated capacity
     uint32_t         gateCount;                                      // Number of range gates
-    uint32_t         marker;                                         // Position Marker
+    RKMarker         marker;                                         // Position Marker
     uint32_t         pulseWidthSampleCount;                          // Pulsewidth
     struct timeval   time;                                           // UNIX time in seconds since 1970/1/1 12:00am
     double           timeDouble;                                     // Time in double representation
     RKFourByte       rawAzimuth;                                     // Raw azimuth reading, which may take up to 4 bytes
     RKFourByte       rawElevation;                                   // Raw elevation reading, which may take up to 4 bytes
-    uint16_t         operatingParametersIndex;                       // Operating parameter index
-    uint16_t         operatingParemetersSubIndex;                    // Operating parameter sub-index
+    uint16_t         parameterIndex;                                 // Operating parameter index
+    uint16_t         paremeterSubIndex;                              // Operating parameter sub-index
     uint16_t         azimuthBinIndex;                                // Ray bin
     float            gateSizeMeters;                                 // Size of range gates
     float            elevationDegrees;                               // Elevation in degrees
@@ -168,35 +203,12 @@ typedef struct rk_pulse {
     RKByte                     data[0];
 } RKPulse;
 
-
-typedef uint32_t RKPulseStatus;
-enum RKPulseStatus {
-    RKPulseStatusVacant         = 0,
-    RKPulseStatusHasIQData      = 1,                                                      // 0x01
-    RKPulseStatusHasPosition    = (1 << 1),                                               // 0x02
-    RKPulseStatusInspected      = (1 << 2),
-    RKPulseStatusCompressed     = (1 << 3),
-    RKPulseStatusSkipped        = (1 << 4),
-    RKPulseStatusProcessed      = (1 << 5),
-    RKPulseStatusReadyForMoment = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
-};
-
-typedef uint32_t RKRayStatus;
-enum RKRayStatus {
-    RKRayStatusVacant        = 0,
-    RKRayStatusProcessing    = 1,
-    RKRayStatusProcessed     = (1 << 1),
-    RKRayStatusSkipped       = (1 << 2),
-    RKRayStatusReady         = (1 << 3),
-    RKRayStatusUsedOnce      = (1 << 4)
-};
-
 typedef struct rk_ray_header {
     uint32_t         capacity;                                       //
     RKRayStatus      s;                                              // Ray status
     uint32_t         i;                                              // Ray indentity
     uint32_t         n;                                              // Ray network counter
-    uint32_t         marker;                                         // Volume / sweep / radial marker
+    RKMarker         marker;                                         // Volume / sweep / radial marker
     uint32_t         reserved1;                                      //
     uint16_t         configIndex;                                    //
     uint16_t         configSubIndex;                                 //
@@ -247,6 +259,7 @@ enum RKResult {
     RKResultFailedToStartPulseGatherer,
     RKResultUnableToChangeCoreCounts,
     RKResultFailedToStartPedestalWorker,
+    RKResultFailedToGetVacantPosition,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -283,6 +296,7 @@ typedef struct rk_scratch {
     RKFloat          *KDP;                                           // Specific phase KDP
 } RKScratch;
 
+typedef uint32_t RKPositionFlag;
 enum RKPositionFlag {
     RKPositionFlagVacant             = 0,
     RKPositionFlagAzimuthEnabled     = 1,
@@ -316,7 +330,7 @@ typedef union rk_position {
         uint8_t          elevationMode;                              // Positioning mode of elevation
         uint8_t          azimuthMode;                                // Positioning mode of azimuth
         uint8_t          sequence;                                   // DEBUG command sequence
-        uint32_t         flag;                                       // Position flag
+        RKPositionFlag   flag;                                       // Position flag
         float            elevationDegrees;                           // Decoded elevation
         float            azimuthDegrees;                             // Decoded elevation
         float            elevationVelocityDegreesPerSecond;          // Decoded velocity of elevation

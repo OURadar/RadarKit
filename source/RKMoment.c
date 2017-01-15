@@ -226,6 +226,7 @@ void *momentCore(void *in) {
     uint32_t tic = me->tic;
 
     RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
+//    uint32_t marker0, marker1;
     float deltaAzimuth, deltaElevation;
     char *string;
     int stride = pulse->header.capacity / ray->header.capacity;
@@ -324,10 +325,11 @@ void *momentCore(void *in) {
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f) [%d] <%d>",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
-                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth, iu, stride);
+                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
+                 S->header.marker);
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -472,7 +474,7 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferSize / 10;
-                RKLog("%s Warning. Projected an overflow.  lag = %.2f %.2f %.2f  %d   engine->index = %d vs %d\n",
+                RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   engine->index = %d vs %d\n",
                       engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
 //                RKLog("%s Warning. Projected an overflow.", engine->name);
                 // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
