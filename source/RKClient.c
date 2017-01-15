@@ -380,11 +380,7 @@ RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
 }
 
 void RKClientFree(RKClient *C) {
-    RKLog("%s Disconnecting ...\n", C->name);
-    if (C->state > RKClientStateResolvingIP && C->state < RKClientStateDisconnecting) {
-        C->state = RKClientStateDisconnecting;
-    }
-    pthread_join(C->threadId, NULL);
+    RKClientStop(C);
     free(C);
     return;
 }
@@ -415,15 +411,17 @@ void RKClientStart(RKClient *C) {
     }
     C->state = RKClientStateCreating;
     while (C->state == RKClientStateCreating) {
-        usleep(100000);
+        usleep(10000);
     }
     return;
 }
 void RKClientStop(RKClient *C) {
     if (C->state > RKClientStateResolvingIP && C->state < RKClientStateDisconnecting) {
+        RKLog("%s Disconnecting ...\n", C->name);
         C->state = RKClientStateDisconnecting;
-    } else {
-        RKLog("Error. Client does not seem to be running.\n");
+        pthread_join(C->threadId, NULL);
+    } else if (C->verbose > 1) {
+        RKLog("%s Info. Client does not seem to be running.\n", C->name);
         return;
     }
 }

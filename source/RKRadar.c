@@ -445,6 +445,7 @@ int RKStop(RKRadar *radar) {
     radar->active = false;
 
     if (radar->state & RKRadarStatePedestalInitialized) {
+        radar->pedestalExec(radar->pedestal, "disconnect");
         if (pthread_join(radar->pedestalThreadId, NULL)) {
             RKLog("Error. Failed at the pedestal return.   errno = %d\n", errno);
         }

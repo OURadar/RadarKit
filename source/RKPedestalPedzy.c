@@ -66,8 +66,14 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
 int RKPedestalPedzyExec(RKPedestal input, const char *command) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
-    RKLog("%s received '%s'", me->client->name, command);
-    RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
+    if (client->verbose > 1) {
+        RKLog("%s received '%s'", client->name, command);
+    }
+    if (!strcmp(command, "disconnect")) {
+        RKClientStop(client);
+    } else {
+        RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
+    }
     return RKResultNoError;
 }
 
