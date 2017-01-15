@@ -278,35 +278,27 @@ int RKFree(RKRadar *radar) {
 
 #pragma mark - Hardware Hooks
 
-int RKSetTransceiver(RKRadar *radar, RKTransceiver routine(RKRadar *, void *), void *initInput) {
-    radar->transceiverInit = routine;
+int RKSetTransceiver(RKRadar *radar,
+                     void *initInput,
+                     RKTransceiver initRoutine(RKRadar *, void *),
+                     int execRoutine(RKTransceiver, const char *),
+                     int freeRoutine(RKTransceiver)) {
     radar->transceiverInitInput = initInput;
+    radar->transceiverInit = initRoutine;
+    radar->transceiverExec = execRoutine;
+    radar->transceiverFree = freeRoutine;
     return RKResultNoError;
 }
 
-int RKSetTransceiverExec(RKRadar *radar, int routine(RKTransceiver, const char *)) {
-    radar->transceiverExec = routine;
-    return RKResultNoError;
-}
-
-int RKSetTransceiverFree(RKRadar *radar, int routine(RKTransceiver)) {
-    radar->transceiverFree = routine;
-    return RKResultNoError;
-}
-
-int RKSetPedestal(RKRadar *radar, RKPedestal routine(RKRadar *, void *), void *initInput) {
-    radar->pedestalInit = routine;
+int RKSetPedestal(RKRadar *radar,
+                  void *initInput,
+                  RKPedestal initRoutine(RKRadar *, void *),
+                  int execRoutine(RKPedestal, const char *),
+                  int freeRoutine(RKPedestal)) {
     radar->pedestalInitInput = initInput;
-    return RKResultNoError;
-}
-
-int RKSetPedestalExec(RKRadar *radar, int routine(RKPedestal, const char *)) {
-    radar->pedestalExec = routine;
-    return RKResultNoError;
-}
-
-int RKSetPedestalFree(RKRadar *radar, int routine(RKPedestal)) {
-    radar->pedestalFree = routine;
+    radar->pedestalInit = initRoutine;
+    radar->pedestalExec = execRoutine;
+    radar->pedestalFree = freeRoutine;
     return RKResultNoError;
 }
 
@@ -403,7 +395,7 @@ int RKGoLive(RKRadar *radar) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing pedestal ...");
         }
-        if (radar->pedestalFree == NULL) {
+        if (radar->pedestalFree == NULL || radar->pedestalExec == NULL) {
             RKLog("Error. Pedestal incomplete.");
             exit(EXIT_FAILURE);
         }
@@ -412,7 +404,7 @@ int RKGoLive(RKRadar *radar) {
     }
 
     // Transceiver
-    if (radar->transceiverInit != NULL) {
+    if (radar->transceiverInit != NULL || radar->transceiverExec == NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing transceiver ...");
         }
@@ -445,13 +437,18 @@ int RKStop(RKRadar *radar) {
     radar->active = false;
 
     if (radar->state & RKRadarStatePedestalInitialized) {
-        radar->pedestalExec(radar->pedestal, "disconnect");
+        if (radar->pedestalExec != NULL) {
+            radar->pedestalExec(radar->pedestal, "disconnect");
+        }
         if (pthread_join(radar->pedestalThreadId, NULL)) {
             RKLog("Error. Failed at the pedestal return.   errno = %d\n", errno);
         }
         radar->state ^= RKRadarStatePedestalInitialized;
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
+        if (radar->transceiverExec != NULL) {
+            radar->transceiverExec(radar->transceiver, "disconnect");
+        }
         if (pthread_join(radar->transceiverThreadId, NULL)) {
             RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
         }
@@ -472,8 +469,7 @@ int RKStop(RKRadar *radar) {
     return 0;
 }
 
-#pragma mark -
-#pragma mark Pulses and Rays
+#pragma mark - Pulses
 
 RKPulse *RKGetVacantPulse(RKRadar *radar) {
     if (radar->pulses == NULL) {
@@ -507,6 +503,8 @@ void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
     pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
 }
 
+#pragma mark - Positions
+
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
     if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
@@ -527,4 +525,25 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->c, &position->time);
     radar->positionIndex = RKNextModuloS(radar->positionIndex, RKBufferPSlotCount);
     return;
+}
+
+#pragma mark - Rays
+
+void RKGetVacanRay(RKRadar *radar) {
+    if (radar->rays == NULL) {
+        RKLog("Error. Buffer for rays has not been allocated.\n");
+        exit(EXIT_FAILURE);
+    }
+    RKRay *ray = RKGetRay(radar->rays, radar->rayIndex);
+    ray->header.s = RKRayStatusVacant;
+    ray->header.i += radar->desc.rayBufferDepth;
+    ray->header.startTime.tv_sec = 0;
+    ray->header.startTime.tv_usec = 0;
+    ray->header.endTime.tv_sec = 0;
+    ray->header.endTime.tv_usec = 0;
+    radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+}
+
+void RKSetRayReady(RKRadar *radar, RKRay *ray) {
+    ray->header.s |= RKRayStatusReady;
 }

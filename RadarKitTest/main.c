@@ -95,6 +95,9 @@ void showHelp() {
            "         Sets the program to test SIMD instructions.\n"
            "         To test the SIMD performance, use --test-simd=2\n"
            "\n"
+           "  --test-one-ray\n"
+           "         Sets the program to test processing one ray using a selected processor.\n"
+           "\n"
            "  --test-pulse-compression\n"
            "         Sets the program to test the pulse compression using a simple case with.\n"
            "         an impulse filter.\n"
@@ -351,17 +354,24 @@ int main(int argc, char *argv[]) {
             i += sprintf(cmd + i, " z %d", user.sleepInterval);
         }
         RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
-        RKSetTransceiver(myRadar, &RKTestSimulateDataStream, cmd);
-        RKSetTransceiverFree(myRadar, &RKTestSimulateDataStreamFree);
+        RKSetTransceiver(myRadar,
+                         (void *)cmd,
+                         &RKTestTransceiverInit,
+                         &RKTestTransceiverExec,
+                         &RKTestTransceiverFree);
 
-        // Build a series of options for pedestal
+        // Build a series of options for pedestal, only pass down the relevant parameters
         if (!strlen(user.pedzyHost)) {
             strcpy(user.pedzyHost, "localhost");
         }
         RKLog("Pedestal input = '%s'", user.pedzyHost);
-        RKSetPedestal(myRadar, &RKPedestalPedzyInit, (void *)user.pedzyHost);
-        RKSetPedestalExec(myRadar, &RKPedestalPedzyExec);
-        RKSetPedestalFree(myRadar, &RKPedestalPedzyFree);
+        RKSetPedestal(myRadar,
+                      (void *)user.pedzyHost,
+                      &RKPedestalPedzyInit,
+                      &RKPedestalPedzyExec,
+                      &RKPedestalPedzyFree);
+        
+        // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);

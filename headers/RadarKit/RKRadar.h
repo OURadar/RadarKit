@@ -130,14 +130,19 @@ int RKFree(RKRadar *radar);
 // Properties
 //
 
-// Set the transceiver / pedestal with their initialization handler and initial input
-int RKSetTransceiver(RKRadar *radar, RKTransceiver(RKRadar *, void *), void *);
-int RKSetTransceiverExec(RKRadar *radar, int routine(RKTransceiver, const char *));
-int RKSetTransceiverFree(RKRadar *radar, int routine(RKTransceiver));
+// Set the transceiver. Pass in function pointers: init, exec and free
+int RKSetTransceiver(RKRadar *radar,
+                     void *initInput,
+                     RKTransceiver initRoutine(RKRadar *, void *),
+                     int execRoutine(RKTransceiver, const char *),
+                     int freeRoutine(RKTransceiver));
 
-int RKSetPedestal(RKRadar *radar, RKPedestal(RKRadar *, void *), void *);
-int RKSetPedestalExec(RKRadar *radar, int(RKPedestal, const char *));
-int RKSetPedestalFree(RKRadar *radar, int(RKPedestal));
+// Set the pedestal. Pass in function pointers: init, exec and free
+int RKSetPedestal(RKRadar *radar,
+                  void *initInput,
+                  RKPedestal initRoutine(RKRadar *, void *),
+                  int execRoutine(RKPedestal, const char *),
+                  int freeRoutine(RKPedestal));
 
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
@@ -158,17 +163,22 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
 // Interactions
 //
 
-int RKGoLive(RKRadar *radar);
-int RKWaitWhileActive(RKRadar *radar);
-int RKStop(RKRadar *radar);
+int RKGoLive(RKRadar *);
+int RKWaitWhileActive(RKRadar *);
+int RKStop(RKRadar *);
 
 // Pulses
-RKPulse *RKGetVacantPulse(RKRadar *radar);
-void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse);
-void RKSetPulseReady(RKRadar *radar, RKPulse *pulse);
+RKPulse *RKGetVacantPulse(RKRadar *);
+void RKSetPulseHasData(RKRadar *, RKPulse *);
+void RKSetPulseReady(RKRadar *, RKPulse *);
+
+// Positions
+RKPosition *RKGetVacantPosition(RKRadar *);
+void RKSetPositionReady(RKRadar *, RKPosition *);
 
 // Rays
-RKPosition *RKGetVacantPosition(RKRadar *radar);
-void RKSetPositionReady(RKRadar *radar, RKPosition *position);
+RKRay *RKGetVacantRay(RKRadar *);
+void RKSetRayReady(RKRadar *, RKRay *);
+
 
 #endif /* defined(__RadarKit_RKRadar__) */

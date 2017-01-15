@@ -8,7 +8,9 @@
 
 #include <RadarKit/RKPedestalPedzy.h>
 
-int RKPedestalPedzyRead(RKClient *client);
+#pragma mark - Internal Functions
+
+// Internal Implementations
 
 int RKPedestalPedzyRead(RKClient *client) {
     RKRadar *radar = client->userResource;
@@ -24,6 +26,10 @@ int RKPedestalPedzyRead(RKClient *client) {
 
     return 0;
 }
+
+#pragma mark - Protocol Implementations
+
+// Implementations
 
 RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)malloc(sizeof(RKPedestalPedzy));

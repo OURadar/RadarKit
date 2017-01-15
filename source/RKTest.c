@@ -9,7 +9,11 @@
 #include <RadarKit/RKTest.h>
 #include <getopt.h>
 
-#define RKFMT  "%4d"
+#define RKFMT                          "%4d"
+#define RKSIMD_TEST_DESC_FORMAT        "%65s"
+#define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
+#define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
+
 
 void RKTestModuloMath(void) {
     int k;
@@ -31,10 +35,6 @@ void RKTestModuloMath(void) {
     k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
 }
 
-
-#define RKSIMD_TEST_DESC_FORMAT        "%65s"
-#define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
-#define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 
 void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKSIMD_show_info();
@@ -389,7 +389,9 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     free(cc);
 }
 
-RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
+#pragma mark - Simulated Transceiver
+
+RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     int j, g, p;
     float phi = 0.0f;
     float azimuth = 0.0f;
@@ -545,9 +547,18 @@ RKTransceiver RKTestSimulateDataStream(RKRadar *radar, void *input) {
     return NULL;
 }
 
-int RKTestSimulateDataStreamFree(RKTransceiver transceiver) {
+int RKTestTransceiverExec(RKTransceiver transceiver, const char *command) {
     return 0;
 }
+
+int RKTestTransceiverFree(RKTransceiver transceiver) {
+    if (transceiver != NULL) {
+        RKLog("This is strange.\n");
+    }
+    return 0;
+}
+
+#pragma mark - Data Processing
 
 void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     RKPulse *pulse;
@@ -618,6 +629,8 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
     }
 }
 
+// Make some private functions available
+
 int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
 
 void RKTestProcessorSpeed(void) {
@@ -678,9 +691,7 @@ void RKTestOneRay(void) {
     RKLog("Allocating buffers ...\n");
     
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    
     RKScratchAlloc(&space, pulseCapacity, 4, true);
-    
     RKPulse *pulses[pulseCount];
     
     for (k = 0; k < pulseCount; k++) {
@@ -688,7 +699,6 @@ void RKTestOneRay(void) {
         pulse->header.i = k;
         pulse->header.t = k;
         pulse->header.gateCount = gateCount;
-        pulses[k] = pulse;
         // Fill in the data...
         for (p = 0; p < 2; p++) {
             RKIQZ X = RKGetSplitComplexDataFromPulse(pulse, p);
@@ -705,10 +715,13 @@ void RKTestOneRay(void) {
                 }
             }
         }
+        pulses[k] = pulse;
     }
     
     RKPulsePairHop(space, pulses, pulseCount);
     
+    RKLog("Deallocating buffers ...\n");
+
     RKScratchFree(space);
     free(pulseBuffer);
     return;
