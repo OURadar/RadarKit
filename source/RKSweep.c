@@ -12,16 +12,26 @@
 
 void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
-    RKSweep *sweep = &engine->sweep;
-    RKRay *S = sweep->rays[0];
-    RKRay *E = sweep->rays[sweep->count - 1];
-    RKLog(">%s         E%4.2f-%.2f   A%6.2f-%6.2f   S%04x-%04x   %05lu...%05lu (%d rays).\n", engine->name,
+    
+    uint32_t n = engine->sweep.count;
+    RKRay **rays = engine->sweep.rays;
+    //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
+
+    RKRay *S = rays[0];
+    RKRay *E = rays[n - 1];
+    RKLog("%s Sweep   C%d-%d   E%4.2f-%.2f   A%6.2f-%6.2f   \033[32mM\033[0m%04x-%04x   %05lu...%05lu (%s%d%s)\n",
           engine->name,
+          S->header.configIndex    , E->header.configIndex,
           S->header.startElevation , E->header.endElevation,
           S->header.startAzimuth   , E->header.endAzimuth,
           S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
           S->header.n              , E->header.n,
-          sweep->count);
+          n < 360 ? "\033[91m" : "",
+          n,
+          RKNoColor);
+    
+    
+    
     return NULL;
 }
 
@@ -31,10 +41,10 @@ void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
     int k, s, n;
-//    int i, j;
     
     RKRay *ray, *S, *E;
-    
+    RKRay **rays = engine->sweep.rays;
+
     // Start and end indices of the input rays
     uint32_t is = 0;
     pthread_t tidSweepWriter = NULL;
@@ -72,26 +82,30 @@ void *rayGatherer(void *in) {
                 S = RKGetRay(engine->rayBuffer, is);
                 E = ray;
                 n = 0;
-                while (is != k && n < RKMaxRaysPerSweep) {
+                do {
                     ray = RKGetRay(engine->rayBuffer, is);
                     ray->header.n = is;
-                    engine->sweep.rays[n++] = ray;
+                    rays[n++] = ray;
                     is = RKNextModuloS(is, engine->rayBufferDepth);
-                }
+                } while (is != k && n < RKMaxRaysPerSweep);
+                ray = RKGetRay(engine->rayBuffer, is);
+                ray->header.n = is;
+                rays[n++] = ray;
                 engine->sweep.count = n;
-                is = RKPreviousNModuloS(is, n, engine->rayBufferDepth);
+                is = RKPreviousNModuloS(is, n + 1, engine->rayBufferDepth);
 
-                RKLog("%s Sweep   E%4.2f-%.2f   A%6.2f-%6.2f   S%04x-%04x   %05lu...%05lu (%d)\n",
-                      engine->name,
-                      S->header.startElevation, E->header.endElevation,
-                      S->header.startAzimuth, E->header.endAzimuth,
-                      S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-                      is, k, n);
+//                RKLog("%s Sweep   E%4.2f-%.2f   A%6.2f-%6.2f   \033[32mM\033[0m%04x-%04x   %05lu...%05lu (%d)\n",
+//                      engine->name,
+//                      S->header.startElevation , E->header.endElevation,
+//                      S->header.startAzimuth   , E->header.endAzimuth,
+//                      S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+//                      is, k, n);
+                
+                //RKLog(">%s %p %p %p ... %p\n", engine->name, engine->sweep.rays[0], engine->sweep.rays[1], engine->sweep.rays[2], engine->sweep.rays[n - 1]);
                 
                 if (tidSweepWriter) {
                     pthread_join(tidSweepWriter, NULL);
                 }
-
                 if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                     RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
                 }

@@ -62,7 +62,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferDepth)];
     i += snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s   %sEL%s %6.2f° @ %+6.2f°/s",
-                  (unsigned long long)position->c,
+                  (unsigned long long)position->i,
                   rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
                   rkGlobalParameters.showColor ? RKNoColor : "",
                   position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
@@ -78,7 +78,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
 void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
     
-    int i, j, k, s;
+    int i, j, k, s, c;
     
     RKPulse *pulse;
     RKPosition *positionBefore;
@@ -114,6 +114,7 @@ void *pulseTagger(void *in) {
     j = 0;   // position index
     k = 0;   // pulse index;
     s = 0;   // sleep counter
+    c = 0;   // config index
     while (engine->state == RKPositionEngineStateActive) {
         // Get the latest pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -217,18 +218,27 @@ void *pulseTagger(void *in) {
             if ((marker1 & RKMarkerSweepEnd) && (marker0 & RKMarkerSweepMiddle)) {
                 marker0 |= RKMarkerSweepBegin;
             }
-//            if ((marker0 & RKMarkerSweepEnd) || (marker0 & RKMarkerSweepBegin) || positionBefore->flag & RKMarkerSweepEnd) {
-//                RKLog(">%s %d %.2f 0x%08x < 0x%08x < 0x%08x   %d %d\n",
-//                      engine->name, pulse->header.i, pulse->header.azimuthDegrees,
-//                      positionBefore->flag,
-//                      marker0,
-//                      positionAfter->flag,
-//                      hasSweepComplete, i);
-//            }
+
             
             pulse->header.marker = marker0;
-            marker1 = marker0;
+            pulse->header.configIndex = c;
             
+            if (marker0 & RKMarkerSweepEnd) {
+                // Add another configuration
+                //*engine->configIndex
+                c = *engine->configIndex;                  RKConfig *config1 = &engine->configBuffer[c];
+                c = RKNextModuloS(c, RKBufferCSlotCount);  RKConfig *config0 = &engine->configBuffer[c];
+                
+                // Propagate everything to the next
+                memcpy(config0, config1, sizeof(RKConfig));
+                config0->i++;
+                *engine->configIndex = c;
+                
+                //RKLog("%s configIndex -> %d\n", engine->name, c);
+            }
+            
+            marker1 = marker0;
+
             // Log a message if it has been a while
             gettimeofday(&t0, NULL);
             if (RKTimevalDiff(t0, t1) > 0.05) {
@@ -292,13 +302,17 @@ void RKPositionEngineSetVerbose(RKPositionEngine *engine, const int verbose) {
 
 void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
                                            RKPosition *positionBuffer, uint32_t *positionIndex, const uint32_t positionBufferDepth,
+                                           RKConfig   *configBuffer,   uint32_t *configIndex,   const uint32_t configBufferDepth,
                                            RKPulse    *pulseBuffer,    uint32_t *pulseIndex,    const uint32_t pulseBufferDepth) {
-    engine->pulseBuffer = pulseBuffer;
-    engine->pulseIndex = pulseIndex;
-    engine->pulseBufferDepth = pulseBufferDepth;
-    engine->positionBuffer = positionBuffer;
-    engine->positionIndex = positionIndex;
+    engine->positionBuffer      = positionBuffer;
+    engine->positionIndex       = positionIndex;
     engine->positionBufferDepth = positionBufferDepth;
+    engine->configBuffer        = configBuffer;
+    engine->configIndex         = configIndex;
+    engine->configBufferDepth   = configBufferDepth;
+    engine->pulseBuffer         = pulseBuffer;
+    engine->pulseIndex          = pulseIndex;
+    engine->pulseBufferDepth    = pulseBufferDepth;
 }
 
 void RKPositionEngineSetHardwareInit(RKPositionEngine *engine, RKPedestal hardwareInit(void *), void *hardwareInitInput) {

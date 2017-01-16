@@ -53,6 +53,7 @@ void *radarCoPilot(void *in) {
 RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     RKRadar *radar;
     size_t bytes;
+    int i;
 
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Initializing ... 0x%x", desc.initFlags);
@@ -93,6 +94,9 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     }
     memset(radar->configs, 0, bytes);
     radar->memoryUsage += bytes;
+    for (i = 0; i < RKBufferCSlotCount; i++) {
+        radar->configs[i].i = i - RKBufferCSlotCount;
+    }
     radar->state ^= RKRadarStateConfigBufferAllocating;
     radar->state |= RKRadarStateConfigBufferIntialized;
 
@@ -110,6 +114,9 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
                   RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(RKBufferPSlotCount));
         }
         radar->memoryUsage += bytes;
+        for (i = 0; i < RKBufferCSlotCount; i++) {
+            radar->positions[i].i = i - RKBufferPSlotCount;
+        }
         radar->state ^= RKRadarStatePositionBufferAllocating;
         radar->state |= RKRadarStatePositionBufferInitialized;
     }
@@ -128,7 +135,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
                   RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth),
                   RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
         }
-        for (int i = 0; i < radar->desc.pulseBufferDepth; i++) {
+        for (i = 0; i < radar->desc.pulseBufferDepth; i++) {
             RKPulse *pulse = RKGetPulse(radar->pulses, i);
             size_t offset = (size_t)pulse->data - (size_t)pulse;
             if (offset != RKPulseHeaderPaddedSize) {
@@ -177,6 +184,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     radar->positionEngine = RKPositionEngineInit();
     RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
                                           radar->positions, &radar->positionIndex, RKBufferPSlotCount,
+                                          radar->configs, &radar->configIndex, RKBufferCSlotCount,
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
     radar->memoryUsage += sizeof(RKPositionEngine);
     radar->state |= RKRadarStatePositionEngineInitialized;
@@ -324,10 +332,11 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     RKClockSetVerbose(radar->pulseClock, verbose);
-    RKClockSetVerbose(radar->positionClock, 2);
+    RKClockSetVerbose(radar->positionClock, verbose);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
+    RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
     return RKResultNoError;
 }
 
@@ -483,6 +492,41 @@ int RKStop(RKRadar *radar) {
     return 0;
 }
 
+#pragma mark - Configs
+
+RKConfig *RKGetVacantConfig(RKRadar *radar) {
+    RKConfig *config = &radar->configs[radar->configIndex];
+    config->i += RKBufferCSlotCount;
+    return config;
+}
+
+void RKSetConfigReady(RKRadar *radar, RKConfig *config) {
+    
+}
+
+#pragma mark - Positions
+
+RKPosition *RKGetVacantPosition(RKRadar *radar) {
+    if (radar->positionEngine == NULL) {
+        RKLog("Error. Pedestal engine has not started.\n");
+        exit(EXIT_FAILURE);
+    }
+    RKPosition *position = &radar->positions[radar->positionIndex];
+    position->i += RKBufferPSlotCount;
+    position->flag = RKPositionFlagVacant;
+    return position;
+}
+
+void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
+    if (position->flag & ~RKPositionFlagHardwareMask) {
+        RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
+    }
+    position->flag |= RKPositionFlagReady;
+    position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
+    radar->positionIndex = RKNextModuloS(radar->positionIndex, RKBufferPSlotCount);
+    return;
+}
+
 #pragma mark - Pulses
 
 RKPulse *RKGetVacantPulse(RKRadar *radar) {
@@ -516,30 +560,6 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
     pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
-}
-
-#pragma mark - Positions
-
-RKPosition *RKGetVacantPosition(RKRadar *radar) {
-    if (radar->positionEngine == NULL) {
-        RKLog("Error. Pedestal engine has not started.\n");
-        exit(EXIT_FAILURE);
-    }
-    RKPosition *position = &radar->positions[radar->positionIndex];
-    position->c = 0;
-    position->tic = 0;
-    position->flag = RKPositionFlagVacant;
-    return position;
-}
-
-void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
-    if (position->flag & ~RKPositionFlagHardwareMask) {
-        RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
-    }
-    position->flag |= RKPositionFlagReady;
-    position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->c, &position->time);
-    radar->positionIndex = RKNextModuloS(radar->positionIndex, RKBufferPSlotCount);
-    return;
 }
 
 #pragma mark - Rays

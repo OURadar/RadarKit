@@ -644,8 +644,8 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const 
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
                                                    RKBuffer buffer, uint32_t *index, const uint32_t size) {
     engine->buffer = buffer;
-    engine->index = index;
-    engine->size = size;
+    engine->index  = index;
+    engine->size   = size;
 
     if (engine->filterGid != NULL) {
         free(engine->filterGid);

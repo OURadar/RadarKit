@@ -152,7 +152,7 @@ enum RKRayStatus {
 
 // A running configuration buffer
 typedef struct rk_config {
-    uint32_t         n;
+    uint32_t         i;                                              // Identity counter
     uint32_t         prf[RKMaxMatchedFilterCount];
     uint32_t         gateCount[RKMaxMatchedFilterCount];
     uint32_t         waveformId[RKMaxMatchedFilterCount];
@@ -342,7 +342,7 @@ enum RKPositionFlag {
 
 typedef union rk_position {
     struct {
-        uint64_t         c;                                          // Counter
+        uint64_t         i;                                          // Counter
         uint64_t         tic;                                        // Time tic
         RKFourByte       rawElevation;                               // Raw elevation readout
         RKFourByte       rawAzimuth;                                 // Raw azimuth readout

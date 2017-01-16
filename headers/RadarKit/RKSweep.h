@@ -10,6 +10,7 @@
 #define __RadarKit_RKSweep__
 
 #include <RadarKit/RKFoundation.h>
+#include <netcdf.h>
 
 typedef uint32_t RKSweepEngineState;
 enum RKSweepEngineState {
@@ -24,12 +25,7 @@ typedef struct rk_sweep {
     uint32_t              count;
 } RKSweep;
 
-typedef struct rk_sweep_writer RKSweepWriter;
 typedef struct rk_sweep_engine RKSweepEngine;
-
-struct rk_sweep_writer {
-    char                   name[RKNameLength];
-};
 
 struct rk_sweep_engine {
     // User set variables
@@ -37,6 +33,9 @@ struct rk_sweep_engine {
     RKBuffer               rayBuffer;
     uint32_t               *rayIndex;
     uint32_t               rayBufferDepth;
+    RKConfig               *configBuffer;
+    uint32_t               *configIndex;
+    uint32_t               configBufferDepth;
     uint8_t                verbose;
     
     // Program set variables

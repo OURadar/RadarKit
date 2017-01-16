@@ -287,7 +287,7 @@ void *momentCore(void *in) {
         ray->header.endTimeD       = E->header.timeDouble;
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
-        ray->header.n = path.length;
+        ray->header.configIndex    = E->header.configIndex;
         marker = RKMarkerNull;
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
@@ -610,11 +610,11 @@ void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine) {
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
                                          RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth) {
-    engine->pulseBuffer = pulseBuffer;
-    engine->pulseIndex = pulseIndex;
+    engine->pulseBuffer      = pulseBuffer;
+    engine->pulseIndex       = pulseIndex;
     engine->pulseBufferDepth = pulseBufferDepth;
-    engine->rayBuffer = rayBuffer;
-    engine->rayIndex = rayIndex;
+    engine->rayBuffer        = rayBuffer;
+    engine->rayIndex         = rayIndex;
     engine->rayBufferDepth = rayBufferDepth;
     engine->momentSource = (RKModuloPath *)malloc(rayBufferDepth * sizeof(RKModuloPath));
     if (engine->momentSource == NULL) {

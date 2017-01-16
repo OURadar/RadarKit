@@ -172,14 +172,18 @@ int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
 int RKStop(RKRadar *);
 
-// Pulses
-RKPulse *RKGetVacantPulse(RKRadar *);
-void RKSetPulseHasData(RKRadar *, RKPulse *);
-void RKSetPulseReady(RKRadar *, RKPulse *);
+// Configs
+RKConfig *RKGetVacantConfig(RKRadar *);
+void RKSetConfigReady(RKRadar *, RKConfig *);
 
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
 void RKSetPositionReady(RKRadar *, RKPosition *);
+
+// Pulses
+RKPulse *RKGetVacantPulse(RKRadar *);
+void RKSetPulseHasData(RKRadar *, RKPulse *);
+void RKSetPulseReady(RKRadar *, RKPulse *);
 
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
