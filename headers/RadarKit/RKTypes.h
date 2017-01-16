@@ -54,7 +54,8 @@
 #define RKMaxMatchedFilterGroupCount     8                           // Maximum filter group count
 #define RKWorkerDutyCycleBufferSize      1000
 #define RKMaxPulsesPerRay                2000
-#define RKMaxProductCount                10
+#define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit
+#define RKMaxRaysPerSweep                1500                        // 1440 is 0.25-deg. This should be plenty
 #define RKMaxPacketSize                  1024 * 1024
 #define RKNetworkTimeoutSeconds          20
 #define RKNetworkReconnectSeconds        3
@@ -67,6 +68,8 @@
 #define RKNoColor                        "\033[0m"
 #define RKMaximumStringLength            4096
 #define RKNameLength                     64
+#define RKPulseHeaderPaddedSize          256                         // Change this to higher number for post-AVX2 intrinsics
+#define RKRayHeaderPaddedSize            128                         // Change this to higher number for post-AVX2 intrinsics
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[91m" : (x > RKDutyCyleOrangeThreshold ? "\033[93m" : "\033[92m"))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[91m" : (x > RKLagOrangeThreshold      ? "\033[93m" : "\033[92m"))
@@ -147,7 +150,6 @@ enum RKRayStatus {
     RKRayStatusUsedOnce         = (1 << 4)
 };
 
-
 // A running configuration buffer
 typedef struct rk_operating_parameters {
     uint32_t         n;
@@ -190,51 +192,72 @@ typedef struct rk_pulse_parameters {
     uint32_t         planSizes[2][RKMaxMatchedFilterCount];
 } RKPulseParameters;
 
-// RKPulse struct is carefully designed to obey the SIMD alignment
-#define RKPulseHeaderSize       256
+// RKPulse struct is padded to a SIMD conformal size
 typedef struct rk_pulse {
     union {
         struct {
             RKPulseHeader      header;
             RKPulseParameters  parameters;
         };
-        RKByte                 headerBytes[RKPulseHeaderSize];
+        RKByte                 headerBytes[RKPulseHeaderPaddedSize];
     };
     RKByte                     data[0];
 } RKPulse;
 
+enum productList {
+    RKProductListDisplayZ             = (1),                         // Displays
+    RKProductListDisplayV             = (1 << 1),                    //
+    RKProductListDisplayW             = (1 << 2),                    //
+    RKProductListDisplayD             = (1 << 3),                    //
+    RKProductListDisplayP             = (1 << 4),                    //
+    RKProductListDisplayR             = (1 << 5),                    //
+    RKProductListDisplayK             = (1 << 6),                    //
+    RKProductListDisplayS             = (1 << 7),                    //
+    RKProductListDisplayZVWDPRKS      = 0x000000FF,                  //
+    RKProductListProductZ             = (1 << 16),                   // Data in float
+    RKProductListProductV             = (1 << 17),                   //
+    RKProductListProductW             = (1 << 18),                   //
+    RKProductListProductD             = (1 << 19),                   //
+    RKProductListProductP             = (1 << 20),                   //
+    RKProductListProductR             = (1 << 21),                   //
+    RKProductListProductK             = (1 << 22),                   //
+    RKProductListProductS             = (1 << 23),                   //
+    RKProductListProductZVWDPRKS      = 0x00FF0000                   //
+};
+
 typedef struct rk_ray_header {
-    uint32_t         capacity;                                       //
+    uint32_t         capacity;                                       // Capacity
     RKRayStatus      s;                                              // Ray status
     uint32_t         i;                                              // Ray indentity
     uint32_t         n;                                              // Ray network counter
     RKMarker         marker;                                         // Volume / sweep / radial marker
-    uint32_t         reserved1;                                      //
-    uint16_t         configIndex;                                    //
-    uint16_t         configSubIndex;                                 //
+    uint32_t         productList;                                    // 16-bit MSB for products + 16-bit LSB for display
+    uint16_t         parameterIndex;                                 // Operating parameter index
+    uint16_t         paremeterSubIndex;                              // Operating parameter sub-index
     uint16_t         gateCount;                                      //
     uint16_t         reserved2;                                      //
+    float            sweepElevation;                                 // Sweep elevation for PPI
+    float            sweepAzimuth;                                   // Sweep azimuth for RHI
     struct timeval   startTime;                                      // Start time of the ray in UNIX time
     double           startTimeD;                                     // Start time in double representation
-    double           endTimeD;                                       //
-    struct timeval   endTime;                                        // End time of the ray in UNIX time
     float            startAzimuth;                                   // End time in double representation
-    float            endAzimuth;                                     // 
     float            startElevation;                                 //
+    struct timeval   endTime;                                        // End time of the ray in UNIX time
+    double           endTimeD;                                       //
+    float            endAzimuth;                                     //
     float            endElevation;                                   //
 } RKRayHeader;
 
-#define RKRayHeaderSize       128
 typedef struct rk_ray {
     union {
         RKRayHeader  header;
-        RKByte       headerBytes[RKRayHeaderSize];
+        RKByte       headerBytes[RKRayHeaderPaddedSize];
     };
     RKByte           data[0];
 } RKRay;
 
 enum RKResult {
-    RKResultTimeout = -1000,
+    RKResultTimeout = -99,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,

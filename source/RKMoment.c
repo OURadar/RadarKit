@@ -271,7 +271,7 @@ void *momentCore(void *in) {
 
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
-        ie = RKNextNModuloS(is, path.length - 1, engine->pulseBufferSize);
+        ie = RKNextNModuloS(is, path.length, engine->pulseBufferSize);
 
         // Latest rayStatusBufferIndex the other end should check (I know there is a horse raise here)
         engine->rayStatusBufferIndex = iu;
@@ -300,7 +300,7 @@ void *momentCore(void *in) {
                 pulses[k++] = pulse;
                 i = RKNextModuloS(i, engine->pulseBufferSize);
             } while (k < path.length);
-            if (ie != RKPreviousModuloS(i, engine->pulseBufferSize)) {
+            if (ie != i) {
                 RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
             }
             // Call the processor
@@ -380,7 +380,7 @@ void *momentCore(void *in) {
 void *pulseGatherer(void *in) {
     RKMomentEngine *engine = (RKMomentEngine *)in;
 
-    int c, i, j, k;
+    int c, i, j, k, s;
 
     sem_t *sem[engine->coreCount];
 
@@ -451,7 +451,6 @@ void *pulseGatherer(void *in) {
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
-    int s = 0;
     while (engine->state == RKMomentEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -514,7 +513,7 @@ void *pulseGatherer(void *in) {
                     i1 = i0;
                     if (count > 0) {
                         // Number of samples in this ray
-                        engine->momentSource[j].length = count + 1;
+                        engine->momentSource[j].length = count;
                         if (engine->useSemaphore) {
                             if (sem_post(sem[c])) {
                                 RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);

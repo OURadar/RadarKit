@@ -96,7 +96,7 @@ void RKClockSetDxDu(RKClock *clock, const double dxdu) {
 
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     int j, k;
-    double x, dx, du;
+    double x, dx, du, n;
     struct timeval t;
     
     // Get the time
@@ -106,11 +106,10 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         *timeval = t;
     }
     if (x - clock->latestTime > RKClockAWhile) {
-        //RKClockSync(clock, u);
         clock->x0 = x;
         clock->u0 = u;
-        clock->latestTime = x;
     }
+    clock->latestTime = x;
 
     // Predict x0 and u0 using a running average, so we need to keep u's and x's.
     k = clock->index;
@@ -120,14 +119,22 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     if (clock->count > 1) {
         if (clock->count > clock->stride) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
+            n = (double)clock->stride;
         } else {
             j = 0;
+            n = (double)clock->count;
         }
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
         du = clock->uBuffer[k] - clock->uBuffer[j];
         if (du <= 1.0e-6 || du > 1.0e9) {
             RKLog("Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", du, clock->count, clock->stride);
+        }
+        if (clock->b < 0.1 * dx / n) {
+            RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
+            clock->b = 0.2 * dx / n;
+            clock->a = 1.0 - clock->a;
+            RKLog("%s updated to a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
         }
         // Update the references as decaying function of the stride size
         clock->x0 = clock->a * clock->x0 + clock->b * x;
@@ -154,17 +161,3 @@ double RKClockGetTimeSinceInit(RKClock *clock, const double time) {
 
 #pragma mark -
 #pragma mark Interactions
-
-//// This function resets the reference of x0 and u0 but keeps dxdu the same
-//void RKClockSync(RKClock *clock, const double u) {
-//    struct timeval tv;
-//    gettimeofday(&tv, NULL);
-//    double x = (double)tv.tv_sec + 1.0e-6 * (double)tv.tv_usec;
-//    clock->x0 = x;
-//    clock->u0 = u;
-//    clock->latestTime = x;
-//    if (clock->verbose > 1) {
-//        RKLog("%s sync  u = %s   u0 = %s   x0 = %s",
-//              clock->name, RKFloatToCommaStyleString(u), RKFloatToCommaStyleString(clock->u0), RKFloatToCommaStyleString(clock->x0));
-//    }
-//}

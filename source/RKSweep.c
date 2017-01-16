@@ -8,6 +8,16 @@
 
 #include <RadarKit/RKSweep.h>
 
+#pragma mark - Helper Functions
+
+void *sweepWriter(void *in) {
+    RKSweepEngine *engine = (RKSweepEngine *)in;
+    RKSweep *sweep = &engine->sweep;
+    RKRay *ray = sweep->rays[0];
+    RKLog("%s Sweep E%.2f with %d rays.\n", engine->name, ray->header.startElevation, sweep->count);
+    return NULL;
+}
+
 #pragma mark - Threads
 
 void *rayGatherer(void *in) {
@@ -20,52 +30,64 @@ void *rayGatherer(void *in) {
     
     // Start and end indices of the input rays
     uint32_t is = 0;
-    uint32_t ie = 0;
-
+    pthread_t tidSweepWriter = NULL;
+    
     RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     
     engine->state |= RKSweepEngineStateActive;
     
     k = 0;   // ray index
-    s = 0;
     while (engine->state & RKSweepEngineStateActive) {
+        // The ray
         ray = RKGetRay(engine->rayBuffer, k);
+        // Wait until the buffer is advanced
+        s = 0;
         while (k == *engine->rayIndex && engine->state & RKSweepEngineStateActive) {
             usleep(10000);
-            if (++s % 100 == 0 && engine->verbose) {
-                RKLog("%s sleep 1/%.1f s\n", engine->name, (float)s * 0.01f);
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 1/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
+            }
+        }
+        // Wait until the ray is ready
+        s = 0;
+        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKSweepEngineStateActive) {
+            usleep(10000);
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
             }
         }
         if (engine->state & RKSweepEngineStateActive) {
             // Lag of the engine
             engine->lag = fmodf(((float)*engine->rayIndex + engine->rayBufferDepth - k) / engine->rayBufferDepth, 1.0f);
             if (ray->header.marker & RKMarkerSweepEnd) {
-                ie = k;
-                E = ray;
                 S = RKGetRay(engine->rayBuffer, is);
-                n = ie - is + 1;
-                if (n < 0) {
-                    n += engine->rayBufferDepth;
+                E = ray;
+                n = 0;
+                while (is != k && n < RKMaxRaysPerSweep) {
+                    engine->sweep.rays[n++] = RKGetRay(engine->rayBuffer, is);
+                    is = RKNextModuloS(is, engine->rayBufferDepth);
                 }
-                RKLog("%s Sweep   E%4.2f-%.2f   A%6.2f-%6.2f  %08x  %05lu...%05lu (%d)\n",
+                engine->sweep.count = n;
+                is = RKPreviousNModuloS(is, n, engine->rayBufferDepth);
+
+                RKLog("%s Sweep   E%4.2f-%.2f   A%6.2f-%6.2f   S%04x-%04x   %05lu...%05lu (%d)\n",
                       engine->name,
                       S->header.startElevation, E->header.endElevation,
-                      S->header.startAzimuth, E->header.endAzimuth, ray->header.marker,
-                      is, ie, n);
+                      S->header.startAzimuth, E->header.endAzimuth,
+                      S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+                      is, k, n);
                 
-//                if (n > 357 && n < 360) {
-//                    n = is;
-//                    j = 0;
-//                    i = RKNextModuloS(ie, engine->rayBufferDepth);
-//                    do {
-//                        j++;
-//                        S = RKGetRay(engine->rayBuffer, n);
-//                        RKLog(">%s  %3d  %04d    A%6.2f-%6.2f %d  %08x", engine->name, j, n, S->header.startAzimuth, S->header.endAzimuth, S->header.n, S->header.marker);
-//                        n = RKNextModuloS(n, engine->rayBufferDepth);
-//                    } while (n != i);
-//                }
-                
-                is = ie;
+                if (tidSweepWriter) {
+                    pthread_join(tidSweepWriter, NULL);
+                }
+
+                if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
+                    RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
+                }
+
+                is = k;
             }
         }
         // Update k to catch up for the next watch

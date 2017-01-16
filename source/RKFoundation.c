@@ -259,7 +259,8 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
 
 RKPulse *RKGetPulse(RKBuffer buffer, const uint32_t k) {
     RKPulse *pulse = (RKPulse *)buffer;
-    size_t pulseSize = RKPulseHeaderSize + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
+    size_t headerSize = sizeof(pulse->headerBytes);
+    size_t pulseSize = headerSize + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     return (RKPulse *)(buffer + k * pulseSize);
 }
 
@@ -327,7 +328,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
 }
 
 RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
-    size_t raySize = RKRayHeaderSize + RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = RKRayHeaderPaddedSize + RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 

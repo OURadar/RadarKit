@@ -19,6 +19,11 @@ enum RKSweepEngineState {
     RKSweepEngineStateWritingFile    = (1 << 2)
 };
 
+typedef struct rk_sweep {
+    RKRay                 *rays[RKMaxRaysPerSweep];
+    uint32_t              count;
+} RKSweep;
+
 typedef struct rk_sweep_writer RKSweepWriter;
 typedef struct rk_sweep_engine RKSweepEngine;
 
@@ -36,6 +41,7 @@ struct rk_sweep_engine {
     
     // Program set variables
     pthread_t              tidRayGatherer;
+    RKSweep                sweep;
     
     // Status / health
     uint32_t               processedRayIndex;

@@ -217,6 +217,7 @@ int socketStreamHandler(RKOperator *O) {
 
     RKRay *ray;
     uint8_t *data;
+    RKRayHeader rayHeader;
 
     // Check IQ
     // Check MM
@@ -268,10 +269,13 @@ int socketStreamHandler(RKOperator *O) {
         endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
         while (user->rayIndex != endIndex) {
             ray = RKGetRay(user->radar->rays, user->rayIndex);
+            // Duplicate and send the header with only selected products
+            memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+            rayHeader.productList = RKProductListDisplayZ;
             data = RKGetUInt8DataFromRay(ray, 0);
             O->delim.type = 'm';
             O->delim.size = (uint32_t)sizeof(RKRayHeader);
-            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &ray->header, O->delim.size, NULL);
+            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, O->delim.size, NULL);
             O->delim.type = 'd';
             O->delim.subtype = 'Z';
             O->delim.size = ray->header.gateCount * sizeof(uint8_t);

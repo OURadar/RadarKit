@@ -425,7 +425,7 @@ int RKGoLive(RKRadar *radar) {
         radar->state |= RKRadarStateTransceiverInitialized;
     }
 
-    // Launch a co-pilot to monitor status of various engines
+    // Launch an assistant to monitor status of various engines
 //    if (radar->momentEngine != NULL && radar->desc.initFlags & RKInitFlagVerbose) {
 //        RKLog("Initializing status monitor ...");
 //        pthread_create(&radar->monitorThreadId, NULL, radarCoPilot, radar);
@@ -436,8 +436,8 @@ int RKGoLive(RKRadar *radar) {
 }
 
 int RKWaitWhileActive(RKRadar *radar) {
-    while (radar->active && radar->positionClock->count < 11000) {
-        usleep(10000);
+    while (radar->active) {
+        usleep(100000);
     }
     return 0;
 }

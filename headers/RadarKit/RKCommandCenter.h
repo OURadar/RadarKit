@@ -16,33 +16,33 @@
 typedef uint64_t RKUserFlag;
 
 enum RKUserFlag {
-    RKUserFlagNull               = 0,              //
-    RKUserFlagControl            = 1,              // Controls
-    RKUserFlagStatusHealth       = (1 << 1),       //
-    RKUserFlagStatusPulses       = (1 << 2),       //
-    RKUserFlagStatusRays         = (1 << 3),       //
-    RKUserFlagStatusPositions    = (1 << 4),       //
-    RKUserFlagStatusAll          = 0x1E,           //
-    RKUserFlagDisplayIQ          = (1 << 8),       // Low rate IQ
-    RKUserFlagProductIQ          = (1 << 9),       // Full rate IQ
-    RKUserFlagDisplayZ           = (1 << 16),      // Display
-    RKUserFlagDisplayV           = (1 << 17),      //
-    RKUserFlagDisplayW           = (1 << 18),      //
-    RKUserFlagDisplayD           = (1 << 19),      //
-    RKUserFlagDisplayP           = (1 << 20),      //
-    RKUserFlagDisplayR           = (1 << 21),      //
-    RKUserFlagDisplayK           = (1 << 22),      //
-    RKUserFlagDisplayS           = (1 << 23),      //
-    RKUserFlagDisplayZVWDPRKS    = 0x0000FF0000,   //
-    RKUserFlagProductZ           = (1ULL << 32),      // Products
-    RKUserFlagProductV           = (1ULL << 33),      //
-    RKUserFlagProductW           = (1ULL << 34),      //
-    RKUserFlagProductD           = (1ULL << 35),      //
-    RKUserFlagProductP           = (1ULL << 36),      //
-    RKUserFlagProductR           = (1ULL << 37),      //
-    RKUserFlagProductK           = (1ULL << 38),      //
-    RKUserFlagProductS           = (1ULL << 39),      //
-    RKUserFlagProductZVWDPRKS    = 0xFF00000000ULL    //
+    RKUserFlagNull                 = 0,                      //
+    RKUserFlagControl              = 1,                      // Controls
+    RKUserFlagStatusHealth         = (1 << 1),               //
+    RKUserFlagStatusPulses         = (1 << 2),               //
+    RKUserFlagStatusRays           = (1 << 3),               //
+    RKUserFlagStatusPositions      = (1 << 4),               //
+    RKUserFlagStatusAll            = 0x1E,                   //
+    RKUserFlagDisplayIQ            = (1 << 8),               // Low rate IQ
+    RKUserFlagProductIQ            = (1 << 9),               // Full rate IQ
+    RKUserFlagDisplayZ             = (1 << 16),              // Display
+    RKUserFlagDisplayV             = (1 << 17),              //
+    RKUserFlagDisplayW             = (1 << 18),              //
+    RKUserFlagDisplayD             = (1 << 19),              //
+    RKUserFlagDisplayP             = (1 << 20),              //
+    RKUserFlagDisplayR             = (1 << 21),              //
+    RKUserFlagDisplayK             = (1 << 22),              //
+    RKUserFlagDisplayS             = (1 << 23),              //
+    RKUserFlagDisplayZVWDPRKS      = 0x0000FF0000,           //
+    RKUserFlagProductZ             = (1ULL << 32),           // Products
+    RKUserFlagProductV             = (1ULL << 33),           //
+    RKUserFlagProductW             = (1ULL << 34),           //
+    RKUserFlagProductD             = (1ULL << 35),           //
+    RKUserFlagProductP             = (1ULL << 36),           //
+    RKUserFlagProductR             = (1ULL << 37),           //
+    RKUserFlagProductK             = (1ULL << 38),           //
+    RKUserFlagProductS             = (1ULL << 39),           //
+    RKUserFlagProductZVWDPRKS      = 0xFF00000000ULL         //
 };
 
 typedef struct  rk_user {

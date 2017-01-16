@@ -25,7 +25,9 @@ else
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
 endif
-LDFLAGS += -lfftw3f -lpthread -lm
+
+LDFLAGS += -lfftw3f -lnetcdf -lpthread -lm
+
 ifeq ($(UNAME), Darwin)
 else
 LDFLAGS += -lrt

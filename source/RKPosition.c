@@ -15,8 +15,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine);
 
 // Implementations
 
-#pragma mark -
-#pragma mark Helper Functions
+#pragma mark - Helper Functions
 
 #define RKPositionAzimuthFlagColor(x)                           \
 (x & RKPositionFlagAzimuthError ? "\033[91m" :                  \
@@ -75,8 +74,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-#pragma mark -
-#pragma mark Threads
+#pragma mark - Threads
 
 void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
@@ -103,7 +101,7 @@ void *pulseTagger(void *in) {
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
     marker1 = RKMarkerSweepEnd;
 
-    RKLog("%s position last %.3f\n", engine->name, engine->positionBuffer[RKBufferPSlotCount - 1].timeDouble);
+    // Wait until there is something ingested
     s = 0;
     while (*engine->positionIndex < 2) {
         usleep(1000);
@@ -112,8 +110,6 @@ void *pulseTagger(void *in) {
                   engine->name, (float)s * 0.001f);
         }
     }
-    j = *engine->positionIndex;
-    RKLog("%s %d  %.3f %.3f\n", engine->name, j, engine->positionBuffer[0].timeDouble, engine->positionBuffer[1].timeDouble);
     
     // Set the pulse to have position
     j = 0;   // position index
@@ -289,8 +285,7 @@ void RKPositionEngineFree(RKPositionEngine *engine) {
     free(engine);
 }
 
-#pragma mark -
-#pragma mark Properties
+#pragma mark - Properties
 
 void RKPositionEngineSetVerbose(RKPositionEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -320,8 +315,7 @@ void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(
     engine->hardwareFree = hardwareFree;
 }
 
-#pragma mark -
-#pragma mark Interactions
+#pragma mark - Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
     RKLog("%s starting ...\n", engine->name);
