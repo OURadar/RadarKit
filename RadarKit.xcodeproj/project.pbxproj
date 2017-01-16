@@ -31,11 +31,11 @@
 		B54795271D91A87700E43F6A /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
 		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
 		B55E437F1DB6668F003C40CF /* RKSIMD.c in Sources */ = {isa = PBXBuildFile; fileRef = B55E437E1DB6668F003C40CF /* RKSIMD.c */; };
+		B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweep.h */; };
 		B594718F1D89B43400EEE77C /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B59471991D8C4F0500EEE77C /* RKCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKCommandCenter.c */; };
 		B5ABDBF51E2BFA4400CDFE4B /* RKSweep.c in Sources */ = {isa = PBXBuildFile; fileRef = B5ABDBF31E2BFA4400CDFE4B /* RKSweep.c */; };
-		B5ABDBF81E2BFAC100CDFE4B /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B5ABDBF71E2BFAC100CDFE4B /* RKSweep.h */; };
 		B5ABDBF91E2BFF4200CDFE4B /* RKSweep.c in Sources */ = {isa = PBXBuildFile; fileRef = B5ABDBF31E2BFA4400CDFE4B /* RKSweep.c */; };
 		B5B5196A1DCA879300470924 /* RKPulsePair.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B519691DCA879300470924 /* RKPulsePair.c */; };
 		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; };
@@ -105,11 +105,11 @@
 		B53AE7EC1D88824400364467 /* RKMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMisc.h; path = headers/RadarKit/RKMisc.h; sourceTree = "<group>"; };
 		B55E437C1DB66682003C40CF /* RKSIMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKSIMD.h; path = headers/RadarKit/RKSIMD.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B55E437E1DB6668F003C40CF /* RKSIMD.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKSIMD.c; path = source/RKSIMD.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		B55F5F191E2C8F9600FA8B2E /* RKSweep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweep.h; path = headers/RadarKit/RKSweep.h; sourceTree = "<group>"; };
 		B594718E1D89B43400EEE77C /* RadarKit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RadarKit.c; path = source/RadarKit.c; sourceTree = SOURCE_ROOT; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B59471981D8C4F0500EEE77C /* RKCommandCenter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKCommandCenter.c; path = source/RKCommandCenter.c; sourceTree = SOURCE_ROOT; };
 		B5ABDBF31E2BFA4400CDFE4B /* RKSweep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweep.c; path = source/RKSweep.c; sourceTree = SOURCE_ROOT; };
-		B5ABDBF71E2BFAC100CDFE4B /* RKSweep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweep.h; path = headers/RadarKit/RKSweep.h; sourceTree = "<group>"; };
 		B5B519691DCA879300470924 /* RKPulsePair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKPulsePair.c; path = source/RKPulsePair.c; sourceTree = SOURCE_ROOT; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
 		B5C1F3441AB9C118004F88CD /* RadarKitTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RadarKitTest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -196,7 +196,7 @@
 				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
 				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B5C1F35E1AB9CC48004F88CD /* RKCommandCenter.h */,
-				B5ABDBF71E2BFAC100CDFE4B /* RKSweep.h */,
+				B55F5F191E2C8F9600FA8B2E /* RKSweep.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
 			name = Headers;
@@ -265,7 +265,7 @@
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
 				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
 				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
-				B5ABDBF81E2BFAC100CDFE4B /* RKSweep.h in Headers */,
+				B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

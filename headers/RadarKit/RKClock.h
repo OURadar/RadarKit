@@ -12,9 +12,9 @@
 #include <RadarKit/RKFoundation.h>
 
 // A clock derived from counter and request time
-#define RKClockDefaultBufferSize         1024
-#define RKClockDefaultStride             100
-#define RKClockAWhile                    60.0
+#define RKClockDefaultBufferSize         2000
+#define RKClockDefaultStride             500
+#define RKClockAWhile                    300.0
 
 typedef struct rk_clock {
     // User set parameters
@@ -30,6 +30,11 @@ typedef struct rk_clock {
     struct timeval   *tBuffer;                    // The time which a request was made (dirty)
     double           *xBuffer;                    // A double representation of timeval (dirty)
     double           *uBuffer;                    // Driving reference (clean)
+    double           *yBuffer;                    // Predicted time
+    double           *zBuffer;                    //
+    
+    double           a;                           // Major coefficient
+    double           b;                           // Minor coefficient
     
     uint32_t         index;
     uint64_t         count;
@@ -38,7 +43,9 @@ typedef struct rk_clock {
     double           typicalPeriod;
     double           x0;
     double           u0;
-    double           dxdu;
+    double           dx;
+    double           sum_x0;
+    double           sum_u0;
     
 } RKClock;
 
@@ -53,7 +60,7 @@ void RKClockSetManualSync(RKClock *clock);
 void RKClockSetOffset(RKClock *, const double);
 void RKClockSetDxDu(RKClock *, const double);
 
-void RKClockSync(RKClock *clock, const double u);
+//void RKClockSync(RKClock *clock, const double u);
 
 double RKClockGetTime(RKClock *, const double, struct timeval *);
 double RKClockGetTimeSinceInit(RKClock *, const double);

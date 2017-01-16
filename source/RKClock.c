@@ -27,16 +27,22 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
     clock->tBuffer = (struct timeval *)malloc(clock->size * sizeof(struct timeval));
     clock->xBuffer = (double *)malloc(clock->size * sizeof(double));
     clock->uBuffer = (double *)malloc(clock->size * sizeof(double));
+    clock->yBuffer = (double *)malloc(clock->size * sizeof(double));
+    clock->zBuffer = (double *)malloc(clock->size * sizeof(double));
     if (clock->tBuffer == NULL || clock->xBuffer == NULL || clock->uBuffer == NULL) {
         RKLog("Error. Unable to allocate internal buffers of an RKClock.\n");
         return NULL;
     }
+    memset(clock->tBuffer, 0, clock->size * sizeof(struct timeval));
+    memset(clock->xBuffer, 0, clock->size * sizeof(double));
+    memset(clock->uBuffer, 0, clock->size * sizeof(double));
+    memset(clock->yBuffer, 0, clock->size * sizeof(double));
+    memset(clock->zBuffer, 0, clock->size * sizeof(double));
     struct timeval t;
     gettimeofday(&t, NULL);
     clock->initTime = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
-    for (int k = 0; k < clock->size; k++) {
-        clock->xBuffer[k] = clock->initTime;
-    }
+    clock->b = 1.0 / (double)clock->stride;
+    clock->a = 1.0 - clock->b;
     return clock;
 }
 
@@ -45,9 +51,21 @@ RKClock *RKClockInit(void) {
 }
 
 void RKClockFree(RKClock *clock) {
+    char filename[64];
+    sprintf(filename, "%s", clock->name + 1);
+    filename[strlen(filename) - 1] = '\0';
+    strcat(filename, ".csv");
+    RKLog("%s Dumping buffers ... j = %d  %s\n", clock->name, clock->index, filename);
+    FILE *fid = fopen(filename, "w");
+    for (int i = 0; i < clock->size; i++) {
+        fprintf(fid, "%.9f, %.9f, %.9f, %.9f\n", clock->xBuffer[i], clock->yBuffer[i], clock->uBuffer[i], clock->zBuffer[i]);
+    }
+    fclose(fid);
     free(clock->tBuffer);
     free(clock->xBuffer);
     free(clock->uBuffer);
+    free(clock->yBuffer);
+    free(clock->zBuffer);
     free(clock);
 }
 
@@ -72,13 +90,12 @@ void RKClockSetOffset(RKClock *clock, double offset) {
 
 void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     clock->hasWisdom = true;
-    clock->dxdu = dxdu;
+    clock->dx = dxdu;
     RKLog("%s received dx/du = %.2e as wisdom\n", clock->name, dxdu);
 }
 
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
-    int j;
-    int k = clock->index;
+    int j, k;
     double x, dx, du;
     struct timeval t;
     
@@ -89,55 +106,41 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         *timeval = t;
     }
     if (x - clock->latestTime > RKClockAWhile) {
-        RKClockSync(clock, u);
+        //RKClockSync(clock, u);
+        clock->x0 = x;
+        clock->u0 = u;
+        clock->latestTime = x;
     }
 
-    if (clock->hasWisdom) {
-        // Derive time using a simplified Kalman filter, covariance of u and time is identity
-        x = clock->x0 + clock->dxdu * (u - clock->u0) + clock->offsetSeconds;
-    } else {
-        // Predict x0 and u0 using a running average, so we need to keep u's and x's.
-        clock->tBuffer[k] = t;
-        clock->xBuffer[k] = x;
-        clock->uBuffer[k] = u;
-        if (clock->autoSync && clock->count > clock->stride && clock->count % clock->stride == 0) {
-            // Compute dx & du at (clock->stride) samples apart
+    // Predict x0 and u0 using a running average, so we need to keep u's and x's.
+    k = clock->index;
+    clock->tBuffer[k] = t;
+    clock->xBuffer[k] = x;
+    clock->uBuffer[k] = u;
+    if (clock->count > 1) {
+        if (clock->count > clock->stride) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
-            dx = clock->xBuffer[k] - clock->xBuffer[j];
-            du = clock->uBuffer[k] - clock->uBuffer[j];
-            if (du <= 1.0e-6 || du > 1.0e9) {
-                RKLog("Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", du, clock->count, clock->stride);
-            }
-            clock->x0 = clock->xBuffer[j];
-            clock->u0 = clock->uBuffer[j];
-            clock->dxdu = dx / du;
-            if (clock->verbose > 2) {
-                RKLog("%s auto-sync.   period = %.2f ms   dx/du = %.3e ms  count = %ld   du = %.2e   dx = %.2e ms\n",
-                      clock->name, 1.0e3 / (double)clock->stride * dx, 1.0e3 * clock->dxdu, clock->count, 1.0e3 * du, 1.0e3 * dx);
-            }
-        } else if (clock->count < clock->stride && clock->count % (clock->stride / 4) == 0) {
+        } else {
             j = 0;
-            dx = clock->xBuffer[k] - clock->xBuffer[j];
-            du = clock->uBuffer[k] - clock->uBuffer[j];
-            if (dx > 1.0e-2 && du > 0.0) {
-                clock->x0 = clock->xBuffer[j];
-                clock->u0 = clock->uBuffer[j];
-                clock->dxdu = dx / du;
-                if (clock->verbose > 2) {
-                    RKLog("%s pre-sync.   period = %.2f ms   dx/du = %.2f ms  count = %ld   du = %.2e   dx = %.2e ms\n",
-                          clock->name, 1.0e3 / (double)clock->stride * dx, 1.0e3 * clock->dxdu, clock->count, 1.0e3 * du, 1.0e3 * dx);
-                }
-            }
         }
-        if (clock->count > (clock->stride / 4)) {
-            x = clock->x0 + clock->dxdu * (u - clock->u0) + clock->offsetSeconds;
-            if (clock->verbose > 3) {
-                RKLog(">%s %d / %d   dx/du = %.2e s   x = %.3f / %s\n",
-                      clock->name, clock->index, clock->count,
-                      clock->dxdu, RKClockGetTimeSinceInit(clock, x), RKFloatToCommaStyleString(x));
-            }
+        // Compute the gradient using a big stride
+        dx = clock->xBuffer[k] - clock->xBuffer[j];
+        du = clock->uBuffer[k] - clock->uBuffer[j];
+        if (du <= 1.0e-6 || du > 1.0e9) {
+            RKLog("Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", du, clock->count, clock->stride);
         }
+        // Update the references as decaying function of the stride size
+        clock->x0 = clock->a * clock->x0 + clock->b * x;
+        clock->u0 = clock->a * clock->u0 + clock->b * u;
+        clock->dx = clock->a * clock->dx + clock->b * dx / du;
     }
+    // Derive time using a linear relation
+    x = clock->x0 + clock->dx * (u - clock->u0) + clock->offsetSeconds;
+    if (!isfinite(x)) {
+        x = 0.0;
+    }
+    clock->yBuffer[k] = x;
+    clock->zBuffer[k] = clock->dx;
     
     // Update the slot index for next call
     clock->index = RKNextModuloS(k, clock->size);
@@ -152,16 +155,16 @@ double RKClockGetTimeSinceInit(RKClock *clock, const double time) {
 #pragma mark -
 #pragma mark Interactions
 
-// This function resets the reference of x0 and u0 but keeps dxdu the same
-void RKClockSync(RKClock *clock, const double u) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    double x = (double)tv.tv_sec + 1.0e-6 * (double)tv.tv_usec;
-    clock->x0 = x;
-    clock->u0 = u;
-    clock->latestTime = x;
-    if (clock->verbose > 1) {
-        RKLog("%s sync  u = %s   u0 = %s   x0 = %s",
-              clock->name, RKFloatToCommaStyleString(u), RKFloatToCommaStyleString(clock->u0), RKFloatToCommaStyleString(clock->x0));
-    }
-}
+//// This function resets the reference of x0 and u0 but keeps dxdu the same
+//void RKClockSync(RKClock *clock, const double u) {
+//    struct timeval tv;
+//    gettimeofday(&tv, NULL);
+//    double x = (double)tv.tv_sec + 1.0e-6 * (double)tv.tv_usec;
+//    clock->x0 = x;
+//    clock->u0 = u;
+//    clock->latestTime = x;
+//    if (clock->verbose > 1) {
+//        RKLog("%s sync  u = %s   u0 = %s   x0 = %s",
+//              clock->name, RKFloatToCommaStyleString(u), RKFloatToCommaStyleString(clock->u0), RKFloatToCommaStyleString(clock->x0));
+//    }
+//}

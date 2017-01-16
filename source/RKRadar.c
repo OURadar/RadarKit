@@ -157,7 +157,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     }
 
     // Clocks
-    radar->pulseClock = RKClockInitWithSize(5000, 1000);
+    radar->pulseClock = RKClockInitWithSize(15000, 10000);
     RKClockSetName(radar->pulseClock, "<pulseClock>");
     radar->memoryUsage += sizeof(RKClock);
     
@@ -324,7 +324,7 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     RKClockSetVerbose(radar->pulseClock, verbose);
-    RKClockSetVerbose(radar->positionClock, verbose);
+    RKClockSetVerbose(radar->positionClock, 2);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
@@ -436,8 +436,8 @@ int RKGoLive(RKRadar *radar) {
 }
 
 int RKWaitWhileActive(RKRadar *radar) {
-    while (radar->active) {
-        usleep(100000);
+    while (radar->active && radar->positionClock->count < 11000) {
+        usleep(10000);
     }
     return 0;
 }

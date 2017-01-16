@@ -81,7 +81,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
 void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
     
-    int i, j, k;
+    int i, j, k, s;
     
     RKPulse *pulse;
     RKPosition *positionBefore;
@@ -103,10 +103,22 @@ void *pulseTagger(void *in) {
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
     marker1 = RKMarkerSweepEnd;
 
+    RKLog("%s position last %.3f\n", engine->name, engine->positionBuffer[RKBufferPSlotCount - 1].timeDouble);
+    s = 0;
+    while (*engine->positionIndex < 2) {
+        usleep(1000);
+        if (++s % 200 == 0 && engine->verbose > 1) {
+            RKLog("%s sleep 0/%.1f s\n",
+                  engine->name, (float)s * 0.001f);
+        }
+    }
+    j = *engine->positionIndex;
+    RKLog("%s %d  %.3f %.3f\n", engine->name, j, engine->positionBuffer[0].timeDouble, engine->positionBuffer[1].timeDouble);
+    
     // Set the pulse to have position
     j = 0;   // position index
     k = 0;   // pulse index;
-    int s = 0;
+    s = 0;   // sleep counter
     while (engine->state == RKPositionEngineStateActive) {
         // Get the latest pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -231,7 +243,7 @@ void *pulseTagger(void *in) {
             }
 
             if (engine->verbose > 2) {
-                RKLog("%s pulse[%04llu]  T [ %.4f %s %.4f %s %.4f ]   A [ %7.2f < %7.2f < %7.2f ]   E [ %.2f < %+7.2f < %+7.2f ]  %d %08x < \033[3%dm%08x\033[0m < %08x\n",
+                RKLog("%s pulse[%04llu]  T [ %.4f %s %.4f %s %.4f ]   A [ %7.2f < %7.2f < %7.2f ]   E [ %.2f < %+7.2f < %+7.2f ]  %d %08x < \033[3%dm%08x\033[0m < %08x (%d / %d)\n",
                       engine->name,
                       pulse->header.i,
                       timeBefore - engine->startTime,
@@ -249,7 +261,8 @@ void *pulseTagger(void *in) {
                       positionBefore->flag,
                       marker0 & 0x7,
                       marker0,
-                      positionAfter->flag);
+                      positionAfter->flag,
+                      i, j);
             }
             
             pulse->header.s |= RKPulseStatusHasPosition;

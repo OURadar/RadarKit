@@ -225,6 +225,7 @@ void *momentCore(void *in) {
     //
     uint32_t tic = me->tic;
 
+    RKModuloPath path;
     RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
     uint32_t marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
@@ -266,7 +267,7 @@ void *momentCore(void *in) {
         ray->header.i = tag;
 
         // The index path of the source of this ray
-        const RKModuloPath path = engine->momentSource[io];
+        path = engine->momentSource[io];
 
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
@@ -286,8 +287,7 @@ void *momentCore(void *in) {
         ray->header.endTimeD       = E->header.timeDouble;
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
-        ray->header.n = c;
-
+        ray->header.n = path.length;
         marker = RKMarkerNull;
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
@@ -514,7 +514,7 @@ void *pulseGatherer(void *in) {
                     i1 = i0;
                     if (count > 0) {
                         // Number of samples in this ray
-                        engine->momentSource[j].length = count;
+                        engine->momentSource[j].length = count + 1;
                         if (engine->useSemaphore) {
                             if (sem_post(sem[c])) {
                                 RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);

@@ -13,7 +13,8 @@
 void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
-    int k, s, n, j, i;
+    int k, s, n;
+//    int i, j;
     
     RKRay *ray, *S, *E;
     
@@ -52,24 +53,19 @@ void *rayGatherer(void *in) {
                       S->header.startAzimuth, E->header.endAzimuth, ray->header.marker,
                       is, ie, n);
                 
-                if (n > 357 && n < 360) {
-                    n = is;
-                    j = 0;
-                    i = RKNextModuloS(ie, engine->rayBufferDepth);
-                    do {
-                        j++;
-                        S = RKGetRay(engine->rayBuffer, n);
-                        RKLog(">%s  %3d  %04d    A%6.2f-%6.2f %d  %08x", engine->name, j, n, S->header.startAzimuth, S->header.endAzimuth, S->header.n, S->header.marker);
-                        n = RKNextModuloS(n, engine->rayBufferDepth);
-                    } while (n != i);
-                }
+//                if (n > 357 && n < 360) {
+//                    n = is;
+//                    j = 0;
+//                    i = RKNextModuloS(ie, engine->rayBufferDepth);
+//                    do {
+//                        j++;
+//                        S = RKGetRay(engine->rayBuffer, n);
+//                        RKLog(">%s  %3d  %04d    A%6.2f-%6.2f %d  %08x", engine->name, j, n, S->header.startAzimuth, S->header.endAzimuth, S->header.n, S->header.marker);
+//                        n = RKNextModuloS(n, engine->rayBufferDepth);
+//                    } while (n != i);
+//                }
                 
                 is = ie;
-//                if (ray->header.marker & RKMarkerSweepBegin) {
-//                    is = ie;
-//                } else {
-//                    is = RKNextModuloS(ie, engine->rayBufferDepth);
-//                }
             }
         }
         // Update k to catch up for the next watch
@@ -90,7 +86,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     sprintf(engine->name, "%s<SweepProducer>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKSweepEngineStateAllocated;
-    engine->memoryUsage = sizeof(RKSweepEngineState);
+    engine->memoryUsage = sizeof(RKSweepEngine);
     return engine;
 }
 
