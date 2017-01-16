@@ -45,7 +45,7 @@ struct rk_pulse_compression_worker {
     uint32_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
     char                       semaphoreName[16];
-    double                     dutyBuff[RKWorkerDutyCycleBufferSize];
+    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
     RKPulseCompressionEngine   *parentEngine;

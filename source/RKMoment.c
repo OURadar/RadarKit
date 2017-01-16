@@ -28,7 +28,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
-    i = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferSize;
+    i = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
     memset(string, '#', i);
     memset(string + i, '.', RKStatusBarWidth - i);
 
@@ -177,15 +177,15 @@ void *momentCore(void *in) {
         return (void *)RKResultFailedToAllocateScratchSpace;
     }
     double *busyPeriods, *fullPeriods;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
     }
-    mem += 2 * RKWorkerDutyCycleBufferSize * sizeof(double);
-    memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
-    memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
+    memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
+    memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
 
     // Initialize some end-of-loop variables
@@ -193,7 +193,7 @@ void *momentCore(void *in) {
     gettimeofday(&t2, NULL);
 
     // Output index for current ray
-    uint32_t io = engine->rayBufferSize - engine->coreCount + c;
+    uint32_t io = engine->rayBufferDepth - engine->coreCount + c;
     
     // Update index of the status for current ray
     uint32_t iu = RKBufferSSlotCount - engine->coreCount + c;
@@ -257,8 +257,8 @@ void *momentCore(void *in) {
         gettimeofday(&t1, NULL);
 
         // Start of getting busy
-        io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferSize);
-        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferSize - me->pid) / engine->pulseBufferSize, 1.0f);
+        io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferDepth);
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         ray = RKGetRay(engine->rayBuffer, io);
 
@@ -271,7 +271,7 @@ void *momentCore(void *in) {
 
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
-        ie = RKNextNModuloS(is, path.length, engine->pulseBufferSize);
+        ie = RKNextNModuloS(is, path.length, engine->pulseBufferDepth);
 
         // Latest rayStatusBufferIndex the other end should check (I know there is a horse raise here)
         engine->rayStatusBufferIndex = iu;
@@ -298,7 +298,7 @@ void *momentCore(void *in) {
                 pulse = RKGetPulse(engine->pulseBuffer, i);
                 marker |= pulse->header.marker;
                 pulses[k++] = pulse;
-                i = RKNextModuloS(i, engine->pulseBufferSize);
+                i = RKNextModuloS(i, engine->pulseBufferDepth);
             } while (k < path.length);
             if (ie != i) {
                 RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
@@ -330,7 +330,7 @@ void *momentCore(void *in) {
         // Status of the ray
         iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
         string = engine->rayStatusBuffer[iu];
-        i = io * (RKStatusBarWidth + 1) / engine->rayBufferSize;
+        i = io * (RKStatusBarWidth + 1) / engine->rayBufferDepth;
         memset(string, '#', i);
         memset(string + i, '.', RKStatusBarWidth - i);
         i = RKStatusBarWidth;
@@ -356,7 +356,7 @@ void *momentCore(void *in) {
         fullPeriods[d0] = RKTimevalDiff(t0, t2);
         allBusyPeriods += busyPeriods[d0];
         allFullPeriods += fullPeriods[d0];
-        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
+        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferDepth);
         me->dutyCycle = allBusyPeriods / allFullPeriods;
 
         tag += engine->coreCount;
@@ -478,7 +478,7 @@ void *pulseGatherer(void *in) {
         }
         if (engine->state == RKMomentEngineStateActive) {
             // Lag of the engine
-            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferSize - k) / engine->pulseBufferSize, 1.0f);
+            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
 
             // Assess the lag of the workers
             lag = engine->workers[0].lag;
@@ -487,14 +487,14 @@ void *pulseGatherer(void *in) {
             }
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
-                skipCounter = engine->pulseBufferSize / 10;
+                skipCounter = engine->pulseBufferDepth / 10;
                 RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   engine->index = %d vs %d\n",
                       engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
 //                RKLog("%s Warning. Projected an overflow.", engine->name);
                 // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
                 i = j;
                 do {
-                    i = RKPreviousModuloS(i, engine->rayBufferSize);
+                    i = RKPreviousModuloS(i, engine->rayBufferDepth);
                     engine->momentSource[j].length = 0;
                     ray = RKGetRay(engine->rayBuffer, i);
                 } while (!(ray->header.s & (RKRayStatusReady | RKRayStatusProcessing)));
@@ -523,7 +523,7 @@ void *pulseGatherer(void *in) {
                         }
                         // Move to the next core, gather the next ray
                         c = RKNextModuloS(c, engine->coreCount);
-                        j = RKNextModuloS(j, engine->rayBufferSize);
+                        j = RKNextModuloS(j, engine->rayBufferDepth);
                         // New origin for the next ray
                         engine->momentSource[j].origin = k;
                         ray = RKGetRay(engine->rayBuffer, j);
@@ -540,7 +540,7 @@ void *pulseGatherer(void *in) {
             // Check finished rays
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             while (ray->header.s & RKRayStatusReady) {
-                *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferSize);
+                *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferDepth);
                 ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             }
 
@@ -553,7 +553,7 @@ void *pulseGatherer(void *in) {
             }
         }
         // Update k to catch up for the next watch
-        k = RKNextModuloS(k, engine->pulseBufferSize);
+        k = RKNextModuloS(k, engine->pulseBufferDepth);
     }
 
     // Wait for workers to return
@@ -608,22 +608,22 @@ void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine) {
 }
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
-                                         RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferSize,
-                                         RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferSize) {
+                                         RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
+                                         RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth) {
     engine->pulseBuffer = pulseBuffer;
     engine->pulseIndex = pulseIndex;
-    engine->pulseBufferSize = pulseBufferSize;
+    engine->pulseBufferDepth = pulseBufferDepth;
     engine->rayBuffer = rayBuffer;
     engine->rayIndex = rayIndex;
-    engine->rayBufferSize = rayBufferSize;
-    engine->momentSource = (RKModuloPath *)malloc(rayBufferSize * sizeof(RKModuloPath));
+    engine->rayBufferDepth = rayBufferDepth;
+    engine->momentSource = (RKModuloPath *)malloc(rayBufferDepth * sizeof(RKModuloPath));
     if (engine->momentSource == NULL) {
         RKLog("Error. Unable to allocate momentSource.\n");
         exit(EXIT_FAILURE);
     }
-    memset(engine->momentSource, 0, rayBufferSize * sizeof(RKModuloPath));
-    for (int i = 0; i < rayBufferSize; i++) {
-        engine->momentSource[i].modulo = pulseBufferSize;
+    memset(engine->momentSource, 0, rayBufferDepth * sizeof(RKModuloPath));
+    for (int i = 0; i < rayBufferDepth; i++) {
+        engine->momentSource[i].modulo = pulseBufferDepth;
     }
 }
 

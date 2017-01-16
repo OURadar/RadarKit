@@ -131,8 +131,8 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         for (int i = 0; i < radar->desc.pulseBufferDepth; i++) {
             RKPulse *pulse = RKGetPulse(radar->pulses, i);
             size_t offset = (size_t)pulse->data - (size_t)pulse;
-            if (offset != RKPulseHeaderSize) {
-                printf("Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderSize);
+            if (offset != RKPulseHeaderPaddedSize) {
+                printf("Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderPaddedSize);
             }
         }
         radar->memoryUsage += bytes;
@@ -341,6 +341,7 @@ int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const i
     }
     // Load in the waveform
     // Call a transceiver delegate function to fill in the DAC
+    // Advance operating parameter, add in the newest set
     RKComplex filter[] = {{1.0f, 0.0f}};
     return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, 1, 0, maxDataLength, group, 0);
 }

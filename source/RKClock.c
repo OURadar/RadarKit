@@ -47,7 +47,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
 }
 
 RKClock *RKClockInit(void) {
-    return RKClockInitWithSize(RKClockDefaultBufferSize, RKClockDefaultStride);
+    return RKClockInitWithSize(RKClockDefaultBufferDepth, RKClockDefaultStride);
 }
 
 void RKClockFree(RKClock *clock) {

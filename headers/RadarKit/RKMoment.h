@@ -33,7 +33,7 @@ struct rk_moment_worker {
     int                    id;
     uint32_t               tic;
     uint32_t               pid;
-    double                 dutyBuff[RKWorkerDutyCycleBufferSize];
+    double                 dutyBuff[RKWorkerDutyCycleBufferDepth];
     double                 dutyCycle;                                // Latest duty cycle estimate
     float                  lag;                                      // Relative lag from the latest index
     sem_t                  *sem;
@@ -44,10 +44,10 @@ struct rk_moment_engine {
     char                   name[RKNameLength];
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
-    uint32_t               pulseBufferSize;
+    uint32_t               pulseBufferDepth;
     RKBuffer               rayBuffer;
     uint32_t               *rayIndex;
-    uint32_t               rayBufferSize;
+    uint32_t               rayBufferDepth;
     uint8_t                verbose;
     uint8_t                coreCount;
     bool                   useSemaphore;

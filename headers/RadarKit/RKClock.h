@@ -12,7 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 
 // A clock derived from counter and request time
-#define RKClockDefaultBufferSize         2000
+#define RKClockDefaultBufferDepth        2000
 #define RKClockDefaultStride             500
 #define RKClockAWhile                    300.0
 

@@ -144,15 +144,15 @@ void *pulseCompressionCore(void *_in) {
     }
     mem += 2 * nfft * sizeof(RKFloat);
     double *busyPeriods, *fullPeriods;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferSize * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
     }
-    mem += 2 * RKWorkerDutyCycleBufferSize * sizeof(double);
-    memset(busyPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
-    memset(fullPeriods, 0, RKWorkerDutyCycleBufferSize * sizeof(double));
+    mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
+    memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
+    memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
 
     // Initialize some end-of-loop variables
@@ -322,7 +322,7 @@ void *pulseCompressionCore(void *_in) {
         fullPeriods[d0] = RKTimevalDiff(t0, t2);
         allBusyPeriods += busyPeriods[d0];
         allFullPeriods += fullPeriods[d0];
-        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferSize);
+        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferDepth);
         me->dutyCycle = allBusyPeriods / allFullPeriods;
 
         t2 = t0;

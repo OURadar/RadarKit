@@ -14,7 +14,7 @@ void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     RKSweep *sweep = &engine->sweep;
     RKRay *ray = sweep->rays[0];
-    RKLog("%s Sweep E%.2f with %d rays.\n", engine->name, ray->header.startElevation, sweep->count);
+    RKLog("%s E%.2f with %d rays.\n", engine->name, ray->header.sweepElevation, sweep->count);
     return NULL;
 }
 

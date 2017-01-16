@@ -52,7 +52,7 @@
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
 #define RKMaxMatchedFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters
 #define RKMaxMatchedFilterGroupCount     8                           // Maximum filter group count
-#define RKWorkerDutyCycleBufferSize      1000
+#define RKWorkerDutyCycleBufferDepth     1000
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit
 #define RKMaxRaysPerSweep                1500                        // 1440 is 0.25-deg. This should be plenty

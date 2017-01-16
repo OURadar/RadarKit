@@ -47,8 +47,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
 
-//#define RKPositionBufferSize    4096
-
 typedef int RKPositionEngineState;
 enum RKPositionEngineState {
     RKPositionEngineStateNull,
@@ -66,10 +64,13 @@ struct rk_position_engine {
     char                   name[RKNameLength];
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
-    uint32_t               pulseBufferSize;
+    uint32_t               pulseBufferDepth;
     RKPosition             *positionBuffer;
     uint32_t               *positionIndex;
-    uint32_t               positionBufferSize;
+    uint32_t               positionBufferDepth;
+    RKOperatingParameters  *parameterBuffer;
+    uint32_t               parameterIndex;
+    uint32_t               parameterBufferDepth;
     uint8_t                verbose;
     RKPedestal             pedestal;
     RKPedestal             (*hardwareInit)(void *);
