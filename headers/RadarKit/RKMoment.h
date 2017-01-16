@@ -10,6 +10,7 @@
 #define __RadarKit_RKMoment__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKDSP.h>
 #include <RadarKit/RKPulsePair.h>
 #include <RadarKit/RKMultiLag.h>
 
@@ -85,7 +86,7 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
-void RKMomentENgineSetProcessParameters(RKMomentEngine *, RKOperatingParameters *);
+//void RKMomentENgineSetProcessParameters(RKMomentEngine *, RKConfig *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

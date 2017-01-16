@@ -81,9 +81,9 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
 
     // Config buffer
     radar->state |= RKRadarStateConfigBufferAllocating;
-    bytes = RKBufferCSlotCount * sizeof(RKOperatingParameters);
-    radar->parameters = (RKOperatingParameters *)malloc(bytes);
-    if (radar->parameters == NULL) {
+    bytes = RKBufferCSlotCount * sizeof(RKConfig);
+    radar->configs = (RKConfig *)malloc(bytes);
+    if (radar->configs == NULL) {
         RKLog("Error. Unable to allocate memory for pulse parameters");
         exit(EXIT_FAILURE);
     }
@@ -91,7 +91,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
         RKLog("Config buffer occupies %s B  (%s sets)\n",
               RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(RKBufferCSlotCount));
     }
-    memset(radar->parameters, 0, bytes);
+    memset(radar->configs, 0, bytes);
     radar->memoryUsage += bytes;
     radar->state ^= RKRadarStateConfigBufferAllocating;
     radar->state |= RKRadarStateConfigBufferIntialized;
@@ -273,7 +273,7 @@ int RKFree(RKRadar *radar) {
         free(radar->rays);
     }
     if (radar->state & RKRadarStateConfigBufferIntialized) {
-        free(radar->parameters);
+        free(radar->configs);
     }
     if (radar->state & RKRadarStatePositionBufferInitialized) {
         free(radar->positions);
@@ -496,7 +496,7 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
-    pulse->header.parameterIndex = radar->parameterIndex;
+    pulse->header.configIndex = radar->configIndex;
     radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     return pulse;
 }

@@ -11,8 +11,6 @@
 
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>
-#include <RadarKit/RKSIMD.h>
-#include <RadarKit/RKClock.h>
 
 #define RKDefaultLogfile                 "messages.log"
 #define RKEOL                            "\r\n"

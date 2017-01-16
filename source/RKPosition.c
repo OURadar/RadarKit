@@ -37,11 +37,10 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
-    const int b = 10;
-    k = engine->processedPulseIndex * (b + 1) / engine->pulseBufferDepth;
+    k = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
     memset(string, '#', k);
-    memset(string + k, '.', b - k);
-    i = b + sprintf(string + b, " | ");
+    memset(string + k, '.', RKStatusBarWidth - k);
+    i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " | ");
 
     // Engine lag
     i += snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s |",
@@ -57,10 +56,10 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Same as previous status, use b characters to draw a bar
-    k = *engine->positionIndex * (b + 1) / engine->positionBufferDepth;
+    k = *engine->positionIndex * (RKStatusBarWidth + 1) / engine->positionBufferDepth;
     memset(string, '#', k);
-    memset(string + k, '.', b - k);
-    i = b + sprintf(string + b, " %04d |", *engine->positionIndex);
+    memset(string + k, '.', RKStatusBarWidth - k);
+    i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferDepth)];
     i += snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s   %sEL%s %6.2f° @ %+6.2f°/s",
                   (unsigned long long)position->c,
@@ -92,7 +91,7 @@ void *pulseTagger(void *in) {
     RKMarker marker0, marker1;
     bool hasSweepComplete;
 
-    RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
     engine->state = RKPositionEngineStateActive;
     
@@ -277,7 +276,7 @@ RKPositionEngine *RKPositionEngineInit() {
     memset(engine, 0, sizeof(RKPositionEngine));
     sprintf(engine->name, "%s<PulsePositioner>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
-    engine->memoryUsage = sizeof(RKPositionEngine) + sizeof(RKClock);
+    engine->memoryUsage = sizeof(RKPositionEngine);
     return engine;
 }
 

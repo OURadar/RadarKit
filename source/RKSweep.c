@@ -13,8 +13,15 @@
 void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     RKSweep *sweep = &engine->sweep;
-    RKRay *ray = sweep->rays[0];
-    RKLog("%s E%.2f with %d rays.\n", engine->name, ray->header.sweepElevation, sweep->count);
+    RKRay *S = sweep->rays[0];
+    RKRay *E = sweep->rays[sweep->count - 1];
+    RKLog(">%s         E%4.2f-%.2f   A%6.2f-%6.2f   S%04x-%04x   %05lu...%05lu (%d rays).\n", engine->name,
+          engine->name,
+          S->header.startElevation , E->header.endElevation,
+          S->header.startAzimuth   , E->header.endAzimuth,
+          S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+          S->header.n              , E->header.n,
+          sweep->count);
     return NULL;
 }
 
@@ -32,7 +39,7 @@ void *rayGatherer(void *in) {
     uint32_t is = 0;
     pthread_t tidSweepWriter = NULL;
     
-    RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    RKLog("%s started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     
     engine->state |= RKSweepEngineStateActive;
     
@@ -66,7 +73,9 @@ void *rayGatherer(void *in) {
                 E = ray;
                 n = 0;
                 while (is != k && n < RKMaxRaysPerSweep) {
-                    engine->sweep.rays[n++] = RKGetRay(engine->rayBuffer, is);
+                    ray = RKGetRay(engine->rayBuffer, is);
+                    ray->header.n = is;
+                    engine->sweep.rays[n++] = ray;
                     is = RKNextModuloS(is, engine->rayBufferDepth);
                 }
                 engine->sweep.count = n;

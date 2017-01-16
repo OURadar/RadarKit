@@ -10,6 +10,8 @@
 #define __RadarKit_RKDSP__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKSIMD.h>
+#include <RadarKit/RKWindow.h>
 
 //
 // Z in [-32.0    ... 95.5]           Zi = (Z) x 2 + 64

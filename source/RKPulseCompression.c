@@ -439,7 +439,7 @@ void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
-    RKLog("%s started.   mem = %s   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
+    RKLog("%s started.   mem = %s   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 

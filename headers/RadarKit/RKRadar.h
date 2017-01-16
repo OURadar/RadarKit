@@ -12,8 +12,10 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKServer.h>
 #include <RadarKit/RKClient.h>
-#include <RadarKit/RKPulseCompression.h>
+#include <RadarKit/RKClock.h>
+#include <RadarKit/RKConfig.h>
 #include <RadarKit/RKPosition.h>
+#include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKSweep.h>
 
@@ -70,14 +72,14 @@ struct rk_radar {
     //
     // Buffers
     //
-    RKOperatingParameters      *parameters;
+    RKConfig                   *configs;
     RKPosition                 *positions;
     RKBuffer                   pulses;
     RKBuffer                   rays;
     //
     // Anchor indices of the buffers
     //
-    uint32_t                   parameterIndex;
+    uint32_t                   configIndex;
     uint32_t                   positionIndex;
     uint32_t                   pulseIndex;
     uint32_t                   rayIndex;

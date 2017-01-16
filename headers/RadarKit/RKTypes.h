@@ -151,7 +151,7 @@ enum RKRayStatus {
 };
 
 // A running configuration buffer
-typedef struct rk_operating_parameters {
+typedef struct rk_config {
     uint32_t         n;
     uint32_t         prf[RKMaxMatchedFilterCount];
     uint32_t         gateCount[RKMaxMatchedFilterCount];
@@ -160,7 +160,7 @@ typedef struct rk_operating_parameters {
     RKFloat          noise[2];
     RKFloat          ZCal[2];
     RKFloat          PCal[2];
-} RKOperatingParameters;
+} RKConfig;
 
 typedef struct rk_pulse_header {
     uint64_t         i;                                              // Identity counter
@@ -175,8 +175,8 @@ typedef struct rk_pulse_header {
     double           timeDouble;                                     // Time in double representation
     RKFourByte       rawAzimuth;                                     // Raw azimuth reading, which may take up to 4 bytes
     RKFourByte       rawElevation;                                   // Raw elevation reading, which may take up to 4 bytes
-    uint16_t         parameterIndex;                                 // Operating parameter index
-    uint16_t         paremeterSubIndex;                              // Operating parameter sub-index
+    uint16_t         configIndex;                                    // Operating configuration index
+    uint16_t         configSubIndex;                                 // Operating configuration sub-index
     uint16_t         azimuthBinIndex;                                // Ray bin
     float            gateSizeMeters;                                 // Size of range gates
     float            elevationDegrees;                               // Elevation in degrees
@@ -232,8 +232,8 @@ typedef struct rk_ray_header {
     uint32_t         n;                                              // Ray network counter
     RKMarker         marker;                                         // Volume / sweep / radial marker
     uint32_t         productList;                                    // 16-bit MSB for products + 16-bit LSB for display
-    uint16_t         parameterIndex;                                 // Operating parameter index
-    uint16_t         paremeterSubIndex;                              // Operating parameter sub-index
+    uint16_t         configIndex;                                    // Operating configuration index
+    uint16_t         configSubIndex;                                 // Operating configuration sub-index
     uint16_t         gateCount;                                      //
     uint16_t         reserved2;                                      //
     float            sweepElevation;                                 // Sweep elevation for PPI

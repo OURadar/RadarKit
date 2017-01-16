@@ -440,7 +440,7 @@ void *pulseGatherer(void *in) {
         }
     }
 
-    RKLog("%s started.   mem = %s B   engine->index = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    RKLog("%s started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
     
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
@@ -488,7 +488,7 @@ void *pulseGatherer(void *in) {
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
                 skipCounter = engine->pulseBufferDepth / 10;
-                RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   engine->index = %d vs %d\n",
+                RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   pulseIndex = %d vs %d\n",
                       engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
 //                RKLog("%s Warning. Projected an overflow.", engine->name);
                 // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
@@ -501,7 +501,7 @@ void *pulseGatherer(void *in) {
             } else if (skipCounter > 0) {
                 // Skip processing if we are in skipping mode
                 if (--skipCounter == 0 && engine->verbose) {
-                    RKLog(">%s Info. Skipped a chunk.   engine->index = %d vs %d\n", engine->name, *engine->pulseIndex, k);
+                    RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
                     for (i = 0; i < engine->coreCount; i++) {
                         engine->workers[i].lag = 0.0f;
                     }
