@@ -220,10 +220,7 @@ void *pulseTagger(void *in) {
             }
 
             
-            pulse->header.marker = marker0;
-            pulse->header.configIndex = c;
-            
-            if (marker0 & RKMarkerSweepEnd) {
+            if (marker0 & RKMarkerSweepBegin) {
                 // Add another configuration
                 //*engine->configIndex
                 c = *engine->configIndex;                  RKConfig *config1 = &engine->configBuffer[c];
@@ -232,10 +229,17 @@ void *pulseTagger(void *in) {
                 // Propagate everything to the next
                 memcpy(config0, config1, sizeof(RKConfig));
                 config0->i++;
+                config0->sweepAzimuth = positionBefore->sweepAzimuthDegrees;
+                config0->sweepElevation = positionBefore->sweepElevationDegrees;
+                
                 *engine->configIndex = c;
                 
-                //RKLog("%s configIndex -> %d\n", engine->name, c);
+                //RKLog("%s configIndex -> %d  %.2f\n", engine->name, c, config0->sweepElevation);
             }
+
+            pulse->header.marker = marker0;
+            pulse->header.configIndex = c;
+            
             
             marker1 = marker0;
 

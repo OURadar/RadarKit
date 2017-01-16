@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Build an initialization description
-    RKRadarInitDesc desc;
+    RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 1 << (int)ceilf(log2f(user.g));
     desc.pulseToRayRatio = 1;

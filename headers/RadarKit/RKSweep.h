@@ -36,6 +36,8 @@ struct rk_sweep_engine {
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
     uint32_t               configBufferDepth;
+    RKRadarDesc            *radarDescription;
+    
     uint8_t                verbose;
     
     // Program set variables
@@ -57,7 +59,9 @@ RKSweepEngine *RKSweepEngineInit(void);
 void RKSweepEngineFree(RKSweepEngine *);
 
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
-void RKSweepEngineSetInputBuffer(RKSweepEngine *, RKBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth);
+void RKSweepEngineSetInputBuffer(RKSweepEngine *, RKRadarDesc *,
+                                 RKConfig *, uint32_t *, const uint32_t,
+                                 RKBuffer, uint32_t *, const uint32_t);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);

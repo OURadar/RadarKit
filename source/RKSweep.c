@@ -18,19 +18,26 @@ void *sweepWriter(void *in) {
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
     RKRay *S = rays[0];
+    RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
-    RKLog("%s Sweep   C%d-%d   E%4.2f-%.2f   A%6.2f-%6.2f   \033[32mM\033[0m%04x-%04x   %05lu...%05lu (%s%d%s)\n",
+    RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    
+    RKLog("%s Sweep   C%02d-%02d  E%4.2f-%4.2f-%.2f   A%6.2f-%6.2f   %sM%s%04x-%04x-%04x   %05lu...%05lu (%s%d%s)\n",
           engine->name,
           S->header.configIndex    , E->header.configIndex,
+          config->sweepElevation,
           S->header.startElevation , E->header.endElevation,
           S->header.startAzimuth   , E->header.endAzimuth,
-          S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+          RKGetColorOfIndex(2)     , RKNoColor,
+          S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
           S->header.n              , E->header.n,
-          n < 360 ? "\033[91m" : "",
+          n < 360 ? RKGetColorOfIndex(0) : "",
           n,
           RKNoColor);
     
-    
+    RKRadarDesc *radar = engine->radarDescription;
+    RKLog("%s %s @ %.7f %.7f\n", engine->name,
+          radar->name, radar->latitude, radar->longitude);
     
     return NULL;
 }
@@ -148,10 +155,16 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKSweepEngineSetInputBuffer(RKSweepEngine *engine, RKBuffer rayBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth) {
-    engine->rayBuffer = rayBuffer;
-    engine->rayIndex = rayIndex;
-    engine->rayBufferDepth = rayBufferDepth;
+void RKSweepEngineSetInputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
+                                 RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
+                                 RKBuffer rayBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth) {
+    engine->radarDescription  = desc;
+    engine->configBuffer      = configBuffer;
+    engine->configIndex       = configIndex;
+    engine->configBufferDepth = configBufferDepth;
+    engine->rayBuffer         = rayBuffer;
+    engine->rayIndex          = rayIndex;
+    engine->rayBufferDepth    = rayBufferDepth;
 }
 
 #pragma mark - Interactions

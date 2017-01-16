@@ -150,6 +150,17 @@ enum RKRayStatus {
     RKRayStatusUsedOnce         = (1 << 4)
 };
 
+typedef struct rk_radar_desc {
+    RKEnum           initFlags;
+    uint32_t         pulseCapacity;
+    uint32_t         pulseToRayRatio;
+    uint32_t         pulseBufferDepth;
+    uint32_t         rayBufferDepth;
+    double           latitude;
+    double           longitude;
+    char             name[RKNameLength];
+} RKRadarDesc;
+
 // A running configuration buffer
 typedef struct rk_config {
     uint32_t         i;                                              // Identity counter
@@ -158,8 +169,10 @@ typedef struct rk_config {
     uint32_t         waveformId[RKMaxMatchedFilterCount];
     char             vcpDefinition[RKMaximumStringLength];
     RKFloat          noise[2];
-    RKFloat          ZCal[2];
+    RKFloat          ZCal[2]; 
     RKFloat          PCal[2];
+    float            sweepElevation;
+    float            sweepAzimuth;
 } RKConfig;
 
 typedef struct rk_pulse_header {

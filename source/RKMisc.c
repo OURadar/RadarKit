@@ -31,9 +31,11 @@ char *RKGetColorOfIndex(const int i) {
     // Here is a reference: http://misc.flogisoft.com/bash/tip_colors_and_formatting
     //
     const uint8_t colors[] = {197, 214, 226, 46, 50, 33, 99, 164};
-    static char str[32];
-    snprintf(str, 31, "\033[1;38;5;%dm", colors[i % sizeof(colors)]);
-    return str;
+    static int k = 3;
+    static char str[4][32];
+    k = k == 3 ? 0 : k + 1;
+    snprintf(str[k], 31, "\033[1;38;5;%dm", colors[i % sizeof(colors)]);
+    return str[k];
 }
 
 char *RKGetBackgroundColor(void) {
@@ -44,9 +46,11 @@ char *RKGetBackgroundColor(void) {
 char *RKGetBackgroundColorOfIndex(const int i) {
     //const uint8_t colors[] = {136, 28, 30, 27, 98, 90};
     const uint8_t colors[] = {28, 136, 30, 162, 27, 98, 90};
-    static char str[32];
-    snprintf(str, 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
-    return str;
+    static int k = 3;
+    static char str[4][32];
+    k = k == 3 ? 0 : k + 1;
+    snprintf(str[k], 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
+    return str[k];
 }
 
 #pragma mark -

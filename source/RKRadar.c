@@ -50,7 +50,7 @@ void *radarCoPilot(void *in) {
 
 #pragma mark - Life Cycle
 
-RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
+RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKRadar *radar;
     size_t bytes;
     int i;
@@ -64,7 +64,8 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     memset(radar, 0, bytes);
 
     // Set some non-zero variables
-    strncpy(radar->name, "PX-10k", RKNameLength - 1);
+    sprintf(radar->name, "%s<MasterController>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(1) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     radar->state |= RKRadarStateBaseAllocated;
     radar->memoryUsage += bytes;
 
@@ -79,6 +80,11 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
     }
+    
+    // Read in preference file here, override some values
+    sprintf(radar->desc.name, "PX-10k");
+    radar->desc.latitude = 35.2550320;
+    radar->desc.longitude = -97.4227810;
 
     // Config buffer
     radar->state |= RKRadarStateConfigBufferAllocating;
@@ -199,7 +205,8 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
     
     // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
-    RKSweepEngineSetInputBuffer(radar->sweepEngine,
+    RKSweepEngineSetInputBuffer(radar->sweepEngine, &radar->desc,
+                                radar->configs, &radar->configIndex, RKBufferCSlotCount,
                                 radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
     radar->memoryUsage += sizeof(RKSweepEngine);
     radar->state |= RKRadarStateSweepEngineInitialized;
@@ -214,7 +221,7 @@ RKRadar *RKInitWithDesc(const RKRadarInitDesc desc) {
 }
 
 RKRadar *RKInitQuiet(void) {
-    RKRadarInitDesc desc;
+    RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverythingQuiet;
     desc.pulseCapacity = RKGateCount;
     desc.pulseToRayRatio = 1;
@@ -224,7 +231,7 @@ RKRadar *RKInitQuiet(void) {
 }
 
 RKRadar *RKInitLean(void) {
-    RKRadarInitDesc desc;
+    RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 1;
@@ -234,7 +241,7 @@ RKRadar *RKInitLean(void) {
 }
 
 RKRadar *RKInitMean(void) {
-    RKRadarInitDesc desc;
+    RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 8192;
     desc.pulseToRayRatio = 2;
@@ -244,7 +251,7 @@ RKRadar *RKInitMean(void) {
 }
 
 RKRadar *RKInitFull(void) {
-    RKRadarInitDesc desc;
+    RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = RKGateCount;
     desc.pulseToRayRatio = 1;
