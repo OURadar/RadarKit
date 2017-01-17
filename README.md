@@ -3,9 +3,82 @@ RadarKit
 
 A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data including multi-core pulse match filtering (compression). More comments will come later ...
 
-```
-RadarKit Test Program
+Radar Struct
+------------
+This is about the only structure you need to worry about.
 
+
+### Life Cycle ###
+
+A radar structure represents an object-like structure where everything is encapsulated.
+
+```c
+RKRadar *RKInitWithDesc(RKRadarDesc);
+RKRadar *RKInitQuiet(void);
+RKRadar *RKInitLean(void);
+RKRadar *RKInitMean(void);
+RKRadar *RKInitFull(void);
+RKRadar *RKInit(void);
+int RKFree(RKRadar *radar);
+```
+
+
+### Properties ###
+
+Hardware hooks are provided to communicate with a digital transceiver, a positioner and various sensors. They must obey the protocol to implement three important functions: _init_, _exec_ and _free_ routines. These functions will be called to start the hardware routine, execute text form commands that will be passed down the master controller, and to deallocate the resources properly upon exit, respectively.
+
+```c
+// Set the transceiver. Pass in function pointers: init, exec and free
+int RKSetTransceiver(RKRadar *radar,
+                     void *initInput,
+                     RKTransceiver initRoutine(RKRadar *, void *),
+                     int execRoutine(RKTransceiver, const char *),
+                     int freeRoutine(RKTransceiver));
+
+// Set the pedestal. Pass in function pointers: init, exec and free
+int RKSetPedestal(RKRadar *radar,
+                  void *initInput,
+                  RKPedestal initRoutine(RKRadar *, void *),
+                  int execRoutine(RKPedestal, const char *),
+                  int freeRoutine(RKPedestal));
+
+// Some states of the radar
+int RKSetVerbose(RKRadar *radar, const int verbose);
+int RKSetProcessingCoreCounts(RKRadar *radar,
+                              const unsigned int pulseCompressionCoreCount,
+                              const unsigned int momentProcessorCoreCount);
+// Some operating parameters
+int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
+int RKSetWaveformToImpulse(RKRadar *radar);
+int RKSetWaveformTo121(RKRadar *radar);
+uint32_t RKGetPulseCapacity(RKRadar *radar);
+```
+
+### Interactions ###
+
+```c
+int RKGoLive(RKRadar *);
+int RKWaitWhileActive(RKRadar *);
+int RKStop(RKRadar *);
+
+// Positions
+RKPosition *RKGetVacantPosition(RKRadar *);
+void RKSetPositionReady(RKRadar *, RKPosition *);
+
+// Pulses
+RKPulse *RKGetVacantPulse(RKRadar *);
+void RKSetPulseHasData(RKRadar *, RKPulse *);
+void RKSetPulseReady(RKRadar *, RKPulse *);
+
+// Rays
+RKRay *RKGetVacantRay(RKRadar *);
+void RKSetRayReady(RKRadar *, RKRay *);
+```
+
+RadarKit Test Program
+---------------------
+
+```
 rktest [options]
 
 OPTIONS:
