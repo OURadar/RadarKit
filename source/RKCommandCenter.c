@@ -120,7 +120,7 @@ int socketCommandHandler(RKOperator *O) {
     j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
     for (k = 0; k < engine->radarCount; k++) {
         RKRadar *radar = engine->radars[k];
-        j += snprintf(string + j, RKMaximumStringLength - j - 1, " %s", radar->name);
+        j += snprintf(string + j, RKMaximumStringLength - j - 1, " %s", radar->desc.name);
     }
 
     //int ival;
@@ -137,7 +137,7 @@ int socketCommandHandler(RKOperator *O) {
             j = 0;
             for (k = 0; k < engine->radarCount; k++) {
                 RKRadar *radar = engine->radars[k];
-                j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->name);
+                j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->desc.name);
             }
             snprintf(string + j, RKMaximumStringLength - j - 1, "Select 1-%d" RKEOL, k);
             RKOperatorSendBeaconAndString(O, string);
@@ -375,7 +375,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
     int i;
     for (i = 0; i < engine->radarCount; i++) {
         if (engine->radars[i] == radar) {
-            RKLog("%s Removing '%s' ...\n", engine->name, radar->name);
+            RKLog("%s Removing '%s' ...\n", engine->name, radar->desc.name);
             while (i < engine->radarCount - 1) {
                 engine->radars[i] = engine->radars[i + 1];
             }
@@ -393,7 +393,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
         char string[RKMaximumStringLength];
         for (int k = 0; k < engine->radarCount; k++) {
             RKRadar *radar = engine->radars[k];
-            j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->name);
+            j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->desc.name);
         }
         printf("Remaining radars\n================\n%s", string);
     }

@@ -117,6 +117,13 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     clock->xBuffer[k] = x;
     clock->uBuffer[k] = u;
     if (clock->count > 1) {
+        j = RKPreviousModuloS(k, clock->size);
+        if (x - clock->xBuffer[j] > 2.0 || u - clock->uBuffer[j] < 0) {
+            RKLog("%s Warning.   x = %s -> %s   u = %s -> %s",
+                  clock->name,
+                  RKFloatToCommaStyleString(clock->xBuffer[j]), RKFloatToCommaStyleString(x),
+                  RKFloatToCommaStyleString(clock->uBuffer[j]), RKFloatToCommaStyleString(u));
+        }
         if (clock->count > clock->stride) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
             n = (double)clock->stride;
@@ -133,18 +140,18 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         if (clock->b < 0.1 * dx / n) {
             RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
             clock->b = 0.2 * dx / n;
-            clock->a = 1.0 - clock->a;
-            RKLog("%s updated to a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+            clock->a = 1.0 - clock->b;
+            RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
         }
         // Update the references as decaying function of the stride size
         clock->x0 = clock->a * clock->x0 + clock->b * x;
         clock->u0 = clock->a * clock->u0 + clock->b * u;
         clock->dx = clock->a * clock->dx + clock->b * dx / du;
-    }
-    // Derive time using a linear relation
-    x = clock->x0 + clock->dx * (u - clock->u0) + clock->offsetSeconds;
-    if (!isfinite(x)) {
-        x = 0.0;
+        // Derive time using a linear relation
+        x = clock->x0 + clock->dx * (u - clock->u0) + clock->offsetSeconds;
+        if (!isfinite(x)) {
+            x = 0.0;
+        }
     }
     clock->yBuffer[k] = x;
     clock->zBuffer[k] = clock->dx;

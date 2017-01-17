@@ -35,9 +35,9 @@ void *sweepWriter(void *in) {
           n,
           RKNoColor);
     
-    RKRadarDesc *radar = engine->radarDescription;
-    RKLog("%s %s @ %.7f %.7f\n", engine->name,
-          radar->name, radar->latitude, radar->longitude);
+//    RKRadarDesc *radar = engine->radarDescription;
+//    RKLog("%s %s @ %.7f %.7f\n", engine->name,
+//          radar->name, radar->latitude, radar->longitude);
     
     return NULL;
 }

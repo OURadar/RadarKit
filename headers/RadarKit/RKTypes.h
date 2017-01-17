@@ -107,7 +107,7 @@ typedef struct rk_iqz {
 } RKIQZ;
 
 // A convenient way to convert bytes into several other types
-typedef union rk_user_data {
+typedef union rk_four_byte {
     struct { uint8_t byte[4]; };
     struct { uint16_t u16, u16_2; };
     struct { int16_t i16, i16_2; };

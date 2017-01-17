@@ -20,7 +20,7 @@ int RKPedestalPedzyRead(RKClient *client) {
     RKPosition *position = (RKPosition *)client->userPayload;
 
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("Position %08x EL %.2f  AZ %.2f\n", position->flag, position->elevationDegrees, position->azimuthDegrees);
+        RKLog("Position %08x EL %.2f  AZ %.2f --> %d\n", position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
     }
     
     // Get a vacant slot for position from Radar, copy over the data, then set it ready
