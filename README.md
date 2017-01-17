@@ -5,20 +5,19 @@ A toolkit with various components of a radar signal processor. Mainly implement 
 
 Radar Struct
 ------------
-This is about the only structure you need to worry about.
+This is about the only structure you need to worry about. A radar structure represents an object-like structure where everything is encapsulated.
 
 
 ### Life Cycle ###
 
-A radar structure represents an object-like structure where everything is encapsulated.
+These are functions that allocate and deallocate a radar struct.
 
 ```c
 RKRadar *RKInitWithDesc(RKRadarDesc);
-RKRadar *RKInitQuiet(void);
-RKRadar *RKInitLean(void);
-RKRadar *RKInitMean(void);
-RKRadar *RKInitFull(void);
-RKRadar *RKInit(void);
+RKRadar *RKInitLean(void);               // For a lean system, PX-1000 like
+RKRadar *RKInitMean(void);               // For a medium system, RaXPol like
+RKRadar *RKInitFull(void);               // For a high-performance system, PX-10,000 like
+RKRadar *RKInit(void);                   // Everything based on default settings, in between mean & lean
 int RKFree(RKRadar *radar);
 ```
 
@@ -47,6 +46,7 @@ int RKSetVerbose(RKRadar *radar, const int verbose);
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);
+
 // Some operating parameters
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
 int RKSetWaveformToImpulse(RKRadar *radar);
@@ -57,6 +57,7 @@ uint32_t RKGetPulseCapacity(RKRadar *radar);
 ### Interactions ###
 
 ```c
+// The radar engine state
 int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
 int RKStop(RKRadar *);
@@ -75,8 +76,11 @@ RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
 ```
 
+
 RadarKit Test Program
 ---------------------
+
+A test program is provided to assess if everything can run properly with your system.
 
 ```
 rktest [options]
