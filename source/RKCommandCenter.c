@@ -274,14 +274,8 @@ int socketStreamHandler(RKOperator *O) {
             rayHeader.productList = RKProductListDisplayZ;
             data = RKGetUInt8DataFromRay(ray, 0);
             O->delim.type = 'm';
-            O->delim.size = (uint32_t)sizeof(RKRayHeader);
-            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, O->delim.size, NULL);
-            O->delim.type = 'd';
-            O->delim.subtype = 'Z';
-            O->delim.size = ray->header.gateCount * sizeof(uint8_t);
-            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), data, O->delim.size, NULL);
-//            RKLog("%s %s ray %d -> %d  gateCount = %d  size %d\n",
-//                  engine->name, O->name, user->rayIndex, endIndex, ray->header.gateCount, O->delim.size);
+            O->delim.size = (uint32_t)(sizeof(RKRayHeader) + ray->header.gateCount * sizeof(uint8_t));
+            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), data, ray->header.gateCount * sizeof(uint8_t), NULL);
             user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
         }
     }

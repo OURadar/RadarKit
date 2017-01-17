@@ -252,6 +252,12 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
     }
     RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
 
+    //
+    //  ACF & CCF to S Z V W D P R K
+    //
+
+    RKUpdateRadarProductsInScratchSpace(space, gateCount);
+
     if (space->showNumbers && count < 50 && gateCount < 50) {
         char variable[32];
         char line[4096];
@@ -317,13 +323,11 @@ int RKPulsePairHop(RKScratch *space, RKPulse **input, const uint16_t count) {
                rkGlobalParameters.showColor ? "\033[24m" : "");
         RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                  // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
+        sprintf(variable, "  Zh = ");
+        RKShowVecFloat(variable, space->Z[p], gateShown);
+        printf(RKEOL);
     }
-    
-    //
-    //  ACF & CCF to S Z V W D P R K
-    //
 
-    RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
     return count;
 

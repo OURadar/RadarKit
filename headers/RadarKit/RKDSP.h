@@ -33,17 +33,17 @@
 // VE in [CLR   -63.5  ... 63.5]            Vi = (V) * 2 + 128
 //
 
-#define ZLHCMAC  { lhma[0] = -32.0f;     lhma[1] = 95.5f;       lhma[2] = 2.0f;      lhma[3] =  64.0f; }  //
-#define VLHCMAC  { lhma[0] = -16.0f;     lhma[1] = 15.875f;     lhma[2] = 8.0f;      lhma[3] = 128.0f; }  //
-#define WLHCMAC  { lhma[0] = -0.05f;     lhma[1] = 12.70f;      lhma[2] = 20.0f;     lhma[3] =   1.0f; }  //
-#define DLHCMAC  { lhma[0] = -10.0f;     lhma[1] = 15.5f;       lhma[2] = 10.0f;     lhma[3] = 100.0f; }  //
-#define PLHCMAC  { lhma[0] = -3.16623f;  lhma[1] = 3.11695f;    lhma[2] = 40.5845f;  lhma[3] = 128.5f; }  //  pi - 2*pi/255
-#define KLHCMAC  { lhma[0] = -0.558508f; lhma[1] = 0.55414249f; lhma[2] = 229.1831f; lhma[3] = 128.0f; }  //  -0.2*pi + 0.4*pi/255
-#define RLHCMAC  { lhma[0] = 0.0f;       lhma[1] = 1.079f;      lhma[2] = 1.0f;      lhma[3] =   0.0f; }  //
-#define V2LHCMAC { lhma[0] = -32.0f;     lhma[1] = 31.75f;      lhma[2] = 4.0f;      lhma[3] = 128.0f; }  //
-#define V3LHCMAC { lhma[0] = -64.0f;     lhma[1] = 63.5f;       lhma[2] = 2.0f;      lhma[3] = 128.0f; }  //
+#define RKZLHMAC  { lhma[0] = -32.0f;     lhma[1] = 95.5f;       lhma[2] = 2.0f;      lhma[3] =  64.0f; }  //
+#define RKVLHMAC  { lhma[0] = -16.0f;     lhma[1] = 15.875f;     lhma[2] = 8.0f;      lhma[3] = 128.0f; }  //
+#define RKWLHMAC  { lhma[0] = -0.05f;     lhma[1] = 12.70f;      lhma[2] = 20.0f;     lhma[3] =   1.0f; }  //
+#define RKDLHMAC  { lhma[0] = -10.0f;     lhma[1] = 15.5f;       lhma[2] = 10.0f;     lhma[3] = 100.0f; }  //
+#define RKPLHMAC  { lhma[0] = -3.16623f;  lhma[1] = 3.11695f;    lhma[2] = 40.5845f;  lhma[3] = 128.5f; }  //  pi - 2*pi/255
+#define RKKLHMAC  { lhma[0] = -0.558508f; lhma[1] = 0.55414249f; lhma[2] = 229.1831f; lhma[3] = 128.0f; }  //  -0.2*pi + 0.4*pi/255
+#define RKRLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.079f;      lhma[2] = 1.0f;      lhma[3] =   0.0f; }  //
+#define RKV2LHMAC { lhma[0] = -32.0f;     lhma[1] = 31.75f;      lhma[2] = 4.0f;      lhma[3] = 128.0f; }  //
+#define RKV3LHMAC { lhma[0] = -64.0f;     lhma[1] = 63.5f;       lhma[2] = 2.0f;      lhma[3] = 128.0f; }  //
 
-#define RHO2CHAR(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
+#define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 
 
 

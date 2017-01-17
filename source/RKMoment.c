@@ -92,11 +92,11 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     // Convert float to color representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKFloat lhma[4];
     int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    ZLHCMAC   RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
-    V2LHCMAC  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
-    WLHCMAC   RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
-    DLHCMAC   RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
-    PLHCMAC   RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
+    RKZLHMAC   RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
+    RKV2LHMAC  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
+    RKWLHMAC   RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
+    RKDLHMAC   RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
+    RKPLHMAC   RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
     RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
@@ -122,7 +122,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         *wu++ = (uint8_t)Wi++;
         *du++ = (uint8_t)Di++;
         *pu++ = (uint8_t)Pi++;
-        *ru++ = (uint8_t)RHO2CHAR(*Ri++);
+        *ru++ = (uint8_t)RKRho2Uint8(*Ri++);
     }
     return i;
 }
@@ -335,16 +335,21 @@ void *momentCore(void *in) {
         memset(string + i, '.', RKStatusBarWidth - i);
         i = RKStatusBarWidth;
 
+        //uint8_t *data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+        RKFloat *data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+        uint8_t *idata = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s   %.2e %d  %.2e %d  %.2e %d  %.2e %d",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
                  ray->header.marker,
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
-                 ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
+                 ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "",
+                 data[0], idata[0], data[1], idata[1], data[2], idata[2], data[3], idata[3]);
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);

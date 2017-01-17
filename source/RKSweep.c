@@ -31,7 +31,7 @@ void *sweepWriter(void *in) {
           RKGetColorOfIndex(2)     , RKNoColor,
           S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
           S->header.n              , E->header.n,
-          n < 360 ? RKGetColorOfIndex(0) : "",
+          n < 360 ? RKGetColorOfIndex(0) : (n > 361 ? RKGetColorOfIndex(1) : ""),
           n,
           RKNoColor);
     

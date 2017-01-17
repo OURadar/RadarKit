@@ -484,7 +484,9 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 
     // Use a counter that mimics microsend increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
-    
+
+    float a;
+
     while (radar->active) {
 
         for (j = 0; radar->active && j < chunkSize; j++) {
@@ -502,6 +504,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 phi += 0.02f;
             }
 
+            a = cosf(2.0 * M_PI * 0.5f * t);
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -509,8 +512,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 // Some seemingly random pattern for testing
                 n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < gateCount; g++) {
-                    //X->i = (int16_t)(32767.0f * cosf(phi * (float)k));
-                    //X->q = (int16_t)(32767.0f * sinf(phi * (float)k));
+//                    X->i = (int16_t)(32767.0f * a * cosf((float)g * 0.001f));
+//                    X->q = (int16_t)(32767.0f * a * sinf((float)g * 0.001f));
                     if (g % 2 == 0) {
                         X->i = (int16_t)((g * n) + p);
                         X->q = (int16_t)((n - 2) * (g - 1));
