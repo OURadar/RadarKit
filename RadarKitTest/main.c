@@ -370,6 +370,8 @@ int main(int argc, char *argv[]) {
                       &RKPedestalPedzyInit,
                       &RKPedestalPedzyExec,
                       &RKPedestalPedzyFree);
+
+        myRadar->configs[0].prf[0] = user.prf;
         
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);

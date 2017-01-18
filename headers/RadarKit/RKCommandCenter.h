@@ -50,6 +50,7 @@ typedef struct  rk_user {
     RKUserFlag   access;             // Authorized access priviledge
     RKUserFlag   streams;
     double       timeLastOut;
+    double       timeLastHealthOut;
     double       timeLastIn;
     uint32_t     rayStatusIndex;
     uint32_t     pulseIndex;

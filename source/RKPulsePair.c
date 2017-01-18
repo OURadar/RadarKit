@@ -17,7 +17,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
     const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
     const RKVec one_pf = _rk_mm_set1_pf(1.0f);
-    const RKVec zcal_pf = _rk_mm_set1_pf(-26.0f);
+    const RKVec zcal_pf = _rk_mm_set1_pf(-36.0f);
     RKVec n_pf;
     RKFloat *s;
     RKFloat *z;

@@ -152,13 +152,13 @@ void *theClient(void *in) {
                 continue;
             }
         } else if (C->verbose) {
-            if (C->type == RKNetworkSocketTypeTCP) {
-                RKLog("%s Connected.\n", C->name);
-                C->state = RKClientStateConnected;
-            } else {
-                // UDP may not mean connected at this point
-                RKLog("%s Initialized.\n", C->name);
-            }
+//            if (C->type == RKNetworkSocketTypeTCP) {
+//                //RKLog("%s Connected.\n", C->name);
+//                //C->state = RKClientStateConnected;
+//            } else {
+//                // UDP may not mean connected at this point
+//            }
+            RKLog("%s Initialized.\n", C->name);
         }
 
         // Actively receive

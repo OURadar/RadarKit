@@ -514,8 +514,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 // Some seemingly random pattern for testing
                 n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < gateCount; g++) {
-//                    X->i = (int16_t)(32767.0f * a * cosf((float)g * 0.001f));
-//                    X->q = (int16_t)(32767.0f * a * sinf((float)g * 0.001f));
+                    X->i = (int16_t)(20000.0f * a * cosf((float)g * 0.005f));
+                    X->q = 0.0f;
 //                    if (g % 2 == 0) {
 //                        X->i = (int16_t)((g * n) + p);
 //                        X->q = (int16_t)((n - 2) * (g - 1));
@@ -523,8 +523,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 //                        X->i = (int16_t)(-g * (n - 1));
 //                        X->q = (int16_t)((g * p) + n);
 //                    }
-                    X->i = (float)g;
-                    X->q = 0.0f;
+//                    X->i = (float)g;
+//                    X->q = 0.0f;
                     X++;
                 }
             }

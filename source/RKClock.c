@@ -98,6 +98,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     int j, k;
     double x, dx, du, n;
     struct timeval t;
+    bool recent = true;
     
     // Get the time
     gettimeofday(&t, NULL);
@@ -106,6 +107,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         *timeval = t;
     }
     if (x - clock->latestTime > RKClockAWhile) {
+        recent = false;
         clock->x0 = x;
         clock->u0 = u;
     }
@@ -134,14 +136,16 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
         du = clock->uBuffer[k] - clock->uBuffer[j];
-        if (du <= 1.0e-6 || du > 1.0e9) {
-            RKLog("Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", du, clock->count, clock->stride);
-        }
-        if (clock->b < 0.1 * dx / n) {
-            RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
-            clock->b = 0.2 * dx / n;
-            clock->a = 1.0 - clock->b;
-            RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+        if (recent) {
+            if (du <= 1.0e-6 || du > 1.0e9) {
+                RKLog("Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", du, clock->count, clock->stride);
+            }
+            if (clock->b < 0.1 * dx / n) {
+                RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
+                clock->b = 0.2 * dx / n;
+                clock->a = 1.0 - clock->b;
+                RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+            }
         }
         // Update the references as decaying function of the stride size
         clock->x0 = clock->a * clock->x0 + clock->b * x;
