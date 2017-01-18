@@ -103,25 +103,26 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
     for (k = 0; k < K; k++) {
-        *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(zm, *Zi_pf++), za);
-        *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(vm, *Vi_pf++), va);
-        *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(wm, *Wi_pf++), wa);
-        *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(dm, *Di_pf++), da);
-        *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(pm, *Pi_pf++), pa);
+        *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Zi_pf++, zm), za);
+        *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Vi_pf++, vm), va);
+        *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Wi_pf++, wm), wa);
+        *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Di_pf++, dm), da);
+        *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Pi_pf++, pm), pa);
     }
     // Convert to uint8 type
-    uint8_t *zu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Zi = space->Z[0];
-    uint8_t *vu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Vi = space->V[0];
-    uint8_t *wu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Wi = space->W[0];
-    uint8_t *du = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Di = space->ZDR;
-    uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Pi = space->PhiDP;
-    uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexZ); Ri = space->RhoHV;
+    Zi = space->Z[0];  uint8_t *zu = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+    Vi = space->V[0];  uint8_t *vu = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+    Wi = space->W[0];  uint8_t *wu = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+    Di = space->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+    Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+    Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+    //RKLog("> Zi = %.1f  --> %d\n", *Zi, (uint8_t)*Zi);
     for (k = 0; k < ray->header.gateCount; k++) {
-        *zu++ = (uint8_t)Zi++;
-        *vu++ = (uint8_t)Vi++;
-        *wu++ = (uint8_t)Wi++;
-        *du++ = (uint8_t)Di++;
-        *pu++ = (uint8_t)Pi++;
+        *zu++ = (uint8_t)*Zi++;
+        *vu++ = (uint8_t)*Vi++;
+        *wu++ = (uint8_t)*Wi++;
+        *du++ = (uint8_t)*Di++;
+        *pu++ = (uint8_t)*Pi++;
         *ru++ = (uint8_t)RKRho2Uint8(*Ri++);
     }
     return i;
