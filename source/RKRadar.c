@@ -197,7 +197,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     // Moment engine
     radar->momentEngine = RKMomentEngineInit();
-    RKMomentEngineSetInputOutputBuffers(radar->momentEngine,
+    RKMomentEngineSetInputOutputBuffers(radar->momentEngine, &radar->desc,
+                                        radar->configs, &radar->configIndex, RKBufferCSlotCount,
                                         radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
                                         radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
     radar->memoryUsage += sizeof(RKMomentEngine);

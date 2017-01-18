@@ -514,13 +514,15 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 for (g = 0; g < gateCount; g++) {
 //                    X->i = (int16_t)(32767.0f * a * cosf((float)g * 0.001f));
 //                    X->q = (int16_t)(32767.0f * a * sinf((float)g * 0.001f));
-                    if (g % 2 == 0) {
-                        X->i = (int16_t)((g * n) + p);
-                        X->q = (int16_t)((n - 2) * (g - 1));
-                    } else {
-                        X->i = (int16_t)(-g * (n - 1));
-                        X->q = (int16_t)((g * p) + n);
-                    }
+//                    if (g % 2 == 0) {
+//                        X->i = (int16_t)((g * n) + p);
+//                        X->q = (int16_t)((n - 2) * (g - 1));
+//                    } else {
+//                        X->i = (int16_t)(-g * (n - 1));
+//                        X->q = (int16_t)((g * p) + n);
+//                    }
+                    X->i = (float)g;
+                    X->q = 0.0f;
                     X++;
                 }
             }
@@ -688,7 +690,7 @@ void RKTestOneRay(void) {
     RKScratch *space;
     RKBuffer pulseBuffer;
     const int gateCount = 6;
-    const int pulseCount = 6;
+    const int pulseCount = 10;
     const int pulseCapacity = 64;
     
     RKLog("Allocating buffers ...\n");

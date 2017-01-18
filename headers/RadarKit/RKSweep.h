@@ -30,13 +30,13 @@ typedef struct rk_sweep_engine RKSweepEngine;
 struct rk_sweep_engine {
     // User set variables
     char                   name[RKNameLength];
-    RKBuffer               rayBuffer;
-    uint32_t               *rayIndex;
-    uint32_t               rayBufferDepth;
+    RKRadarDesc            *radarDescription;
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
     uint32_t               configBufferDepth;
-    RKRadarDesc            *radarDescription;
+    RKBuffer               rayBuffer;
+    uint32_t               *rayIndex;
+    uint32_t               rayBufferDepth;
     
     uint8_t                verbose;
     
@@ -60,8 +60,8 @@ void RKSweepEngineFree(RKSweepEngine *);
 
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
 void RKSweepEngineSetInputBuffer(RKSweepEngine *, RKRadarDesc *,
-                                 RKConfig *, uint32_t *, const uint32_t,
-                                 RKBuffer, uint32_t *, const uint32_t);
+                                 RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
+                                 RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);

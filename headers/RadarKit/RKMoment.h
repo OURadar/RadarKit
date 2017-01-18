@@ -43,6 +43,10 @@ struct rk_moment_worker {
 struct rk_moment_engine {
     // User set variables
     char                   name[RKNameLength];
+    RKRadarDesc            *radarDescription;
+    RKConfig               *configBuffer;
+    uint32_t               *configIndex;
+    uint32_t               configBufferDepth;
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferDepth;
@@ -52,7 +56,6 @@ struct rk_moment_engine {
     uint8_t                verbose;
     uint8_t                coreCount;
     bool                   useSemaphore;
-    bool                   developerMode;
     int                    (*processor)(RKScratch *, RKPulse **, const uint16_t pulseCount);
 
     // Program set variables
@@ -79,7 +82,8 @@ RKMomentEngine *RKMomentEngineInit(void);
 void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int verbose);
-void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *,
+void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, RKRadarDesc *,
+                                         RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                          RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);

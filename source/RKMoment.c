@@ -76,12 +76,12 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKProductIndexP);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKProductIndexR);
     for (i = 0, k = 0; k < gateCount; i++, k += stride) {
-        *Zo++ = *Zi; Zi += stride;
-        *Vo++ = *Zi; Vi += stride;
-        *Wo++ = *Zi; Wi += stride;
-        *Do++ = *Zi; Di += stride;
-        *Po++ = *Zi; Pi += stride;
-        *Ro++ = *Zi; Ri += stride;
+        *Zo++ = *Zi;  Zi += stride;
+        *Vo++ = *Vi;  Vi += stride;
+        *Wo++ = *Wi;  Wi += stride;
+        *Do++ = *Di;  Di += stride;
+        *Po++ = *Pi;  Pi += stride;
+        *Ro++ = *Ri;  Ri += stride;
     }
     // Record down the down-sampled gate count
     ray->header.gateCount = i;
@@ -92,22 +92,25 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     // Convert float to color representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKFloat lhma[4];
     int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    RKZLHMAC   RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
-    RKV2LHMAC  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
-    RKWLHMAC   RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
-    RKDLHMAC   RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
-    RKPLHMAC   RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
+    RKZLHMAC   RKVec zl = _rk_mm_set1_pf(lhma[0]);  RKVec zh = _rk_mm_set1_pf(lhma[1]);  RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
+    RKV2LHMAC  RKVec vl = _rk_mm_set1_pf(lhma[0]);  RKVec vh = _rk_mm_set1_pf(lhma[1]);  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
+    RKWLHMAC   RKVec wl = _rk_mm_set1_pf(lhma[0]);  RKVec wh = _rk_mm_set1_pf(lhma[1]);  RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
+    RKDLHMAC   RKVec dl = _rk_mm_set1_pf(lhma[0]);  RKVec dh = _rk_mm_set1_pf(lhma[1]);  RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
+    RKPLHMAC   RKVec pl = _rk_mm_set1_pf(lhma[0]);  RKVec ph = _rk_mm_set1_pf(lhma[1]);  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
+    RKRLHMAC   RKVec rl = _rk_mm_set1_pf(lhma[0]);  RKVec rh = _rk_mm_set1_pf(lhma[1]);
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
     RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
+    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     for (k = 0; k < K; k++) {
-        *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Zi_pf++, zm), za);
-        *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Vi_pf++, vm), va);
-        *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Wi_pf++, wm), wa);
-        *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Di_pf++, dm), da);
-        *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(*Pi_pf++, pm), pa);
+        *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Zi_pf++, zl), zh), zm), za);
+        *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Vi_pf++, vl), vh), vm), va);
+        *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Wi_pf++, wl), wh), wm), wa);
+        *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Di_pf++, dl), dh), dm), da);
+        *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Pi_pf++, pl), ph), pm), pa);
+        *Ro_pf++ = _rk_mm_min_pf(_rk_mm_max_pf(*Ri_pf++, rl), rh);
     }
     // Convert to uint8 type
     Zi = space->Z[0];  uint8_t *zu = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
@@ -116,7 +119,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     Di = space->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKProductIndexD);
     Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
     Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexR);
-    //RKLog("> Zi = %.1f  --> %d\n", *Zi, (uint8_t)*Zi);
     for (k = 0; k < ray->header.gateCount; k++) {
         *zu++ = (uint8_t)*Zi++;
         *vu++ = (uint8_t)*Vi++;
@@ -203,6 +205,13 @@ void *momentCore(void *in) {
     uint32_t is;
     uint32_t ie;
 
+    //
+    RKFloat gateWidthMeters = 30.0f, r = 0.0f;
+    for (i = 0; i < ray->header.capacity; i++) {
+        r = (RKFloat)i * gateWidthMeters + 15.0f;
+        space->rcor[i] = 10.0f * log10f (r);
+    }
+    
     // The latest index in the dutyCycle buffer
     int d0 = 0;
 
@@ -337,20 +346,24 @@ void *momentCore(void *in) {
         i = RKStatusBarWidth;
 
         //uint8_t *data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-        RKFloat *data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-        uint8_t *idata = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+        RKIQZ raw = RKGetSplitComplexDataFromPulse(pulse, 0);
+        RKFloat *rdat = raw.i;
+//        RKFloat *fdat = space->R[0][0].i;
+//        RKFloat *fdat = space->aR[0][0];
+        RKFloat *fdat = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+        uint8_t *udat = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
 
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s   %.2e %d  %.2e %d  %.2e %d  %.2e %d",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s   %.2e %.2e %d  %.2e %.2e %d  %.2e %.2e %d  %.2e %.2e %d  %.2e %.2e %d",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
                  ray->header.marker,
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "",
-                 data[0], idata[0], data[1], idata[1], data[2], idata[2], data[3], idata[3]);
+                 rdat[0], fdat[0], udat[0], rdat[1], fdat[1], udat[1], rdat[2], fdat[2], udat[2], rdat[30], fdat[30], udat[30], rdat[40], fdat[40], udat[40]);
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -609,19 +622,20 @@ void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKMomentEngineSetDeveloperMode(RKMomentEngine *engine) {
-    engine->developerMode = true;
-}
-
-void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine,
+void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, RKRadarDesc *desc,
+                                         RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                          RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth) {
-    engine->pulseBuffer      = pulseBuffer;
-    engine->pulseIndex       = pulseIndex;
-    engine->pulseBufferDepth = pulseBufferDepth;
-    engine->rayBuffer        = rayBuffer;
-    engine->rayIndex         = rayIndex;
-    engine->rayBufferDepth = rayBufferDepth;
+    engine->radarDescription  = desc;
+    engine->configBuffer      = configBuffer;
+    engine->configIndex       = configIndex;
+    engine->configBufferDepth = configBufferDepth;
+    engine->pulseBuffer       = pulseBuffer;
+    engine->pulseIndex        = pulseIndex;
+    engine->pulseBufferDepth  = pulseBufferDepth;
+    engine->rayBuffer         = rayBuffer;
+    engine->rayIndex          = rayIndex;
+    engine->rayBufferDepth   = rayBufferDepth;
     engine->momentSource = (RKModuloPath *)malloc(rayBufferDepth * sizeof(RKModuloPath));
     if (engine->momentSource == NULL) {
         RKLog("Error. Unable to allocate momentSource.\n");

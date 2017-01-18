@@ -51,6 +51,8 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
 #define _rk_mm_sqrt_pf(a)            _mm512_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm512_rcp_ps(a)
+#define _rk_mm_max_pf(a, b)          _mm512_max_ps(a, b)
+#define _rk_mm_min_pf(a, b)          _mm512_min_ps(a, b)
 //#if defined(_mm512_mul_ps)
 //#define _rk_mm_log10_pf(a)           _mm512_log10_ps(a)
 //#endif
@@ -76,6 +78,8 @@ typedef __m128i RKVecCvt;
 #    endif
 #define _rk_mm_sqrt_pf(a)            _mm256_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm256_rcp_ps(a)
+#define _rk_mm_max_pf(a, b)          _mm256_max_ps(a, b)
+#define _rk_mm_min_pf(a, b)          _mm256_min_ps(a, b)
 //#if defined(_mm256_mul_ps)
 //#define _rk_mm_log10_pf(a)           _mm256_log10_ps(a)
 //#endif
@@ -100,6 +104,8 @@ typedef __m128 RKVec;
 #define _rk_mm_cvtepi32_pf(a)        _mm_cvtepi32_ps(a)                      // SSE2
 #define _rk_mm_sqrt_pf(a)            _mm_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm_rcp_ps(a)
+#define _rk_mm_max_pf(a, b)          _mm_max_ps(a, b)
+#define _rk_mm_min_pf(a, b)          _mm_min_ps(a, b)
 //#if defined(_mm_mul_ps)
 //#define _rk_mm_log10_pf(a)           _mm_log10_ps(a)
 //#endif
@@ -134,5 +140,6 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n);
 void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n);
 
 void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n);
+void RKSIMD_clamp(RKFloat *src, const RKFloat min, const RKFloat max, const int n);
 
 #endif
