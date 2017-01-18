@@ -307,6 +307,8 @@ int socketInitialHandler(RKOperator *O) {
     user->radar = engine->radars[0];
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
+    user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+    user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
     return RKResultNoError;
 }
 

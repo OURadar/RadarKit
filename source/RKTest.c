@@ -468,6 +468,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
     
     const int chunkSize = MAX(1, (int)floor(0.1f / prt));
+    const float gateSizeMeters = 0.5f * 3.0e8f / fs;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
@@ -493,9 +494,10 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             RKPulse *pulse = RKGetVacantPulse(radar);
 
             // Fill in the header
-            pulse->header.gateCount = gateCount;
             pulse->header.i = counter++;
             pulse->header.t = (uint64_t)(1.0e6 * t);
+            pulse->header.gateCount = gateCount;
+            pulse->header.gateSizeMeters = gateSizeMeters;
             
             if (simulatePosition) {
                 pulse->header.azimuthDegrees = azimuth;

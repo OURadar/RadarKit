@@ -205,13 +205,9 @@ void *momentCore(void *in) {
     uint32_t is;
     uint32_t ie;
 
-    //
-    RKFloat gateWidthMeters = 30.0f, r = 0.0f;
-    for (i = 0; i < ray->header.capacity; i++) {
-        r = (RKFloat)i * gateWidthMeters + 15.0f;
-        space->rcor[i] = 10.0f * log10f (r);
-    }
-    
+    // Gate size in meters for range correction
+    RKFloat gateSizeMeters = 30.0f;
+
     // The latest index in the dutyCycle buffer
     int d0 = 0;
 
@@ -298,7 +294,19 @@ void *momentCore(void *in) {
         ray->header.endAzimuth     = E->header.azimuthDegrees;
         ray->header.endElevation   = E->header.elevationDegrees;
         ray->header.configIndex    = E->header.configIndex;
+        ray->header.gateSizeMeters = S->header.gateSizeMeters;
         marker = RKMarkerNull;
+
+        // Compute the range correction factor if needed.
+        if (gateSizeMeters != ray->header.gateSizeMeters) {
+            gateSizeMeters = ray->header.gateSizeMeters;
+            RKLog("gateSize changed to %.2f\n", gateSizeMeters);
+            RKFloat r = 0.0f;
+            for (i = 0; i < ray->header.capacity; i++) {
+                r = (RKFloat)i * gateSizeMeters;
+                space->rcor[i] = 20.0f * log10f(r);
+            }
+        }
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3) {
@@ -345,25 +353,16 @@ void *momentCore(void *in) {
         memset(string + i, '.', RKStatusBarWidth - i);
         i = RKStatusBarWidth;
 
-        //uint8_t *data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-        RKIQZ raw = RKGetSplitComplexDataFromPulse(pulse, 0);
-        RKFloat *rdat = raw.i;
-//        RKFloat *fdat = space->R[0][0].i;
-//        RKFloat *fdat = space->aR[0][0];
-        RKFloat *fdat = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-        uint8_t *udat = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s   %.2e %.2e %d  %.2e %.2e %d  %.2e %.2e %d  %.2e %.2e %d  %.2e %.2e %d",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
                  ray->header.marker,
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
-                 ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "",
-                 rdat[0], fdat[0], udat[0], rdat[1], fdat[1], udat[1], rdat[2], fdat[2], udat[2], rdat[30], fdat[30], udat[30], rdat[40], fdat[40], udat[40]);
+                 ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
         
         // Done processing, get the time
         gettimeofday(&t0, NULL);
