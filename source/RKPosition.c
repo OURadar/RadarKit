@@ -228,9 +228,10 @@ void *pulseTagger(void *in) {
                 
                 // Propagate everything to the next
                 memcpy(config0, config1, sizeof(RKConfig));
-                config0->i++;
-                config0->sweepAzimuth = positionBefore->sweepAzimuthDegrees;
                 config0->sweepElevation = positionBefore->sweepElevationDegrees;
+                config0->sweepAzimuth = positionBefore->sweepAzimuthDegrees;
+                config0->startMarker = marker0;
+                config0->i++;
                 
                 *engine->configIndex = c;
                 

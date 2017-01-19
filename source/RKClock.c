@@ -51,6 +51,7 @@ RKClock *RKClockInit(void) {
 }
 
 void RKClockFree(RKClock *clock) {
+#if defined(CLOCK_CSV)
     char filename[64];
     sprintf(filename, "%s", clock->name + 1);
     filename[strlen(filename) - 1] = '\0';
@@ -61,6 +62,7 @@ void RKClockFree(RKClock *clock) {
         fprintf(fid, "%.9f, %.9f, %.9f, %.9f\n", clock->xBuffer[i], clock->yBuffer[i], clock->uBuffer[i], clock->zBuffer[i]);
     }
     fclose(fid);
+#endif
     free(clock->tBuffer);
     free(clock->xBuffer);
     free(clock->uBuffer);

@@ -22,7 +22,7 @@ enum RKSweepEngineState {
 
 typedef struct rk_sweep {
     RKRay                 *rays[RKMaxRaysPerSweep];
-    uint32_t              count;
+    uint32_t              rayCount;
 } RKSweep;
 
 typedef struct rk_sweep_engine RKSweepEngine;

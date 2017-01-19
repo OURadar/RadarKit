@@ -127,6 +127,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         *pu++ = (uint8_t)*Pi++;
         *ru++ = (uint8_t)RKRho2Uint8(*Ri++);
     }
+    ray->header.productList = RKProductListProductZVWDPR;
     return i;
 }
 
@@ -287,14 +288,16 @@ void *momentCore(void *in) {
         E = RKGetPulse(engine->pulseBuffer, ie);
 
         // Set the ray headers
-        ray->header.startTimeD     = S->header.timeDouble;
-        ray->header.startAzimuth   = S->header.azimuthDegrees;
-        ray->header.startElevation = S->header.elevationDegrees;
-        ray->header.endTimeD       = E->header.timeDouble;
-        ray->header.endAzimuth     = E->header.azimuthDegrees;
-        ray->header.endElevation   = E->header.elevationDegrees;
-        ray->header.configIndex    = E->header.configIndex;
-        ray->header.gateSizeMeters = S->header.gateSizeMeters;
+        ray->header.startTime       = S->header.time;
+        ray->header.startTimeDouble = S->header.timeDouble;
+        ray->header.startAzimuth    = S->header.azimuthDegrees;
+        ray->header.startElevation  = S->header.elevationDegrees;
+        ray->header.endTime         = E->header.time;
+        ray->header.endTimeDouble   = E->header.timeDouble;
+        ray->header.endAzimuth      = E->header.azimuthDegrees;
+        ray->header.endElevation    = E->header.elevationDegrees;
+        ray->header.configIndex     = S->header.configIndex;
+        ray->header.gateSizeMeters  = S->header.gateSizeMeters;
         marker = RKMarkerNull;
 
         // Compute the range correction factor if needed.
@@ -334,10 +337,13 @@ void *momentCore(void *in) {
             }
         }
 
+        // Fill in the ray
         makeRayFromScratch(space, ray, S->header.gateCount, stride);
-        // Clip the range of values?
         
         // Update the rest of the ray header
+        RKConfig *config = &engine->configBuffer[S->header.configIndex];
+        ray->header.sweepElevation = config->sweepElevation;
+        ray->header.sweepAzimuth = config->sweepAzimuth;
         ray->header.marker = marker;
         ray->header.s ^= RKRayStatusProcessing;
         ray->header.s |= RKRayStatusReady;

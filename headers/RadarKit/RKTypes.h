@@ -158,7 +158,9 @@ typedef struct rk_radar_desc {
     uint32_t         rayBufferDepth;
     double           latitude;
     double           longitude;
+    float            radarHeight;
     char             name[RKNameLength];
+    char             filePrefix[RKNameLength];
 } RKRadarDesc;
 
 // A running configuration buffer
@@ -169,11 +171,63 @@ typedef struct rk_config {
     uint32_t         waveformId[RKMaxMatchedFilterCount];
     char             vcpDefinition[RKMaximumStringLength];
     RKFloat          noise[2];
-    RKFloat          ZCal[2]; 
+    RKFloat          ZCal[2];
     RKFloat          PCal[2];
     float            sweepElevation;
     float            sweepAzimuth;
+    RKMarker         startMarker;
 } RKConfig;
+
+typedef uint32_t RKPositionFlag;
+enum RKPositionFlag {
+    RKPositionFlagVacant             = 0,
+    RKPositionFlagAzimuthEnabled     = 1,
+    RKPositionFlagAzimuthSafety      = (1 << 1),
+    RKPositionFlagAzimuthError       = (1 << 2),
+    RKPositionFlagAzimuthSweep       = (1 << 8),
+    RKPositionFlagAzimuthPoint       = (1 << 9),
+    RKPositionFlagAzimuthComplete    = (1 << 10),
+    RKPositionFlagElevationEnabled   = (1 << 16),
+    RKPositionFlagElevationSafety    = (1 << 17),
+    RKPositionFlagElevationError     = (1 << 18),
+    RKPositionFlagElevationSweep     = (1 << 24),
+    RKPositionFlagElevationPoint     = (1 << 25),
+    RKPositionFlagElevationComplete  = (1 << 26),
+    RKPositionFlagActive             = (1 << 28),
+    RKPositionFlagHardwareMask       = 0x3FFFFFFF,
+    RKPositionFlagReady              = (1 << 31)
+};
+
+typedef union rk_position {
+    struct {
+        uint64_t         i;                                          // Counter
+        uint64_t         tic;                                        // Time tic
+        RKFourByte       rawElevation;                               // Raw elevation readout
+        RKFourByte       rawAzimuth;                                 // Raw azimuth readout
+        RKFourByte       rawElevationVelocity;                       // Raw velocity of elevation readout
+        RKFourByte       rawAzimuthVelocity;                         // Raw velocity of azimuth readout
+        RKFourByte       rawElevationStatus;                         // Raw status of elevation readout
+        RKFourByte       rawAzimuthStatus;                           // Raw status of azimuth readout
+        uint8_t          queueSize;                                  // Queue size of the readout buffer
+        uint8_t          elevationMode;                              // Positioning mode of elevation
+        uint8_t          azimuthMode;                                // Positioning mode of azimuth
+        uint8_t          sequence;                                   // DEBUG command sequence
+        RKPositionFlag   flag;                                       // Position flag
+        float            elevationDegrees;                           // Decoded elevation
+        float            azimuthDegrees;                             // Decoded elevation
+        float            elevationVelocityDegreesPerSecond;          // Decoded velocity of elevation
+        float            azimuthVelocityDegreesPerSecond;            // Decoded velocity of azimuth
+        float            elevationCounter;                           // Progress counter (of target) of the elevation
+        float            elevationTarget;                            // Targeted progress counter of the elevation
+        float            azimuthCounter;                             // Progress counter (of target) of the azimuth
+        float            azimuthTarget;                              // Targeted progress counter of the azimuth
+        float            sweepElevationDegrees;                      // Set elevation for current sweep
+        float            sweepAzimuthDegrees;                        // Set azimuth for current sweep
+        struct timeval   time;                                       // Time in struct timeval
+        double           timeDouble;                                 // Time in double;
+    };
+    RKByte               bytes[128];
+} RKPosition;
 
 typedef struct rk_pulse_header {
     uint64_t         i;                                              // Identity counter
@@ -235,6 +289,7 @@ enum productList {
     RKProductListProductR             = (1 << 21),                   //
     RKProductListProductK             = (1 << 22),                   //
     RKProductListProductS             = (1 << 23),                   //
+    RKProductListProductZVWDPR        = 0x003F0000,                  //
     RKProductListProductZVWDPRKS      = 0x00FF0000                   //
 };
 
@@ -253,11 +308,11 @@ typedef struct rk_ray_header {
     float            sweepElevation;                                 // Sweep elevation for PPI
     float            sweepAzimuth;                                   // Sweep azimuth for RHI
     struct timeval   startTime;                                      // Start time of the ray in UNIX time
-    double           startTimeD;                                     // Start time in double representation
+    double           startTimeDouble;                                // Start time in double representation
     float            startAzimuth;                                   // End time in double representation
     float            startElevation;                                 //
     struct timeval   endTime;                                        // End time of the ray in UNIX time
-    double           endTimeD;                                       //
+    double           endTimeDouble;                                  //
     float            endAzimuth;                                     //
     float            endElevation;                                   //
 } RKRayHeader;
@@ -333,57 +388,6 @@ typedef struct rk_scratch {
     RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
     RKFloat          *KDP;                                           // Specific phase KDP
 } RKScratch;
-
-typedef uint32_t RKPositionFlag;
-enum RKPositionFlag {
-    RKPositionFlagVacant             = 0,
-    RKPositionFlagAzimuthEnabled     = 1,
-    RKPositionFlagAzimuthSafety      = (1 << 1),
-    RKPositionFlagAzimuthError       = (1 << 2),
-    RKPositionFlagAzimuthSweep       = (1 << 8),
-    RKPositionFlagAzimuthPoint       = (1 << 9),
-    RKPositionFlagAzimuthComplete    = (1 << 10),
-    RKPositionFlagElevationEnabled   = (1 << 16),
-    RKPositionFlagElevationSafety    = (1 << 17),
-    RKPositionFlagElevationError     = (1 << 18),
-    RKPositionFlagElevationSweep     = (1 << 24),
-    RKPositionFlagElevationPoint     = (1 << 25),
-    RKPositionFlagElevationComplete  = (1 << 26),
-    RKPositionFlagActive             = (1 << 28),
-    RKPositionFlagHardwareMask       = 0x3FFFFFFF,
-    RKPositionFlagReady              = (1 << 31)
-};
-
-typedef union rk_position {
-    struct {
-        uint64_t         i;                                          // Counter
-        uint64_t         tic;                                        // Time tic
-        RKFourByte       rawElevation;                               // Raw elevation readout
-        RKFourByte       rawAzimuth;                                 // Raw azimuth readout
-        RKFourByte       rawElevationVelocity;                       // Raw velocity of elevation readout
-        RKFourByte       rawAzimuthVelocity;                         // Raw velocity of azimuth readout
-        RKFourByte       rawElevationStatus;                         // Raw status of elevation readout
-        RKFourByte       rawAzimuthStatus;                           // Raw status of azimuth readout
-        uint8_t          queueSize;                                  // Queue size of the readout buffer
-        uint8_t          elevationMode;                              // Positioning mode of elevation
-        uint8_t          azimuthMode;                                // Positioning mode of azimuth
-        uint8_t          sequence;                                   // DEBUG command sequence
-        RKPositionFlag   flag;                                       // Position flag
-        float            elevationDegrees;                           // Decoded elevation
-        float            azimuthDegrees;                             // Decoded elevation
-        float            elevationVelocityDegreesPerSecond;          // Decoded velocity of elevation
-        float            azimuthVelocityDegreesPerSecond;            // Decoded velocity of azimuth
-        float            elevationCounter;                           // Progress counter (of target) of the elevation
-        float            elevationTarget;                            // Targeted progress counter of the elevation
-        float            azimuthCounter;                             // Progress counter (of target) of the azimuth
-        float            azimuthTarget;                              // Targeted progress counter of the azimuth
-        float            sweepElevationDegrees;                      // Set elevation for current sweep
-        float            sweepAzimuthDegrees;                        // Set azimuth for current sweep
-        struct timeval   time;                                       // Time in struct timeval
-        double           timeDouble;                                 // Time in double;
-    };
-    RKByte               bytes[128];
-} RKPosition;
 
 enum RKProductIndex {
     RKProductIndexZ,
