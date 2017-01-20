@@ -3,6 +3,19 @@ RadarKit
 
 A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data including multi-core pulse match filtering (compression). More comments will come later ...
 
+Getting netcdf
+CentOS 7
+
+```shell
+yum install epel-release
+yum install netcdf
+```
+Mac OS X
+```shell
+brew install netcdf
+```
+
+
 Radar Struct
 ------------
 This is about the only structure you need to worry about. A radar structure represents an object-like structure where everything is encapsulated.
