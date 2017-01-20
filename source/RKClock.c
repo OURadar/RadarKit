@@ -109,11 +109,11 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         *timeval = t;
     }
     if (x - clock->latestTime > RKClockAWhile) {
+        RKLog("It has been a while.\n");
         recent = false;
         clock->x0 = x;
         clock->u0 = u;
     }
-    clock->latestTime = x;
 
     // Predict x0 and u0 using a running average, so we need to keep u's and x's.
     k = clock->index;
@@ -123,10 +123,13 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     if (clock->count > 1) {
         j = RKPreviousModuloS(k, clock->size);
         if (x - clock->xBuffer[j] > 2.0 || u - clock->uBuffer[j] < 0) {
-            RKLog("%s Warning.   x = %s -> %s   u = %s -> %s",
+            RKLog("%s Warning.   x = %s -> %s -> %s   u = %s -> %s",
                   clock->name,
-                  RKFloatToCommaStyleString(clock->xBuffer[j]), RKFloatToCommaStyleString(x),
+                  RKFloatToCommaStyleString(clock->xBuffer[j]), RKFloatToCommaStyleString(clock->latestTime), RKFloatToCommaStyleString(x),
                   RKFloatToCommaStyleString(clock->uBuffer[j]), RKFloatToCommaStyleString(u));
+            if (x - clock->xBuffer[j] > RKClockAWhile) {
+                recent = false;
+            }
         }
         if (clock->count > clock->stride) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
@@ -161,7 +164,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     }
     clock->yBuffer[k] = x;
     clock->zBuffer[k] = clock->dx;
-    
+
+    clock->latestTime = x;
+
     // Update the slot index for next call
     clock->index = RKNextModuloS(k, clock->size);
     clock->count++;
