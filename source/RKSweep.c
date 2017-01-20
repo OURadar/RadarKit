@@ -116,17 +116,20 @@ void *sweepWriter(void *in) {
             productList ^= RKProductListProductK;
         }
 
-        k = sprintf(filename, "%s-", engine->radarDescription->filePrefix);
-        //time_t startTime = (time_t)S->header.startTimeD;
-        strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+        // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
+        k = sprintf(filename, "moment/");
+        k += strftime(filename + k, 16, "%Y%m%d", gmtime(&startTime));
+        k += sprintf(filename + k, "/%s-", engine->radarDescription->filePrefix);
+        k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerPPIScan) {
-            k += sprintf(filename + strlen(filename), "-E%.1f-%c.nc", S->header.sweepElevation, symbol);
+            k += sprintf(filename + k, "-E%.1f-%c.nc", S->header.sweepElevation, symbol);
         } else if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerRHIScan) {
-            k += sprintf(filename + strlen(filename), "-A%.1fm-%c.nc", S->header.sweepAzimuth, symbol);
+            k += sprintf(filename + k, "-A%.1fm-%c.nc", S->header.sweepAzimuth, symbol);
         } else {
             RKLog("%s Incomplete sweep. Discarding ...\n", engine->name);
             continue;
         }
+        RKPreparePath(filename);
         
         if ((k = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);

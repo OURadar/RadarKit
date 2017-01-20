@@ -143,6 +143,25 @@ bool RKFilenameExists(const char *filename) {
     return false;
 }
 
+void RKPreparePath(const char *filename) {
+    char path[1024];
+    strcpy(path, filename);
+    char *c = strrchr(path, '/');
+    if (c == NULL) {
+        return;
+    }
+    *c = '\0';
+    DIR *dir = opendir(path);
+    if (dir == NULL) {
+        char cmd[1024];
+        sprintf(cmd, "mkdir -p %s", path);
+        system(cmd);
+    } else {
+        closedir(dir);
+    }
+    return;
+}
+
 char *RKSignalString(const int signal) {
     static char string[32];
     switch (signal) {

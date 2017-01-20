@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #ifdef __MACH__
 #include <mach/mach.h>
@@ -60,6 +61,7 @@ double RKTimevalDiff(const struct timeval miuend, const struct timeval subtrahen
 double RKTimespecDiff(const struct timespec miuend, const struct timespec subtrahend);
 void RKUTCTime(struct timespec *);
 bool RKFilenameExists(const char *);
+void RKPreparePath(const char *filename);
 char *RKSignalString(const int);
 
 #endif /* rk_misc_h */
