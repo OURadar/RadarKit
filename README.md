@@ -8,7 +8,7 @@ CentOS 7
 
 ```shell
 yum install epel-release
-yum install netcdf
+yum install netcdf-devel
 ```
 Mac OS X
 ```shell
