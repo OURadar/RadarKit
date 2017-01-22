@@ -402,6 +402,14 @@ enum RKProductIndex {
     RKProductIndexWv
 };
 
+typedef uint32_t RKConfigKey;
+enum RKConfigKey {
+    RKConfigKeyNull,
+    RKConfigKeySweepElevation,
+    RKConfigKeySweepAzimuth,
+    RKConfigKeyPRF
+};
+
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

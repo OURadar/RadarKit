@@ -12,6 +12,9 @@
 //
 //
 
+// More function definitions
+void RKAddConfig(RKRadar *radar, ...);
+
 #pragma mark - Helper Functions
 
 void *backgroundTransceiverInit(void *in) {
@@ -219,6 +222,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }
 
+    RKSetPRF(radar, 1000);
+
     return radar;
 }
 
@@ -389,7 +394,8 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
     return RKResultNoError;
 }
 
-int RKSetPRF(RKRadar *radar, const float prf) {
+int RKSetPRF(RKRadar *radar, const uint32_t prf) {
+    RKAddConfig(radar, RKConfigKeyPRF, prf, RKConfigKeyNull);
     return RKResultNoError;
 }
 
@@ -501,18 +507,6 @@ int RKStop(RKRadar *radar) {
     return 0;
 }
 
-#pragma mark - Configs
-
-RKConfig *RKGetVacantConfig(RKRadar *radar) {
-    RKConfig *config = &radar->configs[radar->configIndex];
-    config->i += RKBufferCSlotCount;
-    return config;
-}
-
-void RKSetConfigReady(RKRadar *radar, RKConfig *config) {
-    
-}
-
 #pragma mark - Positions
 
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
@@ -591,3 +585,38 @@ void RKGetVacanRay(RKRadar *radar) {
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
     ray->header.s |= RKRayStatusReady;
 }
+
+#pragma mark - Internal Functions
+
+// Users normally don't have to deal with these
+
+void RKAddConfig(RKRadar *radar, ...) {
+    va_list   arg;
+    int       c;
+
+    c = radar->configIndex;                      RKConfig *oldConfig = &radar->configs[c];
+    c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *newConfig = &radar->configs[c];
+
+    // Copy everything
+    memcpy(newConfig, oldConfig, sizeof(RKConfig));
+
+    va_start(arg, radar);
+
+    uint32_t key = va_arg(arg, uint32_t);
+
+    // Modify the values based on the supplied keys
+    while (key != RKConfigKeyNull) {
+        switch (key) {
+            case RKConfigKeyPRF:
+                newConfig->prf[0] = va_arg(arg, uint32_t);
+                RKLog("New config with PRF = %s\n", RKIntegerToCommaStyleString(newConfig->prf[0]));
+                break;
+            default:
+                break;
+        }
+    }
+
+    va_end(arg);
+}
+
+

@@ -143,14 +143,17 @@ int RKSetPedestal(RKRadar *radar,
 
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
-int RKSetProcessingCoreCounts(RKRadar *radar,
-                              const unsigned int pulseCompressionCoreCount,
-                              const unsigned int momentProcessorCoreCount);
+
 // Some operating parameters
 int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
 int RKSetWaveformToImpulse(RKRadar *radar);
 int RKSetWaveformTo121(RKRadar *radar);
+int RKSetProcessingCoreCounts(RKRadar *radar,
+                              const unsigned int pulseCompressionCoreCount,
+                              const unsigned int momentProcessorCoreCount);
+int RKSetPRF(RKRadar *radar, const uint32_t prf);
 uint32_t RKGetPulseCapacity(RKRadar *radar);
+
 
 // If there is a tic count from firmware, use it as clean reference for time derivation
 void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta);
@@ -163,10 +166,6 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
 int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
 int RKStop(RKRadar *);
-
-// Configs
-RKConfig *RKGetVacantConfig(RKRadar *);
-void RKSetConfigReady(RKRadar *, RKConfig *);
 
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
