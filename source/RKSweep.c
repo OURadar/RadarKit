@@ -129,6 +129,7 @@ void *sweepWriter(void *in) {
             RKLog("%s Incomplete sweep. Discarding ...\n", engine->name);
             continue;
         }
+        
         RKPreparePath(filename);
         
         if ((k = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
@@ -136,6 +137,10 @@ void *sweepWriter(void *in) {
             return NULL;
         } else {
             RKLog("%s Generating %s ...\n", engine->name, filename);
+        }
+        
+        if (engine->doNotWrite) {
+            continue;
         }
         
         k = 0;
@@ -299,6 +304,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKSweepEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
+    engine->doNotWrite = true;
     return engine;
 }
 

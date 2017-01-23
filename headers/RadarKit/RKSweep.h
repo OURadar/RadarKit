@@ -37,8 +37,8 @@ struct rk_sweep_engine {
     RKBuffer               rayBuffer;
     uint32_t               *rayIndex;
     uint32_t               rayBufferDepth;
-    
     uint8_t                verbose;
+    bool                   doNotWrite;
     
     // Program set variables
     pthread_t              tidRayGatherer;

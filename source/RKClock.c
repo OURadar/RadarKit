@@ -109,7 +109,6 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         *timeval = t;
     }
     if (x - clock->latestTime > RKClockAWhile) {
-        RKLog("It has been a while.\n");
         recent = false;
         clock->x0 = x;
         clock->u0 = u;

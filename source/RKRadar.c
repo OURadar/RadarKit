@@ -13,7 +13,7 @@
 //
 
 // More function definitions
-void RKAddConfig(RKRadar *radar, ...);
+
 
 #pragma mark - Helper Functions
 
@@ -591,32 +591,8 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
 // Users normally don't have to deal with these
 
 void RKAddConfig(RKRadar *radar, ...) {
-    va_list   arg;
-    int       c;
-
-    c = radar->configIndex;                      RKConfig *oldConfig = &radar->configs[c];
-    c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *newConfig = &radar->configs[c];
-
-    // Copy everything
-    memcpy(newConfig, oldConfig, sizeof(RKConfig));
-
-    va_start(arg, radar);
-
-    uint32_t key = va_arg(arg, uint32_t);
-
-    // Modify the values based on the supplied keys
-    while (key != RKConfigKeyNull) {
-        switch (key) {
-            case RKConfigKeyPRF:
-                newConfig->prf[0] = va_arg(arg, uint32_t);
-                RKLog("New config with PRF = %s\n", RKIntegerToCommaStyleString(newConfig->prf[0]));
-                break;
-            default:
-                break;
-        }
-    }
-
-    va_end(arg);
+    va_list args;
+    va_start(args, radar);
+    RKLog("RKAddConfig() ...\n");
+    return RKAdvanceConfig(radar->configs, &radar->configIndex, args);
 }
-
-

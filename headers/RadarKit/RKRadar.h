@@ -180,5 +180,6 @@ void RKSetPulseReady(RKRadar *, RKPulse *);
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
 
+void RKAddConfig(RKRadar *radar, ...);
 
 #endif /* defined(__RadarKit_RKRadar__) */

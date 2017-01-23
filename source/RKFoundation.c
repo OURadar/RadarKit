@@ -443,3 +443,51 @@ void RKScratchFree(RKScratch *space) {
     free(space->gC);
     free(space);
 }
+
+#pragma mark -
+
+void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
+    va_list   arg;
+    int       c;
+    
+    c = *configIndex;                            RKConfig *oldConfig = &configs[c];
+    c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *newConfig = &configs[c];
+    
+    // If a mutex is needed, here is the place to lock it.
+    
+    // Copy everything
+    memcpy(newConfig, oldConfig, sizeof(RKConfig));
+    
+    va_start(arg, configIndex);
+    
+    uint32_t key = va_arg(arg, uint32_t);
+    
+    // Modify the values based on the supplied keys
+    while (key != RKConfigKeyNull) {
+        switch (key) {
+            case RKConfigKeyPRF:
+                newConfig->prf[0] = va_arg(arg, uint32_t);
+                RKLog("New config with PRF = %s Hz\n", RKIntegerToCommaStyleString(newConfig->prf[0]));
+                break;
+            case RKConfigKeySweepElevation:
+                newConfig->sweepElevation = (float)va_arg(arg, double);
+                RKLog("New config with sweep elevation = %.2f\n", newConfig->sweepElevation);
+                break;
+            case RKConfigPositionMarker:
+                newConfig->startMarker = va_arg(arg, uint32_t);
+                break;
+            default:
+                break;
+        }
+        // Get the next key
+        key = va_arg(arg, uint32_t);
+    }
+    
+    va_end(arg);
+    
+    // Update
+    newConfig->i++;
+    *configIndex = c;
+}
+
+

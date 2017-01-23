@@ -219,29 +219,33 @@ void *pulseTagger(void *in) {
                 marker0 |= RKMarkerSweepBegin;
             }
 
-            
             if (marker0 & RKMarkerSweepBegin) {
-//                // Add another configuration
-//                //*engine->configIndex
-//                c = *engine->configIndex;                    RKConfig *config1 = &engine->configBuffer[c];
-//                c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *config0 = &engine->configBuffer[c];
-//                
-//                // Propagate everything to the next
-//                memcpy(config0, config1, sizeof(RKConfig));
-//                config0->sweepElevation = positionBefore->sweepElevationDegrees;
-//                config0->sweepAzimuth = positionBefore->sweepAzimuthDegrees;
-//                config0->startMarker = marker0;
-//                config0->i++;
-//                
-//                *engine->configIndex = c;
-//                
-                //RKLog("%s configIndex -> %d  %.2f\n", engine->name, c, config0->sweepElevation);
-                RKconfig
+                // Add another configuration
+                //*engine->configIndex
+                c = *engine->configIndex;                    RKConfig *config1 = &engine->configBuffer[c];
+                c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *config0 = &engine->configBuffer[c];
+                
+                // Propagate everything to the next
+                memcpy(config0, config1, sizeof(RKConfig));
+                config0->sweepElevation = positionBefore->sweepElevationDegrees;
+                config0->sweepAzimuth = positionBefore->sweepAzimuthDegrees;
+                config0->startMarker = marker0;
+                config0->i++;
+                
+                *engine->configIndex = c;
+
+//                RKAdvanceConfig(engine->configBuffer, engine->configIndex,
+//                                RKConfigKeySweepElevation, (double)positionBefore->sweepElevationDegrees,
+//                                RKConfigPositionMarker,  marker0,
+//                                RKConfigKeyNull);
+                
+                if (engine->verbose) {
+                    RKLog("%s configIndex -> %d   New sweep %.2f\n", engine->name, *engine->configIndex, positionBefore->sweepElevationDegrees);
+                }
             }
 
             pulse->header.marker = marker0;
             pulse->header.configIndex = c;
-            
             
             marker1 = marker0;
 

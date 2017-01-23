@@ -407,6 +407,7 @@ enum RKConfigKey {
     RKConfigKeyNull,
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
+    RKConfigPositionMarker,
     RKConfigKeyPRF
 };
 
