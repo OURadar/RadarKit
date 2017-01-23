@@ -89,7 +89,7 @@ void *pulseTagger(void *in) {
     double alpha;
     struct timeval t0, t1;
     RKMarker marker0, marker1;
-    bool hasSweepComplete;
+    bool hasSweepEnd;
 
     RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
@@ -156,9 +156,9 @@ void *pulseTagger(void *in) {
             
             // Search until the time just after the pulse was acquired.
             i = 0;
-            hasSweepComplete = false;
+            hasSweepEnd = false;
             while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->pulseBufferDepth) {
-                hasSweepComplete |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
+                hasSweepEnd |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
                 j = RKNextModuloS(j, engine->positionBufferDepth);
                 i++;
             }
@@ -205,7 +205,7 @@ void *pulseTagger(void *in) {
             //       i > 2 means the next pair was invalid, this is the case when pulses come in slower than positions
             if (i == 2 && (positionBefore->flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete))) {
                 marker0 |= RKMarkerSweepEnd;
-            } else if (i > 2 && hasSweepComplete && !(marker1 & RKMarkerSweepEnd)) {
+            } else if (i > 2 && hasSweepEnd && !(marker1 & RKMarkerSweepEnd)) {
                 marker0 |= RKMarkerSweepEnd;
             }
             if (!(marker1 & RKMarkerSweepMiddle) && (marker0 & RKMarkerSweepMiddle)) {
@@ -258,7 +258,7 @@ void *pulseTagger(void *in) {
                       positionBefore->elevationDegrees,
                       pulse->header.elevationDegrees,
                       positionAfter->elevationDegrees,
-                      (int)hasSweepComplete,
+                      (int)hasSweepEnd,
                       positionBefore->flag,
                       marker0 & 0x7,
                       marker0,

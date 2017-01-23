@@ -132,15 +132,15 @@ void *sweepWriter(void *in) {
         
         RKPreparePath(filename);
         
+        RKLog("%s Generating %s ...\n", engine->name, filename);
+
+        if (engine->doNotWrite) {
+            continue;
+        }
+        
         if ((k = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);
             return NULL;
-        } else {
-            RKLog("%s Generating %s ...\n", engine->name, filename);
-        }
-        
-        if (engine->doNotWrite) {
-            continue;
         }
         
         k = 0;
@@ -259,7 +259,7 @@ void *rayGatherer(void *in) {
                     ray->header.n = is;
                     rays[n++] = ray;
                     is = RKNextModuloS(is, engine->rayBufferDepth);
-                } while (is != k && n < RKMaxRaysPerSweep);
+                } while (is != k && n < RKMaxRaysPerSweep && n < engine->rayBufferDepth);
                 ray = RKGetRay(engine->rayBuffer, is);
                 ray->header.n = is;
                 rays[n++] = ray;
