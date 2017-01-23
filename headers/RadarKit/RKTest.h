@@ -28,6 +28,7 @@ enum RKTestSIMDFlag {
 
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
+void RKTestParseCommaDelimitedValues(void);
 
 RKTransceiver RKTestTransceiverInit(RKRadar *, void *);
 int RKTestTransceiverExec(RKTransceiver, const char *);

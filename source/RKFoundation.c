@@ -446,9 +446,55 @@ void RKScratchFree(RKScratch *space) {
 
 #pragma mark -
 
+void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
+    float *fv;
+    double *fd;
+    int32_t *i32v;
+    uint32_t *u32v;
+    char *copy = (char *)malloc(strlen(valueString));
+    strcpy(copy, valueString);
+    char *c = copy;
+    char *e = strchr(copy, ',');
+    if (e) {
+        *e = '\0';
+    }
+    size_t s = 0;
+    while (c != NULL && s < size) {
+        switch (type) {
+            case RKValueTypeFloat:
+                fv = (float *)valueStorage;
+                fv[s] = atof(c);
+                break;
+            case RKValueTypeDouble:
+                fd = (double *)valueStorage;
+                fd[s] = atof(c);
+                break;
+            case RKValueTypeInt32:
+                i32v = (int32_t *)valueStorage;
+                i32v[s] = (int32_t)atoi(c);
+                break;
+            case RKValueTypeUInt32:
+                u32v = (uint32_t *)valueStorage;
+                u32v[s] = (uint32_t)atoi(c);
+                break;
+            default:
+                break;
+        }
+        s++;
+        if (e) {
+            c = e + 1;
+            if ((e = strchr(c, ',')) != NULL) {
+                *e = '\0';
+            }
+        }
+    }
+    free(copy);
+}
+
 void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
     va_list   arg;
     uint32_t  c;
+    char      *string;
     
     c = *configIndex;                            RKConfig *oldConfig = &configs[c];
     c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *newConfig = &configs[c];
@@ -465,9 +511,6 @@ void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
     // Modify the values based on the supplied keys
     while (key != RKConfigKeyNull) {
         switch (key) {
-            case RKConfigKeyPRF:
-                newConfig->prf[0] = va_arg(arg, uint32_t);
-                break;
             case RKConfigKeySweepElevation:
                 newConfig->sweepElevation = (float)va_arg(arg, double);
                 break;
@@ -476,6 +519,24 @@ void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
                 break;
             case RKConfigPositionMarker:
                 newConfig->startMarker = va_arg(arg, RKMarker);
+                break;
+            case RKConfigKeyPRF:
+                newConfig->prf[0] = va_arg(arg, uint32_t);
+                break;
+            case RKConfigKeyDualPRF:
+                newConfig->prf[0] = va_arg(arg, uint32_t);
+                newConfig->prf[1] = va_arg(arg, uint32_t);
+                break;
+            case RKConfigKeyGateCount:
+                newConfig->gateCount[0] = va_arg(arg, uint32_t);
+                break;
+            case RKConfigKeyWaveformId:
+                
+                break;
+            case RKConfigKeyVCPDefinition:
+                string = va_arg(arg, char *);
+                RKLog("string = %s", string);
+                //RKParseCommaDelimitedValues(newConfig->prf, RKValueTypeUInt32, RKMaxMatchedFilterCount, string);
                 break;
             default:
                 break;

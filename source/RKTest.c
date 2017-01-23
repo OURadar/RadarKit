@@ -389,6 +389,17 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     free(cc);
 }
 
+void RKTestParseCommaDelimitedValues(void) {
+    char string[] = "1200,2000,3000,5000";
+    float v[4];
+    int32_t i[4];
+    RKParseCommaDelimitedValues(v, RKValueTypeFloat, 3, string);
+    RKLog("%s -> %.2f %.2f %.2f\n", string, v[0], v[1], v[2]);
+    RKParseCommaDelimitedValues(i, RKValueTypeInt32, 3, string);
+    RKLog("%s -> %d %d %d\n", string, i[0], i[1], i[2]);
+}
+
+
 #pragma mark - Simulated Transceiver
 
 RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {

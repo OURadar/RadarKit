@@ -408,7 +408,12 @@ enum RKConfigKey {
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
     RKConfigPositionMarker,
-    RKConfigKeyPRF
+    RKConfigKeyPRF,
+    RKConfigKeyDualPRF,
+    RKConfigKeyGateCount,
+    RKConfigKeyWaveformId,
+    RKConfigKeyVCPDefinition,
+    RKConfigKeyEnd
 };
 
 #pragma pack(pop)

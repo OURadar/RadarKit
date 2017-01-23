@@ -132,7 +132,7 @@ void *sweepWriter(void *in) {
         
         RKPreparePath(filename);
         
-        RKLog("%s Generating %s ...\n", engine->name, filename);
+        RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Pretending" : "Generating", filename);
 
         if (engine->doNotWrite) {
             continue;

@@ -137,6 +137,7 @@ UserParams processInput(int argc, char **argv) {
         {"test-processor"        , no_argument      , NULL, 'Q'},
         {"test-simd"             , optional_argument, NULL, 'S'},
         {"show-types"            , no_argument      , NULL, 'T'},
+        {"test-parse-values"     , no_argument      , NULL, 'V'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
         {"core"                  , required_argument, NULL, 'c'},
@@ -219,6 +220,10 @@ UserParams processInput(int argc, char **argv) {
                 printf("Option T\n");
                 RKShowTypeSizes();
                 exit(EXIT_FAILURE);
+                break;
+            case 'V':
+                RKTestParseCommaDelimitedValues();
+                exit(EXIT_SUCCESS);
                 break;
             case 'P':
                 if (optarg) {

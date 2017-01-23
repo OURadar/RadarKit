@@ -32,6 +32,15 @@ typedef struct RKGlobalParameterStruct {
 
 extern RKGlobalParamters rkGlobalParameters;
 
+typedef uint32_t RKValueType;
+enum RKValueType {
+    RKValueTypeInt32,
+    RKValueTypeUInt32,
+    RKValueTypeFloat,
+    RKValueTypeDouble,
+    RKValueTypeString
+};
+
 #pragma mark -
 
 int RKLog(const char *, ...);
@@ -65,6 +74,8 @@ float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const bool);
 void RKScratchFree(RKScratch *);
 
+void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
 void RKAdvanceConfig(RKConfig *configBuffer, uint32_t *configIndex, ...);
+
 
 #endif /* defined(__RadarKit_RKFoundation__) */
