@@ -43,7 +43,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " | ");
 
     // Engine lag
-    i += snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s |",
+    snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s |",
                   rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                   99.9f * engine->lag,
                   rkGlobalParameters.showColor ? RKNoColor : "");
@@ -61,7 +61,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     memset(string + k, '.', RKStatusBarWidth - k);
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferDepth)];
-    i += snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s   %sEL%s %6.2f° @ %+6.2f°/s",
+    snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s   %sEL%s %6.2f° @ %+6.2f°/s",
                   (unsigned long long)position->i,
                   rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
                   rkGlobalParameters.showColor ? RKNoColor : "",
@@ -78,7 +78,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
 void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
     
-    int i, j, k, s, c;
+    int i, j, k, s;
     
     RKPulse *pulse;
     RKPosition *positionBefore;
@@ -114,7 +114,6 @@ void *pulseTagger(void *in) {
     j = 0;   // position index
     k = 0;   // pulse index;
     s = 0;   // sleep counter
-    c = 0;   // config index
     while (engine->state == RKPositionEngineStateActive) {
         // Get the latest pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -221,31 +220,18 @@ void *pulseTagger(void *in) {
 
             if (marker0 & RKMarkerSweepBegin) {
                 // Add another configuration
-                //*engine->configIndex
-                c = *engine->configIndex;                    RKConfig *config1 = &engine->configBuffer[c];
-                c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *config0 = &engine->configBuffer[c];
-                
-                // Propagate everything to the next
-                memcpy(config0, config1, sizeof(RKConfig));
-                config0->sweepElevation = positionBefore->sweepElevationDegrees;
-                config0->sweepAzimuth = positionBefore->sweepAzimuthDegrees;
-                config0->startMarker = marker0;
-                config0->i++;
-                
-                *engine->configIndex = c;
-
-//                RKAdvanceConfig(engine->configBuffer, engine->configIndex,
-//                                RKConfigKeySweepElevation, (double)positionBefore->sweepElevationDegrees,
-//                                RKConfigPositionMarker,  marker0,
-//                                RKConfigKeyNull);
-                
+                RKAdvanceConfig(engine->configBuffer, engine->configIndex,
+                                RKConfigKeySweepElevation, (double)positionBefore->sweepElevationDegrees,
+                                RKConfigKeySweepAzimuth, (double)positionBefore->sweepAzimuthDegrees,
+                                RKConfigPositionMarker,  marker0,
+                                RKConfigKeyNull);
                 if (engine->verbose) {
                     RKLog("%s configIndex -> %d   New sweep %.2f\n", engine->name, *engine->configIndex, positionBefore->sweepElevationDegrees);
                 }
             }
 
             pulse->header.marker = marker0;
-            pulse->header.configIndex = c;
+            pulse->header.configIndex = *engine->configIndex;
             
             marker1 = marker0;
 

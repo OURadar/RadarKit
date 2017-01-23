@@ -260,8 +260,10 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     if (space->showNumbers && count < 50 && gateCount < 50) {
         char variable[32];
         char line[4096];
-        RKIQZ X[count];
+        RKIQZ *X = (RKIQZ *)malloc(RKMaxPulsesPerRay * sizeof(RKIQZ));
         const int gateShown = 8;
+        
+        // Go through both polarizations
         for (p = 0; p < 2; p++) {
             printf("\%sChannel %d (%s pol):%s\n",
                    rkGlobalParameters.showColor ? "\033[4m" : "",
@@ -328,6 +330,8 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
                rkGlobalParameters.showColor ? "\033[24m" : "");
         RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                  // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
+
+        free(X);
     }
 
 

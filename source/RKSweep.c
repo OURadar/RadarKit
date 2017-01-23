@@ -122,13 +122,13 @@ void *sweepWriter(void *in) {
         k += sprintf(filename + k, "/%s-", engine->radarDescription->filePrefix);
         k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerPPIScan) {
-            k += sprintf(filename + k, "-E%.1f-%c.nc", S->header.sweepElevation, symbol);
+            k += sprintf(filename + k, "-E%.1f-%c", S->header.sweepElevation, symbol);
         } else if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerRHIScan) {
-            k += sprintf(filename + k, "-A%.1fm-%c.nc", S->header.sweepAzimuth, symbol);
+            k += sprintf(filename + k, "-A%.1f-%c", S->header.sweepAzimuth, symbol);
         } else {
-            RKLog("%s Incomplete sweep. Discarding ...\n", engine->name);
-            continue;
+            k += sprintf(filename + k, "-N%03d-%c", n, symbol);
         }
+        sprintf(filename + k, ".nc");
         
         RKPreparePath(filename);
         

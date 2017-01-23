@@ -397,6 +397,11 @@ void *pulseWatcher(void *_in) {
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state = RKPulseCompressionEngineStateActive;
+    
+    // Make all sem_t 0 (to prevent the annoying compiler warnings)
+    for (c = 0; c < engine->coreCount; c++) {
+        sem[c] = NULL;
+    }
 
     // Spin off N workers to process I/Q pulses
     for (c = 0; c < engine->coreCount; c++) {

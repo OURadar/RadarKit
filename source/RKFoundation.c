@@ -448,7 +448,7 @@ void RKScratchFree(RKScratch *space) {
 
 void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
     va_list   arg;
-    int       c;
+    uint32_t  c;
     
     c = *configIndex;                            RKConfig *oldConfig = &configs[c];
     c = RKNextModuloS(c, RKBufferCSlotCount);    RKConfig *newConfig = &configs[c];
@@ -460,27 +460,28 @@ void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
     
     va_start(arg, configIndex);
     
-    uint32_t key = va_arg(arg, uint32_t);
+    uint32_t key = va_arg(arg, RKConfigKey);
     
     // Modify the values based on the supplied keys
     while (key != RKConfigKeyNull) {
         switch (key) {
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(arg, uint32_t);
-                RKLog("New config with PRF = %s Hz\n", RKIntegerToCommaStyleString(newConfig->prf[0]));
                 break;
             case RKConfigKeySweepElevation:
                 newConfig->sweepElevation = (float)va_arg(arg, double);
-                RKLog("New config with sweep elevation = %.2f\n", newConfig->sweepElevation);
+                break;
+            case RKConfigKeySweepAzimuth:
+                newConfig->sweepAzimuth = (float)va_arg(arg, double);
                 break;
             case RKConfigPositionMarker:
-                newConfig->startMarker = va_arg(arg, uint32_t);
+                newConfig->startMarker = va_arg(arg, RKMarker);
                 break;
             default:
                 break;
         }
         // Get the next key
-        key = va_arg(arg, uint32_t);
+        key = va_arg(arg, RKConfigKey);
     }
     
     va_end(arg);
@@ -489,5 +490,3 @@ void RKAdvanceConfig(RKConfig *configs, uint32_t *configIndex, ...) {
     newConfig->i++;
     *configIndex = c;
 }
-
-

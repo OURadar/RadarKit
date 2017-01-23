@@ -313,6 +313,9 @@ int main(int argc, char *argv[]) {
         desc.pulseBufferDepth = 10000;
     }
     desc.rayBufferDepth = 1080;
+    desc.latitude = 35.181251;
+    desc.longitude = -97.436752;
+    desc.radarHeight = 2.5f;
     myRadar = RKInitWithDesc(desc);
     
     if (myRadar == NULL) {

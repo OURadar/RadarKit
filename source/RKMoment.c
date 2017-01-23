@@ -357,7 +357,6 @@ void *momentCore(void *in) {
         i = io * (RKStatusBarWidth + 1) / engine->rayBufferDepth;
         memset(string, '#', i);
         memset(string + i, '.', RKStatusBarWidth - i);
-        i = RKStatusBarWidth;
 
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);

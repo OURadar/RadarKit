@@ -512,7 +512,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 
                 // Some seemingly random pattern for testing
-                n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
+                //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < gateCount; g++) {
                     X->i = (int16_t)(20000.0f * a * cosf((float)g * 0.005f));
                     X->q = 0.0f;
