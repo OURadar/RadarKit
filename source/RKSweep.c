@@ -25,6 +25,7 @@ void *sweepWriter(void *in) {
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    RKRadarDesc *desc = engine->radarDescription;
     
     RKLog("%s Sweep   C%02d-%02d  E%4.2f-%4.2f-%.2f   A%6.2f-%6.2f   %sM%s%04x-%04x-%04x   %05lu...%05lu (%s%d%s)\n",
           engine->name,
@@ -60,7 +61,9 @@ void *sweepWriter(void *in) {
     
     float tmp;
 
+    // Some global attributes
     time_t startTime = (time_t)S->header.startTime.tv_sec;
+    float va = 0.25f * desc->wavelength * config->prf[0];
 
     // Go through all moments
     uint32_t productList = S->header.productList;
@@ -194,7 +197,7 @@ void *sweepWriter(void *in) {
         nc_put_att_float(ncid, NC_GLOBAL, "FractionalTime", NC_FLOAT, 1, &tmp);
         put_global_text_att(ncid, "attributes", "Nyquist_Vel Unit radarName vcp ColorMap");
         put_global_text_att(ncid, "Nyquist_Vel-unit", "MetersPerSecond");
-//        nc_put_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", NC_FLOAT, 1, &vol->va);
+        nc_put_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", NC_FLOAT, 1, &va);
         put_global_text_att(ncid, "Unit-unit", "dimensionless");
         put_global_text_att(ncid, "Unit-value", productUnit);
         put_global_text_att(ncid, "radarName-unit", "dimensionless");

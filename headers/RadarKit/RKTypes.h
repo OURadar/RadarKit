@@ -159,6 +159,7 @@ typedef struct rk_radar_desc {
     double           latitude;
     double           longitude;
     float            radarHeight;
+    float            wavelength;
     char             name[RKNameLength];
     char             filePrefix[RKNameLength];
 } RKRadarDesc;
