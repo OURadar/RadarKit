@@ -79,7 +79,6 @@
 
 typedef uint8_t   RKBoolean;
 typedef int8_t    RKByte;
-typedef uint64_t  RKEnum;
 typedef float     RKFloat;   // We can change this to double if we decided one day
 typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
 typedef void *    RKTransceiver;
@@ -114,6 +113,26 @@ typedef union rk_four_byte {
     struct { uint32_t u32; };
     struct { float f; };
 } RKFourByte;
+
+typedef uint32_t RKPositionFlag;
+enum RKPositionFlag {
+    RKPositionFlagVacant             = 0,
+    RKPositionFlagAzimuthEnabled     = 1,
+    RKPositionFlagAzimuthSafety      = (1 << 1),
+    RKPositionFlagAzimuthError       = (1 << 2),
+    RKPositionFlagAzimuthSweep       = (1 << 8),
+    RKPositionFlagAzimuthPoint       = (1 << 9),
+    RKPositionFlagAzimuthComplete    = (1 << 10),
+    RKPositionFlagElevationEnabled   = (1 << 16),
+    RKPositionFlagElevationSafety    = (1 << 17),
+    RKPositionFlagElevationError     = (1 << 18),
+    RKPositionFlagElevationSweep     = (1 << 24),
+    RKPositionFlagElevationPoint     = (1 << 25),
+    RKPositionFlagElevationComplete  = (1 << 26),
+    RKPositionFlagActive             = (1 << 28),
+    RKPositionFlagHardwareMask       = 0x3FFFFFFF,
+    RKPositionFlagReady              = (1 << 31)
+};
 
 typedef uint32_t RKMarker;
 enum RKMarker {
@@ -150,8 +169,21 @@ enum RKRayStatus {
     RKRayStatusUsedOnce         = (1 << 4)
 };
 
+typedef uint32_t RKInitFlag;
+enum RKInitFlag {
+    RKInitFlagNone                  = 0,
+    RKInitFlagVerbose               = 1,
+    RKInitFlagVeryVerbose           = (1 << 1),
+    RKInitFlagVeryVeryVerbose       = (1 << 2),
+    RKInitFlagAllocMomentBuffer     = (1 << 8),
+    RKInitFlagAllocRawIQBuffer      = (1 << 9),
+    RKInitFlagAllocEverything       = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
+    RKInitFlagAllocEverythingQuiet  = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
+};
+
+// A general description of a radar
 typedef struct rk_radar_desc {
-    RKEnum           initFlags;
+    RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
     uint32_t         pulseToRayRatio;
     uint32_t         pulseBufferDepth;
@@ -178,26 +210,6 @@ typedef struct rk_config {
     float            sweepAzimuth;
     RKMarker         startMarker;
 } RKConfig;
-
-typedef uint32_t RKPositionFlag;
-enum RKPositionFlag {
-    RKPositionFlagVacant             = 0,
-    RKPositionFlagAzimuthEnabled     = 1,
-    RKPositionFlagAzimuthSafety      = (1 << 1),
-    RKPositionFlagAzimuthError       = (1 << 2),
-    RKPositionFlagAzimuthSweep       = (1 << 8),
-    RKPositionFlagAzimuthPoint       = (1 << 9),
-    RKPositionFlagAzimuthComplete    = (1 << 10),
-    RKPositionFlagElevationEnabled   = (1 << 16),
-    RKPositionFlagElevationSafety    = (1 << 17),
-    RKPositionFlagElevationError     = (1 << 18),
-    RKPositionFlagElevationSweep     = (1 << 24),
-    RKPositionFlagElevationPoint     = (1 << 25),
-    RKPositionFlagElevationComplete  = (1 << 26),
-    RKPositionFlagActive             = (1 << 28),
-    RKPositionFlagHardwareMask       = 0x3FFFFFFF,
-    RKPositionFlagReady              = (1 << 31)
-};
 
 typedef union rk_position {
     struct {
@@ -234,7 +246,7 @@ typedef struct rk_pulse_header {
     uint64_t         i;                                              // Identity counter
     uint64_t         n;                                              // Network counter
     uint64_t         t;                                              // A clean clock-related tic count
-    uint32_t         s;                                              // Status flag
+    RKPulseStatus    s;                                              // Status flag
     uint32_t         capacity;                                       // Allocated capacity
     uint32_t         gateCount;                                      // Number of range gates
     RKMarker         marker;                                         // Position Marker
@@ -272,7 +284,8 @@ typedef struct rk_pulse {
     RKByte                     data[0];
 } RKPulse;
 
-enum productList {
+typedef uint32_t RKProductList;
+enum RKProductList {
     RKProductListDisplayZ             = (1),                         // Displays
     RKProductListDisplayV             = (1 << 1),                    //
     RKProductListDisplayW             = (1 << 2),                    //
@@ -300,7 +313,7 @@ typedef struct rk_ray_header {
     uint32_t         i;                                              // Ray indentity
     uint32_t         n;                                              // Ray network counter
     RKMarker         marker;                                         // Volume / sweep / radial marker
-    uint32_t         productList;                                    // 16-bit MSB for products + 16-bit LSB for display
+    RKProductList    productList;                                    // 16-bit MSB for products + 16-bit LSB for display
     uint16_t         configIndex;                                    // Operating configuration index
     uint16_t         configSubIndex;                                 // Operating configuration sub-index
     uint16_t         gateCount;                                      //

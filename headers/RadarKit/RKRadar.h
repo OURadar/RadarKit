@@ -19,18 +19,7 @@
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKSweep.h>
 
-enum RKInitFlag {
-    RKInitFlagNone                  = 0,
-    RKInitFlagVerbose               = 1,
-    RKInitFlagVeryVerbose           = (1 << 1),
-    RKInitFlagVeryVeryVerbose       = (1 << 2),
-    RKInitFlagAllocMomentBuffer     = (1 << 8),
-    RKInitFlagAllocRawIQBuffer      = (1 << 9),
-    RKInitFlagAllocEverything       = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
-    RKInitFlagAllocEverythingQuiet  = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
-};
-
-typedef RKEnum RKRadarState;
+typedef uint32_t RKRadarState;
 enum RKRadarState {
     RKRadarStateBaseAllocated                        = 1,          // 0x01
     RKRadarStateRayBufferAllocating                  = (1 << 1),   // 0x02
