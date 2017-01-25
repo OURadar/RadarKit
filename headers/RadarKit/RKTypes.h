@@ -114,6 +114,38 @@ typedef union rk_four_byte {
     struct { float f; };
 } RKFourByte;
 
+enum RKResult {
+    RKResultTimeout = -99,
+    RKResultIncompleteSend,
+    RKResultIncompleteReceive,
+    RKResultErrorCreatingOperatorRoutine,
+    RKResultErrorCreatingClientRoutine,
+    RKResultSDToFDError,
+    RKResultNoPulseBuffer,
+    RKResultNoRayBuffer,
+    RKResultNoPulseCompressionEngine,
+    RKResultNoMomentEngine,
+    RKResultFailedToStartCompressionCore,
+    RKResultFailedToStartPulseWatcher,
+    RKResultFailedToInitiateSemaphore,
+    RKResultFailedToRetrieveSemaphore,
+    RKResultTooBig,
+    RKResultFailedToAllocateFFTSpace,
+    RKResultFailedToAllocateFilter,
+    RKResultFailedToAllocateDutyCycleBuffer,
+    RKResultFailedToAllocateScratchSpace,
+    RKResultFailedToAddFilter,
+    RKResultEngineDeactivatedMultipleTimes,
+    RKResultFailedToStartMomentCore,
+    RKResultFailedToStartPulseGatherer,
+    RKResultUnableToChangeCoreCounts,
+    RKResultFailedToStartPedestalWorker,
+    RKResultFailedToGetVacantPosition,
+    RKResultFailedToStartRayGatherer,
+    RKResultSuccess = 0,
+    RKResultNoError = 0
+};
+
 typedef uint32_t RKPositionFlag;
 enum RKPositionFlag {
     RKPositionFlagVacant             = 0,
@@ -136,52 +168,52 @@ enum RKPositionFlag {
 
 typedef uint32_t RKMarker;
 enum RKMarker {
-    RKMarkerNull                = 0,
-    RKMarkerSweepMiddle         = 1,
-    RKMarkerSweepBegin          = (1 << 1),
-    RKMarkerSweepEnd            = (1 << 2),
-    RKMarkerVolumeBegin         = (1 << 3),
-    RKMarkerVolumeEnd           = (1 << 4),
-    RKMarkerPPIScan             = (1 << 8),
-    RKMarkerRHIScan             = (1 << 9),
-    RKMarkerPointScan           = (1 << 10)
+    RKMarkerNull                     = 0,
+    RKMarkerSweepMiddle              = 1,
+    RKMarkerSweepBegin               = (1 << 1),
+    RKMarkerSweepEnd                 = (1 << 2),
+    RKMarkerVolumeBegin              = (1 << 3),
+    RKMarkerVolumeEnd                = (1 << 4),
+    RKMarkerPPIScan                  = (1 << 8),
+    RKMarkerRHIScan                  = (1 << 9),
+    RKMarkerPointScan                = (1 << 10)
 };
 
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
-    RKPulseStatusVacant         = 0,
-    RKPulseStatusHasIQData      = 1,                                                      // 0x01
-    RKPulseStatusHasPosition    = (1 << 1),                                               // 0x02
-    RKPulseStatusInspected      = (1 << 2),
-    RKPulseStatusCompressed     = (1 << 3),
-    RKPulseStatusSkipped        = (1 << 4),
-    RKPulseStatusProcessed      = (1 << 5),
-    RKPulseStatusReadyForMoment = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
+    RKPulseStatusVacant              = 0,
+    RKPulseStatusHasIQData           = 1,                            // 0x01
+    RKPulseStatusHasPosition         = (1 << 1),                     // 0x02
+    RKPulseStatusInspected           = (1 << 2),
+    RKPulseStatusCompressed          = (1 << 3),
+    RKPulseStatusSkipped             = (1 << 4),
+    RKPulseStatusProcessed           = (1 << 5),
+    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
 };
 
 typedef uint32_t RKRayStatus;
 enum RKRayStatus {
-    RKRayStatusVacant           = 0,
-    RKRayStatusProcessing       = 1,
-    RKRayStatusProcessed        = (1 << 1),
-    RKRayStatusSkipped          = (1 << 2),
-    RKRayStatusReady            = (1 << 3),
-    RKRayStatusUsedOnce         = (1 << 4)
+    RKRayStatusVacant                = 0,
+    RKRayStatusProcessing            = 1,
+    RKRayStatusProcessed             = (1 << 1),
+    RKRayStatusSkipped               = (1 << 2),
+    RKRayStatusReady                 = (1 << 3),
+    RKRayStatusUsedOnce              = (1 << 4)
 };
 
 typedef uint32_t RKInitFlag;
 enum RKInitFlag {
-    RKInitFlagNone                  = 0,
-    RKInitFlagVerbose               = 1,
-    RKInitFlagVeryVerbose           = (1 << 1),
-    RKInitFlagVeryVeryVerbose       = (1 << 2),
-    RKInitFlagAllocMomentBuffer     = (1 << 8),
-    RKInitFlagAllocRawIQBuffer      = (1 << 9),
-    RKInitFlagAllocEverything       = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
-    RKInitFlagAllocEverythingQuiet  = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
+    RKInitFlagNone                   = 0,
+    RKInitFlagVerbose                = 1,
+    RKInitFlagVeryVerbose            = (1 << 1),
+    RKInitFlagVeryVeryVerbose        = (1 << 2),
+    RKInitFlagAllocMomentBuffer      = (1 << 8),
+    RKInitFlagAllocRawIQBuffer       = (1 << 9),
+    RKInitFlagAllocEverything        = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
+    RKInitFlagAllocEverythingQuiet   = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
 };
 
-// A general description of a radar
+// A general description of a radar. These should never change after the radar has gone live
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
@@ -199,16 +231,16 @@ typedef struct rk_radar_desc {
 // A running configuration buffer
 typedef struct rk_config {
     uint32_t         i;                                              // Identity counter
-    uint32_t         prf[RKMaxMatchedFilterCount];
-    uint32_t         gateCount[RKMaxMatchedFilterCount];
-    uint32_t         waveformId[RKMaxMatchedFilterCount];
-    char             vcpDefinition[RKMaximumStringLength];
-    RKFloat          noise[2];
-    RKFloat          ZCal[2];
-    RKFloat          PCal[2];
-    float            sweepElevation;
-    float            sweepAzimuth;
-    RKMarker         startMarker;
+    uint32_t         prf[RKMaxMatchedFilterCount];                   // Pulse repetition frequency (Hz)
+    uint32_t         gateCount[RKMaxMatchedFilterCount];             // Number of range gates
+    uint32_t         waveformId[RKMaxMatchedFilterCount];            // Transmit waveform
+    char             vcpDefinition[RKMaximumStringLength];           // Volume coverage pattern
+    RKFloat          noise[2];                                       // Noise floor in ADU
+    RKFloat          ZCal[2];                                        // Reflectivity calibration
+    RKFloat          PCal[2];                                        // Phase calibration
+    float            sweepElevation;                                 // Sweep elevation angle
+    float            sweepAzimuth;                                   // Sweep azimuth angle
+    RKMarker         startMarker;                                    // Marker of the start ray
 } RKConfig;
 
 typedef union rk_position {
@@ -286,25 +318,25 @@ typedef struct rk_pulse {
 
 typedef uint32_t RKProductList;
 enum RKProductList {
-    RKProductListDisplayZ             = (1),                         // Displays
-    RKProductListDisplayV             = (1 << 1),                    //
-    RKProductListDisplayW             = (1 << 2),                    //
-    RKProductListDisplayD             = (1 << 3),                    //
-    RKProductListDisplayP             = (1 << 4),                    //
-    RKProductListDisplayR             = (1 << 5),                    //
-    RKProductListDisplayK             = (1 << 6),                    //
-    RKProductListDisplayS             = (1 << 7),                    //
-    RKProductListDisplayZVWDPRKS      = 0x000000FF,                  //
-    RKProductListProductZ             = (1 << 16),                   // Data in float
-    RKProductListProductV             = (1 << 17),                   //
-    RKProductListProductW             = (1 << 18),                   //
-    RKProductListProductD             = (1 << 19),                   //
-    RKProductListProductP             = (1 << 20),                   //
-    RKProductListProductR             = (1 << 21),                   //
-    RKProductListProductK             = (1 << 22),                   //
-    RKProductListProductS             = (1 << 23),                   //
-    RKProductListProductZVWDPR        = 0x003F0000,                  //
-    RKProductListProductZVWDPRKS      = 0x00FF0000                   //
+    RKProductListDisplayZ             = (1),                         // Display Z - Reflectivity dBZ
+    RKProductListDisplayV             = (1 << 1),                    // Display V - Velocity
+    RKProductListDisplayW             = (1 << 2),                    // Display W - Width
+    RKProductListDisplayD             = (1 << 3),                    // Display D - Differential Reflectivity
+    RKProductListDisplayP             = (1 << 4),                    // Display P - PhiDP
+    RKProductListDisplayR             = (1 << 5),                    // Display R - RhoHV
+    RKProductListDisplayK             = (1 << 6),                    // Display K - KDP
+    RKProductListDisplayS             = (1 << 7),                    // Display S - Signal
+    RKProductListDisplayZVWDPRKS      = 0x000000FF,                  // Display All
+    RKProductListProductZ             = (1 << 16),                   // Data of Z
+    RKProductListProductV             = (1 << 17),                   // Data of V
+    RKProductListProductW             = (1 << 18),                   // Data of W
+    RKProductListProductD             = (1 << 19),                   // Data of D
+    RKProductListProductP             = (1 << 20),                   // Data of P
+    RKProductListProductR             = (1 << 21),                   // Data of R
+    RKProductListProductK             = (1 << 22),                   // Data of K
+    RKProductListProductS             = (1 << 23),                   // Data of S
+    RKProductListProductZVWDPR        = 0x003F0000,                  // Base data, i.e., without K, and S
+    RKProductListProductZVWDPRKS      = 0x00FF0000                   // All data
 };
 
 typedef struct rk_ray_header {
@@ -338,38 +370,6 @@ typedef struct rk_ray {
     };
     RKByte           data[0];
 } RKRay;
-
-enum RKResult {
-    RKResultTimeout = -99,
-    RKResultIncompleteSend,
-    RKResultIncompleteReceive,
-    RKResultErrorCreatingOperatorRoutine,
-    RKResultErrorCreatingClientRoutine,
-    RKResultSDToFDError,
-    RKResultNoPulseBuffer,
-    RKResultNoRayBuffer,
-    RKResultNoPulseCompressionEngine,
-    RKResultNoMomentEngine,
-    RKResultFailedToStartCompressionCore,
-    RKResultFailedToStartPulseWatcher,
-    RKResultFailedToInitiateSemaphore,
-    RKResultFailedToRetrieveSemaphore,
-    RKResultTooBig,
-    RKResultFailedToAllocateFFTSpace,
-    RKResultFailedToAllocateFilter,
-    RKResultFailedToAllocateDutyCycleBuffer,
-    RKResultFailedToAllocateScratchSpace,
-    RKResultFailedToAddFilter,
-    RKResultEngineDeactivatedMultipleTimes,
-    RKResultFailedToStartMomentCore,
-    RKResultFailedToStartPulseGatherer,
-    RKResultUnableToChangeCoreCounts,
-    RKResultFailedToStartPedestalWorker,
-    RKResultFailedToGetVacantPosition,
-    RKResultFailedToStartRayGatherer,
-    RKResultSuccess = 0,
-    RKResultNoError = 0
-};
 
 typedef struct rk_modulo_path {
     uint32_t      origin;
