@@ -102,7 +102,7 @@ void *pulseTagger(void *in) {
 
     // Wait until there is something ingested
     s = 0;
-    while (*engine->positionIndex < 2) {
+    while (*engine->positionIndex < 2 && engine->state == RKPositionEngineStateActive) {
         usleep(1000);
         if (++s % 200 == 0 && engine->verbose > 1) {
             RKLog("%s sleep 0/%.1f s\n",
