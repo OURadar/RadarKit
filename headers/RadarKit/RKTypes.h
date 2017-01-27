@@ -276,7 +276,7 @@ typedef union rk_position {
 
 typedef struct rk_pulse_header {
     uint64_t         i;                                              // Identity counter
-    uint64_t         n;                                              // Network counter
+    uint64_t         n;                                              // Network counter, may be useful to indicate packet loss
     uint64_t         t;                                              // A clean clock-related tic count
     RKPulseStatus    s;                                              // Status flag
     uint32_t         capacity;                                       // Allocated capacity
