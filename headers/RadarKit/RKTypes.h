@@ -213,6 +213,57 @@ enum RKInitFlag {
     RKInitFlagAllocEverythingQuiet   = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
 };
 
+typedef uint32_t RKProductList;
+enum RKProductList {
+    RKProductListDisplayZ            = (1),                          // Display Z - Reflectivity dBZ
+    RKProductListDisplayV            = (1 << 1),                     // Display V - Velocity
+    RKProductListDisplayW            = (1 << 2),                     // Display W - Width
+    RKProductListDisplayD            = (1 << 3),                     // Display D - Differential Reflectivity
+    RKProductListDisplayP            = (1 << 4),                     // Display P - PhiDP
+    RKProductListDisplayR            = (1 << 5),                     // Display R - RhoHV
+    RKProductListDisplayK            = (1 << 6),                     // Display K - KDP
+    RKProductListDisplayS            = (1 << 7),                     // Display S - Signal
+    RKProductListDisplayZVWDPRKS     = 0x000000FF,                   // Display All
+    RKProductListProductZ            = (1 << 16),                    // Data of Z
+    RKProductListProductV            = (1 << 17),                    // Data of V
+    RKProductListProductW            = (1 << 18),                    // Data of W
+    RKProductListProductD            = (1 << 19),                    // Data of D
+    RKProductListProductP            = (1 << 20),                    // Data of P
+    RKProductListProductR            = (1 << 21),                    // Data of R
+    RKProductListProductK            = (1 << 22),                    // Data of K
+    RKProductListProductS            = (1 << 23),                    // Data of S
+    RKProductListProductZVWDPR       = 0x003F0000,                   // Base data, i.e., without K, and S
+    RKProductListProductZVWDPRKS     = 0x00FF0000                    // All data
+};
+
+typedef uint32_t RKProductIndex;
+enum RKProductIndex {
+    RKProductIndexZ,
+    RKProductIndexV,
+    RKProductIndexW,
+    RKProductIndexD,
+    RKProductIndexP,
+    RKProductIndexR,
+    RKProductIndexK,
+    RKProductIndexZv,
+    RKProductIndexVv,
+    RKProductIndexWv
+};
+
+typedef uint32_t RKConfigKey;
+enum RKConfigKey {
+    RKConfigKeyNull,
+    RKConfigKeySweepElevation,
+    RKConfigKeySweepAzimuth,
+    RKConfigPositionMarker,
+    RKConfigKeyPRF,
+    RKConfigKeyDualPRF,
+    RKConfigKeyGateCount,
+    RKConfigKeyWaveformId,
+    RKConfigKeyVCPDefinition,
+    RKConfigKeyEnd
+};
+
 // A general description of a radar. These should never change after the radar has gone live
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
@@ -316,29 +367,6 @@ typedef struct rk_pulse {
     RKByte                     data[0];
 } RKPulse;
 
-typedef uint32_t RKProductList;
-enum RKProductList {
-    RKProductListDisplayZ             = (1),                         // Display Z - Reflectivity dBZ
-    RKProductListDisplayV             = (1 << 1),                    // Display V - Velocity
-    RKProductListDisplayW             = (1 << 2),                    // Display W - Width
-    RKProductListDisplayD             = (1 << 3),                    // Display D - Differential Reflectivity
-    RKProductListDisplayP             = (1 << 4),                    // Display P - PhiDP
-    RKProductListDisplayR             = (1 << 5),                    // Display R - RhoHV
-    RKProductListDisplayK             = (1 << 6),                    // Display K - KDP
-    RKProductListDisplayS             = (1 << 7),                    // Display S - Signal
-    RKProductListDisplayZVWDPRKS      = 0x000000FF,                  // Display All
-    RKProductListProductZ             = (1 << 16),                   // Data of Z
-    RKProductListProductV             = (1 << 17),                   // Data of V
-    RKProductListProductW             = (1 << 18),                   // Data of W
-    RKProductListProductD             = (1 << 19),                   // Data of D
-    RKProductListProductP             = (1 << 20),                   // Data of P
-    RKProductListProductR             = (1 << 21),                   // Data of R
-    RKProductListProductK             = (1 << 22),                   // Data of K
-    RKProductListProductS             = (1 << 23),                   // Data of S
-    RKProductListProductZVWDPR        = 0x003F0000,                  // Base data, i.e., without K, and S
-    RKProductListProductZVWDPRKS      = 0x00FF0000                   // All data
-};
-
 typedef struct rk_ray_header {
     uint32_t         capacity;                                       // Capacity
     RKRayStatus      s;                                              // Ray status
@@ -402,33 +430,6 @@ typedef struct rk_scratch {
     RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
     RKFloat          *KDP;                                           // Specific phase KDP
 } RKScratch;
-
-enum RKProductIndex {
-    RKProductIndexZ,
-    RKProductIndexV,
-    RKProductIndexW,
-    RKProductIndexD,
-    RKProductIndexP,
-    RKProductIndexR,
-    RKProductIndexK,
-    RKProductIndexZv,
-    RKProductIndexVv,
-    RKProductIndexWv
-};
-
-typedef uint32_t RKConfigKey;
-enum RKConfigKey {
-    RKConfigKeyNull,
-    RKConfigKeySweepElevation,
-    RKConfigKeySweepAzimuth,
-    RKConfigPositionMarker,
-    RKConfigKeyPRF,
-    RKConfigKeyDualPRF,
-    RKConfigKeyGateCount,
-    RKConfigKeyWaveformId,
-    RKConfigKeyVCPDefinition,
-    RKConfigKeyEnd
-};
 
 #pragma pack(pop)
 
