@@ -177,6 +177,10 @@ int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
 int RKStop(RKRadar *);
 
+// Healths
+RKHealth *RKGetVacantHealth(RKRadar *);
+void RKSetHealthReady(RKRadar *, RKHealth *);
+
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
 void RKSetPositionReady(RKRadar *, RKPosition *);

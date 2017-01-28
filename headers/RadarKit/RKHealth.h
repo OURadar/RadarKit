@@ -57,10 +57,6 @@ void RKHealthEngineSetVerbose(RKHealthEngine *, const int);
 void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth);
 
-//void RKHealthEngineSetHardwareInit(RKHealthEngine *, RKHealth(void *), void *);
-//void RKHealthEngineSetHardwareExec(RKHealthEngine *, int(RKHealth, const char *));
-//void RKHealthEngineSetHardwareFree(RKHealthEngine *, int(RKHealth));
-
 int RKHealthEngineStart(RKHealthEngine *);
 int RKHealthEngineStop(RKHealthEngine *);
 

@@ -11,10 +11,24 @@
 void *healthRelay(void *in) {
     RKHealthEngine *engine = (RKHealthEngine *)in;
     
+    int k, s;
+    
     RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     
     engine->state = RKHealthEngineStateActive;
     
+    k = 0;   // health index
+    while (engine->state == RKHealthEngineStateActive) {
+        s = 0;
+        while (k == *engine->healthIndex) {
+            usleep(10000);
+            if (++s % 100 == 0) {
+                RKLog("%s sleep 0/%.1f s   k = %d\n",
+                      engine->name, (float)s * 0.01f, k);
+            }
+        }
+        k = RKNextModuloS(k, engine->healthBufferDepth);
+    }
 
     return (void *)NULL;
 }
@@ -47,10 +61,6 @@ void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
     engine->healthIndex = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
 }
-
-//void RKHealthEngineSetHardwareInit(RKHealthEngine *, RKHealth(void *), void *);
-//void RKHealthEngineSetHardwareExec(RKHealthEngine *, int(RKHealth, const char *));
-//void RKHealthEngineSetHardwareFree(RKHealthEngine *, int(RKHealth));
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
     RKLog("%s starting ...\n", engine->name);

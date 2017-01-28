@@ -82,12 +82,21 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->desc = desc;
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(RKBuffer0SlotCount));
+        }
     }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(RKBuffer2SlotCount));
+        }
     }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(RKGateCount));
+        }
     }
     
     // Read in preference file here, override some values
@@ -586,6 +595,26 @@ int RKStop(RKRadar *radar) {
     return 0;
 }
 
+#pragma mark - Healths
+
+RKHealth *RKGetVacantHealth(RKRadar *radar) {
+    if (radar->healthEngine == NULL) {
+        RKLog("Error. Health engine has not started.\n");
+        exit(EXIT_FAILURE);
+    }
+    RKHealth *health = &radar->healths[radar->healthIndex];
+    health->i += radar->desc.healthBufferDepth;
+    health->flag = RKHealthFlagVacant;
+    return health;
+}
+
+void RKSetHealthReady(RKRadar *radar, RKHealth *health) {
+    gettimeofday(&health->time, NULL);
+    health->timeDouble = (double)health->time.tv_sec + 1.0e-6 * (double)health->time.tv_usec;
+    health->flag = RKHealthFlagReady;
+    radar->healthIndex = RKNextModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+}
+
 #pragma mark - Positions
 
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
@@ -594,7 +623,7 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
         exit(EXIT_FAILURE);
     }
     RKPosition *position = &radar->positions[radar->positionIndex];
-    position->i += RKBufferPSlotCount;
+    position->i += radar->desc.positionBufferDepth;
     position->flag = RKPositionFlagVacant;
     return position;
 }
@@ -603,9 +632,9 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
     if (position->flag & ~RKPositionFlagHardwareMask) {
         RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
-    position->flag |= RKPositionFlagReady;
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
-    radar->positionIndex = RKNextModuloS(radar->positionIndex, RKBufferPSlotCount);
+    position->flag |= RKPositionFlagReady;
+    radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
     return;
 }
 

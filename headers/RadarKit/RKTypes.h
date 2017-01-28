@@ -169,6 +169,12 @@ enum RKPositionFlag {
     RKPositionFlagReady              = (1 << 31)
 };
 
+typedef uint32_t RKHealthFlag;
+enum RKHealthFlag {
+    RKHealthFlagVacant               = 0,
+    RKHealthFlagReady                = 1
+};
+
 typedef uint32_t RKMarker;
 enum RKMarker {
     RKMarkerNull                     = 0,
@@ -301,6 +307,17 @@ typedef struct rk_config {
     RKMarker         startMarker;                                    // Marker of the start ray
 } RKConfig;
 
+typedef union rk_heath {
+    struct {
+        uint64_t         i;                                          // Identity counter
+        char             string[RKMaximumStringLength];              // Health string
+        RKHealthFlag     flag;                                       // Health flag
+        struct timeval   time;                                       // Time in struct timeval
+        double           timeDouble;                                 // Time in double
+    };
+    RKByte               *bytes;
+} RKHealth;
+
 typedef union rk_position {
     struct {
         uint64_t         i;                                          // Counter
@@ -354,16 +371,6 @@ typedef struct rk_pulse_header {
     float            elevationVelocityDegreesPerSecond;              // Velocity of elevation in degrees / second
     float            azimuthVelocityDegreesPerSecond;                // Velocity of azimuth in degrees / second
 } RKPulseHeader;
-
-typedef union rk_heath {
-    struct {
-        uint64_t         i;
-        struct timeval   time;
-        double           timeDouble;
-        char             string[RKMaximumStringLength];
-    };
-    RKByte               bytes[RKMaximumStringLength];
-} RKHealth;
 
 // Pulse parameters for matched filters (pulseCompressionCore)
 typedef struct rk_pulse_parameters {

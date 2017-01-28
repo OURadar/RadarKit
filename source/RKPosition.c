@@ -113,11 +113,11 @@ void *pulseTagger(void *in) {
     // Set the pulse to have position
     j = 0;   // position index
     k = 0;   // pulse index;
-    s = 0;   // sleep counter
     while (engine->state == RKPositionEngineStateActive) {
         // Get the latest pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until a thread check out this pulse.
+        s = 0;
         while (k == *engine->pulseIndex && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
@@ -311,19 +311,6 @@ void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
     engine->pulseBufferDepth    = pulseBufferDepth;
 }
 
-//void RKPositionEngineSetHardwareInit(RKPositionEngine *engine, RKPedestal hardwareInit(void *), void *hardwareInitInput) {
-//    engine->hardwareInit = hardwareInit;
-//    engine->hardwareInitInput = hardwareInitInput;
-//}
-//
-//void RKPositionEngineSetHardwareExec(RKPositionEngine *engine, int hardwareExec(RKPedestal, const char *)) {
-//    engine->hardwareExec = hardwareExec;
-//}
-//
-//void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(RKPedestal)) {
-//    engine->hardwareFree = hardwareFree;
-//}
-//
 #pragma mark - Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
