@@ -1,7 +1,11 @@
 RadarKit
 ========
 
-A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data including multi-core pulse match filtering (compression). More comments will come later ...
+A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data. The main idea is to have user only implement the interface between a digital transceiver, a pedestal, and a general health monitor. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
+
+Requirements:
+FFTW
+NetCDF
 
 ### Getting netcdf ###
 
