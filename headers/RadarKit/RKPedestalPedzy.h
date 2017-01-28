@@ -18,7 +18,7 @@ typedef struct rk_pedzy {
     RKClient               *client;
 } RKPedestalPedzy;
 
-RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input);
+RKPedestal RKPedestalPedzyInit(RKRadar *, void *);
 int RKPedestalPedzyExec(RKPedestal, const char *);
 int RKPedestalPedzyFree(RKPedestal);
 

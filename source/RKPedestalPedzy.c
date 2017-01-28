@@ -47,7 +47,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     }
     memset(me, 0, sizeof(RKPedestalPedzy));
     
-    // Pedzy use a TCP socket server at port 9000. The payload is always sizeof(RKPosition)
+    // Pedzy uses a TCP socket server at port 9000. The payload is always sizeof(RKPosition)
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.name, "%s<PedzyRelay>%s",

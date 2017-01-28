@@ -83,6 +83,7 @@ typedef float     RKFloat;   // We can change this to double if we decided one d
 typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
 typedef void *    RKTransceiver;
 typedef void *    RKPedestal;
+typedef void *    RKMonitor;
 typedef void *    RKBuffer;
 
 #pragma pack(push, 1)

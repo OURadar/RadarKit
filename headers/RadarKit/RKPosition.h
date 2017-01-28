@@ -95,7 +95,6 @@ struct rk_position_engine {
     size_t                 memoryUsage;
 };
 
-//typedef RKPositionEngine* RKPedestalHandle;
 
 RKPositionEngine *RKPositionEngineInit();
 void RKPositionEngineFree(RKPositionEngine *);
