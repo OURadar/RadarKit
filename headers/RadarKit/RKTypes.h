@@ -272,6 +272,9 @@ typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
     uint32_t         pulseToRayRatio;
+    uint32_t         healthBufferDepth;
+    uint32_t         configBufferDepth;
+    uint32_t         positionBufferDepth;
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
     double           latitude;

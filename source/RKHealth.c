@@ -79,5 +79,5 @@ int RKHealthEngineStop(RKHealthEngine *engine) {
 }
 
 char *RKHealthEngineStatusString(RKHealthEngine *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferHSlotCount)];
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, engine->healthBufferDepth)];
 }

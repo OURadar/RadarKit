@@ -311,19 +311,19 @@ void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
     engine->pulseBufferDepth    = pulseBufferDepth;
 }
 
-void RKPositionEngineSetHardwareInit(RKPositionEngine *engine, RKPedestal hardwareInit(void *), void *hardwareInitInput) {
-    engine->hardwareInit = hardwareInit;
-    engine->hardwareInitInput = hardwareInitInput;
-}
-
-void RKPositionEngineSetHardwareExec(RKPositionEngine *engine, int hardwareExec(RKPedestal, const char *)) {
-    engine->hardwareExec = hardwareExec;
-}
-
-void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(RKPedestal)) {
-    engine->hardwareFree = hardwareFree;
-}
-
+//void RKPositionEngineSetHardwareInit(RKPositionEngine *engine, RKPedestal hardwareInit(void *), void *hardwareInitInput) {
+//    engine->hardwareInit = hardwareInit;
+//    engine->hardwareInitInput = hardwareInitInput;
+//}
+//
+//void RKPositionEngineSetHardwareExec(RKPositionEngine *engine, int hardwareExec(RKPedestal, const char *)) {
+//    engine->hardwareExec = hardwareExec;
+//}
+//
+//void RKPositionEngineSetHardwareFree(RKPositionEngine *engine, int hardwareFree(RKPedestal)) {
+//    engine->hardwareFree = hardwareFree;
+//}
+//
 #pragma mark - Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
