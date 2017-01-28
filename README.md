@@ -3,21 +3,37 @@ RadarKit
 
 A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data including multi-core pulse match filtering (compression). More comments will come later ...
 
-Getting netcdf
+### Getting netcdf ###
+
 CentOS 7
 
 ```shell
 yum install epel-release
 yum install netcdf-devel
 ```
+
 Mac OS X
+
 ```shell
 brew install netcdf
 ```
 
+Design Philosophy
+=================
+
+Two main hardware of a radar: (i) a digital transceiver and (ii) a pedestal are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so it can be interfaced with other libraries, which are specific to these hardware. It is the user responsibility to implement the appropriate interface to bridge the data transport.
+
+The digital transceiver is the hardware that requires high-speed data throughput. RadarKit is designed so that redudant memory copy is minimized. That is, a pointer to the memory space for payload will be provided upon a request. User routines fill in the data, typically through a copy mechanism through DMA to transport the I/Q data from a transceiver memory to the host memory managed by RadarKit.
+
+The pedestal is the hardware that usually is relatively low-speed, typically on the orders of 10 KBps. A proposed strcture is defined in RKTypes.h. If an interface software pedzy (https://git.arrc.ou.edu/cheo4524/pedzy) is used, which is a light weight pedestal controller, RadarKit can readily ingest position data through a network connection. Otherwise, an RKPedestalPedzy can be implemented to provide same functionality.
+
+Other slow-speed miscellaneous hardware will all be lumped into RKHealth. They should all be providing health information using JSON strings through a socket connection.
+
+
 
 Radar Struct
-------------
+============
+
 This is about the only structure you need to worry about. A radar structure represents an object-like structure where everything is encapsulated.
 
 

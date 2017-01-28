@@ -21,8 +21,8 @@ enum RKSweepEngineState {
 };
 
 typedef struct rk_sweep {
-    RKRay                 *rays[RKMaxRaysPerSweep];
-    uint32_t              rayCount;
+    RKRay                  *rays[RKMaxRaysPerSweep];
+    uint32_t               rayCount;
 } RKSweep;
 
 typedef struct rk_sweep_engine RKSweepEngine;
@@ -61,7 +61,7 @@ void RKSweepEngineFree(RKSweepEngine *);
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
 void RKSweepEngineSetInputBuffer(RKSweepEngine *, RKRadarDesc *,
                                  RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                 RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
+                                 RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
