@@ -79,12 +79,12 @@
 
 typedef uint8_t   RKBoolean;
 typedef int8_t    RKByte;
-typedef float     RKFloat;   // We can change this to double if we decided one day
-typedef ssize_t   RKResult;  // Generic return from functions, 0 for no errors and !0 for others.
+typedef float     RKFloat;           // We can change this to double if we decided one day
+typedef ssize_t   RKResult;          // Generic return from functions, 0 for no errors and !0 for others.
+typedef void *    RKBuffer;
 typedef void *    RKTransceiver;
 typedef void *    RKPedestal;
-typedef void *    RKMonitor;
-typedef void *    RKBuffer;
+typedef void *    RKHealthMonitor;
 
 #pragma pack(push, 1)
 
@@ -349,6 +349,16 @@ typedef struct rk_pulse_header {
     float            elevationVelocityDegreesPerSecond;              // Velocity of elevation in degrees / second
     float            azimuthVelocityDegreesPerSecond;                // Velocity of azimuth in degrees / second
 } RKPulseHeader;
+
+typedef union rk_heath {
+    struct {
+        uint64_t         i;
+        struct timeval   time;
+        double           timeDouble;
+        char             string[RKMaximumStringLength];
+    };
+    RKByte               bytes[RKMaximumStringLength];
+} RKHealth;
 
 // Pulse parameters for matched filters (pulseCompressionCore)
 typedef struct rk_pulse_parameters {

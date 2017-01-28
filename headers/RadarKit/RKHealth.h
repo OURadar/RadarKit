@@ -17,6 +17,25 @@ typedef struct rk_health_engine RKHealthEngine;
 struct rk_health_engine {
     // User defined variables
     char                name[RKNameLength];
+    RKHealth            *healthBuffer;
+    uint32_t            *healthIndex;
+    uint32_t            healthBufferDepth;
 };
 
-#endif /* RKHealth_h */
+
+RKHealthEngine *RKHealthEngineInit();
+void RKHealthEngineFree(RKHealthEngine *);
+
+void RKHealthEngineSetVerbose(RKHealthEngine *, const int);
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *);
+
+void RKHealthEngineSetHardwareInit(RKHealthEngine *, RKHealth(void *), void *);
+void RKHealthEngineSetHardwareExec(RKHealthEngine *, int(RKHealth, const char *));
+void RKHealthEngineSetHardwareFree(RKHealthEngine *, int(RKHealth));
+
+int RKHealthEngineStart(RKHealthEngine *);
+int RKHealthEngineStop(RKHealthEngine *);
+
+int RKHealthEngineStatusString(RKHealthEngine *);
+
+#endif /* __RadarKit_Health__ */

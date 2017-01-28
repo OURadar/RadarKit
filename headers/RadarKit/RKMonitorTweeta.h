@@ -14,10 +14,10 @@
 typedef struct rk_tweeta {
     // User defined variables
     RKClient                *client;
-} RKMonitorTweeta;
+} RKHealthMonitorTweeta;
 
-RKMonitor RKMonitorTweetaInit(RKRadar *, void *);
-int RKMonitorTweetaExec(RKMonitor, const char *);
-int RKMonitorTweetaFree(RKMonitor);
+RKHealthMonitor RKMonitorTweetaInit(RKRadar *, void *);
+int RKHealthMonitorTweetaExec(RKHealthMonitor, const char *);
+int RKHealthMonitorTweetaFree(RKHealthMonitor);
 
 #endif /* __RadarKit_MonitorTweeta__ */

@@ -20,13 +20,13 @@ int RKMonitorTweetaRead(RKClient *client) {
 
 // Implementations
 
-RKMonitor RKMonitorTweetaInit(RKRadar *radar, void *input) {
-    RKMonitorTweeta *me = (RKMonitorTweeta *)malloc(sizeof(RKMonitorTweeta));
+RKHealthMonitor RKHealthMonitorTweetaInit(RKRadar *radar, void *input) {
+    RKHealthMonitorTweeta *me = (RKHealthMonitorTweeta *)malloc(sizeof(RKHealthMonitorTweeta));
     if (me == NULL) {
         RKLog("Error. Unable to allocated RKMonitorTweeta.\n");
         return NULL;
     }
-    memset(me, 0, sizeof(RKMonitorTweeta));
+    memset(me, 0, sizeof(RKHealthMonitorTweeta));
 
     // Tweeta uses a TCP socket server at port 9556. The payload is always a line string terminated by \r\n
     RKClientDesc desc;
@@ -55,11 +55,11 @@ RKMonitor RKMonitorTweetaInit(RKRadar *radar, void *input) {
     RKClientSetReceiveHandler(me->client, &RKMonitorTweetaRead);
     RKClientStart(me->client);
     
-    return (RKMonitor)me;
+    return (RKHealthMonitor)me;
 }
 
-int RKMonitorTweetaExec(RKMonitor input, const char *command) {
-    RKMonitorTweeta *me = (RKMonitorTweeta *)input;
+int RKHealthMonitorTweetaExec(RKHealthMonitor input, const char *command) {
+    RKHealthMonitorTweeta *me = (RKHealthMonitorTweeta *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
         RKLog("%s received '%s'", client->name, command);
@@ -72,8 +72,8 @@ int RKMonitorTweetaExec(RKMonitor input, const char *command) {
     return RKResultSuccess;
 }
 
-int RKMonitorTweetaFree(RKMonitor input) {
-    RKMonitorTweeta *me = (RKMonitorTweeta *)input;
+int RKHealthMonitorTweetaFree(RKHealthMonitor input) {
+    RKHealthMonitorTweeta *me = (RKHealthMonitorTweeta *)input;
     RKClientFree(me->client);
     free(me);
     return RKResultSuccess;

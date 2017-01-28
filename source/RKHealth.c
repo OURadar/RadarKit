@@ -6,4 +6,10 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/meRKHealth.h>
+#include <RadarKit/RKHealth.h>
+
+void *healthMonitor(void *in) {
+    RKHealthEngine *engine = (RKHealthEngine *)in;
+    return (void *)NULL;
+}
+

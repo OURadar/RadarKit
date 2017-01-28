@@ -77,8 +77,8 @@ struct rk_radar {
     RKClock                    *pulseClock;
     RKClock                    *positionClock;
     RKPulseCompressionEngine   *pulseCompressionEngine;
-    RKMomentEngine             *momentEngine;
     RKPositionEngine           *positionEngine;
+    RKMomentEngine             *momentEngine;
     RKSweepEngine              *sweepEngine;
     //
     pthread_t                  monitorThreadId;
@@ -98,6 +98,13 @@ struct rk_radar {
     int                        (*pedestalFree)(RKPedestal);
     void                       *pedestalInitInput;
     pthread_t                  pedestalThreadId;
+    //
+    RKHealthMonitor            healthMonitor;
+    RKHealthMonitor            (*healthMonitorInit)(RKRadar *, void *);
+    int                        (*healthMonitorExec)(RKHealthMonitor, const char *);
+    int                        (*healthMonitorFree)(RKHealthMonitor);
+    void                       *healthMonitorInitInput;
+    pthread_t                  healthMonitorThreadId;
 };
 
 //
