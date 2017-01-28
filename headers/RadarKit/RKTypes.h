@@ -43,6 +43,7 @@
  */
 #define RKVersionString                  "1.0"
 #define RKBufferCSlotCount               16                          // Config
+#define RKBufferHSlotCount               50                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
 #define RKBufferPSlotCount               500                         // Positions
 #define RKBuffer0SlotCount               5000                        // Raw I/Q
@@ -84,7 +85,7 @@ typedef ssize_t   RKResult;          // Generic return from functions, 0 for no 
 typedef void *    RKBuffer;
 typedef void *    RKTransceiver;
 typedef void *    RKPedestal;
-typedef void *    RKHealthMonitor;
+typedef void *    RKHealthRelay;
 
 #pragma pack(push, 1)
 
@@ -143,6 +144,7 @@ enum RKResult {
     RKResultFailedToStartPedestalWorker,
     RKResultFailedToGetVacantPosition,
     RKResultFailedToStartRayGatherer,
+    RKResultFailedToStartHealthWorker,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };

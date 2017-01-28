@@ -14,6 +14,7 @@
 #include <RadarKit/RKClient.h>
 #include <RadarKit/RKClock.h>
 #include <RadarKit/RKConfig.h>
+#include <RadarKit/RKHealth.h>
 #include <RadarKit/RKPosition.h>
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKMoment.h>
@@ -27,15 +28,18 @@ enum RKRadarState {
     RKRadarStateRawIQBufferAllocating                = (1 << 3),   // 0x08
     RKRadarStateRawIQBufferInitialized               = (1 << 4),   // 0x10
     RKRadarStateConfigBufferAllocating               = (1 << 5),   // 0x20
-    RKRadarStateConfigBufferIntialized               = (1 << 6),   // 0x40
-    RKRadarStatePositionBufferAllocating             = (1 << 7),
-    RKRadarStatePositionBufferInitialized            = (1 << 8),
-    RKRadarStatePulseCompressionEngineInitialized    = (1 << 9),
-    RKRadarStatePositionEngineInitialized            = (1 << 10),
-    RKRadarStateMomentEngineInitialized              = (1 << 11),
-    RKRadarStateSweepEngineInitialized               = (1 << 12),
-    RKRadarStateTransceiverInitialized               = (1 << 16),
-    RKRadarStatePedestalInitialized                  = (1 << 24),
+    RKRadarStateConfigBufferInitialized              = (1 << 6),   // 0x40
+    RKRadarStateHealthBufferAllocating               = (1 << 7),
+    RKRadarStateHealthBufferInitialized              = (1 << 8),
+    RKRadarStatePositionBufferAllocating             = (1 << 9),
+    RKRadarStatePositionBufferInitialized            = (1 << 10),
+    RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),
+    RKRadarStatePositionEngineInitialized            = (1 << 17),
+    RKRadarStateHealthEngineInitialized              = (1 << 18),
+    RKRadarStateMomentEngineInitialized              = (1 << 19),
+    RKRadarStateSweepEngineInitialized               = (1 << 20),
+    RKRadarStateTransceiverInitialized               = (1 << 21),
+    RKRadarStatePedestalInitialized                  = (1 << 22),
     RKRadarStateLive                                 = (1 << 31)
 };
 
@@ -54,6 +58,7 @@ struct rk_radar {
     // Buffers
     //
     RKConfig                   *configs;
+    RKHealth                   *healths;
     RKPosition                 *positions;
     RKBuffer                   pulses;
     RKBuffer                   rays;
@@ -76,8 +81,9 @@ struct rk_radar {
     //
     RKClock                    *pulseClock;
     RKClock                    *positionClock;
-    RKPulseCompressionEngine   *pulseCompressionEngine;
+    RKHealthEngine             *healthEngine;
     RKPositionEngine           *positionEngine;
+    RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
     RKSweepEngine              *sweepEngine;
     //
@@ -99,12 +105,12 @@ struct rk_radar {
     void                       *pedestalInitInput;
     pthread_t                  pedestalThreadId;
     //
-    RKHealthMonitor            healthMonitor;
-    RKHealthMonitor            (*healthMonitorInit)(RKRadar *, void *);
-    int                        (*healthMonitorExec)(RKHealthMonitor, const char *);
-    int                        (*healthMonitorFree)(RKHealthMonitor);
-    void                       *healthMonitorInitInput;
-    pthread_t                  healthMonitorThreadId;
+    RKHealthRelay              healthRelay;
+    RKHealthRelay              (*healthRelayInit)(RKRadar *, void *);
+    int                        (*healthRelayExec)(RKHealthRelay, const char *);
+    int                        (*healthRelayFree)(RKHealthRelay);
+    void                       *healthRelayInitInput;
+    pthread_t                  healthRelayThreadId;
 };
 
 //
@@ -124,31 +130,38 @@ int RKFree(RKRadar *radar);
 //
 
 // Set the transceiver. Pass in function pointers: init, exec and free
-int RKSetTransceiver(RKRadar *radar,
+int RKSetTransceiver(RKRadar *,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
                      int execRoutine(RKTransceiver, const char *),
                      int freeRoutine(RKTransceiver));
 
 // Set the pedestal. Pass in function pointers: init, exec and free
-int RKSetPedestal(RKRadar *radar,
+int RKSetPedestal(RKRadar *,
                   void *initInput,
                   RKPedestal initRoutine(RKRadar *, void *),
                   int execRoutine(RKPedestal, const char *),
                   int freeRoutine(RKPedestal));
 
+// Set the health relay. Pass in function pointers: init, exec and free
+int RKSetHealthRelay(RKRadar *,
+                     void *initInput,
+                     RKHealthRelay initRoutine(RKRadar *, void *),
+                     int execRoutine(RKHealthRelay, const char *),
+                     int freeRoutine(RKHealthRelay));
+
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
 
 // Some operating parameters
-int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength);
-int RKSetWaveformToImpulse(RKRadar *radar);
-int RKSetWaveformTo121(RKRadar *radar);
-int RKSetProcessingCoreCounts(RKRadar *radar,
+int RKSetWaveform(RKRadar *, const char *filename, const int group, const int maxDataLength);
+int RKSetWaveformToImpulse(RKRadar *);
+int RKSetWaveformTo121(RKRadar *);
+int RKSetProcessingCoreCounts(RKRadar *,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);
-int RKSetPRF(RKRadar *radar, const uint32_t prf);
-uint32_t RKGetPulseCapacity(RKRadar *radar);
+int RKSetPRF(RKRadar *, const uint32_t prf);
+uint32_t RKGetPulseCapacity(RKRadar *);
 
 
 // If there is a tic count from firmware, use it as clean reference for time derivation

@@ -1,18 +1,20 @@
 //
-//  RKMonitorTweeta.c
+//  RKHealthRelayTweeta.c
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 1/28/17.
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKMonitorTweeta.h>
+#include <RadarKit/RKHealthRelayTweeta.h>
 
 #pragma mark - Internal Functions
 
 // Internal Implementations
 
-int RKMonitorTweetaRead(RKClient *client) {
+int RHealthRelayTweetaRead(RKClient *client) {
+    // Read it in from the socket, fill in the buffer
+    
     return 0;
 }
 
@@ -20,13 +22,13 @@ int RKMonitorTweetaRead(RKClient *client) {
 
 // Implementations
 
-RKHealthMonitor RKHealthMonitorTweetaInit(RKRadar *radar, void *input) {
-    RKHealthMonitorTweeta *me = (RKHealthMonitorTweeta *)malloc(sizeof(RKHealthMonitorTweeta));
+RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)malloc(sizeof(RKHealthRelayTweeta));
     if (me == NULL) {
         RKLog("Error. Unable to allocated RKMonitorTweeta.\n");
         return NULL;
     }
-    memset(me, 0, sizeof(RKHealthMonitorTweeta));
+    memset(me, 0, sizeof(RKHealthRelayTweeta));
 
     // Tweeta uses a TCP socket server at port 9556. The payload is always a line string terminated by \r\n
     RKClientDesc desc;
@@ -42,24 +44,23 @@ RKHealthMonitor RKHealthMonitorTweetaInit(RKRadar *radar, void *input) {
         desc.port = 9556;
     }
     desc.type = RKNetworkSocketTypeTCP;
-    desc.format = RKNetworkMessageFormatConstantSize;
+    desc.format = RKNetworkMessageFormatNewLine;
     desc.blocking = true;
     desc.reconnect = true;
-    desc.blockLength = sizeof(RKPosition);
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.verbose = 1;
     
     me->client = RKClientInitWithDesc(desc);
     
     RKClientSetUserResource(me->client, radar);
-    RKClientSetReceiveHandler(me->client, &RKMonitorTweetaRead);
+    RKClientSetReceiveHandler(me->client, &RHealthRelayTweetaRead);
     RKClientStart(me->client);
     
-    return (RKHealthMonitor)me;
+    return (RKHealthRelay)me;
 }
 
-int RKHealthMonitorTweetaExec(RKHealthMonitor input, const char *command) {
-    RKHealthMonitorTweeta *me = (RKHealthMonitorTweeta *)input;
+int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command) {
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
         RKLog("%s received '%s'", client->name, command);
@@ -72,8 +73,8 @@ int RKHealthMonitorTweetaExec(RKHealthMonitor input, const char *command) {
     return RKResultSuccess;
 }
 
-int RKHealthMonitorTweetaFree(RKHealthMonitor input) {
-    RKHealthMonitorTweeta *me = (RKHealthMonitorTweeta *)input;
+int RKHealthRelayTweetaFree(RKHealthRelay input) {
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClientFree(me->client);
     free(me);
     return RKResultSuccess;

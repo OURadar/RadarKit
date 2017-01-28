@@ -29,6 +29,12 @@ void *backgroundPedestalInit(void *in) {
     return NULL;
 }
 
+void *backgroundHealthRelayInit(void *in) {
+    RKRadar *radar = (RKRadar *)in;
+    radar->pedestal = radar->healthRelayInit(radar, radar->healthRelayInitInput);
+    return NULL;
+}
+
 void *radarCoPilot(void *in) {
     RKRadar *radar = (RKRadar *)in;
     RKMomentEngine *productGenerator = radar->momentEngine;
@@ -108,8 +114,28 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->configs[i].i = i - RKBufferCSlotCount;
     }
     radar->state ^= RKRadarStateConfigBufferAllocating;
-    radar->state |= RKRadarStateConfigBufferIntialized;
-
+    radar->state |= RKRadarStateConfigBufferInitialized;
+    
+    // Health buffer
+    radar->state |= RKRadarStateHealthBufferAllocating;
+    bytes = RKBufferHSlotCount * sizeof(RKHealth);
+    radar->healths = (RKHealth *)malloc(bytes);
+    if (radar->healths == NULL) {
+        RKLog("Error. Unable to allocate memory for health status");
+        exit(EXIT_FAILURE);
+    }
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Health buffer occupies %s B  (%s sets)\n",
+              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(RKBufferHSlotCount));
+    }
+    memset(radar->healths, 0, bytes);
+    radar->memoryUsage += bytes;
+    for (i = 0; i < RKBufferHSlotCount; i++) {
+        radar->healths[i].i = i - RKBufferHSlotCount;
+    }
+    radar->state ^= RKRadarStateHealthBufferAllocating;
+    radar->state |= RKRadarStateHealthBufferInitialized;
+    
     // Position buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStatePositionBufferAllocating;
@@ -277,6 +303,7 @@ int RKFree(RKRadar *radar) {
     }
     RKSweepEngineFree(radar->sweepEngine);
     RKMomentEngineFree(radar->momentEngine);
+    RKHealthEngineFree(radar->healthEngine);
     RKPositionEngineFree(radar->positionEngine);
     RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     if (radar->pedestal) {
@@ -294,8 +321,11 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateRayBufferInitialized) {
         free(radar->rays);
     }
-    if (radar->state & RKRadarStateConfigBufferIntialized) {
+    if (radar->state & RKRadarStateConfigBufferInitialized) {
         free(radar->configs);
+    }
+    if (radar->state & RKRadarStateHealthBufferInitialized) {
+        free(radar->healths);
     }
     if (radar->state & RKRadarStatePositionBufferInitialized) {
         free(radar->positions);
@@ -329,6 +359,18 @@ int RKSetPedestal(RKRadar *radar,
     radar->pedestalInit = initRoutine;
     radar->pedestalExec = execRoutine;
     radar->pedestalFree = freeRoutine;
+    return RKResultNoError;
+}
+
+int RKSetHealthRelay(RKRadar *radar,
+                     void *initInput,
+                     RKHealthRelay initRoutine(RKRadar *, void *),
+                     int execRoutine(RKHealthRelay, const char *),
+                     int freeRoutine(RKHealthRelay)) {
+    radar->healthRelayInitInput = initInput;
+    radar->healthRelayInit = initRoutine;
+    radar->healthRelayExec = execRoutine;
+    radar->healthRelayFree = freeRoutine;
     return RKResultNoError;
 }
 
@@ -438,11 +480,11 @@ int RKGoLive(RKRadar *radar) {
     }
 
     // Transceiver
-    if (radar->transceiverInit != NULL || radar->transceiverExec == NULL) {
+    if (radar->transceiverInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Initializing transceiver ...");
         }
-        if (radar->transceiverFree == NULL) {
+        if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
             RKLog("Error. Transceiver incomplete.");
             exit(EXIT_FAILURE);
         }
@@ -450,11 +492,17 @@ int RKGoLive(RKRadar *radar) {
         radar->state |= RKRadarStateTransceiverInitialized;
     }
 
-    // Launch an assistant to monitor status of various engines
-//    if (radar->momentEngine != NULL && radar->desc.initFlags & RKInitFlagVerbose) {
-//        RKLog("Initializing status monitor ...");
-//        pthread_create(&radar->monitorThreadId, NULL, radarCoPilot, radar);
-//    }
+    // Health Relay
+    if (radar->healthRelayInit != NULL) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Initializing health relay ...");
+        }
+        if (radar->healthRelayFree == NULL || radar->healthRelayExec == NULL) {
+            RKLog("Error. Health relay incomplete.");
+            exit(EXIT_FAILURE);
+        }
+        pthread_create(&radar->healthRelayThreadId, NULL, backgroundHealthRelayInit, radar);
+    }
     
     radar->state |= RKRadarStateLive;
     return 0;
@@ -487,6 +535,15 @@ int RKStop(RKRadar *radar) {
             RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
+    }
+    if (radar->state & RKRadarStateHealthEngineInitialized) {
+        if (radar->healthRelayExec != NULL) {
+            radar->healthRelayExec(radar->healthRelay, "disconnect");
+        }
+        if (pthread_join(radar->healthRelayThreadId, NULL)) {
+            RKLog("Error. Failed at the health relay return.   errno = %d\n", errno);
+        }
+        radar->state ^= RKRadarStateHealthEngineInitialized;
     }
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineStop(radar->sweepEngine);

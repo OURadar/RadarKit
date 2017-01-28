@@ -274,8 +274,7 @@ void *pulseTagger(void *in) {
     return (void *)NULL;
 }
 
-#pragma mark -
-#pragma mark Life Cycle
+#pragma mark - Life Cycle
 
 RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
@@ -283,6 +282,7 @@ RKPositionEngine *RKPositionEngineInit() {
     sprintf(engine->name, "%s<PulsePositioner>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine);
+    engine->state = RKPositionEngineStateAllocated;
     return engine;
 }
 

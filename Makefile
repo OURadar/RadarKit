@@ -10,7 +10,7 @@ OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKPulseCompression.o 
 OBJS += RKNetwork.o RKServer.o RKClient.o
 OBJS += RKPulsePair.o RKMultiLag.o
 OBJS += RKPosition.o RKPedestalPedzy.o
-OBJS += RKHealth.o RKMonitorTweeta.o
+OBJS += RKHealth.o RKHealthRelayTweeta.o
 RKLIB = libRadarKit.a
 
 #CFLAGS += -DDEBUG_IQ

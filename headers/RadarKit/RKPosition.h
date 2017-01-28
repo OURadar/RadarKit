@@ -91,7 +91,6 @@ struct rk_position_engine {
     RKPositionEngineState  state;
     uint32_t               tic;
     float                  lag;
-    uint32_t               almostFull;
     size_t                 memoryUsage;
 };
 
