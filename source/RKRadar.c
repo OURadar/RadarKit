@@ -85,18 +85,24 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(RKBuffer0SlotCount));
         }
+    } else if (radar->desc.pulseBufferDepth == 0) {
+        radar->desc.pulseBufferDepth = 1000;
     }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(RKBuffer2SlotCount));
         }
+    } else if (radar->desc.rayBufferDepth == 0) {
+        radar->desc.rayBufferDepth = 720;
     }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(RKGateCount));
         }
+    } else if (radar->desc.pulseCapacity == 0) {
+        radar->desc.pulseCapacity = 100;
     }
     
     // Read in preference file here, override some values
@@ -107,6 +113,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Config buffer
     radar->state |= RKRadarStateConfigBufferAllocating;
+    if (radar->desc.configBufferDepth == 0) {
+        radar->desc.configBufferDepth = RKBufferCSlotCount;
+    }
     bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
     radar->configs = (RKConfig *)malloc(bytes);
     if (radar->configs == NULL) {
@@ -127,6 +136,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     // Health buffer
     radar->state |= RKRadarStateHealthBufferAllocating;
+    if (radar->desc.healthBufferDepth == 0) {
+        radar->desc.healthBufferDepth = RKBufferHSlotCount;
+    }
     bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
     radar->healths = (RKHealth *)malloc(bytes);
     if (radar->healths == NULL) {
@@ -148,6 +160,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Position buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStatePositionBufferAllocating;
+        if (radar->desc.positionBufferDepth == 0) {
+            radar->desc.positionBufferDepth = RKBufferPSlotCount;
+        }
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
         radar->positions = (RKPosition *)malloc(bytes);
         if (radar->positions == NULL) {
@@ -218,6 +233,13 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKClockSetOffset(radar->positionClock, -0.2);
     radar->memoryUsage += sizeof(RKClock);
     
+    // Health engine
+    radar->healthEngine = RKHealthEngineInit();
+    RKHealthEngineSetInputOutputBuffers(radar->healthEngine,
+                                        radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+    radar->memoryUsage += sizeof(RKHealthEngine);
+    radar->state |= RKRadarStateHealthEngineInitialized;
+    
     // Pulse compression engine
     radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
@@ -233,13 +255,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
     radar->memoryUsage += sizeof(RKPositionEngine);
     radar->state |= RKRadarStatePositionEngineInitialized;
-    
-    // Health engine
-    radar->healthEngine = RKHealthEngineInit();
-    RKHealthEngineSetInputOutputBuffers(radar->healthEngine,
-                                        radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
-    radar->memoryUsage += sizeof(RKHealthEngine);
-    radar->state |= RKRadarStateHealthEngineInitialized;
     
     // Moment engine
     radar->momentEngine = RKMomentEngineInit();
@@ -507,7 +522,7 @@ int RKGoLive(RKRadar *radar) {
             exit(EXIT_FAILURE);
         }
         pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
-        radar->state ^= RKRadarStatePedestalInitialized;
+        radar->state |= RKRadarStatePedestalInitialized;
     }
 
     // Transceiver
@@ -533,6 +548,7 @@ int RKGoLive(RKRadar *radar) {
             exit(EXIT_FAILURE);
         }
         pthread_create(&radar->healthRelayThreadId, NULL, backgroundHealthRelayInit, radar);
+        radar->state |= RKRadarStateHealthEngineInitialized;
     }
     
     radar->state |= RKRadarStateLive;
@@ -551,6 +567,7 @@ int RKStop(RKRadar *radar) {
 
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
+            RKLog("Disconnecting pedzy ...");
             radar->pedestalExec(radar->pedestal, "disconnect");
         }
         if (pthread_join(radar->pedestalThreadId, NULL)) {
@@ -560,6 +577,7 @@ int RKStop(RKRadar *radar) {
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (radar->transceiverExec != NULL) {
+            RKLog("Disconnecting transceiver ...");
             radar->transceiverExec(radar->transceiver, "disconnect");
         }
         if (pthread_join(radar->transceiverThreadId, NULL)) {
@@ -567,14 +585,15 @@ int RKStop(RKRadar *radar) {
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
     }
-    if (radar->state & RKRadarStateHealthEngineInitialized) {
+    if (radar->state & RKRadarStateHealthRelayInitialized) {
         if (radar->healthRelayExec != NULL) {
+            RKLog("Disconnecting tweeta ...");
             radar->healthRelayExec(radar->healthRelay, "disconnect");
         }
         if (pthread_join(radar->healthRelayThreadId, NULL)) {
             RKLog("Error. Failed at the health relay return.   errno = %d\n", errno);
         }
-        radar->state ^= RKRadarStateHealthEngineInitialized;
+        radar->state ^= RKRadarStateHealthRelayInitialized;
     }
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineStop(radar->sweepEngine);
@@ -591,6 +610,10 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
+    }
+    if (radar->state & RKRadarStateHealthEngineInitialized) {
+        RKHealthEngineStop(radar->healthEngine);
+        radar->state ^= RKRadarStateHealthEngineInitialized;
     }
     return 0;
 }

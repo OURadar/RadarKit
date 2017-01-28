@@ -42,6 +42,7 @@
 		B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F261E2D206300FA8B2E /* RKConfig.h */; };
 		B55F5F291E2D273400FA8B2E /* RKFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B55F5F281E2D273400FA8B2E /* RKFile.c */; };
 		B55F5F2A1E2D273400FA8B2E /* RKFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B55F5F281E2D273400FA8B2E /* RKFile.c */; };
+		B58CAB491E3D5721009B539F /* RKHealth.c in Sources */ = {isa = PBXBuildFile; fileRef = B50276A81E3CF228002C46B1 /* RKHealth.c */; };
 		B594718F1D89B43400EEE77C /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B59471991D8C4F0500EEE77C /* RKCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKCommandCenter.c */; };
@@ -429,6 +430,7 @@
 				B5DD6F241E1F3F1000FAE2E3 /* RKClock.c in Sources */,
 				B5ABDBF91E2BFF4200CDFE4B /* RKSweep.c in Sources */,
 				B55F5F251E2D205D00FA8B2E /* RKConfig.c in Sources */,
+				B58CAB491E3D5721009B539F /* RKHealth.c in Sources */,
 				B54795251D91A86F00E43F6A /* RKCommandCenter.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

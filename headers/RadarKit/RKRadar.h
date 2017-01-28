@@ -38,8 +38,9 @@ enum RKRadarState {
     RKRadarStateHealthEngineInitialized              = (1 << 18),
     RKRadarStateMomentEngineInitialized              = (1 << 19),
     RKRadarStateSweepEngineInitialized               = (1 << 20),
-    RKRadarStateTransceiverInitialized               = (1 << 21),
-    RKRadarStatePedestalInitialized                  = (1 << 22),
+    RKRadarStateHealthRelayInitialized               = (1 << 21),
+    RKRadarStateTransceiverInitialized               = (1 << 22),
+    RKRadarStatePedestalInitialized                  = (1 << 23),
     RKRadarStateLive                                 = (1 << 31)
 };
 

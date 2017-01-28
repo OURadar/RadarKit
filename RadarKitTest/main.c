@@ -24,6 +24,7 @@ typedef struct user_params {
     int   sleepInterval;
     bool  simulate;
     char  pedzyHost[256];
+    char  tweetaHost[256];
 } UserParams;
 
 // Global variables
@@ -149,6 +150,7 @@ UserParams processInput(int argc, char **argv) {
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"verbose"               , no_argument      , NULL, 'v'},
+        {"tweeta-host"           , no_argument      , NULL, 't'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -258,6 +260,9 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 's':
                 user.simulate = true;
+                break;
+            case 't':
+                strncpy(user.tweetaHost, optarg, sizeof(user.tweetaHost));
                 break;
             case 'v':
                 user.verbose++;
@@ -378,6 +383,16 @@ int main(int argc, char *argv[]) {
                       &RKPedestalPedzyInit,
                       &RKPedestalPedzyExec,
                       &RKPedestalPedzyFree);
+        
+        if (!strlen(user.tweetaHost)) {
+            strcpy(user.tweetaHost, "localhost");
+        }
+        RKLog("Health relay input = '%s'", user.tweetaHost);
+        RKSetHealthRelay(myRadar,
+                         (void *)user.tweetaHost,
+                         &RKHealthRelayTweetaInit,
+                         &RKHealthRelayTweetaExec,
+                         &RKHealthRelayTweetaFree);
 
         myRadar->configs[0].prf[0] = user.prf;
         

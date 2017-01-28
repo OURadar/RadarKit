@@ -84,6 +84,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command) {
         RKLog("%s received '%s'", client->name, command);
     }
     if (!strcmp(command, "disconnect")) {
+        RKLog("RKPedestalPedzyExec() disconnect %d", client->state);
         RKClientStop(client);
     } else {
         RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
