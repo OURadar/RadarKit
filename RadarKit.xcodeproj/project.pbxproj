@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B50276A71E3CF20D002C46B1 /* RKHealth.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276A61E3CF20D002C46B1 /* RKHealth.h */; };
+		B50276A91E3CF228002C46B1 /* RKHealth.c in Sources */ = {isa = PBXBuildFile; fileRef = B50276A81E3CF228002C46B1 /* RKHealth.c */; };
 		B506C1431DC7DF570007BAE0 /* RKSIMD.c in Sources */ = {isa = PBXBuildFile; fileRef = B55E437E1DB6668F003C40CF /* RKSIMD.c */; };
 		B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B52E45C21D91749C00FC1113 /* RKMoment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B52E45C51D9174A500FC1113 /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
@@ -90,6 +92,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B50276A61E3CF20D002C46B1 /* RKHealth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHealth.h; path = headers/RadarKit/RKHealth.h; sourceTree = SOURCE_ROOT; };
+		B50276A81E3CF228002C46B1 /* RKHealth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKHealth.c; path = source/RKHealth.c; sourceTree = SOURCE_ROOT; };
 		B52E45C21D91749C00FC1113 /* RKMoment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMoment.h; path = headers/RadarKit/RKMoment.h; sourceTree = "<group>"; };
 		B52E45C41D9174A500FC1113 /* RKMoment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKMoment.c; path = source/RKMoment.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		B5324D4F1AB8A5A000C00517 /* libRadarKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRadarKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -202,6 +206,7 @@
 				B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */,
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B55F5F191E2C8F9600FA8B2E /* RKSweep.h */,
+				B50276A61E3CF20D002C46B1 /* RKHealth.h */,
 				B5C1F3631AB9CD34004F88CD /* RKFile.h */,
 				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B5C1F35E1AB9CC48004F88CD /* RKCommandCenter.h */,
@@ -231,6 +236,7 @@
 				B5DDE7E11E1AB55400C5D16D /* RKMultiLag.c */,
 				B52E45C41D9174A500FC1113 /* RKMoment.c */,
 				B5ABDBF31E2BFA4400CDFE4B /* RKSweep.c */,
+				B50276A81E3CF228002C46B1 /* RKHealth.c */,
 				B55F5F281E2D273400FA8B2E /* RKFile.c */,
 				B5324DEA1AB9B2E900C00517 /* RKRadar.c */,
 				B59471981D8C4F0500EEE77C /* RKCommandCenter.c */,
@@ -264,6 +270,7 @@
 				B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */,
 				B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */,
 				B5C1F3641AB9CD34004F88CD /* RKFile.h in Headers */,
+				B50276A71E3CF20D002C46B1 /* RKHealth.h in Headers */,
 				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
 				B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */,
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
@@ -381,6 +388,7 @@
 				B594718F1D89B43400EEE77C /* RadarKit.c in Sources */,
 				B5C1F3511AB9C917004F88CD /* RKPulseCompression.c in Sources */,
 				B55F5F241E2D205D00FA8B2E /* RKConfig.c in Sources */,
+				B50276A91E3CF228002C46B1 /* RKHealth.c in Sources */,
 				B5DD6F231E1F3F1000FAE2E3 /* RKClock.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

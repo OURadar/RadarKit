@@ -273,10 +273,11 @@ typedef struct rk_radar_desc {
     uint32_t         rayBufferDepth;
     double           latitude;
     double           longitude;
-    float            radarHeight;
-    float            wavelength;
-    char             name[RKNameLength];
-    char             filePrefix[RKNameLength];
+    float            heading;                                        // Radar heading
+    float            radarHeight;                                    // Radar height from ground (m)
+    float            wavelength;                                     // Radar wavelength (m)
+    char             name[RKNameLength];                             // Radar name
+    char             filePrefix[RKNameLength];                       // Prefix of output files
 } RKRadarDesc;
 
 // A running configuration buffer

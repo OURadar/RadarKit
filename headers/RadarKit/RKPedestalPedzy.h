@@ -8,8 +8,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKPedestalPedzy__
-#define __RadarKit_RKPedestalPedzy__
+#ifndef __RadarKit_PedestalPedzy__
+#define __RadarKit_PedestalPedzy__
 
 #include <RadarKit/RKRadar.h>
 

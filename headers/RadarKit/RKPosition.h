@@ -41,8 +41,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKPosition__
-#define __RadarKit_RKPosition__
+#ifndef __RadarKit_Position__
+#define __RadarKit_Position__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>

@@ -6,8 +6,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKSweep__
-#define __RadarKit_RKSweep__
+#ifndef __RadarKit_Sweep__
+#define __RadarKit_Sweep__
 
 #include <RadarKit/RKFoundation.h>
 #include <netcdf.h>
