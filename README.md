@@ -3,7 +3,21 @@ RadarKit
 
 A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data. The main idea is to have user only implement the interface between a digital transceiver, a pedestal, and a general health monitor. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
 
-### Requirements: ###
+## Getting the Project ##
+
+Follow these steps to get the project
+
+1. Clone a git project using the following command in Terminal:
+
+    ```shell
+    git clone https://git.arrc.ou.edu/cheo4524/radarkit.git
+    ```
+
+2. Get the required packages.
+ 
+
+
+## Requirements ##
 
 - FFTW [http://www.fftw.org]
 - NetCDF [http://www.unidata.ucar.edu/software/netcdf]
@@ -12,20 +26,20 @@ A toolkit with various components of a radar signal processor. Mainly implement 
 
 Required packages can either be installed through one of the package managers or compiled from source, which can be downloaded from their respective webpage.
 
-#### Debian ####
+##### Debian #####
 
 ```shell
 apt-get install fftw netcdf
 ```
 
-#### CentOS 7 ####
+##### CentOS 7 #####
 
 ```shell
 yum install epel-release
 yum install fftw netcdf-devel
 ```
 
-#### Mac OS X ####
+##### Mac OS X #####
 
 ```shell
 brew install fftw netcdf
