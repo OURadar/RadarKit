@@ -12,6 +12,12 @@ A toolkit with various components of a radar signal processor. Mainly implement 
 
 Required packages can either be installed through one of the package managers or compiled from source, which can be downloaded from their respective webpage.
 
+#### Debian ####
+
+```shell
+apt-get install fftw netcdf
+```
+
 #### CentOS 7 ####
 
 ```shell
@@ -28,14 +34,19 @@ brew install fftw netcdf
 Design Philosophy
 =================
 
-Three main hardware of a radar: (i) a digital transceiver, (ii) a pedestal, and (iii) a health relay (auxiliary controller) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so it can be interfaced with other libraries, which are specific to these hardware. It is the user responsibility to implement the appropriate interface routines to bridge the data transport.
+Three major hardware components of a radar: (i) a __digital transceiver__, (ii) a __pedestal__, and (iii) a __health relay__ (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so it can be interfaced with other libraries, which are specific to these hardware. It is the user responsibility to implement the appropriate interface routines to bridge the data transport and/or control commands. Some keywords are defined in the framework (still in a work in progress).
 
-The digital transceiver is the hardware that requires high-speed data throughput. RadarKit is designed so that redudant memory copy is minimized. That is, a pointer to the memory space for payload will be provided upon a request. User routines fill in the data, typically through a copy mechanism through DMA to transport the I/Q data from a transceiver memory to the host memory managed by RadarKit.
+The __digital transceiver__ is the hardware that requires high-speed data throughput. RadarKit is designed so that redudant memory copy is minimized. That is, a pointer to the memory space for payload will be provided upon a request. User defined routines fill in the data, typically through a copy mechanism through DMA to transport the I/Q data from a transceiver memory to the host memory, which is initialized and managed by RadarKit. The fundamental form is signed 16-bit I and Q, which is a part of `RKPulse` defined in the framework.
 
-The pedestal is the hardware that usually is relatively low speed, typically on the orders of 10 KBps. A proposed strcture RKPosition is defined in RKTypes.h. If an interface software pedzy (https://git.arrc.ou.edu/cheo4524/pedzy) is used, which is a light weight pedestal controller, RadarKit can readily ingest position data through a network connection. Otherwise, an RKPedestalPedzy can be implemented to provide same functionality.
+The __pedestal__ is the hardware that usually is relatively low speed, typically on the orders of 10 KBps if the position reading is provided at about 100 samples per second. A proposed strcture `RKPosition` is defined in the framework. If an interface software [pedzy] is used, which is a light weight pedestal controller, RadarKit can readily ingest position data through a network connection. Otherwise, an `RKPedestalPedzy` replacement can be implemented to provide same functionality.
 
-The health relay is the hardware that usually is relatively low speed, typically on thge orders of 1 KBps. This is also the hardware that can be called an auxiliary controller, where everything else is controlled through this relay and their health information is probed through this controller. A proposed structure RKHealth is defined in RKTypes.h. They should all be providing health information using JSON strings through a socket connection.
+The __health relay__ is the hardware that usually is also relatively low speed, typically on thge orders of 1 KBps. This is also the hardware that can be called an _auxiliary controller_, where everything else is interfaced through this relay and the health information is probed through this controller. A proposed structure `RKHealth` is defined in the framework. They should all be providing health information using JSON strings through a socket connection. If an interface software [tweeta] is used, RadarKit can readily ingest auxiliary hardware health data through a network connection. Otherwise, an `RKHealthRelayTweeta` replacement can be implemented to provide same functionality.
 
+Base radar rroducts are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
+
+[pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
+[tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
+[iRadar]: https://arrc.ou.edu/tools
 
 
 Radar Struct
