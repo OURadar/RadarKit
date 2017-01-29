@@ -235,3 +235,10 @@ char *RKSignalString(const int signal) {
     }
     return string;
 }
+
+void RKStripTail(char *string) {
+    char *c = string + strlen(string) - 1;
+    while (c != string && (*c == '\r' || *c == '\n' || *c == ' ')) {
+        *c-- = '\0';
+    }
+}

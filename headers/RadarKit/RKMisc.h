@@ -65,4 +65,6 @@ bool RKFilenameExists(const char *);
 void RKPreparePath(const char *filename);
 char *RKSignalString(const int);
 
+void RKStripTail(char *);
+
 #endif /* rk_misc_h */

@@ -52,6 +52,7 @@ typedef struct  rk_user {
     double       timeLastOut;
     double       timeLastHealthOut;
     double       timeLastIn;
+    uint32_t     healthIndex;
     uint32_t     rayStatusIndex;
     uint32_t     pulseIndex;
     uint32_t     rayIndex;

@@ -18,11 +18,12 @@ int RHealthRelayTweetaRead(RKClient *client) {
 
     // The payload just was just read by RKClient
     char *report = (char *)client->userPayload;
-
+    RKStripTail(report);
+    
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         printf("%s\n", report);
     }
-        
+    
     // Get a vacant slot for health from Radar, copy over the data, then set it ready
     RKHealth *health = RKGetVacantHealth(radar);
     strncpy(health->string, report, RKMaximumStringLength - 1);   
