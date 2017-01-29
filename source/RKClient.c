@@ -302,6 +302,7 @@ void *theClient(void *in) {
                     C->state = RKClientStateReconnecting;
                 }
                 close(C->sd);
+                fid = NULL;
                 continue;
             } else if (C->state < RKClientStateDisconnecting) {
                 C->state = RKClientStateConnected;

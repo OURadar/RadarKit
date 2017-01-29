@@ -149,8 +149,8 @@ UserParams processInput(int argc, char **argv) {
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
+        {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
-        {"tweeta-host"           , no_argument      , NULL, 't'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };

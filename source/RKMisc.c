@@ -52,6 +52,34 @@ char *RKGetBackgroundColorOfIndex(const int i) {
     return str[k];
 }
 
+char *RKGetValueOfKey(const char *string, const char *key) {
+    static char arg[256];
+    char *keyPosition = strcasestr(string, key);
+    if (keyPosition != NULL) {
+        // Find start of the value
+        char *s = strchr(keyPosition + strlen(key), ':');
+        if (s != NULL) {
+            do {
+                s++;
+            } while (*s == '"' || *s == '\'' || *s == ' ');
+        }
+        // Find end of the value
+        char *e = s;
+        while (*e != '"' && *e != '\'' && *e != ',' && *e != '}') {
+            e++;
+        }
+        size_t len = e - s;
+        if (len > 0) {
+            strncpy(arg, s, len);
+            arg[len] = '\0';
+        } else {
+            arg[0] = '\0';
+        }
+        return arg;
+    }
+    return NULL;
+}
+
 #pragma mark -
 
 ////////////////////////////////////////////////

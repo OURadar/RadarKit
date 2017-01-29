@@ -235,7 +235,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     // Health engine
     radar->healthEngine = RKHealthEngineInit();
-    RKHealthEngineSetInputOutputBuffers(radar->healthEngine,
+    RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc,
                                         radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
     radar->memoryUsage += sizeof(RKHealthEngine);
     radar->state |= RKRadarStateHealthEngineInitialized;
@@ -250,7 +250,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Position engine
     radar->positionEngine = RKPositionEngineInit();
     RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
-                                          radar->positions, &radar->positionIndex, RKBufferPSlotCount,
+                                          radar->positions, &radar->positionIndex, radar->desc.positionBufferDepth,
                                           radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
     radar->memoryUsage += sizeof(RKPositionEngine);

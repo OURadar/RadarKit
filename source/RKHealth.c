@@ -5,15 +5,18 @@
 //  Created by Boon Leng Cheong on 1/28/17.
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
+//  █
 
 #include <RadarKit/RKHealth.h>
 
 void *healthRelay(void *in) {
     RKHealthEngine *engine = (RKHealthEngine *)in;
+    RKRadarDesc *desc = engine->radarDescription;
     
     int k, s;
     
     RKHealth *health;
+    char *valueString;
     
     RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     
@@ -26,16 +29,23 @@ void *healthRelay(void *in) {
         // Wait until a newer status came in
         s = 0;
         while (k == *engine->healthIndex && engine->state == RKHealthEngineStateActive) {
-            
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
                       engine->name, (float)s * 0.01f, k, health->flag);
             }
         }
+        // Look for certain keywords, extract some information
+        if ((valueString = RKGetValueOfKey(health->string, "latitude")) != NULL) {
+            desc->latitude = atof(valueString);
+            printf("Latitude = '%s' -> %.6f\n", valueString, desc->latitude);
+        }
+        if ((valueString = RKGetValueOfKey(health->string, "longitude")) != NULL) {
+            desc->longitude = atof(valueString);
+            printf("Longitude = '%s' -> %.6f\n", valueString, desc->longitude);
+        }
         k = RKNextModuloS(k, engine->healthBufferDepth);
     }
-
     return (void *)NULL;
 }
 
@@ -62,7 +72,9 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
 }
 
 void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
+                                         RKRadarDesc *radarDescription,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
+    engine->radarDescription = radarDescription;
     engine->healthBuffer = healthBuffer;
     engine->healthIndex = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
