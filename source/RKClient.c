@@ -303,7 +303,7 @@ void *theClient(void *in) {
                 }
                 close(C->sd);
                 continue;
-            } else {
+            } else if (C->state < RKClientStateDisconnecting) {
                 C->state = RKClientStateConnected;
             }
             C->recv(C);
@@ -418,8 +418,7 @@ void RKClientStart(RKClient *C) {
     return;
 }
 void RKClientStop(RKClient *C) {
-    RKLog("%s RKClientStop ...\n", C->name);
-    if (C->state >= RKClientStateResolvingIP && C->state < RKClientStateDisconnecting) {
+    if (C->state > RKClientStateCreating && C->state < RKClientStateDisconnecting) {
         RKLog("%s Disconnecting ...\n", C->name);
         C->state = RKClientStateDisconnecting;
         pthread_join(C->threadId, NULL);

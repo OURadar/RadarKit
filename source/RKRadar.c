@@ -31,7 +31,7 @@ void *backgroundPedestalInit(void *in) {
 
 void *backgroundHealthRelayInit(void *in) {
     RKRadar *radar = (RKRadar *)in;
-    radar->pedestal = radar->healthRelayInit(radar, radar->healthRelayInitInput);
+    radar->healthRelay = radar->healthRelayInit(radar, radar->healthRelayInitInput);
     return NULL;
 }
 
@@ -509,6 +509,7 @@ int RKGoLive(RKRadar *radar) {
     radar->active = true;
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKPositionEngineStart(radar->positionEngine);
+    RKHealthEngineStart(radar->healthEngine);
     RKMomentEngineStart(radar->momentEngine);
     RKSweepEngineStart(radar->sweepEngine);
 
@@ -548,7 +549,7 @@ int RKGoLive(RKRadar *radar) {
             exit(EXIT_FAILURE);
         }
         pthread_create(&radar->healthRelayThreadId, NULL, backgroundHealthRelayInit, radar);
-        radar->state |= RKRadarStateHealthEngineInitialized;
+        radar->state |= RKRadarStateHealthRelayInitialized;
     }
     
     radar->state |= RKRadarStateLive;
@@ -567,7 +568,6 @@ int RKStop(RKRadar *radar) {
 
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
-            RKLog("Disconnecting pedzy ...");
             radar->pedestalExec(radar->pedestal, "disconnect");
         }
         if (pthread_join(radar->pedestalThreadId, NULL)) {
@@ -577,7 +577,6 @@ int RKStop(RKRadar *radar) {
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (radar->transceiverExec != NULL) {
-            RKLog("Disconnecting transceiver ...");
             radar->transceiverExec(radar->transceiver, "disconnect");
         }
         if (pthread_join(radar->transceiverThreadId, NULL)) {
@@ -587,7 +586,6 @@ int RKStop(RKRadar *radar) {
     }
     if (radar->state & RKRadarStateHealthRelayInitialized) {
         if (radar->healthRelayExec != NULL) {
-            RKLog("Disconnecting tweeta ...");
             radar->healthRelayExec(radar->healthRelay, "disconnect");
         }
         if (pthread_join(radar->healthRelayThreadId, NULL)) {
@@ -603,6 +601,10 @@ int RKStop(RKRadar *radar) {
         RKMomentEngineStop(radar->momentEngine);
         radar->state ^= RKRadarStateMomentEngineInitialized;
     }
+    if (radar->state & RKRadarStateHealthEngineInitialized) {
+        RKHealthEngineStop(radar->healthEngine);
+        radar->state ^= RKRadarStateHealthEngineInitialized;
+    }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
         RKPositionEngineStop(radar->positionEngine);
         radar->state ^= RKRadarStatePositionEngineInitialized;
@@ -610,10 +612,6 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
-    }
-    if (radar->state & RKRadarStateHealthEngineInitialized) {
-        RKHealthEngineStop(radar->healthEngine);
-        radar->state ^= RKRadarStateHealthEngineInitialized;
     }
     return 0;
 }

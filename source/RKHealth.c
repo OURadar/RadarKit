@@ -13,18 +13,24 @@ void *healthRelay(void *in) {
     
     int k, s;
     
+    RKHealth *health;
+    
     RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     
     engine->state = RKHealthEngineStateActive;
     
     k = 0;   // health index
     while (engine->state == RKHealthEngineStateActive) {
+        // Get the latest health
+        health = &engine->healthBuffer[*engine->healthIndex];
+        // Wait until a newer status came in
         s = 0;
-        while (k == *engine->healthIndex) {
+        while (k == *engine->healthIndex && engine->state == RKHealthEngineStateActive) {
+            
             usleep(10000);
-            if (++s % 100 == 0) {
-                RKLog("%s sleep 0/%.1f s   k = %d\n",
-                      engine->name, (float)s * 0.01f, k);
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
+                      engine->name, (float)s * 0.01f, k, health->flag);
             }
         }
         k = RKNextModuloS(k, engine->healthBufferDepth);
