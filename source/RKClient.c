@@ -84,8 +84,11 @@ void *theClient(void *in) {
         }
         struct hostent *h = gethostbyname2(C->hostname, AF_INET);
         if (h == NULL) {
-            RKLog("Error. Unable to resolve %s\n", C->hostname);
-            sleep(10);
+            RKLog("%s Error. Unable to resolve %s\n", C->name, C->hostname);
+            k = RKNetworkReconnectSeconds * 10;
+            do {
+                usleep(100000);
+            } while (k-- > 0 && C->state < RKClientStateReconnecting);
             continue;
         }
         strcpy(C->hostIP, inet_ntoa(*((struct in_addr *)h->h_addr_list[0])));
@@ -116,9 +119,8 @@ void *theClient(void *in) {
                     if (C->verbose > 1 && k % 10 == 0) {
                         RKLog("%s Connection failed (errno = %d). Retry in %d second%s ...\n", C->name, k, k > 1 ? "s" : "");
                     }
-                    k--;
                     usleep(100000);
-                } while (k > 0 && C->state < RKClientStateReconnecting);
+                } while (k-- > 0 && C->state < RKClientStateReconnecting);
                 continue;
             }
         }
@@ -151,16 +153,8 @@ void *theClient(void *in) {
                 }
                 continue;
             }
-        } else if (C->verbose) {
-//            if (C->type == RKNetworkSocketTypeTCP) {
-//                //RKLog("%s Connected.\n", C->name);
-//                //C->state = RKClientStateConnected;
-//            } else {
-//                // UDP may not mean connected at this point
-//            }
-            RKLog("%s Initialized.\n", C->name);
         }
-
+        
         // Actively receive
         timeoutCount = 0;
         while (C->state < RKClientStateReconnecting) {
@@ -305,6 +299,9 @@ void *theClient(void *in) {
                 fid = NULL;
                 continue;
             } else if (C->state < RKClientStateDisconnecting) {
+                if (C->state != RKClientStateConnected) {
+                    RKLog("%s Connected.\n", C->name);
+                }
                 C->state = RKClientStateConnected;
             }
             C->recv(C);
@@ -414,7 +411,7 @@ void RKClientStart(RKClient *C) {
     }
     C->state = RKClientStateCreating;
     while (C->state == RKClientStateCreating) {
-        usleep(10000);
+        usleep(100000);
     }
     return;
 }

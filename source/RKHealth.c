@@ -18,7 +18,7 @@ void *healthRelay(void *in) {
     RKHealth *health;
     char *valueString;
     
-    RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    RKLog("%s started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     
     engine->state = RKHealthEngineStateActive;
     
@@ -38,11 +38,11 @@ void *healthRelay(void *in) {
         // Look for certain keywords, extract some information
         if ((valueString = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             desc->latitude = atof(valueString);
-            printf("Latitude = '%s' -> %.6f\n", valueString, desc->latitude);
+            //printf("Latitude = '%s' -> %.6f\n", valueString, desc->latitude);
         }
         if ((valueString = RKGetValueOfKey(health->string, "longitude")) != NULL) {
             desc->longitude = atof(valueString);
-            printf("Longitude = '%s' -> %.6f\n", valueString, desc->longitude);
+            //printf("Longitude = '%s' -> %.6f\n", valueString, desc->longitude);
         }
         k = RKNextModuloS(k, engine->healthBufferDepth);
     }
@@ -54,7 +54,7 @@ void *healthRelay(void *in) {
 RKHealthEngine *RKHealthEngineInit() {
     RKHealthEngine *engine = (RKHealthEngine *)malloc(sizeof(RKHealthEngine));
     memset(engine, 0, sizeof(RKHealthEngine));
-    sprintf(engine->name, "%s<TweetaRelay>%s",
+    sprintf(engine->name, "%s<HealthAssistant>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthEngine);
     engine->state = RKHealthEngineStateAllocated;
