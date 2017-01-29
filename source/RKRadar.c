@@ -435,6 +435,7 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     }
     RKClockSetVerbose(radar->pulseClock, verbose);
     RKClockSetVerbose(radar->positionClock, verbose);
+    RKHealthEngineSetVerbose(radar->healthEngine, verbose);
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);

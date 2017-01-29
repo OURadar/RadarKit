@@ -52,30 +52,67 @@ char *RKGetBackgroundColorOfIndex(const int i) {
     return str[k];
 }
 
+// BUG: This function is limited to an array of 8 elements
 char *RKGetValueOfKey(const char *string, const char *key) {
-    static char arg[256];
+    static int k = 7;
+    static char valueStrings[8][256];
+    k = k == 7 ? 0 : k + 1;
+    char *s, *e;
+    size_t len;
+    char *valueString = valueStrings[k];
     char *keyPosition = strcasestr(string, key);
+    
     if (keyPosition != NULL) {
         // Find start of the value
-        char *s = strchr(keyPosition + strlen(key), ':');
+        s = strchr(keyPosition + strlen(key), ':');
         if (s != NULL) {
             do {
                 s++;
             } while (*s == '"' || *s == '\'' || *s == ' ');
         }
+        // Array
+        if (*s == '[') {
+            // Find the end of bracket, return the entire array
+            e = s + 1;
+            while (*e != ']') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        } else if (*s == '{') {
+            // Find the end of curly bracket, return the entire array
+            e = s;
+            while (*e != '}') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        }
         // Find end of the value
-        char *e = s;
-        while (*e != '"' && *e != '\'' && *e != ',' && *e != '}') {
+        e = s;
+        while (*e != '"' && *e != '\'' && *e != ',' && *e != '}' && *e != ']') {
             e++;
         }
-        size_t len = e - s;
+        len = e - s;
         if (len > 0) {
-            strncpy(arg, s, len);
-            arg[len] = '\0';
+            strncpy(valueString, s, len);
+            valueString[len] = '\0';
         } else {
-            arg[0] = '\0';
+            valueString[0] = '\0';
         }
-        return arg;
+        return valueString;
     }
     return NULL;
 }
