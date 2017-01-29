@@ -3,23 +3,26 @@ RadarKit
 
 A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data. The main idea is to have user only implement the interface between a digital transceiver, a pedestal, and a general health monitor. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
 
-Requirements:
-FFTW
-NetCDF
+### Requirements: ###
 
-### Getting netcdf ###
+- FFTW [http://www.fftw.org]
+- NetCDF [http://www.unidata.ucar.edu/software/netcdf]
 
-CentOS 7
+### Getting Required Packages ###
+
+Required packages can either be installed through one of the package managers or compiled from source, which can be downloaded from their respective webpage.
+
+#### CentOS 7 ####
 
 ```shell
 yum install epel-release
-yum install netcdf-devel
+yum install fftw netcdf-devel
 ```
 
-Mac OS X
+#### Mac OS X ####
 
 ```shell
-brew install netcdf
+brew install fftw netcdf
 ```
 
 Design Philosophy
