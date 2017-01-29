@@ -89,18 +89,25 @@ Hardware hooks are provided to communicate with a digital transceiver, a positio
 
 ```c
 // Set the transceiver. Pass in function pointers: init, exec and free
-int RKSetTransceiver(RKRadar *radar,
+int RKSetTransceiver(RKRadar *,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
                      int execRoutine(RKTransceiver, const char *),
                      int freeRoutine(RKTransceiver));
 
 // Set the pedestal. Pass in function pointers: init, exec and free
-int RKSetPedestal(RKRadar *radar,
+int RKSetPedestal(RKRadar *,
                   void *initInput,
                   RKPedestal initRoutine(RKRadar *, void *),
                   int execRoutine(RKPedestal, const char *),
                   int freeRoutine(RKPedestal));
+
+// Set the health relay. Pass in function pointers: init, exec and free
+int RKSetHealthRelay(RKRadar *,
+                     void *initInput,
+                     RKHealthRelay initRoutine(RKRadar *, void *),
+                     int execRoutine(RKHealthRelay, const char *),
+                     int freeRoutine(RKHealthRelay));
 
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
