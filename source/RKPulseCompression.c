@@ -35,7 +35,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->index * (RKStatusBarWidth + 1) / engine->size;
-    memset(string, '#', i);
+    memset(string, 'C', i);
     memset(string + i, '.', RKStatusBarWidth - i);
     
     // Engine lag
@@ -65,7 +65,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d] |", engine->almostFull);
+    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
     if (i > RKMaximumStringLength - 13) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
