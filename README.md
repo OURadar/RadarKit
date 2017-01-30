@@ -18,22 +18,25 @@ Follow these steps to get the project
 
 ## Basic Usage ##
 
-1. Initialize a radar.
+1. Initialize a radar. Supply a tranceiver routine and pedestal routine. The health relay is omitted here for simplicity.
 
     ```c
     #include <RadarKit.h>
     
     int main() {
         RKRadar *radar = RKInit();
+        RKSetTransceiver(radar, NULL, transceiverThread, NULL, NULL);
+        RKSetPedestal(radar, NULL, pedestalThread, NULL, NULL);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
+        RKFree(radar);
     }
     ``````
 
 2. Set up a transceiver thread that receives I/Q data.
 
     ```c
-    void transceiverThread() {
+    RKTransceiver transceiverThread(RKRadar *radar, void *userInput) {
         while (active) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             pulse->header.gateCount = 1000;
@@ -58,7 +61,7 @@ Follow these steps to get the project
 3. Set up a pedestal thread that receives position data.
  
     ```c
-    void pedestalThread() {
+    RKPedestal pedestalThread(RKRadar *radar, void *userInput) {
         while (active) {
             RKPosition *position = RKGetVacantPosition(radar);
             // Copy the position from hardware interface
@@ -75,7 +78,7 @@ Follow these steps to get the project
     gcc -o program program.c -lRadarKit -lfftw -lnetcdf
     ``````
 
-This example is extremely simple. The actual radar will be more complex.
+This example is extremely simple. Many optional arguments were set to NULL. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
 ## Requirements ##
 
@@ -90,20 +93,20 @@ Required packages can either be installed through one of the package managers or
 
 ```shell
 apt-get install fftw netcdf
-```
+``````
 
 ##### CentOS 7 #####
 
 ```shell
 yum install epel-release
 yum install fftw netcdf-devel
-```
+``````
 
 ##### Mac OS X #####
 
 ```shell
 brew install fftw netcdf
-```
+``````
 
 Design Philosophy
 =================
@@ -140,7 +143,7 @@ RKRadar *RKInitMean(void);               // For a medium system, RaXPol like
 RKRadar *RKInitFull(void);               // For a high-performance system, PX-10,000 like
 RKRadar *RKInit(void);                   // Everything based on default settings, in between mean & lean
 int RKFree(RKRadar *radar);
-```
+``````
 
 
 ### Properties ###
