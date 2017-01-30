@@ -11,11 +11,68 @@ Follow these steps to get the project
 
     ```shell
     git clone https://git.arrc.ou.edu/cheo4524/radarkit.git
-    ```
+    ``````
 
 2. Get the required packages.
  
 
+## Basic Usage ##
+
+1. Initialize a radar.
+
+    ```c
+    #include <RadarKit.h>
+    
+    int main() {
+        RKRadar *radar = RKInit();
+    }
+    ``````
+
+2. Set up a transceiver thread that receives I/Q data.
+
+    ```c
+    void transceiverThread() {
+        while (active) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            pulse->header.gateCount = 1000;
+            
+            // Go through both polarizations
+            for (int p = 0; p < 2; p++) {
+                RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                // Go through all range gates
+                for (int g = 0; g < 1000; g++) {
+                    // Copy the I/Q samples from hardware interface
+                    X->i = 0;
+                    X->q = 1;
+                    X++;
+                }
+            }
+            RKSetPulseHasData(radar, pulse);
+        }
+    }
+    ``````
+    
+3. Set up a pedestal thread that receives position data.
+ 
+    ```c
+    void pedestalThread() {
+        while (active) {
+            RKPosition *position = RKGetVacantPosition(radar);
+            // Copy the position from hardware interface
+            position->az = 1.0;
+            position->el = 0.5;
+            RKSetPositionReady(radar, position);
+        }
+    }
+    ``````
+    
+4. Build the program and link to the RadarKit framework
+
+    ```shell
+    gcc -o program program.c -lRadarKit
+    ``````
+
+This example is extremely simple. The actual radar will be more complex.
 
 ## Requirements ##
 
