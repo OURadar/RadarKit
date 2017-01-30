@@ -25,6 +25,8 @@ Follow these steps to get the project
     
     int main() {
         RKRadar *radar = RKInit();
+        RKGoLive(radar);
+        RKWaitWhileActive(radar);
     }
     ``````
 
