@@ -38,8 +38,9 @@ Follow these steps to get the project
             
             // Go through both polarizations
             for (int p = 0; p < 2; p++) {
+                // Get a data pointer to the 16-bit data
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                // Go through all range gates
+                // Go through all range gates and fill in the samples
                 for (int g = 0; g < 1000; g++) {
                     // Copy the I/Q samples from hardware interface
                     X->i = 0;
@@ -66,10 +67,10 @@ Follow these steps to get the project
     }
     ``````
     
-4. Build the program and link to the RadarKit framework
+4. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
     ```shell
-    gcc -o program program.c -lRadarKit
+    gcc -o program program.c -lRadarKit -lfftw -lnetcdf
     ``````
 
 This example is extremely simple. The actual radar will be more complex.
