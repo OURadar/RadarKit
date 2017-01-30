@@ -13,8 +13,34 @@ Follow these steps to get the project
     git clone https://git.arrc.ou.edu/cheo4524/radarkit.git
     ``````
 
-2. Get the required packages.
- 
+2. Get the required packages, which can either be installed through one of the package managers or compiled from source.
+    - FFTW [http://www.fftw.org]
+    - NetCDF [http://www.unidata.ucar.edu/software/netcdf]
+
+    ##### Debian #####
+
+    ```shell
+    apt-get install fftw netcdf
+    ``````
+    
+    ##### CentOS 7 #####
+    
+    ```shell
+    yum install epel-release
+    yum install fftw netcdf-devel
+    ``````
+    
+    ##### Mac OS X #####
+    
+    ```shell
+    brew install fftw netcdf
+    ``````
+3. Compile and install the framework.
+
+    ```shell
+    make
+    sudo make install
+    ``````
 
 ## Basic Usage ##
 
@@ -80,33 +106,6 @@ Follow these steps to get the project
 
 This example is extremely simple. Many optional arguments were set to NULL. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
-## Requirements ##
-
-- FFTW [http://www.fftw.org]
-- NetCDF [http://www.unidata.ucar.edu/software/netcdf]
-
-### Getting Required Packages ###
-
-Required packages can either be installed through one of the package managers or compiled from source, which can be downloaded from their respective webpage.
-
-##### Debian #####
-
-```shell
-apt-get install fftw netcdf
-``````
-
-##### CentOS 7 #####
-
-```shell
-yum install epel-release
-yum install fftw netcdf-devel
-``````
-
-##### Mac OS X #####
-
-```shell
-brew install fftw netcdf
-``````
 
 Design Philosophy
 =================
