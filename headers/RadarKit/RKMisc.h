@@ -57,11 +57,12 @@ char *RKGetBackgroundColorOfIndex(const int i);
 char *RKIntegerToCommaStyleString(const long);
 char *RKFloatToCommaStyleString(const double);
 
-double RKTimevalDiff(const struct timeval miuend, const struct timeval subtrahend);
-double RKTimespecDiff(const struct timespec miuend, const struct timespec subtrahend);
+double RKTimevalDiff(const struct timeval minuend, const struct timeval subtrahend);
+double RKTimespecDiff(const struct timespec minuend, const struct timespec subtrahend);
 void RKUTCTime(struct timespec *);
 bool RKFilenameExists(const char *);
 void RKPreparePath(const char *filename);
 char *RKSignalString(const int);
+float RKUMinDiff(const float minuend, const float subtrahend);
 
 #endif /* rk_misc_h */

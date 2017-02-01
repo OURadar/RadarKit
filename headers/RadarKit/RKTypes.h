@@ -253,6 +253,7 @@ enum RKProductIndex {
     RKProductIndexD,
     RKProductIndexP,
     RKProductIndexR,
+    RKProductIndexS,
     RKProductIndexK,
     RKProductIndexZv,
     RKProductIndexVv,
@@ -295,15 +296,18 @@ typedef struct rk_radar_desc {
 // A running configuration buffer
 typedef struct rk_config {
     uint32_t         i;                                              // Identity counter
+    uint32_t         pw[RKMaxMatchedFilterCount];                    // Pulse width (ns)
     uint32_t         prf[RKMaxMatchedFilterCount];                   // Pulse repetition frequency (Hz)
     uint32_t         gateCount[RKMaxMatchedFilterCount];             // Number of range gates
     uint32_t         waveformId[RKMaxMatchedFilterCount];            // Transmit waveform
     char             vcpDefinition[RKMaximumStringLength];           // Volume coverage pattern
-    RKFloat          noise[2];                                       // Noise floor in ADU
-    RKFloat          ZCal[2];                                        // Reflectivity calibration
+    RKFloat          noise[2];                                       // Noise floor (ADU)
+    RKFloat          ZCal[2];                                        // Reflectivity calibration (dB)
+    RKFloat          DCal[2];                                        // ZDR calibration (dB)
     RKFloat          PCal[2];                                        // Phase calibration
-    float            sweepElevation;                                 // Sweep elevation angle
-    float            sweepAzimuth;                                   // Sweep azimuth angle
+    RKFloat          censorSNR;                                      // Censor SNR (dB)
+    float            sweepElevation;                                 // Sweep elevation angle (degrees)
+    float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
     RKMarker         startMarker;                                    // Marker of the start ray
 } RKConfig;
 
