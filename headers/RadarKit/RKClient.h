@@ -63,7 +63,6 @@ struct rk_client {
     bool                     reconnect;                          // Reconnect if connection fails
     int                      verbose;                            // Verbosity level
     void                     *userResource;                      // A pointer to user resource
-
     void                     *userPayload;                       // A pointer to user payload
 
     int                      (*init)(RKClient *);                // Connection initialization handler
@@ -85,6 +84,8 @@ struct rk_client {
     fd_set                   rfd;                                // Read ready
     fd_set                   wfd;                                // Write ready
     fd_set                   efd;                                // Error occurred
+
+    RKNetDelimiter           netDelimiter;                       // A storage for latest delimiter
 };
 
 RKClient *RKClientInit(void);

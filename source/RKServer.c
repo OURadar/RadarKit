@@ -172,15 +172,13 @@ void *RKOperatorRoutine(void *in) {
 
     // Run loop for the read/write
     while (M->state == RKServerStateActive && O->state == RKOperatorStateActive) {
-        FD_ZERO(&rfd);
-        FD_ZERO(&wfd);
-        FD_ZERO(&efd);
-        FD_SET(O->sid, &rfd);
-        FD_SET(O->sid, &wfd);
-        FD_SET(O->sid, &efd);
         //
         //  Stream worker
         //
+        FD_ZERO(&wfd);
+        FD_ZERO(&efd);
+        FD_SET(O->sid, &wfd);
+        FD_SET(O->sid, &efd);
         if (M->s != NULL) {
             timeout.tv_sec = 0;
             timeout.tv_usec = 1000;
@@ -207,6 +205,10 @@ void *RKOperatorRoutine(void *in) {
         //
         //  Command worker
         //
+        FD_ZERO(&rfd);
+        FD_ZERO(&efd);
+        FD_SET(O->sid, &rfd);
+        FD_SET(O->sid, &efd);
         timeout.tv_sec = 0;
         timeout.tv_usec = 1000;
         r = select(O->sid + 1, &rfd, NULL, &efd, &timeout);
@@ -309,7 +311,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
     O->beacon.type = RKNetworkPacketTypeBeacon;
     O->beacon.size = 0;
-    O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\0';
+    O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
     O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
 
     if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {

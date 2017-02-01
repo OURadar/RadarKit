@@ -20,28 +20,31 @@ void *theClient(void *in);
 #pragma mark Helper Functions
 
 void *theClient(void *in) {
+    RKClient *C = (RKClient *)in;
+
     int r;
     int k;
     int readCount, timeoutCount;
     struct timeval timeout;
+    struct timeval previousBeaconTime;
     bool readOkay;
 
     FILE *fid = NULL;
 
-    char *buf = (char *)malloc(RKMaxPacketSize);
+    void *buf = (void *)malloc(RKMaxPacketSize);
     if (buf == NULL) {
         RKLog("Error. Unable to allocate space for a buffer.\n");
         return (void *)RKResultErrorCreatingOperatorRoutine;
     }
+    void *delimiter = &C->netDelimiter;
 
-    RKNetDelimiter *header = (RKNetDelimiter *)buf;
-
-    RKClient *C = (RKClient *)in;
     C->userPayload = buf;
 
     if (C->verbose > 1) {
         RKLog("%s is working hard ...\n", C->name);
     }
+
+    char beacon[] = "ping" RKEOL;
 
     // Here comes the infinite loop until being stopped
     while (C->state < RKClientStateDisconnecting) {
@@ -128,10 +131,8 @@ void *theClient(void *in) {
         // Server is ready to receive
         if (C->init) {
             fid = NULL;
-            FD_ZERO(&C->rfd);
             FD_ZERO(&C->wfd);
             FD_ZERO(&C->efd);
-            FD_SET(C->sd, &C->rfd);
             FD_SET(C->sd, &C->wfd);
             FD_SET(C->sd, &C->efd);
             timeout.tv_sec = C->timeoutSeconds;
@@ -157,12 +158,10 @@ void *theClient(void *in) {
         
         // Actively receive
         timeoutCount = 0;
-        while (C->state < RKClientStateDisconnecting) {
+        while (C->state < RKClientStateReconnecting) {
             FD_ZERO(&C->rfd);
-            FD_ZERO(&C->wfd);
             FD_ZERO(&C->efd);
             FD_SET(C->sd, &C->rfd);
-            FD_SET(C->sd, &C->wfd);
             FD_SET(C->sd, &C->efd);
             timeout.tv_sec = 0;
             timeout.tv_usec = 100000;
@@ -221,15 +220,16 @@ void *theClient(void *in) {
 
                     case RKNetworkMessageFormatHeaderDefinedSize:
 
+                        // The delimiter first
                         k = 0;
                         readCount = 0;
                         while (readCount++ < C->timeoutSeconds * 100) {
-                            if ((r = (int)read(C->sd, buf + k, sizeof(RKNetDelimiter) - k)) > 0) {
+                            if ((r = (int)read(C->sd, delimiter + k, sizeof(RKNetDelimiter) - k)) > 0) {
                                 k += r;
-                                if (k > sizeof(RKNetDelimiter)) {
-                                    RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
+                                if (k == sizeof(RKNetDelimiter)) {
                                     break;
-                                } else if (k == sizeof(RKNetDelimiter)) {
+                                } else if (k > sizeof(RKNetDelimiter)) {
+                                    RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
                                     break;
                                 } else {
                                     usleep(10000);
@@ -246,15 +246,16 @@ void *theClient(void *in) {
                                 break;
                             }
                         }
-                        if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100 || errno != ETIMEDOUT) {
+                        if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
                             break;
                         }
+                        // Now the actual payload
                         k = 0;
                         readCount = 0;
-                        while (k < header->size && readCount++ < C->timeoutSeconds * 100) {
-                            if ((r = (int)read(C->sd, buf + sizeof(RKNetDelimiter) + k, header->size - k)) > 0) {
+                        while (readCount++ < C->timeoutSeconds * 100) {
+                            if ((r = (int)read(C->sd, buf + k, C->netDelimiter.size - k)) > 0) {
                                 k += r;
-                                if (k >= header->size) {
+                                if (k >= C->netDelimiter.size) {
                                     break;
                                 } else {
                                     usleep(10000);
@@ -262,10 +263,14 @@ void *theClient(void *in) {
                             } else if (errno != EAGAIN) {
                                 RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  r=%d  k=%d  errno=%d (%s)\n",
                                         C->name, r, k, errno, RKErrnoString(errno));
+                                readCount = C->timeoutSeconds * 1000;
+                                if (C->state < RKClientStateDisconnecting) {
+                                    C->state = RKClientStateReconnecting;
+                                }
                                 break;
                             }
                         }
-                        if (readCount >= RKNetworkTimeoutSeconds * 100 || errno != EAGAIN) {
+                        if (readCount >= C->timeoutSeconds * 1000) {
                             break;
                         }
                         readOkay = true;
@@ -309,6 +314,32 @@ void *theClient(void *in) {
                 C->state = RKClientStateConnected;
             }
             C->recv(C);
+
+            // Send in a beacon signal
+            gettimeofday(&timeout, NULL);
+            timeout.tv_sec -= 1;
+            if (timercmp(&timeout, &previousBeaconTime, >=)) {
+                FD_ZERO(&C->wfd);
+                FD_ZERO(&C->efd);
+                FD_SET(C->sd, &C->wfd);
+                FD_SET(C->sd, &C->efd);
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 1000;
+                r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+                if (r > 0) {
+                    if (FD_ISSET(C->sd, &C->efd)) {
+                        // Exceptions
+                        RKLog("%s encountered an exception error.\n", C->name);
+                        break;
+                    } else if (FD_ISSET(C->sd, &C->wfd)) {
+                        gettimeofday(&previousBeaconTime, NULL);
+                        RKNetworkSendPackets(C->sd, beacon, strlen(beacon), NULL);
+                    }
+                } else {
+                    RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                    break;
+                }
+            }
         }
 
         // Wait a while before trying to reconnect

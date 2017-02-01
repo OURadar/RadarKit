@@ -21,7 +21,7 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
     ssize_t   totalSentSize = 0;
     ssize_t   sentSize = 0;
 
-    int timeout_count = 0;
+    int       timeout_count = 0;
 
     va_start(arg, sd);
 
@@ -29,7 +29,7 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
     payload = va_arg(arg, void *);
     while (payload != NULL) {
         payloadSize = va_arg(arg, ssize_t);
-        RKLog("RKNetworkSendPackets : payloadSize = %d @ %p\n", (int)payloadSize, payload);
+        // RKLog("RKNetworkSendPackets : payloadSize = %d @ %p\n", (int)payloadSize, payload);
         sentSize = 0;
         totalSentSize = 0;
         while (totalSentSize < payloadSize && timeout_count++ < RKNetworkTimeoutSeconds / 10) {
@@ -39,10 +39,12 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
             if (totalSentSize < payloadSize) {
                 usleep(10000);
             } else if (sentSize < 0) {
+                RKLog("RKNetworkSendPackets Unable to send()\n");
                 return RKResultIncompleteSend;
             }
         }
         grandTotalSentSize += totalSentSize;
+        //RKLog("RKNetworkSendPackets : grandTotalSentSize = %d\n", (int)grandTotalSentSize);
         payload = va_arg(arg, void *);
     }
 
@@ -51,6 +53,5 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
     if (timeout_count >= RKNetworkTimeoutSeconds / 10) {
         return RKResultTimeout;
     }
-
     return grandTotalSentSize;
 }

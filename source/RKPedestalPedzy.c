@@ -16,23 +16,36 @@ int RKPedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
     RKRadar *radar = client->userResource;
 
-    // The payload just was just read by RKClient
-    RKPosition *position = (RKPosition *)client->userPayload;
+    if (client->netDelimiter.type == 'p') {
+        // The payload just was just read by RKClient
+        RKPosition *position = (RKPosition *)client->userPayload;
 
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("Position %08x EL %.2f  AZ %.2f --> %d\n", position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
-    }
-    
-    // Get a vacant slot for position from Radar, copy over the data, then set it ready
-    RKPosition *newPosition = RKGetVacantPosition(radar);
-    if (newPosition == NULL) {
-        RKLog("%s failed to get a vacant position.\n", client->name);
-        return RKResultFailedToGetVacantPosition;
-    }
-    memcpy(newPosition, position, sizeof(RKPosition));
-    RKSetPositionReady(radar, newPosition);
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Position  %010ld   %010ld   %08x EL %.2f  AZ %.2f --> %d\n",
+                  position->i,
+                  position->tic,
+                  position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
+        }
 
-    return RKResultNoError;
+        // Get a vacant slot for position from Radar, copy over the data, then set it ready
+        RKPosition *newPosition = RKGetVacantPosition(radar);
+        if (newPosition == NULL) {
+            RKLog("%s failed to get a vacant position.\n", client->name);
+            return RKResultFailedToGetVacantPosition;
+        }
+        memcpy(newPosition, client->userPayload, sizeof(RKPosition));
+        RKSetPositionReady(radar, newPosition);
+    } else {
+        // This the command acknowledgement, queue it up to feedback
+        char *string = (char *)client->userPayload;
+        if (!strncmp(string, "pong", 4)) {
+            // Just a beacon response.
+        } else {
+            RKLog("%s %s", client->name, string);
+        }
+    }
+
+    return RKResultSuccess;
 }
 
 #pragma mark - Protocol Implementations
@@ -61,10 +74,9 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
         desc.port = 9000;
     }
     desc.type = RKNetworkSocketTypeTCP;
-    desc.format = RKNetworkMessageFormatConstantSize;
+    desc.format = RKNetworkMessageFormatHeaderDefinedSize;
     desc.blocking = true;
     desc.reconnect = true;
-    desc.blockLength = sizeof(RKPosition);
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.verbose = 1;
     
