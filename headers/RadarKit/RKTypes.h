@@ -271,6 +271,9 @@ enum RKConfigKey {
     RKConfigKeyGateCount,
     RKConfigKeyWaveformId,
     RKConfigKeyVCPDefinition,
+    RKConfigKeyZCal,
+    RKConfigKeyDCal,
+    RKConfigKeyPCal,
     RKConfigKeyEnd
 };
 

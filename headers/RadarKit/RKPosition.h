@@ -45,6 +45,7 @@
 #define __RadarKit_Position__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKConfig.h>
 #include <RadarKit/RKDSP.h>
 
 typedef int RKPositionEngineState;

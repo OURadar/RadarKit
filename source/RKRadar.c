@@ -279,7 +279,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }
 
-    RKSetPRF(radar, 1000);
+    RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
+                    RKConfigKeyPRF, 1000,
+                    RKConfigKeyZCal, -43.0f, -43.0f,
+                    RKConfigKeyNull);
 
     return radar;
 }
@@ -724,5 +727,5 @@ void RKAddConfig(RKRadar *radar, ...) {
     va_list args;
     va_start(args, radar);
     RKLog("RKAddConfig() ...\n");
-    return RKAdvanceConfig(radar->configs, &radar->configIndex, args);
+    return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
 }

@@ -75,7 +75,6 @@ size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t 
 void RKScratchFree(RKScratch *);
 
 void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
-void RKAdvanceConfig(RKConfig *configBuffer, uint32_t *configIndex, ...);
 
 
 #endif /* defined(__RadarKit_RKFoundation__) */

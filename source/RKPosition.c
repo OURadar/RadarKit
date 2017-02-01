@@ -220,7 +220,7 @@ void *pulseTagger(void *in) {
 
             if (marker0 & RKMarkerSweepBegin) {
                 // Add another configuration
-                RKAdvanceConfig(engine->configBuffer, engine->configIndex,
+                RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
                                 RKConfigKeySweepElevation, (double)positionBefore->sweepElevationDegrees,
                                 RKConfigKeySweepAzimuth, (double)positionBefore->sweepAzimuthDegrees,
                                 RKConfigPositionMarker,  marker0,

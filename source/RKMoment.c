@@ -207,7 +207,7 @@ void *momentCore(void *in) {
     uint32_t ie;
 
     // Gate size in meters for range correction
-    RKFloat gateSizeMeters = 30.0f;
+    RKFloat gateSizeMeters = 0.0f;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -303,11 +303,15 @@ void *momentCore(void *in) {
         // Compute the range correction factor if needed.
         if (gateSizeMeters != ray->header.gateSizeMeters) {
             gateSizeMeters = ray->header.gateSizeMeters;
-            RKLog("gateSize changed to %.2f\n", gateSizeMeters);
+            k = *engine->configIndex;
+            RKConfig *config = &engine->configBuffer[*engine->configIndex];
+            if (engine->verbose) {
+                RKLog("%s %s deriving range correction factors  ZCal = %.2f dB (%d).\n", engine->name, name, config->ZCal[0], k);
+            }
             RKFloat r = 0.0f;
             for (i = 0; i < ray->header.capacity; i++) {
                 r = (RKFloat)i * gateSizeMeters;
-                space->rcor[i] = 20.0f * log10f(r);
+                space->rcor[i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
             }
         }
 
