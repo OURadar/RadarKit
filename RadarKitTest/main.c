@@ -149,8 +149,8 @@ UserParams processInput(int argc, char **argv) {
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
+        {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
-        {"tweeta-host"           , no_argument      , NULL, 't'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -369,9 +369,9 @@ int main(int argc, char *argv[]) {
         RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
         RKSetTransceiver(myRadar,
                          (void *)cmd,
-                         &RKTestTransceiverInit,
-                         &RKTestTransceiverExec,
-                         &RKTestTransceiverFree);
+                         RKTestTransceiverInit,
+                         RKTestTransceiverExec,
+                         RKTestTransceiverFree);
 
         // Build a series of options for pedestal, only pass down the relevant parameters
         if (!strlen(user.pedzyHost)) {
@@ -380,9 +380,9 @@ int main(int argc, char *argv[]) {
         RKLog("Pedestal input = '%s'", user.pedzyHost);
         RKSetPedestal(myRadar,
                       (void *)user.pedzyHost,
-                      &RKPedestalPedzyInit,
-                      &RKPedestalPedzyExec,
-                      &RKPedestalPedzyFree);
+                      RKPedestalPedzyInit,
+                      RKPedestalPedzyExec,
+                      RKPedestalPedzyFree);
         
         if (!strlen(user.tweetaHost)) {
             strcpy(user.tweetaHost, "localhost");
@@ -390,9 +390,9 @@ int main(int argc, char *argv[]) {
         RKLog("Health relay input = '%s'", user.tweetaHost);
         RKSetHealthRelay(myRadar,
                          (void *)user.tweetaHost,
-                         &RKHealthRelayTweetaInit,
-                         &RKHealthRelayTweetaExec,
-                         &RKHealthRelayTweetaFree);
+                         RKHealthRelayTweetaInit,
+                         RKHealthRelayTweetaExec,
+                         RKHealthRelayTweetaFree);
 
         myRadar->configs[0].prf[0] = user.prf;
         

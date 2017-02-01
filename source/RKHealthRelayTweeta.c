@@ -18,30 +18,10 @@ int RHealthRelayTweetaRead(RKClient *client) {
 
     // The payload just was just read by RKClient
     char *report = (char *)client->userPayload;
-
+    RKStripTail(report);
+    
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         printf("%s\n", report);
-    }
-    
-    // Look for some keywords, extract some information
-    const char keyword[] = "latitude";
-    char *token = strcasestr(report, keyword);
-    if (token != NULL) {
-        char *s = strstr(token + strlen(keyword), ":");
-        while (*(s + 1) == '"' || *(s + 1) == ' ') {
-            s++;
-        }
-        char *e = s;
-        while (*e != '"' || *e != ',' || *e != '}') {
-            e++;
-        }
-        size_t len = e - s;
-        char arg[40];
-        strncpy(arg, s, len);
-        s[len] = '\0';
-        
-        double latitude = atof(arg);
-        printf("Latitude = '%s' -> %.6f\n", arg, latitude);
     }
     
     // Get a vacant slot for health from Radar, copy over the data, then set it ready

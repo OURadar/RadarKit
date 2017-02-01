@@ -25,6 +25,9 @@ RKUserFlag RKStringToFlag(const char * string) {
             case 'h':
                 flag |= RKUserFlagStatusHealth;
                 break;
+            case 'H':
+                flag |= RKUserFlagStatusHealthOld;
+                break;
             case '1':
                 flag |= RKUserFlagStatusPulses;
                 break;
@@ -86,10 +89,11 @@ RKUserFlag RKStringToFlag(const char * string) {
 
 int RKFlagToString(char *string, RKUserFlag flag) {
     int j = 0;
-    if (flag & RKUserFlagStatusHealth)    { j += sprintf(string + j, "h"); }
+    if (flag & RKUserFlagStatusHealthOld) { j += sprintf(string + j, "H"); }
     if (flag & RKUserFlagStatusPulses)    { j += sprintf(string + j, "1"); }
     if (flag & RKUserFlagStatusRays)      { j += sprintf(string + j, "2"); }
     if (flag & RKUserFlagStatusPositions) { j += sprintf(string + j, "3"); }
+    if (flag & RKUserFlagStatusHealth)    { j += sprintf(string + j, "h"); }
     if (flag & RKUserFlagDisplayZ)        { j += sprintf(string + j, "z"); }
     if (flag & RKUserFlagProductZ)        { j += sprintf(string + j, "Z"); }
     if (flag & RKUserFlagDisplayV)        { j += sprintf(string + j, "v"); }
@@ -182,9 +186,10 @@ int socketCommandHandler(RKOperator *O) {
             user->streams = RKStringToFlag(O->cmd + 1);
             sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
             // Fast foward some indices
+            user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+            user->pulseIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
             user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-            //user->pulseIndex = user->radar->pulseIndex;
-            //user->rayIndex = user->radar->rayIndex;
+            user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
             RKOperatorSendBeaconAndString(O, string);
             break;
             
@@ -219,10 +224,6 @@ int socketStreamHandler(RKOperator *O) {
     uint8_t *data;
     RKRayHeader rayHeader;
 
-    // Check IQ
-    // Check MM
-    // Check system health
-
     if (engine->radarCount < 1) {
         return 0;
     }
@@ -234,7 +235,7 @@ int socketStreamHandler(RKOperator *O) {
 
     if (user->streams & user->access && td >= 0.05) {
         if (user->streams & RKUserFlagStatusPulses) {
-            snprintf(user->string, RKMaximumStringLength - 1, "%s %s %s" RKEOL,
+            snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s" RKEOL,
                      RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                      RKPositionEngineStatusString(user->radar->positionEngine),
                      RKMomentEngineStatusString(user->radar->momentEngine));
@@ -249,7 +250,8 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
-    if (user->streams & user->access & RKUserFlagStatusHealth && time - user->timeLastHealthOut >= 1.0) {
+
+    if (user->streams & user->access & RKUserFlagStatusHealthOld && time - user->timeLastHealthOut >= 1.0) {
         k = snprintf(user->string, RKMaximumStringLength - 1,
                      "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
                      user->radar->configs[user->radar->configIndex].prf[0]);
@@ -257,6 +259,24 @@ int socketStreamHandler(RKOperator *O) {
         O->delim.size = k + 1;
         RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), user->string, O->delim.size, NULL);
         user->timeLastHealthOut = time;
+    }
+    
+    if (user->streams & user->access & RKUserFlagStatusHealth) {
+        j = 0;
+        k = 0;
+        endIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
+        while (user->healthIndex != endIndex) {
+            c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
+            k += snprintf(user->string + k, RKMaximumStringLength - k - 1, "%s\n", c);
+            user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
+            j++;
+        }
+        if (j) {
+            // Take out the last '\n', replace it with somethign else + EOL
+            snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
+            RKOperatorSendBeaconAndString(O, user->string);
+        }
+        user->timeLastOut = time;
     }
 
     if (user->streams & user->access & RKUserFlagStatusRays) {
@@ -319,8 +339,6 @@ int socketInitialHandler(RKOperator *O) {
     user->radar = engine->radars[0];
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
-    user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
-    user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
     return RKResultNoError;
 }
 

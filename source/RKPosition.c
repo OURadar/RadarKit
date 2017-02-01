@@ -38,12 +38,12 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
 
     // Use b characters to draw a bar
     k = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
-    memset(string, '#', k);
+    memset(string, 'P', k);
     memset(string + k, '.', RKStatusBarWidth - k);
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " | ");
 
     // Engine lag
-    snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s |",
+    snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s",
                   rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                   99.9f * engine->lag,
                   rkGlobalParameters.showColor ? RKNoColor : "");

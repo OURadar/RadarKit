@@ -44,12 +44,77 @@ char *RKGetBackgroundColor(void) {
 }
 
 char *RKGetBackgroundColorOfIndex(const int i) {
-    const uint8_t colors[] = {64, 28, 136, 30, 162, 27, 98, 90};
+    const uint8_t colors[] = {64, 28, 136, 30, 162, 27, 98, 90, 167};
     static int k = 3;
     static char str[4][32];
     k = k == 3 ? 0 : k + 1;
     snprintf(str[k], 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
     return str[k];
+}
+
+// BUG: This function is limited to an array of 8 elements
+char *RKGetValueOfKey(const char *string, const char *key) {
+    static int k = 7;
+    static char valueStrings[8][256];
+    k = k == 7 ? 0 : k + 1;
+    char *s, *e;
+    size_t len;
+    char *valueString = valueStrings[k];
+    char *keyPosition = strcasestr(string, key);
+    
+    if (keyPosition != NULL) {
+        // Find start of the value
+        s = strchr(keyPosition + strlen(key), ':');
+        if (s != NULL) {
+            do {
+                s++;
+            } while (*s == '"' || *s == '\'' || *s == ' ');
+        }
+        // Array
+        if (*s == '[') {
+            // Find the end of bracket, return the entire array
+            e = s + 1;
+            while (*e != ']') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        } else if (*s == '{') {
+            // Find the end of curly bracket, return the entire array
+            e = s;
+            while (*e != '}') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        }
+        // Find end of the value
+        e = s;
+        while (*e != '"' && *e != '\'' && *e != ',' && *e != '}' && *e != ']') {
+            e++;
+        }
+        len = e - s;
+        if (len > 0) {
+            strncpy(valueString, s, len);
+            valueString[len] = '\0';
+        } else {
+            valueString[0] = '\0';
+        }
+        return valueString;
+    }
+    return NULL;
 }
 
 #pragma mark -
@@ -208,6 +273,13 @@ char *RKSignalString(const int signal) {
     return string;
 }
 
+void RKStripTail(char *string) {
+    char *c = string + strlen(string) - 1;
+    while (c != string && (*c == '\r' || *c == '\n' || *c == ' ')) {
+        *c-- = '\0';
+    }
+}
+
 float RKUMinDiff(const float m, const float s) {
     float d = m - s;
     if (d < -180.0f) {
@@ -220,3 +292,4 @@ float RKUMinDiff(const float m, const float s) {
     }
     return d;
 }
+    

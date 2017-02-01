@@ -53,6 +53,7 @@ char *RKGetColor();
 char *RKGetColorOfIndex(const int i);
 char *RKGetBackgroundColor();
 char *RKGetBackgroundColorOfIndex(const int i);
+char *RKGetValueOfKey(const char *string, const char *key);
 
 char *RKIntegerToCommaStyleString(const long);
 char *RKFloatToCommaStyleString(const double);
@@ -63,6 +64,7 @@ void RKUTCTime(struct timespec *);
 bool RKFilenameExists(const char *);
 void RKPreparePath(const char *filename);
 char *RKSignalString(const int);
+void RKStripTail(char *);
 float RKUMinDiff(const float minuend, const float subtrahend);
 
 #endif /* rk_misc_h */
