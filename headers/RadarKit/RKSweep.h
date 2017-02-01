@@ -43,6 +43,8 @@ struct rk_sweep_engine {
     // Program set variables
     pthread_t              tidRayGatherer;
     RKSweep                sweep;
+    float                  *array1D;
+    float                  *array2D;
     
     // Status / health
     uint32_t               processedRayIndex;

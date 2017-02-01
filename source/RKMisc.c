@@ -279,3 +279,17 @@ void RKStripTail(char *string) {
         *c-- = '\0';
     }
 }
+
+float RKUMinDiff(const float m, const float s) {
+    float d = m - s;
+    if (d < -180.0f) {
+        d += 360.0f;
+    } else if (d >= 180.0f) {
+        d -= 360.0f;
+    }
+    if (d < 0.0f) {
+        d = -d;
+    }
+    return d;
+}
+    
