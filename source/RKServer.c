@@ -137,7 +137,12 @@ void *RKOperatorRoutine(void *in) {
     fd_set          wfd;
     fd_set          efd;
 
+    char            str[RKMaximumStringLength];
+
     struct timeval  timeout;
+    struct timeval  user_timeout = {M->timeoutSeconds, 0};
+    struct timeval  latestReadTime;
+    struct timeval  latestWriteTime;
 
     RKLog("%s %s started for the connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq++);
 
@@ -146,23 +151,10 @@ void *RKOperatorRoutine(void *in) {
         M->w(O);
     }
 
-    int		        mwait = 0;
-    int             rwait = 0;
-    int             wwait = 0;
-    char            str[RKMaximumStringLength];
+    // Initialize some time values
+    gettimeofday(&latestReadTime, NULL);
+    gettimeofday(&latestWriteTime, NULL);
 
-    // Get whatever that is in-transit, should look at server options
-    /*
-     FD_ZERO(&rfd);
-     FD_SET(A->sid, &rfd);
-     timeout.tv_sec = 0;   timeout.tv_usec = 100000;
-     r = select(A->sid + 1, &rfd, NULL, &efd, &timeout);
-     if (r > 0 && FD_ISSET(A->sid, &rfd)) {
-     read(A->sid, str, PS_MAX_STR);
-     //printf("Flushed : %s\n", str);
-     }
-     */
-    
     // Get a file descriptor for get line
     fp = fdopen(O->sid, "r");
     if (fp == NULL) {
@@ -181,7 +173,7 @@ void *RKOperatorRoutine(void *in) {
         FD_SET(O->sid, &efd);
         if (M->s != NULL) {
             timeout.tv_sec = 0;
-            timeout.tv_usec = 1000;
+            timeout.tv_usec = RKServerSelectTimeoutUs;
             r = select(O->sid + 1, NULL, &wfd, &efd, &timeout);
             if (r > 0) {
                 if (FD_ISSET(O->sid, &efd)) {
@@ -190,7 +182,7 @@ void *RKOperatorRoutine(void *in) {
                     break;
                 } else if (FD_ISSET(O->sid, &wfd)) {
                     // Ready to write (stream)
-                    wwait = 0;
+                    gettimeofday(&latestWriteTime, NULL);
                     M->s(O);
                 }
             } else if (r < 0) {
@@ -199,7 +191,16 @@ void *RKOperatorRoutine(void *in) {
                 break;
             } else {
                 // Timeout (r == 0)
-                wwait++;
+                gettimeofday(&timeout, NULL);
+                timersub(&timeout, &user_timeout, &timeout);
+                if (timercmp(&timeout, &latestWriteTime, >=)) {
+                    // Dismiss with a terminate function
+                    RKLog("%s %s Encountered a timeout (%d seconds).\n", M->name, O->name, M->timeoutSeconds);
+                    if (M->t != NULL) {
+                        M->t(O);
+                    }
+                    break;
+                }
             }
         }
         //
@@ -210,20 +211,20 @@ void *RKOperatorRoutine(void *in) {
         FD_SET(O->sid, &rfd);
         FD_SET(O->sid, &efd);
         timeout.tv_sec = 0;
-        timeout.tv_usec = 1000;
+        timeout.tv_usec = RKServerSelectTimeoutUs;
         r = select(O->sid + 1, &rfd, NULL, &efd, &timeout);
         if (r > 0) {
             if (FD_ISSET(O->sid, &efd)) {
                 // Exceptions
-                RKLog("%s %s encountered an exception error.\n", M->name, O->name);
+                RKLog("%s %s Encountered an exception error.\n", M->name, O->name);
                 break;
             } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
-                rwait = 0;
+                gettimeofday(&latestReadTime, NULL);
                 if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
-                    RKLog("%s %s disconnected.\n", M->name, O->name);
+                    RKLog("%s %s Disconnected.\n", M->name, O->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -232,26 +233,25 @@ void *RKOperatorRoutine(void *in) {
                 if (M->c) {
                     M->c(O);
                 } else {
-                    RKLog("%s has no command handler. cmd '%s' from Op-%03d (%s)\n", M->name, O->cmd, O->iid, O->ip);
+                    RKLog("%s No command handler. cmd '%s' from Op-%03d (%s)\n", M->name, O->cmd, O->iid, O->ip);
                 }
             }
         } else if (r < 0) {
             // Errors
             RKLog("%s %s Error. Encountered an unexpected error.\n", M->name, O->name);
             break;
-        } else {
+        } else if (M->options & RKServerOptionExpectBeacon) {
             // Timeout (r == 0)
-            rwait++;
-        }
-        // Process the timeout
-        mwait = wwait < rwait ? wwait : rwait;
-        if (mwait > M->timeoutSeconds * 10 && !(O->option & RKOperatorOptionKeepAlive)) {
-            RKLog("%s %d encountered a timeout.\n", M->name, O->name);
-            // Dismiss with a terminate function
-            if (M->t != NULL) {
-                M->t(O);
+            gettimeofday(&timeout, NULL);
+            timersub(&timeout, &user_timeout, &timeout);
+            if (timercmp(&timeout, &latestReadTime, >=)) {
+                // Dismiss with a terminate function
+                RKLog("%s %s Encountered a timeout (%d seconds).\n", M->name, O->name, M->timeoutSeconds);
+                if (M->t != NULL) {
+                    M->t(O);
+                }
+                break;
             }
-            break;
         }
     } // while () ...
 
@@ -296,8 +296,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->iid = k;
     O->sid = sid;
     O->state = RKOperatorStateActive;
-    O->option = RKOperatorOptionNone;
-    O->timeoutSeconds = 10;
+    O->timeoutSeconds = 30;
     O->userResource = M->userResource;
     pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);

@@ -12,6 +12,7 @@
 #include <RadarKit/RKNetwork.h>
 
 #define RKServerMaximumOperators    16
+#define RKServerSelectTimeoutUs     200;
 
 //#ifdef __cplusplus
 //extern "C" {
@@ -28,7 +29,6 @@ enum RKServerState {
 };
 
 typedef int RKOperatorState;
-
 enum RKOperatorState {
     RKOperatorStateNull,
     RKOperatorStateFree,
@@ -36,11 +36,10 @@ enum RKOperatorState {
     RKOperatorStateActive
 };
 
-typedef int RKOperatorOption;
-
-enum RKOperatorOption {
-    RKOperatorOptionNone         = 0,
-    RKOperatorOptionKeepAlive    = 1
+typedef int RKServerOption;
+enum RKServerOption {
+    RKServerOptionNone           = 0,
+    RKServerOptionExpectBeacon   = 1
 };
 
 
@@ -55,6 +54,7 @@ struct rk_server {
     int              port;                           // Port number of the server
     int              maxClient;                      // Maximum number of client connections
     int              timeoutSeconds;                 // Timeout in seconds
+    RKServerOption   options;                        // Server options
 
     bool             ids[RKServerMaximumOperators];  // Operator IDs
     int              nclient;                        // Number of clients
@@ -73,7 +73,6 @@ struct rk_server {
 
 struct rk_operator  {
     RKServer         *M;                             // Pointer to main server for common resources
-    RKOperatorOption option;                         // Keep alive flag
 
     int              iid;                            // Instant identifier
     int              timeoutSeconds;                 // Timeout in seconds
