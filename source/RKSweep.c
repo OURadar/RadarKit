@@ -338,7 +338,7 @@ void *rayGatherer(void *in) {
     
     int k, s, n;
     
-    RKRay *ray, *S, *E;
+    RKRay *ray;
     RKRay **rays = engine->sweep.rays;
 
     // Start and end indices of the input rays
@@ -375,8 +375,6 @@ void *rayGatherer(void *in) {
             // Lag of the engine
             engine->lag = fmodf(((float)*engine->rayIndex + engine->rayBufferDepth - k) / engine->rayBufferDepth, 1.0f);
             if (ray->header.marker & RKMarkerSweepEnd) {
-                S = RKGetRay(engine->rayBuffer, is);
-                E = ray;
                 n = 0;
                 do {
                     ray = RKGetRay(engine->rayBuffer, is);
@@ -389,13 +387,6 @@ void *rayGatherer(void *in) {
                 rays[n++] = ray;
                 engine->sweep.rayCount = n;
                 is = RKPreviousNModuloS(is, n + 1, engine->rayBufferDepth);
-
-//                RKLog("%s Sweep   E%4.2f-%.2f   A%6.2f-%6.2f   \033[32mM\033[0m%04x-%04x   %05lu...%05lu (%d)\n",
-//                      engine->name,
-//                      S->header.startElevation , E->header.endElevation,
-//                      S->header.startAzimuth   , E->header.endAzimuth,
-//                      S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-//                      is, k, n);
                 
                 //RKLog(">%s %p %p %p ... %p\n", engine->name, engine->sweep.rays[0], engine->sweep.rays[1], engine->sweep.rays[2], engine->sweep.rays[n - 1]);
                 
