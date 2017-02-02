@@ -71,7 +71,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
         *colon = '\0';
         sscanf(colon + 1, "%d", &desc.port);
     } else {
-        desc.port = 9000;
+        desc.port = 9554;
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
