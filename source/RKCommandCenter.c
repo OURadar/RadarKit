@@ -265,9 +265,9 @@ int socketStreamHandler(RKOperator *O) {
         j = 0;
         k = 0;
         endIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
-        while (user->healthIndex != endIndex) {
+        while (user->healthIndex != endIndex && k < RKMaximumStringLength - 100) {
             c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
-            k += snprintf(user->string + k, RKMaximumStringLength - k - 1, "%s\n", c);
+            k += sprintf(user->string + k, "%s\n", c);
             user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
             j++;
         }
@@ -283,9 +283,9 @@ int socketStreamHandler(RKOperator *O) {
         j = 0;
         k = 0;
         endIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-        while (user->rayStatusIndex != endIndex) {
+        while (user->rayStatusIndex != endIndex && k < RKMaximumStringLength - 100) {
             c = user->radar->momentEngine->rayStatusBuffer[user->rayStatusIndex];
-            k += snprintf(user->string + k, RKMaximumStringLength - k - 1, "%s\n", c);
+            k += sprintf(user->string + k, "%s\n", c);
             user->rayStatusIndex = RKNextModuloS(user->rayStatusIndex, RKBufferSSlotCount);
             j++;
         }
