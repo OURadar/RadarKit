@@ -33,4 +33,3 @@ float RKInterpolateAngles(const float angleBefore, const float angleAfter, const
     }
     return value;
 }
-

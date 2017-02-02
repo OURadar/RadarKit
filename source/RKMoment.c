@@ -287,6 +287,10 @@ void *momentCore(void *in) {
         S = RKGetPulse(engine->pulseBuffer, is);
         E = RKGetPulse(engine->pulseBuffer, ie);
 
+        // Beamwidth
+        deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
+        deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+
         // Set the ray headers
         ray->header.startTime       = S->header.time;
         ray->header.startTimeDouble = S->header.timeDouble;
@@ -316,7 +320,7 @@ void *momentCore(void *in) {
         }
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
-        if (path.length > 3) {
+        if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             k = 0;
             i = is;
             do {
@@ -362,8 +366,6 @@ void *momentCore(void *in) {
         memset(string, '#', i);
         memset(string + i, '.', RKStatusBarWidth - i);
 
-        deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
-        deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
                  " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f) [%d/%.2f]   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
