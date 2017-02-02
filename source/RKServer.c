@@ -474,7 +474,7 @@ void RKServerStart(RKServer *M) {
         usleep(25000);
     }
     if (M->verbose) {
-        RKLog("%s started.\n", M->name);
+        RKLog("%s Started.\n", M->name);
     }
 }
 

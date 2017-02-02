@@ -215,7 +215,7 @@ void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
-    RKLog(">%s %s started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", engine->name, name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
+    RKLog(">%s %s Started.   i0 = %d   mem = %s B   tic = %d   %s @ %p\n", engine->name, name, io, RKIntegerToCommaStyleString(mem), me->tic, me->semaphoreName, sem);
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -467,7 +467,7 @@ void *pulseGatherer(void *in) {
         }
     }
 
-    RKLog("%s started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
     
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
@@ -690,7 +690,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
-    RKLog("%s starting ...\n", engine->name);
+    RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
         return RKResultFailedToStartPulseGatherer;

@@ -429,7 +429,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
 #pragma mark - Interactions
 
 void RKCommandCenterStart(RKCommandCenter *center) {
-    RKLog("%s starting ...\n", center->name);
+    RKLog("%s Starting ...\n", center->name);
     RKServerStart(center->server);
 }
 

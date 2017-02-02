@@ -42,11 +42,11 @@
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
 #define RKVersionString                  "1.0"
-#define RKBufferCSlotCount               16                          // Config
+#define RKBufferCSlotCount               50                          // Config
 #define RKBufferHSlotCount               50                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
 #define RKBufferPSlotCount               500                         // Positions
-#define RKBuffer0SlotCount               5000                        // Raw I/Q
+#define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               1440                        // Ray
 #define RKGateCount                      32768                       // Must power of 2!
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0

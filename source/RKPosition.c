@@ -91,7 +91,7 @@ void *pulseTagger(void *in) {
     RKMarker marker0, marker1;
     bool hasSweepEnd;
 
-    RKLog("%s started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
     engine->state = RKPositionEngineStateActive;
     
@@ -314,7 +314,7 @@ void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
 #pragma mark - Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
-    RKLog("%s starting ...\n", engine->name);
+    RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;

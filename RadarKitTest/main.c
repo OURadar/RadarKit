@@ -18,7 +18,7 @@ typedef struct user_params {
     int   coresForProductGenerator;
     int   prf;
     int   fs;
-    int   g;
+    int   gateCount;
     int   verbose;
     int   testPulseCompression;
     int   sleepInterval;
@@ -241,7 +241,7 @@ UserParams processInput(int argc, char **argv) {
                 user.prf = (int)atof(optarg);
                 break;
             case 'g':
-                user.g = (int)atof(optarg);
+                user.gateCount = (int)atof(optarg);
                 break;
             case 'h':
                 showHelp();
@@ -282,8 +282,8 @@ UserParams processInput(int argc, char **argv) {
     if (user.prf > 0 && user.simulate == false) {
         RKLog("Warning. PRF has no effects without simulation.\n");
     }
-    if (user.g == 0 && user.fs > 0) {
-        user.g = (int)(2.0 * 60.0e3 * (float)user.fs / 3.0e8);
+    if (user.gateCount == 0 && user.fs > 0) {
+        user.gateCount = (int)(2.0 * 60.0e3 * (float)user.fs / 3.0e8);
     }
     
     return user;
@@ -315,14 +315,14 @@ int main(int argc, char *argv[]) {
     // Build an initialization description
     RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
-    desc.pulseCapacity = 1 << (int)ceilf(log2f(user.g));
+    desc.pulseCapacity = 1 << (int)ceilf(log2f(user.gateCount));
     desc.pulseToRayRatio = 1;
-    if (user.fs > 10000) {
+    if (user.fs >= 20000000) {
         desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
         desc.pulseBufferDepth = 10000;
     }
-    desc.rayBufferDepth = 1080;
+    desc.rayBufferDepth = 1440;
     desc.latitude = 35.181251;
     desc.longitude = -97.436752;
     desc.radarHeight = 2.5f;
@@ -357,8 +357,8 @@ int main(int argc, char *argv[]) {
         if (user.prf) {
             i += sprintf(cmd + i, " f %d", user.prf);
         }
-        if (user.g) {
-            i += sprintf(cmd + i, " g %d", user.g);
+        if (user.gateCount) {
+            i += sprintf(cmd + i, " g %d", user.gateCount);
         }
         if (user.fs) {
             i += sprintf(cmd + i, " F %d", user.fs);

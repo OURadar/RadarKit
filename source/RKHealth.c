@@ -24,7 +24,7 @@ void *healthRelay(void *in) {
     char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage"};
     const int keywordsCount = sizeof(keywords) / RKNameLength;
     
-    RKLog("%s started.   mem = %s B   healthIndex = %d   keywordsCount = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex, keywordsCount);
+    RKLog("%s Started.   mem = %s B   healthIndex = %d   keywordsCount = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex, keywordsCount);
     
     engine->state = RKHealthEngineStateActive;
     
@@ -123,7 +123,7 @@ void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
 }
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
-    RKLog("%s starting ...\n", engine->name);
+    RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->threadId, NULL, healthRelay, engine)) {
         RKLog("Error. Unable to start health engine.\n");
         return RKResultFailedToStartHealthWorker;

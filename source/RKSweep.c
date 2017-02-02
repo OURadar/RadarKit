@@ -344,7 +344,7 @@ void *rayGatherer(void *in) {
     uint32_t is = 0;
     pthread_t tidSweepWriter = NULL;
     
-    RKLog("%s started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     
     engine->state |= RKSweepEngineStateActive;
     
@@ -472,7 +472,7 @@ void RKSweepEngineSetInputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
 #pragma mark - Interactions
 
 int RKSweepEngineStart(RKSweepEngine *engine) {
-    RKLog("%s starting ...\n", engine->name);
+    RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->tidRayGatherer, NULL, rayGatherer, engine) != 0) {
         RKLog("Error. Failed to start a ray gatherer.\n");
         return RKResultFailedToStartRayGatherer;

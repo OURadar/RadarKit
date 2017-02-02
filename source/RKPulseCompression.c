@@ -172,7 +172,7 @@ void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s started.   i0 = %d   mem = %s B   tic = %d\n", engine->name, name, i0, RKIntegerToCommaStyleString(mem), me->tic);
+    RKLog(">%s %s Started.   i0 = %d   mem = %s B   tic = %d\n", engine->name, name, i0, RKIntegerToCommaStyleString(mem), me->tic);
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -444,7 +444,7 @@ void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
-    RKLog("%s started.   mem = %s   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
+    RKLog("%s Started.   mem = %s   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
@@ -751,7 +751,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
-    RKLog("%s starting ...\n", engine->name);
+    RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("Error. Failed to start %s.\n", engine->name);
         return RKResultFailedToStartPulseWatcher;

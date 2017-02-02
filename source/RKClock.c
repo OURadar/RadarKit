@@ -93,7 +93,7 @@ void RKClockSetOffset(RKClock *clock, double offset) {
 void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     clock->hasWisdom = true;
     clock->dx = dxdu;
-    RKLog("%s received dx/du = %.2e as wisdom\n", clock->name, dxdu);
+    RKLog("%s Received dx/du = %.2e as wisdom\n", clock->name, dxdu);
 }
 
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
