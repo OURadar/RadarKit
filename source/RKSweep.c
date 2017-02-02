@@ -59,9 +59,9 @@ void *sweepWriter(void *in) {
     T = rays[k + 1];
     E = rays[k + n - 1];
     config = &engine->configBuffer[T->header.configIndex];
-    RKLog("%s Sweep      C%02d     E%5.2f/%5.2f-%5.2f         A%6.2f-%6.2f   M%%04x-%04x        %05lu...%05lu (%s%d%s)\n",
+    RKLog("%s Sweep      C%02d     E%5.2f/%5.2f-%5.2f         A%6.2f-%6.2f   M%04x-%04x        %05lu...%05lu (%s%d%s)\n",
           engine->name,
-          T->header.configIndex    ,
+          T->header.configIndex,
           config->sweepElevation,
           S->header.startElevation , E->header.endElevation,
           S->header.startAzimuth   , E->header.endAzimuth,
@@ -437,7 +437,9 @@ void RKSweepEngineFree(RKSweepEngine *engine) {
     if (engine->state & RKSweepEngineStateActive) {
         engine->state ^= RKSweepEngineStateActive;
     }
-    pthread_join(engine->tidRayGatherer, NULL);
+    if (engine->state & RKSweepEngineStateActive) {
+        pthread_join(engine->tidRayGatherer, NULL);
+    }
     free(engine->array1D);
     free(engine->array2D);
     free(engine);
