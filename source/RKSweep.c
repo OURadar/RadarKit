@@ -57,16 +57,18 @@ void *sweepWriter(void *in) {
         }
     }
     S = rays[k];
+    T = rays[k + 1];
     E = rays[k + n - 1];
-    RKLog("%s Sweep   C%02d-%02d  E%4.2f-%4.2f-%.2f   A%6.2f-%6.2f   %sM%s%04x-%04x   %05lu...%05lu (%s%d%s)\n",
+    config = &engine->configBuffer[T->header.configIndex];
+    RKLog("%s Sweep   C%02d     E%4.2f-%4.2f-%4.2f-%.2f   A%6.2f-%6.2f   %sM%s%04x-%04x        %05lu...%05lu (%s%d%s)\n",
           engine->name,
-          S->header.configIndex    , E->header.configIndex,
+          T->header.configIndex    , config->sweepElevation,
           config->sweepElevation,
-          S->header.startElevation , E->header.endElevation,
-          S->header.startAzimuth   , E->header.endAzimuth,
+          T->header.startElevation , E->header.endElevation,
+          T->header.startAzimuth   , E->header.endAzimuth,
           RKGetColorOfIndex(2)     , RKNoColor,
-          S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-          S->header.n              , E->header.n,
+          T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+          T->header.n              , E->header.n,
           n != 360 ? RKGetColorOfIndex(1) : "",
           n,
           RKNoColor);
@@ -168,10 +170,10 @@ void *sweepWriter(void *in) {
         j += strftime(filename + j, 16, "%Y%m%d", gmtime(&startTime));
         j += sprintf(filename + j, "/%s-", engine->radarDescription->filePrefix);
         j += strftime(filename + j, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-        if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerPPIScan) {
-            j += sprintf(filename + j, "-E%.1f-%c", S->header.sweepElevation, symbol);
+        if (engine->configBuffer[T->header.configIndex].startMarker & RKMarkerPPIScan) {
+            j += sprintf(filename + j, "-E%.1f-%c", T->header.sweepElevation, symbol);
         } else if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerRHIScan) {
-            j += sprintf(filename + j, "-A%.1f-%c", S->header.sweepAzimuth, symbol);
+            j += sprintf(filename + j, "-A%.1f-%c", T->header.sweepAzimuth, symbol);
         } else {
             j += sprintf(filename + j, "-N%03d-%c", n, symbol);
         }
@@ -242,9 +244,9 @@ void *sweepWriter(void *in) {
         put_global_text_att(ncid, "ColorMap-value", productColormap);
         
         // Other housekeeping attributes
-        nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &S->header.sweepElevation);
+        nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &T->header.sweepElevation);
         put_global_text_att(ncid, "ElevationUnits", "Degrees");
-        nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &S->header.sweepAzimuth);
+        nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &T->header.sweepAzimuth);
         put_global_text_att(ncid, "AzimuthUnits", "Degrees");
         tmpf = 0.0f;
         nc_put_att_float(ncid, NC_GLOBAL, "RangeToFirstGate", NC_FLOAT, 1, &tmpf);
@@ -261,7 +263,7 @@ void *sweepWriter(void *in) {
         tmpf = (float)config->pw[0] * 0.001f;
         nc_put_att_float(ncid, NC_GLOBAL, "PulseWidth-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "MaximumRange-unit", "KiloMeters");
-        tmpf = 1.0e-3f * S->header.gateSizeMeters * S->header.gateCount;
+        tmpf = 1.0e-3f * T->header.gateSizeMeters * T->header.gateCount;
         nc_put_att_float(ncid, NC_GLOBAL, "MaximumRange-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "ProcessParameters", "Noise Calib Censor");
         tmpf = 20.0f * log10f(config->noise[0]);
@@ -308,7 +310,7 @@ void *sweepWriter(void *in) {
         }
         nc_put_var_float(ncid, variableIdBeamwidth, array1D);
         for (j = 0; j < n; j++) {
-            array1D[j] = S->header.gateSizeMeters;
+            array1D[j] = T->header.gateSizeMeters;
         }
         nc_put_var_float(ncid, variableIdGateWidth, array1D);
         
@@ -321,6 +323,7 @@ void *sweepWriter(void *in) {
                 } else {
                     *y++ = W2_MISSING_DATA;
                 }
+                x++;
             }
         }
         nc_put_var_float(ncid, variableIdData, array2D);
@@ -437,7 +440,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     }
     engine->state = RKSweepEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine) + RKMaxRaysPerSweep * (RKGateCount + 1) * sizeof(float);
-    engine->doNotWrite = true;
+    engine->doNotWrite = false;
     return engine;
 }
 
@@ -467,6 +470,10 @@ void RKSweepEngineSetInputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
     engine->rayBufferDepth    = rayBufferDepth;
+}
+
+void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
+    engine->doNotWrite = value;
 }
 
 #pragma mark - Interactions

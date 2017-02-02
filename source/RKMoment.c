@@ -365,9 +365,10 @@ void *momentCore(void *in) {
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f) [%d/%.2f]   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+                 ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
                  ray->header.marker,
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",

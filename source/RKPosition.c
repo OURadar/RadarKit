@@ -61,14 +61,18 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     memset(string + k, '.', RKStatusBarWidth - k);
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferDepth)];
-    snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s   %sEL%s %6.2f° @ %+6.2f°/s",
-                  (unsigned long long)position->i,
-                  rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
-                  rkGlobalParameters.showColor ? RKNoColor : "",
-                  position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
-                  rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
-                  rkGlobalParameters.showColor ? RKNoColor : "",
-                  position->elevationDegrees, position->elevationVelocityDegreesPerSecond);
+    snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]",
+             (unsigned long long)position->i,
+             rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "",
+             position->azimuthDegrees,
+             position->azimuthVelocityDegreesPerSecond,
+             position->sweepElevationDegrees,
+             rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "",
+             position->elevationDegrees,
+             position->elevationVelocityDegreesPerSecond,
+             position->sweepElevationDegrees);
 
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -221,12 +225,13 @@ void *pulseTagger(void *in) {
             if (marker0 & RKMarkerSweepBegin) {
                 // Add another configuration
                 RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
-                                RKConfigKeySweepElevation, (double)positionBefore->sweepElevationDegrees,
-                                RKConfigKeySweepAzimuth, (double)positionBefore->sweepAzimuthDegrees,
+                                RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
+                                RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
                                 RKConfigPositionMarker,  marker0,
                                 RKConfigKeyNull);
                 if (engine->verbose) {
-                    RKLog("%s configIndex -> %d   New sweep %.2f\n", engine->name, *engine->configIndex, positionBefore->sweepElevationDegrees);
+                    RKLog("%s New sweep C%02d.   EL %.2f°   AZ %.2f°\n", engine->name, *engine->configIndex,
+                          positionAfter->sweepElevationDegrees, positionAfter->sweepAzimuthDegrees);
                 }
             }
 

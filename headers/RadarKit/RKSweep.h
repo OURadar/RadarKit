@@ -64,6 +64,7 @@ void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
 void RKSweepEngineSetInputBuffer(RKSweepEngine *, RKRadarDesc *,
                                  RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                  RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
+void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
