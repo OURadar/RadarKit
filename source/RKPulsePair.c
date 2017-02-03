@@ -115,12 +115,11 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     v = space->KDP;
     ri = space->C[0].i;
     rq = space->C[0].q;
-    *v++ = 0.0f;
-    for (k = 0; k < gateCount - 1; k++) {
-        *s = atan2f(*rq++, *ri++) + pcal;
-        *v++ = -*s + ++*s;
+    s[0] = atan2f(*rq++, *ri++) + pcal;
+    for (k = 1; k < gateCount; k++) {
+        s[k] = atan2f(*rq++, *ri++) + pcal;
+        *v++ = s[k] - s[k - 1];
     }
-    *s++ = atan2f(*rq++, *ri++) + pcal;
 }
 
 int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
