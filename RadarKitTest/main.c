@@ -23,6 +23,7 @@ typedef struct user_params {
     int   testPulseCompression;
     int   sleepInterval;
     bool  simulate;
+    bool  doNotWrite;
     char  pedzyHost[256];
     char  tweetaHost[256];
 } UserParams;
@@ -151,6 +152,7 @@ UserParams processInput(int argc, char **argv) {
         {"sim"                   , no_argument      , NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
+        {"do-not-write"          , no_argument      , NULL, 'w'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -267,6 +269,9 @@ UserParams processInput(int argc, char **argv) {
             case 'v':
                 user.verbose++;
                 break;
+            case 'w':
+                user.doNotWrite = true;
+                break;
             case 'z':
                 if (optarg) {
                     user.sleepInterval = atoi(optarg);
@@ -346,6 +351,9 @@ int main(int argc, char *argv[]) {
 
     // Set any parameters here:
     RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
+    if (user.doNotWrite) {
+        RKSweepEngineSetDoNotWrite(myRadar->sweepEngine, true);
+    }
 
     if (user.simulate) {
 
