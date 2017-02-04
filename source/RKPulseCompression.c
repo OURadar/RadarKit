@@ -34,7 +34,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
-    i = *engine->index * (RKStatusBarWidth + 1) / engine->size;
+    i = *engine->pulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
     memset(string, 'C', i);
     memset(string + i, '.', RKStatusBarWidth - i);
     
@@ -122,7 +122,7 @@ void *pulseCompressionCore(void *_in) {
 
 #endif
 
-    RKPulse *pulse = RKGetPulse(engine->buffer, 0);
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
     const size_t nfft = MIN(RKGateCount, pulse->header.capacity);
 
     // Allocate local resources, use k to keep track of the total allocation
@@ -160,7 +160,7 @@ void *pulseCompressionCore(void *_in) {
     gettimeofday(&t2, NULL);
     
     // The last index of the pulse buffer
-    uint32_t i0 = engine->size - engine->coreCount + c;
+    uint32_t i0 = engine->pulseBufferDepth - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -210,10 +210,10 @@ void *pulseCompressionCore(void *_in) {
         gettimeofday(&t1, NULL);
 
         // Start of getting busy
-        i0 = RKNextNModuloS(i0, engine->coreCount, engine->size);
-        me->lag = fmodf((float)(*engine->index + engine->size - me->pid) / engine->size, 1.0f);
+        i0 = RKNextNModuloS(i0, engine->coreCount, engine->pulseBufferDepth);
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
-        RKPulse *pulse = RKGetPulse(engine->buffer, i0);
+        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, i0);
 
         #ifdef DEBUG_IQ
         RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
@@ -361,7 +361,7 @@ void *pulseWatcher(void *_in) {
     struct timeval t0, t1;
 
     // The beginning of the buffer is a pulse, it has the capacity info
-    RKPulse *pulse = RKGetPulse(engine->buffer, 0);
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
     RKPulse *pulseToSkip;
     
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
@@ -444,7 +444,7 @@ void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
-    RKLog("%s Started.   mem = %s   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->index);
+    RKLog("%s Started.   mem = %s   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
@@ -456,14 +456,14 @@ void *pulseWatcher(void *_in) {
     int s = 0;
     while (engine->state == RKPulseCompressionEngineStateActive) {
         // The pulse
-        pulse = RKGetPulse(engine->buffer, k);
+        pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
         s = 0;
-        while (k == *engine->index && engine->state == RKPulseCompressionEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state == RKPulseCompressionEngineStateActive) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.0002f, k , *engine->index, pulse->header.s);
+                      engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
@@ -472,15 +472,15 @@ void *pulseWatcher(void *_in) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.0002f, k , *engine->index, pulse->header.s);
+                      engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         if (engine->state == RKPulseCompressionEngineStateActive) {
             // Lag of the engine
-            engine->lag = fmodf(((float)*engine->index + engine->size - k) / engine->size, 1.0f);
+            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
             if (!isfinite(engine->lag)) {
                 RKLog("%s %d + %d - %d = %d",
-                      engine->name, *engine->index, engine->size, k, *engine->index + engine->size - k, engine->lag);
+                      engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
             }
             
             // Assess the lag of the workers
@@ -490,13 +490,13 @@ void *pulseWatcher(void *_in) {
             }
             if (skipCounter == 0 && lag > 0.9f) {
                 engine->almostFull++;
-                skipCounter = engine->size / 10;
+                skipCounter = engine->pulseBufferDepth / 10;
                 RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
-                i = *engine->index;
+                i = *engine->pulseIndex;
                 do {
-                    i = RKPreviousModuloS(i, engine->size);
+                    i = RKPreviousModuloS(i, engine->pulseBufferDepth);
                     engine->filterGid[i] = -1;
-                    pulseToSkip = RKGetPulse(engine->buffer, i);
+                    pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
                 } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
             }
 
@@ -567,7 +567,7 @@ void *pulseWatcher(void *_in) {
             }
         }
         // Update k to catch up for the next watch
-        k = RKNextModuloS(k, engine->size);
+        k = RKNextModuloS(k, engine->pulseBufferDepth);
     }
 
     // Wait for workers to return
@@ -647,15 +647,16 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const 
 // size - number of slots in *pulses
 //
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   RKBuffer buffer, uint32_t *index, const uint32_t size) {
-    engine->buffer = buffer;
-    engine->index  = index;
-    engine->size   = size;
+                                                   RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
+                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
+    engine->pulseBuffer      = pulseBuffer;
+    engine->pulseIndex       = pulseIndex;
+    engine->pulseBufferDepth = pulseBufferDepth;
 
     if (engine->filterGid != NULL) {
         free(engine->filterGid);
     }
-    engine->filterGid = (int *)malloc(size * sizeof(int));
+    engine->filterGid = (int *)malloc(pulseBufferDepth * sizeof(int));
     if (engine->filterGid == NULL) {
         RKLog("%s Error. Unable to allocate filterGid.\n", engine->name);
         exit(EXIT_FAILURE);
@@ -664,8 +665,8 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     if (engine->planIndices != NULL) {
         free(engine->planIndices);
     }
-    engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(size * sizeof(RKPulseCompressionPlanIndex));
-    engine->memoryUsage += size * sizeof(RKPulseCompressionPlanIndex);
+    engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(pulseBufferDepth * sizeof(RKPulseCompressionPlanIndex));
+    engine->memoryUsage += pulseBufferDepth * sizeof(RKPulseCompressionPlanIndex);
     if (engine->planIndices == NULL) {
         RKLog("%s Error. Unable to allocate planIndices.\n", engine->name);
         exit(EXIT_FAILURE);
@@ -718,19 +719,19 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}};
-    RKPulse *pulse = (RKPulse *)engine->buffer;
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
-    RKPulse *pulse = (RKPulse *)engine->buffer;
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {1.0f, 0.0f}};
-    RKPulse *pulse = (RKPulse *)engine->buffer;
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 

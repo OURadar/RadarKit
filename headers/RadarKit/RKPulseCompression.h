@@ -33,7 +33,7 @@ typedef struct rk_filter_anchor {
     int origin;
     int length;
     int maxDataLength;
-} RKPulseCompressionFilterAnchor;
+} RKMatchedFilterAnchor;
 
 typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
 typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
@@ -55,16 +55,19 @@ struct rk_pulse_compression_worker {
 struct rk_pulse_compression_engine {
     // User set variables
     char                             name[RKNameLength];
-    RKBuffer                         buffer;                             // Buffer of raw pulses
-    uint32_t                         *index;                             // The refence index to watch for
-    uint32_t                         size;                               // Size of the buffer
+    RKBuffer                         pulseBuffer;                        // Buffer of raw pulses
+    uint32_t                         *pulseIndex;                        // The refence index to watch for
+    uint32_t                         pulseBufferDepth;                   // Size of the buffer
+    RKConfig                         *configBuffer;
+    uint32_t                         *configIndex;
+    uint32_t                         configBufferDepth;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxMatchedFilterGroupCount];
     RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
-    RKPulseCompressionFilterAnchor   anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+    RKMatchedFilterAnchor            anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
 
     // Program set variables
     int                              planCount;
@@ -93,8 +96,12 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
 
 void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   RKBuffer buffer, uint32_t *index, const uint32_t size);
+                                                   RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
+                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count);
+
+// ------
+// These should go into RKConfig
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
@@ -107,6 +114,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
 int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine);
+// ------
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);

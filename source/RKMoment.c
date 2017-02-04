@@ -635,8 +635,8 @@ void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
 
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, RKRadarDesc *desc,
                                          RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                         RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
-                                         RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth) {
+                                         RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth,
+                                         RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth) {
     engine->radarDescription  = desc;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;

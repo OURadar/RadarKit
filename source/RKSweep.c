@@ -488,4 +488,3 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
     pthread_join(engine->tidRayGatherer, NULL);
     return RKResultSuccess;
 }
-
