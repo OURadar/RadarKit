@@ -14,8 +14,8 @@ Follow these steps to get the project
     ``````
 
 2. Get the required packages, which can either be installed through one of the package managers or compiled from source.
-    - FFTW [http://www.fftw.org]
-    - NetCDF [http://www.unidata.ucar.edu/software/netcdf]
+    - [FFTW]
+    - [NetCDF]
 
     ##### Debian #####
 
@@ -32,15 +32,21 @@ Follow these steps to get the project
     
     ##### Mac OS X #####
     
+    I use [Homebrew] as my package manager for macOS. I highly recommend it.
+    
     ```shell
-    brew install fftw netcdf
+    brew install fftw science/netcdf
     ``````
+    
 3. Compile and install the framework.
 
     ```shell
     make
     sudo make install
     ``````
+[FFTW]: http://www.fftw.org
+[NetCDF]: http://www.unidata.ucar.edu/software/netcdf
+[Homebrew]: http://brew.sh
 
 ## Basic Usage ##
 
