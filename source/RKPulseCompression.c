@@ -649,9 +649,12 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const 
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
                                                    RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
-    engine->pulseBuffer      = pulseBuffer;
-    engine->pulseIndex       = pulseIndex;
-    engine->pulseBufferDepth = pulseBufferDepth;
+    engine->configBuffer      = configBuffer;
+    engine->configIndex       = configIndex;
+    engine->configBufferDepth = configBufferDepth;
+    engine->pulseBuffer       = pulseBuffer;
+    engine->pulseIndex        = pulseIndex;
+    engine->pulseBufferDepth  = pulseBufferDepth;
 
     if (engine->filterGid != NULL) {
         free(engine->filterGid);
@@ -754,7 +757,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
-        RKLog("Error. Failed to start %s.\n", engine->name);
+        RKLog("%s Error. Failed to start.\n", engine->name);
         return RKResultFailedToStartPulseWatcher;
     }
     while (engine->tic == 0) {

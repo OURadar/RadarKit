@@ -145,6 +145,7 @@ enum RKResult {
     RKResultFailedToGetVacantPosition,
     RKResultFailedToStartRayGatherer,
     RKResultFailedToStartHealthWorker,
+    RKResultFailedToStartPulseRecorder,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };

@@ -14,11 +14,11 @@
 typedef int RKFileEngineState;
 enum RKFileEngineState {
     RKFileEngineStateNull,
-    RKFileEngineStateStateAllocated,
-    RKFileEngineStateStateActivating,
-    RKFileEngineStateStateActive,
-    RKFileEngineStateStateDeactivating,
-    RKFileEngineStateStateSleep
+    RKFileEngineStateAllocated,
+    RKFileEngineStateActivating,
+    RKFileEngineStateActive,
+    RKFileEngineStateDeactivating,
+    RKFileEngineStateSleep
 };
 
 typedef struct rk_file_engine RKFileEngine;
@@ -34,6 +34,8 @@ struct rk_file_engine {
     uint32_t                         configBufferDepth;
     uint8_t                          verbose;
 
+    pthread_t                        tidPulseRecorder;
+
     // Status / health
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
@@ -44,7 +46,7 @@ struct rk_file_engine {
 };
 
 RKFileEngine *RKFileEngineInit(void);
-void RKFileEngineFree(RKFileEngineState *engine);
+void RKFileEngineFree(RKFileEngine *engine);
 
 void RKFileEngineSetVerbose(RKFileEngine *, const int);
 void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine,
