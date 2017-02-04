@@ -237,7 +237,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->healthEngine = RKHealthEngineInit();
     RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc,
                                         radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
-    radar->memoryUsage += sizeof(RKHealthEngine);
+    radar->memoryUsage += radar->healthEngine->memoryUsage;
     radar->state |= RKRadarStateHealthEngineInitialized;
     
     // Pulse compression engine
@@ -245,7 +245,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
                                                   radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                                                   radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
-    radar->memoryUsage += sizeof(RKPulseCompressionEngine);
+    radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
     radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
     // Position engine
@@ -254,7 +254,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                           radar->positions, &radar->positionIndex, radar->desc.positionBufferDepth,
                                           radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
-    radar->memoryUsage += sizeof(RKPositionEngine);
+    radar->memoryUsage += radar->positionEngine->memoryUsage;
     radar->state |= RKRadarStatePositionEngineInitialized;
     
     // Moment engine
@@ -263,15 +263,23 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                         radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                                         radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
                                         radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
-    radar->memoryUsage += sizeof(RKMomentEngine);
+    radar->memoryUsage += radar->momentEngine->memoryUsage;
     radar->state |= RKRadarStateMomentEngineInitialized;
     
+    // File engine
+    radar->fileEngine = RKFileEngineInit();
+    RKFileEngineSetInputOutputBuffers(radar->fileEngine,
+                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
+                                      radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+    radar->memoryUsage +=  radar->fileEngine->memoryUsage;
+    radar->state |= RKRadarStateFileEngineInitialized;
+
     // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputBuffer(radar->sweepEngine, &radar->desc,
                                 radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                                 radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
-    radar->memoryUsage += sizeof(RKSweepEngine);
+    radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -349,6 +357,7 @@ int RKFree(RKRadar *radar) {
         RKStop(radar);
     }
     RKSweepEngineFree(radar->sweepEngine);
+    RKFileEngineFree(radar->fileEngine);
     RKMomentEngineFree(radar->momentEngine);
     RKHealthEngineFree(radar->healthEngine);
     RKPositionEngineFree(radar->positionEngine);
@@ -443,6 +452,7 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
     RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     RKMomentEngineSetVerbose(radar->momentEngine, verbose);
+    RKFileEngineSetVerbose(radar->fileEngine, verbose);
     RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
     return RKResultNoError;
 }
@@ -516,6 +526,7 @@ int RKGoLive(RKRadar *radar) {
     RKPositionEngineStart(radar->positionEngine);
     RKHealthEngineStart(radar->healthEngine);
     RKMomentEngineStart(radar->momentEngine);
+    RKFileEngineStart(radar->fileEngine);
     RKSweepEngineStart(radar->sweepEngine);
 
     // Pedestal
@@ -598,6 +609,10 @@ int RKStop(RKRadar *radar) {
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
     }
+    if (radar->state & RKRadarStateFileEngineInitialized) {
+        RKFileEngineStop(radar->fileEngine);
+        radar->state ^= RKRadarStateFileEngineInitialized;
+    }
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineStop(radar->sweepEngine);
         radar->state ^= RKRadarStateSweepEngineInitialized;
@@ -618,7 +633,7 @@ int RKStop(RKRadar *radar) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
     }
-    return 0;
+    return RKResultSuccess;
 }
 
 #pragma mark - Healths

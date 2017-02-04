@@ -11,6 +11,7 @@ OBJS += RKNetwork.o RKServer.o RKClient.o
 OBJS += RKPulsePair.o RKMultiLag.o
 OBJS += RKPosition.o RKPedestalPedzy.o
 OBJS += RKHealth.o RKHealthRelayTweeta.o
+OBJS += RKFile.o
 RKLIB = libRadarKit.a
 
 #CFLAGS += -DDEBUG_IQ

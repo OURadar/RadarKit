@@ -415,7 +415,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKSweepEngine));
-    sprintf(engine->name, "%s<SweepProducer>%s",
+    sprintf(engine->name, "%s<ProductRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->array1D = (float *)malloc(RKMaxRaysPerSweep * sizeof(float));
     if (engine->array1D == NULL) {

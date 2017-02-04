@@ -478,11 +478,7 @@ void *pulseWatcher(void *_in) {
         if (engine->state == RKPulseCompressionEngineStateActive) {
             // Lag of the engine
             engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
-            if (!isfinite(engine->lag)) {
-                RKLog("%s %d + %d - %d = %d",
-                      engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
-            }
-            
+
             // Assess the lag of the workers
             lag = engine->workers[0].lag;
             for (i = 1; i < engine->coreCount; i++) {

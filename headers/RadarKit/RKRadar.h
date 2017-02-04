@@ -19,6 +19,7 @@
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKSweep.h>
+#include <RadarKit/RKFile.h>
 
 typedef uint32_t RKRadarState;
 enum RKRadarState {
@@ -38,9 +39,10 @@ enum RKRadarState {
     RKRadarStateHealthEngineInitialized              = (1 << 18),
     RKRadarStateMomentEngineInitialized              = (1 << 19),
     RKRadarStateSweepEngineInitialized               = (1 << 20),
-    RKRadarStateHealthRelayInitialized               = (1 << 21),
-    RKRadarStateTransceiverInitialized               = (1 << 22),
-    RKRadarStatePedestalInitialized                  = (1 << 23),
+    RKRadarStateFileEngineInitialized                = (1 << 21),
+    RKRadarStateHealthRelayInitialized               = (1 << 22),
+    RKRadarStateTransceiverInitialized               = (1 << 23),
+    RKRadarStatePedestalInitialized                  = (1 << 24),
     RKRadarStateLive                                 = (1 << 31)
 };
 
@@ -88,6 +90,7 @@ struct rk_radar {
     RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
     RKSweepEngine              *sweepEngine;
+    RKFileEngine               *fileEngine;
     //
     pthread_t                  monitorThreadId;
     //
