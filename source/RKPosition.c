@@ -154,129 +154,132 @@ void *pulseTagger(void *in) {
         // Record down the latest time
         timeLatest = engine->positionBuffer[i].timeDouble;
         
-        if (engine->state == RKPositionEngineStateActive) {
-            // Lag of the engine
-            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
-            
-            // Search until the time just after the pulse was acquired.
-            i = 0;
-            hasSweepEnd = false;
-            while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->pulseBufferDepth) {
-                hasSweepEnd |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
-                j = RKNextModuloS(j, engine->positionBufferDepth);
-                i++;
-            }
-            if (i == engine->pulseBufferDepth) {
-                RKLog("Could not find an appropriate position.  %.2f %s %.2f",
-                      pulse->header.timeDouble,
-                      pulse->header.timeDouble < timeLatest ? "<" : ">=",
-                      timeLatest);
-                continue;
-            }
-            positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;
-            
-            // Roll back one slot, which should be the position just before the pulse was acquired.
-            j = RKPreviousModuloS(j, engine->positionBufferDepth);
-            positionBefore = &engine->positionBuffer[j];   timeBefore = positionBefore->timeDouble;
-            
-            // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
-            alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
-            pulse->header.azimuthDegrees = RKInterpolateAngles(positionBefore->azimuthDegrees,
-                                                               positionAfter->azimuthDegrees,
-                                                               alpha);
-            pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
-                                                                 positionAfter->elevationDegrees,
-                                                                 alpha);
-            // Consolidate markers from the positions
-            marker0 = RKMarkerNull;
-            
-            // First set of logics are purely from position
-            if (positionBefore->flag & RKPositionFlagActive) {
-                marker0 |= RKMarkerSweepMiddle;
-            }
-            if ((positionBefore->flag & RKPositionFlagElevationPoint) && (positionBefore->flag & RKPositionFlagAzimuthSweep)) {
-                marker0 |= RKMarkerPPIScan;
-            } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationSweep)) {
-                marker0 |= RKMarkerRHIScan;
-            } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationPoint)) {
-                marker0 |= RKMarkerPointScan;
-            }
-            
-            // Second set of logics are derived from marker change
-            // NOTE: hasComplete indicates that a sweep complete has been encountered during the search, which may be prior to positionBefore
-            // NOTE: i = 1 means this loop is still using the same pair of positionBefore and positionAfter
-            //       i = 2 means the next pair was valid, this is the case when pulses come in equal or faster than positions
-            //       i > 2 means the next pair was invalid, this is the case when pulses come in slower than positions
-            if (i == 2 && (positionBefore->flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete))) {
-                marker0 |= RKMarkerSweepEnd;
-            } else if (i > 2 && hasSweepEnd && !(marker1 & RKMarkerSweepEnd)) {
-                marker0 |= RKMarkerSweepEnd;
-            }
-            if (!(marker1 & RKMarkerSweepMiddle) && (marker0 & RKMarkerSweepMiddle)) {
-                marker0 |= RKMarkerSweepBegin;
-            }
-            if ((marker1 & RKMarkerSweepMiddle) && !(marker0 & RKMarkerSweepMiddle)) {
-                marker0 |= RKMarkerSweepEnd;
-            }
-            if ((marker1 & RKMarkerSweepEnd) && (marker0 & RKMarkerSweepMiddle)) {
-                marker0 |= RKMarkerSweepBegin;
-            }
-
-            if (marker0 & RKMarkerSweepBegin) {
-                // Add another configuration
-                RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
-                                RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
-                                RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
-                                RKConfigPositionMarker,  marker0,
-                                RKConfigKeyNull);
-                if (engine->verbose) {
-                    RKLog("%s New sweep C%02d.   EL %.2f°   AZ %.2f°\n", engine->name, *engine->configIndex,
-                          positionAfter->sweepElevationDegrees, positionAfter->sweepAzimuthDegrees);
-                }
-            }
-
-            pulse->header.marker = marker0;
-            pulse->header.configIndex = *engine->configIndex;
-            
-            marker1 = marker0;
-
-            // Log a message if it has been a while
-            gettimeofday(&t0, NULL);
-            if (RKTimevalDiff(t0, t1) > 0.05) {
-                t1 = t0;
-                engine->processedPulseIndex = k;
-                RKPositionnUpdateStatusString(engine);
-            }
-
-            if (engine->verbose > 2) {
-                RKLog("%s pulse[%04llu]  T [ %.4f %s %.4f %s %.4f ]   A [ %7.2f < %7.2f < %7.2f ]   E [ %.2f < %+7.2f < %+7.2f ]  %d %08x < \033[3%dm%08x\033[0m < %08x (%d / %d)\n",
-                      engine->name,
-                      pulse->header.i,
-                      timeBefore - engine->startTime,
-                      timeBefore <= pulse->header.timeDouble ? "<" : ">=",
-                      pulse->header.timeDouble - engine->startTime,
-                      pulse->header.timeDouble <= timeAfter ? "<" : ">=",
-                      timeAfter - engine->startTime,
-                      positionBefore->azimuthDegrees,
-                      pulse->header.azimuthDegrees,
-                      positionAfter->azimuthDegrees,
-                      positionBefore->elevationDegrees,
-                      pulse->header.elevationDegrees,
-                      positionAfter->elevationDegrees,
-                      (int)hasSweepEnd,
-                      positionBefore->flag,
-                      marker0 & 0x7,
-                      marker0,
-                      positionAfter->flag,
-                      i, j);
-            }
-            
-            pulse->header.s |= RKPulseStatusHasPosition;
+        if (engine->state != RKPositionEngineStateActive) {
+            break;
         }
+        
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+        
+        // Search until the time just after the pulse was acquired.
+        i = 0;
+        hasSweepEnd = false;
+        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->pulseBufferDepth) {
+            hasSweepEnd |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
+            j = RKNextModuloS(j, engine->positionBufferDepth);
+            i++;
+        }
+        if (i == engine->pulseBufferDepth) {
+            RKLog("Could not find an appropriate position.  %.2f %s %.2f",
+                  pulse->header.timeDouble,
+                  pulse->header.timeDouble < timeLatest ? "<" : ">=",
+                  timeLatest);
+            continue;
+        }
+        positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;
+        
+        // Roll back one slot, which should be the position just before the pulse was acquired.
+        j = RKPreviousModuloS(j, engine->positionBufferDepth);
+        positionBefore = &engine->positionBuffer[j];   timeBefore = positionBefore->timeDouble;
+        
+        // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
+        alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
+        pulse->header.azimuthDegrees = RKInterpolateAngles(positionBefore->azimuthDegrees,
+                                                           positionAfter->azimuthDegrees,
+                                                           alpha);
+        pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
+                                                             positionAfter->elevationDegrees,
+                                                             alpha);
+        // Consolidate markers from the positions
+        marker0 = RKMarkerNull;
+        
+        // First set of logics are purely from position
+        if (positionBefore->flag & RKPositionFlagActive) {
+            marker0 |= RKMarkerSweepMiddle;
+        }
+        if ((positionBefore->flag & RKPositionFlagElevationPoint) && (positionBefore->flag & RKPositionFlagAzimuthSweep)) {
+            marker0 |= RKMarkerPPIScan;
+        } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationSweep)) {
+            marker0 |= RKMarkerRHIScan;
+        } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationPoint)) {
+            marker0 |= RKMarkerPointScan;
+        }
+        
+        // Second set of logics are derived from marker change
+        // NOTE: hasComplete indicates that a sweep complete has been encountered during the search, which may be prior to positionBefore
+        // NOTE: i = 1 means this loop is still using the same pair of positionBefore and positionAfter
+        //       i = 2 means the next pair was valid, this is the case when pulses come in equal or faster than positions
+        //       i > 2 means the next pair was invalid, this is the case when pulses come in slower than positions
+        if (i == 2 && (positionBefore->flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete))) {
+            marker0 |= RKMarkerSweepEnd;
+        } else if (i > 2 && hasSweepEnd && !(marker1 & RKMarkerSweepEnd)) {
+            marker0 |= RKMarkerSweepEnd;
+        }
+        if (!(marker1 & RKMarkerSweepMiddle) && (marker0 & RKMarkerSweepMiddle)) {
+            marker0 |= RKMarkerSweepBegin;
+        }
+        if ((marker1 & RKMarkerSweepMiddle) && !(marker0 & RKMarkerSweepMiddle)) {
+            marker0 |= RKMarkerSweepEnd;
+        }
+        if ((marker1 & RKMarkerSweepEnd) && (marker0 & RKMarkerSweepMiddle)) {
+            marker0 |= RKMarkerSweepBegin;
+        }
+
+        if (marker0 & RKMarkerSweepBegin) {
+            // Add another configuration
+            RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
+                            RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
+                            RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
+                            RKConfigPositionMarker,  marker0,
+                            RKConfigKeyNull);
+            if (engine->verbose) {
+                RKLog("%s New sweep C%02d.   EL %.2f°   AZ %.2f°\n", engine->name, *engine->configIndex,
+                      positionAfter->sweepElevationDegrees, positionAfter->sweepAzimuthDegrees);
+            }
+        }
+
+        pulse->header.marker = marker0;
+        pulse->header.configIndex = *engine->configIndex;
+        
+        marker1 = marker0;
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            engine->processedPulseIndex = k;
+            RKPositionnUpdateStatusString(engine);
+        }
+
+        if (engine->verbose > 2) {
+            RKLog("%s pulse[%04llu]  T [ %.4f %s %.4f %s %.4f ]   A [ %7.2f < %7.2f < %7.2f ]   E [ %.2f < %+7.2f < %+7.2f ]  %d %08x < \033[3%dm%08x\033[0m < %08x (%d / %d)\n",
+                  engine->name,
+                  pulse->header.i,
+                  timeBefore - engine->startTime,
+                  timeBefore <= pulse->header.timeDouble ? "<" : ">=",
+                  pulse->header.timeDouble - engine->startTime,
+                  pulse->header.timeDouble <= timeAfter ? "<" : ">=",
+                  timeAfter - engine->startTime,
+                  positionBefore->azimuthDegrees,
+                  pulse->header.azimuthDegrees,
+                  positionAfter->azimuthDegrees,
+                  positionBefore->elevationDegrees,
+                  pulse->header.elevationDegrees,
+                  positionAfter->elevationDegrees,
+                  (int)hasSweepEnd,
+                  positionBefore->flag,
+                  marker0 & 0x7,
+                  marker0,
+                  positionAfter->flag,
+                  i, j);
+        }
+        
+        pulse->header.s |= RKPulseStatusHasPosition;
+
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
     }
-    return (void *)NULL;
+    return NULL;
 }
 
 #pragma mark - Life Cycle

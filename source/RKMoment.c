@@ -506,82 +506,85 @@ void *pulseGatherer(void *in) {
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state == RKMomentEngineStateActive) {
-            // Lag of the engine
-            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
-
-            // Assess the lag of the workers
-            lag = engine->workers[0].lag;
-            for (i = 1; i < engine->coreCount; i++) {
-                lag = MAX(lag, engine->workers[i].lag);
-            }
-            if (skipCounter == 0 && lag > 0.9f) {
-                engine->almostFull++;
-                skipCounter = engine->pulseBufferDepth / 10;
-                RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   pulseIndex = %d vs %d\n",
-                      engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
-//                RKLog("%s Warning. Projected an overflow.", engine->name);
-                // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
-                i = j;
-                do {
-                    i = RKPreviousModuloS(i, engine->rayBufferDepth);
-                    engine->momentSource[j].length = 0;
-                    ray = RKGetRay(engine->rayBuffer, i);
-                } while (!(ray->header.s & (RKRayStatusReady | RKRayStatusProcessing)));
-            } else if (skipCounter > 0) {
-                // Skip processing if we are in skipping mode
-                if (--skipCounter == 0 && engine->verbose) {
-                    RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
-                    for (i = 0; i < engine->coreCount; i++) {
-                        engine->workers[i].lag = 0.0f;
-                    }
-                }
-            } else {
-                // Gather the start and end pulses and post a worker to process for a ray
-                i0 = (int)floorf(pulse->header.azimuthDegrees);
-                if (i1 != i0 || count == RKMaxPulsesPerRay) {
-                    i1 = i0;
-                    if (count > 0) {
-                        // Number of samples in this ray
-                        engine->momentSource[j].length = count;
-                        if (engine->useSemaphore) {
-                            if (sem_post(sem[c])) {
-                                RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
-                            }
-                        } else {
-                            engine->workers[c].tic++;
-                        }
-                        // Move to the next core, gather the next ray
-                        c = RKNextModuloS(c, engine->coreCount);
-                        j = RKNextModuloS(j, engine->rayBufferDepth);
-                        // New origin for the next ray
-                        engine->momentSource[j].origin = k;
-                        ray = RKGetRay(engine->rayBuffer, j);
-                        ray->header.s = RKRayStatusVacant;
-                        count = 0;
-                    } else {
-                        // Just started, i0 could be any azimuth bin
-                    }
-                }
-                // Keep counting up
-                count++;
-            }
-            
-            // Check finished rays
-            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
-            while (ray->header.s & RKRayStatusReady) {
-                *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferDepth);
-                ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
-            }
-
-            // Log a message if it has been a while
-            gettimeofday(&t0, NULL);
-            if (RKTimevalDiff(t0, t1) > 0.05) {
-                t1 = t0;
-                engine->processedPulseIndex = k;
-                RKMomentUpdateStatusString(engine);
-            }
+        if (engine->state != RKMomentEngineStateActive) {
+            break;
         }
+
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+
+        // Assess the lag of the workers
+        lag = engine->workers[0].lag;
+        for (i = 1; i < engine->coreCount; i++) {
+            lag = MAX(lag, engine->workers[i].lag);
+        }
+        if (skipCounter == 0 && lag > 0.9f) {
+            engine->almostFull++;
+            skipCounter = engine->pulseBufferDepth / 10;
+            RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   pulseIndex = %d vs %d\n",
+                  engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
+//                RKLog("%s Warning. Projected an overflow.", engine->name);
+            // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
+            i = j;
+            do {
+                i = RKPreviousModuloS(i, engine->rayBufferDepth);
+                engine->momentSource[j].length = 0;
+                ray = RKGetRay(engine->rayBuffer, i);
+            } while (!(ray->header.s & (RKRayStatusReady | RKRayStatusProcessing)));
+        } else if (skipCounter > 0) {
+            // Skip processing if we are in skipping mode
+            if (--skipCounter == 0 && engine->verbose) {
+                RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
+                for (i = 0; i < engine->coreCount; i++) {
+                    engine->workers[i].lag = 0.0f;
+                }
+            }
+        } else {
+            // Gather the start and end pulses and post a worker to process for a ray
+            i0 = (int)floorf(pulse->header.azimuthDegrees);
+            if (i1 != i0 || count == RKMaxPulsesPerRay) {
+                i1 = i0;
+                if (count > 0) {
+                    // Number of samples in this ray
+                    engine->momentSource[j].length = count;
+                    if (engine->useSemaphore) {
+                        if (sem_post(sem[c])) {
+                            RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
+                        }
+                    } else {
+                        engine->workers[c].tic++;
+                    }
+                    // Move to the next core, gather the next ray
+                    c = RKNextModuloS(c, engine->coreCount);
+                    j = RKNextModuloS(j, engine->rayBufferDepth);
+                    // New origin for the next ray
+                    engine->momentSource[j].origin = k;
+                    ray = RKGetRay(engine->rayBuffer, j);
+                    ray->header.s = RKRayStatusVacant;
+                    count = 0;
+                } else {
+                    // Just started, i0 could be any azimuth bin
+                }
+            }
+            // Keep counting up
+            count++;
+        }
+        
+        // Check finished rays
+        ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+        while (ray->header.s & RKRayStatusReady) {
+            *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferDepth);
+            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+        }
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            engine->processedPulseIndex = k;
+            RKMomentUpdateStatusString(engine);
+        }
+
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
     }

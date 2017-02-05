@@ -455,6 +455,7 @@ void *pulseWatcher(void *_in) {
     c = 0;   // core index
     int s = 0;
     while (engine->state == RKPulseCompressionEngineStateActive) {
+
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
@@ -475,93 +476,96 @@ void *pulseWatcher(void *_in) {
                       engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state == RKPulseCompressionEngineStateActive) {
-            // Lag of the engine
-            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+        if (engine->state != RKPulseCompressionEngineStateActive) {
+            break;
+        }
 
-            // Assess the lag of the workers
-            lag = engine->workers[0].lag;
-            for (i = 1; i < engine->coreCount; i++) {
-                lag = MAX(lag, engine->workers[i].lag);
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+
+        // Assess the lag of the workers
+        lag = engine->workers[0].lag;
+        for (i = 1; i < engine->coreCount; i++) {
+            lag = MAX(lag, engine->workers[i].lag);
+        }
+        if (skipCounter == 0 && lag > 0.9f) {
+            engine->almostFull++;
+            skipCounter = engine->pulseBufferDepth / 10;
+            RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
+            i = *engine->pulseIndex;
+            do {
+                i = RKPreviousModuloS(i, engine->pulseBufferDepth);
+                engine->filterGid[i] = -1;
+                pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
+            } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
+        }
+
+        // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
+        if (skipCounter > 0) {
+            engine->filterGid[k] = -1;
+            engine->planIndices[k][0] = 0;
+            if (--skipCounter == 0) {
+                RKLog(">%s Info. Skipped a chunk.\n", engine->name);
             }
-            if (skipCounter == 0 && lag > 0.9f) {
-                engine->almostFull++;
-                skipCounter = engine->pulseBufferDepth / 10;
-                RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
-                i = *engine->pulseIndex;
-                do {
-                    i = RKPreviousModuloS(i, engine->pulseBufferDepth);
-                    engine->filterGid[i] = -1;
-                    pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
-                } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
-            }
+        } else {
+            // Compute the filter group id to use
+            engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
 
-            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
-            if (skipCounter > 0) {
-                engine->filterGid[k] = -1;
-                engine->planIndices[k][0] = 0;
-                if (--skipCounter == 0) {
-                    RKLog(">%s Info. Skipped a chunk.\n", engine->name);
-                }
-            } else {
-                // Compute the filter group id to use
-                engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
-
-                // Find the right plan; create it if it does not exist
-                for (j = 0; j < engine->filterCounts[gid]; j++) {
-                    planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
-                    found = false;
-                    i = engine->planCount;
-                    while (i > 0) {
-                        i--;
-                        if (planSize == engine->planSizes[i]) {
-                            planIndex = i;
-                            found = true;
-                            break;
-                        }
+            // Find the right plan; create it if it does not exist
+            for (j = 0; j < engine->filterCounts[gid]; j++) {
+                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
+                found = false;
+                i = engine->planCount;
+                while (i > 0) {
+                    i--;
+                    if (planSize == engine->planSizes[i]) {
+                        planIndex = i;
+                        found = true;
+                        break;
                     }
-                    if (!found) {
-                        RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
-                        if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
-                            RKLog("%s Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
-                            exit(EXIT_FAILURE);
-                        }
-                        planIndex = engine->planCount;
-                        engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-                        engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
-                        engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-                        engine->planSizes[planIndex] = planSize;
-                        engine->planCount++;
-                        RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
-                        exportWisdom = true;
+                }
+                if (!found) {
+                    RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
+                    if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
+                        RKLog("%s Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
+                        exit(EXIT_FAILURE);
                     }
-                    engine->planIndices[k][j] = planIndex;
+                    planIndex = engine->planCount;
+                    engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+                    engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
+                    engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
+                    engine->planSizes[planIndex] = planSize;
+                    engine->planCount++;
+                    RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
+                    exportWisdom = true;
                 }
-            }
-
-            // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
-            pulse->header.s |= RKPulseStatusInspected;
-
-            // Now we post
-            #ifdef DEBUG_IQ
-            RKLog("%s posting core-%d for pulse %d gate %d\n", engine->name, c, k, engine->pulses[k].header.gateCount);
-            #endif
-            if (engine->useSemaphore) {
-                if (sem_post(sem[c])) {
-                    RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
-                }
-            } else {
-                engine->workers[c].tic++;
-            }
-            c = RKNextModuloS(c, engine->coreCount);
-            
-            // Log a message if it has been a while
-            gettimeofday(&t0, NULL);
-            if (RKTimevalDiff(t0, t1) > 0.05) {
-                t1 = t0;
-                RKPulseCompressionUpdateStatusString(engine);
+                engine->planIndices[k][j] = planIndex;
             }
         }
+
+        // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
+        pulse->header.s |= RKPulseStatusInspected;
+
+        // Now we post
+        #ifdef DEBUG_IQ
+        RKLog("%s posting core-%d for pulse %d gate %d\n", engine->name, c, k, engine->pulses[k].header.gateCount);
+        #endif
+        if (engine->useSemaphore) {
+            if (sem_post(sem[c])) {
+                RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+            }
+        } else {
+            engine->workers[c].tic++;
+        }
+        c = RKNextModuloS(c, engine->coreCount);
+        
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKPulseCompressionUpdateStatusString(engine);
+        }
+    
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
     }

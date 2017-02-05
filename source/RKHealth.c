@@ -41,6 +41,10 @@ void *healthRelay(void *in) {
                       engine->name, (float)s * 0.01f, k, health->flag);
             }
         }
+        if (engine->state != RKHealthEngineStateActive) {
+            break;
+        }
+        
         // Look for certain keywords, extract some information
         if ((valueString = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             desc->latitude = atof(valueString);
@@ -85,10 +89,11 @@ void *healthRelay(void *in) {
                 }
             }
         }
-        
+
+        // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
     }
-    return (void *)NULL;
+    return NULL;
 }
 
 #pragma mark - Life Cycle

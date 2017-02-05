@@ -70,31 +70,37 @@ void *pulseRecorder(void *in) {
                       engine->name, (float)s * 0.01f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state == RKFileEngineStateActive) {
-            // Lag of the engine
-            engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
-            if (!isfinite(engine->lag)) {
-                RKLog("%s %d + %d - %d = %d",
-                      engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
-            }
-
-            // Assess the configIndex
-            if (j != pulse->header.configIndex) {
-                j = pulse->header.configIndex;
-                config = &engine->configBuffer[pulse->header.configIndex];
-
-                // Close the current file
-                RKLog("Closing file ...\n");
-            }
-
-
-            // Log a message if it has been a while
-            gettimeofday(&t0, NULL);
-            if (RKTimevalDiff(t0, t1) > 0.05) {
-                t1 = t0;
-                RKFileEngineUpdateStatusString(engine);
-            }
+        if (engine->state != RKFileEngineStateActive) {
+            break;
         }
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+        if (!isfinite(engine->lag)) {
+            RKLog("%s %d + %d - %d = %d",
+                  engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
+        }
+
+        // Assess the configIndex
+        if (j != pulse->header.configIndex) {
+            j = pulse->header.configIndex;
+            config = &engine->configBuffer[pulse->header.configIndex];
+
+            // Close the current file
+            RKLog("Closing file ...\n");
+        }
+
+        // Actual cache and write happen here.
+        
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKFileEngineUpdateStatusString(engine);
+        }
+
+        // Update pulseIndex for the next watch
+        k = RKNextModuloS(k, engine->pulseBufferDepth);
     }
     return NULL;
 }

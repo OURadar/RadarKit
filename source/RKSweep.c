@@ -371,35 +371,38 @@ void *rayGatherer(void *in) {
                       engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
             }
         }
-        if (engine->state & RKSweepEngineStateActive) {
-            // Lag of the engine
-            engine->lag = fmodf(((float)*engine->rayIndex + engine->rayBufferDepth - k) / engine->rayBufferDepth, 1.0f);
-            if (ray->header.marker & RKMarkerSweepEnd) {
-                n = 0;
-                do {
-                    ray = RKGetRay(engine->rayBuffer, is);
-                    ray->header.n = is;
-                    rays[n++] = ray;
-                    is = RKNextModuloS(is, engine->rayBufferDepth);
-                } while (is != k && n < RKMaxRaysPerSweep && n < engine->rayBufferDepth);
+        if ((engine->state & RKSweepEngineStateActive) == 0) {
+            break;
+        }
+        
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->rayIndex + engine->rayBufferDepth - k) / engine->rayBufferDepth, 1.0f);
+        if (ray->header.marker & RKMarkerSweepEnd) {
+            n = 0;
+            do {
                 ray = RKGetRay(engine->rayBuffer, is);
                 ray->header.n = is;
                 rays[n++] = ray;
-                engine->sweep.rayCount = n;
-                is = RKPreviousNModuloS(is, n + 1, engine->rayBufferDepth);
-                
-                //RKLog(">%s %p %p %p ... %p\n", engine->name, engine->sweep.rays[0], engine->sweep.rays[1], engine->sweep.rays[2], engine->sweep.rays[n - 1]);
-                
-                if (tidSweepWriter) {
-                    pthread_join(tidSweepWriter, NULL);
-                }
-                if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
-                    RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
-                }
-
-                is = k;
+                is = RKNextModuloS(is, engine->rayBufferDepth);
+            } while (is != k && n < RKMaxRaysPerSweep && n < engine->rayBufferDepth);
+            ray = RKGetRay(engine->rayBuffer, is);
+            ray->header.n = is;
+            rays[n++] = ray;
+            engine->sweep.rayCount = n;
+            is = RKPreviousNModuloS(is, n + 1, engine->rayBufferDepth);
+            
+            //RKLog(">%s %p %p %p ... %p\n", engine->name, engine->sweep.rays[0], engine->sweep.rays[1], engine->sweep.rays[2], engine->sweep.rays[n - 1]);
+            
+            if (tidSweepWriter) {
+                pthread_join(tidSweepWriter, NULL);
             }
+            if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
+                RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
+            }
+
+            is = k;
         }
+
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->rayBufferDepth);
     }

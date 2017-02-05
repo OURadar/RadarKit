@@ -235,10 +235,11 @@ int socketStreamHandler(RKOperator *O) {
 
     if (user->streams & user->access && td >= 0.05) {
         if (user->streams & RKUserFlagStatusPulses) {
-            snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s" RKEOL,
+            snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s" RKEOL,
                      RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                      RKPositionEngineStatusString(user->radar->positionEngine),
-                     RKMomentEngineStatusString(user->radar->momentEngine));
+                     RKMomentEngineStatusString(user->radar->momentEngine),
+                     RKFileEngineStatusString(user->radar->fileEngine));
             RKOperatorSendBeaconAndString(O, user->string);
             user->timeLastOut = time;
         }
