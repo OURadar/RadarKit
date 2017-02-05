@@ -8,6 +8,63 @@
 
 #include <RadarKit/RKFile.h>
 
+#pragma mark - Internal Functions
+
+void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size) {
+    if (engine->cacheSize == size) {
+        return;
+    }
+    if (engine->cache != NULL) {
+        free(engine->cache);
+        engine->memoryUsage -= engine->cacheSize;
+    }
+    engine->cacheSize = size;
+    if (posix_memalign((void **)&engine->cache, RKSIMDAlignSize, engine->cacheSize)) {
+        RKLog("%s Error. Unable to allocate cache.", engine->name);
+        exit(EXIT_FAILURE);
+    }
+    engine->memoryUsage += engine->cacheSize;
+}
+
+uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const uint32_t size) {
+    if (size == 0) {
+        return 0;
+    }
+    uint32_t remainingSize = size;
+    uint32_t lastChunkSize = 0;
+    uint32_t writtenSize = 0;
+    // Mechanism:
+    // If the remainder of cache is less than payload size, copy the whatever that fits, called it lastChunkSize
+    // Then, the last part of the payload (starting lastChunkSize) should go into the cache. Otherwise, just
+    // write out the remainig payload entirely.
+    if (engine->cacheWriteIndex + remainingSize >= engine->cacheSize) {
+        lastChunkSize = engine->cacheSize - engine->cacheWriteIndex;
+        memcpy(engine->cache + engine->cacheWriteIndex, payload, lastChunkSize);
+        remainingSize = size - lastChunkSize;
+        writtenSize = (uint32_t)write(engine->fd, engine->cache, engine->cacheSize);
+        if (writtenSize != engine->cacheSize) {
+            RKLog("%s Error in write().   writtenSize = %s\n", RKIntegerToCommaStyleString((long)writtenSize));
+        }
+        engine->cacheWriteIndex = 0;
+        if (remainingSize >= engine->cacheSize) {
+            writtenSize += (uint32_t)write(engine->fd, (char *)(payload + lastChunkSize), remainingSize);
+            return writtenSize;
+        }
+    }
+    memcpy(engine->cache + engine->cacheWriteIndex, payload + lastChunkSize, remainingSize);
+    engine->cacheWriteIndex += remainingSize;
+    return writtenSize;
+}
+
+uint32_t RKFileEngineCacheFlush(RKFileEngine *engine) {
+    if (engine->cacheWriteIndex == 0) {
+        return 0;
+    }
+    return (uint32_t)write(engine->fd, engine->cache, engine->cacheWriteIndex);
+}
+
+#pragma mark - Implementation
+
 void RKFileEngineUpdateStatusString(RKFileEngine *engine) {
     int i;
     char *string;
@@ -105,6 +162,7 @@ void *pulseRecorder(void *in) {
     return NULL;
 }
 
+#pragma mark - Life Cycle
 
 RKFileEngine *RKFileEngineInit(void) {
     RKFileEngine *engine = (RKFileEngine *)malloc(sizeof(RKFileEngine));
@@ -115,8 +173,9 @@ RKFileEngine *RKFileEngineInit(void) {
     memset(engine, 0, sizeof(RKFileEngine));
     sprintf(engine->name, "%s<RawDataRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    RKFileEngineSetCacheSize(engine, 32 * 1024 * 1024);
     engine->state = RKFileEngineStateAllocated;
-    engine->memoryUsage = sizeof(RKFileEngine);
+    engine->memoryUsage = sizeof(RKFileEngine) + engine->cacheSize;
     return engine;
 }
 
@@ -124,8 +183,11 @@ void RKFileEngineFree(RKFileEngine *engine) {
     if (engine->state == RKFileEngineStateActive) {
         RKFileEngineStop(engine);
     }
+    free(engine->cache);
     free(engine);
 }
+
+#pragma mark - Properties
 
 void RKFileEngineSetVerbose(RKFileEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -141,6 +203,8 @@ void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine,
     engine->pulseIndex        = pulseIndex;
     engine->pulseBufferDepth  = pulseBufferDepth;
 }
+
+#pragma mark - Interactions
 
 int RKFileEngineStart(RKFileEngine *engine) {
     engine->state = RKFileEngineStateActivating;

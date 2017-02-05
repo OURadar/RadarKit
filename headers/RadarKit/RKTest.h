@@ -38,4 +38,6 @@ void RKTestPulseCompression(RKRadar *, RKTestFlag);
 void RKTestProcessorSpeed(void);
 void RKTestOneRay(void);
 
+void RKTestCacheWrite(void);
+
 #endif /* defined(__RadarKit_RKFile__) */

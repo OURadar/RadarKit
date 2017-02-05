@@ -744,3 +744,55 @@ void RKTestOneRay(void) {
     free(pulseBuffer);
     return;
 }
+
+void RKTestCacheWrite(void) {
+    RKFileEngine *fileEngine = RKFileEngineInit();
+    fileEngine->fd = open("testwrite", O_CREAT | O_WRONLY, 0000644);
+    if (fileEngine->fd < 0) {
+        RKLog("Error. Unable to open file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+//    RKFileEngineSetCacheSize(fileEngine, 4);
+//    RKFileEngineCacheWrite(fileEngine, bytes, 4);
+//    RKFileEngineCacheWrite(fileEngine, &bytes[4], 2);
+//    RKFileEngineCacheWrite(fileEngine, &bytes[6], 1);
+//    RKFileEngineCacheFlush(fileEngine);
+  
+    RKBuffer pulseBuffer;
+    RKPulseBufferAlloc(&pulseBuffer, 8192, 100);
+    
+    struct timeval time;
+    double t0, t1;
+    
+    gettimeofday(&time, NULL);
+    t1 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
+    
+    uint32_t len = 0;
+    for (int k = 1, j = 1; k < 50000; k++) {
+        RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
+        pulse->header.gateCount = 8000;
+        
+        len += RKFileEngineCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
+        len += RKFileEngineCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKFileEngineCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        
+        if (k % 2000 == 0) {
+            RKFileEngineCacheFlush(fileEngine);
+
+            gettimeofday(&time, NULL);
+            t0 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
+            printf("Speed = %.2f MBps (%d)\n", 1.0e-6 * len / (t0 - t1), len);
+            
+            if (j++ % 5 == 0) {
+                printf("\n");
+                t1 = t0;
+                len = 0;
+            }
+        }
+    }
+
+    close(fileEngine->fd);
+  
+    RKFileEngineFree(fileEngine);
+}

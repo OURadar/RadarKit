@@ -33,7 +33,14 @@ struct rk_file_engine {
     uint32_t                         *configIndex;
     uint32_t                         configBufferDepth;
     uint8_t                          verbose;
+    uint32_t                         cacheSize;
 
+    // Cache
+    int                              fd;
+    FILE                             *fid;
+    void                             *cache;
+    uint32_t                         cacheWriteIndex;
+    uint32_t                         cacheReadIndex;
     pthread_t                        tidPulseRecorder;
 
     // Status / health
@@ -55,5 +62,10 @@ void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine,
 int RKFileEngineStart(RKFileEngine *engine);
 int RKFileEngineStop(RKFileEngine *engine);
 char *RKFileEngineStatusString(RKFileEngine *engine);
+
+void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size);
+uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const uint32_t size);
+uint32_t RKFileEngineCacheFlush(RKFileEngine *engine);
+
 
 #endif /* defined(__RadarKit_RKFile__) */

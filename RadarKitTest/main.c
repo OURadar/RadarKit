@@ -153,6 +153,7 @@ UserParams processInput(int argc, char **argv) {
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
+        {"y"                     , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -271,6 +272,10 @@ UserParams processInput(int argc, char **argv) {
                 break;
             case 'w':
                 user.doNotWrite = true;
+                break;
+            case 'y':
+                RKTestCacheWrite();
+                exit(EXIT_SUCCESS);
                 break;
             case 'z':
                 if (optarg) {
