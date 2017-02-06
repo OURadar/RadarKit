@@ -73,6 +73,18 @@ RKUserFlag RKStringToFlag(const char * string) {
             case 'R':
                 flag |= RKUserFlagProductR;
                 break;
+            case 'k':
+                flag |= RKUserFlagDisplayK;
+                break;
+            case 'K':
+                flag |= RKUserFlagProductK;
+                break;
+            case 's':
+                flag |= RKUserFlagDisplayS;
+                break;
+            case 'S':
+                flag |= RKUserFlagProductS;
+                break;
             case 'i':
                 flag |= RKUserFlagDisplayIQ;
                 break;
@@ -106,10 +118,10 @@ int RKFlagToString(char *string, RKUserFlag flag) {
     if (flag & RKUserFlagProductP)        { j += sprintf(string + j, "P"); }
     if (flag & RKUserFlagDisplayR)        { j += sprintf(string + j, "r"); }
     if (flag & RKUserFlagProductR)        { j += sprintf(string + j, "R"); }
-    if (flag & RKUserFlagDisplayS)        { j += sprintf(string + j, "s"); }
-    if (flag & RKUserFlagProductS)        { j += sprintf(string + j, "S"); }
     if (flag & RKUserFlagDisplayK)        { j += sprintf(string + j, "k"); }
     if (flag & RKUserFlagProductK)        { j += sprintf(string + j, "K"); }
+    if (flag & RKUserFlagDisplayS)        { j += sprintf(string + j, "s"); }
+    if (flag & RKUserFlagProductS)        { j += sprintf(string + j, "S"); }
     if (flag & RKUserFlagDisplayIQ)       { j += sprintf(string + j, "i"); }
     if (flag & RKUserFlagProductIQ)       {      sprintf(string + j, "I"); }
     return 0;
@@ -352,18 +364,18 @@ int socketStreamHandler(RKOperator *O) {
                 } else if (productList & RKProductListDisplayD) {
                     productList ^= RKProductListDisplayD;
                     data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
-                } else if (productList & RKProductListDisplayD) {
-                    productList ^= RKProductListDisplayD;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
                 } else if (productList & RKProductListDisplayP) {
                     productList ^= RKProductListDisplayP;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                } else if (productList & RKProductListDisplayR) {
+                    productList ^= RKProductListDisplayR;
                     data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
-                } else if (productList & RKProductListDisplayS) {
-                    productList ^= RKProductListDisplayS;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
                 } else if (productList & RKProductListDisplayK) {
                     productList ^= RKProductListDisplayK;
                     data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                } else if (productList & RKProductListDisplayS) {
+                    productList ^= RKProductListDisplayS;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
                 } else {
                     data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                 }
