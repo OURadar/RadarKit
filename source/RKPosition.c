@@ -129,9 +129,9 @@ void *pulseTagger(void *in) {
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        // Wait until it has data. Otherwise, time stamp may not be good.
+        // Wait until it has data & processed. Otherwise, the time stamp is no good and there is a horse raise with pulse compression engine.
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state == RKPositionEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKPositionEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
