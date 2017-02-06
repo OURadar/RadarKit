@@ -301,19 +301,19 @@ void *momentCore(void *in) {
         ray->header.endAzimuth      = E->header.azimuthDegrees;
         ray->header.endElevation    = E->header.elevationDegrees;
         ray->header.configIndex     = S->header.configIndex;
-        ray->header.gateSizeMeters  = S->header.gateSizeMeters;
+        ray->header.gateSizeMeters  = S->header.gateSizeMeters * (float)stride;
         marker = RKMarkerNull;
 
         // Compute the range correction factor if needed.
-        if (gateSizeMeters != ray->header.gateSizeMeters) {
-            gateSizeMeters = ray->header.gateSizeMeters;
+        if (gateSizeMeters != S->header.gateSizeMeters) {
+            gateSizeMeters = S->header.gateSizeMeters;
             k = *engine->configIndex;
             RKConfig *config = &engine->configBuffer[*engine->configIndex];
             if (engine->verbose) {
-                RKLog("%s %s deriving range correction factors  ZCal = %.2f dB (%d).\n", engine->name, name, config->ZCal[0], k);
+                RKLog("%s %s deriving range correction factors  ZCal = %.2f dB (%d).  %d / %d\n", engine->name, name, config->ZCal[0], k, stride, ray->header.capacity);
             }
             RKFloat r = 0.0f;
-            for (i = 0; i < ray->header.capacity; i++) {
+            for (i = 0; i < space->capacity; i++) {
                 r = (RKFloat)i * gateSizeMeters;
                 space->rcor[i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
             }

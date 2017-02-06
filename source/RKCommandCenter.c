@@ -223,7 +223,7 @@ int socketStreamHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    int j, k;
+    int i, j, k;
     char *c;
     static struct timeval t0;
 
@@ -249,7 +249,7 @@ int socketStreamHandler(RKOperator *O) {
 
     if (user->streams & user->access && td >= 0.05) {
         if (user->streams & RKUserFlagStatusPulses) {
-            snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s" RKEOL,
+            snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
                      RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                      RKPositionEngineStatusString(user->radar->positionEngine),
                      RKMomentEngineStatusString(user->radar->momentEngine),
@@ -347,8 +347,13 @@ int socketStreamHandler(RKOperator *O) {
             uint32_t productCount = __builtin_popcount(productList);
             //RKLog("ProductCount = %d / %x\n", productCount, productList);
 
+
+            uint16_t ds = 2;
+            rayHeader.gateCount /= ds;
+            rayHeader.gateSizeMeters *= (float)ds;
+
             O->delim.type = 'm';
-            O->delim.size = (uint32_t)(sizeof(RKRayHeader) + productCount * ray->header.gateCount * sizeof(uint8_t));
+            O->delim.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
             RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
 
             for (j = 0; j < productCount; j++) {
@@ -379,7 +384,12 @@ int socketStreamHandler(RKOperator *O) {
                 } else {
                     data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                 }
-                RKOperatorSendPackets(O, data, ray->header.gateCount * sizeof(uint8_t), NULL);
+
+                uint8_t *lowRateData = (uint8_t *)user->string;
+                for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += ds) {
+                    lowRateData[i] = data[k];
+                }
+                RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
             }
             user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
         }

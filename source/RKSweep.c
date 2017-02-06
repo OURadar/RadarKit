@@ -141,7 +141,7 @@ void *sweepWriter(void *in) {
             productList ^= RKProductListProductP;
             productIndex = RKProductIndexP;
         } else if (productList & RKProductListProductR) {
-            symbol = 'P';
+            symbol = 'R';
             sprintf(productName, "RhoHV");
             sprintf(productUnit, "Unitless");
             sprintf(productColormap, "RhoHV");

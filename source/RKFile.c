@@ -146,7 +146,7 @@ void *pulseRecorder(void *in) {
             config = &engine->configBuffer[pulse->header.configIndex];
 
             // Close the current file
-            RKLog("Closing file ...\n");
+            //RKLog("Closing file ...\n");
         }
 
         // Actual cache and write happen here.

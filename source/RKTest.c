@@ -478,7 +478,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         }
     }
     
-    const int chunkSize = MAX(1, (int)floor(0.1f / prt));
+    const int chunkSize = MAX(1, (int)floor(0.05f / prt));
     const float gateSizeMeters = 0.5f * 3.0e8f / fs;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -487,7 +487,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
               RKFloatToCommaStyleString(1.0e-6 * fs),
               RKIntegerToCommaStyleString((int)(1.0f / prt)),
               RKIntegerToCommaStyleString(gateCount),
-              gateCount * 1.5e5 / fs);
+              gateCount * gateSizeMeters * 1.0e-3);
         RKLog("%s chunk size = %d   tics = %s\n",
               name,
               chunkSize,
@@ -517,7 +517,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 phi += 0.02f;
             }
 
-            a = cosf(2.0 * M_PI * 0.5f * t);
+            a = cosf(2.0 * M_PI * t);
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -525,7 +525,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < gateCount; g++) {
-                    X->i = (int16_t)(20000.0f * a * cosf((float)g * 0.005f));
+                    X->i = (int16_t)(20000.0f * a * cosf((float)g * gateSizeMeters * 0.0001f));
                     X->q = 0.0f;
 //                    if (g % 2 == 0) {
 //                        X->i = (int16_t)((g * n) + p);

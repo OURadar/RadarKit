@@ -20,7 +20,7 @@ int RKPedestalPedzyRead(RKClient *client) {
         // The payload just was just read by RKClient
         RKPosition *position = (RKPosition *)client->userPayload;
 
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
             RKLog("Position  %010ld   %010ld   %08x EL %.2f  AZ %.2f --> %d\n",
                   position->i,
                   position->tic,

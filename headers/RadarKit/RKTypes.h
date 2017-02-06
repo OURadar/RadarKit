@@ -440,6 +440,7 @@ typedef struct rk_modulo_path {
 
 typedef struct rk_scratch {
     bool             showNumbers;
+    uint32_t         capacity;                                       // Capacity
     uint8_t          lagCount;                                       // Number of lags of R & C
     RKIQZ            mX[2];                                          // Mean of X, 2 for dual-pol
     RKIQZ            vX[2];                                          // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
