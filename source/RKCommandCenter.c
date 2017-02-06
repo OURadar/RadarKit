@@ -106,6 +106,8 @@ int RKFlagToString(char *string, RKUserFlag flag) {
     if (flag & RKUserFlagProductP)        { j += sprintf(string + j, "P"); }
     if (flag & RKUserFlagDisplayR)        { j += sprintf(string + j, "r"); }
     if (flag & RKUserFlagProductR)        { j += sprintf(string + j, "R"); }
+    if (flag & RKUserFlagDisplayS)        { j += sprintf(string + j, "s"); }
+    if (flag & RKUserFlagProductS)        { j += sprintf(string + j, "S"); }
     if (flag & RKUserFlagDisplayK)        { j += sprintf(string + j, "k"); }
     if (flag & RKUserFlagProductK)        { j += sprintf(string + j, "K"); }
     if (flag & RKUserFlagDisplayIQ)       { j += sprintf(string + j, "i"); }
@@ -221,7 +223,7 @@ int socketStreamHandler(RKOperator *O) {
     double td = time - user->timeLastOut;
 
     RKRay *ray;
-    uint8_t *data;
+    uint8_t *data = NULL;
     RKRayHeader rayHeader;
 
     if (engine->radarCount < 1) {
@@ -298,17 +300,75 @@ int socketStreamHandler(RKOperator *O) {
         user->timeLastOut = time;
     }
 
-    if (user->streams & user->access & RKUserFlagDisplayZ) {
+    if (user->streams & user->access & RKUserFlagDisplayZVWDPRKS) {
         endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
         while (user->rayIndex != endIndex) {
             ray = RKGetRay(user->radar->rays, user->rayIndex);
             // Duplicate and send the header with only selected products
             memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
-            rayHeader.productList = RKProductListDisplayZ;
-            data = RKGetUInt8DataFromRay(ray, 0);
+            rayHeader.productList = RKProductListNone;
+            if (user->streams & RKUserFlagDisplayZ) {
+                rayHeader.productList |= RKProductListDisplayZ;
+            }
+            if (user->streams & RKUserFlagDisplayV) {
+                rayHeader.productList |= RKProductListDisplayV;
+            }
+            if (user->streams & RKUserFlagDisplayW) {
+                rayHeader.productList |= RKProductListDisplayW;
+            }
+            if (user->streams & RKUserFlagDisplayD) {
+                rayHeader.productList |= RKProductListDisplayD;
+            }
+            if (user->streams & RKUserFlagDisplayP) {
+                rayHeader.productList |= RKProductListDisplayP;
+            }
+            if (user->streams & RKUserFlagDisplayR) {
+                rayHeader.productList |= RKProductListDisplayR;
+            }
+            if (user->streams & RKUserFlagDisplayK) {
+                rayHeader.productList |= RKProductListDisplayK;
+            }
+            if (user->streams & RKUserFlagDisplayS) {
+                rayHeader.productList |= RKProductListDisplayS;
+            }
+            uint32_t productList = rayHeader.productList;
+            uint32_t productCount = __builtin_popcount(productList);
+            //RKLog("ProductCount = %d / %x\n", productCount, productList);
+
             O->delim.type = 'm';
-            O->delim.size = (uint32_t)(sizeof(RKRayHeader) + ray->header.gateCount * sizeof(uint8_t));
-            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), data, ray->header.gateCount * sizeof(uint8_t), NULL);
+            O->delim.size = (uint32_t)(sizeof(RKRayHeader) + productCount * ray->header.gateCount * sizeof(uint8_t));
+            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+
+            for (j = 0; j < productCount; j++) {
+                if (productList & RKProductListDisplayZ) {
+                    productList ^= RKProductListDisplayZ;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                } else if (productList & RKProductListDisplayV) {
+                    productList ^= RKProductListDisplayV;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+                } else if (productList & RKProductListDisplayW) {
+                    productList ^= RKProductListDisplayW;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+                } else if (productList & RKProductListDisplayD) {
+                    productList ^= RKProductListDisplayD;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+                } else if (productList & RKProductListDisplayD) {
+                    productList ^= RKProductListDisplayD;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                } else if (productList & RKProductListDisplayP) {
+                    productList ^= RKProductListDisplayP;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+                } else if (productList & RKProductListDisplayS) {
+                    productList ^= RKProductListDisplayS;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
+                } else if (productList & RKProductListDisplayK) {
+                    productList ^= RKProductListDisplayK;
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                } else {
+                    data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                }
+                RKOperatorSendPackets(O, data, ray->header.gateCount * sizeof(uint8_t), NULL);
+            }
             user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
         }
     }

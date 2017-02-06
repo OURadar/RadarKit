@@ -225,6 +225,7 @@ enum RKInitFlag {
 
 typedef uint32_t RKProductList;
 enum RKProductList {
+    RKProductListNone                = 0,                            // None
     RKProductListDisplayZ            = (1),                          // Display Z - Reflectivity dBZ
     RKProductListDisplayV            = (1 << 1),                     // Display V - Velocity
     RKProductListDisplayW            = (1 << 2),                     // Display W - Width

@@ -33,10 +33,13 @@ uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const
     uint32_t remainingSize = size;
     uint32_t lastChunkSize = 0;
     uint32_t writtenSize = 0;
-    // Mechanism:
-    // If the remainder of cache is less than payload size, copy the whatever that fits, called it lastChunkSize
+    //
+    // Method:
+    //
+    // If the remainder of cache is less than then payload size, copy the whatever that fits, called it lastChunkSize
     // Then, the last part of the payload (starting lastChunkSize) should go into the cache. Otherwise, just
-    // write out the remainig payload entirely.
+    // write out the remainig payload entirely, leaving the cache empty.
+    //
     if (engine->cacheWriteIndex + remainingSize >= engine->cacheSize) {
         lastChunkSize = engine->cacheSize - engine->cacheWriteIndex;
         memcpy(engine->cache + engine->cacheWriteIndex, payload, lastChunkSize);
