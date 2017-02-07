@@ -38,7 +38,7 @@ void *healthRelay(void *in) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
-                      engine->name, (float)s * 0.1f, k, health->flag);
+                      engine->name, (float)s * 0.01f, k, health->flag);
             }
         }
         if (engine->state != RKHealthEngineStateActive) {

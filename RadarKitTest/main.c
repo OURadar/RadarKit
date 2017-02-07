@@ -326,10 +326,11 @@ int main(int argc, char *argv[]) {
     RKRadarDesc desc;
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 1 << (int)ceilf(log2f(user.gateCount));
-    desc.pulseToRayRatio = 2;
     if (user.fs >= 20000000) {
+        desc.pulseToRayRatio = 2;
         desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
+        desc.pulseToRayRatio = 1;
         desc.pulseBufferDepth = 10000;
     }
     desc.rayBufferDepth = 1440;

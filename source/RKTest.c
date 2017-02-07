@@ -478,7 +478,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         }
     }
     
-    const int chunkSize = MAX(1, (int)floor(0.05f / prt));
+    const int chunkSize = MAX(1, (int)floor(0.5f / prt));
     const float gateSizeMeters = 0.5f * 3.0e8f / fs;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {

@@ -144,9 +144,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
             if (du <= 1.0e-6 || du > 1.0e9) {
                 RKLog("%s Warning. Reference tic change of %.e per second is unexpected %.2e > %.2e\n", clock->name, du, clock->count, clock->stride);
             }
-            if (clock->b < 0.1 * dx / n) {
+            if (clock->b < 0.05 * dx / n) {
                 RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
-                clock->b = 0.2 * dx / n;
+                clock->b = 0.1 * dx / n;
                 clock->a = 1.0 - clock->b;
                 RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
             }

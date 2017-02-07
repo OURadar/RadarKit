@@ -347,10 +347,8 @@ int socketStreamHandler(RKOperator *O) {
             uint32_t productCount = __builtin_popcount(productList);
             //RKLog("ProductCount = %d / %x\n", productCount, productList);
 
-
-            uint16_t ds = 2;
-            rayHeader.gateCount /= ds;
-            rayHeader.gateSizeMeters *= (float)ds;
+            rayHeader.gateCount /= user->rayDownSamplingRatio;
+            rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
 
             O->delim.type = 'm';
             O->delim.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
@@ -386,7 +384,7 @@ int socketStreamHandler(RKOperator *O) {
                 }
 
                 uint8_t *lowRateData = (uint8_t *)user->string;
-                for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += ds) {
+                for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
                     lowRateData[i] = data[k];
                 }
                 RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
@@ -412,7 +410,6 @@ int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    RKLog(">%s %s preparing user %d ...\n", engine->name, O->name, O->iid);
     memset(user, 0, sizeof(RKUser));
     user->access = RKUserFlagStatusAll;
     user->access |= RKUserFlagDisplayZVWDPRKS;
@@ -420,6 +417,9 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
+    user->rayDownSamplingRatio = (uint16_t)floorf(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
+    RKLog(">%s %s User %d x %d ...\n", engine->name, O->name, O->iid, user->rayDownSamplingRatio);
+
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
     return RKResultNoError;
