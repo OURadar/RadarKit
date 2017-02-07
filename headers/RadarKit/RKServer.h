@@ -84,8 +84,9 @@ struct rk_operator  {
     char             name[RKNameLength];             // Operator name
     char             ip[RKMaximumStringLength];      // Client's IP address
 
-    RKNetDelimiter   delim;                          // Convenient delimiter for sending a string
-    RKNetDelimiter   beacon;       
+    RKNetDelimiter   delimString;                    // Convenient delimiter for text response of commands
+    RKNetDelimiter   delimTx;                        // Convenient delimiter for streaming
+    RKNetDelimiter   beacon;                         // Beacon
 
     char             *cmd;                           // Latest command
 
@@ -94,7 +95,8 @@ struct rk_operator  {
 
 
 ssize_t RKOperatorSendPackets(RKOperator *, ...);
-ssize_t RKOperatorSendBeaconAndString(RKOperator *, const char *);
+ssize_t RKOperatorSendString(RKOperator *, const char *);
+ssize_t RKOperatorSendDelimitedString(RKOperator *, const char *);
 ssize_t RKOperatorSendBeacon(RKOperator *);
 void RKOperatorHangUp(RKOperator *);
 

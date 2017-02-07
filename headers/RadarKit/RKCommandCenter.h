@@ -52,6 +52,7 @@ typedef struct  rk_user {
     RKUserFlag   streams;
     double       timeLastOut;
     double       timeLastHealthOut;
+    double       timeLastDisplayIQOut;
     double       timeLastIn;
     uint32_t     healthIndex;
     uint32_t     rayStatusIndex;

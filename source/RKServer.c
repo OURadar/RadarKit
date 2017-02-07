@@ -304,14 +304,18 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
              rkGlobalParameters.showColor ? RKGetColorOfIndex(O->iid) : "",
              O->iid,
              rkGlobalParameters.showColor ? RKNoColor : "");
-    O->delim.type = RKNetworkPacketTypePlainText;
-    O->delim.size = 0;
-    O->delim.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
-    O->delim.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    O->delimString.type = RKNetworkPacketTypePlainText;
+    O->delimString.size = 0;
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 6] = 8;
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 5] = 8;
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 4] = 8;
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 3] = 8;
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    memcpy(&O->beacon, &O->delimString, sizeof(RKNetDelimiter));
     O->beacon.type = RKNetworkPacketTypeBeacon;
-    O->beacon.size = 0;
-    O->beacon.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
-    O->beacon.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    memcpy(&O->delimTx, &O->delimString, sizeof(RKNetDelimiter));
+    O->delimTx.type = RKNetworkPacketTypeBytes;
 
     if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
         RKLog("%s Error. Failed to create RKOperatorRoutine().\n", M->name);
@@ -551,10 +555,13 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
     return grandTotalSentSize;
 }
 
-ssize_t RKOperatorSendBeaconAndString(RKOperator *O, const char *string) {
-    O->delim.type = 't';
-    O->delim.size = (uint32_t)strlen(string) + 1;
-    return RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), string, O->delim.size, NULL);
+ssize_t RKOperatorSendString(RKOperator *O, const char *string) {
+    return RKOperatorSendPackets(O, string, strlen(string) + 1, NULL);
+}
+
+ssize_t RKOperatorSendDelimitedString(RKOperator *O, const char *string) {
+    O->delimString.size = (uint32_t)strlen(string) + 1;
+    return RKOperatorSendPackets(O, &O->delimString, sizeof(RKNetDelimiter), string, O->delimString.size, NULL);
 }
 
 ssize_t RKOperatorSendBeacon(RKOperator *O) {

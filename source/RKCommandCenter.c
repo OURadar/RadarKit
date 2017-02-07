@@ -158,7 +158,7 @@ int socketCommandHandler(RKOperator *O) {
                 j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->desc.name);
             }
             snprintf(string + j, RKMaximumStringLength - j - 1, "Select 1-%d" RKEOL, k);
-            RKOperatorSendBeaconAndString(O, string);
+            RKOperatorSendDelimitedString(O, string);
             break;
             
         case 'd':
@@ -186,7 +186,7 @@ int socketCommandHandler(RKOperator *O) {
         case 'r':
             RKLog("%s %s selected radar %s\n", engine->name, O->name, input);
             snprintf(string, RKMaximumStringLength - 1, "Radar %s selected." RKEOL, input);
-            RKOperatorSendBeaconAndString(O, string);
+            RKOperatorSendDelimitedString(O, string);
             break;
 
         case 'm':
@@ -204,7 +204,7 @@ int socketCommandHandler(RKOperator *O) {
             user->pulseIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
             user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
             user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
-            RKOperatorSendBeaconAndString(O, string);
+            RKOperatorSendDelimitedString(O, string);
             break;
             
         case 'w':
@@ -213,7 +213,7 @@ int socketCommandHandler(RKOperator *O) {
             
         default:
             snprintf(string, RKMaximumStringLength, "Unknown command '%s'." RKEOL, O->cmd);
-            RKOperatorSendBeaconAndString(O, string);
+            RKOperatorSendDelimitedString(O, string);
             break;
     }
     return 0;
@@ -227,7 +227,7 @@ int socketStreamHandler(RKOperator *O) {
     char *c;
     static struct timeval t0;
 
-    ssize_t r;
+    ssize_t size;
     uint32_t endIndex;
 
     gettimeofday(&t0, NULL);
@@ -235,8 +235,13 @@ int socketStreamHandler(RKOperator *O) {
     double td = time - user->timeLastOut;
 
     RKRay *ray;
-    uint8_t *data = NULL;
     RKRayHeader rayHeader;
+    uint8_t *u8Data = NULL;
+
+    RKPulse *pulse;
+    RKPulseHeader pulseHeader;
+    RKInt16C *c16DataH = NULL;
+    RKInt16C *c16DataV = NULL;
 
     if (engine->radarCount < 1) {
         return 0;
@@ -249,18 +254,22 @@ int socketStreamHandler(RKOperator *O) {
 
     if (user->streams & user->access && td >= 0.05) {
         if (user->streams & RKUserFlagStatusPulses) {
-            snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
-                     RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
-                     RKPositionEngineStatusString(user->radar->positionEngine),
-                     RKMomentEngineStatusString(user->radar->momentEngine),
-                     RKFileEngineStatusString(user->radar->fileEngine));
-            RKOperatorSendBeaconAndString(O, user->string);
+            k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
+                         RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
+                         RKPositionEngineStatusString(user->radar->positionEngine),
+                         RKMomentEngineStatusString(user->radar->momentEngine),
+                         RKFileEngineStatusString(user->radar->fileEngine));
+            O->delimTx.type = RKNetworkPacketTypePlainText;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
         }
         if (user->streams & RKUserFlagStatusPositions) {
-            snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
-                     RKPositionEnginePositionString(user->radar->positionEngine));
-            RKOperatorSendBeaconAndString(O, user->string);
+            k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                         RKPositionEnginePositionString(user->radar->positionEngine));
+            O->delimTx.type = RKNetworkPacketTypePlainText;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
         }
     }
@@ -270,9 +279,9 @@ int socketStreamHandler(RKOperator *O) {
         k = snprintf(user->string, RKMaximumStringLength - 1,
                      "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
                      user->radar->configs[user->radar->configIndex].prf[0]);
-        O->delim.type = 's';
-        O->delim.size = k + 1;
-        RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), user->string, O->delim.size, NULL);
+        O->delimTx.type = RKNetworkPacketTypePlainText;
+        O->delimTx.size = k + 1;
+        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         user->timeLastHealthOut = time;
     }
     
@@ -289,7 +298,9 @@ int socketStreamHandler(RKOperator *O) {
         if (j) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
-            RKOperatorSendBeaconAndString(O, user->string);
+            O->delimTx.type = RKNetworkPacketTypePlainText;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
         user->timeLastOut = time;
     }
@@ -307,7 +318,9 @@ int socketStreamHandler(RKOperator *O) {
         if (j) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
-            RKOperatorSendBeaconAndString(O, user->string);
+            O->delimTx.type = RKNetworkPacketTypePlainText;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
         user->timeLastOut = time;
     }
@@ -350,42 +363,42 @@ int socketStreamHandler(RKOperator *O) {
             rayHeader.gateCount /= user->rayDownSamplingRatio;
             rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
 
-            O->delim.type = 'm';
-            O->delim.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
-            RKOperatorSendPackets(O, &O->delim, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+            O->delimTx.type = 'm';
+            O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
 
             for (j = 0; j < productCount; j++) {
                 if (productList & RKProductListDisplayZ) {
                     productList ^= RKProductListDisplayZ;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                 } else if (productList & RKProductListDisplayV) {
                     productList ^= RKProductListDisplayV;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
                 } else if (productList & RKProductListDisplayW) {
                     productList ^= RKProductListDisplayW;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
                 } else if (productList & RKProductListDisplayD) {
                     productList ^= RKProductListDisplayD;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
                 } else if (productList & RKProductListDisplayP) {
                     productList ^= RKProductListDisplayP;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
                 } else if (productList & RKProductListDisplayR) {
                     productList ^= RKProductListDisplayR;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
                 } else if (productList & RKProductListDisplayK) {
                     productList ^= RKProductListDisplayK;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
                 } else if (productList & RKProductListDisplayS) {
                     productList ^= RKProductListDisplayS;
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
                 } else {
-                    data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                 }
 
                 uint8_t *lowRateData = (uint8_t *)user->string;
                 for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
-                    lowRateData[i] = data[k];
+                    lowRateData[i] = u8Data[k];
                 }
                 RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
             }
@@ -393,12 +406,34 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
+    if (user->streams & user->access & RKUserFlagProductIQ) {
+        // If I/Q data is sent, there is no need to send a subset of it.
+        endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+        while (user->pulseIndex != endIndex) {
+
+            user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
+        }
+    } else if (user->streams & user->access & RKUserFlagDisplayIQ && time - user->timeLastDisplayIQOut >= 1.0) {
+        endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+        pulse = RKGetPulse(user->radar->pulses, endIndex);
+        memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
+        c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
+        c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
+        size = pulseHeader.gateCount * sizeof(RKInt16C);
+
+        O->delimTx.type = RKNetworkPacketTypePulseData;
+        O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
+        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, O->delimTx.size, c16DataH, size, c16DataV, size, NULL);
+
+        user->timeLastDisplayIQOut = time;
+    }
+
     // Re-evaluate td = time - user->timeLastOut; send a heart beat if nothing has been sent
     if (time - user->timeLastOut >= 1.0) {
         user->timeLastOut = time;
-        r = RKOperatorSendBeacon(O);
-        if (r < 0) {
-            RKLog("Beacon failed (r = %d).\n", r);
+        size = RKOperatorSendBeacon(O);
+        if (size < 0) {
+            RKLog("Beacon failed (r = %d).\n", size);
             RKOperatorHangUp(O);
         }
     }

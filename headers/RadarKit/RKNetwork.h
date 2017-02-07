@@ -38,6 +38,7 @@ enum RKNetworkMessageFormat {
 };
 
 enum RKNetworkPacketType {
+    RKNetworkPacketTypeBytes,
     RKNetworkPacketTypePlainText,
     RKNetworkPacketTypePulseData,
     RKNetworkPacketTypeRayData,
