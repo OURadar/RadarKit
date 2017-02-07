@@ -279,7 +279,7 @@ int socketStreamHandler(RKOperator *O) {
         k = snprintf(user->string, RKMaximumStringLength - 1,
                      "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
                      user->radar->configs[user->radar->configIndex].prf[0]);
-        O->delimTx.type = RKNetworkPacketTypePlainText;
+        O->delimTx.type = 's';
         O->delimTx.size = k + 1;
         RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         user->timeLastHealthOut = time;
@@ -413,17 +413,27 @@ int socketStreamHandler(RKOperator *O) {
 
             user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
-    } else if (user->streams & user->access & RKUserFlagDisplayIQ && time - user->timeLastDisplayIQOut >= 1.0) {
+    } else if (user->streams & user->access & RKUserFlagDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(user->radar->pulses, endIndex);
         memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
+
+        pulseHeader.gateCount /= 8;
+        pulseHeader.gateSizeMeters *= 8.0f;
+
         c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
         c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
+
+        for (i = 0, k = 0; i < pulseHeader.gateCount; i++, k += 8) {
+            user->samples[0][i] = c16DataH[k];
+            user->samples[1][i] = c16DataV[k];
+        }
+
         size = pulseHeader.gateCount * sizeof(RKInt16C);
 
         O->delimTx.type = RKNetworkPacketTypePulseData;
         O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
-        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, O->delimTx.size, c16DataH, size, c16DataV, size, NULL);
+        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, sizeof(RKPulseHeader), user->samples[0], size, user->samples[1], size, NULL);
 
         user->timeLastDisplayIQOut = time;
     }

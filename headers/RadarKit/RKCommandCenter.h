@@ -60,6 +60,7 @@ typedef struct  rk_user {
     uint32_t     rayIndex;
     uint16_t     rayDownSamplingRatio;
     char         string[RKMaximumStringLength];
+    RKInt16C     samples[2][RKGateCount];
     RKOperator   *serverOperator;
     RKRadar      *radar;
 } RKUser;
