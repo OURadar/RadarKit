@@ -27,7 +27,7 @@ Follow these steps to get the project
     
     ```shell
     yum install epel-release
-    yum install fftw netcdf-devel
+    yum install fftw-devel netcdf-devel
     ``````
     
     ##### Mac OS X #####
