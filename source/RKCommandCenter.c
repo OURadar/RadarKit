@@ -206,7 +206,12 @@ int socketCommandHandler(RKOperator *O) {
             user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
             RKOperatorSendDelimitedString(O, string);
             break;
-            
+
+        case 't':
+            // Temporary pass everything to transceiver
+            user->radar->transceiverExec(user->radar->transceiver, O->cmd);
+            break;
+
         case 'w':
             // Change waveform
             break;

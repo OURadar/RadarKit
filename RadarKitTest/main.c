@@ -117,7 +117,7 @@ void showHelp() {
            );
 }
 
-UserParams processInput(int argc, char **argv) {
+UserParams processInput(int argc, const char **argv) {
     int k;
     
     // A structure unit that encapsulates command line user parameters
@@ -167,7 +167,7 @@ UserParams processInput(int argc, char **argv) {
     //printf("str = %s\n", str);
     // Process the input arguments and set the parameters
     int opt, long_index = 0;
-    while ((opt = getopt_long(argc, argv, str, long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'C':
                 RKSetWantColor(false);
@@ -304,7 +304,7 @@ UserParams processInput(int argc, char **argv) {
 //  M A I N
 //
 //
-int main(int argc, char *argv[]) {
+int main(int argc, const char **argv) {
 
     RKSetProgramName("iRadar");
     RKSetWantScreenOutput(true);

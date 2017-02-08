@@ -312,10 +312,10 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->delimString.bytes[sizeof(RKNetDelimiter) - 3] = 8;
     O->delimString.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
     O->delimString.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
-    memcpy(&O->beacon, &O->delimString, sizeof(RKNetDelimiter));
-    O->beacon.type = RKNetworkPacketTypeBeacon;
     memcpy(&O->delimTx, &O->delimString, sizeof(RKNetDelimiter));
     O->delimTx.type = RKNetworkPacketTypeBytes;
+    //memcpy(&O->beacon, &O->delimString, sizeof(RKNetDelimiter));
+    O->beacon.type = RKNetworkPacketTypeBeacon;
 
     if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
         RKLog("%s Error. Failed to create RKOperatorRoutine().\n", M->name);
