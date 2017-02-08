@@ -423,13 +423,13 @@ int socketStreamHandler(RKOperator *O) {
         pulse = RKGetPulse(user->radar->pulses, endIndex);
         memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
 
-        pulseHeader.gateCount /= 8;
-        pulseHeader.gateSizeMeters *= 8.0f;
+        pulseHeader.gateCount /= user->pulseDownSamplingRatio;
+        pulseHeader.gateSizeMeters *= (float)user->pulseDownSamplingRatio;
 
         c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
         c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
 
-        for (i = 0, k = 0; i < pulseHeader.gateCount; i++, k += 8) {
+        for (i = 0, k = 0; i < pulseHeader.gateCount; i++, k += user->pulseDownSamplingRatio) {
             user->samples[0][i] = c16DataH[k];
             user->samples[1][i] = c16DataV[k];
         }
@@ -468,7 +468,8 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
     user->rayDownSamplingRatio = (uint16_t)floorf(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
-    RKLog(">%s %s User %d x %d ...\n", engine->name, O->name, O->iid, user->rayDownSamplingRatio);
+    user->pulseDownSamplingRatio = (uint16_t)floorf(user->radar->desc.pulseCapacity / 1000);
+    RKLog(">%s %s User %d x%d x%d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;

@@ -57,6 +57,7 @@ typedef struct  rk_user {
     uint32_t     healthIndex;
     uint32_t     rayStatusIndex;
     uint32_t     pulseIndex;
+    uint16_t     pulseDownSamplingRatio;
     uint32_t     rayIndex;
     uint16_t     rayDownSamplingRatio;
     char         string[RKMaximumStringLength];
