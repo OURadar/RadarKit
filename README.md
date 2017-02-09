@@ -65,11 +65,31 @@ Follow these steps to get the project
     }
     ``````
 
-2. Set up a transceiver thread that receives I/Q data.
+2. Set up a transceiver initialization routine to return a user pointer, and a run loop thread that receives I/Q data. The initialization routine must return immediately.
 
     ```c
-    RKTransceiver transceiverThread(RKRadar *radar, void *userInput) {
-        while (active) {
+    RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
+        // Allocate your own resources, define your structure somewhere else
+        UserStruct *resource = malloc(sizeof(UserStruct));
+        
+        // Be sure to save a reference to radar
+        resource->radar = radar
+        
+        // Create your run loop as a separate thread so you can return immediately
+        pthread_create(&tid, NULL, transceiverRunLoop, resource);
+        
+        return (RKTransceiver)resource;
+    }
+    
+    void *transceiverRunLoop(void *in) {
+        // Type cast input to something you defined earlier
+        UserStruct *resource = (UserStruct *)in;
+        
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
+        
+        // Here is the busy run loop
+        while (radar->active) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             pulse->header.gateCount = 1000;
             
