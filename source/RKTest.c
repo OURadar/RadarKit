@@ -582,20 +582,20 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
-    if (strcmp(command, "disconnect")) {
-        RKLog("%s disconnect", transceiver->name);
+    if (!strcmp(command, "disconnect")) {
+        RKLog("%s Disconnecting ...", transceiver->name);
         pthread_join(transceiver->tidRunLoop, NULL);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s stopped.\n", transceiver->name);
         }
     }
-    return 0;
+    return RKResultSuccess;
 }
 
 int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     free(transceiver);
-    return 0;
+    return RKResultSuccess;
 }
 
 #pragma mark - Data Processing
