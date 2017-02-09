@@ -26,6 +26,19 @@ enum RKTestSIMDFlag {
     RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
 };
 
+typedef struct rk_test_transceiver {
+    char      name[RKNameLength];
+    bool      simulatePosition;
+    int       sleepInterval;
+    int       gateCount;
+    float     gateSizeMeters;
+    long      counter;
+    double    fs;
+    double    prt;
+    pthread_t tidRunLoop;
+    RKRadar   *radar;
+} RKTestTransceiver;
+
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestParseCommaDelimitedValues(void);

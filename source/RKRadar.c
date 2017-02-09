@@ -17,24 +17,6 @@
 
 #pragma mark - Helper Functions
 
-void *backgroundTransceiverInit(void *in) {
-    RKRadar *radar = (RKRadar *)in;
-    radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
-    return NULL;
-}
-
-void *backgroundPedestalInit(void *in) {
-    RKRadar *radar = (RKRadar *)in;
-    radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
-    return NULL;
-}
-
-void *backgroundHealthRelayInit(void *in) {
-    RKRadar *radar = (RKRadar *)in;
-    radar->healthRelay = radar->healthRelayInit(radar, radar->healthRelayInitInput);
-    return NULL;
-}
-
 void *radarCoPilot(void *in) {
     RKRadar *radar = (RKRadar *)in;
     RKMomentEngine *productGenerator = radar->momentEngine;
@@ -538,7 +520,7 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Error. Pedestal incomplete.");
             exit(EXIT_FAILURE);
         }
-        pthread_create(&radar->pedestalThreadId, NULL, backgroundPedestalInit, radar);
+        radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
         radar->state |= RKRadarStatePedestalInitialized;
     }
 
@@ -551,7 +533,7 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Error. Transceiver incomplete.");
             exit(EXIT_FAILURE);
         }
-        pthread_create(&radar->transceiverThreadId, NULL, backgroundTransceiverInit, radar);
+        radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
         radar->state |= RKRadarStateTransceiverInitialized;
     }
 
@@ -564,7 +546,7 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Error. Health relay incomplete.");
             exit(EXIT_FAILURE);
         }
-        pthread_create(&radar->healthRelayThreadId, NULL, backgroundHealthRelayInit, radar);
+        radar->healthRelay = radar->healthRelayInit(radar, radar->healthRelayInitInput);
         radar->state |= RKRadarStateHealthRelayInitialized;
     }
     
@@ -586,26 +568,17 @@ int RKStop(RKRadar *radar) {
         if (radar->pedestalExec != NULL) {
             radar->pedestalExec(radar->pedestal, "disconnect");
         }
-        if (pthread_join(radar->pedestalThreadId, NULL)) {
-            RKLog("Error. Failed at the pedestal return.   errno = %d\n", errno);
-        }
         radar->state ^= RKRadarStatePedestalInitialized;
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (radar->transceiverExec != NULL) {
             radar->transceiverExec(radar->transceiver, "disconnect");
         }
-        if (pthread_join(radar->transceiverThreadId, NULL)) {
-            RKLog("Error. Failed at the transceiver return.   errno = %d\n", errno);
-        }
         radar->state ^= RKRadarStateTransceiverInitialized;
     }
     if (radar->state & RKRadarStateHealthRelayInitialized) {
         if (radar->healthRelayExec != NULL) {
             radar->healthRelayExec(radar->healthRelay, "disconnect");
-        }
-        if (pthread_join(radar->healthRelayThreadId, NULL)) {
-            RKLog("Error. Failed at the health relay return.   errno = %d\n", errno);
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
     }

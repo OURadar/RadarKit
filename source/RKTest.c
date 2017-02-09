@@ -402,28 +402,115 @@ void RKTestParseCommaDelimitedValues(void) {
 
 #pragma mark - Simulated Transceiver
 
-RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
-    int j, g, p;
+void *RKTestTransceiverRunLoop(void *input) {
+    RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
+    RKRadar *radar = transceiver->radar;
+
+    int j, p, g, n;
+    float a;
     float phi = 0.0f;
     float azimuth = 0.0f;
-    struct timeval t0, t1;
     double t = 0.0f;
     double dt = 0.0;
-    double prt = 0.0002;
-    float fs = 50.0e6;
-    int n = 0;
-    bool simulatePosition = false;
-    int sleepInterval = 0;
-    uint64_t counter = 0;
+    struct timeval t0, t1;
+
+    
+    const int chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
+    
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
+              transceiver->name,
+              RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
+              RKIntegerToCommaStyleString((int)(1.0f / transceiver->prt)),
+              RKIntegerToCommaStyleString(transceiver->gateCount),
+              transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3);
+        RKLog("%s chunk size = %d   tics = %s\n",
+              transceiver->name,
+              chunkSize,
+              RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
+    }
+    
 
     gettimeofday(&t0, NULL);
 
-    int capacity = RKGetPulseCapacity(radar);
-    int gateCount = capacity;
+    while (radar->active) {
+        
+        for (j = 0; radar->active && j < chunkSize; j++) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            
+            // Fill in the header
+            pulse->header.i = transceiver->counter++;
+            pulse->header.t = (uint64_t)(1.0e6 * t);
+            pulse->header.gateCount = transceiver->gateCount;
+            pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
+            
+            if (transceiver->simulatePosition) {
+                pulse->header.azimuthDegrees = azimuth;
+                pulse->header.elevationDegrees = 2.41f;
+                azimuth = fmodf(25.0f * t, 360.0f);
+                phi += 0.02f;
+            }
+            
+            a = cosf(2.0 * M_PI * t);
+            // Fill in the data...
+            for (p = 0; p < 2; p++) {
+                RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                
+                // Some seemingly random pattern for testing
+                //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
+                for (g = 0; g < transceiver->gateCount; g++) {
+                    X->i = (int16_t)(20000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
+                    X->q = 0.0f;
+                    //                    if (g % 2 == 0) {
+                    //                        X->i = (int16_t)((g * n) + p);
+                    //                        X->q = (int16_t)((n - 2) * (g - 1));
+                    //                    } else {
+                    //                        X->i = (int16_t)(-g * (n - 1));
+                    //                        X->q = (int16_t)((g * p) + n);
+                    //                    }
+                    //                    X->i = (float)g;
+                    //                    X->q = 0.0f;
+                    X++;
+                }
+            }
+            
+            RKSetPulseHasData(radar, pulse);
+            
+            if (transceiver->sleepInterval > 0 && transceiver->counter % transceiver->sleepInterval == 0) {
+                RKLog("%s sleeping at counter = %s / %s ...",
+                      transceiver->name, RKIntegerToCommaStyleString(transceiver->counter), RKIntegerToCommaStyleString(transceiver->sleepInterval));
+                sleep(3);
+            }
+            t += transceiver->prt;
+        }
+        
+        // Wait to simulate the PRF
+        n = 0;
+        do {
+            gettimeofday(&t1, NULL);
+            dt = RKTimevalDiff(t1, t0);
+            usleep(100);
+            n++;
+        } while (radar->active && dt < transceiver->prt * chunkSize);
+        t0 = t1;
+    }
+    return NULL;
+}
 
-    char name[RKNameLength];
-    sprintf(name, "%s<Transceiver>%s",
+
+RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
+
+    RKTestTransceiver *transceiver = (RKTestTransceiver *)malloc(sizeof(RKTestTransceiver));
+    if (transceiver == NULL) {
+        RKLog("Error. Unable to allocate a test transceiver.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(transceiver, 0, sizeof(RKTestTransceiver));
+    sprintf(transceiver->name, "%s<Transceiver>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    transceiver->radar = radar;
+    transceiver->fs = 50.0e6;
+    transceiver->gateCount = RKGetPulseCapacity(radar);
     
     // Parse out input parameters
     if (input) {
@@ -435,35 +522,36 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             sv = se + 1;
             switch (*sb) {
                 case 'f':
-                    prt = 1.0 / (double)atof(sv);
+                    transceiver->prt = 1.0 / (double)atof(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / prt)));
+                        RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / transceiver->prt)));
                     }
                     break;
                 case 'F':
-                    fs = atof(sv);
+                    transceiver->fs = atof(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)fs));
+                        RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)transceiver->fs));
                     }
                     break;
                 case 'P':
-                    simulatePosition = true;
+                    transceiver->simulatePosition = true;
                     break;
                 case 'g':
-                    gateCount = atoi(sv);
-                    if (gateCount > capacity) {
-                        RKLog("Warning. gateCount %s is clamped to the capacity %s",
-                              RKIntegerToCommaStyleString(gateCount), RKIntegerToCommaStyleString(capacity));
-                        gateCount = capacity;
+                    transceiver->gateCount = atoi(sv);
+                    uint32_t capacity = RKGetPulseCapacity(radar);
+                    if (transceiver->gateCount > capacity) {
+                        RKLog("Warning. gateCount %s will be clamped to the capacity %s",
+                              RKIntegerToCommaStyleString(transceiver->gateCount), RKIntegerToCommaStyleString(capacity));
+                        transceiver->gateCount = capacity;
                     }
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">gateCount = %s", RKIntegerToCommaStyleString((long)gateCount));
+                        RKLog(">gateCount = %s", RKIntegerToCommaStyleString(transceiver->gateCount));
                     }
                     break;
                 case 'z':
-                    sleepInterval = atoi(sv);
+                    transceiver->sleepInterval = atoi(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">sleepInterval = %s", RKIntegerToCommaStyleString((long)sleepInterval));
+                        RKLog(">sleepInterval = %s", RKIntegerToCommaStyleString(transceiver->sleepInterval));
                     }
                     break;
             }
@@ -477,102 +565,36 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             }
         }
     }
-    
-    const int chunkSize = MAX(1, (int)floor(0.5f / prt));
-    const float gateSizeMeters = 0.5f * 3.0e8f / fs;
 
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
-              name,
-              RKFloatToCommaStyleString(1.0e-6 * fs),
-              RKIntegerToCommaStyleString((int)(1.0f / prt)),
-              RKIntegerToCommaStyleString(gateCount),
-              gateCount * gateSizeMeters * 1.0e-3);
-        RKLog("%s chunk size = %d   tics = %s\n",
-              name,
-              chunkSize,
-              RKFloatToCommaStyleString(1.0e6 * prt));
-    }
+    // Derive some calculated parameters
+    transceiver->gateSizeMeters = 0.5f * 3.0e8f / transceiver->fs;
 
     // Use a counter that mimics microsend increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
-    float a;
-
-    while (radar->active) {
-
-        for (j = 0; radar->active && j < chunkSize; j++) {
-            RKPulse *pulse = RKGetVacantPulse(radar);
-
-            // Fill in the header
-            pulse->header.i = counter++;
-            pulse->header.t = (uint64_t)(1.0e6 * t);
-            pulse->header.gateCount = gateCount;
-            pulse->header.gateSizeMeters = gateSizeMeters;
-            
-            if (simulatePosition) {
-                pulse->header.azimuthDegrees = azimuth;
-                pulse->header.elevationDegrees = 2.41f;
-                azimuth = fmodf(25.0f * t, 360.0f);
-                phi += 0.02f;
-            }
-
-            a = cosf(2.0 * M_PI * t);
-            // Fill in the data...
-            for (p = 0; p < 2; p++) {
-                RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                
-                // Some seemingly random pattern for testing
-                //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
-                for (g = 0; g < gateCount; g++) {
-                    X->i = (int16_t)(20000.0f * a * cosf((float)g * gateSizeMeters * 0.0001f));
-                    X->q = 0.0f;
-//                    if (g % 2 == 0) {
-//                        X->i = (int16_t)((g * n) + p);
-//                        X->q = (int16_t)((n - 2) * (g - 1));
-//                    } else {
-//                        X->i = (int16_t)(-g * (n - 1));
-//                        X->q = (int16_t)((g * p) + n);
-//                    }
-//                    X->i = (float)g;
-//                    X->q = 0.0f;
-                    X++;
-                }
-            }
-
-            RKSetPulseHasData(radar, pulse);
-
-            if (sleepInterval > 0 && counter % sleepInterval == 0) {
-                RKLog("%s sleeping at counter = %s / %s ...", name, RKIntegerToCommaStyleString(counter), RKIntegerToCommaStyleString(sleepInterval));
-                sleep(3);
-            }
-            t += prt;
-        }
-
-        // Wait to simulate the PRF
-        n = 0;
-        do {
-            gettimeofday(&t1, NULL);
-            dt = RKTimevalDiff(t1, t0);
-            usleep(100);
-            n++;
-        } while (radar->active && dt < prt * chunkSize);
-        t0 = t1;
+    if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
+        RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
     }
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s stopped.\n", name);
-    }
-    return NULL;
+    
+    return (RKTransceiver)transceiver;
 }
 
-int RKTestTransceiverExec(RKTransceiver transceiver, const char *command) {
+int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command) {
+    RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
+    RKRadar *radar = transceiver->radar;
+    if (strcmp(command, "disconnect")) {
+        RKLog("%s disconnect", transceiver->name);
+        pthread_join(transceiver->tidRunLoop, NULL);
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s stopped.\n", transceiver->name);
+        }
+    }
     return 0;
 }
 
-int RKTestTransceiverFree(RKTransceiver transceiver) {
-    if (transceiver != NULL) {
-        RKLog("This is strange.\n");
-    }
+int RKTestTransceiverFree(RKTransceiver transceiverReference) {
+    RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
+    free(transceiver);
     return 0;
 }
 

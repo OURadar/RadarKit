@@ -101,21 +101,18 @@ struct rk_radar {
     int                        (*transceiverExec)(RKTransceiver, const char *);
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
-    pthread_t                  transceiverThreadId;
     //
     RKPedestal                 pedestal;
     RKPedestal                 (*pedestalInit)(RKRadar *, void *);
     int                        (*pedestalExec)(RKPedestal, const char *);
     int                        (*pedestalFree)(RKPedestal);
     void                       *pedestalInitInput;
-    pthread_t                  pedestalThreadId;
     //
     RKHealthRelay              healthRelay;
     RKHealthRelay              (*healthRelayInit)(RKRadar *, void *);
     int                        (*healthRelayExec)(RKHealthRelay, const char *);
     int                        (*healthRelayFree)(RKHealthRelay);
     void                       *healthRelayInitInput;
-    pthread_t                  healthRelayThreadId;
 };
 
 //
