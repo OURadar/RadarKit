@@ -65,7 +65,7 @@ Follow these steps to get the project
     }
     ``````
 
-2. Set up a transceiver initialization routine to return a user pointer, and a run loop thread that receives I/Q data. The initialization routine must return immediately.
+2. Set up a _transceiver_ initialization routine to return a user-defined pointer, and a run-loop routine that receives I/Q data. The initialization routine must return immediately; the run-loop routine should be created as a separate thread.
 
     ```c
     RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
@@ -82,7 +82,7 @@ Follow these steps to get the project
     }
     
     void *transceiverRunLoop(void *in) {
-        // Type cast input to something you defined earlier
+        // Type cast the input to something you defined earlier
         UserStruct *resource = (UserStruct *)in;
         
         // Now you can recover the radar reference you provided in init routine.
@@ -110,12 +110,31 @@ Follow these steps to get the project
     }
     ``````
     
-3. Set up a pedestal thread that receives position data.
+3. Set up a _pedestal_ initialization routine to return a user-defined pointer, and a run-loop routine that receives position data. The initialization routine must return immediately; the run-loop routine should be created as a separate thread.
  
     ```c
-    RKPedestal pedestalThread(RKRadar *radar, void *userInput) {
-        while (active) {
+    RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
+        // Allocate your own resources, define your structure somewhere else
+        UserStruct *resource = malloc(sizeof(UserStruct));
+        // Be sure to save a reference to radar
+        resource->radar = radar
+        
+        // Create your run loop as a separate thread so you can return immediately
+        pthread_create(&tid, NULL, pedestalRunLoop, resource);
+        
+        return (RKPedestal)resource;
+    }
+
+    int pedestalRunLoop(void *in) {
+        // Type cast the input to something you defined earlier
+        UserStruct *resource = (UserStruct *)in;
+        
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
+        
+        while (radar->active) {
             RKPosition *position = RKGetVacantPosition(radar);
+            
             // Copy the position from hardware interface
             position->az = 1.0;
             position->el = 0.5;
@@ -123,8 +142,9 @@ Follow these steps to get the project
         }
     }
     ``````
-    
-4. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
+4. Set up _health relay_ initialization and run-loop routines just like the previous two examples.
+
+5. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
     ```shell
     gcc -o program program.c -lRadarKit -lfftw -lnetcdf
