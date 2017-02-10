@@ -57,8 +57,8 @@ Follow these steps to get the project
     
     int main() {
         RKRadar *radar = RKInit();
-        RKSetTransceiver(radar, NULL, transceiverThread, NULL, NULL);
-        RKSetPedestal(radar, NULL, pedestalThread, NULL, NULL);
+        RKSetTransceiver(radar, NULL, transceiverInit, NULL, NULL);
+        RKSetPedestal(radar, NULL, pedestalInit, NULL, NULL);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
         RKFree(radar);
