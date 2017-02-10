@@ -65,7 +65,7 @@ Follow these steps to get the project
     }
     ``````
 
-2. Set up a _transceiver_ initialization routine to return a user-defined pointer, and a run-loop routine that receives I/Q data. The initialization routine must return immediately; the run-loop routine should be created as a separate thread.
+2. Set up a _transceiver_ initialization and run-loop routines. The initialization routine returns a user-defined pointer, and a run-loop routine receives I/Q data. The initialization routine must return immediately, and the run-loop routine should be created as a separate thread.
 
     ```c
     RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
@@ -76,7 +76,7 @@ Follow these steps to get the project
         resource->radar = radar
         
         // Create your run loop as a separate thread so you can return immediately
-        pthread_create(&tid, NULL, transceiverRunLoop, resource);
+        pthread_create(&resource->tid, NULL, transceiverRunLoop, resource);
         
         return (RKTransceiver)resource;
     }
@@ -110,7 +110,7 @@ Follow these steps to get the project
     }
     ``````
     
-3. Set up a _pedestal_ initialization routine to return a user-defined pointer, and a run-loop routine that receives position data. The initialization routine must return immediately; the run-loop routine should be created as a separate thread.
+3. Set up a set of _pedestal_ initialization and run-loop routines. The initialization routine returns a user-defined pointer, and a run-loop routine receives position data. The initialization routine must return immediately, and the run-loop routine should be created as a separate thread.
  
     ```c
     RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
@@ -120,7 +120,7 @@ Follow these steps to get the project
         resource->radar = radar
         
         // Create your run loop as a separate thread so you can return immediately
-        pthread_create(&tid, NULL, pedestalRunLoop, resource);
+        pthread_create(&resource->tid, NULL, pedestalRunLoop, resource);
         
         return (RKPedestal)resource;
     }
@@ -150,7 +150,7 @@ Follow these steps to get the project
     gcc -o program program.c -lRadarKit -lfftw -lnetcdf
     ``````
 
-This example is extremely simple. Many optional arguments were set to NULL. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
+This example is extremely simple. Many optional arguments were set to NULL (execution and free routines are omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
 
 Design Philosophy
