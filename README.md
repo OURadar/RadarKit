@@ -116,6 +116,7 @@ Follow these steps to get the project
     RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
         UserStruct *resource = malloc(sizeof(UserStruct));
+        
         // Be sure to save a reference to radar
         resource->radar = radar
         
@@ -132,6 +133,7 @@ Follow these steps to get the project
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
         
+        // Here is the busy run loop
         while (radar->active) {
             RKPosition *position = RKGetVacantPosition(radar);
             
