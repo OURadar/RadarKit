@@ -70,7 +70,7 @@ Follow these steps to get the project
     ```c
     RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
-        UserStruct *resource = malloc(sizeof(UserStruct));
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserStruct));
         
         // Be sure to save a reference to radar
         resource->radar = radar
@@ -83,7 +83,7 @@ Follow these steps to get the project
     
     void *transceiverRunLoop(void *in) {
         // Type cast the input to something you defined earlier
-        UserStruct *resource = (UserStruct *)in;
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)in;
         
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
@@ -115,7 +115,7 @@ Follow these steps to get the project
     ```c
     RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
-        UserStruct *resource = malloc(sizeof(UserStruct));
+        UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserStruct));
         
         // Be sure to save a reference to radar
         resource->radar = radar
@@ -128,7 +128,7 @@ Follow these steps to get the project
 
     int pedestalRunLoop(void *in) {
         // Type cast the input to something you defined earlier
-        UserStruct *resource = (UserStruct *)in;
+        UserPedestalStruct *resource = (UserPedestalStruct *)in;
         
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
