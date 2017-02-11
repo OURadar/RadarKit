@@ -98,21 +98,24 @@ struct rk_radar {
     //
     RKTransceiver              transceiver;
     RKTransceiver              (*transceiverInit)(RKRadar *, void *);
-    int                        (*transceiverExec)(RKTransceiver, const char *);
+    int                        (*transceiverExec)(RKTransceiver, const char *, char *);
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
+    char                       *transceiverResponse;
     //
     RKPedestal                 pedestal;
     RKPedestal                 (*pedestalInit)(RKRadar *, void *);
-    int                        (*pedestalExec)(RKPedestal, const char *);
+    int                        (*pedestalExec)(RKPedestal, const char *, char *);
     int                        (*pedestalFree)(RKPedestal);
     void                       *pedestalInitInput;
+    char                       *pedestalResponse;
     //
     RKHealthRelay              healthRelay;
     RKHealthRelay              (*healthRelayInit)(RKRadar *, void *);
-    int                        (*healthRelayExec)(RKHealthRelay, const char *);
+    int                        (*healthRelayExec)(RKHealthRelay, const char *, char *);
     int                        (*healthRelayFree)(RKHealthRelay);
     void                       *healthRelayInitInput;
+    char                       *healthRelayResponse;
 };
 
 //

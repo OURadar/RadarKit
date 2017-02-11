@@ -566,19 +566,19 @@ int RKStop(RKRadar *radar) {
 
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
-            radar->pedestalExec(radar->pedestal, "disconnect");
+            radar->pedestalExec(radar->pedestal, "disconnect", NULL);
         }
         radar->state ^= RKRadarStatePedestalInitialized;
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (radar->transceiverExec != NULL) {
-            radar->transceiverExec(radar->transceiver, "disconnect");
+            radar->transceiverExec(radar->transceiver, "disconnect", NULL);
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
     }
     if (radar->state & RKRadarStateHealthRelayInitialized) {
         if (radar->healthRelayExec != NULL) {
-            radar->healthRelayExec(radar->healthRelay, "disconnect");
+            radar->healthRelayExec(radar->healthRelay, "disconnect", NULL);
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
     }
