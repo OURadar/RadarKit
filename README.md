@@ -202,21 +202,21 @@ Hardware hooks are provided to communicate with a digital transceiver, a positio
 int RKSetTransceiver(RKRadar *,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
-                     int execRoutine(RKTransceiver, const char *),
+                     int execRoutine(RKTransceiver, const char *, char *),
                      int freeRoutine(RKTransceiver));
 
 // Set the pedestal. Pass in function pointers: init, exec and free
 int RKSetPedestal(RKRadar *,
                   void *initInput,
                   RKPedestal initRoutine(RKRadar *, void *),
-                  int execRoutine(RKPedestal, const char *),
+                  int execRoutine(RKPedestal, const char *, char *),
                   int freeRoutine(RKPedestal));
 
 // Set the health relay. Pass in function pointers: init, exec and free
 int RKSetHealthRelay(RKRadar *,
                      void *initInput,
                      RKHealthRelay initRoutine(RKRadar *, void *),
-                     int execRoutine(RKHealthRelay, const char *),
+                     int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
 // Some states of the radar
@@ -252,11 +252,53 @@ void RKSetPulseReady(RKRadar *, RKPulse *);
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
-```
+``````
+
+Advanced Usage
+==============
+
+To use the other two routines in _transceiver_, _pedestal_, and _health relay_, the execution routine must be in the form of
+
+```c
+int execRoutine(RKTransceiver, const char *command, char *response);
+int execRoutine(RKPedestal, const char *command, char *response);
+int execRoutine(RKHealthRelay, const char *, char *response);
+``````
+
+while the resource free routine must be in the form of
+
+```c
+int freeRoutine(RKTransceiver);
+int freeRoutine(RKPedestal);
+int freeRoutine(RKHealthRelay);
+``````
+
+Here is a simple example of
+
+```c
+int execRoutine(RKTransceiver userTransceiver, const char *command, char *response) {
+    // Type cast it to your defined type
+    UserTransceiverStruct transceiver = (UserTransceiverStruct *)userTransceiver;
+    
+    // Restore the radar reference.
+    RKRadar *radar = transceiver->radar;
+    
+    // Do something with the instruction, say change the prt
+    float prt;
+    char dummy[64];
+    if (!strcmp(command, "prt")) {
+        sscanf(command, "%s %f", dummy, &prt);
+        transceiver->prt = prt;
+        sprintf(response, "ACK. Command executed.");
+    }
+    return 0;
+}
+
+``````
 
 
 RadarKit Test Program
----------------------
+=====================
 
 A test program is provided to assess if everything can run properly with your system.
 
