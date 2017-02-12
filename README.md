@@ -262,7 +262,7 @@ To use the other two routines in _transceiver_, _pedestal_, and _health relay_, 
 ```c
 int execRoutine(RKTransceiver, const char *command, char *response);
 int execRoutine(RKPedestal, const char *command, char *response);
-int execRoutine(RKHealthRelay, const char *, char *response);
+int execRoutine(RKHealthRelay, const char *command, char *response);
 ``````
 
 while the resource free routine must be in the form of
@@ -273,7 +273,7 @@ int freeRoutine(RKPedestal);
 int freeRoutine(RKHealthRelay);
 ``````
 
-Here is a simple example of
+Here is a simple example of execution routine of a transceiver that response to a PRT change
 
 ```c
 int execRoutine(RKTransceiver userTransceiver, const char *command, char *response) {
@@ -300,73 +300,8 @@ int execRoutine(RKTransceiver userTransceiver, const char *command, char *respon
 RadarKit Test Program
 =====================
 
-A test program is provided to assess if everything can run properly with your system.
+A test program is provided to assess if everything can run properly with your system. Call it with a _help_ option to show all the available options.
 
 ```
-rktest [options]
-
-OPTIONS:
-     Unless specifically stated, all options are interpreted in sequence. Some
-     options can be specified multiples times for repetitions. For example, the
-     verbosity level increaes by one for every -v.
-
-  -c (--core) P,M (no space after comma)
-         Sets the number of threads for pulse compression to P
-         and the number of threads for product generator to M.
-         If not specified, the default core counts are 8 / 4.
-
-  -f (--prf) value
-         Sets the pulse repetition frequency (PRF) to value in Hz.
-         If not specified, the default PRF = 5000 Hz.
-
-  -F (--fs or -b) value
-         Sets the sampling frequency (bandwidth) to value in Hz.
-         If not specified, the default will be used.
-
-  -g (--gate) value
-         Sets the number of range gates to value.
-         If not specified, the default gate count is 8192.
-
-  -h (--help)
-         Shows this help text.
-
-  -L (--test-lean-system)
-         Run with arguments '-v -f 2000 -F 5e6 -c 2,2'.
-
-  -M (--test-medium-system)
-         Run with arguments '-v -f 5000 -F 20e6 -c 4,2'.
-
-  -p (--pedzy-host) hostname
-         Sets the host of pedzy pedestal controller.
-
-  -s (--simulate)
-         Sets the program to simulate data stream (default, if none of the tests
-         is specified).
-
-  -v (--verbose)
-         Increases verbosity level, which can be specified multiple times.
-
-  --test-mod
-         Sets the program to test modulo macros.
-
-  --test-simd
-         Sets the program to test SIMD instructions.
-         To test the SIMD performance, use --test-simd=2
-
-  --test-pulse-compression
-         Sets the program to test the pulse compression using a simple case with.
-         an impulse filter.
-
-  --test-processor
-         Sets the program to test the moment processor.
-
-
-EXAMPLES:
-     Here are some examples of typical configurations.
-
-  radar
-         Runs the program with default settings.
-
-  radar -f 2000
-         Runs the program with PRF = 2000 Hz.
-```
+rktest --help
+``````
