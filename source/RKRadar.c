@@ -382,7 +382,7 @@ int RKFree(RKRadar *radar) {
 int RKSetTransceiver(RKRadar *radar,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
-                     int execRoutine(RKTransceiver, const char *),
+                     int execRoutine(RKTransceiver, const char *, char *),
                      int freeRoutine(RKTransceiver)) {
     radar->transceiverInitInput = initInput;
     radar->transceiverInit = initRoutine;
@@ -394,7 +394,7 @@ int RKSetTransceiver(RKRadar *radar,
 int RKSetPedestal(RKRadar *radar,
                   void *initInput,
                   RKPedestal initRoutine(RKRadar *, void *),
-                  int execRoutine(RKPedestal, const char *),
+                  int execRoutine(RKPedestal, const char *, char *),
                   int freeRoutine(RKPedestal)) {
     radar->pedestalInitInput = initInput;
     radar->pedestalInit = initRoutine;
@@ -406,7 +406,7 @@ int RKSetPedestal(RKRadar *radar,
 int RKSetHealthRelay(RKRadar *radar,
                      void *initInput,
                      RKHealthRelay initRoutine(RKRadar *, void *),
-                     int execRoutine(RKHealthRelay, const char *),
+                     int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay)) {
     radar->healthRelayInitInput = initInput;
     radar->healthRelayInit = initRoutine;
@@ -566,19 +566,19 @@ int RKStop(RKRadar *radar) {
 
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
-            radar->pedestalExec(radar->pedestal, "disconnect", NULL);
+            radar->pedestalExec(radar->pedestal, "disconnect", radar->pedestalResponse);
         }
         radar->state ^= RKRadarStatePedestalInitialized;
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (radar->transceiverExec != NULL) {
-            radar->transceiverExec(radar->transceiver, "disconnect", NULL);
+            radar->transceiverExec(radar->transceiver, "disconnect", radar->transceiverResponse);
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
     }
     if (radar->state & RKRadarStateHealthRelayInitialized) {
         if (radar->healthRelayExec != NULL) {
-            radar->healthRelayExec(radar->healthRelay, "disconnect", NULL);
+            radar->healthRelayExec(radar->healthRelay, "disconnect", radar->healthRelayResponse);
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
     }

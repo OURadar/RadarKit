@@ -14,7 +14,8 @@
 
 int RKPedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
-    RKRadar *radar = client->userResource;
+    RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
+    RKRadar *radar = me->radar;
 
     if (client->netDelimiter.type == 'p') {
         // The payload just was just read by RKClient
@@ -42,6 +43,8 @@ int RKPedestalPedzyRead(RKClient *client) {
             // Just a beacon response.
         } else {
             RKLog("%s %s", client->name, string);
+            strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
+            me->responseIndex = RKNextModuloS(me->responseIndex, RKPedestalPedzyFeedbackDepth);
         }
     }
 
@@ -59,8 +62,9 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
         return NULL;
     }
     memset(me, 0, sizeof(RKPedestalPedzy));
+    me->radar = radar;
     
-    // Pedzy uses a TCP socket server at port 9000. The payload is always sizeof(RKPosition)
+    // Pedzy uses a TCP socket server at port 9000.
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.name, "%s<PedzyRelay>%s",
@@ -78,18 +82,21 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     desc.blocking = true;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
-    desc.verbose = 1;
-    
+    desc.verbose =
+    radar->desc.initFlags & RKInitFlagVeryVeryVerbose ? 3 :
+    (radar->desc.initFlags & RKInitFlagVeryVerbose ? 2:
+     (radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0));
+
     me->client = RKClientInitWithDesc(desc);
 
-    RKClientSetUserResource(me->client, radar);
+    RKClientSetUserResource(me->client, me);
     RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
     RKClientStart(me->client);
 
     return (RKPedestal)me;
 }
 
-int RKPedestalPedzyExec(RKPedestal input, const char *command) {
+int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
@@ -98,7 +105,23 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command) {
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
+        int s = 0;
+        uint32_t responseIndex = me->responseIndex;
         RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
+        while (responseIndex == me->responseIndex) {
+            usleep(10000);
+            if (++s % 100 == 0) {
+                RKLog("%s Waited %.2f for response.\n", client->name, (float)s * 0.01f);
+            }
+            if ((float)s * 0.01f >= 5.0f) {
+                RKLog("%s should time out.\n", client->name);
+                break;
+            }
+        }
+        if (responseIndex == me->responseIndex) {
+            return RKResultTimeout;
+        }
+        strcpy(response, me->responses[responseIndex]);
     }
     return RKResultNoError;
 }

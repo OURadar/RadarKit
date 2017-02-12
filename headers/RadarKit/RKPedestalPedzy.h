@@ -13,13 +13,18 @@
 
 #include <RadarKit/RKRadar.h>
 
+#define RKPedestalPedzyFeedbackDepth   8
+
 typedef struct rk_pedzy {
     // User set variables
     RKClient               *client;
+    uint32_t               responseIndex;
+    char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
+    RKRadar                *radar;
 } RKPedestalPedzy;
 
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);
-int RKPedestalPedzyExec(RKPedestal, const char *);
+int RKPedestalPedzyExec(RKPedestal, const char *, char *);
 int RKPedestalPedzyFree(RKPedestal);
 
 #endif /* __RadarKit_RKPedestal__ */

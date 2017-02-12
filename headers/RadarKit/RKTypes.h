@@ -49,6 +49,7 @@
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               1440                        // Ray
 #define RKGateCount                      32768                       // Must power of 2!
+#define RKHealthNodeCount                4                           // Number of nodes to ingest health info
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
 #define RKMaxMatchedFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters

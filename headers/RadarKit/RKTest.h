@@ -44,7 +44,7 @@ void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestParseCommaDelimitedValues(void);
 
 RKTransceiver RKTestTransceiverInit(RKRadar *, void *);
-int RKTestTransceiverExec(RKTransceiver, const char *);
+int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
 
 void RKTestPulseCompression(RKRadar *, RKTestFlag);

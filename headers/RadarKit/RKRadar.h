@@ -101,21 +101,21 @@ struct rk_radar {
     int                        (*transceiverExec)(RKTransceiver, const char *, char *);
     int                        (*transceiverFree)(RKTransceiver);
     void                       *transceiverInitInput;
-    char                       *transceiverResponse;
+    char                       transceiverResponse[RKMaximumStringLength];
     //
     RKPedestal                 pedestal;
     RKPedestal                 (*pedestalInit)(RKRadar *, void *);
     int                        (*pedestalExec)(RKPedestal, const char *, char *);
     int                        (*pedestalFree)(RKPedestal);
     void                       *pedestalInitInput;
-    char                       *pedestalResponse;
+    char                       pedestalResponse[RKMaximumStringLength];
     //
     RKHealthRelay              healthRelay;
     RKHealthRelay              (*healthRelayInit)(RKRadar *, void *);
     int                        (*healthRelayExec)(RKHealthRelay, const char *, char *);
     int                        (*healthRelayFree)(RKHealthRelay);
     void                       *healthRelayInitInput;
-    char                       *healthRelayResponse;
+    char                       healthRelayResponse[RKMaximumStringLength];
 };
 
 //
@@ -138,21 +138,21 @@ int RKFree(RKRadar *radar);
 int RKSetTransceiver(RKRadar *,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
-                     int execRoutine(RKTransceiver, const char *),
+                     int execRoutine(RKTransceiver, const char *, char *),
                      int freeRoutine(RKTransceiver));
 
 // Set the pedestal. Pass in function pointers: init, exec and free
 int RKSetPedestal(RKRadar *,
                   void *initInput,
                   RKPedestal initRoutine(RKRadar *, void *),
-                  int execRoutine(RKPedestal, const char *),
+                  int execRoutine(RKPedestal, const char *, char *),
                   int freeRoutine(RKPedestal));
 
 // Set the health relay. Pass in function pointers: init, exec and free
 int RKSetHealthRelay(RKRadar *,
                      void *initInput,
                      RKHealthRelay initRoutine(RKRadar *, void *),
-                     int execRoutine(RKHealthRelay, const char *),
+                     int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
 // Some states of the radar

@@ -579,12 +579,13 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     return (RKTransceiver)transceiver;
 }
 
-int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command) {
+int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command, char *response) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
     if (!strcmp(command, "disconnect")) {
         RKLog("%s Disconnecting ...", transceiver->name);
         pthread_join(transceiver->tidRunLoop, NULL);
+        sprintf(response, "ACK. Transceiver stopped.");
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s stopped.\n", transceiver->name);
         }

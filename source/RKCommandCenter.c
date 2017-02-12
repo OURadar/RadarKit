@@ -209,7 +209,7 @@ int socketCommandHandler(RKOperator *O) {
 
         case 't':
             // Temporary pass everything to transceiver
-            user->radar->transceiverExec(user->radar->transceiver, O->cmd);
+            user->radar->transceiverExec(user->radar->transceiver, O->cmd, user->radar->transceiverResponse);
             break;
 
         case 'w':

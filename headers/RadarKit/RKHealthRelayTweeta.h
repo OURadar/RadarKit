@@ -17,7 +17,7 @@ typedef struct rk_tweeta {
 } RKHealthRelayTweeta;
 
 RKHealthRelay RKHealthRelayTweetaInit(RKRadar *, void *);
-int RKHealthRelayTweetaExec(RKHealthRelay, const char *);
+int RKHealthRelayTweetaExec(RKHealthRelay, const char *, char *);
 int RKHealthRelayTweetaFree(RKHealthRelay);
 
 #endif /* __RadarKit_HealthRelayTweeta__ */
