@@ -63,7 +63,9 @@ uint32_t RKFileEngineCacheFlush(RKFileEngine *engine) {
     if (engine->cacheWriteIndex == 0) {
         return 0;
     }
-    return (uint32_t)write(engine->fd, engine->cache, engine->cacheWriteIndex);
+    uint32_t writtenSize = (uint32_t)write(engine->fd, engine->cache, engine->cacheWriteIndex);
+    engine->cacheWriteIndex = 0;
+    return writtenSize;
 }
 
 #pragma mark - Implementation
@@ -106,15 +108,22 @@ void *pulseRecorder(void *in) {
 
     uint32_t len = 0;
 
+    char *fileHeader = (void *)malloc(4096);
+    memset(fileHeader, 0, 4096);
+    fileHeader[0] = 'B';
+    fileHeader[4093] = 'E';
+    fileHeader[4094] = 'O';
+    fileHeader[4095] = 'L';
+
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
-    engine->state = RKFileEngineStateActive;
+    engine->state |= RKFileEngineStateActive;
 
     j = 0;   // config index
     k = 0;   // pulse index
-    while (engine->state == RKFileEngineStateActive) {
+    while (engine->state & RKFileEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until the buffer is advanced
@@ -134,7 +143,7 @@ void *pulseRecorder(void *in) {
                       engine->name, (float)s * 0.01f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state != RKFileEngineStateActive) {
+        if ((engine->state & RKFileEngineStateActive) == 0) {
             break;
         }
         // Lag of the engine
@@ -150,25 +159,28 @@ void *pulseRecorder(void *in) {
             config = &engine->configBuffer[pulse->header.configIndex];
 
             // Close the current file
-            if (engine->fid != NULL) {
-                RKLog("Closing file ...\n");
-                RKFileEngineCacheFlush(engine);
+            if (engine->fd != 0) {
+                RKLog("%s Closing file %s (%d) ...\n", engine->name, filename, engine->cacheWriteIndex);
+                len += RKFileEngineCacheFlush(engine);
                 close(engine->fd);
-
-                // New file
-                time_t startTime = pulse->header.time.tv_sec;
-                i = sprintf(filename, "data/");
-                i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
-                i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
-                i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-                sprintf(filename + j, ".rkr");
-
-                RKPreparePath(filename);
-
-                engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
-
-                RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Pretending" : "Generating", filename);
             }
+
+            // New file
+            time_t startTime = pulse->header.time.tv_sec;
+            i = sprintf(filename, "data/");
+            i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
+            i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
+            i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+            sprintf(filename + i, ".rkr");
+
+            RKPreparePath(filename);
+
+            engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
+
+            len = RKFileEngineCacheWrite(engine, fileHeader, 4096);
+            len += RKFileEngineCacheWrite(engine, config, sizeof(RKConfig));
+
+            RKLog("%s %s file %s ...\n", engine->name, engine->doNotWrite ? "Pretending" : "Opening", filename);
         }
 
         // Actual cache and write happen here.
@@ -186,6 +198,9 @@ void *pulseRecorder(void *in) {
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
     }
+
+    free(fileHeader);
+
     return NULL;
 }
 
@@ -207,7 +222,7 @@ RKFileEngine *RKFileEngineInit(void) {
 }
 
 void RKFileEngineFree(RKFileEngine *engine) {
-    if (engine->state == RKFileEngineStateActive) {
+    if (engine->state & RKFileEngineStateActive) {
         RKFileEngineStop(engine);
     }
     free(engine->cache);
@@ -232,28 +247,33 @@ void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *desc,
     engine->pulseBufferDepth  = pulseBufferDepth;
 }
 
+void RKFileEngineSetDoNotWrite(RKFileEngine *engine, const bool value) {
+    engine->doNotWrite = value;
+}
+
 #pragma mark - Interactions
 
 int RKFileEngineStart(RKFileEngine *engine) {
     engine->state = RKFileEngineStateActivating;
     if (pthread_create(&engine->tidPulseRecorder, NULL, pulseRecorder, engine) != 0) {
-        RKLog("%s Error. Failed to start.\n", engine->name);
+        RKLog("%s Error. Failed to start pulse recorder.\n", engine->name);
         return RKResultFailedToStartPulseRecorder;
     }
-    while (engine->state < RKFileEngineStateActive) {
+    while (!(engine->state < RKFileEngineStateActive)) {
         usleep(10000);
     }
     return RKResultSuccess;
 }
 
 int RKFileEngineStop(RKFileEngine *engine) {
-    if (engine->state == RKFileEngineStateActive) {
-        engine->state = RKFileEngineStateDeactivating;
-        pthread_join(engine->tidPulseRecorder, NULL);
-    } else {
+    if ((engine->state & RKFileEngineStateActive) == 0) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    engine->state = RKFileEngineStateSleep;
+    engine->state |= RKFileEngineStateDeactivating;
+    engine->state ^= RKFileEngineStateActive;
+    pthread_join(engine->tidPulseRecorder, NULL);
+    RKLog("%s stopped.\n", engine->name);
+    engine->state = RKFileEngineStateAllocated;
     return RKResultSuccess;
 }
 

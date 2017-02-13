@@ -438,10 +438,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
 
 void RKSweepEngineFree(RKSweepEngine *engine) {
     if (engine->state & RKSweepEngineStateActive) {
-        engine->state ^= RKSweepEngineStateActive;
-    }
-    if (engine->state & RKSweepEngineStateActive) {
-        pthread_join(engine->tidRayGatherer, NULL);
+        RKSweepEngineStop(engine);
     }
     free(engine->array1D);
     free(engine->array2D);
@@ -485,9 +482,13 @@ int RKSweepEngineStart(RKSweepEngine *engine) {
 }
 
 int RKSweepEngineStop(RKSweepEngine *engine) {
-    if (engine->state & RKSweepEngineStateActive) {
-        engine->state ^= RKSweepEngineStateActive;
+    if ((engine->state & RKSweepEngineStateActive) == 0) {
+        return RKResultEngineDeactivatedMultipleTimes;
     }
+    engine->state |= RKSweepEngineStateDeactivating;
+    engine->state ^= RKSweepEngineStateActive;
     pthread_join(engine->tidRayGatherer, NULL);
+    RKLog("%s stopped.\n", engine->name);
+    engine->state = RKSweepEngineStateAllocated;
     return RKResultSuccess;
 }

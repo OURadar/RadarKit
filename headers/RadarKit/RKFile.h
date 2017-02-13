@@ -13,12 +13,12 @@
 
 typedef int RKFileEngineState;
 enum RKFileEngineState {
-    RKFileEngineStateNull,
-    RKFileEngineStateAllocated,
-    RKFileEngineStateActivating,
-    RKFileEngineStateActive,
-    RKFileEngineStateDeactivating,
-    RKFileEngineStateSleep
+    RKFileEngineStateNull          = 0,
+    RKFileEngineStateAllocated     = 1,
+    RKFileEngineStateActivating    = (1 << 1),
+    RKFileEngineStateActive        = (1 << 2),
+    RKFileEngineStateDeactivating  = (1 << 3),
+    RKFileEngineStateWritingFile   = (1 << 4)
 };
 
 typedef struct rk_file_engine RKFileEngine;
@@ -42,7 +42,6 @@ struct rk_file_engine {
     FILE                   *fid;
     void                   *cache;
     uint32_t               cacheWriteIndex;
-    uint32_t               cacheReadIndex;
     pthread_t              tidPulseRecorder;
 
     // Status / health
@@ -61,6 +60,7 @@ void RKFileEngineSetVerbose(RKFileEngine *, const int);
 void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
+void RKFileEngineSetDoNotWrite(RKFileEngine *engine, const bool value);
 int RKFileEngineStart(RKFileEngine *engine);
 int RKFileEngineStop(RKFileEngine *engine);
 char *RKFileEngineStatusString(RKFileEngine *engine);

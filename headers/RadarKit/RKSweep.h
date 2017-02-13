@@ -16,8 +16,10 @@ typedef uint32_t RKSweepEngineState;
 enum RKSweepEngineState {
     RKSweepEngineStateNull           = 0,
     RKSweepEngineStateAllocated      = 1,
-    RKSweepEngineStateActive         = (1 << 1),
-    RKSweepEngineStateWritingFile    = (1 << 2)
+    RKSweepEngineStateActiving       = (1 << 1),
+    RKSweepEngineStateActive         = (1 << 2),
+    RKSweepEngineStateDeactivating   = (1 << 3),
+    RKSweepEngineStateWritingFile    = (1 << 4)
 };
 
 typedef struct rk_sweep {
