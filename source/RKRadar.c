@@ -250,7 +250,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     // File engine
     radar->fileEngine = RKFileEngineInit();
-    RKFileEngineSetInputOutputBuffers(radar->fileEngine,
+    RKFileEngineSetInputOutputBuffers(radar->fileEngine, &radar->desc,
                                       radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                                       radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
     radar->memoryUsage +=  radar->fileEngine->memoryUsage;
@@ -258,9 +258,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
-    RKSweepEngineSetInputBuffer(radar->sweepEngine, &radar->desc,
-                                radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+    RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc,
+                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
+                                      radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
 

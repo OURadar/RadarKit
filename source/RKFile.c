@@ -95,12 +95,16 @@ void RKFileEngineUpdateStatusString(RKFileEngine *engine) {
 void *pulseRecorder(void *in) {
     RKFileEngine *engine = (RKFileEngine *)in;
 
-    int j, k, s;
+    int i, j, k, s;
 
     struct timeval t0, t1;
 
     RKPulse *pulse;
     RKConfig *config;
+
+    char filename[RKMaximumStringLength];
+
+    uint32_t len = 0;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
@@ -108,8 +112,8 @@ void *pulseRecorder(void *in) {
 
     engine->state = RKFileEngineStateActive;
 
-    j = 0;
-    k = 0;
+    j = 0;   // config index
+    k = 0;   // pulse index
     while (engine->state == RKFileEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -146,11 +150,31 @@ void *pulseRecorder(void *in) {
             config = &engine->configBuffer[pulse->header.configIndex];
 
             // Close the current file
-            //RKLog("Closing file ...\n");
+            if (engine->fid != NULL) {
+                RKLog("Closing file ...\n");
+                RKFileEngineCacheFlush(engine);
+                close(engine->fd);
+
+                // New file
+                time_t startTime = pulse->header.time.tv_sec;
+                i = sprintf(filename, "data/");
+                i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
+                i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
+                i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+                sprintf(filename + j, ".rkr");
+
+                RKPreparePath(filename);
+
+                engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
+
+                RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Pretending" : "Generating", filename);
+            }
         }
 
         // Actual cache and write happen here.
-        
+        len += RKFileEngineCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
+        len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
 
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
@@ -196,9 +220,10 @@ void RKFileEngineSetVerbose(RKFileEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine,
+void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *desc,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
+    engine->radarDescription  = desc;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
     engine->configBufferDepth = configBufferDepth;

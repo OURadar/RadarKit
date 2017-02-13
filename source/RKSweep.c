@@ -454,9 +454,9 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKSweepEngineSetInputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
-                                 RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                 RKBuffer rayBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth) {
+void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
+                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
+                                       RKBuffer rayBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth) {
     engine->radarDescription  = desc;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
