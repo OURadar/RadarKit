@@ -190,6 +190,9 @@ void *pulseTagger(void *in) {
         pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
                                                              positionAfter->elevationDegrees,
                                                              alpha);
+        pulse->header.azimuthVelocityDegreesPerSecond = positionBefore->azimuthVelocityDegreesPerSecond;
+        pulse->header.elevationVelocityDegreesPerSecond = positionBefore->elevationVelocityDegreesPerSecond;
+        
         // Consolidate markers from the positions
         marker0 = RKMarkerNull;
         
