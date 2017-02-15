@@ -49,7 +49,7 @@
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               1440                        // Ray
 #define RKGateCount                      32768                       // Must power of 2!
-#define RKHealthNodeCount                4                           // Number of nodes to ingest health info
+#define RKHealthNodeCount                4                           // Maximum number of nodes to ingest health info
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
 #define RKMaxMatchedFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters
@@ -280,6 +280,14 @@ enum RKConfigKey {
     RKConfigKeyEnd
 };
 
+typedef uint8_t RKHealthNode;
+enum RKHealthNode {
+    RKHealthNodeTransceiver,
+    RKHealthNodePedestal,
+    RKHealthNodeUser1,
+    RKHealthNodeUser2
+};
+
 // A general description of a radar. These should never change after the radar has gone live
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
@@ -320,6 +328,7 @@ typedef struct rk_config {
 typedef union rk_heath {
     struct {
         uint64_t         i;                                          // Identity counter
+        uint8_t          node;                                       // Node identity
         char             string[RKMaximumStringLength];              // Health string
         RKHealthFlag     flag;                                       // Health flag
         struct timeval   time;                                       // Time in struct timeval

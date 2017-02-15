@@ -25,7 +25,7 @@ int RHealthRelayTweetaRead(RKClient *client) {
     }
     
     // Get a vacant slot for health from Radar, copy over the data, then set it ready
-    RKHealth *health = RKGetVacantHealth(radar);
+    RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeUser1);
     strncpy(health->string, report, RKMaximumStringLength - 1);   
     RKSetHealthReady(radar, health);
     

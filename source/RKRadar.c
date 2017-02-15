@@ -121,24 +121,25 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.healthBufferDepth == 0) {
         radar->desc.healthBufferDepth = RKBufferHSlotCount;
     }
-    bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+    bytes = RKHealthNodeCount * radar->desc.healthBufferDepth * sizeof(RKHealth);
     radar->healths = (RKHealth *)malloc(bytes);
     if (radar->healths == NULL) {
         RKLog("Error. Unable to allocate memory for health status");
         exit(EXIT_FAILURE);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Health buffer occupies %s B  (%s sets)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+        RKLog("Health buffer occupies %s B  (%d nodes x %s sets)\n",
+              RKIntegerToCommaStyleString(bytes), RKHealthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
     }
     memset(radar->healths, 0, bytes);
     radar->memoryUsage += bytes;
     for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-        radar->healths[i].i = i - radar->desc.healthBufferDepth;
+        radar->healths[i].i = i % radar->desc.healthBufferDepth - radar->desc.healthBufferDepth;
+        radar->healths[i].node = i / radar->desc.healthBufferDepth;
     }
     radar->state ^= RKRadarStateHealthBufferAllocating;
     radar->state |= RKRadarStateHealthBufferInitialized;
-    
+
     // Position buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStatePositionBufferAllocating;
@@ -218,7 +219,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Health engine
     radar->healthEngine = RKHealthEngineInit();
     RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc,
-                                        radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+                                        radar->healths, radar->healthIndices, radar->desc.healthBufferDepth);
     radar->memoryUsage += radar->healthEngine->memoryUsage;
     radar->state |= RKRadarStateHealthEngineInitialized;
     
@@ -611,12 +612,12 @@ int RKStop(RKRadar *radar) {
 
 #pragma mark - Healths
 
-RKHealth *RKGetVacantHealth(RKRadar *radar) {
+RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     if (radar->healthEngine == NULL) {
         RKLog("Error. Health engine has not started.\n");
         exit(EXIT_FAILURE);
     }
-    RKHealth *health = &radar->healths[radar->healthIndex];
+    RKHealth *health = &radar->healths[node * radar->desc.healthBufferDepth + radar->healthIndices[node]];
     health->i += radar->desc.healthBufferDepth;
     health->flag = RKHealthFlagVacant;
     return health;
@@ -626,7 +627,7 @@ void RKSetHealthReady(RKRadar *radar, RKHealth *health) {
     gettimeofday(&health->time, NULL);
     health->timeDouble = (double)health->time.tv_sec + 1.0e-6 * (double)health->time.tv_usec;
     health->flag = RKHealthFlagReady;
-    radar->healthIndex = RKNextModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+    radar->healthIndices[health->node] = RKNextModuloS(radar->healthIndices[health->node], radar->desc.healthBufferDepth);
 }
 
 #pragma mark - Positions

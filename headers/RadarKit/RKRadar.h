@@ -69,7 +69,7 @@ struct rk_radar {
     // Anchor indices of the buffers
     //
     uint32_t                   configIndex;
-    uint32_t                   healthIndex;
+    uint32_t                   healthIndices[RKHealthNodeCount];
     uint32_t                   positionIndex;
     uint32_t                   pulseIndex;
     uint32_t                   rayIndex;
@@ -92,7 +92,7 @@ struct rk_radar {
     RKSweepEngine              *sweepEngine;
     RKFileEngine               *fileEngine;
     //
-    pthread_t                  monitorThreadId;
+    pthread_mutex_t            mutex;
     //
     // Hardware protocols for controls
     //
@@ -182,7 +182,8 @@ int RKWaitWhileActive(RKRadar *);
 int RKStop(RKRadar *);
 
 // Healths
-RKHealth *RKGetVacantHealth(RKRadar *);
+uint8_t RKRequestHealthNode(RKRadar *);
+RKHealth *RKGetVacantHealth(RKRadar *, const uint8_t);
 void RKSetHealthReady(RKRadar *, RKHealth *);
 
 // Positions
