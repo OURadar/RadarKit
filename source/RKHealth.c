@@ -134,7 +134,7 @@ void *healthConsolidator(void *in) {
         i += sprintf(string + i - 2, "}");                                                                 // Erase the last ", "
         health->flag = RKHealthFlagReady;
 
-        RKLog("%s", string);
+        //RKLog("%s", string);
 
         // Look for certain keywords, extract some information
         if ((stringValue = RKGetValueOfKey(health->string, "latitude")) != NULL) {

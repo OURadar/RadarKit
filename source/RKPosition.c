@@ -192,7 +192,7 @@ void *pulseTagger(void *in) {
                                                              alpha);
         pulse->header.azimuthVelocityDegreesPerSecond = positionBefore->azimuthVelocityDegreesPerSecond;
         pulse->header.elevationVelocityDegreesPerSecond = positionBefore->elevationVelocityDegreesPerSecond;
-        
+
         // Consolidate markers from the positions
         marker0 = RKMarkerNull;
         

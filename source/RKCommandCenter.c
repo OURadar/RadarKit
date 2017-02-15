@@ -467,8 +467,8 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
-    user->rayDownSamplingRatio = (uint16_t)floorf(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
-    user->pulseDownSamplingRatio = (uint16_t)floorf(user->radar->desc.pulseCapacity / 1000);
+    user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
+    user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 1000);
     RKLog(">%s %s User %d x%d x%d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
     snprintf(user->login, 63, "radarop");
