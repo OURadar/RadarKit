@@ -57,6 +57,10 @@ struct rk_radar {
     // General buffers
     //
     char                       name[RKNameLength];
+    RKRadarDesc                desc;
+    RKRadarState               state;
+    bool                       active;
+    size_t                     memoryUsage;
     //
     // Buffers
     //
@@ -69,17 +73,15 @@ struct rk_radar {
     // Anchor indices of the buffers
     //
     uint32_t                   configIndex;
-    uint32_t                   healthIndices[RKHealthNodeCount];
+    uint32_t                   healthIndex;
     uint32_t                   positionIndex;
     uint32_t                   pulseIndex;
     uint32_t                   rayIndex;
     //
+    // Secondary Health Buffer
     //
-    RKRadarDesc                desc;
-    RKRadarState               state;
-    bool                       active;
+    RKNodalHealth              *healthNodes;
     //
-    size_t                     memoryUsage;
     //
     // Internal engines
     //
@@ -183,7 +185,7 @@ int RKStop(RKRadar *);
 
 // Healths
 uint8_t RKRequestHealthNode(RKRadar *);
-RKHealth *RKGetVacantHealth(RKRadar *, const uint8_t);
+RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);
 void RKSetHealthReady(RKRadar *, RKHealth *);
 
 // Positions

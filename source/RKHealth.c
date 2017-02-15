@@ -9,7 +9,7 @@
 
 #include <RadarKit/RKHealth.h>
 
-void *healthRelay(void *in) {
+void *healthConsolidator(void *in) {
     RKHealthEngine *engine = (RKHealthEngine *)in;
     RKRadarDesc *desc = engine->radarDescription;
     
@@ -21,6 +21,9 @@ void *healthRelay(void *in) {
     float value = 0.0f;
     int type = 0;
     
+    uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
+    memset(indices, 0, desc->healthNodeCount * sizeof(uint32_t));
+    
     char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage"};
     const int keywordsCount = sizeof(keywords) / RKNameLength;
     
@@ -28,19 +31,41 @@ void *healthRelay(void *in) {
     
     engine->state = RKHealthEngineStateActive;
     
+    bool allSame = true;
+    
     k = 0;   // health index
     while (engine->state == RKHealthEngineStateActive) {
         // Get the latest health
         health = &engine->healthBuffer[k];
         // Wait until a newer status came in
         s = 0;
-        while (k == *engine->healthIndex && engine->state == RKHealthEngineStateActive) {
-            usleep(10000);
-            if (++s % 100 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
-                      engine->name, (float)s * 0.01f, k, health->flag);
+//        while (k == *engine->healthIndex && engine->state == RKHealthEngineStateActive) {
+//            usleep(10000);
+//            if (++s % 100 == 0 && engine->verbose > 1) {
+//                RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
+//                      engine->name, (float)s * 0.01f, k, health->flag);
+//            }
+//        }
+        allSame = true;
+        while (allSame && engine->state == RKHealthEngineStateActive) {
+            for (j = 0; j < desc->healthNodeCount; j++) {
+                if (indices[j] != engine->healthNodes[j].index) {
+                    indices[j] = engine->healthNodes[j].index;
+                    allSame = false;
+                }
+            }
+            if (allSame) {
+                usleep(10000);
+                if (++s % 100 == 0 && engine->verbose > 1) {
+                    RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
+                          engine->name, (float)s * 0.01f, k, health->flag);
+                }
             }
         }
+        
+        // Combine all the JSON strings
+        RKLog("%s %s %s\n", engine->name, engine->healthNodes[0].healths[indices[0]], engine->healthNodes[2].healths[indices[2]]);
+
         if (engine->state != RKHealthEngineStateActive) {
             break;
         }
@@ -93,6 +118,9 @@ void *healthRelay(void *in) {
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
     }
+    
+    free(indices);
+    
     return NULL;
 }
 
@@ -120,8 +148,10 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
 
 void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
                                          RKRadarDesc *radarDescription,
+                                         RKNodalHealth *healthNodes,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
     engine->radarDescription = radarDescription;
+    engine->healthNodes = healthNodes;
     engine->healthBuffer = healthBuffer;
     engine->healthIndex = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
@@ -129,7 +159,7 @@ void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
     RKLog("%s Starting ...\n", engine->name);
-    if (pthread_create(&engine->threadId, NULL, healthRelay, engine)) {
+    if (pthread_create(&engine->threadId, NULL, healthConsolidator, engine)) {
         RKLog("Error. Unable to start health engine.\n");
         return RKResultFailedToStartHealthWorker;
     }

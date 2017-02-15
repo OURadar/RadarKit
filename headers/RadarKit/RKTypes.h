@@ -293,6 +293,7 @@ typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
     uint32_t         pulseToRayRatio;
+    uint32_t         healthNodeCount;
     uint32_t         healthBufferDepth;
     uint32_t         configBufferDepth;
     uint32_t         positionBufferDepth;
@@ -328,14 +329,19 @@ typedef struct rk_config {
 typedef union rk_heath {
     struct {
         uint64_t         i;                                          // Identity counter
-        uint8_t          node;                                       // Node identity
-        char             string[RKMaximumStringLength];              // Health string
         RKHealthFlag     flag;                                       // Health flag
         struct timeval   time;                                       // Time in struct timeval
         double           timeDouble;                                 // Time in double
+        char             string[RKMaximumStringLength];              // Health string
     };
     RKByte               *bytes;
 } RKHealth;
+
+typedef struct rk_nodal_health {
+    RKHealth         *healths;
+    uint32_t         index;
+    uint32_t         depth;
+} RKNodalHealth;
 
 typedef union rk_position {
     struct {
