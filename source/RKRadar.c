@@ -642,6 +642,7 @@ RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     RKHealth *health = &radar->healthNodes[node].healths[index];
     health->i += radar->desc.healthBufferDepth;
     health->flag = RKHealthFlagVacant;
+    health->string[0] = '\0';
     radar->healthNodes[node].index = RKNextModuloS(index, radar->desc.healthBufferDepth);
     return health;
 }

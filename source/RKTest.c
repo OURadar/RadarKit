@@ -491,6 +491,7 @@ void *RKTestTransceiverRunLoop(void *input) {
         sprintf(health->string, "{\"FPGA Temp\":{\"Value\":\"%.1fC\", \"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\", \"Enum\":%d}}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0);
+        RKSetHealthReady(radar, health);
 
         // Wait to simulate the PRF
         n = 0;
