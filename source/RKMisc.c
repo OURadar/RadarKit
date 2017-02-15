@@ -273,11 +273,14 @@ char *RKSignalString(const int signal) {
     return string;
 }
 
-void RKStripTail(char *string) {
+int RKStripTail(char *string) {
+    int k = 0;
     char *c = string + strlen(string) - 1;
     while (c != string && (*c == '\r' || *c == '\n' || *c == ' ')) {
         *c-- = '\0';
+        k++;
     }
+    return k;
 }
 
 float RKUMinDiff(const float m, const float s) {

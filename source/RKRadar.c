@@ -140,14 +140,16 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
     }
     radar->healthNodes = (RKNodalHealth *)malloc(radar->desc.healthNodeCount * sizeof(RKNodalHealth));
+    memset(radar->healthNodes, 0, radar->desc.healthNodeCount * sizeof(RKNodalHealth));
     radar->memoryUsage += radar->desc.healthNodeCount * sizeof(RKNodalHealth);
     bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
     for (i = 0; i < radar->desc.healthNodeCount; i++) {
         radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
+        memset(radar->healthNodes[i].healths, 0, bytes);
     }
     radar->memoryUsage += radar->desc.healthNodeCount * bytes;
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Nodal health buffers occupy %s B  (%d nodes x %s sets)\n",
+        RKLog("Nodal-health buffers occupy %s B  (%d nodes x %s sets)\n",
               RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), RKHealthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
     }
     for (k = 0; k < radar->desc.healthNodeCount; k++) {
@@ -635,6 +637,7 @@ RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
         RKLog("Error. Health engine has not started.\n");
         exit(EXIT_FAILURE);
     }
+    radar->healthNodes[node].active = true;
     uint32_t index = radar->healthNodes[node].index;
     RKHealth *health = &radar->healthNodes[node].healths[index];
     health->i += radar->desc.healthBufferDepth;

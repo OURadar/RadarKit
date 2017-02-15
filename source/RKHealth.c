@@ -13,39 +13,46 @@ void *healthConsolidator(void *in) {
     RKHealthEngine *engine = (RKHealthEngine *)in;
     RKRadarDesc *desc = engine->radarDescription;
     
-    int k, j, s;
+    int i, j, k, n, s;
     
     RKHealth *health;
-    char *valueString, *subString;
-    bool led = false;
-    float value = 0.0f;
+    char *valueString, *enumString, *subString;
     int type = 0;
-    
+    int valueEnum = 0;
+    bool valueBool = false;
+    float valueFloat = 0.0f;
+
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0, desc->healthNodeCount * sizeof(uint32_t));
     
-    char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage"};
+    char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage", "FPGA Temp"};
     const int keywordsCount = sizeof(keywords) / RKNameLength;
     
     RKLog("%s Started.   mem = %s B   healthIndex = %d   keywordsCount = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex, keywordsCount);
     
     engine->state = RKHealthEngineStateActive;
     
-    bool allSame = true;
-    
+    bool allSame;
+    char string[RKMaximumStringLength];
+    struct timeval t0, t1;
+
+    gettimeofday(&t1, NULL);
+
     k = 0;   // health index
     while (engine->state == RKHealthEngineStateActive) {
+        // Evaluate the nodal-health buffers every once in a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) < 0.25) {
+            usleep(10000);
+            continue;
+        }
+        t1 = t0;
+
         // Get the latest health
         health = &engine->healthBuffer[k];
+
         // Wait until a newer status came in
         s = 0;
-//        while (k == *engine->healthIndex && engine->state == RKHealthEngineStateActive) {
-//            usleep(10000);
-//            if (++s % 100 == 0 && engine->verbose > 1) {
-//                RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
-//                      engine->name, (float)s * 0.01f, k, health->flag);
-//            }
-//        }
         allSame = true;
         while (allSame && engine->state == RKHealthEngineStateActive) {
             for (j = 0; j < desc->healthNodeCount; j++) {
@@ -56,15 +63,38 @@ void *healthConsolidator(void *in) {
             }
             if (allSame) {
                 usleep(10000);
-                if (++s % 100 == 0 && engine->verbose > 1) {
-                    RKLog("%s sleep 0/%.1f s   k = %d   health.s = 0x%02x\n",
-                          engine->name, (float)s * 0.01f, k, health->flag);
+                if (++s % 100 == 0 && engine->verbose) {
+                    j = sprintf(string, "indices = [%02d", indices[0]);
+                    for (i = 1; i < RKHealthNodeCount; i++) {
+                        j += sprintf(string + j,  ", %02d", indices[i]);
+                    }
+                    j += sprintf(string + j, "]");
+                    RKLog("%s sleep 0/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.01f, string, k);
                 }
             }
         }
-        
-        // Combine all the JSON strings
-        RKLog("%s %s %s\n", engine->name, engine->healthNodes[0].healths[indices[0]], engine->healthNodes[2].healths[indices[2]]);
+
+        j = sprintf(string, "active = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
+        for (i = 1; i < RKHealthNodeCount; i++) {
+            j += sprintf(string + j,  ", %02d", engine->healthNodes[i].active ? indices[i] : -1);
+        }
+        j += sprintf(string + j, "]");
+        RKLog("%s %s   k = %d\n", engine->name, string, k);
+
+        // Combine all the active JSON strings
+        j = sprintf(string, "{");
+        for (i = 0; i < RKHealthNodeCount; i++) {
+            if (engine->healthNodes[i].active) {
+                n = RKPreviousModuloS(indices[i], desc->healthBufferDepth);
+                j += sprintf(string + j, "%s", engine->healthNodes[i].healths[n].string + 1);  // Ignore the first "{"
+                j -= RKStripTail(string);                                                      // Strip away white spaces
+                j--;                                                                           // Ignore the last "}"
+                j += sprintf(string + j, ", ");                                                // Get ready to concatenante
+            }
+        }
+        j += sprintf(string + j - 2, "}");                                                     // Erase the last ", "
+
+        RKLog("%s %s\n", engine->name, string);
 
         if (engine->state != RKHealthEngineStateActive) {
             break;
@@ -80,37 +110,29 @@ void *healthConsolidator(void *in) {
         
         for (j = 0; j < keywordsCount; j++) {
             subString = RKGetValueOfKey(health->string, keywords[j]);
+            RKLog("%s subString = %s\n", engine->name, subString);
             if (subString) {
                 valueString = RKGetValueOfKey(subString, "value");
                 if (valueString) {
                     if (!strcasecmp(valueString, "true")) {
                         type = 1;
-                        led = true;
+                        valueBool = true;
                     } else if (!strcasecmp(valueString, "false")) {
                         type = 1;
-                        led = false;
+                        valueBool = false;
                     } else {
                         type = 2;
-                        value = atof(valueString);
+                        valueFloat = atof(valueString);
                     }
                 }
-                valueString = RKGetValueOfKey(subString, "color");
-                if (valueString) {
-                    if (!strcasecmp(valueString, "green")) {
-                        //printf("got green\n");
-                    } else if (!strcasecmp(valueString, "orange")) {
-                        //printf("got orange\n");
-                    } else if (!strcasecmp(valueString, "red")) {
-                        RKLog("%s Got red on HVPS\n", engine->name);
-                        // Suspend the radar
-                    }
-                }
-                if (engine->verbose > 1) {
-                    if (type == 1) {
-                        RKLog("%s %s -> %s / %s", engine->name, keywords[j], led == true ? "On" : "Off", valueString);
-                    } else if (type == 2) {
-                        RKLog("%s %s -> %.4f / %s", engine->name, keywords[j], value, valueString);
-                    }
+                enumString = RKGetValueOfKey(subString, "enum");
+                if (enumString) {
+                    valueEnum = atoi(enumString);
+                    RKLog("%s %s -> %s / %d\n",
+                          engine->name,
+                          keywords[j],
+                          type == 1 ? (valueBool ? "true" : "false") : (RKFloatToCommaStyleString(valueFloat)),
+                          valueEnum);
                 }
             }
         }

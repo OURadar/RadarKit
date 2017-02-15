@@ -483,7 +483,15 @@ void *RKTestTransceiverRunLoop(void *input) {
             }
             t += transceiver->prt;
         }
-        
+
+        // Report health
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
+        float temp = 1.0f * rand() / RAND_MAX + 79.5f;
+        float volt = 1.0f * rand() / RAND_MAX + 11.5f;
+        sprintf(health->string, "{\"FPGA Temp\":{\"Value\":\"%.1fC\", \"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\", \"Enum\":%d}}",
+                temp, temp > 80.0f ? 1 : 0,
+                volt, volt > 12.2f ? 1 : 0);
+
         // Wait to simulate the PRF
         n = 0;
         do {
