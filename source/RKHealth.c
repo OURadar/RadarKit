@@ -63,14 +63,14 @@ void *healthConsolidator(void *in) {
                 }
             }
             if (allTrue) {
-                usleep(10000);
-                if (++s % 100 == 0 && engine->verbose) {
-                    j = sprintf(string, "indices = [%02d", indices[0]);
-                    for (i = 1; i < desc->healthNodeCount; i++) {
-                        j += sprintf(string + j,  ", %02d", indices[i]);
+                usleep(100000);
+                if (++s % 20 == 0 && engine->verbose) {
+                    i = sprintf(string, "indices = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
+                    for (j = 1; j < desc->healthNodeCount; j++) {
+                        i += sprintf(string + i,  ", %02d", engine->healthNodes[j].active ? indices[j] : -1);
                     }
-                    j += sprintf(string + j, "]");
-                    RKLog("%s sleep 0/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.01f, string, k);
+                    i += sprintf(string + i, "]");
+                    RKLog("%s sleep 0/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                 }
             }
         }
@@ -86,8 +86,8 @@ void *healthConsolidator(void *in) {
             if (allTrue) {
                 break;
             } else {
-                usleep(10000);
-                if (++s % 100 == 0 && engine->verbose) {
+                usleep(100000);
+                if (++s % 20 == 0 && engine->verbose) {
                     n = indices[0];
                     i = sprintf(string, "flags = [%x", engine->healthNodes[0].healths[n].flag);
                     for (j = 1; j < desc->healthNodeCount; j++) {
@@ -95,7 +95,7 @@ void *healthConsolidator(void *in) {
                         i += sprintf(string + i,  ", %x", engine->healthNodes[j].healths[n].flag);
                     }
                     i += sprintf(string + i, "]");
-                    RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.01f, string, k);
+                    RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                 }
             }
         }
