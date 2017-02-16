@@ -143,6 +143,7 @@ int socketCommandHandler(RKOperator *O) {
 
     //int ival;
     char sval1[64], sval2[64];
+    float fval1, fval2;
     
     // Delimited reading ...
     
@@ -152,12 +153,20 @@ int socketCommandHandler(RKOperator *O) {
             sscanf(O->cmd + 1, "%s %s", sval1, sval2);
             RKLog("Authenticating %s %s ... (%d) (%d)\n", sval1, sval2, sizeof(sval1), sizeof(user->login));
             strncpy(user->login, sval1, sizeof(user->login) - 1);
-            j = 0;
+            j = sprintf(string, "{\"Radars\":[");
             for (k = 0; k < engine->radarCount; k++) {
                 RKRadar *radar = engine->radars[k];
-                j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->desc.name);
+                j += sprintf(string + j, "\"%s\", ", radar->desc.name);
             }
-            snprintf(string + j, RKMaximumStringLength - j - 1, "Select 1-%d" RKEOL, k);
+            if (k > 0) {
+                j += sprintf(string + j - 2, "], ") - 2;
+            } else {
+                j += sprintf(string + j, "], ");
+            }
+            j += sprintf(string + j, "\"Controls\":["
+                         "{\"Label\":\"Go\", \"Command\":\"y\"}, "
+                         "{\"Label\":\"Stop\", \"Command\":\"z\"}"
+                         "]}" RKEOL);
             RKOperatorSendDelimitedString(O, string);
             break;
             
@@ -178,9 +187,24 @@ int socketCommandHandler(RKOperator *O) {
             }
             break;
             
+        case 'h':
+            sprintf(string,
+                    "a [username] [password] - Authenticate\n"
+                    "prt [value] - PRT in seconds\n"
+                    "prf [value] - PRF in Hz\n"
+                    );
+            RKOperatorSendDelimitedString(O, string);
+            break;
+            
         case 'p':
             // Change PRT
-            
+            if (!strncmp("prt", O->cmd, 3)) {
+                fval1 = atof(O->cmd + 3);
+                RKLog("%s %s Changing PRT to %.3f s ...\n", engine->name, O->name, fval1);
+            } else if (!strncmp("prf", O->cmd, 3)) {
+                fval1 = roundf(atof(O->cmd + 3));
+                RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKFloatToCommaStyleString(fval1));
+            }
             break;
             
         case 'r':
