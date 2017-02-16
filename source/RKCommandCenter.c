@@ -132,7 +132,6 @@ int socketCommandHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     
     int j, k;
-    char input[RKMaximumStringLength];
     char string[RKMaximumStringLength];
 
     j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
@@ -142,7 +141,7 @@ int socketCommandHandler(RKOperator *O) {
     }
 
     //int ival;
-    char sval1[64], sval2[64];
+    char sval1[RKNameLength], sval2[RKNameLength];
     float fval1, fval2;
     
     // Delimited reading ...
@@ -192,6 +191,7 @@ int socketCommandHandler(RKOperator *O) {
                     "a [username] [password] - Authenticate\n"
                     "prt [value] - PRT in seconds\n"
                     "prf [value] - PRF in Hz\n"
+                    "df [filter index] - DSP Filters: 0 = \n"
                     );
             RKOperatorSendDelimitedString(O, string);
             break;
@@ -199,17 +199,29 @@ int socketCommandHandler(RKOperator *O) {
         case 'p':
             // Change PRT
             if (!strncmp("prt", O->cmd, 3)) {
-                fval1 = atof(O->cmd + 3);
-                RKLog("%s %s Changing PRT to %.3f s ...\n", engine->name, O->name, fval1);
+                //user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
+                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
+                if (k == 2) {
+                    RKLog("%s %s Changing PRT to %.4f + %.4f ms ...\n", engine->name, O->name, fval1, fval2);
+                } else {
+                    RKLog("%s %s Changing PRT to %.4f s ...\n", engine->name, O->name, fval1);
+                }
             } else if (!strncmp("prf", O->cmd, 3)) {
-                fval1 = roundf(atof(O->cmd + 3));
-                RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKFloatToCommaStyleString(fval1));
+                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
+                fval1 = roundf(fval1);
+                if (k == 2) {
+                    fval2 = roundf(fval2);
+                    RKLog("%s %s Changing PRF to %s + %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1), RKIntegerToCommaStyleString((long)fval2));
+                } else {
+                    RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1));
+                }
             }
             break;
             
         case 'r':
-            RKLog("%s %s selected radar %s\n", engine->name, O->name, input);
-            snprintf(string, RKMaximumStringLength - 1, "Radar %s selected." RKEOL, input);
+            sscanf("%s", O->cmd + 1, sval1);
+            RKLog("%s %s selected radar %s\n", engine->name, O->name, sval1);
+            snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
             RKOperatorSendDelimitedString(O, string);
             break;
 
