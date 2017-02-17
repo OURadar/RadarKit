@@ -324,6 +324,7 @@ int main(int argc, const char **argv) {
 
     // Build an initialization description
     RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 1 << (int)ceilf(log2f(user.gateCount));
     if (user.fs >= 20000000) {

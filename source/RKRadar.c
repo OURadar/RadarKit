@@ -95,7 +95,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Config buffer
     radar->state |= RKRadarStateConfigBufferAllocating;
-    if (radar->desc.configBufferDepth == 0) {
+    if (radar->desc.configBufferDepth == 0 || radar->desc.configBufferDepth > RKBufferCSlotCount) {
         radar->desc.configBufferDepth = RKBufferCSlotCount;
     }
     bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
@@ -136,21 +136,25 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     for (i = 0; i < radar->desc.healthBufferDepth; i++) {
         radar->healths[i].i = i - radar->desc.healthBufferDepth;
     }
-    if (radar->desc.healthNodeCount == 0) {
+    if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
     }
-    radar->healthNodes = (RKNodalHealth *)malloc(radar->desc.healthNodeCount * sizeof(RKNodalHealth));
-    memset(radar->healthNodes, 0, radar->desc.healthNodeCount * sizeof(RKNodalHealth));
-    radar->memoryUsage += radar->desc.healthNodeCount * sizeof(RKNodalHealth);
+    bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
+    printf("Allocating node %d ...\n", (int)bytes);
+    radar->healthNodes = (RKNodalHealth *)malloc(bytes);
+    memset(radar->healthNodes, 0, bytes);
+    radar->memoryUsage += bytes;
+    printf("Allocating node %d ...\n", i);
     bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
     for (i = 0; i < radar->desc.healthNodeCount; i++) {
+        printf("Allocating node %d ...\n", i);
         radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
         memset(radar->healthNodes[i].healths, 0, bytes);
     }
     radar->memoryUsage += radar->desc.healthNodeCount * bytes;
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Nodal-health buffers occupy %s B  (%d nodes x %s sets)\n",
-              RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), RKHealthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+              RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), radar->desc.healthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
     }
     for (k = 0; k < radar->desc.healthNodeCount; k++) {
         for (i = 0; i < radar->desc.healthBufferDepth; i++) {
@@ -163,7 +167,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Position buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
         radar->state |= RKRadarStatePositionBufferAllocating;
-        if (radar->desc.positionBufferDepth == 0) {
+        if (radar->desc.positionBufferDepth == 0 || radar->desc.positionBufferDepth > RKBufferPSlotCount) {
             radar->desc.positionBufferDepth = RKBufferPSlotCount;
         }
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
