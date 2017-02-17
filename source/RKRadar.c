@@ -140,14 +140,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
     }
     bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
-    printf("Allocating node %d ...\n", (int)bytes);
     radar->healthNodes = (RKNodalHealth *)malloc(bytes);
     memset(radar->healthNodes, 0, bytes);
     radar->memoryUsage += bytes;
-    printf("Allocating node %d ...\n", i);
     bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
     for (i = 0; i < radar->desc.healthNodeCount; i++) {
-        printf("Allocating node %d ...\n", i);
         radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
         memset(radar->healthNodes[i].healths, 0, bytes);
     }
