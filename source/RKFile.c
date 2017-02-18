@@ -160,7 +160,7 @@ void *pulseRecorder(void *in) {
 
             // Close the current file
             if (engine->fd != 0) {
-                RKLog("%s Closing file %s (%d) ...\n", engine->name, filename, engine->cacheWriteIndex);
+                RKLog("%s Closing file %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(engine->cacheWriteIndex));
                 len += RKFileEngineCacheFlush(engine);
                 close(engine->fd);
             }
