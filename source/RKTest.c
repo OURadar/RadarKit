@@ -432,7 +432,9 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     gettimeofday(&t0, NULL);
 
-    while (radar->active) {
+    transceiver->state |= RKEngineStateActive;
+    
+    while (transceiver->state & RKEngineStateActive) {
         
         for (j = 0; radar->active && j < chunkSize; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
@@ -519,6 +521,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->radar = radar;
     transceiver->fs = 5.0e6;
     transceiver->gateCount = RKGetPulseCapacity(radar);
+    transceiver->state = RKEngineStateAllocated;
     
     // Parse out input parameters
     if (input) {
@@ -575,14 +578,17 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
 
     // Derive some calculated parameters
-    //transceiver->gateSizeMeters = 0.5f * 3.0e8f / transceiver->fs;
     transceiver->gateSizeMeters = 60.0e3f / transceiver->gateCount;
 
     // Use a counter that mimics microsend increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
+    transceiver->state |= RKEngineStateActivating;
     if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
         RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
+    }
+    while (!(transceiver->state & RKEngineStateActive)) {
+        usleep(10000);
     }
     
     return (RKTransceiver)transceiver;
@@ -595,11 +601,14 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
         }
+        transceiver->state |= RKEngineStateDeactivating;
+        transceiver->state ^= RKEngineStateActive;
         pthread_join(transceiver->tidRunLoop, NULL);
         sprintf(response, "ACK. Transceiver stopped.");
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s stopped.\n", transceiver->name);
         }
+        transceiver->state = RKEngineStateAllocated;
     }
     return RKResultSuccess;
 }

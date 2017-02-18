@@ -45,6 +45,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKRadar *radar;
     size_t bytes;
     int i, k;
+    char name[RKNameLength];
 
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Initializing ... 0x%x", desc.initFlags);
@@ -93,11 +94,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     // Read in preference file here, override some values
     if (!strlen(radar->desc.name)) {
-        sprintf(radar->desc.name, "PX-10k");
+        sprintf(radar->desc.name, "Radar");
     }
-    if (!strlen(radar->desc.name)) {
-        sprintf(radar->desc.filePrefix, "PX10K");
+    if (!strlen(radar->desc.filePrefix)) {
+        sprintf(radar->desc.filePrefix, "RK");
     }
+    RKLog("name='%s'  prefix='%s'", radar->desc.name, radar->desc.filePrefix);
     radar->desc.latitude = 35.2550320;
     radar->desc.longitude = -97.4227810;
 
@@ -238,11 +240,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Clocks
     radar->pulseClock = RKClockInitWithSize(15000, 10000);
-    RKClockSetName(radar->pulseClock, "<pulseClock>");
+    sprintf(name, "%s<PulseClock>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(10) : "", RKNoColor);
+    RKClockSetName(radar->pulseClock, name);
     radar->memoryUsage += sizeof(RKClock);
     
     radar->positionClock = RKClockInit();
-    RKClockSetName(radar->positionClock, "<positionClock>");
+    sprintf(name, "%s<PositionClock>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(10) : "", RKNoColor);
+    RKClockSetName(radar->positionClock, name);
     RKClockSetOffset(radar->positionClock, -0.02);
     radar->memoryUsage += sizeof(RKClock);
     
@@ -311,8 +317,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
 RKRadar *RKInitQuiet(void) {
     RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverythingQuiet;
-    desc.pulseCapacity = RKGateCount;
+    desc.pulseCapacity = 4096;
     desc.pulseToRayRatio = 1;
     desc.configBufferDepth = RKBufferCSlotCount;
     desc.healthBufferDepth = RKBufferHSlotCount;
@@ -324,6 +331,7 @@ RKRadar *RKInitQuiet(void) {
 
 RKRadar *RKInitLean(void) {
     RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 1;
@@ -337,6 +345,7 @@ RKRadar *RKInitLean(void) {
 
 RKRadar *RKInitMean(void) {
     RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = 8192;
     desc.pulseToRayRatio = 2;
@@ -350,9 +359,10 @@ RKRadar *RKInitMean(void) {
 
 RKRadar *RKInitFull(void) {
     RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = RKGateCount;
-    desc.pulseToRayRatio = 1;
+    desc.pulseToRayRatio = 8;
     desc.configBufferDepth = RKBufferCSlotCount;
     desc.healthBufferDepth = RKBufferHSlotCount;
     desc.positionBufferDepth = RKBufferPSlotCount;
@@ -559,7 +569,7 @@ int RKGoLive(RKRadar *radar) {
 
     // Pedestal
     if (radar->pedestalInit != NULL) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
             RKLog("Initializing pedestal ...");
         }
         if (radar->pedestalFree == NULL || radar->pedestalExec == NULL) {
@@ -572,7 +582,7 @@ int RKGoLive(RKRadar *radar) {
 
     // Transceiver
     if (radar->transceiverInit != NULL) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
             RKLog("Initializing transceiver ...");
         }
         if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
@@ -585,7 +595,7 @@ int RKGoLive(RKRadar *radar) {
 
     // Health Relay
     if (radar->healthRelayInit != NULL) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
             RKLog("Initializing health relay ...");
         }
         if (radar->healthRelayFree == NULL || radar->healthRelayExec == NULL) {
@@ -597,8 +607,8 @@ int RKGoLive(RKRadar *radar) {
     }
     
     // Update memory usage
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Radar Live. Memory usage = %s B (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }

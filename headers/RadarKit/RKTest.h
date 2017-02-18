@@ -27,16 +27,17 @@ enum RKTestSIMDFlag {
 };
 
 typedef struct rk_test_transceiver {
-    char      name[RKNameLength];
-    bool      simulatePosition;
-    int       sleepInterval;
-    int       gateCount;
-    float     gateSizeMeters;
-    long      counter;
-    double    fs;
-    double    prt;
-    pthread_t tidRunLoop;
-    RKRadar   *radar;
+    char           name[RKNameLength];
+    bool           simulatePosition;
+    int            sleepInterval;
+    int            gateCount;
+    float          gateSizeMeters;
+    long           counter;
+    double         fs;
+    double         prt;
+    pthread_t      tidRunLoop;
+    RKEngineState  state;
+    RKRadar        *radar;
 } RKTestTransceiver;
 
 void RKTestModuloMath(void);
