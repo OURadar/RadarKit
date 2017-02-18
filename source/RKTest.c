@@ -430,7 +430,6 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
-
     gettimeofday(&t0, NULL);
 
     while (radar->active) {
@@ -518,7 +517,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     sprintf(transceiver->name, "%s<Transceiver>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->radar = radar;
-    transceiver->fs = 50.0e6;
+    transceiver->fs = 5.0e6;
     transceiver->gateCount = RKGetPulseCapacity(radar);
     
     // Parse out input parameters
@@ -576,7 +575,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
 
     // Derive some calculated parameters
-    transceiver->gateSizeMeters = 0.5f * 3.0e8f / transceiver->fs;
+    //transceiver->gateSizeMeters = 0.5f * 3.0e8f / transceiver->fs;
+    transceiver->gateSizeMeters = 60.0f / transceiver->gateCount;
 
     // Use a counter that mimics microsend increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);

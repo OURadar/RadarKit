@@ -131,6 +131,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     return i;
 }
 
+void zeroOutRay(RKRay *ray) {
+    memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * RKMaxProductCount * (sizeof(uint8_t) + sizeof(float)));
+}
+
 #pragma mark -
 #pragma mark Delegate Workers
 
@@ -175,7 +179,8 @@ void *momentCore(void *in) {
     // Allocate local resources and keep track of the total allocation
     ray = RKGetRay(engine->rayBuffer, 0);
     pulse = RKGetPulse(engine->pulseBuffer, 0);
-    size_t mem = RKScratchAlloc(&space, pulse->header.capacity, engine->processorLagCount, engine->verbose > 3);
+    uint32_t capacity = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
+    size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->verbose > 3);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateScratchSpace;
@@ -237,7 +242,7 @@ void *momentCore(void *in) {
     uint32_t marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
-    int stride = pulse->header.capacity / ray->header.capacity;
+    int stride = MAX(1, pulse->header.capacity / ray->header.capacity);
 
     char sweepBeginMarker[RKNameLength] = "S", sweepEndMarker[RKNameLength] = "E";
     if (rkGlobalParameters.showColor) {
@@ -310,7 +315,7 @@ void *momentCore(void *in) {
             k = *engine->configIndex;
             RKConfig *config = &engine->configBuffer[*engine->configIndex];
             if (engine->verbose) {
-                RKLog("%s %s deriving range correction factors  ZCal = %.2f dB (%d).  %d / %d\n", engine->name, name, config->ZCal[0], k, stride, ray->header.capacity);
+                RKLog("%s %s Deriving range correction factors  ZCal = %.2f dB (%d).  %d / %d\n", engine->name, name, config->ZCal[0], k, stride, ray->header.capacity);
             }
             RKFloat r = 0.0f;
             for (i = 0; i < space->capacity; i++) {
@@ -337,17 +342,18 @@ void *momentCore(void *in) {
             if (k != path.length) {
                 RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
             }
+            // Fill in the ray
+            makeRayFromScratch(space, ray, S->header.gateCount, stride);
             ray->header.s |= RKRayStatusProcessed;
         } else {
-            ray->header.s |= RKRayStatusSkipped;
+            // Zero out the ray
+            zeroOutRay(ray);
             if (engine->verbose) {
-                RKLog("%s %s skipped a ray with %d sampples.\n", engine->name, name, path.length);
+                RKLog("%s %s Skipped a ray with %d sampples.\n", engine->name, name, path.length);
             }
+            ray->header.s |= RKRayStatusSkipped;
         }
 
-        // Fill in the ray
-        makeRayFromScratch(space, ray, S->header.gateCount, stride);
-        
         // Update the rest of the ray header
         RKConfig *config = &engine->configBuffer[S->header.configIndex];
         ray->header.sweepElevation = config->sweepElevation;
@@ -649,7 +655,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, RKRadarDesc *de
     engine->pulseBufferDepth  = pulseBufferDepth;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
-    engine->rayBufferDepth   = rayBufferDepth;
+    engine->rayBufferDepth    = rayBufferDepth;
     engine->momentSource = (RKModuloPath *)malloc(rayBufferDepth * sizeof(RKModuloPath));
     if (engine->momentSource == NULL) {
         RKLog("Error. Unable to allocate momentSource.\n");

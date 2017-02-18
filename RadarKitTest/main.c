@@ -17,7 +17,6 @@ typedef struct user_params {
     int   coresForPulseCompression;
     int   coresForProductGenerator;
     int   prf;
-    int   fs;
     int   gateCount;
     int   verbose;
     int   testPulseCompression;
@@ -123,9 +122,9 @@ UserParams processInput(int argc, const char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     memset(&user, 0, sizeof(UserParams));
-    user.fs = 5000000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
+    user.gateCount = 2000;
     
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
@@ -175,32 +174,29 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'D':
                 user.simulate = true;
-                user.fs = 5000000;
+                user.gateCount = 2000;
                 user.prf = 6;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 break;
             case 'b':
-            case 'F':
-                user.fs = atof(optarg);
-                break;
             case 'H':
                 user.simulate = true;
-                user.fs = 50000000;
+                user.gateCount = 24000;
                 user.prf = 5000;
                 user.coresForPulseCompression = 10;
                 user.coresForProductGenerator = 4;
                 break;
             case 'L':
                 user.simulate = true;
-                user.fs = 5000000;
+                user.gateCount = 2000;
                 user.prf = 2000;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 break;
             case 'M':
                 user.simulate = true;
-                user.fs = 20000000;
+                user.gateCount = 4000;
                 user.prf = 5000;
                 user.coresForPulseCompression = 4;
                 user.coresForProductGenerator = 2;
@@ -300,9 +296,6 @@ UserParams processInput(int argc, const char **argv) {
     if (user.prf > 0 && user.simulate == false) {
         RKLog("Warning. PRF has no effects without simulation.\n");
     }
-    if (user.gateCount == 0 && user.fs > 0) {
-        user.gateCount = (int)(2.0 * 60.0e3 * (float)user.fs / 3.0e8);
-    }
     
     return user;
 }
@@ -334,8 +327,8 @@ int main(int argc, const char **argv) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
-    desc.pulseCapacity = 1 << (int)ceilf(log2f(user.gateCount));
-    if (user.fs >= 20000000) {
+    desc.pulseCapacity = user.gateCount;
+    if (user.gateCount >= 4000) {
         desc.pulseToRayRatio = 2;
         desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
@@ -382,9 +375,6 @@ int main(int argc, const char **argv) {
         }
         if (user.gateCount) {
             i += sprintf(cmd + i, " g %d", user.gateCount);
-        }
-        if (user.fs) {
-            i += sprintf(cmd + i, " F %d", user.fs);
         }
         if (user.sleepInterval) {
             i += sprintf(cmd + i, " z %d", user.sleepInterval);

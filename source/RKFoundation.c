@@ -60,13 +60,13 @@ int RKLog(const char *whatever, ...) {
         
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;32m");
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;92m");
             } else if (has_info) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;36m");
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;96m");
             } else if (has_error) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;31m");
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;91m");
             } else if (has_warning) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;33m");
+                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;93m");
             }
         }
         strncpy(colored_whatever + len, anchor, 2048 - len);
@@ -218,12 +218,8 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
 //    RKIQZ              Z[2];
 //
 size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
-    if (capacity - (1 << (int)log2f((float)capacity))) {
-        RKLog("Error. Pulse capacity must be power of 2!");
-        return 0;
-    }
-    if (capacity != (capacity / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. Pulse capacity must be multiple of %d!", RKSIMDAlignSize);
+    if (capacity != (capacity * sizeof(RKInt16C) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKInt16C)) {
+        RKLog("Error. Pulse capacity must be multiple of %d!", RKSIMDAlignSize / sizeof(RKInt16C));
         return 0;
     }
     RKPulse *pulse;
@@ -235,7 +231,7 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
     size_t channelCount = 2;
     size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     if (pulseSize != (pulseSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. The resultant size does not conform to SIMD alignment.");
+        RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(pulseSize));
         return 0;
     }
     size_t bytes = slots * pulseSize;
@@ -289,11 +285,11 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int8 _t            idata[2][capacity];
-//    float              fdata[2][capacity];
+//    int8 _t            idata[RKMaxProductCount][capacity];
+//    float              fdata[RKMaxProductCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
-    if (capacity - (capacity / RKSIMDAlignSize) * RKSIMDAlignSize != 0) {
+    if (capacity != (capacity / RKSIMDAlignSize) * RKSIMDAlignSize) {
         RKLog("Error. Ray capacity must be a multiple of %d!", RKSIMDAlignSize);
         return 0;
     }
@@ -305,7 +301,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
     }
     size_t raySize = headerSize + RKMaxProductCount * capacity * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. The resultant size does not conform to SIMD alignment.");
+        RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(raySize));
         return 0;
     }
     size_t bytes = slots * raySize;

@@ -123,7 +123,7 @@ void *pulseCompressionCore(void *_in) {
 #endif
 
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
-    const size_t nfft = MIN(RKGateCount, pulse->header.capacity);
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible

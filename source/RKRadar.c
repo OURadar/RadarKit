@@ -65,7 +65,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(RKBuffer0SlotCount));
+            RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
         }
     } else if (radar->desc.pulseBufferDepth == 0) {
         radar->desc.pulseBufferDepth = 1000;
@@ -73,7 +73,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(RKBuffer2SlotCount));
+            RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
         }
     } else if (radar->desc.rayBufferDepth == 0) {
         radar->desc.rayBufferDepth = 720;
@@ -81,10 +81,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(RKGateCount));
+            RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
         }
     } else if (radar->desc.pulseCapacity == 0) {
-        radar->desc.pulseCapacity = 100;
+        radar->desc.pulseCapacity = 256;
+    }
+    radar->desc.pulseCapacity = (radar->desc.pulseCapacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
+    if (radar->desc.pulseCapacity != desc.pulseCapacity && desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     }
     
     // Read in preference file here, override some values
@@ -218,13 +222,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Moment bufer
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         radar->state |= RKRadarStateRayBufferAllocating;
-        bytes = RKRayBufferAlloc(&radar->rays, radar->desc.pulseCapacity / radar->desc.pulseToRayRatio, radar->desc.rayBufferDepth);
+        k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
+        bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
                   RKMaxProductCount,
-                  RKIntegerToCommaStyleString(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio));
+                  RKIntegerToCommaStyleString(k));
         }
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRayBufferAllocating;
@@ -238,7 +243,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     radar->positionClock = RKClockInit();
     RKClockSetName(radar->positionClock, "<positionClock>");
-    RKClockSetOffset(radar->positionClock, -0.2);
+    RKClockSetOffset(radar->positionClock, -0.02);
     radar->memoryUsage += sizeof(RKClock);
     
     // Health engine
@@ -704,7 +709,7 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
         pulse->header.timeDouble = RKClockGetTime(radar->pulseClock, (double)pulse->header.t, &pulse->header.time);
     }
     if (pulse->header.gateCount > pulse->header.capacity) {
-        RKLog("Error. gateCount should not be larger than the capacity %s > %s",
+        RKLog("Error. gateCount = %s > capacity = %s\n",
               RKIntegerToCommaStyleString(pulse->header.gateCount), RKIntegerToCommaStyleString(pulse->header.capacity));
         pulse->header.gateCount = pulse->header.capacity;
     }
