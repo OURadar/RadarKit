@@ -293,6 +293,16 @@ enum RKHealthNode {
     RKHealthNodeUser4
 };
 
+typedef uint32_t RKEngineState;
+enum RKEngineState {
+    RKEngineStateNull          = 0,
+    RKEngineStateAllocated     = 1,
+    RKEngineStateActivating    = (1 << 1),
+    RKEngineStateActive        = (1 << 2),
+    RKEngineStateDeactivating  = (1 << 3),
+    RKEngineStateWritingFile   = (1 << 4)
+};
+
 // A general description of a radar. These should never change after the radar has gone live
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;

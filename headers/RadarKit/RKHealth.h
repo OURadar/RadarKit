@@ -12,16 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKClient.h>
 
-typedef int RKHealthEngineState;
-enum RKHealthEngineState {
-    RKHealthEngineStateNull,
-    RKHealthEngineStateAllocated,
-    RKHealthEngineStateActivating,
-    RKHealthEngineStateActive,
-    RKHealthEngineStateDeactivating,
-    RKHealthEngineStateSleep
-};
-
 typedef struct rk_health_engine RKHealthEngine;
 
 struct rk_health_engine {
@@ -47,7 +37,7 @@ struct rk_health_engine {
     // Status / health
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
-    RKHealthEngineState    state;
+    RKEngineState    state;
     size_t                 memoryUsage;
 };
 

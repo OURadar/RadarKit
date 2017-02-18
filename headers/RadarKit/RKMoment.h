@@ -14,16 +14,6 @@
 #include <RadarKit/RKPulsePair.h>
 #include <RadarKit/RKMultiLag.h>
 
-typedef uint32_t RKMomentEngineState;
-enum RKMomentEngineState {
-    RKMomentEngineStateNull          = 0,
-    RKMomentEngineStateAllocated     = 1,
-    RKMomentEngineStateActivating    = (1 << 1),
-    RKMomentEngineStateActive        = (1 << 2),
-    RKMomentEngineStateDeactivating  = (1 << 3),
-    RKMomentEngineStateSleep         = (1 << 4)
-};
-
 typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
@@ -71,7 +61,7 @@ struct rk_moment_engine {
     char                   rayStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
     uint32_t               rayStatusBufferIndex;
-    RKMomentEngineState    state;
+    RKEngineState          state;
     uint32_t               tic;
     float                  lag;
     uint32_t               almostFull;

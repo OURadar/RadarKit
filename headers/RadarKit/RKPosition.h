@@ -48,16 +48,6 @@
 #include <RadarKit/RKConfig.h>
 #include <RadarKit/RKDSP.h>
 
-typedef int RKPositionEngineState;
-enum RKPositionEngineState {
-    RKPositionEngineStateNull,
-    RKPositionEngineStateAllocated,
-    RKPositionEngineStateActivating,
-    RKPositionEngineStateActive,
-    RKPositionEngineStateDeactivating,
-    RKPositionEngineStateSleep
-};
-
 typedef struct rk_position_engine RKPositionEngine;
 
 struct rk_position_engine {
@@ -89,7 +79,7 @@ struct rk_position_engine {
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     char                   positionStringBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
-    RKPositionEngineState  state;
+    RKEngineState          state;
     uint32_t               tic;
     float                  lag;
     size_t                 memoryUsage;

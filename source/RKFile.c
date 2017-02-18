@@ -119,17 +119,17 @@ void *pulseRecorder(void *in) {
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
-    engine->state |= RKFileEngineStateActive;
-    engine->state ^= RKFileEngineStateActivating;
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
 
     j = 0;   // config index
     k = 0;   // pulse index
-    while (engine->state & RKFileEngineStateActive) {
+    while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until the buffer is advanced
         s = 0;
-        while (k == *engine->pulseIndex && engine->state & RKFileEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -137,14 +137,14 @@ void *pulseRecorder(void *in) {
             }
         }
         // Wait until the pulse is completely processed
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKFileEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.01f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (!(engine->state & RKFileEngineStateActive)) {
+        if (!(engine->state & RKEngineStateActive)) {
             break;
         }
         // Lag of the engine
@@ -217,13 +217,13 @@ RKFileEngine *RKFileEngineInit(void) {
     sprintf(engine->name, "%s<RawDataRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKFileEngineSetCacheSize(engine, 32 * 1024 * 1024);
-    engine->state = RKFileEngineStateAllocated;
+    engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKFileEngine) + engine->cacheSize;
     return engine;
 }
 
 void RKFileEngineFree(RKFileEngine *engine) {
-    if (engine->state & RKFileEngineStateActive) {
+    if (engine->state & RKEngineStateActive) {
         RKFileEngineStop(engine);
     }
     free(engine->cache);
@@ -258,31 +258,34 @@ int RKFileEngineStart(RKFileEngine *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
-    engine->state = RKFileEngineStateActivating;
+    engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseRecorder, NULL, pulseRecorder, engine) != 0) {
         RKLog("%s Error. Failed to start pulse recorder.\n", engine->name);
         return RKResultFailedToStartPulseRecorder;
     }
-    while (!(engine->state & RKFileEngineStateActive)) {
+    while (!(engine->state & RKEngineStateActive)) {
         usleep(10000);
     }
     return RKResultSuccess;
 }
 
 int RKFileEngineStop(RKFileEngine *engine) {
-    if ((engine->state & RKFileEngineStateActive) == 0) {
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose > 1) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
-    engine->state |= RKFileEngineStateDeactivating;
-    engine->state ^= RKFileEngineStateActive;
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidPulseRecorder, NULL);
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
     }
-    engine->state = RKFileEngineStateAllocated;
+    engine->state = RKEngineStateAllocated;
     return RKResultSuccess;
 }
 

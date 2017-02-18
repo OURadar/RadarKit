@@ -345,16 +345,16 @@ void *rayGatherer(void *in) {
     
     RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     
-    engine->state |= RKSweepEngineStateActive;
-    engine->state ^= RKSweepEngineStateActiving;
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
     
     k = 0;   // ray index
-    while (engine->state & RKSweepEngineStateActive) {
+    while (engine->state & RKEngineStateActive) {
         // The ray
         ray = RKGetRay(engine->rayBuffer, k);
         // Wait until the buffer is advanced
         s = 0;
-        while (k == *engine->rayIndex && engine->state & RKSweepEngineStateActive) {
+        while (k == *engine->rayIndex && engine->state & RKEngineStateActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
@@ -363,14 +363,14 @@ void *rayGatherer(void *in) {
         }
         // Wait until the ray is ready
         s = 0;
-        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKSweepEngineStateActive) {
+        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
             }
         }
-        if (!(engine->state & RKSweepEngineStateActive)) {
+        if (!(engine->state & RKEngineStateActive)) {
             break;
         }
         
@@ -429,14 +429,14 @@ RKSweepEngine *RKSweepEngineInit(void) {
         RKLog("%s Error. Unable to allocate memory.\n", engine->name);
         exit(EXIT_FAILURE);
     }
-    engine->state = RKSweepEngineStateAllocated;
+    engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine) + RKMaxRaysPerSweep * (RKGateCount + 1) * sizeof(float);
     engine->doNotWrite = false;
     return engine;
 }
 
 void RKSweepEngineFree(RKSweepEngine *engine) {
-    if (engine->state & RKSweepEngineStateActive) {
+    if (engine->state & RKEngineStateActive) {
         RKSweepEngineStop(engine);
     }
     free(engine->array1D);
@@ -472,30 +472,33 @@ int RKSweepEngineStart(RKSweepEngine *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
-    engine->state |= RKSweepEngineStateActiving;
+    engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidRayGatherer, NULL, rayGatherer, engine) != 0) {
         RKLog("Error. Failed to start a ray gatherer.\n");
         return RKResultFailedToStartRayGatherer;
     }
-    while (!(engine->state & RKSweepEngineStateActive)) {
+    while (!(engine->state & RKEngineStateActive)) {
         usleep(10000);
     }
     return RKResultSuccess;
 }
 
 int RKSweepEngineStop(RKSweepEngine *engine) {
-    if ((engine->state & RKSweepEngineStateActive) == 0) {
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose > 1) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
-    engine->state |= RKSweepEngineStateDeactivating;
-    engine->state ^= RKSweepEngineStateActive;
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidRayGatherer, NULL);
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
     }
-    engine->state = RKSweepEngineStateAllocated;
+    engine->state = RKEngineStateAllocated;
     return RKResultSuccess;
 }

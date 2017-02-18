@@ -12,16 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <netcdf.h>
 
-typedef uint32_t RKSweepEngineState;
-enum RKSweepEngineState {
-    RKSweepEngineStateNull           = 0,
-    RKSweepEngineStateAllocated      = 1,
-    RKSweepEngineStateActiving       = (1 << 1),
-    RKSweepEngineStateActive         = (1 << 2),
-    RKSweepEngineStateDeactivating   = (1 << 3),
-    RKSweepEngineStateWritingFile    = (1 << 4)
-};
-
 typedef struct rk_sweep {
     RKRay                  *rays[RKMaxRaysPerSweep];
     uint32_t               rayCount;
@@ -52,7 +42,7 @@ struct rk_sweep_engine {
     uint32_t               processedRayIndex;
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
-    RKSweepEngineState     state;
+    RKEngineState          state;
     uint32_t               tic;
     float                  lag;
     uint32_t               almostFull;

@@ -97,7 +97,8 @@ void *pulseTagger(void *in) {
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
-    engine->state = RKPositionEngineStateActive;
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
     
     // If multiple workers are needed, here will be the time to launch them.
 
@@ -106,7 +107,7 @@ void *pulseTagger(void *in) {
 
     // Wait until there is something ingested
     s = 0;
-    while (*engine->positionIndex < 2 && engine->state == RKPositionEngineStateActive) {
+    while (*engine->positionIndex < 2 && engine->state & RKEngineStateActive) {
         usleep(1000);
         if (++s % 200 == 0 && engine->verbose > 1) {
             RKLog("%s sleep 0/%.1f s\n",
@@ -117,12 +118,12 @@ void *pulseTagger(void *in) {
     // Set the pulse to have position
     j = 0;   // position index
     k = 0;   // pulse index;
-    while (engine->state == RKPositionEngineStateActive) {
+    while (engine->state & RKEngineStateActive) {
         // Get the latest pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until a thread check out this pulse.
         s = 0;
-        while (k == *engine->pulseIndex && engine->state == RKPositionEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -131,7 +132,7 @@ void *pulseTagger(void *in) {
         }
         // Wait until it has data & processed. Otherwise, the time stamp is no good and there is a horse raise with pulse compression engine.
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state == RKPositionEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -141,7 +142,7 @@ void *pulseTagger(void *in) {
         // Wait until we have a position newer than pulse time.
         s = 0;
         i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
-        while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state == RKPositionEngineStateActive) {
+        while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 3/%.1f s   k = %d   latestTime = %s <= %s = header.timeDouble\n",
@@ -154,7 +155,7 @@ void *pulseTagger(void *in) {
         // Record down the latest time
         timeLatest = engine->positionBuffer[i].timeDouble;
         
-        if (engine->state != RKPositionEngineStateActive) {
+        if (!(engine->state & RKEngineStateActive)) {
             break;
         }
         
@@ -295,7 +296,7 @@ RKPositionEngine *RKPositionEngineInit() {
     sprintf(engine->name, "%s<PulsePositioner>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine);
-    engine->state = RKPositionEngineStateAllocated;
+    engine->state = RKEngineStateAllocated;
     return engine;
 }
 
@@ -327,12 +328,15 @@ void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
 #pragma mark - Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
-    RKLog("%s Starting ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
+    engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
     }
-    while (engine->state < RKPositionEngineStateActive) {
+    while (!(engine->state & RKEngineStateActive)) {
         usleep(10000);
     }
     struct timeval t;
@@ -345,10 +349,10 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
     if (engine->verbose > 1) {
         RKLog("%s stopping ...\n", engine->name);
     }
-    engine->state = RKPositionEngineStateDeactivating;
+    engine->state = RKEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
     RKLog("%s stopped.\n", engine->name);
-    engine->state = RKPositionEngineStateNull;
+    engine->state = RKEngineStateNull;
     return RKResultNoError;
 }
 

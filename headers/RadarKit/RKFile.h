@@ -11,16 +11,6 @@
 
 #include <RadarKit/RKFoundation.h>
 
-typedef int RKFileEngineState;
-enum RKFileEngineState {
-    RKFileEngineStateNull          = 0,
-    RKFileEngineStateAllocated     = 1,
-    RKFileEngineStateActivating    = (1 << 1),
-    RKFileEngineStateActive        = (1 << 2),
-    RKFileEngineStateDeactivating  = (1 << 3),
-    RKFileEngineStateWritingFile   = (1 << 4)
-};
-
 typedef struct rk_file_engine RKFileEngine;
 
 struct rk_file_engine {
@@ -47,7 +37,7 @@ struct rk_file_engine {
     // Status / health
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
-    RKFileEngineState      state;
+    RKEngineState      state;
     uint32_t               tic;
     float                  lag;
     size_t                 memoryUsage;

@@ -37,6 +37,9 @@ RKUserFlag RKStringToFlag(const char * string) {
             case '3':
                 flag |= RKUserFlagStatusPositions;
                 break;
+            case '4':
+                flag |= RKUserFlagStatusEngines;
+                break;
             case 'z':
                 flag |= RKUserFlagDisplayZ;
                 break;
@@ -101,29 +104,30 @@ RKUserFlag RKStringToFlag(const char * string) {
 
 int RKFlagToString(char *string, RKUserFlag flag) {
     int j = 0;
-    if (flag & RKUserFlagStatusHealthOld) { j += sprintf(string + j, "H"); }
-    if (flag & RKUserFlagStatusPulses)    { j += sprintf(string + j, "1"); }
-    if (flag & RKUserFlagStatusRays)      { j += sprintf(string + j, "2"); }
-    if (flag & RKUserFlagStatusPositions) { j += sprintf(string + j, "3"); }
-    if (flag & RKUserFlagStatusHealth)    { j += sprintf(string + j, "h"); }
-    if (flag & RKUserFlagDisplayZ)        { j += sprintf(string + j, "z"); }
-    if (flag & RKUserFlagProductZ)        { j += sprintf(string + j, "Z"); }
-    if (flag & RKUserFlagDisplayV)        { j += sprintf(string + j, "v"); }
-    if (flag & RKUserFlagProductV)        { j += sprintf(string + j, "V"); }
-    if (flag & RKUserFlagDisplayW)        { j += sprintf(string + j, "w"); }
-    if (flag & RKUserFlagProductW)        { j += sprintf(string + j, "W"); }
-    if (flag & RKUserFlagDisplayD)        { j += sprintf(string + j, "d"); }
-    if (flag & RKUserFlagProductD)        { j += sprintf(string + j, "D"); }
-    if (flag & RKUserFlagDisplayP)        { j += sprintf(string + j, "p"); }
-    if (flag & RKUserFlagProductP)        { j += sprintf(string + j, "P"); }
-    if (flag & RKUserFlagDisplayR)        { j += sprintf(string + j, "r"); }
-    if (flag & RKUserFlagProductR)        { j += sprintf(string + j, "R"); }
-    if (flag & RKUserFlagDisplayK)        { j += sprintf(string + j, "k"); }
-    if (flag & RKUserFlagProductK)        { j += sprintf(string + j, "K"); }
-    if (flag & RKUserFlagDisplayS)        { j += sprintf(string + j, "s"); }
-    if (flag & RKUserFlagProductS)        { j += sprintf(string + j, "S"); }
-    if (flag & RKUserFlagDisplayIQ)       { j += sprintf(string + j, "i"); }
-    if (flag & RKUserFlagProductIQ)       {      sprintf(string + j, "I"); }
+    if (flag & RKUserFlagStatusHealthOld)   { j += sprintf(string + j, "H"); }
+    if (flag & RKUserFlagStatusPulses)      { j += sprintf(string + j, "1"); }
+    if (flag & RKUserFlagStatusRays)        { j += sprintf(string + j, "2"); }
+    if (flag & RKUserFlagStatusPositions)   { j += sprintf(string + j, "3"); }
+    if (flag & RKUserFlagStatusEngines)     { j += sprintf(string + j, "4"); }
+    if (flag & RKUserFlagStatusHealth)      { j += sprintf(string + j, "h"); }
+    if (flag & RKUserFlagDisplayZ)          { j += sprintf(string + j, "z"); }
+    if (flag & RKUserFlagProductZ)          { j += sprintf(string + j, "Z"); }
+    if (flag & RKUserFlagDisplayV)          { j += sprintf(string + j, "v"); }
+    if (flag & RKUserFlagProductV)          { j += sprintf(string + j, "V"); }
+    if (flag & RKUserFlagDisplayW)          { j += sprintf(string + j, "w"); }
+    if (flag & RKUserFlagProductW)          { j += sprintf(string + j, "W"); }
+    if (flag & RKUserFlagDisplayD)          { j += sprintf(string + j, "d"); }
+    if (flag & RKUserFlagProductD)          { j += sprintf(string + j, "D"); }
+    if (flag & RKUserFlagDisplayP)          { j += sprintf(string + j, "p"); }
+    if (flag & RKUserFlagProductP)          { j += sprintf(string + j, "P"); }
+    if (flag & RKUserFlagDisplayR)          { j += sprintf(string + j, "r"); }
+    if (flag & RKUserFlagProductR)          { j += sprintf(string + j, "R"); }
+    if (flag & RKUserFlagDisplayK)          { j += sprintf(string + j, "k"); }
+    if (flag & RKUserFlagProductK)          { j += sprintf(string + j, "K"); }
+    if (flag & RKUserFlagDisplayS)          { j += sprintf(string + j, "s"); }
+    if (flag & RKUserFlagProductS)          { j += sprintf(string + j, "S"); }
+    if (flag & RKUserFlagDisplayIQ)         { j += sprintf(string + j, "i"); }
+    if (flag & RKUserFlagProductIQ)         {      sprintf(string + j, "I"); }
     return 0;
 }
 
@@ -305,6 +309,19 @@ int socketStreamHandler(RKOperator *O) {
         if (user->streams & RKUserFlagStatusPositions) {
             k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
                          RKPositionEnginePositionString(user->radar->positionEngine));
+            O->delimTx.type = RKNetworkPacketTypePlainText;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
+        }
+        if (user->streams & RKUserFlagStatusEngines) {
+            k = snprintf(user->string, RKMaximumStringLength - 1, "P%04x  C%04x  M%04x  S%04x  F%04x  H%04x" RKEOL,
+                         user->radar->positionEngine->state,
+                         user->radar->pulseCompressionEngine->state,
+                         user->radar->momentEngine->state,
+                         user->radar->sweepEngine->state,
+                         user->radar->fileEngine->state,
+                         user->radar->healthEngine->state);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);

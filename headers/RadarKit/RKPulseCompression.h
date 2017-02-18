@@ -19,16 +19,6 @@
 //extern "C" {
 //#endif
 
-typedef int RKPulseCompressionEngineState;
-enum RKPulseCompressionEngineState {
-    RKPulseCompressionEngineStateNull          = 0,
-    RKPulseCompressionEngineStateAllocated     = 1,
-    RKPulseCompressionEngineStateActivating    = (1 << 1),
-    RKPulseCompressionEngineStateActive        = (1 << 2),
-    RKPulseCompressionEngineStateDeactivating  = (1 << 3),
-    RKPulseCompressionEngineStateSleep         = (1 << 4)
-};
-
 typedef struct rk_filter_anchor {
     int origin;
     int length;
@@ -84,7 +74,7 @@ struct rk_pulse_compression_engine {
     // Status / health
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
-    RKPulseCompressionEngineState    state;
+    RKEngineState                    state;
     uint32_t                         tic;
     float                            lag;
     int                              almostFull;
