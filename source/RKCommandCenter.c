@@ -315,13 +315,16 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
         if (user->streams & RKUserFlagStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "P%02x  C%02x  M%02x  S%02x  F%02x  H%02x" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%x  Com:0x%x  Mom:0x%x  Swe:0x%x  Fil:0x%x  Hea:0x%x   Pos:%04d  Pul:%05d  Ray:%04d" RKEOL,
                          user->radar->positionEngine->state,
                          user->radar->pulseCompressionEngine->state,
                          user->radar->momentEngine->state,
                          user->radar->sweepEngine->state,
                          user->radar->fileEngine->state,
-                         user->radar->healthEngine->state);
+                         user->radar->healthEngine->state,
+                         user->radar->positionIndex,
+                         user->radar->pulseIndex,
+                         user->radar->rayIndex);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -519,7 +522,7 @@ int socketInitialHandler(RKOperator *O) {
     user->radar = engine->radars[0];
     user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
     user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 1000);
-    RKLog(">%s %s User %d x%d x%d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
+    RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
