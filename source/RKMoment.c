@@ -315,7 +315,7 @@ void *momentCore(void *in) {
             k = *engine->configIndex;
             RKConfig *config = &engine->configBuffer[*engine->configIndex];
             if (engine->verbose) {
-                RKLog("%s %s Deriving range correction factors  ZCal = %.2f dB (%d).  %d / %d\n", engine->name, name, config->ZCal[0], k, stride, ray->header.capacity);
+                RKLog("%s %s Deriving C%d RCor @ %.2f dB   capacity = %d  stride = %d\n", engine->name, name, k, config->ZCal[0], ray->header.capacity, stride);
             }
             RKFloat r = 0.0f;
             for (i = 0; i < space->capacity; i++) {

@@ -535,12 +535,27 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
 
 int RKGoLive(RKRadar *radar) {
     radar->active = true;
+    
+    radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
+    radar->memoryUsage -= radar->positionEngine->memoryUsage;
+    radar->memoryUsage -= radar->healthEngine->memoryUsage;
+    radar->memoryUsage -= radar->momentEngine->memoryUsage;
+    radar->memoryUsage -= radar->fileEngine->memoryUsage;
+    radar->memoryUsage -= radar->sweepEngine->memoryUsage;
+    
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKPositionEngineStart(radar->positionEngine);
     RKHealthEngineStart(radar->healthEngine);
     RKMomentEngineStart(radar->momentEngine);
     RKFileEngineStart(radar->fileEngine);
     RKSweepEngineStart(radar->sweepEngine);
+
+    radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
+    radar->memoryUsage += radar->positionEngine->memoryUsage;
+    radar->memoryUsage += radar->healthEngine->memoryUsage;
+    radar->memoryUsage += radar->momentEngine->memoryUsage;
+    radar->memoryUsage += radar->fileEngine->memoryUsage;
+    radar->memoryUsage += radar->sweepEngine->memoryUsage;
 
     // Pedestal
     if (radar->pedestalInit != NULL) {
@@ -581,6 +596,13 @@ int RKGoLive(RKRadar *radar) {
         radar->state |= RKRadarStateHealthRelayInitialized;
     }
     
+    // Update memory usage
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
+              RKIntegerToCommaStyleString(radar->memoryUsage),
+              RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+    }
+
     radar->state |= RKRadarStateLive;
     return 0;
 }
