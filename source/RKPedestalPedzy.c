@@ -22,7 +22,7 @@ int RKPedestalPedzyRead(RKClient *client) {
         RKPosition *position = (RKPosition *)client->userPayload;
 
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-            RKLog("Position  %010ld   %010ld   %08x EL %.2f  AZ %.2f --> %d\n",
+            RKLog("Position   %010ld   %010ld   %08x EL %.2f  AZ %.2f --> %d\n",
                   position->i,
                   position->tic,
                   position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);

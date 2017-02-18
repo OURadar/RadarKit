@@ -244,12 +244,9 @@ int socketCommandHandler(RKOperator *O) {
             break;
 
         case 't':
+        case 'w':
             // Temporary pass everything to transceiver
             user->radar->transceiverExec(user->radar->transceiver, O->cmd, user->radar->transceiverResponse);
-            break;
-
-        case 'w':
-            // Change waveform
             break;
             
         default:
