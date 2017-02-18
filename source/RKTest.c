@@ -803,7 +803,7 @@ void RKTestCacheWrite(void) {
     uint32_t len = 0;
     for (int k = 1, j = 1; k < 50000; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
-        pulse->header.gateCount = 8000;
+        pulse->header.gateCount = 16000;
         
         len += RKFileEngineCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
         len += RKFileEngineCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));

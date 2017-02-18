@@ -88,8 +88,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
     
     // Read in preference file here, override some values
-    sprintf(radar->desc.name, "PX-10k");
-    sprintf(radar->desc.filePrefix, "PX10K");
+    if (!strlen(radar->desc.name)) {
+        sprintf(radar->desc.name, "PX-10k");
+    }
+    if (!strlen(radar->desc.name)) {
+        sprintf(radar->desc.filePrefix, "PX10K");
+    }
     radar->desc.latitude = 35.2550320;
     radar->desc.longitude = -97.4227810;
 

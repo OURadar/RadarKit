@@ -132,8 +132,9 @@ UserParams processInput(int argc, const char **argv) {
         {"no-color"              , no_argument      , NULL, 'C'},
         {"debug-demo"            , no_argument      , NULL, 'D'},
         {"fs"                    , required_argument, NULL, 'F'},
-        {"lean-system-test"      , no_argument      , NULL, 'L'},
-        {"medium-system-test"    , no_argument      , NULL, 'M'},
+        {"hp-system"             , no_argument      , NULL, 'H'},
+        {"lean-system"           , no_argument      , NULL, 'L'},
+        {"medium-system"         , no_argument      , NULL, 'M'},
         {"test-pulse-compression", optional_argument, NULL, 'P'},
         {"test-one-ray"          , no_argument      , NULL, 'R'},
         {"test-processor"        , no_argument      , NULL, 'Q'},
@@ -153,7 +154,7 @@ UserParams processInput(int argc, const char **argv) {
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
-        {"y"                     , no_argument      , NULL, 'y'},
+        {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -182,6 +183,13 @@ UserParams processInput(int argc, const char **argv) {
             case 'b':
             case 'F':
                 user.fs = atof(optarg);
+                break;
+            case 'H':
+                user.simulate = true;
+                user.fs = 50000000;
+                user.prf = 5000;
+                user.coresForPulseCompression = 10;
+                user.coresForProductGenerator = 4;
                 break;
             case 'L':
                 user.simulate = true;
