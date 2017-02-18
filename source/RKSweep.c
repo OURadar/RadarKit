@@ -346,6 +346,7 @@ void *rayGatherer(void *in) {
     RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     
     engine->state |= RKSweepEngineStateActive;
+    engine->state ^= RKSweepEngineStateActiving;
     
     k = 0;   // ray index
     while (engine->state & RKSweepEngineStateActive) {
@@ -369,7 +370,7 @@ void *rayGatherer(void *in) {
                       engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
             }
         }
-        if ((engine->state & RKSweepEngineStateActive) == 0) {
+        if (!(engine->state & RKSweepEngineStateActive)) {
             break;
         }
         
@@ -468,7 +469,10 @@ void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
 #pragma mark - Interactions
 
 int RKSweepEngineStart(RKSweepEngine *engine) {
-    RKLog("%s Starting ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
+    engine->state |= RKSweepEngineStateActiving;
     if (pthread_create(&engine->tidRayGatherer, NULL, rayGatherer, engine) != 0) {
         RKLog("Error. Failed to start a ray gatherer.\n");
         return RKResultFailedToStartRayGatherer;
@@ -483,10 +487,15 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
     if ((engine->state & RKSweepEngineStateActive) == 0) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
+    }
     engine->state |= RKSweepEngineStateDeactivating;
     engine->state ^= RKSweepEngineStateActive;
     pthread_join(engine->tidRayGatherer, NULL);
-    RKLog("%s stopped.\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
     engine->state = RKSweepEngineStateAllocated;
     return RKResultSuccess;
 }

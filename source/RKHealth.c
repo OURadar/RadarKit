@@ -220,7 +220,9 @@ void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
 }
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
-    RKLog("%s Starting ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
     if (pthread_create(&engine->threadId, NULL, healthConsolidator, engine)) {
         RKLog("Error. Unable to start health engine.\n");
         return RKResultFailedToStartHealthWorker;
@@ -235,12 +237,14 @@ int RKHealthEngineStart(RKHealthEngine *engine) {
 }
 
 int RKHealthEngineStop(RKHealthEngine *engine) {
-    if (engine->verbose > 1) {
-        RKLog("%s stopping ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state = RKHealthEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
-    RKLog("%s stopped.\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
     engine->state = RKHealthEngineStateNull;
     return RKResultSuccess;
 }

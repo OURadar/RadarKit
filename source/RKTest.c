@@ -418,7 +418,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     const int chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
     
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s (%.1f km)\n",
+        RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s   range = %.1f km\n",
               transceiver->name,
               RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
               RKIntegerToCommaStyleString((int)(1.0f / transceiver->prt)),
@@ -576,7 +576,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 
     // Derive some calculated parameters
     //transceiver->gateSizeMeters = 0.5f * 3.0e8f / transceiver->fs;
-    transceiver->gateSizeMeters = 60.0f / transceiver->gateCount;
+    transceiver->gateSizeMeters = 60.0e3f / transceiver->gateCount;
 
     // Use a counter that mimics microsend increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
@@ -592,7 +592,9 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
     if (!strcmp(command, "disconnect")) {
-        RKLog("%s Disconnecting ...", transceiver->name);
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Disconnecting ...", transceiver->name);
+        }
         pthread_join(transceiver->tidRunLoop, NULL);
         sprintf(response, "ACK. Transceiver stopped.");
         if (radar->desc.initFlags & RKInitFlagVerbose) {

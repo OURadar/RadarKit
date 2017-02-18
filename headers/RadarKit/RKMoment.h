@@ -16,12 +16,12 @@
 
 typedef uint32_t RKMomentEngineState;
 enum RKMomentEngineState {
-    RKMomentEngineStateNull,
-    RKMomentEngineStateAllocated,
-    RKMomentEngineStateActivating,
-    RKMomentEngineStateActive,
-    RKMomentEngineStateDeactivating,
-    RKMomentEngineStateSleep
+    RKMomentEngineStateNull          = 0,
+    RKMomentEngineStateAllocated     = 1,
+    RKMomentEngineStateActivating    = (1 << 1),
+    RKMomentEngineStateActive        = (1 << 2),
+    RKMomentEngineStateDeactivating  = (1 << 3),
+    RKMomentEngineStateSleep         = (1 << 4)
 };
 
 typedef struct rk_moment_worker RKMomentWorker;

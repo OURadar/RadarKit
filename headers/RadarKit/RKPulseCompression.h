@@ -21,12 +21,12 @@
 
 typedef int RKPulseCompressionEngineState;
 enum RKPulseCompressionEngineState {
-    RKPulseCompressionEngineStateNull,
-    RKPulseCompressionEngineStateAllocated,
-    RKPulseCompressionEngineStateActivating,
-    RKPulseCompressionEngineStateActive,
-    RKPulseCompressionEngineStateDeactivating,
-    RKPulseCompressionEngineStateSleep
+    RKPulseCompressionEngineStateNull          = 0,
+    RKPulseCompressionEngineStateAllocated     = 1,
+    RKPulseCompressionEngineStateActivating    = (1 << 1),
+    RKPulseCompressionEngineStateActive        = (1 << 2),
+    RKPulseCompressionEngineStateDeactivating  = (1 << 3),
+    RKPulseCompressionEngineStateSleep         = (1 << 4)
 };
 
 typedef struct rk_filter_anchor {

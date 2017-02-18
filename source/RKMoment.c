@@ -220,7 +220,8 @@ void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
-    RKLog(">%s %s Started.   i0 = %d   mem = %s B   tic = %d\n", engine->name, name, io, RKIntegerToCommaStyleString(mem), me->tic);
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   tic = %d\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), me->tic);
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -250,18 +251,18 @@ void *momentCore(void *in) {
         sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
 
-    while (engine->state == RKMomentEngineStateActive) {
+    while (engine->state & RKMomentEngineStateActive) {
         if (engine->useSemaphore) {
             if (sem_wait(sem)) {
                 RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
             }
         } else {
-            while (tic == me->tic && engine->state == RKMomentEngineStateActive) {
+            while (tic == me->tic && engine->state & RKMomentEngineStateActive) {
                 usleep(1000);
             }
             tic = me->tic;
         }
-        if (engine->state != RKMomentEngineStateActive) {
+        if (!(engine->state & RKMomentEngineStateActive)) {
             break;
         }
 
@@ -408,7 +409,7 @@ void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s ended.\n", engine->name, name);
+    RKLog(">%s %s stopped.\n", engine->name, name);
 
     return NULL;
 }
@@ -432,7 +433,8 @@ void *pulseGatherer(void *in) {
     RKRay *ray;
 
     // Change the state to active so all the processing cores stay in the busy loop
-    engine->state = RKMomentEngineStateActive;
+    engine->state |= RKMomentEngineStateActive;
+    engine->state ^= RKMomentEngineStateActivating;
 
     // Spin off N workers to process I/Q pulses
     for (c = 0; c < engine->coreCount; c++) {
@@ -487,12 +489,12 @@ void *pulseGatherer(void *in) {
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
-    while (engine->state == RKMomentEngineStateActive) {
+    while (engine->state & RKMomentEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until the buffer is advanced
         s = 0;
-        while (k == *engine->pulseIndex && engine->state == RKMomentEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state & RKMomentEngineStateActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0 && engine->verbose > 1) {
@@ -505,14 +507,14 @@ void *pulseGatherer(void *in) {
         // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
         // A separate thread applies matched filter to the data (RKPulseStatusProcessed).
         s = 0;
-        while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state == RKMomentEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state & RKMomentEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state != RKMomentEngineStateActive) {
+        if (!(engine->state & RKMomentEngineStateActive)) {
             break;
         }
 
@@ -629,7 +631,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
 }
 
 void RKMomentEngineFree(RKMomentEngine *engine) {
-    if (engine->state == RKMomentEngineStateActive) {
+    if (engine->state & RKMomentEngineStateActive) {
         RKMomentEngineStop(engine);
     }
     free(engine->momentSource);
@@ -668,7 +670,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, RKRadarDesc *de
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const int count) {
-    if (engine->state == RKMomentEngineStateActive) {
+    if (engine->state & RKMomentEngineStateActive) {
         RKLog("Error. Core count cannot be changed when the engine is active.\n");
         return;
     }
@@ -693,7 +695,6 @@ void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
 #pragma mark - Interactions
 
 int RKMomentEngineStart(RKMomentEngine *engine) {
-    engine->state = RKMomentEngineStateActivating;
     if (engine->coreCount == 0) {
         engine->coreCount = 4;
     }
@@ -702,7 +703,10 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
-    RKLog("%s Starting ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
+    engine->state |= RKMomentEngineStateActivating;
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
         return RKResultFailedToStartPulseGatherer;
@@ -715,21 +719,22 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
 }
 
 int RKMomentEngineStop(RKMomentEngine *engine) {
-    if (engine->state != RKMomentEngineStateActive) {
+    if (engine->state & RKMomentEngineStateDeactivating) {
         if (engine->verbose > 1) {
             RKLog("Info. Pulse compression engine is being or has been deactivated.\n");
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose > 1) {
-        RKLog("%s stopping ...\n", engine->name);
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
     }
-    engine->state = RKMomentEngineStateDeactivating;
+    engine->state |= RKMomentEngineStateDeactivating;
+    engine->state ^= RKMomentEngineStateActive;
     pthread_join(engine->tidPulseGatherer, NULL);
-    RKLog("%s stopped.\n", engine->name);
+    RKLog("%s Stopped.\n", engine->name);
     free(engine->workers);
     engine->workers = NULL;
-    engine->state = RKMomentEngineStateNull;
+    engine->state = RKMomentEngineStateAllocated;
     return RKResultNoError;
 }
 
