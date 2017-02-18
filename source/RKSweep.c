@@ -42,6 +42,9 @@ void *sweepWriter(void *in) {
           n,
           RKNoColor);
 
+    // Mark the state
+    engine->state |= RKEngineStateWritingFile;
+
     k = 0;
     if (n > 360) {
         if (S->header.marker & RKMarkerSweepBegin) {
@@ -326,6 +329,9 @@ void *sweepWriter(void *in) {
 
         ncclose(ncid);
     }
+    
+    engine->state ^= RKEngineStateWritingFile;
+
     return NULL;
 }
 

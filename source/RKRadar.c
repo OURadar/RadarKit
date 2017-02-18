@@ -395,7 +395,7 @@ int RKFree(RKRadar *radar) {
         radar->healthRelayFree(radar->healthRelay);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Freeing radar ...\n");
+        RKLog("Freeing radar '%s' ...\n", radar->desc.name);
     }
     if (radar->state & RKRadarStateRawIQBufferInitialized) {
         free(radar->pulses);

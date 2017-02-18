@@ -37,7 +37,7 @@ struct rk_file_engine {
     // Status / health
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
-    RKEngineState      state;
+    RKEngineState          state;
     uint32_t               tic;
     float                  lag;
     size_t                 memoryUsage;

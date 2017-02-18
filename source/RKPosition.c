@@ -352,7 +352,7 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
     engine->state = RKEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
     RKLog("%s stopped.\n", engine->name);
-    engine->state = RKEngineStateNull;
+    engine->state = RKEngineStateAllocated;
     return RKResultNoError;
 }
 

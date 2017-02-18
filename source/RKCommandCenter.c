@@ -315,7 +315,7 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
         if (user->streams & RKUserFlagStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "P%04x  C%04x  M%04x  S%04x  F%04x  H%04x" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "P%02x  C%02x  M%02x  S%02x  F%02x  H%02x" RKEOL,
                          user->radar->positionEngine->state,
                          user->radar->pulseCompressionEngine->state,
                          user->radar->momentEngine->state,

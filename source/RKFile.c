@@ -154,6 +154,9 @@ void *pulseRecorder(void *in) {
                   engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
         }
 
+        // Consider we are writing at this point
+        engine->state |= RKEngineStateWritingFile;
+
         // Assess the configIndex
         if (j != pulse->header.configIndex) {
             j = pulse->header.configIndex;
@@ -195,6 +198,9 @@ void *pulseRecorder(void *in) {
             t1 = t0;
             RKFileEngineUpdateStatusString(engine);
         }
+
+        // Going to wait mode soon
+        engine->state ^= RKEngineStateWritingFile;
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);

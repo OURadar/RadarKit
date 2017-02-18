@@ -132,7 +132,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
 }
 
 void zeroOutRay(RKRay *ray) {
-    memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * RKMaxProductCount * (sizeof(uint8_t) + sizeof(float)));
+    memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
 }
 
 #pragma mark -
@@ -273,8 +273,9 @@ void *momentCore(void *in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferDepth);
         me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
+        // My ray
         ray = RKGetRay(engine->rayBuffer, io);
-
+        
         // Mark being processed so that the other thread will not override the length
         ray->header.s = RKRayStatusProcessing;
         ray->header.i = tag;
