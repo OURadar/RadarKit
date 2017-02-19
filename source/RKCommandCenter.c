@@ -135,7 +135,7 @@ int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    int j, k;
+    int j, k, s;
     char string[RKMaximumStringLength];
 
     j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
@@ -145,7 +145,7 @@ int socketCommandHandler(RKOperator *O) {
     }
 
     //int ival;
-    char sval1[RKNameLength], sval2[RKNameLength];
+    char sval1[512], sval2[512];
     float fval1, fval2;
     
     // Delimited reading ...
@@ -166,10 +166,15 @@ int socketCommandHandler(RKOperator *O) {
             } else {
                 j += sprintf(string + j, "], ");
             }
+            s = sprintf(sval1, "vol p 2 140 180");
+            for (k = 4; k < 21; k += 2) {
+                s += sprintf(sval1 + s, "/p %d 140 180", k);
+            }
             j += sprintf(string + j, "\"Controls\":["
                          "{\"Label\":\"Go\", \"Command\":\"y\"}, "
-                         "{\"Label\":\"Stop\", \"Command\":\"z\"}"
-                         "]}" RKEOL);
+                         "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
+                         "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}"
+                         "]}" RKEOL, sval1);
             RKOperatorSendDelimitedString(O, string);
             break;
             
@@ -261,6 +266,18 @@ int socketCommandHandler(RKOperator *O) {
         case 'v':
             // There is only one possibility now - "vol"
             user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
+            break;
+            
+        case 'y':
+            // Go - get default command from preference object
+            s = sprintf(sval1, "vol p 2 140 180");
+            for (k = 4; k < 21; k += 2) {
+                s += sprintf(sval1 + s, "/p %d 140 180", k);
+            }
+            user->radar->pedestalExec(user->radar->pedestal, sval1, string);
+            RKOperatorSendDelimitedString(O, string);
+            user->radar->transceiverExec(user->radar->transceiver, "y", string);
+            RKOperatorSendDelimitedString(O, string);
             break;
             
         default:
@@ -476,7 +493,7 @@ int socketStreamHandler(RKOperator *O) {
     }
 
     if (user->streams & user->access & RKUserFlagProductIQ) {
-        // If I/Q data is sent, there is no need to send a subset of it.
+        // If I/Q data is sent, there is no need to send another subset of it.
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         while (user->pulseIndex != endIndex) {
 
