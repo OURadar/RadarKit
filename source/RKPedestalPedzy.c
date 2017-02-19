@@ -107,6 +107,12 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
+        if (client->state < RKClientStateConnected) {
+            if (response != NULL) {
+                sprintf(response, "NAK. Pedestal not connected." RKEOL);
+            }
+            return RKResultIncompleteReceive;
+        }
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
         size_t size = snprintf(me->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
@@ -123,7 +129,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         }
         if (responseIndex == me->responseIndex) {
             if (response != NULL) {
-                sprintf(response, "NAK. Timeout.");
+                sprintf(response, "NAK. Timeout." RKEOL);
             }
             return RKResultTimeout;
         }
