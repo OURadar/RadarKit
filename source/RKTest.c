@@ -605,16 +605,28 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         transceiver->state ^= RKEngineStateActive;
         pthread_join(transceiver->tidRunLoop, NULL);
         if (response != NULL) {
-            sprintf(response, "ACK. Transceiver stopped.");
+            sprintf(response, "ACK. Transceiver stopped." RKEOL);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", transceiver->name);
         }
         transceiver->state = RKEngineStateAllocated;
+    } else if (!strncmp(command, "prt", 3)) {
+        transceiver->prt = atof(command + 3);
+        if (response != NULL) {
+            sprintf(response, "ACK. PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
+        }
     } else if (command[0] == 'h') {
         sprintf(response,
-                "    h - Help list.\n"
-                "    z [value] - Sleep interval set to value.\n");
+                "Commands:\n"
+                "---------\n"
+                UNDERLINE("h") " - Help list.\n"
+                UNDERLINE("prt") " [value] - PRT set to value\n"
+                UNDERLINE("z") " [value] - Sleep interval set to value.\n"
+                );
     } else if (command[0] == 'z') {
         transceiver->sleepInterval = atoi(command + 1);
         RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
