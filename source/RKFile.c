@@ -150,7 +150,7 @@ void *pulseRecorder(void *in) {
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
         if (!isfinite(engine->lag)) {
-            RKLog("%s %d + %d - %d = %d",
+            RKLog("%s Error. %d + %d - %d = %d",
                   engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
         }
 
@@ -163,12 +163,21 @@ void *pulseRecorder(void *in) {
             config = &engine->configBuffer[pulse->header.configIndex];
 
             // Close the current file
-            if (engine->fd != 0) {
-                RKLog("%s Closing file %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(engine->cacheWriteIndex));
-                len += RKFileEngineCacheFlush(engine);
-                close(engine->fd);
+            if (engine->doNotWrite) {
+                if (engine->verbose) {
+                    RKLog("%s Skip closing file %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len));
+                }
+                len = 0;
+            } else {
+                if (engine->fd != 0) {
+                    if (engine->verbose) {
+                        RKLog("%s Closing file %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
+                    }
+                    len += RKFileEngineCacheFlush(engine);
+                    close(engine->fd);
+                }
             }
-
+            
             // New file
             time_t startTime = pulse->header.time.tv_sec;
             i = sprintf(filename, "data/");
@@ -177,20 +186,32 @@ void *pulseRecorder(void *in) {
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
             sprintf(filename + i, ".rkr");
 
-            RKPreparePath(filename);
+            if (engine->doNotWrite) {
+                if (engine->verbose) {
+                    RKLog("%s Skip opening file %s ...\n", engine->name, filename);
+                }
+                len = 4096 + sizeof(RKConfig);
+            } else {
+                if (engine->verbose) {
+                    RKLog("%s Opening file %s ...\n", engine->name, filename);
+                }
+                RKPreparePath(filename);
 
-            engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
+                engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
 
-            len = RKFileEngineCacheWrite(engine, fileHeader, 4096);
-            len += RKFileEngineCacheWrite(engine, config, sizeof(RKConfig));
-
-            RKLog("%s %s file %s ...\n", engine->name, engine->doNotWrite ? "Pretending" : "Opening", filename);
+                len = RKFileEngineCacheWrite(engine, fileHeader, 4096);
+                len += RKFileEngineCacheWrite(engine, config, sizeof(RKConfig));
+            }
         }
 
         // Actual cache and write happen here.
-        len += RKFileEngineCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
-        len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-        len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        if (engine->doNotWrite) {
+            len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
+        } else {
+            len += RKFileEngineCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
+            len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+            len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        }
 
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);

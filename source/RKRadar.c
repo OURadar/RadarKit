@@ -480,6 +480,12 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     return RKResultNoError;
 }
 
+int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
+    RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
+    RKFileEngineSetDoNotWrite(radar->fileEngine, doNotWrite);
+    return RKResultNoError;
+}
+
 //
 // NOTE: Function incomplete, need to define file format
 // ingest the samples, convert, etc.

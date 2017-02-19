@@ -45,7 +45,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
-                      99.9f * worker->lag,
+                      99.5f * worker->lag,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Put a separator
@@ -55,7 +55,7 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.9f * worker->dutyCycle,
+                      99.5f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
@@ -317,7 +317,8 @@ void *momentCore(void *in) {
             k = *engine->configIndex;
             RKConfig *config = &engine->configBuffer[*engine->configIndex];
             if (engine->verbose) {
-                RKLog("%s %s Deriving C%d RCor @ %.2f dB   capacity = %d  stride = %d\n", engine->name, name, k, config->ZCal[0], ray->header.capacity, stride);
+                RKLog("%s %s Deriving C%d RCor @ %.2f dB   capacity = %s   stride = %d\n",
+                      engine->name, name, k, config->ZCal[0], RKIntegerToCommaStyleString(ray->header.capacity), stride);
             }
             RKFloat r = 0.0f;
             for (i = 0; i < space->capacity; i++) {

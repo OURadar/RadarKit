@@ -424,9 +424,9 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKIntegerToCommaStyleString((int)(1.0f / transceiver->prt)),
               RKIntegerToCommaStyleString(transceiver->gateCount),
               transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3);
-        RKLog("%s chunk size = %d   tics = %s\n",
+        RKLog("%s chunk size = %s   tics = %s\n",
               transceiver->name,
-              chunkSize,
+              RKIntegerToCommaStyleString(chunkSize),
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     

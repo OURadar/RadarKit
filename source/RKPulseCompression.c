@@ -51,7 +51,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
-                      99.9f * worker->lag,
+                      99.5f * worker->lag,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Put a separator
@@ -61,7 +61,7 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
         worker = &engine->workers[c];
         i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.9f * worker->dutyCycle,
+                      99.5f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count

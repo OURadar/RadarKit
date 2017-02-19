@@ -361,6 +361,7 @@ int main(int argc, const char **argv) {
     RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
     if (user.doNotWrite) {
         RKSweepEngineSetDoNotWrite(myRadar->sweepEngine, true);
+        RKFileEngineSetDoNotWrite(myRadar->fileEngine, true);
     }
 
     if (user.simulate) {

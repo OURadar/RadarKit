@@ -159,6 +159,7 @@ int RKSetHealthRelay(RKRadar *,
 
 // Some states of the radar
 int RKSetVerbose(RKRadar *radar, const int verbose);
+int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite);
 
 // Some operating parameters
 int RKSetWaveform(RKRadar *, const char *filename, const int group, const int maxDataLength);
