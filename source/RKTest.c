@@ -544,9 +544,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                         RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)transceiver->fs));
                     }
                     break;
-                case 'P':
-                    transceiver->simulatePosition = true;
-                    break;
                 case 'g':
                     transceiver->gateCount = atoi(sv);
                     uint32_t capacity = RKGetPulseCapacity(radar);
@@ -558,6 +555,9 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
                         RKLog(">gateCount = %s", RKIntegerToCommaStyleString(transceiver->gateCount));
                     }
+                    break;
+                case 'P':
+                    transceiver->simulatePosition = true;
                     break;
                 case 'z':
                     transceiver->sleepInterval = atoi(sv);
@@ -611,6 +611,13 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             RKLog("%s Stopped.\n", transceiver->name);
         }
         transceiver->state = RKEngineStateAllocated;
+    } else if (command[0] == 'h') {
+        sprintf(response,
+                "    h - Help list.\n"
+                "    z [value] - Sleep interval set to value.\n");
+    } else if (command[0] == 'z') {
+        transceiver->sleepInterval = atoi(command + 1);
+        RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
     }
     return RKResultSuccess;
 }
