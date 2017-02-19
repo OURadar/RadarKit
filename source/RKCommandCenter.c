@@ -131,6 +131,21 @@ int RKFlagToString(char *string, RKUserFlag flag) {
     return 0;
 }
 
+int indentCopy(char *dst, char *src) {
+    int k = 0;
+    char *e, *s = src;
+    do {
+        e = strchr(s, '\n');
+        if (e) {
+            *e = '\0';
+            k += sprintf(dst + k, "    %s\n", s);
+            s = e + 1;
+        }
+    } while (e != NULL);
+    k += sprintf(dst + k, "    %s", s);
+    return k;
+}
+
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
@@ -204,60 +219,55 @@ int socketCommandHandler(RKOperator *O) {
                             "Help\n"
                             "====\n"
                             "\n"
-                            "a [username] [password] - Authenticate\n"
+                            HIGHLIGHT("a") " [username] [password] - Authenticate\n"
                             "\n"
-                            "df [filter index] - DSP filters, where index can be:\n"
-                            "    o 0 - No ground clutter filter\n"
-                            "    o 1 - Ground clutter filter @ +/- 0.5 m/s\n"
-                            "    o 2 - Ground clutter filter @ +/- 1.0 m/s\n"
-                            "    o 3 - Ground clutter filter @ +/- 2.0 m/s\n"
+                            HIGHLIGHT("df") " [filter index] - DSP filters, where index can be:\n"
+                            "    0 - No ground clutter filter\n"
+                            "    1 - Ground clutter filter @ +/- 0.5 m/s\n"
+                            "    2 - Ground clutter filter @ +/- 1.0 m/s\n"
+                            "    3 - Ground clutter filter @ +/- 2.0 m/s\n"
                             "\n"
-                            "prt [value] - PRT in seconds\n"
-                            "prf [value] - PRF in Hz\n"
-                            "\n"
-                            "point [az] [el] - points the antenna to an azimuth over elevation\n"
-                            "\n"
-                            "s [value] - Get various data streams, where value can be combinations of\n"
-                            "    o 1 - Overall all view of the system buffer\n"
-                            "    o 2 - Product generation, ray by ray update\n"
-                            "    o 3 - Position data from the pedestal while I/Q is active\n"
-                            "    o 4 - Various engine states\n"
-                            "    o z - Display stream of Z reflectivity\n"
-                            "    o v - Display stream of V velocity\n"
-                            "    o w - Display stream of W width\n"
-                            "    o d - Display stream of D differential reflectivity\n"
-                            "    o p - Display stream of P PhiDP differential phase\n"
-                            "    o r - Display stream of R RhoHV cross-correlation coefficient\n"
-                            "    o k - Display stream of K KDP specific phase\n"
-                            "    o s - Display stream of S signal power in dBm\n"
+                            HIGHLIGHT("s") " [value] - Get various data streams, where value can be combinations of\n"
+                            "    1 - Overall all view of the system buffer\n"
+                            "    2 - Product generation, ray by ray update\n"
+                            "    3 - Position data from the pedestal while I/Q is active\n"
+                            "    4 - Various engine states\n"
+                            "    z - Display stream of Z reflectivity\n"
+                            "    v - Display stream of V velocity\n"
+                            "    w - Display stream of W width\n"
+                            "    d - Display stream of D differential reflectivity\n"
+                            "    p - Display stream of P PhiDP differential phase\n"
+                            "    r - Display stream of R RhoHV cross-correlation coefficient\n"
+                            "    k - Display stream of K KDP specific phase\n"
+                            "    s - Display stream of S signal power in dBm\n"
                             "\n"
                             "    e.g.,\n"
-                            "        szvwd - streams Z, V, W and D.\n"
-                            "        s1 - Look at the overall system status.\n"
+                            "        s zvwd - streams Z, V, W and D.\n"
+                            "        s 1 - Look at the overall system status.\n"
                             "\n"
-                            "y - Everything goes, default waveform and VCP\n"
+                            HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                             "\n"
-                            "z - Everything stops\n"
+                            HIGHLIGHT("z") " - Everything stops\n"
                             "\n");
 
                 k += sprintf(string + k,
-                             "t - Transceiver commands, everything that starts with t goes to the transceiver\n"
-                             "    module in a concatenated form, e.g., 't help' -> 'help' to transceiver. Here\n"
-                             "    is the list of commands from the transceiver module:\n");
+                             HIGHLIGHT("t") " - Transceiver commands, everything that starts with t goes to the transceiver\n"
+                             "    module in a concatenated form, e.g., 't help' -> 'help' to transceiver.\n\n");
                 user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
                 RKStripTail(sval1);
-                k += sprintf(string + k, "%s\n\n", sval1);
+                k += indentCopy(string + k, sval1);
+                k += sprintf(string + k, "\n\n");
 
                 k += sprintf(string + k,
-                             "p - Pedestal commands, everything that starts with p goes to the pedestal module\n"
-                             "    in concatenated form, e.g., 'p help' -> 'help' to pedestal. Here is the list\n"
-                             "    of commands from the pedestal module:\n");
+                             HIGHLIGHT("p") " - Pedestal commands, everything that starts with p goes to the pedestal module\n"
+                             "    in concatenated form, e.g., 'p help' -> 'help' to pedestal.\n\n");
                 user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
                 RKStripTail(sval1);
-                k += sprintf(string + k, "%s\n\n", sval1);
+                k += indentCopy(string + k, sval1);
+                k += sprintf(string + k, "\n\n");
                 //RKLog("%s %s sval1 = '%s' (%s)", engine->name, O->name, sval1, RKIntegerToCommaStyleString(strlen(sval1)));
 
-                sprintf(string + k, "--" RKEOL);
+                sprintf(string + k, "==" RKEOL);
 
                 RKOperatorSendDelimitedString(O, string);
                 break;
