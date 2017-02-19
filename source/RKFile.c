@@ -108,12 +108,13 @@ void *pulseRecorder(void *in) {
 
     uint32_t len = 0;
 
-    char *fileHeader = (void *)malloc(4096);
+    RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
     memset(fileHeader, 0, 4096);
-    fileHeader[0] = 'B';
-    fileHeader[4093] = 'E';
-    fileHeader[4094] = 'O';
-    fileHeader[4095] = 'L';
+    sprintf(fileHeader->preface, "RadarKit/RawIQ");
+    fileHeader->buildNo = 1;
+    fileHeader->bytes[4093] = 'E';
+    fileHeader->bytes[4094] = 'O';
+    fileHeader->bytes[4095] = 'L';
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
@@ -167,6 +168,7 @@ void *pulseRecorder(void *in) {
                 if (engine->verbose) {
                     RKLog("%s Skipping %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len));
                 }
+                usleep(250000);
                 len = 0;
             } else {
                 if (engine->fd != 0) {

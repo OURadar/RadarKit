@@ -196,6 +196,7 @@ int socketCommandHandler(RKOperator *O) {
                     "prt [value] - PRT in seconds\n"
                     "prf [value] - PRF in Hz\n"
                     "df [filter index] - DSP Filters: 0 = \n"
+                    "s [value] - Get various data streams\n"
                     );
             RKOperatorSendDelimitedString(O, string);
             break;
@@ -219,6 +220,9 @@ int socketCommandHandler(RKOperator *O) {
                 } else {
                     RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1));
                 }
+            } else if (!strncmp("point", O->cmd, 5)) {
+                user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
+                RKOperatorSendDelimitedString(O, string);
             }
             break;
             
@@ -250,7 +254,13 @@ int socketCommandHandler(RKOperator *O) {
         case 't':
         case 'w':
             // Temporary pass everything to transceiver
-            user->radar->transceiverExec(user->radar->transceiver, O->cmd, user->radar->transceiverResponse);
+            user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
+            RKOperatorSendDelimitedString(O, string);
+            break;
+            
+        case 'v':
+            // There is only one possibility now - "vol"
+            user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
             break;
             
         default:
@@ -315,16 +325,17 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
         if (user->streams & RKUserFlagStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%02x  Com:0x%02x  Mom:0x%02x  Swe:0x%02x  Fil:0x%02x  Hea:0x%02x | Pos:%04d  Pul:%05d  Ray:%04d" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%02x/%04d  Pul:0x%02x/%05d  Mom:0x%02x/%04d  Hea:0x%02x/%02d  Swe:0x%02x  Fil:0x%02x" RKEOL,
                          user->radar->positionEngine->state,
-                         user->radar->pulseCompressionEngine->state,
-                         user->radar->momentEngine->state,
-                         user->radar->sweepEngine->state,
-                         user->radar->fileEngine->state,
-                         user->radar->healthEngine->state,
                          user->radar->positionIndex,
+                         user->radar->pulseCompressionEngine->state,
                          user->radar->pulseIndex,
-                         user->radar->rayIndex);
+                         user->radar->momentEngine->state,
+                         user->radar->rayIndex,
+                         user->radar->healthEngine->state,
+                         user->radar->healthIndex,
+                         user->radar->sweepEngine->state,
+                         user->radar->fileEngine->state);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);

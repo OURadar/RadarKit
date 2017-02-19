@@ -496,6 +496,15 @@ typedef struct rk_scratch {
     RKFloat          *KDP;                                           // Specific phase KDP
 } RKScratch;
 
+typedef union rk_file_header {
+    struct {
+        char         preface[RKNameLength];
+        uint32_t     buildNo;
+        RKRadarDesc  desc;
+    };
+    RKByte bytes[4096];
+} RKFileHeader;
+
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

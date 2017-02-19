@@ -604,7 +604,9 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         transceiver->state |= RKEngineStateDeactivating;
         transceiver->state ^= RKEngineStateActive;
         pthread_join(transceiver->tidRunLoop, NULL);
-        sprintf(response, "ACK. Transceiver stopped.");
+        if (response != NULL) {
+            sprintf(response, "ACK. Transceiver stopped.");
+        }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", transceiver->name);
         }

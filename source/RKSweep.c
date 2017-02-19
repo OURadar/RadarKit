@@ -176,16 +176,17 @@ void *sweepWriter(void *in) {
         }
         sprintf(filename + j, ".nc");
         
-        RKPreparePath(filename);
-        
         if (engine->verbose) {
             RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);
         }
 
         if (engine->doNotWrite) {
+            usleep(50000);
             continue;
         }
         
+        RKPreparePath(filename);
+
         if ((j = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);
             return NULL;

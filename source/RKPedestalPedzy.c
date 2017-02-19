@@ -119,9 +119,14 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             }
         }
         if (responseIndex == me->responseIndex) {
+            if (response != NULL) {
+                sprintf(response, "NAK. Timeout.");
+            }
             return RKResultTimeout;
         }
-        strcpy(response, me->responses[responseIndex]);
+        if (response != NULL) {
+            strcpy(response, me->responses[responseIndex]);
+        }
     }
     return RKResultNoError;
 }
