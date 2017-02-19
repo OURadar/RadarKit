@@ -72,7 +72,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         z_pf = (RKVec *)space->Z[p];
         v_pf = (RKVec *)space->V[p];
         w_pf = (RKVec *)space->W[p];
-        r_pf = (RKVec *)space->rcor;
+        r_pf = (RKVec *)space->rcor[p];
         // Packed single math
         for (k = 0; k < K; k++) {
             // Z:  10 * (previous) + rcr + zcal  =  10 * log10(S) + rangeCorrection + ZCal;
@@ -318,7 +318,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             }
             printf(RKEOL);
             sprintf(variable, "  rcor = ");
-            RKShowVecFloat(variable, space->rcor, gateShown);
+            RKShowVecFloat(variable, space->rcor[p], gateShown);
             printf(RKEOL);
             sprintf(variable, "    Z%s = ", p == 0 ? "h" : "v");
             RKShowVecFloat(variable, space->Z[p], gateShown);

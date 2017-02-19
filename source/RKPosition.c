@@ -347,11 +347,11 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
     if (engine->verbose > 1) {
-        RKLog("%s stopping ...\n", engine->name);
+        RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state = RKEngineStateDeactivating;
     pthread_join(engine->threadId, NULL);
-    RKLog("%s stopped.\n", engine->name);
+    RKLog("%s Stopped.\n", engine->name);
     engine->state = RKEngineStateAllocated;
     return RKResultNoError;
 }

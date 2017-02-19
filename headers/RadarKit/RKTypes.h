@@ -295,12 +295,12 @@ enum RKHealthNode {
 
 typedef uint32_t RKEngineState;
 enum RKEngineState {
-    RKEngineStateNull          = 0,
-    RKEngineStateAllocated     = 1,
-    RKEngineStateActivating    = (1 << 1),
-    RKEngineStateActive        = (1 << 2),
-    RKEngineStateDeactivating  = (1 << 3),
-    RKEngineStateWritingFile   = (1 << 4)
+    RKEngineStateNull                = 0,
+    RKEngineStateAllocated           = 1,
+    RKEngineStateActivating          = (1 << 1),
+    RKEngineStateActive              = (1 << 2),
+    RKEngineStateDeactivating        = (1 << 3),
+    RKEngineStateWritingFile         = (1 << 4)
 };
 
 // A general description of a radar. These should never change after the radar has gone live
@@ -484,7 +484,7 @@ typedef struct rk_scratch {
     RKFloat          *gC;                                            // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
     RKFloat          noise[2];                                       // Noise floor of each channel
     RKFloat          aliasingVelocity;                               // Aliasing velocity
-    RKFloat          *rcor;                                          // Reflectivity range correction factor
+    RKFloat          *rcor[2];                                       // Reflectivity range correction factor
     RKFloat          *S[2];                                          // Signal
     RKFloat          *Z[2];                                          // Reflectivity in dB
     RKFloat          *V[2];                                          // Velocity in same units as aliasing velocity

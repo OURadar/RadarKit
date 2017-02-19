@@ -317,13 +317,14 @@ void *momentCore(void *in) {
             k = *engine->configIndex;
             RKConfig *config = &engine->configBuffer[*engine->configIndex];
             if (engine->verbose) {
-                RKLog("%s %s Deriving C%d RCor @ %.2f dB   capacity = %s   stride = %d\n",
-                      engine->name, name, k, config->ZCal[0], RKIntegerToCommaStyleString(ray->header.capacity), stride);
+                RKLog("%s %s C%d RCor @ %.2f/%.2f dB   capacity = %s   stride = %d\n",
+                      engine->name, name, k, config->ZCal[0], config->ZCal[1], RKIntegerToCommaStyleString(ray->header.capacity), stride);
             }
             RKFloat r = 0.0f;
             for (i = 0; i < space->capacity; i++) {
                 r = (RKFloat)i * gateSizeMeters;
-                space->rcor[i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
+                space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
+                space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1];
             }
         }
 
@@ -411,7 +412,7 @@ void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, name);
 
     return NULL;
 }

@@ -341,7 +341,7 @@ void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, name);
     
     return NULL;
 }

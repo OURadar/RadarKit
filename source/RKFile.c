@@ -165,13 +165,13 @@ void *pulseRecorder(void *in) {
             // Close the current file
             if (engine->doNotWrite) {
                 if (engine->verbose) {
-                    RKLog("%s Skip closing file %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len));
+                    RKLog("%s Skipping %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len));
                 }
                 len = 0;
             } else {
                 if (engine->fd != 0) {
                     if (engine->verbose) {
-                        RKLog("%s Closing file %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
+                        RKLog("%s Closing %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
                     }
                     len += RKFileEngineCacheFlush(engine);
                     close(engine->fd);
@@ -188,12 +188,12 @@ void *pulseRecorder(void *in) {
 
             if (engine->doNotWrite) {
                 if (engine->verbose) {
-                    RKLog("%s Skip opening file %s ...\n", engine->name, filename);
+                    RKLog("%s Skipping %s ...\n", engine->name, filename);
                 }
                 len = 4096 + sizeof(RKConfig);
             } else {
                 if (engine->verbose) {
-                    RKLog("%s Opening file %s ...\n", engine->name, filename);
+                    RKLog("%s Creating %s ...\n", engine->name, filename);
                 }
                 RKPreparePath(filename);
 

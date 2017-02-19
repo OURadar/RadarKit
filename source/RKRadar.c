@@ -302,7 +302,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->state |= RKRadarStateSweepEngineInitialized;
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar initialized. Data buffers occupy %s B (%s GiB)\n",
+        RKLog("Radar initialized. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }

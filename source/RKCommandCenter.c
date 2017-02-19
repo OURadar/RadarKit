@@ -315,7 +315,7 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
         if (user->streams & RKUserFlagStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%x  Com:0x%x  Mom:0x%x  Swe:0x%x  Fil:0x%x  Hea:0x%x   Pos:%04d  Pul:%05d  Ray:%04d" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%02x  Com:0x%02x  Mom:0x%02x  Swe:0x%02x  Fil:0x%02x  Hea:0x%02x | Pos:%04d  Pul:%05d  Ray:%04d" RKEOL,
                          user->radar->positionEngine->state,
                          user->radar->pulseCompressionEngine->state,
                          user->radar->momentEngine->state,
@@ -622,8 +622,8 @@ void RKCommandCenterStart(RKCommandCenter *center) {
 
 void RKCommandCenterStop(RKCommandCenter *center) {
     if (center->verbose > 1) {
-        RKLog("%s stopping ...\n", center->name);
+        RKLog("%s Stopping ...\n", center->name);
     }
     RKServerStop(center->server);
-    RKLog("%s stopped.\n", center->name);
+    RKLog("%s Stopped.\n", center->name);
 }
