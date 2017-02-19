@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKWindow__
-#define __RadarKit_RKWindow__
+#ifndef __RadarKit_Window__
+#define __RadarKit_Window__
 
 #include <RadarKit/RKFoundation.h>
 
@@ -15,6 +15,15 @@
 //extern "C" {
 //#endif
 
+typedef uint8_t RKWindowType;
+enum RKWindowType{
+    RKWindowTypeBoxCar,
+    RKWindowTypeHann,
+    RKWindowTypeHamming,
+    RKWindowTypeKaiser
+};
+
+void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...);
 
 // hamming
 // hanning
@@ -25,4 +34,4 @@
 //}
 //#endif
 
-#endif /* defined(__RadarKit_RKWindow__) */
+#endif /* defined(__RadarKit_Window__) */

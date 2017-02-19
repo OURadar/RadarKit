@@ -151,6 +151,7 @@ UserParams processInput(int argc, const char **argv) {
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
+        {"test-windows"          , no_argument      , NULL, 'u'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
         {"test-write-speed"      , no_argument      , NULL, 'y'},
@@ -270,6 +271,10 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 't':
                 strncpy(user.tweetaHost, optarg, sizeof(user.tweetaHost));
+                break;
+            case 'u':
+                RKTestWindow();
+                exit(EXIT_SUCCESS);
                 break;
             case 'v':
                 user.verbose++;

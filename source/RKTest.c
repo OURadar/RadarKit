@@ -860,3 +860,19 @@ void RKTestCacheWrite(void) {
   
     RKFileEngineFree(fileEngine);
 }
+
+void RKTestWindow(void) {
+    int k;
+    int n = 10;
+    RKFloat *window = (RKFloat *)malloc(n * sizeof(RKFloat));
+    RKWindowMake(window, RKWindowTypeHamming, n);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+    RKWindowMake(window, RKWindowTypeKaiser, n, 0.5);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+
+    free(window);
+}

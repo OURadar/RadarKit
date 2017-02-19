@@ -45,9 +45,6 @@
 
 #define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 
-
-
-
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
