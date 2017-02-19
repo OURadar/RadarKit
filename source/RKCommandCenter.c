@@ -151,7 +151,7 @@ int socketCommandHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     
     int j, k, s;
-    char string[RKMaximumStringLength * 4];
+    char string[RKMaximumStringLength * 2];
 
     j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
     for (k = 0; k < engine->radarCount; k++) {
@@ -161,7 +161,8 @@ int socketCommandHandler(RKOperator *O) {
 
     //int ival;
     //float fval1, fval2;
-    char sval1[RKMaximumStringLength], sval2[RKMaximumStringLength];
+    char sval1[RKMaximumStringLength];
+    char sval2[RKMaximumStringLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     
@@ -219,15 +220,15 @@ int socketCommandHandler(RKOperator *O) {
                             "Help\n"
                             "====\n"
                             "\n"
-                            HIGHLIGHT("a") " [username] [password] - Authenticate\n"
+                            HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
                             "\n"
-                            HIGHLIGHT("df") " [filter index] - DSP filters, where index can be:\n"
+                            HIGHLIGHT("f") " [FILTER_INDEX] - DSP filters, where index can be:\n"
                             "    0 - No ground clutter filter\n"
                             "    1 - Ground clutter filter @ +/- 0.5 m/s\n"
                             "    2 - Ground clutter filter @ +/- 1.0 m/s\n"
                             "    3 - Ground clutter filter @ +/- 2.0 m/s\n"
                             "\n"
-                            HIGHLIGHT("s") " [value] - Get various data streams, where value can be combinations of\n"
+                            HIGHLIGHT("s") " [VALUE] - Get various data streams, where value can be combinations of\n"
                             "    1 - Overall all view of the system buffer\n"
                             "    2 - Product generation, ray by ray update\n"
                             "    3 - Position data from the pedestal while I/Q is active\n"
@@ -245,13 +246,17 @@ int socketCommandHandler(RKOperator *O) {
                             "        s zvwd - streams Z, V, W and D.\n"
                             "        s 1 - Look at the overall system status.\n"
                             "\n"
+                            HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
+                            "    e.g.,\n"
+                            "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
+                            "\n"
                             HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                             "\n"
                             HIGHLIGHT("z") " - Everything stops\n"
                             "\n");
 
                 k += sprintf(string + k,
-                             HIGHLIGHT("t") " - Transceiver commands, everything that starts with t goes to the transceiver\n"
+                             HIGHLIGHT("t") " - " ITALIC("Transceiver") " commands, everything that starts with t goes to the transceiver\n"
                              "    module in a concatenated form, e.g., 't help' -> 'help' to transceiver.\n\n");
                 user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
                 RKStripTail(sval1);
@@ -259,7 +264,7 @@ int socketCommandHandler(RKOperator *O) {
                 k += sprintf(string + k, "\n\n");
 
                 k += sprintf(string + k,
-                             HIGHLIGHT("p") " - Pedestal commands, everything that starts with p goes to the pedestal module\n"
+                             HIGHLIGHT("p") " - " ITALIC ("Pedestal") " commands, everything that starts with p goes to the pedestal module\n"
                              "    in concatenated form, e.g., 'p help' -> 'help' to pedestal.\n\n");
                 user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
                 RKStripTail(sval1);
@@ -267,8 +272,9 @@ int socketCommandHandler(RKOperator *O) {
                 k += sprintf(string + k, "\n\n");
                 //RKLog("%s %s sval1 = '%s' (%s)", engine->name, O->name, sval1, RKIntegerToCommaStyleString(strlen(sval1)));
 
-                sprintf(string + k, "==" RKEOL);
+                k += sprintf(string + k, "==" RKEOL);
 
+                RKLog("Help text occupies %s B\n", RKIntegerToCommaStyleString(k));
                 RKOperatorSendDelimitedString(O, string);
                 break;
             }
@@ -325,7 +331,7 @@ int socketCommandHandler(RKOperator *O) {
             break;
 
         case 'p':
-            // Temporary pass everything to pedestal
+            // Pass everything to pedestal
             k = 0;
             do {
                 k++;
@@ -336,7 +342,7 @@ int socketCommandHandler(RKOperator *O) {
 
         case 't':
         case 'w':
-            // Temporary pass everything to transceiver
+            // Pass everything to transceiver
             k = 1;
             while (O->cmd[k] == ' ') {
                 k++;
@@ -346,7 +352,7 @@ int socketCommandHandler(RKOperator *O) {
             break;
             
         case 'v':
-            // There is only one possibility now - "vol"
+            // Simple volume
             user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
             break;
             

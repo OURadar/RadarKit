@@ -77,6 +77,7 @@
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[91m" : (x > RKDutyCyleOrangeThreshold ? "\033[93m" : "\033[92m"))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[91m" : (x > RKLagOrangeThreshold      ? "\033[93m" : "\033[92m"))
 
+#define ITALIC(x)            "\033[3m" x "\033[23m"
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
 
