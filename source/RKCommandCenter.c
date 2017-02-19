@@ -136,7 +136,7 @@ int socketCommandHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     
     int j, k, s;
-    char string[RKMaximumStringLength];
+    char string[RKMaximumStringLength * 4];
 
     j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
     for (k = 0; k < engine->radarCount; k++) {
@@ -145,8 +145,10 @@ int socketCommandHandler(RKOperator *O) {
     }
 
     //int ival;
-    char sval1[512], sval2[512];
-    float fval1, fval2;
+    //float fval1, fval2;
+    char sval1[RKMaximumStringLength], sval2[RKMaximumStringLength];
+    memset(sval1, 0, sizeof(sval1));
+    memset(sval2, 0, sizeof(sval2));
     
     // Delimited reading ...
     
@@ -154,7 +156,7 @@ int socketCommandHandler(RKOperator *O) {
         case 'a':
             // Authenticate
             sscanf(O->cmd + 1, "%s %s", sval1, sval2);
-            RKLog("Authenticating %s %s ... (%d) (%d)\n", sval1, sval2, sizeof(sval1), sizeof(user->login));
+            RKLog("Authenticating %s %s ... (%d) (%d)\n", sval1, sval2, strlen(sval1), sizeof(user->login));
             strncpy(user->login, sval1, sizeof(user->login) - 1);
             j = sprintf(string, "{\"Radars\":[");
             for (k = 0; k < engine->radarCount; k++) {
@@ -167,9 +169,10 @@ int socketCommandHandler(RKOperator *O) {
                 j += sprintf(string + j, "], ");
             }
             s = sprintf(sval1, "vol p 2 140 180");
-            for (k = 4; k < 21; k += 2) {
+            for (k = 4; k < 20; k += 2) {
                 s += sprintf(sval1 + s, "/p %d 140 180", k);
             }
+            s += sprintf(sval1 + s, "/p 20 140,120 180");
             j += sprintf(string + j, "\"Controls\":["
                          "{\"Label\":\"Go\", \"Command\":\"y\"}, "
                          "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
@@ -196,40 +199,95 @@ int socketCommandHandler(RKOperator *O) {
             break;
             
         case 'h':
-            sprintf(string,
-                    "a [username] [password] - Authenticate\n"
-                    "prt [value] - PRT in seconds\n"
-                    "prf [value] - PRF in Hz\n"
-                    "df [filter index] - DSP Filters: 0 = \n"
-                    "s [value] - Get various data streams\n"
-                    );
-            RKOperatorSendDelimitedString(O, string);
-            break;
-            
-        case 'p':
-            // Change PRT
-            if (!strncmp("prt", O->cmd, 3)) {
-                //user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
-                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
-                if (k == 2) {
-                    RKLog("%s %s Changing PRT to %.4f + %.4f ms ...\n", engine->name, O->name, fval1, fval2);
-                } else {
-                    RKLog("%s %s Changing PRT to %.4f s ...\n", engine->name, O->name, fval1);
-                }
-            } else if (!strncmp("prf", O->cmd, 3)) {
-                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
-                fval1 = roundf(fval1);
-                if (k == 2) {
-                    fval2 = roundf(fval2);
-                    RKLog("%s %s Changing PRF to %s + %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1), RKIntegerToCommaStyleString((long)fval2));
-                } else {
-                    RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1));
-                }
-            } else if (!strncmp("point", O->cmd, 5)) {
-                user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
+            if (strlen(O->cmd) == 1 || !strncmp(O->cmd, "help", 4)) {
+                k = sprintf(string,
+                            "Help\n"
+                            "====\n"
+                            "\n"
+                            "a [username] [password] - Authenticate\n"
+                            "\n"
+                            "df [filter index] - DSP filters, where index can be:\n"
+                            "    o 0 - No ground clutter filter\n"
+                            "    o 1 - Ground clutter filter @ +/- 0.5 m/s\n"
+                            "    o 2 - Ground clutter filter @ +/- 1.0 m/s\n"
+                            "    o 3 - Ground clutter filter @ +/- 2.0 m/s\n"
+                            "\n"
+                            "prt [value] - PRT in seconds\n"
+                            "prf [value] - PRF in Hz\n"
+                            "\n"
+                            "point [az] [el] - points the antenna to an azimuth over elevation\n"
+                            "\n"
+                            "s [value] - Get various data streams, where value can be combinations of\n"
+                            "    o 1 - Overall all view of the system buffer\n"
+                            "    o 2 - Product generation, ray by ray update\n"
+                            "    o 3 - Position data from the pedestal while I/Q is active\n"
+                            "    o 4 - Various engine states\n"
+                            "    o z - Display stream of Z reflectivity\n"
+                            "    o v - Display stream of V velocity\n"
+                            "    o w - Display stream of W width\n"
+                            "    o d - Display stream of D differential reflectivity\n"
+                            "    o p - Display stream of P PhiDP differential phase\n"
+                            "    o r - Display stream of R RhoHV cross-correlation coefficient\n"
+                            "    o k - Display stream of K KDP specific phase\n"
+                            "    o s - Display stream of S signal power in dBm\n"
+                            "\n"
+                            "    e.g.,\n"
+                            "        szvwd - streams Z, V, W and D.\n"
+                            "        s1 - Look at the overall system status.\n"
+                            "\n"
+                            "y - Everything goes, default waveform and VCP\n"
+                            "\n"
+                            "z - Everything stops\n"
+                            "\n");
+
+                k += sprintf(string + k,
+                             "t - Transceiver commands, everything that starts with t goes to the transceiver\n"
+                             "    module in a concatenated form, e.g., 't help' -> 'help' to transceiver. Here\n"
+                             "    is the list of commands from the transceiver module:\n");
+                user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
+                RKStripTail(sval1);
+                k += sprintf(string + k, "%s\n\n", sval1);
+
+                k += sprintf(string + k,
+                             "p - Pedestal commands, everything that starts with p goes to the pedestal module\n"
+                             "    in concatenated form, e.g., 'p help' -> 'help' to pedestal. Here is the list\n"
+                             "    of commands from the pedestal module:\n");
+                user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
+                RKStripTail(sval1);
+                k += sprintf(string + k, "%s\n\n", sval1);
+                //RKLog("%s %s sval1 = '%s' (%s)", engine->name, O->name, sval1, RKIntegerToCommaStyleString(strlen(sval1)));
+
+                sprintf(string + k, "--" RKEOL);
+
                 RKOperatorSendDelimitedString(O, string);
+                break;
             }
-            break;
+            // Forward to health relay
+            
+//        case 'p':
+//            // Change PRT
+//            if (!strncmp("prt", O->cmd, 3)) {
+//                //user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
+//                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
+//                if (k == 2) {
+//                    RKLog("%s %s Changing PRT to %.4f + %.4f ms ...\n", engine->name, O->name, fval1, fval2);
+//                } else {
+//                    RKLog("%s %s Changing PRT to %.4f s ...\n", engine->name, O->name, fval1);
+//                }
+//            } else if (!strncmp("prf", O->cmd, 3)) {
+//                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
+//                fval1 = roundf(fval1);
+//                if (k == 2) {
+//                    fval2 = roundf(fval2);
+//                    RKLog("%s %s Changing PRF to %s + %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1), RKIntegerToCommaStyleString((long)fval2));
+//                } else {
+//                    RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1));
+//                }
+//            } else if (!strncmp("point", O->cmd, 5)) {
+//                user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
+//                RKOperatorSendDelimitedString(O, string);
+//            }
+//            break;
             
         case 'r':
             sscanf("%s", O->cmd + 1, sval1);
@@ -256,10 +314,24 @@ int socketCommandHandler(RKOperator *O) {
             RKOperatorSendDelimitedString(O, string);
             break;
 
+        case 'p':
+            // Temporary pass everything to pedestal
+            k = 0;
+            do {
+                k++;
+            } while (O->cmd[k] == ' ');
+            user->radar->pedestalExec(user->radar->pedestal, O->cmd + k, string);
+            RKOperatorSendDelimitedString(O, string);
+            break;
+
         case 't':
         case 'w':
             // Temporary pass everything to transceiver
-            user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
+            k = 1;
+            while (O->cmd[k] == ' ') {
+                k++;
+            }
+            user->radar->transceiverExec(user->radar->transceiver, O->cmd + k, string);
             RKOperatorSendDelimitedString(O, string);
             break;
             
@@ -271,14 +343,18 @@ int socketCommandHandler(RKOperator *O) {
         case 'y':
             // Go - get default command from preference object
             s = sprintf(sval1, "vol p 2 140 180");
-            for (k = 4; k < 21; k += 2) {
+            for (k = 4; k < 20; k += 2) {
                 s += sprintf(sval1 + s, "/p %d 140 180", k);
             }
+            s += sprintf(sval1 + s, "/p 20 140,120 180" RKEOL);
             user->radar->pedestalExec(user->radar->pedestal, sval1, string);
             RKOperatorSendDelimitedString(O, string);
             user->radar->transceiverExec(user->radar->transceiver, "y", string);
             RKOperatorSendDelimitedString(O, string);
             break;
+            
+        case 'z':
+            // Stop everything
             
         default:
             snprintf(string, RKMaximumStringLength, "Unknown command '%s'." RKEOL, O->cmd);

@@ -20,6 +20,7 @@ typedef struct rk_pedzy {
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
+    char                   latestCommand[RKMaximumStringLength];
     RKRadar                *radar;
 } RKPedestalPedzy;
 

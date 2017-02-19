@@ -121,8 +121,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     clock->uBuffer[k] = u;
     if (clock->count > 1) {
         j = RKPreviousModuloS(k, clock->size);
-        if (x - clock->xBuffer[j] > 2.0 || u - clock->uBuffer[j] < 0) {
-            RKLog("%s Warning.   x = %s -> %s -> %s   u = %s -> %s",
+        if (x - clock->xBuffer[j] > 60.0 || u - clock->uBuffer[j] < 0) {
+            // Latest in raw input xBuffer > latest (derived time > x
+            RKLog("%s Warning. x = %s > %s > %s   u = %s > %s",
                   clock->name,
                   RKFloatToCommaStyleString(clock->xBuffer[j]), RKFloatToCommaStyleString(clock->latestTime), RKFloatToCommaStyleString(x),
                   RKFloatToCommaStyleString(clock->uBuffer[j]), RKFloatToCommaStyleString(u));

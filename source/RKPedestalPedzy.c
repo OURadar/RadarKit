@@ -42,7 +42,9 @@ int RKPedestalPedzyRead(RKClient *client) {
         if (!strncmp(string, "pong", 4)) {
             // Just a beacon response.
         } else {
-            RKLog("%s %s", client->name, string);
+            if (client->verbose && me->latestCommand[0] != 'h') {
+                RKLog("%s %s", client->name, string);
+            }
             strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
             me->responseIndex = RKNextModuloS(me->responseIndex, RKPedestalPedzyFeedbackDepth);
         }
@@ -107,7 +109,8 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     } else {
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
-        RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
+        size_t size = snprintf(me->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
+        RKNetworkSendPackets(client->sd, me->latestCommand, size + 1, NULL);
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {

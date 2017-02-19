@@ -235,6 +235,7 @@ void *RKOperatorRoutine(void *in) {
                 } else {
                     RKLog("%s No command handler. cmd '%s' from Op-%03d (%s)\n", M->name, O->cmd, O->iid, O->ip);
                 }
+                memset(str, 0, sizeof(str));
             }
         } else if (r < 0) {
             // Errors
