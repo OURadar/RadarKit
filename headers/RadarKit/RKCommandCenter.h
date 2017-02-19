@@ -44,7 +44,8 @@ enum RKUserFlag {
     RKUserFlagProductR             = (1ULL << 37),           //
     RKUserFlagProductK             = (1ULL << 38),           //
     RKUserFlagProductS             = (1ULL << 39),           //
-    RKUserFlagProductZVWDPRKS      = 0xFF00000000ULL         //
+    RKUserFlagProductZVWDPRKS      = 0xFF00000000ULL,        //
+    RKUserFlagEverything           = 0xFFFFFFFFFFULL
 };
 
 typedef struct  rk_user {

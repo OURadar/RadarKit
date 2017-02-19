@@ -53,5 +53,6 @@ void RKTestProcessorSpeed(void);
 void RKTestOneRay(void);
 
 void RKTestCacheWrite(void);
+void RKTestWindow(void);
 
 #endif /* defined(__RadarKit_RKFile__) */
