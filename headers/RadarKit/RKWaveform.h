@@ -30,7 +30,7 @@ typedef struct rk_waveform {
 } RKWaveform;
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
-RKWaveform *RKWaveformInit();
+RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);
 
 void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double bandwidth);
