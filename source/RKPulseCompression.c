@@ -21,7 +21,7 @@ void *pulseCompressionCore(void *in);
 
 void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
     for (int k = 0; k < n; k++) {
-        printf("    %6.2fd %s %6.2fdi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
+        printf("    %6.2f %s %6.2fi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
     }
 }
 
@@ -262,7 +262,7 @@ void *pulseCompressionCore(void *_in) {
 
                     fftwf_execute_dft(engine->planForwardOutPlace[planIndex], (fftwf_complex *)engine->filters[gid][j], out);
 
-                    //printf("dft(filt) =\n"); RKPulseCompressionShowBuffer(in, 8);
+                    //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
 
                     if (multiplyMethod == 1) {
                         // In-place SIMD multiplication using the interleaved format
@@ -301,6 +301,9 @@ void *pulseCompressionCore(void *_in) {
                         *Z.i++ = out[i][0];
                         *Z.q++ = out[i][1];
                     }
+
+                    Y = RKGetComplexDataFromPulse(pulse, p);
+                    //printf("Y real =\n"); RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
 
                     // Copy over the parameters used
                     pulse->parameters.planIndices[p][j] = planIndex;
@@ -704,8 +707,9 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     if (engine->filters[group][index] != NULL) {
         free(engine->filters[group][index]);
     }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, maxDataLength * sizeof(RKComplex)))
-    memset(engine->filters[group][index], 0, maxDataLength * sizeof(RKComplex));
+    size_t nfft = 1 << (int)ceilf(log2f((float)maxDataLength));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
+    memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
