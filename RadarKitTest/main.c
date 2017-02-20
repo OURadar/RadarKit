@@ -124,7 +124,7 @@ UserParams processInput(int argc, const char **argv) {
     memset(&user, 0, sizeof(UserParams));
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
-    user.gateCount = 2000;
+    user.gateCount = 16000;
     
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
@@ -334,7 +334,7 @@ int main(int argc, const char **argv) {
     desc.initFlags = RKInitFlagAllocEverything;
     desc.pulseCapacity = user.gateCount;
     if (user.gateCount >= 4000) {
-        desc.pulseToRayRatio = 2;
+        desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
         desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
         desc.pulseToRayRatio = 1;
