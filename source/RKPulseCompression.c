@@ -365,16 +365,16 @@ void *pulseWatcher(void *_in) {
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
     RKPulse *pulseToSkip;
     
+    // Maximum plan size
+    planSize = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    bool exportWisdom = false;
+    const char wisdomFile[] = "radarkit-fft-wisdom";
+
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, pulse->header.capacity * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
     engine->memoryUsage += 2 * pulse->header.capacity * sizeof(fftwf_complex);
-
-    // Maximum plan size
-    planSize = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
-    bool exportWisdom = false;
-    const char wisdomFile[] = "fft-wisdom";
 
     if (RKFilenameExists(wisdomFile)) {
         RKLog(">%s Loading DFT wisdom ...\n", engine->name);
