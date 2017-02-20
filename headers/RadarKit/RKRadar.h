@@ -20,6 +20,7 @@
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKSweep.h>
 #include <RadarKit/RKFile.h>
+#include <RadarKit/RKWaveform.h>
 
 typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
 enum RKRadarState {
