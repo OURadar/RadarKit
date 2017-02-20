@@ -179,18 +179,18 @@ void *momentCore(void *in) {
     // Allocate local resources and keep track of the total allocation
     ray = RKGetRay(engine->rayBuffer, 0);
     pulse = RKGetPulse(engine->pulseBuffer, 0);
-    uint32_t capacity = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
+    uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->verbose > 3);
     if (space == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
-        return (void *)RKResultFailedToAllocateScratchSpace;
+        exit(EXIT_FAILURE);
     }
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
-        return (void *)RKResultFailedToAllocateDutyCycleBuffer;
+        exit(EXIT_FAILURE);
     }
     mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
@@ -243,7 +243,7 @@ void *momentCore(void *in) {
     uint32_t marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
-    int stride = MAX(1, pulse->header.capacity / ray->header.capacity);
+    int stride = MAX(1, (int)(roundf((float)pulse->header.capacity / ray->header.capacity)));
 
     char sweepBeginMarker[RKNameLength] = "S", sweepEndMarker[RKNameLength] = "E";
     if (rkGlobalParameters.showColor) {

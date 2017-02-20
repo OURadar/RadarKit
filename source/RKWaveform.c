@@ -25,8 +25,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
             RKLog("Error. Unable to allocate memory.\n");
             exit(EXIT_FAILURE);
         }
-        memset(waveform->samples, 0, waveform->depth * sizeof(RKComplex));
-        memset(waveform->iSamples, 0, waveform->depth * sizeof(RKInt16C));
+        memset(waveform->samples[k], 0, waveform->depth * sizeof(RKComplex));
+        memset(waveform->iSamples[k], 0, waveform->depth * sizeof(RKInt16C));
     }
     return waveform;
 }
@@ -60,7 +60,7 @@ void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double band
     for (k = 0; k < waveform->count; k++) {
         f = stride * (double)(k / 2) - 0.5 * bandwidth;
         omega = 2.0 * M_PI * f / fs;
-        RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, omega);
+        //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, omega);
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (i = 0; i < waveform->depth; i++) {

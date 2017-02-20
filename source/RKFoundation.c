@@ -342,8 +342,9 @@ float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t m) {
 #pragma mark -
 
 size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount, const bool showNumbers) {
-    if (capacity - (1 << (int)log2f((float)capacity))) {
-        RKLog("Error. Scratch space capacity must be power of 2!");
+    if (capacity - (capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat)) {
+        RKLog("Error. Scratch space capacity must be an integer multiple of %s!",
+              RKIntegerToCommaStyleString(RKSIMDAlignSize / sizeof(RKFloat)));
         return 0;
     }
     if (lagCount > RKLagCount) {
