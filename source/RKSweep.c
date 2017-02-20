@@ -31,14 +31,16 @@ void *sweepWriter(void *in) {
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
     RKRadarDesc *desc = engine->radarDescription;
     
-    RKLog("%s C%02d-%02d-%02d  E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x-%03x   (%d)\n",
-          engine->name,
-          S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
-          config->sweepElevation   ,
-          S->header.startElevation , E->header.endElevation   ,
-          S->header.startAzimuth   , E->header.endAzimuth     ,
-          S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-          n);
+    if (engine->verbose > 1) {
+        RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x-%03x   (%d)\n",
+              engine->name,
+              S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
+              config->sweepElevation   ,
+              S->header.startElevation , E->header.endElevation   ,
+              S->header.startAzimuth   , E->header.endAzimuth     ,
+              S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+              n);
+    }
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -59,16 +61,18 @@ void *sweepWriter(void *in) {
     T = rays[k + 1];
     E = rays[k + n - 1];
     config = &engine->configBuffer[T->header.configIndex];
-    RKLog(">%s    C%02d     E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x       (%s%d%s)\n",
-          engine->name,
-          T->header.configIndex,
-          config->sweepElevation,
-          S->header.startElevation , E->header.endElevation,
-          S->header.startAzimuth   , E->header.endAzimuth,
-          S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-          n != 360 ? RKGetColorOfIndex(1) : "",
-          n,
-          RKNoColor);
+    if (engine->verbose) {
+        RKLog(">%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s%d%s)\n",
+              engine->name,
+              T->header.configIndex,
+              config->sweepElevation,
+              S->header.startElevation , E->header.endElevation,
+              S->header.startAzimuth   , E->header.endAzimuth,
+              S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+              n != 360 ? RKGetColorOfIndex(1) : "",
+              n,
+              RKNoColor);
+    }
 
 //    RKRadarDesc *radar = engine->radarDescription;
 //    RKLog("%s %s @ %.7f %.7f\n", engine->name,
