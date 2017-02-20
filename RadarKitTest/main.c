@@ -197,10 +197,10 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'M':
                 user.simulate = true;
-                user.gateCount = 4000;
+                user.gateCount = 16000;
                 user.prf = 5000;
-                user.coresForPulseCompression = 4;
-                user.coresForProductGenerator = 2;
+                user.coresForPulseCompression = 6;
+                user.coresForProductGenerator = 4;
                 break;
             case 'R':
                 RKTestOneRay();
@@ -368,8 +368,7 @@ int main(int argc, const char **argv) {
     // Set any parameters here:
     RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
     if (user.doNotWrite) {
-        RKSweepEngineSetDoNotWrite(myRadar->sweepEngine, true);
-        RKFileEngineSetDoNotWrite(myRadar->fileEngine, true);
+        RKSetDoNotWrite(myRadar, true);
     }
 
     if (user.simulate) {
