@@ -9,6 +9,9 @@ core.*
 *.log
 *.dSYM
 
+data
+moment
+
 radar
 rktest
 fft-wisdom

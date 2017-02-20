@@ -20,7 +20,8 @@ enum RKWindowType{
     RKWindowTypeBoxCar,
     RKWindowTypeHann,
     RKWindowTypeHamming,
-    RKWindowTypeKaiser
+    RKWindowTypeKaiser,
+    RKWindowTypeTukey
 };
 
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...);
