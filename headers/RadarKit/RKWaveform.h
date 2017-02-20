@@ -11,6 +11,28 @@
 
 #include <RadarKit/RKFoundation.h>
 
-void makeHops(RKInt16C *waveTable, double bandwidth, const int count);
+#define RKWaveformDefaultDepth 1024
+
+typedef uint32_t RKWaveformType;
+enum RKWaveformType {
+    RKWaveformTypeNone,
+    RKWaveformTypeSingle,
+    RKWaveformTypeFrequencyHopping,
+    RKWaveformTypeTimeFrequencyMultiplex
+};
+
+typedef struct rk_waveform {
+    int             count;
+    int             depth;
+    RKWaveformType  type;
+    RKComplex       *samples[RKMaxMatchedFilterGroupCount];
+    RKInt16C        *iSamples[RKMaxMatchedFilterGroupCount];
+} RKWaveform;
+
+RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
+RKWaveform *RKWaveformInit();
+void RKWaveformFree(RKWaveform *);
+
+void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double bandwidth);
 
 #endif
