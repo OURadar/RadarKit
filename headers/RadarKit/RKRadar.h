@@ -55,7 +55,7 @@ enum RKRadarState {
 typedef struct rk_radar RKRadar;
 struct rk_radar {
     //
-    // General buffers
+    // General attributes
     //
     char                       name[RKNameLength];
     RKRadarDesc                desc;
@@ -94,6 +94,10 @@ struct rk_radar {
     RKMomentEngine             *momentEngine;
     RKSweepEngine              *sweepEngine;
     RKFileEngine               *fileEngine;
+    //
+    // Internal copies of things
+    //
+    RKWaveform                 *waveform;
     //
     pthread_mutex_t            mutex;
     //
