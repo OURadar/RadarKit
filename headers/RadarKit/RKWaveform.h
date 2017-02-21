@@ -25,9 +25,9 @@ typedef struct rk_waveform {
     int             count;                                      // Number of groups
     int             depth;                                      // Maximum number of samples
     RKWaveformType  type;                                       // Various type of waveforms
-    double          omega[RKMaxMatchedFilterGroupCount];        // Sub-carrier of RKWaveformTypeFrequencyHopping
-    RKComplex       *samples[RKMaxMatchedFilterGroupCount];     // Samples up to amplitude of 1.0
-    RKInt16C        *iSamples[RKMaxMatchedFilterGroupCount];    // 16-bit full-scale equivalent of the waveforms
+    double          omega[RKMaxFilterGroups];                   // Sub-carrier of RKWaveformTypeFrequencyHopping
+    RKComplex       *samples[RKMaxFilterGroups];                // Samples up to amplitude of 1.0
+    RKInt16C        *iSamples[RKMaxFilterGroups];               // 16-bit full-scale equivalent of the waveforms
 } RKWaveform;
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
@@ -35,5 +35,6 @@ RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);
 
 void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double bandwidth);
+void RKWaveformConjuate(RKWaveform *waveform);
 
 #endif

@@ -53,8 +53,8 @@
 #define RKHealthNodeCount                8                           // Maximum number of nodes to ingest health info. Check RKHealthNode
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
-#define RKMaxMatchedFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters
-#define RKMaxMatchedFilterGroupCount     22                          // Maximum filter group count
+#define RKMaxFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters
+#define RKMaxFilterGroups     22                          // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth     1000
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit
@@ -121,6 +121,18 @@ typedef union rk_four_byte {
     struct { uint32_t u32; };
     struct { float f; };
 } RKFourByte;
+
+typedef struct rk_filter_anchor {
+    uint32_t      origin;
+    uint32_t      length;
+    uint32_t      maxDataLength;
+} RKFilterAnchor;
+
+typedef struct rk_modulo_path {
+    uint32_t      origin;
+    uint32_t      length;
+    uint32_t      modulo;
+} RKModuloPath;
 
 enum RKResult {
     RKResultTimeout = -99,
@@ -330,10 +342,10 @@ typedef struct rk_radar_desc {
 // A running configuration buffer
 typedef struct rk_config {
     uint32_t         i;                                              // Identity counter
-    uint32_t         pw[RKMaxMatchedFilterCount];                    // Pulse width (ns)
-    uint32_t         prf[RKMaxMatchedFilterCount];                   // Pulse repetition frequency (Hz)
-    uint32_t         gateCount[RKMaxMatchedFilterCount];             // Number of range gates
-    uint32_t         waveformId[RKMaxMatchedFilterCount];            // Transmit waveform
+    uint32_t         pw[RKMaxFilterCount];                           // Pulse width (ns)
+    uint32_t         prf[RKMaxFilterCount];                          // Pulse repetition frequency (Hz)
+    uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
+    uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     char             vcpDefinition[RKMaximumStringLength];           // Volume coverage pattern
     RKFloat          noise[2];                                       // Noise floor (ADU)
     RKFloat          ZCal[2];                                        // Reflectivity calibration (dB)
@@ -419,8 +431,8 @@ typedef struct rk_pulse_header {
 // Pulse parameters for matched filters (pulseCompressionCore)
 typedef struct rk_pulse_parameters {
     uint32_t         filterCounts[2];
-    uint32_t         planIndices[2][RKMaxMatchedFilterCount];
-    uint32_t         planSizes[2][RKMaxMatchedFilterCount];
+    uint32_t         planIndices[2][RKMaxFilterCount];
+    uint32_t         planSizes[2][RKMaxFilterCount];
 } RKPulseParameters;
 
 // RKPulse struct is padded to a SIMD conformal size
@@ -466,12 +478,6 @@ typedef struct rk_ray {
     };
     RKByte           data[0];
 } RKRay;
-
-typedef struct rk_modulo_path {
-    uint32_t      origin;
-    uint32_t      length;
-    uint32_t      modulo;
-} RKModuloPath;
 
 typedef struct rk_scratch {
     bool             showNumbers;

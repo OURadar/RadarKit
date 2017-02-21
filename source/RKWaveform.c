@@ -14,8 +14,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
     memset(waveform, 0, sizeof(RKWaveform));
     waveform->count = count;
     waveform->depth = depth;
-    if (count > RKMaxMatchedFilterGroupCount) {
-        waveform->count = RKMaxMatchedFilterGroupCount;
+    if (count > RKMaxFilterGroups) {
+        waveform->count = RKMaxFilterGroups;
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
@@ -69,6 +69,22 @@ void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double band
             x->q = sin(omega * i);
             w->i = (int16_t)(32767.0 * x->i);
             w->q = (int16_t)(32767.0 * x->q);
+            x++;
+            w++;
+        }
+    }
+}
+
+void RKWaveformConjuate(RKWaveform *waveform) {
+    int i, k;
+    RKComplex *x;
+    RKInt16C *w;
+    for (k = 0; k < waveform->count; k++) {
+        x = waveform->samples[k];
+        w = waveform->iSamples[k];
+        for (i = 0; i < waveform->depth; i++) {
+            x->q = -x->q;
+            w->q = -w->q;
             x++;
             w++;
         }

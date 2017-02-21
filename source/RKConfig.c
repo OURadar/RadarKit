@@ -53,7 +53,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyVCPDefinition:
                 string = va_arg(arg, char *);
                 RKLog(">string = %s", string);
-                //RKParseCommaDelimitedValues(newConfig->prf, RKValueTypeUInt32, RKMaxMatchedFilterCount, string);
+                //RKParseCommaDelimitedValues(newConfig->prf, RKValueTypeUInt32, RKMaxFilterCount, string);
                 break;
             case RKConfigKeyZCal:
                 newConfig->ZCal[0] = (RKFloat)va_arg(arg, double);
