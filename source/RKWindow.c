@@ -9,6 +9,9 @@
 #include <RadarKit/RKWindow.h>
 #include "bessi.c"
 
+//
+// Hann window
+//
 void hann(double *w, const int n) {
     int i, j;
     unsigned int m = (n + 1) / 2;
@@ -30,6 +33,9 @@ void hann(double *w, const int n) {
     return;
 }
 
+//
+// Hamming window
+//
 void hamming(double *w, const int n) {
     int i, j;
     unsigned int m = (n + 1) / 2;
@@ -50,6 +56,9 @@ void hamming(double *w, const int n) {
     return;
 }
 
+//
+// Kaiser window
+//
 void kaiser(double *w, const int n, const double beta) {
     int i, j;
     unsigned int m = (n + 1) / 2;
@@ -95,9 +104,25 @@ void kaiser(double *w, const int n, const double beta) {
     return;
 }
 
+//
+// Trapezoid window
+// gamma to 1.0 when gamma > 0.0
+// 1.0 to abs(gamma) when gamma < 0.0
+//
+void trapezoid(double *w, const int n, const double gamma) {
+    int i;
+    double slope = (gamma < 0.0 ? (fabs(gamma) - 1.0) : (1.0 - gamma)) / (n - 1);
+    double offset = gamma < 0.0 ? 1.0 : gamma;
+    for (i = 0; i < n; i++) {
+        w[i] = slope * i + offset;
+    }
+}
+
+#pragma mark - Methods
+
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
     int k;
-    double beta;
+    double param;
     va_list args;
     
     double *window = (double *)malloc(length * sizeof(double));
@@ -105,17 +130,25 @@ void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
     va_start(args, length);
 
     switch (type) {
+        
         case RKWindowTypeHann:
             hann(window, length);
             break;
+        
         case RKWindowTypeHamming:
             hamming(window, length);
             break;
+        
         case RKWindowTypeKaiser:
-            beta = va_arg(args, double);
-            printf("beta = %.4f\n", beta);
-            kaiser(window, length, beta);
+            param = va_arg(args, double);
+            kaiser(window, length, param);
             break;
+        
+        case RKWindowTypeTrapezoid:
+            param = va_arg(args, double);
+            trapezoid(window, length, param);
+            break;
+            
         case RKWindowTypeBoxCar:
         default:
             for (k = 0; k < length; k++) {

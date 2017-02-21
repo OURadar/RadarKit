@@ -811,7 +811,7 @@ void RKTestOneRay(void) {
 
 void RKTestCacheWrite(void) {
     RKFileEngine *fileEngine = RKFileEngineInit();
-    fileEngine->fd = open("testwrite", O_CREAT | O_WRONLY, 0000644);
+    fileEngine->fd = open("._testwrite", O_CREAT | O_WRONLY, 0000644);
     if (fileEngine->fd < 0) {
         RKLog("Error. Unable to open file.\n");
         exit(EXIT_FAILURE);
@@ -858,18 +858,34 @@ void RKTestCacheWrite(void) {
 
     close(fileEngine->fd);
   
+    // Remove the files that was just created.
+    system("rm -f ._testwrite");
+    
     RKFileEngineFree(fileEngine);
 }
 
 void RKTestWindow(void) {
     int k;
     int n = 10;
+    double param;
     RKFloat *window = (RKFloat *)malloc(n * sizeof(RKFloat));
+
+    printf("Hamming:\n");
     RKWindowMake(window, RKWindowTypeHamming, n);
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
-    RKWindowMake(window, RKWindowTypeKaiser, n, 0.5);
+    
+    param = 0.5;
+    printf("Kaiser @ %.4f:\n", param);
+    RKWindowMake(window, RKWindowTypeKaiser, n, param);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+    
+    param = 0.8;
+    printf("Trapezoid @ %.4f:\n", param);
+    RKWindowMake(window, RKWindowTypeTrapezoid, n, param);
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
