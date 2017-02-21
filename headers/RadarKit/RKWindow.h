@@ -21,15 +21,11 @@ enum RKWindowType{
     RKWindowTypeHann,
     RKWindowTypeHamming,
     RKWindowTypeKaiser,
-    RKWindowTypeTukey
+    RKWindowTypeTukey,
+    RKWindowTypeTrapezoid
 };
 
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...);
-
-// hamming
-// hanning
-// blackman
-// chebyshev
 
 //#ifdef __cplusplus
 //}
