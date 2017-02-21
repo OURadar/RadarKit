@@ -231,6 +231,7 @@ void *pulseCompressionCore(void *_in) {
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
             pulse->header.s |= RKPulseStatusSkipped | RKPulseStatusProcessed;
+            RKLog("%s pulse skipped\n", engine->name);
         } else {
             // Do some work with this pulse
             // DFT of the raw data is stored in *in
@@ -691,6 +692,14 @@ void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, cons
     engine->coreCount = count;
 }
 
+int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
+    engine->filterGroupCount = 0;
+    for (int k = 0; k < RKMaxFilterCount; k++) {
+        engine->filterCounts[k] = 0;
+    }
+    return RKResultNoError;
+}
+
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count) {
     engine->filterCounts[group] = count;
     return RKResultNoError;
@@ -702,9 +711,9 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
 }
 
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int origin, const int maxDataLength, const int group, const int index) {
-    if (engine->filterGroupCount >= RKMaxFilterGroups) {
-        RKLog("Error. Unable to set anymore filters.\n");
-        return RKResultFailedToAddFilter;
+    if (group >= RKMaxFilterGroups) {
+        RKLog("Error. Group %d is invalid.\n", group);
+        return RKResultFailedToSetFilter;
     }
     if (engine->pulseBuffer == NULL) {
         RKLog("Warning. Pulse buffer has not been set, output cannot be guaranteed.\n");
@@ -732,6 +741,7 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
         RKLog("%s Error. RKPulseCompressionSetFilterToImpulse() should be called after pulse buffer is set\n", engine->name);
         return RKResultNoPulseBuffer;
     }
+    RKPulseCompressionResetFilters(engine);
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
@@ -742,6 +752,7 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
         RKLog("%s Error. RKPulseCompressionSetFilterTo*() should be called after pulse buffer is set\n", engine->name);
         return RKResultNoPulseBuffer;
     }
+    RKPulseCompressionResetFilters(engine);
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
@@ -752,6 +763,7 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
         RKLog("%s Error. RKPulseCompressionSetFilterTo*() should be called after pulse buffer is set\n", engine->name);
         return RKResultNoPulseBuffer;
     }
+    RKPulseCompressionResetFilters(engine);
     return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
 }
 
