@@ -221,8 +221,8 @@ void *pulseCompressionCore(void *_in) {
         #endif
 
         // Filter group id
-        //const int gid = engine->filterGid[i0];
-        const int gid = pulse->header.i % engine->filterGroupCount;
+        const int gid = engine->filterGid[i0];
+//        printf("pulse i = %u   gid = %d\n", (uint32_t)pulse->header.i, gid);
 
         // Now we process / skip
         if (gid < 0 || gid >= engine->filterGroupCount) {
@@ -303,7 +303,7 @@ void *pulseCompressionCore(void *_in) {
                         *Z.q++ = out[i][1];
                     }
 
-                    Y = RKGetComplexDataFromPulse(pulse, p);
+                    //Y = RKGetComplexDataFromPulse(pulse, p);
                     //printf("Y real =\n"); RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
 
                     // Copy over the parameters used
@@ -516,6 +516,7 @@ void *pulseWatcher(void *_in) {
         } else {
             // Compute the filter group id to use
             engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
+            //printf("pulse->header.i = %d   gid = %d\n", (uint32_t)pulse->header.i, gid);
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
@@ -701,7 +702,7 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
 }
 
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int origin, const int maxDataLength, const int group, const int index) {
-    if (engine->filterGroupCount >= RKMaxMatchedFilterGroupCount) {
+    if (engine->filterGroupCount >= RKMaxFilterGroups) {
         RKLog("Error. Unable to set anymore filters.\n");
         return RKResultFailedToAddFilter;
     }
@@ -721,13 +722,6 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     engine->anchors[group][index].origin = origin;
     engine->anchors[group][index].length = filterLength;
     engine->anchors[group][index].maxDataLength = maxDataLength;
-    RKLog("%s Matched filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
-    for (int i = 0; i < engine->filterGroupCount; i++) {
-        RKLog(">%s Filter count of group[%d] = %d\n", engine->name, i, engine->filterCounts[i]);
-        for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">    Filter[%d] @ length = %d  origin = %d  maximum data length = %s\n", j, engine->anchors[i][j].length, engine->anchors[i][j].origin, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
-        }
-    }
     return RKResultNoError;
 }
 
@@ -816,4 +810,14 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
+}
+
+void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
+    RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
+    for (int i = 0; i < engine->filterGroupCount; i++) {
+        for (int j = 0; j < engine->filterCounts[i]; j++) {
+            RKLog(">%s    Filter[%2d][%d] @ {%d, %d, %s}\n",
+                  engine->name, i, j, engine->anchors[i][j].origin, engine->anchors[i][j].length, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
+        }
+    }
 }

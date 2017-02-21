@@ -19,12 +19,6 @@
 //extern "C" {
 //#endif
 
-typedef struct rk_filter_anchor {
-    int origin;
-    int length;
-    int maxDataLength;
-} RKMatchedFilterAnchor;
-
 typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
 typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 
@@ -55,9 +49,9 @@ struct rk_pulse_compression_engine {
     uint8_t                          coreCount;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
-    uint32_t                         filterCounts[RKMaxMatchedFilterGroupCount];
-    RKComplex                        *filters[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
-    RKMatchedFilterAnchor            anchors[RKMaxMatchedFilterGroupCount][RKMaxMatchedFilterCount];
+    uint32_t                         filterCounts[RKMaxFilterGroups];
+    RKComplex                        *filters[RKMaxFilterGroups][RKMaxFilterCount];
+    RKFilterAnchor                   anchors[RKMaxFilterGroups][RKMaxFilterCount];
 
     // Program set variables
     int                              planCount;
@@ -90,8 +84,6 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
                                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count);
 
-// ------
-// These should go into RKConfig
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
@@ -104,11 +96,11 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
 int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine);
-// ------
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine);
+void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine);
 
 //#ifdef __cplusplus
 //}
