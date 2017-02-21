@@ -221,10 +221,11 @@ void *pulseCompressionCore(void *_in) {
         #endif
 
         // Filter group id
-        const int gid = engine->filterGid[i0];
+        //const int gid = engine->filterGid[i0];
+        const int gid = pulse->header.i % engine->filterGroupCount;
 
         // Now we process / skip
-        if (gid < 0) {
+        if (gid < 0 || gid >= engine->filterGroupCount) {
             pulse->parameters.planSizes[0][0] = 0;
             pulse->parameters.planSizes[1][0] = 0;
             pulse->parameters.filterCounts[0] = 0;

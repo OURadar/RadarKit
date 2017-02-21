@@ -403,6 +403,8 @@ int socketStreamHandler(RKOperator *O) {
     RKPulseHeader pulseHeader;
     RKInt16C *c16DataH = NULL;
     RKInt16C *c16DataV = NULL;
+    RKInt16C *userDataH = NULL;
+    RKInt16C *userDataV = NULL;
 
     if (engine->radarCount < 1) {
         return 0;
@@ -601,10 +603,23 @@ int socketStreamHandler(RKOperator *O) {
 
         c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
         c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
+        
+        userDataH = user->samples[0];
+        userDataV = user->samples[1];
+        
+        RKComplex *x = RKGetComplexDataFromPulse(pulse, 1);
+        
+        k = user->pulseDownSamplingRatio;
 
-        for (i = 0, k = 0; i < pulseHeader.gateCount; i++, k += user->pulseDownSamplingRatio) {
-            user->samples[0][i] = c16DataH[k];
-            user->samples[1][i] = c16DataV[k];
+        for (i = 0; i < pulseHeader.gateCount; i++) {
+            //*userDataH++ = *c16DataH;
+            userDataH->i = (int16_t)(10000.0f * x->i);
+            userDataH->q = (int16_t)(10000.0f * x->q);
+            userDataH++;
+            x++;
+            *userDataV++ = *c16DataV;
+            c16DataH += k;
+            c16DataV += k;
         }
 
         size = pulseHeader.gateCount * sizeof(RKInt16C);
