@@ -866,7 +866,7 @@ void RKTestCacheWrite(void) {
 
 void RKTestWindow(void) {
     int k;
-    int n = 10;
+    int n = 6;
     double param;
     RKFloat *window = (RKFloat *)malloc(n * sizeof(RKFloat));
 
@@ -875,6 +875,7 @@ void RKTestWindow(void) {
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
+    printf("\n");
     
     param = 0.5;
     printf("Kaiser @ %.4f:\n", param);
@@ -882,6 +883,7 @@ void RKTestWindow(void) {
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
+    printf("\n");
     
     param = 0.8;
     printf("Trapezoid @ %.4f:\n", param);
@@ -889,6 +891,7 @@ void RKTestWindow(void) {
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
+    printf("\n");
 
     free(window);
 }

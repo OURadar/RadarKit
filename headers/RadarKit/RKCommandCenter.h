@@ -26,7 +26,9 @@ enum RKUserFlag {
     RKUserFlagStatusEngines        = (1 << 6),               //
     RKUserFlagStatusAll            = 0xFE,                   //
     RKUserFlagDisplayIQ            = (1 << 8),               // Low rate IQ
-    RKUserFlagProductIQ            = (1 << 9),               // Full rate IQ
+    RKUserFlagDisplayIQFiltered    = (1 << 9),               // filtered IQ (usually matched filter)
+    RKUserFlagProductIQ            = (1 << 10),              // Full rate IQ
+    RKUserFlagProductIQFiltered    = (1 << 11),              // Full rate filtered IQ
     RKUserFlagDisplayZ             = (1 << 16),              // Display
     RKUserFlagDisplayV             = (1 << 17),              //
     RKUserFlagDisplayW             = (1 << 18),              //
@@ -51,7 +53,9 @@ enum RKUserFlag {
 typedef struct  rk_user {
     char         login[64];
     RKUserFlag   access;             // Authorized access priviledge
+    RKUserFlag   accessLevel2;
     RKUserFlag   streams;
+    RKUserFlag   streamsLevel2;
     double       timeLastOut;
     double       timeLastHealthOut;
     double       timeLastDisplayIQOut;
