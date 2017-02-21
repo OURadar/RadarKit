@@ -22,11 +22,12 @@ enum RKWaveformType {
 };
 
 typedef struct rk_waveform {
-    int             count;
-    int             depth;
-    RKWaveformType  type;
-    RKComplex       *samples[RKMaxMatchedFilterGroupCount];
-    RKInt16C        *iSamples[RKMaxMatchedFilterGroupCount];
+    int             count;                                      // Number of groups
+    int             depth;                                      // Maximum number of samples
+    RKWaveformType  type;                                       // Various type of waveforms
+    double          omega[RKMaxMatchedFilterGroupCount];        // Sub-carrier of RKWaveformTypeFrequencyHopping
+    RKComplex       *samples[RKMaxMatchedFilterGroupCount];     // Samples up to amplitude of 1.0
+    RKInt16C        *iSamples[RKMaxMatchedFilterGroupCount];    // 16-bit full-scale equivalent of the waveforms
 } RKWaveform;
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
