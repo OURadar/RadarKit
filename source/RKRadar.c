@@ -486,11 +486,29 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     return RKResultNoError;
 }
 
+int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int origin, const int maxDataLength) {
+    int k;
+    RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
+    for (k = 0; k < waveform->count; k++) {
+        RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
+                                    waveform->samples[k],
+                                    waveform->depth,
+                                    origin,
+                                    maxDataLength,
+                                    k,
+                                    0);
+    }
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+    }
+    return RKResultNoError;
+}
+
 //
 // NOTE: Function incomplete, need to define file format
 // ingest the samples, convert, etc.
 //
-int RKSetWaveform(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
+int RKSetWaveformByFilename(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }

@@ -154,7 +154,7 @@ enum RKResult {
     RKResultFailedToAllocateFilter,
     RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAllocateScratchSpace,
-    RKResultFailedToAddFilter,
+    RKResultFailedToSetFilter,
     RKResultEngineDeactivatedMultipleTimes,
     RKResultFailedToStartMomentCore,
     RKResultFailedToStartPulseGatherer,

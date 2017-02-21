@@ -36,5 +36,6 @@ void RKWaveformFree(RKWaveform *);
 
 void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double bandwidth);
 void RKWaveformConjuate(RKWaveform *waveform);
+void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
 
 #endif

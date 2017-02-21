@@ -90,3 +90,18 @@ void RKWaveformConjuate(RKWaveform *waveform) {
         }
     }
 }
+
+void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
+    int i, j, k;
+    waveform->depth /= stride;
+    RKComplex *x;
+    RKInt16C *w;
+    for (k = 0; k < waveform->count; k++) {
+        x = waveform->samples[k];
+        w = waveform->iSamples[k];
+        for (j = 0, i = 0; j < waveform->depth; j++, i += stride) {
+            x[j] = x[i];
+            w[j] = w[i];
+        }
+    }
+}
