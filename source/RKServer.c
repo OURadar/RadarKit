@@ -307,15 +307,14 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
              rkGlobalParameters.showColor ? RKNoColor : "");
     O->delimString.type = RKNetworkPacketTypePlainText;
     O->delimString.size = 0;
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 6] = 8;
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 6] = ' ';
     O->delimString.bytes[sizeof(RKNetDelimiter) - 5] = 8;
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 4] = 8;
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 3] = 8;
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 2] = '\r';
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 1] = '\0';
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 4] = ' ';         // Give a spac character to erase
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 3] = 8;           // Use a backspace to erase the previous character
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 2] = '\r';        // Return line
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 1] = '\0';        // End of string
     memcpy(&O->delimTx, &O->delimString, sizeof(RKNetDelimiter));
     O->delimTx.type = RKNetworkPacketTypeBytes;
-    //memcpy(&O->beacon, &O->delimString, sizeof(RKNetDelimiter));
     O->beacon.type = RKNetworkPacketTypeBeacon;
 
     if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
