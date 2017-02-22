@@ -44,10 +44,33 @@ void RKWaveformFree(RKWaveform *waveform) {
     free(waveform);
 }
 
+#pragma mark - Waveforms
+
+void RKWaveformOnes(RKWaveform *waveform) {
+    int i, k;
+    RKComplex *x;
+    RKInt16C *w;
+
+    waveform->type = RKWaveformTypeSingle;
+    
+    for (k = 0; k < waveform->count; k++) {
+        x = waveform->samples[k];
+        w = waveform->iSamples[k];
+        for (i = 0; i < waveform->depth; i++) {
+            x->i = 1.0f;
+            x->q = 0.0f;
+            w->i = (int16_t)RKWaveformDigitalAmplitude;
+            w->q = 0;
+            x++;
+            w++;
+        }
+    }
+}
+
 //
 // This is actually hop pairs: f0, f0, f1, f1, f2, f2, ...
 //
-void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double bandwidth) {
+void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidth) {
     int i, k;
     double f, omega;
     RKComplex *x;
@@ -67,8 +90,8 @@ void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double band
         for (i = 0; i < waveform->depth; i++) {
             x->i = cos(omega * i);
             x->q = sin(omega * i);
-            w->i = (int16_t)(32767.0 * x->i);
-            w->q = (int16_t)(32767.0 * x->q);
+            w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
+            w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
             x++;
             w++;
         }
@@ -104,4 +127,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             w[j] = w[i];
         }
     }
+}
+
+void RKWaveformRead(RKWaveform *waveform, const char *filename) {
+    
 }
