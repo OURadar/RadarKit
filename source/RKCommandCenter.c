@@ -256,54 +256,56 @@ int socketCommandHandler(RKOperator *O) {
                             "\n");
 
                 k += sprintf(string + k,
-                             HIGHLIGHT("t") " - " ITALIC("Transceiver") " commands, everything that starts with t goes to the transceiver\n"
-                             "    module in a concatenated form, e.g., 't help' -> 'help' to transceiver.\n\n");
-                user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
-                RKStripTail(sval1);
-                k += indentCopy(string + k, sval1);
-                k += sprintf(string + k, "\n\n");
+                             HIGHLIGHT("t") " - " UNDERLINE_ITALIC("Transceiver") " commands, everything that starts with t goes to the transceiver\n"
+                             "    module in a concatenated form, e.g., 't help' -> 'help' to the transceiver.\n\n");
+                if (user->radar->transceiver) {
+                    user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
+                    RKStripTail(sval1);
+                    k += indentCopy(string + k, sval1);
+                    k += sprintf(string + k, "\n\n");
+                } else {
+                    k += sprintf(string + k, "    INFO: Transceiver not set.\n");
+                }
 
                 k += sprintf(string + k,
-                             HIGHLIGHT("p") " - " ITALIC ("Pedestal") " commands, everything that starts with p goes to the pedestal module\n"
-                             "    in concatenated form, e.g., 'p help' -> 'help' to pedestal.\n\n");
-                user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
-                RKStripTail(sval1);
-                k += indentCopy(string + k, sval1);
-                k += sprintf(string + k, "\n\n");
-                //RKLog("%s %s sval1 = '%s' (%s)", engine->name, O->name, sval1, RKIntegerToCommaStyleString(strlen(sval1)));
+                             HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with p goes to the pedestal module\n"
+                             "    in a concatenated form, e.g., 'p help' -> 'help' to the pedestal.\n\n");
+                if (user->radar->pedestal) {
+                    user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
+                    RKStripTail(sval1);
+                    k += indentCopy(string + k, sval1);
+                    k += sprintf(string + k, "\n\n");
+                } else {
+                    k += sprintf(string + k, "    INFO: Pedestal not set.\n");
+                }
 
-                k += sprintf(string + k, "==" RKEOL);
+                k += sprintf(string + k,
+                             HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with p goes to the health relay\n"
+                             "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
+                if (user->radar->healthRelay) {
+                    user->radar->healthRelayExec(user->radar->healthRelay, "help", sval1);
+                    RKStripTail(sval1);
+                    k += indentCopy(string + k, sval1);
+                    k += sprintf(string + k, "\n\n");
+                } else {
+                    k += sprintf(string + k, "    INFO: Health Relay not set.\n");
+                }
 
-                RKLog("Help text occupies %s B\n", RKIntegerToCommaStyleString(k));
+                k += sprintf(string + k, "== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
+
                 RKOperatorSendDelimitedString(O, string);
                 break;
+
+            } else {
+
+                // Forward to health relay
+                k = 1;
+                while (O->cmd[k] == ' ') {
+                    k++;
+                }
+                user->radar->healthRelayExec(user->radar->healthRelay, O->cmd + k, string);
+
             }
-            // Forward to health relay
-            
-//        case 'p':
-//            // Change PRT
-//            if (!strncmp("prt", O->cmd, 3)) {
-//                //user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
-//                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
-//                if (k == 2) {
-//                    RKLog("%s %s Changing PRT to %.4f + %.4f ms ...\n", engine->name, O->name, fval1, fval2);
-//                } else {
-//                    RKLog("%s %s Changing PRT to %.4f s ...\n", engine->name, O->name, fval1);
-//                }
-//            } else if (!strncmp("prf", O->cmd, 3)) {
-//                k = sscanf(O->cmd + 3, "%f %f", &fval1, &fval2);
-//                fval1 = roundf(fval1);
-//                if (k == 2) {
-//                    fval2 = roundf(fval2);
-//                    RKLog("%s %s Changing PRF to %s + %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1), RKIntegerToCommaStyleString((long)fval2));
-//                } else {
-//                    RKLog("%s %s Changing PRF to %s Hz ...\n", engine->name, O->name, RKIntegerToCommaStyleString((long)fval1));
-//                }
-//            } else if (!strncmp("point", O->cmd, 5)) {
-//                user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
-//                RKOperatorSendDelimitedString(O, string);
-//            }
-//            break;
             
         case 'r':
             sscanf("%s", O->cmd + 1, sval1);
@@ -354,6 +356,12 @@ int socketCommandHandler(RKOperator *O) {
         case 'v':
             // Simple volume
             user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
+            break;
+
+        case 'x':
+            engine->developerInspect = !engine->developerInspect;
+            sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
+            RKOperatorSendDelimitedString(O, string);
             break;
             
         case 'y':
@@ -594,7 +602,7 @@ int socketStreamHandler(RKOperator *O) {
             user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
     } else if (user->streams & user->access & RKUserFlagDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
-        endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
+        endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(user->radar->pulses, endIndex);
         memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
 
@@ -604,7 +612,7 @@ int socketStreamHandler(RKOperator *O) {
         userDataH = user->samples[0];
         userDataV = user->samples[1];
 
-        if (user->developerInspect) {
+        if (engine->developerInspect) {
             int gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
             pulseHeader.gateCount = 1000;
 
@@ -678,7 +686,6 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
-    user->developerInspect = 1;
     user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
     user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 1000);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);

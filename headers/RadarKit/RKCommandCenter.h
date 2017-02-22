@@ -66,7 +66,6 @@ typedef struct  rk_user {
     uint16_t     pulseDownSamplingRatio;
     uint32_t     rayIndex;
     uint16_t     rayDownSamplingRatio;
-    uint8_t      developerInspect;
     char         string[RKMaximumStringLength];
     RKInt16C     samples[2][RKGateCount];
     RKOperator   *serverOperator;
@@ -83,6 +82,7 @@ typedef struct rk_command_center {
     bool         suspendHandler;
     RKServer     *server;
     int          radarCount;
+    int          developerInspect;
     RKUser       users[RKCommandCenterMaxConnections];
 } RKCommandCenter;
 

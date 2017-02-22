@@ -80,6 +80,7 @@
 #define ITALIC(x)            "\033[3m" x "\033[23m"
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
+#define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
 
 /*! @/definedblock */
 
