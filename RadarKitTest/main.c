@@ -351,9 +351,6 @@ int main(int argc, const char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(22, 200);
-    RKWaveformMakeHops(waveform, 50.0e6, 40.0e6);
-
     RKSetVerbose(myRadar, user.verbose);
 
     RKCommandCenter *center = RKCommandCenterInit();

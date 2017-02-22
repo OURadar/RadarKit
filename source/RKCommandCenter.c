@@ -594,59 +594,55 @@ int socketStreamHandler(RKOperator *O) {
             user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
     } else if (user->streams & user->access & RKUserFlagDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
-        endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+        endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(user->radar->pulses, endIndex);
         memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
 
-        pulseHeader.gateCount /= user->pulseDownSamplingRatio;
-        pulseHeader.gateSizeMeters *= (float)user->pulseDownSamplingRatio;
-
         c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
         c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
-        
+
         userDataH = user->samples[0];
         userDataV = user->samples[1];
-        
-        RKComplex *x = RKGetComplexDataFromPulse(pulse, 1);
-        
-        k = user->pulseDownSamplingRatio;
 
-        while (!(pulse->header.s & RKPulseStatusProcessed)) {
-            usleep(1000);
-        }
+        if (user->developerInspect) {
+            int gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
+            pulseHeader.gateCount = 1000;
 
-        //for (i = 0; i < pulseHeader.gateCount; i++) {
-        for (i = 0; i < 120; i++) {
-            //*userDataH++ = *c16DataH;
+            // Channel H to show the raw received samples of channel 1
+            // Channel V to show the filtered result of channel 1
+            RKComplex *x = RKGetComplexDataFromPulse(pulse, 1);
+            for (i = 0; i < 1000; i++) {
+                *userDataH++ = *c16DataV++;
 
-            userDataH->i = (int16_t)(0.02f * x->i);
-            userDataH->q = (int16_t)(0.02f * x->q);
-            userDataH++;
-            x++;
+                userDataV->i = (int16_t)(0.02f * x->i);
+                userDataV->q = (int16_t)(0.02f * x->q);
+                userDataV++;
+                x++;
+            }
 
-            *userDataV++ = *c16DataV;
+            // Replace the second part of channel H to show the filter that was used
+            x = user->radar->pulseCompressionEngine->filters[gid][0];
+            userDataH = user->samples[0] + MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length + 10);
 
-            //c16DataH += k;
-            //c16DataV += k;
-            c16DataV++;
-        }
+            for (i = 0; i < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); i++) {
+                userDataH->i = (int16_t)(10000.0f * x->i);
+                userDataH->q = (int16_t)(10000.0f * x->q);
+                userDataH++;
+                x++;
+            }
+        } else {
+            k = user->pulseDownSamplingRatio;
 
-        int gid = pulse->header.i % 22;
-        x = user->radar->pulseCompressionEngine->filters[gid][0];
+            pulseHeader.gateCount /= k;
+            pulseHeader.gateSizeMeters *= (float)k;
 
-        for (; i < 250; i++) {
-            //*userDataH++ = *c16DataH;
+            for (i = 0; i < pulseHeader.gateCount; i++) {
+                *userDataH++ = *c16DataH;
+                *userDataV++ = *c16DataV;
 
-            userDataH->i = (int16_t)(10000.0f * x->i);
-            userDataH->q = (int16_t)(10000.0f * x->q);
-            userDataH++;
-            x++;
-
-            *userDataV++ = *c16DataV;
-
-            //c16DataH += k;
-            //c16DataV += k;
-            c16DataV++;
+                c16DataH += k;
+                c16DataV += k;
+            }
         }
 
         size = pulseHeader.gateCount * sizeof(RKInt16C);
@@ -682,6 +678,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKUserFlagDisplayIQ | RKUserFlagProductIQ;
     user->access |= RKUserFlagControl;
     user->radar = engine->radars[0];
+    user->developerInspect = 1;
     user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
     user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 1000);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
