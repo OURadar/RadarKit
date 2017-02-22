@@ -723,13 +723,13 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         free(engine->filters[group][index]);
     }
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
-    size_t nfft = 1 << (int)ceilf(log2f(MAX((float)pulse->header.capacity, (float)maxDataLength)));
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, maxDataLength)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
-    engine->anchors[group][index].origin = origin;
-    engine->anchors[group][index].length = filterLength;
-    engine->anchors[group][index].maxDataLength = maxDataLength;
+    engine->anchors[group][index].origin = (uint32_t)origin;
+    engine->anchors[group][index].length = (uint32_t)MIN(nfft, filterLength);
+    engine->anchors[group][index].maxDataLength = (uint32_t)maxDataLength;
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     return RKResultNoError;
