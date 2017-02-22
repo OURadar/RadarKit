@@ -11,7 +11,8 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKWaveformDefaultDepth 1024
+#define RKWaveformDefaultDepth       1024
+#define RKWaveformDigitalAmplitude   32767.0
 
 typedef uint32_t RKWaveformType;
 enum RKWaveformType {
@@ -34,8 +35,10 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
 RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);
 
-void RKWaveformMakeHops(RKWaveform *waveform, const double fs, const double bandwidth);
+void RKWaveformOnes(RKWaveform *waveform);
+void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidth);
 void RKWaveformConjuate(RKWaveform *waveform);
 void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
+void RKWaveformRead(RKWaveform *waveform, const char *filename);
 
 #endif
