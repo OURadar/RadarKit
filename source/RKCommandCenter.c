@@ -622,8 +622,8 @@ int socketStreamHandler(RKOperator *O) {
             for (i = 0; i < 1000; i++) {
                 *userDataH++ = *c16DataV++;
 
-                userDataV->i = (int16_t)(0.02f * x->i);
-                userDataV->q = (int16_t)(0.02f * x->q);
+                userDataV->i = (int16_t)(0.04f * x->i);
+                userDataV->q = (int16_t)(0.04f * x->q);
                 userDataV++;
                 x++;
             }

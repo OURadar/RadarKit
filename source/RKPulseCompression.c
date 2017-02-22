@@ -694,8 +694,8 @@ void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, cons
 
 int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
     // If engine->filterGroupCount is set to 0, gid may be undefined segmentation fault
-    engine->filterGroupCount = 1;
-    for (int k = 0; k < RKMaxFilterCount; k++) {
+    engine->filterCounts[0] = 1;
+    for (int k = 1; k < RKMaxFilterCount; k++) {
         engine->filterCounts[k] = 0;
     }
     return RKResultNoError;
@@ -829,7 +829,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
     for (int i = 0; i < engine->filterGroupCount; i++) {
         for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">%s    Filter[%2d][%d] @ {%d, %d, %s}\n",
+            RKLog(">%s  - Filter[%2d][%d] @ {%d, %d, %s}\n",
                   engine->name, i, j, engine->anchors[i][j].origin, engine->anchors[i][j].length, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
         }
     }
