@@ -693,7 +693,8 @@ void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, cons
 }
 
 int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
-    engine->filterGroupCount = 0;
+    // If engine->filterGroupCount is set to 0, gid may be undefined segmentation fault
+    engine->filterGroupCount = 1;
     for (int k = 0; k < RKMaxFilterCount; k++) {
         engine->filterCounts[k] = 0;
     }
@@ -726,11 +727,11 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
-    engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
-    engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     engine->anchors[group][index].origin = origin;
     engine->anchors[group][index].length = filterLength;
     engine->anchors[group][index].maxDataLength = maxDataLength;
+    engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
+    engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     return RKResultNoError;
 }
 
