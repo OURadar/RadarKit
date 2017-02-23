@@ -1,5 +1,4 @@
-filename = boonlib('choosefile', '~/Downloads', '*.rkr', [1 1]);
-disp(filename)
+filename = boonlib('choosefile', '~/Downloads', '*.rkr');
 
 dat = iqread(filename);
 
@@ -19,7 +18,7 @@ pulses = single(pulses);
 
 %%
 N = 6;
-ng = min(size(pulses, 1), 90);
+ng = min(size(pulses, 1), 50);
 ns = min(size(pulses, 2), 500);
 
 t_fast = (1:ng) / 50;
@@ -52,25 +51,29 @@ for ii = 1 : M * N
     grid on
     if iy == 0, xlabel('Time (us)'); else, set(gca, 'XTickLabel', []); end
     if ix == 0, ylabel('Amplitude'); else, set(gca, 'YTickLabel', []); end
-    ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d %d / %d', dat.pulses(k).n, dat.pulses(k).i, rem(dat.pulses(k).i, 8)));
+    ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
     ylim(11500 * [-1 1])
 end
 boonlib('bsizewin', gcf, [3200 1080])
+set(gcf, 'Menubar', 'None');
 set(ht, 'HorizontalAlignment', 'Right');
 
 return
 
-jj = 1;
-while (jj < size(pulses, 2))
+%%
+%jj = 1;
+%while (jj < size(pulses, 2))
     for ii = 1 : M * N
-        k = ii + 48 * (jj - 1);
+        k = ii + jj;
         if k > size(pulses, 2), break; end;
-        set(hd(ii, 1), 'YData', real(pulses(1:ns, k, 2)));
-        set(hd(ii, 2), 'YData', imag(pulses(1:ns, k, 2)));
-        set(hd(ii, 3), 'YData', abs(pulses(1:ns, k, 2)));
-        set(ht(ii), 'String', sprintf('%d %d / %d', dat.pulses(k).n, dat.pulses(k).i, rem(dat.pulses(k).i, 8)));
+        set(hd(ii, 1), 'YData', real(pulses(1:ng, k, 2)));
+        set(hd(ii, 2), 'YData', imag(pulses(1:ng, k, 2)));
+        set(hd(ii, 3), 'YData', abs(pulses(1:ng, k, 2)));
+        set(ht(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
+            dat.pulses(k).n, floor(rem(double(dat.pulses(k).n), M) / 2) - 5, ...
+            dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
     end
     drawnow
-    bfig png
-    jj = jj + 1;
-end
+    % bfig png
+    jj = jj + M * N;
+%end
