@@ -231,7 +231,7 @@ void *pulseCompressionCore(void *_in) {
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
             pulse->header.s |= RKPulseStatusSkipped | RKPulseStatusProcessed;
-            RKLog("%s pulse skipped\n", engine->name);
+            RKLog("%s pulse skipped. gid = %d\n", engine->name, gid);
         } else {
             // Do some work with this pulse
             // DFT of the raw data is stored in *in

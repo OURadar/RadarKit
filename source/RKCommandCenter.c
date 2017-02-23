@@ -708,6 +708,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     sprintf(engine->name, "%s<CommandCenter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
+    engine->developerInspect = 0;
     engine->server = RKServerInit();
     engine->developerInspect = 1;
     RKServerSetName(engine->server, engine->name);
