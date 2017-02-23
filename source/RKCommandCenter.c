@@ -709,6 +709,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->server = RKServerInit();
+    engine->developerInspect = 1;
     RKServerSetName(engine->server, engine->name);
     RKServerSetWelcomeHandler(engine->server, &socketInitialHandler);
     RKServerSetCommandHandler(engine->server, &socketCommandHandler);
