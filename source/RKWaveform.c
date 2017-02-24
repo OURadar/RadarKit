@@ -78,7 +78,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
 
     waveform->type = RKWaveformTypeFrequencyHopping;
 
-    double stride = bandwidth / (double)((waveform->count / 2) - 1);
+    double stride = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
 
     for (k = 0; k < waveform->count; k++) {
         f = stride * (double)(k / 2) - 0.5 * bandwidth;
