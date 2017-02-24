@@ -434,11 +434,9 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     transceiver->state |= RKEngineStateActive;
 
-    int m = 0;
-
     while (transceiver->state & RKEngineStateActive) {
         
-        for (j = 0; radar->active && j < chunkSize; j++) {
+        for (j = 0; j < chunkSize && transceiver->state & RKEngineStateActive; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
@@ -491,10 +489,10 @@ void *RKTestTransceiverRunLoop(void *input) {
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         float temp = 1.0f * rand() / RAND_MAX + 79.5f;
         float volt = 1.0f * rand() / RAND_MAX + 11.5f;
-        sprintf(health->string, "{\"FPGA Temp\":{\"Value\":\"%.1fC\", \"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\", \"Enum\":%d}, \"NULL\": [%d, %d]}",
+        sprintf(health->string, "{\"FPGA Temp\":{\"Value\":\"%.1fC\", \"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\", \"Enum\":%d}, \"NULL\": %ld",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
-                m++, radar->healthIndex);
+                transceiver->counter);
         RKSetHealthReady(radar, health);
 
         // Wait to simulate the PRF

@@ -707,9 +707,10 @@ RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     uint32_t index = radar->healthNodes[node].index;
     RKHealth *health = &radar->healthNodes[node].healths[index];
     health->i += radar->desc.healthBufferDepth;
-    health->flag = RKHealthFlagVacant;
-    health->string[0] = '\0';
-    radar->healthNodes[node].index = RKNextModuloS(index, radar->desc.healthBufferDepth);
+    index = RKNextModuloS(index, radar->desc.healthBufferDepth);
+    radar->healthNodes[node].healths[index].flag = RKHealthFlagVacant;
+    radar->healthNodes[node].healths[index].string[0] = '\0';
+    radar->healthNodes[node].index = index;
     return health;
 }
 

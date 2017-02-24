@@ -22,7 +22,7 @@ void *healthConsolidator(void *in) {
     float valueFloat = 0.0f;
 
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
-    memset(indices, 0, desc->healthNodeCount * sizeof(uint32_t));
+    memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
     
     char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage", "FPGA Temp"};
     const int keywordsCount = sizeof(keywords) / RKNameLength;
@@ -178,6 +178,7 @@ void *healthConsolidator(void *in) {
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
         health = &engine->healthBuffer[k];
+        health->string[0] = '\0';
         health->flag = RKHealthFlagVacant;
         *engine->healthIndex = k;
     }
