@@ -360,7 +360,7 @@ int socketCommandHandler(RKOperator *O) {
             break;
 
         case 'x':
-            engine->developerInspect = !engine->developerInspect;
+            engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
             sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
             RKOperatorSendDelimitedString(O, string);
             break;
@@ -397,6 +397,7 @@ int socketStreamHandler(RKOperator *O) {
     char *c;
     static struct timeval t0;
 
+    int gid;
     ssize_t size;
     uint32_t endIndex;
 
@@ -613,45 +614,80 @@ int socketStreamHandler(RKOperator *O) {
         userDataH = user->samples[0];
         userDataV = user->samples[1];
 
-        if (engine->developerInspect) {
-            int gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
-            pulseHeader.gateCount = 1000;
+        RKComplex *yH;
+        RKComplex *yV;
 
-            // Channel H to show the raw received samples of channel 1
-            // Channel V to show the filtered result of channel 1
-            RKComplex *x = RKGetComplexDataFromPulse(pulse, 1);
-            for (i = 0; i < 1000; i++) {
-                *userDataH++ = *c16DataV++;
+        // Default stride: k = 1
+        k = 1;
+        gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
+        switch (engine->developerInspect) {
+            case 3:
+                // Show the filter that was used
+                pulseHeader.gateCount = 1000;
+                i = 0;
+                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length + 10); k++) {
+                    *userDataH++ = *c16DataH++;
+                    *userDataV++ = *c16DataV++;
+                    i++;
+                }
 
-                userDataV->i = (int16_t)(0.04f * x->i);
-                userDataV->q = (int16_t)(0.04f * x->q);
-                userDataV++;
-                x++;
-            }
+                yH = user->radar->pulseCompressionEngine->filters[gid][0];
+                yV = user->radar->pulseCompressionEngine->filters[gid][0];
+                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); k++) {
+                    userDataH->i   = (int16_t)(10000.0f * yH->i);
+                    userDataH++->q = (int16_t)(10000.0f * yH++->q);
 
-            // Replace the second part of channel H to show the filter that was used
-            x = user->radar->pulseCompressionEngine->filters[gid][0];
-            userDataH = user->samples[0] + MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length + 10);
+                    userDataV->i   = (int16_t)(10000.0f * yV->i);
+                    userDataV++->q = (int16_t)(10000.0f * yV++->q);
+                    i++;
+                }
 
-            for (i = 0; i < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); i++) {
-                userDataH->i = (int16_t)(10000.0f * x->i);
-                userDataH->q = (int16_t)(10000.0f * x->q);
-                userDataH++;
-                x++;
-            }
-        } else {
-            k = user->pulseDownSamplingRatio;
+                // The second part of is the processed data
+                yH = RKGetComplexDataFromPulse(pulse, 0);
+                yV = RKGetComplexDataFromPulse(pulse, 1);
+                for (; i < pulseHeader.gateCount; i++) {
+                    userDataH->i   = (int16_t)(0.04f * yH->i);
+                    userDataH++->q = (int16_t)(0.04f * yH++->q);
 
-            pulseHeader.gateCount /= k;
-            pulseHeader.gateSizeMeters *= (float)k;
+                    userDataV->i   = (int16_t)(0.04f * yV->i);
+                    userDataV++->q = (int16_t)(0.04f * yV++->q);
+                }
+                break;
 
-            for (i = 0; i < pulseHeader.gateCount; i++) {
-                *userDataH++ = *c16DataH;
-                *userDataV++ = *c16DataV;
+            case 2:
+                k = user->pulseDownSamplingRatio;
 
-                c16DataH += k;
-                c16DataV += k;
-            }
+                pulseHeader.gateCount /= k;
+                pulseHeader.gateSizeMeters *= (float)k;
+
+                yH = RKGetComplexDataFromPulse(pulse, 0);
+                yV = RKGetComplexDataFromPulse(pulse, 1);
+                for (i = 0; i < pulseHeader.gateCount; i++) {
+                    userDataH->i   = (int16_t)(0.04f * yH->i);
+                    userDataH++->q = (int16_t)(0.04f * yH->q);
+                    yH += k;
+
+                    userDataV->i   = (int16_t)(0.04f * yV->i);
+                    userDataV++->q = (int16_t)(0.04f * yV->q);
+                    yV += k;
+                }
+                break;
+                
+            case 1:
+                k = user->pulseDownSamplingRatio;
+
+            default:
+                pulseHeader.gateCount /= k;
+                pulseHeader.gateCount = MIN(pulseHeader.gateCount, 1000);
+                pulseHeader.gateSizeMeters *= (float)k;
+                for (i = 0; i < pulseHeader.gateCount; i++) {
+                    *userDataH++ = *c16DataH;
+                    *userDataV++ = *c16DataV;
+
+                    c16DataH += k;
+                    c16DataV += k;
+                }
+                break;
         }
 
         size = pulseHeader.gateCount * sizeof(RKInt16C);
@@ -708,9 +744,8 @@ RKCommandCenter *RKCommandCenterInit(void) {
     sprintf(engine->name, "%s<CommandCenter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
-    engine->developerInspect = 0;
+    engine->developerInspect = 3;
     engine->server = RKServerInit();
-    engine->developerInspect = 1;
     RKServerSetName(engine->server, engine->name);
     RKServerSetWelcomeHandler(engine->server, &socketInitialHandler);
     RKServerSetCommandHandler(engine->server, &socketCommandHandler);

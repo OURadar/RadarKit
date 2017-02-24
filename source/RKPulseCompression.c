@@ -694,6 +694,7 @@ void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, cons
 
 int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
     // If engine->filterGroupCount is set to 0, gid may be undefined segmentation fault
+    engine->filterGroupCount = 1;
     engine->filterCounts[0] = 1;
     for (int k = 1; k < RKMaxFilterCount; k++) {
         engine->filterCounts[k] = 0;
