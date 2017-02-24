@@ -477,7 +477,7 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKUserFlagStatusHealth) {
         j = 0;
         k = 0;
-        endIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
+        endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
         while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
             c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
             k += sprintf(user->string + k, "%s\n", c);
