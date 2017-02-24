@@ -34,9 +34,9 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
-    i = *engine->pulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
-    memset(string, 'C', i);
-    memset(string + i, '.', RKStatusBarWidth - i);
+    i = *engine->pulseIndex * RKStatusBarWidth / engine->pulseBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = 'C';
     
     // Engine lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",

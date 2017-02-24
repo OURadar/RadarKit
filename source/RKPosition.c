@@ -26,7 +26,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine);
 (x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[91m"))
 
 void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
-    int i, k;
+    int i;
     char *string;
 
     // Status string
@@ -37,16 +37,15 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
-    k = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
-    memset(string, 'P', k);
-    memset(string + k, '.', RKStatusBarWidth - k);
-    i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " | ");
+    i = engine->processedPulseIndex * RKStatusBarWidth / engine->pulseBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = 'P';
 
     // Engine lag
-    snprintf(string + i, RKMaximumStringLength - i, "%s%02.0f%s",
-                  rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-                  99.9f * engine->lag,
-                  rkGlobalParameters.showColor ? RKNoColor : "");
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+                                    rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+                                    99.9f * engine->lag,
+                                    rkGlobalParameters.showColor ? RKNoColor : "");
     
     // Position string
     string = engine->positionStringBuffer[engine->statusBufferIndex];
@@ -56,9 +55,9 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Same as previous status, use b characters to draw a bar
-    k = *engine->positionIndex * (RKStatusBarWidth + 1) / engine->positionBufferDepth;
-    memset(string, '#', k);
-    memset(string + k, '.', RKStatusBarWidth - k);
+    i = *engine->positionIndex * RKStatusBarWidth / engine->positionBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferDepth)];
     snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]",
