@@ -28,9 +28,9 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
-    i = engine->processedPulseIndex * (RKStatusBarWidth + 1) / engine->pulseBufferDepth;
-    memset(string, 'M', i);
-    memset(string + i, '.', RKStatusBarWidth - i);
+    i = engine->processedPulseIndex * RKStatusBarWidth / engine->pulseBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = 'M';
 
     // Engine lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
