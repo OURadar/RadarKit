@@ -426,6 +426,7 @@ int socketStreamHandler(RKOperator *O) {
     }
 
     if (user->streams & user->access && td >= 0.05) {
+        // Stream "1" - Overall status
         if (user->streams & RKUserFlagStatusPulses) {
             k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
                          RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
@@ -437,6 +438,7 @@ int socketStreamHandler(RKOperator *O) {
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
         }
+        // Stream "3" - Positions
         if (user->streams & RKUserFlagStatusPositions) {
             k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
                          RKPositionEnginePositionString(user->radar->positionEngine));
@@ -445,6 +447,7 @@ int socketStreamHandler(RKOperator *O) {
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
         }
+        // Stream "4" - Internal Engines
         if (user->streams & RKUserFlagStatusEngines) {
             k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%02x/%04d  Pul:0x%02x/%05d  Mom:0x%02x/%04d  Hea:0x%02x/%02d  Swe:0x%02x  Fil:0x%02x" RKEOL,
                          user->radar->positionEngine->state,
@@ -463,38 +466,8 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
     }
-
-
-    if (user->streams & user->access & RKUserFlagStatusHealthOld && time - user->timeLastHealthOut >= 1.0) {
-        k = snprintf(user->string, RKMaximumStringLength - 1,
-                     "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
-                     user->radar->configs[user->radar->configIndex].prf[0]);
-        O->delimTx.type = 's';
-        O->delimTx.size = k + 1;
-        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-        user->timeLastHealthOut = time;
-    }
     
-    if (user->streams & user->access & RKUserFlagStatusHealth) {
-        j = 0;
-        k = 0;
-        endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
-        while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
-            c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
-            k += sprintf(user->string + k, "%s\n", c);
-            user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
-            j++;
-        }
-        if (j) {
-            // Take out the last '\n', replace it with somethign else + EOL
-            snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-        }
-        user->timeLastOut = time;
-    }
-
+    // Stream "2" - Level-II / Moment status - no skipping
     if (user->streams & user->access & RKUserFlagStatusRays) {
         j = 0;
         k = 0;
@@ -514,7 +487,39 @@ int socketStreamHandler(RKOperator *O) {
         }
         user->timeLastOut = time;
     }
+    
+    // Old-style Health Status
+    if (user->streams & user->access & RKUserFlagStatusHealthOld && time - user->timeLastHealthOut >= 1.0) {
+        k = snprintf(user->string, RKMaximumStringLength - 1,
+                     "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
+                     user->radar->configs[user->radar->configIndex].prf[0]);
+        O->delimTx.type = 's';
+        O->delimTx.size = k + 1;
+        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+        user->timeLastHealthOut = time;
+    }
+    
+    // Health Status
+    if (user->streams & user->access & RKUserFlagStatusHealth) {
+        j = 0;
+        k = 0;
+        endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
+        while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
+            c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
+            k += sprintf(user->string + k, "%s\n", c);
+            user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
+            j++;
+        }
+        if (j) {
+            // Take out the last '\n', replace it with somethign else + EOL
+            snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
+            O->delimTx.type = RKNetworkPacketTypeHealth;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+        }
+    }
 
+    // Product streams - no skipping
     if (user->streams & user->access & RKUserFlagDisplayZVWDPRKS) {
         endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
         while (user->rayIndex != endIndex) {
@@ -596,6 +601,7 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
+    // IQ
     if (user->streams & user->access & RKUserFlagProductIQ) {
         // If I/Q data is sent, there is no need to send another subset of it.
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
@@ -603,6 +609,7 @@ int socketStreamHandler(RKOperator *O) {
 
             user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
+        user->timeLastDisplayIQOut = time;
     } else if (user->streams & user->access & RKUserFlagDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
         endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(user->radar->pulses, endIndex);
