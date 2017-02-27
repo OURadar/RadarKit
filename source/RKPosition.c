@@ -348,7 +348,8 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
     if (engine->verbose > 1) {
         RKLog("%s Stopping ...\n", engine->name);
     }
-    engine->state = RKEngineStateDeactivating;
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
     pthread_join(engine->threadId, NULL);
     RKLog("%s Stopped.\n", engine->name);
     engine->state = RKEngineStateAllocated;
