@@ -107,11 +107,15 @@ void *pulseTagger(void *in) {
     // Wait until there is something ingested
     s = 0;
     while (*engine->positionIndex < 2 && engine->state & RKEngineStateActive) {
+        engine->state |= RKEngineStateSleep0;
         usleep(1000);
         if (++s % 200 == 0 && engine->verbose > 1) {
             RKLog("%s sleep 0/%.1f s\n",
                   engine->name, (float)s * 0.001f);
         }
+    }
+    if (engine->state & RKEngineStateSleep0) {
+        engine->state ^= RKEngineStateSleep0;
     }
     
     // Set the pulse to have position
@@ -123,25 +127,34 @@ void *pulseTagger(void *in) {
         // Wait until a thread check out this pulse.
         s = 0;
         while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
+            engine->state |= RKEngineStateSleep1;
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
+        if (engine->state & RKEngineStateSleep1) {
+            engine->state ^= RKEngineStateSleep1;
+        }
         // Wait until it has data & processed. Otherwise, the time stamp is no good and there is a horse raise with pulse compression engine.
         s = 0;
         while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateActive) {
+            engine->state |= RKEngineStateSleep2;
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
+        if (engine->state & RKEngineStateSleep2) {
+            engine->state ^= RKEngineStateSleep2;
+        }
         // Wait until we have a position newer than pulse time.
         s = 0;
         i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
         while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state & RKEngineStateActive) {
+            engine->state |= RKEngineStateSleep3;
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 3/%.1f s   k = %d   latestTime = %s <= %s = header.timeDouble\n",
@@ -149,6 +162,9 @@ void *pulseTagger(void *in) {
                       RKFloatToCommaStyleString(engine->positionBuffer[i].timeDouble), RKFloatToCommaStyleString(pulse->header.timeDouble));
             }
             i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
+        }
+        if (engine->state & RKEngineStateSleep3) {
+            engine->state ^= RKEngineStateSleep3;
         }
         
         // Record down the latest time

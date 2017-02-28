@@ -317,7 +317,11 @@ enum RKEngineState {
     RKEngineStateActivating          = (1 << 1),
     RKEngineStateActive              = (1 << 2),
     RKEngineStateDeactivating        = (1 << 3),
-    RKEngineStateWritingFile         = (1 << 4)
+    RKEngineStateWritingFile         = (1 << 4),
+    RKEngineStateSleep0              = (1 << 9),
+    RKEngineStateSleep1              = (1 << 9),
+    RKEngineStateSleep2              = (1 << 10),
+    RKEngineStateSleep3              = (1 << 11)
 };
 
 // A general description of a radar. These should never change after the radar has gone live
