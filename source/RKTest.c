@@ -489,7 +489,7 @@ void *RKTestTransceiverRunLoop(void *input) {
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         float temp = 1.0f * rand() / RAND_MAX + 79.5f;
         float volt = 1.0f * rand() / RAND_MAX + 11.5f;
-        sprintf(health->string, "{\"FPGA Temp\":{\"Value\":\"%.1fC\", \"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\", \"Enum\":%d}, \"NULL\": %ld",
+        sprintf(health->string, "{\"Transceiver\":{\"Value\":true, \"Enum\":0}, \"Ready\":{\"Value\":true, \"Enum\":0}, \"FPGA Temp\":{\"Value\":\"%.1fdegC\", \"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\", \"Enum\":%d}, \"NULL\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
                 transceiver->counter);
