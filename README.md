@@ -50,7 +50,7 @@ Follow these steps to get the project
 
 ## Basic Usage ##
 
-1. Initialize a radar. Supply a tranceiver routine and pedestal routine. The health relay is omitted here for simplicity.
+1. Initialize a _radar_ object (although RadarKit is not an objective implementation but it is easier to think this way). Supply the necessary _tranceiver_ routines and _pedestal_ routines. The _health relay_ is omitted here for simplicity.
 
     ```c
     #include <RadarKit.h>
@@ -152,7 +152,7 @@ Follow these steps to get the project
     gcc -o program program.c -lRadarKit -lfftw -lnetcdf
     ``````
 
-This example is extremely simple. Many optional arguments were set to NULL (execution and free routines are omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
+This example is extremely simple. Many optional arguments were set to NULL (execution and free routines were omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
 
 Design Philosophy
