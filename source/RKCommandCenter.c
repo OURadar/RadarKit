@@ -281,7 +281,7 @@ int socketCommandHandler(RKOperator *O) {
                 }
 
                 k += sprintf(string + k,
-                             HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with p goes to the health relay\n"
+                             HIGHLIGHT("h") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with p goes to the health relay\n"
                              "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
                 if (user->radar->healthRelay) {
                     user->radar->healthRelayExec(user->radar->healthRelay, "help", sval1);
@@ -295,7 +295,6 @@ int socketCommandHandler(RKOperator *O) {
                 k += sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
 
                 RKOperatorSendDelimitedString(O, string);
-                break;
 
             } else {
 
@@ -304,9 +303,11 @@ int socketCommandHandler(RKOperator *O) {
                 while (O->cmd[k] == ' ') {
                     k++;
                 }
+                RKLog("%s %s Forwarding '%s' to tweeta ...\n", engine->name, O->name, O->cmd + k);
                 user->radar->healthRelayExec(user->radar->healthRelay, O->cmd + k, string);
-
+                RKOperatorSendDelimitedString(O, string);
             }
+            break;
             
         case 'r':
             sscanf("%s", O->cmd + 1, sval1);

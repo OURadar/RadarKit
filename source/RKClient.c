@@ -98,10 +98,23 @@ void *theClient(void *in) {
 
         C->state = RKClientStateConfiguringSocket;
 
+        //RKLog("%s <RKClient> --> %d", C->name, sizeof(C->sa.sin_addr.s_addr));
+
+        // Bind to a specific interface
+//        struct sockaddr_in local_addr;
+//        local_addr.sin_family = AF_INET;
+//        local_addr.sin_port = htons(0);
+//        local_addr.sin_addr.s_addr = inet_addr("192.168.2.2");
+//        if (bind(C->sd, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_in))) {
+//            RKLog("%s Error. Unable to fix an interface (errno = %d)\n", C->name, errno);
+//        }
+
         // Configure the socket
         C->sa.sin_family = AF_INET;
         C->sa.sin_port = htons(C->port);
         C->sa.sin_addr.s_addr = inet_addr(C->hostIP);
+        //memset(C->sa.sin_zero, 0, 8);
+        //RKLog("%s <RKClient> %d.%d.%d.%d\n", C->name, (C->sa.sin_addr.s_addr >> 24) & 0xFF, (C->sa.sin_addr.s_addr >> 16) & 0xFF, (C->sa.sin_addr.s_addr >> 8) & 0xFF, C->sa.sin_addr.s_addr & 0xFF);
 
         if (C->verbose > 1) {
             RKLog("%s Configuring socket ...\n", C->name);

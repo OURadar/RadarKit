@@ -14,21 +14,36 @@
 
 int RHealthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKRadar *radar = client->userResource;
 
-    // The payload just was just read by RKClient
-    char *report = (char *)client->userPayload;
-    RKStripTail(report);
-    
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        printf("%s\n", report);
+    if (client->netDelimiter.type == 's') {
+        // The payload just read by RKClient
+        char *report = (char *)client->userPayload;
+        RKStripTail(report);
+
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            printf("%s\n", report);
+        }
+
+        // Get a vacant slot for health from Radar, copy over the data, then set it ready
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
+        strncpy(health->string, report, RKMaximumStringLength - 1);
+        RKSetHealthReady(radar, health);
+    } else {
+        // This the command acknowledgement, queue it up to feedback
+        char *string = (char *)client->userPayload;
+        if (!strncmp(string, "pong", 4)) {
+            // Just a beacon response.
+        } else {
+            if (client->verbose && me->latestCommand[0] != 'h') {
+                RKLog("%s %s", client->name, string);
+            }
+            strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
+            me->responseIndex = RKNextModuloS(me->responseIndex, RKHealthRelayTweetaFeedbackDepth);
+        }
     }
-    
-    // Get a vacant slot for health from Radar, copy over the data, then set it ready
-    RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
-    strncpy(health->string, report, RKMaximumStringLength - 1);   
-    RKSetHealthReady(radar, health);
-    
+
     return RKResultSuccess;
 }
 
@@ -39,10 +54,11 @@ int RHealthRelayTweetaRead(RKClient *client) {
 RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)malloc(sizeof(RKHealthRelayTweeta));
     if (me == NULL) {
-        RKLog("Error. Unable to allocated RKMonitorTweeta.\n");
+        RKLog("Error. Unable to allocated RKHealthRelayTweeta.\n");
         return NULL;
     }
     memset(me, 0, sizeof(RKHealthRelayTweeta));
+    me->radar = radar;
 
     // Tweeta uses a TCP socket server at port 9556. The payload is always a line string terminated by \r\n
     RKClientDesc desc;
@@ -58,15 +74,18 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
         desc.port = 9556;
     }
     desc.type = RKNetworkSocketTypeTCP;
-    desc.format = RKNetworkMessageFormatNewLine;
+    desc.format = RKNetworkMessageFormatHeaderDefinedSize;
     desc.blocking = true;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
-    desc.verbose = 1;
-    
+    desc.verbose =
+    radar->desc.initFlags & RKInitFlagVeryVeryVerbose ? 3 :
+    (radar->desc.initFlags & RKInitFlagVeryVerbose ? 2:
+     (radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0));
+
     me->client = RKClientInitWithDesc(desc);
     
-    RKClientSetUserResource(me->client, radar);
+    RKClientSetUserResource(me->client, me);
     RKClientSetReceiveHandler(me->client, &RHealthRelayTweetaRead);
     RKClientStart(me->client);
     
@@ -82,7 +101,35 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
-        RKNetworkSendPackets(client->sd, command, strlen(command), NULL);
+        if (client->state < RKClientStateConnected) {
+            if (response != NULL) {
+                sprintf(response, "NAK. Health Relay not connected." RKEOL);
+            }
+            return RKResultIncompleteReceive;
+        }
+        int s = 0;
+        uint32_t responseIndex = me->responseIndex;
+        size_t size = snprintf(me->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
+        RKNetworkSendPackets(client->sd, me->latestCommand, size + 1, NULL);
+        while (responseIndex == me->responseIndex) {
+            usleep(10000);
+            if (++s % 100 == 0) {
+                RKLog("%s Waited %.2f for response.\n", client->name, (float)s * 0.01f);
+            }
+            if ((float)s * 0.01f >= 5.0f) {
+                RKLog("%s should time out.\n", client->name);
+                break;
+            }
+        }
+        if (responseIndex == me->responseIndex) {
+            if (response != NULL) {
+                sprintf(response, "NAK. Timeout." RKEOL);
+            }
+            return RKResultTimeout;
+        }
+        if (response != NULL) {
+            strcpy(response, me->responses[responseIndex]);
+        }
     }
     return RKResultSuccess;
 }
