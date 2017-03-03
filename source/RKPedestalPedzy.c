@@ -18,7 +18,7 @@ int RKPedestalPedzyRead(RKClient *client) {
     RKRadar *radar = me->radar;
 
     if (client->netDelimiter.type == 'p') {
-        // The payload just was just read by RKClient
+        // The payload just read by RKClient
         RKPosition *position = (RKPosition *)client->userPayload;
 
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {

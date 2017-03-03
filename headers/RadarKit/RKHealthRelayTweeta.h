@@ -11,9 +11,15 @@
 
 #include <RadarKit/RKRadar.h>
 
+#define RKHealthRelayTweetaFeedbackDepth   8
+
 typedef struct rk_tweeta {
     // User defined variables
     RKClient                *client;
+    uint32_t               responseIndex;
+    char                   responses[RKHealthRelayTweetaFeedbackDepth][RKMaximumStringLength];
+    char                   latestCommand[RKMaximumStringLength];
+    RKRadar                *radar;
 } RKHealthRelayTweeta;
 
 RKHealthRelay RKHealthRelayTweetaInit(RKRadar *, void *);
