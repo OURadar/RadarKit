@@ -162,6 +162,7 @@ enum RKResult {
     RKResultUnableToChangeCoreCounts,
     RKResultFailedToStartPedestalWorker,
     RKResultFailedToGetVacantPosition,
+    RKResultFailedToGetVacantHealth,
     RKResultFailedToStartRayGatherer,
     RKResultFailedToStartHealthWorker,
     RKResultFailedToStartPulseRecorder,

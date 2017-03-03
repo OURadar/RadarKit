@@ -15,7 +15,7 @@
 int RHealthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
-    RKRadar *radar = client->userResource;
+    RKRadar *radar = me->radar;
 
     if (client->netDelimiter.type == 's') {
         // The payload just read by RKClient
@@ -28,6 +28,10 @@ int RHealthRelayTweetaRead(RKClient *client) {
 
         // Get a vacant slot for health from Radar, copy over the data, then set it ready
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
+        if (health == NULL) {
+            RKLog("%s failed to get a vacant health.\n", client->name);
+            return RKResultFailedToGetVacantHealth;
+        }
         strncpy(health->string, report, RKMaximumStringLength - 1);
         RKSetHealthReady(radar, health);
     } else {
@@ -37,7 +41,7 @@ int RHealthRelayTweetaRead(RKClient *client) {
             // Just a beacon response.
         } else {
             if (client->verbose && me->latestCommand[0] != 'h') {
-                RKLog("%s %s", client->name, string);
+                RKLog("%s (type %d) %s", client->name, client->netDelimiter.type, string);
             }
             strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
             me->responseIndex = RKNextModuloS(me->responseIndex, RKHealthRelayTweetaFeedbackDepth);
