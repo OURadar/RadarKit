@@ -53,8 +53,8 @@
 #define RKHealthNodeCount                8                           // Maximum number of nodes to ingest health info. Check RKHealthNode
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
-#define RKMaxFilterCount          4                           // Maximum filter count within each filter group. Check RKPulseParameters
-#define RKMaxFilterGroups     22                          // Maximum filter group count
+#define RKMaxFilterCount                 4                           // Maximum filter count within each filter group. Check RKPulseParameters
+#define RKMaxFilterGroups                22                          // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth     1000
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit
@@ -313,11 +313,15 @@ enum RKHealthNode {
 typedef uint32_t RKEngineState;
 enum RKEngineState {
     RKEngineStateNull                = 0,
-    RKEngineStateAllocated           = 1,
-    RKEngineStateActivating          = (1 << 1),
-    RKEngineStateActive              = (1 << 2),
-    RKEngineStateDeactivating        = (1 << 3),
-    RKEngineStateWritingFile         = (1 << 4)
+    RKEngineStateSleep0              = 1,                            // Usually for a wait just outside of the main while loop
+    RKEngineStateSleep1              = (1 << 1),                     // Stage 1 wait - usually waiting for pulse
+    RKEngineStateSleep2              = (1 << 2),                     // Stage 2 wait
+    RKEngineStateSleep3              = (1 << 3),                     // Stage 3 wait
+    RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
+    RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
+    RKEngineStateActivating          = (1 << 9),                     // The main run loop is being activated
+    RKEngineStateDeactivating        = (1 << 10),                    // The main run loop is being deactivated, RKEngineStateActive is immediatelu
+    RKEngineStateActive              = (1 << 15)                     // The engine is active
 };
 
 // A general description of a radar. These should never change after the radar has gone live
