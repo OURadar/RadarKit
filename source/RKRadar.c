@@ -701,7 +701,8 @@ int RKStop(RKRadar *radar) {
 RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     if (radar->healthEngine == NULL) {
         RKLog("Error. Health engine has not started.\n");
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
+        return NULL;
     }
     radar->healthNodes[node].active = true;
     uint32_t index = radar->healthNodes[node].index;
@@ -725,7 +726,8 @@ void RKSetHealthReady(RKRadar *radar, RKHealth *health) {
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
     if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
+        return NULL;
     }
     RKPosition *position = &radar->positions[radar->positionIndex];
     position->i += radar->desc.positionBufferDepth;
