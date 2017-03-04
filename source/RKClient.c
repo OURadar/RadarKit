@@ -192,6 +192,32 @@ void *theClient(void *in) {
                     }
                     break;
                 }
+                // Send in a beacon signal
+                gettimeofday(&timeout, NULL);
+                timeout.tv_sec -= 1;
+                if (timercmp(&timeout, &previousBeaconTime, >=)) {
+                    FD_ZERO(&C->wfd);
+                    FD_ZERO(&C->efd);
+                    FD_SET(C->sd, &C->wfd);
+                    FD_SET(C->sd, &C->efd);
+                    timeout.tv_sec = 0;
+                    timeout.tv_usec = 1000;
+                    r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+                    if (r > 0) {
+                        if (FD_ISSET(C->sd, &C->efd)) {
+                            // Exceptions
+                            RKLog("%s encountered an exception error.\n", C->name);
+                            break;
+                        } else if (FD_ISSET(C->sd, &C->wfd)) {
+                            gettimeofday(&previousBeaconTime, NULL);
+                            //RKLog("%s beacon\n", C->name);
+                            RKNetworkSendPackets(C->sd, beacon, strlen(beacon), NULL);
+                        }
+                    } else {
+                        RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                        break;
+                    }
+                }
                 continue;
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
                 switch (C->format) {
@@ -262,6 +288,11 @@ void *theClient(void *in) {
                         if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
                             break;
                         }
+                        // If the delimiter specifies 0 payload, it could just be a beacon
+                        if (C->netDelimiter.size == 0) {
+                            readOkay = true;
+                            break;
+                        }
                         // Now the actual payload
                         k = 0;
                         readCount = 0;
@@ -326,33 +357,8 @@ void *theClient(void *in) {
                 }
                 C->state = RKClientStateConnected;
             }
+            timeoutCount = 0;
             C->recv(C);
-
-            // Send in a beacon signal
-            gettimeofday(&timeout, NULL);
-            timeout.tv_sec -= 1;
-            if (timercmp(&timeout, &previousBeaconTime, >=)) {
-                FD_ZERO(&C->wfd);
-                FD_ZERO(&C->efd);
-                FD_SET(C->sd, &C->wfd);
-                FD_SET(C->sd, &C->efd);
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 1000;
-                r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
-                if (r > 0) {
-                    if (FD_ISSET(C->sd, &C->efd)) {
-                        // Exceptions
-                        RKLog("%s encountered an exception error.\n", C->name);
-                        break;
-                    } else if (FD_ISSET(C->sd, &C->wfd)) {
-                        gettimeofday(&previousBeaconTime, NULL);
-                        RKNetworkSendPackets(C->sd, beacon, strlen(beacon), NULL);
-                    }
-                } else {
-                    RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                    break;
-                }
-            }
         }
 
         // Wait a while before trying to reconnect

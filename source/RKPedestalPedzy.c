@@ -42,11 +42,12 @@ int RKPedestalPedzyRead(RKClient *client) {
         if (!strncmp(string, "pong", 4)) {
             // Just a beacon response.
         } else {
-            if (client->verbose && me->latestCommand[0] != 'h') {
-                RKLog("%s %s", client->name, string);
-            }
             strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
             me->responseIndex = RKNextModuloS(me->responseIndex, RKPedestalPedzyFeedbackDepth);
+            if (client->verbose && me->latestCommand[0] != 'h') {
+                RKStripTail(string);
+                RKLog("%s %s", client->name, string);
+            }
         }
     }
 

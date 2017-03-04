@@ -22,7 +22,7 @@ int RHealthRelayTweetaRead(RKClient *client) {
         char *report = (char *)client->userPayload;
         RKStripTail(report);
 
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
             printf("%s\n", report);
         }
 
@@ -40,11 +40,12 @@ int RHealthRelayTweetaRead(RKClient *client) {
         if (!strncmp(string, "pong", 4)) {
             // Just a beacon response.
         } else {
-            if (client->verbose && me->latestCommand[0] != 'h') {
-                RKLog("%s (type %d) %s", client->name, client->netDelimiter.type, string);
-            }
             strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
             me->responseIndex = RKNextModuloS(me->responseIndex, RKHealthRelayTweetaFeedbackDepth);
+            if (client->verbose && me->latestCommand[0] != 'h') {
+                RKStripTail(string);
+                RKLog("%s %s (delim.type = %d)\n", client->name, string, client->netDelimiter.type);
+            }
         }
     }
 
