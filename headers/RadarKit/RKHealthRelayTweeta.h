@@ -15,7 +15,7 @@
 
 typedef struct rk_tweeta {
     // User defined variables
-    RKClient                *client;
+    RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKHealthRelayTweetaFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumStringLength];

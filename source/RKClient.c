@@ -44,7 +44,7 @@ void *theClient(void *in) {
         RKLog("%s is working hard ...\n", C->name);
     }
 
-    char beacon[] = "ping" RKEOL;
+    char ping[] = "ping" RKEOL;
 
     // Here comes the infinite loop until being stopped
     while (C->state < RKClientStateDisconnecting) {
@@ -192,33 +192,7 @@ void *theClient(void *in) {
                     }
                     break;
                 }
-                // Send in a beacon signal
-                gettimeofday(&timeout, NULL);
-                timeout.tv_sec -= 1;
-                if (timercmp(&timeout, &previousBeaconTime, >=)) {
-                    FD_ZERO(&C->wfd);
-                    FD_ZERO(&C->efd);
-                    FD_SET(C->sd, &C->wfd);
-                    FD_SET(C->sd, &C->efd);
-                    timeout.tv_sec = 0;
-                    timeout.tv_usec = 1000;
-                    r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
-                    if (r > 0) {
-                        if (FD_ISSET(C->sd, &C->efd)) {
-                            // Exceptions
-                            RKLog("%s encountered an exception error.\n", C->name);
-                            break;
-                        } else if (FD_ISSET(C->sd, &C->wfd)) {
-                            gettimeofday(&previousBeaconTime, NULL);
-                            //RKLog("%s beacon\n", C->name);
-                            RKNetworkSendPackets(C->sd, beacon, strlen(beacon), NULL);
-                        }
-                    } else {
-                        RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                        break;
-                    }
-                }
-                continue;
+                //continue;
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
                 switch (C->format) {
 
@@ -290,6 +264,7 @@ void *theClient(void *in) {
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
                         if (C->netDelimiter.size == 0) {
+                            RKLog("%s size = 0\n", C->name);
                             readOkay = true;
                             break;
                         }
@@ -335,6 +310,23 @@ void *theClient(void *in) {
                         }
                         break;
                 }
+
+                if (readOkay == false) {
+                    RKLog("%s Server disconnected.\n", C->name);
+                    if (C->state < RKClientStateDisconnecting) {
+                        C->state = RKClientStateReconnecting;
+                    }
+                    close(C->sd);
+                    fid = NULL;
+                    continue;
+                } else if (C->state < RKClientStateDisconnecting) {
+                    if (C->state != RKClientStateConnected) {
+                        RKLog("%s Connected.\n", C->name);
+                    }
+                    C->state = RKClientStateConnected;
+                }
+                timeoutCount = 0;
+                C->recv(C);
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
@@ -343,22 +335,32 @@ void *theClient(void *in) {
                 break;
             }
 
-            if (readOkay == false) {
-                RKLog("%s Server disconnected.\n", C->name);
-                if (C->state < RKClientStateDisconnecting) {
-                    C->state = RKClientStateReconnecting;
+            // Send in a beacon signal
+            gettimeofday(&timeout, NULL);
+            timeout.tv_sec -= 1;
+            if (timercmp(&timeout, &previousBeaconTime, >=)) {
+                FD_ZERO(&C->wfd);
+                FD_ZERO(&C->efd);
+                FD_SET(C->sd, &C->wfd);
+                FD_SET(C->sd, &C->efd);
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 1000;
+                r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+                if (r > 0) {
+                    if (FD_ISSET(C->sd, &C->efd)) {
+                        // Exceptions
+                        RKLog("%s encountered an exception error.\n", C->name);
+                        break;
+                    } else if (FD_ISSET(C->sd, &C->wfd)) {
+                        gettimeofday(&previousBeaconTime, NULL);
+                        //RKLog("%s beacon\n", C->name);
+                        RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
+                    }
+                } else {
+                    RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                    break;
                 }
-                close(C->sd);
-                fid = NULL;
-                continue;
-            } else if (C->state < RKClientStateDisconnecting) {
-                if (C->state != RKClientStateConnected) {
-                    RKLog("%s Connected.\n", C->name);
-                }
-                C->state = RKClientStateConnected;
             }
-            timeoutCount = 0;
-            C->recv(C);
         }
 
         // Wait a while before trying to reconnect
