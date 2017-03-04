@@ -37,6 +37,7 @@ void *theClient(void *in) {
         return (void *)RKResultErrorCreatingOperatorRoutine;
     }
     void *delimiter = &C->netDelimiter;
+    char *cbuf = (char *)buf;
 
     C->userPayload = buf;
 
@@ -264,7 +265,7 @@ void *theClient(void *in) {
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
                         if (C->netDelimiter.size == 0) {
-                            RKLog("%s size = 0\n", C->name);
+                            RKLog("%s netDelimiter.size = 0\n", C->name);
                             readOkay = true;
                             break;
                         }
@@ -289,6 +290,8 @@ void *theClient(void *in) {
                                 break;
                             }
                         }
+                        // Add a NULL character to the end of payload
+                        cbuf[k] = '\0';
                         if (readCount >= C->timeoutSeconds * 1000) {
                             break;
                         }
