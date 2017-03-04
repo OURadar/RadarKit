@@ -598,6 +598,9 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command, char *response) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
+    if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
+    }
     if (!strcmp(command, "disconnect")) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);

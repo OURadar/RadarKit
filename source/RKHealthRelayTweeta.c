@@ -17,13 +17,12 @@ int RHealthRelayTweetaRead(RKClient *client) {
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKRadar *radar = me->radar;
 
+    char *string = (char *)client->userPayload;
+
     if (client->netDelimiter.type == 's') {
         // The payload just read by RKClient
-        char *report = (char *)client->userPayload;
-        RKStripTail(report);
-
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-            printf("%s\n", report);
+            printf("%s\n", string);
         }
 
         // Get a vacant slot for health from Radar, copy over the data, then set it ready
@@ -32,11 +31,11 @@ int RHealthRelayTweetaRead(RKClient *client) {
             RKLog("%s failed to get a vacant health.\n", client->name);
             return RKResultFailedToGetVacantHealth;
         }
-        strncpy(health->string, report, RKMaximumStringLength - 1);
+        strncpy(health->string, string, RKMaximumStringLength - 1);
+        RKStripTail(health->string);
         RKSetHealthReady(radar, health);
     } else {
         // This the command acknowledgement, queue it up to feedback
-        char *string = (char *)client->userPayload;
         if (!strncmp(string, "pong", 4)) {
             // Just a beacon response.
         } else {
@@ -115,7 +114,7 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
         size_t size = snprintf(me->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
-        RKNetworkSendPackets(client->sd, me->latestCommand, size + 1, NULL);
+        RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {

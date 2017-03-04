@@ -299,6 +299,11 @@ int socketCommandHandler(RKOperator *O) {
             } else {
 
                 // Forward to health relay
+                if (strlen(O->cmd) < 2) {
+                    sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                    RKOperatorSendDelimitedString(O, string);
+                    break;
+                }
                 k = 1;
                 while (O->cmd[k] == ' ') {
                     k++;
@@ -336,6 +341,11 @@ int socketCommandHandler(RKOperator *O) {
 
         case 'p':
             // Pass everything to pedestal
+            if (strlen(O->cmd) < 2) {
+                sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                RKOperatorSendDelimitedString(O, string);
+                break;
+            }
             k = 0;
             do {
                 k++;
@@ -347,6 +357,11 @@ int socketCommandHandler(RKOperator *O) {
         case 't':
         case 'w':
             // Pass everything to transceiver
+            if (strlen(O->cmd) < 2) {
+                sprintf(string, "NAK. Empty command to transceiver." RKEOL);
+                RKOperatorSendDelimitedString(O, string);
+                break;
+            }
             k = 1;
             while (O->cmd[k] == ' ') {
                 k++;
@@ -383,7 +398,7 @@ int socketCommandHandler(RKOperator *O) {
             // Stop everything
             
         default:
-            snprintf(string, RKMaximumStringLength, "Unknown command '%s'." RKEOL, O->cmd);
+            snprintf(string, RKMaximumStringLength - 1, "Unknown command '%s'." RKEOL, O->cmd);
             RKOperatorSendDelimitedString(O, string);
             break;
     }
