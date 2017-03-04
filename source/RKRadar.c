@@ -642,7 +642,25 @@ int RKGoLive(RKRadar *radar) {
 }
 
 int RKWaitWhileActive(RKRadar *radar) {
+    uint32_t positionIndex = radar->positionIndex;
+    uint32_t healthIndex = radar->healthIndex;
+    int s = 0;
     while (radar->active) {
+        if (s++ == 10) {
+            s = 0;
+            RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
+            sprintf(health->string, "{"
+                    "\"Transceiver\":{\"Value\":true,\"Enum\":0},"
+                    "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
+                    "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}"
+                    "}",
+                    positionIndex == radar->positionIndex ? "false" : "true", positionIndex == radar->positionIndex ? 2 : 0,
+                    healthIndex == radar->healthIndex ? "false" : "true", healthIndex == radar->healthIndex ? 2 : 0
+                    );
+            RKSetHealthReady(radar, health);
+            positionIndex = radar->positionIndex;
+            healthIndex = radar->healthIndex;
+        }
         usleep(100000);
     }
     return 0;

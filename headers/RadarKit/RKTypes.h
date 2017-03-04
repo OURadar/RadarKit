@@ -301,10 +301,10 @@ enum RKConfigKey {
 
 typedef uint8_t RKHealthNode;
 enum RKHealthNode {
+    RKHealthNodeRadarKit,
     RKHealthNodeTransceiver,
     RKHealthNodePedestal,
     RKHealthNodeTweeta,
-    RKHealthNodeTrailer,
     RKHealthNodeUser1,
     RKHealthNodeUser2,
     RKHealthNodeUser3,
