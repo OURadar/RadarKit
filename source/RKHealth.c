@@ -55,6 +55,7 @@ void *healthConsolidator(void *in) {
         // Wait while all the indices are the same (wait when all the indices are the same)
         s = 0;
         allTrue = true;
+        engine->state |= RKEngineStateSleep1;
         while (allTrue && engine->state & RKEngineStateActive) {
             for (j = 0; j < desc->healthNodeCount; j++) {
                 if (indices[j] != engine->healthNodes[j].index) {
@@ -74,6 +75,8 @@ void *healthConsolidator(void *in) {
                 }
             }
         }
+        engine->state ^= RKEngineStateSleep1;
+        engine->state |= RKEngineStateSleep2;
         // Wait until all the flags are ready (wait when any flag is vacant)
         s = 0;
         while (engine->state & RKEngineStateActive) {
@@ -99,6 +102,7 @@ void *healthConsolidator(void *in) {
                 }
             }
         }
+        engine->state ^= RKEngineStateSleep2;
         if (!(engine->state & RKEngineStateActive)) {
             break;
         }
@@ -137,11 +141,21 @@ void *healthConsolidator(void *in) {
         //RKLog("%s", string);
 
         // Look for certain keywords, extract some information
-        if ((stringValue = RKGetValueOfKey(health->string, "latitude")) != NULL) {
-            desc->latitude = atof(stringValue);
+        if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
+            stringValue = RKGetValueOfKey(stringObject, "value");
+            stringEnum = RKGetValueOfKey(stringObject, "enum");
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
+                RKLog("%s Found new latitude %s\n", engine->name, stringValue);
+                desc->latitude = atof(stringValue);
+            }
         }
-        if ((stringValue = RKGetValueOfKey(health->string, "longitude")) != NULL) {
-            desc->longitude = atof(stringValue);
+        if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
+            stringValue = RKGetValueOfKey(stringObject, "value");
+            stringEnum = RKGetValueOfKey(stringObject, "enum");
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
+                RKLog("%s Found new longitude %s\n", engine->name, stringValue);
+                desc->longitude = atof(stringValue);
+            }
         }
         
         for (j = 0; j < keywordsCount; j++) {

@@ -322,7 +322,7 @@ enum RKEngineState {
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
     RKEngineStateActivating          = (1 << 9),                     // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 10),                    // The main run loop is being deactivated, RKEngineStateActive is immediatelu
-    RKEngineStateActive              = (1 << 15)                     // The engine is active
+    RKEngineStateActive              = (1 << 11)                     // The engine is active
 };
 
 // A general description of a radar. These should never change after the radar has gone live

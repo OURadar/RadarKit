@@ -442,11 +442,13 @@ void *pulseWatcher(void *_in) {
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
     // Tested and removed on 9/29/2016
+    engine->state |= RKEngineStateSleep0;
     for (c = 0; c < engine->coreCount; c++) {
         while (engine->workers[c].tic == 0) {
             usleep(1000);
         }
     }
+    engine->state ^= RKEngineStateSleep0;
 
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
