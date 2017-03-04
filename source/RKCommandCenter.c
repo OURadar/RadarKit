@@ -465,7 +465,7 @@ int socketStreamHandler(RKOperator *O) {
         }
         // Stream "4" - Internal Engines
         if (user->streams & RKUserFlagStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%02x/%04d  Pul:0x%02x/%05d  Mom:0x%02x/%04d  Hea:0x%02x/%02d  Swe:0x%02x  Fil:0x%02x" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%03x/%04d  Pul:0x%03x/%05d  Mom:0x%03x/%04d  Hea:0x%03x/%02d  Swe:0x%03x  Fil:0x%03x" RKEOL,
                          user->radar->positionEngine->state,
                          user->radar->positionIndex,
                          user->radar->pulseCompressionEngine->state,
