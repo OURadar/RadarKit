@@ -556,11 +556,11 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
 }
 
 ssize_t RKOperatorSendString(RKOperator *O, const char *string) {
-    return RKOperatorSendPackets(O, string, strlen(string) + 1, NULL);
+    return RKOperatorSendPackets(O, string, strlen(string), NULL);
 }
 
 ssize_t RKOperatorSendDelimitedString(RKOperator *O, const char *string) {
-    O->delimString.size = (uint32_t)strlen(string) + 1;
+    O->delimString.size = (uint32_t)strlen(string);
     return RKOperatorSendPackets(O, &O->delimString, sizeof(RKNetDelimiter), string, O->delimString.size, NULL);
 }
 
