@@ -1,7 +1,7 @@
 RadarKit
 ========
 
-A toolkit with various components of a radar signal processor. Mainly implement the real-time operation of data collection, data transportation through network, rudimentary processing from raw I/Q data to moment data. The main idea is to have user only implement the interface between a digital transceiver, a pedestal, and a general health monitor. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
+A toolkit with various components of a radar signal processor. Mainly the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to base moment products. The main idea is to have user only implement the interface between a digital transceiver, a pedestal, and a generic health monitor. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
 
 ## Getting the Project ##
 
@@ -70,7 +70,7 @@ Follow these steps to get the project
     ```c
     RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
-        UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserStruct));
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
         
         // Be sure to save a reference to radar
         resource->radar = radar
@@ -115,7 +115,7 @@ Follow these steps to get the project
     ```c
     RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
-        UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserStruct));
+        UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
         
         // Be sure to save a reference to radar
         resource->radar = radar
@@ -251,6 +251,11 @@ void RKSetPulseReady(RKRadar *, RKPulse *);
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
+
+// Health
+RKHealth *RKGetVacantHealth(RKRadar *, RKHeathNode);
+void RKSetHealthReady(RKRadar *, RKHealth *);
+
 ``````
 
 Advanced Usage
