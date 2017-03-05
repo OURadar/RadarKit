@@ -309,7 +309,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
                     RKConfigKeyPRF, 1000,
-                    RKConfigKeyZCal, -43.0f, -43.0f,
+                    RKConfigKeyZCal, -43.0, -43.0,
+                    RKConfigKeyNoise, 900.0, 900.0,
                     RKConfigKeyNull);
 
     return radar;

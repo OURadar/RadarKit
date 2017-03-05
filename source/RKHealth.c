@@ -8,6 +8,10 @@
 
 #include <RadarKit/RKHealth.h>
 
+#pragma mark - Convenient Functions
+
+#pragma mark - Threads
+
 void *healthConsolidator(void *in) {
     RKHealthEngine *engine = (RKHealthEngine *)in;
     RKRadarDesc *desc = engine->radarDescription;
@@ -141,22 +145,32 @@ void *healthConsolidator(void *in) {
 
         //RKLog("%s", string);
 
-        // Look for certain keywords, extract some information
+        // Look for certain keywords with {"Value":x,"Enum":y} pairs, extract some information
+        float latitude = NAN, longitude = NAN, heading = NAN;
+        
         if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
-                RKLog("%s Found new latitude %s\n", engine->name, stringValue);
-                desc->latitude = atof(stringValue);
+                latitude = atof(stringValue);
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
-                RKLog("%s Found new longitude %s\n", engine->name, stringValue);
-                desc->longitude = atof(stringValue);
+                longitude = atof(stringValue);
             }
+        }
+        if ((stringObject = RKGetValueOfKey(health->string, "heading")) != NULL) {
+            stringValue = RKGetValueOfKey(stringObject, "value");
+            stringEnum = RKGetValueOfKey(stringObject, "enum");
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
+                heading = atof(stringValue);
+            }
+        }
+        if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
+            RKLog("%s GPS:  latitude = %.4f   longitude = %.4f   heading = %.4f\n", engine->name, latitude, longitude, heading);
         }
         
         for (j = 0; j < keywordsCount; j++) {

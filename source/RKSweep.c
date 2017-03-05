@@ -62,7 +62,7 @@ void *sweepWriter(void *in) {
     E = rays[k + n - 1];
     config = &engine->configBuffer[T->header.configIndex];
     if (engine->verbose) {
-        RKLog(">%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s%d%s)\n",
+        RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s%d%s)\n",
               engine->name,
               T->header.configIndex,
               config->sweepElevation,

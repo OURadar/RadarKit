@@ -68,20 +68,40 @@ void RKMomentUpdateStatusString(RKMomentEngine *engine) {
 
 int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const int stride) {
     int i, k;
-    // Grab the data from scratch space and perform down-sampling, if stride > 1
+    // Grab the data from scratch space and perform down-sampling according to stride.
+    float *Si = space->S[0];
     float *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKProductIndexZ);
     float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKProductIndexV);
     float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKProductIndexW);
     float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKProductIndexD);
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKProductIndexP);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKProductIndexR);
+    float SNR;
+    float SNRThreshold = powf(10.0f, 0.1f * (1.0f));
     for (i = 0, k = 0; k < gateCount; i++, k += stride) {
-        *Zo++ = *Zi;  Zi += stride;
-        *Vo++ = *Vi;  Vi += stride;
-        *Wo++ = *Wi;  Wi += stride;
-        *Do++ = *Di;  Di += stride;
-        *Po++ = *Pi;  Pi += stride;
-        *Ro++ = *Ri;  Ri += stride;
+        SNR = *Si / space->noise[0];
+        if (SNR > SNRThreshold) {
+            *Zo++ = *Zi;
+            *Vo++ = *Vi;
+            *Wo++ = *Wi;
+            *Do++ = *Di;
+            *Po++ = *Pi;
+            *Ro++ = *Ri;
+        } else {
+            *Zo++ = NAN;
+            *Vo++ = NAN;
+            *Wo++ = NAN;
+            *Do++ = NAN;
+            *Po++ = NAN;
+            *Ro++ = NAN;
+        }
+        Si += stride;
+        Zi += stride;
+        Vi += stride;
+        Wi += stride;
+        Di += stride;
+        Pi += stride;
+        Ri += stride;
     }
     // Record down the down-sampled gate count
     ray->header.gateCount = i;
@@ -315,7 +335,7 @@ void *momentCore(void *in) {
         if (gateSizeMeters != S->header.gateSizeMeters) {
             gateSizeMeters = S->header.gateSizeMeters;
             k = *engine->configIndex;
-            RKConfig *config = &engine->configBuffer[*engine->configIndex];
+            RKConfig *config = &engine->configBuffer[k];
             if (engine->verbose) {
                 RKLog("%s %s C%d RCor @ %.2f/%.2f dB   capacity = %s   stride = %d\n",
                       engine->name, name, k, config->ZCal[0], config->ZCal[1], RKIntegerToCommaStyleString(ray->header.capacity), stride);
@@ -326,6 +346,8 @@ void *momentCore(void *in) {
                 space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
                 space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1];
             }
+            space->noise[0] = config->noise[0];
+            space->noise[1] = config->noise[1];
         }
 
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group

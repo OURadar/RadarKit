@@ -48,17 +48,22 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->gateCount[0] = va_arg(arg, uint32_t);
                 break;
             case RKConfigKeyWaveformId:
-
+                // ???
+                //RKParseCommaDelimitedValues(newConfig->waveformId, RKValueTypeUInt32, RKMaxFilterCount, string);
                 break;
             case RKConfigKeyVCPDefinition:
                 string = va_arg(arg, char *);
                 RKLog(">string = %s", string);
-                //RKParseCommaDelimitedValues(newConfig->prf, RKValueTypeUInt32, RKMaxFilterCount, string);
                 break;
             case RKConfigKeyZCal:
                 newConfig->ZCal[0] = (RKFloat)va_arg(arg, double);
                 newConfig->ZCal[1] = (RKFloat)va_arg(arg, double);
                 RKLog(">ZCal = %.2f %.2f dB\n", newConfig->ZCal[0], newConfig->ZCal[1]);
+                break;
+            case RKConfigKeyNoise:
+                newConfig->noise[0] = (RKFloat)va_arg(arg, double);
+                newConfig->noise[1] = (RKFloat)va_arg(arg, double);
+                RKLog(">Noise = %.2f %.2f ADU^2\n", newConfig->noise[0], newConfig->noise[1]);
                 break;
             default:
                 break;

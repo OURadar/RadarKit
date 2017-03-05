@@ -460,7 +460,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(20000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
+                    X->i = (int16_t)(10000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
                     X->q = 0.0f;
                     X++;
                 }
@@ -480,10 +480,20 @@ void *RKTestTransceiverRunLoop(void *input) {
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         float temp = 1.0f * rand() / RAND_MAX + 79.5f;
         float volt = 1.0f * rand() / RAND_MAX + 11.5f;
-        sprintf(health->string, "{\"Trigger\":{\"Value\":true,\"Enum\":0}, \"Ready\":{\"Value\":true,\"Enum\":0}, \"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, \"XMC Volt\":{\"Value\":\"%.1fV\",\"Enum\":%d}, \"GPS Latitude\":{\"Value\":\"%.6f\",\"Enum\":0}, \"NULL\": %ld}",
+        sprintf(health->string,
+                "{\"Trigger\":{\"Value\":true,\"Enum\":0}, "
+                "\"Ready\":{\"Value\":true,\"Enum\":0}, "
+                "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                "\"XMC Volt\":{\"Value\":\"%.1fV\",\"Enum\":%d}, "
+                "\"GPS Latitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
+                "\"GPS Longitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.6f\",\"Enum\":0}, "
+                "\"NULL\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
                 (double)rand() * 1.0 / RAND_MAX + 35,
+                (double)rand() * 1.0 / RAND_MAX - 95,
+                (double)rand() * 1.0 / RAND_MAX + 45,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
 
