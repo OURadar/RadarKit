@@ -318,6 +318,7 @@ enum RKEngineState {
     RKEngineStateSleep1              = (1 << 1),                     // Stage 1 wait - usually waiting for pulse
     RKEngineStateSleep2              = (1 << 2),                     // Stage 2 wait
     RKEngineStateSleep3              = (1 << 3),                     // Stage 3 wait
+    RKEngineStateSleepMask           = 0x0F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
     RKEngineStateActivating          = (1 << 9),                     // The main run loop is being activated
