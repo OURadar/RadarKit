@@ -462,15 +462,6 @@ void *RKTestTransceiverRunLoop(void *input) {
                 for (g = 0; g < transceiver->gateCount; g++) {
                     X->i = (int16_t)(20000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
                     X->q = 0.0f;
-                    //                    if (g % 2 == 0) {
-                    //                        X->i = (int16_t)((g * n) + p);
-                    //                        X->q = (int16_t)((n - 2) * (g - 1));
-                    //                    } else {
-                    //                        X->i = (int16_t)(-g * (n - 1));
-                    //                        X->q = (int16_t)((g * p) + n);
-                    //                    }
-                    //                    X->i = (float)g;
-                    //                    X->q = 0.0f;
                     X++;
                 }
             }

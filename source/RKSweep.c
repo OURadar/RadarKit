@@ -363,7 +363,9 @@ void *rayGatherer(void *in) {
     while (engine->state & RKEngineStateActive) {
         // The ray
         ray = RKGetRay(engine->rayBuffer, k);
+        
         // Wait until the buffer is advanced
+        engine->state |= RKEngineStateSleep1;
         s = 0;
         while (k == *engine->rayIndex && engine->state & RKEngineStateActive) {
             usleep(10000);
@@ -372,6 +374,8 @@ void *rayGatherer(void *in) {
                       engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
             }
         }
+        engine->state ^= RKEngineStateSleep1;
+        engine->state |= RKEngineStateSleep2;
         // Wait until the ray is ready
         s = 0;
         while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive) {
@@ -381,6 +385,8 @@ void *rayGatherer(void *in) {
                       engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
             }
         }
+        engine->state ^= RKEngineStateSleep2;
+
         if (!(engine->state & RKEngineStateActive)) {
             break;
         }

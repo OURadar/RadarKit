@@ -53,9 +53,9 @@ void *healthConsolidator(void *in) {
         string = health->string;
 
         // Wait while all the indices are the same (wait when all the indices are the same)
+        engine->state |= RKEngineStateSleep1;
         s = 0;
         allTrue = true;
-        engine->state |= RKEngineStateSleep1;
         while (allTrue && engine->state & RKEngineStateActive) {
             for (j = 0; j < desc->healthNodeCount; j++) {
                 if (indices[j] != engine->healthNodes[j].index) {
@@ -103,6 +103,7 @@ void *healthConsolidator(void *in) {
             }
         }
         engine->state ^= RKEngineStateSleep2;
+        
         if (!(engine->state & RKEngineStateActive)) {
             break;
         }

@@ -464,35 +464,32 @@ void *pulseWatcher(void *_in) {
     c = 0;   // core index
     int s = 0;
     while (engine->state & RKEngineStateActive) {
-
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
+
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
+        engine->state |= RKEngineStateSleep1;
         s = 0;
         while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
-            engine->state |= RKEngineStateSleep1;
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state & RKEngineStateSleep1) {
-            engine->state ^= RKEngineStateSleep1;
-        }
+        engine->state ^= RKEngineStateSleep1;
+        engine->state |= RKEngineStateSleep2;
         // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
         s = 0;
         while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateActive) {
-            engine->state |= RKEngineStateSleep2;
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
-        if (engine->state & RKEngineStateSleep2) {
-            engine->state ^= RKEngineStateSleep2;
-        }
+        engine->state ^= RKEngineStateSleep2;
+
         if (!(engine->state & RKEngineStateActive)) {
             break;
         }

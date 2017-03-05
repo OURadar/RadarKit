@@ -475,11 +475,13 @@ void *pulseGatherer(void *in) {
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
     // See RKPulseCompression.c
+    engine->state |= RKEngineStateSleep0;
     for (c = 0; c < engine->coreCount; c++) {
         while (engine->workers[c].tic == 0) {
             usleep(1000);
         }
     }
+    engine->state ^= RKEngineStateSleep0;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
     
@@ -495,7 +497,9 @@ void *pulseGatherer(void *in) {
     while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
+        
         // Wait until the buffer is advanced
+        engine->state |= RKEngineStateSleep1;
         s = 0;
         while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
             usleep(1000);
@@ -505,6 +509,8 @@ void *pulseGatherer(void *in) {
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
+        engine->state ^= RKEngineStateSleep1;
+        engine->state |= RKEngineStateSleep2;
         // At this point, three things are happening:
         // A separate thread has checked out a pulse, filling it with data (RKPulseStatusHasIQData);
         // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
@@ -517,6 +523,8 @@ void *pulseGatherer(void *in) {
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
+        engine->state ^= RKEngineStateSleep2;
+        
         if (!(engine->state & RKEngineStateActive)) {
             break;
         }
