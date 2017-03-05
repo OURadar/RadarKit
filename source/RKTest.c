@@ -415,7 +415,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     struct timeval t0, t1;
 
     
-    const int chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
+    const int chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s   range = %.1f km\n",
@@ -460,7 +460,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(10000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
+                    X->i = (int16_t)(1000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
                     X->q = 0.0f;
                     X++;
                 }
@@ -484,7 +484,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "{\"Trigger\":{\"Value\":true,\"Enum\":0}, "
                 "\"Ready\":{\"Value\":true,\"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                "\"XMC Volt\":{\"Value\":\"%.1fV\",\"Enum\":%d}, "
+                "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
                 "\"GPS Latitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.6f\",\"Enum\":0}, "

@@ -643,24 +643,29 @@ int RKGoLive(RKRadar *radar) {
 }
 
 int RKWaitWhileActive(RKRadar *radar) {
+    uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
-    uint32_t healthIndex = radar->healthIndex;
+    bool transceiverOkay;
+    bool pedestalOkay;
     int s = 0;
     while (radar->active) {
-        if (s++ == 10) {
+        if (s++ == 3) {
             s = 0;
+            transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
+            pedestalOkay = positionIndex == radar->positionIndex ? false : true;
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
             sprintf(health->string, "{"
-                    "\"Transceiver\":{\"Value\":true,\"Enum\":0},"
+                    "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}"
                     "}",
-                    positionIndex == radar->positionIndex ? "false" : "true", positionIndex == radar->positionIndex ? 2 : 0,
-                    healthIndex == radar->healthIndex ? "false" : "true", healthIndex == radar->healthIndex ? 2 : 0
+                    transceiverOkay ? "true" : "false", transceiverOkay ? 0 : 2,
+                    pedestalOkay ? "true" : "false", pedestalOkay ? 0 : 2,
+                    radar->healthEngine == NULL ? "false" : "true", radar->healthEngine == NULL ? 2 : 0
                     );
             RKSetHealthReady(radar, health);
+            pulseIndex = radar->pulseIndex;
             positionIndex = radar->positionIndex;
-            healthIndex = radar->healthIndex;
         }
         usleep(100000);
     }
