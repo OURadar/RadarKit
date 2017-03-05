@@ -296,6 +296,7 @@ enum RKConfigKey {
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
+    RKConfigKeyNoise,
     RKConfigKeyEnd
 };
 
