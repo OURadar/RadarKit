@@ -32,3 +32,6 @@ void RKPreferenceFree(RKPreference *object) {
 
 #pragma mark - Interactions
 
+int RKPreferenceUpdate(RKPreference *object) {
+    
+}
