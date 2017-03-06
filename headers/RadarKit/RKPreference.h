@@ -11,16 +11,24 @@
 
 #include <RadarKit/RKFoundation.h>
 
+#define RKPreferenceObjectCount   64
+
 typedef struct rk_preference {
-    char    waveform[RKNameLength];
-    char    vcp[RKNameLength];
-    double  latitude;
-    double  longitude;
-    double  radarHeight;
-    double  meanSeaLevel;
+    char                  filename[RKMaximumStringLength];
+    char                  waveform[RKNameLength];
+    char                  vcp[RKNameLength];
+    double                latitude;
+    double                longitude;
+    double                radarHeight;
+    double                meanSeaLevel;
+    RKPreferenceObject    objects[RKPreferenceObjectCount];
+    uint32_t              memoryUsage;
 } RKPreference;
 
+RKPreference *RKPreferenceInitWithFile(const char *filename);
 RKPreference *RKPreferenceInit(void);
 void RKPreferenceFree(RKPreference *);
+
+int RKPreferenceUpdate(RKPreference *preference);
 
 #endif
