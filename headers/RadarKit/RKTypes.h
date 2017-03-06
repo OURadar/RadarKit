@@ -166,6 +166,7 @@ enum RKResult {
     RKResultFailedToStartRayGatherer,
     RKResultFailedToStartHealthWorker,
     RKResultFailedToStartPulseRecorder,
+    RKResultPreferenceFileNotFound,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -522,6 +523,14 @@ typedef union rk_file_header {
     };
     RKByte bytes[4096];
 } RKFileHeader;
+
+typedef struct rk_preferene_object {
+    char             keyword[RKNameLength];
+    char             valueString[RKNameLength];
+    bool             isNumeric;
+    int              numericCount;
+    double           parameters[4];
+} RKPreferenceObject;
 
 #pragma pack(pop)
 

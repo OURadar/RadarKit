@@ -125,7 +125,9 @@ UserParams processInput(int argc, const char **argv) {
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
     user.gateCount = 16000;
-    
+
+    RKPreference *preference = NULL;
+
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
         {"no-color"              , no_argument      , NULL, 'C'},
@@ -156,6 +158,7 @@ UserParams processInput(int argc, const char **argv) {
         {"do-not-write"          , no_argument      , NULL, 'w'},
         {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
+        {"read-preference"       , no_argument      , NULL, '1'},
         {0, 0, 0, 0}
     };
     
@@ -292,6 +295,12 @@ UserParams processInput(int argc, const char **argv) {
                 } else {
                     user.sleepInterval = 1000;
                 }
+                break;
+            case '1':
+                preference = RKPreferenceInit();
+                RKPreferenceUpdate(preference);
+                RKPreferenceFree(preference);
+                exit(EXIT_SUCCESS);
                 break;
             default:
                 exit(EXIT_FAILURE);
