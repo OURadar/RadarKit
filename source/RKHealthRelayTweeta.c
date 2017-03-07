@@ -12,12 +12,31 @@
 
 // Internal Implementations
 
+void *backgroundGo(void *in) {
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)in;
+    RKRadar *radar = me->radar;
+    radar->transceiverExec(radar->transceiver, "y", NULL);
+    RKHealthRelayTweetaExec(radar->healthRelay, "clearbutton", NULL);
+    me->handlingEvent = false;
+    return NULL;
+}
+
+void *backgroundStop(void *in) {
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)in;
+    RKRadar *radar = me->radar;
+    radar->transceiverExec(radar->transceiver, "z", NULL);
+    RKHealthRelayTweetaExec(radar->healthRelay, "clearbutton", NULL);
+    me->handlingEvent = false;
+    return NULL;
+}
+
 int RHealthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKRadar *radar = me->radar;
 
     char *string = (char *)client->userPayload;
+    char *stringValue;
 
     if (client->netDelimiter.type == 's') {
         // The payload just read by RKClient
@@ -33,6 +52,18 @@ int RHealthRelayTweetaRead(RKClient *client) {
         }
         strncpy(health->string, string, RKMaximumStringLength - 1);
         RKStripTail(health->string);
+
+        // Handle a special event from a push button
+        if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL) {
+            if (!strcasecmp(stringValue, "short") && !me->handlingEvent) {
+                RKLog("%s event %s\n", client->name, stringValue);
+                pthread_create(&me->tidBackground, NULL, &backgroundGo, me);
+            } else if (!strcasecmp(stringValue, "long") && !me->handlingEvent) {
+                RKLog("%s event %s\n", client->name, stringValue);
+                pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
+            }
+        }
+
         RKSetHealthReady(radar, health);
     } else {
         // This the command acknowledgement, queue it up to feedback
@@ -144,3 +175,4 @@ int RKHealthRelayTweetaFree(RKHealthRelay input) {
     free(me);
     return RKResultSuccess;
 }
+

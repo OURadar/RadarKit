@@ -22,6 +22,7 @@ typedef struct rk_preference {
     double                radarHeight;
     double                meanSeaLevel;
     RKPreferenceObject    objects[RKPreferenceObjectCount];
+    uint32_t              count;
     uint32_t              memoryUsage;
 } RKPreference;
 

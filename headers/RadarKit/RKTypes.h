@@ -526,7 +526,7 @@ typedef union rk_file_header {
 
 typedef struct rk_preferene_object {
     char             keyword[RKNameLength];
-    char             valueString[RKNameLength];
+    char             valueString[RKMaximumStringLength];
     bool             isNumeric;
     bool             isValid;
     int              numericCount;
