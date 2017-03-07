@@ -35,6 +35,13 @@ int RKPedestalPedzyRead(RKClient *client) {
             return RKResultFailedToGetVacantPosition;
         }
         memcpy(newPosition, client->userPayload, sizeof(RKPosition));
+        // Correct by radar heading
+        newPosition->azimuthDegrees += radar->desc.heading;
+        if (newPosition->azimuthDegrees < 0.0f) {
+            newPosition->azimuthDegrees += 360.0f;
+        } else if (newPosition->azimuthDegrees >= 360.0f) {
+            newPosition->azimuthDegrees -= 360.0f;
+        }
         RKSetPositionReady(radar, newPosition);
     } else {
         // This the command acknowledgement, queue it up to feedback

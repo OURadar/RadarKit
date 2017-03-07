@@ -88,7 +88,7 @@ void *theClient(void *in) {
         }
         struct hostent *h = gethostbyname2(C->hostname, AF_INET);
         if (h == NULL) {
-            RKLog("%s Error. Unable to resolve %s\n", C->name, C->hostname);
+            RKLog("%s Error. Unable to resolve '%s'\n", C->name, C->hostname);
             k = RKNetworkReconnectSeconds * 10;
             do {
                 usleep(100000);
@@ -134,7 +134,7 @@ void *theClient(void *in) {
                 k = RKNetworkReconnectSeconds * 10;
                 do {
                     if (C->verbose > 1 && k % 10 == 0) {
-                        RKLog("%s Connection failed (errno = %d). Retry in %d second%s ...\n", C->name, k, k > 1 ? "s" : "");
+                        RKLog("%s Connection failed (errno = %d). Retry in %d second%s ...\n", C->name, errno, k, k > 1 ? "s" : "");
                     }
                     usleep(100000);
                 } while (k-- > 0 && C->state < RKClientStateDisconnecting);

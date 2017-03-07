@@ -23,7 +23,8 @@ RKPreference *RKPreferenceInitWithFile(const char *filename) {
     memset(preference, 0, sizeof(RKPreference));
     strcpy(preference->filename, filename);
     preference->memoryUsage = sizeof(RKPreference);
-    RKLog("%s\n", RKIntegerToCommaStyleString(preference->memoryUsage));
+    //RKLog("%s\n", RKIntegerToCommaStyleString(preference->memoryUsage));
+    RKPreferenceUpdate(preference);
     return preference;
 }
 
@@ -45,6 +46,8 @@ int RKPreferenceUpdate(RKPreference *preference) {
         RKLog("Error. Unable to open preference file %s.\n", preference->filename);
         return RKResultPreferenceFileNotFound;
     }
+    memset(preference->objects, 0, RKPreferenceObjectCount * sizeof(RKPreferenceObject));
+    preference->count = 0;
 
     char *line = (char *)malloc(RKMaximumStringLength);
 
@@ -82,6 +85,7 @@ int RKPreferenceUpdate(RKPreference *preference) {
                                                              &preference->objects[k].parameters[1],
                                                              &preference->objects[k].parameters[2],
                                                              &preference->objects[k].parameters[3]);
+                preference->count++;
                 /*
                 printf("Keyword:'%s'   parameters:'%s' (%d)  %d  (%d) %.1f %.1f %.1f\n",
                        preference->objects[k].keyword, preference->objects[k].valueString, (int)strlen(preference->objects[k].valueString),

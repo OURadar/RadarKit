@@ -19,6 +19,8 @@ typedef struct rk_tweeta {
     uint32_t               responseIndex;
     char                   responses[RKHealthRelayTweetaFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumStringLength];
+    bool                   handlingEvent;
+    pthread_t              tidBackground;
     RKRadar                *radar;
 } RKHealthRelayTweeta;
 

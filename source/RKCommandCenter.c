@@ -382,7 +382,9 @@ int socketCommandHandler(RKOperator *O) {
             break;
             
         case 'y':
+        case 'z':
             // Go - get default command from preference object
+            /*
             s = sprintf(sval1, "vol p 2 140 180");
             for (k = 4; k < 20; k += 2) {
                 s += sprintf(sval1 + s, "/p %d 140 180", k);
@@ -392,9 +394,11 @@ int socketCommandHandler(RKOperator *O) {
             RKOperatorSendDelimitedString(O, string);
             user->radar->transceiverExec(user->radar->transceiver, "y", string);
             RKOperatorSendDelimitedString(O, string);
+            */
+            user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
+            RKOperatorSendDelimitedString(O, string);
             break;
             
-        case 'z':
             // Stop everything
             
         default:
@@ -767,7 +771,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     sprintf(engine->name, "%s<CommandCenter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
-    engine->developerInspect = 3;
+    engine->developerInspect = 0;
     engine->server = RKServerInit();
     RKServerSetName(engine->server, engine->name);
     RKServerSetWelcomeHandler(engine->server, &socketInitialHandler);
