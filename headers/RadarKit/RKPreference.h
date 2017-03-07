@@ -30,5 +30,6 @@ RKPreference *RKPreferenceInit(void);
 void RKPreferenceFree(RKPreference *);
 
 int RKPreferenceUpdate(RKPreference *preference);
+RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *preference, const char *keyword);
 
 #endif
