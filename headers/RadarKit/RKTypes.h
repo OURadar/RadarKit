@@ -528,6 +528,7 @@ typedef struct rk_preferene_object {
     char             keyword[RKNameLength];
     char             valueString[RKNameLength];
     bool             isNumeric;
+    bool             isValid;
     int              numericCount;
     double           parameters[4];
 } RKPreferenceObject;

@@ -127,6 +127,7 @@ UserParams processInput(int argc, const char **argv) {
     user.gateCount = 16000;
 
     RKPreference *preference = NULL;
+    RKPreferenceObject *object = NULL;
 
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
@@ -299,6 +300,16 @@ UserParams processInput(int argc, const char **argv) {
             case '1':
                 preference = RKPreferenceInit();
                 RKPreferenceUpdate(preference);
+                
+                object = RKPreferenceFindKeyword(preference, "PedzyHost");
+                if (object) {
+                    printf("pedzy host = %s\n", object->valueString);
+                }
+                object = RKPreferenceFindKeyword(preference, "TweetaHost");
+                if (object) {
+                    printf("tweeta host = %s\n", object->valueString);
+                }
+                
                 RKPreferenceFree(preference);
                 exit(EXIT_SUCCESS);
                 break;

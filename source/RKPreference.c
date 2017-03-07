@@ -74,6 +74,7 @@ int RKPreferenceUpdate(RKPreference *preference) {
             strncpy(preference->objects[k].keyword, line, RKNameLength);
             strncpy(preference->objects[k].valueString, s, RKNameLength);
             RKStripTail(preference->objects[k].valueString);
+            preference->objects[k].isValid = true;
             if (preference->objects[k].valueString[0] >= '0' && preference->objects[k].valueString[0] <= '9') {
                 preference->objects[k].isNumeric = true;
                 preference->objects[k].numericCount = sscanf(preference->objects[k].valueString, "%lf %lf %lf %lf",
@@ -102,4 +103,15 @@ int RKPreferenceUpdate(RKPreference *preference) {
     free(line);
 
     return RKResultSuccess;
+}
+
+RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *preference, const char *keyword) {
+    int k = 0;
+    while (k < RKPreferenceObjectCount && preference->objects[k].isValid == true) {
+        if (!strcasecmp(preference->objects[k].keyword, keyword)) {
+            return &preference->objects[k];
+        }
+        k++;
+    }
+    return NULL;
 }
