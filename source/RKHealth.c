@@ -170,7 +170,9 @@ void *healthConsolidator(void *in) {
             }
         }
         if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
-            RKLog("%s GPS:  latitude = %.4f   longitude = %.4f   heading = %.4f\n", engine->name, latitude, longitude, heading);
+            if (engine->verbose > 1) {
+                RKLog("%s GPS:  latitude = %.4f   longitude = %.4f   heading = %.4f\n", engine->name, latitude, longitude, heading);
+            }
         }
         
         for (j = 0; j < keywordsCount; j++) {

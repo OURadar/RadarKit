@@ -166,246 +166,267 @@ int socketCommandHandler(RKOperator *O) {
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     
-    // Delimited reading ...
+    // Delimited reading: each command is separated by a ';'
+    // e.g., a radarkit;s hz;
     
-    switch (O->cmd[0]) {
-        case 'a':
-            // Authenticate
-            sscanf(O->cmd + 1, "%s %s", sval1, sval2);
-            RKLog("Authenticating %s %s ... (%d) (%d)\n", sval1, sval2, strlen(sval1), sizeof(user->login));
-            strncpy(user->login, sval1, sizeof(user->login) - 1);
-            j = sprintf(string, "{\"Radars\":[");
-            for (k = 0; k < engine->radarCount; k++) {
-                RKRadar *radar = engine->radars[k];
-                j += sprintf(string + j, "\"%s\", ", radar->desc.name);
-            }
-            if (k > 0) {
-                j += sprintf(string + j - 2, "], ") - 2;
-            } else {
-                j += sprintf(string + j, "], ");
-            }
-            s = sprintf(sval1, "vol p 2 140 180");
-            for (k = 4; k < 20; k += 2) {
-                s += sprintf(sval1 + s, "/p %d 140 180", k);
-            }
-            s += sprintf(sval1 + s, "/p 20 140,120 180");
-            j += sprintf(string + j, "\"Controls\":["
-                         "{\"Label\":\"Go\", \"Command\":\"y\"}, "
-                         "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
-                         "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}"
-                         "]}" RKEOL, sval1);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-            
-        case 'd':
-            // DSP related
-            switch (O->cmd[1]) {
-                case 'f':
-                    // 'df' - DSP filter
-                    break;
-                case 'n':
-                    // 'dn' - DSP noise override
-                    break;
-                case 'N':
-                    // 'dN' - DSP noise override in dB
-                    break;
-                default:
-                    break;
-            }
-            break;
-            
-        case 'h':
-            if (strlen(O->cmd) == 1 || !strncmp(O->cmd, "help", 4)) {
-                k = sprintf(string,
-                            "Help\n"
-                            "====\n"
-                            "\n"
-                            HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
-                            "\n"
-                            HIGHLIGHT("f") " [FILTER_INDEX] - DSP filters,\n"
-                            "    where index can be:\n"
-                            "        0 - No ground clutter filter\n"
-                            "        1 - Ground clutter filter @ +/- 0.5 m/s\n"
-                            "        2 - Ground clutter filter @ +/- 1.0 m/s\n"
-                            "        3 - Ground clutter filter @ +/- 2.0 m/s\n"
-                            "\n"
-                            HIGHLIGHT("s") " [VALUE] - Get various data streams\n"
-                            "    where [VALUE] can be one of a combinations of:\n"
-                            "        1 - Overall all view of the system buffer\n"
-                            "        2 - Product generation, ray by ray update\n"
-                            "        3 - Position data from the pedestal while I/Q is active\n"
-                            "        4 - Various engine states\n"
-                            "        z - Display stream of Z reflectivity\n"
-                            "        v - Display stream of V velocity\n"
-                            "        w - Display stream of W width\n"
-                            "        d - Display stream of D differential reflectivity\n"
-                            "        p - Display stream of P PhiDP differential phase\n"
-                            "        r - Display stream of R RhoHV cross-correlation coefficient\n"
-                            "        k - Display stream of K KDP specific phase\n"
-                            "        s - Display stream of S signal power in dBm\n"
-                            "    e.g.,\n"
-                            "        s zvwd - streams Z, V, W and D.\n"
-                            "        s 1 - Look at the overall system status.\n"
-                            "\n"
-                            HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
-                            "    e.g.,\n"
-                            "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
-                            "\n"
-                            HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
-                            "\n"
-                            HIGHLIGHT("z") " - Everything stops\n"
-                            "\n");
+    char *commandString = &O->cmd[0];
+    char *commandStringEnd = NULL;
+    
+    while (commandString != NULL) {
+        if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
+            *commandStringEnd = '\0';
+        }
 
-                k += sprintf(string + k,
-                             HIGHLIGHT("t") " - " UNDERLINE_ITALIC("Transceiver") " commands, everything that starts with t goes to the transceiver\n"
-                             "    module in a concatenated form, e.g., 't help' -> 'help' to the transceiver.\n\n");
-                if (user->radar->transceiver) {
-                    user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
-                    RKStripTail(sval1);
-                    k += indentCopy(string + k, sval1);
-                    k += sprintf(string + k, "\n\n");
-                } else {
-                    k += sprintf(string + k, "    INFO: Transceiver not set.\n");
+        switch (commandString[0]) {
+            case 'a':
+                // Authenticate
+                sscanf(O->cmd + 1, "%s %s", sval1, sval2);
+                RKLog("Authenticating %s %s ... (%d) (%d)\n", sval1, sval2, strlen(sval1), sizeof(user->login));
+                strncpy(user->login, sval1, sizeof(user->login) - 1);
+                j = sprintf(string, "{\"Radars\":[");
+                for (k = 0; k < engine->radarCount; k++) {
+                    RKRadar *radar = engine->radars[k];
+                    j += sprintf(string + j, "\"%s\", ", radar->desc.name);
                 }
-
-                k += sprintf(string + k,
-                             HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with p goes to the pedestal module\n"
-                             "    in a concatenated form, e.g., 'p help' -> 'help' to the pedestal.\n\n");
-                if (user->radar->pedestal) {
-                    user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
-                    RKStripTail(sval1);
-                    k += indentCopy(string + k, sval1);
-                    k += sprintf(string + k, "\n\n");
+                if (k > 0) {
+                    j += sprintf(string + j - 2, "], ") - 2;
                 } else {
-                    k += sprintf(string + k, "    INFO: Pedestal not set.\n");
+                    j += sprintf(string + j, "], ");
                 }
+                s = sprintf(sval1, "vol p 2 140 180");
+                for (k = 4; k < 20; k += 2) {
+                    s += sprintf(sval1 + s, "/p %d 140 180", k);
+                }
+                s += sprintf(sval1 + s, "/p 20 140,120 180");
+                j += sprintf(string + j, "\"Controls\":["
+                             "{\"Label\":\"Go\", \"Command\":\"y\"}, "
+                             "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
+                             "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}"
+                             "]}" RKEOL, sval1);
+                O->delimTx.type = RKNetworkPacketTypeControls;
+                O->delimTx.size = j + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
 
-                k += sprintf(string + k,
-                             HIGHLIGHT("h") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with p goes to the health relay\n"
-                             "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
-                if (user->radar->healthRelay) {
-                    user->radar->healthRelayExec(user->radar->healthRelay, "help", sval1);
-                    RKStripTail(sval1);
-                    k += indentCopy(string + k, sval1);
-                    k += sprintf(string + k, "\n\n");
+                break;
+                
+            case 'd':
+                // DSP related
+                switch (commandString[1]) {
+                    case 'f':
+                        // 'df' - DSP filter
+                        break;
+                    case 'n':
+                        // 'dn' - DSP noise override
+                        break;
+                    case 'N':
+                        // 'dN' - DSP noise override in dB
+                        break;
+                    default:
+                        break;
+                }
+                break;
+                
+            case 'h':
+                if (strlen(commandString) == 1 || !strncmp(commandString, "help", 4)) {
+                    k = sprintf(string,
+                                "Help\n"
+                                "====\n"
+                                "\n"
+                                HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
+                                "\n"
+                                HIGHLIGHT("f") " [FILTER_INDEX] - DSP filters,\n"
+                                "    where index can be:\n"
+                                "        0 - No ground clutter filter\n"
+                                "        1 - Ground clutter filter @ +/- 0.5 m/s\n"
+                                "        2 - Ground clutter filter @ +/- 1.0 m/s\n"
+                                "        3 - Ground clutter filter @ +/- 2.0 m/s\n"
+                                "\n"
+                                HIGHLIGHT("s") " [VALUE] - Get various data streams\n"
+                                "    where [VALUE] can be one of a combinations of:\n"
+                                "        1 - Overall all view of the system buffer\n"
+                                "        2 - Product generation, ray by ray update\n"
+                                "        3 - Position data from the pedestal while I/Q is active\n"
+                                "        4 - Various engine states\n"
+                                "        z - Display stream of Z reflectivity\n"
+                                "        v - Display stream of V velocity\n"
+                                "        w - Display stream of W width\n"
+                                "        d - Display stream of D differential reflectivity\n"
+                                "        p - Display stream of P PhiDP differential phase\n"
+                                "        r - Display stream of R RhoHV cross-correlation coefficient\n"
+                                "        k - Display stream of K KDP specific phase\n"
+                                "        s - Display stream of S signal power in dBm\n"
+                                "    e.g.,\n"
+                                "        s zvwd - streams Z, V, W and D.\n"
+                                "        s 1 - Look at the overall system status.\n"
+                                "\n"
+                                HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
+                                "    e.g.,\n"
+                                "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
+                                "\n"
+                                HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
+                                "\n"
+                                HIGHLIGHT("z") " - Everything stops\n"
+                                "\n");
+                    
+                    k += sprintf(string + k,
+                                 HIGHLIGHT("t") " - " UNDERLINE_ITALIC("Transceiver") " commands, everything that starts with t goes to the transceiver\n"
+                                 "    module in a concatenated form, e.g., 't help' -> 'help' to the transceiver.\n\n");
+                    if (user->radar->transceiver) {
+                        user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
+                        RKStripTail(sval1);
+                        k += indentCopy(string + k, sval1);
+                        k += sprintf(string + k, "\n\n");
+                    } else {
+                        k += sprintf(string + k, "    INFO: Transceiver not set.\n");
+                    }
+                    
+                    k += sprintf(string + k,
+                                 HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with p goes to the pedestal module\n"
+                                 "    in a concatenated form, e.g., 'p help' -> 'help' to the pedestal.\n\n");
+                    if (user->radar->pedestal) {
+                        user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
+                        RKStripTail(sval1);
+                        k += indentCopy(string + k, sval1);
+                        k += sprintf(string + k, "\n\n");
+                    } else {
+                        k += sprintf(string + k, "    INFO: Pedestal not set.\n");
+                    }
+                    
+                    k += sprintf(string + k,
+                                 HIGHLIGHT("h") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with p goes to the health relay\n"
+                                 "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
+                    if (user->radar->healthRelay) {
+                        user->radar->healthRelayExec(user->radar->healthRelay, "help", sval1);
+                        RKStripTail(sval1);
+                        k += indentCopy(string + k, sval1);
+                        k += sprintf(string + k, "\n\n");
+                    } else {
+                        k += sprintf(string + k, "    INFO: Health Relay not set.\n");
+                    }
+                    
+                    k += sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
+                    
+                    RKOperatorSendDelimitedString(O, string);
+                    
                 } else {
-                    k += sprintf(string + k, "    INFO: Health Relay not set.\n");
+                    
+                    // Forward to health relay
+                    if (strlen(commandString) < 2) {
+                        sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                        RKOperatorSendDelimitedString(O, string);
+                        break;
+                    }
+                    k = 1;
+                    while (commandString[k] == ' ') {
+                        k++;
+                    }
+                    RKLog("%s %s Forwarding '%s' to tweeta ...\n", engine->name, O->name, commandString + k);
+                    user->radar->healthRelayExec(user->radar->healthRelay, commandString + k, string);
+                    RKOperatorSendDelimitedString(O, string);
                 }
-
-                k += sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
-
+                break;
+                
+            case 'r':
+                sscanf("%s", commandString + 1, sval1);
+                RKLog("%s %s selected radar %s\n", engine->name, O->name, sval1);
+                snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
                 RKOperatorSendDelimitedString(O, string);
-
-            } else {
-
-                // Forward to health relay
-                if (strlen(O->cmd) < 2) {
+                break;
+                
+            case 'm':
+                RKLog("%s %s display data\n", engine->name, O->name);
+                user->streams |= RKUserFlagDisplayZ;
+                user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+                break;
+                
+            case 's':
+                // Stream varrious data
+                user->streams = RKStringToFlag(commandString + 1);
+                sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
+                // Fast foward some indices
+                user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+                user->pulseIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+                user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+                user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
+                RKOperatorSendDelimitedString(O, string);
+                break;
+                
+            case 'p':
+                // Pass everything to pedestal
+                if (strlen(commandString) < 2) {
                     sprintf(string, "NAK. Empty command to pedestal." RKEOL);
                     RKOperatorSendDelimitedString(O, string);
                     break;
                 }
+                k = 0;
+                do {
+                    k++;
+                } while (commandString[k] == ' ');
+                user->radar->pedestalExec(user->radar->pedestal, commandString + k, string);
+                RKOperatorSendDelimitedString(O, string);
+                break;
+                
+            case 't':
+            case 'w':
+                // Pass everything to transceiver
+                if (strlen(commandString) < 2) {
+                    sprintf(string, "NAK. Empty command to transceiver." RKEOL);
+                    RKOperatorSendDelimitedString(O, string);
+                    break;
+                }
                 k = 1;
-                while (O->cmd[k] == ' ') {
+                while (commandString[k] == ' ') {
                     k++;
                 }
-                RKLog("%s %s Forwarding '%s' to tweeta ...\n", engine->name, O->name, O->cmd + k);
-                user->radar->healthRelayExec(user->radar->healthRelay, O->cmd + k, string);
-                RKOperatorSendDelimitedString(O, string);
-            }
-            break;
-            
-        case 'r':
-            sscanf("%s", O->cmd + 1, sval1);
-            RKLog("%s %s selected radar %s\n", engine->name, O->name, sval1);
-            snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-
-        case 'm':
-            RKLog("%s %s display data\n", engine->name, O->name);
-            user->streams |= RKUserFlagDisplayZ;
-            user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
-            break;
-
-        case 's':
-            // Stream varrious data
-            user->streams = RKStringToFlag(O->cmd + 1);
-            sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx}" RKEOL, (unsigned long)user->access, (unsigned long)user->streams);
-            // Fast foward some indices
-            user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
-            user->pulseIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
-            user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-            user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-
-        case 'p':
-            // Pass everything to pedestal
-            if (strlen(O->cmd) < 2) {
-                sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                user->radar->transceiverExec(user->radar->transceiver, commandString + k, string);
                 RKOperatorSendDelimitedString(O, string);
                 break;
-            }
-            k = 0;
-            do {
-                k++;
-            } while (O->cmd[k] == ' ');
-            user->radar->pedestalExec(user->radar->pedestal, O->cmd + k, string);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-
-        case 't':
-        case 'w':
-            // Pass everything to transceiver
-            if (strlen(O->cmd) < 2) {
-                sprintf(string, "NAK. Empty command to transceiver." RKEOL);
+                
+            case 'v':
+                // Simple volume
+                user->radar->pedestalExec(user->radar->pedestal, commandString, string);
+                break;
+                
+            case 'x':
+                engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
+                sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
                 RKOperatorSendDelimitedString(O, string);
                 break;
-            }
-            k = 1;
-            while (O->cmd[k] == ' ') {
-                k++;
-            }
-            user->radar->transceiverExec(user->radar->transceiver, O->cmd + k, string);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-            
-        case 'v':
-            // Simple volume
-            user->radar->pedestalExec(user->radar->pedestal, O->cmd, string);
-            break;
+                
+            case 'y':
+            case 'z':
+                // Go - get default command from preference object
+                /*
+                 s = sprintf(sval1, "vol p 2 140 180");
+                 for (k = 4; k < 20; k += 2) {
+                 s += sprintf(sval1 + s, "/p %d 140 180", k);
+                 }
+                 s += sprintf(sval1 + s, "/p 20 140,120 180" RKEOL);
+                 user->radar->pedestalExec(user->radar->pedestal, sval1, string);
+                 RKOperatorSendDelimitedString(O, string);
+                 user->radar->transceiverExec(user->radar->transceiver, "y", string);
+                 RKOperatorSendDelimitedString(O, string);
+                 */
+                user->radar->transceiverExec(user->radar->transceiver, commandString, string);
+                RKOperatorSendDelimitedString(O, string);
+                break;
+                
+                // Stop everything
+                
+            default:
+                snprintf(string, RKMaximumStringLength - 1, "Unknown command '%s'." RKEOL, commandString);
+                RKOperatorSendDelimitedString(O, string);
+                break;
+        }
 
-        case 'x':
-            engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
-            sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-            
-        case 'y':
-        case 'z':
-            // Go - get default command from preference object
-            /*
-            s = sprintf(sval1, "vol p 2 140 180");
-            for (k = 4; k < 20; k += 2) {
-                s += sprintf(sval1 + s, "/p %d 140 180", k);
-            }
-            s += sprintf(sval1 + s, "/p 20 140,120 180" RKEOL);
-            user->radar->pedestalExec(user->radar->pedestal, sval1, string);
-            RKOperatorSendDelimitedString(O, string);
-            user->radar->transceiverExec(user->radar->transceiver, "y", string);
-            RKOperatorSendDelimitedString(O, string);
-            */
-            user->radar->transceiverExec(user->radar->transceiver, O->cmd, string);
-            RKOperatorSendDelimitedString(O, string);
-            break;
-            
-            // Stop everything
-            
-        default:
-            snprintf(string, RKMaximumStringLength - 1, "Unknown command '%s'." RKEOL, O->cmd);
-            RKOperatorSendDelimitedString(O, string);
-            break;
+        // Get to the next command
+        if (commandStringEnd != NULL) {
+            commandString = commandStringEnd + 1;
+        } else {
+            commandString = NULL;
+        }
     }
+    
     return 0;
 }
 
