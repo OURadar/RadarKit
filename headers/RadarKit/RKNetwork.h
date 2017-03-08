@@ -39,13 +39,13 @@ enum RKNetworkMessageFormat {
 
 enum RKNetworkPacketType {
     RKNetworkPacketTypeBytes,
+    RKNetworkPacketTypeBeacon,
     RKNetworkPacketTypePlainText,
     RKNetworkPacketTypePulseData,
     RKNetworkPacketTypeRayData,
     RKNetworkPacketTypeHealth,
     RKNetworkPacketTypeControls,
-    RKNetworkPacketTypeCommandResponse,
-    RKNetworkPacketTypeBeacon
+    RKNetworkPacketTypeCommandResponse
 };
 
 #pragma pack(push, 1)

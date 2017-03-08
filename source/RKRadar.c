@@ -307,12 +307,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }
 
-    RKAddConfig(radar,
-                RKConfigKeyPRF, 1000,
-                RKConfigKeyZCal, -43.0, -43.0,
-                RKConfigKeyNoise, 90.0, 90.0,
-                RKConfigKeyNull);
-
     return radar;
 }
 
@@ -591,6 +585,15 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->momentEngine->memoryUsage;
     radar->memoryUsage += radar->fileEngine->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
+
+    // Add a dummy config to get things started if there hasn't been one
+    if (radar->configIndex == 0) {
+        RKAddConfig(radar,
+                    RKConfigKeyPRF, 1000,
+                    RKConfigKeyZCal, -43.0, -43.0,
+                    RKConfigKeyNoise, 90.0, 90.0,
+                    RKConfigKeyNull);
+    }
 
     // Pedestal
     if (radar->pedestalInit != NULL) {
