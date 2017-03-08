@@ -227,7 +227,7 @@ int socketCommandHandler(RKOperator *O) {
                         if (k == 2) {
                             RKAddConfig(user->radar, RKConfigKeyNoise, fval1, fval2);
                             sprintf(string, "ACK. Noise set to %.4f, %.4f\n", fval1, fval2);
-                        } else if (k == 0) {
+                        } else if (k == -1) {
                             sprintf(string, "ACK. Current noise is %.4f %.4f\n", config->noise[0], config->noise[1]);
                         } else {
                             sprintf(string, "NAK. Must have two paramters  (k = %d).\n", k);
