@@ -51,6 +51,7 @@
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);
 float RKGetMinorSectorInDegrees(const float angle1, const float angle2);
+float RKInterpolatePositiveAngles(const float angleBefore, const float angleAfter, const float alpha);
 float RKInterpolateAngles(const float angleLeft, const float angleRight, const float alpha);
 
 //

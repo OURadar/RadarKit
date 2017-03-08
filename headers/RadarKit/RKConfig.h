@@ -11,7 +11,8 @@
 
 #include <RadarKit/RKFoundation.h>
 
-void RKConfigAdvance(RKConfig *configBuffer, uint32_t *configIndex, uint32_t configBufferDepth, ...);
+void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, ...);
+void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list arg);
 
 void RKConfigAddSweep();
 

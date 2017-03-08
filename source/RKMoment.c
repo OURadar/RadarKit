@@ -194,6 +194,7 @@ void *momentCore(void *in) {
 
     RKRay *ray;
     RKPulse *pulse;
+    RKConfig *config;
     RKScratch *space;
 
     // Allocate local resources and keep track of the total allocation
@@ -230,6 +231,9 @@ void *momentCore(void *in) {
     // Start and end indices of the input pulses
     uint32_t is;
     uint32_t ie;
+
+    // Configuration index
+    uint32_t ic = 0;
 
     // Gate size in meters for range correction
     RKFloat gateSizeMeters = 0.0f;
@@ -331,11 +335,12 @@ void *momentCore(void *in) {
         ray->header.gateSizeMeters  = S->header.gateSizeMeters * (float)stride;
         marker = RKMarkerNull;
 
+        config = &engine->configBuffer[S->header.configIndex];
+
         // Compute the range correction factor if needed.
-        if (gateSizeMeters != S->header.gateSizeMeters) {
+        if (ic != S->header.configIndex) {
+            ic = S->header.configIndex;
             gateSizeMeters = S->header.gateSizeMeters;
-            k = *engine->configIndex;
-            RKConfig *config = &engine->configBuffer[k];
             if (engine->verbose) {
                 RKLog("%s %s C%d RCor @ %.2f/%.2f dB   capacity = %s   stride = %d\n",
                       engine->name, name, k, config->ZCal[0], config->ZCal[1], RKIntegerToCommaStyleString(ray->header.capacity), stride);
@@ -349,7 +354,7 @@ void *momentCore(void *in) {
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
         }
-
+        
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             k = 0;
@@ -381,7 +386,6 @@ void *momentCore(void *in) {
         }
 
         // Update the rest of the ray header
-        RKConfig *config = &engine->configBuffer[S->header.configIndex];
         ray->header.sweepElevation = config->sweepElevation;
         ray->header.sweepAzimuth = config->sweepAzimuth;
         ray->header.marker = marker;
