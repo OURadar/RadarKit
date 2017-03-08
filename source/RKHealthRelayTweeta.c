@@ -17,7 +17,6 @@ void *backgroundGo(void *in) {
     RKRadar *radar = me->radar;
     radar->transceiverExec(radar->transceiver, "y", NULL);
     RKHealthRelayTweetaExec(radar->healthRelay, "clearbutton", NULL);
-    me->handlingEvent = false;
     return NULL;
 }
 
@@ -26,7 +25,6 @@ void *backgroundStop(void *in) {
     RKRadar *radar = me->radar;
     radar->transceiverExec(radar->transceiver, "z", NULL);
     RKHealthRelayTweetaExec(radar->healthRelay, "clearbutton", NULL);
-    me->handlingEvent = false;
     return NULL;
 }
 
@@ -56,11 +54,20 @@ int RHealthRelayTweetaRead(RKClient *client) {
         // Handle a special event from a push button
         if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL) {
             if (!strcasecmp(stringValue, "short") && !me->handlingEvent) {
+                me->handlingEvent = true;
                 RKLog("%s event %s\n", client->name, stringValue);
-                pthread_create(&me->tidBackground, NULL, &backgroundGo, me);
+                if (me->toggleEvent) {
+                    pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
+                } else {
+                    pthread_create(&me->tidBackground, NULL, &backgroundGo, me);
+                }
+                me->toggleEvent = !me->toggleEvent;
             } else if (!strcasecmp(stringValue, "long") && !me->handlingEvent) {
+                me->handlingEvent = true;
                 RKLog("%s event %s\n", client->name, stringValue);
                 pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
+            } else if (!strcasecmp(stringValue, "none")) {
+                me->handlingEvent = false;
             }
         }
 
@@ -175,4 +182,3 @@ int RKHealthRelayTweetaFree(RKHealthRelay input) {
     free(me);
     return RKResultSuccess;
 }
-

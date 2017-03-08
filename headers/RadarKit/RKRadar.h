@@ -195,6 +195,8 @@ int RKStop(RKRadar *);
 uint8_t RKRequestHealthNode(RKRadar *);
 RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);
 void RKSetHealthReady(RKRadar *, RKHealth *);
+RKHealth *RKGetLatestHealth(RKRadar *radar);
+int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword);
 
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
