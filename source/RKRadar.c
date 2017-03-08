@@ -745,6 +745,21 @@ void RKSetHealthReady(RKRadar *radar, RKHealth *health) {
     health->flag = RKHealthFlagReady;
 }
 
+RKHealth *RKGetLatestHealth(RKRadar *radar) {
+    uint32_t index = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+    return &radar->healths[index];
+}
+
+int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
+    RKHealth *health = RKGetLatestHealth(radar);
+    char *stringObject = RKGetValueOfKey(health->string, keyword);
+    if (stringObject) {
+        char *stringEnum = RKGetValueOfKey(stringObject, "enum");
+        return atoi(stringEnum);
+    }
+    return -1;
+}
+
 #pragma mark - Positions
 
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
