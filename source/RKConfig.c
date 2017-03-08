@@ -8,8 +8,13 @@
 
 #include <RadarKit/RKConfig.h>
 
-void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, ...) {
-    va_list   arg;
+void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, ...) {
+    va_list args;
+    va_start(args, configBufferDepth);
+    return RKConfigAdvance(configs, configIndex, configBufferDepth, args);
+}
+
+void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list arg) {
     uint32_t  c;
     char      *string;
 
@@ -21,7 +26,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Copy everything
     memcpy(newConfig, oldConfig, sizeof(RKConfig));
 
-    va_start(arg, configBufferDepth);
+    //va_start(arg, configBufferDepth);
 
     uint32_t key = va_arg(arg, RKConfigKey);
 

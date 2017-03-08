@@ -23,7 +23,7 @@ float RKGetMinorSectorInDegrees(const float angle1, const float angle2) {
 }
 
 // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before), alpha in [0, 1]
-float RKInterpolateAngles(const float angleBefore, const float angleAfter, const float alpha) {
+float RKInterpolatePositiveAngles(const float angleBefore, const float angleAfter, const float alpha) {
     float value = RKGetSignedMinorSectorInDegrees(angleAfter, angleBefore);
     value = angleBefore + alpha * value;
     if (value > 360.0f) {
@@ -31,5 +31,11 @@ float RKInterpolateAngles(const float angleBefore, const float angleAfter, const
     } else if (value < 0.0f) {
         value += 360.0f;
     }
+    return value;
+}
+
+float RKInterpolateAngles(const float angleBefore, const float angleAfter, const float alpha) {
+    float value = RKGetSignedMinorSectorInDegrees(angleAfter, angleBefore);
+    value = angleBefore + alpha * value;
     return value;
 }

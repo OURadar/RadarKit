@@ -149,6 +149,7 @@ int indentCopy(char *dst, char *src) {
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
+    RKConfig *config = RKGetLatestConfig(user->radar);
     
     int j, k, s;
     char string[RKMaximumStringLength * 2];
@@ -165,6 +166,8 @@ int socketCommandHandler(RKOperator *O) {
     char sval2[RKMaximumStringLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
+    
+    double fval1, fval2;
     
     // Delimited reading: each command is separated by a ';'
     // e.g., a radarkit;s hz;
@@ -201,7 +204,8 @@ int socketCommandHandler(RKOperator *O) {
                 j += sprintf(string + j, "\"Controls\":["
                              "{\"Label\":\"Go\", \"Command\":\"y\"}, "
                              "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
-                             "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}"
+                             "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}, "
+                             "{\"Label\":\"Park\", \"Command\":\"p point 0 0\"}"
                              "]}" RKEOL, sval1);
                 printf("auth  %p vs %p\n", &O->delimTx, &O->beacon);
                 O->delimTx.type = RKNetworkPacketTypeControls;
@@ -212,12 +216,23 @@ int socketCommandHandler(RKOperator *O) {
                 
             case 'd':
                 // DSP related
+                
                 switch (commandString[1]) {
                     case 'f':
                         // 'df' - DSP filter
                         break;
                     case 'n':
                         // 'dn' - DSP noise override
+                        k = sscanf(&commandString[2], "%lf %lf", &fval1, &fval2);
+                        if (k == 2) {
+                            RKAddConfig(user->radar, RKConfigKeyNoise, fval1, fval2);
+                            sprintf(string, "ACK. Noise set to %.4f, %.4f\n", fval1, fval2);
+                        } else if (k == 0) {
+                            sprintf(string, "ACK. Current noise is %.4f %.4f\n", config->noise[0], config->noise[1]);
+                        } else {
+                            sprintf(string, "NAK. Must have two paramters  (k = %d).\n", k);
+                        }
+                        RKOperatorSendDelimitedString(O, string);
                         break;
                     case 'N':
                         // 'dN' - DSP noise override in dB
@@ -531,7 +546,7 @@ int socketStreamHandler(RKOperator *O) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
             O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k;
+            O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
         user->timeLastOut = time;

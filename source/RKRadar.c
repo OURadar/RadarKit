@@ -307,11 +307,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
     }
 
-    RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                    RKConfigKeyPRF, 1000,
-                    RKConfigKeyZCal, -43.0, -43.0,
-                    RKConfigKeyNoise, 900.0, 900.0,
-                    RKConfigKeyNull);
+    RKAddConfig(radar,
+                RKConfigKeyPRF, 1000,
+                RKConfigKeyZCal, -43.0, -43.0,
+                RKConfigKeyNoise, 90.0, 90.0,
+                RKConfigKeyNull);
 
     return radar;
 }
@@ -657,7 +657,8 @@ int RKWaitWhileActive(RKRadar *radar) {
             sprintf(health->string, "{"
                     "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
-                    "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}"
+                    "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
+                    "\"Network\":{\"Value\":true,\"Enum\":0}"
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? 0 : 2,
                     pedestalOkay ? "true" : "false", pedestalOkay ? 0 : 2,
@@ -849,4 +850,8 @@ void RKAddConfig(RKRadar *radar, ...) {
     va_start(args, radar);
     RKLog("RKAddConfig() ...\n");
     return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
+}
+
+RKConfig *RKGetLatestConfig(RKRadar *radar) {
+    return &radar->configs[radar->configIndex];
 }

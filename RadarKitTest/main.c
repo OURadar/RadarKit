@@ -299,7 +299,6 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case '1':
                 preference = RKPreferenceInit();
-                RKPreferenceUpdate(preference);
                 
                 object = RKPreferenceFindKeyword(preference, "PedzyHost");
                 if (object) {

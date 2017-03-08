@@ -193,9 +193,9 @@ void *pulseTagger(void *in) {
         
         // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
         alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
-        pulse->header.azimuthDegrees = RKInterpolateAngles(positionBefore->azimuthDegrees,
-                                                           positionAfter->azimuthDegrees,
-                                                           alpha);
+        pulse->header.azimuthDegrees = RKInterpolatePositiveAngles(positionBefore->azimuthDegrees,
+                                                                   positionAfter->azimuthDegrees,
+                                                                   alpha);
         pulse->header.elevationDegrees = RKInterpolateAngles(positionBefore->elevationDegrees,
                                                              positionAfter->elevationDegrees,
                                                              alpha);
@@ -241,7 +241,12 @@ void *pulseTagger(void *in) {
 
         if (marker0 & RKMarkerSweepBegin) {
             // Add another configuration
-            RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
+//            RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
+//                            RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
+//                            RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
+//                            RKConfigPositionMarker,  marker0,
+//                            RKConfigKeyNull);
+            RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
                             RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
                             RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
                             RKConfigPositionMarker,  marker0,
