@@ -43,6 +43,7 @@ enum RKNetworkPacketType {
     RKNetworkPacketTypePulseData,
     RKNetworkPacketTypeRayData,
     RKNetworkPacketTypeHealth,
+    RKNetworkPacketTypeControls,
     RKNetworkPacketTypeBeacon
 };
 
