@@ -97,6 +97,7 @@ struct rk_operator  {
 ssize_t RKOperatorSendPackets(RKOperator *, ...);
 ssize_t RKOperatorSendString(RKOperator *, const char *);
 ssize_t RKOperatorSendDelimitedString(RKOperator *, const char *);
+ssize_t RKOperatorSendCommandResponse(RKOperator *, const char *);
 ssize_t RKOperatorSendBeacon(RKOperator *);
 void RKOperatorHangUp(RKOperator *);
 

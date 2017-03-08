@@ -176,11 +176,11 @@ int socketCommandHandler(RKOperator *O) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
         }
-
+        // Process the command
         switch (commandString[0]) {
             case 'a':
                 // Authenticate
-                sscanf(O->cmd + 1, "%s %s", sval1, sval2);
+                sscanf(commandString + 1, "%s %s", sval1, sval2);
                 RKLog("Authenticating %s %s ... (%d) (%d)\n", sval1, sval2, strlen(sval1), sizeof(user->login));
                 strncpy(user->login, sval1, sizeof(user->login) - 1);
                 j = sprintf(string, "{\"Radars\":[");
@@ -203,8 +203,9 @@ int socketCommandHandler(RKOperator *O) {
                              "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
                              "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}"
                              "]}" RKEOL, sval1);
+                printf("auth  %p vs %p\n", &O->delimTx, &O->beacon);
                 O->delimTx.type = RKNetworkPacketTypeControls;
-                O->delimTx.size = j + 1;
+                O->delimTx.size = j;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
 
                 break;
@@ -235,7 +236,7 @@ int socketCommandHandler(RKOperator *O) {
                                 HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
                                 "\n"
                                 HIGHLIGHT("f") " [FILTER_INDEX] - DSP filters,\n"
-                                "    where index can be:\n"
+                                "    where index can be (coming soon):\n"
                                 "        0 - No ground clutter filter\n"
                                 "        1 - Ground clutter filter @ +/- 0.5 m/s\n"
                                 "        2 - Ground clutter filter @ +/- 1.0 m/s\n"
@@ -313,7 +314,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Forward to health relay
                     if (strlen(commandString) < 2) {
                         sprintf(string, "NAK. Empty command to pedestal." RKEOL);
-                        RKOperatorSendDelimitedString(O, string);
+                        RKOperatorSendCommandResponse(O, string);
                         break;
                     }
                     k = 1;
@@ -322,7 +323,7 @@ int socketCommandHandler(RKOperator *O) {
                     }
                     RKLog("%s %s Forwarding '%s' to tweeta ...\n", engine->name, O->name, commandString + k);
                     user->radar->healthRelayExec(user->radar->healthRelay, commandString + k, string);
-                    RKOperatorSendDelimitedString(O, string);
+                    RKOperatorSendCommandResponse(O, string);
                 }
                 break;
                 
@@ -330,7 +331,7 @@ int socketCommandHandler(RKOperator *O) {
                 sscanf("%s", commandString + 1, sval1);
                 RKLog("%s %s selected radar %s\n", engine->name, O->name, sval1);
                 snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
                 
             case 'm':
@@ -348,14 +349,14 @@ int socketCommandHandler(RKOperator *O) {
                 user->pulseIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
                 user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                 user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
                 
             case 'p':
                 // Pass everything to pedestal
                 if (strlen(commandString) < 2) {
                     sprintf(string, "NAK. Empty command to pedestal." RKEOL);
-                    RKOperatorSendDelimitedString(O, string);
+                    RKOperatorSendCommandResponse(O, string);
                     break;
                 }
                 k = 0;
@@ -363,7 +364,7 @@ int socketCommandHandler(RKOperator *O) {
                     k++;
                 } while (commandString[k] == ' ');
                 user->radar->pedestalExec(user->radar->pedestal, commandString + k, string);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
                 
             case 't':
@@ -371,7 +372,7 @@ int socketCommandHandler(RKOperator *O) {
                 // Pass everything to transceiver
                 if (strlen(commandString) < 2) {
                     sprintf(string, "NAK. Empty command to transceiver." RKEOL);
-                    RKOperatorSendDelimitedString(O, string);
+                    RKOperatorSendCommandResponse(O, string);
                     break;
                 }
                 k = 1;
@@ -379,7 +380,7 @@ int socketCommandHandler(RKOperator *O) {
                     k++;
                 }
                 user->radar->transceiverExec(user->radar->transceiver, commandString + k, string);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
                 
             case 'v':
@@ -390,7 +391,7 @@ int socketCommandHandler(RKOperator *O) {
             case 'x':
                 engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
                 sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
                 
             case 'y':
@@ -408,20 +409,27 @@ int socketCommandHandler(RKOperator *O) {
                  RKOperatorSendDelimitedString(O, string);
                  */
                 user->radar->transceiverExec(user->radar->transceiver, commandString, string);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
                 
                 // Stop everything
                 
             default:
                 snprintf(string, RKMaximumStringLength - 1, "Unknown command '%s'." RKEOL, commandString);
-                RKOperatorSendDelimitedString(O, string);
+                RKOperatorSendCommandResponse(O, string);
                 break;
         }
 
         // Get to the next command
         if (commandStringEnd != NULL) {
             commandString = commandStringEnd + 1;
+            // Strip out some space after ';'
+            while (*commandString == '\r' || *commandString == '\n' || *commandString == ' ') {
+                commandString++;
+            }
+            if (*commandString == '\0') {
+                commandString = NULL;
+            }
         } else {
             commandString = NULL;
         }
@@ -523,7 +531,7 @@ int socketStreamHandler(RKOperator *O) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
             O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
+            O->delimTx.size = k;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
         user->timeLastOut = time;
@@ -535,7 +543,7 @@ int socketStreamHandler(RKOperator *O) {
                      "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
                      user->radar->configs[user->radar->configIndex].prf[0]);
         O->delimTx.type = 's';
-        O->delimTx.size = k + 1;
+        O->delimTx.size = k;
         RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         user->timeLastHealthOut = time;
     }
@@ -555,7 +563,7 @@ int socketStreamHandler(RKOperator *O) {
             // Take out the last '\n', replace it with somethign else + EOL
             snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
             O->delimTx.type = RKNetworkPacketTypeHealth;
-            O->delimTx.size = k + 1;
+            O->delimTx.size = k;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
     }
@@ -750,6 +758,9 @@ int socketStreamHandler(RKOperator *O) {
     // Re-evaluate td = time - user->timeLastOut; send a heart beat if nothing has been sent
     if (time - user->timeLastOut >= 1.0) {
         user->timeLastOut = time;
+        if (O->beacon.type != RKNetworkPacketTypeBeacon) {
+            RKLog("Beacon has been changed %d\n", O->beacon.type);
+        }
         size = RKOperatorSendBeacon(O);
         if (size < 0) {
             RKLog("Beacon failed (r = %d).\n", size);
