@@ -79,7 +79,7 @@ int RHealthRelayTweetaRead(RKClient *client) {
         } else {
             strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
             me->responseIndex = RKNextModuloS(me->responseIndex, RKHealthRelayTweetaFeedbackDepth);
-            if (client->verbose && me->latestCommand[0] != 'h') {
+            if (client->verbose > 1 && me->latestCommand[0] != 'h') {
                 RKStripTail(string);
                 RKLog("%s %s (delim.type = %d)\n", client->name, string, client->netDelimiter.type);
             }

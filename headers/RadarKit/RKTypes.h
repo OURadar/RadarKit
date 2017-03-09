@@ -503,6 +503,7 @@ typedef struct rk_scratch {
     RKFloat          *gC;                                            // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
     RKFloat          noise[2];                                       // Noise floor of each channel
     RKFloat          aliasingVelocity;                               // Aliasing velocity
+    RKFloat          aliasingWidth;                                  // Aliasing width
     RKFloat          *rcor[2];                                       // Reflectivity range correction factor
     RKFloat          *S[2];                                          // Signal
     RKFloat          *Z[2];                                          // Reflectivity in dB
