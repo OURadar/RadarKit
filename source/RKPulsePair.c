@@ -10,8 +10,8 @@
 
 
 void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) {
-    const RKFloat va = 15.0f;
-    const RKFloat wa = 0.3 / (2.0f * sqrt(2.0) * M_PI) * 2000.0f;
+    const RKFloat va = space->aliasingVelocity;
+    const RKFloat wa = space->aliasingWidth;
     const RKFloat pcal = 3.3f;
     const RKVec va_pf = _rk_mm_set1_pf(va);
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
@@ -66,7 +66,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
             // V: angle(R[1])
             *v++ = atan2f(*rq++, *ri++);
             // W: log10(previous) = log10(S / R[1])
-            *w = log10(*w);
+            *w = log10f(*w);
             w++;
         }
         z_pf = (RKVec *)space->Z[p];

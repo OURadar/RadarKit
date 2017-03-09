@@ -354,6 +354,7 @@ void *momentCore(void *in) {
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
             space->aliasingVelocity = 0.25 * engine->radarDescription->wavelength * config->prf[0];
+            space->aliasingWidth = engine->radarDescription->wavelength / (2.0f * sqrtf(2.0f) * M_PI) * config->prf[0];
         }
         
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
