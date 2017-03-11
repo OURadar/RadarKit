@@ -648,14 +648,17 @@ int RKGoLive(RKRadar *radar) {
 int RKWaitWhileActive(RKRadar *radar) {
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
+    uint32_t healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
     bool transceiverOkay;
     bool pedestalOkay;
+    bool healthOkay;
     int s = 0;
     while (radar->active) {
         if (s++ == 3) {
             s = 0;
             transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
             pedestalOkay = positionIndex == radar->positionIndex ? false : true;
+            healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
             sprintf(health->string, "{"
                     "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
@@ -665,7 +668,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? 0 : 2,
                     pedestalOkay ? "true" : "false", pedestalOkay ? 0 : 2,
-                    radar->healthEngine == NULL ? "false" : "true", radar->healthEngine == NULL ? 2 : 0
+                    healthOkay ? "true" : "false", healthOkay ? 0 : 2
                     );
             RKSetHealthReady(radar, health);
             pulseIndex = radar->pulseIndex;

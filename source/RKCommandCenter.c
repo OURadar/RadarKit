@@ -207,7 +207,6 @@ int socketCommandHandler(RKOperator *O) {
                              "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}, "
                              "{\"Label\":\"Park\", \"Command\":\"p point 0 0\"}"
                              "]}" RKEOL, sval1);
-                printf("auth  %p vs %p\n", &O->delimTx, &O->beacon);
                 O->delimTx.type = RKNetworkPacketTypeControls;
                 O->delimTx.size = j;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
