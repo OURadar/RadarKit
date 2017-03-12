@@ -13,6 +13,8 @@
 		B50276AD1E3CFE88002C46B1 /* RKHealthRelayTweeta.c in Sources */ = {isa = PBXBuildFile; fileRef = B50276AC1E3CFE88002C46B1 /* RKHealthRelayTweeta.c */; };
 		B50276AE1E3CFE88002C46B1 /* RKHealthRelayTweeta.c in Sources */ = {isa = PBXBuildFile; fileRef = B50276AC1E3CFE88002C46B1 /* RKHealthRelayTweeta.c */; };
 		B506C1431DC7DF570007BAE0 /* RKSIMD.c in Sources */ = {isa = PBXBuildFile; fileRef = B55E437E1DB6668F003C40CF /* RKSIMD.c */; };
+		B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = B528D9611E74EE8100A7328F /* RKFileManager.h */; };
+		B528D9641E74EEB000A7328F /* RKFileManager.c in Sources */ = {isa = PBXBuildFile; fileRef = B528D9631E74EEB000A7328F /* RKFileManager.c */; };
 		B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B52E45C21D91749C00FC1113 /* RKMoment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B52E45C51D9174A500FC1113 /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
 		B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDA1AB8D9F100C00517 /* RKClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -107,6 +109,8 @@
 		B50276A81E3CF228002C46B1 /* RKHealth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKHealth.c; path = source/RKHealth.c; sourceTree = SOURCE_ROOT; };
 		B50276AA1E3CFC19002C46B1 /* RKHealthRelayTweeta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKHealthRelayTweeta.h; path = headers/RadarKit/RKHealthRelayTweeta.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B50276AC1E3CFE88002C46B1 /* RKHealthRelayTweeta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKHealthRelayTweeta.c; path = source/RKHealthRelayTweeta.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		B528D9611E74EE8100A7328F /* RKFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKFileManager.h; path = headers/RadarKit/RKFileManager.h; sourceTree = "<group>"; };
+		B528D9631E74EEB000A7328F /* RKFileManager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKFileManager.c; path = source/RKFileManager.c; sourceTree = SOURCE_ROOT; };
 		B52E45C21D91749C00FC1113 /* RKMoment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMoment.h; path = headers/RadarKit/RKMoment.h; sourceTree = "<group>"; };
 		B52E45C41D9174A500FC1113 /* RKMoment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKMoment.c; path = source/RKMoment.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		B5324D4F1AB8A5A000C00517 /* libRadarKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRadarKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -235,6 +239,7 @@
 				B565B5341E5A3838000C8503 /* RKPreference.h */,
 				B5324DDD1AB8D9F100C00517 /* RKRadar.h */,
 				B5C1F35E1AB9CC48004F88CD /* RKCommandCenter.h */,
+				B528D9611E74EE8100A7328F /* RKFileManager.h */,
 				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
@@ -268,6 +273,7 @@
 				B565B5361E5A38B1000C8503 /* RKPreference.c */,
 				B5324DEA1AB9B2E900C00517 /* RKRadar.c */,
 				B59471981D8C4F0500EEE77C /* RKCommandCenter.c */,
+				B528D9631E74EEB000A7328F /* RKFileManager.c */,
 				B5F5AE3C1DBF996100CF643F /* RKTest.c */,
 				B594718E1D89B43400EEE77C /* RadarKit.c */,
 			);
@@ -328,6 +334,7 @@
 				B5DDE7E41E1AB57700C5D16D /* RKMultiLag.h in Headers */,
 				B52E45C31D91749C00FC1113 /* RKMoment.h in Headers */,
 				B59471911D89B4D400EEE77C /* RadarKit.h in Headers */,
+				B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */,
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
 				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
 				B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */,
@@ -419,6 +426,7 @@
 				B52E45C51D9174A500FC1113 /* RKMoment.c in Sources */,
 				B5324DEC1AB9B2E900C00517 /* RKClient.c in Sources */,
 				B5324DED1AB9B2E900C00517 /* RKNetwork.c in Sources */,
+				B528D9641E74EEB000A7328F /* RKFileManager.c in Sources */,
 				B5324DEE1AB9B2E900C00517 /* RKRadar.c in Sources */,
 				B59471991D8C4F0500EEE77C /* RKCommandCenter.c in Sources */,
 				B50276AD1E3CFE88002C46B1 /* RKHealthRelayTweeta.c in Sources */,
