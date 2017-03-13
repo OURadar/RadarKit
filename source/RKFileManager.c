@@ -6,7 +6,7 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKTemplate.h>
+#include <RadarKit/RKFileManager.h>
 
 #pragma mark - Internal Functions
 
