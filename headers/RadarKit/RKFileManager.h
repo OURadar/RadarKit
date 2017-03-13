@@ -21,6 +21,6 @@ typedef struct rk_file_manager {
 
 RKFileManager *RKFileManagerInit(void);
 void RKFileManagerFree(RKFileManager *);
-void RKFileManagerSetVerbose(RKPulseCompressionEngine *, const int);
+void RKFileManagerSetVerbose(RKFileManager *, const int);
 
 #endif

@@ -323,8 +323,7 @@ enum RKEngineState {
     RKEngineStateSleepMask           = 0x0F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
-    RKEngineStat
-    eActivating          = (1 << 9),                     // The main run loop is being activated
+    RKEngineStateActivating          = (1 << 9),                     // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 10),                    // The main run loop is being deactivated, RKEngineStateActive is immediatelu
     RKEngineStateActive              = (1 << 11)                     // The engine is active
 };
