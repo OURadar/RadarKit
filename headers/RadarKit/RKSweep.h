@@ -37,7 +37,12 @@ struct rk_sweep_engine {
     RKSweep                sweep;
     float                  *array1D;
     float                  *array2D;
-    
+    char                   filelist[RKMaximumStringLength];
+    char                   filename[RKMaximumStringLength];
+    char                   productName[RKMaximumStringLength];
+    char                   productUnit[RKMaximumStringLength];
+    char                   productColormap[RKMaximumStringLength];
+
     // Status / health
     uint32_t               processedRayIndex;
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];

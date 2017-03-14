@@ -79,11 +79,12 @@ void *sweepWriter(void *in) {
 //          radar->name, radar->latitude, radar->longitude);
     
     char symbol = 'U';
-    char filename[RKMaximumStringLength];
-    char productName[RKMaximumStringLength];
-    char productUnit[RKMaximumStringLength];
-    char productColormap[RKMaximumStringLength];
-    
+    char *filelist = engine->filelist;
+    char *filename = engine->filename;
+    char *productName = engine->productName;
+    char *productUnit = engine->productUnit;
+    char *productColormap = engine->productColormap;
+
     int ncid;
     int dimensionIds[2];
     int variableIdAzimuth;
@@ -104,6 +105,8 @@ void *sweepWriter(void *in) {
     float va = 0.25f * desc->wavelength * config->prf[0];
 
     // Go through all moments
+    sprintf(filelist, "./handlefiles.sh");
+
     RKProductIndex productIndex = RKProductIndexS;
     uint32_t productList = S->header.productList;
     int productCount = __builtin_popcount(productList);
@@ -190,6 +193,8 @@ void *sweepWriter(void *in) {
         }
         
         RKPreparePath(filename);
+
+        sprintf(filelist + strlen(filelist), " %s", filename);
 
         if ((j = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);
@@ -334,7 +339,9 @@ void *sweepWriter(void *in) {
 
         ncclose(ncid);
     }
-    
+
+    printf("CMD: '%s'\n", filelist);
+
     engine->state ^= RKEngineStateWritingFile;
 
     return NULL;
