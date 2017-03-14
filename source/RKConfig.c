@@ -44,6 +44,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(arg, uint32_t);
+                RKLog(">PRF = %s", RKIntegerToCommaStyleString(newConfig->prf[0]));
                 break;
             case RKConfigKeyDualPRF:
                 newConfig->prf[0] = va_arg(arg, uint32_t);
@@ -58,7 +59,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyVCPDefinition:
                 string = va_arg(arg, char *);
-                RKLog(">string = %s", string);
+                if (string == NULL) {
+                    RKLog(">string = (NULL)\n");
+                } else {
+                    RKLog(">string = %s\n", string);
+                }
                 break;
             case RKConfigKeyZCal:
                 newConfig->ZCal[0] = (RKFloat)va_arg(arg, double);
@@ -71,6 +76,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 RKLog(">Noise = %.2f %.2f ADU^2\n", newConfig->noise[0], newConfig->noise[1]);
                 break;
             default:
+                RKLog(">Key %d not understood.\n", key);
                 break;
         }
         // Get the next key

@@ -76,12 +76,12 @@ int RKPreferenceUpdate(RKPreference *preference) {
                 s++;
             }
             // Terminate anything pass '#'
-            if (s == '\0') {
-                e = s;
+            if (s != '\0') {
+                e = s + 1;
                 while (*e != '\0' && *e != '#') {
                     e++;
                 }
-                if (e != '\0') {
+                if (*e != '\0') {
                     *e = '\0';
                 }
             }

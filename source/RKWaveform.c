@@ -72,7 +72,7 @@ void RKWaveformOnes(RKWaveform *waveform) {
 //
 void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidth) {
     int i, k;
-    double f, omega;
+    double f, omega, psi;
     RKComplex *x;
     RKInt16C *w;
 
@@ -83,13 +83,14 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
     for (k = 0; k < waveform->count; k++) {
         f = stride * (double)(k / 2) - 0.5 * bandwidth;
         omega = 2.0 * M_PI * f / fs;
+        psi = omega * (double)waveform->depth * 0.5;
         waveform->omega[k] = omega;
         //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, waveform->omega);
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (i = 0; i < waveform->depth; i++) {
-            x->i = cos(omega * i);
-            x->q = sin(omega * i);
+            x->i = cos(omega * i - psi);
+            x->q = sin(omega * i - psi);
             w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
             w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
             x++;

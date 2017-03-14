@@ -860,7 +860,9 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
 void RKAddConfig(RKRadar *radar, ...) {
     va_list args;
     va_start(args, radar);
-    RKLog("RKAddConfig() ...\n");
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("RKAddConfig() ...\n");
+    }
     return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
 }
 
