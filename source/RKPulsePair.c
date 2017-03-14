@@ -17,7 +17,6 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
     const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
     const RKVec one_pf = _rk_mm_set1_pf(1.0f);
-    const RKVec zcal_pf = _rk_mm_set1_pf(-36.0f);
     RKVec n_pf;
     RKFloat *s;
     RKFloat *z;
@@ -29,6 +28,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     RKVec *v_pf;
     RKVec *w_pf;
     RKVec *r_pf;
+    RKVec *q_pf;
     RKVec *a_pf;
     RKFloat *ri;
     RKFloat *rq;
@@ -38,7 +38,8 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         n_pf = _rk_mm_set1_pf(space->noise[p]);
         s_pf = (RKVec *)space->S[p];
         r_pf = (RKVec *)space->aR[p][0];
-        w_pf = (RKVec *)space->aR[p][1];
+        q_pf = (RKVec *)space->aR[p][1];
+        w_pf = (RKVec *)space->W[p];
         a_pf = (RKVec *)space->SNR[p];
         for (k = 0; k < K; k++) {
             // S: R[0] - N
@@ -46,11 +47,12 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
             // SNR: S / N
             *a_pf = _rk_mm_div_pf(*s_pf, n_pf);
             // W: S / R(1)
-            *w_pf = _rk_mm_div_pf(*s_pf, *w_pf);
+            *w_pf = _rk_mm_div_pf(*s_pf, *q_pf);
             s_pf++;
             r_pf++;
             a_pf++;
             w_pf++;
+            q_pf++;
         }
         // log10(S) --> Z (temp)
         s = space->S[p];
@@ -75,8 +77,8 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         r_pf = (RKVec *)space->rcor[p];
         // Packed single math
         for (k = 0; k < K; k++) {
-            // Z:  10 * (previous) + rcr + zcal  =  10 * log10(S) + rangeCorrection + ZCal;
-            *z_pf = _rk_mm_add_pf(_rk_mm_add_pf(_rk_mm_mul_pf(ten_pf, *z_pf), *r_pf), zcal_pf);
+            // Z:  10 * (previous) + rcr =  10 * log10(S) + rangeCorrection;
+            *z_pf = _rk_mm_add_pf(_rk_mm_mul_pf(ten_pf, *z_pf), *r_pf);
             // V: V = va * (previous) = va * angle(R1)
             *v_pf = _rk_mm_mul_pf(va_pf, *v_pf);
             // W: w = wa * sqrt(previous) = wa * sqrt(log10(S / R[1]))

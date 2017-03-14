@@ -496,6 +496,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int origin, const 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
     }
+    RKClockReset(radar->pulseClock);
     return RKResultNoError;
 }
 
@@ -724,6 +725,11 @@ int RKStop(RKRadar *radar) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
     }
+    return RKResultSuccess;
+}
+
+int RKResetEngines(RKRadar *radar) {
+    RKClockReset(radar->pulseClock);
     return RKResultSuccess;
 }
 

@@ -179,3 +179,8 @@ double RKClockGetTimeSinceInit(RKClock *clock, const double time) {
 
 #pragma mark -
 #pragma mark Interactions
+
+void RKClockReset(RKClock *clock) {
+    clock->index = 0;
+    clock->count = 0;
+}
