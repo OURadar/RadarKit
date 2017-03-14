@@ -692,15 +692,22 @@ int socketStreamHandler(RKOperator *O) {
         gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
         switch (engine->developerInspect) {
             case 3:
-                // Show the filter that was used
+                // Show the waveform that was used through the forward sampling path
                 pulseHeader.gateCount = 1000;
                 i = 0;
-                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length + 10); k++) {
+                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); k++) {
                     *userDataH++ = *c16DataH++;
                     *userDataV++ = *c16DataV++;
                     i++;
                 }
-
+                for (; k < MIN(203, user->radar->pulseCompressionEngine->anchors[gid][0].length + 3); k++) {
+                    userDataH->i   = 0;
+                    userDataH++->q = 0;
+                    userDataV->i   = 0;
+                    userDataV++->q = 0;
+                    i++;
+                }
+                // Show the filter that was used as matched filter
                 yH = user->radar->pulseCompressionEngine->filters[gid][0];
                 yV = user->radar->pulseCompressionEngine->filters[gid][0];
                 for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); k++) {
@@ -712,7 +719,7 @@ int socketStreamHandler(RKOperator *O) {
                     i++;
                 }
 
-                // The second part of is the processed data
+                // The third part of is the processed data
                 yH = RKGetComplexDataFromPulse(pulse, 0);
                 yV = RKGetComplexDataFromPulse(pulse, 1);
                 for (; i < pulseHeader.gateCount; i++) {

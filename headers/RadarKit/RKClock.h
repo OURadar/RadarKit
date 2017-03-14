@@ -65,4 +65,6 @@ void RKClockSetDxDu(RKClock *, const double);
 double RKClockGetTime(RKClock *, const double, struct timeval *);
 double RKClockGetTimeSinceInit(RKClock *, const double);
 
+void RKClockReset(RKClock *);
+
 #endif /* __RadarKit_RKClock_h__ */
