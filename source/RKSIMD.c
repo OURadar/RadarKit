@@ -403,3 +403,20 @@ void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n) {
     }
     return;
 }
+
+void RKSIMD_izrmrm(RKIQZ *src, RKFloat *dst, RKFloat *x, RKFloat *y, const int n) {
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKVec *si = (RKVec *)src->i;
+    RKVec *sq = (RKVec *)src->q;
+    RKVec *a = (RKVec *)x;
+    RKVec *b = (RKVec *)y;
+    RKVec *d = (RKVec *)dst;
+    RKVec m;
+    for (k = 0; k < K; k++) {
+        m = _rk_mm_rcp_pf(_rk_mm_mul_pf(*a++, *b++));
+        *d++ = _rk_mm_sqrt_pf(_rk_mm_mul_pf(_rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)), m));
+        si++;
+        sq++;
+    }
+    return;
+}

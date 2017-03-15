@@ -282,9 +282,9 @@ void *sweepWriter(void *in) {
         put_global_text_att(ncid, "NoiseV-unit", "dB-ADU");
         nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "CalibH-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibH-value", NC_FLOAT, 1, &config->ZCal[0]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibH-value", NC_FLOAT, 1, &config->ZCal[0][0]);
         put_global_text_att(ncid, "CalibV-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibV-value", NC_FLOAT, 1, &config->ZCal[1]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibV-value", NC_FLOAT, 1, &config->ZCal[1][0]);
         put_global_text_att(ncid, "CalibD1-unit", "dB");
         nc_put_att_float(ncid, NC_GLOBAL, "CalibD1-value", NC_FLOAT, 1, &config->DCal[0]);
         put_global_text_att(ncid, "CalibD2-unit", "dB");

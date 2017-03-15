@@ -665,7 +665,8 @@ int RKWaitWhileActive(RKRadar *radar) {
                     "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
-                    "\"Network\":{\"Value\":true,\"Enum\":0}"
+                    "\"Network\":{\"Value\":true,\"Enum\":0},"
+                    "\"Recorder\":{\"Value\":true,\"Enum\":2}"
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? 0 : 2,
                     pedestalOkay ? "true" : "false", pedestalOkay ? 0 : 2,
