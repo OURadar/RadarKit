@@ -584,7 +584,8 @@ int socketStreamHandler(RKOperator *O) {
 
     // Product streams - no skipping
     if (user->streams & user->access & RKUserFlagDisplayZVWDPRKS) {
-        endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+        //endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+        endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
         while (user->rayIndex != endIndex) {
             ray = RKGetRay(user->radar->rays, user->rayIndex);
             // Duplicate and send the header with only selected products
@@ -695,12 +696,12 @@ int socketStreamHandler(RKOperator *O) {
                 // Show the waveform that was used through the forward sampling path
                 pulseHeader.gateCount = 1000;
                 i = 0;
-                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); k++) {
+                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                     *userDataH++ = *c16DataH++;
                     *userDataV++ = *c16DataV++;
                     i++;
                 }
-                for (; k < MIN(203, user->radar->pulseCompressionEngine->anchors[gid][0].length + 3); k++) {
+                for (; k < MIN(203, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
                     userDataH->i   = 0;
                     userDataH++->q = 0;
                     userDataV->i   = 0;
@@ -710,7 +711,7 @@ int socketStreamHandler(RKOperator *O) {
                 // Show the filter that was used as matched filter
                 yH = user->radar->pulseCompressionEngine->filters[gid][0];
                 yV = user->radar->pulseCompressionEngine->filters[gid][0];
-                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->anchors[gid][0].length); k++) {
+                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                     userDataH->i   = (int16_t)(10000.0f * yH->i);
                     userDataH++->q = (int16_t)(10000.0f * yH++->q);
 
