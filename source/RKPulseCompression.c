@@ -249,8 +249,8 @@ void *pulseCompressionCore(void *_in) {
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                    X += engine->anchors[gid][j].origin;
-                    bound = MIN(pulse->header.gateCount, pulse->header.capacity - engine->anchors[gid][j].origin);
+                    X += engine->filterAnchors[gid][j].origin;
+                    bound = MIN(pulse->header.gateCount, pulse->header.capacity - engine->filterAnchors[gid][j].origin);
                     for (k = 0; k < bound; k++) {
                         in[k][0] = (RKFloat)X->i;
                         in[k][1] = (RKFloat)X++->q;
@@ -293,10 +293,10 @@ void *pulseCompressionCore(void *_in) {
 
                     RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-                    Y += engine->anchors[gid][j].origin;
-                    Z.i += engine->anchors[gid][j].origin;
-                    Z.q += engine->anchors[gid][j].origin;
-                    bound = MIN(pulse->header.gateCount - engine->anchors[gid][j].length + 1, engine->anchors[gid][j].maxDataLength);
+                    Y += engine->filterAnchors[gid][j].origin;
+                    Z.i += engine->filterAnchors[gid][j].origin;
+                    Z.q += engine->filterAnchors[gid][j].origin;
+                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].length + 1, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = out[i][0];
                         Y++->q = out[i][1];
@@ -528,7 +528,7 @@ void *pulseWatcher(void *_in) {
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->anchors[gid][j].maxDataLength)));
+                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->filterAnchors[gid][j].maxDataLength)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {
@@ -735,9 +735,9 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
-    engine->anchors[group][index].origin = (uint32_t)origin;
-    engine->anchors[group][index].length = (uint32_t)MIN(nfft, filterLength);
-    engine->anchors[group][index].maxDataLength = (uint32_t)maxDataLength;
+    engine->filterAnchors[group][index].origin = (uint32_t)origin;
+    engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, filterLength);
+    engine->filterAnchors[group][index].maxDataLength = (uint32_t)maxDataLength;
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     return RKResultNoError;
@@ -837,8 +837,11 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
     for (int i = 0; i < engine->filterGroupCount; i++) {
         for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">%s  - Filter[%2d][%d] @ {%d, %d, %s}\n",
-                  engine->name, i, j, engine->anchors[i][j].origin, engine->anchors[i][j].length, RKIntegerToCommaStyleString(engine->anchors[i][j].maxDataLength));
+            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s}\n",
+                  engine->name, i, j,
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].origin),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
     }
 }

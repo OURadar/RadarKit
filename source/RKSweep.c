@@ -340,7 +340,8 @@ void *sweepWriter(void *in) {
         ncclose(ncid);
     }
 
-    printf("CMD: '%s'\n", filelist);
+    //printf("CMD: '%s'\n", filelist);
+    system(filelist);
 
     engine->state ^= RKEngineStateWritingFile;
 
