@@ -142,4 +142,6 @@ void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n);
 void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n);
 void RKSIMD_clamp(RKFloat *src, const RKFloat min, const RKFloat max, const int n);
 
+void RKSIMD_izrmrm(RKIQZ *src, RKFloat *dst, RKFloat *x, RKFloat *y, const int n);
+
 #endif

@@ -357,9 +357,9 @@ typedef struct rk_config {
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     char             vcpDefinition[RKMaximumStringLength];           // Volume coverage pattern
     RKFloat          noise[2];                                       // Noise floor (ADU)
-    RKFloat          ZCal[2];                                        // Reflectivity calibration (dB)
-    RKFloat          DCal[2];                                        // ZDR calibration (dB)
-    RKFloat          PCal[2];                                        // Phase calibration
+    RKFloat          ZCal[2][RKMaxFilterCount];                      // Reflectivity calibration (dB)
+    RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
+    RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration
     RKFloat          censorSNR;                                      // Censor SNR (dB)
     float            sweepElevation;                                 // Sweep elevation angle (degrees)
     float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
@@ -502,8 +502,10 @@ typedef struct rk_scratch {
     RKFloat          *aC[2 * RKLagCount - 1];                        // abs(CCF)
     RKFloat          *gC;                                            // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
     RKFloat          noise[2];                                       // Noise floor of each channel
-    RKFloat          aliasingVelocity;                               // Aliasing velocity
-    RKFloat          aliasingWidth;                                  // Aliasing width
+    RKFloat          velocityFactor;                                 // Velocity factor to multiply by atan2(R(1))
+    RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|)
+    RKFloat          dcal;                                           // Calibration offset to D
+    RKFloat          pcal;                                           // Calibration offset to P
     RKFloat          *rcor[2];                                       // Reflectivity range correction factor
     RKFloat          *S[2];                                          // Signal
     RKFloat          *Z[2];                                          // Reflectivity in dB

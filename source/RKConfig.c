@@ -14,7 +14,7 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
     return RKConfigAdvance(configs, configIndex, configBufferDepth, args);
 }
 
-void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list arg) {
+void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
     uint32_t  c;
     char      *string;
 
@@ -28,62 +28,70 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 
     //va_start(arg, configBufferDepth);
 
-    uint32_t key = va_arg(arg, RKConfigKey);
+    uint32_t key = va_arg(args, RKConfigKey);
 
     // Modify the values based on the supplied keys
     while (key != RKConfigKeyNull) {
         switch (key) {
             case RKConfigKeySweepElevation:
-                newConfig->sweepElevation = (float)va_arg(arg, double);
+                newConfig->sweepElevation = (float)va_arg(args, double);
                 break;
             case RKConfigKeySweepAzimuth:
-                newConfig->sweepAzimuth = (float)va_arg(arg, double);
+                newConfig->sweepAzimuth = (float)va_arg(args, double);
                 break;
             case RKConfigPositionMarker:
-                newConfig->startMarker = va_arg(arg, RKMarker);
+                newConfig->startMarker = va_arg(args, RKMarker);
                 break;
             case RKConfigKeyPRF:
-                newConfig->prf[0] = va_arg(arg, uint32_t);
-                RKLog(">PRF = %s", RKIntegerToCommaStyleString(newConfig->prf[0]));
+                newConfig->prf[0] = va_arg(args, uint32_t);
+                RKLog(">PRF = %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]));
                 break;
             case RKConfigKeyDualPRF:
-                newConfig->prf[0] = va_arg(arg, uint32_t);
-                newConfig->prf[1] = va_arg(arg, uint32_t);
+                newConfig->prf[0] = va_arg(args, uint32_t);
+                newConfig->prf[1] = va_arg(args, uint32_t);
                 break;
             case RKConfigKeyGateCount:
-                newConfig->gateCount[0] = va_arg(arg, uint32_t);
+                newConfig->gateCount[0] = va_arg(args, uint32_t);
                 break;
             case RKConfigKeyWaveformId:
                 // ???
                 //RKParseCommaDelimitedValues(newConfig->waveformId, RKValueTypeUInt32, RKMaxFilterCount, string);
                 break;
             case RKConfigKeyVCPDefinition:
-                string = va_arg(arg, char *);
+                string = va_arg(args, char *);
                 if (string == NULL) {
                     RKLog(">string = (NULL)\n");
                 } else {
                     RKLog(">string = %s\n", string);
                 }
                 break;
-            case RKConfigKeyZCal:
-                newConfig->ZCal[0] = (RKFloat)va_arg(arg, double);
-                newConfig->ZCal[1] = (RKFloat)va_arg(arg, double);
-                RKLog(">ZCal = %.2f %.2f dB\n", newConfig->ZCal[0], newConfig->ZCal[1]);
-                break;
             case RKConfigKeyNoise:
-                newConfig->noise[0] = (RKFloat)va_arg(arg, double);
-                newConfig->noise[1] = (RKFloat)va_arg(arg, double);
+                newConfig->noise[0] = (RKFloat)va_arg(args, double);
+                newConfig->noise[1] = (RKFloat)va_arg(args, double);
                 RKLog(">Noise = %.2f %.2f ADU^2\n", newConfig->noise[0], newConfig->noise[1]);
+                break;
+            case RKConfigKeyZCal:
+                newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
+                newConfig->ZCal[1][0] = (RKFloat)va_arg(args, double);
+                RKLog(">ZCal = %.2f %.2f dB\n", newConfig->ZCal[0][0], newConfig->ZCal[1][0]);
+                break;
+            case RKConfigKeyDCal:
+                newConfig->DCal[0] = (RKFloat)va_arg(args, double);
+                RKLog(">DCal = %.2f dB\n", newConfig->DCal[1]);
+                break;
+            case RKConfigKeyPCal:
+                newConfig->PCal[0] = (RKFloat)va_arg(args, double);
+                RKLog(">PCal = %.2f deg\n", newConfig->PCal[1]);
                 break;
             default:
                 RKLog(">Key %d not understood.\n", key);
                 break;
         }
         // Get the next key
-        key = va_arg(arg, RKConfigKey);
+        key = va_arg(args, RKConfigKey);
     }
 
-    va_end(arg);
+    va_end(args);
 
     // Update
     newConfig->i++;

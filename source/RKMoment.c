@@ -342,19 +342,21 @@ void *momentCore(void *in) {
             ic = S->header.configIndex;
             gateSizeMeters = S->header.gateSizeMeters;
             if (engine->verbose) {
-                RKLog("%s %s C%d RCor @ %.2f/%.2f dB   capacity = %s   stride = %d\n",
-                      engine->name, name, k, config->ZCal[0], config->ZCal[1], RKIntegerToCommaStyleString(ray->header.capacity), stride);
+                RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s   stride = %d\n",
+                      engine->name, name, k, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity), stride);
             }
             RKFloat r = 0.0f;
             for (i = 0; i < space->capacity; i++) {
                 r = (RKFloat)i * gateSizeMeters;
-                space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
-                space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1];
+                space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][0];
+                space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1][0];
             }
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
-            space->aliasingVelocity = 0.25 * engine->radarDescription->wavelength * config->prf[0];
-            space->aliasingWidth = engine->radarDescription->wavelength / (2.0f * sqrtf(2.0f) * M_PI) * config->prf[0];
+            space->dcal = config->DCal[0];
+            space->pcal = config->PCal[0] * 180.0 / M_PI;
+            space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
+            space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
         }
         
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
