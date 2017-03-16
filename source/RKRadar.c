@@ -666,7 +666,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                     "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Network\":{\"Value\":true,\"Enum\":0},"
-                    "\"Recorder\":{\"Value\":true,\"Enum\":2}"
+                    "\"Recorder\":{\"Value\":true,\"Enum\":3}"
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? 0 : 2,
                     pedestalOkay ? "true" : "false", pedestalOkay ? 0 : 2,
@@ -675,6 +675,7 @@ int RKWaitWhileActive(RKRadar *radar) {
             RKSetHealthReady(radar, health);
             pulseIndex = radar->pulseIndex;
             positionIndex = radar->positionIndex;
+            healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
         }
         usleep(100000);
     }
