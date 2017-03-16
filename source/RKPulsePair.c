@@ -41,6 +41,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         q_pf = (RKVec *)space->aR[p][1];
         w_pf = (RKVec *)space->W[p];
         a_pf = (RKVec *)space->SNR[p];
+        // Packed single math
         for (k = 0; k < K; k++) {
             // S: R[0] - N
             *s_pf = _rk_mm_sub_pf(*r_pf, n_pf);
@@ -101,9 +102,9 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         // D: Zh - Zv + DCal
         *z_pf = _rk_mm_add_pf(_rk_mm_sub_pf(*a_pf, *w_pf), dcal_pf);
         // R: |C[0]| * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
-        //*r_pf = _rk_mm_mul_pf(_rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*h_pf)), _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*v_pf)));
-        //*r_pf = _rk_mm_mul_pf(*s_pf, _rk_mm_sqrt_pf(*r_pf));
-        *r_pf = *s_pf;
+        *r_pf = _rk_mm_mul_pf(_rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*h_pf)), _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*v_pf)));
+        *r_pf = _rk_mm_mul_pf(*s_pf, _rk_mm_sqrt_pf(*r_pf));
+        //*r_pf = *s_pf;
 
         z_pf++;
         a_pf++;
@@ -257,8 +258,8 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                               // C += Xh[] * Xv[]'
         j++;
     }
-    RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0], space->aR[1][0], gateCount);  // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
-    //RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
+    //    RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
+    RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0], space->aR[1][0], 1.0f / (float)(j), gateCount);  // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
 
     //
     //  ACF & CCF to S Z V W D P R K
