@@ -352,6 +352,7 @@ void *momentCore(void *in) {
         ray->header.endAzimuth      = E->header.azimuthDegrees;
         ray->header.endElevation    = E->header.elevationDegrees;
         ray->header.configIndex     = S->header.configIndex;
+        ray->header.gateCount       = S->header.gateCount / stride;
         ray->header.gateSizeMeters  = S->header.gateSizeMeters * (float)stride;
         marker = RKMarkerNull;
 
@@ -423,15 +424,16 @@ void *momentCore(void *in) {
         iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
         string = engine->rayStatusBuffer[iu];
         i = io * (RKStatusBarWidth + 1) / engine->rayBufferDepth;
-        memset(string, '#', i);
-        memset(string + i, '.', RKStatusBarWidth - i);
+        memset(string, '.', RKStatusBarWidth);
+        string[i] = '#';
 
         snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f) [%d/%.2f]   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
+                 " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f) [%d/%.2f]   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s",
                  (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
+                 RKIntegerToCommaStyleString(ray->header.gateCount),
                  ray->header.marker,
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");

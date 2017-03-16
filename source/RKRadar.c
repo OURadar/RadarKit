@@ -615,19 +615,6 @@ int RKGoLive(RKRadar *radar) {
         radar->state |= RKRadarStatePedestalInitialized;
     }
 
-    // Transceiver
-    if (radar->transceiverInit != NULL) {
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Initializing transceiver ...");
-        }
-        if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
-            RKLog("Error. Transceiver incomplete.");
-            exit(EXIT_FAILURE);
-        }
-        radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
-        radar->state |= RKRadarStateTransceiverInitialized;
-    }
-
     // Health Relay
     if (radar->healthRelayInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
@@ -641,6 +628,19 @@ int RKGoLive(RKRadar *radar) {
         radar->state |= RKRadarStateHealthRelayInitialized;
     }
     
+    // Transceiver
+    if (radar->transceiverInit != NULL) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Initializing transceiver ...");
+        }
+        if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
+            RKLog("Error. Transceiver incomplete.");
+            exit(EXIT_FAILURE);
+        }
+        radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
+        radar->state |= RKRadarStateTransceiverInitialized;
+    }
+
     // Update memory usage
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Radar Live. Memory usage = %s B (%s GiB)\n",
@@ -868,7 +868,7 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
 void RKAddConfig(RKRadar *radar, ...) {
     va_list args;
     va_start(args, radar);
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("RKAddConfig() ...\n");
     }
     return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
