@@ -198,9 +198,9 @@ int socketCommandHandler(RKOperator *O) {
                 }
                 s = sprintf(sval1, "vol p 2 140 180");
                 for (k = 4; k < 20; k += 2) {
-                    s += sprintf(sval1 + s, "/p %d 140 180", k);
+                    s += sprintf(sval1 + s, "/p %d 50 180", k);
                 }
-                s += sprintf(sval1 + s, "/p 20 140,120 180");
+                s += sprintf(sval1 + s, "/p 20 50,30 180");
                 j += sprintf(string + j, "\"Controls\":["
                              "{\"Label\":\"Go\", \"Command\":\"y\"}, "
                              "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
@@ -359,10 +359,6 @@ int socketCommandHandler(RKOperator *O) {
                 user->streams = RKStringToFlag(commandString + 1);
                 k = user->rayIndex;
                 // Fast foward some indices
-//                user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
-//                user->pulseIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
-//                user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-//                user->healthIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
                 user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
                 user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
                 user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
