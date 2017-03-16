@@ -484,12 +484,16 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
 int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int origin, const int maxDataLength) {
     int k;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
+    RKFilterAnchor anchor;
+    anchor.origin = origin;
+    anchor.length = waveform->depth;
+    anchor.maxDataLength = maxDataLength;
     for (k = 0; k < waveform->count; k++) {
+        anchor.name = waveform->name[k];
+        anchor.subCarrierFrequency = waveform->omega[k];
         RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
                                     waveform->samples[k],
-                                    waveform->depth,
-                                    origin,
-                                    maxDataLength,
+                                    anchor,
                                     k,
                                     0);
     }
@@ -512,7 +516,9 @@ int RKSetWaveformByFilename(RKRadar *radar, const char *filename, const int grou
     // Call a transceiver delegate function to fill in the DAC
     // Advance operating parameter, add in the newest set
     RKComplex filter[] = {{1.0f, 0.0f}};
-    return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, 1, 0, maxDataLength, group, 0);
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    anchor.maxDataLength = maxDataLength;
+    return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, group, 0);
 }
 
 int RKSetWaveformToImpulse(RKRadar *radar) {

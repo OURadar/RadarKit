@@ -670,7 +670,8 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
             case 2:
                 // Change filter to [1, 1i]
                 printf("Filter [1, i]:\n\n");
-                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, sizeof(filter) / sizeof(RKComplex), 0, 8, 0, 0);
+                RKFilterAnchor anchor = RKFilterAnchorDefaultWithMaxDataLength(8);
+                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, 0, 0);
                 break;
             default:
                 // Default is impulse [1];

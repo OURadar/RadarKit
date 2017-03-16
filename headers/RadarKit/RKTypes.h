@@ -124,10 +124,15 @@ typedef union rk_four_byte {
 } RKFourByte;
 
 typedef struct rk_filter_anchor {
+    uint32_t      name;
     uint32_t      origin;
     uint32_t      length;
     uint32_t      maxDataLength;
+    RKFloat       subCarrierFrequency;
 } RKFilterAnchor;
+
+#define RKFilterAnchorDefault  {0, 0, 1, 1024, 0.0f}
+#define RKFilterAnchorDefaultWithMaxDataLength(x) {0, 0, 1, (x), 0.0f}
 
 typedef struct rk_modulo_path {
     uint32_t      origin;
