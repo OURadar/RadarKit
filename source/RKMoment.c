@@ -77,7 +77,8 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKProductIndexP);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKProductIndexR);
     float SNR;
-    float SNRThreshold = powf(10.0f, 0.1f * (1.0f));
+    float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
+    // Masking based on SNR
     for (i = 0, k = 0; k < gateCount; i++, k += stride) {
         SNR = *Si / space->noise[0];
         if (SNR > SNRThreshold) {
@@ -123,7 +124,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
-    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
+    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     for (k = 0; k < K; k++) {
         *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Zi_pf++, zl), zh), zm), za);
         *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Vi_pf++, vl), vh), vm), va);
@@ -139,13 +140,32 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     Di = space->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKProductIndexD);
     Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
     Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+    Si = space->S[0];
     for (k = 0; k < ray->header.gateCount; k++) {
-        *zu++ = (uint8_t)*Zi++;
-        *vu++ = (uint8_t)*Vi++;
-        *wu++ = (uint8_t)*Wi++;
-        *du++ = (uint8_t)*Di++;
-        *pu++ = (uint8_t)*Pi++;
-        *ru++ = (uint8_t)RKRho2Uint8(*Ri++);
+        SNR = *Si / space->noise[0];
+        if (SNR > SNRThreshold) {
+            *zu++ = (uint8_t)*Zi;
+            *vu++ = (uint8_t)*Vi;
+            *wu++ = (uint8_t)*Wi;
+            *du++ = (uint8_t)*Di;
+            *pu++ = (uint8_t)*Pi;
+            *ru++ = (uint8_t)RKRho2Uint8(*Ri);
+        } else {
+            // Uint8 = 0 = transparent color
+            *zu++ = 0;
+            *vu++ = 0;
+            *wu++ = 0;
+            *du++ = 0;
+            *pu++ = 0;
+            *ru++ = 0;
+        }
+        Si += stride;
+        Zi++;
+        Vi++;
+        Wi++;
+        Di++;
+        Pi++;
+        Ri++;
     }
     ray->header.productList = RKProductListProductZVWDPR;
     return i;

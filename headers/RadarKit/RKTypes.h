@@ -506,6 +506,7 @@ typedef struct rk_scratch {
     RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|)
     RKFloat          dcal;                                           // Calibration offset to D
     RKFloat          pcal;                                           // Calibration offset to P
+    RKFloat          SNRThreshold;                                   // SNR threshold for masking
     RKFloat          *rcor[2];                                       // Reflectivity range correction factor
     RKFloat          *S[2];                                          // Signal
     RKFloat          *Z[2];                                          // Reflectivity in dB
