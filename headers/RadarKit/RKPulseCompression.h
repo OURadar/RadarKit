@@ -89,9 +89,7 @@ int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, co
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
                                 const RKComplex *filter,
-                                const int filterLength,
-                                const int dataOrigin,
-                                const int maxDataLength,
+                                const RKFilterAnchor anchor,
                                 const int group,
                                 const int index);
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);

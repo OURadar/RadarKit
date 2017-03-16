@@ -719,7 +719,7 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
     return RKResultNoError;
 }
 
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const int filterLength, const int origin, const int maxDataLength, const int group, const int index) {
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const RKFilterAnchor anchor, const int group, const int index) {
     if (group >= RKMaxFilterGroups) {
         RKLog("Error. Group %d is invalid.\n", group);
         return RKResultFailedToSetFilter;
@@ -731,13 +731,15 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         free(engine->filters[group][index]);
     }
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
-    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, maxDataLength)));
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
-    memcpy(engine->filters[group][index], filter, filterLength * sizeof(RKComplex));
-    engine->filterAnchors[group][index].origin = (uint32_t)origin;
-    engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, filterLength);
-    engine->filterAnchors[group][index].maxDataLength = (uint32_t)maxDataLength;
+    memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
+    engine->filterAnchors[group][index].name = anchor.name;
+    engine->filterAnchors[group][index].origin = anchor.origin;
+    engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
+    engine->filterAnchors[group][index].maxDataLength = anchor.maxDataLength;
+    engine->filterAnchors[group][index].subCarrierFrequency = anchor.subCarrierFrequency;
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     return RKResultNoError;
@@ -751,7 +753,11 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
         return RKResultNoPulseBuffer;
     }
     RKPulseCompressionResetFilters(engine);
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    anchor.length = sizeof(filter) / sizeof(RKComplex);
+    anchor.maxDataLength = pulse->header.capacity;
+    anchor.subCarrierFrequency = 0.0f;
+    return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
@@ -762,7 +768,11 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
         return RKResultNoPulseBuffer;
     }
     RKPulseCompressionResetFilters(engine);
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    anchor.length = sizeof(filter) / sizeof(RKComplex);
+    anchor.maxDataLength = pulse->header.capacity;
+    anchor.subCarrierFrequency = 0.0f;
+    return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
 int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
@@ -773,7 +783,11 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
         return RKResultNoPulseBuffer;
     }
     RKPulseCompressionResetFilters(engine);
-    return RKPulseCompressionSetFilter(engine, filter, sizeof(filter) / sizeof(RKComplex), 0, pulse->header.capacity, 0, 0);
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    anchor.length = sizeof(filter) / sizeof(RKComplex);
+    anchor.maxDataLength = pulse->header.capacity;
+    anchor.subCarrierFrequency = 0.0f;
+    return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
 #pragma mark - Interactions
@@ -837,11 +851,13 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
     for (int i = 0; i < engine->filterGroupCount; i++) {
         for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s}\n",
+            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s, %02d / %s}\n",
                   engine->name, i, j,
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].origin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
-                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength),
+                  engine->filterAnchors[i][j].name,
+                  RKFloatToCommaStyleString(engine->filterAnchors[i][j].subCarrierFrequency));
         }
     }
 }
