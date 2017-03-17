@@ -212,7 +212,6 @@ void *pulseCompressionCore(void *_in) {
 
         // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->pulseBufferDepth);
-        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         RKPulse *pulse = RKGetPulse(engine->pulseBuffer, i0);
 
@@ -317,6 +316,7 @@ void *pulseCompressionCore(void *_in) {
         }
         // Record down the latest processed pulse index
         me->pid = i0;
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);

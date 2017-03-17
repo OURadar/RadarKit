@@ -315,7 +315,6 @@ void *momentCore(void *in) {
 
         // Start of getting busy
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferDepth);
-        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         // The index path of the source of this ray
         path = engine->momentSource[io];
@@ -419,9 +418,6 @@ void *momentCore(void *in) {
             ray->header.s ^= RKRayStatusProcessing;
             ray->header.s |= RKRayStatusReady;
             
-            // Update processed index
-            me->pid = ie;
-            
             // Status of the ray
             iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
             string = engine->rayStatusBuffer[iu];
@@ -441,6 +437,9 @@ void *momentCore(void *in) {
                      ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                      ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
         }
+        // Update processed index
+        me->pid = ie;
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
