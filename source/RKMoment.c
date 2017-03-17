@@ -315,7 +315,6 @@ void *momentCore(void *in) {
 
         // Start of getting busy
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferDepth);
-        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         // The index path of the source of this ray
         path = engine->momentSource[io];
@@ -458,10 +457,14 @@ void *momentCore(void *in) {
             ray->header.s ^= RKRayStatusProcessing;
             ray->header.s |= RKRayStatusReady;
             
+<<<<<<< HEAD
             // Update processed index
             me->pid = ie;
             
             // Status of the engine
+=======
+            // Status of the ray
+>>>>>>> Updated lag calculation, I think this is more accurate
             iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
             string = engine->rayStatusBuffer[iu];
             i = io * (RKStatusBarWidth + 1) / engine->rayBufferDepth;
@@ -479,6 +482,9 @@ void *momentCore(void *in) {
                      ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                      ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
         }
+        // Update processed index
+        me->pid = ie;
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
         // Update the rest of the ray header
         ray->header.sweepElevation = config->sweepElevation;
