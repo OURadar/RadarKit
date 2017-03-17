@@ -104,6 +104,8 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Pi += stride;
         Ri += stride;
     }
+    Pi = space->PhiDP;
+    printf("PhiDP = %.1f %.1f %.1f %.1f ... %.1f %.1f\n", Pi[0], Pi[1], Pi[2], Pi[3], Pi[200], Pi[201]);
     // Record down the down-sampled gate count
     ray->header.gateCount = i;
     if (i != (gateCount + stride - 1) / stride) {
@@ -168,6 +170,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Ri++;
     }
     ray->header.productList = RKProductListProductZVWDPR;
+
+    pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+    Pi = space->PhiDP;
+    printf("PhiDP = %.1f %d  %.1f %d  %.1f %d  %.1f %d ... %.1f %d  %.1f %d\n", Pi[0], pu[0], Pi[1], pu[1], Pi[2], pu[2], Pi[3], pu[3], Pi[200], pu[200], Pi[201], pu[201]);
     return i;
 }
 
@@ -416,8 +422,10 @@ void *momentCore(void *in) {
                 }
                 space->noise[0] = config->noise[0];
                 space->noise[1] = config->noise[1];
-                space->aliasingVelocity = 0.25 * engine->radarDescription->wavelength * config->prf[0];
-                space->aliasingWidth = engine->radarDescription->wavelength / (2.0f * sqrtf(2.0f) * M_PI) * config->prf[0];
+                space->dcal = config->DCal[0];
+                space->pcal = config->PCal[0];
+                space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
+                space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
             }
             
             // Duplicate a linear array for processor if we are to process; otherwise just skip this group
@@ -677,7 +685,7 @@ void *pulseGatherer(void *in) {
                 i = RKPreviousModuloS(i, engine->rayBufferDepth);
                 engine->momentSource[j].length = 0;
                 ray = RKGetRay(engine->rayBuffer, i);
-            } while (!(ray->header.s & (RKRayStatusReady | RKRayStatusProcessing)));
+            } while (!(ray->header.s & RKRayStatusReady));
         } else if (skipCounter > 0) {
             // Skip processing if we are in skipping mode
             if (--skipCounter == 0 && engine->verbose) {

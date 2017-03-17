@@ -77,11 +77,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyDCal:
                 newConfig->DCal[0] = (RKFloat)va_arg(args, double);
-                RKLog(">DCal = %.2f dB\n", newConfig->DCal[1]);
+                RKLog(">DCal = %.2f dB\n", newConfig->DCal[0]);
                 break;
             case RKConfigKeyPCal:
                 newConfig->PCal[0] = (RKFloat)va_arg(args, double);
-                RKLog(">PCal = %.2f deg\n", newConfig->PCal[1]);
+                RKLog(">PCal = %.2f rad\n", newConfig->PCal[0]);
                 break;
             default:
                 RKLog(">Key %d not understood.\n", key);
