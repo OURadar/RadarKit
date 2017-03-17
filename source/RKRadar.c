@@ -824,6 +824,9 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
 }
 
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
+    if (pulse->header.i == 0) {
+        RKClockReset(radar->pulseClock);
+    }
     if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
         pulse->header.timeDouble = RKClockGetTime(radar->pulseClock, (double)pulse->header.t, &pulse->header.time);
     }
