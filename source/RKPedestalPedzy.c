@@ -36,7 +36,7 @@ int RKPedestalPedzyRead(RKClient *client) {
         }
         memcpy(newPosition, client->userPayload, sizeof(RKPosition));
         // Correct by radar heading
-        newPosition->azimuthDegrees += radar->desc.heading;
+        newPosition->azimuthDegrees -= radar->desc.heading;
         if (newPosition->azimuthDegrees < 0.0f) {
             newPosition->azimuthDegrees += 360.0f;
         } else if (newPosition->azimuthDegrees >= 360.0f) {

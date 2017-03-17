@@ -173,6 +173,9 @@ void *healthConsolidator(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s GPS:  latitude = %.4f   longitude = %.4f   heading = %.4f\n", engine->name, latitude, longitude, heading);
             }
+            engine->radarDescription->latitude = latitude;
+            engine->radarDescription->longitude = longitude;
+            engine->radarDescription->heading = heading;
         }
         
         for (j = 0; j < keywordsCount; j++) {
