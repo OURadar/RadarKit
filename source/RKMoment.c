@@ -337,6 +337,13 @@ void *momentCore(void *in) {
             deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
             deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
             
+            // My ray
+            ray = RKGetRay(engine->rayBuffer, io);
+            
+            // Mark being processed so that the other thread will not override the length
+            ray->header.s = RKRayStatusProcessing;
+            ray->header.i = tag;
+            
             // Set the ray headers
             ray->header.startTime       = S->header.time;
             ray->header.startTimeDouble = S->header.timeDouble;
