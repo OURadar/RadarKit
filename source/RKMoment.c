@@ -105,7 +105,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Ri += stride;
     }
     Pi = space->PhiDP;
-    printf("PhiDP = %.1f %.1f %.1f %.1f ... %.1f %.1f\n", Pi[0], Pi[1], Pi[2], Pi[3], Pi[200], Pi[201]);
     // Record down the down-sampled gate count
     ray->header.gateCount = i;
     if (i != (gateCount + stride - 1) / stride) {
@@ -173,7 +172,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
 
     pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
     Pi = space->PhiDP;
-    printf("PhiDP = %.1f %d  %.1f %d  %.1f %d  %.1f %d ... %.1f %d  %.1f %d\n", Pi[0], pu[0], Pi[1], pu[1], Pi[2], pu[2], Pi[3], pu[3], Pi[200], pu[200], Pi[201], pu[201]);
     return i;
 }
 
