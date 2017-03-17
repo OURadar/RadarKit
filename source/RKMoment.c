@@ -317,13 +317,6 @@ void *momentCore(void *in) {
         io = RKNextNModuloS(io, engine->coreCount, engine->rayBufferDepth);
         me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
 
-        // My ray
-        ray = RKGetRay(engine->rayBuffer, io);
-        
-        // Mark being processed so that the other thread will not override the length
-        ray->header.s = RKRayStatusProcessing;
-        ray->header.i = tag;
-
         // The index path of the source of this ray
         path = engine->momentSource[io];
 
@@ -380,34 +373,111 @@ void *momentCore(void *in) {
             space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
         }
         
-        // Duplicate a linear array for processor if we are to process; otherwise just skip this group
-        if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
-            k = 0;
-            i = is;
-            do {
-                pulse = RKGetPulse(engine->pulseBuffer, i);
-                marker |= pulse->header.marker;
-                pulses[k++] = pulse;
-                i = RKNextModuloS(i, engine->pulseBufferDepth);
-            } while (k < path.length);
-            if (ie != i) {
-                RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
+        // Only continue this ray if the start pulse was compressed (not skipped).
+        if (S->header.s & RKPulseStatusCompressed) {
+            // Beamwidth
+            deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
+            deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+            
+            // My ray
+            ray = RKGetRay(engine->rayBuffer, io);
+            
+            // Mark being processed so that the other thread will not override the length
+            ray->header.s = RKRayStatusProcessing;
+            ray->header.i = tag;
+            
+            // Set the ray headers
+            ray->header.startTime       = S->header.time;
+            ray->header.startTimeDouble = S->header.timeDouble;
+            ray->header.startAzimuth    = S->header.azimuthDegrees;
+            ray->header.startElevation  = S->header.elevationDegrees;
+            ray->header.endTime         = E->header.time;
+            ray->header.endTimeDouble   = E->header.timeDouble;
+            ray->header.endAzimuth      = E->header.azimuthDegrees;
+            ray->header.endElevation    = E->header.elevationDegrees;
+            ray->header.configIndex     = S->header.configIndex;
+            ray->header.gateSizeMeters  = S->header.gateSizeMeters * (float)stride;
+            marker = RKMarkerNull;
+            
+            config = &engine->configBuffer[S->header.configIndex];
+            
+            // Compute the range correction factor if needed.
+            if (ic != S->header.configIndex) {
+                ic = S->header.configIndex;
+                gateSizeMeters = S->header.gateSizeMeters;
+                if (engine->verbose) {
+                    RKLog("%s %s C%d RCor @ %.2f/%.2f dB   capacity = %s   stride = %d\n",
+                          engine->name, name, k, config->ZCal[0], config->ZCal[1], RKIntegerToCommaStyleString(ray->header.capacity), stride);
+                }
+                RKFloat r = 0.0f;
+                for (i = 0; i < space->capacity; i++) {
+                    r = (RKFloat)i * gateSizeMeters;
+                    space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0];
+                    space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1];
+                }
+                space->noise[0] = config->noise[0];
+                space->noise[1] = config->noise[1];
+                space->aliasingVelocity = 0.25 * engine->radarDescription->wavelength * config->prf[0];
+                space->aliasingWidth = engine->radarDescription->wavelength / (2.0f * sqrtf(2.0f) * M_PI) * config->prf[0];
             }
-            // Call the processor
-            k = engine->processor(space, pulses, path.length);
-            if (k != path.length) {
-                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
+            
+            // Duplicate a linear array for processor if we are to process; otherwise just skip this group
+            if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
+                k = 0;
+                i = is;
+                do {
+                    pulse = RKGetPulse(engine->pulseBuffer, i);
+                    marker |= pulse->header.marker;
+                    pulses[k++] = pulse;
+                    i = RKNextModuloS(i, engine->pulseBufferDepth);
+                } while (k < path.length);
+                if (ie != i) {
+                    RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
+                }
+                // Call the processor
+                k = engine->processor(space, pulses, path.length);
+                if (k != path.length) {
+                    RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
+                }
+                // Fill in the ray
+                makeRayFromScratch(space, ray, S->header.gateCount, stride);
+                ray->header.s |= RKRayStatusProcessed;
+            } else {
+                // Zero out the ray
+                zeroOutRay(ray);
+                if (engine->verbose) {
+                    RKLog("%s %s Skipped a ray with %d sampples.\n", engine->name, name, path.length);
+                }
+                ray->header.s |= RKRayStatusSkipped;
             }
-            // Fill in the ray
-            makeRayFromScratch(space, ray, S->header.gateCount, stride);
-            ray->header.s |= RKRayStatusProcessed;
-        } else {
-            // Zero out the ray
-            zeroOutRay(ray);
-            if (engine->verbose) {
-                RKLog("%s %s Skipped a ray with %d sampples.\n", engine->name, name, path.length);
-            }
-            ray->header.s |= RKRayStatusSkipped;
+            
+            // Update the rest of the ray header
+            ray->header.sweepElevation = config->sweepElevation;
+            ray->header.sweepAzimuth = config->sweepAzimuth;
+            ray->header.marker = marker;
+            ray->header.s ^= RKRayStatusProcessing;
+            ray->header.s |= RKRayStatusReady;
+            
+            // Update processed index
+            me->pid = ie;
+            
+            // Status of the engine
+            iu = RKNextNModuloS(iu, engine->coreCount, RKBufferSSlotCount);
+            string = engine->rayStatusBuffer[iu];
+            i = io * (RKStatusBarWidth + 1) / engine->rayBufferDepth;
+            memset(string, '#', i);
+            memset(string + i, '.', RKStatusBarWidth - i);
+            
+            // Summary of this ray
+            snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
+                     " %05lu | %s  %05lu...%05lu (%3d)  E%4.2f-%.2f (%4.2f) [%d/%.2f]   A%6.2f-%6.2f (%4.2f)   M%05x %s%s",
+                     (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
+                     S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
+                     ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation,
+                     S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
+                     ray->header.marker,
+                     ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
+                     ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
         }
 
         // Update the rest of the ray header
