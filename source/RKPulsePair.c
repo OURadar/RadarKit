@@ -120,11 +120,10 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     rq = space->C[0].q;
     s[0] = atan2f(*rq++, *ri++);
     for (k = 1; k < gateCount; k++) {
-        s[k] = atan2f(*rq++, *ri++);
-        s[k] += space->pcal;
-        if (s[k] < M_PI) {
+        s[k] = atan2f(*rq++, *ri++) + space->pcal;
+        if (s[k] < -M_PI) {
             s[k] += 2.0f * M_PI;
-        } else if (s[k] > M_PI) {
+        } else if (s[k] >= M_PI) {
             s[k] -= 2.0f * M_PI;
         }
         *v++ = s[k] - s[k - 1];
