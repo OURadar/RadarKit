@@ -170,15 +170,18 @@ int socketCommandHandler(RKOperator *O) {
     double fval1, fval2;
     
     // Delimited reading: each command is separated by a ';'
-    // e.g., a radarkit;s hz;
+    // e.g., a radarkit nopasswd;s hz;h hv on;
     
-    char *commandString = &O->cmd[0];
+    char *commandString = O->cmd;
     char *commandStringEnd = NULL;
-    
+
+    RKStripTail(commandString);
+
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
         }
+        RKLog("%s %s Command '%s'\n", engine->name, O->name, commandString);
         // Process the command
         switch (commandString[0]) {
             case 'a':
@@ -203,6 +206,8 @@ int socketCommandHandler(RKOperator *O) {
                 s += sprintf(sval1 + s, "/p 20 50,30 180");
                 j += sprintf(string + j, "\"Controls\":["
                              "{\"Label\":\"Go\", \"Command\":\"y\"}, "
+                             "{\"Label\":\"PRF 4,000 Hz\", \"Command\":\"t prf 4000\"}, "
+                             "{\"Label\":\"PRF 5,000 Hz\", \"Command\":\"t prf 5000\"}, "
                              "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
                              "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}, "
                              "{\"Label\":\"Park\", \"Command\":\"p point 0 0\"}"

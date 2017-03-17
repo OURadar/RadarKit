@@ -65,30 +65,24 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->desc = desc;
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
-        }
+        RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
     } else if (radar->desc.pulseBufferDepth == 0) {
         radar->desc.pulseBufferDepth = 1000;
     }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
-        }
+        RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
     } else if (radar->desc.rayBufferDepth == 0) {
         radar->desc.rayBufferDepth = 720;
     }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
-        }
+        RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     } else if (radar->desc.pulseCapacity == 0) {
         radar->desc.pulseCapacity = 256;
     }
     radar->desc.pulseCapacity = (radar->desc.pulseCapacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
-    if (radar->desc.pulseCapacity != desc.pulseCapacity && desc.initFlags & RKInitFlagVerbose) {
+    if (radar->desc.pulseCapacity != desc.pulseCapacity) {
         RKLog("Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     }
     
