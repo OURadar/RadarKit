@@ -408,7 +408,7 @@ void *rayGatherer(void *in) {
                 ray->header.n = is;
                 rays[n++] = ray;
                 is = RKNextModuloS(is, engine->rayBufferDepth);
-            } while (is != k && n < RKMaxRaysPerSweep && n < engine->rayBufferDepth);
+            } while (is != k && n < RKMaxRaysPerSweep - 1 && n < engine->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
