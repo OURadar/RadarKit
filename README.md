@@ -20,7 +20,7 @@ Follow these steps to get the project
     ##### Debian #####
 
     ```shell
-    apt-get install fftw netcdf
+    apt-get install libfftw3-dev libnetcdf-dev
     ``````
     
     ##### CentOS 7 #####
