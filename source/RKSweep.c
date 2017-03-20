@@ -170,18 +170,18 @@ void *sweepWriter(void *in) {
         }
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
-        j = sprintf(filename, "moment/");
-        j += strftime(filename + j, 16, "%Y%m%d", gmtime(&startTime));
-        j += sprintf(filename + j, "/%s-", engine->radarDescription->filePrefix);
-        j += strftime(filename + j, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+        i = sprintf(filename, "%s%smoment/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/");
+        i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
+        i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
+        i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         if (engine->configBuffer[T->header.configIndex].startMarker & RKMarkerPPIScan) {
-            j += sprintf(filename + j, "-E%.1f-%c", T->header.sweepElevation, symbol);
+            i += sprintf(filename + i, "-E%.1f-%c", T->header.sweepElevation, symbol);
         } else if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerRHIScan) {
-            j += sprintf(filename + j, "-A%.1f-%c", T->header.sweepAzimuth, symbol);
+            i += sprintf(filename + i, "-A%.1f-%c", T->header.sweepAzimuth, symbol);
         } else {
-            j += sprintf(filename + j, "-N%03d-%c", n, symbol);
+            i += sprintf(filename + i, "-N%03d-%c", n, symbol);
         }
-        sprintf(filename + j, ".nc");
+        sprintf(filename + i, ".nc");
         
         if (engine->verbose) {
             RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);

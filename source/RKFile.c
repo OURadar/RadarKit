@@ -182,7 +182,7 @@ void *pulseRecorder(void *in) {
             
             // New file
             time_t startTime = pulse->header.time.tv_sec;
-            i = sprintf(filename, "data/");
+            i = sprintf(filename, "%s%siq/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/");
             i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));

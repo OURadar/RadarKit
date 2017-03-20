@@ -14,6 +14,15 @@
 #define RKPreferenceObjectCount   64
 
 typedef struct rk_preference {
+    RKPreferenceObject    objects[RKPreferenceObjectCount];
+    uint32_t              count;
+    uint32_t              memoryUsage;
+
+    // Internal variables
+    uint32_t              previousIndex;
+    char                  previousKeyword[RKNameLength];
+    
+    // These may not be committed
     char                  filename[RKMaximumStringLength];
     char                  waveform[RKNameLength];
     char                  vcp[RKNameLength];
@@ -21,9 +30,6 @@ typedef struct rk_preference {
     double                longitude;
     double                radarHeight;
     double                meanSeaLevel;
-    RKPreferenceObject    objects[RKPreferenceObjectCount];
-    uint32_t              count;
-    uint32_t              memoryUsage;
 } RKPreference;
 
 RKPreference *RKPreferenceInitWithFile(const char *filename);
@@ -32,5 +38,6 @@ void RKPreferenceFree(RKPreference *);
 
 int RKPreferenceUpdate(RKPreference *preference);
 RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *preference, const char *keyword);
+int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword);
 
 #endif

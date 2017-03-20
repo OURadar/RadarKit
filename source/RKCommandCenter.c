@@ -131,27 +131,12 @@ int RKFlagToString(char *string, RKUserFlag flag) {
     return 0;
 }
 
-int indentCopy(char *dst, char *src) {
-    int k = 0;
-    char *e, *s = src;
-    do {
-        e = strchr(s, '\n');
-        if (e) {
-            *e = '\0';
-            k += sprintf(dst + k, "    %s\n", s);
-            s = e + 1;
-        }
-    } while (e != NULL);
-    k += sprintf(dst + k, "    %s", s);
-    return k;
-}
-
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     RKConfig *config = RKGetLatestConfig(user->radar);
     
-    int j, k, s;
+    int j, k;
     char string[RKMaximumStringLength * 2];
 
     j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
@@ -199,18 +184,13 @@ int socketCommandHandler(RKOperator *O) {
                 } else {
                     j += sprintf(string + j, "], ");
                 }
-                s = sprintf(sval1, "vol p 2 140 180");
-                for (k = 4; k < 20; k += 2) {
-                    s += sprintf(sval1 + s, "/p %d 50 180", k);
-                }
-                s += sprintf(sval1 + s, "/p 20 50,30 180");
+
+                RKMakeJSONStringFromControls(sval1, user->radar->controls, RKControlCount);
+
                 j += sprintf(string + j, "\"Controls\":["
                              "{\"Label\":\"Go\", \"Command\":\"y\"}, "
-                             "{\"Label\":\"PRF 4,000 Hz\", \"Command\":\"t prf 4000\"}, "
-                             "{\"Label\":\"PRF 5,000 Hz\", \"Command\":\"t prf 5000\"}, "
                              "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
-                             "{\"Label\":\"10-tilt Rapid Scan @ 180 dps\", \"Command\":\"%s\"}, "
-                             "{\"Label\":\"Park\", \"Command\":\"p point 0 0\"}"
+                             "%s"
                              "]}" RKEOL, sval1);
                 O->delimTx.type = RKNetworkPacketTypeControls;
                 O->delimTx.size = j;
@@ -294,7 +274,7 @@ int socketCommandHandler(RKOperator *O) {
                     if (user->radar->transceiver) {
                         user->radar->transceiverExec(user->radar->transceiver, "help", sval1);
                         RKStripTail(sval1);
-                        k += indentCopy(string + k, sval1);
+                        k += RKIndentCopy(string + k, sval1);
                         k += sprintf(string + k, "\n\n");
                     } else {
                         k += sprintf(string + k, "    INFO: Transceiver not set.\n");
@@ -306,7 +286,7 @@ int socketCommandHandler(RKOperator *O) {
                     if (user->radar->pedestal) {
                         user->radar->pedestalExec(user->radar->pedestal, "help", sval1);
                         RKStripTail(sval1);
-                        k += indentCopy(string + k, sval1);
+                        k += RKIndentCopy(string + k, sval1);
                         k += sprintf(string + k, "\n\n");
                     } else {
                         k += sprintf(string + k, "    INFO: Pedestal not set.\n");
@@ -318,7 +298,7 @@ int socketCommandHandler(RKOperator *O) {
                     if (user->radar->healthRelay) {
                         user->radar->healthRelayExec(user->radar->healthRelay, "help", sval1);
                         RKStripTail(sval1);
-                        k += indentCopy(string + k, sval1);
+                        k += RKIndentCopy(string + k, sval1);
                         k += sprintf(string + k, "\n\n");
                     } else {
                         k += sprintf(string + k, "    INFO: Health Relay not set.\n");

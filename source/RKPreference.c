@@ -86,7 +86,7 @@ int RKPreferenceUpdate(RKPreference *preference) {
                 }
             }
             strncpy(preference->objects[k].keyword, line, RKNameLength);
-            strncpy(preference->objects[k].valueString, s, RKNameLength);
+            strncpy(preference->objects[k].valueString, s, RKMaximumStringLength);
             RKStripTail(preference->objects[k].valueString);
             preference->objects[k].isValid = true;
             if ((preference->objects[k].valueString[0] >= '0' && preference->objects[k].valueString[0] <= '9') ||
@@ -99,16 +99,16 @@ int RKPreferenceUpdate(RKPreference *preference) {
                                                              &preference->objects[k].parameters[1],
                                                              &preference->objects[k].parameters[2],
                                                              &preference->objects[k].parameters[3]);
-                preference->count++;
-                #if defined(DEBUG)
-                printf("Keyword:'%s'   parameters:'%s' (%d)  %d  (%d) %.1f %.1f %.1f\n",
-                       preference->objects[k].keyword, preference->objects[k].valueString, (int)strlen(preference->objects[k].valueString),
-                       preference->objects[k].isNumeric, preference->objects[k].numericCount,
-                       preference->objects[k].parameters[0],
-                       preference->objects[k].parameters[1],
-                       preference->objects[k].parameters[2]);
-                #endif
             }
+            preference->count++;
+            #if defined(DEBUG)
+            printf("Keyword:'%s'   parameters:'%s' (%d)  %d  (%d) %.1f %.1f %.1f\n",
+                   preference->objects[k].keyword, preference->objects[k].valueString, (int)strlen(preference->objects[k].valueString),
+                   preference->objects[k].isNumeric, preference->objects[k].numericCount,
+                   preference->objects[k].parameters[0],
+                   preference->objects[k].parameters[1],
+                   preference->objects[k].parameters[2]);
+            #endif
             k++;
         }
         i++;
@@ -125,11 +125,29 @@ int RKPreferenceUpdate(RKPreference *preference) {
 
 RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *preference, const char *keyword) {
     int k = 0;
+    if (!strcasecmp(keyword, preference->previousKeyword)) {
+        k = preference->previousIndex + 1;
+        if (k >= preference->count) {
+            return NULL;
+        }
+    }
     while (k < RKPreferenceObjectCount && preference->objects[k].isValid == true) {
         if (!strcasecmp(preference->objects[k].keyword, keyword)) {
+            strcpy(preference->previousKeyword, keyword);
+            preference->previousIndex = k;
             return &preference->objects[k];
         }
         k++;
     }
     return NULL;
+}
+
+int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
+    int k = 0;
+    while (k < RKPreferenceObjectCount && preference->objects[k].isValid == true) {
+        if (!strcasecmp(preference->objects[k].keyword, keyword)) {
+            k++;
+        }
+    }
+    return k;
 }

@@ -54,6 +54,7 @@ char *RKGetColorOfIndex(const int i);
 char *RKGetBackgroundColor();
 char *RKGetBackgroundColorOfIndex(const int i);
 char *RKGetValueOfKey(const char *string, const char *key);
+int RKIndentCopy(char *dst, char *src);
 
 char *RKIntegerToCommaStyleString(const long);
 char *RKFloatToCommaStyleString(const double);

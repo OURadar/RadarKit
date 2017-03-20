@@ -194,7 +194,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRawIQBufferAllocating;
         bytes = RKPulseBufferAlloc(&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
         if (bytes == 0 || radar->pulses == NULL) {
-            RKLog("Error. Unable to allocate memory for I/Q pulses.");
+            RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
             exit(EXIT_FAILURE);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -230,6 +230,35 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateRayBufferAllocating;
         radar->state |= RKRadarStateRayBufferInitialized;
+    }
+
+    // Controls
+    if (radar->desc.controlCount > RKControlCount) {
+        radar->desc.controlCount = RKControlCount;
+        RKLog("Info. Control count limited to %s\n", RKControlCount);
+    } else if (radar->desc.controlCount == 0) {
+        radar->desc.controlCount = RKControlCount;
+    }
+    if (radar->desc.controlCount) {
+        radar->state |= RKRadarStateControlsAllocating;
+        bytes = radar->desc.controlCount * sizeof(RKControl);
+        radar->controls = (RKControl *)malloc(bytes);
+        if (radar->controls == NULL) {
+            RKLog("Error. Unable to allocate memory for controls.\n");
+            exit(EXIT_FAILURE);
+        }
+        for (i = 0; i < radar->desc.controlCount; i++) {
+            RKControl *control = &radar->controls[i];
+            control->uid = i;
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Controls occupy %s B (%d)",
+                  RKIntegerToCommaStyleString(bytes),
+                  RKIntegerToCommaStyleString(radar->desc.controlCount));
+        }
+        radar->memoryUsage += bytes;
+        radar->state ^= RKRadarStateControlsAllocating;
+        radar->state |= RKRadarStateControlsInitialized;
     }
 
     // Clocks
@@ -401,6 +430,9 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStatePositionBufferInitialized) {
         free(radar->positions);
     }
+    if (radar->state & RKRadarStateControlsInitialized) {
+        free(radar->controls);
+    }
     RKClockFree(radar->pulseClock);
     RKClockFree(radar->positionClock);
     free(radar);
@@ -559,6 +591,25 @@ void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta) {
 
 void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
+}
+
+void RKAddControl(RKRadar *radar, const char *label, const char *command) {
+    uint8_t index = radar->controlIndex++;
+    if (index >= radar->desc.controlCount) {
+        RKLog("Cannot add anymore controls.\n");
+        return;
+    }
+    RKUpdateControl(radar, index, label, command);
+}
+
+void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const char *command) {
+    if (index >= radar->desc.controlCount) {
+        RKLog("Error. Unable to update control.\n");
+        return;
+    }
+    RKControl *control = &radar->controls[index];
+    strncpy(control->label, label, RKNameLength - 1);
+    strncpy(control->command, command, RKMaximumStringLength - 1);
 }
 
 #pragma mark - Interaction / State Change
