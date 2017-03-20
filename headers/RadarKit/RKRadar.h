@@ -37,6 +37,8 @@ enum RKRadarState {
     RKRadarStateHealthBufferInitialized              = (1 << 8),
     RKRadarStatePositionBufferAllocating             = (1 << 9),
     RKRadarStatePositionBufferInitialized            = (1 << 10),
+    RKRadarStateControlsAllocating                   = (1 << 11),
+    RKRadarStateControlsInitialized                  = (1 << 12),
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),
     RKRadarStatePositionEngineInitialized            = (1 << 17),
     RKRadarStateHealthEngineInitialized              = (1 << 18),
@@ -125,6 +127,11 @@ struct rk_radar {
     int                        (*healthRelayFree)(RKHealthRelay);
     void                       *healthRelayInitInput;
     char                       healthRelayResponse[RKMaximumStringLength];
+    //
+    // Controls
+    //
+    RKControl                  *controls;
+    uint32_t                   controlIndex;
 };
 
 //
@@ -194,10 +201,10 @@ int RKStop(RKRadar *);
 
 // Healths
 uint8_t RKRequestHealthNode(RKRadar *);
-RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);
+RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode node);
 void RKSetHealthReady(RKRadar *, RKHealth *);
-RKHealth *RKGetLatestHealth(RKRadar *radar);
-int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword);
+RKHealth *RKGetLatestHealth(RKRadar *);
+int RKGetEnumFromLatestHealth(RKRadar *, const char *keyword);
 
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
@@ -215,5 +222,9 @@ void RKSetRayReady(RKRadar *, RKRay *);
 // Configs
 void RKAddConfig(RKRadar *radar, ...);
 RKConfig *RKGetLatestConfig(RKRadar *radar);
+
+// Controls
+void RKAddControl(RKRadar *, const char *label, const char *command);
+void RKUpdateControl(RKRadar *, uint8_t, const char *label, const char *command);
 
 #endif /* defined(__RadarKit_RKRadar__) */

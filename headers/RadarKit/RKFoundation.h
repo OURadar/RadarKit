@@ -75,6 +75,7 @@ size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t 
 void RKScratchFree(RKScratch *);
 
 void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
-
+void RKParseQuotedStrings(const char *source, ...);
+void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

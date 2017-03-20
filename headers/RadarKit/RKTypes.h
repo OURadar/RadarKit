@@ -49,6 +49,7 @@
 #define RKBufferPSlotCount               500                         // Positions
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
+#define RKControlCount                   64                          // Controls
 #define RKGateCount                      32768                       // Must power of 2!
 #define RKHealthNodeCount                8                           // Maximum number of nodes to ingest health info. Check RKHealthNode
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
@@ -344,6 +345,7 @@ typedef struct rk_radar_desc {
     uint32_t         positionBufferDepth;
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
+    uint32_t         controlCount;
     double           latitude;
     double           longitude;
     float            heading;                                        // Radar heading
@@ -351,6 +353,7 @@ typedef struct rk_radar_desc {
     float            wavelength;                                     // Radar wavelength (m)
     char             name[RKNameLength];                             // Radar name
     char             filePrefix[RKNameLength];                       // Prefix of output files
+    char             dataPath[RKMaximumStringLength];                // Root path for the data files
 } RKRadarDesc;
 
 // A running configuration buffer
@@ -541,6 +544,14 @@ typedef struct rk_preferene_object {
     int              numericCount;
     double           parameters[4];
 } RKPreferenceObject;
+
+typedef struct rk_control {
+    uint8_t          uid;                                             // A unique identifier
+    uint8_t          state;                                           // Some internal state for house keeping
+    uint8_t          level;                                           // Root level controls are for top interface
+    char             label[RKNameLength];                             // Label up to RKNameLength
+    char             command[RKMaximumStringLength];                  // Control command
+} RKControl;
 
 #pragma pack(pop)
 

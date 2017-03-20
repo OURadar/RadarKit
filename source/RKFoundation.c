@@ -488,3 +488,51 @@ void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const siz
     }
     free(copy);
 }
+
+void RKParseQuotedStrings(const char *source, ...) {
+    va_list args;
+    va_start(args, source);
+
+    char *s = (char *)source, *e, q;
+    char *string = va_arg(args, char *);
+    size_t length = 0;
+
+    while (string != NULL) {
+        // Look for the beginning quote
+        while (*s != '"' && *s != '\'' && *s != '\0') {
+            s++;
+        }
+        if (*s == '\0') {
+            break;
+        }
+        q = *s++;
+        // Look for the ending quote
+        e = s;
+        while (*e != q && *e != q) {
+            e++;
+        }
+        length = (size_t)(e - s);
+        strncpy(string, s, length);
+        string[length] = '\0';
+        s = e + 1;
+        // Get the next string
+        string = va_arg(args, char *);
+    }
+}
+
+void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t count) {
+    int i, j = 0;
+    RKControl *control = controls;
+    for (i = 0; i < count; i++) {
+        if (control->label[0] == 0) {
+            break;
+        }
+        j += sprintf(string + j, "{\"Label\":\"%s\",\"Command\":\"%s\"}, ", control->label, control->command);
+        control++;
+    }
+    if (j > 2) {
+        string[j - 2] = '\0';
+    } else {
+        string[0] = '\0';
+    }
+}

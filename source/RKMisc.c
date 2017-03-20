@@ -117,6 +117,21 @@ char *RKGetValueOfKey(const char *string, const char *key) {
     return NULL;
 }
 
+int RKIndentCopy(char *dst, char *src) {
+    int k = 0;
+    char *e, *s = src;
+    do {
+        e = strchr(s, '\n');
+        if (e) {
+            *e = '\0';
+            k += sprintf(dst + k, "    %s\n", s);
+            s = e + 1;
+        }
+    } while (e != NULL);
+    k += sprintf(dst + k, "    %s", s);
+    return k;
+}
+
 #pragma mark -
 
 ////////////////////////////////////////////////
