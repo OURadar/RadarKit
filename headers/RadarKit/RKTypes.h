@@ -72,7 +72,7 @@
 #define RKNoColor                        "\033[0m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
-#define RKNameLength                     64
+#define RKNameLength                     256
 #define RKPulseHeaderPaddedSize          256                         // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize            128                         // Change this to higher number for post-AVX2 intrinsics
 

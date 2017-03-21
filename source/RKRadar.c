@@ -14,6 +14,10 @@
 
 // More function definitions
 
+typedef struct rk_task {
+    RKRadar *radar;
+    char command[RKNameLength];
+} RKTaskInput;
 
 #pragma mark - Helper Functions
 
@@ -35,6 +39,14 @@ void *radarCoPilot(void *in) {
         }
         RKLog(productGenerator->rayStatusBuffer[k]);
         k = RKNextModuloS(k, RKBufferSSlotCount);
+    }
+    return NULL;
+}
+
+void *masterControllerExecuteInBackground(void *in) {
+    RKTaskInput *task = (RKTaskInput *)in;
+    if (task->radar->masterController) {
+        task->radar->masterControllerExec(task->radar->masterController, task->command, NULL);
     }
     return NULL;
 }
@@ -788,6 +800,18 @@ int RKStop(RKRadar *radar) {
 int RKResetEngines(RKRadar *radar) {
     RKClockReset(radar->pulseClock);
     return RKResultSuccess;
+}
+
+void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
+    if (radar->masterController == NULL) {
+        RKLog("Master controller is not valid.\n");
+        return;
+    }
+    RKTaskInput taskInput;
+    taskInput.radar = radar;
+    strncpy(taskInput.command, command, RKNameLength - 1);
+    pthread_t tid;
+    pthread_create(&tid, NULL, &masterControllerExecuteInBackground, &taskInput);
 }
 
 #pragma mark - Healths

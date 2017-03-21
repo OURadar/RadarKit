@@ -198,8 +198,8 @@ void *healthConsolidator(void *in) {
                 stringEnum = RKGetValueOfKey(stringObject, "enum");
                 if (stringEnum) {
                     valueEnum = atoi(stringEnum);
-                    if (valueEnum > 1) {
-                        RKLog("%s Warning. %s -> %s / %d --> Shutdown\n",
+                    if (valueEnum > 2) {
+                        RKLog("%s Warning. %s -> %s / %d --> Shutdown?\n",
                               engine->name,
                               keywords[j],
                               type == 1 ? (valueBool ? "true" : "false") : (RKFloatToCommaStyleString(valueFloat)),
