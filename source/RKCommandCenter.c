@@ -396,7 +396,11 @@ int socketCommandHandler(RKOperator *O) {
             case 'y':  // Start everything
             case 'z':  // Stop everything
                 // Passed to the master controller
-                user->radar->masterControllerExec(user->radar->masterController, commandString, string);
+                if (user->radar->masterController == NULL) {
+                    sprintf(string, "NAK. Not ready." RKEOL);
+                } else {
+                    user->radar->masterControllerExec(user->radar->masterController, commandString, string);
+                }
                 RKOperatorSendCommandResponse(O, string);
                 break;
                 
