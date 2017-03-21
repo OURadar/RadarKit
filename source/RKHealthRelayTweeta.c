@@ -28,6 +28,7 @@ void *backgroundStop(void *in) {
     return NULL;
 }
 
+
 int RHealthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
@@ -52,24 +53,9 @@ int RHealthRelayTweetaRead(RKClient *client) {
         RKStripTail(health->string);
 
         // Handle a special event from a push button
-        if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL) {
-            if (!strcasecmp(stringValue, "short") && !me->handlingEvent) {
-                me->handlingEvent = true;
-                RKLog("%s event %s\n", client->name, stringValue);
-                radar->masterControllerExec(radar->masterController, "b", NULL);
-//                if (me->toggleEvent) {
-//                    pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
-//                } else {
-//                    pthread_create(&me->tidBackground, NULL, &backgroundGo, me);
-//                }
-//                me->toggleEvent = !me->toggleEvent;
-            } else if (!strcasecmp(stringValue, "long") && !me->handlingEvent) {
-                me->handlingEvent = true;
-                RKLog("%s event %s\n", client->name, stringValue);
-                pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
-            } else if (!strcasecmp(stringValue, "none")) {
-                me->handlingEvent = false;
-            }
+        if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL && !strcasecmp(stringValue, "short")) {
+            RKLog("%s event %s\n", client->name, stringValue);
+            RKPerformMasterTaskInBackground(radar, "b");
         }
 
         RKSetHealthReady(radar, health);
@@ -143,6 +129,7 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
     }
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
+    //} else if (!strcmp(command, "state")) {
     } else {
         if (client->state < RKClientStateConnected) {
             if (response != NULL) {
@@ -159,7 +146,7 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
             if (++s % 100 == 0) {
                 RKLog("%s Waited %.2f for response.\n", client->name, (float)s * 0.01f);
             }
-            if ((float)s * 0.01f >= 5.0f) {
+            if ((float)s * 0.01f >= 3.0f) {
                 RKLog("%s should time out.\n", client->name);
                 break;
             }

@@ -130,7 +130,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             if (++s % 100 == 0) {
                 RKLog("%s Waited %.2f for response.\n", client->name, (float)s * 0.01f);
             }
-            if ((float)s * 0.01f >= 5.0f) {
+            if ((float)s * 0.01f >= 3.0f) {
                 RKLog("%s should time out.\n", client->name);
                 break;
             }

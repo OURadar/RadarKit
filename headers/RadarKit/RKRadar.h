@@ -201,6 +201,8 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
 int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
 int RKStop(RKRadar *);
+int RKResetEngines(RKRadar *);
+void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
 // Healths
 uint8_t RKRequestHealthNode(RKRadar *);

@@ -345,7 +345,7 @@ void *sweepWriter(void *in) {
     }
 
     if (engine->hasHandleFilesScript) {
-        printf("CMD: '%s'\n", filelist);
+        //printf("CMD: '%s'\n", filelist);
         system(filelist);
     }
 
