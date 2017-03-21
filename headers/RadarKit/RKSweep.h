@@ -31,6 +31,7 @@ struct rk_sweep_engine {
     uint32_t               rayBufferDepth;
     uint8_t                verbose;
     bool                   doNotWrite;
+    bool                   hasHandleFilesScript;
     
     // Program set variables
     pthread_t              tidRayGatherer;
@@ -38,10 +39,11 @@ struct rk_sweep_engine {
     float                  *array1D;
     float                  *array2D;
     char                   filelist[RKMaximumStringLength];
-    char                   filename[RKMaximumStringLength];
-    char                   productName[RKMaximumStringLength];
-    char                   productUnit[RKMaximumStringLength];
-    char                   productColormap[RKMaximumStringLength];
+    char                   filename[RKMaximumPathLength];
+    char                   productName[RKNameLength];
+    char                   productUnit[RKNameLength];
+    char                   productColormap[RKNameLength];
+    char                   handleFilesScript[RKMaximumPathLength];
 
     // Status / health
     uint32_t               processedRayIndex;
@@ -62,6 +64,7 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
+void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);

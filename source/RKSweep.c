@@ -105,7 +105,9 @@ void *sweepWriter(void *in) {
     float va = 0.25f * desc->wavelength * config->prf[0];
 
     // Go through all moments
-    sprintf(filelist, "./handlefiles.sh");
+    if (engine->hasHandleFilesScript) {
+        strncpy(filelist, engine->handleFilesScript, RKMaximumPathLength);
+    }
 
     RKProductIndex productIndex = RKProductIndexS;
     uint32_t productList = S->header.productList;
@@ -194,7 +196,9 @@ void *sweepWriter(void *in) {
         
         RKPreparePath(filename);
 
-        sprintf(filelist + strlen(filelist), " %s", filename);
+        if (engine->hasHandleFilesScript) {
+            sprintf(filelist + strlen(filelist), " %s", filename);
+        }
 
         if ((j = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);
@@ -340,8 +344,10 @@ void *sweepWriter(void *in) {
         ncclose(ncid);
     }
 
-    //printf("CMD: '%s'\n", filelist);
-    system(filelist);
+    if (engine->hasHandleFilesScript) {
+        printf("CMD: '%s'\n", filelist);
+        system(filelist);
+    }
 
     engine->state ^= RKEngineStateWritingFile;
 
@@ -489,6 +495,16 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
 
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
     engine->doNotWrite = value;
+}
+
+void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script) {
+    if (RKFilenameExists(script)) {
+        strcpy(engine->handleFilesScript, script);
+        engine->hasHandleFilesScript = true;
+        RKLog("%s Handle files using '%s'\n", engine->name, engine->handleFilesScript);
+    } else {
+        RKLog("%s Error. Handle files scirpt does not exist.\n", engine->name);
+    }
 }
 
 #pragma mark - Interactions
