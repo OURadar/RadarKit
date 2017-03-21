@@ -472,6 +472,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 RKLog("%s sleeping at counter = %s / %s ...",
                       transceiver->name, RKIntegerToCommaStyleString(transceiver->counter), RKIntegerToCommaStyleString(transceiver->sleepInterval));
                 sleep(3);
+                transceiver->counter = 0;
             }
             t += transceiver->prt;
         }
