@@ -94,6 +94,7 @@ typedef void *    RKBuffer;
 typedef void *    RKTransceiver;
 typedef void *    RKPedestal;
 typedef void *    RKHealthRelay;
+typedef void *    RKMasterController;
 
 #pragma pack(push, 1)
 
