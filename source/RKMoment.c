@@ -75,6 +75,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKProductIndexW);
     float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKProductIndexD);
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKProductIndexP);
+    float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKProductIndexK);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKProductIndexR);
     float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKProductIndexK);
     float SNR;
@@ -88,6 +89,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Wo++ = *Wi;
             *Do++ = *Di;
             *Po++ = *Pi;
+            *Ko++ = *Ki;
             *Ro++ = *Ri;
             *Ko++ = *Ki;
         } else {
@@ -96,6 +98,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Wo++ = NAN;
             *Do++ = NAN;
             *Po++ = NAN;
+            *Ko++ = NAN;
             *Ro++ = NAN;
             *Ko++ = NAN;
         }
@@ -105,10 +108,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Wi += stride;
         Di += stride;
         Pi += stride;
+        Ki += stride;
         Ri += stride;
         Ki += stride;
     }
-    Pi = space->PhiDP;
     // Record down the down-sampled gate count
     ray->header.gateCount = i;
     if (i != (gateCount + stride - 1) / stride) {
@@ -130,6 +133,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
+    RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Ko_pf = (RKVec *)space->KDP;
     RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexK);  RKVec *Ko_pf = (RKVec *)space->KDP;
     for (k = 0; k < K; k++) {
