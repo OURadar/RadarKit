@@ -108,7 +108,8 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     if (timeval) {
         *timeval = t;
     }
-    if (x - clock->latestTime > RKClockAWhile) {
+    // Reset the references when clock count = 0 or it has been a while
+    if (clock->count == 0 || x - clock->latestTime > RKClockAWhile) {
         recent = false;
         clock->x0 = x;
         clock->u0 = u;
