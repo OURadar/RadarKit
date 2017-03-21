@@ -128,6 +128,9 @@ struct rk_radar {
     void                       *healthRelayInitInput;
     char                       healthRelayResponse[RKMaximumStringLength];
     //
+    RKMasterController         masterController;
+    int                        (*masterControllerExec)(RKMasterController, const char *, char *);
+    //
     // Controls
     //
     RKControl                  *controls;

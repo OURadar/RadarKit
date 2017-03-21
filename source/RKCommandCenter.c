@@ -186,7 +186,6 @@ int socketCommandHandler(RKOperator *O) {
                 }
 
                 RKMakeJSONStringFromControls(sval1, user->radar->controls, RKControlCount);
-
                 j += sprintf(string + j, "\"Controls\":["
                              "{\"Label\":\"Go\", \"Command\":\"y\"}, "
                              "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
@@ -195,12 +194,10 @@ int socketCommandHandler(RKOperator *O) {
                 O->delimTx.type = RKNetworkPacketTypeControls;
                 O->delimTx.size = j;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
-
                 break;
                 
             case 'd':
                 // DSP related
-                
                 switch (commandString[1]) {
                     case 'f':
                         // 'df' - DSP filter
@@ -395,25 +392,13 @@ int socketCommandHandler(RKOperator *O) {
                 RKOperatorSendCommandResponse(O, string);
                 break;
                 
-            case 'y':
-            case 'z':
-                // Go - get default command from preference object
-                /*
-                 s = sprintf(sval1, "vol p 2 140 180");
-                 for (k = 4; k < 20; k += 2) {
-                 s += sprintf(sval1 + s, "/p %d 140 180", k);
-                 }
-                 s += sprintf(sval1 + s, "/p 20 140,120 180" RKEOL);
-                 user->radar->pedestalExec(user->radar->pedestal, sval1, string);
-                 RKOperatorSendDelimitedString(O, string);
-                 user->radar->transceiverExec(user->radar->transceiver, "y", string);
-                 RKOperatorSendDelimitedString(O, string);
-                 */
-                user->radar->transceiverExec(user->radar->transceiver, commandString, string);
+            case 'b':  // Button event
+            case 'y':  // Start everything
+            case 'z':  // Stop everything
+                // Passed to the master controller
+                user->radar->masterControllerExec(user->radar->masterController, commandString, string);
                 RKOperatorSendCommandResponse(O, string);
                 break;
-                
-                // Stop everything
                 
             default:
                 snprintf(string, RKMaximumStringLength - 1, "Unknown command '%s'." RKEOL, commandString);
