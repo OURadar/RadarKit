@@ -76,6 +76,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKProductIndexD);
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKProductIndexP);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKProductIndexR);
+    float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKProductIndexK);
     float SNR;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     // Masking based on SNR
@@ -88,6 +89,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Do++ = *Di;
             *Po++ = *Pi;
             *Ro++ = *Ri;
+            *Ko++ = *Ki;
         } else {
             *Zo++ = NAN;
             *Vo++ = NAN;
@@ -95,6 +97,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Do++ = NAN;
             *Po++ = NAN;
             *Ro++ = NAN;
+            *Ko++ = NAN;
         }
         Si += stride;
         Zi += stride;
@@ -103,6 +106,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Di += stride;
         Pi += stride;
         Ri += stride;
+        Ki += stride;
     }
     Pi = space->PhiDP;
     // Record down the down-sampled gate count
@@ -119,6 +123,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     RKWLHMAC   RKVec wl = _rk_mm_set1_pf(lhma[0]);  RKVec wh = _rk_mm_set1_pf(lhma[1]);  RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
     RKDLHMAC   RKVec dl = _rk_mm_set1_pf(lhma[0]);  RKVec dh = _rk_mm_set1_pf(lhma[1]);  RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
     RKPLHMAC   RKVec pl = _rk_mm_set1_pf(lhma[0]);  RKVec ph = _rk_mm_set1_pf(lhma[1]);  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
+    RKKLHMAC   RKVec kl = _rk_mm_set1_pf(lhma[0]);  RKVec kh = _rk_mm_set1_pf(lhma[1]);  RKVec km = _rk_mm_set1_pf(lhma[2]);  RKVec ka = _rk_mm_set1_pf(lhma[3]);
     RKRLHMAC   RKVec rl = _rk_mm_set1_pf(lhma[0]);  RKVec rh = _rk_mm_set1_pf(lhma[1]);
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
     RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
@@ -126,12 +131,14 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
     RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
+    RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexK);  RKVec *Ko_pf = (RKVec *)space->KDP;
     for (k = 0; k < K; k++) {
         *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Zi_pf++, zl), zh), zm), za);
         *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Vi_pf++, vl), vh), vm), va);
         *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Wi_pf++, wl), wh), wm), wa);
         *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Di_pf++, dl), dh), dm), da);
         *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Pi_pf++, pl), ph), pm), pa);
+        *Ko_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Ki_pf++, kl), kh), km), ka);
         *Ro_pf++ = _rk_mm_min_pf(_rk_mm_max_pf(*Ri_pf++, rl), rh);
     }
     // Convert to uint8 type
@@ -140,6 +147,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     Wi = space->W[0];  uint8_t *wu = RKGetUInt8DataFromRay(ray, RKProductIndexW);
     Di = space->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKProductIndexD);
     Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+    Ki = space->KDP;   uint8_t *ku = RKGetUInt8DataFromRay(ray, RKProductIndexK);
     Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexR);
     Si = space->S[0];
     for (k = 0; k < ray->header.gateCount; k++) {
@@ -150,6 +158,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *wu++ = (uint8_t)*Wi;
             *du++ = (uint8_t)*Di;
             *pu++ = (uint8_t)*Pi;
+            *ku++ = (uint8_t)*Ki;
             *ru++ = (uint8_t)RKRho2Uint8(*Ri);
         } else {
             // Uint8 = 0 = transparent color
@@ -158,6 +167,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *wu++ = 0;
             *du++ = 0;
             *pu++ = 0;
+            *ku++ = 0;
             *ru++ = 0;
         }
         Si += stride;
@@ -166,12 +176,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Wi++;
         Di++;
         Pi++;
+        Ki++;
         Ri++;
     }
-    ray->header.productList = RKProductListProductZVWDPR;
-
-    pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
-    Pi = space->PhiDP;
+    ray->header.productList = RKProductListProductZVWDPR | RKProductListProductK;
     return i;
 }
 
