@@ -638,10 +638,6 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->fileEngine->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
 
-    // For now, the transceiver is the master controller
-    radar->masterController = radar->transceiver;
-    radar->masterControllerExec = radar->masterControllerExec;
-    
     // Add a dummy config to get things started if there hasn't been one
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
@@ -690,6 +686,10 @@ int RKGoLive(RKRadar *radar) {
         radar->state |= RKRadarStateTransceiverInitialized;
     }
 
+    // For now, the transceiver is the master controller
+    radar->masterController = radar->transceiver;
+    radar->masterControllerExec = radar->transceiverExec;
+    
     // Update memory usage
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Radar Live. Memory usage = %s B (%s GiB)\n",

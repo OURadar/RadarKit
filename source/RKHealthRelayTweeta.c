@@ -56,12 +56,13 @@ int RHealthRelayTweetaRead(RKClient *client) {
             if (!strcasecmp(stringValue, "short") && !me->handlingEvent) {
                 me->handlingEvent = true;
                 RKLog("%s event %s\n", client->name, stringValue);
-                if (me->toggleEvent) {
-                    pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
-                } else {
-                    pthread_create(&me->tidBackground, NULL, &backgroundGo, me);
-                }
-                me->toggleEvent = !me->toggleEvent;
+                radar->masterControllerExec(radar->masterController, "b", NULL);
+//                if (me->toggleEvent) {
+//                    pthread_create(&me->tidBackground, NULL, &backgroundStop, me);
+//                } else {
+//                    pthread_create(&me->tidBackground, NULL, &backgroundGo, me);
+//                }
+//                me->toggleEvent = !me->toggleEvent;
             } else if (!strcasecmp(stringValue, "long") && !me->handlingEvent) {
                 me->handlingEvent = true;
                 RKLog("%s event %s\n", client->name, stringValue);
