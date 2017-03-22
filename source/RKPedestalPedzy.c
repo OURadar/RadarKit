@@ -10,6 +10,32 @@
 
 #pragma mark - Internal Functions
 
+void *pedestalHealth(void *in) {
+    RKPedestalPedzy *me = (RKPedestal)in;
+    RKRadar *radar = me->radar;
+    while (me->client->state < RKClientStateDisconnecting) {
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
+        RKPosition *position = RKGetLatestPosition(radar);
+        bool azInterlock = position->flag & RKPositionFlagAzimuthSafety;
+        bool elInterlock = position->flag & RKPositionFlagElevationSafety;
+        int activeEnum = position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError) ? 2 : (position->flag & RKPositionFlagActive ? 0 : 1);
+        sprintf(health->string,
+                "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
+                "\"Pedestal AZ Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
+                "\"Pedestal EL Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}}",
+                azInterlock ? "true" : "false", azInterlock ? 2 : 0,
+                elInterlock ? "true" : "false", elInterlock ? 2 : 0,
+                activeEnum > 1 ? "true" : "false", activeEnum,
+                position->azimuthDegrees,
+                position->elevationDegrees);
+        RKSetHealthReady(radar, health);
+        usleep(200000);
+    }
+    return (void *)NULL;
+}
+
 // Internal Implementations
 
 int RKPedestalPedzyRead(RKClient *client) {
@@ -102,6 +128,11 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     RKClientSetUserResource(me->client, me);
     RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
     RKClientStart(me->client);
+
+    if (pthread_create(&me->tidPedestalMonitor, NULL, pedestalHealth, me) != 0) {
+        RKLog("%s Error. Failed to start a pedestal monitor.\n", me->client->name);
+        return (void *)RKResultFailedToStartPedestalMonitor;
+    }
 
     return (RKPedestal)me;
 }
