@@ -878,6 +878,11 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
     return;
 }
 
+RKPosition *RKGetLatestPosition(RKRadar *radar) {
+    uint32_t index = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
+    return &radar->positions[index];
+}
+
 #pragma mark - Pulses
 
 RKPulse *RKGetVacantPulse(RKRadar *radar) {

@@ -22,6 +22,9 @@ typedef struct rk_pedzy {
     char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumStringLength];
     RKRadar                *radar;
+
+    // Program set variables
+    pthread_t              tidPedestalMonitor;
 } RKPedestalPedzy;
 
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);

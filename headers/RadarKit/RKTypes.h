@@ -174,6 +174,7 @@ enum RKResult {
     RKResultFailedToStartRayGatherer,
     RKResultFailedToStartHealthWorker,
     RKResultFailedToStartPulseRecorder,
+    RKResultFailedToStartPedestalMonitor,
     RKResultPreferenceFileNotFound,
     RKResultSuccess = 0,
     RKResultNoError = 0
@@ -334,6 +335,19 @@ enum RKEngineState {
     RKEngineStateActivating          = (1 << 9),                     // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 10),                    // The main run loop is being deactivated, RKEngineStateActive is immediatelu
     RKEngineStateActive              = (1 << 11)                     // The engine is active
+};
+
+typedef uint32_t RKStatusEnum;
+enum RKStatusEnum {
+    RKStatusEnumInvalid           = -2,
+    RKStatusEnumTooLow            = -1,
+    RKStatusEnumNormal            =  0,
+    RKStatusEnumHigh              =  1,
+    RKStatusEnumStandby           =  1,
+    RKStatusEnumTooHigh           =  2,
+    RKStatusEnumNotOperational    =  2,
+    RKStatusEnumFault             =  2,
+    RKStatusEnumCritical          =  3                                // This would the status we may shutdown the radar
 };
 
 // A general description of a radar. These should never change after the radar has gone live
