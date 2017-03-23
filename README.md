@@ -1,7 +1,9 @@
 RadarKit
 ========
 
-A toolkit with various components of a radar signal processor. Mainly the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to base moment products. The main idea is to have user only implement the interface between a digital transceiver, a pedestal, and a generic health monitor. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
+First of all. Thanks for your interest in the framework! :smile: :thumbsup: :punch:
+
+This is a toolkit with various components of a radar signal processor. Mainly the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to _base moment_ products. The main idea is to have user only implement the interface between a _digital transceiver_, a _pedestal_, and a generic _health relay_. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
 
 ## Getting the Project ##
 
@@ -300,6 +302,16 @@ int execRoutine(RKTransceiver userTransceiver, const char *command, char *respon
 
 ``````
 
+Reserved Keywords for Commands
+==============================
+
+### `disconnect` ###
+
+This is a command the master controller issues when everything should stop.
+
+### `state` ###
+
+This is a command the master controller issues for checking if the component wants to report opereate (1) or standby (0)
 
 RadarKit Test Program
 =====================
