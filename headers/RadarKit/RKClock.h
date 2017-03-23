@@ -25,6 +25,7 @@ typedef struct rk_clock {
     bool             hasWisdom;                   // User provided dudt
     uint32_t         size;                        // User changeable depth
     uint32_t         stride;                      // Size to compute average
+    uint64_t         tic;                         // An internal tic in case user doesn't obey the rule
 
     // Program set parameters
     struct timeval   *tBuffer;                    // The time which a request was made (dirty)
