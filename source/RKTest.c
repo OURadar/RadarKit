@@ -13,7 +13,7 @@
 #define RKSIMD_TEST_DESC_FORMAT        "%65s"
 #define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
-
+#define PEDESTAL_SAMPLING_TIME         0.01
 
 void RKTestModuloMath(void) {
     int k;
@@ -400,7 +400,7 @@ void RKTestParseCommaDelimitedValues(void) {
 }
 
 
-#pragma mark - Simulated Transceiver
+#pragma mark - Transceiver Emulator
 
 void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
@@ -413,7 +413,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     double t = 0.0f;
     double dt = 0.0;
     struct timeval t0, t1;
-
     
     const int chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     
@@ -433,7 +432,8 @@ void *RKTestTransceiverRunLoop(void *input) {
     gettimeofday(&t0, NULL);
 
     transceiver->state |= RKEngineStateActive;
-
+    transceiver->state &= ~RKEngineStateActivating;
+    
     while (transceiver->state & RKEngineStateActive) {
         
         for (j = 0; j < chunkSize && transceiver->state & RKEngineStateActive; j++) {
@@ -584,7 +584,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     // Derive some calculated parameters
     transceiver->gateSizeMeters = 60.0e3f / transceiver->gateCount;
 
-    // Use a counter that mimics microsend increments
+    // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
     transceiver->state |= RKEngineStateActivating;
@@ -601,9 +601,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command, char *response) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
-    if (response != NULL) {
-        sprintf(response, "NAK. Command not understood." RKEOL);
-    }
     if (!strcmp(command, "disconnect")) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
@@ -637,6 +634,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     } else if (command[0] == 'z') {
         transceiver->sleepInterval = atoi(command + 1);
         RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
+    } else if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
     }
     return RKResultSuccess;
 }
@@ -644,6 +643,111 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     free(transceiver);
+    return RKResultSuccess;
+}
+
+#pragma mark - Pedestal Emulator
+
+void *RKTestPedestalRunLoop(void *input) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)input;
+    RKRadar *radar = pedestal->radar;
+    
+    int n;
+    float azimuth = 0.0f;
+    float elevation = 3.0f;
+    double dt = 0.0;
+    struct timeval t0, t1;
+
+    RKLog("%s starting ...\n", pedestal->name);
+    
+    gettimeofday(&t0, NULL);
+
+    pedestal->state |= RKEngineStateActive;
+    pedestal->state &= ~RKEngineStateActivating;
+    
+    while (pedestal->state & RKEngineStateActive) {
+        RKPosition *position = RKGetVacantPosition(radar);
+        position->elevationDegrees = elevation;
+        position->azimuthDegrees = azimuth;
+        position->flag |= RKPositionFlagActive;
+        
+        RKSetPositionReady(radar, position);
+        
+        // Report health
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
+        sprintf(health->string, "{"
+                "\"Pedestal azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}}",
+                position->azimuthDegrees);
+        RKSetHealthReady(radar, health);
+        
+        // Wait to simulate sampling time
+        n = 0;
+        do {
+            gettimeofday(&t1, NULL);
+            dt = RKTimevalDiff(t1, t0);
+            usleep(100);
+            n++;
+        } while (radar->active && dt < PEDESTAL_SAMPLING_TIME);
+        t0 = t1;
+    }
+    
+    return NULL;
+}
+
+RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)malloc(sizeof(RKTestPedestal));
+    if (pedestal == NULL) {
+        RKLog("Error. Unable to allocate a test pedestal.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(pedestal, 0, sizeof(RKTestTransceiver));
+    sprintf(pedestal->name, "%s<Pedestal>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    pedestal->radar = radar;
+    pedestal->state = RKEngineStateAllocated;
+    
+    pedestal->state |= RKEngineStateActivating;
+    if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {
+        RKLog("%s. Unable to create pedestal run loop.\n", pedestal->name);
+    }
+    while (!(pedestal->state & RKEngineStateActive)) {
+        usleep(10000);
+    }
+
+    return (RKPedestal)pedestal;
+}
+
+int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *response) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
+    RKRadar *radar = pedestal->radar;
+    
+    if (!strcmp(command, "disconnect")) {
+        pedestal->state |= RKEngineStateDeactivating;
+        pedestal->state ^= RKEngineStateActive;
+        pthread_join(pedestal->tidRunLoop, NULL);
+        if (response != NULL) {
+            sprintf(response, "ACK. Pedestal stopped." RKEOL);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Stopped.\n", pedestal->name);
+        }
+        pedestal->state = RKEngineStateAllocated;
+    } else if (!strcmp(command, "help")) {
+        sprintf(response,
+                "Commands:\n"
+                UNDERLINE("help") " - Help list\n"
+                UNDERLINE("point [AZ] [EL]") " - Point to azimuth AZ and elevation EL.\n"
+                UNDERLINE("slew [AZ] [EL]") " - Slew the azimuth in AZ rate and the elevation in EL rate.\n"
+                );
+    } else if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
+    }
+    return RKResultSuccess;
+}
+
+int RKTestPedestalFree(RKPedestal pedestalReference) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
+    free(pedestal);
     return RKResultSuccess;
 }
 

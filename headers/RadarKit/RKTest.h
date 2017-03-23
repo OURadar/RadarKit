@@ -40,6 +40,15 @@ typedef struct rk_test_transceiver {
     RKRadar        *radar;
 } RKTestTransceiver;
 
+typedef struct rk_test_pedestal {
+    char           name[RKNameLength];
+    bool           simulatePosition;
+    long           counter;
+    pthread_t      tidRunLoop;
+    RKEngineState  state;
+    RKRadar        *radar;
+} RKTestPedestal;
+
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestParseCommaDelimitedValues(void);
@@ -47,6 +56,10 @@ void RKTestParseCommaDelimitedValues(void);
 RKTransceiver RKTestTransceiverInit(RKRadar *, void *);
 int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
+
+RKPedestal RKTestPedestalInit(RKRadar *, void *);
+int RKTestPedestalExec(RKTransceiver, const char *, char *);
+int RKTestPedestalFree(RKTransceiver);
 
 void RKTestPulseCompression(RKRadar *, RKTestFlag);
 void RKTestProcessorSpeed(void);
