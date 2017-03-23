@@ -657,6 +657,7 @@ void *RKTestPedestalRunLoop(void *input) {
     float elevation = 3.0f;
     double dt = 0.0;
     struct timeval t0, t1;
+    unsigned long tic = 0;
 
     RKLog("%s starting ...\n", pedestal->name);
     
@@ -667,6 +668,7 @@ void *RKTestPedestalRunLoop(void *input) {
     
     while (pedestal->state & RKEngineStateActive) {
         RKPosition *position = RKGetVacantPosition(radar);
+        //position->tic = tic++;
         position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
         position->flag |= RKPositionFlagActive;
@@ -674,18 +676,23 @@ void *RKTestPedestalRunLoop(void *input) {
         RKSetPositionReady(radar, position);
         
         // Report health
-        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-        sprintf(health->string, "{"
-                "\"Pedestal azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}}",
-                position->azimuthDegrees);
-        RKSetHealthReady(radar, health);
+        if (tic % 10 == 0) {
+            RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
+            sprintf(health->string, "{"
+                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}}"
+                    "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":0}"
+                    "}",
+                    position->azimuthDegrees,
+                    position->elevationDegrees);
+            RKSetHealthReady(radar, health);
+        }
         
         // Wait to simulate sampling time
         n = 0;
         do {
             gettimeofday(&t1, NULL);
             dt = RKTimevalDiff(t1, t0);
-            usleep(100);
+            usleep(1000);
             n++;
         } while (radar->active && dt < PEDESTAL_SAMPLING_TIME);
         t0 = t1;
@@ -700,7 +707,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         RKLog("Error. Unable to allocate a test pedestal.\n");
         exit(EXIT_FAILURE);
     }
-    memset(pedestal, 0, sizeof(RKTestTransceiver));
+    memset(pedestal, 0, sizeof(RKTestPedestal));
     sprintf(pedestal->name, "%s<Pedestal>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->radar = radar;
@@ -710,6 +717,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {
         RKLog("%s. Unable to create pedestal run loop.\n", pedestal->name);
     }
+    RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
     while (!(pedestal->state & RKEngineStateActive)) {
         usleep(10000);
     }
