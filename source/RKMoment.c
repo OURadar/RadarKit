@@ -278,8 +278,8 @@ void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   tic = %d\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), me->tic);
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io));
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.

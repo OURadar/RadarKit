@@ -189,7 +189,7 @@ UserParams processInput(int argc, const char **argv) {
             case 'b':
             case 'H':
                 user.simulate = true;
-                user.gateCount = 24000;
+                user.gateCount = 60000;
                 user.prf = 5000;
                 user.coresForPulseCompression = 10;
                 user.coresForProductGenerator = 4;
@@ -353,14 +353,13 @@ int main(int argc, const char **argv) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
-    desc.pulseCapacity = user.gateCount;
+    desc.pulseCapacity = (uint32_t)ceilf((float)user.gateCount * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     if (user.gateCount >= 4000) {
         desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
-        desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
         desc.pulseToRayRatio = 1;
-        desc.pulseBufferDepth = 10000;
     }
+    desc.pulseBufferDepth = 1000;
     desc.rayBufferDepth = 1440;
     desc.latitude = 35.181251;
     desc.longitude = -97.436752;

@@ -52,15 +52,16 @@ void RKWaveformOnes(RKWaveform *waveform) {
     RKInt16C *w;
 
     waveform->type = RKWaveformTypeSingle;
-    
+    double amplitudeScale = 1.0 / sqrt((double)waveform->depth);
+
     for (k = 0; k < waveform->count; k++) {
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (i = 0; i < waveform->depth; i++) {
-            x->i = 1.0f;
-            x->q = 0.0f;
             w->i = (int16_t)RKWaveformDigitalAmplitude;
             w->q = 0;
+            x->i = amplitudeScale;
+            x->q = 0.0f;
             x++;
             w++;
         }
@@ -75,10 +76,12 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
     double f, omega, psi;
     RKComplex *x;
     RKInt16C *w;
+    RKFloat gain;
 
     waveform->type = RKWaveformTypeFrequencyHopping;
 
     double stride = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
+    //double amplitudeScale = 1.0 / sqrt((double)waveform->depth);
 
     n = 0;
     m = (waveform->count / 2) % 2 == 0 ? (waveform->count + 2) / 4 : waveform->count / 4;
@@ -92,16 +95,27 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
         //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, waveform->omega);
         x = waveform->samples[k];
         w = waveform->iSamples[k];
+        gain = 0.0f;
         for (i = 0; i < waveform->depth; i++) {
             x->i = cos(omega * i - psi);
             x->q = sin(omega * i - psi);
             w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
             w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
+            gain += (x->i * x->i + x->q * x->q);
             x++;
             w++;
         }
+        // This equation still needs to be checked.
+        //gain = (RKFloat)waveform->depth;
+        gain = sqrtf(gain);
+        x = waveform->samples[k];
+        for (i = 0; i < waveform->depth; i++) {
+            x->i /= gain;
+            x->q /= gain;
+            x++;
+        }
         if (k % 2 == 1) {
-            n = RKNextNModuloS(n, m, waveform->count/2);
+            n = RKNextNModuloS(n, m, waveform->count / 2);
         }
     }
 }
@@ -127,11 +141,13 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     waveform->depth /= stride;
     RKComplex *x;
     RKInt16C *w;
+    RKFloat gainAdjust = 1.0f / (RKFloat)stride;
     for (k = 0; k < waveform->count; k++) {
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (j = 0, i = 0; j < waveform->depth; j++, i += stride) {
-            x[j] = x[i];
+            x[j].i = gainAdjust * x[i].i;
+            x[j].q = gainAdjust * x[i].q;
             w[j] = w[i];
         }
     }

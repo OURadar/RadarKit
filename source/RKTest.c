@@ -433,7 +433,10 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     transceiver->state |= RKEngineStateActive;
     transceiver->state &= ~RKEngineStateActivating;
-    
+
+    //    uint32_t gateCount1 = 60000;
+    //uint32_t gateCount2 = 16000;
+
     while (transceiver->state & RKEngineStateActive) {
         
         for (j = 0; j < chunkSize && transceiver->state & RKEngineStateActive; j++) {
@@ -444,7 +447,14 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.t = (uint64_t)(1.0e6 * t);
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
-            
+
+/*            if (pulse->header.i % 10 < 5) {
+                pulse->header.gateCount = gateCount1;
+            } else {
+                pulse->header.gateCount = gateCount2;
+            }
+            printf("gateCount = %d\n", pulse->header.gateCount);
+*/
             if (transceiver->simulatePosition) {
                 pulse->header.azimuthDegrees = azimuth;
                 pulse->header.elevationDegrees = 2.41f;
