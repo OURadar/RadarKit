@@ -90,7 +90,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Po++ = *Pi;
             *Ko++ = *Ki;
             *Ro++ = *Ri;
-            *Ko++ = *Ki;
         } else {
             *Zo++ = NAN;
             *Vo++ = NAN;
@@ -99,7 +98,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Po++ = NAN;
             *Ko++ = NAN;
             *Ro++ = NAN;
-            *Ko++ = NAN;
         }
         Si += stride;
         Zi += stride;
@@ -109,7 +107,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Pi += stride;
         Ki += stride;
         Ri += stride;
-        Ki += stride;
     }
     // Record down the down-sampled gate count
     ray->header.gateCount = i;
@@ -132,7 +129,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
-    RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexP);  RKVec *Ko_pf = (RKVec *)space->KDP;
+    RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexK);  RKVec *Ko_pf = (RKVec *)space->KDP;
     RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     for (k = 0; k < K; k++) {
         *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Zi_pf++, zl), zh), zm), za);
@@ -172,7 +169,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *ku++ = 0;
             *ru++ = 0;
         }
-        Si += stride;
+        Si++;
         Zi++;
         Vi++;
         Wi++;
@@ -394,7 +391,7 @@ void *momentCore(void *in) {
 //                printf("pcal = %.2f\n", space->pcal);
                 space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
                 space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
-                space->KDPFactor = 1.0f / S->header.gateSizeMeters;
+                space->KDPFactor = 1.0e3f / S->header.gateSizeMeters;
             }
             
             // Duplicate a linear array for processor if we are to process; otherwise just skip this group
