@@ -274,6 +274,7 @@ enum RKProductList {
     RKProductListProductK            = (1 << 22),                    // Data of K
     RKProductListProductS            = (1 << 23),                    // Data of S
     RKProductListProductZVWDPR       = 0x003F0000,                   // Base data, i.e., without K, and S
+    RKProductListProductZVWDPRK      = 0x007F0000,                   // Base data + K
     RKProductListProductZVWDPRKS     = 0x00FF0000                    // All data
 };
 

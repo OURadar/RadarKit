@@ -26,8 +26,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Copy everything
     memcpy(newConfig, oldConfig, sizeof(RKConfig));
 
-    //va_start(arg, configBufferDepth);
-
     uint32_t key = va_arg(args, RKConfigKey);
 
     // Modify the values based on the supplied keys

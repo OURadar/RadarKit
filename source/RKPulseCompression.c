@@ -173,7 +173,7 @@ void *pulseCompressionCore(void *_in) {
     engine->memoryUsage += mem;
 
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), me->tic, RKIntegerToCommaStyleString(nfft));
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
 
     pthread_mutex_unlock(&engine->coreMutex);
 
