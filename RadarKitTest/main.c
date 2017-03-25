@@ -413,7 +413,6 @@ int main(int argc, const char **argv) {
 
         // Build a series of options for pedestal, only pass down the relevant parameters
         if (strlen(user.pedzyHost)) {
-            //strcpy(user.pedzyHost, "localhost");
             RKLog("Pedestal input = '%s'", user.pedzyHost);
             RKSetPedestal(myRadar,
                           (void *)user.pedzyHost,
@@ -428,15 +427,14 @@ int main(int argc, const char **argv) {
                           RKTestPedestalFree);
         }
         
-        if (!strlen(user.tweetaHost)) {
-            strcpy(user.tweetaHost, "localhost");
+        if (strlen(user.tweetaHost)) {
+            RKLog("Health relay input = '%s'", user.tweetaHost);
+            RKSetHealthRelay(myRadar,
+                             (void *)user.tweetaHost,
+                             RKHealthRelayTweetaInit,
+                             RKHealthRelayTweetaExec,
+                             RKHealthRelayTweetaFree);
         }
-        RKLog("Health relay input = '%s'", user.tweetaHost);
-        RKSetHealthRelay(myRadar,
-                         (void *)user.tweetaHost,
-                         RKHealthRelayTweetaInit,
-                         RKHealthRelayTweetaExec,
-                         RKHealthRelayTweetaFree);
 
         myRadar->configs[0].prf[0] = user.prf;
         
