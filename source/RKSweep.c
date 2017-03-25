@@ -168,7 +168,7 @@ void *sweepWriter(void *in) {
         } else if (productList & RKProductListProductK) {
             symbol = 'K';
             sprintf(productName, "KDP");
-            sprintf(productUnit, "DegreesPerMeter");
+            sprintf(productUnit, "DegreesPerKilometer");
             sprintf(productColormap, "KDP");
             productList ^= RKProductListProductK;
             productIndex = RKProductIndexK;
