@@ -178,7 +178,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Ki++;
         Ri++;
     }
-    ray->header.productList = RKProductListProductZVWDPR | RKProductListProductK;
+    ray->header.productList = RKProductListProductZVWDPRK;
     return i;
 }
 
@@ -391,7 +391,7 @@ void *momentCore(void *in) {
 //                printf("pcal = %.2f\n", space->pcal);
                 space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
                 space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
-                space->KDPFactor = 1.0e3f / S->header.gateSizeMeters;
+                space->KDPFactor = 1.0f / S->header.gateSizeMeters;
             }
             
             // Duplicate a linear array for processor if we are to process; otherwise just skip this group
