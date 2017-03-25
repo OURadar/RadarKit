@@ -99,7 +99,8 @@ void *sweepWriter(void *in) {
     float *array2D = engine->array2D;
     float *x;
     float *y;
-
+    bool convertRadiansToDegrees;
+    
     // Some global attributes
     time_t startTime = (time_t)S->header.startTime.tv_sec;
     float va = 0.25f * desc->wavelength * config->prf[0];
@@ -109,6 +110,8 @@ void *sweepWriter(void *in) {
         strncpy(filelist, engine->handleFilesScript, RKMaximumPathLength);
     }
 
+    const float radianToDegree = 180.0f / M_PI;
+    
     RKProductIndex productIndex = RKProductIndexS;
     uint32_t productList = S->header.productList;
     int productCount = __builtin_popcount(productList);
@@ -165,7 +168,7 @@ void *sweepWriter(void *in) {
         } else if (productList & RKProductListProductK) {
             symbol = 'K';
             sprintf(productName, "KDP");
-            sprintf(productUnit, "DegreesPerKilometer");
+            sprintf(productUnit, "DegreesPerMeter");
             sprintf(productColormap, "KDP");
             productList ^= RKProductListProductK;
             productIndex = RKProductIndexK;
@@ -328,15 +331,28 @@ void *sweepWriter(void *in) {
         nc_put_var_float(ncid, variableIdGateWidth, array1D);
         
         y = array2D;
+        // Should AND it with a user preference
+        convertRadiansToDegrees = productIndex == RKProductIndexP || productIndex == RKProductIndexK;
         for (j = 0; j < n; j++) {
             x = RKGetFloatDataFromRay(rays[k + j], productIndex);
-            for (i = 0; i < T->header.gateCount; i++) {
-                if (isfinite(*x)) {
-                    *y++ = *x;
-                } else {
-                    *y++ = W2_MISSING_DATA;
+            if (convertRadiansToDegrees) {
+                for (i = 0; i < T->header.gateCount; i++) {
+                    if (isfinite(*x)) {
+                        *y++ = *x * radianToDegree;
+                    } else {
+                        *y++ = W2_MISSING_DATA;
+                    }
+                    x++;
                 }
-                x++;
+            } else {
+                for (i = 0; i < T->header.gateCount; i++) {
+                    if (isfinite(*x)) {
+                        *y++ = *x;
+                    } else {
+                        *y++ = W2_MISSING_DATA;
+                    }
+                    x++;
+                }
             }
         }
         nc_put_var_float(ncid, variableIdData, array2D);
