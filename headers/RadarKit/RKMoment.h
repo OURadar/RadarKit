@@ -80,7 +80,6 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
-//void RKMomentENgineSetProcessParameters(RKMomentEngine *, RKConfig *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
