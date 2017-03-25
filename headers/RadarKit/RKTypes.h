@@ -528,6 +528,7 @@ typedef struct rk_scratch {
     RKFloat          noise[2];                                       // Noise floor of each channel
     RKFloat          velocityFactor;                                 // Velocity factor to multiply by atan2(R(1))
     RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|)
+    RKFloat          KDPFactor;                                      // Normalization factor of 1.0 / gateWidth in kilometers
     RKFloat          dcal;                                           // Calibration offset to D
     RKFloat          pcal;                                           // Calibration offset to P (radians)
     RKFloat          SNRThreshold;                                   // SNR threshold for masking

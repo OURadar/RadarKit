@@ -194,9 +194,9 @@ void *pulseRecorder(void *in) {
                 }
                 len = 4096 + sizeof(RKConfig);
             } else {
-                if (engine->verbose) {
+                //if (engine->verbose) {
                     RKLog("%s Creating %s ...\n", engine->name, filename);
-                }
+                //}
                 RKPreparePath(filename);
 
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
