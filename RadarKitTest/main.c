@@ -374,6 +374,7 @@ int main(int argc, const char **argv) {
     RKSetVerbose(myRadar, user.verbose);
     
     RKAddControl(myRadar, "PPI @ 45 dps", "p ppi 3 45");
+    RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
 
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
@@ -383,6 +384,7 @@ int main(int argc, const char **argv) {
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
+    signal(SIGKILL, handleSignals);
 
     // Set any parameters here:
     RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);

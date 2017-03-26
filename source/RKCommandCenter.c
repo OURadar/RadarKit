@@ -368,7 +368,7 @@ int socketCommandHandler(RKOperator *O) {
             case 'q':
                 sprintf(string, "Bye." RKEOL);
                 RKOperatorSendCommandResponse(O, string);
-                
+                RKOperatorHangUp(O);
                 break;
                 
             case 't':
