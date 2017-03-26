@@ -26,6 +26,13 @@ enum RKTestSIMDFlag {
     RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
 };
 
+typedef int RKTestPedestalScanMode;
+enum RKTestPedestalScanMode {
+    RKTestPedestalScanModeNull,
+    RKTestPedestalScanModePPI,
+    RKTestPedestalScanModeRHI
+};
+
 typedef struct rk_test_transceiver {
     char           name[RKNameLength];
     bool           simulatePosition;
@@ -40,6 +47,22 @@ typedef struct rk_test_transceiver {
     RKRadar        *radar;
 } RKTestTransceiver;
 
+typedef struct rk_test_pedestal {
+    char           name[RKNameLength];
+    bool           simulatePosition;
+    long           counter;
+    int            scanMode;
+    float          scanElevation;
+    float          scanAzimuth;
+    float          speedAzimuth;
+    float          speedElevation;
+    float          rhiElevationStart;
+    float          rhiElevationEnd;
+    pthread_t      tidRunLoop;
+    RKEngineState  state;
+    RKRadar        *radar;
+} RKTestPedestal;
+
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestParseCommaDelimitedValues(void);
@@ -47,6 +70,10 @@ void RKTestParseCommaDelimitedValues(void);
 RKTransceiver RKTestTransceiverInit(RKRadar *, void *);
 int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
+
+RKPedestal RKTestPedestalInit(RKRadar *, void *);
+int RKTestPedestalExec(RKTransceiver, const char *, char *);
+int RKTestPedestalFree(RKTransceiver);
 
 void RKTestPulseCompression(RKRadar *, RKTestFlag);
 void RKTestProcessorSpeed(void);

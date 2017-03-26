@@ -42,7 +42,7 @@
  @define RKGateCount The maximum number of gates allocated for each pulse
  @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  */
-#define RKVersionString                  "1.0"
+#define RKVersionString                  "1.0.1"
 #define RKBufferCSlotCount               50                          // Config
 #define RKBufferHSlotCount               50                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
@@ -50,7 +50,7 @@
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
 #define RKControlCount                   64                          // Controls
-#define RKGateCount                      32768                       // Must power of 2!
+#define RKGateCount                      65536                       // Must power of 2!
 #define RKHealthNodeCount                8                           // Maximum number of nodes to ingest health info. Check RKHealthNode
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
@@ -274,6 +274,7 @@ enum RKProductList {
     RKProductListProductK            = (1 << 22),                    // Data of K
     RKProductListProductS            = (1 << 23),                    // Data of S
     RKProductListProductZVWDPR       = 0x003F0000,                   // Base data, i.e., without K, and S
+    RKProductListProductZVWDPRK      = 0x007F0000,                   // Base data + K
     RKProductListProductZVWDPRKS     = 0x00FF0000                    // All data
 };
 
@@ -374,7 +375,7 @@ typedef struct rk_radar_desc {
 
 // A running configuration buffer
 typedef struct rk_config {
-    uint32_t         i;                                              // Identity counter
+    uint64_t         i;                                              // Identity counter
     uint32_t         pw[RKMaxFilterCount];                           // Pulse width (ns)
     uint32_t         prf[RKMaxFilterCount];                          // Pulse repetition frequency (Hz)
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
@@ -483,8 +484,8 @@ typedef struct rk_pulse {
 typedef struct rk_ray_header {
     uint32_t         capacity;                                       // Capacity
     RKRayStatus      s;                                              // Ray status
-    uint32_t         i;                                              // Ray indentity
-    uint32_t         n;                                              // Ray network counter
+    uint64_t         i;                                              // Ray indentity
+    uint64_t         n;                                              // Ray network counter
     RKMarker         marker;                                         // Volume / sweep / radial marker
     RKProductList    productList;                                    // 16-bit MSB for products + 16-bit LSB for display
     uint16_t         configIndex;                                    // Operating configuration index
@@ -528,6 +529,7 @@ typedef struct rk_scratch {
     RKFloat          noise[2];                                       // Noise floor of each channel
     RKFloat          velocityFactor;                                 // Velocity factor to multiply by atan2(R(1))
     RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|)
+    RKFloat          KDPFactor;                                      // Normalization factor of 1.0 / gateWidth in kilometers
     RKFloat          dcal;                                           // Calibration offset to D
     RKFloat          pcal;                                           // Calibration offset to P (radians)
     RKFloat          SNRThreshold;                                   // SNR threshold for masking

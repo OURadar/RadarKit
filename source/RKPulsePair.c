@@ -10,7 +10,7 @@
 
 
 void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) {
-    const RKFloat va = space->widthFactor;
+    const RKFloat va = space->velocityFactor;
     const RKFloat wa = space->widthFactor;
     const RKVec va_pf = _rk_mm_set1_pf(va);
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
@@ -126,7 +126,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         } else if (s[k] >= M_PI) {
             s[k] -= 2.0f * M_PI;
         }
-        *v++ = s[k] - s[k - 1];
+        *v++ = space->KDPFactor * (s[k] - s[k - 1]);
     }
 }
 

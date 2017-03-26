@@ -13,7 +13,7 @@
 #define RKSIMD_TEST_DESC_FORMAT        "%65s"
 #define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
-
+#define PEDESTAL_SAMPLING_TIME         0.01
 
 void RKTestModuloMath(void) {
     int k;
@@ -400,7 +400,7 @@ void RKTestParseCommaDelimitedValues(void) {
 }
 
 
-#pragma mark - Simulated Transceiver
+#pragma mark - Transceiver Emulator
 
 void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
@@ -413,7 +413,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     double t = 0.0f;
     double dt = 0.0;
     struct timeval t0, t1;
-
     
     const int chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     
@@ -433,6 +432,10 @@ void *RKTestTransceiverRunLoop(void *input) {
     gettimeofday(&t0, NULL);
 
     transceiver->state |= RKEngineStateActive;
+    transceiver->state &= ~RKEngineStateActivating;
+
+    //    uint32_t gateCount1 = 60000;
+    //uint32_t gateCount2 = 16000;
 
     while (transceiver->state & RKEngineStateActive) {
         
@@ -444,7 +447,14 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.t = (uint64_t)(1.0e6 * t);
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
-            
+
+/*            if (pulse->header.i % 10 < 5) {
+                pulse->header.gateCount = gateCount1;
+            } else {
+                pulse->header.gateCount = gateCount2;
+            }
+            printf("gateCount = %d\n", pulse->header.gateCount);
+*/
             if (transceiver->simulatePosition) {
                 pulse->header.azimuthDegrees = azimuth;
                 pulse->header.elevationDegrees = 2.41f;
@@ -452,7 +462,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 phi += 0.02f;
             }
             
-            a = cosf(2.0 * M_PI * t);
+            a = cosf(2.0 * M_PI * 0.1 * t);
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -460,7 +470,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(1000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
+                    X->i = (int16_t)(100.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
                     X->q = 0.0f;
                     X++;
                 }
@@ -486,15 +496,15 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"Ready\":{\"Value\":true,\"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"GPS Latitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.6f\",\"Enum\":0}, "
+                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"NULL\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
-                (double)rand() * 1.0 / RAND_MAX + 35,
-                (double)rand() * 1.0 / RAND_MAX - 95,
-                (double)rand() * 1.0 / RAND_MAX + 45,
+                (double)rand() * 0.01 / RAND_MAX + 35,
+                (double)rand() * 0.01 / RAND_MAX - 95,
+                (double)rand() * 0.2 / RAND_MAX + 45,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
 
@@ -584,7 +594,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     // Derive some calculated parameters
     transceiver->gateSizeMeters = 60.0e3f / transceiver->gateCount;
 
-    // Use a counter that mimics microsend increments
+    // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
     transceiver->state |= RKEngineStateActivating;
@@ -601,9 +611,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command, char *response) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
-    if (response != NULL) {
-        sprintf(response, "NAK. Command not understood." RKEOL);
-    }
     if (!strcmp(command, "disconnect")) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
@@ -637,6 +644,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     } else if (command[0] == 'z') {
         transceiver->sleepInterval = atoi(command + 1);
         RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
+    } else if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
     }
     return RKResultSuccess;
 }
@@ -644,6 +653,216 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     free(transceiver);
+    return RKResultSuccess;
+}
+
+#pragma mark - Pedestal Emulator
+
+void *RKTestPedestalRunLoop(void *input) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)input;
+    RKRadar *radar = pedestal->radar;
+    
+    int n;
+    float azimuth = 0.0f;
+    float elevation = 3.0f;
+    double dt = 0.0;
+    struct timeval t0, t1;
+    unsigned long tic = 0;
+    bool scanStartEndPPI = true;
+    bool scanStartRHI = true;
+    bool scanEndRHI = true;
+    bool elTransition = false;
+
+    RKLog("%s Starting ...\n", pedestal->name);
+    
+    gettimeofday(&t0, NULL);
+
+    pedestal->state |= RKEngineStateActive;
+    pedestal->state &= ~RKEngineStateActivating;
+    
+    int scanMode = pedestal->scanMode;
+    
+    while (pedestal->state & RKEngineStateActive) {
+        if (scanMode != pedestal->scanMode) {
+            scanMode = pedestal->scanMode;
+            elevation = pedestal->scanElevation;
+            azimuth = pedestal->scanAzimuth;
+        }
+
+        // Get a vacation position to fill it in with the latest reading
+        RKPosition *position = RKGetVacantPosition(radar);
+        position->tic = tic++;
+        position->elevationDegrees = elevation;
+        position->azimuthDegrees = azimuth;
+        position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
+        position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
+        position->flag |= RKPositionFlagActive | RKPositionFlagAzimuthEnabled;
+
+        if (pedestal->scanMode == RKTestPedestalScanModePPI) {
+            position->sweepElevationDegrees = pedestal->scanElevation;
+            position->sweepAzimuthDegrees = 0.0f;
+            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagActive;
+        } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
+            position->sweepAzimuthDegrees = pedestal->scanAzimuth;
+            position->sweepElevationDegrees = 0.0f;
+            position->flag |= RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint;
+        }
+        if (scanStartEndPPI) {
+            scanStartEndPPI = false;
+            position->flag |= RKPositionFlagAzimuthComplete;
+        }
+        if (scanStartRHI) {
+            scanStartRHI = false;
+            position->flag |= RKPositionFlagElevationComplete;
+        } else if (scanEndRHI) {
+            scanEndRHI = false;
+        }
+        RKSetPositionReady(radar, position);
+        
+        // Report health
+        if (tic % 10 == 0) {
+            RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
+            sprintf(health->string, "{"
+                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
+                    "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":0}"
+                    "}",
+                    position->azimuthDegrees,
+                    position->elevationDegrees);
+            RKSetHealthReady(radar, health);
+        }
+        
+        // Posiiton change
+        if (pedestal->scanMode == RKTestPedestalScanModePPI) {
+            azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
+            if (azimuth >= 360.0f) {
+                azimuth -= 360.0f;
+            } else if (azimuth < 0.0f) {
+                azimuth += 360.0f;
+            }
+            // Transition over 0 degree
+            if (pedestal->speedAzimuth > 0.0f && azimuth < 5.0f && position->azimuthDegrees > 355.0f) {
+                scanStartEndPPI = true;
+            } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
+                scanStartEndPPI = true;
+            }
+        } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
+            if (elTransition) {
+                elevation -= 2.0f * pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            } else {
+                elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            }
+            if (elevation > 180.0f) {
+                elevation -= 360.0f;
+            } else if (elevation < -180.0f) {
+                elevation += 360.0f;
+            }
+            if (pedestal->speedElevation > 0.0f) {
+                if (elevation > pedestal->rhiElevationEnd) {
+                    scanEndRHI = true;
+                    elTransition = true;
+                    position->flag &= ~RKPositionFlagActive;
+                } else if (elevation < pedestal->rhiElevationStart) {
+                    scanStartRHI = true;
+                    elTransition = false;
+                    position->flag |= RKPositionFlagActive;
+                }
+            }
+        }
+        
+        // Wait to simulate sampling time
+        n = 0;
+        do {
+            gettimeofday(&t1, NULL);
+            dt = RKTimevalDiff(t1, t0);
+            usleep(1000);
+            n++;
+        } while (radar->active && dt < PEDESTAL_SAMPLING_TIME);
+        t0 = t1;
+    }
+    
+    return NULL;
+}
+
+RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)malloc(sizeof(RKTestPedestal));
+    if (pedestal == NULL) {
+        RKLog("Error. Unable to allocate a test pedestal.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(pedestal, 0, sizeof(RKTestPedestal));
+    sprintf(pedestal->name, "%s<PedestalEmulator>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    pedestal->radar = radar;
+    pedestal->state = RKEngineStateAllocated;
+    
+    pedestal->state |= RKEngineStateActivating;
+    if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {
+        RKLog("%s. Unable to create pedestal run loop.\n", pedestal->name);
+    }
+    RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
+    while (!(pedestal->state & RKEngineStateActive)) {
+        usleep(10000);
+    }
+
+    return (RKPedestal)pedestal;
+}
+
+int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *response) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
+    RKRadar *radar = pedestal->radar;
+    
+    int k;
+    char sval[4][64];
+    
+    if (!strcmp(command, "disconnect")) {
+        pedestal->state |= RKEngineStateDeactivating;
+        pedestal->state ^= RKEngineStateActive;
+        pthread_join(pedestal->tidRunLoop, NULL);
+        if (response != NULL) {
+            sprintf(response, "ACK. Pedestal stopped." RKEOL);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Stopped.\n", pedestal->name);
+        }
+        pedestal->state = RKEngineStateAllocated;
+    } else if (!strncmp(command, "ppi", 3)) {
+        k = sscanf(command, "%s %s %s", sval[0], sval[1], sval[2]);
+        if (k == 3) {
+            pedestal->scanMode = RKTestPedestalScanModePPI;
+            pedestal->scanElevation = atof(sval[1]);
+            pedestal->speedAzimuth = atof(sval[2]);
+        }
+        if (response != NULL) {
+            sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f deg/sec" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
+        }
+    } else if (!strncmp(command, "rhi", 3)) {
+        k = sscanf(command, "%s %s %s %s", sval[0], sval[1], sval[2], sval[3]);
+        if (k == 4) {
+            pedestal->scanMode = RKTestPedestalScanModeRHI;
+            pedestal->scanAzimuth = atof(sval[1]);
+            pedestal->speedElevation = atof(sval[3]);
+            sscanf(sval[2], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
+        }
+        if (response != NULL) {
+            sprintf(response, "ACK. RHI mode set at AZ %.2f over %.2f-%.2f deg @ %.2f deg/sec" RKEOL,
+                    pedestal->scanAzimuth, pedestal->rhiElevationStart, pedestal->rhiElevationEnd, pedestal->speedElevation);
+        }
+    } else if (!strcmp(command, "help")) {
+        sprintf(response,
+                "Commands:\n"
+                UNDERLINE("help") " - Help list\n"
+                UNDERLINE("ppi") " [EL] [AZ_RATE] - PPI scan at elevation EL at AZ_RATE deg/s.\n"
+                UNDERLINE("rhi") " [AZ] [EL_START,EL_END] [EL_RATE] - RHI at AZ over EL_START to EL_END.\n"
+                );
+    } else if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
+    }
+    return RKResultSuccess;
+}
+
+int RKTestPedestalFree(RKPedestal pedestalReference) {
+    RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
+    free(pedestal);
     return RKResultSuccess;
 }
 
@@ -786,7 +1005,6 @@ void RKTestOneRay(void) {
     
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
-        pulse->header.i = k;
         pulse->header.t = k;
         pulse->header.gateCount = gateCount;
         // Fill in the data...

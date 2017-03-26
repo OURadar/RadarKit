@@ -22,7 +22,7 @@ typedef struct user_params {
     int   testPulseCompression;
     int   sleepInterval;
     bool  simulate;
-    bool  doNotWrite;
+    bool  writeFiles;
     char  pedzyHost[256];
     char  tweetaHost[256];
 } UserParams;
@@ -122,9 +122,11 @@ UserParams processInput(int argc, const char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     memset(&user, 0, sizeof(UserParams));
+    user.simulate = true;
+    user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
-    user.gateCount = 16000;
+    user.prf = 2000;
 
     RKPreference *preference = NULL;
     RKPreferenceObject *object = NULL;
@@ -187,7 +189,7 @@ UserParams processInput(int argc, const char **argv) {
             case 'b':
             case 'H':
                 user.simulate = true;
-                user.gateCount = 24000;
+                user.gateCount = 60000;
                 user.prf = 5000;
                 user.coresForPulseCompression = 10;
                 user.coresForProductGenerator = 4;
@@ -284,7 +286,7 @@ UserParams processInput(int argc, const char **argv) {
                 user.verbose++;
                 break;
             case 'w':
-                user.doNotWrite = true;
+                user.writeFiles = true;
                 break;
             case 'y':
                 RKTestCacheWrite();
@@ -351,14 +353,13 @@ int main(int argc, const char **argv) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything;
-    desc.pulseCapacity = user.gateCount;
+    desc.pulseCapacity = (uint32_t)ceilf((float)user.gateCount * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     if (user.gateCount >= 4000) {
         desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
-        desc.pulseBufferDepth = RKBuffer0SlotCount;
     } else {
         desc.pulseToRayRatio = 1;
-        desc.pulseBufferDepth = 10000;
     }
+    desc.pulseBufferDepth = 5000;
     desc.rayBufferDepth = 1440;
     desc.latitude = 35.181251;
     desc.longitude = -97.436752;
@@ -371,6 +372,9 @@ int main(int argc, const char **argv) {
     }
 
     RKSetVerbose(myRadar, user.verbose);
+    
+    RKAddControl(myRadar, "PPI @ 45 dps", "p ppi 3 45");
+    RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
 
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
@@ -380,10 +384,11 @@ int main(int argc, const char **argv) {
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
+    signal(SIGKILL, handleSignals);
 
     // Set any parameters here:
     RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
-    if (user.doNotWrite) {
+    if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
 
@@ -411,25 +416,29 @@ int main(int argc, const char **argv) {
                          RKTestTransceiverFree);
 
         // Build a series of options for pedestal, only pass down the relevant parameters
-        if (!strlen(user.pedzyHost)) {
-            strcpy(user.pedzyHost, "localhost");
+        if (strlen(user.pedzyHost)) {
+            RKLog("Pedestal input = '%s'", user.pedzyHost);
+            RKSetPedestal(myRadar,
+                          (void *)user.pedzyHost,
+                          RKPedestalPedzyInit,
+                          RKPedestalPedzyExec,
+                          RKPedestalPedzyFree);
+        } else {
+            RKSetPedestal(myRadar,
+                          NULL,
+                          RKTestPedestalInit,
+                          RKTestPedestalExec,
+                          RKTestPedestalFree);
         }
-        RKLog("Pedestal input = '%s'", user.pedzyHost);
-        RKSetPedestal(myRadar,
-                      (void *)user.pedzyHost,
-                      RKPedestalPedzyInit,
-                      RKPedestalPedzyExec,
-                      RKPedestalPedzyFree);
         
-        if (!strlen(user.tweetaHost)) {
-            strcpy(user.tweetaHost, "localhost");
+        if (strlen(user.tweetaHost)) {
+            RKLog("Health relay input = '%s'", user.tweetaHost);
+            RKSetHealthRelay(myRadar,
+                             (void *)user.tweetaHost,
+                             RKHealthRelayTweetaInit,
+                             RKHealthRelayTweetaExec,
+                             RKHealthRelayTweetaFree);
         }
-        RKLog("Health relay input = '%s'", user.tweetaHost);
-        RKSetHealthRelay(myRadar,
-                         (void *)user.tweetaHost,
-                         RKHealthRelayTweetaInit,
-                         RKHealthRelayTweetaExec,
-                         RKHealthRelayTweetaFree);
 
         myRadar->configs[0].prf[0] = user.prf;
         

@@ -24,10 +24,12 @@
 #define RKPreviousModuloS(i, S)          ((i) == 0 ? (S) - 1 : (i) - 1)
 
 typedef struct RKGlobalParameterStruct {
-    char program[RKMaximumStringLength];
-    char logfile[RKMaximumStringLength];
-    bool showColor;
-    FILE *stream;
+    char   program[RKNameLength];                      // Name of the program in log
+    char   logfile[RKNameLength];                      // Name of the log file. This is ignored when dailyLog = true
+    char   rootDataFolder[RKNameLength];               // Root folder where iq, moment health and log files are stored
+    bool   dailyLog;                                   // Daily mode where log file is /{rootDataFolder}/log/YYYYMMDD.log
+    bool   showColor;                                  // Show colors
+    FILE   *stream;                                    // Secondary output stream, can be NULL
 } RKGlobalParamters;
 
 extern RKGlobalParamters rkGlobalParameters;

@@ -172,8 +172,8 @@ void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   tic = %d\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), me->tic);
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -249,13 +249,15 @@ void *pulseCompressionCore(void *_in) {
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                     X += engine->filterAnchors[gid][j].origin;
-                    bound = MIN(pulse->header.gateCount, pulse->header.capacity - engine->filterAnchors[gid][j].origin);
+                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].origin);
                     for (k = 0; k < bound; k++) {
                         in[k][0] = (RKFloat)X->i;
                         in[k][1] = (RKFloat)X++->q;
                     }
                     // Zero pad the input; a filter is always zero-padded in the setter function.
-                    memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
+                    if (planSize > k) {
+                        memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
+                    }
 
                     fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
 

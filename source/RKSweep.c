@@ -99,7 +99,8 @@ void *sweepWriter(void *in) {
     float *array2D = engine->array2D;
     float *x;
     float *y;
-
+    bool convertRadiansToDegrees;
+    
     // Some global attributes
     time_t startTime = (time_t)S->header.startTime.tv_sec;
     float va = 0.25f * desc->wavelength * config->prf[0];
@@ -109,6 +110,8 @@ void *sweepWriter(void *in) {
         strncpy(filelist, engine->handleFilesScript, RKMaximumPathLength);
     }
 
+    const float radianToDegree = 180.0f / M_PI;
+    
     RKProductIndex productIndex = RKProductIndexS;
     uint32_t productList = S->header.productList;
     int productCount = __builtin_popcount(productList);
@@ -129,7 +132,7 @@ void *sweepWriter(void *in) {
             productIndex = RKProductIndexV;
         } else if (productList & RKProductListProductW) {
             symbol = 'W';
-            sprintf(productName, "SpectrumWidth");
+            sprintf(productName, "Width");
             sprintf(productUnit, "MetersPerSecond");
             sprintf(productColormap, "Width");
             productList ^= RKProductListProductW;
@@ -165,7 +168,7 @@ void *sweepWriter(void *in) {
         } else if (productList & RKProductListProductK) {
             symbol = 'K';
             sprintf(productName, "KDP");
-            sprintf(productUnit, "DegreesPerKilometer");
+            sprintf(productUnit, "DegreesPerMeter");
             sprintf(productColormap, "KDP");
             productList ^= RKProductListProductK;
             productIndex = RKProductIndexK;
@@ -232,7 +235,7 @@ void *sweepWriter(void *in) {
         if (S->header.marker & RKMarkerPPIScan) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "PPI");
         } else if (S->header.marker & RKMarkerRHIScan) {
-            nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 10, "RHI");
+            nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "RHI");
         }
         tmpf = engine->radarDescription->latitude;
         nc_put_att_float(ncid, NC_GLOBAL, "Latitude", NC_FLOAT, 1, &tmpf);
@@ -299,7 +302,7 @@ void *sweepWriter(void *in) {
         nc_put_att_float(ncid, NC_GLOBAL, "CalibP2-value", NC_FLOAT, 1, &config->PCal[1]);
         put_global_text_att(ncid, "CensorThreshold-unit", "dB");
         nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-value", NC_FLOAT, 1, &config->censorSNR);
-        put_global_text_att(ncid, "Waveform", "hop");
+        put_global_text_att(ncid, "Waveform", "h4011");
         put_global_text_att(ncid, "CreatedBy", "RadarKit");
         put_global_text_att(ncid, "ContactInformation", "http://arrc.ou.edu");
 
@@ -328,15 +331,28 @@ void *sweepWriter(void *in) {
         nc_put_var_float(ncid, variableIdGateWidth, array1D);
         
         y = array2D;
+        // Should AND it with a user preference
+        convertRadiansToDegrees = productIndex == RKProductIndexP || productIndex == RKProductIndexK;
         for (j = 0; j < n; j++) {
             x = RKGetFloatDataFromRay(rays[k + j], productIndex);
-            for (i = 0; i < T->header.gateCount; i++) {
-                if (isfinite(*x)) {
-                    *y++ = *x;
-                } else {
-                    *y++ = W2_MISSING_DATA;
+            if (convertRadiansToDegrees) {
+                for (i = 0; i < T->header.gateCount; i++) {
+                    if (isfinite(*x)) {
+                        *y++ = *x * radianToDegree;
+                    } else {
+                        *y++ = W2_MISSING_DATA;
+                    }
+                    x++;
                 }
-                x++;
+            } else {
+                for (i = 0; i < T->header.gateCount; i++) {
+                    if (isfinite(*x)) {
+                        *y++ = *x;
+                    } else {
+                        *y++ = W2_MISSING_DATA;
+                    }
+                    x++;
+                }
             }
         }
         nc_put_var_float(ncid, variableIdData, array2D);
