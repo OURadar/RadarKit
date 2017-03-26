@@ -18,15 +18,22 @@ int RKLog(const char *whatever, ...) {
     int i = 0;
     size_t len;
     va_list args;
-    char msg[2048];
+    char msg[RKMaximumStringLength];
+    time_t utc;
+
+    time(&utc);
+    struct tm *time = localtime(&utc);
+
     va_start(args, whatever);
-    if (strlen(whatever) > 1600) {
+    if (strlen(whatever) > RKMaximumStringLength - 256) {
         fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
+        return 1;
     }
     if (whatever[0] == '>') {
-        i += snprintf(msg, 2040, "                    : [%s] ", rkGlobalParameters.program);
+        i += sprintf(msg, "                    : [%s] ", rkGlobalParameters.program);
     } else {
-        i += snprintf(msg, 2040, "%19s : [%s] ", RKNow(), rkGlobalParameters.program);
+        i += strftime(msg, 32, "%Y/%m/%d %T", time);
+        i += sprintf(msg + i, " : [%s] ", rkGlobalParameters.program);
     }
     char *okay_str = strcasestr(whatever, "ok");
     char *info_str = strcasestr(whatever, "info");
@@ -40,7 +47,7 @@ int RKLog(const char *whatever, ...) {
     char *anchor = (char *)whatever + (whatever[0] == '>' ? 1 : 0);
 
     if (has_ok || has_info || has_error || has_warning) {
-        char colored_whatever[2048];
+        char colored_whatever[RKMaximumStringLength];
         
         if (has_ok) {
             len = (size_t)(okay_str - anchor);
@@ -60,21 +67,21 @@ int RKLog(const char *whatever, ...) {
         
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;92m");
+                len += sprintf(colored_whatever + len, "\033[1;92m");
             } else if (has_info) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;96m");
+                len += sprintf(colored_whatever + len, "\033[1;96m");
             } else if (has_error) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;91m");
+                len += sprintf(colored_whatever + len, "\033[1;91m");
             } else if (has_warning) {
-                len += snprintf(colored_whatever + len, 2040 - len, "\033[1;93m");
+                len += sprintf(colored_whatever + len, "\033[1;93m");
             }
         }
-        strncpy(colored_whatever + len, anchor, 2048 - len);
+        strncpy(colored_whatever + len, anchor, RKMaximumStringLength - len);
         
         i += vsprintf(msg + i, colored_whatever, args);
         
         if (rkGlobalParameters.showColor) {
-            snprintf(msg + i, 2040 - i, "\033[0m");
+            sprintf(msg + i, "\033[0m");
         }
     } else {
         vsprintf(msg + i, anchor, args);
@@ -90,7 +97,13 @@ int RKLog(const char *whatever, ...) {
         fflush(rkGlobalParameters.stream);
     }
     // Write the string to a file if specified
-    if (rkGlobalParameters.logfile[0] != '\0' && strlen(rkGlobalParameters.logfile) > 0) {
+    if (rkGlobalParameters.dailyLog) {
+        if (strlen(rkGlobalParameters.rootDataFolder)) {
+            i = sprintf(rkGlobalParameters.logfile, "%s/logs/", rkGlobalParameters.rootDataFolder);
+        }
+        i += strftime(rkGlobalParameters.logfile + i, RKNameLength, "YYYYMMDD.log", time);
+    }
+    if (strlen(rkGlobalParameters.logfile)) {
         FILE *logFileID = fopen(rkGlobalParameters.logfile, "a");
         if (logFileID == NULL) {
             fprintf(stderr, "Unable to log.\n");
@@ -117,27 +130,44 @@ void RKSetWantScreenOutput(const bool yes) {
 }
 
 int RKSetProgramName(const char *name) {
-    if (strlen(name) >= RKMaximumStringLength) {
+    if (strlen(name) >= RKNameLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.program, RKMaximumStringLength, "%s", name);
-    return 0;
+    snprintf(rkGlobalParameters.program, RKNameLength, "%s", name);
+    return RKResultSuccess;
+}
+
+int RKSetRootFolder(const char *folder) {
+    if (strlen(folder) > RKNameLength - 64) {
+        fprintf(stderr, "WARNING. Very long root folder.\n");
+    }
+    sprintf(rkGlobalParameters.rootDataFolder, "%s", folder);
+    size_t len = strlen(rkGlobalParameters.rootDataFolder);
+    while (rkGlobalParameters.rootDataFolder[len - 1] == '/') {
+        len--;
+    }
+    rkGlobalParameters.rootDataFolder[len] = '\0';
+    return RKResultSuccess;
 }
 
 int RKSetLogfile(const char *filename) {
     if (filename == NULL) {
         rkGlobalParameters.logfile[0] = '\0';
         return 0;
-    } else if (strlen(filename) >= RKMaximumStringLength) {
+    } else if (strlen(filename) >= RKNameLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", filename);
-    return 0;
+    snprintf(rkGlobalParameters.logfile, RKNameLength, "%s", filename);
+    return RKResultSuccess;
 }
 
 int RKSetLogfileToDefault(void) {
-    snprintf(rkGlobalParameters.logfile, RKMaximumStringLength, "%s", RKDefaultLogfile);
-    return 0;
+    if (strlen(rkGlobalParameters.rootDataFolder)) {
+        snprintf(rkGlobalParameters.logfile, RKNameLength, "%s", RKDefaultLogfile);
+    } else {
+        snprintf(rkGlobalParameters.logfile, RKNameLength, "%s/%s", rkGlobalParameters.rootDataFolder, RKDefaultLogfile);
+    }
+    return RKResultSuccess;
 }
 
 #pragma mark -

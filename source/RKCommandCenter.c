@@ -364,6 +364,12 @@ int socketCommandHandler(RKOperator *O) {
                 user->radar->pedestalExec(user->radar->pedestal, commandString + k, string);
                 RKOperatorSendCommandResponse(O, string);
                 break;
+            
+            case 'q':
+                sprintf(string, "Bye." RKEOL);
+                RKOperatorSendCommandResponse(O, string);
+                
+                break;
                 
             case 't':
             case 'w':

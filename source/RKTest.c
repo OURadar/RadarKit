@@ -668,8 +668,9 @@ void *RKTestPedestalRunLoop(void *input) {
     double dt = 0.0;
     struct timeval t0, t1;
     unsigned long tic = 0;
+    bool scanStartEndPPI = false;
 
-    RKLog("%s starting ...\n", pedestal->name);
+    RKLog("%s Starting ...\n", pedestal->name);
     
     gettimeofday(&t0, NULL);
 
@@ -678,11 +679,15 @@ void *RKTestPedestalRunLoop(void *input) {
     
     while (pedestal->state & RKEngineStateActive) {
         RKPosition *position = RKGetVacantPosition(radar);
-        //position->tic = tic++;
+        position->tic = tic++;
         position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
         position->flag |= RKPositionFlagActive;
         
+        if (scanStartEndPPI) {
+            scanStartEndPPI = false;
+            position->flag |= RKPositionFlagAzimuthComplete;
+        }
         RKSetPositionReady(radar, position);
         
         // Report health
@@ -695,6 +700,22 @@ void *RKTestPedestalRunLoop(void *input) {
                     position->azimuthDegrees,
                     position->elevationDegrees);
             RKSetHealthReady(radar, health);
+        }
+        
+        // Posiiton change
+        if (pedestal->scanMode == RKTestPedestalScanModePPI) {
+            azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
+            if (azimuth >= 360.0f) {
+                azimuth -= 360.0f;
+            } else if (azimuth < 0.0f) {
+                azimuth += 360.0f;
+            }
+            // Transition over 0 degree
+            if (pedestal->speedAzimuth > 0.0f && azimuth < 5.0f && position->azimuthDegrees > 355.0f) {
+                scanStartEndPPI = true;
+            } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
+                scanStartEndPPI = true;
+            }
         }
         
         // Wait to simulate sampling time
@@ -718,7 +739,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
-    sprintf(pedestal->name, "%s<Pedestal>%s",
+    sprintf(pedestal->name, "%s<PedestalEmulator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->radar = radar;
     pedestal->state = RKEngineStateAllocated;
@@ -739,6 +760,9 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
     RKRadar *radar = pedestal->radar;
     
+    int k;
+    char sval[4][64];
+    
     if (!strcmp(command, "disconnect")) {
         pedestal->state |= RKEngineStateDeactivating;
         pedestal->state ^= RKEngineStateActive;
@@ -750,12 +774,19 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             RKLog("%s Stopped.\n", pedestal->name);
         }
         pedestal->state = RKEngineStateAllocated;
+    } else if (!strcmp(command, "ppi")) {
+        k = sscanf(command, "%s %s %s", sval[0], sval[1], sval[2]);
+        if (k == 3) {
+            pedestal->scanMode = RKTestPedestalScanModePPI;
+            pedestal->scanElevation = atof(sval[1]);
+            pedestal->speedAzimuth = atof(sval[2]);
+        }
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
                 UNDERLINE("help") " - Help list\n"
-                UNDERLINE("point [AZ] [EL]") " - Point to azimuth AZ and elevation EL.\n"
-                UNDERLINE("slew [AZ] [EL]") " - Slew the azimuth in AZ rate and the elevation in EL rate.\n"
+                UNDERLINE("ppi") " [EL] [AZ_RATE] - PPI scan at elevation EL at AZ_RATE deg/s.\n"
+                UNDERLINE("rhi") " [AZ] [EL_START,EL_END] [EL_RATE] - RHI at AZ over EL_START to EL_END.\n"
                 );
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
