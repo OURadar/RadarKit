@@ -496,15 +496,15 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"Ready\":{\"Value\":true,\"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"GPS Latitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.6f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.6f\",\"Enum\":0}, "
+                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"NULL\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
-                (double)rand() * 1.0 / RAND_MAX + 35,
-                (double)rand() * 1.0 / RAND_MAX - 95,
-                (double)rand() * 1.0 / RAND_MAX + 45,
+                (double)rand() * 0.01 / RAND_MAX + 35,
+                (double)rand() * 0.01 / RAND_MAX - 95,
+                (double)rand() * 0.2 / RAND_MAX + 45,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
 
@@ -668,8 +668,10 @@ void *RKTestPedestalRunLoop(void *input) {
     double dt = 0.0;
     struct timeval t0, t1;
     unsigned long tic = 0;
-    bool scanStartEndPPI = false;
-    bool scanStartEndRHI = false;
+    bool scanStartEndPPI = true;
+    bool scanStartRHI = true;
+    bool scanEndRHI = true;
+    bool elTransition = false;
 
     RKLog("%s Starting ...\n", pedestal->name);
     
@@ -678,7 +680,16 @@ void *RKTestPedestalRunLoop(void *input) {
     pedestal->state |= RKEngineStateActive;
     pedestal->state &= ~RKEngineStateActivating;
     
+    int scanMode = pedestal->scanMode;
+    
     while (pedestal->state & RKEngineStateActive) {
+        if (scanMode != pedestal->scanMode) {
+            scanMode = pedestal->scanMode;
+            elevation = pedestal->scanElevation;
+            azimuth = pedestal->scanAzimuth;
+        }
+
+        // Get a vacation position to fill it in with the latest reading
         RKPosition *position = RKGetVacantPosition(radar);
         position->tic = tic++;
         position->elevationDegrees = elevation;
@@ -690,7 +701,7 @@ void *RKTestPedestalRunLoop(void *input) {
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             position->sweepElevationDegrees = pedestal->scanElevation;
             position->sweepAzimuthDegrees = 0.0f;
-            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint;
+            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagActive;
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
             position->sweepAzimuthDegrees = pedestal->scanAzimuth;
             position->sweepElevationDegrees = 0.0f;
@@ -698,13 +709,13 @@ void *RKTestPedestalRunLoop(void *input) {
         }
         if (scanStartEndPPI) {
             scanStartEndPPI = false;
-            elevation = pedestal->scanElevation;
             position->flag |= RKPositionFlagAzimuthComplete;
         }
-        if (scanStartEndRHI) {
-            scanStartEndRHI = false;
-            azimuth = pedestal->scanAzimuth;
+        if (scanStartRHI) {
+            scanStartRHI = false;
             position->flag |= RKPositionFlagElevationComplete;
+        } else if (scanEndRHI) {
+            scanEndRHI = false;
         }
         RKSetPositionReady(radar, position);
         
@@ -712,7 +723,7 @@ void *RKTestPedestalRunLoop(void *input) {
         if (tic % 10 == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
-                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}}"
+                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
                     "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":0}"
                     "}",
                     position->azimuthDegrees,
@@ -735,18 +746,26 @@ void *RKTestPedestalRunLoop(void *input) {
                 scanStartEndPPI = true;
             }
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
-            elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            if (elTransition) {
+                elevation -= 2.0f * pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            } else {
+                elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            }
             if (elevation > 180.0f) {
                 elevation -= 360.0f;
             } else if (elevation < -180.0f) {
                 elevation += 360.0f;
             }
-            if (pedestal->speedElevation > 0.0f && elevation > pedestal->rhiElevationEnd) {
-                elevation = pedestal->rhiElevationStart;
-                scanStartEndRHI = true;
-            } else if (pedestal->speedElevation < 0.0f && elevation < pedestal->rhiElevationStart) {
-                elevation = pedestal->rhiElevationEnd;
-                scanStartEndRHI = true;
+            if (pedestal->speedElevation > 0.0f) {
+                if (elevation > pedestal->rhiElevationEnd) {
+                    scanEndRHI = true;
+                    elTransition = true;
+                    position->flag &= ~RKPositionFlagActive;
+                } else if (elevation < pedestal->rhiElevationStart) {
+                    scanStartRHI = true;
+                    elTransition = false;
+                    position->flag |= RKPositionFlagActive;
+                }
             }
         }
         
