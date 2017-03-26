@@ -55,6 +55,7 @@ typedef struct rk_test_pedestal {
     float          scanElevation;
     float          scanAzimuth;
     float          speedAzimuth;
+    float          speedElevation;
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;

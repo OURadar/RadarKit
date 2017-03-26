@@ -127,7 +127,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     memset(radar->configs, 0, bytes);
     radar->memoryUsage += bytes;
     for (i = 0; i < radar->desc.configBufferDepth; i++) {
-        radar->configs[i].i = i - radar->desc.configBufferDepth;
+        radar->configs[i].i = (uint64_t)(-1) - radar->desc.configBufferDepth + i;
     }
     radar->state ^= RKRadarStateConfigBufferAllocating;
     radar->state |= RKRadarStateConfigBufferInitialized;
@@ -150,7 +150,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     memset(radar->healths, 0, bytes);
     radar->memoryUsage += bytes;
     for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-        radar->healths[i].i = i - radar->desc.healthBufferDepth;
+        radar->healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
     }
     if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
@@ -171,7 +171,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
     for (k = 0; k < radar->desc.healthNodeCount; k++) {
         for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-            radar->healthNodes[k].healths[i].i = i - radar->desc.healthBufferDepth;
+            radar->healthNodes[k].healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
         }
     }
     radar->state ^= RKRadarStateHealthBufferAllocating;
@@ -195,7 +195,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.positionBufferDepth; i++) {
-            radar->positions[i].i = i - radar->desc.positionBufferDepth;
+            radar->positions[i].i = (uint64_t)(-1) - radar->desc.positionBufferDepth + i;
         }
         radar->state ^= RKRadarStatePositionBufferAllocating;
         radar->state |= RKRadarStatePositionBufferInitialized;
@@ -654,8 +654,8 @@ int RKGoLive(RKRadar *radar) {
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
                     RKConfigKeyPRF, 1000,
-                    RKConfigKeyZCal, -43.0, -43.0,
-                    RKConfigKeyNoise, 90.0, 90.0,
+                    RKConfigKeyZCal, -47.0, -47.0,
+                    RKConfigKeyNoise, 1.0, 1.0,
                     RKConfigKeyNull);
     }
 
