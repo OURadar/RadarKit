@@ -375,7 +375,7 @@ typedef struct rk_radar_desc {
 
 // A running configuration buffer
 typedef struct rk_config {
-    uint32_t         i;                                              // Identity counter
+    uint64_t         i;                                              // Identity counter
     uint32_t         pw[RKMaxFilterCount];                           // Pulse width (ns)
     uint32_t         prf[RKMaxFilterCount];                          // Pulse repetition frequency (Hz)
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
@@ -484,8 +484,8 @@ typedef struct rk_pulse {
 typedef struct rk_ray_header {
     uint32_t         capacity;                                       // Capacity
     RKRayStatus      s;                                              // Ray status
-    uint32_t         i;                                              // Ray indentity
-    uint32_t         n;                                              // Ray network counter
+    uint64_t         i;                                              // Ray indentity
+    uint64_t         n;                                              // Ray network counter
     RKMarker         marker;                                         // Volume / sweep / radial marker
     RKProductList    productList;                                    // 16-bit MSB for products + 16-bit LSB for display
     uint16_t         configIndex;                                    // Operating configuration index

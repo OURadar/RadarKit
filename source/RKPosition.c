@@ -66,7 +66,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
              rkGlobalParameters.showColor ? RKNoColor : "",
              position->azimuthDegrees,
              position->azimuthVelocityDegreesPerSecond,
-             position->sweepElevationDegrees,
+             position->sweepAzimuthDegrees,
              rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
              rkGlobalParameters.showColor ? RKNoColor : "",
              position->elevationDegrees,

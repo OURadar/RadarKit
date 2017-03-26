@@ -372,6 +372,8 @@ int main(int argc, const char **argv) {
     }
 
     RKSetVerbose(myRadar, user.verbose);
+    
+    RKAddControl(myRadar, "PPI @ 45 dps", "p ppi 3 45");
 
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);

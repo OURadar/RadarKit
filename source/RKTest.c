@@ -462,7 +462,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 phi += 0.02f;
             }
             
-            a = cosf(2.0 * M_PI * t);
+            a = cosf(2.0 * M_PI * 0.1 * t);
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -470,7 +470,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(1000.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
+                    X->i = (int16_t)(100.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
                     X->q = 0.0f;
                     X++;
                 }
@@ -682,10 +682,22 @@ void *RKTestPedestalRunLoop(void *input) {
         position->tic = tic++;
         position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
-        position->flag |= RKPositionFlagActive;
-        
+        position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
+        position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
+        position->flag |= RKPositionFlagActive | RKPositionFlagAzimuthEnabled;
+
+        if (pedestal->scanMode == RKTestPedestalScanModePPI) {
+            position->sweepElevationDegrees = pedestal->scanElevation;
+            position->sweepAzimuthDegrees = 0.0f;
+            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint;
+        } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
+            position->sweepAzimuthDegrees = pedestal->scanAzimuth;
+            position->sweepElevationDegrees = 0.0f;
+            position->flag |= RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint;
+        }
         if (scanStartEndPPI) {
             scanStartEndPPI = false;
+            elevation = pedestal->scanElevation;
             position->flag |= RKPositionFlagAzimuthComplete;
         }
         RKSetPositionReady(radar, position);
@@ -774,12 +786,15 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             RKLog("%s Stopped.\n", pedestal->name);
         }
         pedestal->state = RKEngineStateAllocated;
-    } else if (!strcmp(command, "ppi")) {
+    } else if (!strncmp(command, "ppi", 3)) {
         k = sscanf(command, "%s %s %s", sval[0], sval[1], sval[2]);
         if (k == 3) {
             pedestal->scanMode = RKTestPedestalScanModePPI;
             pedestal->scanElevation = atof(sval[1]);
             pedestal->speedAzimuth = atof(sval[2]);
+        }
+        if (response != NULL) {
+            sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f deg/sec" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
         }
     } else if (!strcmp(command, "help")) {
         sprintf(response,
@@ -939,7 +954,6 @@ void RKTestOneRay(void) {
     
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
-        pulse->header.i = k;
         pulse->header.t = k;
         pulse->header.gateCount = gateCount;
         // Fill in the data...
