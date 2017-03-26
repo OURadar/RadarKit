@@ -26,6 +26,13 @@ enum RKTestSIMDFlag {
     RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
 };
 
+typedef int RKTestPedestalScanMode;
+enum RKTestPedestalScanMode {
+    RKTestPedestalScanModeNull,
+    RKTestPedestalScanModePPI,
+    RKTestPedestalScanModeRHI
+};
+
 typedef struct rk_test_transceiver {
     char           name[RKNameLength];
     bool           simulatePosition;
@@ -44,6 +51,10 @@ typedef struct rk_test_pedestal {
     char           name[RKNameLength];
     bool           simulatePosition;
     long           counter;
+    int            scanMode;
+    float          scanElevation;
+    float          scanAzimuth;
+    float          speedAzimuth;
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;

@@ -331,6 +331,7 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 }
 
 
+//int RKOperatorDisconnect(RKServer *M)
 int RKDefaultWelcomeHandler(RKOperator *O) {
 
     char msg[6 * RKMaximumStringLength];

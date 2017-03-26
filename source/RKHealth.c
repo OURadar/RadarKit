@@ -24,6 +24,7 @@ void *healthConsolidator(void *in) {
     int valueEnum = 0;
     bool valueBool = false;
     float valueFloat = 0.0f;
+    int headingChangeCount = 0;
 
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
@@ -173,9 +174,16 @@ void *healthConsolidator(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s GPS:  latitude = %.4f   longitude = %.4f   heading = %.4f\n", engine->name, latitude, longitude, heading);
             }
-            engine->radarDescription->latitude = latitude;
-            engine->radarDescription->longitude = longitude;
-            engine->radarDescription->heading = heading;
+            // Only update if it is significant
+            if (fabs(engine->radarDescription->latitude - latitude) > 1.0e6 || fabs(engine->radarDescription->longitude - longitude) > 1.0e6) {
+                engine->radarDescription->latitude = latitude;
+                engine->radarDescription->longitude = longitude;
+            }
+            if (fabs(engine->radarDescription->heading - heading) > 1.0 && headingChangeCount++ > 3) {
+                engine->radarDescription->heading = heading;
+            } else {
+                headingChangeCount = 0;
+            }
         }
         
         for (j = 0; j < keywordsCount; j++) {
