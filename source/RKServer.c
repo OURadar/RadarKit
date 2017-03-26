@@ -331,7 +331,6 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 }
 
 
-//int RKOperatorDisconnect(RKServer *M)
 int RKDefaultWelcomeHandler(RKOperator *O) {
 
     char msg[6 * RKMaximumStringLength];
@@ -580,4 +579,5 @@ ssize_t RKOperatorSendBeacon(RKOperator *O) {
 
 void RKOperatorHangUp(RKOperator *O) {
     O->state = RKOperatorStateClosing;
+    pthread_join(O->threadId, NULL);
 }

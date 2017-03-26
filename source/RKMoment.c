@@ -419,7 +419,7 @@ void *momentCore(void *in) {
                 // Zero out the ray
                 zeroOutRay(ray);
                 if (engine->verbose) {
-                    RKLog("%s %s Skipped a ray with %d sampples.\n", engine->name, name, path.length);
+                    RKLog("%s %s Skipped a ray with %d sampples deltaAz = %.2f deltaEl = %.2f.\n", engine->name, name, path.length, deltaAzimuth, deltaElevation);
                 }
                 ray->header.s |= RKRayStatusSkipped;
             }
@@ -628,7 +628,8 @@ void *pulseGatherer(void *in) {
             }
         } else {
             // Gather the start and end pulses and post a worker to process for a ray
-            i0 = (int)floorf(pulse->header.azimuthDegrees);
+            //i0 = (int)floorf(pulse->header.azimuthDegrees);
+            i0 = 360 * (int)floorf(pulse->header.elevationDegrees) + (int)floorf(pulse->header.azimuthDegrees);
             if (i1 != i0 || count == RKMaxPulsesPerRay) {
                 i1 = i0;
                 if (count > 0) {

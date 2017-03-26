@@ -669,6 +669,7 @@ void *RKTestPedestalRunLoop(void *input) {
     struct timeval t0, t1;
     unsigned long tic = 0;
     bool scanStartEndPPI = false;
+    bool scanStartEndRHI = false;
 
     RKLog("%s Starting ...\n", pedestal->name);
     
@@ -700,6 +701,11 @@ void *RKTestPedestalRunLoop(void *input) {
             elevation = pedestal->scanElevation;
             position->flag |= RKPositionFlagAzimuthComplete;
         }
+        if (scanStartEndRHI) {
+            scanStartEndRHI = false;
+            azimuth = pedestal->scanAzimuth;
+            position->flag |= RKPositionFlagElevationComplete;
+        }
         RKSetPositionReady(radar, position);
         
         // Report health
@@ -727,6 +733,20 @@ void *RKTestPedestalRunLoop(void *input) {
                 scanStartEndPPI = true;
             } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
                 scanStartEndPPI = true;
+            }
+        } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
+            elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            if (elevation > 180.0f) {
+                elevation -= 360.0f;
+            } else if (elevation < -180.0f) {
+                elevation += 360.0f;
+            }
+            if (pedestal->speedElevation > 0.0f && elevation > pedestal->rhiElevationEnd) {
+                elevation = pedestal->rhiElevationStart;
+                scanStartEndRHI = true;
+            } else if (pedestal->speedElevation < 0.0f && elevation < pedestal->rhiElevationStart) {
+                elevation = pedestal->rhiElevationEnd;
+                scanStartEndRHI = true;
             }
         }
         
@@ -795,6 +815,18 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         }
         if (response != NULL) {
             sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f deg/sec" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
+        }
+    } else if (!strncmp(command, "rhi", 3)) {
+        k = sscanf(command, "%s %s %s %s", sval[0], sval[1], sval[2], sval[3]);
+        if (k == 4) {
+            pedestal->scanMode = RKTestPedestalScanModeRHI;
+            pedestal->scanAzimuth = atof(sval[1]);
+            pedestal->speedElevation = atof(sval[3]);
+            sscanf(sval[2], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
+        }
+        if (response != NULL) {
+            sprintf(response, "ACK. RHI mode set at AZ %.2f over %.2f-%.2f deg @ %.2f deg/sec" RKEOL,
+                    pedestal->scanAzimuth, pedestal->rhiElevationStart, pedestal->rhiElevationEnd, pedestal->speedElevation);
         }
     } else if (!strcmp(command, "help")) {
         sprintf(response,
