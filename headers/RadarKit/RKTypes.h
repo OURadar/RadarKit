@@ -176,6 +176,7 @@ enum RKResult {
     RKResultFailedToStartPulseRecorder,
     RKResultFailedToStartPedestalMonitor,
     RKResultPreferenceFileNotFound,
+    RKResultFailedToMeasureNoise,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -308,6 +309,8 @@ enum RKConfigKey {
     RKConfigKeyDCal,
     RKConfigKeyPCal,
     RKConfigKeyNoise,
+    RKConfigKeySNRThreshold,
+    RKConfigKeyWaveform,
     RKConfigKeyEnd
 };
 
@@ -381,11 +384,12 @@ typedef struct rk_config {
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     char             vcpDefinition[RKMaximumStringLength];           // Volume coverage pattern
+    char             waveform[RKNameLength];                         // Waveform name
     RKFloat          noise[2];                                       // Noise floor (ADU)
     RKFloat          ZCal[2][RKMaxFilterCount];                      // Reflectivity calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration
-    RKFloat          censorSNR;                                      // Censor SNR (dB)
+    RKFloat          SNRThreshold;                                   // Censor SNR (dB)
     float            sweepElevation;                                 // Sweep elevation angle (degrees)
     float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
     RKMarker         startMarker;                                    // Marker of the start ray

@@ -814,6 +814,19 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
     pthread_create(&tid, NULL, &masterControllerExecuteInBackground, &taskInput);
 }
 
+#pragma mark - General
+
+void RKMeasureNoise(RKRadar *radar) {
+    RKFloat noise[2];
+    RKPulse *pulse = RKGetLatestPulse(radar);
+    RKMeasureNoiseFromPulse(noise, pulse);
+    RKAddConfig(radar, RKConfigKeyNoise, noise[0], noise[1], RKConfigKeyNull);
+}
+
+void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
+    RKAddConfig(radar, RKConfigKeySNRThreshold, threshold, RKConfigKeyNull);
+}
+
 #pragma mark - Healths
 
 RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
@@ -919,6 +932,17 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
     pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+}
+
+RKPulse *RKGetLatestPulse(RKRadar *radar) {
+    uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
+    RKPulse *pulse = RKGetPulse(radar->pulses, index);
+    int k = 0;
+    while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
+        index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
+        pulse = RKGetPulse(radar->pulses, index);
+    }
+    return pulse;
 }
 
 #pragma mark - Rays
