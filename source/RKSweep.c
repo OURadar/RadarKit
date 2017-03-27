@@ -447,6 +447,8 @@ void *rayGatherer(void *in) {
             }
 
             is = k;
+        } else if (ray->header.marker & RKMarkerSweepBegin) {
+            is = k;
         }
 
         // Update k to catch up for the next watch
