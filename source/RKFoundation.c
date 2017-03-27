@@ -99,11 +99,14 @@ int RKLog(const char *whatever, ...) {
     // Write the string to a file if specified
     if (rkGlobalParameters.dailyLog) {
         if (strlen(rkGlobalParameters.rootDataFolder)) {
-            i = sprintf(rkGlobalParameters.logfile, "%s/logs/", rkGlobalParameters.rootDataFolder);
+            i = sprintf(rkGlobalParameters.logfile, "%s/logs/%s/", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
+        } else {
+            i = 0;
         }
-        i += strftime(rkGlobalParameters.logfile + i, RKNameLength, "YYYYMMDD.log", time);
+        i += strftime(rkGlobalParameters.logfile + i, RKNameLength, "%Y%m%d.log", time);
     }
     if (strlen(rkGlobalParameters.logfile)) {
+        RKPreparePath(rkGlobalParameters.logfile);
         FILE *logFileID = fopen(rkGlobalParameters.logfile, "a");
         if (logFileID == NULL) {
             fprintf(stderr, "Unable to log.\n");
@@ -127,6 +130,10 @@ void RKSetWantScreenOutput(const bool yes) {
     } else {
         rkGlobalParameters.stream = NULL;
     }
+}
+
+void RKSetUseDailyLog(const bool dailyLog) {
+    rkGlobalParameters.dailyLog = dailyLog;
 }
 
 int RKSetProgramName(const char *name) {

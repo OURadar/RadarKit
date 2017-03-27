@@ -181,7 +181,6 @@ void *healthConsolidator(void *in) {
             }
             if (fabs(engine->radarDescription->heading - heading) > 1.0 && headingChangeCount++ > 3) {
                 engine->radarDescription->heading = heading;
-            } else {
                 headingChangeCount = 0;
             }
         }
