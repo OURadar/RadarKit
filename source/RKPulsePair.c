@@ -16,6 +16,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
     const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
     const RKVec one_pf = _rk_mm_set1_pf(1.0f);
+    const RKVec tiny_pf = _rk_mm_set1_pf(1.0e-6f);
     const RKVec dcal_pf = _rk_mm_set1_pf(space->dcal);
     RKVec n_pf;
     RKFloat *s;
@@ -44,7 +45,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         // Packed single math
         for (k = 0; k < K; k++) {
             // S: R[0] - N
-            *s_pf = _rk_mm_sub_pf(*r_pf, n_pf);
+            *s_pf = _rk_mm_max_pf(tiny_pf, _rk_mm_sub_pf(*r_pf, n_pf));
             // SNR: S / N
             *a_pf = _rk_mm_div_pf(*s_pf, n_pf);
             // W: S / R(1)

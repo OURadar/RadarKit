@@ -39,3 +39,25 @@ float RKInterpolateAngles(const float angleBefore, const float angleAfter, const
     value = angleBefore + alpha * value;
     return value;
 }
+
+int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse) {
+    int j = 0, k, p;
+    k = 0;
+    do {
+        usleep(1000);
+    } while (k++ < 100 && !(pulse->header.s & RKPulseStatusCompressed));
+    if (k >= 100) {
+        RKLog("Noise measurement may be invalid.  k = %d  %x\n", k, pulse->header.s);
+    }
+    RKComplex *x;
+    for (p = 0; p < 2; p++) {
+        x = RKGetComplexDataFromPulse(pulse, p);
+        noise[p] = 0.0f;
+        for (j = 0; j < pulse->header.gateCount; j++) {
+            noise[p] += x->i * x->i + x->q * x->q;
+            x++;
+        }
+        noise[p] /= (RKFloat)j;
+    }
+    return RKResultSuccess;
+}

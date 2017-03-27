@@ -61,6 +61,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     RKLog(">string = (NULL)\n");
                 } else {
                     RKLog(">string = %s\n", string);
+                    strncpy(newConfig->vcpDefinition, string, RKMaximumStringLength - 1);
                 }
                 break;
             case RKConfigKeyNoise:
@@ -80,6 +81,14 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyPCal:
                 newConfig->PCal[0] = (RKFloat)va_arg(args, double);
                 RKLog(">PCal = %.2f rad\n", newConfig->PCal[0]);
+                break;
+            case RKConfigKeySNRThreshold:
+                newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
+                RKLog(">SNRThreshold = %.2f dB\n", newConfig->SNRThreshold);
+                break;
+            case RKConfigKeyWaveform:
+                strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
+                RKLog(">Waveform = %s\n", newConfig->waveform);
                 break;
             default:
                 RKLog(">Key %d not understood.\n", key);

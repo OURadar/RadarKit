@@ -204,6 +204,9 @@ int RKStop(RKRadar *);
 int RKResetEngines(RKRadar *);
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
+void RKMeasureNoise(RKRadar *);
+void RKSetSNRThreshold(RKRadar *radar, const RKFloat);
+
 // Healths
 uint8_t RKRequestHealthNode(RKRadar *);
 RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode node);
@@ -220,6 +223,7 @@ RKPosition *RKGetLatestPosition(RKRadar *);
 RKPulse *RKGetVacantPulse(RKRadar *);
 void RKSetPulseHasData(RKRadar *, RKPulse *);
 void RKSetPulseReady(RKRadar *, RKPulse *);
+RKPulse *RKGetLatestPulse(RKRadar *radar);
 
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);

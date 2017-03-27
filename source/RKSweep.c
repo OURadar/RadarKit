@@ -301,8 +301,8 @@ void *sweepWriter(void *in) {
         put_global_text_att(ncid, "CalibP2-unit", "Degrees");
         nc_put_att_float(ncid, NC_GLOBAL, "CalibP2-value", NC_FLOAT, 1, &config->PCal[1]);
         put_global_text_att(ncid, "CensorThreshold-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-value", NC_FLOAT, 1, &config->censorSNR);
-        put_global_text_att(ncid, "Waveform", "h4011");
+        nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-value", NC_FLOAT, 1, &config->SNRThreshold);
+        put_global_text_att(ncid, "Waveform", config->waveform);
         put_global_text_att(ncid, "CreatedBy", "RadarKit");
         put_global_text_att(ncid, "ContactInformation", "http://arrc.ou.edu");
 

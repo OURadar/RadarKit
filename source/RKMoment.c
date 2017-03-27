@@ -389,6 +389,7 @@ void *momentCore(void *in) {
                 space->dcal = config->DCal[0];
                 space->pcal = config->PCal[0];
 //                printf("pcal = %.2f\n", space->pcal);
+                space->SNRThreshold = config->SNRThreshold;
                 space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
                 space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
                 space->KDPFactor = 1.0f / S->header.gateSizeMeters;
