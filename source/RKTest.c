@@ -408,8 +408,6 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     int j, p, g, n;
     float a;
-    float phi = 0.0f;
-    float azimuth = 0.0f;
     double t = 0.0f;
     double dt = 0.0;
     struct timeval t0, t1;
@@ -455,14 +453,8 @@ void *RKTestTransceiverRunLoop(void *input) {
             }
             printf("gateCount = %d\n", pulse->header.gateCount);
 */
-            if (transceiver->simulatePosition) {
-                pulse->header.azimuthDegrees = azimuth;
-                pulse->header.elevationDegrees = 2.41f;
-                azimuth = fmodf(25.0f * t, 360.0f);
-                phi += 0.02f;
-            }
-            
             a = cosf(2.0 * M_PI * 0.1 * t);
+            a *= a;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -470,8 +462,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(100.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
-                    X->q = 0.0f;
+                    X->i = (int16_t)(16.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f)) + (rand() & 0xF) - 8;
+                    X->q = (rand() & 0xF) - 8;
                     X++;
                 }
             }
@@ -569,9 +561,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
                         RKLog(">gateCount = %s", RKIntegerToCommaStyleString(transceiver->gateCount));
                     }
-                    break;
-                case 'P':
-                    transceiver->simulatePosition = true;
                     break;
                 case 'z':
                     transceiver->sleepInterval = atoi(sv);
@@ -738,7 +727,7 @@ void *RKTestPedestalRunLoop(void *input) {
         RKSetPositionReady(radar, position);
         
         // Report health
-        if (tic % 10 == 0) {
+        if (tic % 5 == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
                     "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
@@ -747,7 +736,7 @@ void *RKTestPedestalRunLoop(void *input) {
                     "}",
                     position->azimuthDegrees, RKStatusEnumNormal,
                     position->elevationDegrees, RKStatusEnumNormal,
-                    RKStatusEnumNormal);
+                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
             RKSetHealthReady(radar, health);
         }
         
