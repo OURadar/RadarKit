@@ -30,7 +30,8 @@ typedef int RKTestPedestalScanMode;
 enum RKTestPedestalScanMode {
     RKTestPedestalScanModeNull,
     RKTestPedestalScanModePPI,
-    RKTestPedestalScanModeRHI
+    RKTestPedestalScanModeRHI,
+    RKTestPedestalScanModeBadPedestal
 };
 
 typedef struct rk_test_transceiver {

@@ -148,6 +148,7 @@ enum RKResult {
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,
+    RKResultErrorCreatingOperatorCommandRoutine,
     RKResultErrorCreatingClientRoutine,
     RKResultSDToFDError,
     RKResultNoPulseBuffer,
