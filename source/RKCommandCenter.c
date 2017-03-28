@@ -317,7 +317,6 @@ int socketCommandHandler(RKOperator *O) {
                     while (commandString[k] == ' ') {
                         k++;
                     }
-                    RKLog("%s %s Forwarding '%s' to tweeta ...\n", engine->name, O->name, commandString + k);
                     user->radar->healthRelayExec(user->radar->healthRelay, commandString + k, string);
                     RKOperatorSendCommandResponse(O, string);
                 }

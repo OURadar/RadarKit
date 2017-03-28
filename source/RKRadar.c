@@ -818,9 +818,24 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
 
 void RKMeasureNoise(RKRadar *radar) {
     RKFloat noise[2];
-    RKPulse *pulse = RKGetLatestPulse(radar);
-    RKMeasureNoiseFromPulse(noise, pulse);
-    RKAddConfig(radar, RKConfigKeyNoise, noise[0], noise[1], RKConfigKeyNull);
+    RKFloat noiseAverage[2] = {0.0f, 0.0f};
+    uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
+    RKPulse *pulse = RKGetPulse(radar->pulses, index);
+    int k = 0;
+    while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
+        index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
+        pulse = RKGetPulse(radar->pulses, index);
+    }
+    for (k = 0; k < 100; k++) {
+        index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
+        pulse = RKGetPulse(radar->pulses, index);
+        RKMeasureNoiseFromPulse(noise, pulse);
+        noiseAverage[0] += noise[0];
+        noiseAverage[1] += noise[1];
+    }
+    noiseAverage[0] /= (RKFloat)k;
+    noiseAverage[1] /= (RKFloat)k;
+    RKAddConfig(radar, RKConfigKeyNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }
 
 void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {

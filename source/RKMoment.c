@@ -502,6 +502,7 @@ void *pulseGatherer(void *in) {
     float lag;
     struct timeval t0, t1;
 
+    RKMarker marker;
     RKPulse *pulse;
     RKRay *ray;
 
@@ -630,8 +631,14 @@ void *pulseGatherer(void *in) {
             }
         } else {
             // Gather the start and end pulses and post a worker to process for a ray
-            //i0 = (int)floorf(pulse->header.azimuthDegrees);
-            i0 = 360 * (int)floorf(pulse->header.elevationDegrees) + (int)floorf(pulse->header.azimuthDegrees);
+            marker = engine->configBuffer[pulse->header.configIndex].startMarker;
+            if (marker & RKMarkerPPIScan) {
+                i0 = (int)floorf(pulse->header.azimuthDegrees);
+            } else if (marker & RKMarkerRHIScan) {
+                i0 = (int)floorf(pulse->header.elevationDegrees);
+            } else {
+                i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
+            }
             if (i1 != i0 || count == RKMaxPulsesPerRay) {
                 i1 = i0;
                 if (count > 0) {
