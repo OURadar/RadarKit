@@ -88,7 +88,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyWaveform:
                 strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
-                RKLog(">Waveform = %s\n", newConfig->waveform);
+                RKLog(">Waveform = '%s'\n", newConfig->waveform);
                 break;
             default:
                 RKLog(">Key %d not understood.\n", key);
