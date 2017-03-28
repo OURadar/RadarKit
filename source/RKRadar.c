@@ -826,7 +826,7 @@ void RKMeasureNoise(RKRadar *radar) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
-    for (k = 0; k < 100; k++) {
+    for (k = 0; k < 200; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
         RKMeasureNoiseFromPulse(noise, pulse);

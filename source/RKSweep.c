@@ -260,9 +260,19 @@ void *sweepWriter(void *in) {
         put_global_text_att(ncid, "ColorMap-value", productColormap);
         
         // Other housekeeping attributes
-        nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &T->header.sweepElevation);
+        if (engine->configBuffer[T->header.configIndex].startMarker & RKMarkerPPIScan) {
+            nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &T->header.sweepElevation);
+        } else {
+            tmpf = W2_MISSING_DATA;
+            nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &tmpf);
+        }
         put_global_text_att(ncid, "ElevationUnits", "Degrees");
-        nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &T->header.sweepAzimuth);
+        if (engine->configBuffer[T->header.configIndex].startMarker & RKMarkerPPIScan) {
+            nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &T->header.sweepAzimuth);
+        } else {
+            tmpf = W2_MISSING_DATA;
+            nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &tmpf);
+        }
         put_global_text_att(ncid, "AzimuthUnits", "Degrees");
         tmpf = 0.0f;
         nc_put_att_float(ncid, NC_GLOBAL, "RangeToFirstGate", NC_FLOAT, 1, &tmpf);

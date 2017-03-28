@@ -207,16 +207,27 @@ int socketCommandHandler(RKOperator *O) {
                         k = sscanf(&commandString[2], "%lf %lf", &fval1, &fval2);
                         if (k == 2) {
                             RKAddConfig(user->radar, RKConfigKeyNoise, fval1, fval2, RKConfigKeyNull);
-                            sprintf(string, "ACK. Noise set to %.4f, %.4f\n", fval1, fval2);
+                            sprintf(string, "ACK. Noise set to %.4f, %.4f" RKEOL, fval1, fval2);
                         } else if (k == -1) {
-                            sprintf(string, "ACK. Current noise is %.4f %.4f\n", config->noise[0], config->noise[1]);
+                            sprintf(string, "ACK. Current noise is %.4f %.4f" RKEOL, config->noise[0], config->noise[1]);
                         } else {
-                            sprintf(string, "NAK. Must have two paramters  (k = %d).\n", k);
+                            sprintf(string, "NAK. Must have two paramters  (k = %d)." RKEOL, k);
                         }
-                        RKOperatorSendDelimitedString(O, string);
+                        RKOperatorSendCommandResponse(O, string);
                         break;
                     case 'N':
                         // 'dN' - DSP noise override in dB
+                        break;
+                    case 't':
+                        // 'dt' - DSP threshold in SNR dB
+                        k = sscanf(&commandString[2], "%lf", &fval1);
+                        if (k == 1) {
+                            RKAddConfig(user->radar, RKConfigKeySNRThreshold, fval1, RKConfigKeyNull);
+                            sprintf(string, "ACK. SNR threshold set to %.2f dB" RKEOL, fval1);
+                        } else {
+                            sprintf(string, "ACK. Current SNR threshold is %.2f dB" RKEOL, config->SNRThreshold);
+                        }
+                        RKOperatorSendCommandResponse(O, string);
                         break;
                     default:
                         break;
