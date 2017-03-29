@@ -162,6 +162,7 @@ UserParams processInput(int argc, const char **argv) {
         {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {"read-preference"       , no_argument      , NULL, '1'},
+        {"test-json-keywords"    , no_argument      , NULL, '2'},
         {0, 0, 0, 0}
     };
     
@@ -312,6 +313,10 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 
                 RKPreferenceFree(preference);
+                exit(EXIT_SUCCESS);
+                break;
+            case '2':
+                RKTestJSON();
                 exit(EXIT_SUCCESS);
                 break;
             default:

@@ -46,6 +46,14 @@
 
 #define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
 
+enum RKJSONObjectType {
+    RKJSONObjectTypeUnknown,
+    RKJSONObjectTypePlain,
+    RKJSONObjectTypeString,
+    RKJSONObjectTypeArray,
+    RKJSONObjectTypeObject
+};
+
 void stripTrailingUnwanted(char *str);
 
 char *RKNow();
@@ -67,5 +75,8 @@ void RKPreparePath(const char *filename);
 char *RKSignalString(const int);
 int RKStripTail(char *);
 float RKUMinDiff(const float minuend, const float subtrahend);
+
+char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
+void RKGoThroughKeywords(const char *string);
 
 #endif /* rk_misc_h */

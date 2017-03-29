@@ -310,4 +310,124 @@ float RKUMinDiff(const float m, const float s) {
     }
     return d;
 }
-    
+
+// ks = start of a keyword, should begin with quote or space
+char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
+    char *ke;
+    while (*ks != '"' && *ks != '\0') {
+        ks++;
+    }
+    ke = ++ks;
+    while (*ke != '"' && *ke != '\0') {
+        ke++;
+    }
+    if (*ke == '\0') {
+        fprintf(stderr, "Expected a close quote for keyword %s\n", ks);
+    }
+    // Now a keyword is in betwee ks & ke
+    strncpy(key, ks, ke - ks);
+    key[ke - ks] = '\0';
+    char *os, *oe;
+    os = ke + 1;
+    while (*os != ':' && *os != '\0') {
+        os++;
+    }
+    // Space character(s) in between ':' and '{'
+    os++;
+    while (*os == ' ') {
+        os++;
+    }
+    if (*os == '{') {
+        // This is an object, recursively call myself.
+        *type = RKJSONObjectTypeObject;
+        oe = os + 1;
+        while (*oe != '}') {
+            oe++;
+        }
+        oe++;
+        strncpy(value, os, oe - os);
+        value[oe - os] = '\0';
+        #if defined(DEBUG_HEAVY)
+        fprintf(stderr, "Key '%s' Object '%s'\n", key, value);
+        #endif
+    } else if (*os == '[') {
+        // This is an array
+        *type = RKJSONObjectTypeArray;
+        oe = os + 1;
+        while (*oe != ']') {
+            oe++;
+        }
+        oe++;
+        strncpy(value, os, oe - os);
+        value[oe - os] = '\0';
+        #if defined(DEBUG_HEAVY)
+        fprintf(stderr, "Key '%s' Array '%s'\n", key, value);
+        #endif
+    } else if (*os == '"') {
+        // This is a string
+        *type = RKJSONObjectTypeString;
+        oe = os + 1;
+        while (*oe != '"') {
+            oe++;
+        }
+        oe++;
+        strncpy(value, os, oe - os);
+        value[oe - os] = '\0';
+    } else {
+        // This is just a plain value
+        *type = RKJSONObjectTypePlain;
+        oe = os + 1;
+        while (*oe != ',' && *oe != '}') {
+            oe++;
+        }
+        strncpy(value, os, oe - os);
+        value[oe - os] = '\0';
+        #if defined(DEBUG_HEAVY)
+        fprintf(stderr, "Key '%s' Value '%s'\n", key, value);
+        #endif
+    }
+    while (*oe == ' ') {
+        oe++;
+    }
+    return oe;
+}
+
+void RKGoThroughKeywords(const char *string) {
+
+    char *str = (char *)malloc(strlen(string));
+    char *key = (char *)malloc(1024);
+    char *obj = (char *)malloc(1024);
+    char *subKey = (char *)malloc(1024);
+    char *subObj = (char *)malloc(1024);
+    uint8_t type;
+    uint8_t subType;
+
+    strcpy(str, string);
+
+    char *ks;
+    char *sks;
+    if (*str != '{') {
+        fprintf(stderr, "Expected '{'.\n");
+    }
+
+    ks = str + 1;
+    while (*ks != '\0' && *ks != '}') {
+        ks = RKExtractJSON(ks, &type, key, obj);
+        if (type != RKJSONObjectTypeObject) {
+            continue;
+        }
+        sks = obj + 1;
+        while (*sks != '\0' && *sks != '}') {
+            sks = RKExtractJSON(sks, &subType, subKey, subObj);
+            if (!strcmp("Enum", subKey)) {
+                fprintf(stderr, "  --> %s\n", subObj);
+            }
+        }
+    }
+
+    free(subKey);
+    free(subObj);
+    free(str);
+    free(key);
+    free(obj);
+}
