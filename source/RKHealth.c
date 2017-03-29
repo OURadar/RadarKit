@@ -12,7 +12,7 @@
 
 static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) {
 
-    char *str = (char *)malloc(strlen(string));
+    char *str = (char *)malloc(strlen(string) + 1);
     char *key = (char *)malloc(RKNameLength);
     char *obj = (char *)malloc(RKMaximumPathLength);
     char *subKey = (char *)malloc(RKNameLength);
@@ -20,6 +20,27 @@ static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) 
     uint8_t type;
     uint8_t subType;
     RKStatusEnum componentStatus;
+    
+    if (str == NULL) {
+        RKLog("%s Error allocating memory for str.\n", engine->name);
+        return;
+    }
+    if (key == NULL) {
+        RKLog("%s Error allocating memory for key.\n", engine->name);
+        return;
+    }
+    if (obj == NULL) {
+        RKLog("%s Error allocating memory for obj.\n", engine->name);
+        return;
+    }
+    if (subKey == NULL) {
+        RKLog("%s Error allocating memory for subKey.\n", engine->name);
+        return;
+    }
+    if (subObj == NULL) {
+        RKLog("%s Error allocating memory for subObj.\n", engine->name);
+        return;
+    }
 
     strcpy(str, string);
 
@@ -41,17 +62,17 @@ static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) 
             if (strcmp("Enum", subKey)) {
                 continue;
             }
-            if ((componentStatus = atof(subKey)) == RKStatusEnumCritical) {
+            if ((componentStatus = atoi(subKey)) == RKStatusEnumCritical) {
                 RKLog("%s Warning. '%s' registered critical.\n", engine->name, key);
             }
         }
     }
 
-    free(subKey);
-    free(subObj);
     free(str);
     free(key);
     free(obj);
+    free(subKey);
+    free(subObj);
 }
 
 #pragma mark - Threads
@@ -64,17 +85,11 @@ void *healthConsolidator(void *in) {
     
     RKHealth *health;
     char *stringValue, *stringEnum, *stringObject;
-    //    int type = 0;
-    //int valueEnum = 0;
-    //bool valueBool = false;
-    //float valueFloat = 0.0f;
     int headingChangeCount = 0;
+    int locationChangeCount = 0;
 
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
-    
-    //    char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage", "FPGA Temp"};
-    //    const int keywordsCount = sizeof(keywords) / RKNameLength;
     
     RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     
@@ -196,35 +211,35 @@ void *healthConsolidator(void *in) {
         if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
                 latitude = atof(stringValue);
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
                 longitude = atof(stringValue);
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "heading")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == 0) {
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
                 heading = atof(stringValue);
             }
         }
         if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
             if (engine->verbose > 1) {
-                RKLog("%s GPS:  latitude = %.4f   longitude = %.4f   heading = %.4f\n", engine->name, latitude, longitude, heading);
+                RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
             }
             // Only update if it is significant
-            if (fabs(engine->radarDescription->latitude - latitude) > 1.0e6 || fabs(engine->radarDescription->longitude - longitude) > 1.0e6) {
+            if (locationChangeCount++ > 3 && (fabs(engine->radarDescription->latitude - latitude) > 1.0e-5 || fabs(engine->radarDescription->longitude - longitude) > 1.0e-5)) {
                 engine->radarDescription->latitude = latitude;
                 engine->radarDescription->longitude = longitude;
-                RKLog("%s GPS update.   latitude = %.4f   longitude = %.4f\n", engine->name, engine->radarDescription->latitude, engine->radarDescription->longitude);
+                RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, engine->radarDescription->latitude, engine->radarDescription->longitude);
             }
-            if (fabs(engine->radarDescription->heading - heading) > 1.0 && headingChangeCount++ > 3) {
+            if (headingChangeCount++ > 3 && fabs(engine->radarDescription->heading - heading) > 1.0) {
                 engine->radarDescription->heading = heading;
                 RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, engine->radarDescription->heading);
                 headingChangeCount = 0;

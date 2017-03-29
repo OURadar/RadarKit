@@ -703,16 +703,16 @@ void *RKTestPedestalRunLoop(void *input) {
         position->azimuthDegrees = azimuth;
         position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
         position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
-        position->flag |= RKPositionFlagActive | RKPositionFlagAzimuthEnabled;
+        position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthEnabled;
 
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             position->sweepElevationDegrees = pedestal->scanElevation;
             position->sweepAzimuthDegrees = 0.0f;
-            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagActive;
+            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
             position->sweepAzimuthDegrees = pedestal->scanAzimuth;
             position->sweepElevationDegrees = 0.0f;
-            position->flag |= RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint;
+            position->flag |= RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
         }
         if (scanStartEndPPI) {
             scanStartEndPPI = false;
@@ -769,11 +769,11 @@ void *RKTestPedestalRunLoop(void *input) {
                 if (elevation > pedestal->rhiElevationEnd) {
                     scanEndRHI = true;
                     elTransition = true;
-                    position->flag &= ~RKPositionFlagActive;
+                    position->flag &= ~RKPositionFlagScanActive;
                 } else if (elevation < pedestal->rhiElevationStart) {
                     scanStartRHI = true;
                     elTransition = false;
-                    position->flag |= RKPositionFlagActive;
+                    position->flag |= RKPositionFlagScanActive;
                 }
             }
         } else if (pedestal->scanMode == RKTestPedestalScanModeBadPedestal) {
@@ -1154,17 +1154,7 @@ void RKTestWindow(void) {
 }
 
 void RKTestJSON(void) {
-    char *str = (char *)malloc(4096);
-    FILE *fid = fopen("jsontest.txt", "r");
-    if (fid == NULL) {
-        RKLog("Error reading file.\n");
-        return;
-    }
-    fgets(str, 4095, fid);
+    char str[] = "{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":3}, \"Event\":\"None\", \"Volt\":1.234}";
     printf("%s (%d)\n", str, (int)strlen(str));
-    fclose(fid);
-
     RKGoThroughKeywords(str);
-
-    free(str);
 }

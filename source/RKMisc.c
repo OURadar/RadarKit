@@ -419,9 +419,10 @@ void RKGoThroughKeywords(const char *string) {
         sks = obj + 1;
         while (*sks != '\0' && *sks != '}') {
             sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (!strcmp("Enum", subKey)) {
-                fprintf(stderr, "  --> %s\n", subObj);
+            if (strcmp("Enum", subKey)) {
+                continue;
             }
+            fprintf(stderr, "%s --> '%s' --> %d\n", key, subObj, atoi(subObj));
         }
     }
 

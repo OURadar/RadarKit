@@ -209,7 +209,7 @@ void *pulseTagger(void *in) {
         marker0 = RKMarkerNull;
         
         // First set of logics are purely from position
-        if (positionBefore->flag & RKPositionFlagActive) {
+        if (positionBefore->flag & RKPositionFlagScanActive) {
             marker0 |= RKMarkerSweepMiddle;
         }
         if ((positionBefore->flag & RKPositionFlagElevationPoint) && (positionBefore->flag & RKPositionFlagAzimuthSweep)) {

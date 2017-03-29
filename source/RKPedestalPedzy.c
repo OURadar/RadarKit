@@ -18,7 +18,7 @@ void *pedestalHealth(void *in) {
         RKPosition *position = RKGetLatestPosition(radar);
         bool azInterlock = position->flag & RKPositionFlagAzimuthSafety;
         bool elInterlock = position->flag & RKPositionFlagElevationSafety;
-        int activeEnum = position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError) ? 2 : (position->flag & RKPositionFlagActive ? 0 : 1);
+        int activeEnum = position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError) ? RKStatusEnumFault : (position->flag & RKPositionFlagVCPActive ? RKStatusEnumNormal : RKStatusEnumStandby);
         sprintf(health->string,
                 "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
