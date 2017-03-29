@@ -197,7 +197,8 @@ enum RKPositionFlag {
     RKPositionFlagElevationSweep     = (1 << 24),
     RKPositionFlagElevationPoint     = (1 << 25),
     RKPositionFlagElevationComplete  = (1 << 26),
-    RKPositionFlagActive             = (1 << 28),
+    RKPositionFlagScanActive         = (1 << 28),
+    RKPositionFlagVCPActive          = (1 << 29),
     RKPositionFlagHardwareMask       = 0x3FFFFFFF,
     RKPositionFlagReady              = (1 << 31)
 };
