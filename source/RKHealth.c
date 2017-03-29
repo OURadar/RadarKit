@@ -10,6 +10,50 @@
 
 #pragma mark - Convenient Functions
 
+static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) {
+
+    char *str = (char *)malloc(strlen(string));
+    char *key = (char *)malloc(RKNameLength);
+    char *obj = (char *)malloc(RKMaximumPathLength);
+    char *subKey = (char *)malloc(RKNameLength);
+    char *subObj = (char *)malloc(RKMaximumPathLength);
+    uint8_t type;
+    uint8_t subType;
+    RKStatusEnum componentStatus;
+
+    strcpy(str, string);
+
+    char *ks;
+    char *sks;
+    if (*str != '{') {
+        fprintf(stderr, "Expected '{'.\n");
+    }
+
+    ks = str + 1;
+    while (*ks != '\0' && *ks != '}') {
+        ks = RKExtractJSON(ks, &type, key, obj);
+        if (type != RKJSONObjectTypeObject) {
+            continue;
+        }
+        sks = obj + 1;
+        while (*sks != '\0' && *sks != '}') {
+            sks = RKExtractJSON(sks, &subType, subKey, subObj);
+            if (strcmp("Enum", subKey)) {
+                continue;
+            }
+            if ((componentStatus = atof(subKey)) == RKStatusEnumCritical) {
+                RKLog("%s Warning. '%s' registered critical.\n", engine->name, key);
+            }
+        }
+    }
+
+    free(subKey);
+    free(subObj);
+    free(str);
+    free(key);
+    free(obj);
+}
+
 #pragma mark - Threads
 
 void *healthConsolidator(void *in) {
@@ -20,19 +64,19 @@ void *healthConsolidator(void *in) {
     
     RKHealth *health;
     char *stringValue, *stringEnum, *stringObject;
-    int type = 0;
-    int valueEnum = 0;
-    bool valueBool = false;
-    float valueFloat = 0.0f;
+    //    int type = 0;
+    //int valueEnum = 0;
+    //bool valueBool = false;
+    //float valueFloat = 0.0f;
     int headingChangeCount = 0;
 
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
     
-    char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage", "FPGA Temp"};
-    const int keywordsCount = sizeof(keywords) / RKNameLength;
+    //    char keywords[][RKNameLength] = {"HVPS", "Body Current", "Cathode Voltage", "FPGA Temp"};
+    //    const int keywordsCount = sizeof(keywords) / RKNameLength;
     
-    RKLog("%s Started.   mem = %s B   healthIndex = %d   keywordsCount = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex, keywordsCount);
+    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -178,13 +222,16 @@ void *healthConsolidator(void *in) {
             if (fabs(engine->radarDescription->latitude - latitude) > 1.0e6 || fabs(engine->radarDescription->longitude - longitude) > 1.0e6) {
                 engine->radarDescription->latitude = latitude;
                 engine->radarDescription->longitude = longitude;
+                RKLog("%s GPS update.   latitude = %.4f   longitude = %.4f\n", engine->name, engine->radarDescription->latitude, engine->radarDescription->longitude);
             }
             if (fabs(engine->radarDescription->heading - heading) > 1.0 && headingChangeCount++ > 3) {
                 engine->radarDescription->heading = heading;
+                RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, engine->radarDescription->heading);
                 headingChangeCount = 0;
             }
         }
-        
+
+        /*
         for (j = 0; j < keywordsCount; j++) {
             stringObject = RKGetValueOfKey(health->string, keywords[j]);
             //RKLog("%s %s subString = %s\n", engine->name, keywords[j], subString);
@@ -205,7 +252,7 @@ void *healthConsolidator(void *in) {
                 stringEnum = RKGetValueOfKey(stringObject, "enum");
                 if (stringEnum) {
                     valueEnum = atoi(stringEnum);
-                    if (valueEnum > 2) {
+                    if (valueEnum == RKStatusEnumCritical) {
                         RKLog("%s Warning. %s -> %s / %d --> Shutdown?\n",
                               engine->name,
                               keywords[j],
@@ -215,6 +262,9 @@ void *healthConsolidator(void *in) {
                 }
             }
         }
+         */
+
+        RKProcessHealthKeywords(engine, health->string);
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);

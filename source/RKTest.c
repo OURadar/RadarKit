@@ -1121,3 +1121,19 @@ void RKTestWindow(void) {
 
     free(window);
 }
+
+void RKTestJSON(void) {
+    char *str = (char *)malloc(4096);
+    FILE *fid = fopen("jsontest.txt", "r");
+    if (fid == NULL) {
+        RKLog("Error reading file.\n");
+        return;
+    }
+    fgets(str, 4095, fid);
+    printf("%s (%d)\n", str, (int)strlen(str));
+    fclose(fid);
+
+    RKGoThroughKeywords(str);
+
+    free(str);
+}
