@@ -408,8 +408,6 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     int j, p, g, n;
     float a;
-    float phi = 0.0f;
-    float azimuth = 0.0f;
     double t = 0.0f;
     double dt = 0.0;
     struct timeval t0, t1;
@@ -455,14 +453,8 @@ void *RKTestTransceiverRunLoop(void *input) {
             }
             printf("gateCount = %d\n", pulse->header.gateCount);
 */
-            if (transceiver->simulatePosition) {
-                pulse->header.azimuthDegrees = azimuth;
-                pulse->header.elevationDegrees = 2.41f;
-                azimuth = fmodf(25.0f * t, 360.0f);
-                phi += 0.02f;
-            }
-            
             a = cosf(2.0 * M_PI * 0.1 * t);
+            a *= a;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -470,8 +462,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Some seemingly random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(100.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f));
-                    X->q = 0.0f;
+                    X->i = (int16_t)(16.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f)) + (rand() & 0xF) - 8;
+                    X->q = (rand() & 0xF) - 8;
                     X++;
                 }
             }
@@ -570,9 +562,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                         RKLog(">gateCount = %s", RKIntegerToCommaStyleString(transceiver->gateCount));
                     }
                     break;
-                case 'P':
-                    transceiver->simulatePosition = true;
-                    break;
                 case 'z':
                     transceiver->sleepInterval = atoi(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
@@ -641,9 +630,27 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 UNDERLINE("prt") " [value] - PRT set to value\n"
                 UNDERLINE("z") " [value] - Sleep interval set to value.\n"
                 );
-    } else if (command[0] == 'z') {
+    } else if (command[0] == 't') {
+        // Pretend a slow command
+        sleep(2);
+        if (response != NULL) {
+            sprintf(response, "ACK. Command executed." RKEOL);
+        }
+    } else if (command[0] == 's') {
         transceiver->sleepInterval = atoi(command + 1);
         RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
+    } else if (command[0] == 'y') {
+        // Everything goes
+        radar->pedestalExec(radar->pedestal, "ppi 3 90", radar->pedestalResponse);
+        if (response != NULL) {
+            sprintf(response, "ACK. Everything goes." RKEOL);
+        }
+    } else if (command[0] == 'z') {
+        // Everything stops
+        radar->pedestalExec(radar->pedestal, "stop", radar->pedestalResponse);
+        if (response != NULL) {
+            sprintf(response, "ACK. Everything stops." RKEOL);
+        }
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
@@ -720,14 +727,16 @@ void *RKTestPedestalRunLoop(void *input) {
         RKSetPositionReady(radar, position);
         
         // Report health
-        if (tic % 10 == 0) {
+        if (tic % 5 == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
-                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
-                    "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":0}"
+                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
                     "}",
-                    position->azimuthDegrees,
-                    position->elevationDegrees);
+                    position->azimuthDegrees, RKStatusEnumNormal,
+                    position->elevationDegrees, RKStatusEnumNormal,
+                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
             RKSetHealthReady(radar, health);
         }
         
@@ -767,6 +776,8 @@ void *RKTestPedestalRunLoop(void *input) {
                     position->flag |= RKPositionFlagActive;
                 }
             }
+        } else if (pedestal->scanMode == RKTestPedestalScanModeBadPedestal) {
+            azimuth = (float)rand() * 360.0f / RAND_MAX;
         }
         
         // Wait to simulate sampling time
@@ -825,6 +836,21 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             RKLog("%s Stopped.\n", pedestal->name);
         }
         pedestal->state = RKEngineStateAllocated;
+    } else if (!strncmp(command, "state", 5)) {
+        if (fabsf(pedestal->speedAzimuth) > 0.1f || fabsf(pedestal->speedElevation) > 0.1f) {
+            sprintf(response, "1" RKEOL);
+        } else {
+            sprintf(response, "0" RKEOL);
+        }
+    } else if (!strncmp(command, "stop", 4)) {
+        pedestal->scanMode = RKTestPedestalScanModeNull;
+        pedestal->scanElevation = 0.0f;
+        pedestal->scanAzimuth = 0.0f;
+        pedestal->speedElevation = 0.0f;
+        pedestal->speedAzimuth = 0.0f;
+        if (response != NULL) {
+            sprintf(response, "ACK. Pedestal stopped." RKEOL);
+        }
     } else if (!strncmp(command, "ppi", 3)) {
         k = sscanf(command, "%s %s %s", sval[0], sval[1], sval[2]);
         if (k == 3) {
@@ -846,6 +872,11 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         if (response != NULL) {
             sprintf(response, "ACK. RHI mode set at AZ %.2f over %.2f-%.2f deg @ %.2f deg/sec" RKEOL,
                     pedestal->scanAzimuth, pedestal->rhiElevationStart, pedestal->rhiElevationEnd, pedestal->speedElevation);
+        }
+    } else if (!strncmp(command, "bad", 3)) {
+        pedestal->scanMode = RKTestPedestalScanModeBadPedestal;
+        if (response != NULL) {
+            sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
     } else if (!strcmp(command, "help")) {
         sprintf(response,

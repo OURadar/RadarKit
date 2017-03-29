@@ -13,6 +13,7 @@
 
 #define RKServerMaximumOperators    16
 #define RKServerSelectTimeoutUs     200;
+#define RKServerBufferDepth         8
 
 //#ifdef __cplusplus
 //extern "C" {
@@ -78,7 +79,8 @@ struct rk_operator  {
     int              timeoutSeconds;                 // Timeout in seconds
     int              sid;                            // Socket identifier of the client
     RKOperatorState  state;                          // Connection state
-    pthread_t        threadId;                       // Thread ID
+    pthread_t        tidRead;                        // Thread ID of the operator ingest
+    pthread_t        tidExecute;                     // Thread ID of the operator execution
     pthread_mutex_t  lock;                           // Thread safety mutex of the attendant
 
     char             name[RKNameLength];             // Operator name
@@ -89,6 +91,10 @@ struct rk_operator  {
     RKNetDelimiter   beacon;                         // Beacon
 
     char             *cmd;                           // Latest command
+    
+    char             commands[RKServerBufferDepth][RKMaximumStringLength];  // A buffer to keep the latest N commands
+    uint8_t          commandIndexWrite;                                     // Index to write to the buffer
+    uint8_t          commandIndexRead;                                      // Index to read from the buffer
 
     void             *userResource;                  // User pointer
 };

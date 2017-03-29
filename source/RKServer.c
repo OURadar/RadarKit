@@ -14,7 +14,9 @@
 
 void *RKServerRoutine(void *);
 void *RKOperatorRoutine(void *);
+void *RKOperatorCommandRoutine(void *);
 int RKOperatorCreate(RKServer *, int, const char *);
+void RKOperatorFree(RKOperator *);
 int RKDefaultWelcomeHandler(RKOperator *);
 int RKDefaultTerminateHandler(RKOperator *);
 
@@ -137,7 +139,8 @@ void *RKOperatorRoutine(void *in) {
     fd_set          wfd;
     fd_set          efd;
 
-    char            str[RKMaximumStringLength];
+    //char            str[RKMaximumStringLength];
+    char            *str;
 
     struct timeval  timeout;
     struct timeval  user_timeout = {M->timeoutSeconds, 0};
@@ -204,7 +207,7 @@ void *RKOperatorRoutine(void *in) {
             }
         }
         //
-        //  Command worker
+        //  Command queue
         //
         FD_ZERO(&rfd);
         FD_ZERO(&efd);
@@ -221,21 +224,17 @@ void *RKOperatorRoutine(void *in) {
             } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
                 gettimeofday(&latestReadTime, NULL);
-                if (fgets(str, RKMaximumStringLength, fp) == NULL) {
+                //if (fgets(str, RKMaximumStringLength, fp) == NULL) {
+                str = O->commands[O->commandIndexWrite];
+                if (fgets(str, RKMaximumStringLength - 1, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
                     RKLog("%s %s Disconnected.\n", M->name, O->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
-                // Set the command so that a command handler can retrieve this
-                O->cmd = str;
-                if (M->c) {
-                    M->c(O);
-                } else {
-                    RKLog("%s No command handler. cmd '%s' from Op-%03d (%s)\n", M->name, O->cmd, O->iid, O->ip);
-                }
-                memset(str, 0, sizeof(str));
+                O->commandIndexWrite = O->commandIndexWrite == RKServerBufferDepth - 1 ? 0 : O->commandIndexWrite + 1;
+                memset(O->commands[O->commandIndexWrite], 0, RKMaximumStringLength);
             }
         } else if (r < 0) {
             // Errors
@@ -257,20 +256,43 @@ void *RKOperatorRoutine(void *in) {
     } // while () ...
 
     if (M->verbose > 1) {
-        RKLog(">%s %s returning ...\n", M->name, O->name);
+        RKLog(">%s %s operator routine returning ...\n", M->name, O->name);
     }
     M->ids[O->iid] = false;
 
     fclose(fp);
-    close(O->sid);
-    pthread_mutex_destroy(&O->lock);
 
-    free(O);
+    return NULL;
+}
 
-    pthread_mutex_lock(&M->lock);
-    M->nclient--;
-    pthread_mutex_unlock(&M->lock);
 
+void *RKOperatorCommandRoutine(void *in) {
+    
+    RKOperator      *O = (RKOperator *)in;
+    RKServer        *M = O->M;
+    
+    while (true) {
+        while (O->commandIndexRead == O->commandIndexWrite && M->state == RKServerStateActive && O->state == RKOperatorStateActive) {
+            usleep(10000);
+        }
+        if (M->state != RKServerStateActive || O->state != RKOperatorStateActive) {
+            break;
+        }
+        // The command to execute
+        O->cmd = O->commands[O->commandIndexRead];
+        if (M->c) {
+            M->c(O);
+        } else {
+            RKLog("%s No command handler. cmd '%s' from Op-%03d (%s)\n", M->name, O->cmd, O->iid, O->ip);
+        }
+        O->commandIndexRead = O->commandIndexRead == RKServerBufferDepth - 1 ? 0 : O->commandIndexRead + 1;
+    }
+    
+    if (M->verbose > 1) {
+        RKLog(">%s %s command routine returning ...\n", M->name, O->name);
+    }
+    
+    M->ids[O->iid] = false;
     return NULL;
 }
 
@@ -317,10 +339,15 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->delimTx.type = RKNetworkPacketTypeBytes;
     O->beacon.type = RKNetworkPacketTypeBeacon;
 
-    if (pthread_create(&O->threadId, NULL, RKOperatorRoutine, O)) {
+    if (pthread_create(&O->tidRead, NULL, RKOperatorRoutine, O)) {
         RKLog("%s Error. Failed to create RKOperatorRoutine().\n", M->name);
         pthread_mutex_unlock(&M->lock);
         return RKResultErrorCreatingOperatorRoutine;
+    }
+    if (pthread_create(&O->tidExecute, NULL, RKOperatorCommandRoutine, O)) {
+        RKLog("%s Error. Failed to create RKOperatorCommandRoutine().\n", M->name);
+        pthread_mutex_unlock(&M->lock);
+        return RKResultErrorCreatingOperatorCommandRoutine;
     }
     
     M->nclient++;
@@ -328,6 +355,24 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     pthread_mutex_unlock(&M->lock);
     
     return 0;
+}
+
+
+void RKOperatorFree(RKOperator *O) {
+
+    RKServer *M = O->M;
+    
+    O->state = RKOperatorStateClosing;
+    pthread_join(O->tidRead, NULL);
+    pthread_join(O->tidExecute, NULL);
+    pthread_mutex_destroy(&O->lock);
+    close(O->sid);
+    
+    free(O);
+    
+    pthread_mutex_lock(&M->lock);
+    M->nclient--;
+    pthread_mutex_unlock(&M->lock);
 }
 
 
@@ -578,6 +623,5 @@ ssize_t RKOperatorSendBeacon(RKOperator *O) {
 }
 
 void RKOperatorHangUp(RKOperator *O) {
-    O->state = RKOperatorStateClosing;
-    pthread_join(O->threadId, NULL);
+    return RKOperatorFree(O);
 }

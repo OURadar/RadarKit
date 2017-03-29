@@ -30,12 +30,12 @@ typedef int RKTestPedestalScanMode;
 enum RKTestPedestalScanMode {
     RKTestPedestalScanModeNull,
     RKTestPedestalScanModePPI,
-    RKTestPedestalScanModeRHI
+    RKTestPedestalScanModeRHI,
+    RKTestPedestalScanModeBadPedestal
 };
 
 typedef struct rk_test_transceiver {
     char           name[RKNameLength];
-    bool           simulatePosition;
     int            sleepInterval;
     int            gateCount;
     float          gateSizeMeters;
@@ -49,7 +49,6 @@ typedef struct rk_test_transceiver {
 
 typedef struct rk_test_pedestal {
     char           name[RKNameLength];
-    bool           simulatePosition;
     long           counter;
     int            scanMode;
     float          scanElevation;
