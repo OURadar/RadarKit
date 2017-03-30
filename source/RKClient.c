@@ -462,18 +462,22 @@ void RKClientSetReceiveHandler(RKClient *C, int (*routine)(RKClient *)) {
 #pragma mark -
 #pragma mark Interactions
 
-void RKClientStart(RKClient *C) {
+void RKClientStart(RKClient *C, const bool waitForConnection) {
     pthread_attr_init(&C->threadAttributes);
     if (pthread_create(&C->threadId, &C->threadAttributes, theClient, C)) {
         RKLog("Error. Unable to launch a socket client.\n");
         return;
     }
     C->state = RKClientStateCreating;
+    if (!waitForConnection) {
+        return;
+    }
     while (C->state == RKClientStateCreating) {
         usleep(100000);
     }
     return;
 }
+
 void RKClientStop(RKClient *C) {
     if (C->state > RKClientStateCreating && C->state < RKClientStateDisconnecting) {
         RKLog("%s Disconnecting ...\n", C->name);

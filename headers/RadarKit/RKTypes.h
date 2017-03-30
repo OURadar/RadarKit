@@ -348,6 +348,7 @@ enum RKStatusEnum {
     RKStatusEnumInvalid           = -2,
     RKStatusEnumTooLow            = -1,
     RKStatusEnumNormal            =  0,
+    RKStatusEnumActive            =  0,
     RKStatusEnumHigh              =  1,
     RKStatusEnumStandby           =  1,
     RKStatusEnumTooHigh           =  2,

@@ -97,7 +97,7 @@ void RKClientSetUserResource(RKClient *, void *);
 void RKClientSetGreetHandler(RKClient *, int (*)(RKClient *));
 void RKClientSetReceiveHandler(RKClient *, int (*)(RKClient *));
 
-void RKClientStart(RKClient *);
+void RKClientStart(RKClient *, const bool waitForConnection);
 void RKClientStop(RKClient *);
 
 //#ifdef __cplusplus
