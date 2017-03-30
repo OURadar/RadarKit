@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKHealth.h>
 
-#pragma mark - Convenient Functions
+#pragma mark - Helper Functions
 
 static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) {
 
@@ -75,9 +75,9 @@ static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) 
     free(subObj);
 }
 
-#pragma mark - Threads
+#pragma mark - Delegate Workers
 
-void *healthConsolidator(void *in) {
+static void *healthConsolidator(void *in) {
     RKHealthEngine *engine = (RKHealthEngine *)in;
     RKRadarDesc *desc = engine->radarDescription;
     

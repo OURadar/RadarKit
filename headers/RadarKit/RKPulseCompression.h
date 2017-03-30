@@ -76,30 +76,32 @@ struct rk_pulse_compression_engine {
 };
 
 RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
-void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine);
+void RKPulseCompressionEngineFree(RKPulseCompressionEngine *);
 
 void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *,
                                                    RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
-void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count);
+void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *, const unsigned int count);
 
-int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine);
-int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count);
-int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount);
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine,
+int RKPulseCompressionResetFilters(RKPulseCompressionEngine *);
+int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *, const int group, const int count);
+int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *, const int groupCount);
+int RKPulseCompressionSetFilter(RKPulseCompressionEngine *,
                                 const RKComplex *filter,
                                 const RKFilterAnchor anchor,
                                 const int group,
                                 const int index);
-int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine);
-int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine);
-int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine);
+int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *);
+int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *);
+int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *);
 
-int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine);
-int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine);
-char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine);
-void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine);
+int RKPulseCompressionEngineStart(RKPulseCompressionEngine *);
+int RKPulseCompressionEngineStop(RKPulseCompressionEngine *);
+
+char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *);
+void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *);
+void RKPulseCompressionShowBuffer(fftwf_complex *, const int);
 
 //#ifdef __cplusplus
 //}

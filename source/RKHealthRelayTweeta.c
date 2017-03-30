@@ -8,41 +8,26 @@
 
 #include <RadarKit/RKHealthRelayTweeta.h>
 
+// Internal Functions
+
+static int RHealthRelayTweetaRead(RKClient *);
+
 #pragma mark - Internal Functions
 
-// Internal Implementations
-
-void *backgroundGo(void *in) {
-    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)in;
-    RKRadar *radar = me->radar;
-    radar->transceiverExec(radar->transceiver, "y", NULL);
-    RKHealthRelayTweetaExec(radar->healthRelay, "clearbutton", NULL);
-    return NULL;
-}
-
-void *backgroundStop(void *in) {
-    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)in;
-    RKRadar *radar = me->radar;
-    radar->transceiverExec(radar->transceiver, "z", NULL);
-    RKHealthRelayTweetaExec(radar->healthRelay, "clearbutton", NULL);
-    return NULL;
-}
-
-
-int RHealthRelayTweetaRead(RKClient *client) {
+static int RHealthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKRadar *radar = me->radar;
-
+    
     char *string = (char *)client->userPayload;
     char *stringValue;
-
+    
     if (client->netDelimiter.type == 's') {
         // The payload just read by RKClient
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
             printf("%s\n", string);
         }
-
+        
         // Get a vacant slot for health from Radar, copy over the data, then set it ready
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         if (health == NULL) {
@@ -51,13 +36,13 @@ int RHealthRelayTweetaRead(RKClient *client) {
         }
         strncpy(health->string, string, RKMaximumStringLength - 1);
         RKStripTail(health->string);
-
+        
         // Handle a special event from a push button
         if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL && !strcasecmp(stringValue, "short")) {
             RKLog("%s event %s\n", client->name, stringValue);
             RKPerformMasterTaskInBackground(radar, "b");
         }
-
+        
         RKSetHealthReady(radar, health);
     } else {
         // This the command acknowledgement, queue it up to feedback
@@ -72,7 +57,7 @@ int RHealthRelayTweetaRead(RKClient *client) {
             }
         }
     }
-
+    
     return RKResultSuccess;
 }
 

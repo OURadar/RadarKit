@@ -8,18 +8,21 @@
 
 #include <RadarKit/RKMoment.h>
 
-// Internal functions
+// Internal Functions
 
-void *momentCore(void *);
-void *pulseGatherer(void *);
+static void RKMomentUpdateStatusString(RKMomentEngine *);
+static void zeroOutRay(RKRay *);
+static void *momentCore(void *);
+static void *pulseGatherer(void *);
+
+// Private Functions (accessible for tests)
+
 int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
-
-// Implementations
 
 #pragma mark -
 #pragma mark Helper Functions
 
-void RKMomentUpdateStatusString(RKMomentEngine *engine) {
+static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
 
@@ -182,14 +185,14 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     return i;
 }
 
-void zeroOutRay(RKRay *ray) {
+static void zeroOutRay(RKRay *ray) {
     memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
 }
 
 #pragma mark -
 #pragma mark Delegate Workers
 
-void *momentCore(void *in) {
+static void *momentCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
     RKMomentEngine *engine = me->parentEngine;
 
@@ -487,7 +490,7 @@ void *momentCore(void *in) {
     return NULL;
 }
 
-void *pulseGatherer(void *in) {
+static void *pulseGatherer(void *in) {
     RKMomentEngine *engine = (RKMomentEngine *)in;
 
     int c, i, j, k, s;

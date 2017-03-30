@@ -11,13 +11,19 @@
 #define W2_MISSING_DATA       -99900.0
 #define W2_RANGE_FOLDED       -99901.0
 
+// Internal Functions
+
+static int put_global_text_att(const int ncid, const char *att, const char *text);
+static void *sweepWriter(void *);
+static void *rayGatherer(void *in);
+
 #pragma mark - Helper Functions
 
 static int put_global_text_att(const int ncid, const char *att, const char *text) {
     return nc_put_att_text(ncid, NC_GLOBAL, att, strlen(text), text);
 }
 
-void *sweepWriter(void *in) {
+static void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
     int i, j, k, p;
@@ -380,9 +386,9 @@ void *sweepWriter(void *in) {
     return NULL;
 }
 
-#pragma mark - Threads
+#pragma mark - Delegate Workers
 
-void *rayGatherer(void *in) {
+static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
     int k, s, n;
