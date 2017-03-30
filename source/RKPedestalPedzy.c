@@ -69,23 +69,50 @@ static int RKPedestalPedzyRead(RKClient *client) {
 static void *pedestalHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
+    RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
+    RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
+    RKStatusEnum vcpActive;
+    char azPosition[16];
+    char elPosition[16];
+    RKStatusEnum azEnum;
+    RKStatusEnum elEnum;
     while (me->client->state < RKClientStateDisconnecting) {
+        if (me->client->state < RKClientStateConnected) {
+            azInterlockStatus = RKStatusEnumInvalid;
+            elInterlockStatus = RKStatusEnumInvalid;
+            vcpActive = RKStatusEnumInvalid;
+            sprintf(elPosition, "--.-- deg");
+            sprintf(azPosition, "--.-- deg");
+            azEnum = RKStatusEnumInvalid;
+            elEnum = RKStatusEnumInvalid;
+        } else {
+            RKPosition *position = RKGetLatestPosition(radar);
+            azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
+            elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
+            if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
+                vcpActive = RKStatusEnumFault;
+            } else if (position->flag & RKPositionFlagVCPActive) {
+                vcpActive = RKStatusEnumActive;
+            } else {
+                vcpActive = RKStatusEnumStandby;
+            }
+            sprintf(elPosition, "%.2f deg", position->azimuthDegrees);
+            sprintf(azPosition, "%.2f deg", position->elevationDegrees);
+            azEnum = RKStatusEnumNormal;
+            elEnum = RKStatusEnumNormal;
+        }
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-        RKPosition *position = RKGetLatestPosition(radar);
-        bool azInterlock = position->flag & RKPositionFlagAzimuthSafety;
-        bool elInterlock = position->flag & RKPositionFlagElevationSafety;
-        int activeEnum = position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError) ? RKStatusEnumFault : (position->flag & RKPositionFlagVCPActive ? RKStatusEnumNormal : RKStatusEnumStandby);
         sprintf(health->string,
                 "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"Pedestal AZ Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
-                "\"Pedestal EL Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}}",
-                azInterlock ? "true" : "false", azInterlock ? 2 : 0,
-                elInterlock ? "true" : "false", elInterlock ? 2 : 0,
-                activeEnum > 1 ? "true" : "false", activeEnum,
-                position->azimuthDegrees,
-                position->elevationDegrees);
+                "\"Pedestal AZ Position\":{\"Value\":\"%s\",\"Enum\":%d}, "
+                "\"Pedestal EL Position\":{\"Value\":\"%s\",\"Enum\":%d}}",
+                azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
+                elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
+                vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
+                azPosition, azEnum,
+                elPosition, elEnum);
         RKSetHealthReady(radar, health);
         usleep(200000);
     }
@@ -130,7 +157,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
 
     RKClientSetUserResource(me->client, me);
     RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
-    RKClientStart(me->client);
+    RKClientStart(me->client, false);
 
     if (pthread_create(&me->tidPedestalMonitor, NULL, pedestalHealth, me) != 0) {
         RKLog("%s Error. Failed to start a pedestal monitor.\n", me->client->name);

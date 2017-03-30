@@ -101,7 +101,7 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     
     RKClientSetUserResource(me->client, me);
     RKClientSetReceiveHandler(me->client, &RHealthRelayTweetaRead);
-    RKClientStart(me->client);
+    RKClientStart(me->client, false);
     
     return (RKHealthRelay)me;
 }
@@ -114,7 +114,6 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
     }
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
-    //} else if (!strcmp(command, "state")) {
     } else {
         if (client->state < RKClientStateConnected) {
             if (response != NULL) {
