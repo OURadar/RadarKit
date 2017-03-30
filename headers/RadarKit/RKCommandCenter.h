@@ -86,6 +86,9 @@ typedef struct rk_command_center {
     RKUser       users[RKCommandCenterMaxConnections];
 } RKCommandCenter;
 
+RKUserFlag RKStringToFlag(const char *);
+int RKFlagToString(char *string, RKUserFlag);
+
 RKCommandCenter *RKCommandCenterInit(void);
 void RKCommandCenterFree(RKCommandCenter *);
 

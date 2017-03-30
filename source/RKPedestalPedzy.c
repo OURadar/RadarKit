@@ -8,52 +8,29 @@
 
 #include <RadarKit/RKPedestalPedzy.h>
 
+// Internal Functions
+
+static int RKPedestalPedzyRead(RKClient *);
+static void *pedestalHealth(void *);
+
 #pragma mark - Internal Functions
 
-void *pedestalHealth(void *in) {
-    RKPedestalPedzy *me = (RKPedestal)in;
-    RKRadar *radar = me->radar;
-    while (me->client->state < RKClientStateDisconnecting) {
-        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-        RKPosition *position = RKGetLatestPosition(radar);
-        bool azInterlock = position->flag & RKPositionFlagAzimuthSafety;
-        bool elInterlock = position->flag & RKPositionFlagElevationSafety;
-        int activeEnum = position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError) ? RKStatusEnumFault : (position->flag & RKPositionFlagVCPActive ? RKStatusEnumNormal : RKStatusEnumStandby);
-        sprintf(health->string,
-                "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"Pedestal AZ Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
-                "\"Pedestal EL Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}}",
-                azInterlock ? "true" : "false", azInterlock ? 2 : 0,
-                elInterlock ? "true" : "false", elInterlock ? 2 : 0,
-                activeEnum > 1 ? "true" : "false", activeEnum,
-                position->azimuthDegrees,
-                position->elevationDegrees);
-        RKSetHealthReady(radar, health);
-        usleep(200000);
-    }
-    return (void *)NULL;
-}
-
-// Internal Implementations
-
-int RKPedestalPedzyRead(RKClient *client) {
+static int RKPedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
     RKRadar *radar = me->radar;
-
+    
     if (client->netDelimiter.type == 'p') {
         // The payload just read by RKClient
         RKPosition *position = (RKPosition *)client->userPayload;
-
+        
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
             RKLog("Position   %010ld   %010ld   %08x EL %.2f  AZ %.2f --> %d\n",
                   position->i,
                   position->tic,
                   position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
         }
-
+        
         // Get a vacant slot for position from Radar, copy over the data, then set it ready
         RKPosition *newPosition = RKGetVacantPosition(radar);
         if (newPosition == NULL) {
@@ -83,13 +60,39 @@ int RKPedestalPedzyRead(RKClient *client) {
             }
         }
     }
-
+    
     return RKResultSuccess;
 }
 
-#pragma mark - Protocol Implementations
+#pragma mark - Delegate Workers
 
-// Implementations
+static void *pedestalHealth(void *in) {
+    RKPedestalPedzy *me = (RKPedestal)in;
+    RKRadar *radar = me->radar;
+    while (me->client->state < RKClientStateDisconnecting) {
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
+        RKPosition *position = RKGetLatestPosition(radar);
+        bool azInterlock = position->flag & RKPositionFlagAzimuthSafety;
+        bool elInterlock = position->flag & RKPositionFlagElevationSafety;
+        int activeEnum = position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError) ? RKStatusEnumFault : (position->flag & RKPositionFlagVCPActive ? RKStatusEnumNormal : RKStatusEnumStandby);
+        sprintf(health->string,
+                "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
+                "\"Pedestal AZ Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
+                "\"Pedestal EL Position\":{\"Value\":\"%.2f deg\",\"Enum\":0}}",
+                azInterlock ? "true" : "false", azInterlock ? 2 : 0,
+                elInterlock ? "true" : "false", elInterlock ? 2 : 0,
+                activeEnum > 1 ? "true" : "false", activeEnum,
+                position->azimuthDegrees,
+                position->elevationDegrees);
+        RKSetHealthReady(radar, health);
+        usleep(200000);
+    }
+    return (void *)NULL;
+}
+
+#pragma mark - Protocol Implementations
 
 RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)malloc(sizeof(RKPedestalPedzy));

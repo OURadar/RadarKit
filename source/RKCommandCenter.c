@@ -10,126 +10,11 @@
 
 // Private declarations
 
-int socketInitialHandler(RKOperator *);
 int socketCommandHandler(RKOperator *);
 int socketStreamHandler(RKOperator *);
+int socketInitialHandler(RKOperator *);
 
-// Implementation
-
-RKUserFlag RKStringToFlag(const char * string) {
-    int j = 0;
-    char *c = (char *)string;
-    RKUserFlag flag = RKUserFlagNull;
-    while (j++ < strlen(string)) {
-        switch (*c) {
-            case 'h':
-                flag |= RKUserFlagStatusHealth;
-                break;
-            case 'H':
-                flag |= RKUserFlagStatusHealthOld;
-                break;
-            case '1':
-                flag |= RKUserFlagStatusPulses;
-                break;
-            case '2':
-                flag |= RKUserFlagStatusRays;
-                break;
-            case '3':
-                flag |= RKUserFlagStatusPositions;
-                break;
-            case '4':
-                flag |= RKUserFlagStatusEngines;
-                break;
-            case 'z':
-                flag |= RKUserFlagDisplayZ;
-                break;
-            case 'Z':
-                flag |= RKUserFlagProductZ;
-                break;
-            case 'v':
-                flag |= RKUserFlagDisplayV;
-                break;
-            case 'V':
-                flag |= RKUserFlagProductV;
-                break;
-            case 'w':
-                flag |= RKUserFlagDisplayW;
-                break;
-            case 'W':
-                flag |= RKUserFlagProductW;
-                break;
-            case 'd':
-                flag |= RKUserFlagDisplayD;
-                break;
-            case 'D':
-                flag |= RKUserFlagProductD;
-                break;
-            case 'p':
-                flag |= RKUserFlagDisplayP;
-                break;
-            case 'P':
-                flag |= RKUserFlagProductP;
-                break;
-            case 'r':
-                flag |= RKUserFlagDisplayR;
-                break;
-            case 'R':
-                flag |= RKUserFlagProductR;
-                break;
-            case 'k':
-                flag |= RKUserFlagDisplayK;
-                break;
-            case 'K':
-                flag |= RKUserFlagProductK;
-                break;
-            case 's':
-                flag |= RKUserFlagDisplayS;
-                break;
-            case 'S':
-                flag |= RKUserFlagProductS;
-                break;
-            case 'i':
-                flag |= RKUserFlagDisplayIQ;
-                break;
-            case 'I':
-                flag |= RKUserFlagProductIQ;
-                break;
-            default:
-                break;
-        }
-        c++;
-    }
-    return flag;
-}
-
-int RKFlagToString(char *string, RKUserFlag flag) {
-    int j = 0;
-    if (flag & RKUserFlagStatusHealthOld)   { j += sprintf(string + j, "H"); }
-    if (flag & RKUserFlagStatusPulses)      { j += sprintf(string + j, "1"); }
-    if (flag & RKUserFlagStatusRays)        { j += sprintf(string + j, "2"); }
-    if (flag & RKUserFlagStatusPositions)   { j += sprintf(string + j, "3"); }
-    if (flag & RKUserFlagStatusEngines)     { j += sprintf(string + j, "4"); }
-    if (flag & RKUserFlagStatusHealth)      { j += sprintf(string + j, "h"); }
-    if (flag & RKUserFlagDisplayZ)          { j += sprintf(string + j, "z"); }
-    if (flag & RKUserFlagProductZ)          { j += sprintf(string + j, "Z"); }
-    if (flag & RKUserFlagDisplayV)          { j += sprintf(string + j, "v"); }
-    if (flag & RKUserFlagProductV)          { j += sprintf(string + j, "V"); }
-    if (flag & RKUserFlagDisplayW)          { j += sprintf(string + j, "w"); }
-    if (flag & RKUserFlagProductW)          { j += sprintf(string + j, "W"); }
-    if (flag & RKUserFlagDisplayD)          { j += sprintf(string + j, "d"); }
-    if (flag & RKUserFlagProductD)          { j += sprintf(string + j, "D"); }
-    if (flag & RKUserFlagDisplayP)          { j += sprintf(string + j, "p"); }
-    if (flag & RKUserFlagProductP)          { j += sprintf(string + j, "P"); }
-    if (flag & RKUserFlagDisplayR)          { j += sprintf(string + j, "r"); }
-    if (flag & RKUserFlagProductR)          { j += sprintf(string + j, "R"); }
-    if (flag & RKUserFlagDisplayK)          { j += sprintf(string + j, "k"); }
-    if (flag & RKUserFlagProductK)          { j += sprintf(string + j, "K"); }
-    if (flag & RKUserFlagDisplayS)          { j += sprintf(string + j, "s"); }
-    if (flag & RKUserFlagProductS)          { j += sprintf(string + j, "S"); }
-    if (flag & RKUserFlagDisplayIQ)         { j += sprintf(string + j, "i"); }
-    if (flag & RKUserFlagProductIQ)         {      sprintf(string + j, "I"); }
-    return 0;
-}
+#pragma mark - Helper Functions
 
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
@@ -803,6 +688,123 @@ int socketInitialHandler(RKOperator *O) {
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
     return RKResultNoError;
+}
+
+#pragma mark - Type Conversions
+
+RKUserFlag RKStringToFlag(const char * string) {
+    int j = 0;
+    char *c = (char *)string;
+    RKUserFlag flag = RKUserFlagNull;
+    while (j++ < strlen(string)) {
+        switch (*c) {
+            case 'h':
+                flag |= RKUserFlagStatusHealth;
+                break;
+            case 'H':
+                flag |= RKUserFlagStatusHealthOld;
+                break;
+            case '1':
+                flag |= RKUserFlagStatusPulses;
+                break;
+            case '2':
+                flag |= RKUserFlagStatusRays;
+                break;
+            case '3':
+                flag |= RKUserFlagStatusPositions;
+                break;
+            case '4':
+                flag |= RKUserFlagStatusEngines;
+                break;
+            case 'z':
+                flag |= RKUserFlagDisplayZ;
+                break;
+            case 'Z':
+                flag |= RKUserFlagProductZ;
+                break;
+            case 'v':
+                flag |= RKUserFlagDisplayV;
+                break;
+            case 'V':
+                flag |= RKUserFlagProductV;
+                break;
+            case 'w':
+                flag |= RKUserFlagDisplayW;
+                break;
+            case 'W':
+                flag |= RKUserFlagProductW;
+                break;
+            case 'd':
+                flag |= RKUserFlagDisplayD;
+                break;
+            case 'D':
+                flag |= RKUserFlagProductD;
+                break;
+            case 'p':
+                flag |= RKUserFlagDisplayP;
+                break;
+            case 'P':
+                flag |= RKUserFlagProductP;
+                break;
+            case 'r':
+                flag |= RKUserFlagDisplayR;
+                break;
+            case 'R':
+                flag |= RKUserFlagProductR;
+                break;
+            case 'k':
+                flag |= RKUserFlagDisplayK;
+                break;
+            case 'K':
+                flag |= RKUserFlagProductK;
+                break;
+            case 's':
+                flag |= RKUserFlagDisplayS;
+                break;
+            case 'S':
+                flag |= RKUserFlagProductS;
+                break;
+            case 'i':
+                flag |= RKUserFlagDisplayIQ;
+                break;
+            case 'I':
+                flag |= RKUserFlagProductIQ;
+                break;
+            default:
+                break;
+        }
+        c++;
+    }
+    return flag;
+}
+
+int RKFlagToString(char *string, RKUserFlag flag) {
+    int j = 0;
+    if (flag & RKUserFlagStatusHealthOld)   { j += sprintf(string + j, "H"); }
+    if (flag & RKUserFlagStatusPulses)      { j += sprintf(string + j, "1"); }
+    if (flag & RKUserFlagStatusRays)        { j += sprintf(string + j, "2"); }
+    if (flag & RKUserFlagStatusPositions)   { j += sprintf(string + j, "3"); }
+    if (flag & RKUserFlagStatusEngines)     { j += sprintf(string + j, "4"); }
+    if (flag & RKUserFlagStatusHealth)      { j += sprintf(string + j, "h"); }
+    if (flag & RKUserFlagDisplayZ)          { j += sprintf(string + j, "z"); }
+    if (flag & RKUserFlagProductZ)          { j += sprintf(string + j, "Z"); }
+    if (flag & RKUserFlagDisplayV)          { j += sprintf(string + j, "v"); }
+    if (flag & RKUserFlagProductV)          { j += sprintf(string + j, "V"); }
+    if (flag & RKUserFlagDisplayW)          { j += sprintf(string + j, "w"); }
+    if (flag & RKUserFlagProductW)          { j += sprintf(string + j, "W"); }
+    if (flag & RKUserFlagDisplayD)          { j += sprintf(string + j, "d"); }
+    if (flag & RKUserFlagProductD)          { j += sprintf(string + j, "D"); }
+    if (flag & RKUserFlagDisplayP)          { j += sprintf(string + j, "p"); }
+    if (flag & RKUserFlagProductP)          { j += sprintf(string + j, "P"); }
+    if (flag & RKUserFlagDisplayR)          { j += sprintf(string + j, "r"); }
+    if (flag & RKUserFlagProductR)          { j += sprintf(string + j, "R"); }
+    if (flag & RKUserFlagDisplayK)          { j += sprintf(string + j, "k"); }
+    if (flag & RKUserFlagProductK)          { j += sprintf(string + j, "K"); }
+    if (flag & RKUserFlagDisplayS)          { j += sprintf(string + j, "s"); }
+    if (flag & RKUserFlagProductS)          { j += sprintf(string + j, "S"); }
+    if (flag & RKUserFlagDisplayIQ)         { j += sprintf(string + j, "i"); }
+    if (flag & RKUserFlagProductIQ)         {      sprintf(string + j, "I"); }
+    return 0;
 }
 
 #pragma mark - Life Cycle

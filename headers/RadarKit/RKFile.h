@@ -59,5 +59,4 @@ void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size);
 uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const uint32_t size);
 uint32_t RKFileEngineCacheFlush(RKFileEngine *engine);
 
-
 #endif /* defined(__RadarKit_RKFile__) */

@@ -10,8 +10,8 @@
 
 // Internal functions
 
-void *pulseTagger(void *in);
-void RKPositionnUpdateStatusString(RKPositionEngine *engine);
+static void RKPositionnUpdateStatusString(RKPositionEngine *);
+static void *pulseTagger(void *);
 
 // Implementations
 
@@ -25,7 +25,7 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine);
 (x & RKPositionFlagElevationError ? "\033[91m" :                \
 (x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[93m"))
 
-void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
+static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     int i;
     char *string;
 
@@ -77,9 +77,9 @@ void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-#pragma mark - Threads
+#pragma mark - Delegate Workers
 
-void *pulseTagger(void *in) {
+static void *pulseTagger(void *in) {
     RKPositionEngine *engine = (RKPositionEngine *)in;
     
     int i, j, k, s;

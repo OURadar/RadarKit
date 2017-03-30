@@ -8,24 +8,15 @@
 
 #include <RadarKit/RKPulseCompression.h>
 
-// Internal functions
+// Internal Functions
 
-void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n);
-void updateStatusString(RKPulseCompressionEngine *engine);
-void *pulseCompressionCore(void *in);
+static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *);
+static void *pulseCompressionCore(void *);
+static void *pulseWatcher(void *);
 
-// Implementations
+#pragma mark - Helper Functions
 
-#pragma mark -
-#pragma mark Helper Functions
-
-void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
-    for (int k = 0; k < n; k++) {
-        printf("    %6.2f %s %6.2fi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
-    }
-}
-
-void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
+static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
     
@@ -72,10 +63,9 @@ void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-#pragma mark -
-#pragma mark Delegate Workers
+#pragma mark - Delegate Workers
 
-void *pulseCompressionCore(void *_in) {
+static void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
     RKPulseCompressionEngine *engine = me->parentEngine;
 
@@ -353,7 +343,7 @@ void *pulseCompressionCore(void *_in) {
     return NULL;
 }
 
-void *pulseWatcher(void *_in) {
+static void *pulseWatcher(void *_in) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
 
     int c, i, j, k;
@@ -861,5 +851,11 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
                   engine->filterAnchors[i][j].name,
                   RKFloatToCommaStyleString(engine->filterAnchors[i][j].subCarrierFrequency));
         }
+    }
+}
+
+void RKPulseCompressionShowBuffer(fftwf_complex *in, const int n) {
+    for (int k = 0; k < n; k++) {
+        printf("    %6.2f %s %6.2fi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
     }
 }
