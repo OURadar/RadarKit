@@ -874,8 +874,8 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
             engine->radarCount--;
         }
     }
-    for (i = 0; i < engine->server->nclient; i++) {
-        if (engine->users[i].radar == radar) {
+    for (i = 0; i < engine->server->maxClient; i++) {
+        if (engine->server->busy[i] && engine->users[i].serverOperator->state == RKOperatorStateActive && engine->users[i].radar == radar) {
             RKLog("%s Removing '%s' from user %s %s ...\n", engine->name, radar->desc.name, engine->users[i].serverOperator->name, engine->users[i].login);
             engine->users[i].radar = NULL;
         }

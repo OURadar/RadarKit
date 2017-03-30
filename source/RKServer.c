@@ -15,7 +15,7 @@
 void *RKServerRoutine(void *);
 void *RKOperatorRoutine(void *);
 void *RKOperatorCommandRoutine(void *);
-int RKOperatorCreate(RKServer *, int, const char *);
+RKOperator *RKOperatorCreate(RKServer *, int, const char *);
 void RKOperatorFree(RKOperator *);
 int RKDefaultWelcomeHandler(RKOperator *);
 int RKDefaultTerminateHandler(RKOperator *);
@@ -38,7 +38,7 @@ void *RKServerRoutine(void *in) {
         return NULL;
     }
 
-    int ii;
+    int ii, k;
     struct sockaddr_in sa;
     socklen_t sa_len = sizeof(struct sockaddr_in);
 
@@ -81,44 +81,62 @@ void *RKServerRoutine(void *in) {
     fd_set          rfd;
     struct timeval  timeout;
     const char      busy_msg[] = "Server busy." RKEOL;
+    int             nclient;
 
     // Accept connection requests and create and assign an operator for the client
     while (M->state == RKServerStateActive) {
-        // use select to prevent accept() from blocking
+        // Use select to prevent accept() from blocking
         FD_ZERO(&rfd);
         FD_SET(M->sd, &rfd);
         timeout.tv_sec = 0; timeout.tv_usec = 100000;
         ii = select(M->sd + 1, &rfd, NULL, NULL, &timeout);
         if (ii > 0 && FD_ISSET(M->sd, &rfd)) {
-            // accept a connection, this part shouldn't be blocked. Reuse sa since we no longer need it
+            // Accept a connection, this part shouldn't be blocked. Reuse sa since we no longer need it
             if ((sid = accept(M->sd, (struct sockaddr *)&sa, &sa_len)) == -1) {
                 RKLog("%s Error. Failed at accept().\n", M->name);
                 break;
             }
-            if (M->verbose) {
-                RKLog("%s answering %s:%d  (nclient = %d  sd = %d)\n",
-                      M->name, inet_ntoa(sa.sin_addr), sa.sin_port, M->nclient, sid);
+            // Count the number of clients, or operators that are busy
+            nclient = 0;
+            for (k = 0; k < M->maxClient; k++) {
+                if (M->busy[k]) {
+                    nclient++;
+                }
             }
-            if (M->nclient >= M->maxClient) {
-                RKLog("%s busy (nclient = #%d)\n", M->name, M->nclient);
+            if (M->verbose) {
+                RKLog("%s Answering %s:%d  (nclient = %d  sd = %d)\n",
+                      M->name, inet_ntoa(sa.sin_addr), sa.sin_port, nclient, sid);
+            }
+            if (nclient >= M->maxClient) {
+                RKLog("%s Busy (nclient = #%d)\n", M->name, nclient);
                 send(sid, busy_msg, strlen(busy_msg), 0);
                 close(sid);
-                continue;
             } else {
-                RKOperatorCreate(M, sid, inet_ntoa(sa.sin_addr));
+                RKOperator *O = RKOperatorCreate(M, sid, inet_ntoa(sa.sin_addr));
+                M->operators[O->iid] = O;
             }
         } else if (ii == 0) {
             // This isn't really an error, just mean no one is connecting & timeout...
-            continue;
+            usleep(1000);
         } else if (ii == -1) {
             RKLog("%s Error. Failed at select().\n", M->name);
         } else {
             RKLog("%s Error. At an unknown state.\n", M->name);
         }
-    }
+
+        // Go through all operator to see which one should be freed
+        for (k = 0; k < M->maxClient; k++) {
+            if (M->busy[k]) {
+                RKOperator *O = M->operators[k];
+                if (O->state == RKOperatorStateHungUp) {
+                    RKOperatorFree(O);
+                }
+            }
+        }
+    } // while (M->state == RKServerStateActive) ...
     
     if (M->verbose > 1) {
-        RKLog("%s returning ...\n", M->name);
+        RKLog("%s Returning ...\n", M->name);
     }
     
     M->state = RKServerStateFree;
@@ -146,6 +164,15 @@ void *RKOperatorRoutine(void *in) {
     struct timeval  user_timeout = {M->timeoutSeconds, 0};
     struct timeval  latestReadTime;
     struct timeval  latestWriteTime;
+
+    pthread_mutex_init(&O->lock, NULL);
+
+    O->state = RKOperatorStateActive;
+
+    if (pthread_create(&O->tidExecute, NULL, RKOperatorCommandRoutine, O)) {
+        RKLog("%s Error. Failed to create RKOperatorCommandRoutine().\n", M->name);
+        return (void *)RKResultErrorCreatingOperatorCommandRoutine;
+    }
 
     RKLog("%s %s started for the connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq++);
 
@@ -229,7 +256,7 @@ void *RKOperatorRoutine(void *in) {
                 if (fgets(str, RKMaximumStringLength - 1, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
-                    RKLog("%s %s Disconnected.\n", M->name, O->name);
+                    RKLog("%s %s Client disconnected.\n", M->name, O->name);
                     break;
                 }
                 stripTrailingUnwanted(str);
@@ -255,12 +282,18 @@ void *RKOperatorRoutine(void *in) {
         }
     } // while () ...
 
-    if (M->verbose > 1) {
-        RKLog(">%s %s operator routine returning ...\n", M->name, O->name);
-    }
-    M->ids[O->iid] = false;
+    // Set the state if all the 'break' conditions signals the RKOperatorCommandRoutine to quit as well.
+    O->state = RKOperatorStateClosing;
 
+    pthread_join(O->tidExecute, NULL);
+    pthread_mutex_destroy(&O->lock);
     fclose(fp);
+
+    O->state = RKOperatorStateHungUp;
+
+    if (M->verbose > 1) {
+        RKLog(">%s %s Operator routine returning ...\n", M->name, O->name);
+    }
 
     return NULL;
 }
@@ -289,39 +322,37 @@ void *RKOperatorCommandRoutine(void *in) {
     }
     
     if (M->verbose > 1) {
-        RKLog(">%s %s command routine returning ...\n", M->name, O->name);
+        RKLog(">%s %s Command routine returning ...\n", M->name, O->name);
     }
     
-    M->ids[O->iid] = false;
     return NULL;
 }
 
 
-int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
+RKOperator *RKOperatorCreate(RKServer *M, int sid, const char *ip) {
 
     RKOperator *O = (RKOperator *)malloc(sizeof(RKOperator));
     if (O == NULL) {
         RKLog("%s failed to allocate an operator.\n", M->name);
-        return 1;
+        return NULL;
     }
     memset(O, 0, sizeof(RKOperator));
 
     pthread_mutex_lock(&M->lock);
 
     int k = 0;
-    while (M->ids[k]) {
+    while (M->busy[k]) {
         k++;
     }
-    M->ids[k] = true;
+    M->busy[k] = true;
 
     // Default operator parameters that should not be 0
     O->M = M;
     O->iid = k;
     O->sid = sid;
-    O->state = RKOperatorStateActive;
+    O->state = RKOperatorStateAllocated;
     O->timeoutSeconds = 30;
     O->userResource = M->userResource;
-    pthread_mutex_init(&O->lock, NULL);
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
     snprintf(O->name, RKNameLength - 1, "%sO%d%s",
              rkGlobalParameters.showColor ? RKGetColorOfIndex(O->iid) : "",
@@ -342,37 +373,25 @@ int RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     if (pthread_create(&O->tidRead, NULL, RKOperatorRoutine, O)) {
         RKLog("%s Error. Failed to create RKOperatorRoutine().\n", M->name);
         pthread_mutex_unlock(&M->lock);
-        return RKResultErrorCreatingOperatorRoutine;
+        return NULL;
     }
-    if (pthread_create(&O->tidExecute, NULL, RKOperatorCommandRoutine, O)) {
-        RKLog("%s Error. Failed to create RKOperatorCommandRoutine().\n", M->name);
-        pthread_mutex_unlock(&M->lock);
-        return RKResultErrorCreatingOperatorCommandRoutine;
-    }
-    
-    M->nclient++;
-    
+
     pthread_mutex_unlock(&M->lock);
     
-    return 0;
+    return O;
 }
 
 
 void RKOperatorFree(RKOperator *O) {
-
     RKServer *M = O->M;
-    
-    O->state = RKOperatorStateClosing;
+    const int k = O->iid;
+
     pthread_join(O->tidRead, NULL);
-    pthread_join(O->tidExecute, NULL);
-    pthread_mutex_destroy(&O->lock);
     close(O->sid);
-    
     free(O);
-    
-    pthread_mutex_lock(&M->lock);
-    M->nclient--;
-    pthread_mutex_unlock(&M->lock);
+
+    M->busy[k] = false;
+    M->operators[k] = NULL;
 }
 
 
@@ -623,5 +642,6 @@ ssize_t RKOperatorSendBeacon(RKOperator *O) {
 }
 
 void RKOperatorHangUp(RKOperator *O) {
-    return RKOperatorFree(O);
+    O->state = RKOperatorStateClosing;
+    return;
 }

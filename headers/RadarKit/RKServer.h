@@ -33,8 +33,10 @@ typedef int RKOperatorState;
 enum RKOperatorState {
     RKOperatorStateNull,
     RKOperatorStateFree,
+    RKOperatorStateAllocated,
+    RKOperatorStateActive,
     RKOperatorStateClosing,
-    RKOperatorStateActive
+    RKOperatorStateHungUp
 };
 
 typedef int RKServerOption;
@@ -48,55 +50,56 @@ typedef struct rk_server    RKServer;
 typedef struct rk_operator  RKOperator;
 
 struct rk_server {
-    char             name[RKNameLength];             // A program name
+    char             name[RKNameLength];                    // A program name
     int              verbose;
-    
-    int              sd;                             // Socket descriptor
-    int              port;                           // Port number of the server
-    int              maxClient;                      // Maximum number of client connections
-    int              timeoutSeconds;                 // Timeout in seconds
-    RKServerOption   options;                        // Server options
 
-    bool             ids[RKServerMaximumOperators];  // Operator IDs
-    int              nclient;                        // Number of clients
-    int              ireq;                           // A global instance request
-    int              state;                          // A global flag for infinite loop
-    pthread_t        threadId;                       // Own thread ID
-    pthread_mutex_t  lock;                           // Thread safety mutex of the server
+    int              sd;                                    // Socket descriptor
+    int              port;                                  // Port number of the server
+    int              maxClient;                             // Maximum number of client connections
+    int              timeoutSeconds;                        // Timeout in seconds
+    RKServerOption   options;                               // Server options
 
-    int              (*w)(RKOperator *);             // Function that sends initial welcome message
-    int              (*c)(RKOperator *);             // Function that answers command
-    int              (*s)(RKOperator *);             // Function that keeps streaming content
-    int              (*t)(RKOperator *);             // Function that terminates connection
-    
-    void             *userResource;                  // User pointer
+    int              ireq;                                  // A global instance request
+    int              state;                                 // A global flag for infinite loop
+    pthread_t        threadId;                              // Own thread ID
+    pthread_mutex_t  lock;                                  // Thread safety mutex of the server
+
+    bool             busy[RKServerMaximumOperators];       // Operator occupied
+    RKOperator       *operators[RKServerMaximumOperators]; // Operator reference
+
+    int              (*w)(RKOperator *);                   // Function that sends initial welcome message
+    int              (*c)(RKOperator *);                   // Function that answers command
+    int              (*s)(RKOperator *);                   // Function that keeps streaming content
+    int              (*t)(RKOperator *);                   // Function that terminates connection
+
+    void             *userResource;                        // User pointer
 };
 
 struct rk_operator  {
-    RKServer         *M;                             // Pointer to main server for common resources
+    RKServer         *M;                                   // Pointer to main server for common resources
 
-    int              iid;                            // Instant identifier
-    int              timeoutSeconds;                 // Timeout in seconds
-    int              sid;                            // Socket identifier of the client
-    RKOperatorState  state;                          // Connection state
-    pthread_t        tidRead;                        // Thread ID of the operator ingest
-    pthread_t        tidExecute;                     // Thread ID of the operator execution
-    pthread_mutex_t  lock;                           // Thread safety mutex of the attendant
+    int              iid;                                  // Instant identifier
+    int              timeoutSeconds;                       // Timeout in seconds
+    int              sid;                                  // Socket identifier of the client
+    RKOperatorState  state;                                // Connection state
+    pthread_t        tidRead;                              // Thread ID of the operator ingest
+    pthread_t        tidExecute;                           // Thread ID of the operator execution
+    pthread_mutex_t  lock;                                 // Thread safety mutex of the attendant
 
-    char             name[RKNameLength];             // Operator name
-    char             ip[RKMaximumStringLength];      // Client's IP address
+    char             name[RKNameLength];                   // Operator name
+    char             ip[RKMaximumStringLength];            // Client's IP address
 
-    RKNetDelimiter   delimString;                    // Convenient delimiter for text response of commands
-    RKNetDelimiter   delimTx;                        // Convenient delimiter for streaming
-    RKNetDelimiter   beacon;                         // Beacon
+    RKNetDelimiter   delimString;                          // Convenient delimiter for text response of commands
+    RKNetDelimiter   delimTx;                              // Convenient delimiter for streaming
+    RKNetDelimiter   beacon;                               // Beacon
 
-    char             *cmd;                           // Latest command
-    
+    char             *cmd;                                 // Latest command
+
     char             commands[RKServerBufferDepth][RKMaximumStringLength];  // A buffer to keep the latest N commands
     uint8_t          commandIndexWrite;                                     // Index to write to the buffer
     uint8_t          commandIndexRead;                                      // Index to read from the buffer
 
-    void             *userResource;                  // User pointer
+    void             *userResource;                        // User pointer
 };
 
 
