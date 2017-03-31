@@ -102,6 +102,10 @@ static void *healthConsolidator(void *in) {
 
     gettimeofday(&t1, NULL);
 
+    time_t minutesSinceEpoch;
+    struct tm *timeStruct;
+    int min = -1;
+
     k = 0;   // health index
     while (engine->state & RKEngineStateActive) {
         // Evaluate the nodal-health buffers every once in a while
@@ -200,7 +204,7 @@ static void *healthConsolidator(void *in) {
                 i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
             }
         }
-        i += sprintf(string + i - 2, "}");                                                                 // Erase the last ", "
+        i += sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                          // Add the log time as the last object
         health->flag = RKHealthFlagReady;
 
         //RKLog("%s", string);
@@ -246,40 +250,30 @@ static void *healthConsolidator(void *in) {
             }
         }
 
-        /*
-        for (j = 0; j < keywordsCount; j++) {
-            stringObject = RKGetValueOfKey(health->string, keywords[j]);
-            //RKLog("%s %s subString = %s\n", engine->name, keywords[j], subString);
-            if (stringObject) {
-                stringValue = RKGetValueOfKey(stringObject, "value");
-                if (stringValue) {
-                    if (!strcasecmp(stringValue, "true")) {
-                        type = 1;
-                        valueBool = true;
-                    } else if (!strcasecmp(stringValue, "false")) {
-                        type = 1;
-                        valueBool = false;
-                    } else {
-                        type = 2;
-                        valueFloat = atof(stringValue);
-                    }
-                }
-                stringEnum = RKGetValueOfKey(stringObject, "enum");
-                if (stringEnum) {
-                    valueEnum = atoi(stringEnum);
-                    if (valueEnum == RKStatusEnumCritical) {
-                        RKLog("%s Warning. %s -> %s / %d --> Shutdown?\n",
-                              engine->name,
-                              keywords[j],
-                              type == 1 ? (valueBool ? "true" : "false") : (RKFloatToCommaStyleString(valueFloat)),
-                              valueEnum);
-                    }
-                }
-            }
-        }
-         */
-
         RKProcessHealthKeywords(engine, health->string);
+
+        // Log a copy
+        minutesSinceEpoch = (time_t)t0.tv_sec;
+        timeStruct = gmtime(&minutesSinceEpoch);
+        if (min != timeStruct->tm_min) {
+            min = timeStruct->tm_min;
+            if (engine->healthLog != NULL) {
+                fclose(engine->healthLog);
+            }
+            char filename[RKMaximumStringLength];
+            if (strlen(engine->radarDescription->dataPath)) {
+                i = sprintf(filename, "%s/logs/health/", engine->radarDescription->dataPath);
+            } else {
+                i = sprintf(filename, "logs/health/");
+            }
+            i += strftime(filename + i, 20, "%Y%m%d-%H%M.log", timeStruct);
+            RKPreparePath(filename);
+            RKLog("%s %s\n", engine->name, filename);
+            engine->healthLog = fopen(filename, "w");
+        }
+        if (engine->healthLog != NULL) {
+            fprintf(engine->healthLog, "%s\n", string);
+        }
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
@@ -287,6 +281,11 @@ static void *healthConsolidator(void *in) {
         health->string[0] = '\0';
         health->flag = RKHealthFlagVacant;
         *engine->healthIndex = k;
+    }
+
+    if (engine->healthLog != NULL) {
+        fclose(engine->healthLog);
+        engine->healthLog = NULL;
     }
 
     free(indices);

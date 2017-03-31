@@ -33,6 +33,7 @@ struct rk_health_engine {
     // Program set variables
     pthread_t              threadId;
     double                 startTime;
+    FILE                   *healthLog;
 
     // Status / health
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
