@@ -132,6 +132,7 @@ typedef struct rk_filter_anchor {
     uint32_t      length;
     uint32_t      maxDataLength;
     RKFloat       subCarrierFrequency;
+    RKFloat       gain;
 } RKFilterAnchor;
 
 #define RKFilterAnchorDefault                      {0, 0, 1, 1024, 0.0f}

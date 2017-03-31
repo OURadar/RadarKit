@@ -494,8 +494,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"NULL\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
-                (double)rand() * 2.5e-5 / RAND_MAX + 35.5,
-                (double)rand() * 2.5e-5 / RAND_MAX - 95.5,
+                (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
+                (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
                 (double)rand() * 0.2 / RAND_MAX + 45,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
