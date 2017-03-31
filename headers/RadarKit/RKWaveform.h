@@ -19,17 +19,17 @@ enum RKWaveformType {
     RKWaveformTypeNone,
     RKWaveformTypeSingle,
     RKWaveformTypeFrequencyHopping,
-    RKWaveformTypeTimeFrequencyMultiplex
+    RKWaveformTypeTimeFrequencyMultiplexing
 };
 
 typedef struct rk_waveform {
-    int             count;                                      // Number of groups
-    int             depth;                                      // Maximum number of samples
-    RKWaveformType  type;                                       // Various type of waveforms
-    int             name[RKMaxFilterGroups];                    // Name of the sub-carrier
-    double          omega[RKMaxFilterGroups];                   // Sub-carrier of RKWaveformTypeFrequencyHopping
-    RKComplex       *samples[RKMaxFilterGroups];                // Samples up to amplitude of 1.0
-    RKInt16C        *iSamples[RKMaxFilterGroups];               // 16-bit full-scale equivalent of the waveforms
+    int             count;                                                 // Number of groups
+    int             depth;                                                 // Maximum number of samples
+    RKWaveformType  type;                                                  // Various type of waveforms
+    RKComplex       *samples[RKMaxFilterGroups];                           // Samples up to amplitude of 1.0
+    RKInt16C        *iSamples[RKMaxFilterGroups];                          // 16-bit full-scale equivalent of the waveforms
+    uint32_t        filterCounts[RKMaxFilterGroups];                       // Number of filters to applied to each waveform, see filterAnchors
+    RKFilterAnchor  filterAnchors[RKMaxFilterGroups][RKMaxFilterCount];    // Filter anchors of each sub-waveform for de-multiplexing
 } RKWaveform;
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
