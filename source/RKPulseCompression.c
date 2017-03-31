@@ -277,8 +277,9 @@ static void *pulseCompressionCore(void *_in) {
 
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-                    // Scaling due to a net gain of planSize from forward + backward DFT
+                    // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
                     RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
+                    //RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize / sqrtf(engine->filterAnchors[gid][j].gain), planSize);
 
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
@@ -727,11 +728,8 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
-    engine->filterAnchors[group][index].name = anchor.name;
-    engine->filterAnchors[group][index].origin = anchor.origin;
+    memcpy(&engine->filterAnchors[group][index], &anchor, sizeof(RKFilterAnchor));
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
-    engine->filterAnchors[group][index].maxDataLength = anchor.maxDataLength;
-    engine->filterAnchors[group][index].subCarrierFrequency = anchor.subCarrierFrequency;
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     return RKResultNoError;
@@ -843,13 +841,14 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
     for (int i = 0; i < engine->filterGroupCount; i++) {
         for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s, %02d / %+.3f}\n",
+            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f %s}\n",
                   engine->name, i, j,
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].origin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength),
                   engine->filterAnchors[i][j].name,
-                  engine->filterAnchors[i][j].subCarrierFrequency);
+                  engine->filterAnchors[i][j].subCarrierFrequency,
+                  RKFloatToCommaStyleString(engine->filterAnchors[i][j].gain));
         }
     }
 }

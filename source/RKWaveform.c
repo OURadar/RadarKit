@@ -88,7 +88,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
     n = 0;
     for (k = 0; k < waveform->count; k++) {
         f = delta * (double)n - 0.5 * bandwidth;
-        omega = M_PI * f / fs;
+        omega = 2.0 * M_PI * f / fs;
         psi = omega * (double)(waveform->depth / 2);
         waveform->filterCounts[k] = 1;
         waveform->filterAnchors[k][0].name = n;
@@ -109,6 +109,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
             x++;
             w++;
         }
+        waveform->filterAnchors[k][0].gain = gain;
         // This equation still needs to be checked.
         gain = sqrtf(gain);
         x = waveform->samples[k];
@@ -126,6 +127,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
             }
         }
     }
+    //RKWaveformCalculateGain(waveform);
 }
 
 void RKWaveformConjuate(RKWaveform *waveform) {
@@ -163,4 +165,20 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 
 void RKWaveformRead(RKWaveform *waveform, const char *filename) {
     
+}
+
+void RKWaveformCalculateGain(RKWaveform *waveform) {
+    // Normalize the peak to get the peak transmit power
+    int i, j, k;
+    for (k = 0; k < waveform->count; k++) {
+        for (j = 0; j < waveform->filterCounts[k]; j++) {
+            RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+            RKFloat maxSq = 0.0f;
+            for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
+                maxSq = MAX(maxSq, w->i * w->i + w->q * w->q);
+                w++;
+            }
+            waveform->filterAnchors[k][j].gain = 1.0 / maxSq * waveform->filterCounts[k];
+        }
+    }
 }

@@ -42,4 +42,6 @@ void RKWaveformConjuate(RKWaveform *waveform);
 void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
 void RKWaveformRead(RKWaveform *waveform, const char *filename);
 
+void RKWaveformCalculateGain(RKWaveform *waveform);
+
 #endif
