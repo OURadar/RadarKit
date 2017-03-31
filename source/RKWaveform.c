@@ -72,26 +72,30 @@ void RKWaveformOnes(RKWaveform *waveform) {
 // This is actually hop pairs: f0, f0, f1, f1, f2, f2, ...
 //
 void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidth) {
-    int i, k, m, n;
+    int i, k, n;
     double f, omega, psi;
     RKComplex *x;
     RKInt16C *w;
     RKFloat gain;
 
+    const bool sequential = false;
+
     waveform->type = RKWaveformTypeFrequencyHopping;
 
-    double stride = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
-    //double amplitudeScale = 1.0 / sqrt((double)waveform->depth);
+    const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
+    const int stride = (waveform->count / 2) % 2 == 0 ? (waveform->count + 2) / 4 : waveform->count / 4;
 
     n = 0;
-    m = (waveform->count / 2) % 2 == 0 ? (waveform->count + 2) / 4 : waveform->count / 4;
     for (k = 0; k < waveform->count; k++) {
-        //f = stride * (double)(k / 2) - 0.5 * bandwidth;
-        f = stride * (double)n - 0.5 * bandwidth;
-        omega = 2.0 * M_PI * f / fs;
-        psi = omega * (double)waveform->depth * 0.5;
-        waveform->omega[k] = omega;
-        waveform->name[k] = n;
+        f = delta * (double)n - 0.5 * bandwidth;
+        omega = M_PI * f / fs;
+        psi = omega * (double)(waveform->depth / 2);
+        waveform->filterCounts[k] = 1;
+        waveform->filterAnchors[k][0].name = n;
+        waveform->filterAnchors[k][0].origin = 0;
+        waveform->filterAnchors[k][0].length = waveform->depth;
+        waveform->filterAnchors[k][0].maxDataLength = waveform->depth;  // Replace with actual depth later
+        waveform->filterAnchors[k][0].subCarrierFrequency = omega;
         //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, waveform->omega);
         x = waveform->samples[k];
         w = waveform->iSamples[k];
@@ -106,7 +110,6 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
             w++;
         }
         // This equation still needs to be checked.
-        //gain = (RKFloat)waveform->depth;
         gain = sqrtf(gain);
         x = waveform->samples[k];
         for (i = 0; i < waveform->depth; i++) {
@@ -114,8 +117,13 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
             x->q /= gain;
             x++;
         }
+        // Get ready for the next frequency when we are odd index
         if (k % 2 == 1) {
-            n = RKNextNModuloS(n, m, waveform->count / 2);
+            if (sequential) {
+                n = ((k + 1) / 2);
+            } else {
+                n = RKNextNModuloS(n, stride, waveform->count / 2);
+            }
         }
     }
 }

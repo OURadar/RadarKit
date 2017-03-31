@@ -54,7 +54,7 @@
 #define RKHealthNodeCount                8                           // Maximum number of nodes to ingest health info. Check RKHealthNode
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
-#define RKMaxFilterCount                 4                           // Maximum filter count within each filter group. Check RKPulseParameters
+#define RKMaxFilterCount                 8                           // Maximum filter count within each filter group. Check RKPulseParameters
 #define RKMaxFilterGroups                22                          // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth     1000
 #define RKMaxPulsesPerRay                2000
@@ -134,8 +134,8 @@ typedef struct rk_filter_anchor {
     RKFloat       subCarrierFrequency;
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault  {0, 0, 1, 1024, 0.0f}
-#define RKFilterAnchorDefaultWithMaxDataLength(x) {0, 0, 1, (x), 0.0f}
+#define RKFilterAnchorDefault                      {0, 0, 1, 1024, 0.0f}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)  {0, 0, 1, (x),  0.0f}
 
 typedef struct rk_modulo_path {
     uint32_t      origin;

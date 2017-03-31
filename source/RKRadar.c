@@ -519,21 +519,20 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     return RKResultNoError;
 }
 
-int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int origin, const int maxDataLength) {
-    int k;
+int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
+    int j, k;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
-    RKFilterAnchor anchor;
-    anchor.origin = origin;
-    anchor.length = waveform->depth;
-    anchor.maxDataLength = maxDataLength;
     for (k = 0; k < waveform->count; k++) {
-        anchor.name = waveform->name[k];
-        anchor.subCarrierFrequency = waveform->omega[k];
-        RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
-                                    waveform->samples[k],
-                                    anchor,
-                                    k,
-                                    0);
+        for (j = 0; j < waveform->filterCounts[k]; j++) {
+            // The user knows how many samples each pulse has, override maxDataLength with the supplied gateCount
+            waveform->filterAnchors[k][j].maxDataLength = gateCount - waveform->filterAnchors[k][j].origin;
+            RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+            RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
+                                        filter,
+                                        waveform->filterAnchors[k][j],
+                                        k,
+                                        j);
+        }
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);

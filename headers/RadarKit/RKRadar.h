@@ -179,7 +179,7 @@ int RKSetVerbose(RKRadar *, const int verbose);
 int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
 
 // Some operating parameters
-int RKSetWaveform(RKRadar *, RKWaveform *waveform, const int origin, const int maxDataLength);
+int RKSetWaveform(RKRadar *, RKWaveform *, const int maxDataLength);
 int RKSetWaveformByFilename(RKRadar *, const char *filename, const int group, const int maxDataLength);
 int RKSetWaveformToImpulse(RKRadar *);
 int RKSetWaveformTo121(RKRadar *);
