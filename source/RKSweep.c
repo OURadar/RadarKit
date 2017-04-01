@@ -483,7 +483,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKSweepEngine));
     sprintf(engine->name, "%s<ProductRecorder>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(13) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->array1D = (float *)malloc(RKMaxRaysPerSweep * sizeof(float));
     if (engine->array1D == NULL) {
         RKLog("%s Error. Unable to allocate memory.\n", engine->name);

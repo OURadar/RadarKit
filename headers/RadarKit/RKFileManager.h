@@ -14,13 +14,24 @@
 typedef struct rk_file_manager {
     // User set variables
     char                   name[RKNameLength];
-    RKEngineState          state;
+    RKRadarDesc            *radarDescription;
     uint8_t                verbose;
+    size_t                 rawDataUsagelimit;
+    
+    // Program set variables
+    pthread_t              tidFileWatcher;
+
+    // Status / health
+    RKEngineState          state;
     uint32_t               memoryUsage;
 } RKFileManager;
 
 RKFileManager *RKFileManagerInit(void);
 void RKFileManagerFree(RKFileManager *);
 void RKFileManagerSetVerbose(RKFileManager *, const int);
+void RKFileManagerSSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
+
+int RKFileManagerStart(RKFileManager *);
+int RKFileManagerStop(RKFileManager *);
 
 #endif

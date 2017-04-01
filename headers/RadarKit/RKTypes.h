@@ -377,7 +377,7 @@ typedef struct rk_radar_desc {
     float            wavelength;                                     // Radar wavelength (m)
     char             name[RKNameLength];                             // Radar name
     char             filePrefix[RKNameLength];                       // Prefix of output files
-    char             dataPath[RKMaximumStringLength];                // Root path for the data files
+    char             dataPath[RKMaximumPathLength];                  // Root path for the data files
 } RKRadarDesc;
 
 // A running configuration buffer

@@ -103,6 +103,10 @@ int socketCommandHandler(RKOperator *O) {
                     case 'N':
                         // 'dN' - DSP noise override in dB
                         break;
+                    case 'r':
+                        // 'dr' - Restart DSP engines
+                        
+                        break;
                     case 't':
                         // 'dt' - DSP threshold in SNR dB
                         k = sscanf(&commandString[2], "%lf", &fval1);
@@ -817,7 +821,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     }
     memset(engine, 0, sizeof(RKCommandCenter));
     sprintf(engine->name, "%s<CommandCenter>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(9) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->developerInspect = 0;
     engine->server = RKServerInit();

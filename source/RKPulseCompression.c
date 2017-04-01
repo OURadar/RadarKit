@@ -616,7 +616,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKPulseCompressionEngine));
     sprintf(engine->name, "%s<PulseCompressor>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(5) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     pthread_mutex_init(&engine->coreMutex, NULL);

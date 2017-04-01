@@ -44,7 +44,8 @@ char *RKGetBackgroundColor(void) {
 }
 
 char *RKGetBackgroundColorOfIndex(const int i) {
-    const uint8_t colors[] = {70, 28, 136, 30, 33, 162, 27, 99, 167, 90, 241};
+    //const uint8_t colors[] = {70, 28, 136, 30, 33, 162, 27, 99, 167, 90, 241};
+    const uint8_t colors[] = {167, 197, 208, 178, 136, 70, 28, 30, 33, 27, 99, 57, 90, 162, 241};
     static int k = 3;
     static char str[4][32];
     k = k == 3 ? 0 : k + 1;

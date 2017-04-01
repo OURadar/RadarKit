@@ -45,9 +45,10 @@ enum RKRadarState {
     RKRadarStateMomentEngineInitialized              = (1 << 19),
     RKRadarStateSweepEngineInitialized               = (1 << 20),
     RKRadarStateFileEngineInitialized                = (1 << 21),
-    RKRadarStateHealthRelayInitialized               = (1 << 22),
-    RKRadarStateTransceiverInitialized               = (1 << 23),
-    RKRadarStatePedestalInitialized                  = (1 << 24),
+    RKRadarStateFileManagerInitialized               = (1 << 22),
+    RKRadarStateHealthRelayInitialized               = (1 << 23),
+    RKRadarStateTransceiverInitialized               = (1 << 24),
+    RKRadarStatePedestalInitialized                  = (1 << 25),
     RKRadarStateLive                                 = (1 << 31)
 };
 
@@ -98,6 +99,7 @@ struct rk_radar {
     RKMomentEngine             *momentEngine;
     RKSweepEngine              *sweepEngine;
     RKFileEngine               *fileEngine;
+    RKFileManager              *fileManager;
     //
     // Internal copies of things
     //

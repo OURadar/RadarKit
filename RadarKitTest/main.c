@@ -163,6 +163,7 @@ UserParams processInput(int argc, const char **argv) {
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {"read-preference"       , no_argument      , NULL, '1'},
         {"test-json-keywords"    , no_argument      , NULL, '2'},
+        {"test-show-colors"      , no_argument      , NULL, '3'},
         {0, 0, 0, 0}
     };
     
@@ -317,6 +318,10 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case '2':
                 RKTestJSON();
+                exit(EXIT_SUCCESS);
+                break;
+            case '3':
+                RKTestShowColors();
                 exit(EXIT_SUCCESS);
                 break;
             default:
