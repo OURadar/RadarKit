@@ -523,7 +523,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
     sprintf(transceiver->name, "%s<Transceiver>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(12) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->radar = radar;
     transceiver->fs = 5.0e6;
     transceiver->gateCount = RKGetPulseCapacity(radar);
@@ -802,7 +802,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
     sprintf(pedestal->name, "%s<PedestalEmulator>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(10) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->radar = radar;
     pedestal->state = RKEngineStateAllocated;
     
@@ -1157,4 +1157,10 @@ void RKTestJSON(void) {
     char str[] = "{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":3}, \"Event\":\"None\", \"Volt\":1.234}";
     printf("%s (%d)\n", str, (int)strlen(str));
     RKGoThroughKeywords(str);
+}
+
+void RKTestShowColors(void) {
+    for (int k = 0; k < 16; k++) {
+        printf("%s<Color %d>%s\n", RKGetBackgroundColor(), k, RKNoColor);
+    }
 }

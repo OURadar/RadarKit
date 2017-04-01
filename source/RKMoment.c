@@ -615,7 +615,6 @@ static void *pulseGatherer(void *in) {
             skipCounter = engine->pulseBufferDepth / 10;
             RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   pulseIndex = %d vs %d\n",
                   engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
-//                RKLog("%s Warning. Projected an overflow.", engine->name);
             // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
             i = j;
             do {
@@ -711,7 +710,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKMomentEngine));
     sprintf(engine->name, "%s<ProductGatherer>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(7) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;

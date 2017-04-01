@@ -191,7 +191,7 @@ RKFileEngine *RKFileEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKFileEngine));
     sprintf(engine->name, "%s<RawDataRecorder>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColor() : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(9) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKFileEngineSetCacheSize(engine, 32 * 1024 * 1024);
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKFileEngine) + engine->cacheSize;
