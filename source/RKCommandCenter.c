@@ -432,17 +432,6 @@ int socketStreamHandler(RKOperator *O) {
         user->timeLastOut = time;
     }
     
-    // Old-style Health Status
-    if (user->streams & user->access & RKUserFlagStatusHealthOld && time - user->timeLastHealthOut >= 1.0) {
-        k = snprintf(user->string, RKMaximumStringLength - 1,
-                     "Ready@led=3;Status 1@led=3;Status 2@led=3;Pedestal@led=3;Transceiver@led=3;Clock@led=2;DSP@led=2;Recorder@led=2;SSPA H@num=1,-inf dBm;SSPA V@num=1,-inf dBm;FPGA@num=4,55 degC;Temp 1@num=3,43 degC;Temp 2@num=3,41 degC;Temp 3@num=3,36 degC;Temp 4@num=3,22.81 degC;PRF@num=3,%d Hz" RKEOL,
-                     user->radar->configs[user->radar->configIndex].prf[0]);
-        O->delimTx.type = 's';
-        O->delimTx.size = k;
-        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-        user->timeLastHealthOut = time;
-    }
-    
     // Health Status
     if (user->streams & user->access & RKUserFlagStatusHealth) {
         j = 0;
