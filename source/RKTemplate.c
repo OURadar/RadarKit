@@ -8,9 +8,9 @@
 
 #include <RadarKit/RKTemplate.h>
 
-#pragma mark - Internal Functions
+#pragma mark - Helper Functions
 
-#pragma mark - Implementation
+#pragma mark - Delegate Workers
 
 #pragma mark - Life Cycle
 

@@ -1074,12 +1074,16 @@ void RKTestCacheWrite(void) {
         exit(EXIT_FAILURE);
     }
 
-//    RKFileEngineSetCacheSize(fileEngine, 4);
-//    RKFileEngineCacheWrite(fileEngine, bytes, 4);
-//    RKFileEngineCacheWrite(fileEngine, &bytes[4], 2);
-//    RKFileEngineCacheWrite(fileEngine, &bytes[6], 1);
-//    RKFileEngineCacheFlush(fileEngine);
-  
+#ifdef FUNDAMENTAL_CACHE_WRITE_TEST
+
+    RKFileEngineSetCacheSize(fileEngine, 4);
+    RKFileEngineCacheWrite(fileEngine, bytes, 4);
+    RKFileEngineCacheWrite(fileEngine, &bytes[4], 2);
+    RKFileEngineCacheWrite(fileEngine, &bytes[6], 1);
+    RKFileEngineCacheFlush(fileEngine);
+
+#endif
+    
     RKBuffer pulseBuffer;
     RKPulseBufferAlloc(&pulseBuffer, 8192, 100);
     
@@ -1171,9 +1175,7 @@ void RKTestSingleEngine(void) {
         fprintf(stderr, "Unable to allocate a File Manager.\n");
         return;
     }
-    RKRadarDesc desc;
-    memset(&desc, 0, sizeof(RKRadarDesc));
-    RKFileManagerSSetInputOutputBuffer(o, &desc);
+    RKFileManagerSetPathToMonitor(o, "/Users/boonleng/Developer/radarkit");
     RKFileManagerStart(o);
     RKFileManagerFree(o);
 }
