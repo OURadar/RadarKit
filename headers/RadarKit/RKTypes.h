@@ -178,6 +178,7 @@ enum RKResult {
     RKResultFailedToStartHealthWorker,
     RKResultFailedToStartPulseRecorder,
     RKResultFailedToStartPedestalMonitor,
+    RKResultFailedToStartFileManager,
     RKResultPreferenceFileNotFound,
     RKResultFailedToMeasureNoise,
     RKResultSuccess = 0,
@@ -343,7 +344,7 @@ enum RKEngineState {
     RKEngineStateProperlyWired       = (1 << 9),                     // ALl required pointers are properly wired up
     RKEngineStateActivating          = (1 << 10),                    // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 11),                    // The main run loop is being deactivated
-    RKEngineStateActive              = (1 << 11)                     // The engine is active
+    RKEngineStateActive              = (1 << 12)                     // The engine is active
 };
 
 typedef uint32_t RKStatusEnum;

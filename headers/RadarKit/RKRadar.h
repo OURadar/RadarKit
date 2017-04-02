@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef __RadarKit_RKRadar__
-#define __RadarKit_RKRadar__
+#ifndef __RadarKit_Radar__
+#define __RadarKit_Radar__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKServer.h>
@@ -19,7 +19,7 @@
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKSweep.h>
-#include <RadarKit/RKFile.h>
+#include <RadarKit/RKDataRecorder.h>
 #include <RadarKit/RKWaveform.h>
 #include <RadarKit/RKPreference.h>
 #include <RadarKit/RKFileManager.h>
@@ -44,7 +44,7 @@ enum RKRadarState {
     RKRadarStateHealthEngineInitialized              = (1 << 18),
     RKRadarStateMomentEngineInitialized              = (1 << 19),
     RKRadarStateSweepEngineInitialized               = (1 << 20),
-    RKRadarStateFileEngineInitialized                = (1 << 21),
+    RKRadarStateFileRecorderInitialized              = (1 << 21),
     RKRadarStateFileManagerInitialized               = (1 << 22),
     RKRadarStateHealthRelayInitialized               = (1 << 23),
     RKRadarStateTransceiverInitialized               = (1 << 24),
@@ -98,7 +98,7 @@ struct rk_radar {
     RKPulseCompressionEngine   *pulseCompressionEngine;
     RKMomentEngine             *momentEngine;
     RKSweepEngine              *sweepEngine;
-    RKFileEngine               *fileEngine;
+    RKDataRecorder             *dataRecorder;
     RKFileManager              *fileManager;
     //
     // Internal copies of things

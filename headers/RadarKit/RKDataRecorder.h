@@ -1,19 +1,19 @@
 //
-//  RKFile.h
+//  RKDataRecorder.h
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/18/15.
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKFile__
-#define __RadarKit_RKFile__
+#ifndef __RadarKit_DataRecorder__
+#define __RadarKit_DataRecorder__
 
 #include <RadarKit/RKFoundation.h>
 
-typedef struct rk_file_engine RKFileEngine;
+typedef struct rk_data_recorder RKDataRecorder;
 
-struct rk_file_engine {
+struct rk_data_recorder {
     // User set variables
     char                   name[RKNameLength];
     RKRadarDesc            *radarDescription;
@@ -43,20 +43,20 @@ struct rk_file_engine {
     size_t                 memoryUsage;
 };
 
-RKFileEngine *RKFileEngineInit(void);
-void RKFileEngineFree(RKFileEngine *engine);
+RKDataRecorder *RKDataRecorderInit(void);
+void RKDataRecorderFree(RKDataRecorder *engine);
 
-void RKFileEngineSetVerbose(RKFileEngine *, const int);
-void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *,
+void RKDataRecorderSetVerbose(RKDataRecorder *, const int);
+void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
-void RKFileEngineSetDoNotWrite(RKFileEngine *engine, const bool value);
-int RKFileEngineStart(RKFileEngine *engine);
-int RKFileEngineStop(RKFileEngine *engine);
-char *RKFileEngineStatusString(RKFileEngine *engine);
+void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value);
+int RKDataRecorderStart(RKDataRecorder *engine);
+int RKDataRecorderStop(RKDataRecorder *engine);
+char *RKDataRecorderStatusString(RKDataRecorder *engine);
 
-void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size);
-uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const uint32_t size);
-uint32_t RKFileEngineCacheFlush(RKFileEngine *engine);
+void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size);
+uint32_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const uint32_t size);
+uint32_t RKDataRecorderCacheFlush(RKDataRecorder *engine);
 
 #endif /* defined(__RadarKit_RKFile__) */

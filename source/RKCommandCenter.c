@@ -376,7 +376,7 @@ int socketStreamHandler(RKOperator *O) {
                          RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),
                          RKMomentEngineStatusString(user->radar->momentEngine),
-                         RKFileEngineStatusString(user->radar->fileEngine));
+                         RKDataRecorderStatusString(user->radar->dataRecorder));
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -403,7 +403,7 @@ int socketStreamHandler(RKOperator *O) {
                          user->radar->healthEngine->state,
                          user->radar->healthIndex,
                          user->radar->sweepEngine->state,
-                         user->radar->fileEngine->state);
+                         user->radar->dataRecorder->state);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
