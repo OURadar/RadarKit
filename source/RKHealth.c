@@ -324,9 +324,14 @@ void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
     engine->healthBuffer = healthBuffer;
     engine->healthIndex = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }

@@ -37,8 +37,10 @@ static void *fileWatcher(void *in) {
     
     // List all the files. Keep a copy of the list
     while ((dir = readdir(did)) != NULL) {
-        stat(dir->d_name, &st);
-        printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
+        if (dir->d_type == DT_REG) {
+            stat(dir->d_name, &st);
+            printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
+        }
     }
 
     while (engine->state & RKEngineStateActive) {
@@ -83,12 +85,17 @@ void RKFileManagerSetVerbose(RKFileManager *engine, const int verbose) {
 }
 
 void RKFileManagerSSetInputOutputBuffer(RKFileManager *engine, RKRadarDesc *desc) {
-    engine->radarDescription  = desc;
+    engine->radarDescription = desc;
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 #pragma mark - Interactions
 
 int RKFileManagerStart(RKFileManager *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }

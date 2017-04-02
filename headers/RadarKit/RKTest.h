@@ -82,5 +82,6 @@ void RKTestCacheWrite(void);
 void RKTestWindow(void);
 void RKTestJSON(void);
 void RKTestShowColors(void);
+void RKTestSingleEngine(void);
 
 #endif /* defined(__RadarKit_RKFile__) */
