@@ -1181,7 +1181,8 @@ void RKTestSingleEngine(void) {
         fprintf(stderr, "Unable to allocate a File Manager.\n");
         return;
     }
-    RKFileManagerSetPathToMonitor(o, "/Users/boonleng/Developer/radarkit");
+    //RKFileManagerSetPathToMonitor(o, "/Users/boonleng/Developer/radarkit");
+    //RKFileManagerSetPathToMonitor(o, "");
     RKFileManagerStart(o);
     RKFileManagerFree(o);
 }
