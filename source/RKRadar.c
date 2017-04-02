@@ -338,7 +338,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // File manager
     radar->fileManager = RKFileManagerInit();
-    RKFileManagerSSetInputOutputBuffer(radar->fileManager, &radar->desc);
+    RKFileManagerSetInputOutputBuffer(radar->fileManager, &radar->desc);
     radar->memoryUsage += radar->fileManager->memoryUsage;
     radar->state |= RKRadarStateFileManagerInitialized;
 

@@ -11,11 +11,14 @@
 
 #include <RadarKit/RKFoundation.h>
 
+#define RKFileManagerDefaultUsageLimit   (size_t)256 * 1024 * 1024 * 1024
+
 typedef struct rk_file_manager {
     // User set variables
     char                   name[RKNameLength];
     RKRadarDesc            *radarDescription;
     uint8_t                verbose;
+    char                   dataPath[RKMaximumPathLength];
     size_t                 rawDataUsagelimit;
     
     // Program set variables
@@ -29,7 +32,9 @@ typedef struct rk_file_manager {
 RKFileManager *RKFileManagerInit(void);
 void RKFileManagerFree(RKFileManager *);
 void RKFileManagerSetVerbose(RKFileManager *, const int);
-void RKFileManagerSSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
+void RKFileManagerSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
+
+void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);

@@ -28,18 +28,28 @@ static void *fileWatcher(void *in) {
     path[RKMaximumPathLength - 1] = '\0';
 
     // Raw data path
-    if (strlen(engine->radarDescription->dataPath)) {
+    if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
+        printf("Using radar descrtiption ...\n");
         snprintf(path, RKMaximumPathLength - 1, "%s/iq", engine->radarDescription->dataPath);
+    } else if (strlen(engine->dataPath)) {
+        printf("Using supplied data path ...\n");
+        snprintf(path, RKMaximumPathLength - 1, "%s/iq", engine->dataPath);
     } else {
+        printf("Using bare path\n");
         snprintf(path, RKMaximumPathLength - 1, "iq");
     }
+    
     DIR *did = opendir(path);
+    if (did == NULL) {
+        RKLog("%s Error. Unable to access director '%s'\n", path);
+        return (void *)1;
+    }
     
     // List all the files. Keep a copy of the list
     while ((dir = readdir(did)) != NULL) {
         if (dir->d_type == DT_REG) {
             stat(dir->d_name, &st);
-            printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
+            printf("%s %lld\n", dir->d_name, st.st_size);
         }
     }
 
@@ -84,17 +94,22 @@ void RKFileManagerSetVerbose(RKFileManager *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKFileManagerSSetInputOutputBuffer(RKFileManager *engine, RKRadarDesc *desc) {
+void RKFileManagerSetInputOutputBuffer(RKFileManager *engine, RKRadarDesc *desc) {
     engine->radarDescription = desc;
-    engine->state |= RKEngineStateProperlyWired;
+}
+
+void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
+    strncpy(engine->dataPath, path, RKMaximumPathLength - 1);
 }
 
 #pragma mark - Interactions
 
 int RKFileManagerStart(RKFileManager *engine) {
-    if (!(engine->state & RKEngineStateProperlyWired)) {
-        RKLog("%s Error. Not properly wired.\n", engine->name);
-        return RKResultEngineNotWired;
+    // File manager is always assumed wired
+    engine->state |= RKEngineStateProperlyWired;
+    if (engine->rawDataUsagelimit == 0) {
+        engine->rawDataUsagelimit = RKFileManagerDefaultUsageLimit;
+        RKLog("%s Usage limit not set.  Use default = %s GB\n", engine->name, RKIntegerToCommaStyleString(engine->rawDataUsagelimit / 1073741824));
     }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
