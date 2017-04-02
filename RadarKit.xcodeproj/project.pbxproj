@@ -35,6 +35,8 @@
 		B54795251D91A86F00E43F6A /* RKCommandCenter.c in Sources */ = {isa = PBXBuildFile; fileRef = B59471981D8C4F0500EEE77C /* RKCommandCenter.c */; };
 		B54795261D91A87200E43F6A /* RKMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B52E45C41D9174A500FC1113 /* RKMoment.c */; };
 		B54795271D91A87700E43F6A /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B594718E1D89B43400EEE77C /* RadarKit.c */; };
+		B55557C11E907C5E00B6AEAC /* RKFileManager.c in Sources */ = {isa = PBXBuildFile; fileRef = B528D9631E74EEB000A7328F /* RKFileManager.c */; };
+		B55557C21E907C6B00B6AEAC /* RKWaveform.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5411E5A3E60000C8503 /* RKWaveform.c */; };
 		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
 		B55E437F1DB6668F003C40CF /* RKSIMD.c in Sources */ = {isa = PBXBuildFile; fileRef = B55E437E1DB6668F003C40CF /* RKSIMD.c */; };
 		B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweep.h */; };
@@ -465,6 +467,7 @@
 				B5C1F3571AB9CB69004F88CD /* RKWindow.c in Sources */,
 				B506C1431DC7DF570007BAE0 /* RKSIMD.c in Sources */,
 				B5C1F35C1AB9CBAA004F88CD /* RKDSP.c in Sources */,
+				B55557C21E907C6B00B6AEAC /* RKWaveform.c in Sources */,
 				B5E6D94F1E1C4A2B00DFBBA9 /* RKPosition.c in Sources */,
 				B565B5381E5A38B1000C8503 /* RKPreference.c in Sources */,
 				B5C1F3521AB9C917004F88CD /* RKPulseCompression.c in Sources */,
@@ -484,6 +487,7 @@
 				B55F5F251E2D205D00FA8B2E /* RKConfig.c in Sources */,
 				B58CAB491E3D5721009B539F /* RKHealth.c in Sources */,
 				B54795251D91A86F00E43F6A /* RKCommandCenter.c in Sources */,
+				B55557C11E907C5E00B6AEAC /* RKFileManager.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

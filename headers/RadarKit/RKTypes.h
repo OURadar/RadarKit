@@ -146,6 +146,7 @@ typedef struct rk_modulo_path {
 
 enum RKResult {
     RKResultTimeout = -99,
+    RKResultEngineNotWired,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
     RKResultErrorCreatingOperatorRoutine,
@@ -339,8 +340,9 @@ enum RKEngineState {
     RKEngineStateSleepMask           = 0x0F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
-    RKEngineStateActivating          = (1 << 9),                     // The main run loop is being activated
-    RKEngineStateDeactivating        = (1 << 10),                    // The main run loop is being deactivated, RKEngineStateActive is immediatelu
+    RKEngineStateProperlyWired       = (1 << 9),                     // ALl required pointers are properly wired up
+    RKEngineStateActivating          = (1 << 10),                    // The main run loop is being activated
+    RKEngineStateDeactivating        = (1 << 11),                    // The main run loop is being deactivated
     RKEngineStateActive              = (1 << 11)                     // The engine is active
 };
 

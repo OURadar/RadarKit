@@ -1164,3 +1164,16 @@ void RKTestShowColors(void) {
         printf("%s<Color %d>%s\n", RKGetBackgroundColor(), k, RKNoColor);
     }
 }
+
+void RKTestSingleEngine(void) {
+    RKFileManager *o = RKFileManagerInit();
+    if (o == NULL) {
+        fprintf(stderr, "Unable to allocate a File Manager.\n");
+        return;
+    }
+    RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
+    RKFileManagerSSetInputOutputBuffer(o, &desc);
+    RKFileManagerStart(o);
+    RKFileManagerFree(o);
+}

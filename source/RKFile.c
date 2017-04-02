@@ -222,6 +222,7 @@ void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *desc,
     engine->pulseBuffer       = pulseBuffer;
     engine->pulseIndex        = pulseIndex;
     engine->pulseBufferDepth  = pulseBufferDepth;
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 void RKFileEngineSetDoNotWrite(RKFileEngine *engine, const bool value) {
@@ -247,6 +248,10 @@ void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size) {
 #pragma mark - Interactions
 
 int RKFileEngineStart(RKFileEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }

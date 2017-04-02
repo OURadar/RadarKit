@@ -337,11 +337,16 @@ void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
     engine->pulseBuffer         = pulseBuffer;
     engine->pulseIndex          = pulseIndex;
     engine->pulseBufferDepth    = pulseBufferDepth;
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 #pragma mark - Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }

@@ -830,6 +830,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, RKRadarDesc *de
     for (int i = 0; i < rayBufferDepth; i++) {
         engine->momentSource[i].modulo = pulseBufferDepth;
     }
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const int count) {
@@ -858,6 +859,10 @@ void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
 #pragma mark - Interactions
 
 int RKMomentEngineStart(RKMomentEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->coreCount == 0) {
         engine->coreCount = 4;
     }

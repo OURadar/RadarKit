@@ -682,6 +682,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
         RKLog("%s Error. Unable to allocate planIndices.\n", engine->name);
         exit(EXIT_FAILURE);
     }
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count) {
@@ -783,6 +784,10 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
 #pragma mark - Interactions
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->filterGroupCount == 0) {
         // Set to default impulse as matched filter
         RKPulseCompressionSetFilterToImpulse(engine);

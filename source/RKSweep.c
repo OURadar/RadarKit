@@ -525,6 +525,7 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
     engine->rayBufferDepth    = rayBufferDepth;
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
@@ -544,6 +545,10 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
 #pragma mark - Interactions
 
 int RKSweepEngineStart(RKSweepEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
