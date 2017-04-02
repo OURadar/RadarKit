@@ -35,15 +35,17 @@ static void *fileWatcher(void *in) {
     }
     DIR *did = opendir(path);
     
+    // List all the files. Keep a copy of the list
     while ((dir = readdir(did)) != NULL) {
         stat(dir->d_name, &st);
         printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
     }
+
     while (engine->state & RKEngineStateActive) {
-        if ((dir = readdir(did)) != NULL) {
-            stat(dir->d_name, &st);
-            printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
-        }
+//        if ((dir = readdir(did)) != NULL) {
+//            stat(dir->d_name, &st);
+//            printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
+//        }
         sleep(1);
         k++;
     }

@@ -33,5 +33,6 @@ void RKFileManagerSSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);
+int RKFileManagerAddFile(RKFileManager *, const char *);
 
 #endif
