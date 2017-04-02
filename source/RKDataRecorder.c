@@ -1,21 +1,21 @@
 //
-//  RKFile.c
+//  RKDataRecorder.c
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/18/15.
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKFile.h>
+#include <RadarKit/RKDataRecorder.h>
 
 // Internal Functions
 
-static void RKFileEngineUpdateStatusString(RKFileEngine *);
+static void RKDataRecorderUpdateStatusString(RKDataRecorder *);
 static void *pulseRecorder(void *);
 
 #pragma mark - Helper Functions
 
-static void RKFileEngineUpdateStatusString(RKFileEngine *engine) {
+static void RKDataRecorderUpdateStatusString(RKDataRecorder *engine) {
     int i;
     char *string;
     
@@ -42,7 +42,7 @@ static void RKFileEngineUpdateStatusString(RKFileEngine *engine) {
 #pragma mark - Delegate Workers
 
 static void *pulseRecorder(void *in) {
-    RKFileEngine *engine = (RKFileEngine *)in;
+    RKDataRecorder *engine = (RKDataRecorder *)in;
     
     int i, j, k, s;
     
@@ -122,7 +122,7 @@ static void *pulseRecorder(void *in) {
                     if (engine->verbose) {
                         RKLog("%s Closing %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
                     }
-                    len += RKFileEngineCacheFlush(engine);
+                    len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
                 }
             }
@@ -148,8 +148,8 @@ static void *pulseRecorder(void *in) {
                 
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 
-                len = RKFileEngineCacheWrite(engine, fileHeader, 4096);
-                len += RKFileEngineCacheWrite(engine, config, sizeof(RKConfig));
+                len = RKDataRecorderCacheWrite(engine, fileHeader, 4096);
+                len += RKDataRecorderCacheWrite(engine, config, sizeof(RKConfig));
             }
         }
         
@@ -157,16 +157,16 @@ static void *pulseRecorder(void *in) {
         if (engine->doNotWrite) {
             len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
         } else {
-            len += RKFileEngineCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
-            len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-            len += RKFileEngineCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+            len += RKDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
+            len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+            len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
         }
         
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
-            RKFileEngineUpdateStatusString(engine);
+            RKDataRecorderUpdateStatusString(engine);
         }
         
         // Going to wait mode soon
@@ -183,24 +183,24 @@ static void *pulseRecorder(void *in) {
 
 #pragma mark - Life Cycle
 
-RKFileEngine *RKFileEngineInit(void) {
-    RKFileEngine *engine = (RKFileEngine *)malloc(sizeof(RKFileEngine));
+RKDataRecorder *RKDataRecorderInit(void) {
+    RKDataRecorder *engine = (RKDataRecorder *)malloc(sizeof(RKDataRecorder));
     if (engine == NULL) {
-        RKLog("Error. Unable to allocate RKFileEngine.\r");
+        RKLog("Error. Unable to allocate RKDataRecorder.\r");
         exit(EXIT_FAILURE);
     }
-    memset(engine, 0, sizeof(RKFileEngine));
+    memset(engine, 0, sizeof(RKDataRecorder));
     sprintf(engine->name, "%s<RawDataRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(8) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-    RKFileEngineSetCacheSize(engine, 32 * 1024 * 1024);
+    RKDataRecorderSetCacheSize(engine, 32 * 1024 * 1024);
     engine->state = RKEngineStateAllocated;
-    engine->memoryUsage = sizeof(RKFileEngine) + engine->cacheSize;
+    engine->memoryUsage = sizeof(RKDataRecorder) + engine->cacheSize;
     return engine;
 }
 
-void RKFileEngineFree(RKFileEngine *engine) {
+void RKDataRecorderFree(RKDataRecorder *engine) {
     if (engine->state & RKEngineStateActive) {
-        RKFileEngineStop(engine);
+        RKDataRecorderStop(engine);
     }
     free(engine->cache);
     free(engine);
@@ -208,11 +208,11 @@ void RKFileEngineFree(RKFileEngine *engine) {
 
 #pragma mark - Properties
 
-void RKFileEngineSetVerbose(RKFileEngine *engine, const int verbose) {
+void RKDataRecorderSetVerbose(RKDataRecorder *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *desc,
+void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *desc,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
     engine->radarDescription  = desc;
@@ -225,11 +225,11 @@ void RKFileEngineSetInputOutputBuffers(RKFileEngine *engine, RKRadarDesc *desc,
     engine->state |= RKEngineStateProperlyWired;
 }
 
-void RKFileEngineSetDoNotWrite(RKFileEngine *engine, const bool value) {
+void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value) {
     engine->doNotWrite = value;
 }
 
-void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size) {
+void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size) {
     if (engine->cacheSize == size) {
         return;
     }
@@ -247,7 +247,7 @@ void RKFileEngineSetCacheSize(RKFileEngine *engine, uint32_t size) {
 
 #pragma mark - Interactions
 
-int RKFileEngineStart(RKFileEngine *engine) {
+int RKDataRecorderStart(RKDataRecorder *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
         RKLog("%s Error. Not properly wired.\n", engine->name);
         return RKResultEngineNotWired;
@@ -266,7 +266,7 @@ int RKFileEngineStart(RKFileEngine *engine) {
     return RKResultSuccess;
 }
 
-int RKFileEngineStop(RKFileEngine *engine) {
+int RKDataRecorderStop(RKDataRecorder *engine) {
     if (engine->state & RKEngineStateDeactivating) {
         if (engine->verbose > 1) {
             RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
@@ -279,14 +279,17 @@ int RKFileEngineStop(RKFileEngine *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidPulseRecorder, NULL);
+    engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
     }
-    engine->state = RKEngineStateAllocated;
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+    }
     return RKResultSuccess;
 }
 
-uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const uint32_t size) {
+uint32_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const uint32_t size) {
     if (size == 0) {
         return 0;
     }
@@ -319,7 +322,7 @@ uint32_t RKFileEngineCacheWrite(RKFileEngine *engine, const void *payload, const
     return writtenSize;
 }
 
-uint32_t RKFileEngineCacheFlush(RKFileEngine *engine) {
+uint32_t RKDataRecorderCacheFlush(RKDataRecorder *engine) {
     if (engine->cacheWriteIndex == 0) {
         return 0;
     }
@@ -328,6 +331,6 @@ uint32_t RKFileEngineCacheFlush(RKFileEngine *engine) {
     return writtenSize;
 }
 
-char *RKFileEngineStatusString(RKFileEngine *engine) {
+char *RKDataRecorderStatusString(RKDataRecorder *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

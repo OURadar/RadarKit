@@ -45,6 +45,7 @@ typedef struct rk_test_transceiver {
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
+    size_t         memoryUsage;
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {
@@ -60,6 +61,7 @@ typedef struct rk_test_pedestal {
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
+    size_t         memoryUsage;
 } RKTestPedestal;
 
 void RKTestModuloMath(void);

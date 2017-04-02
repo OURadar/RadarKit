@@ -829,12 +829,15 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidPulseWatcher, NULL);
-    if (engine->verbose) {
-        RKLog("%s Stopped\n", engine->name);
-    }
     free(engine->workers);
     engine->workers = NULL;
-    engine->state = RKEngineStateAllocated;
+    engine->state ^= RKEngineStateDeactivating;
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+    }
     return RKResultNoError;
 }
 

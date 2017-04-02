@@ -17,31 +17,29 @@ static void *fileWatcher(void *in) {
     
     int k = 0;
     
-    RKLog("%s Started.   mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
-    
-    engine->state |= RKEngineStateActive;
-    engine->state ^= RKEngineStateActivating;
-    
     struct stat st;
     struct dirent *dir;
     char path[RKMaximumPathLength];
     path[RKMaximumPathLength - 1] = '\0';
-
+    
+    RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
+    
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
+    
     // Raw data path
     if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-        printf("Using radar descrtiption ...\n");
         snprintf(path, RKMaximumPathLength - 1, "%s/iq", engine->radarDescription->dataPath);
     } else if (strlen(engine->dataPath)) {
-        printf("Using supplied data path ...\n");
         snprintf(path, RKMaximumPathLength - 1, "%s/iq", engine->dataPath);
     } else {
-        printf("Using bare path\n");
         snprintf(path, RKMaximumPathLength - 1, "iq");
     }
     
+    RKLog("%s Monitoring path '%s'\n", engine->name, path);
     DIR *did = opendir(path);
     if (did == NULL) {
-        RKLog("%s Error. Unable to access director '%s'\n", path);
+        RKLog("%s Error. Unable to access director '%s'\n", engine->name, path);
         return (void *)1;
     }
     
@@ -58,8 +56,10 @@ static void *fileWatcher(void *in) {
 //            stat(dir->d_name, &st);
 //            printf("%s %d %lld\n", dir->d_name, dir->d_type, st.st_size);
 //        }
-        sleep(1);
-        k++;
+        k = 0;
+        while (k++ < 10 && engine->state & RKEngineStateActive) {
+            usleep(100000);
+        }
     }
 
     return NULL;
@@ -117,7 +117,7 @@ int RKFileManagerStart(RKFileManager *engine) {
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidFileWatcher, NULL, fileWatcher, engine) != 0) {
         RKLog("Error. Failed to start a ray gatherer.\n");
-        return RKResultFailedToStartRayGatherer;
+        return RKResultFailedToStartFileManager;
     }
     while (!(engine->state & RKEngineStateActive)) {
         usleep(10000);
@@ -127,7 +127,7 @@ int RKFileManagerStart(RKFileManager *engine) {
 
 int RKFileManagerStop(RKFileManager *engine) {
     if (engine->state & RKEngineStateDeactivating) {
-        if (engine->verbose > 1) {
+        if (engine->verbose) {
             RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
         }
         return RKResultEngineDeactivatedMultipleTimes;
@@ -138,9 +138,12 @@ int RKFileManagerStop(RKFileManager *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidFileWatcher, NULL);
+    engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
     }
-    engine->state = RKEngineStateAllocated;
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+    }
     return RKResultSuccess;
 }

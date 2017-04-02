@@ -576,9 +576,12 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidRayGatherer, NULL);
+    engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
     }
-    engine->state = RKEngineStateAllocated;
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+    }
     return RKResultSuccess;
 }

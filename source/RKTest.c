@@ -414,10 +414,16 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     const int chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     
+    gettimeofday(&t0, NULL);
+
+    transceiver->state |= RKEngineStateActive;
+    transceiver->state &= ~RKEngineStateActivating;
+
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
+
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s fs = %s MHz   PRF = %s Hz   gateCount = %s   range = %.1f km\n",
+        RKLog("%s PRF = %s Hz   gateCount = %s   range = %.1f km\n",
               transceiver->name,
-              RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
               RKIntegerToCommaStyleString((int)(1.0f / transceiver->prt)),
               RKIntegerToCommaStyleString(transceiver->gateCount),
               transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3);
@@ -427,11 +433,6 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
-    gettimeofday(&t0, NULL);
-
-    transceiver->state |= RKEngineStateActive;
-    transceiver->state &= ~RKEngineStateActivating;
-
     //    uint32_t gateCount1 = 60000;
     //uint32_t gateCount2 = 16000;
 
@@ -522,8 +523,9 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
-    sprintf(transceiver->name, "%s<Transceiver>%s",
+    sprintf(transceiver->name, "%s<TransceiverEmulator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(12) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    transceiver->memoryUsage = sizeof(RKTestTransceiver);
     transceiver->radar = radar;
     transceiver->fs = 5.0e6;
     transceiver->gateCount = RKGetPulseCapacity(radar);
@@ -601,7 +603,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
     if (!strcmp(command, "disconnect")) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
         }
         transceiver->state |= RKEngineStateDeactivating;
@@ -680,12 +682,12 @@ void *RKTestPedestalRunLoop(void *input) {
     bool scanEndRHI = true;
     bool elTransition = false;
 
-    RKLog("%s Starting ...\n", pedestal->name);
-    
     gettimeofday(&t0, NULL);
 
     pedestal->state |= RKEngineStateActive;
     pedestal->state &= ~RKEngineStateActivating;
+
+    RKLog("%s Started.   mem = %s B\n", pedestal->name, RKIntegerToCommaStyleString(pedestal->memoryUsage));
     
     int scanMode = pedestal->scanMode;
     
@@ -803,6 +805,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     memset(pedestal, 0, sizeof(RKTestPedestal));
     sprintf(pedestal->name, "%s<PedestalEmulator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(10) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    pedestal->memoryUsage = sizeof(RKTestPedestal);
     pedestal->radar = radar;
     pedestal->state = RKEngineStateAllocated;
     
@@ -826,6 +829,9 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     char sval[4][64];
     
     if (!strcmp(command, "disconnect")) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("%s Disconnecting ...", pedestal->name);
+        }
         pedestal->state |= RKEngineStateDeactivating;
         pedestal->state ^= RKEngineStateActive;
         pthread_join(pedestal->tidRunLoop, NULL);
@@ -1067,7 +1073,7 @@ void RKTestOneRay(void) {
 }
 
 void RKTestCacheWrite(void) {
-    RKFileEngine *fileEngine = RKFileEngineInit();
+    RKDataRecorder *fileEngine = RKDataRecorderInit();
     fileEngine->fd = open("._testwrite", O_CREAT | O_WRONLY, 0000644);
     if (fileEngine->fd < 0) {
         RKLog("Error. Unable to open file.\n");
@@ -1076,11 +1082,11 @@ void RKTestCacheWrite(void) {
 
 #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
-    RKFileEngineSetCacheSize(fileEngine, 4);
-    RKFileEngineCacheWrite(fileEngine, bytes, 4);
-    RKFileEngineCacheWrite(fileEngine, &bytes[4], 2);
-    RKFileEngineCacheWrite(fileEngine, &bytes[6], 1);
-    RKFileEngineCacheFlush(fileEngine);
+    RKDataRecorderSetCacheSize(fileEngine, 4);
+    RKDataRecorderCacheWrite(fileEngine, bytes, 4);
+    RKDataRecorderCacheWrite(fileEngine, &bytes[4], 2);
+    RKDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
+    RKDataRecorderCacheFlush(fileEngine);
 
 #endif
     
@@ -1098,12 +1104,12 @@ void RKTestCacheWrite(void) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
         pulse->header.gateCount = 16000;
         
-        len += RKFileEngineCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
-        len += RKFileEngineCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-        len += RKFileEngineCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
+        len += RKDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
         
         if (k % 2000 == 0) {
-            RKFileEngineCacheFlush(fileEngine);
+            RKDataRecorderCacheFlush(fileEngine);
 
             gettimeofday(&time, NULL);
             t0 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
@@ -1122,7 +1128,7 @@ void RKTestCacheWrite(void) {
     // Remove the files that was just created.
     system("rm -f ._testwrite");
     
-    RKFileEngineFree(fileEngine);
+    RKDataRecorderFree(fileEngine);
 }
 
 void RKTestWindow(void) {
