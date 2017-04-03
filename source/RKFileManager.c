@@ -8,9 +8,10 @@
 
 #include <RadarKit/RKFileManager.h>
 
-#define RKFileManagerCapacity  10000
+#define RKFileManagerFolderListCapacity  60
+#define RKFileManagerFileListCapacity    10000
 
-typedef char RKFilename[RKNameLength];
+typedef char RKPathname[RKNameLength];
 typedef struct _rk_indexed_stat {
     int      index;
     time_t   time;
@@ -19,10 +20,41 @@ typedef struct _rk_indexed_stat {
 
 #pragma mark - Helper Functions
 
+// Compare two unix time in RKIndexedStat
 static int struct_cmp_by_time(const void *a, const void *b) {
     RKIndexedStat *x = (RKIndexedStat *)a;
     RKIndexedStat *y = (RKIndexedStat *)b;
     return (int)(x->time - y->time);
+}
+
+// Compare two filenames in the pattern of YYYYMMDD, e.g., 20170402
+static int string_cmp_by_pseudo_time(const void *a, const void *b) {
+    return strncmp((char *)a, (char *)b, 8);
+}
+
+static int listElementsInFolder(RKPathname *list, const int maximumCapacity, const char *path, uint8_t type) {
+    int k = 0;
+    struct dirent *dir;
+    DIR *did = opendir(path);
+    if (did == NULL) {
+        fprintf(stderr, "Unable to list folder '%s'\n", path);
+        return -1;
+    }
+    while ((dir = readdir(did)) != NULL) {
+        if (dir->d_type == type) {
+            sprintf(list[k], "%s/%s", path, dir->d_name);
+            k++;
+        }
+    }
+    return k;
+}
+
+static int listFoldersInFolder(RKPathname *list, const int maximumCapacity, const char *path) {
+    return listElementsInFolder(list, maximumCapacity, path, DT_DIR);
+}
+
+static int listFilesInFolder(RKPathname *list, const int maximumCapacity, const char *path) {
+    return listElementsInFolder(list, maximumCapacity, path, DT_REG);
 }
 
 #pragma mark - Delegate Workers
@@ -32,8 +64,7 @@ static void *fileRemover(void *in) {
     RKFileManager *engine = me->parent;
     
     int k;
-    struct dirent *dir;
-    
+
     const int c = me->id;
 
     char name[RKNameLength];
@@ -54,18 +85,24 @@ static void *fileRemover(void *in) {
     }
     
     size_t mem = 0;
-    RKFilename *filenames = (RKFilename *)malloc(RKFileManagerCapacity * sizeof(RKFilename));
-    if (filenames == NULL) {
-        RKLog("%s %s Error. unable to allocate space for filenames.\n", engine->name, name);
+    RKPathname *folders = (RKPathname *)malloc(RKFileManagerFolderListCapacity * sizeof(RKPathname));
+    if (folders == NULL) {
+        RKLog("%s %s Error. unable to allocate space for folder list.\n", engine->name, name);
     }
-    memset(filenames, 0, RKFileManagerCapacity * sizeof(RKFilename));
-    mem += RKFileManagerCapacity * sizeof(RKFilename);
-    RKIndexedStat *indexedStats = (RKIndexedStat *)malloc(RKFileManagerCapacity * sizeof(RKIndexedStat));
+    memset(folders, 0, RKFileManagerFolderListCapacity * sizeof(RKPathname));
+    mem += RKFileManagerFolderListCapacity * sizeof(RKPathname);
+    RKPathname *filenames = (RKPathname *)malloc(RKFileManagerFileListCapacity * sizeof(RKPathname));
+    if (filenames == NULL) {
+        RKLog("%s %s Error. unable to allocate space for file list.\n", engine->name, name);
+    }
+    memset(filenames, 0, RKFileManagerFileListCapacity * sizeof(RKPathname));
+    mem += RKFileManagerFileListCapacity * sizeof(RKPathname);
+    RKIndexedStat *indexedStats = (RKIndexedStat *)malloc(RKFileManagerFileListCapacity * sizeof(RKIndexedStat));
     if (indexedStats == NULL) {
         RKLog("%s %s Error. unable to allocate space for indexed stats.\n", engine->name, name);
     }
-    memset(indexedStats, 0, RKFileManagerCapacity * sizeof(RKIndexedStat));
-    mem += RKFileManagerCapacity * sizeof(RKIndexedStat);
+    memset(indexedStats, 0, RKFileManagerFileListCapacity * sizeof(RKIndexedStat));
+    mem += RKFileManagerFileListCapacity * sizeof(RKIndexedStat);
     
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
@@ -74,39 +111,36 @@ static void *fileRemover(void *in) {
           engine->name, name, RKIntegerToCommaStyleString(mem), me->path);
     
     pthread_mutex_unlock(&engine->mutex);
-    
-    DIR *did = opendir(me->path);
-    if (did == NULL) {
-        RKLog("%s Error. Unable to access directory '%s'\n", engine->name, me->path);
-        return (void *)1;
+
+    int folderCount = listFoldersInFolder(folders, RKFileManagerFolderListCapacity, me->path);
+
+    qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
+
+    // Gather the filenames in the folders
+    int fileCount = 0;
+    for (k = 0; k < folderCount; k++) {
+        fileCount += listFilesInFolder(&filenames[fileCount], RKFileManagerFileListCapacity - fileCount, folders[k]);
     }
-    
-    // List all the files. Keep a copy of the list
-    k = 0;
+
+    // Gather the stats of the files
     struct stat fileStat;
     size_t totalUsage = 0;
-    while ((dir = readdir(did)) != NULL) {
-        if (dir->d_type == DT_REG) {
-            sprintf(filenames[k], "%s/%s", me->path, dir->d_name);
-            stat(filenames[k], &fileStat);
-            // Get creation time
-            indexedStats[k].index = k;
-            indexedStats[k].time = fileStat.st_birthtimespec.tv_sec;
-            indexedStats[k].size = fileStat.st_size;
-            totalUsage += fileStat.st_size;
-            printf("%s %12s B  %ld\n", filenames[k], RKIntegerToCommaStyleString(indexedStats[k].size), indexedStats[k].time);
-            k++;
-        }
+    for (k = 0; k < fileCount; k++) {
+        //printf("%3d. %s\n", k, filenames[k]);
+        stat(filenames[k], &fileStat);
+        indexedStats[k].index = k;
+        indexedStats[k].time = fileStat.st_mtime;
+        indexedStats[k].size = fileStat.st_size;
+        totalUsage += fileStat.st_size;
     }
-    printf("Total usage: %s B\n", RKIntegerToCommaStyleString(totalUsage));
-    
-    qsort(indexedStats, k, sizeof(RKIndexedStat), struct_cmp_by_time);
-    
-    while (k > 0) {
-        k--;
-        printf("%d %zu -> %s\n", indexedStats[k].index, indexedStats[k].time, filenames[indexedStats[k].index]);
+
+    qsort(indexedStats, fileCount, sizeof(RKIndexedStat), struct_cmp_by_time);
+
+    for (k = 0; k < fileCount; k++) {
+        printf("%3d -> %3d. %s  %s\n", k, indexedStats[k].index, filenames[indexedStats[k].index], RKIntegerToCommaStyleString(indexedStats[k].size));
     }
-    
+    printf("Total count = %d   usage: %s B\n", fileCount, RKIntegerToCommaStyleString(totalUsage));
+
     while (engine->state & RKEngineStateActive) {
         k = 0;
         while (k++ < 10 && engine->state & RKEngineStateActive) {

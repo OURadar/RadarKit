@@ -1182,7 +1182,7 @@ void RKTestSingleEngine(void) {
         return;
     }
     //RKFileManagerSetPathToMonitor(o, "/Users/boonleng/Developer/radarkit");
-    //RKFileManagerSetPathToMonitor(o, "");
+    RKFileManagerSetPathToMonitor(o, "data");
     RKFileManagerStart(o);
     RKFileManagerFree(o);
 }
