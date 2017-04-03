@@ -322,7 +322,8 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case '3':
                 //RKTestShowColors();
-                RKTestSingleEngine();
+                //RKTestSingleEngine();
+                RKTestSingleCommand();
                 exit(EXIT_SUCCESS);
                 break;
             default:

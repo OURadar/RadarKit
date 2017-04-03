@@ -78,5 +78,6 @@ float RKUMinDiff(const float minuend, const float subtrahend);
 
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 void RKGoThroughKeywords(const char *string);
+void RKReplaceKeyValue(char *string, const char *key, int value);
 
 #endif /* rk_misc_h */
