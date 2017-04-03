@@ -102,7 +102,7 @@ static void *healthConsolidator(void *in) {
 
     gettimeofday(&t1, NULL);
 
-    time_t minutesSinceEpoch;
+    time_t unixTime;
     struct tm *timeStruct;
     int min = -1;
 
@@ -253,8 +253,8 @@ static void *healthConsolidator(void *in) {
         RKProcessHealthKeywords(engine, health->string);
 
         // Log a copy
-        minutesSinceEpoch = (time_t)t0.tv_sec;
-        timeStruct = gmtime(&minutesSinceEpoch);
+        unixTime = (time_t)t0.tv_sec;
+        timeStruct = gmtime(&unixTime);
         if (min != timeStruct->tm_min) {
             min = timeStruct->tm_min;
             if (engine->healthLog != NULL) {
@@ -268,7 +268,7 @@ static void *healthConsolidator(void *in) {
             }
             i += strftime(filename + i, 10, "%Y%m%d/", timeStruct);
             i += sprintf(filename + i, "%s-", engine->radarDescription->filePrefix);
-            i += strftime(filename + i, 20, "%Y%m%d-%H%M.txt", timeStruct);
+            i += strftime(filename + i, 20, "%Y%m%d-%H%M.json", timeStruct);
             RKPreparePath(filename);
             RKLog("%s %s\n", engine->name, filename);
             engine->healthLog = fopen(filename, "w");
