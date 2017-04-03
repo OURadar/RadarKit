@@ -84,10 +84,10 @@ static void *pulseCompressionCore(void *_in) {
     };
 
     // Initiate a variable to store my name
-    char name[64];
+    char name[RKNameLength];
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->coreMutex);
-        k = snprintf(name, 63, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->coreMutex);
     } else {
         k = 0;
@@ -427,7 +427,7 @@ static void *pulseWatcher(void *_in) {
         worker->id = c;
         worker->parentEngine = engine;
         if (pthread_create(&worker->tid, NULL, pulseCompressionCore, worker) != 0) {
-            RKLog(">    Error. Failed to start a compression core.\n");
+            RKLog(">%s Error. Failed to start a compression core.\n", engine->name);
             return (void *)RKResultFailedToStartCompressionCore;
         }
     }
@@ -634,6 +634,7 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
             }
         }
     }
+    pthread_mutex_destroy(&engine->coreMutex);
     free(engine->filterGid);
     free(engine->planIndices);
     free(engine);

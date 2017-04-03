@@ -179,8 +179,10 @@ enum RKResult {
     RKResultFailedToStartPulseRecorder,
     RKResultFailedToStartPedestalMonitor,
     RKResultFailedToStartFileManager,
+    RKResultFailedToStartFileRemover,
     RKResultPreferenceFileNotFound,
     RKResultFailedToMeasureNoise,
+    RKResultFailedToCreateFileRemover,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };

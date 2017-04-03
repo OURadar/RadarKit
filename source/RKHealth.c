@@ -262,11 +262,13 @@ static void *healthConsolidator(void *in) {
             }
             char filename[RKMaximumStringLength];
             if (strlen(engine->radarDescription->dataPath)) {
-                i = sprintf(filename, "%s/logs/health/", engine->radarDescription->dataPath);
+                i = sprintf(filename, "%s/health/", engine->radarDescription->dataPath);
             } else {
-                i = sprintf(filename, "logs/health/");
+                i = sprintf(filename, "health/");
             }
-            i += strftime(filename + i, 20, "%Y%m%d-%H%M.log", timeStruct);
+            i += strftime(filename + i, 10, "%Y%m%d/", timeStruct);
+            i += sprintf(filename + i, "%s-", engine->radarDescription->filePrefix);
+            i += strftime(filename + i, 20, "%Y%m%d-%H%M.txt", timeStruct);
             RKPreparePath(filename);
             RKLog("%s %s\n", engine->name, filename);
             engine->healthLog = fopen(filename, "w");
