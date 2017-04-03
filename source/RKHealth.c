@@ -145,7 +145,7 @@ static void *healthConsolidator(void *in) {
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
-        // Wait until all the flags are ready (wait when any flag is vacant)
+        // Wait until all the flags are ready (wait when any flag is still vacant)
         s = 0;
         while (engine->state & RKEngineStateActive) {
             allTrue = true;
@@ -158,7 +158,24 @@ static void *healthConsolidator(void *in) {
                 break;
             } else {
                 usleep(100000);
-                if (++s % 20 == 0 && engine->verbose) {
+                if (++s == 10) {
+                    // Waited too long
+                    for (j = 1; j < desc->healthNodeCount; j++) {
+                        if (engine->healthNodes[j].active && engine->healthNodes[j].healths[indices[j]].flag != RKHealthFlagReady) {
+                            RKLog("%s Replacing enum in node %d @ %d ...\n", engine->name, j, indices[j]);
+                            // This node has been disconnected, duplicate the latest reading, set all enum to old
+                            n = indices[j];
+                            RKHealth *h0 = &engine->healthNodes[j].healths[n];
+                            n = RKPreviousModuloS(n, engine->radarDescription->healthBufferDepth);
+                            RKHealth *h1 = &engine->healthNodes[j].healths[n];
+                            // Copy over the previous health to current health, set all enums to old
+                            h0->i += engine->radarDescription->healthBufferDepth;
+                            strcpy(h0->string, h1->string);
+                            RKReplaceKeyValue(h0->string, "Enum", RKStatusEnumOld);
+                            h0->flag = RKHealthFlagReady;
+                        }
+                    }
+                } else if (engine->verbose > 1) {
                     n = indices[0];
                     i = sprintf(string, "flags = [%x", engine->healthNodes[0].healths[n].flag);
                     for (j = 1; j < desc->healthNodeCount; j++) {
@@ -184,10 +201,10 @@ static void *healthConsolidator(void *in) {
             i += sprintf(string + i, "]");
             RKLog("%s %s   k = %d\n", engine->name, string, k);
             n = indices[0];
-            i = sprintf(string, "flags = [%x", engine->healthNodes[0].healths[n].flag);
+            i = sprintf(string, "flags   = [%02x", engine->healthNodes[0].healths[n].flag);
             for (j = 1; j < desc->healthNodeCount; j++) {
                 n = indices[j];
-                i += sprintf(string + i,  ", %x", engine->healthNodes[j].healths[n].flag);
+                i += sprintf(string + i,  ", %02x", engine->healthNodes[j].healths[n].flag);
             }
             i += sprintf(string + i, "]");
             RKLog("%s %s   k = %d   s = %d\n", engine->name, string, k, s);
@@ -237,8 +254,8 @@ static void *healthConsolidator(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
             }
-            // Only update if it is significant
-            if (locationChangeCount++ > 3 && (fabs(engine->radarDescription->latitude - latitude) > 1.0e-5 || fabs(engine->radarDescription->longitude - longitude) > 1.0e-5)) {
+            // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half.
+            if (locationChangeCount++ > 3 && (fabs(engine->radarDescription->latitude - latitude) > 3.5e-5 || fabs(engine->radarDescription->longitude - longitude) > 3.5e-5)) {
                 engine->radarDescription->latitude = latitude;
                 engine->radarDescription->longitude = longitude;
                 RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, engine->radarDescription->latitude, engine->radarDescription->longitude);

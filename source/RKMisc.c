@@ -436,3 +436,28 @@ void RKGoThroughKeywords(const char *string) {
     free(key);
     free(obj);
 }
+
+void RKReplaceKeyValue(char *string, const char *key, int value) {
+    int k;
+    char *s = strstr(string, key);
+    char *e;
+    char valueString[32];
+    while (s != NULL) {
+        s += strlen(key);
+        while (*s != '\0' && (*s == '"' || *s == ' ' || *s == ':')) {
+            s++;
+        }
+        e = s;
+        while (*e != '\0' && (*e != '}' && *e != ',' && *e != ']')) {
+            e++;
+        }
+        // Now value should be in between s & e
+        k = sprintf(valueString, "%d", value);
+        if (e - s < k) {
+            // Need to add another character
+            memmove(e + k - 1, e, strlen(e));
+        }
+        strncpy(s, valueString, k);
+        s = strstr(e, key);
+    }
+}

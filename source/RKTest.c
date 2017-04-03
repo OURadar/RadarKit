@@ -1186,3 +1186,10 @@ void RKTestSingleEngine(void) {
     RKFileManagerStart(o);
     RKFileManagerFree(o);
 }
+
+void RKTestSingleCommand(void) {
+    char string[256] = "{\"Health\":{\"Value\":true,\"Enum\":1}, \"Transceiver\":{\"Value\":true,\"Enum\":1}}\"";
+    printf("string = %s\n", string);
+    RKReplaceKeyValue(string, "Enum", RKStatusEnumOld);
+    printf("string = %s\n", string);
+}

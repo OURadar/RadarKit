@@ -65,7 +65,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         rq = (RKFloat *)space->R[p][1].q;
         // Regular math, no intrinsic options
         for (k = 0; k < gateCount; k++) {
-            // Z: log10(previous) = log10(R[0] - N)
+            // Z: log10(previous) = log10(S)
             *z++ = log10f(*s++);
             // V: angle(R[1])
             *v++ = atan2f(*rq++, *ri++);
@@ -83,7 +83,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
             *z_pf = _rk_mm_add_pf(_rk_mm_mul_pf(ten_pf, *z_pf), *r_pf);
             // V: V = va * (previous) = va * angle(R1)
             *v_pf = _rk_mm_mul_pf(va_pf, *v_pf);
-            // W: w = wa * sqrt(previous) = wa * sqrt(log10(S / R[1]))
+            // W: w = wa * sqrt(previous) = wa * sqrt(ln(S / R[1]))
             *w_pf = _rk_mm_mul_pf(wa_pf, _rk_mm_sqrt_pf(*w_pf));
             z_pf++;
             r_pf++;

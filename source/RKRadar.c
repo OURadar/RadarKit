@@ -737,19 +737,23 @@ int RKWaitWhileActive(RKRadar *radar) {
             transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
             pedestalOkay = positionIndex == radar->positionIndex ? false : true;
             healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
             sprintf(health->string, "{"
                     "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Network\":{\"Value\":true,\"Enum\":0},"
-                    "\"Recorder\":{\"Value\":true,\"Enum\":3}"
+                    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3}"
                     "}",
-                    transceiverOkay ? "true" : "false", transceiverOkay ? 0 : 2,
-                    pedestalOkay ? "true" : "false", pedestalOkay ? 0 : 2,
-                    healthOkay ? "true" : "false", healthOkay ? 0 : 2
+                    transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                    pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                    healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault
                     );
             RKSetHealthReady(radar, health);
+
+            //printf("radarkitnode %d\n", radar->healthNodes[RKHealthNodeRadarKit].index);
+            
             pulseIndex = radar->pulseIndex;
             positionIndex = radar->positionIndex;
             healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;

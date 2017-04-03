@@ -351,6 +351,7 @@ enum RKEngineState {
 
 typedef uint32_t RKStatusEnum;
 enum RKStatusEnum {
+    RKStatusEnumOld               = -3,
     RKStatusEnumInvalid           = -2,
     RKStatusEnumTooLow            = -1,
     RKStatusEnumNormal            =  0,
