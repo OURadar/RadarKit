@@ -124,12 +124,14 @@ static void *pulseRecorder(void *in) {
                     }
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
+                    // Notify file manager of a new addition
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
                 }
             }
             
             // New file
             time_t startTime = pulse->header.time.tv_sec;
-            i = sprintf(filename, "%s%siq/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/");
+            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
             i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
@@ -212,10 +214,11 @@ void RKDataRecorderSetVerbose(RKDataRecorder *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *desc,
+void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *desc, RKFileManager *fileManager,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
     engine->radarDescription  = desc;
+    engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
     engine->configBufferDepth = configBufferDepth;

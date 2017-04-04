@@ -69,6 +69,10 @@
 #define RKDutyCyleOrangeThreshold        0.90
 #define RKStatusBarWidth                 10
 
+#define RKDataFolderIQ                   "iq"
+#define RKDataFolderMoment               "moment"
+#define RKDataFolderHealth               "health"
+
 #define RKNoColor                        "\033[0m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
@@ -362,6 +366,15 @@ enum RKStatusEnum {
     RKStatusEnumNotOperational    =  2,
     RKStatusEnumFault             =  2,
     RKStatusEnumCritical          =  3                                // This would the status we may shutdown the radar
+};
+
+typedef uint32_t RKFileType;
+enum RKFileType {
+    RKFileTypeIQ,
+    RKFileTypeMoment,
+    RKFileTypeHealth,
+    RKFileTypeLog,
+    RKFileTypeCount
 };
 
 // A general description of a radar. These should never change after the radar has gone live

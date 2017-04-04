@@ -181,8 +181,8 @@ static void *sweepWriter(void *in) {
         }
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
-        i = sprintf(filename, "%s%smoment/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/");
-        i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
+        i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
+        i += strftime(filename + i, 10, "%Y%m%d", gmtime(&startTime));
         i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
         i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         if (engine->configBuffer[T->header.configIndex].startMarker & RKMarkerPPIScan) {
@@ -374,6 +374,9 @@ static void *sweepWriter(void *in) {
         nc_put_var_float(ncid, variableIdData, array2D);
 
         ncclose(ncid);
+
+        // Notify file manager of a new addition
+        RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
     }
 
     if (engine->hasHandleFilesScript) {
@@ -515,10 +518,11 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
+void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer rayBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth) {
     engine->radarDescription  = desc;
+    engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
     engine->configBufferDepth = configBufferDepth;

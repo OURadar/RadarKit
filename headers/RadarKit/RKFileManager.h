@@ -5,6 +5,9 @@
 //  Remove old files so that disk usage does not exceed a user-set limit.
 //  Expected file structure from RadarKit:
 //
+//
+//  Three major folders with structure A:
+//
 //  .../rootDataFolder/iq/20170401/RK-20170401-012345-E1.0.rkr
 //                                 RK-20170401-012346-E2.0.rkr
 //                                 RK-20170401-012347-E3.0.rkr
@@ -34,6 +37,15 @@
 //
 //  iq : moment : health ~ 3,000 : 100 : 1
 //
+//
+//  Log folders have structure B:
+//
+//  .../rootDataFolder/logs/trxd/20170401.log
+//                               20170402.log
+//                               20170403.log
+//                                       :
+//
+//
 //  Created by Boon Leng Cheong on 3/11/17.
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
@@ -43,7 +55,13 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKFileManagerDefaultUsageLimit   (size_t)256 * 1024 * 1024 * 1024
+//#define RKFileManagerDefaultUsageLimit   (size_t)256 * 1024 * 1024 * 1024
+#define RKFileManagerDefaultUsageLimit      (size_t)4 * 1024 * 1024 * 1024
+#define RKFileManagerRawDataPercentage      90
+#define RKFileManagerMomentDataPercentage    8
+#define RKFileManagerHealthDataPercentage    1
+#define RKFileManagerLogDataPercentage       1
+
 
 typedef struct rk_file_remover RKFileRemover;
 typedef struct rk_file_manager RKFileManager;
@@ -51,9 +69,16 @@ typedef struct rk_file_manager RKFileManager;
 struct rk_file_remover {
     int                    id;
     pthread_t              tid;
+    uint32_t               index;
+    uint32_t               count;
+    size_t                 usage;
+    size_t                 limit;
     char                   path[RKMaximumPathLength];
-    size_t                 usageLimit;
     RKFileManager          *parent;
+    
+    void                   *folders;
+    void                   *filenames;
+    void                   *indexedStats;
 };
 
 struct rk_file_manager {
@@ -62,7 +87,7 @@ struct rk_file_manager {
     RKRadarDesc            *radarDescription;
     uint8_t                verbose;
     char                   dataPath[RKMaximumPathLength];
-    size_t                 rawDataUsagelimit;
+    size_t                 usagelimit;
     
     // Program set variables
     int                    workerCount;
@@ -84,6 +109,7 @@ void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);
-int RKFileManagerAddFile(RKFileManager *, const char *);
+
+int RKFileManagerAddFile(RKFileManager *, const char *, RKFileType);
 
 #endif

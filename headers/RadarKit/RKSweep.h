@@ -10,6 +10,7 @@
 #define __RadarKit_Sweep__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKFileManager.h>
 #include <netcdf.h>
 
 typedef struct rk_sweep {
@@ -32,7 +33,9 @@ struct rk_sweep_engine {
     uint8_t                verbose;
     bool                   doNotWrite;
     bool                   hasHandleFilesScript;
-    
+    char                   handleFilesScript[RKMaximumPathLength];
+    RKFileManager          *fileManager;
+
     // Program set variables
     pthread_t              tidRayGatherer;
     RKSweep                sweep;
@@ -43,7 +46,6 @@ struct rk_sweep_engine {
     char                   productName[RKNameLength];
     char                   productUnit[RKNameLength];
     char                   productColormap[RKNameLength];
-    char                   handleFilesScript[RKMaximumPathLength];
 
     // Status / health
     uint32_t               processedRayIndex;
@@ -60,7 +62,7 @@ RKSweepEngine *RKSweepEngineInit(void);
 void RKSweepEngineFree(RKSweepEngine *);
 
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
-void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *,
+void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileManager *,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);

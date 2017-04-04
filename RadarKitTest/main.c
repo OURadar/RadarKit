@@ -322,8 +322,8 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case '3':
                 //RKTestShowColors();
-                //RKTestSingleEngine();
-                RKTestSingleCommand();
+                RKTestSingleEngine();
+                //RKTestSingleCommand();
                 exit(EXIT_SUCCESS);
                 break;
             default:
@@ -345,7 +345,7 @@ UserParams processInput(int argc, const char **argv) {
 //
 int main(int argc, const char **argv) {
 
-    RKSetProgramName("iRadar");
+    RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
     UserParams user = processInput(argc, argv);
