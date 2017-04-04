@@ -153,6 +153,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     RKInt16C *w;
     RKFloat gainAdjust = 1.0f / (RKFloat)stride;
     for (k = 0; k < waveform->count; k++) {
+        waveform->filterAnchors[k][0].origin /= stride;
+        waveform->filterAnchors[k][0].length /= stride;
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (j = 0, i = 0; j < waveform->depth; j++, i += stride) {
