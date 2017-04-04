@@ -660,6 +660,12 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->fileManager->memoryUsage;
 
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Radar live. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
+              RKIntegerToCommaStyleString(radar->memoryUsage),
+              RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+    }
+
     // Add a dummy config to get things started if there hasn't been one
     if (radar->configIndex == 0) {
         RKAddConfig(radar,

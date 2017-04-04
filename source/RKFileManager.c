@@ -8,8 +8,7 @@
 
 #include <RadarKit/RKFileManager.h>
 
-#define RKFileManagerFolderListCapacity  60
-#define RKFileManagerFileListCapacity    500000
+#define RKFileManagerFolderListCapacity      60
 
 typedef char RKPathname[RKNameLength];
 typedef struct _rk_indexed_stat {
@@ -90,8 +89,8 @@ static void refreshFileList(RKFileRemover *me) {
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
 
     // Go through all files in the folders
-    for (k = 0; k < folderCount && me->count < RKFileManagerFileListCapacity; k++) {
-        int count = listFilesInFolder(&filenames[me->count], RKFileManagerFileListCapacity - me->count, folders[k]);
+    for (k = 0; k < folderCount && me->count < me->capacity; k++) {
+        int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, folders[k]);
         if (count < 0) {
             RKLog("%s Error. Unable to list files in %s\n", me->parent->name, folders[k]);
             return;
@@ -109,7 +108,7 @@ static void refreshFileList(RKFileRemover *me) {
     }
 
     // We can operate in a circular buffer fashion if all the files are accounted
-    if (me->count < RKFileManagerFileListCapacity) {
+    if (me->count < me->capacity) {
         me->reusable = true;
     } else {
         RKLog("%s Warning. Experimental mode for '%s'.\n", me->parent->name, me->path);
@@ -165,25 +164,32 @@ static void *fileRemover(void *in) {
         sprintf(name + k, RKNoColor);
     }
     
+    size_t bytes;
     size_t mem = 0;
-    RKPathname *folders = (RKPathname *)malloc(RKFileManagerFolderListCapacity * sizeof(RKPathname));
+    
+    bytes = RKFileManagerFolderListCapacity * sizeof(RKPathname);
+    RKPathname *folders = (RKPathname *)malloc(bytes);
     if (folders == NULL) {
         RKLog("%s %s Error. Unable to allocate space for folder list.\n", engine->name, name);
     }
-    memset(folders, 0, RKFileManagerFolderListCapacity * sizeof(RKPathname));
-    mem += RKFileManagerFolderListCapacity * sizeof(RKPathname);
-    RKPathname *filenames = (RKPathname *)malloc(RKFileManagerFileListCapacity * sizeof(RKPathname));
+    memset(folders, 0, bytes);
+    mem += bytes;
+    
+    bytes = me->capacity * sizeof(RKPathname);
+    RKPathname *filenames = (RKPathname *)malloc(bytes);
     if (filenames == NULL) {
         RKLog("%s %s Error. Unable to allocate space for file list.\n", engine->name, name);
     }
-    memset(filenames, 0, RKFileManagerFileListCapacity * sizeof(RKPathname));
-    mem += RKFileManagerFileListCapacity * sizeof(RKPathname);
-    RKIndexedStat *indexedStats = (RKIndexedStat *)malloc(RKFileManagerFileListCapacity * sizeof(RKIndexedStat));
+    memset(filenames, 0, bytes);
+    mem += bytes;
+    
+    bytes = me->capacity * sizeof(RKIndexedStat);
+    RKIndexedStat *indexedStats = (RKIndexedStat *)malloc(bytes);
     if (indexedStats == NULL) {
         RKLog("%s %s Error. Unable to allocate space for indexed stats.\n", engine->name, name);
     }
-    memset(indexedStats, 0, RKFileManagerFileListCapacity * sizeof(RKIndexedStat));
-    mem += RKFileManagerFileListCapacity * sizeof(RKIndexedStat);
+    memset(indexedStats, 0, bytes);
+    mem += bytes;
     
     me->folders = folders;
     me->filenames = filenames;
@@ -198,19 +204,22 @@ static void *fileRemover(void *in) {
     // Use the first folder as the initial value of parentFolder
     strcpy(parentFolder, folders[0]);
 
-    RKLog(">%s %s Started.   mem = %s B   path = '%s'\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), me->path);
+    RKLog(">%s %s Started.   mem = %s B   capacity = %s\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(me->capacity));
+    RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
+    
+    me->tic++;
     
     pthread_mutex_unlock(&engine->mutex);
 
     if (me->usage > 10 * 1024 * 1024) {
-        RKLog("%s %s Listed.  count = %7s   usage = %7s / %7s MB\n", engine->name, name,
+        RKLog("%s %s Listed.  count = %s   usage = %s / %s MB\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage / 1024 / 1024), RKIntegerToCommaStyleString(me->limit / 1024 / 1024));
     } else if (me->usage > 10 * 1024) {
-        RKLog("%s %s Listed.  count = %7s   usage = %7s / %7s KB\n", engine->name, name,
+        RKLog("%s %s Listed.  count = %s   usage = %s / %s KB\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage / 1024), RKIntegerToCommaStyleString(me->limit / 1024));
     } else {
-        RKLog("%s %s Listed.  count = %7s   usage = %7s / %7s B\n", engine->name, name,
+        RKLog("%s %s Listed.  count = %s   usage = %s / %s B\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
     }
 
@@ -243,7 +252,7 @@ static void *fileRemover(void *in) {
             }
 
             // Update the index for next check or refresh it entirely if there are too many files
-            if (me->index == RKFileManagerFileListCapacity) {
+            if (me->index == me->capacity) {
                 me->index = 0;
                 if (me->reusable) {
                     if (engine->verbose) {
@@ -279,8 +288,6 @@ static void *folderWatcher(void *in) {
     
     int k;
     
-    RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
-    
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
     
@@ -289,6 +296,11 @@ static void *folderWatcher(void *in) {
         RKDataFolderIQ,
         RKDataFolderMoment,
         RKDataFolderHealth
+    };
+    int capacities[] = {
+        24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
+        24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
+        24 * 60 * 2,                      // Assume a file every minute, 2 folders
     };
     size_t limits[] = {
         RKFileManagerRawDataRatio,
@@ -304,12 +316,14 @@ static void *folderWatcher(void *in) {
         return (void *)RKResultFailedToCreateFileRemover;
     }
     memset(engine->workers, 0, engine->workerCount * sizeof(RKFileRemover));
+    engine->memoryUsage += RKFileTypeCount * sizeof(RKFileRemover);
     
     for (k = 0; k < engine->workerCount; k++) {
         RKFileRemover *worker = &engine->workers[k];
         
         worker->id = k;
         worker->parent = engine;
+        worker->capacity = capacities[k];
         if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
             snprintf(worker->path, RKMaximumPathLength - 1, "%s/%s", engine->radarDescription->dataPath, folders[k]);
         } else if (strlen(engine->dataPath)) {
@@ -324,8 +338,17 @@ static void *folderWatcher(void *in) {
             RKLog(">%s Error. Failed to start a file remover.\n", engine->name);
             return (void *)RKResultFailedToStartFileRemover;
         }
+        
+        while (worker->tic == 0 && engine->state & RKEngineStateActive) {
+            usleep(10000);
+        }
     }
 
+    // Increase the tic once to indicate the engine is ready
+    engine->tic++;
+
+    RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
+    
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateActive) {
         k = 0;
@@ -398,8 +421,8 @@ int RKFileManagerStart(RKFileManager *engine) {
         RKLog("Error. Failed to start a ray gatherer.\n");
         return RKResultFailedToStartFileManager;
     }
-    while (!(engine->state & RKEngineStateActive)) {
-        usleep(10000);
+    while (engine->tic == 0) {
+        usleep(1000);
     }
     return RKResultSuccess;
 }
@@ -456,7 +479,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
         RKLog("%s Added file '%s' %d\n", engine->name, filename, k);
     }
     
-    me->count = RKNextModuloS(me->count, RKFileManagerFileListCapacity);
+    me->count = RKNextModuloS(me->count, me->capacity);
     
     pthread_mutex_unlock(&engine->mutex);
 

@@ -68,9 +68,11 @@ typedef struct rk_file_manager RKFileManager;
 
 struct rk_file_remover {
     int                    id;
+    int                    tic;
     pthread_t              tid;
     int                    index;                               // Index to get sorted index for removal
     int                    count;                               // Dual use index: count and index to add (reusable buffer)
+    int                    capacity;                            // Capcity of *folders, *filenames and *indexedStats
     size_t                 usage;
     size_t                 limit;
     char                   path[RKMaximumPathLength];
@@ -93,6 +95,7 @@ struct rk_file_manager {
     size_t                 usagelimit;
     
     // Program set variables
+    int                    tic;
     int                    workerCount;
     RKFileRemover          *workers;
     pthread_t              tidFileWatcher;
