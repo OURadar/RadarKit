@@ -9,7 +9,7 @@
 #include <RadarKit/RKFileManager.h>
 
 #define RKFileManagerFolderListCapacity  60
-#define RKFileManagerFileListCapacity    10000
+#define RKFileManagerFileListCapacity    100
 
 typedef char RKPathname[RKNameLength];
 typedef struct _rk_indexed_stat {
@@ -59,6 +59,49 @@ static int listFilesInFolder(RKPathname *list, const int maximumCapacity, const 
 
 #pragma mark - Delegate Workers
 
+static void refreshFileList(RKFileRemover *me) {
+    int k;
+    
+    RKPathname *folders = (RKPathname *)me->folders;
+    RKPathname *filenames = (RKPathname *)me->filenames;
+    RKIndexedStat *indexedStats = (RKIndexedStat *)me->indexedStats;
+
+    me->index = 0;
+    me->count = 0;
+    me->usage = 0;
+
+    // Go through all folders
+    int folderCount = listFoldersInFolder(folders, RKFileManagerFolderListCapacity, me->path);
+    
+    // Sort the folders by name (should be in time numbers)
+    qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
+
+    // Go through all files in the folders
+    for (k = 0; k < folderCount && me->count < RKFileManagerFileListCapacity; k++) {
+        me->count += listFilesInFolder(&filenames[me->count], RKFileManagerFileListCapacity - me->count, folders[k]);
+    }
+    
+    // Gather the stats of the files
+    struct stat fileStat;
+    for (k = 0; k < me->count; k++) {
+        stat(filenames[k], &fileStat);
+        indexedStats[k].index = k;
+        indexedStats[k].time = fileStat.st_ctime;
+        indexedStats[k].size = fileStat.st_size;
+        me->usage += fileStat.st_size;
+    }
+
+    // We can operate in a circular buffer fashion if all the files are accounted
+    if (me->count < RKFileManagerFileListCapacity) {
+        me->reusable = true;
+    } else if (me->usage < me->limit) {
+        RKLog("%s Warning. No files may be erased in '%s'.\n", me->parent->name, me->path);
+    }
+
+    // Sort the files by time
+    qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
+}
+
 static void *fileRemover(void *in) {
     RKFileRemover *me = (RKFileRemover *)in;
     RKFileManager *engine = me->parent;
@@ -67,9 +110,10 @@ static void *fileRemover(void *in) {
 
     const int c = me->id;
     
-    char command[RKMaximumPathLength];
-
     char name[RKNameLength];
+    char command[RKMaximumPathLength];
+    struct timeval time = {0, 0};
+
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
@@ -113,56 +157,55 @@ static void *fileRemover(void *in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
+    // Gather the initial file list in the folders
+    refreshFileList(me);
+
     RKLog(">%s %s Started.   mem = %s B   path = '%s'\n",
           engine->name, name, RKIntegerToCommaStyleString(mem), me->path);
     
     pthread_mutex_unlock(&engine->mutex);
 
-    int folderCount = listFoldersInFolder(folders, RKFileManagerFolderListCapacity, me->path);
-
-    qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
-
-    // Gather the filenames in the folders
-    me->count = 0;
-    for (k = 0; k < folderCount && me->count < RKFileManagerFileListCapacity; k++) {
-        me->count += listFilesInFolder(&filenames[me->count], RKFileManagerFileListCapacity - me->count, folders[k]);
+    if (me->usage > 10 * 1024 * 1024) {
+        RKLog("%s %s Listed.  count = %7s   usage = %7s / %7s MB\n", engine->name, name,
+              RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage / 1024 / 1024), RKIntegerToCommaStyleString(me->limit / 1024 / 1024));
+    } else if (me->usage > 10 * 1024) {
+        RKLog("%s %s Listed.  count = %7s   usage = %7s / %7s KB\n", engine->name, name,
+              RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage / 1024), RKIntegerToCommaStyleString(me->limit / 1024));
+    } else {
+        RKLog("%s %s Listed.  count = %7s   usage = %7s / %7s B\n", engine->name, name,
+              RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
     }
 
-    // Gather the stats of the files
-    struct stat fileStat;
-    me->usage = 0;
-    for (k = 0; k < me->count; k++) {
-        //printf("%3d. %s\n", k, filenames[k]);
-        stat(filenames[k], &fileStat);
-        indexedStats[k].index = k;
-        indexedStats[k].time = fileStat.st_ctime;
-        indexedStats[k].size = fileStat.st_size;
-        me->usage += fileStat.st_size;
-    }
-
-    // Sort the files by time
-    qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
-
-    //for (k = 0; k < me->count; k++) {
-    //    printf("%3d -> %3d. %s  %s\n", k, indexedStats[k].index, filenames[indexedStats[k].index], RKIntegerToCommaStyleString(indexedStats[k].size));
-    //}
-    RKLog("%s %s Listed.   count = %s   usage: %13s / %13s B\n", engine->name, name,
-          RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
+    // Just wait a little
+    usleep(30000);
+    
     me->index = 0;
     while (engine->state & RKEngineStateActive) {
         while (me->usage > me->limit && engine->state & RKEngineStateActive) {
-            RKLog("%s %s Removing file '%s'", engine->name, name, filenames[me->index]);
-            sprintf(command, "rm -f %s", filenames[me->index]);
+            if (engine->verbose) {
+                RKLog("%s %s Removing '%s' %d/%d", engine->name, name, filenames[indexedStats[me->index].index], me->index, indexedStats[me->index].index);
+            }
+            sprintf(command, "rm -f %s", filenames[indexedStats[me->index].index]);
             system(command);
             me->usage -= indexedStats[me->index].size;
             me->index++;
             if (me->index == RKFileManagerFileListCapacity) {
-                RKLog("%s %s Refreshing file list.\n", engine->name, name);
-                //
+                me->index = 0;
+                if (me->reusable) {
+                    if (engine->verbose) {
+                        RKLog("%s %s Reusable file list rotated to 0.\n", engine->name, name);
+                    }
+                } else {
+                    if (engine->verbose) {
+                        RKLog("%s %s Refreshing file list.\n", engine->name, name);
+                    }
+                    refreshFileList(me);
+                }
             }
         }
         k = 0;
-        while (k++ < 10 && engine->state & RKEngineStateActive) {
+        while ((k++ < 10 || RKTimevalDiff(time, me->latestTime) < 0.3) && engine->state & RKEngineStateActive) {
+            gettimeofday(&time, NULL);
             usleep(100000);
         }
     }
@@ -218,7 +261,7 @@ static void *folderWatcher(void *in) {
         } else {
             snprintf(worker->path, RKMaximumPathLength - 1, "%s", folders[k]);
         }
-        worker->limit = engine->usagelimit * limits[k] / 100;
+        worker->limit = engine->usagelimit * limits[k] / 1000;
 
         // Workers to actually remove the files
         if (pthread_create(&worker->tid, NULL, fileRemover, worker) != 0) {
@@ -330,8 +373,8 @@ int RKFileManagerStop(RKFileManager *engine) {
 
 int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType type) {
     RKFileRemover *me = &engine->workers[type];
-    if (me->count == RKFileManagerFileListCapacity) {
-        return RKResultTooBig;
+    if (me->reusable == false) {
+        return RKResultFileManagerBufferNotResuable;
     }
     
     RKPathname *filenames = (RKPathname *)me->filenames;
@@ -349,8 +392,14 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     indexedStats[k].time = fileStat.st_ctime;
     indexedStats[k].size = fileStat.st_size;
     
+    if (engine->verbose > 2) {
+        RKLog("%s Added file '%s' %d\n", engine->name, filename, k);
+    }
+    
     me->usage += indexedStats[k].size;
-    me->count++;
+    me->count = RKNextModuloS(me->count, RKFileManagerFileListCapacity);
+    
+    gettimeofday(&me->latestTime, NULL);
     
     pthread_mutex_unlock(&engine->mutex);
 
