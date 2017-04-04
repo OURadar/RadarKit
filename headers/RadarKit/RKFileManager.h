@@ -55,10 +55,9 @@
 
 #include <RadarKit/RKFoundation.h>
 
-//#define RKFileManagerDefaultUsageLimit   (size_t)256 * 1024 * 1024 * 1024
-#define RKFileManagerDefaultUsageLimit      (size_t)2 * 1024 * 1024 * 1024
-#define RKFileManagerRawDataPercentage      900
-#define RKFileManagerMomentDataPercentage    98
+#define RKFileManagerDefaultUsageLimit        (size_t)10 * 1024 * 1024 * 1024
+#define RKFileManagerRawDataPercentage        900
+#define RKFileManagerMomentDataPercentage     98
 #define RKFileManagerHealthDataPercentage     1
 #define RKFileManagerLogDataPercentage        1
 
@@ -69,8 +68,8 @@ typedef struct rk_file_manager RKFileManager;
 struct rk_file_remover {
     int                    id;
     pthread_t              tid;
-    uint32_t               index;                               // Index to get sorted index for removal
-    uint32_t               count;                               // Dual use index: count and index to add (reusable buffer)
+    int                    index;                               // Index to get sorted index for removal
+    int                    count;                               // Dual use index: count and index to add (reusable buffer)
     size_t                 usage;
     size_t                 limit;
     char                   path[RKMaximumPathLength];
