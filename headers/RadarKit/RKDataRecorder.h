@@ -10,6 +10,7 @@
 #define __RadarKit_DataRecorder__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKFileManager.h>
 
 typedef struct rk_data_recorder RKDataRecorder;
 
@@ -26,8 +27,9 @@ struct rk_data_recorder {
     uint8_t                verbose;
     bool                   doNotWrite;
     uint32_t               cacheSize;
+    RKFileManager          *fileManager;
 
-    // Cache
+    // Program set variables
     int                    fd;
     FILE                   *fid;
     void                   *cache;
@@ -47,7 +49,7 @@ RKDataRecorder *RKDataRecorderInit(void);
 void RKDataRecorderFree(RKDataRecorder *engine);
 
 void RKDataRecorderSetVerbose(RKDataRecorder *, const int);
-void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *,
+void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *, RKFileManager *,
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
 void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value);

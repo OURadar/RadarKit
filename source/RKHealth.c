@@ -88,6 +88,8 @@ static void *healthConsolidator(void *in) {
     int headingChangeCount = 0;
     int locationChangeCount = 0;
 
+    char filename[RKMaximumStringLength];
+    
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
     
@@ -276,15 +278,11 @@ static void *healthConsolidator(void *in) {
             min = timeStruct->tm_min;
             if (engine->healthLog != NULL) {
                 fclose(engine->healthLog);
+                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
             }
-            char filename[RKMaximumStringLength];
-            if (strlen(engine->radarDescription->dataPath)) {
-                i = sprintf(filename, "%s/health/", engine->radarDescription->dataPath);
-            } else {
-                i = sprintf(filename, "health/");
-            }
-            i += strftime(filename + i, 10, "%Y%m%d/", timeStruct);
-            i += sprintf(filename + i, "%s-", engine->radarDescription->filePrefix);
+            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
+            i += strftime(filename + i, 10, "%Y%m%d", timeStruct);
+            i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 20, "%Y%m%d-%H%M.json", timeStruct);
             RKPreparePath(filename);
             RKLog("%s %s\n", engine->name, filename);
@@ -334,14 +332,14 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine,
-                                         RKRadarDesc *radarDescription,
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
                                          RKNodalHealth *healthNodes,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
-    engine->radarDescription = radarDescription;
-    engine->healthNodes = healthNodes;
-    engine->healthBuffer = healthBuffer;
-    engine->healthIndex = healthIndex;
+    engine->radarDescription  = desc;
+    engine->fileManager       = fileManager;
+    engine->healthNodes       = healthNodes;
+    engine->healthBuffer      = healthBuffer;
+    engine->healthIndex       = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }

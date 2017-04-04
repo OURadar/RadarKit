@@ -10,6 +10,7 @@
 #define __RadarKit_Health__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKFileManager.h>
 #include <RadarKit/RKClient.h>
 
 typedef struct rk_health_engine RKHealthEngine;
@@ -29,6 +30,7 @@ struct rk_health_engine {
     int                    (*hardwareRead)(RKHealthRelay, RKHealth *);
     int                    (*hardwareFree)(RKHealthRelay);
     void                   *hardwareInitInput;
+    RKFileManager          *fileManager;
 
     // Program set variables
     pthread_t              threadId;
@@ -47,8 +49,7 @@ RKHealthEngine *RKHealthEngineInit();
 void RKHealthEngineFree(RKHealthEngine *);
 
 void RKHealthEngineSetVerbose(RKHealthEngine *, const int);
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *,
-                                         RKRadarDesc *radarDescription,
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *, RKRadarDesc *, RKFileManager *,
                                          RKNodalHealth *healthNodes,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth);
 

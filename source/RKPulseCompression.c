@@ -850,7 +850,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
     for (int i = 0; i < engine->filterGroupCount; i++) {
         for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f %s}\n",
+            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f, %s}\n",
                   engine->name, i, j,
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].origin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
