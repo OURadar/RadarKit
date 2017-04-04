@@ -26,13 +26,13 @@
 //                                      RK-20170402-012347-E3.0-W.nc
 //                                                  :
 //
-//  .../rootDataFolder/health/20170401/RK-20170402-2250.txt
-//                                     RK-20170402-2251.txt
-//                                     RK-20170402-2252.txt
+//  .../rootDataFolder/health/20170401/RK-20170402-2250.json
+//                                     RK-20170402-2251.json
+//                                     RK-20170402-2252.json
 //                                             :
-//  .../rootDataFolder/health/20170402/RK-20170402-2250.txt
-//                                     RK-20170402-2251.txt
-//                                     RK-20170402-2252.txt
+//  .../rootDataFolder/health/20170402/RK-20170402-2250.json
+//                                     RK-20170402-2251.json
+//                                     RK-20170402-2252.json
 //                                             :
 //
 //  iq : moment : health ~ 3,000 : 100 : 1
@@ -55,7 +55,7 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKFileManagerDefaultUsageLimit        (size_t)10 * 1024 * 1024 * 1024
+#define RKFileManagerDefaultUsageLimit        (size_t)1024 * 1024 * 1024 * 1024
 #define RKFileManagerRawDataPercentage        900
 #define RKFileManagerMomentDataPercentage     98
 #define RKFileManagerHealthDataPercentage     1
