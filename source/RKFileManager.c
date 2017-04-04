@@ -9,7 +9,7 @@
 #include <RadarKit/RKFileManager.h>
 
 #define RKFileManagerFolderListCapacity  60
-#define RKFileManagerFileListCapacity    20000
+#define RKFileManagerFileListCapacity    500000
 
 typedef char RKPathname[RKNameLength];
 typedef struct _rk_indexed_stat {
@@ -291,9 +291,9 @@ static void *folderWatcher(void *in) {
         RKDataFolderHealth
     };
     size_t limits[] = {
-        RKFileManagerRawDataPercentage,
-        RKFileManagerMomentDataPercentage,
-        RKFileManagerHealthDataPercentage
+        RKFileManagerRawDataRatio,
+        RKFileManagerMomentDataRatio,
+        RKFileManagerHealthDataRatio
     };
     
     engine->workerCount = sizeof(folders) / RKNameLength;
@@ -317,9 +317,9 @@ static void *folderWatcher(void *in) {
         } else {
             snprintf(worker->path, RKMaximumPathLength - 1, "%s", folders[k]);
         }
-        worker->limit = engine->usagelimit * limits[k] / 1000;
+        worker->limit = engine->usagelimit * limits[k] / RKFileManagerTotalRatio;
 
-        // Workers to actually remove the files
+        // Workers that actually remove the files (and folders)
         if (pthread_create(&worker->tid, NULL, fileRemover, worker) != 0) {
             RKLog(">%s Error. Failed to start a file remover.\n", engine->name);
             return (void *)RKResultFailedToStartFileRemover;

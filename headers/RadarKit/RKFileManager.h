@@ -55,11 +55,12 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKFileManagerDefaultUsageLimit        (size_t)1024 * 1024 * 1024 * 1024
-#define RKFileManagerRawDataPercentage        900
-#define RKFileManagerMomentDataPercentage     98
-#define RKFileManagerHealthDataPercentage     1
-#define RKFileManagerLogDataPercentage        1
+#define RKFileManagerDefaultUsageLimit   (size_t)1024 * 1024 * 1024 * 1024
+#define RKFileManagerRawDataRatio        900
+#define RKFileManagerMomentDataRatio     98
+#define RKFileManagerHealthDataRatio     1
+#define RKFileManagerLogDataRatio        1
+#define RKFileManagerTotalRatio          (RKFileManagerRawDataRatio + RKFileManagerMomentDataRatio + RKFileManagerHealthDataRatio + RKFileManagerLogDataRatio)
 
 
 typedef struct rk_file_remover RKFileRemover;
