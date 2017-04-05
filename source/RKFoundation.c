@@ -99,7 +99,7 @@ int RKLog(const char *whatever, ...) {
     // Write the string to a file if specified
     if (rkGlobalParameters.dailyLog) {
         if (strlen(rkGlobalParameters.rootDataFolder)) {
-            i = sprintf(rkGlobalParameters.logfile, "%s/logs/%s/", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
+            i = sprintf(rkGlobalParameters.logfile, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
         } else {
             i = 0;
         }
