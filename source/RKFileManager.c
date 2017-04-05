@@ -10,9 +10,17 @@
 
 #define RKFileManagerFolderListCapacity      60
 
-typedef char RKPathname[RKNameLength];
+// The way RadarKit names the files should be relatively short:
+// Folder: YYYYMMDD
+// IQData: XXXXXX-YYYYMMDD-HHMMSS-EX.X.rkr  (31 chars)
+// Moment: XXXXXX-YYYYMMDD-HHMMSS-EX.X-Z.nc (32 chars)
+// Health: XXXXXX-YYYYMMDD-HHMMSS.json      (27 chars)
+#define RKFileManagerFilenameLength          35
+
+typedef char RKPathname[RKFileManagerFilenameLength];
 typedef struct _rk_indexed_stat {
     int      index;
+    int      folderId;
     time_t   time;
     size_t   size;
 } RKIndexedStat;
@@ -36,12 +44,12 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
     struct dirent *dir;
     DIR *did = opendir(path);
     if (did == NULL) {
-        fprintf(stderr, "Unable to list folder '%s'\n", path);
+        //fprintf(stderr, "Unable to list folder '%s'\n", path);
         return -1;
     }
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {
         if (dir->d_type == type && strcmp(".", dir->d_name) && strcmp("..", dir->d_name)) {
-            sprintf(list[k], "%s/%s", path, dir->d_name);
+            snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
             k++;
         }
     }
@@ -59,6 +67,10 @@ static int listFilesInFolder(RKPathname *list, const int maximumCapacity, const 
 static bool isFolderEmpty(const char *path) {
     struct dirent *dir;
     DIR *did = opendir(path);
+    if (did == NULL) {
+        fprintf(stderr, "Error opening directory %s\n", path);
+        return false;
+    }
     while ((dir = readdir(did)) != NULL) {
         if (dir->d_type == DT_REG) {
             return false;
@@ -70,7 +82,7 @@ static bool isFolderEmpty(const char *path) {
 #pragma mark - Delegate Workers
 
 static void refreshFileList(RKFileRemover *me) {
-    int k;
+    int j, k;
     struct stat fileStat;
     char string[RKMaximumPathLength];
 
@@ -89,23 +101,36 @@ static void refreshFileList(RKFileRemover *me) {
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
 
     // Go through all files in the folders
-    for (k = 0; k < folderCount && me->count < me->capacity; k++) {
-        int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, folders[k]);
+    for (j = 0, k = 0; k < folderCount && me->count < me->capacity; k++) {
+        sprintf(string, "%s/%s", me->path, folders[k]);
+        int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, string);
         if (count < 0) {
-            RKLog("%s Error. Unable to list files in %s\n", me->parent->name, folders[k]);
+            RKLog("%s Error. Unable to list files in %s\n", me->parent->name, string);
             return;
         }
         me->count += count;
+        for (; j < me->count; j++) {
+            sprintf(string, "%s/%s/%s", me->path, folders[k], filenames[j]);
+            stat(string, &fileStat);
+            indexedStats[j].index = j;
+            indexedStats[j].folderId = k;
+            indexedStats[j].time = fileStat.st_ctime;
+            indexedStats[j].size = fileStat.st_size;
+            me->usage += fileStat.st_size;
+        }
     }
     
     // Gather the stats of the files
-    for (k = 0; k < me->count; k++) {
-        stat(filenames[k], &fileStat);
-        indexedStats[k].index = k;
-        indexedStats[k].time = fileStat.st_ctime;
-        indexedStats[k].size = fileStat.st_size;
-        me->usage += fileStat.st_size;
-    }
+//    for (k = 0; k < me->count; k++) {
+//        stat(filenames[k], &fileStat);
+//        indexedStats[k].index = k;
+//        indexedStats[k].time = fileStat.st_ctime;
+//        indexedStats[k].size = fileStat.st_size;
+//        me->usage += fileStat.st_size;
+//    }
+
+    // Sort the files by time
+    qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
 
     // We can operate in a circular buffer fashion if all the files are accounted
     if (me->count < me->capacity) {
@@ -129,9 +154,6 @@ static void refreshFileList(RKFileRemover *me) {
         }
         RKLog("%s Trucated list with total usage %s\n", me->parent->name, RKIntegerToCommaStyleString(me->usage));
     }
-
-    // Sort the files by time
-    qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
 }
 
 static void *fileRemover(void *in) {
@@ -142,10 +164,10 @@ static void *fileRemover(void *in) {
 
     const int c = me->id;
     
-    char *key;
     char name[RKNameLength];
+    char path[RKMaximumPathLength];
     char command[RKMaximumPathLength];
-    char parentFolder[RKMaximumPathLength] = "";
+    char parentFolder[RKFileManagerFilenameLength] = "";
     struct timeval time = {0, 0};
 
     if (rkGlobalParameters.showColor) {
@@ -208,10 +230,6 @@ static void *fileRemover(void *in) {
           engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(me->capacity));
     RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
     
-    me->tic++;
-    
-    pthread_mutex_unlock(&engine->mutex);
-
     if (me->usage > 10 * 1024 * 1024) {
         RKLog("%s %s Listed.  count = %s   usage = %s / %s MB\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage / 1024 / 1024), RKIntegerToCommaStyleString(me->limit / 1024 / 1024));
@@ -223,32 +241,34 @@ static void *fileRemover(void *in) {
               RKIntegerToCommaStyleString(me->count), RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
     }
 
-    // Just wait a little
-    usleep(30000);
+    me->tic++;
     
+    pthread_mutex_unlock(&engine->mutex);
+
     me->index = 0;
     while (engine->state & RKEngineStateActive) {
         // Removing files
         while (me->usage > me->limit) {
+            // Build the complete path from various components
+            sprintf(path, "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
             if (engine->verbose) {
-                RKLog("%s %s Removing %s", engine->name, name, filenames[indexedStats[me->index].index]);
+                RKLog("%s %s Removing %s", engine->name, name, path);
             }
-            sprintf(command, "rm -f %s", filenames[indexedStats[me->index].index]);
+            sprintf(command, "rm -f %s", path);
             system(command);
             me->usage -= indexedStats[me->index].size;
             me->index++;
 
-            // Get the parent folder from filename, if it is different than before, check if it is empty, and remove it if so.
-            if (strncmp(parentFolder, filenames[indexedStats[me->index].index], strlen(parentFolder))) {
-                if (isFolderEmpty(parentFolder)) {
-                    RKLog("%s %s Removing folder %s that is empty.\n", engine->name, name, parentFolder);
-                    sprintf(command, "rm -rf %s", parentFolder);
+            // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
+            if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {
+                sprintf(path, "%s/%s", me->path, parentFolder);
+                if (isFolderEmpty(path)) {
+                    RKLog("%s %s Removing folder %s that is empty.\n", engine->name, name, path);
+                    sprintf(command, "rm -rf %s", path);
                     system(command);
                 }
-            }
-            strcpy(parentFolder, filenames[indexedStats[me->index].index]);
-            if ((key = strrchr(parentFolder, '/')) != NULL) {
-                *key = '\0';
+                strcpy(parentFolder, folders[indexedStats[me->index].folderId]);
+                RKLog("%s %s New parentFolder = %s\n", engine->name, name, parentFolder);
             }
 
             // Update the index for next check or refresh it entirely if there are too many files
