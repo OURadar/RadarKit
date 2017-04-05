@@ -87,10 +87,10 @@ struct rk_file_remover {
 struct rk_file_manager {
     // User set variables
     char                   name[RKNameLength];
-    RKRadarDesc            *radarDescription;
-    uint8_t                verbose;
-    char                   dataPath[RKMaximumPathLength];
-    size_t                 usagelimit;
+    RKRadarDesc            *radarDescription;                   // This takes precedence over dataPath[] if both are set
+    uint8_t                verbose;                             // Verbosity level
+    char                   dataPath[RKMaximumPathLength];       // Can be empty. In this case all folders are relative to the path where it is executed
+    size_t                 usagelimit;                          // Overall usage limit in bytes
     
     // Program set variables
     int                    tic;

@@ -343,6 +343,9 @@ UserParams processInput(int argc, const char **argv) {
 //  M A I N
 //
 //
+
+#define ROOT_PATH "data"
+
 int main(int argc, const char **argv) {
 
     RKSetProgramName("rktest");
@@ -376,7 +379,7 @@ int main(int argc, const char **argv) {
     desc.latitude = 35.181251;
     desc.longitude = -97.436752;
     desc.radarHeight = 2.5f;
-    strcpy(desc.dataPath, "data");
+    strcpy(desc.dataPath, ROOT_PATH);
     myRadar = RKInitWithDesc(desc);
     
     if (myRadar == NULL) {

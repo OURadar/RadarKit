@@ -15,6 +15,7 @@
 // IQData: XXXXXX-YYYYMMDD-HHMMSS-EX.X.rkr  (31 chars)
 // Moment: XXXXXX-YYYYMMDD-HHMMSS-EX.X-Z.nc (32 chars)
 // Health: XXXXXX-YYYYMMDD-HHMMSS.json      (27 chars)
+// Log   : XXXXXX-YYYYMMDD.log              (19 chars)
 #define RKFileManagerFilenameLength          35
 
 typedef char RKPathname[RKFileManagerFilenameLength];
@@ -119,15 +120,6 @@ static void refreshFileList(RKFileRemover *me) {
             me->usage += fileStat.st_size;
         }
     }
-    
-    // Gather the stats of the files
-//    for (k = 0; k < me->count; k++) {
-//        stat(filenames[k], &fileStat);
-//        indexedStats[k].index = k;
-//        indexedStats[k].time = fileStat.st_ctime;
-//        indexedStats[k].size = fileStat.st_size;
-//        me->usage += fileStat.st_size;
-//    }
 
     // Sort the files by time
     qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
@@ -427,7 +419,7 @@ void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
 #pragma mark - Interactions
 
 int RKFileManagerStart(RKFileManager *engine) {
-    // File manager is always assumed wired
+    // File manager is always assumed wired, dataPath may be empty
     engine->state |= RKEngineStateProperlyWired;
     if (engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
