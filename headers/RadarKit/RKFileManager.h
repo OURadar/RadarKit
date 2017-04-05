@@ -35,14 +35,12 @@
 //                                     RK-20170402-2252.json
 //                                             :
 //
-//  iq : moment : health ~ 3,000 : 100 : 1
-//
 //
 //  Log folders have structure B:
 //
-//  .../rootDataFolder/logs/trxd/20170401.log
-//                               20170402.log
-//                               20170403.log
+//  .../rootDataFolder/log/trxd-20170401.log
+//                         trxd-20170402.log
+//                         trxd-20170403.log
 //                                       :
 //
 //
