@@ -102,6 +102,14 @@ void showHelp() {
            "  --test-pulse-compression\n"
            "         Sets the program to test the pulse compression using a simple case with.\n"
            "         an impulse filter.\n"
+           "  -T (--test) " UNDERLINE("value") "\n"
+           "         0 - Show types\n"
+           "         1 - Show colors\n"
+           "         2 - Show modulo math\n"
+           "         3 - Show window types\n"
+           "         4 - Test parsing comma delimited values\n"
+           "         5 - Test parsing values in a JSON string\n"
+           "         6 - Test reading a preference file\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
@@ -128,9 +136,6 @@ UserParams processInput(int argc, const char **argv) {
     user.coresForProductGenerator = 2;
     user.prf = 2000;
 
-    RKPreference *preference = NULL;
-    RKPreferenceObject *object = NULL;
-
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
         {"no-color"              , no_argument      , NULL, 'C'},
@@ -143,27 +148,21 @@ UserParams processInput(int argc, const char **argv) {
         {"test-one-ray"          , no_argument      , NULL, 'R'},
         {"test-processor"        , no_argument      , NULL, 'Q'},
         {"test-simd"             , optional_argument, NULL, 'S'},
-        {"show-types"            , no_argument      , NULL, 'T'},
-        {"test-parse-values"     , no_argument      , NULL, 'V'},
+        {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
         {"core"                  , required_argument, NULL, 'c'},
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
-        {"test-mod"              , no_argument      , NULL, 'm'},
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
-        {"test-windows"          , no_argument      , NULL, 'u'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
         {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
-        {"read-preference"       , no_argument      , NULL, '1'},
-        {"test-json-keywords"    , no_argument      , NULL, '2'},
-        {"test-show-colors"      , no_argument      , NULL, '3'},
         {0, 0, 0, 0}
     };
     
@@ -235,13 +234,42 @@ UserParams processInput(int argc, const char **argv) {
                 exit(EXIT_SUCCESS);
                 break;
             case 'T':
-                printf("Option T\n");
-                RKShowTypeSizes();
-                exit(EXIT_FAILURE);
+                k = atoi(optarg);
+            switch (k) {
+                case 0:
+                    RKShowTypeSizes();
+                    break;
+                case 1:
+                    RKTestShowColors();
+                    break;
+                case 2:
+                    RKTestModuloMath();
+                    break;
+                case 3:
+                    RKTestWindow();
+                    break;
+                case 4:
+                    RKTestParseCommaDelimitedValues();
+                    break;
+                case 5:
+                    RKTestJSON();
+                    break;
+                case 6:
+                    RKTestMakeHops();
+                    break;
+                case 7:
+                    RKTestSingleEngine();
+                    break;
+                case 8:
+                    RKTestPreferenceReading();
+                    break;
+                default:
                 break;
-            case 'V':
-                RKTestParseCommaDelimitedValues();
-                exit(EXIT_SUCCESS);
+            }
+            exit(EXIT_SUCCESS);
+            break;
+            case 'U':
+                exit(EXIT_FAILURE);
                 break;
             case 'P':
                 if (optarg) {
@@ -263,11 +291,6 @@ UserParams processInput(int argc, const char **argv) {
                 showHelp();
                 exit(EXIT_SUCCESS);
                 break;
-            case 'm':
-                // Modulo-math test
-                RKTestModuloMath();
-                exit(EXIT_SUCCESS);
-                break;
             case 'p':
                 strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
                 break;
@@ -279,10 +302,6 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 't':
                 strncpy(user.tweetaHost, optarg, sizeof(user.tweetaHost));
-                break;
-            case 'u':
-                RKTestWindow();
-                exit(EXIT_SUCCESS);
                 break;
             case 'v':
                 user.verbose++;
@@ -300,32 +319,6 @@ UserParams processInput(int argc, const char **argv) {
                 } else {
                     user.sleepInterval = 1000;
                 }
-                break;
-            case '1':
-                preference = RKPreferenceInit();
-                
-                object = RKPreferenceFindKeyword(preference, "PedzyHost");
-                if (object) {
-                    printf("pedzy host = %s\n", object->valueString);
-                }
-                object = RKPreferenceFindKeyword(preference, "TweetaHost");
-                if (object) {
-                    printf("tweeta host = %s\n", object->valueString);
-                }
-                
-                RKPreferenceFree(preference);
-                exit(EXIT_SUCCESS);
-                break;
-            case '2':
-                RKTestJSON();
-                exit(EXIT_SUCCESS);
-                break;
-            case '3':
-                //RKTestShowColors();
-                //RKTestSingleEngine();
-                //RKTestSingleCommand();
-                RKTestMakeHops();
-                exit(EXIT_SUCCESS);
                 break;
             default:
                 exit(EXIT_FAILURE);

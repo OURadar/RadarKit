@@ -1171,7 +1171,7 @@ void RKTestJSON(void) {
 
 void RKTestShowColors(void) {
     for (int k = 0; k < 16; k++) {
-        printf("%s<Color %d>%s\n", RKGetBackgroundColor(), k, RKNoColor);
+        printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
 }
 
@@ -1199,4 +1199,18 @@ void RKTestMakeHops(void) {
         printf("%d Hops:\n", k);
         RKBestStrideOfHops(k, true);
     }
+}
+
+void RKTestPreferenceReading(void) {
+    RKPreference *preference = RKPreferenceInit();;
+    RKPreferenceObject *object = NULL;
+    object = RKPreferenceFindKeyword(preference, "PedzyHost");
+    if (object) {
+        printf("pedzy host = %s\n", object->valueString);
+    }
+    object = RKPreferenceFindKeyword(preference, "TweetaHost");
+    if (object) {
+        printf("tweeta host = %s\n", object->valueString);
+    }
+    RKPreferenceFree(preference);
 }

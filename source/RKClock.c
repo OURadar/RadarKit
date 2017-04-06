@@ -123,14 +123,10 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         j = RKPreviousModuloS(k, clock->size);
         if (x - clock->xBuffer[j] > 60.0 || u - clock->uBuffer[j] < 0) {
             // Latest in raw input xBuffer > latest (derived time > x
-//            RKLog("%s Warning. x = %s > %s > %s   u = %s > %s",
-//                  clock->name,
-//                  RKFloatToCommaStyleString(clock->xBuffer[j]), RKFloatToCommaStyleString(clock->latestTime), RKFloatToCommaStyleString(x),
-//                  RKFloatToCommaStyleString(clock->uBuffer[j]), RKFloatToCommaStyleString(u));
-                        RKLog("%s Warning. dx = %s > %s   du = %s",
-                              clock->name,
-                              RKFloatToCommaStyleString(clock->xBuffer[j] - clock->latestTime), RKFloatToCommaStyleString(clock->latestTime - x),
-                              RKFloatToCommaStyleString(clock->uBuffer[j] - u));
+            RKLog("%s Warning. dx = %s > %s   du = %s",
+                  clock->name,
+                  RKFloatToCommaStyleString(clock->xBuffer[j] - clock->latestTime), RKFloatToCommaStyleString(clock->latestTime - x),
+                  RKFloatToCommaStyleString(clock->uBuffer[j] - u));
             if (x - clock->xBuffer[j] > RKClockAWhile) {
                 recent = false;
             }
@@ -161,7 +157,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->a = 1.0 - clock->b;
                 RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
             } else if (clock->b > 5.0 * dx / n) {
-                RKLog("%s The reading could be smoother with lower minor factor. dx / n = %.2f\n", clock->name, dx / n);
+                RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2f\n", clock->name, dx / n);
             }
         }
         // Update the references as decaying function of the stride size

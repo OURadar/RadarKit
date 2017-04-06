@@ -10,6 +10,7 @@
 #define __RadarKit_Waveform__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKDSP.h>
 
 #define RKWaveformDefaultDepth       1024
 #define RKWaveformDigitalAmplitude   32767.0
