@@ -72,6 +72,7 @@
 #define RKDataFolderIQ                   "iq"
 #define RKDataFolderMoment               "moment"
 #define RKDataFolderHealth               "health"
+#define RKLogFolder                      "log"
 
 #define RKNoColor                        "\033[0m"
 #define RKMaximumStringLength            4096

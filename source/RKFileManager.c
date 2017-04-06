@@ -369,11 +369,11 @@ static void *folderWatcher(void *in) {
 
     // Log path has structure B
     char string[RKMaximumPathLength];
-    char logPath[RKMaximumPathLength] = "log";
+    char logPath[RKMaximumPathLength] = RKLogFolder;
     if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-        snprintf(logPath, RKMaximumPathLength - 1, "%s/log", engine->radarDescription->dataPath);
+        snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->radarDescription->dataPath);
     } else if (strlen(engine->dataPath)) {
-        snprintf(logPath, RKMaximumPathLength - 1, "%s/log", engine->dataPath);
+        snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->dataPath);
     }
     
     // Increase the tic once to indicate the engine is ready
@@ -462,7 +462,7 @@ int RKFileManagerStart(RKFileManager *engine) {
     engine->state |= RKEngineStateProperlyWired;
     if (engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
-        RKLog("%s Usage limit not set.  Use default = %s GB\n", engine->name, RKIntegerToCommaStyleString(engine->usagelimit / 1073741824));
+        RKLog("%s Usage limit not set, use default " UNDERLINE("%s") " GB\n", engine->name, RKIntegerToCommaStyleString(engine->usagelimit / 1073741824));
     }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
