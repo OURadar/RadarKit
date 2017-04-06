@@ -1193,3 +1193,10 @@ void RKTestSingleCommand(void) {
     RKReplaceKeyValue(string, "Enum", RKStatusEnumOld);
     printf("string = %s\n", string);
 }
+
+void RKTestMakeHops(void) {
+    for (int k = 3; k < 15; k++) {
+        printf("%d Hops:\n", k);
+        RKBestStrideOfHops(k, true);
+    }
+}
