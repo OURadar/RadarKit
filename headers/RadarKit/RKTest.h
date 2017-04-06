@@ -88,5 +88,6 @@ void RKTestSingleEngine(void);
 void RKTestSingleCommand(void);
 void RKTestMakeHops(void);
 void RKTestPreferenceReading(void);
+void RKTestCountFiles(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

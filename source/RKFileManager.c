@@ -46,7 +46,6 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
     struct dirent *dir;
     DIR *did = opendir(path);
     if (did == NULL) {
-        //fprintf(stderr, "Unable to list folder '%s'\n", path);
         return -1;
     }
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {
