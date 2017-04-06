@@ -17,7 +17,7 @@
 // Moment: XXXXXX-YYYYMMDD-HHMMSS-EX.X-Z.nc (32 chars)
 // Health: XXXXXX-YYYYMMDD-HHMMSS.json      (27 chars)
 // Log   : XXXXXX-YYYYMMDD.log              (19 chars)
-#define RKFileManagerFilenameLength          35
+#define RKFileManagerFilenameLength          36
 
 typedef char RKPathname[RKFileManagerFilenameLength];
 typedef struct _rk_indexed_stat {
@@ -513,6 +513,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
         return RKResultFileManagerBufferNotResuable;
     }
     
+    RKPathname *folders = (RKPathname *)me->folders;
     RKPathname *filenames = (RKPathname *)me->filenames;
     RKIndexedStat *indexedStats = (RKIndexedStat *)me->indexedStats;
     
@@ -520,8 +521,48 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     
     // Copy over the filename and stats to the internal buffer
     uint32_t k = me->count;
-    strcpy(filenames[k], filename);
+    
+    // Extract out the date portion
+    char *lastPart = strrchr(filename, '/');
+    if (lastPart) {
+        strncpy(filenames[k], lastPart + 1, RKFileManagerFilenameLength - 1);
+    } else {
+        if (strlen(filename) > RKFileManagerFilenameLength - 1) {
+            RKLog("%s Warning. Filename is too long.\n", engine->name);
+        }
+        strncpy(filenames[k], filename, RKFileManagerFilenameLength - 1);
+    }
+    
+    if (strncmp(me->path, filename, strlen(me->path))) {
+        RKLog("%s File %s does not belong here.\n", engine->name, filename);
+    }
+    
+    // [me->path]/YYYYMMDD/RK-YYYYMMDD-...
+    
+    int folderId = 0;
+    char *folder = engine->scratch;
+    strcpy(folder, filename + strlen(me->path) + 1);
+    char *e = strrchr(folder, '/');
+    *e = '\0';   
+    if (strlen(folder) > RKFileManagerFilenameLength - 1) {
+        RKLog("%s Warning. Folder name is too long.\n", engine->name);
+    }
+    if (k == 0) {
+        // The data folder is empty
+        folderId = 0;
+        strcpy(folders[0], folder);
+    } else {
+        folderId = indexedStats[k - 1].folderId;
+        // If same folder as the previous entry, no need to add another folder in the list. Add one otherwise.
+        if (strcmp(folder, folders[indexedStats[k - 1].folderId])) {
+            folderId++;
+            strcpy(folders[indexedStats[k - 1].folderId + 1], folder);
+        }
+    }
+    //printf("%s --> %s / %s (%d)\n", filename, folder, filenames[k], folderId);
+    
     indexedStats[k].index = k;
+    indexedStats[k].folderId = folderId;
     indexedStats[k].time = fileStat.st_ctime;
     indexedStats[k].size = fileStat.st_size;
     

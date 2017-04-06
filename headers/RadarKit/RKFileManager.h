@@ -98,6 +98,7 @@ struct rk_file_manager {
     RKFileRemover          *workers;
     pthread_t              tidFileWatcher;
     pthread_mutex_t        mutex;
+    char                   scratch[RKMaximumStringLength];
 
     // Status / health
     RKEngineState          state;

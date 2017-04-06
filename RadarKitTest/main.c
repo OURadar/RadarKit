@@ -42,7 +42,7 @@ static void handleSignals(int signal) {
         return;
     }
     fprintf(stderr, "\n");
-    RKLog("Caught a %s (%d)  radar->state = 0x%x.\n", RKSignalString(signal), signal, myRadar->state);
+    RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
     RKStop(myRadar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
