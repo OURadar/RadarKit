@@ -9,6 +9,7 @@
 #include <RadarKit/RKFileManager.h>
 
 #define RKFileManagerFolderListCapacity      60
+#define RKFileManagerLogFileListCapacity     1000
 
 // The way RadarKit names the files should be relatively short:
 // Folder: YYYYMMDD
@@ -54,6 +55,7 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
             k++;
         }
     }
+    closedir(did);
     return k;
 }
 
@@ -74,9 +76,11 @@ static bool isFolderEmpty(const char *path) {
     }
     while ((dir = readdir(did)) != NULL) {
         if (dir->d_type == DT_REG) {
+            closedir(did);
             return false;
         }
     }
+    closedir(did);
     return true;
 }
 
@@ -146,6 +150,7 @@ static void refreshFileList(RKFileRemover *me) {
                 stat(string, &fileStat);
                 me->usage += fileStat.st_size;
             }
+            closedir(did);
         }
         RKLog("%s Trucated list with total usage %s\n", me->parent->name, RKIntegerToCommaStyleString(me->usage));
     }
@@ -302,6 +307,9 @@ static void *folderWatcher(void *in) {
     RKFileManager *engine = (RKFileManager *)in;
     
     int k;
+    DIR *did;
+    struct dirent *dir;
+    struct stat fileStat;
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -359,15 +367,43 @@ static void *folderWatcher(void *in) {
         }
     }
 
+    // Log path has structure B
+    char string[RKMaximumPathLength];
+    char logPath[RKMaximumPathLength] = "log";
+    if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
+        snprintf(logPath, RKMaximumPathLength - 1, "%s/log", engine->radarDescription->dataPath);
+    } else if (strlen(engine->dataPath)) {
+        snprintf(logPath, RKMaximumPathLength - 1, "%s/log", engine->dataPath);
+    }
+    
     // Increase the tic once to indicate the engine is ready
     engine->tic++;
 
     RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
-    
+
     // Wait here while the engine should stay active
+    time_t now;
+    time_t longTime = 7 * 86400;
     while (engine->state & RKEngineStateActive) {
+        // Take care of super slow changing files, like the daily logs
+        time(&now);
+        if ((did = opendir(logPath)) != NULL) {
+            while ((dir = readdir(did)) != NULL) {
+                if (dir->d_type == DT_REG) {
+                    snprintf(string, RKMaximumPathLength - 1, "%s/%s", logPath, dir->d_name);
+                    stat(string, &fileStat);
+                    if (fileStat.st_ctime < now - longTime) {
+                        RKLog("%s Removing %s ...\n", engine->name, string);
+                        snprintf(string, RKMaximumPathLength - 1, "rm -f %s/%s", logPath, dir->d_name);
+                        system(string);
+                    }
+                }
+            }
+            closedir(did);
+        }
+        // Wait one minute, do it with multiples of 0.1s for a responsive exit
         k = 0;
-        while (k++ < 10 && engine->state & RKEngineStateActive) {
+        while (k++ < 600 && engine->state & RKEngineStateActive) {
             usleep(100000);
         }
     }
