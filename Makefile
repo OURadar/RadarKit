@@ -1,11 +1,11 @@
 UNAME := $(shell uname)
 
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
-CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
-#CFLAGS = -ggdb -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+#CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
+CFLAGS = -ggdb -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS += -fms-extensions -Wno-microsoft
-LDFLAGS = -L /usr/local/lib
+LDFLAGS = -L /usr/local/lib -L /usr/lib64
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o RKSweep.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o
 OBJS += RKPreference.o
@@ -32,7 +32,7 @@ CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
 endif
 
-LDFLAGS += -lfftw3f -lnetcdf -lpthread -lm
+LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm
 
 ifeq ($(UNAME), Darwin)
 else

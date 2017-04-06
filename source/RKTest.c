@@ -603,7 +603,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
     if (!strcmp(command, "disconnect")) {
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
         }
         transceiver->state |= RKEngineStateDeactivating;
@@ -829,7 +829,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     char sval[4][64];
     
     if (!strcmp(command, "disconnect")) {
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", pedestal->name);
         }
         pedestal->state |= RKEngineStateDeactivating;

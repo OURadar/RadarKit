@@ -217,8 +217,9 @@ static void *sweepWriter(void *in) {
             sprintf(filelist + strlen(filelist), " %s", filename);
         }
 
-        if ((j = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
+        if ((j = nc_create(filename, NC_NETCDF4, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);
+            engine->state ^= RKEngineStateWritingFile;
             return NULL;
         }
         
@@ -233,15 +234,22 @@ static void *sweepWriter(void *in) {
         
         // Define variables
         nc_def_var(ncid, "Azimuth", NC_FLOAT, 1, dimensionIds, &variableIdAzimuth);
-        nc_put_att_text(ncid, variableIdAzimuth, "Units", 7, "Degrees");
         nc_def_var(ncid, "Elevation", NC_FLOAT, 1, dimensionIds, &variableIdElevation);
-        nc_put_att_text(ncid, variableIdElevation, "Units", 7, "Degrees");
         nc_def_var(ncid, "Beamwidth", NC_FLOAT, 1, dimensionIds, &variableIdBeamwidth);
-        nc_put_att_text(ncid, variableIdBeamwidth, "Units", 7, "Degrees");
         nc_def_var(ncid, "GateWidth", NC_FLOAT, 1, dimensionIds, &variableIdGateWidth);
-        nc_put_att_text(ncid, variableIdGateWidth, "Units", 6, "Meters");
         nc_def_var(ncid, productName, NC_FLOAT, 2, dimensionIds, &variableIdData);
+
+        nc_put_att_text(ncid, variableIdAzimuth, "Units", 7, "Degrees");
+        nc_put_att_text(ncid, variableIdElevation, "Units", 7, "Degrees");
+        nc_put_att_text(ncid, variableIdBeamwidth, "Units", 7, "Degrees");
+        nc_put_att_text(ncid, variableIdGateWidth, "Units", 6, "Meters");
         nc_put_att_text(ncid, variableIdData, "Units", strlen(productUnit), productUnit);
+
+//        nc_def_var_deflate(ncid, variableIdAzimuth, 1, 1, 3);
+//        nc_def_var_deflate(ncid, variableIdElevation, 1, 1, 3);
+//        nc_def_var_deflate(ncid, variableIdBeamwidth, 1, 1, 3);
+//        nc_def_var_deflate(ncid, variableIdGateWidth, 1, 1, 3);
+//        nc_def_var_deflate(ncid, variableIdData, 1, 1, 3);
 
         // Global attributes - some are WDSS-II required
         nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(productName), productName);
@@ -597,7 +605,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         RKLog("%s Stopped.\n", engine->name);
     }
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
 }
