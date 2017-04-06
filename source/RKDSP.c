@@ -62,3 +62,62 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse) {
     }
     return RKResultSuccess;
 }
+
+int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
+    int i, k, n;
+    int n1, n2, n3;
+    int s1, s2, s3;
+    int m1, m2, m3;
+    float score, maxScore = 0.0f;
+    int stride = 1;
+    for (i = 1; i < hopCount; i++) {
+        n = 0;
+        score = 0.0f;
+        m1 = hopCount;
+        m2 = hopCount;
+        m3 = hopCount;
+        for (k = 0; k < hopCount; k++) {
+            n1 = (n + 1 * i) % hopCount;
+            n2 = (n + 2 * i) % hopCount;
+            n3 = (n + 3 * i) % hopCount;
+            s1 = abs(n1 - n);
+            s2 = abs(n2 - n);
+            s3 = abs(n3 - n);
+            if (m1 > s1) {
+                m1 = s1;
+            }
+            if (m2 > s2) {
+                m2 = s2;
+            }
+            if (m3 > s3) {
+                m3 = s3;
+            }
+            score += 1.00f * s1 + 0.50f * s2 + 0.25f * s3;
+            n = RKNextNModuloS(n, i, hopCount);
+        }
+        score += m1 + 0.5 * m2 + 0.25 * m3;
+        if (showNumbers) {
+            if (hopCount > 10) {
+                printf("stride = %2d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
+            } else {
+                printf("stride = %d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
+            }
+        }
+        if (maxScore < score) {
+            maxScore = score;
+            stride = i;
+        }
+    }
+    if (showNumbers) {
+        n = 0;
+        char sequence[1024];
+        sequence[1023] = '\0';
+        i = 0;
+        for (k = 0; k < hopCount; k++) {
+            i += snprintf(sequence + i, 1023 - i, " %d", n);
+            n = RKNextNModuloS(n, stride, hopCount);
+        }
+        printf("   => best stride = %d  ==> %s\n", stride, sequence);
+    }
+    return stride;
+}

@@ -55,6 +55,7 @@ float RKInterpolatePositiveAngles(const float angleBefore, const float angleAfte
 float RKInterpolateAngles(const float angleLeft, const float angleRight, const float alpha);
 
 int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse);
+int RKBestStrideOfHops(const int hopCount, const bool showNumbers);
 
 //
 // FIR + IIR Filters

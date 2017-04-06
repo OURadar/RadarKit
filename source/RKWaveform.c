@@ -83,29 +83,9 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
     waveform->type = RKWaveformTypeFrequencyHopping;
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
-    int stride = 1;
 
-    switch (waveform->count / 2) {
-        case 13:
-            stride = 5;
-            break;
-        case 11:
-            stride = 3;
-            break;
-        case 10:
-            stride = 4;
-            break;
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-            stride = 2;
-            break;
-        default:
-            stride = 1;
-            break;
-    }
+    int stride = RKBestStrideOfHops(waveform->count / 2, false);
+
     n = 0;
     for (k = 0; k < waveform->count; k++) {
         f = delta * (double)n - 0.5 * bandwidth;
