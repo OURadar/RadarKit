@@ -461,6 +461,8 @@ int main(int argc, const char **argv) {
 
         RKWaveform *waveform = RKWaveformInitWithCountAndDepth ( 22, 50 );
         RKWaveformHops(waveform, 5.0, 4.0);
+        //RKWaveform *waveform = RKWaveformInitWithCountAndDepth ( 18, 50 );
+        //RKWaveformHops(waveform, 5.0, 2.0);
         RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
 
         // Radar going live, then wait indefinitely until something happens
