@@ -266,8 +266,8 @@ static void *fileRemover(void *in) {
                     sprintf(command, "rm -rf %s", path);
                     system(command);
                 }
+                RKLog("%s %s New parentFolder = %s -> %s\n", engine->name, name, parentFolder, folders[indexedStats[me->index].folderId]);
                 strcpy(parentFolder, folders[indexedStats[me->index].folderId]);
-                RKLog("%s %s New parentFolder = %s\n", engine->name, name, parentFolder);
             }
 
             // Update the index for next check or refresh it entirely if there are too many files

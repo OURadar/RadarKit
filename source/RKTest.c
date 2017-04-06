@@ -1196,8 +1196,9 @@ void RKTestSingleCommand(void) {
 
 void RKTestMakeHops(void) {
     for (int k = 3; k < 15; k++) {
-        printf("%d Hops:\n", k);
+        printf(UNDERLINE("%d Hops:\n"), k);
         RKBestStrideOfHops(k, true);
+        printf("\n");
     }
 }
 

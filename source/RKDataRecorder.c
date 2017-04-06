@@ -119,11 +119,11 @@ static void *pulseRecorder(void *in) {
                 len = 0;
             } else {
                 if (engine->fd != 0) {
-                    if (engine->verbose) {
-                        RKLog("%s Closing %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
-                    }
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
+                    if (engine->verbose) {
+                        RKLog("%s Recorded %s (%s B)\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
+                    }
                     // Notify file manager of a new addition
                     RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
                 }
@@ -138,12 +138,12 @@ static void *pulseRecorder(void *in) {
             sprintf(filename + i, ".rkr");
             
             if (engine->doNotWrite) {
-                if (engine->verbose) {
+                if (engine->verbose > 1) {
                     RKLog("%s Skipping %s ...\n", engine->name, filename);
                 }
                 len = 4096 + sizeof(RKConfig);
             } else {
-                if (engine->verbose) {
+                if (engine->verbose > 1) {
                     RKLog("%s Creating %s ...\n", engine->name, filename);
                 }
                 RKPreparePath(filename);

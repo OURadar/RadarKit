@@ -44,8 +44,7 @@ char *RKGetBackgroundColor(void) {
 }
 
 char *RKGetBackgroundColorOfIndex(const int i) {
-    //const uint8_t colors[] = {70, 28, 136, 30, 33, 162, 27, 99, 167, 90, 241};
-    const uint8_t colors[] = {167, 197, 208, 178, 136, 70, 28, 30, 33, 27, 99, 57, 90, 162, 241};
+    const uint8_t colors[] = {167, 197, 202, 178, 136, 70, 28, 30, 33, 27, 99, 57, 90, 162, 241, 236};
     static int k = 3;
     static char str[4][32];
     k = k == 3 ? 0 : k + 1;
@@ -473,4 +472,24 @@ long RKCountFilesInPath(const char *path) {
     printf("offset = %ld\n", offset);
     seekdir(did, offset + 3);
     return telldir(did);
+}
+
+char *RKLastTwoPartsOfPath(const char *path) {
+    char *a0 = strchr((char *)path, '/');
+    char *a1 = strchr(a0 + 1, '/');
+    char *a2 = strchr(a1 + 1, '/');
+    if (a0 == NULL) {
+        return a0;
+    } else if (a1 != NULL) {
+        if (a2 == NULL) {
+            return a1;
+        } else if (a2 != NULL) {
+            do {
+                a0 = a1;
+                a1 = a2;
+                a2 = strchr(a2 + 1, '/');
+            } while (a2 != NULL);
+        }
+    }
+    return a0;
 }

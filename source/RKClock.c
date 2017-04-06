@@ -144,7 +144,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         if (recent) {
             if (du <= 1.0e-6 || du > 1.0e9) {
                 if (clock->tic == 0) {
-                    RKLog("%s Warning. Reference tic change of %.e per second is unexpectedn\n", clock->name, du);
+                    RKLog("%s Warning. Reference tic change of %.e per second is unexpected.\n", clock->name, du);
                     RKLog("%s Warning. Will be replaced with an internal uniform reference.\n", clock->name);
                 }
                 // Override with own tic?
@@ -157,7 +157,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->a = 1.0 - clock->b;
                 RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
             } else if (clock->b > 5.0 * dx / n) {
-                RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2f\n", clock->name, dx / n);
+                RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e\n", clock->name, dx / n);
             }
         }
         // Update the references as decaying function of the stride size

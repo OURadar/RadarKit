@@ -117,7 +117,8 @@ static void *sweepWriter(void *in) {
     }
 
     const float radianToDegree = 180.0f / M_PI;
-    
+
+    int summarySize = 0;
     RKProductIndex productIndex = RKProductIndexS;
     uint32_t productList = S->header.productList;
     int productCount = __builtin_popcount(productList);
@@ -194,8 +195,15 @@ static void *sweepWriter(void *in) {
         }
         sprintf(filename + i, ".nc");
         
-        if (engine->verbose) {
+        if (engine->verbose > 1) {
             RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);
+        } else if (engine->verbose) {
+            if (p == 0) {
+                // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
+                summarySize = sprintf(engine->summary, "%s ...%s", engine->doNotWrite ? "Skipped" : "Created", RKLastTwoPartsOfPath(filename));
+            } else {
+                summarySize += sprintf(engine->summary + summarySize, ", %c", symbol);
+            }
         }
 
         if (engine->doNotWrite) {
@@ -377,6 +385,10 @@ static void *sweepWriter(void *in) {
 
         // Notify file manager of a new addition
         RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
+    }
+
+    if (engine->verbose && summarySize > 0) {
+        RKLog("%s %s", engine->name, engine->summary);
     }
 
     if (engine->hasHandleFilesScript) {
