@@ -97,7 +97,10 @@ static void refreshFileList(RKFileRemover *me) {
 
     // Go through all folders
     int folderCount = listFoldersInFolder(folders, RKFileManagerFolderListCapacity, me->path);
-    
+
+    if (folderCount <= 0) {
+        return;
+    }
     // Sort the folders by name (should be in time numbers)
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
 
