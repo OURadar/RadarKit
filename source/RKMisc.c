@@ -461,3 +461,16 @@ void RKReplaceKeyValue(char *string, const char *key, int value) {
         s = strstr(e, key);
     }
 }
+
+long RKCountFilesInPath(const char *path) {
+    //struct dirent *dir;
+    DIR *did = opendir(path);
+    if (did == NULL) {
+        fprintf(stderr, "Unable to open directory %s\n", path);
+        return 0;
+    }
+    long offset = telldir(did);
+    printf("offset = %ld\n", offset);
+    seekdir(did, offset + 3);
+    return telldir(did);
+}

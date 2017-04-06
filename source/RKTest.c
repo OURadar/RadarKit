@@ -1214,3 +1214,9 @@ void RKTestPreferenceReading(void) {
     }
     RKPreferenceFree(preference);
 }
+
+void RKTestCountFiles(void) {
+    const char *folder = "data";
+    long count = RKCountFilesInPath(folder);
+    printf("%ld files in %s\n", count, folder);
+}

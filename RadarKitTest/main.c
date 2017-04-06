@@ -263,6 +263,9 @@ UserParams processInput(int argc, const char **argv) {
                 case 8:
                     RKTestPreferenceReading();
                     break;
+                case 9:
+                    RKTestCountFiles();
+                    break;
                 default:
                 break;
             }
