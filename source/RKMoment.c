@@ -420,9 +420,9 @@ static void *momentCore(void *in) {
             if (ic != S->header.configIndex) {
                 ic = S->header.configIndex;
                 gateSizeMeters = S->header.gateSizeMeters;
-                if (engine->verbose) {
-                    RKLog("%s %s C%d RCor @ %.2f/%.2f dB   capacity = %s   stride = %d\n",
-                          engine->name, name, k, config->ZCal[0], config->ZCal[1], RKIntegerToCommaStyleString(ray->header.capacity), stride);
+                if (engine->verbose > 1) {
+                    RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s   stride = %d\n",
+                          engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity), stride);
                 }
                 RKFloat r = 0.0f;
                 for (i = 0; i < space->capacity; i++) {

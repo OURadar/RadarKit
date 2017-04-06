@@ -81,5 +81,6 @@ void RKGoThroughKeywords(const char *string);
 void RKReplaceKeyValue(char *string, const char *key, int value);
 
 long RKCountFilesInPath(const char *);
+char *RKLastTwoPartsOfPath(const char *path);
 
 #endif /* rk_misc_h */

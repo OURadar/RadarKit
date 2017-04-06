@@ -70,6 +70,7 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
     int m1, m2, m3;
     float score, maxScore = 0.0f;
     int stride = 1;
+    const float a = 1.00f, b = 0.75, c = 0.50f;
     for (i = 1; i < hopCount; i++) {
         n = 0;
         score = 0.0f;
@@ -92,10 +93,10 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
             if (m3 > s3) {
                 m3 = s3;
             }
-            score += 1.00f * s1 + 0.50f * s2 + 0.25f * s3;
+            score += a * s1 + b * s2 + c * s3;
             n = RKNextNModuloS(n, i, hopCount);
         }
-        score += m1 + 0.5 * m2 + 0.25 * m3;
+        score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
         if (showNumbers) {
             if (hopCount > 10) {
                 printf("stride = %2d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
@@ -117,7 +118,7 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
             i += snprintf(sequence + i, 1023 - i, " %d", n);
             n = RKNextNModuloS(n, stride, hopCount);
         }
-        printf("   => best stride = %d  ==> %s\n", stride, sequence);
+        printf("    Best stride = %d  ==> %s\n", stride, sequence);
     }
     return stride;
 }
