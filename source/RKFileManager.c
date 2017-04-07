@@ -44,12 +44,23 @@ static int string_cmp_by_pseudo_time(const void *a, const void *b) {
 static int listElementsInFolder(RKPathname *list, const int maximumCapacity, const char *path, uint8_t type) {
     int k = 0;
     struct dirent *dir;
+    struct stat status;
     DIR *did = opendir(path);
+    char pathname[RKMaximumPathLength];
     if (did == NULL) {
+        fprintf(stderr, "Error opening directory %s  errno = %d\n", path, errno);
         return -1;
     }
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {
-        if (dir->d_type == type && strcmp(".", dir->d_name) && strcmp("..", dir->d_name)) {
+        if (dir->d_type == DT_UNKNOWN && dir->d_name[0] != '.') {
+            sprintf(pathname, "%s/%s", path, dir->d_name);
+            lstat(pathname, &status);
+            if ((type == DT_REG && S_ISREG(status.st_mode)) ||
+                (type == DT_DIR && S_ISDIR(status.st_mode))) {
+                snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
+                k++;
+            }
+        } else if (dir->d_type == type && dir->d_name[0] != '.') {
             snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
             k++;
         }
