@@ -267,7 +267,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             control->uid = i;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Controls occupy %s B (%d)",
+            RKLog("Controls occupy %s B (%s)",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(radar->desc.controlCount));
         }

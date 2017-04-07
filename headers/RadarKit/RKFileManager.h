@@ -41,7 +41,7 @@
 //  .../rootDataFolder/log/trxd-20170401.log
 //                         trxd-20170402.log
 //                         trxd-20170403.log
-//                                       :
+//                                      :
 //
 //
 //  Created by Boon Leng Cheong on 3/11/17.
@@ -53,11 +53,11 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKFileManagerDefaultUsageLimit   (size_t)1024 * 1024 * 1024 * 1024
+#define RKFileManagerDefaultUsageLimit   (size_t)1024 * 1024 * 1024 * 1024 * 15 / 10
 #define RKFileManagerRawDataRatio        500
-#define RKFileManagerMomentDataRatio     490
-#define RKFileManagerHealthDataRatio     5
-#define RKFileManagerLogDataRatio        5
+#define RKFileManagerMomentDataRatio     1000
+#define RKFileManagerHealthDataRatio     2
+#define RKFileManagerLogDataRatio        1
 #define RKFileManagerTotalRatio          (RKFileManagerRawDataRatio + RKFileManagerMomentDataRatio + RKFileManagerHealthDataRatio + RKFileManagerLogDataRatio)
 
 
