@@ -57,7 +57,7 @@ int socketCommandHandler(RKOperator *O) {
             case 'a':
                 // Authenticate
                 sscanf(commandString + 1, "%s %s", sval1, sval2);
-                RKLog("%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
+                RKLog(">%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
                 strncpy(user->login, sval1, sizeof(user->login) - 1);
                 j = sprintf(string, "{\"Radars\":[");
                 for (k = 0; k < engine->radarCount; k++) {
@@ -224,13 +224,13 @@ int socketCommandHandler(RKOperator *O) {
                 
             case 'r':
                 sscanf("%s", commandString + 1, sval1);
-                RKLog("%s %s selected radar %s\n", engine->name, O->name, sval1);
+                RKLog(">%s %s selected radar %s\n", engine->name, O->name, sval1);
                 snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
                 RKOperatorSendCommandResponse(O, string);
                 break;
                 
             case 'm':
-                RKLog("%s %s display data\n", engine->name, O->name);
+                RKLog(">%s %s display data\n", engine->name, O->name);
                 user->streams |= RKUserFlagDisplayZ;
                 user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
                 break;

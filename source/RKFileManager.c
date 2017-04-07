@@ -246,6 +246,9 @@ static void *fileRemover(void *in) {
 
     me->index = 0;
     while (engine->state & RKEngineStateActive) {
+
+        pthread_mutex_lock(&engine->mutex);
+
         // Removing files
         while (me->usage > me->limit) {
             // Build the complete path from various components
@@ -285,10 +288,12 @@ static void *fileRemover(void *in) {
                 }
             }
         }
-        
+
+        pthread_mutex_unlock(&engine->mutex);
+
         // Now we wait
         k = 0;
-        while ((k++ < 10 || RKTimevalDiff(time, me->latestTime) < 0.3) && engine->state & RKEngineStateActive) {
+        while ((k++ < 10 || RKTimevalDiff(time, me->latestTime) < 0.2) && engine->state & RKEngineStateActive) {
             gettimeofday(&time, NULL);
             usleep(100000);
         }
@@ -505,8 +510,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
 
     struct stat fileStat;
     stat(filename, &fileStat);
-    me->usage += fileStat.st_size;
-    
+
     gettimeofday(&me->latestTime, NULL);
     
     if (me->reusable == false) {
@@ -519,6 +523,8 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     
     pthread_mutex_lock(&engine->mutex);
     
+    me->usage += fileStat.st_size;
+
     // Copy over the filename and stats to the internal buffer
     uint32_t k = me->count;
     
@@ -560,7 +566,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
         }
     }
     //printf("%s --> %s / %s (%d)\n", filename, folder, filenames[k], folderId);
-    
+
     indexedStats[k].index = k;
     indexedStats[k].folderId = folderId;
     indexedStats[k].time = fileStat.st_ctime;

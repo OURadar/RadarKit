@@ -89,9 +89,6 @@ void showHelp() {
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
-           "  --test-mod\n"
-           "         Sets the program to test modulo macros.\n"
-           "\n"
            "  --test-simd\n"
            "         Sets the program to test SIMD instructions.\n"
            "         To test the SIMD performance, use --test-simd=2\n"
@@ -235,42 +232,42 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'T':
                 k = atoi(optarg);
-            switch (k) {
-                case 0:
-                    RKShowTypeSizes();
+                switch (k) {
+                    case 0:
+                        RKShowTypeSizes();
+                        break;
+                    case 1:
+                        RKTestShowColors();
+                        break;
+                    case 2:
+                        RKTestModuloMath();
+                        break;
+                    case 3:
+                        RKTestWindow();
+                        break;
+                    case 4:
+                        RKTestParseCommaDelimitedValues();
+                        break;
+                    case 5:
+                        RKTestJSON();
+                        break;
+                    case 6:
+                        RKTestMakeHops();
+                        break;
+                    case 7:
+                        RKTestSingleEngine();
+                        break;
+                    case 8:
+                        RKTestPreferenceReading();
+                        break;
+                    case 9:
+                        RKTestCountFiles();
+                        break;
+                    default:
                     break;
-                case 1:
-                    RKTestShowColors();
-                    break;
-                case 2:
-                    RKTestModuloMath();
-                    break;
-                case 3:
-                    RKTestWindow();
-                    break;
-                case 4:
-                    RKTestParseCommaDelimitedValues();
-                    break;
-                case 5:
-                    RKTestJSON();
-                    break;
-                case 6:
-                    RKTestMakeHops();
-                    break;
-                case 7:
-                    RKTestSingleEngine();
-                    break;
-                case 8:
-                    RKTestPreferenceReading();
-                    break;
-                case 9:
-                    RKTestCountFiles();
-                    break;
-                default:
+                }
+                exit(EXIT_SUCCESS);
                 break;
-            }
-            exit(EXIT_SUCCESS);
-            break;
             case 'U':
                 exit(EXIT_FAILURE);
                 break;
