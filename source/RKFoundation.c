@@ -14,16 +14,18 @@ int RKLog(const char *whatever, ...) {
     if (rkGlobalParameters.stream == NULL && rkGlobalParameters.logfile[0] == 0) {
         return 0;
     }
-    // Construct the string
     int i = 0;
     size_t len;
     va_list args;
-    char msg[RKMaximumStringLength];
     time_t utc;
+    struct tm tm;
+    char msg[RKMaximumStringLength];
 
+    // Get the time
     time(&utc);
-    struct tm *time = localtime(&utc);
+    memcpy(&tm, localtime(&utc), sizeof(struct tm));
 
+    // Construct the string
     va_start(args, whatever);
     if (strlen(whatever) > RKMaximumStringLength - 256) {
         fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
@@ -32,7 +34,7 @@ int RKLog(const char *whatever, ...) {
     if (whatever[0] == '>') {
         i += sprintf(msg, "                    ");
     } else {
-        i += strftime(msg, 32, "%Y/%m/%d %T ", time);
+        i += strftime(msg, 32, "%Y/%m/%d %T ", &tm);
     }
     char *okay_str = strcasestr(whatever, "ok");
     char *info_str = strcasestr(whatever, "info");
@@ -102,7 +104,7 @@ int RKLog(const char *whatever, ...) {
         } else {
             i = 0;
         }
-        i += strftime(rkGlobalParameters.logfile + i, RKNameLength, "%Y%m%d.log", time);
+        i += strftime(rkGlobalParameters.logfile + i, RKNameLength, "%Y%m%d.log", &tm);
     }
     if (strlen(rkGlobalParameters.logfile)) {
         RKPreparePath(rkGlobalParameters.logfile);
