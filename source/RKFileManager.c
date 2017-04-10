@@ -48,7 +48,10 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
     DIR *did = opendir(path);
     char pathname[RKMaximumPathLength];
     if (did == NULL) {
-        fprintf(stderr, "Error opening directory %s  errno = %d\n", path, errno);
+        if (errno != ENOENT) {
+            // It is possible that the root storage folder is empty, in this case errno = ENOENT is okay.
+            fprintf(stderr, "Error opening directory %s  errno = %d\n", path, errno);
+        }
         return -1;
     }
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {

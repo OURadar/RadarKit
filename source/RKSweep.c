@@ -395,6 +395,7 @@ static void *sweepWriter(void *in) {
         RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
     }
 
+    // Show a summary of all the files created
     if (engine->verbose && summarySize > 0) {
         RKLog("%s %s", engine->name, engine->summary);
     }

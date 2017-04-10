@@ -542,7 +542,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             switch (*sb) {
                 case 'f':
                     transceiver->prt = 1.0 / (double)atof(sv);
-                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                    if (radar->desc.initFlags & RKInitFlagVerbose) {
                         RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / transceiver->prt)));
                     }
                     break;
