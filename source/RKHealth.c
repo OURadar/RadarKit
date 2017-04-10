@@ -278,6 +278,9 @@ static void *healthConsolidator(void *in) {
             min = timeStruct->tm_min;
             if (engine->healthLog != NULL) {
                 fclose(engine->healthLog);
+                if (engine->verbose) {
+                    RKLog("%s %s\n", engine->name, filename);
+                }
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
             }
             i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
@@ -285,7 +288,6 @@ static void *healthConsolidator(void *in) {
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
             RKPreparePath(filename);
-            RKLog("%s %s\n", engine->name, filename);
             engine->healthLog = fopen(filename, "w");
         }
         if (engine->healthLog != NULL) {

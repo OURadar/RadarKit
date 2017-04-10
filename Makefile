@@ -5,7 +5,7 @@ UNAME := $(shell uname)
 CFLAGS = -ggdb -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS += -fms-extensions -Wno-microsoft
-LDFLAGS = -L /usr/local/lib -L /usr/lib64
+LDFLAGS = -L /usr/local/lib
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o RKSweep.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o
 OBJS += RKPreference.o

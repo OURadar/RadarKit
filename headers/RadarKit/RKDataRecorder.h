@@ -12,6 +12,8 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
 
+#define RKDataRecorderDefaultMaximumRecorderDepth   50000
+
 typedef struct rk_data_recorder RKDataRecorder;
 
 struct rk_data_recorder {
@@ -27,6 +29,7 @@ struct rk_data_recorder {
     uint8_t                verbose;
     bool                   doNotWrite;
     uint32_t               cacheSize;
+    uint32_t               maximumRecordDepth;
     RKFileManager          *fileManager;
 
     // Program set variables
@@ -53,11 +56,13 @@ void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *, 
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
 void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value);
+void RKDataRecorderSetMaximumRecordDepth(RKDataRecorder *engine, const uint32_t);
+void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size);
+
 int RKDataRecorderStart(RKDataRecorder *engine);
 int RKDataRecorderStop(RKDataRecorder *engine);
 char *RKDataRecorderStatusString(RKDataRecorder *engine);
 
-void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size);
 uint32_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const uint32_t size);
 uint32_t RKDataRecorderCacheFlush(RKDataRecorder *engine);
 

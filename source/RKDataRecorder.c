@@ -44,7 +44,7 @@ static void RKDataRecorderUpdateStatusString(RKDataRecorder *engine) {
 static void *pulseRecorder(void *in) {
     RKDataRecorder *engine = (RKDataRecorder *)in;
     
-    int i, j, k, s;
+    int i, j, k, n, s;
     
     struct timeval t0, t1;
     
@@ -72,6 +72,7 @@ static void *pulseRecorder(void *in) {
     
     j = 0;   // config index
     k = 0;   // pulse index
+    n = 0;   // pulse sample count
     while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -102,18 +103,18 @@ static void *pulseRecorder(void *in) {
                   engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
         }
         
-        // Consider we are writing at this point
+        // Consider we are writing to a file at this point
         engine->state |= RKEngineStateWritingFile;
         
         // Assess the configIndex
-        if (j != pulse->header.configIndex) {
+        if (j != pulse->header.configIndex || n >= engine->maximumRecordDepth) {
             j = pulse->header.configIndex;
             config = &engine->configBuffer[pulse->header.configIndex];
             
             // Close the current file
             if (engine->doNotWrite) {
                 if (engine->verbose) {
-                    RKLog("%s Skipping %s (%s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(len));
+                    RKLog("%s Skipping %s (%s pulses, %s B) ...\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKIntegerToCommaStyleString(len));
                 }
                 usleep(250000);
                 len = 0;
@@ -122,7 +123,7 @@ static void *pulseRecorder(void *in) {
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
                     if (engine->verbose) {
-                        RKLog("%s Recorded %s (%s B)\n", engine->name, filename, RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
+                        RKLog("%s Recorded %s (%s pulses, %s B)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
                     }
                     // Notify file manager of a new addition
                     RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
@@ -136,6 +137,8 @@ static void *pulseRecorder(void *in) {
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
             sprintf(filename + i, ".rkr");
+            
+            n = 0;
             
             if (engine->doNotWrite) {
                 if (engine->verbose > 1) {
@@ -176,6 +179,7 @@ static void *pulseRecorder(void *in) {
         
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
+        n++;
     }
     
     free(fileHeader);
@@ -196,6 +200,7 @@ RKDataRecorder *RKDataRecorderInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(8) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKDataRecorderSetCacheSize(engine, 32 * 1024 * 1024);
     engine->state = RKEngineStateAllocated;
+    engine->maximumRecordDepth = RKDataRecorderDefaultMaximumRecorderDepth;
     engine->memoryUsage = sizeof(RKDataRecorder) + engine->cacheSize;
     return engine;
 }
@@ -230,6 +235,10 @@ void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *de
 
 void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value) {
     engine->doNotWrite = value;
+}
+
+void RKDataRecorderSetMaximumRecordDepth(RKDataRecorder *engine, const uint32_t depth) {
+    engine->maximumRecordDepth = depth;
 }
 
 void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size) {
