@@ -30,10 +30,9 @@ int RKLog(const char *whatever, ...) {
         return 1;
     }
     if (whatever[0] == '>') {
-        i += sprintf(msg, "                    : [%s] ", rkGlobalParameters.program);
+        i += sprintf(msg, "                    ");
     } else {
-        i += strftime(msg, 32, "%Y/%m/%d %T", time);
-        i += sprintf(msg + i, " : [%s] ", rkGlobalParameters.program);
+        i += strftime(msg, 32, "%Y/%m/%d %T ", time);
     }
     char *okay_str = strcasestr(whatever, "ok");
     char *info_str = strcasestr(whatever, "info");
