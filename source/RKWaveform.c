@@ -128,7 +128,6 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
             }
         }
     }
-    //RKWaveformCalculateGain(waveform);
 }
 
 void RKWaveformConjuate(RKWaveform *waveform) {
@@ -156,6 +155,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     for (k = 0; k < waveform->count; k++) {
         waveform->filterAnchors[k][0].origin /= stride;
         waveform->filterAnchors[k][0].length /= stride;
+        waveform->filterAnchors[k][0].gain /= stride;
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (j = 0, i = 0; j < waveform->depth; j++, i += stride) {
