@@ -279,7 +279,7 @@ static void *healthConsolidator(void *in) {
             if (engine->healthLog != NULL) {
                 fclose(engine->healthLog);
                 if (engine->verbose) {
-                    RKLog("%s %s\n", engine->name, filename);
+                    RKLog("%s Recorded %s\n", engine->name, filename);
                 }
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
             }
