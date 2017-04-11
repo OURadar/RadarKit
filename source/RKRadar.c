@@ -60,7 +60,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     char name[RKNameLength];
 
     RKSetUseDailyLog(true);
-    RKSetRootFolder(desc.dataPath);
 
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Initializing ... 0x%x", desc.initFlags);
@@ -111,6 +110,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKLog("Radar name = '%s'  prefix = '%s'", radar->desc.name, radar->desc.filePrefix);
     radar->desc.latitude = 35.2550320;
     radar->desc.longitude = -97.4227810;
+    if (strlen(desc.dataPath) == 0) {
+        sprintf(radar->desc.dataPath, RKDefaultDataPath);
+    }
 
     // Config buffer
     radar->state |= RKRadarStateConfigBufferAllocating;
@@ -523,6 +525,12 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     RKFileManagerSetVerbose(radar->fileManager, verbose);
     return RKResultNoError;
 }
+
+int RKSetDataPath(RKRadar *radar, const char *path) {
+    memcpy(radar->desc.dataPath, path, RKMaximumPathLength - 1);
+    RKSetRootFolder(path);
+    return RKResultNoError;
+};
 
 int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
