@@ -153,13 +153,14 @@ static void refreshFileList(RKFileRemover *me) {
         me->usage = 0;
         for (k = 0; k < folderCount; k++) {
             struct dirent *dir;
-            DIR *did = opendir(folders[k]);
+            sprintf(string, "%s/%s/%s", me->path, folders[k], filenames[j]);
+            DIR *did = opendir(string);
             if (did == NULL) {
                 fprintf(stderr, "Unable to list folder '%s'\n", folders[k]);
                 continue;
             }
             while ((dir = readdir(did)) != NULL) {
-                sprintf(string, "%s/%s", folders[k], dir->d_name);
+                sprintf(string, "%s/%s/%s", me->path, folders[k], dir->d_name);
                 stat(string, &fileStat);
                 me->usage += fileStat.st_size;
             }
@@ -341,7 +342,7 @@ static void *folderWatcher(void *in) {
     int capacities[] = {
         24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
         24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
-        24 * 60 * 2,                      // Assume a file every minute, 2 folders
+        24 * 60 * 3,                      // Assume a file every minute, 2 folders
     };
     size_t limits[] = {
         RKFileManagerRawDataRatio,
