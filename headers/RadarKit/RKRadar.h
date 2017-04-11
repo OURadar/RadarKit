@@ -62,7 +62,8 @@ struct rk_radar {
     //
     // General attributes
     //
-    char                       name[RKNameLength];
+    char                       name[RKNameLength];                   // Name of the engine
+    char                       dataPath[RKMaximumPathLength];        // Root path for the data files
     RKRadarDesc                desc;
     RKRadarState               state;
     bool                       active;

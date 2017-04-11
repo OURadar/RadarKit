@@ -10,11 +10,9 @@
 
 // Internal Functions
 
-static int RHealthRelayTweetaRead(RKClient *);
-
 #pragma mark - Internal Functions
 
-static int RHealthRelayTweetaRead(RKClient *client) {
+static int RKHealthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKRadar *radar = me->radar;
@@ -100,7 +98,7 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     me->client = RKClientInitWithDesc(desc);
     
     RKClientSetUserResource(me->client, me);
-    RKClientSetReceiveHandler(me->client, &RHealthRelayTweetaRead);
+    RKClientSetReceiveHandler(me->client, &RKHealthRelayTweetaRead);
     RKClientStart(me->client, false);
     
     return (RKHealthRelay)me;

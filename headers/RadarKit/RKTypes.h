@@ -263,8 +263,10 @@ enum RKInitFlag {
     RKInitFlagVeryVeryVerbose        = (1 << 2),
     RKInitFlagAllocMomentBuffer      = (1 << 8),
     RKInitFlagAllocRawIQBuffer       = (1 << 9),
-    RKInitFlagAllocEverything        = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagVerbose),
-    RKInitFlagAllocEverythingQuiet   = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer),
+    RKInitFlagAllocHealthNodes       = (1 << 10),
+    RKInitFlagAllocEverything        = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocHealthNodes | RKInitFlagVerbose),
+    RKInitFlagAllocEverythingQuiet   = (RKInitFlagAllocMomentBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocHealthNodes),
+    RKInitFlagRelay                  = (1 << 16)
 };
 
 typedef uint32_t RKProductList;
@@ -357,17 +359,17 @@ enum RKEngineState {
 
 typedef uint32_t RKStatusEnum;
 enum RKStatusEnum {
-    RKStatusEnumOld               = -3,
-    RKStatusEnumInvalid           = -2,
-    RKStatusEnumTooLow            = -1,
-    RKStatusEnumNormal            =  0,
-    RKStatusEnumActive            =  0,
-    RKStatusEnumHigh              =  1,
-    RKStatusEnumStandby           =  1,
-    RKStatusEnumTooHigh           =  2,
-    RKStatusEnumNotOperational    =  2,
-    RKStatusEnumFault             =  2,
-    RKStatusEnumCritical          =  3                                // This would the status we may shutdown the radar
+    RKStatusEnumOld                  = -3,
+    RKStatusEnumInvalid              = -2,
+    RKStatusEnumTooLow               = -1,
+    RKStatusEnumNormal               =  0,
+    RKStatusEnumActive               =  0,
+    RKStatusEnumHigh                 =  1,
+    RKStatusEnumStandby              =  1,
+    RKStatusEnumTooHigh              =  2,
+    RKStatusEnumNotOperational       =  2,
+    RKStatusEnumFault                =  2,
+    RKStatusEnumCritical             =  3                            // This would the status we may shutdown the radar
 };
 
 typedef uint32_t RKFileType;
@@ -377,6 +379,41 @@ enum RKFileType {
     RKFileTypeHealth,
     RKFileTypeLog,
     RKFileTypeCount
+};
+
+typedef uint64_t RKStream;
+enum RKStream {
+    RKStreamNull                     = 0,                            //
+    RKStreamControl                  = 1,                            // Controls
+    RKStreamStatusHealth             = (1 << 1),                     //
+    RKStreamStatusPulses             = (1 << 2),                     //
+    RKStreamStatusRays               = (1 << 3),                     //
+    RKStreamStatusPositions          = (1 << 4),                     //
+    RKStreamStatusEngines            = (1 << 6),                     //
+    RKStreamStatusAll                = 0xFE,                         //
+    RKStreamDisplayIQ                = (1 << 8),                     // Low rate IQ (sub-smpled)
+    RKStreamDisplayIQFiltered        = (1 << 9),                     // Filtered IQ (usually matched filter is applied)
+    RKStreamProductIQ                = (1 << 10),                    // Full rate IQ
+    RKStreamProductIQFiltered        = (1 << 11),                    // Full rate filtered IQ
+    RKStreamDisplayZ                 = (1 << 16),                    // Display
+    RKStreamDisplayV                 = (1 << 17),                    //
+    RKStreamDisplayW                 = (1 << 18),                    //
+    RKStreamDisplayD                 = (1 << 19),                    //
+    RKStreamDisplayP                 = (1 << 20),                    //
+    RKStreamDisplayR                 = (1 << 21),                    //
+    RKStreamDisplayK                 = (1 << 22),                    //
+    RKStreamDisplayS                 = (1 << 23),                    //
+    RKStreamDisplayZVWDPRKS          = 0x0000FF0000,                 //
+    RKStreamProductZ                 = (1ULL << 32),                 // Products
+    RKStreamProductV                 = (1ULL << 33),                 //
+    RKStreamProductW                 = (1ULL << 34),                 //
+    RKStreamProductD                 = (1ULL << 35),                 //
+    RKStreamProductP                 = (1ULL << 36),                 //
+    RKStreamProductR                 = (1ULL << 37),                 //
+    RKStreamProductK                 = (1ULL << 38),                 //
+    RKStreamProductS                 = (1ULL << 39),                 //
+    RKStreamProductZVWDPRKS          = 0xFF00000000ULL,              //
+    RKStreamEverything               = 0xFFFFFFFFFFULL               //
 };
 
 // A general description of a radar. These should never change after the radar has gone live
@@ -398,7 +435,6 @@ typedef struct rk_radar_desc {
     float            wavelength;                                     // Radar wavelength (m)
     char             name[RKNameLength];                             // Radar name
     char             filePrefix[RKNameLength];                       // Prefix of output files
-    char             dataPath[RKMaximumPathLength];                  // Root path for the data files
 } RKRadarDesc;
 
 // A running configuration buffer
