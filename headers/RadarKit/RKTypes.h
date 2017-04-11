@@ -69,6 +69,7 @@
 #define RKDutyCyleOrangeThreshold        0.90
 #define RKStatusBarWidth                 10
 
+#define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
 #define RKDataFolderMoment               "moment"
 #define RKDataFolderHealth               "health"
@@ -435,6 +436,7 @@ typedef struct rk_radar_desc {
     float            wavelength;                                     // Radar wavelength (m)
     char             name[RKNameLength];                             // Radar name
     char             filePrefix[RKNameLength];                       // Prefix of output files
+    char             dataPath[RKMaximumPathLength];                  // Root path for the data files
 } RKRadarDesc;
 
 // A running configuration buffer
