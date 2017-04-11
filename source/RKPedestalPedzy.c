@@ -11,6 +11,7 @@
 // Internal Functions
 
 static int RKPedestalPedzyRead(RKClient *);
+static int RKPedestalPedzyGreet(RKClient *);
 static void *pedestalHealth(void *);
 
 #pragma mark - Internal Functions
@@ -60,7 +61,14 @@ static int RKPedestalPedzyRead(RKClient *client) {
             }
         }
     }
-    
+    return RKResultSuccess;
+}
+
+static int RKPedestalPedzyGreet(RKClient *client) {
+    // The shared user resource pointer
+    RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
+    RKRadar *radar = me->radar;
+    RKClockReset(radar->pulseClock);
     return RKResultSuccess;
 }
 
@@ -156,6 +164,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     me->client = RKClientInitWithDesc(desc);
 
     RKClientSetUserResource(me->client, me);
+    RKClientSetGreetHandler(me->client, &RKPedestalPedzyGreet);
     RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
     RKClientStart(me->client, false);
 
@@ -189,7 +198,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {
-                RKLog("%s Waited %.2f for response.\n", client->name, (float)s * 0.01f);
+                RKLog("%s Waited %.2f s for response.\n", client->name, (float)s * 0.01f);
             }
             if ((float)s * 0.01f >= 3.0f) {
                 RKLog("%s should time out.\n", client->name);
