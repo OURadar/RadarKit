@@ -11,6 +11,8 @@
 
 #define CLEAR                       "\033[0m"
 #define UNDERLINE(x)                "\033[4m" x "\033[24m"
+#define ROOT_PATH                   "data"
+
 
 // User parameters in a struct
 typedef struct user_params {
@@ -337,8 +339,6 @@ UserParams processInput(int argc, const char **argv) {
 //  M A I N
 //
 //
-
-#define ROOT_PATH "data"
 
 int main(int argc, const char **argv) {
 
