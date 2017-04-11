@@ -13,49 +13,12 @@
 
 #define RKCommandCenterMaxConnections 32
 
-typedef uint64_t RKUserFlag;
-
-enum RKUserFlag {
-    RKUserFlagNull                 = 0,                      //
-    RKUserFlagControl              = 1,                      // Controls
-    RKUserFlagStatusHealth         = (1 << 1),               //
-    RKUserFlagStatusPulses         = (1 << 2),               //
-    RKUserFlagStatusRays           = (1 << 3),               //
-    RKUserFlagStatusPositions      = (1 << 4),               //
-    RKUserFlagStatusHealthOld      = (1 << 5),               //
-    RKUserFlagStatusEngines        = (1 << 6),               //
-    RKUserFlagStatusAll            = 0xFE,                   //
-    RKUserFlagDisplayIQ            = (1 << 8),               // Low rate IQ
-    RKUserFlagDisplayIQFiltered    = (1 << 9),               // filtered IQ (usually matched filter)
-    RKUserFlagProductIQ            = (1 << 10),              // Full rate IQ
-    RKUserFlagProductIQFiltered    = (1 << 11),              // Full rate filtered IQ
-    RKUserFlagDisplayZ             = (1 << 16),              // Display
-    RKUserFlagDisplayV             = (1 << 17),              //
-    RKUserFlagDisplayW             = (1 << 18),              //
-    RKUserFlagDisplayD             = (1 << 19),              //
-    RKUserFlagDisplayP             = (1 << 20),              //
-    RKUserFlagDisplayR             = (1 << 21),              //
-    RKUserFlagDisplayK             = (1 << 22),              //
-    RKUserFlagDisplayS             = (1 << 23),              //
-    RKUserFlagDisplayZVWDPRKS      = 0x0000FF0000,           //
-    RKUserFlagProductZ             = (1ULL << 32),           // Products
-    RKUserFlagProductV             = (1ULL << 33),           //
-    RKUserFlagProductW             = (1ULL << 34),           //
-    RKUserFlagProductD             = (1ULL << 35),           //
-    RKUserFlagProductP             = (1ULL << 36),           //
-    RKUserFlagProductR             = (1ULL << 37),           //
-    RKUserFlagProductK             = (1ULL << 38),           //
-    RKUserFlagProductS             = (1ULL << 39),           //
-    RKUserFlagProductZVWDPRKS      = 0xFF00000000ULL,        //
-    RKUserFlagEverything           = 0xFFFFFFFFFFULL
-};
-
 typedef struct  rk_user {
     char         login[64];
-    RKUserFlag   access;             // Authorized access priviledge
-    RKUserFlag   accessLevel2;
-    RKUserFlag   streams;
-    RKUserFlag   streamsLevel2;
+    RKStream     access;             // Authorized access priviledge
+    RKStream     accessLevel2;
+    RKStream     streams;
+    RKStream     streamsLevel2;
     double       timeLastOut;
     double       timeLastHealthOut;
     double       timeLastDisplayIQOut;
@@ -63,8 +26,8 @@ typedef struct  rk_user {
     uint32_t     healthIndex;
     uint32_t     rayStatusIndex;
     uint32_t     pulseIndex;
-    uint16_t     pulseDownSamplingRatio;
     uint32_t     rayIndex;
+    uint16_t     pulseDownSamplingRatio;
     uint16_t     rayDownSamplingRatio;
     char         string[RKMaximumStringLength];
     RKInt16C     samples[2][RKGateCount];
@@ -79,6 +42,7 @@ typedef struct rk_command_center {
     RKRadar      *radars[4];
     
     // Program set variables
+    bool         relayMode;
     bool         suspendHandler;
     RKServer     *server;
     int          radarCount;
@@ -86,8 +50,8 @@ typedef struct rk_command_center {
     RKUser       users[RKCommandCenterMaxConnections];
 } RKCommandCenter;
 
-RKUserFlag RKStringToFlag(const char *);
-int RKFlagToString(char *string, RKUserFlag);
+RKStream RKStringToFlag(const char *);
+int RKFlagToString(char *string, RKStream);
 
 RKCommandCenter *RKCommandCenterInit(void);
 void RKCommandCenterFree(RKCommandCenter *);
