@@ -82,7 +82,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
         RKLog("Info. Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
     } else if (radar->desc.pulseBufferDepth == 0) {
-        radar->desc.pulseBufferDepth = 1000;
+        radar->desc.pulseBufferDepth = 2000;
     }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
@@ -142,24 +142,26 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     // Config buffer
-    radar->state |= RKRadarStateConfigBufferAllocating;
-    bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
-    radar->configs = (RKConfig *)malloc(bytes);
-    if (radar->configs == NULL) {
-        RKLog("Error. Unable to allocate memory for pulse parameters");
-        exit(EXIT_FAILURE);
+    if (radar->desc.initFlags & RKInitFlagAllocConfigBuffer) {
+        radar->state |= RKRadarStateConfigBufferAllocating;
+        bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
+        radar->configs = (RKConfig *)malloc(bytes);
+        if (radar->configs == NULL) {
+            RKLog("Error. Unable to allocate memory for pulse parameters");
+            exit(EXIT_FAILURE);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Config buffer occupies %s B  (%s sets)\n",
+                  RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
+        }
+        memset(radar->configs, 0, bytes);
+        radar->memoryUsage += bytes;
+        for (i = 0; i < radar->desc.configBufferDepth; i++) {
+            radar->configs[i].i = (uint64_t)(-1) - radar->desc.configBufferDepth + i;
+        }
+        radar->state ^= RKRadarStateConfigBufferAllocating;
+        radar->state |= RKRadarStateConfigBufferInitialized;
     }
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Config buffer occupies %s B  (%s sets)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
-    }
-    memset(radar->configs, 0, bytes);
-    radar->memoryUsage += bytes;
-    for (i = 0; i < radar->desc.configBufferDepth; i++) {
-        radar->configs[i].i = (uint64_t)(-1) - radar->desc.configBufferDepth + i;
-    }
-    radar->state ^= RKRadarStateConfigBufferAllocating;
-    radar->state |= RKRadarStateConfigBufferInitialized;
     
     // Health buffer
     if (radar->desc.initFlags & RKInitFlagAllocHealthBuffer) {
@@ -296,59 +298,63 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateControlsInitialized;
     }
 
-    // Clocks
-    radar->pulseClock = RKClockInitWithSize(15000, 10000);
-    sprintf(name, "%s<PulseClock>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", RKNoColor);
-    RKClockSetName(radar->pulseClock, name);
-    radar->memoryUsage += sizeof(RKClock);
-    
-    radar->positionClock = RKClockInit();
-    sprintf(name, "%s<PositionClock>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", RKNoColor);
-    RKClockSetName(radar->positionClock, name);
-    RKClockSetOffset(radar->positionClock, -0.02);
-    radar->memoryUsage += sizeof(RKClock);
-    
-    // Pulse compression engine
-    radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
-    RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
-                                                  radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                                  radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
-    radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
-    radar->state |= RKRadarStatePulseCompressionEngineInitialized;
+    // Signal processor marries pulse and position data, process for moment, etc.
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        // Clocks
+        radar->pulseClock = RKClockInitWithSize(15000, 10000);
+        sprintf(name, "%s<PulseClock>%s",
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", RKNoColor);
+        RKClockSetName(radar->pulseClock, name);
+        radar->memoryUsage += sizeof(RKClock);
+        
+        radar->positionClock = RKClockInit();
+        sprintf(name, "%s<PositionClock>%s",
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", RKNoColor);
+        RKClockSetName(radar->positionClock, name);
+        RKClockSetOffset(radar->positionClock, -0.02);
+        radar->memoryUsage += sizeof(RKClock);
+        
+        // Pulse compression engine
+        radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
+        RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
+                                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
+                                                      radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+        radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
+        radar->state |= RKRadarStatePulseCompressionEngineInitialized;
+        
+        // Position engine
+        radar->positionEngine = RKPositionEngineInit();
+        RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
+                                              radar->positions, &radar->positionIndex, radar->desc.positionBufferDepth,
+                                              radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
+                                              radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+        radar->memoryUsage += radar->positionEngine->memoryUsage;
+        radar->state |= RKRadarStatePositionEngineInitialized;
 
-    // Position engine
-    radar->positionEngine = RKPositionEngineInit();
-    RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
-                                          radar->positions, &radar->positionIndex, radar->desc.positionBufferDepth,
-                                          radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                          radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
-    radar->memoryUsage += radar->positionEngine->memoryUsage;
-    radar->state |= RKRadarStatePositionEngineInitialized;
-    
-    // Moment engine
-    radar->momentEngine = RKMomentEngineInit();
-    RKMomentEngineSetInputOutputBuffers(radar->momentEngine, &radar->desc,
-                                        radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                        radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
-                                        radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
-    radar->memoryUsage += radar->momentEngine->memoryUsage;
-    radar->state |= RKRadarStateMomentEngineInitialized;
-    
+        // Moment engine
+        radar->momentEngine = RKMomentEngineInit();
+        RKMomentEngineSetInputOutputBuffers(radar->momentEngine, &radar->desc,
+                                            radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
+                                            radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
+                                            radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+        radar->memoryUsage += radar->momentEngine->memoryUsage;
+        radar->state |= RKRadarStateMomentEngineInitialized;
+    }
+
     // File manager
     radar->fileManager = RKFileManagerInit();
     RKFileManagerSetInputOutputBuffer(radar->fileManager, &radar->desc);
     radar->memoryUsage += radar->fileManager->memoryUsage;
     radar->state |= RKRadarStateFileManagerInitialized;
     
+
     // Health engine
     radar->healthEngine = RKHealthEngineInit();
     RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc, radar->fileManager, radar->healthNodes,
                                         radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
     radar->memoryUsage += radar->healthEngine->memoryUsage;
     radar->state |= RKRadarStateHealthEngineInitialized;
-    
+
     // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
@@ -365,6 +371,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
+    // Total memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
@@ -377,7 +384,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 RKRadar *RKInitQuiet(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
-    desc.initFlags = RKInitFlagAllocEverythingQuiet;
+    desc.initFlags = RKInitFlagAllocEverythingQuiet | RKInitFlagSignalProcessor;
     desc.pulseCapacity = 4096;
     desc.pulseToRayRatio = 1;
     desc.configBufferDepth = RKBufferCSlotCount;
@@ -391,7 +398,7 @@ RKRadar *RKInitQuiet(void) {
 RKRadar *RKInitLean(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
-    desc.initFlags = RKInitFlagAllocEverything;
+    desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 1;
     desc.configBufferDepth = RKBufferCSlotCount;
@@ -405,7 +412,7 @@ RKRadar *RKInitLean(void) {
 RKRadar *RKInitMean(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
-    desc.initFlags = RKInitFlagAllocEverything;
+    desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
     desc.pulseCapacity = 8192;
     desc.pulseToRayRatio = 2;
     desc.configBufferDepth = RKBufferCSlotCount;
@@ -419,7 +426,7 @@ RKRadar *RKInitMean(void) {
 RKRadar *RKInitFull(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
-    desc.initFlags = RKInitFlagAllocEverything;
+    desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
     desc.pulseCapacity = RKGateCount;
     desc.pulseToRayRatio = 8;
     desc.configBufferDepth = RKBufferCSlotCount;
@@ -437,7 +444,7 @@ RKRadar *RKInit(void) {
 RKRadar *RKInitAsRelay(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
-    desc.initFlags = RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer | RKInitFlagRelay;
+    desc.initFlags = RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer;
     desc.pulseCapacity = RKGateCount;
     desc.pulseToRayRatio = 8;
     desc.configBufferDepth = RKBufferCSlotCount;
@@ -451,13 +458,15 @@ int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
     }
-    RKDataRecorderFree(radar->dataRecorder);
-    RKSweepEngineFree(radar->sweepEngine);
-    RKHealthEngineFree(radar->healthEngine);
     RKFileManagerFree(radar->fileManager);
-    RKMomentEngineFree(radar->momentEngine);
-    RKPositionEngineFree(radar->positionEngine);
-    RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
+    RKSweepEngineFree(radar->sweepEngine);
+    RKDataRecorderFree(radar->dataRecorder);
+    RKHealthEngineFree(radar->healthEngine);
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        RKMomentEngineFree(radar->momentEngine);
+        RKPositionEngineFree(radar->positionEngine);
+        RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
+    }
     if (radar->pedestal) {
         radar->pedestalFree(radar->pedestal);
     }
@@ -488,8 +497,12 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateControlsInitialized) {
         free(radar->controls);
     }
-    RKClockFree(radar->pulseClock);
-    RKClockFree(radar->positionClock);
+    if (radar->pulseClock) {
+        RKClockFree(radar->pulseClock);
+    }
+    if (radar->positionClock) {
+        RKClockFree(radar->positionClock);
+    }
     free(radar);
     return EXIT_SUCCESS;
 }
@@ -545,12 +558,14 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     } else if (verbose >= 3) {
         radar->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-    RKClockSetVerbose(radar->pulseClock, verbose);
-    RKClockSetVerbose(radar->positionClock, verbose);
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        RKClockSetVerbose(radar->pulseClock, verbose);
+        RKClockSetVerbose(radar->positionClock, verbose);
+        RKPositionEngineSetVerbose(radar->positionEngine, verbose);
+        RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
+        RKMomentEngineSetVerbose(radar->momentEngine, verbose);
+    }
     RKHealthEngineSetVerbose(radar->healthEngine, verbose);
-    RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
-    RKPositionEngineSetVerbose(radar->positionEngine, verbose);
-    RKMomentEngineSetVerbose(radar->momentEngine, verbose);
     RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
     RKDataRecorderSetVerbose(radar->dataRecorder, verbose);
     RKFileManagerSetVerbose(radar->fileManager, verbose);
@@ -570,6 +585,10 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
 }
 
 int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
+    if (radar->pulseCompressionEngine == NULL) {
+        RKLog("Error. No pulse compression engine.\n");
+        return RKResultNoPulseCompressionEngine;
+    }
     int j, k;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
     for (k = 0; k < waveform->count; k++) {
@@ -597,6 +616,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
 //
 int RKSetWaveformByFilename(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
     if (radar->pulseCompressionEngine == NULL) {
+        RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
     }
     // Load in the waveform
@@ -625,6 +645,9 @@ int RKSetWaveformTo121(RKRadar *radar) {
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount) {
+    if (radar->pulseCompressionEngine == NULL) {
+        return RKResultNoPulseCompressionEngine;
+    }
     if (radar->state & RKRadarStateLive) {
         return RKResultUnableToChangeCoreCounts;
     }
@@ -678,30 +701,40 @@ void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const cha
 int RKGoLive(RKRadar *radar) {
     radar->active = true;
     
-    radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
-    radar->memoryUsage -= radar->positionEngine->memoryUsage;
+    // Offset the pre-allocated memory
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
+        radar->memoryUsage -= radar->positionEngine->memoryUsage;
+        radar->memoryUsage -= radar->momentEngine->memoryUsage;
+    }
     radar->memoryUsage -= radar->healthEngine->memoryUsage;
-    radar->memoryUsage -= radar->momentEngine->memoryUsage;
-    radar->memoryUsage -= radar->sweepEngine->memoryUsage;
     radar->memoryUsage -= radar->dataRecorder->memoryUsage;
+    radar->memoryUsage -= radar->sweepEngine->memoryUsage;
     radar->memoryUsage -= radar->fileManager->memoryUsage;
     
-    RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
-    RKPositionEngineStart(radar->positionEngine);
+    // Start the engines
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+        RKPositionEngineStart(radar->positionEngine);
+        RKMomentEngineStart(radar->momentEngine);
+    }
     RKHealthEngineStart(radar->healthEngine);
-    RKMomentEngineStart(radar->momentEngine);
-    RKSweepEngineStart(radar->sweepEngine);
     RKDataRecorderStart(radar->dataRecorder);
+    RKSweepEngineStart(radar->sweepEngine);
     RKFileManagerStart(radar->fileManager);
 
-    radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
-    radar->memoryUsage += radar->positionEngine->memoryUsage;
+    // Get the post-allocated memory
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
+        radar->memoryUsage += radar->positionEngine->memoryUsage;
+        radar->memoryUsage += radar->momentEngine->memoryUsage;
+    }
     radar->memoryUsage += radar->healthEngine->memoryUsage;
-    radar->memoryUsage += radar->momentEngine->memoryUsage;
-    radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
+    radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->memoryUsage += radar->fileManager->memoryUsage;
 
+    // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar live. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
