@@ -15,11 +15,13 @@
 
 #include <RadarKit/RKRadar.h>
 
+#define RKRadarRelayFeedbackDepth   200
+
 typedef struct rk_radar_relay {
     // User defined variables
     RKClient               *client;
     uint32_t               responseIndex;
-    char                   responses[RKHealthRelayTweetaFeedbackDepth][RKMaximumStringLength];
+    char                   responses[RKRadarRelayFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumStringLength];
     pthread_t              tidBackground;
     RKStream               streams;

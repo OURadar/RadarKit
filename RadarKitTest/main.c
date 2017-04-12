@@ -25,6 +25,7 @@ typedef struct user_params {
     int   sleepInterval;
     bool  simulate;
     bool  writeFiles;
+    bool  relay;
     char  pedzyHost[256];
     char  tweetaHost[256];
 } UserParams;
@@ -129,7 +130,6 @@ UserParams processInput(int argc, const char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     memset(&user, 0, sizeof(UserParams));
-    user.simulate = true;
     user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
@@ -156,6 +156,7 @@ UserParams processInput(int argc, const char **argv) {
         {"help"                  , no_argument      , NULL, 'h'},
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
+        {"relay"                 , no_argument      , NULL, 'r'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
@@ -299,6 +300,9 @@ UserParams processInput(int argc, const char **argv) {
             case 'q':
                 user.verbose = MAX(user.verbose - 1, 0);
                 break;
+            case 'r':
+                user.relay = true;
+                break;
             case 's':
                 user.simulate = true;
                 break;
@@ -348,7 +352,7 @@ int main(int argc, const char **argv) {
     UserParams user = processInput(argc, argv);
 
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && user.testPulseCompression == 0) {
+    if (user.simulate == false && user.relay == false && user.testPulseCompression == 0) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
     }
@@ -358,11 +362,21 @@ int main(int argc, const char **argv) {
         RKSetWantScreenOutput(false);
     }
 
+    if (user.simulate == true && user.relay == true) {
+        RKLog("Info. Simulate takes precedence over relay.\n");
+        user.relay = false;
+    }
+    
     // Build an initialization description
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
-    desc.initFlags = RKInitFlagAllocEverything;
-    desc.pulseCapacity = (uint32_t)ceilf((float)user.gateCount * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
+    
+    if (user.relay) {
+        desc.initFlags = RKInitFlagRelay;
+    } else {
+        desc.initFlags = RKInitFlagAllocEverything;
+    }
+    desc.pulseCapacity = user.gateCount;
     if (user.gateCount >= 4000) {
         desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
     } else {
@@ -398,7 +412,9 @@ int main(int argc, const char **argv) {
     signal(SIGKILL, handleSignals);
 
     // Set any parameters here:
-    RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
+    if (user.relay == false) {
+        RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
+    }
     if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }

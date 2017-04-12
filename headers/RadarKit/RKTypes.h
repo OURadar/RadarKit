@@ -262,14 +262,16 @@ enum RKInitFlag {
     RKInitFlagVerbose                = 0x0001,
     RKInitFlagVeryVerbose            = 0x0002,
     RKInitFlagVeryVeryVerbose        = 0x0004,
-    RKInitFlagAllocRawIQBuffer       = 0x0100,
-    RKInitFlagAllocPositionBuffer    = 0x0200,
-    RKInitFlagAllocMomentBuffer      = 0x0400,
-    RKInitFlagAllocHealthBuffer      = 0x0800,
-    RKInitFlagAllocHealthNodes       = 0x1000,
-    RKInitFlagAllocEverything        = 0x1F01,
-    RKInitFlagAllocEverythingQuiet   = 0x1F00,
-    RKInitFlagRelay                  = 0x8000
+    RKInitFlagAllocConfigBuffer      = 0x0100,
+    RKInitFlagAllocRawIQBuffer       = 0x0200,
+    RKInitFlagAllocPositionBuffer    = 0x0400,
+    RKInitFlagAllocMomentBuffer      = 0x0800,
+    RKInitFlagAllocHealthBuffer      = 0x1000,
+    RKInitFlagAllocHealthNodes       = 0x2000,
+    RKInitFlagSignalProcessor        = 0x8000,
+    RKInitFlagRelay                  = 0x1B03,                       // Everything = 0xBF00 - 0x8000 - 0x2000 - 0x0400
+    RKInitFlagAllocEverything        = 0xBF01,
+    RKInitFlagAllocEverythingQuiet   = 0xBF00,
 };
 
 typedef uint32_t RKProductList;
