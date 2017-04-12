@@ -397,6 +397,7 @@ RKClient *RKClientInit(void) {
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.hostname, "localhost");
     desc.port = 9000;
+    desc.type = RKNetworkSocketTypeTCP;
     desc.blocking = true;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
