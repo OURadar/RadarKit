@@ -53,7 +53,7 @@ struct rk_client {
     // User set parameters
     //    struct rk_client_desc;                                 // Need -fms-extension to compile this properly
     char                     name[RKNameLength];                 // A program name
-    char                     hostname[RKMaximumStringLength];    // Hostname
+    char                     hostname[RKNameLength];             // Hostname
     int                      port;                               // Port number of the server
     int                      timeoutSeconds;                     // Timeout in seconds
     RKNetworkSocketType      type;                               // Socket type

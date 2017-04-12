@@ -15,50 +15,69 @@ static int RKRadarRelayRead(RKClient *client) {
     return RKResultSuccess;
 }
 
-#pragma mark - Protocol Implementations
+#pragma mark - Life Cycle
 
-RKRadar *RKRadarRelayInit(RKRadar *radar, void *input) {
-    RKRadarRelay *me = (RKRadarRelay *)malloc(sizeof(RKRadarRelay));
-    if (me == NULL) {
-        RKLog("Error. Unable to allocated RKRadarRelay.\n");
+RKRadarRelay *RKRadarRelayInit(void) {
+    RKRadarRelay *engine = (RKRadarRelay *)malloc(sizeof(RKRadarRelay));
+    if (engine == NULL) {
+        RKLog("Error. Unable to allocated a radar relay.\n");
         return NULL;
     }
-    memset(me, 0, sizeof(RKRadarRelay));
+    memset(engine, 0, sizeof(RKRadarRelay));
     
     // TCP socket server over port 10000.
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.name, "%s<RadarRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(12) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-    strncpy(desc.hostname, (char *)input, RKMaximumStringLength - 1);
-    char *colon = strstr(desc.hostname, ":");
-    if (colon != NULL) {
-        *colon = '\0';
-        sscanf(colon + 1, "%d", &desc.port);
-    } else {
-        desc.port = 10000;
-    }
-    desc.type = RKNetworkSocketTypeTCP;
-    desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-    desc.blocking = true;
-    desc.reconnect = true;
-    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
-    desc.verbose = 2;
-    
-    me->client = RKClientInitWithDesc(desc);
-    
-    RKClientSetUserResource(me->client, me);
-    RKClientSetReceiveHandler(me->client, &RKRadarRelayRead);
-    RKClientStart(me->client, false);
-    
-    return (RKRadar *)me;
+    sprintf(engine->name, "%s<RadarRelay>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+//    strncpy(desc.hostname, (char *)input, RKMaximumStringLength - 1);
+//    char *colon = strstr(desc.hostname, ":");
+//    if (colon != NULL) {
+//        *colon = '\0';
+//        sscanf(colon + 1, "%d", &desc.port);
+//    } else {
+//        desc.port = 10000;
+//    }
+//    desc.type = RKNetworkSocketTypeTCP;
+//    desc.format = RKNetworkMessageFormatHeaderDefinedSize;
+//    desc.blocking = true;
+//    desc.reconnect = true;
+//    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+//    desc.verbose = 2;
+//    
+//    engine->client = RKClientInitWithDesc(desc);
+//    
+//    RKClientSetUserResource(engine->client, engine);
+//    RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
+//    RKClientStart(engine->client, false);
+    engine->state = RKEngineStateAllocated;
+
+    return (RKRadarRelay *)engine;
 }
 
-#pragma mark - Life Cycle
+void RKRadarRelayFree(RKRadarRelay *engine) {
+    free(engine);
+}
 
 #pragma mark - Properties
 
+void RKRadarRelaySetVerbose(RKRadarRelay *engine, const int verbose) {
+    engine->verbose = verbose;
+}
+
+void RKRadarRelaySetHost(RKRadarRelay *engine, const char *hostname) {
+    strncpy(engine->host, hostname, RKNameLength - 1);
+}
+
 #pragma mark - Interactions
+
+int RKRadarRelayStart(RKRadarRelay *engine) {
+    return RKResultSuccess;
+}
+
+int RKRadarRelayStop(RKRadarRelay *engine) {
+    return RKResultSuccess;
+}
 
 int RKRadarRelayExec(RKMasterController input, const char *command, char *response) {
     RKRadarRelay *me = (RKRadarRelay *)input;
