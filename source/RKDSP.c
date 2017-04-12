@@ -47,7 +47,8 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse) {
         usleep(1000);
     } while (k++ < 100 && !(pulse->header.s & RKPulseStatusCompressed));
     if (k >= 100) {
-        RKLog("Noise measurement may be invalid.  k = %d  %x\n", k, pulse->header.s);
+        RKLog("Noise measurement failed.  k = %d  %x\n", k, pulse->header.s);
+        return RKResultTimeout;
     }
     RKComplex *x;
     for (p = 0; p < 2; p++) {
