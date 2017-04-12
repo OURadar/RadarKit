@@ -23,6 +23,7 @@
 #include <RadarKit/RKWaveform.h>
 #include <RadarKit/RKPreference.h>
 #include <RadarKit/RKFileManager.h>
+#include <RadarKit/RKRadarRelay.h>
 
 typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
 enum RKRadarState {
@@ -102,6 +103,7 @@ struct rk_radar {
     RKSweepEngine              *sweepEngine;
     RKDataRecorder             *dataRecorder;
     RKFileManager              *fileManager;
+    RKRadarRelay               *radarRelay;
     //
     // Internal copies of things
     //

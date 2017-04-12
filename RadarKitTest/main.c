@@ -480,6 +480,13 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
+    } else if (user.relay) {
+
+        // Radar going live, then wait indefinitely until something happens
+        RKGoLive(myRadar);
+        RKWaitWhileActive(myRadar);
+        RKStop(myRadar);
+        
     } else if (user.testPulseCompression) {
 
         RKLog("Testing pulse compression ...");

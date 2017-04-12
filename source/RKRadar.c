@@ -339,6 +339,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                             radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->state |= RKRadarStateMomentEngineInitialized;
+    } else {
+        radar->radarRelay = RKRadarRelayInit();
+        radar->memoryUsage += radar->radarRelay->memoryUsage;
     }
 
     // File manager
