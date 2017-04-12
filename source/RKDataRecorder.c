@@ -144,17 +144,17 @@ static void *pulseRecorder(void *in) {
                 if (engine->verbose > 1) {
                     RKLog("%s Skipping %s ...\n", engine->name, filename);
                 }
-                len = 4096 + sizeof(RKConfig);
+                //len = 4096 + sizeof(RKConfig);
+                len = sizeof(RKFileHeader);
             } else {
                 if (engine->verbose > 1) {
                     RKLog("%s Creating %s ...\n", engine->name, filename);
                 }
                 RKPreparePath(filename);
-                
+                memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
-                
-                len = RKDataRecorderCacheWrite(engine, fileHeader, 4096);
-                len += RKDataRecorderCacheWrite(engine, config, sizeof(RKConfig));
+                len = RKDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
+                //len += RKDataRecorderCacheWrite(engine, config, sizeof(RKConfig));
             }
         }
         

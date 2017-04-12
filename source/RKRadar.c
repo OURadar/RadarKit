@@ -579,7 +579,13 @@ int RKSetDataPath(RKRadar *radar, const char *path) {
     memcpy(radar->desc.dataPath, path, RKMaximumPathLength - 1);
     RKSetRootFolder(path);
     return RKResultNoError;
-};
+}
+
+int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
+    radar->fileManager->usagelimit = limit;
+    RKLog("Usage limit %s B\n", RKIntegerToCommaStyleString(radar->fileManager->usagelimit));
+    return RKResultNoError;
+}
 
 int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);

@@ -396,6 +396,7 @@ int main(int argc, const char **argv) {
     }
 
     RKSetVerbose(myRadar, user.verbose);
+    RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
     
     RKAddControl(myRadar, "PPI @ 45 dps", "p ppi 3 90");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
@@ -469,10 +470,8 @@ int main(int argc, const char **argv) {
 
         myRadar->configs[0].prf[0] = user.prf;
 
-        RKWaveform *waveform = RKWaveformInitWithCountAndDepth ( 22, 50 );
+        RKWaveform *waveform = RKWaveformInitWithCountAndDepth ( 22, 25 );
         RKWaveformHops(waveform, 5.0, 4.0);
-        //RKWaveform *waveform = RKWaveformInitWithCountAndDepth ( 18, 50 );
-        //RKWaveformHops(waveform, 5.0, 2.0);
         RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
 
         // Radar going live, then wait indefinitely until something happens

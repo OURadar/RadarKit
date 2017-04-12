@@ -184,6 +184,7 @@ int RKSetHealthRelay(RKRadar *,
 // Some states of the radar
 int RKSetVerbose(RKRadar *, const int verbose);
 int RKSetDataPath(RKRadar *, const char *path);
+int RKSetDataUsageLimit(RKRadar *, const size_t limit);
 int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
 
 // Some operating parameters

@@ -190,12 +190,15 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
     RKLog(">sizeof(RKFloat) = %d", (int)sizeof(RKFloat));
     RKLog(">sizeof(RKComplex) = %d", (int)sizeof(RKComplex));
+    RKLog(">sizeof(RKConfig) = %d", (int)sizeof(RKConfig));
     RKLog(">sizeof(RKPulseHeader) = %d", (int)sizeof(RKPulseHeader));
     RKLog(">sizeof(RKPulseParameters) = %d", (int)sizeof(RKPulseParameters));
     RKLog(">sizeof(pulse->headerBytes) = %d", (int)sizeof(pulse->headerBytes));
     RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
     RKLog(">sizeof(ray->headerBytes) = %d", (int)sizeof(ray->headerBytes));
     RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
+    RKLog(">sizeof(RKHealth) = %d", (int)sizeof(RKHealth));
+    RKLog(">sizeof(RKFileHeader) = %d", (int)sizeof(RKFileHeader));
     rkGlobalParameters.stream = stream;
 }
 

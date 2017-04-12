@@ -58,7 +58,7 @@
 #define RKMaxFilterGroups                22                          // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth     1000
 #define RKMaxPulsesPerRay                2000
-#define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit
+#define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaxRaysPerSweep                1500                        // 1440 is 0.25-deg. This should be plenty
 #define RKMaxPacketSize                  1024 * 1024
 #define RKNetworkTimeoutSeconds          20
@@ -450,8 +450,6 @@ typedef struct rk_config {
     uint32_t         prf[RKMaxFilterCount];                          // Pulse repetition frequency (Hz)
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
-    char             vcpDefinition[RKMaximumStringLength];           // Volume coverage pattern
-    char             waveform[RKNameLength];                         // Waveform name
     RKFloat          noise[2];                                       // Noise floor (ADU)
     RKFloat          ZCal[2][RKMaxFilterCount];                      // Reflectivity calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
@@ -460,6 +458,8 @@ typedef struct rk_config {
     float            sweepElevation;                                 // Sweep elevation angle (degrees)
     float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
     RKMarker         startMarker;                                    // Marker of the start ray
+    char             waveform[RKNameLength];                         // Waveform name
+    char             vcpDefinition[RKNameLength];                    // Volume coverage pattern
 } RKConfig;
 
 typedef union rk_heath {
@@ -621,6 +621,7 @@ typedef union rk_file_header {
         char         preface[RKNameLength];
         uint32_t     buildNo;
         RKRadarDesc  desc;
+        RKConfig     config;
     };
     RKByte bytes[4096];
 } RKFileHeader;

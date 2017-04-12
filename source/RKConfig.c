@@ -61,7 +61,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     RKLog(">string = (NULL)\n");
                 } else {
                     RKLog(">string = %s\n", string);
-                    strncpy(newConfig->vcpDefinition, string, RKMaximumStringLength - 1);
+                    strncpy(newConfig->vcpDefinition, string, RKNameLength - 1);
                 }
                 break;
             case RKConfigKeyNoise:
