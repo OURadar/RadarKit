@@ -26,20 +26,22 @@
 
 typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
 enum RKRadarState {
-    RKRadarStateBaseAllocated                        = 1,          // 0x01
-    RKRadarStateRayBufferAllocating                  = (1 << 1),   // 0x02
-    RKRadarStateRayBufferInitialized                 = (1 << 2),   // 0x04
-    RKRadarStateRawIQBufferAllocating                = (1 << 3),   // 0x08
-    RKRadarStateRawIQBufferInitialized               = (1 << 4),   // 0x10
-    RKRadarStateConfigBufferAllocating               = (1 << 5),   // 0x20
-    RKRadarStateConfigBufferInitialized              = (1 << 6),   // 0x40
+    RKRadarStateBaseAllocated                        = 1,          // Base
+    RKRadarStateRayBufferAllocating                  = (1 << 1),   // Data buffers
+    RKRadarStateRayBufferInitialized                 = (1 << 2),   //
+    RKRadarStateRawIQBufferAllocating                = (1 << 3),   //
+    RKRadarStateRawIQBufferInitialized               = (1 << 4),   //
+    RKRadarStateConfigBufferAllocating               = (1 << 5),   //
+    RKRadarStateConfigBufferInitialized              = (1 << 6),   //
     RKRadarStateHealthBufferAllocating               = (1 << 7),
     RKRadarStateHealthBufferInitialized              = (1 << 8),
-    RKRadarStatePositionBufferAllocating             = (1 << 9),
-    RKRadarStatePositionBufferInitialized            = (1 << 10),
-    RKRadarStateControlsAllocating                   = (1 << 11),
-    RKRadarStateControlsInitialized                  = (1 << 12),
-    RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),
+    RKRadarStateHealthNodesAllocating                = (1 << 9),
+    RKRadarStateHealthNodesInitialized               = (1 << 10),
+    RKRadarStatePositionBufferAllocating             = (1 << 11),
+    RKRadarStatePositionBufferInitialized            = (1 << 12),
+    RKRadarStateControlsAllocating                   = (1 << 13),
+    RKRadarStateControlsInitialized                  = (1 << 14),
+    RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePositionEngineInitialized            = (1 << 17),
     RKRadarStateHealthEngineInitialized              = (1 << 18),
     RKRadarStateMomentEngineInitialized              = (1 << 19),
@@ -149,6 +151,7 @@ RKRadar *RKInitLean(void);
 RKRadar *RKInitMean(void);
 RKRadar *RKInitFull(void);
 RKRadar *RKInit(void);
+RKRadar *RKInitAsRelay(void);
 int RKFree(RKRadar *radar);
 
 //

@@ -8,8 +8,6 @@
 
 #include <RadarKit/RKHealthRelayTweeta.h>
 
-// Internal Functions
-
 #pragma mark - Internal Functions
 
 static int RKHealthRelayTweetaRead(RKClient *client) {

@@ -80,27 +80,53 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->desc = desc;
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
-        RKLog("Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
+        RKLog("Info. Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
     } else if (radar->desc.pulseBufferDepth == 0) {
         radar->desc.pulseBufferDepth = 1000;
     }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;
-        RKLog("Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
+        RKLog("Info. Ray buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.rayBufferDepth));
     } else if (radar->desc.rayBufferDepth == 0) {
         radar->desc.rayBufferDepth = 720;
     }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
-        RKLog("Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+        RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     } else if (radar->desc.pulseCapacity == 0) {
-        radar->desc.pulseCapacity = 256;
+        radar->desc.pulseCapacity = 512;
     }
     radar->desc.pulseCapacity = (radar->desc.pulseCapacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     if (radar->desc.pulseCapacity != desc.pulseCapacity) {
-        RKLog("Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+        RKLog("Info. Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     }
-    
+    if (radar->desc.configBufferDepth > RKBufferCSlotCount) {
+        radar->desc.configBufferDepth = RKBufferCSlotCount;
+        RKLog("Info. Config buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
+    } else if (radar->desc.configBufferDepth == 0) {
+        radar->desc.configBufferDepth = 25;
+    }
+    if (radar->desc.healthBufferDepth > RKBufferHSlotCount) {
+        radar->desc.healthBufferDepth = RKBufferHSlotCount;
+        RKLog("Info. Health buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+    } else if (radar->desc.healthBufferDepth == 0) {
+        radar->desc.healthBufferDepth = 25;
+    }
+    if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
+        radar->desc.healthNodeCount = RKHealthNodeCount;
+    }
+    if (radar->desc.positionBufferDepth > RKBufferPSlotCount) {
+        radar->desc.positionBufferDepth = RKBufferPSlotCount;
+    } else if (radar->desc.positionBufferDepth == 0) {
+        radar->desc.positionBufferDepth = 250;
+    }
+    if (radar->desc.controlCount > RKControlCount) {
+        radar->desc.controlCount = RKControlCount;
+        RKLog("Info. Control count limited to %s\n", RKControlCount);
+    } else if (radar->desc.controlCount == 0) {
+        radar->desc.controlCount = RKControlCount;
+    }
+
     // Read in preference file here, override some values
     if (!strlen(radar->desc.name)) {
         sprintf(radar->desc.name, "Radar");
@@ -117,9 +143,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Config buffer
     radar->state |= RKRadarStateConfigBufferAllocating;
-    if (radar->desc.configBufferDepth == 0 || radar->desc.configBufferDepth > RKBufferCSlotCount) {
-        radar->desc.configBufferDepth = RKBufferCSlotCount;
-    }
     bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
     radar->configs = (RKConfig *)malloc(bytes);
     if (radar->configs == NULL) {
@@ -139,56 +162,56 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->state |= RKRadarStateConfigBufferInitialized;
     
     // Health buffer
-    radar->state |= RKRadarStateHealthBufferAllocating;
-    if (radar->desc.healthBufferDepth == 0) {
-        radar->desc.healthBufferDepth = RKBufferHSlotCount;
-    }
-    bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
-    radar->healths = (RKHealth *)malloc(bytes);
-    if (radar->healths == NULL) {
-        RKLog("Error. Unable to allocate memory for health status");
-        exit(EXIT_FAILURE);
-    }
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Health buffer occupies %s B  (%s sets)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
-    }
-    memset(radar->healths, 0, bytes);
-    radar->memoryUsage += bytes;
-    for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-        radar->healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
-    }
-    if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
-        radar->desc.healthNodeCount = RKHealthNodeCount;
-    }
-    bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
-    radar->healthNodes = (RKNodalHealth *)malloc(bytes);
-    memset(radar->healthNodes, 0, bytes);
-    radar->memoryUsage += bytes;
-    bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
-    for (i = 0; i < radar->desc.healthNodeCount; i++) {
-        radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
-        memset(radar->healthNodes[i].healths, 0, bytes);
-    }
-    radar->memoryUsage += radar->desc.healthNodeCount * bytes;
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Nodal-health buffers occupy %s B  (%d nodes x %s sets)\n",
-              RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), radar->desc.healthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
-    }
-    for (k = 0; k < radar->desc.healthNodeCount; k++) {
+    if (radar->desc.initFlags & RKInitFlagAllocHealthBuffer) {
+        radar->state |= RKRadarStateHealthBufferAllocating;
+        bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+        radar->healths = (RKHealth *)malloc(bytes);
+        if (radar->healths == NULL) {
+            RKLog("Error. Unable to allocate memory for health status");
+            exit(EXIT_FAILURE);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Health buffer occupies %s B  (%s sets)\n",
+                  RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+        }
+        memset(radar->healths, 0, bytes);
+        radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-            radar->healthNodes[k].healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
+            radar->healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
         }
+        radar->state ^= RKRadarStateHealthBufferAllocating;
+        radar->state |= RKRadarStateHealthBufferInitialized;
     }
-    radar->state ^= RKRadarStateHealthBufferAllocating;
-    radar->state |= RKRadarStateHealthBufferInitialized;
-
-    // Position buffer
-    if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
-        radar->state |= RKRadarStatePositionBufferAllocating;
-        if (radar->desc.positionBufferDepth == 0 || radar->desc.positionBufferDepth > RKBufferPSlotCount) {
-            radar->desc.positionBufferDepth = RKBufferPSlotCount;
+    
+    // Health nodes
+    if (radar->desc.initFlags & RKInitFlagAllocHealthNodes) {
+        radar->state |= RKRadarStateHealthNodesAllocating;
+        bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
+        radar->healthNodes = (RKNodalHealth *)malloc(bytes);
+        memset(radar->healthNodes, 0, bytes);
+        radar->memoryUsage += bytes;
+        bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+        for (i = 0; i < radar->desc.healthNodeCount; i++) {
+            radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
+            memset(radar->healthNodes[i].healths, 0, bytes);
         }
+        radar->memoryUsage += radar->desc.healthNodeCount * bytes;
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Nodal-health buffers occupy %s B  (%d nodes x %s sets)\n",
+                  RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), radar->desc.healthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+        }
+        for (k = 0; k < radar->desc.healthNodeCount; k++) {
+            for (i = 0; i < radar->desc.healthBufferDepth; i++) {
+                radar->healthNodes[k].healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
+            }
+        }
+        radar->state ^= RKRadarStateHealthNodesAllocating;
+        radar->state |= RKRadarStateHealthNodesInitialized;
+    }
+    
+    // Position buffer
+    if (radar->desc.initFlags & RKInitFlagAllocPositionBuffer) {
+        radar->state |= RKRadarStatePositionBufferAllocating;
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
         radar->positions = (RKPosition *)malloc(bytes);
         if (radar->positions == NULL) {
@@ -251,12 +274,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     // Controls
-    if (radar->desc.controlCount > RKControlCount) {
-        radar->desc.controlCount = RKControlCount;
-        RKLog("Info. Control count limited to %s\n", RKControlCount);
-    } else if (radar->desc.controlCount == 0) {
-        radar->desc.controlCount = RKControlCount;
-    }
     if (radar->desc.controlCount) {
         radar->state |= RKRadarStateControlsAllocating;
         bytes = radar->desc.controlCount * sizeof(RKControl);
@@ -415,6 +432,19 @@ RKRadar *RKInitFull(void) {
 
 RKRadar *RKInit(void) {
     return RKInitFull();
+}
+
+RKRadar *RKInitAsRelay(void) {
+    RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
+    desc.initFlags = RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer | RKInitFlagRelay;
+    desc.pulseCapacity = RKGateCount;
+    desc.pulseToRayRatio = 8;
+    desc.configBufferDepth = RKBufferCSlotCount;
+    desc.healthBufferDepth = RKBufferHSlotCount;
+    desc.pulseBufferDepth = RKBuffer0SlotCount;
+    desc.rayBufferDepth = RKBuffer2SlotCount;
+    return RKInitWithDesc(desc);
 }
 
 int RKFree(RKRadar *radar) {
