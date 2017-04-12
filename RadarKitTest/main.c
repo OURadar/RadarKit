@@ -396,7 +396,7 @@ int main(int argc, const char **argv) {
     }
 
     RKSetVerbose(myRadar, user.verbose);
-    RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
+    //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
     
     RKAddControl(myRadar, "PPI @ 45 dps", "p ppi 3 90");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");

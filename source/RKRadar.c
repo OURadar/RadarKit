@@ -815,13 +815,13 @@ int RKGoLive(RKRadar *radar) {
 int RKWaitWhileActive(RKRadar *radar) {
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
-    uint32_t healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
+    uint32_t healthIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
     int s = 0;
     while (radar->active) {
-        if (s++ == 3) {
+        if (radar->desc.initFlags & RKInitFlagSignalProcessor && s++ == 3) {
             s = 0;
             transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
             pedestalOkay = positionIndex == radar->positionIndex ? false : true;
