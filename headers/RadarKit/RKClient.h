@@ -35,7 +35,7 @@ enum RKClientState {
 
 typedef struct rk_client_desc {
     char                     name[RKNameLength];                 // A program name
-    char                     hostname[RKMaximumStringLength];    // Hostname
+    char                     hostname[RKNameLength];             // Hostname
     int                      port;                               // Port number of the server
     int                      timeoutSeconds;                     // Timeout in seconds
     RKNetworkSocketType      type;                               // Socket type

@@ -430,7 +430,7 @@ RKClient *RKClientInitWithDesc(RKClientDesc desc) {
 RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    strncpy(desc.hostname, hostname, RKMaximumStringLength - 1);
+    strncpy(desc.hostname, hostname, RKNameLength - 1);
     desc.port = port;
     desc.type = RKNetworkSocketTypeTCP;
     desc.blocking = true;

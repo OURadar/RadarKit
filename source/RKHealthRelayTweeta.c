@@ -75,7 +75,7 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.name, "%s<TweetaRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(0) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-    strncpy(desc.hostname, (char *)input, RKMaximumStringLength - 1);
+    strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
         *colon = '\0';
