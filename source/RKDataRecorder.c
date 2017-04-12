@@ -123,7 +123,7 @@ static void *pulseRecorder(void *in) {
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
                     if (engine->verbose) {
-                        RKLog("%s Recorded %s (%s pulses, %s B)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKIntegerToCommaStyleString(len + engine->cacheWriteIndex));
+                        RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKIntegerToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
                     }
                     // Notify file manager of a new addition
                     RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
