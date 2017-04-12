@@ -28,6 +28,6 @@
 #include <RadarKit/RKCommandCenter.h>
 #include <RadarKit/RKPedestalPedzy.h>
 #include <RadarKit/RKHealthRelayTweeta.h>
-#include <RadarKit/RKRelay.h>
+#include <RadarKit/RKRadarRelay.h>
 
 #endif /* defined(__RadarKit__) */
