@@ -12,7 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
 
-#define RKDataRecorderDefaultMaximumRecorderDepth   50000
+#define RKDataRecorderDefaultMaximumRecorderDepth   100000
 
 typedef struct rk_data_recorder RKDataRecorder;
 
