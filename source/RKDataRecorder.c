@@ -154,7 +154,6 @@ static void *pulseRecorder(void *in) {
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 len = RKDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
-                //len += RKDataRecorderCacheWrite(engine, config, sizeof(RKConfig));
             }
         }
         
@@ -301,13 +300,13 @@ int RKDataRecorderStop(RKDataRecorder *engine) {
     return RKResultSuccess;
 }
 
-uint32_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const uint32_t size) {
+size_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const size_t size) {
     if (size == 0) {
         return 0;
     }
-    uint32_t remainingSize = size;
-    uint32_t lastChunkSize = 0;
-    uint32_t writtenSize = 0;
+    size_t remainingSize = size;
+    size_t lastChunkSize = 0;
+    size_t writtenSize = 0;
     //
     // Method:
     //
@@ -334,11 +333,11 @@ uint32_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, c
     return writtenSize;
 }
 
-uint32_t RKDataRecorderCacheFlush(RKDataRecorder *engine) {
+size_t RKDataRecorderCacheFlush(RKDataRecorder *engine) {
     if (engine->cacheWriteIndex == 0) {
         return 0;
     }
-    uint32_t writtenSize = (uint32_t)write(engine->fd, engine->cache, engine->cacheWriteIndex);
+    size_t writtenSize = write(engine->fd, engine->cache, engine->cacheWriteIndex);
     engine->cacheWriteIndex = 0;
     return writtenSize;
 }

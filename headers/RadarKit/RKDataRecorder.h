@@ -28,15 +28,15 @@ struct rk_data_recorder {
     uint32_t               configBufferDepth;
     uint8_t                verbose;
     bool                   doNotWrite;
-    uint32_t               cacheSize;
-    uint32_t               maximumRecordDepth;
+    size_t                 cacheSize;
+    size_t                 maximumRecordDepth;
     RKFileManager          *fileManager;
 
     // Program set variables
     int                    fd;
     FILE                   *fid;
     void                   *cache;
-    uint32_t               cacheWriteIndex;
+    size_t                 cacheWriteIndex;
     pthread_t              tidPulseRecorder;
 
     // Status / health
@@ -63,7 +63,7 @@ int RKDataRecorderStart(RKDataRecorder *engine);
 int RKDataRecorderStop(RKDataRecorder *engine);
 char *RKDataRecorderStatusString(RKDataRecorder *engine);
 
-uint32_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const uint32_t size);
-uint32_t RKDataRecorderCacheFlush(RKDataRecorder *engine);
+size_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const size_t size);
+size_t RKDataRecorderCacheFlush(RKDataRecorder *engine);
 
 #endif /* defined(__RadarKit_RKFile__) */
