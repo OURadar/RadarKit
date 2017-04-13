@@ -53,7 +53,7 @@ static void *pulseRecorder(void *in) {
     
     char filename[RKMaximumStringLength];
     
-    uint32_t len = 0;
+    size_t len = 0;
     
     RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
     memset(fileHeader, 0, 4096);
