@@ -104,8 +104,8 @@ static void *pedestalHealth(void *in) {
             } else {
                 vcpActive = RKStatusEnumStandby;
             }
-            sprintf(elPosition, "%.2f deg", position->azimuthDegrees);
-            sprintf(azPosition, "%.2f deg", position->elevationDegrees);
+            sprintf(elPosition, "%.2f deg", position->elevationDegrees);
+            sprintf(azPosition, "%.2f deg", position->azimuthDegrees);
             azEnum = RKStatusEnumNormal;
             elEnum = RKStatusEnumNormal;
         }
