@@ -227,6 +227,17 @@ static void *momentCore(void *in) {
     if (rkGlobalParameters.showColor) {
         sprintf(name + k, RKNoColor);
     }
+    
+#if defined(_GNU_SOURCE)
+    
+    // Set my CPU core
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(engine->coreOrigin + c, &cpuset);
+    sched_setaffinity(0, sizeof(cpuset), &cpuset);
+    pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
+    
+#endif
 
     RKRay *ray;
     RKPulse *pulse;
@@ -834,12 +845,20 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, RKRadarDesc *de
     engine->state |= RKEngineStateProperlyWired;
 }
 
-void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const int count) {
+void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const uint8_t count) {
     if (engine->state & RKEngineStateActive) {
         RKLog("Error. Core count cannot be changed when the engine is active.\n");
         return;
     }
     engine->coreCount = count;
+}
+
+void RKMomentEngineSetCoreOrigin(RKMomentEngine *engine, const uint8_t origin) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("Error. Core origin cannot be changed when the engine is active.\n");
+        return;
+    }
+    engine->coreOrigin = origin;
 }
 
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {

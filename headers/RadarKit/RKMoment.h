@@ -45,6 +45,7 @@ struct rk_moment_engine {
     uint32_t               rayBufferDepth;
     uint8_t                verbose;
     uint8_t                coreCount;
+    uint8_t                coreOrigin;
     bool                   useSemaphore;
     int                    (*processor)(RKScratch *, RKPulse **, const uint16_t pulseCount);
 
@@ -76,7 +77,8 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, RKRadarDesc *,
                                          RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                          RKBuffer pulseBuffer, uint32_t *pulseIndex, const uint32_t pulseBufferDepth,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex,   const uint32_t rayBufferDepth);
-void RKMomentEngineSetCoreCount(RKMomentEngine *, const int);
+void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
+void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
