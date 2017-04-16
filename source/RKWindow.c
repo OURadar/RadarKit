@@ -14,9 +14,14 @@
 //
 void hann(double *w, const int n) {
     int i, j;
+    bool odd = n % 2;
     unsigned int m = (n + 1) / 2;
-    unsigned int odd = n % 2;
     double twid = 2.0 * M_PI / ((double)n + 1.0);
+
+    if (n == 0) {
+        return;
+    }
+
     for (i = 0; i < m; i++) {
         w[i] = 0.5 * (1.0 - cos(twid * ((double)i + 1.0)));
         //printf("%.7f\n", v[i]);
@@ -38,9 +43,14 @@ void hann(double *w, const int n) {
 //
 void hamming(double *w, const int n) {
     int i, j;
+    bool odd = n % 2;
     unsigned int m = (n + 1) / 2;
-    unsigned int odd = n % 2;
     double twid = 2.0 * M_PI / ((double)n - 1.0);
+
+    if (n == 0) {
+        return;
+    }
+
     for (i = 0; i < m; i++) {
         w[i] = 0.54 - 0.46 * cos(twid * ((double)i));
     }
@@ -61,11 +71,20 @@ void hamming(double *w, const int n) {
 //
 void kaiser(double *w, const int n, const double beta) {
     int i, j;
+    bool odd = n % 2;
     unsigned int m = (n + 1) / 2;
-    unsigned int odd = n % 2;
     double bes = BESSI0(beta);
     double x_end = ((double)n - 1); x_end *= x_end;
-    double x[m], v[m];
+    double *x, *v;
+    
+    if (n == 0) {
+        return;
+    }
+    
+    x = (double *)malloc(m * sizeof(double));
+    v = (double *)malloc(m * sizeof(double));
+    memset(x, 0, m * sizeof(double));
+    memset(v, 0, m * sizeof(double));
     
     if (bes < 0.0) {
         bes -= bes;
@@ -101,6 +120,8 @@ void kaiser(double *w, const int n, const double beta) {
     while (j < n) {
         w[j++] = v[i++];
     }
+    free(x);
+    free(v);
     return;
 }
 
@@ -120,12 +141,21 @@ void trapezoid(double *w, const int n, const double gamma) {
 
 #pragma mark - Methods
 
+//
+// RKWindowMake(buffer, RKWindowTypeHann, 20) creates a Hann window of length 20
+// RKWindowMake(buffer, RKWindowTypeKaiser, 20, 0.2) creates a Kaiser window of length 20 with factor 0.2
+//
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
     int k;
     double param;
     va_list args;
     
+    if (length == 0) {
+        return;
+    }
+    
     double *window = (double *)malloc(length * sizeof(double));
+    memset(window, 0, length * sizeof(double));
 
     va_start(args, length);
 
@@ -152,14 +182,14 @@ void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
         case RKWindowTypeBoxCar:
         default:
             for (k = 0; k < length; k++) {
-                buffer[k] = (RKFloat)1.0;
+                window[k] = 1.0;
             }
             break;
     }
     
     va_end(args);
     
-    // Down sample to RadarKit precision
+    // Copy to RadarKit buffer
     for (k = 0; k < length; k++) {
         buffer[k] = (RKFloat)window[k];
     }

@@ -513,6 +513,7 @@ static void *pulseGatherer(void *in) {
     engine->state ^= RKEngineStateActivating;
 
     // Spin off N workers to process I/Q pulses
+    memset(sem, 0, engine->coreCount * sizeof(sem_t *));
     for (c = 0; c < engine->coreCount; c++) {
         RKMomentWorker *worker = &engine->workers[c];
         snprintf(worker->semaphoreName, 16, "rk-mm-%02d", c);
@@ -691,7 +692,7 @@ static void *pulseGatherer(void *in) {
     for (c = 0; c < engine->coreCount; c++) {
         RKMomentWorker *worker = &engine->workers[c];
         if (engine->useSemaphore) {
-            sem_post(sem[c]);
+            sem_post(worker->sem);
         }
         pthread_join(worker->tid, NULL);
         sem_unlink(worker->semaphoreName);

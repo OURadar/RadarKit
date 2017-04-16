@@ -475,7 +475,6 @@ static void *rayGatherer(void *in) {
             ray->header.n = is;
             rays[n++] = ray;
             engine->sweep.rayCount = n;
-            is = RKPreviousNModuloS(is, n + 1, engine->rayBufferDepth);
             
             //RKLog(">%s %p %p %p ... %p\n", engine->name, engine->sweep.rays[0], engine->sweep.rays[1], engine->sweep.rays[2], engine->sweep.rays[n - 1]);
             
