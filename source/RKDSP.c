@@ -54,7 +54,6 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse) {
     for (p = 0; p < 2; p++) {
         x = RKGetComplexDataFromPulse(pulse, p);
         noise[p] = 0.0f;
-        //for (j = 0; j < MIN(1000, pulse->header.gateCount); j++) {
         for (j = 0; j < pulse->header.gateCount; j++) {
             noise[p] += x->i * x->i + x->q * x->q;
             x++;
