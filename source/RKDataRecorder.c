@@ -32,10 +32,10 @@ static void RKDataRecorderUpdateStatusString(RKDataRecorder *engine) {
     string[i] = 'F';
     
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s",
-                                    rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-                                    99.9f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+             rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+             99.9f * engine->lag,
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
@@ -117,7 +117,6 @@ static void *pulseRecorder(void *in) {
                 if (engine->verbose) {
                     RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
                 }
-                len = 0;
             } else {
                 if (engine->fd != 0) {
                     len += RKDataRecorderCacheFlush(engine);

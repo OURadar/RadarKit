@@ -128,8 +128,9 @@ void *RKServerRoutine(void *in) {
         for (k = 0; k < M->maxClient; k++) {
             if (M->busy[k]) {
                 RKOperator *O = M->operators[k];
-                if (O->state == RKOperatorStateHungUp) {
+                if (O != NULL && O->state == RKOperatorStateHungUp) {
                     RKOperatorFree(O);
+                    M->operators[k] = NULL;
                 }
             }
         }

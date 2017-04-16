@@ -59,7 +59,7 @@
 #define RKFileManagerHealthDataRatio     2
 #define RKFileManagerLogDataRatio        1
 #define RKFileManagerTotalRatio          (RKFileManagerRawDataRatio + RKFileManagerMomentDataRatio + RKFileManagerHealthDataRatio + RKFileManagerLogDataRatio)
-
+#define RKFileManagerDefaultLogAgeInDays 7
 
 typedef struct rk_file_remover RKFileRemover;
 typedef struct rk_file_manager RKFileManager;
@@ -91,6 +91,7 @@ struct rk_file_manager {
     uint8_t                verbose;                             // Verbosity level
     char                   dataPath[RKMaximumPathLength];       // Can be empty. In this case all folders are relative to the path where it is executed
     size_t                 usagelimit;                          // Overall usage limit in bytes
+    int                    maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
     
     // Program set variables
     int                    tic;
@@ -107,10 +108,11 @@ struct rk_file_manager {
 
 RKFileManager *RKFileManagerInit(void);
 void RKFileManagerFree(RKFileManager *);
+
 void RKFileManagerSetVerbose(RKFileManager *, const int);
 void RKFileManagerSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
-
 void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
+void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);
