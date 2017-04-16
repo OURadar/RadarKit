@@ -79,10 +79,6 @@ static void *sweepWriter(void *in) {
               n,
               RKNoColor);
     }
-
-//    RKRadarDesc *radar = engine->radarDescription;
-//    RKLog("%s %s @ %.7f %.7f\n", engine->name,
-//          radar->name, radar->latitude, radar->longitude);
     
     char symbol = 'U';
     char *filelist = engine->filelist;
@@ -245,12 +241,16 @@ static void *sweepWriter(void *in) {
         nc_put_att_text(ncid, variableIdGateWidth, "Units", 6, "Meters");
         nc_put_att_text(ncid, variableIdData, "Units", strlen(productUnit), productUnit);
 
-//        nc_def_var_deflate(ncid, variableIdAzimuth, 1, 1, 3);
-//        nc_def_var_deflate(ncid, variableIdElevation, 1, 1, 3);
-//        nc_def_var_deflate(ncid, variableIdBeamwidth, 1, 1, 3);
-//        nc_def_var_deflate(ncid, variableIdGateWidth, 1, 1, 3);
-//        nc_def_var_deflate(ncid, variableIdData, 1, 1, 3);
+#if defined (COMPRESSED_NETCDF)
 
+        nc_def_var_deflate(ncid, variableIdAzimuth, 1, 1, 3);
+        nc_def_var_deflate(ncid, variableIdElevation, 1, 1, 3);
+        nc_def_var_deflate(ncid, variableIdBeamwidth, 1, 1, 3);
+        nc_def_var_deflate(ncid, variableIdGateWidth, 1, 1, 3);
+        nc_def_var_deflate(ncid, variableIdData, 1, 1, 3);
+
+#endif
+        
         // Global attributes - some are WDSS-II required
         nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(productName), productName);
         nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
