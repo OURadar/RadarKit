@@ -710,6 +710,10 @@ void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const cha
 int RKGoLive(RKRadar *radar) {
     radar->active = true;
     
+    // Get the number of CPUs
+    long processorCount = sysconf(_SC_NPROCESSORS_ONLN);
+    RKLog("Number of CPUs = %ld\n", processorCount);
+
     // Offset the pre-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
@@ -723,6 +727,16 @@ int RKGoLive(RKRadar *radar) {
     
     // Start the engines
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        // Main thread uses 1 CPU. Start the others from 1.
+        uint8_t o = 1;
+        if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > processorCount) {
+            RKLog("Info. Not enough physical cores. Core counts will be adjusted.\n");
+            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, (uint8_t)processorCount / 2);
+            RKMomentEngineSetCoreCount(radar->momentEngine, (uint8_t)processorCount / 2 - 1);
+        }
+        RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
+        RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
+        // Now, we start the engines
         RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
         RKPositionEngineStart(radar->positionEngine);
         RKMomentEngineStart(radar->momentEngine);

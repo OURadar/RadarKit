@@ -47,6 +47,7 @@ struct rk_pulse_compression_engine {
     uint32_t                         configBufferDepth;
     uint8_t                          verbose;
     uint8_t                          coreCount;
+    uint8_t                          coreOrigin;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaxFilterGroups];
@@ -82,7 +83,8 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *,
                                                    RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
-void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *, const unsigned int count);
+void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *, const uint8_t);
+void RKPulseCompressionEngineSetCoreOrigin(RKPulseCompressionEngine *, const uint8_t);
 
 int RKPulseCompressionResetFilters(RKPulseCompressionEngine *);
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *, const int group, const int count);

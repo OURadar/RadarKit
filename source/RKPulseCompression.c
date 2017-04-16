@@ -106,7 +106,7 @@ static void *pulseCompressionCore(void *_in) {
     // Set my CPU core
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(c + 1, &cpuset);
+    CPU_SET(engine->coreOrigin + c, &cpuset);
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
     pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
 
@@ -686,12 +686,20 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     engine->state |= RKEngineStateProperlyWired;
 }
 
-void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const unsigned int count) {
+void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const uint8_t count) {
     if (engine->state & RKEngineStateActive) {
         RKLog("%s Error. Core count cannot change when the engine is active.\n", engine->name);
         return;
     }
     engine->coreCount = count;
+}
+
+void RKPulseCompressionEngineSetCoreOrigin(RKPulseCompressionEngine *engine, const uint8_t origin) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Error. Core origin cannot change when the engine is active.\n", engine->name);
+        return;
+    }
+    engine->coreOrigin = origin;
 }
 
 int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
@@ -795,6 +803,9 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     }
     if (engine->coreCount == 0) {
         engine->coreCount = 8;
+    }
+    if (engine->coreOrigin == 0) {
+        engine->coreOrigin = 1;
     }
     if (engine->workers != NULL) {
         RKLog("%s Error. workers should be NULL here.\n", engine->name);
