@@ -42,7 +42,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
-                RKLog(">PRF = %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]));
+                RKLog("PRF = %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]));
                 break;
             case RKConfigKeyDualPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);

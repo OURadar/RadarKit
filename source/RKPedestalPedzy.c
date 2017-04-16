@@ -68,7 +68,10 @@ static int RKPedestalPedzyGreet(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
     RKRadar *radar = me->radar;
-    RKClockReset(radar->pulseClock);
+    if (client->verbose > 1) {
+        RKLog("%s Resetting position clock.\n", me->client->name);
+    }
+    RKClockReset(radar->positionClock);
     return RKResultSuccess;
 }
 

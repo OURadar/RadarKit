@@ -373,6 +373,7 @@ enum RKStatusEnum {
     RKStatusEnumStandby              =  1,
     RKStatusEnumTooHigh              =  2,
     RKStatusEnumNotOperational       =  2,
+    RKStatusEnumOff                  =  2,
     RKStatusEnumFault                =  2,
     RKStatusEnumCritical             =  3                            // This would the status we may shutdown the radar
 };

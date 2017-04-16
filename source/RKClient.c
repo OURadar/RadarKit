@@ -155,8 +155,8 @@ void *theClient(void *in) {
             if (r > 0) {
                 if (FD_ISSET(C->sd, &C->wfd)) {
                     C->state = RKClientStateConnected;
-                    if (C->verbose > 1) {
-                        RKLog("Connected.\n");
+                    if (C->verbose) {
+                        RKLog("%s Connected.\n", C->name);
                     }
                 } else if (FD_ISSET(C->sd, &C->efd)) {
                     RKLog("Error. r = %d   errno = %d (%s)\n", r, errno, RKErrnoString(errno));
@@ -322,8 +322,8 @@ void *theClient(void *in) {
                     close(C->sd);
                     fid = NULL;
                     continue;
-                } else if (C->state < RKClientStateDisconnecting) {
-                    if (C->state != RKClientStateConnected) {
+                } else if (C->state < RKClientStateDisconnecting && C->state != RKClientStateConnected) {
+                    if (C->verbose) {
                         RKLog("%s Connected.\n", C->name);
                     }
                     C->state = RKClientStateConnected;
