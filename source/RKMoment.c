@@ -153,10 +153,8 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKProductIndexP);
     Ki = space->KDP;   uint8_t *ku = RKGetUInt8DataFromRay(ray, RKProductIndexK);
     Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKProductIndexR);
-    Si = space->S[0];
     for (k = 0; k < ray->header.gateCount; k++) {
-        SNR = *Si / space->noise[0];
-        if (SNR > SNRThreshold) {
+        if (isfinite(*Zi)) {
             *zu++ = (uint8_t)*Zi;
             *vu++ = (uint8_t)*Vi;
             *wu++ = (uint8_t)*Wi;
@@ -174,7 +172,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *ku++ = 0;
             *ru++ = 0;
         }
-        Si++;
         Zi++;
         Vi++;
         Wi++;

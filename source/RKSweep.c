@@ -213,11 +213,20 @@ static void *sweepWriter(void *in) {
             sprintf(filelist + strlen(filelist), " %s", filename);
         }
 
+#if defined (COMPRESSED_NETCDF)
+
         if ((j = nc_create(filename, NC_NETCDF4, &ncid)) > 0) {
+
+#else
+        if ((j = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
+
+#endif
+
             RKLog("%s Error creating %s\n", engine->name, filename);
             engine->state ^= RKEngineStateWritingFile;
             return NULL;
         }
+
         
         if (S->header.marker & RKMarkerPPIScan) {
             nc_def_dim(ncid, "Azimuth", n, &dimensionIds[0]);
