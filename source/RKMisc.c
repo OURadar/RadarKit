@@ -69,6 +69,8 @@ char *RKGetValueOfKey(const char *string, const char *key) {
             do {
                 s++;
             } while (*s == '"' || *s == '\'' || *s == ' ');
+        } else {
+            return NULL;
         }
         // Array
         if (*s == '[') {

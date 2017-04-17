@@ -140,7 +140,7 @@ static void *healthConsolidator(void *in) {
                     for (j = 1; j < desc->healthNodeCount; j++) {
                         i += sprintf(string + i,  ", %02d", engine->healthNodes[j].active ? indices[j] : -1);
                     }
-                    i += sprintf(string + i, "]");
+                    sprintf(string + i, "]");
                     RKLog("%s sleep 0/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                 }
             }
@@ -184,7 +184,7 @@ static void *healthConsolidator(void *in) {
                         n = indices[j];
                         i += sprintf(string + i,  ", %x", engine->healthNodes[j].healths[n].flag);
                     }
-                    i += sprintf(string + i, "]");
+                    sprintf(string + i, "]");
                     RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                 }
             }
@@ -200,7 +200,7 @@ static void *healthConsolidator(void *in) {
             for (j = 1; j < desc->healthNodeCount; j++) {
                 i += sprintf(string + i,  ", %02d", engine->healthNodes[j].active ? indices[j] : -1);
             }
-            i += sprintf(string + i, "]");
+            sprintf(string + i, "]");
             RKLog("%s %s   k = %d\n", engine->name, string, k);
             n = indices[0];
             i = sprintf(string, "flags   = [%02x", engine->healthNodes[0].healths[n].flag);
@@ -208,7 +208,7 @@ static void *healthConsolidator(void *in) {
                 n = indices[j];
                 i += sprintf(string + i,  ", %02x", engine->healthNodes[j].healths[n].flag);
             }
-            i += sprintf(string + i, "]");
+            sprintf(string + i, "]");
             RKLog("%s %s   k = %d   s = %d\n", engine->name, string, k, s);
         }
 
@@ -223,7 +223,7 @@ static void *healthConsolidator(void *in) {
                 i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
             }
         }
-        i += sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                          // Add the log time as the last object
+        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                          // Add the log time as the last object
         health->flag = RKHealthFlagReady;
 
         //RKLog("%s", string);
@@ -286,7 +286,7 @@ static void *healthConsolidator(void *in) {
             i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
             i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
-            i += strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
+            strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
             RKPreparePath(filename);
             engine->healthLog = fopen(filename, "w");
         }

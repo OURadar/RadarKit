@@ -201,7 +201,7 @@ int socketCommandHandler(RKOperator *O) {
                         k += sprintf(string + k, "    INFO: Health Relay not set.\n");
                     }
                     
-                    k += sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
+                    sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
                     
                     RKOperatorSendDelimitedString(O, string);
                     

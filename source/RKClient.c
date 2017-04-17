@@ -26,7 +26,7 @@ void *theClient(void *in) {
     int k;
     int readCount, timeoutCount;
     struct timeval timeout;
-    struct timeval previousBeaconTime;
+    struct timeval previousBeaconTime = {0, 0};
     bool readOkay;
 
     FILE *fid = NULL;

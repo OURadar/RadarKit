@@ -104,7 +104,7 @@ int RKLog(const char *whatever, ...) {
         } else {
             i = 0;
         }
-        i += strftime(rkGlobalParameters.logfile + i, RKNameLength, "%Y%m%d.log", &tm);
+        strftime(rkGlobalParameters.logfile + i, RKNameLength - i, "%Y%m%d.log", &tm);
     }
     if (strlen(rkGlobalParameters.logfile)) {
         RKPreparePath(rkGlobalParameters.logfile);

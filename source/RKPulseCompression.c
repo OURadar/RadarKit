@@ -359,6 +359,11 @@ static void *pulseWatcher(void *_in) {
     float lag;
     struct timeval t0, t1;
 
+    if (engine->coreCount == 0) {
+        RKLog("Error. No processing core?\n");
+        return NULL;
+    }
+    
     // The beginning of the buffer is a pulse, it has the capacity info
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
     RKPulse *pulseToSkip;
@@ -398,12 +403,8 @@ static void *pulseWatcher(void *_in) {
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
     
-    // Make all sem_t 0 (to prevent the annoying compiler warnings)
-    for (c = 0; c < engine->coreCount; c++) {
-        sem[c] = NULL;
-    }
-
     // Spin off N workers to process I/Q pulses
+    memset(sem, 0, engine->coreCount * sizeof(sem_t *));
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseCompressionWorker *worker = &engine->workers[c];
         snprintf(worker->semaphoreName, 16, "rk-iq-%03d", c);
@@ -425,7 +426,11 @@ static void *pulseWatcher(void *_in) {
             }
         }
         worker->id = c;
+        worker->sem = sem[c];
         worker->parentEngine = engine;
+        if (engine->verbose > 1) {
+            RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
+        }
         if (pthread_create(&worker->tid, NULL, pulseCompressionCore, worker) != 0) {
             RKLog(">%s Error. Failed to start a compression core.\n", engine->name);
             return (void *)RKResultFailedToStartCompressionCore;
@@ -582,7 +587,7 @@ static void *pulseWatcher(void *_in) {
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseCompressionWorker *worker = &engine->workers[c];
         if (engine->useSemaphore) {
-            sem_post(sem[c]);
+            sem_post(worker->sem);
         }
         pthread_join(worker->tid, NULL);
         sem_unlink(worker->semaphoreName);
@@ -728,7 +733,8 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         return RKResultFailedToSetFilter;
     }
     if (engine->pulseBuffer == NULL) {
-        RKLog("Warning. Pulse buffer has not been set, output cannot be guaranteed.\n");
+        RKLog("Warning. Pulse buffer has not been set.\n");
+        return RKResultNoPulseBuffer;
     }
     if (engine->filters[group][index] != NULL) {
         free(engine->filters[group][index]);

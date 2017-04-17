@@ -25,15 +25,16 @@ typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
 struct rk_pulse_compression_worker {
+    RKPulseCompressionEngine   *parentEngine;
+    char                       semaphoreName[16];
     int                        id;
     pthread_t                  tid;                                      // Thread ID
     uint32_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    char                       semaphoreName[16];
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
-    RKPulseCompressionEngine   *parentEngine;
+    sem_t                      *sem;
 };
 
 struct rk_pulse_compression_engine {

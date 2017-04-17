@@ -343,31 +343,34 @@ static void *folderWatcher(void *in) {
     engine->state ^= RKEngineStateActivating;
     
     // Three major data folders that have structure A
-    char folders[][RKNameLength] = {
+    const char folders[][RKNameLength] = {
         RKDataFolderIQ,
         RKDataFolderMoment,
-        RKDataFolderHealth
+        RKDataFolderHealth,
+        ""
     };
-    int capacities[] = {
+    const int capacities[] = {
         24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
         24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
-        24 * 60 * 3,                      // Assume a file every minute, 2 folders
+        24 * 60 * 3,                      // Assume a file every minute, 3 folders
+        0
     };
-    size_t limits[] = {
+    const size_t limits[] = {
         RKFileManagerRawDataRatio,
         RKFileManagerMomentDataRatio,
-        RKFileManagerHealthDataRatio
+        RKFileManagerHealthDataRatio,
+        0
     };
     
-    engine->workerCount = sizeof(folders) / RKNameLength;
+    engine->workerCount = 3;
     
-    engine->workers = (RKFileRemover *)malloc(RKFileTypeCount * sizeof(RKFileRemover));
+    engine->workers = (RKFileRemover *)malloc(engine->workerCount * sizeof(RKFileRemover));
     if (engine->workers == NULL) {
         RKLog(">%s Error. Unable to allocate an RKFileRemover.\n", engine->name);
         return (void *)RKResultFailedToCreateFileRemover;
     }
     memset(engine->workers, 0, engine->workerCount * sizeof(RKFileRemover));
-    engine->memoryUsage += RKFileTypeCount * sizeof(RKFileRemover);
+    engine->memoryUsage += engine->workerCount * sizeof(RKFileRemover);
     
     for (k = 0; k < engine->workerCount; k++) {
         RKFileRemover *worker = &engine->workers[k];
@@ -411,7 +414,7 @@ static void *folderWatcher(void *in) {
 
     // Wait here while the engine should stay active
     time_t now;
-    time_t longTime = 7 * 86400;
+    time_t longTime = engine->maximumLogAgeInDays * 86400;
     while (engine->state & RKEngineStateActive) {
         // Take care of super slow changing files, like the daily logs
         time(&now);
@@ -456,6 +459,7 @@ RKFileManager *RKFileManagerInit() {
     sprintf(engine->name, "%s<DataFileManager>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(2) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
+    engine->maximumLogAgeInDays = RKFileManagerDefaultLogAgeInDays;
     engine->memoryUsage = sizeof(RKFileManager);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
@@ -481,6 +485,10 @@ void RKFileManagerSetInputOutputBuffer(RKFileManager *engine, RKRadarDesc *desc)
 
 void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
     strncpy(engine->dataPath, path, RKMaximumPathLength - 1);
+}
+
+void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age) {
+    engine->maximumLogAgeInDays = age;
 }
 
 #pragma mark - Interactions
