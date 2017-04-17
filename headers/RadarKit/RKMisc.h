@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <pthread.h>
 
 #ifdef __MACH__
 #include <mach/mach.h>
@@ -45,6 +46,27 @@
 (errno == EIO          ? "EIO"          : "OTHERS")))))))
 
 #define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
+
+#if defined(__APPLE__)
+
+#define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"
+
+typedef struct cpu_set {
+    uint32_t    count;
+} cpu_set_t;
+
+static inline void
+CPU_ZERO(cpu_set_t *cs) { cs->count = 0; }
+
+static inline void
+CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
+
+static inline int
+CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
+
+int pthread_setaffinity_np(pthread_t thread, size_t cpu_size, cpu_set_t *cpu_set);
+
+#endif
 
 enum RKJSONObjectType {
     RKJSONObjectTypeUnknown,
