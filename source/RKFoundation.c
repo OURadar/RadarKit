@@ -20,6 +20,7 @@ int RKLog(const char *whatever, ...) {
     time_t utc;
     struct tm tm;
     char msg[RKMaximumStringLength];
+    char filename[RKMaximumPathLength];
 
     // Get the time
     time(&utc);
@@ -98,21 +99,21 @@ int RKLog(const char *whatever, ...) {
         fflush(rkGlobalParameters.stream);
     }
     // Write the string to a file if specified
+    FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
         if (strlen(rkGlobalParameters.rootDataFolder)) {
-            i = sprintf(rkGlobalParameters.logfile, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
+            i = sprintf(filename, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
         } else {
             i = 0;
         }
-        strftime(rkGlobalParameters.logfile + i, RKNameLength - i, "%Y%m%d.log", &tm);
-    }
-    if (strlen(rkGlobalParameters.logfile)) {
+        strftime(filename + i, RKNameLength - i, "%Y%m%d.log", &tm);
+        RKPreparePath(filename);
+        logFileID = fopen(filename, "a");
+    } else if (strlen(rkGlobalParameters.logfile)) {
         RKPreparePath(rkGlobalParameters.logfile);
-        FILE *logFileID = fopen(rkGlobalParameters.logfile, "a");
-        if (logFileID == NULL) {
-            fprintf(stderr, "Unable to log.\n");
-            return 1;
-        }
+        logFileID = fopen(rkGlobalParameters.logfile, "a");
+    }
+    if (logFileID) {
         fprintf(logFileID, "%s", msg);
         fclose(logFileID);
     }
