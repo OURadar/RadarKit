@@ -256,7 +256,7 @@ static void *healthConsolidator(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
             }
-            // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half.
+            // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half of that.
             if (locationChangeCount++ > 3 && (fabs(engine->radarDescription->latitude - latitude) > 3.5e-5 || fabs(engine->radarDescription->longitude - longitude) > 3.5e-5)) {
                 engine->radarDescription->latitude = latitude;
                 engine->radarDescription->longitude = longitude;

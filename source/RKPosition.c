@@ -242,11 +242,6 @@ static void *pulseTagger(void *in) {
 
         if (marker0 & RKMarkerSweepBegin) {
             // Add another configuration
-//            RKConfigAdvance(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
-//                            RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
-//                            RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
-//                            RKConfigPositionMarker,  marker0,
-//                            RKConfigKeyNull);
             RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
                             RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
                             RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,

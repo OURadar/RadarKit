@@ -40,12 +40,14 @@ static int RKPedestalPedzyRead(RKClient *client) {
         }
         memcpy(newPosition, client->userPayload, sizeof(RKPosition));
         // Correct by radar heading
-        newPosition->azimuthDegrees -= radar->desc.heading;
+        printf("AZ = %.1f", newPosition->azimuthDegrees);
+        newPosition->azimuthDegrees += radar->desc.heading + 180.0f;
         if (newPosition->azimuthDegrees < 0.0f) {
             newPosition->azimuthDegrees += 360.0f;
         } else if (newPosition->azimuthDegrees >= 360.0f) {
             newPosition->azimuthDegrees -= 360.0f;
         }
+        printf(" --> %.1f\n", newPosition->azimuthDegrees);
         RKSetPositionReady(radar, newPosition);
     } else {
         // This the command acknowledgement, queue it up to feedback
