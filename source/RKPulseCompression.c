@@ -220,7 +220,9 @@ static void *pulseCompressionCore(void *_in) {
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
             pulse->header.s |= RKPulseStatusSkipped | RKPulseStatusProcessed;
+            if (engine->verbose > 1) {
             RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
+            }
         } else {
             // Do some work with this pulse
             // DFT of the raw data is stored in *in
