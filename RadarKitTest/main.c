@@ -471,9 +471,9 @@ int main(int argc, const char **argv) {
         myRadar->configs[0].prf[0] = user.prf;
         myRadar->desc.heading = 180.0f;
 
-        RKWaveform *waveform = RKWaveformInitWithCountAndDepth (22, 25);
-        RKWaveformHops(waveform, 5.0, 4.0);
-        RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
+        //RKWaveform *waveform = RKWaveformInitWithCountAndDepth (22, 25);
+        //RKWaveformHops(waveform, 5.0, 4.0);
+        //RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
