@@ -11,6 +11,12 @@
 #define W2_MISSING_DATA       -99900.0
 #define W2_RANGE_FOLDED       -99901.0
 
+#if defined (COMPRESSED_NETCDF)
+#define NC_MODE  NC_NETCDF4
+#else
+#define NC_MODE  NC_CLOBBER
+#endif
+
 // Internal Functions
 
 static int put_global_text_att(const int ncid, const char *att, const char *text);
@@ -213,21 +219,12 @@ static void *sweepWriter(void *in) {
             sprintf(filelist + strlen(filelist), " %s", filename);
         }
 
-#if defined (COMPRESSED_NETCDF)
-
-        if ((j = nc_create(filename, NC_NETCDF4, &ncid)) > 0) {
-
-#else
-        if ((j = nc_create(filename, NC_CLOBBER, &ncid)) > 0) {
-
-#endif
-
+        if ((j = nc_create(filename, NC_MODE, &ncid)) > 0) {
             RKLog("%s Error creating %s\n", engine->name, filename);
             engine->state ^= RKEngineStateWritingFile;
             return NULL;
         }
 
-        
         if (S->header.marker & RKMarkerPPIScan) {
             nc_def_dim(ncid, "Azimuth", n, &dimensionIds[0]);
         } else if (S->header.marker & RKMarkerRHIScan) {
@@ -270,8 +267,11 @@ static void *sweepWriter(void *in) {
         }
         tmpf = engine->radarDescription->latitude;
         nc_put_att_float(ncid, NC_GLOBAL, "Latitude", NC_FLOAT, 1, &tmpf);
+        nc_put_att_double(ncid, NC_GLOBAL, "LatitudeDouble", NC_DOUBLE, 1, &engine->radarDescription->latitude);
         tmpf = engine->radarDescription->longitude;
         nc_put_att_float(ncid, NC_GLOBAL, "Longitude", NC_FLOAT, 1, &tmpf);
+        nc_put_att_double(ncid, NC_GLOBAL, "LongitudeDouble", NC_DOUBLE, 1, &engine->radarDescription->longitude);
+        nc_put_att_float(ncid, NC_GLOBAL, "Heading", NC_FLOAT, 1, &engine->radarDescription->heading);
         nc_put_att_float(ncid, NC_GLOBAL, "Height", NC_FLOAT, 1, &engine->radarDescription->radarHeight);
         nc_put_att_long(ncid, NC_GLOBAL, "Time", NC_LONG, 1, &S->header.startTime.tv_sec);
         tmpf = (float)S->header.startTime.tv_usec * 1.0e-6;

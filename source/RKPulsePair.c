@@ -343,7 +343,6 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         free(X);
     }
 
-
     return count;
 
 }
