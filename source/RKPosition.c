@@ -180,10 +180,12 @@ static void *pulseTagger(void *in) {
             i++;
         }
         if (i == engine->pulseBufferDepth) {
-            RKLog("Could not find an appropriate position.  %.2f %s %.2f",
-                  pulse->header.timeDouble,
-                  pulse->header.timeDouble < timeLatest ? "<" : ">=",
-                  timeLatest);
+            if (engine->verbose > 1) {
+                RKLog("Could not find an appropriate position.  %.2f %s %.2f",
+                      pulse->header.timeDouble,
+                      pulse->header.timeDouble < timeLatest ? "<" : ">=",
+                      timeLatest);
+            }
             continue;
         }
         positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;
@@ -303,7 +305,8 @@ RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
     sprintf(engine->name, "%s<PulsePositioner>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(4) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionEngine) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine);
     engine->state = RKEngineStateAllocated;
     return engine;

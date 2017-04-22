@@ -965,6 +965,16 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 
 #pragma mark - Healths
 
+RKHealthNode RKRequestHealthNode(RKRadar *radar) {
+    RKHealthNode node = RKHealthNodeUser1 + radar->healthNodeCount;
+    if (node == RKHealthNodeCount) {
+        RKLog("Error. No more health node available.\n");
+        node = (RKHealthNode)-1;
+    }
+    radar->healthNodeCount++;
+    return node;
+}
+
 RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     if (radar->healthEngine == NULL) {
         RKLog("Error. Health engine has not started.\n");

@@ -145,7 +145,8 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(desc.name, "%s<PedzyRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(10) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {

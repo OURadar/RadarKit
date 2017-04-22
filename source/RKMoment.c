@@ -792,7 +792,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
     }
     memset(engine, 0, sizeof(RKMomentEngine));
     sprintf(engine->name, "%s<ProductGatherer>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(7) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMomentEngine) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;

@@ -13,6 +13,7 @@
 #include <RadarKit/RKFileManager.h>
 
 #define RKDataRecorderDefaultMaximumRecorderDepth   100000
+#define RKDataRecorderDefaultCacheSize              32 * 1024 * 1024
 
 typedef struct rk_data_recorder RKDataRecorder;
 

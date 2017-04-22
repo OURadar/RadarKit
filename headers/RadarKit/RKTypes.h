@@ -51,7 +51,6 @@
 #define RKBuffer2SlotCount               36000                       // Ray
 #define RKControlCount                   64                          // Controls
 #define RKGateCount                      65536                       // Must power of 2!
-#define RKHealthNodeCount                8                           // Maximum number of nodes to ingest health info. Check RKHealthNode
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
 #define RKMaxFilterCount                 8                           // Maximum filter count within each filter group. Check RKPulseParameters
@@ -192,6 +191,21 @@ enum RKResult {
     RKResultFileManagerBufferNotResuable,
     RKResultSuccess = 0,
     RKResultNoError = 0
+};
+
+enum RKEngineColor {
+    RKEngineColorCommandCenter = 9,
+    RKEngineColorPulseCompressionEngine = 6,
+    RKEngineColorPositionEngine = 4,
+    RKEngineColorMomentEngine = 7,
+    RKEngineColorHealthEngine = 5,
+    RKEngineColorDataRecorder = 8,
+    RKEngineColorSweepEngine = 13,
+    RKEngineColorFileManager = 2,
+    RKEngineColorTransceiver = 12,
+    RKEngineColorPedestalRelayPedzy = 10,
+    RKEngineColorHealthRelayTweeta = 0,
+    RKEngineColorClock = 14
 };
 
 typedef uint32_t RKPositionFlag;
@@ -343,7 +357,13 @@ enum RKHealthNode {
     RKHealthNodeUser1,
     RKHealthNodeUser2,
     RKHealthNodeUser3,
-    RKHealthNodeUser4
+    RKHealthNodeUser4,
+    RKHealthNodeUser5,
+    RKHealthNodeUser6,
+    RKHealthNodeUser7,
+    RKHealthNodeUser8,
+    RKHealthNodeCount,
+    RKHealthNodeInvalid = (RKHealthNode)-1
 };
 
 typedef uint32_t RKEngineState;
