@@ -457,7 +457,8 @@ RKFileManager *RKFileManagerInit() {
     }
     memset(engine, 0, sizeof(RKFileManager));
     sprintf(engine->name, "%s<DataFileManager>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(2) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFileManager) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->maximumLogAgeInDays = RKFileManagerDefaultLogAgeInDays;
     engine->memoryUsage = sizeof(RKFileManager);

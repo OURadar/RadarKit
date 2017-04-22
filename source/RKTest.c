@@ -524,7 +524,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
     sprintf(transceiver->name, "%s<TransceiverEmulator>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(12) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
     transceiver->radar = radar;
     transceiver->fs = 5.0e6;
@@ -804,7 +805,8 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
     sprintf(pedestal->name, "%s<PedestalEmulator>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(10) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->memoryUsage = sizeof(RKTestPedestal);
     pedestal->radar = radar;
     pedestal->state = RKEngineStateAllocated;

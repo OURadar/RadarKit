@@ -318,7 +318,8 @@ RKHealthEngine *RKHealthEngineInit() {
     RKHealthEngine *engine = (RKHealthEngine *)malloc(sizeof(RKHealthEngine));
     memset(engine, 0, sizeof(RKHealthEngine));
     sprintf(engine->name, "%s<HealthAssistant>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(5) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthEngine) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthEngine);
     engine->state = RKEngineStateAllocated;
     return engine;

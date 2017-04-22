@@ -89,6 +89,7 @@ struct rk_radar {
     //
     // Secondary Health Buffer
     //
+    RKHealthNode               healthNodeCount;
     RKNodalHealth              *healthNodes;
     //
     //
@@ -198,7 +199,6 @@ int RKSetProcessingCoreCounts(RKRadar *,
 int RKSetPRF(RKRadar *, const uint32_t prf);
 uint32_t RKGetPulseCapacity(RKRadar *);
 
-
 // If there is a tic count from firmware, use it as clean reference for time derivation
 void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta);
 void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
@@ -217,7 +217,7 @@ void RKMeasureNoise(RKRadar *);
 void RKSetSNRThreshold(RKRadar *radar, const RKFloat);
 
 // Healths
-uint8_t RKRequestHealthNode(RKRadar *);
+RKHealthNode RKRequestHealthNode(RKRadar *);
 RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode node);
 void RKSetHealthReady(RKRadar *, RKHealth *);
 RKHealth *RKGetLatestHealth(RKRadar *);
