@@ -67,6 +67,7 @@
 #define RKDutyCyleRedThreshold           0.95
 #define RKDutyCyleOrangeThreshold        0.90
 #define RKStatusBarWidth                 10
+#define RKPulseCountForNoiseMeasurement  200
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
