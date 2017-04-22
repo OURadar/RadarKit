@@ -53,6 +53,32 @@ void *masterControllerExecuteInBackground(void *in) {
 
 #pragma mark - Life Cycle
 
+//
+// Initialize a radar object
+// Input:
+//     RKRadarDesc desc - a description of the properties,
+//     which are:
+//         desc.initFlags - can be ORed togher from RKInitFlag enums
+//         desc.pulseCapacity - the maximum number of samples for each pulse
+//         desc.pulseToRayRatio - the down-sampling factor going from pulse to ray
+//         desc.healthNodeCount - the number of user health node count
+//         desc.healthBufferDepth - the depth of the cosolidated health buffer
+//         desc.configBufferDepth - the depth of the operational configuration parameters
+//         desc.positionBufferDepth - the depth of position readings
+//         desc.pulseBufferDepth - the depth of pulse buffer
+//         desc.rayBufferDepth - the depth of ray buffer
+//         desc.controlCount - the maximum number of control
+//         desc.latitude - latitude in degrees
+//         desc.longitude - longitude in degrees
+//         desc.heading - heading in degrees
+//         desc.radarHeight - radar height from the ground
+//         desc.wavelength - radar wavelength in meters
+//         desc.name[RKNameLength] - radar name
+//         desc.filePrefix[RKNameLength] - file prefix user would like to use
+//         desc.dataPath[RKMaximumPathLength] - the root path where data are stored
+// output:
+//     RKRadar *radar - an "object" radar. This is a reference of a radar system.
+//
 RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKRadar *radar;
     size_t bytes;
@@ -426,6 +452,13 @@ RKRadar *RKInitMean(void) {
     return RKInitWithDesc(desc);
 }
 
+//
+// Initializes a radar object with all features
+// Input:
+//     None
+// Output:
+//     An RKRadar object
+//
 RKRadar *RKInitFull(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
@@ -440,10 +473,24 @@ RKRadar *RKInitFull(void) {
     return RKInitWithDesc(desc);
 }
 
+//
+// Initializes a radar object with all features
+// Input:
+//     None
+// Output:
+//     An RKRadar object
+//
 RKRadar *RKInit(void) {
     return RKInitFull();
 }
 
+//
+// Initializes a radar object as a relay
+// Input:
+//     None
+// Output:
+//     An RKRadar object
+//
 RKRadar *RKInitAsRelay(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
@@ -457,6 +504,13 @@ RKRadar *RKInitAsRelay(void) {
     return RKInitWithDesc(desc);
 }
 
+//
+// Free up the radar object
+// Input:
+//     None
+// Output:
+//     RKResultSuccess if no errors
+//
 int RKFree(RKRadar *radar) {
     if (radar->active) {
         RKStop(radar);
@@ -507,7 +561,7 @@ int RKFree(RKRadar *radar) {
         RKClockFree(radar->positionClock);
     }
     free(radar);
-    return EXIT_SUCCESS;
+    return RKResultSuccess;
 }
 
 #pragma mark - Hardware Hooks
@@ -549,6 +603,9 @@ int RKSetHealthRelay(RKRadar *radar,
 }
 
 #pragma mark - Properties
+//
+// Property setters are self-explanatory so minimal descriptions are provided here
+//
 
 int RKSetVerbose(RKRadar *radar, const int verbose) {
     if (verbose) {
@@ -619,6 +676,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
     return RKResultNoError;
 }
 
+//
+// Sets the waveform from a pre-defined file that specifies the digital samples for an
+// arbitrary waveform generator.
 //
 // NOTE: Function incomplete, need to define file format
 // ingest the samples, convert, etc.
@@ -706,7 +766,14 @@ void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const cha
 }
 
 #pragma mark - Interaction / State Change
-
+//
+// Set the radar to go live. All the engines will be ignited with this function, going into infinite
+// loops waiting for incoming samples or events, which come from network connections.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     Always RKResultSuccess
+//
 int RKGoLive(RKRadar *radar) {
     radar->active = true;
     
@@ -823,9 +890,16 @@ int RKGoLive(RKRadar *radar) {
     }
 
     radar->state |= RKRadarStateLive;
-    return 0;
+    return RKResultSuccess;
 }
 
+//
+// Wait indefinitely until the radar engines are killed
+// Input:
+//     RKRadar *radar - the radar object of the system
+// Output:
+//     None
+//
 int RKWaitWhileActive(RKRadar *radar) {
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
@@ -863,9 +937,16 @@ int RKWaitWhileActive(RKRadar *radar) {
         }
         usleep(100000);
     }
-    return 0;
+    return RKResultSuccess;
 }
 
+//
+// Stops the engines. The radar engines will all be killed.
+// Input:
+//     RKRadar object of the radar
+// Ouput:
+//     Always RKResultSuccess
+//
 int RKStop(RKRadar *radar) {
     radar->active = false;
 
@@ -920,9 +1001,20 @@ int RKStop(RKRadar *radar) {
 
 int RKResetEngines(RKRadar *radar) {
     RKClockReset(radar->pulseClock);
+    RKClockReset(radar->positionClock);
     return RKResultSuccess;
 }
 
+//
+// Performs a function in the background.
+// This function is intended for handling commands that may recurse to itself. Instead of causing a block
+// call, this function make the functional call as a separate call eliminating the blocking behavior.
+// Input:
+//     RKRadar *radar - object of the radar
+//     char *command - a string of the command
+// Ouput:
+//     None
+//
 void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
     if (radar->masterController == NULL) {
         RKLog("Master controller is not valid.\n");
@@ -937,6 +1029,13 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
 
 #pragma mark - General
 
+//
+// Measure noise from the latest 200 pulses
+// Input:
+//     RKRadar *radar - object of the radar
+// Ouput:
+//     None
+//
 void RKMeasureNoise(RKRadar *radar) {
     RKFloat noise[2];
     RKFloat noiseAverage[2] = {0.0f, 0.0f};
@@ -947,7 +1046,7 @@ void RKMeasureNoise(RKRadar *radar) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
-    for (k = 0; k < 200; k++) {
+    for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
         RKMeasureNoiseFromPulse(noise, pulse);
@@ -1114,8 +1213,21 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
 
 #pragma mark - Internal Functions
 
+//
+// Add a configuration to change the operational setting
+// Input:
+//     RKConfigKey key - the key that describes what comes next
+//     value(s) - values of the key
+// Output:
+//     None
+// Note:
+//     The last key must be RKConfigKeyNull
+// Example:
+//     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
+//     RKConfigAdd(radar, RKConfigKeyNoise, 0.3, 0.2, RKConfigNull) to set noise
+//
 // Users normally don't have to deal with these
-
+//
 void RKAddConfig(RKRadar *radar, ...) {
     va_list args;
     va_start(args, radar);
