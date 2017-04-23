@@ -284,7 +284,7 @@ enum RKInitFlag {
     RKInitFlagAllocHealthBuffer      = 0x1000,
     RKInitFlagAllocHealthNodes       = 0x2000,
     RKInitFlagSignalProcessor        = 0x8000,
-    RKInitFlagRelay                  = 0x1B03,                       // Everything = 0xBF00 - 0x8000 - 0x2000 - 0x0400
+    RKInitFlagRelay                  = 0x3B03,                       // Everything = 0xBF00 - 0x8000 - 0x0400
     RKInitFlagAllocEverything        = 0xBF01,
     RKInitFlagAllocEverythingQuiet   = 0xBF00,
 };
