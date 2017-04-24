@@ -545,8 +545,12 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     stat(filename, &fileStat);
 
     gettimeofday(&me->latestTime, NULL);
-    
+
+    // For non-reusable type, just add the size
     if (me->reusable == false) {
+        pthread_mutex_lock(&engine->mutex);
+        me->usage += fileStat.st_size;
+        pthread_mutex_unlock(&engine->mutex);
         return RKResultFileManagerBufferNotResuable;
     }
     
@@ -554,10 +558,6 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     RKPathname *filenames = (RKPathname *)me->filenames;
     RKIndexedStat *indexedStats = (RKIndexedStat *)me->indexedStats;
     
-    pthread_mutex_lock(&engine->mutex);
-    
-    me->usage += fileStat.st_size;
-
     // Copy over the filename and stats to the internal buffer
     uint32_t k = me->count;
     
@@ -600,10 +600,14 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     }
     //printf("%s --> %s / %s (%d)\n", filename, folder, filenames[k], folderId);
 
+    pthread_mutex_lock(&engine->mutex);
+
     indexedStats[k].index = k;
     indexedStats[k].folderId = folderId;
     indexedStats[k].time = fileStat.st_ctime;
     indexedStats[k].size = fileStat.st_size;
+    
+    me->usage += fileStat.st_size;
     
     if (engine->verbose > 2) {
         RKLog("%s Added file '%s' %d\n", engine->name, filename, k);
