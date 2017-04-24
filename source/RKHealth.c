@@ -272,15 +272,17 @@ static void *healthConsolidator(void *in) {
         RKProcessHealthKeywords(engine, health->string);
 
         // Log a copy
+        //char *keyValue = RKGetValueOfKey(string, "Log Time");
         unixTime = (time_t)t0.tv_sec;
         timeStruct = gmtime(&unixTime);
         if (min != timeStruct->tm_min) {
             min = timeStruct->tm_min;
-            if (engine->healthLog != NULL) {
-                fclose(engine->healthLog);
+            if (engine->fid != NULL) {
+                fclose(engine->fid);
                 if (engine->verbose) {
                     RKLog("%s Recorded %s\n", engine->name, filename);
                 }
+                // Notify file manager of a new addition
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
             }
             i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
@@ -288,10 +290,10 @@ static void *healthConsolidator(void *in) {
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
             RKPreparePath(filename);
-            engine->healthLog = fopen(filename, "w");
+            engine->fid = fopen(filename, "w");
         }
-        if (engine->healthLog != NULL) {
-            fprintf(engine->healthLog, "%s\n", string);
+        if (engine->fid != NULL) {
+            fprintf(engine->fid, "%s\n", string);
         }
 
         // Update pulseIndex for the next watch
@@ -302,9 +304,9 @@ static void *healthConsolidator(void *in) {
         *engine->healthIndex = k;
     }
 
-    if (engine->healthLog != NULL) {
-        fclose(engine->healthLog);
-        engine->healthLog = NULL;
+    if (engine->fid != NULL) {
+        fclose(engine->fid);
+        engine->fid = NULL;
     }
 
     free(indices);
@@ -356,16 +358,13 @@ int RKHealthEngineStart(RKHealthEngine *engine) {
         RKLog("%s Starting ...\n", engine->name);
     }
     engine->state |= RKEngineStateActivating;
-    if (pthread_create(&engine->threadId, NULL, healthConsolidator, engine)) {
+    if (pthread_create(&engine->tidHealthConsolidator, NULL, healthConsolidator, engine)) {
         RKLog("Error. Unable to start health engine.\n");
         return RKResultFailedToStartHealthWorker;
     }
     while (!(engine->state & RKEngineStateActive)) {
         usleep(10000);
     }
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    engine->startTime = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
     return RKResultSuccess;
 }
 
@@ -381,7 +380,7 @@ int RKHealthEngineStop(RKHealthEngine *engine) {
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->threadId, NULL);
+    pthread_join(engine->tidHealthConsolidator, NULL);
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
