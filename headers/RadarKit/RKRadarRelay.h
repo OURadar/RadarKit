@@ -14,6 +14,7 @@
 #define __RadarKit_RadarRelay__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKFileManager.h>
 #include <RadarKit/RKClient.h>
 
 #define RKRadarRelayFeedbackDepth   200
@@ -22,9 +23,13 @@ typedef struct rk_radar_relay {
     // User defined variables
     char                   name[RKNameLength];
     char                   host[RKNameLength];
+    RKRadarDesc            *radarDescription;
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
     uint32_t               configBufferDepth;
+    RKHealth               *healthBuffer;
+    uint32_t               *healthIndex;
+    uint32_t               healthBufferDepth;
     RKBuffer               pulseBuffer;                        // Buffer of raw pulses
     uint32_t               *pulseIndex;                        // The refence index to watch for
     uint32_t               pulseBufferDepth;                   // Size of the buffer
@@ -32,7 +37,8 @@ typedef struct rk_radar_relay {
     uint32_t               *rayIndex;
     uint32_t               rayBufferDepth;
     uint8_t                verbose;
-    
+    RKFileManager          *fileManager;
+
     // Program set variables
     RKClient               *client;
     uint32_t               responseIndex;
@@ -54,6 +60,14 @@ RKRadarRelay *RKRadarRelayInit(void);
 void RKRadarRelayFree(RKRadarRelay *);
 
 void RKRadarRelaySetVerbose(RKRadarRelay *, const int verbose);
+void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *, RKRadarDesc *, RKFileManager *,
+                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
+                                       RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth,
+                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth,
+                                       RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
 void RKRadarRelaySetHost(RKRadarRelay *, const char *hostname);
+
+int RKRadarRelayStart(RKRadarRelay *);
+int RKRadarRelayStop(RKRadarRelay *);
 
 #endif
