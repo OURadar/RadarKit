@@ -21,7 +21,31 @@ static void *radarRelay(void *in) {
     RKRadarRelay *engine = (RKRadarRelay *)in;
     //RKRadarDesc *desc = engine->radarDescription;
 
-    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    RKClientDesc desc;
+    memset(&desc, 0, sizeof(RKClientDesc));
+    strcpy(desc.name, engine->name);
+    strncpy(desc.hostname, engine->host, RKNameLength - 1);
+    char *colon = strstr(desc.hostname, ":");
+    if (colon != NULL) {
+        *colon = '\0';
+        sscanf(colon + 1, "%d", &desc.port);
+    } else {
+        desc.port = 10000;
+    }
+    desc.type = RKNetworkSocketTypeTCP;
+    desc.format = RKNetworkMessageFormatHeaderDefinedSize;
+    desc.blocking = true;
+    desc.reconnect = true;
+    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    desc.verbose = 2;
+
+    engine->client = RKClientInitWithDesc(desc);
+
+    RKClientSetUserResource(engine->client, engine);
+    RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
+    RKClientStart(engine->client, false);
+    
+    RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -40,6 +64,8 @@ static void *radarRelay(void *in) {
         t1 = t0;
     }
 
+    RKClientStop(engine->client);
+
     return (void *)NULL;
 }
 
@@ -54,31 +80,9 @@ RKRadarRelay *RKRadarRelayInit(void) {
     memset(engine, 0, sizeof(RKRadarRelay));
     
     // TCP socket server over port 10000.
-    RKClientDesc desc;
-    memset(&desc, 0, sizeof(RKClientDesc));
     sprintf(engine->name, "%s<RadarRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarRelay) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-//    strncpy(desc.hostname, (char *)input, RKMaximumStringLength - 1);
-//    char *colon = strstr(desc.hostname, ":");
-//    if (colon != NULL) {
-//        *colon = '\0';
-//        sscanf(colon + 1, "%d", &desc.port);
-//    } else {
-//        desc.port = 10000;
-//    }
-//    desc.type = RKNetworkSocketTypeTCP;
-//    desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-//    desc.blocking = true;
-//    desc.reconnect = true;
-//    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
-//    desc.verbose = 2;
-//    
-//    engine->client = RKClientInitWithDesc(desc);
-//    
-//    RKClientSetUserResource(engine->client, engine);
-//    RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
-//    RKClientStart(engine->client, false);
     engine->state = RKEngineStateAllocated;
 
     return (RKRadarRelay *)engine;
@@ -131,6 +135,7 @@ int RKRadarRelayStart(RKRadarRelay *engine) {
         RKLog("%s Starting ...\n", engine->name);
     }
     engine->state |= RKEngineStateActivating;
+
     if (pthread_create(&engine->tidBackground, NULL, radarRelay, engine)) {
         RKLog("Error. Unable to start radar relay.\n");
         return RKResultFailedToStartHealthWorker;
