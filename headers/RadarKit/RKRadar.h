@@ -49,9 +49,10 @@ enum RKRadarState {
     RKRadarStateSweepEngineInitialized               = (1 << 20),
     RKRadarStateFileRecorderInitialized              = (1 << 21),
     RKRadarStateFileManagerInitialized               = (1 << 22),
-    RKRadarStateHealthRelayInitialized               = (1 << 23),
-    RKRadarStateTransceiverInitialized               = (1 << 24),
-    RKRadarStatePedestalInitialized                  = (1 << 25),
+    RKRadarStateRadarRelayInitialized                = (1 << 23),
+    RKRadarStateHealthRelayInitialized               = (1 << 24),
+    RKRadarStateTransceiverInitialized               = (1 << 25),
+    RKRadarStatePedestalInitialized                  = (1 << 26),
     RKRadarStateLive                                 = (1 << 31)
 };
 
