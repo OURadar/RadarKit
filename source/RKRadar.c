@@ -1186,9 +1186,11 @@ int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
     char *stringObject = RKGetValueOfKey(health->string, keyword);
     if (stringObject) {
         char *stringEnum = RKGetValueOfKey(stringObject, "enum");
-        return atoi(stringEnum);
+        if (stringEnum) {
+            return atoi(stringEnum);
+        }
     }
-    return -1;
+    return RKStatusEnumInvalid;
 }
 
 #pragma mark - Positions
