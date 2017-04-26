@@ -6,15 +6,16 @@ CFLAGS = -ggdb -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-prag
 #CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS += -fms-extensions -Wno-microsoft
 LDFLAGS = -L /usr/local/lib
-OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o RKSweep.o
+OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o
 OBJS += RKPreference.o
-OBJS += RKConfig.o RKPulseCompression.o RKMoment.o
+OBJS += RKFileManager.o
+OBJS += RKConfig.o RKHealth.o RKPulseCompression.o RKMoment.o RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o
 OBJS += RKPulsePair.o RKMultiLag.o
-OBJS += RKPosition.o RKPedestalPedzy.o
-OBJS += RKHealth.o RKHealthRelayTweeta.o
-OBJS += RKDataRecorder.o RKFileManager.o RKRadarRelay.o
+OBJS += RKPosition.o
+OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
+OBJS += RKDataRecorder.o RKSweep.o RKHealthLogger.o
 OBJS += RKWaveform.o
 RKLIB = libRadarKit.a
 
