@@ -292,11 +292,42 @@ int socketCommandHandler(RKOperator *O) {
                     }
                     user->radar->transceiverExec(user->radar->transceiver, commandString + k, string);
                     RKOperatorSendCommandResponse(O, string);
-                    break;
-                    
-                case 'x':
-                    engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
-                    sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
+                }
+                break;
+                
+            case 'r':
+                sscanf("%s", commandString + 1, sval1);
+                RKLog(">%s %s selected radar %s\n", engine->name, O->name, sval1);
+                snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
+                RKOperatorSendCommandResponse(O, string);
+                break;
+                
+            case 'm':
+                RKLog(">%s %s display data\n", engine->name, O->name);
+                user->streams |= RKStreamDisplayZ;
+                user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+                break;
+                
+            case 's':
+                // Stream varrious data
+                user->streams = RKStringToFlag(commandString + 1);
+                k = user->rayIndex;
+                // Fast foward some indices
+                user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
+                user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
+                user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
+                if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+                    user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
+                }
+                sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                        (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
+                RKOperatorSendCommandResponse(O, string);
+                break;
+                
+            case 'p':
+                // Pass everything to pedestal
+                if (strlen(commandString) < 2) {
+                    sprintf(string, "NAK. Empty command to pedestal." RKEOL);
                     RKOperatorSendCommandResponse(O, string);
                     break;
                     
@@ -441,7 +472,7 @@ int socketStreamHandler(RKOperator *O) {
         k = 0;
         endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
         while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
-            c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
+            c = user->radar->healths[user->healthIndex].string;
             k += sprintf(user->string + k, "%s\n", c);
             user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
             j++;

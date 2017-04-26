@@ -479,7 +479,7 @@ void RKClientStart(RKClient *C, const bool waitForConnection) {
     if (!waitForConnection) {
         return;
     }
-    while (C->state == RKClientStateCreating) {
+    while (C->state < RKClientStateConnected) {
         usleep(100000);
     }
     return;
