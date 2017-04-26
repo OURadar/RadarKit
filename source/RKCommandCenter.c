@@ -242,8 +242,10 @@ int socketCommandHandler(RKOperator *O) {
                 // Fast foward some indices
                 user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
                 user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
-                user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
                 user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
+                if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+                    user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
+                }
                 sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                         (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                 RKOperatorSendCommandResponse(O, string);
@@ -432,7 +434,7 @@ int socketStreamHandler(RKOperator *O) {
         k = 0;
         endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
         while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
-            c = user->radar->healthEngine->healthBuffer[user->healthIndex].string;
+            c = user->radar->healths[user->healthIndex].string;
             k += sprintf(user->string + k, "%s\n", c);
             user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
             j++;
