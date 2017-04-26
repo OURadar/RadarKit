@@ -49,8 +49,7 @@ static void *radarRelay(void *in) {
 
     RKClientSetUserResource(engine->client, engine);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
-    RKClientStart(engine->client, false);
-    
+
     RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
     engine->state |= RKEngineStateActive;
@@ -62,10 +61,13 @@ static void *radarRelay(void *in) {
 
     char cmd[RKNameLength];
 
-    usleep(10000);
+    RKClientStart(engine->client, true);
+
     size_t size = sprintf(cmd, "sh" RKEOL);
     printf("Sending command (%zu) ...\n", size);
+    pthread_mutex_lock(&engine->client->lock);
     RKNetworkSendPackets(engine->client->sd, "sh" RKEOL, size, NULL);
+    pthread_mutex_unlock(&engine->client->lock);
 
     while (engine->state & RKEngineStateActive) {
         // Evaluate the nodal-health buffers every once in a while
