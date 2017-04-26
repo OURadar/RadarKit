@@ -409,7 +409,7 @@ static void *sweepWriter(void *in) {
         RKLog("%s %s", engine->name, engine->summary);
     }
 
-    if (engine->hasHandleFilesScript) {
+    if (!engine->doNotWrite && engine->hasHandleFilesScript) {
         //printf("CMD: '%s'\n", filelist);
         system(filelist);
     }
