@@ -11,7 +11,13 @@
 #pragma mark - Internal Functions
 
 static int RKRadarRelayRead(RKClient *client) {
-    
+    // The shared user resource pointer
+    RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
+
+    char *string = client->userPayload;
+    RKStripTail(string);
+    RKLog("%s  %d/%d %s\n", engine->name, client->netDelimiter.type, client->netDelimiter.size, string);
+
     return RKResultSuccess;
 }
 
@@ -37,7 +43,7 @@ static void *radarRelay(void *in) {
     desc.blocking = true;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
-    desc.verbose = 2;
+    desc.verbose = 1;
 
     engine->client = RKClientInitWithDesc(desc);
 
@@ -53,6 +59,13 @@ static void *radarRelay(void *in) {
     struct timeval t0, t1;
 
     gettimeofday(&t1, NULL);
+
+    char cmd[RKNameLength];
+
+    usleep(10000);
+    size_t size = sprintf(cmd, "sh" RKEOL);
+    printf("Sending command (%zu) ...\n", size);
+    RKNetworkSendPackets(engine->client->sd, "sh" RKEOL, size, NULL);
 
     while (engine->state & RKEngineStateActive) {
         // Evaluate the nodal-health buffers every once in a while
