@@ -374,7 +374,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
         // Health engine
         radar->healthEngine = RKHealthEngineInit();
-        RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc, radar->fileManager, radar->healthNodes,
+        RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc, radar->healthNodes,
                                             radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
         radar->memoryUsage += radar->healthEngine->memoryUsage;
         radar->state |= RKRadarStateHealthEngineInitialized;
@@ -389,6 +389,13 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += radar->radarRelay->memoryUsage;
         radar->state |= RKRadarStateRadarRelayInitialized;
     }
+
+    // Health logger
+    radar->healthLogger = RKHealthLoggerInit();
+    RKHealthLoggerSetInputOutputBuffers(radar->healthLogger, &radar->desc, radar->fileManager,
+                                        radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+    radar->memoryUsage += radar->healthLogger->memoryUsage;
+    radar->state |= RKRadarStateHealthLoggerInitialized;
 
     // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
@@ -548,6 +555,9 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateRadarRelayInitialized) {
         RKRadarRelayFree(radar->radarRelay);
     }
+    if (radar->state & RKRadarStateHealthLoggerInitialized) {
+        RKHealthLoggerFree(radar->healthLogger);
+    }
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineFree(radar->sweepEngine);
     }
@@ -670,6 +680,9 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     }
     if (radar->radarRelay) {
         RKRadarRelaySetVerbose(radar->radarRelay, verbose);
+    }
+    if (radar->healthLogger) {
+        RKHealthLoggerSetVerbose(radar->healthLogger, verbose);
     }
     if (radar->sweepEngine) {
         RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
@@ -836,6 +849,7 @@ int RKGoLive(RKRadar *radar) {
         radar->memoryUsage -= radar->momentEngine->memoryUsage;
         radar->memoryUsage -= radar->healthEngine->memoryUsage;
     }
+    radar->memoryUsage -= radar->healthLogger->memoryUsage;
     radar->memoryUsage -= radar->dataRecorder->memoryUsage;
     radar->memoryUsage -= radar->sweepEngine->memoryUsage;
     radar->memoryUsage -= radar->fileManager->memoryUsage;
@@ -860,6 +874,7 @@ int RKGoLive(RKRadar *radar) {
     } else {
         RKRadarRelayStart(radar->radarRelay);
     }
+    RKHealthLoggerStart(radar->healthLogger);
     RKDataRecorderStart(radar->dataRecorder);
     RKSweepEngineStart(radar->sweepEngine);
 
@@ -870,6 +885,7 @@ int RKGoLive(RKRadar *radar) {
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->memoryUsage += radar->healthEngine->memoryUsage;
     }
+    radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->memoryUsage += radar->fileManager->memoryUsage;
@@ -998,8 +1014,10 @@ int RKWaitWhileActive(RKRadar *radar) {
 //     Always RKResultSuccess
 //
 int RKStop(RKRadar *radar) {
+    if (radar->active == false) {
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     radar->active = false;
-
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
             radar->pedestalExec(radar->pedestal, "disconnect", radar->pedestalResponse);
@@ -1049,6 +1067,13 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineStop(radar->sweepEngine);
         radar->state ^= RKRadarStateSweepEngineInitialized;
+    }
+    if (radar->state & RKRadarStateHealthLoggerInitialized) {
+        RKHealthLoggerStop(radar->healthLogger);
+        radar->state ^= RKRadarStateHealthLoggerInitialized;
+    }
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("radar->state = 0x%x\n", radar->state);
     }
     return RKResultSuccess;
 }

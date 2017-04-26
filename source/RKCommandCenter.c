@@ -810,7 +810,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKCommandCenter));
-    sprintf(engine->name, "%s<CommandCenter>%s",
+    sprintf(engine->name, "%s<OperationCenter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorCommandCenter) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
