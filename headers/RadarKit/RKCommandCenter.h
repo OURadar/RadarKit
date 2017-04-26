@@ -27,6 +27,8 @@ typedef struct  rk_user {
     uint32_t     rayStatusIndex;
     uint32_t     pulseIndex;
     uint32_t     rayIndex;
+    uint32_t     pingCount;
+    uint32_t     commandCount;
     uint16_t     pulseDownSamplingRatio;
     uint16_t     rayDownSamplingRatio;
     char         string[RKMaximumStringLength];

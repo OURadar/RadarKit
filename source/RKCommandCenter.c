@@ -53,8 +53,13 @@ int socketCommandHandler(RKOperator *O) {
         }
         // Command 'ping' is most frequent, check this first
         if (!strncmp(commandString, "ping", 4)) {
-            // Send nothing. The delegate function socketStreamHandler sends a beacon periodically
+            user->pingCount++;
+            if (engine->verbose && user->pingCount % 10 == 0) {
+                RKLog("%s %s ping x %d\n", engine->name, O->name, user->pingCount);
+            }
+            // There is no need to send a response. The delegate function socketStreamHandler sends a beacon periodically
         } else {
+            user->commandCount++;
             RKLog("%s %s Command '%s'\n", engine->name, O->name, commandString);
             // Process the command
             switch (commandString[0]) {
