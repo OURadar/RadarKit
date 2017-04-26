@@ -149,10 +149,19 @@ static void *healthConsolidator(void *in) {
                 i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
             }
         }
-        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                          // Add the log time as the last object
+        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
         health->flag = RKHealthFlagReady;
 
-        //RKLog("%s", string);
+        if (engine->verbose > 2) {
+            RKLog("%s", string);
+        }
+
+        // Update pulseIndex for the next watch
+        k = RKNextModuloS(k, engine->healthBufferDepth);
+        health = &engine->healthBuffer[k];
+        health->string[0] = '\0';
+        health->flag = RKHealthFlagVacant;
+        *engine->healthIndex = k;
     }
 
     free(indices);
@@ -165,7 +174,7 @@ static void *healthConsolidator(void *in) {
 RKHealthEngine *RKHealthEngineInit() {
     RKHealthEngine *engine = (RKHealthEngine *)malloc(sizeof(RKHealthEngine));
     memset(engine, 0, sizeof(RKHealthEngine));
-    sprintf(engine->name, "%s<HealthAssistant>%s",
+    sprintf(engine->name, "%s<HealthCollector>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthEngine);
@@ -183,11 +192,10 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, RKRadarDesc *desc,
                                          RKNodalHealth *healthNodes,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
     engine->radarDescription  = desc;
-    engine->fileManager       = fileManager;
     engine->healthNodes       = healthNodes;
     engine->healthBuffer      = healthBuffer;
     engine->healthIndex       = healthIndex;

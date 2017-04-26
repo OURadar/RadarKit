@@ -212,10 +212,6 @@ static void *healthLogger(void *in) {
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
-        health = &engine->healthBuffer[k];
-        health->string[0] = '\0';
-        health->flag = RKHealthFlagVacant;
-        *engine->healthIndex = k;
     }
 
     if (engine->fid != NULL) {
@@ -231,7 +227,7 @@ static void *healthLogger(void *in) {
 RKHealthLogger *RKHealthLoggerInit() {
     RKHealthLogger *engine = (RKHealthLogger *)malloc(sizeof(RKHealthLogger));
     memset(engine, 0, sizeof(RKHealthLogger));
-    sprintf(engine->name, "%s<HealthAssistant>%s",
+    sprintf(engine->name, "%s<HealthLogWriter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthLogger) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthLogger);
