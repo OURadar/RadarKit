@@ -265,7 +265,9 @@ void *theClient(void *in) {
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
                         if (C->netDelimiter.size == 0) {
-                            RKLog("%s netDelimiter.size = 0\n", C->name);
+                            if (C->verbose > 1) {
+                                RKLog("%s netDelimiter.size = 0\n", C->name);
+                            }
                             readOkay = true;
                             break;
                         }
@@ -330,6 +332,7 @@ void *theClient(void *in) {
                 }
                 timeoutCount = 0;
                 C->recv(C);
+                cbuf[0] = '\0';
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
@@ -340,7 +343,7 @@ void *theClient(void *in) {
 
             // Send in a beacon signal
             gettimeofday(&timeout, NULL);
-            timeout.tv_sec -= 1;
+            timeout.tv_sec -= 2;
             if (timercmp(&timeout, &previousBeaconTime, >=)) {
                 FD_ZERO(&C->wfd);
                 FD_ZERO(&C->efd);
