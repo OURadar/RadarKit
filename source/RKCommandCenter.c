@@ -58,6 +58,26 @@ int socketCommandHandler(RKOperator *O) {
                 RKLog("%s %s ping x %d\n", engine->name, O->name, user->pingCount);
             }
             // There is no need to send a response. The delegate function socketStreamHandler sends a beacon periodically
+        } else if (user->radar->desc.initFlags & RKInitFlagRelay) {
+            switch (commandString[0]) {
+                case 'r':
+                    sscanf("%s", commandString + 1, sval1);
+                    RKLog(">%s %s selected radar %s\n", engine->name, O->name, sval1);
+                    snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
+                    RKOperatorSendCommandResponse(O, string);
+                    break;
+
+                case 's':
+                    // Consolidate streams
+                    break;
+
+                default:
+                    // Just forward to the right radar
+                    RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
+                    RKRadarRelayExec(user->radar->radarRelay, commandString, string);
+                    RKOperatorSendCommandResponse(O, string);
+                    break;
+            }
         } else {
             user->commandCount++;
             RKLog("%s %s Command '%s'\n", engine->name, O->name, commandString);
@@ -229,13 +249,6 @@ int socketCommandHandler(RKOperator *O) {
                         user->radar->healthRelayExec(user->radar->healthRelay, commandString + k, string);
                         RKOperatorSendCommandResponse(O, string);
                     }
-                    break;
-                    
-                case 'r':
-                    sscanf("%s", commandString + 1, sval1);
-                    RKLog(">%s %s selected radar %s\n", engine->name, O->name, sval1);
-                    snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
-                    RKOperatorSendCommandResponse(O, string);
                     break;
                     
                 case 'm':
