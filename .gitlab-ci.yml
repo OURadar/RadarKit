@@ -11,11 +11,10 @@ build:
   before_script: 
     - apt update && apt -y install make autoconf libfftw3-dev libnetcdf-dev
   script: 
-  #  - g++ helloworld.cpp -o mybinary
     - make
-  artifacts:
+  rkest:
     paths:
-      - rktest
+      - rktest -T 1
   # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
   # cache:
   #   paths:
