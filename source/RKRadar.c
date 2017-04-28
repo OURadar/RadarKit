@@ -403,7 +403,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+              RKFloatToCommaStyleString(radar->memoryUsage / 1073741824));
     }
 
     return radar;
@@ -839,7 +839,7 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar live. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+              RKFloatToCommaStyleString(radar->memoryUsage / 1073741824));
     }
 
     // Add a dummy config to get things started if there hasn't been one
@@ -897,7 +897,7 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Radar Live. Memory usage = %s B (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString(1.0e-9f * radar->memoryUsage));
+              RKFloatToCommaStyleString(radar->memoryUsage / 1073741824));
     }
 
     radar->state |= RKRadarStateLive;
