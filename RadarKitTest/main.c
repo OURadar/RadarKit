@@ -28,6 +28,7 @@ typedef struct user_params {
     bool  relay;
     char  pedzyHost[256];
     char  tweetaHost[256];
+    char  relayHost[256];
 } UserParams;
 
 // Global variables
@@ -156,7 +157,7 @@ UserParams processInput(int argc, const char **argv) {
         {"help"                  , no_argument      , NULL, 'h'},
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
-        {"relay"                 , no_argument      , NULL, 'r'},
+        {"relay"                 , required_argument, NULL, 'r'},
         {"sim"                   , no_argument      , NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
@@ -302,6 +303,7 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'r':
                 user.relay = true;
+                strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;
             case 's':
                 user.simulate = true;
@@ -481,6 +483,8 @@ int main(int argc, const char **argv) {
         RKStop(myRadar);
 
     } else if (user.relay) {
+
+        RKRadarRelaySetHost(myRadar->radarRelay, user.relayHost);
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);

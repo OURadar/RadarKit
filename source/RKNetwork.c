@@ -10,7 +10,9 @@
 
 // Use as:
 // RKNetworkSendPackets(operator, payload, size, payload, size, ..., NULL);
-
+//
+// Note:
+// This function is not mutex proctected.
 ssize_t RKNetworkSendPackets(int sd, ...) {
     va_list   arg;
 

@@ -1,33 +1,33 @@
 //
-//  RKHealth.h
+//  RKHealthLogger.h
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 1/28/17.
+//  Created by Boon Leng Cheong on 4/26/17.
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_Health__
-#define __RadarKit_Health__
+#ifndef __RadarKit_HealthLogger__
+#define __RadarKit_HealthLogger__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
-#include <RadarKit/RKClient.h>
 
-typedef struct rk_health_engine RKHealthEngine;
+typedef struct rk_health_logger RKHealthLogger;
 
-struct rk_health_engine {
+struct rk_health_logger {
     // User defined variables
     char                   name[RKNameLength];
     RKRadarDesc            *radarDescription;
-    RKNodalHealth          *healthNodes;
     RKHealth               *healthBuffer;
     uint32_t               *healthIndex;
     uint32_t               healthBufferDepth;
     uint8_t                verbose;
+    RKHealthRelay          healthRelay;
+    RKFileManager          *fileManager;
 
     // Program set variables
     FILE                   *fid;
-    pthread_t              tidHealthConsolidator;
+    pthread_t              tidBackground;
 
     // Status / health
     char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
@@ -36,17 +36,16 @@ struct rk_health_engine {
     size_t                 memoryUsage;
 };
 
-RKHealthEngine *RKHealthEngineInit();
-void RKHealthEngineFree(RKHealthEngine *);
+RKHealthLogger *RKHealthLoggerInit();
+void RKHealthLoggerFree(RKHealthLogger *);
 
-void RKHealthEngineSetVerbose(RKHealthEngine *, const int);
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *, RKRadarDesc *,
-                                         RKNodalHealth *healthNodes,
+void RKHealthLoggerSetVerbose(RKHealthLogger *, const int);
+void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *, RKRadarDesc *, RKFileManager *,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth);
 
-int RKHealthEngineStart(RKHealthEngine *);
-int RKHealthEngineStop(RKHealthEngine *);
+int RKHealthLoggerStart(RKHealthLogger *);
+int RKHealthLoggerStop(RKHealthLogger *);
 
-char *RKHealthEngineStatusString(RKHealthEngine *);
+char *RKHealthLoggerStatusString(RKHealthLogger *);
 
-#endif /* __RadarKit_Health__ */
+#endif

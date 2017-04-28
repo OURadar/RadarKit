@@ -199,13 +199,15 @@ enum RKEngineColor {
     RKEngineColorPulseCompressionEngine = 6,
     RKEngineColorPositionEngine = 4,
     RKEngineColorMomentEngine = 7,
-    RKEngineColorHealthEngine = 5,
+    RKEngineColorHealthEngine = 1,
     RKEngineColorDataRecorder = 8,
     RKEngineColorSweepEngine = 13,
+    RKEngineColorHealthLogger = 5,
     RKEngineColorFileManager = 2,
     RKEngineColorTransceiver = 12,
     RKEngineColorPedestalRelayPedzy = 10,
     RKEngineColorHealthRelayTweeta = 0,
+    RKEngineColorRadarRelay = 12,
     RKEngineColorClock = 14
 };
 

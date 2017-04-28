@@ -143,11 +143,11 @@ int RKIndentCopy(char *dst, char *src) {
 char *RKIntegerToCommaStyleString(const long num) {
     int i, j, k;
     static int ibuf = 0;
-    static char stringBuffer[8][32];
+    static char stringBuffer[16][32];
 
     const int r = ibuf;
 
-    ibuf = ibuf == 7 ? 0 : ibuf + 1;
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
 
     sprintf(stringBuffer[r], "%ld", num);
     if (num < 1000) {

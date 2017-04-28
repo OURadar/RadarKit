@@ -10,71 +10,6 @@
 
 #pragma mark - Helper Functions
 
-static void RKProcessHealthKeywords(RKHealthEngine *engine, const char *string) {
-
-    char *str = (char *)malloc(strlen(string) + 1);
-    char *key = (char *)malloc(RKNameLength);
-    char *obj = (char *)malloc(RKMaximumPathLength);
-    char *subKey = (char *)malloc(RKNameLength);
-    char *subObj = (char *)malloc(RKMaximumPathLength);
-    uint8_t type;
-    uint8_t subType;
-    RKStatusEnum componentStatus;
-    
-    if (str == NULL) {
-        RKLog("%s Error allocating memory for str.\n", engine->name);
-        return;
-    }
-    if (key == NULL) {
-        RKLog("%s Error allocating memory for key.\n", engine->name);
-        return;
-    }
-    if (obj == NULL) {
-        RKLog("%s Error allocating memory for obj.\n", engine->name);
-        return;
-    }
-    if (subKey == NULL) {
-        RKLog("%s Error allocating memory for subKey.\n", engine->name);
-        return;
-    }
-    if (subObj == NULL) {
-        RKLog("%s Error allocating memory for subObj.\n", engine->name);
-        return;
-    }
-
-    strcpy(str, string);
-
-    char *ks;
-    char *sks;
-    if (*str != '{') {
-        fprintf(stderr, "Expected '{'.\n");
-    }
-
-    ks = str + 1;
-    while (*ks != '\0' && *ks != '}') {
-        ks = RKExtractJSON(ks, &type, key, obj);
-        if (type != RKJSONObjectTypeObject) {
-            continue;
-        }
-        sks = obj + 1;
-        while (*sks != '\0' && *sks != '}') {
-            sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (strcmp("Enum", subKey)) {
-                continue;
-            }
-            if ((componentStatus = atoi(subKey)) == RKStatusEnumCritical) {
-                RKLog("%s Warning. '%s' registered critical.\n", engine->name, key);
-            }
-        }
-    }
-
-    free(str);
-    free(key);
-    free(obj);
-    free(subKey);
-    free(subObj);
-}
-
 #pragma mark - Delegate Workers
 
 static void *healthConsolidator(void *in) {
@@ -84,11 +19,6 @@ static void *healthConsolidator(void *in) {
     int i, j, k, n, s;
     
     RKHealth *health;
-    char *stringValue, *stringEnum, *stringObject;
-    int headingChangeCount = 0;
-    int locationChangeCount = 0;
-
-    char filename[RKMaximumStringLength];
     
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
@@ -103,10 +33,6 @@ static void *healthConsolidator(void *in) {
     struct timeval t0, t1;
 
     gettimeofday(&t1, NULL);
-
-    time_t unixTime;
-    struct tm *timeStruct;
-    int min = -1;
 
     k = 0;   // health index
     while (engine->state & RKEngineStateActive) {
@@ -168,10 +94,10 @@ static void *healthConsolidator(void *in) {
                             // This node has been disconnected, duplicate the latest reading, set all enum to old
                             n = indices[j];
                             RKHealth *h0 = &engine->healthNodes[j].healths[n];
-                            n = RKPreviousModuloS(n, engine->radarDescription->healthBufferDepth);
+                            n = RKPreviousModuloS(n, desc->healthBufferDepth);
                             RKHealth *h1 = &engine->healthNodes[j].healths[n];
                             // Copy over the previous health to current health, set all enums to old
-                            h0->i += engine->radarDescription->healthBufferDepth;
+                            h0->i += desc->healthBufferDepth;
                             strcpy(h0->string, h1->string);
                             RKReplaceKeyValue(h0->string, "Enum", RKStatusEnumOld);
                             h0->flag = RKHealthFlagReady;
@@ -223,77 +149,11 @@ static void *healthConsolidator(void *in) {
                 i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
             }
         }
-        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                          // Add the log time as the last object
+        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
         health->flag = RKHealthFlagReady;
 
-        //RKLog("%s", string);
-
-        // Look for certain keywords with {"Value":x,"Enum":y} pairs, extract some information
-        float latitude = NAN, longitude = NAN, heading = NAN;
-        
-        if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
-            stringValue = RKGetValueOfKey(stringObject, "value");
-            stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                latitude = atof(stringValue);
-            }
-        }
-        if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
-            stringValue = RKGetValueOfKey(stringObject, "value");
-            stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                longitude = atof(stringValue);
-            }
-        }
-        if ((stringObject = RKGetValueOfKey(health->string, "heading")) != NULL) {
-            stringValue = RKGetValueOfKey(stringObject, "value");
-            stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                heading = atof(stringValue);
-            }
-        }
-        if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
-            if (engine->verbose > 1) {
-                RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
-            }
-            // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half of that.
-            if (locationChangeCount++ > 3 && (fabs(engine->radarDescription->latitude - latitude) > 3.5e-5 || fabs(engine->radarDescription->longitude - longitude) > 3.5e-5)) {
-                engine->radarDescription->latitude = latitude;
-                engine->radarDescription->longitude = longitude;
-                RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, engine->radarDescription->latitude, engine->radarDescription->longitude);
-            }
-            if (headingChangeCount++ > 3 && fabs(engine->radarDescription->heading - heading) > 1.0) {
-                engine->radarDescription->heading = heading;
-                RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, engine->radarDescription->heading);
-                headingChangeCount = 0;
-            }
-        }
-
-        RKProcessHealthKeywords(engine, health->string);
-
-        // Log a copy
-        //char *keyValue = RKGetValueOfKey(string, "Log Time");
-        unixTime = (time_t)t0.tv_sec;
-        timeStruct = gmtime(&unixTime);
-        if (min != timeStruct->tm_min) {
-            min = timeStruct->tm_min;
-            if (engine->fid != NULL) {
-                fclose(engine->fid);
-                if (engine->verbose) {
-                    RKLog("%s Recorded %s\n", engine->name, filename);
-                }
-                // Notify file manager of a new addition
-                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
-            }
-            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
-            i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
-            i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
-            strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
-            RKPreparePath(filename);
-            engine->fid = fopen(filename, "w");
-        }
-        if (engine->fid != NULL) {
-            fprintf(engine->fid, "%s\n", string);
+        if (engine->verbose > 2) {
+            RKLog("%s", string);
         }
 
         // Update pulseIndex for the next watch
@@ -302,11 +162,6 @@ static void *healthConsolidator(void *in) {
         health->string[0] = '\0';
         health->flag = RKHealthFlagVacant;
         *engine->healthIndex = k;
-    }
-
-    if (engine->fid != NULL) {
-        fclose(engine->fid);
-        engine->fid = NULL;
     }
 
     free(indices);
@@ -319,7 +174,7 @@ static void *healthConsolidator(void *in) {
 RKHealthEngine *RKHealthEngineInit() {
     RKHealthEngine *engine = (RKHealthEngine *)malloc(sizeof(RKHealthEngine));
     memset(engine, 0, sizeof(RKHealthEngine));
-    sprintf(engine->name, "%s<HealthAssistant>%s",
+    sprintf(engine->name, "%s<HealthCollector>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthEngine);
@@ -337,17 +192,18 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, RKRadarDesc *desc,
                                          RKNodalHealth *healthNodes,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
     engine->radarDescription  = desc;
-    engine->fileManager       = fileManager;
     engine->healthNodes       = healthNodes;
     engine->healthBuffer      = healthBuffer;
     engine->healthIndex       = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
+
+#pragma mark - Interactions
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

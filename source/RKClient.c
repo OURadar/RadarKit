@@ -265,7 +265,9 @@ void *theClient(void *in) {
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
                         if (C->netDelimiter.size == 0) {
-                            RKLog("%s netDelimiter.size = 0\n", C->name);
+                            if (C->verbose > 1) {
+                                RKLog("%s netDelimiter.size = 0\n", C->name);
+                            }
                             readOkay = true;
                             break;
                         }
@@ -330,6 +332,7 @@ void *theClient(void *in) {
                 }
                 timeoutCount = 0;
                 C->recv(C);
+                cbuf[0] = '\0';
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
@@ -340,7 +343,7 @@ void *theClient(void *in) {
 
             // Send in a beacon signal
             gettimeofday(&timeout, NULL);
-            timeout.tv_sec -= 1;
+            timeout.tv_sec -= 2;
             if (timercmp(&timeout, &previousBeaconTime, >=)) {
                 FD_ZERO(&C->wfd);
                 FD_ZERO(&C->efd);
@@ -357,7 +360,9 @@ void *theClient(void *in) {
                     } else if (FD_ISSET(C->sd, &C->wfd)) {
                         gettimeofday(&previousBeaconTime, NULL);
                         //RKLog("%s beacon\n", C->name);
+                        pthread_mutex_lock(&C->lock);
                         RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
+                        pthread_mutex_unlock(&C->lock);
                     }
                 } else {
                     RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
@@ -391,18 +396,6 @@ void *theClient(void *in) {
 
 #pragma mark -
 #pragma mark Life Cycle
-
-RKClient *RKClientInit(void) {
-    RKClientDesc desc;
-    memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.hostname, "localhost");
-    desc.port = 9000;
-    desc.type = RKNetworkSocketTypeTCP;
-    desc.blocking = true;
-    desc.reconnect = true;
-    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
-    return RKClientInitWithDesc(desc);
-}
 
 RKClient *RKClientInitWithDesc(RKClientDesc desc) {
     if (desc.format == RKNetworkMessageFormatConstantSize && desc.blockLength == 0) {
@@ -439,6 +432,18 @@ RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
     return RKClientInitWithDesc(desc);
 }
 
+RKClient *RKClientInit(void) {
+    RKClientDesc desc;
+    memset(&desc, 0, sizeof(RKClientDesc));
+    sprintf(desc.hostname, "localhost");
+    desc.port = 9000;
+    desc.type = RKNetworkSocketTypeTCP;
+    desc.blocking = true;
+    desc.reconnect = true;
+    desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    return RKClientInitWithDesc(desc);
+}
+
 void RKClientFree(RKClient *C) {
     RKClientStop(C);
     free(C);
@@ -464,6 +469,7 @@ void RKClientSetReceiveHandler(RKClient *C, int (*routine)(RKClient *)) {
 #pragma mark Interactions
 
 void RKClientStart(RKClient *C, const bool waitForConnection) {
+    pthread_mutex_init(&C->lock, NULL);
     pthread_attr_init(&C->threadAttributes);
     if (pthread_create(&C->threadId, &C->threadAttributes, theClient, C)) {
         RKLog("Error. Unable to launch a socket client.\n");
@@ -484,6 +490,8 @@ void RKClientStop(RKClient *C) {
         RKLog("%s Disconnecting ...\n", C->name);
         C->state = RKClientStateDisconnecting;
         pthread_join(C->threadId, NULL);
+        pthread_attr_destroy(&C->threadAttributes);
+        pthread_mutex_destroy(&C->lock);
     } else if (C->verbose > 1) {
         RKLog("%s Info. Client does not seem to be running.\n", C->name);
         return;

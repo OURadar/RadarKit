@@ -406,6 +406,7 @@ static void *folderWatcher(void *in) {
     } else if (strlen(engine->dataPath)) {
         snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->dataPath);
     }
+    printf("log folder = %s\n", logPath);
     
     // Increase the tic once to indicate the engine is ready
     engine->tic++;
@@ -420,14 +421,18 @@ static void *folderWatcher(void *in) {
         time(&now);
         if ((did = opendir(logPath)) != NULL) {
             while ((dir = readdir(did)) != NULL) {
-                if (dir->d_type == DT_REG) {
-                    snprintf(string, RKMaximumPathLength - 1, "%s/%s", logPath, dir->d_name);
-                    stat(string, &fileStat);
-                    if (fileStat.st_ctime < now - longTime) {
-                        RKLog("%s Removing %s ...\n", engine->name, string);
-                        snprintf(string, RKMaximumPathLength - 1, "rm -f %s/%s", logPath, dir->d_name);
-                        system(string);
-                    }
+                if (dir->d_name[0] == '.') {
+                    continue;
+                }
+                snprintf(string, RKMaximumPathLength - 1, "%s/%s", logPath, dir->d_name);
+                lstat(string, &fileStat);
+                if (!S_ISREG(fileStat.st_mode)) {
+                    continue;
+                }
+                if (fileStat.st_ctime < now - longTime) {
+                    RKLog("%s Removing %s ...\n", engine->name, string);
+                    snprintf(string, RKMaximumPathLength - 1, "rm -f %s/%s", logPath, dir->d_name);
+                    system(string);
                 }
             }
             closedir(did);

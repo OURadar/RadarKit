@@ -88,9 +88,9 @@ struct rk_client {
     RKNetDelimiter           netDelimiter;                       // A storage for latest delimiter
 };
 
-RKClient *RKClientInit(void);
 RKClient *RKClientInitWithDesc(RKClientDesc);
 RKClient *RKClientInitWithHostnamePort(const char *, const int);
+RKClient *RKClientInit(void);
 void RKClientFree(RKClient *);
 
 void RKClientSetUserResource(RKClient *, void *);
