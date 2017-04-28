@@ -5,7 +5,7 @@
 image: gcc
 
 before_script: 
-  - apt update && apt -y install make autoconf libfftw3-dev libnetcdf-dev
+  - apt -y install make autoconf libfftw3-dev libnetcdf-dev
 
 stages:
   - build
