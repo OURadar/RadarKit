@@ -202,7 +202,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {
-                RKLog("%s Waited %.2f s for response of '%s'.\n", client->name, (float)s * 0.01f, command);
+                RKLog("%s Waited %.2f s for response to '%s'.\n", client->name, (float)s * 0.01f, command);
             }
             if ((float)s * 0.01f >= 3.0f) {
                 RKLog("%s should time out.\n", client->name);
