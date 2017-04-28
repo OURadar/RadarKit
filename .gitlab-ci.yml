@@ -7,9 +7,13 @@ image: gcc
 before_script: 
   - apt update && apt -y install make autoconf libfftw3-dev libnetcdf-dev
 
+stages:
+  - build
+
 rkest:
+  stage: build
   script:
-  - rktest -T 1
+  - make
 
 # run tests using the binary built before
 #test:
