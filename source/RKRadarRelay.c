@@ -14,17 +14,24 @@ static int RKRadarRelayRead(RKClient *client) {
     // The shared user resource pointer
     RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
 
-    char *string = client->userPayload;
+//    char *string = client->userPayload;
 //    RKStripTail(string);
 
-    if (!strncmp(string, "pong", 4)) {
-        // Do nothing for a beacon feedback
-        printf("pong\n");
-    } else {
-        // Queue up the feedback
-        strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
-        engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
+    switch (client->netDelimiter.type) {
+        case RKNetworkPacketTypeHealth:
+            // Queue up the health
+            break;
+
+        case RKNetworkPacketTypeCommandResponse:
+            // Queue up the feedback
+            strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
+            engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
+            break;
+        default:
+            RKLog("%s New type %d\n", client->netDelimiter.type);
+            break;
     }
+
     return RKResultSuccess;
 }
 
