@@ -4,21 +4,18 @@
 # see https://hub.docker.com/_/gcc/
 image: gcc
 
+#before_script: 
+#  - apt -y install make autoconf libfftw3-dev libnetcdf-dev
+
+stages:
+  - build
+
 build:
   stage: build
-  # instead of calling g++ directly you can also use some build toolkit like make
-  # install the necessary build tools when needed
-  before_script: 
-    - apt update && apt -y install make autoconf libfftw3-dev libnetcdf-dev
-  script: 
-    - make
-  rkest:
+  script: make
+  artifacts:
     paths:
-      - rktest -T 1
-  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-  # cache:
-  #   paths:
-  #     - "*.o"
+      - rktest
 
 # run tests using the binary built before
 #test:
