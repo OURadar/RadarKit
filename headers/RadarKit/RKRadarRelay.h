@@ -17,7 +17,8 @@
 #include <RadarKit/RKFileManager.h>
 #include <RadarKit/RKClient.h>
 
-#define RKRadarRelayFeedbackDepth   200
+#define RKRadarRelayFeedbackDepth     200
+#define RKRadarRelayFeedbackCapacity  8196
 
 typedef struct rk_radar_relay {
     // User defined variables
@@ -42,7 +43,7 @@ typedef struct rk_radar_relay {
     // Program set variables
     RKClient               *client;
     uint32_t               responseIndex;
-    char                   responses[RKRadarRelayFeedbackDepth][RKMaximumStringLength];
+    char                   responses[RKRadarRelayFeedbackDepth][RKRadarRelayFeedbackCapacity];
     char                   latestCommand[RKMaximumStringLength];
     pthread_t              tidBackground;
     RKStream               streams;
@@ -69,5 +70,7 @@ void RKRadarRelaySetHost(RKRadarRelay *, const char *hostname);
 
 int RKRadarRelayStart(RKRadarRelay *);
 int RKRadarRelayStop(RKRadarRelay *);
+
+int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response);
 
 #endif

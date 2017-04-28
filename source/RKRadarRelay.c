@@ -15,9 +15,16 @@ static int RKRadarRelayRead(RKClient *client) {
     RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
 
     char *string = client->userPayload;
-    RKStripTail(string);
-    RKLog("%s  %d/%d %s\n", engine->name, client->netDelimiter.type, client->netDelimiter.size, string);
+//    RKStripTail(string);
 
+    if (!strncmp(string, "pong", 4)) {
+        // Do nothing for a beacon feedback
+        printf("pong\n");
+    } else {
+        // Queue up the feedback
+        strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
+        engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
+    }
     return RKResultSuccess;
 }
 
@@ -184,9 +191,8 @@ int RKRadarRelayStop(RKRadarRelay *engine) {
     return RKResultSuccess;
 }
 
-int RKRadarRelayExec(RKMasterController input, const char *command, char *response) {
-    RKRadarRelay *me = (RKRadarRelay *)input;
-    RKClient *client = me->client;
+int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) {
+    RKClient *client = engine->client;
     if (client->verbose > 1) {
         RKLog("%s received '%s'", client->name, command);
     }
@@ -200,10 +206,10 @@ int RKRadarRelayExec(RKMasterController input, const char *command, char *respon
             return RKResultIncompleteReceive;
         }
         int s = 0;
-        uint32_t responseIndex = me->responseIndex;
-        size_t size = snprintf(me->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
-        RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        while (responseIndex == me->responseIndex) {
+        uint32_t responseIndex = engine->responseIndex;
+        size_t size = snprintf(engine->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
+        RKNetworkSendPackets(client->sd, engine->latestCommand, size, NULL);
+        while (responseIndex == engine->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {
                 RKLog("%s Waited %.2f s for response.\n", client->name, (float)s * 0.01f);
@@ -213,14 +219,14 @@ int RKRadarRelayExec(RKMasterController input, const char *command, char *respon
                 break;
             }
         }
-        if (responseIndex == me->responseIndex) {
+        if (responseIndex == engine->responseIndex) {
             if (response != NULL) {
                 sprintf(response, "NAK. Timeout." RKEOL);
             }
             return RKResultTimeout;
         }
         if (response != NULL) {
-            strcpy(response, me->responses[responseIndex]);
+            strcpy(response, engine->responses[responseIndex]);
         }
     }
     return RKResultSuccess;
