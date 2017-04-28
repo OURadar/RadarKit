@@ -9,7 +9,7 @@
 #include <RadarKit/RKTest.h>
 #include <getopt.h>
 
-#define RKFMT                          "%4d"
+#define RKFMT                          "%5d"
 #define RKSIMD_TEST_DESC_FORMAT        "%65s"
 #define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
