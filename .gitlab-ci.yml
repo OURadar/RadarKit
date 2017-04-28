@@ -10,10 +10,12 @@ image: gcc
 stages:
   - build
 
-rkest:
+build:
   stage: build
-  script:
-  - make
+  script: make
+  artifacts:
+    paths:
+      - rktest
 
 # run tests using the binary built before
 #test:
