@@ -4,8 +4,8 @@
 # see https://hub.docker.com/_/gcc/
 image: gcc
 
-before_script: 
-  - apt -y install make autoconf libfftw3-dev libnetcdf-dev
+#before_script: 
+#  - apt -y install make autoconf libfftw3-dev libnetcdf-dev
 
 stages:
   - build
