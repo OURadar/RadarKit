@@ -1166,9 +1166,83 @@ void RKTestWindow(void) {
 }
 
 void RKTestJSON(void) {
-    char str[] = "{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":3}, \"Event\":\"None\", \"Volt\":1.234}";
-    printf("%s (%d)\n", str, (int)strlen(str));
+    char str[] = "{"
+    "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
+    "\"Health Relay\":{\"Value\":true,\"Enum\":0}, "
+    "\"Network\":{\"Value\":true,\"Enum\":0}, "
+    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3}, "
+    "\"10-MHz Clock\":{\"Value\":true,\"Enum\":0}, "
+    "\"DAC PLL\":{\"Value\":true,\"Enum\":0}, "
+    "\"FPGA Temp\":{\"Value\":\"69.3degC\",\"Enum\":0}, "
+    "\"Core Volt\":{\"Value\":\"1.00 V\",\"Enum\":0}, "
+    "\"Aux. Volt\":{\"Value\":\"2.469 V\",\"Enum\":0}, "
+    "\"XMC Volt\":{\"Value\":\"11.649 V\",\"Enum\":0}, "
+    "\"XMC 3p3\":{\"Value\":\"3.250 V\",\"Enum\":0}, "
+    "\"PRF\":{\"Value\":\"5,008 Hz\",\"Enum\":0,\"Target\":\"5,000 Hz\"}, "
+    "\"Transmit H\":{\"Value\":\"69.706 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-1.877 dBm\",\"Min\":\"-2.945 dBm\"}, "
+    "\"Transmit V\":{\"Value\":\"69.297 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-2.225 dBm\",\"Min\":\"-3.076 dBm\"}, "
+    "\"DAC QI\":{\"Value\":\"0.913\",\"Enum\":0}, "
+    "\"Waveform\":{\"Value\":\"h4011\",\"Enum\":0}, "
+    "\"UnderOver\":[0,-897570], "
+    "\"Lags\":[-139171212,-139171220,-159052813], \"NULL\":[149970], "
+    "\"Pedestal AZ Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal EL Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"VCP Active\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal AZ Position\":{\"Value\":\"26.21 deg\",\"Enum\":0}, "
+    "\"Pedestal EL Position\":{\"Value\":\"2.97 deg\",\"Enum\":0}, "
+    "\"TWT Power\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Warmed Up\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT High Voltage\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Full Power\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT VSWR\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Duty Cycle\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Fans\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Faults Clear\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Cathode Voltage\":{\"Value\":\"-21.54 kV\",\"Enum\":0}, "
+    "\"TWT Body Current\":{\"Value\":\"0.09 A\",\"Enum\":0}, "
+    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
+    "\"GPS Latitude\":{\"Value\":\"35.1812820\",\"Enum\":0}, "
+    "\"GPS Longitude\":{\"Value\":\"-97.4373016\",\"Enum\":0}, "
+    "\"GPS Heading\":{\"Value\":\"88.0 deg\", \"Enum\":0}, "
+    "\"Ground Speed\":{\"Value\":\"0.30 km/h\", \"Enum\":0}, "
+    "\"Platform Pitch\":{\"Value\":\"-0.23 deg\",\"Enum\":0}, "
+    "\"Platform Roll\":{\"Value\":\"0.04 deg\",\"Enum\":0}, "
+    "\"I2C Chip\":{\"Value\":\"30.50 degC\",\"Enum\":0}, "
+    "\"Event\":\"none\", \"Log Time\":1493410480"
+    "}";
+    printf("%s (%d characters)\n", str, (int)strlen(str));
+    char *stringObject, *stringValue, *stringEnum;
+    if ((stringObject = RKGetValueOfKey(str, "latitude")) != NULL) {
+        printf("stringObject = '%s'\n", stringObject);
+        stringValue = RKGetValueOfKey(stringObject, "value");
+        stringEnum = RKGetValueOfKey(stringObject, "enum");
+        if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+            printf("latitude = %.7f\n", atof(stringValue));
+        }
+    }
+    if ((stringObject = RKGetValueOfKey(str, "longitude")) != NULL) {
+        printf("stringObject = '%s'\n", stringObject);
+        stringValue = RKGetValueOfKey(stringObject, "value");
+        stringEnum = RKGetValueOfKey(stringObject, "enum");
+        if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+            printf("longitude = %.7f\n", atof(stringValue));
+        }
+    }
     RKGoThroughKeywords(str);
+    
+    printf("\n");
+    char strObj[] = "0";
+    stringObject = strObj;
+    printf("stringObject = '%s'\n", stringObject);
+    stringValue = RKGetValueOfKey(stringObject, "value");
+    stringEnum = RKGetValueOfKey(stringObject, "enum");
+    printf("stringValue = %s\n", stringValue == NULL ? "(NULL)" : stringValue);
+    printf("stringEnum = %s\n", stringEnum == NULL ? "(NULL)" : stringEnum);
+    if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+        printf("longitude = %.7f\n", atof(stringValue));
+    }
 }
 
 void RKTestShowColors(void) {

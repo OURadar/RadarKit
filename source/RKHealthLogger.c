@@ -96,9 +96,9 @@ static void *healthLogger(void *in) {
     engine->state ^= RKEngineStateActivating;
 
     char *string;
-    struct timeval t0, t1;
+    struct timeval timeNow;
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&timeNow, NULL);
 
     time_t unixTime;
     struct tm *timeStruct;
@@ -143,22 +143,28 @@ static void *healthLogger(void *in) {
         if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                latitude = atof(stringValue);
+            if (stringValue != NULL && stringEnum != NULL) {
+                if (atoi(stringEnum) == RKStatusEnumNormal) {
+                    latitude = atof(stringValue);
+                }
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                longitude = atof(stringValue);
+            if (stringValue != NULL && stringEnum != NULL) {
+                if (atoi(stringEnum) == RKStatusEnumNormal) {
+                    longitude = atof(stringValue);
+                }
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "heading")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                heading = atof(stringValue);
+            if (stringValue != NULL && stringEnum != NULL) {
+                if (atoi(stringEnum) == RKStatusEnumNormal) {
+                    heading = atof(stringValue);
+                }
             }
         }
         if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
@@ -184,7 +190,7 @@ static void *healthLogger(void *in) {
         char *keyValue = RKGetValueOfKey(string, "Log Time");
         if (keyValue == NULL) {
             RKLog("%s Error. No log time found.\n", engine->name);
-            unixTime = (time_t)t0.tv_sec;
+            unixTime = (time_t)timeNow.tv_sec;
         } else {
             unixTime = (time_t)atol(keyValue);
         }
