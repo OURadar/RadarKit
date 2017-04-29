@@ -6,6 +6,19 @@
 //
 //  █
 //
+//  1.1.1  - Command relay
+//         - RKFileManager
+//         - RKHealthEngine and RKHealthLogger detached
+//         - Incorporated NetCDF-4
+//         - General bug fixes
+//
+//  1.1    - Optmized sequence of frequency hop
+//         - Raw data I/Q recording
+//         - Health logger
+//         - Reduced memory footprint
+//
+//  1.0    - First working state
+//
 
 #ifndef __RadarKit_RKTypes__
 #define __RadarKit_RKTypes__
@@ -33,18 +46,25 @@
 #include <fcntl.h>
 #include <errno.h>
 
-/*!
- @definedblock Memory Blocks
- @abstract Defines the number of slots and gates of each pulse of the RKRadar structure
- @define RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
- @define RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
- @define RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
- @define RKGateCount The maximum number of gates allocated for each pulse
- @define RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
+/*
+  Memory Blocks
+  Defines the number of slots and gates of each pulse of the RKRadar structure
+ 
+  RKBufferCSlotCount The number of slots for config
+  RKBufferHSlotCount The number of slots for health JSON string
+  RKBufferSSlotCount The number of slots for status string
+  RKBufferPSlotCount The number of slots for position buffer
+  RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
+  RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
+  RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
+  RKControlCount The number of controls (buttons)
+  RKGateCount The maximum number of gates allocated for each pulse
+  RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
+ 
  */
-#define RKVersionString                  "1.1"
-#define RKBufferCSlotCount               50                          // Config
-#define RKBufferHSlotCount               50                          // Health
+#define RKVersionString                  "1.1.1b"
+#define RKBufferCSlotCount               25                          // Config
+#define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
 #define RKBufferPSlotCount               500                         // Positions
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
@@ -53,7 +73,7 @@
 #define RKGateCount                      65536                       // Must be a multiple of RKSIMDAlignSize
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
-#define RKMaxFilterCount                 8                           // Maximum filter count within each filter group. Check RKPulseParameters
+#define RKMaxFilterCount                 8                           // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaxFilterGroups                22                          // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth     1000
 #define RKMaxPulsesPerRay                2000
@@ -89,9 +109,6 @@
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
-
-/*! @/definedblock */
-
 
 typedef uint8_t   RKBoolean;
 typedef int8_t    RKByte;
