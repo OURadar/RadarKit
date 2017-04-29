@@ -211,6 +211,9 @@ static void *healthLogger(void *in) {
             strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
             RKPreparePath(filename);
             engine->fid = fopen(filename, "w");
+            if (engine->fid == NULL) {
+                RKLog("%s Error. Unable to create file for health log.\n", engine->name);
+            }
         }
         if (engine->fid != NULL) {
             fprintf(engine->fid, "%s\n", string);
