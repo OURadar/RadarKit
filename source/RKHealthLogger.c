@@ -177,9 +177,11 @@ static void *healthLogger(void *in) {
                 desc->longitude = longitude;
                 RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, desc->latitude, desc->longitude);
             }
-            if (headingChangeCount++ > 3 && fabs(desc->heading - heading) > 1.0) {
+            if (fabs(desc->heading - heading) > 1.0 && headingChangeCount++ > 3) {
                 desc->heading = heading;
                 RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
+                headingChangeCount = 0;
+            } else {
                 headingChangeCount = 0;
             }
         }

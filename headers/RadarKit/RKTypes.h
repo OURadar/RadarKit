@@ -12,12 +12,12 @@
 //         - Incorporated NetCDF-4
 //         - General bug fixes
 //
-//  1.1    - Optmized sequence of frequency hop
+//  1.1    - Optmized sequence for frequency hop
 //         - Raw data I/Q recording
 //         - Health logger
 //         - Reduced memory footprint
 //
-//  1.0    - First working state
+//  1.0    - First working version
 //
 
 #ifndef __RadarKit_RKTypes__
@@ -122,19 +122,19 @@ typedef void *    RKMasterController;
 
 #pragma pack(push, 1)
 
-/// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
+// Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
 typedef struct rk_int16c {
     int16_t i;
     int16_t q;
 } RKInt16C;
 
-/// Fundamental unit of a (float) + (float) raw complex IQ sample
+// Fundamental unit of a (float) + (float) raw complex IQ sample
 typedef struct rk_complex {
     RKFloat i;
     RKFloat q;
 } RKComplex;
 
-//! Deinterleaved complex format for vector library
+// Deinterleaved complex format for vector library
 typedef struct rk_iqz {
     RKFloat *i;
     RKFloat *q;
