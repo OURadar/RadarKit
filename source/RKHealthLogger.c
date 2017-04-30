@@ -161,7 +161,7 @@ static void *healthLogger(void *in) {
                 heading = atof(stringValue);
             }
         }
-        if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
+        if (isfinite(latitude) && isfinite(longitude) && isfinite(heading)) {
             if (engine->verbose > 1) {
                 RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
             }

@@ -143,12 +143,13 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
     if (radar->desc.positionBufferDepth > RKBufferPSlotCount) {
         radar->desc.positionBufferDepth = RKBufferPSlotCount;
+        RKLog("Info. Position buffer clamped to %s\n", radar->desc.positionBufferDepth);
     } else if (radar->desc.positionBufferDepth == 0) {
         radar->desc.positionBufferDepth = 250;
     }
     if (radar->desc.controlCount > RKControlCount) {
         radar->desc.controlCount = RKControlCount;
-        RKLog("Info. Control count limited to %s\n", RKControlCount);
+        RKLog("Info. Control count limited to %s\n", radar->desc.controlCount);
     } else if (radar->desc.controlCount == 0) {
         radar->desc.controlCount = RKControlCount;
     }
