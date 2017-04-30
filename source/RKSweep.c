@@ -209,7 +209,6 @@ static void *sweepWriter(void *in) {
         }
 
         if (engine->doNotWrite) {
-            usleep(50000);
             continue;
         }
         

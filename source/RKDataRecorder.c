@@ -113,7 +113,6 @@ static void *pulseRecorder(void *in) {
             
             // Close the current file
             if (engine->doNotWrite) {
-                usleep(250000);
                 if (engine->verbose) {
                     RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
                 }

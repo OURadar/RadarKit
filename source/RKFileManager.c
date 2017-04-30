@@ -406,7 +406,6 @@ static void *folderWatcher(void *in) {
     } else if (strlen(engine->dataPath)) {
         snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->dataPath);
     }
-    printf("log folder = %s\n", logPath);
     
     // Increase the tic once to indicate the engine is ready
     engine->tic++;

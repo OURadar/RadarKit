@@ -198,24 +198,33 @@ static void *healthLogger(void *in) {
             unixTime = (time_t)atol(keyValue);
         }
         timeStruct = gmtime(&unixTime);
-        if (min != timeStruct->tm_min) {
+        //if (min != timeStruct->tm_min) {
+        if (true) {
             min = timeStruct->tm_min;
-            if (engine->fid != NULL) {
-                fclose(engine->fid);
-                if (engine->verbose) {
-                    RKLog("%s Recorded %s\n", engine->name, filename);
+            if (engine->doNotWrite) {
+                if (engine->verbose && strlen(filename)) {
+                    RKLog("%s Skipped %s\n", engine->name, filename);
                 }
-                // Notify file manager of a new addition
-                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
+            } else {
+                if (engine->fid != NULL) {
+                    fclose(engine->fid);
+                    if (engine->verbose) {
+                        RKLog("%s Recorded %s\n", engine->name, filename);
+                    }
+                    // Notify file manager of a new addition
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
+                }
             }
             i = sprintf(filename, "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
             i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
             i += sprintf(filename + i, "/%s-", desc->filePrefix);
             strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
-            RKPreparePath(filename);
-            engine->fid = fopen(filename, "w");
-            if (engine->fid == NULL) {
-                RKLog("%s Error. Unable to create file for health log.\n", engine->name);
+            if (!engine->doNotWrite) {
+                RKPreparePath(filename);
+                engine->fid = fopen(filename, "w");
+                if (engine->fid == NULL) {
+                    RKLog("%s Error. Unable to create file for health log.\n", engine->name);
+                }
             }
         }
         if (engine->fid != NULL) {
@@ -270,6 +279,10 @@ void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *engine, RKRadarDesc *de
     engine->healthIndex       = healthIndex;
     engine->healthBufferDepth = healthBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
+}
+
+void RKHealthLoggerSetDoNotWrite(RKHealthLogger *engine, const bool value) {
+    engine->doNotWrite = value;
 }
 
 #pragma mark - Interactions

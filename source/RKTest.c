@@ -412,7 +412,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     double dt = 0.0;
     struct timeval t0, t1;
     
-    const int chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
+    const int chunkSize = MAX(1, (int)floor(0.1 / transceiver->prt));
     
     gettimeofday(&t0, NULL);
 
@@ -730,7 +730,7 @@ void *RKTestPedestalRunLoop(void *input) {
         RKSetPositionReady(radar, position);
         
         // Report health
-        if (tic % 5 == 0) {
+        if (true) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
                     "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
