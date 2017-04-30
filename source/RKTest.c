@@ -538,37 +538,40 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         while (*sb == ' ') {
             sb++;
         }
+        if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+            RKLog("%s Parsing input.\n", transceiver->name);
+        }
         while ((se = strchr(sb, ' ')) != NULL) {
             sv = se + 1;
             switch (*sb) {
                 case 'f':
                     transceiver->prt = 1.0 / (double)atof(sv);
-                    if (radar->desc.initFlags & RKInitFlagVerbose) {
-                        RKLog(">prf = %s Hz", RKIntegerToCommaStyleString((long)(1.0f / transceiver->prt)));
+                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                        RKLog(">%s prf = %s Hz\n", transceiver->name, RKIntegerToCommaStyleString((long)(1.0f / transceiver->prt)));
                     }
                     break;
                 case 'F':
                     transceiver->fs = atof(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">fs = %s Hz", RKIntegerToCommaStyleString((long)transceiver->fs));
+                        RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
                     }
                     break;
                 case 'g':
                     transceiver->gateCount = atoi(sv);
                     uint32_t capacity = RKGetPulseCapacity(radar);
                     if (transceiver->gateCount > capacity) {
-                        RKLog("Warning. gateCount %s will be clamped to the capacity %s",
-                              RKIntegerToCommaStyleString(transceiver->gateCount), RKIntegerToCommaStyleString(capacity));
+                        RKLog("%s Warning. gateCount %s will be clamped to the capacity %s\n",
+                              transceiver->name, RKIntegerToCommaStyleString(transceiver->gateCount), RKIntegerToCommaStyleString(capacity));
                         transceiver->gateCount = capacity;
                     }
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">gateCount = %s", RKIntegerToCommaStyleString(transceiver->gateCount));
+                        RKLog(">%s gateCount = %s\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->gateCount));
                     }
                     break;
                 case 'z':
                     transceiver->sleepInterval = atoi(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">sleepInterval = %s", RKIntegerToCommaStyleString(transceiver->sleepInterval));
+                        RKLog(">%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
                     }
                     break;
             }

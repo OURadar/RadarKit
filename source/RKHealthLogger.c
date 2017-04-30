@@ -88,14 +88,13 @@ static void *healthLogger(void *in) {
     int headingChangeCount = 0;
     int locationChangeCount = 0;
 
-    char filename[RKMaximumStringLength];
+    char filename[RKMaximumPathLength] = "";
 
     RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
 
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
-    char *string;
     struct timeval timeNow;
 
     gettimeofday(&timeNow, NULL);
@@ -108,7 +107,6 @@ static void *healthLogger(void *in) {
     while (engine->state & RKEngineStateActive) {
         // Get the latest health
         health = &engine->healthBuffer[k];
-        string = health->string;
 
         // Wait until the engine index advances
         engine->state |= RKEngineStateSleep1;
@@ -190,7 +188,7 @@ static void *healthLogger(void *in) {
         RKProcessHealthKeywords(engine, health->string);
 
         // Log a copy
-        char *keyValue = RKGetValueOfKey(string, "Log Time");
+        char *keyValue = RKGetValueOfKey(health->string, "Log Time");
         if (keyValue == NULL) {
             RKLog("%s Error. No log time found.\n", engine->name);
             unixTime = (time_t)timeNow.tv_sec;
@@ -198,8 +196,7 @@ static void *healthLogger(void *in) {
             unixTime = (time_t)atol(keyValue);
         }
         timeStruct = gmtime(&unixTime);
-        //if (min != timeStruct->tm_min) {
-        if (true) {
+        if (min != timeStruct->tm_min) {
             min = timeStruct->tm_min;
             if (engine->doNotWrite) {
                 if (engine->verbose && strlen(filename)) {
@@ -228,7 +225,7 @@ static void *healthLogger(void *in) {
             }
         }
         if (engine->fid != NULL) {
-            fprintf(engine->fid, "%s\n", string);
+            fprintf(engine->fid, "%s\n", health->string);
         }
 
         // Update pulseIndex for the next watch

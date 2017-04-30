@@ -331,7 +331,7 @@ static void *pulseCompressionCore(void *_in) {
 
     // Clean up
     if (engine->verbose > 1) {
-        RKLog("%s %s freeing reources ...\n", engine->name, name);
+        RKLog("%s %s Freeing reources ...\n", engine->name, name);
     }
 
     free(zi);
