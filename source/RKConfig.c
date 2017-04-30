@@ -42,7 +42,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
-                RKLog("PRF = %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]));
+                RKLog(">PRF = %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]));
                 break;
             case RKConfigKeyDualPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
@@ -58,9 +58,9 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyVCPDefinition:
                 string = va_arg(args, char *);
                 if (string == NULL) {
-                    RKLog(">string = (NULL)\n");
+                    RKLog(">VCP = (NULL)\n");
                 } else {
-                    RKLog(">string = %s\n", string);
+                    RKLog(">VCP = %s\n", string);
                     strncpy(newConfig->vcpDefinition, string, RKNameLength - 1);
                 }
                 break;
