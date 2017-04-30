@@ -143,28 +143,22 @@ static void *healthLogger(void *in) {
         if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL) {
-                if (atoi(stringEnum) == RKStatusEnumNormal) {
-                    latitude = atof(stringValue);
-                }
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+                latitude = atof(stringValue);
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL) {
-                if (atoi(stringEnum) == RKStatusEnumNormal) {
-                    longitude = atof(stringValue);
-                }
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+                longitude = atof(stringValue);
             }
         }
         if ((stringObject = RKGetValueOfKey(health->string, "heading")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL) {
-                if (atoi(stringEnum) == RKStatusEnumNormal) {
-                    heading = atof(stringValue);
-                }
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+                heading = atof(stringValue);
             }
         }
         if (isfinite(latitude) && isfinite(longitude && isfinite(heading))) {
@@ -172,15 +166,22 @@ static void *healthLogger(void *in) {
                 RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
             }
             // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half of that.
-            if (locationChangeCount++ > 3 && (fabs(desc->latitude - latitude) > 3.5e-5 || fabs(desc->longitude - longitude) > 3.5e-5)) {
-                desc->latitude = latitude;
-                desc->longitude = longitude;
-                RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, desc->latitude, desc->longitude);
+            if ((fabs(desc->latitude - latitude) > 3.5e-5 || fabs(desc->longitude - longitude) > 3.5e-5)) {
+                if (locationChangeCount++ > 3) {
+                    desc->latitude = latitude;
+                    desc->longitude = longitude;
+                    RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, desc->latitude, desc->longitude);
+                    locationChangeCount = 0;
+                }
+            } else {
+                locationChangeCount = 0;
             }
-            if (fabs(desc->heading - heading) > 1.0 && headingChangeCount++ > 3) {
-                desc->heading = heading;
-                RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
-                headingChangeCount = 0;
+            if (fabs(desc->heading - heading) > 1.0) {
+                if (headingChangeCount++ > 3) {
+                    desc->heading = heading;
+                    RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
+                    headingChangeCount = 0;
+                }
             } else {
                 headingChangeCount = 0;
             }
@@ -223,6 +224,11 @@ static void *healthLogger(void *in) {
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
+        if (k >= engine->healthBufferDepth) {
+            RKLog("Error. k = %d\n", k);
+            k = *engine->healthIndex;
+            RKLog("Error. --> %d\n", k);
+        }
     }
 
     if (engine->fid != NULL) {
