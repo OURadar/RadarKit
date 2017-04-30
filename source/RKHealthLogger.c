@@ -135,10 +135,51 @@ static void *healthLogger(void *in) {
             break;
         }
 
+        // Log a copy
+        char *keyValue = RKGetValueOfKey(health->string, "Log Time");
+        if (keyValue == NULL) {
+            RKLog("%s Error. No log time found.\n", engine->name);
+            unixTime = (time_t)timeNow.tv_sec;
+        } else {
+            unixTime = (time_t)atol(keyValue);
+        }
+        timeStruct = gmtime(&unixTime);
+        if (min != timeStruct->tm_min) {
+            min = timeStruct->tm_min;
+            if (engine->doNotWrite) {
+                if (engine->verbose && strlen(filename)) {
+                    RKLog("%s Skipped %s\n", engine->name, filename);
+                }
+            } else {
+                if (engine->fid != NULL) {
+                    fclose(engine->fid);
+                    if (engine->verbose) {
+                        RKLog("%s Recorded %s\n", engine->name, filename);
+                    }
+                    // Notify file manager of a new addition
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
+                }
+            }
+            i = sprintf(filename, "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
+            i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
+            i += sprintf(filename + i, "/%s-", desc->filePrefix);
+            strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
+            if (!engine->doNotWrite) {
+                RKPreparePath(filename);
+                engine->fid = fopen(filename, "w");
+                if (engine->fid == NULL) {
+                    RKLog("%s Error. Unable to create file for health log.\n", engine->name);
+                }
+            }
+        }
+        if (engine->fid != NULL) {
+            fprintf(engine->fid, "%s\n", health->string);
+        }
+
         // Look for certain keywords with {"Value":x,"Enum":y} pairs, extract some information
         double latitude = NAN, longitude = NAN;
         float heading = NAN;
-
+        
         if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
@@ -185,49 +226,8 @@ static void *healthLogger(void *in) {
                 headingChangeCount = 0;
             }
         }
-
+        
         RKProcessHealthKeywords(engine, health->string);
-
-        // Log a copy
-        char *keyValue = RKGetValueOfKey(health->string, "Log Time");
-        if (keyValue == NULL) {
-            RKLog("%s Error. No log time found.\n", engine->name);
-            unixTime = (time_t)timeNow.tv_sec;
-        } else {
-            unixTime = (time_t)atol(keyValue);
-        }
-        timeStruct = gmtime(&unixTime);
-        if (min != timeStruct->tm_min) {
-            min = timeStruct->tm_min;
-            if (engine->doNotWrite) {
-                if (engine->verbose && strlen(filename)) {
-                    RKLog("%s Skipped %s\n", engine->name, filename);
-                }
-            } else {
-                if (engine->fid != NULL) {
-                    fclose(engine->fid);
-                    if (engine->verbose) {
-                        RKLog("%s Recorded %s\n", engine->name, filename);
-                    }
-                    // Notify file manager of a new addition
-                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
-                }
-            }
-            i = sprintf(filename, "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
-            i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
-            i += sprintf(filename + i, "/%s-", desc->filePrefix);
-            strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
-            if (!engine->doNotWrite) {
-                RKPreparePath(filename);
-                engine->fid = fopen(filename, "w");
-                if (engine->fid == NULL) {
-                    RKLog("%s Error. Unable to create file for health log.\n", engine->name);
-                }
-            }
-        }
-        if (engine->fid != NULL) {
-            fprintf(engine->fid, "%s\n", health->string);
-        }
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->healthBufferDepth);
