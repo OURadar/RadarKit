@@ -136,7 +136,8 @@ static void *healthLogger(void *in) {
         }
 
         // Look for certain keywords with {"Value":x,"Enum":y} pairs, extract some information
-        float latitude = NAN, longitude = NAN, heading = NAN;
+        double latitude = NAN, longitude = NAN;
+        float heading = NAN;
 
         if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
@@ -156,7 +157,7 @@ static void *healthLogger(void *in) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                heading = atof(stringValue);
+                heading = (float)atof(stringValue);
             }
         }
         if (isfinite(latitude) && isfinite(longitude) && isfinite(heading)) {
@@ -174,7 +175,7 @@ static void *healthLogger(void *in) {
             } else {
                 locationChangeCount = 0;
             }
-            if (fabs(desc->heading - heading) > 1.0) {
+            if (fabsf(desc->heading - heading) > 1.0f) {
                 if (headingChangeCount++ > 3) {
                     desc->heading = heading;
                     RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
