@@ -38,7 +38,7 @@ static void *healthConsolidator(void *in) {
     while (engine->state & RKEngineStateActive) {
         // Evaluate the nodal-health buffers every once in a while
         gettimeofday(&t0, NULL);
-        if (RKTimevalDiff(t0, t1) < 0.5) {
+        if (RKTimevalDiff(t0, t1) < 0.1) {
             usleep(10000);
             continue;
         }
@@ -105,10 +105,10 @@ static void *healthConsolidator(void *in) {
                     }
                 } else if (engine->verbose > 1) {
                     n = indices[0];
-                    i = sprintf(string, "flags = [%x", engine->healthNodes[0].healths[n].flag);
+                    i = sprintf(string, "ready = [%x", engine->healthNodes[0].healths[n].flag);
                     for (j = 1; j < desc->healthNodeCount; j++) {
                         n = indices[j];
-                        i += sprintf(string + i,  ", %x", engine->healthNodes[j].healths[n].flag);
+                        i += sprintf(string + i,  " %s", engine->healthNodes[j].active ? (engine->healthNodes[j].healths[n].flag ? "1" : "0") : "-");
                     }
                     sprintf(string + i, "]");
                     RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);

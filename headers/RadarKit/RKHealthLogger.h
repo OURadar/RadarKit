@@ -22,6 +22,7 @@ struct rk_health_logger {
     uint32_t               *healthIndex;
     uint32_t               healthBufferDepth;
     uint8_t                verbose;
+    bool                   doNotWrite;
     RKHealthRelay          healthRelay;
     RKFileManager          *fileManager;
 
@@ -42,6 +43,7 @@ void RKHealthLoggerFree(RKHealthLogger *);
 void RKHealthLoggerSetVerbose(RKHealthLogger *, const int);
 void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *, RKRadarDesc *, RKFileManager *,
                                          RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth);
+void RKHealthLoggerSetDoNotWrite(RKHealthLogger *, const bool);
 
 int RKHealthLoggerStart(RKHealthLogger *);
 int RKHealthLoggerStop(RKHealthLogger *);
