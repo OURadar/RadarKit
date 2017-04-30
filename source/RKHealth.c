@@ -103,15 +103,16 @@ static void *healthConsolidator(void *in) {
                             h0->flag = RKHealthFlagReady;
                         }
                     }
-                } else if (engine->verbose > 1) {
-                    n = indices[0];
-                    i = sprintf(string, "ready = [%x", engine->healthNodes[0].healths[n].flag);
-                    for (j = 1; j < desc->healthNodeCount; j++) {
-                        n = indices[j];
-                        i += sprintf(string + i,  " %s", engine->healthNodes[j].active ? (engine->healthNodes[j].healths[n].flag ? "1" : "0") : "-");
+                    if (engine->verbose > 1) {
+                        n = indices[0];
+                        i = sprintf(string, "ready = [%x", engine->healthNodes[0].healths[n].flag);
+                        for (j = 1; j < desc->healthNodeCount; j++) {
+                            n = indices[j];
+                            i += sprintf(string + i,  " %s", engine->healthNodes[j].active ? (engine->healthNodes[j].healths[n].flag ? "1" : "0") : "-");
+                        }
+                        sprintf(string + i, "]");
+                        RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                     }
-                    sprintf(string + i, "]");
-                    RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                 }
             }
         }
