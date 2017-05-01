@@ -17,9 +17,29 @@ static int RKRadarRelayRead(RKClient *client) {
 //    char *string = client->userPayload;
 //    RKStripTail(string);
 
+    int k;
+    RKHealth *health;
+    
     switch (client->netDelimiter.type) {
+        case RKNetworkPacketTypeBeacon:
+            // Ignore beacon
+            break;
+            
+        case RKNetworkPacketTypePlainText:
+            break;
+
         case RKNetworkPacketTypeHealth:
             // Queue up the health
+            RKLog("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
+            k = *engine->healthIndex;
+            health = &engine->healthBuffer[k];
+            strncpy(health->string, client->userPayload, RKMaximumStringLength);
+            health->flag = RKHealthFlagReady;
+            k = RKNextModuloS(k, engine->healthBufferDepth);
+            health = &engine->healthBuffer[k];
+            health->string[0] = '\0';
+            health->flag = RKHealthFlagVacant;
+            *engine->healthIndex = k;
             break;
 
         case RKNetworkPacketTypeCommandResponse:
@@ -28,7 +48,7 @@ static int RKRadarRelayRead(RKClient *client) {
             engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
             break;
         default:
-            RKLog("%s New type %d\n", client->netDelimiter.type);
+            RKLog("%s New type %d\n", engine->name, client->netDelimiter.type);
             break;
     }
 
