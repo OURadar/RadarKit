@@ -50,6 +50,8 @@ typedef struct rk_command_center {
     int          radarCount;
     int          developerInspect;
     RKUser       users[RKCommandCenterMaxConnections];
+    RKStream     relayStreams;
+    RKStream     relayStreamsLevel2;
 } RKCommandCenter;
 
 RKStream RKStringToFlag(const char *);

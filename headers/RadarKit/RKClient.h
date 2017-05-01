@@ -67,6 +67,7 @@ struct rk_client {
 
     int                      (*init)(RKClient *);                // Connection initialization handler
     int                      (*recv)(RKClient *);                // Receive handler
+    int                      (*exit)(RKClient *);                // Connection exit handler
 
     // Program set parameters
     char                     hostIP[32];                         // Host IP in numbers
@@ -96,6 +97,7 @@ void RKClientFree(RKClient *);
 void RKClientSetUserResource(RKClient *, void *);
 void RKClientSetGreetHandler(RKClient *, int (*)(RKClient *));
 void RKClientSetReceiveHandler(RKClient *, int (*)(RKClient *));
+void RKClientSetCloseHandler(RKClient *, int (*)(RKClient *));
 
 void RKClientStart(RKClient *, const bool waitForConnection);
 void RKClientStop(RKClient *);

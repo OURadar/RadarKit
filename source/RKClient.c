@@ -388,6 +388,9 @@ void *theClient(void *in) {
     if (C->verbose) {
         RKLog("%s Disconnected.\n", C->name);
     }
+    if (C->exit) {
+        C->exit(C);
+    }
     return NULL;
 }
 
@@ -461,8 +464,13 @@ void RKClientSetUserResource(RKClient *C, void *resource) {
 void RKClientSetGreetHandler(RKClient *C, int (*routine)(RKClient *)) {
     C->init = routine;
 }
+
 void RKClientSetReceiveHandler(RKClient *C, int (*routine)(RKClient *)) {
     C->recv = routine;
+}
+
+void RKClientSetCloseHandler(RKClient *C, int (*routine)(RKClient *)) {
+    C->exit = routine;
 }
 
 #pragma mark -
