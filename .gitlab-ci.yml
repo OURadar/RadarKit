@@ -2,7 +2,7 @@
 # use the official gcc image, based on debian
 # can use verions as well, like gcc:5.2
 # see https://hub.docker.com/_/gcc/
-image: gcc
+image: ruby:2.1
 
 #before_script: 
 #  - apt -y install make autoconf libfftw3-dev libnetcdf-dev
