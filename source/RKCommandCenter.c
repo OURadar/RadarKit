@@ -758,6 +758,10 @@ int socketInitialHandler(RKOperator *O) {
 
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
+    
+    O->delimTx.type = RKNetworkPacketTypeRadarDescription;
+    O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
+    RKOperatorSendPackets(O, &O->delimTx, &user->radar->desc, NULL);
     return RKResultNoError;
 }
 

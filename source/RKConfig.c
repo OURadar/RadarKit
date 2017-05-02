@@ -100,7 +100,18 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 
     va_end(args);
 
-    // Update
+    // Update the identifier and the buffer index
     newConfig->i++;
     *configIndex = c;
+}
+
+RKConfig *RKConfigWithId(RKConfig *configs, uint32_t configBufferDepth, uint64_t id) {
+    int k = configBufferDepth;
+    while (k > 0) {
+        k--;
+        if (configs[k].i == id) {
+            return &configs[k];
+        }
+    }
+    return NULL;
 }
