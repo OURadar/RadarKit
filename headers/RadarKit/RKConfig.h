@@ -14,6 +14,7 @@
 void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, ...);
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args);
 
-void RKConfigAddSweep();
+//void RKConfigAddSweep();
+RKConfig *RKConfigWithId(RKConfig *configs, uint32_t configBufferDepth, uint64_t id);
 
 #endif /* __RadarKit_RKConfig__ */
