@@ -46,7 +46,8 @@ enum RKNetworkPacketType {
     RKNetworkPacketTypeHealth,
     RKNetworkPacketTypeControls,
     RKNetworkPacketTypeCommandResponse,
-    RKNetworkPacketTypeProcessorStatus
+    RKNetworkPacketTypeProcessorStatus,
+    RKNetworkPacketTypeRayDisplay = 'm'
 };
 
 #pragma pack(push, 1)
