@@ -19,10 +19,15 @@ static int RKRadarRelayRead(RKClient *client) {
 
     int k;
     RKHealth *health;
+    RKProcessorStatus status;
     
     switch (client->netDelimiter.type) {
         case RKNetworkPacketTypeBeacon:
             // Ignore beacon
+            break;
+            
+        case RKNetworkPacketTypeProcessorStatus:
+            memcpy(&status, client->userPayload, sizeof(RKProcessorStatus));
             break;
             
         case RKNetworkPacketTypePlainText:
