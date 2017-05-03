@@ -373,6 +373,13 @@ int socketCommandHandler(RKOperator *O) {
             }
         } else {
             switch (commandString[0]) {
+                case 'a':
+                    RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
+                    RKRadarRelayExec(user->radar->radarRelay, commandString, string);
+                    O->delimTx.type = RKNetworkPacketTypeControls;
+                    O->delimTx.size = (uint32_t)strlen(string);
+                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
+
                 case 'r':
                     sscanf("%s", commandString + 1, sval1);
                     RKLog(">%s %s selected radar %s\n", engine->name, O->name, sval1);
