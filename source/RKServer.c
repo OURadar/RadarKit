@@ -258,6 +258,9 @@ void *RKOperatorRoutine(void *in) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
                     RKLog("%s %s Client disconnected.\n", M->name, O->name);
+                    if (M->t != NULL) {
+                        M->t(O);
+                    }
                     break;
                 }
                 stripTrailingUnwanted(str);

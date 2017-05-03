@@ -36,6 +36,9 @@ static int RKRadarRelayRead(RKClient *client) {
     switch (client->netDelimiter.type) {
         case RKNetworkPacketTypeBeacon:
             // Ignore beacon
+            if (engine->verbose > 1) {
+                RKLog("%s beacon.\n", engine->name);
+            }
             break;
             
         case RKNetworkPacketTypeProcessorStatus:
@@ -110,6 +113,7 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
 
         case RKNetworkPacketTypeCommandResponse:
+        case RKNetworkPacketTypeControls:
             // Queue up the feedback
             strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
             engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
@@ -127,7 +131,6 @@ static int RKRadarRelayRead(RKClient *client) {
 
 static void *radarRelay(void *in) {
     RKRadarRelay *engine = (RKRadarRelay *)in;
-    //RKRadarDesc *desc = engine->radarDescription;
 
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
@@ -165,10 +168,9 @@ static void *radarRelay(void *in) {
 
     RKClientStart(engine->client, true);
 
-    size_t size = sprintf(cmd, "sh" RKEOL);
-    printf("Sending command (%zu) ...\n", size);
+    size_t size = sprintf(cmd, "a RKRelay nopassword" RKEOL);
     pthread_mutex_lock(&engine->client->lock);
-    RKNetworkSendPackets(engine->client->sd, "sh" RKEOL, size, NULL);
+    RKNetworkSendPackets(engine->client->sd, cmd, size, NULL);
     pthread_mutex_unlock(&engine->client->lock);
 
     while (engine->state & RKEngineStateActive) {
