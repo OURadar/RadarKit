@@ -17,6 +17,30 @@ int socketTerminateHandler(RKOperator *);
 
 #pragma mark - Helper Functions
 
+static void consolidateStreams(RKOperator *O) {
+    RKCommandCenter *engine = O->userResource;
+    RKUser *user = &engine->users[O->iid];
+    
+    int k;
+    char string[RKNameLength];
+    RKStream consolidatedStreams;
+    
+    // Consolidate streams
+    consolidatedStreams = RKStreamNull;
+    for (k = 0; k < RKCommandCenterMaxConnections; k++) {
+        consolidatedStreams |= user->streams;
+    }
+    if (engine->relayStreams != consolidatedStreams) {
+        engine->relayStreams = consolidatedStreams;
+        string[0] = 's';
+        RKFlagToString(string + 1, engine->relayStreams);
+        RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
+        RKRadarRelayExec(user->radar->radarRelay, string, string);
+    } else {
+        RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
+    }
+}
+
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
@@ -48,8 +72,6 @@ int socketCommandHandler(RKOperator *O) {
 
     RKStripTail(commandString);
     
-    RKStream consolidatedStreams;
-
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
@@ -117,7 +139,12 @@ int socketCommandHandler(RKOperator *O) {
                             break;
                         case 'r':
                             // 'dr' - Restart DSP engines
-                            
+                            RKMomentEngineStop(user->radar->momentEngine);
+                            RKPulseCompressionEngineStop(user->radar->pulseCompressionEngine);
+                            RKPulseCompressionEngineStart(user->radar->pulseCompressionEngine);
+                            RKMomentEngineStart(user->radar->momentEngine);
+                            sprintf(string, "ACK. %s and %s restarted." RKEOL,
+                                    user->radar->pulseCompressionEngine->name, user->radar->momentEngine->name);
                             break;
                         case 't':
                             // 'dt' - DSP threshold in SNR dB
@@ -356,20 +383,8 @@ int socketCommandHandler(RKOperator *O) {
                 case 's':
                     // Stream varrious data
                     user->streams = RKStringToFlag(commandString + 1);
-                    // Consolidate streams
-                    consolidatedStreams = RKStreamNull;
-                    for (k = 0; k < RKCommandCenterMaxConnections; k++) {
-                        consolidatedStreams |= user->streams;
-                    }
-                    if (engine->relayStreams != consolidatedStreams) {
-                        engine->relayStreams = consolidatedStreams;
-                        string[0] = 's';
-                        RKFlagToString(string + 1, engine->relayStreams);
-                        RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
-                        RKRadarRelayExec(user->radar->radarRelay, string, string);
-                    } else {
-                        RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
-                    }
+                    
+                    consolidateStreams(O);
 
                     k = user->rayIndex;
                     // Fast foward some indices
@@ -769,7 +784,8 @@ int socketTerminateHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     RKLog(">%s %s User[%d]   Stream reset.\n", engine->name, O->name, O->iid);
-    memset(user, 0, sizeof(RKUser));
+    user->streams = RKStreamNull;
+    consolidateStreams(O);
     return RKResultNoError;
 }
 
