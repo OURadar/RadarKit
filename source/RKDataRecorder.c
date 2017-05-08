@@ -51,7 +51,7 @@ static void *pulseRecorder(void *in) {
     RKPulse *pulse;
     RKConfig *config;
     
-    char filename[RKMaximumStringLength];
+    char filename[RKMaximumPathLength] = "";
     
     size_t len = 0;
     
@@ -113,8 +113,7 @@ static void *pulseRecorder(void *in) {
             
             // Close the current file
             if (engine->doNotWrite) {
-                usleep(250000);
-                if (engine->verbose) {
+                if (engine->verbose && strlen(filename)) {
                     RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
                 }
             } else {

@@ -180,7 +180,7 @@ static void *pulseTagger(void *in) {
             i++;
         }
         if (i == engine->pulseBufferDepth) {
-            if (engine->verbose > 1) {
+            if (engine->verbose > 2) {
                 RKLog("Could not find an appropriate position.  %.2f %s %.2f",
                       pulse->header.timeDouble,
                       pulse->header.timeDouble < timeLatest ? "<" : ">=",

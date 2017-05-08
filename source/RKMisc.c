@@ -54,8 +54,8 @@ char *RKGetBackgroundColorOfIndex(const int i) {
 
 // BUG: This function is limited to an array of 8 elements
 char *RKGetValueOfKey(const char *string, const char *key) {
-    static int k = 7;
     static char valueStrings[8][256];
+    static int k = 7;
     k = k == 7 ? 0 : k + 1;
     char *s, *e;
     size_t len;
@@ -107,7 +107,7 @@ char *RKGetValueOfKey(const char *string, const char *key) {
         while (*e != '"' && *e != '\'' && *e != ',' && *e != '}' && *e != ']') {
             e++;
         }
-        len = e - s;
+        len = MIN(255, e - s);
         if (len > 0) {
             strncpy(valueString, s, len);
             valueString[len] = '\0';

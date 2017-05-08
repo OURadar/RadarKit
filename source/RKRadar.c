@@ -172,6 +172,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagAllocConfigBuffer) {
         radar->state |= RKRadarStateConfigBufferAllocating;
         bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for config buffer?\n");
+            radar->desc.configBufferDepth = 25;
+            bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
+        }
         radar->configs = (RKConfig *)malloc(bytes);
         if (radar->configs == NULL) {
             RKLog("Error. Unable to allocate memory for pulse parameters");
@@ -194,6 +199,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagAllocHealthBuffer) {
         radar->state |= RKRadarStateHealthBufferAllocating;
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for health buffer?\n");
+            radar->desc.healthBufferDepth = 25;
+            bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+        }
         radar->healths = (RKHealth *)malloc(bytes);
         if (radar->healths == NULL) {
             RKLog("Error. Unable to allocate memory for health status");
@@ -220,6 +230,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         memset(radar->healthNodes, 0, bytes);
         radar->memoryUsage += bytes;
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for health nodes?\n");
+            radar->desc.healthBufferDepth = 25;
+            bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+        }
         for (i = 0; i < radar->desc.healthNodeCount; i++) {
             radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
             memset(radar->healthNodes[i].healths, 0, bytes);
@@ -242,6 +257,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagAllocPositionBuffer) {
         radar->state |= RKRadarStatePositionBufferAllocating;
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for position buffer?\n");
+            radar->desc.positionBufferDepth = 250;
+            bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
+        }
         radar->positions = (RKPosition *)malloc(bytes);
         if (radar->positions == NULL) {
             RKLog("Error. Unable to allocate memory for positions.");
@@ -306,6 +326,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.controlCount) {
         radar->state |= RKRadarStateControlsAllocating;
         bytes = radar->desc.controlCount * sizeof(RKControl);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for controls?\n");
+            radar->desc.controlCount = 64;
+            bytes = radar->desc.controlCount * sizeof(RKControl);
+        }
         radar->controls = (RKControl *)malloc(bytes);
         if (radar->controls == NULL) {
             RKLog("Error. Unable to allocate memory for controls.\n");
@@ -336,15 +361,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         // Clocks
         radar->pulseClock = RKClockInitWithSize(15000, 10000);
         sprintf(name, "%s<PulseClock>%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", RKNoColor);
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->pulseClock, name);
         radar->memoryUsage += sizeof(RKClock);
         
         radar->positionClock = RKClockInit();
         sprintf(name, "%s<PositionClock>%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(14) : "", RKNoColor);
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
-        RKClockSetOffset(radar->positionClock, -0.02);
+        RKClockSetOffset(radar->positionClock, -0.01);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine
@@ -418,7 +443,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString(radar->memoryUsage / 1073741824));
+              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 
     return radar;
@@ -707,6 +732,7 @@ int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
 }
 
 int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
+    RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
     RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
     RKDataRecorderSetDoNotWrite(radar->dataRecorder, doNotWrite);
     return RKResultNoError;
@@ -895,7 +921,7 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar live. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString(radar->memoryUsage / 1073741824));
+              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 
     // Add a dummy config to get things started if there hasn't been one
@@ -953,7 +979,7 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Radar Live. Memory usage = %s B (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString(radar->memoryUsage / 1073741824));
+              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 
     radar->state |= RKRadarStateLive;
@@ -982,17 +1008,20 @@ int RKWaitWhileActive(RKRadar *radar) {
             pedestalOkay = positionIndex == radar->positionIndex ? false : true;
             healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
 
+            RKConfig *config = RKGetLatestConfig(radar);
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
             sprintf(health->string, "{"
                     "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
                     "\"Network\":{\"Value\":true,\"Enum\":0},"
-                    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3}"
+                    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3},"
+                    "\"Noise\":[%.3f,%.3f]"
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                     pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                    healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault
+                    healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                    config->noise[0], config->noise[1]
                     );
             RKSetHealthReady(radar, health);
 
