@@ -994,42 +994,59 @@ int RKGoLive(RKRadar *radar) {
 //     None
 //
 int RKWaitWhileActive(RKRadar *radar) {
+    int k;
+    int s = 0;
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
     uint32_t healthIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
+    RKProcessorStatus status;
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
-    int s = 0;
     while (radar->active) {
-        if (radar->desc.initFlags & RKInitFlagSignalProcessor && s++ == 3) {
-            s = 0;
-            transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
-            pedestalOkay = positionIndex == radar->positionIndex ? false : true;
-            healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+        if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            if (s++ == 3) {
+                s = 0;
+                transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
+                pedestalOkay = positionIndex == radar->positionIndex ? false : true;
+                healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
 
-            RKConfig *config = RKGetLatestConfig(radar);
-            RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
-            sprintf(health->string, "{"
-                    "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
-                    "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
-                    "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
-                    "\"Network\":{\"Value\":true,\"Enum\":0},"
-                    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3},"
-                    "\"Noise\":[%.3f,%.3f]"
-                    "}",
-                    transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                    pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                    healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                    config->noise[0], config->noise[1]
-                    );
-            RKSetHealthReady(radar, health);
+                RKConfig *config = RKGetLatestConfig(radar);
+                RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
+                sprintf(health->string, "{"
+                        "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
+                        "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
+                        "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
+                        "\"Network\":{\"Value\":true,\"Enum\":0},"
+                        "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3},"
+                        "\"Noise\":[%.3f,%.3f]"
+                        "}",
+                        transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        config->noise[0], config->noise[1]
+                        );
+                RKSetHealthReady(radar, health);
 
-            //printf("radarkitnode %d\n", radar->healthNodes[RKHealthNodeRadarKit].index);
-            
-            pulseIndex = radar->pulseIndex;
-            positionIndex = radar->positionIndex;
-            healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
+                //printf("radarkitnode %d\n", radar->healthNodes[RKHealthNodeRadarKit].index);
+                
+                pulseIndex = radar->pulseIndex;
+                positionIndex = radar->positionIndex;
+                healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
+            }
+            // Put together a system status
+            status.pulseOrigin = radar->pulseIndex;
+            status.pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
+            for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
+                status.pulseCoreLags[k] = (uint8_t)(99.5f * radar->pulseCompressionEngine->workers[k].lag);
+                status.pulseCoreUsage[k] = (uint8_t)(99.5 * radar->pulseCompressionEngine->workers[k].dutyCycle);
+            }
+            status.rayOrigin = radar->momentEngine->processedPulseIndex;
+            status.rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
+            for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
+                status.rayCoreLags[k] = (uint8_t)(99.5f * radar->momentEngine->workers[k].lag);
+                status.rayCoreUsage[k] = (uint8_t)(99.5 * radar->momentEngine->workers[k].dutyCycle);
+            }
         }
         usleep(100000);
     }

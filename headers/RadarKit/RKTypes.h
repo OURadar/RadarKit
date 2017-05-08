@@ -88,6 +88,8 @@
 #define RKDutyCyleOrangeThreshold        0.90
 #define RKStatusBarWidth                 10
 #define RKPulseCountForNoiseMeasurement  200
+#define RKProcessorStatusPulseCoreCount  16
+#define RKProcessorStatusRayCoreCount    16
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
@@ -683,6 +685,21 @@ typedef struct rk_control {
     char             label[RKNameLength];                             // Label up to RKNameLength
     char             command[RKMaximumStringLength];                  // Control command
 } RKControl;
+
+typedef struct rk_processor_status {
+    uint8_t          pulseOrigin;
+    uint8_t          pulseMonitorLag;
+    uint8_t          pulseSkipCount;
+    uint8_t          pulseCoreLags[RKProcessorStatusPulseCoreCount];
+    uint8_t          pulseCoreUsage[RKProcessorStatusPulseCoreCount];
+    uint8_t          rayOrigin;
+    uint8_t          rayMonitorLag;
+    uint8_t          raySkipCount;
+    uint8_t          rayCoreLags[RKProcessorStatusRayCoreCount];
+    uint8_t          rayCoreUsage[RKProcessorStatusRayCoreCount];
+    uint8_t          recorderOrigin;
+    uint8_t          recorderLag;
+} RKProcessorStatus;
 
 #pragma pack(pop)
 
