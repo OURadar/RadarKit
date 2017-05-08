@@ -17,18 +17,110 @@ static int RKRadarRelayRead(RKClient *client) {
 //    char *string = client->userPayload;
 //    RKStripTail(string);
 
+    int j, k;
+    RKHealth *health;
+    RKProcessorStatus status;
+    
+    RKRay *ray;
+    uint8_t *u8Data = NULL;
+    uint32_t productList;
+    uint32_t productCount;
+
+//    RKPulse *pulse;
+//    RKPulseHeader pulseHeader;
+//    RKInt16C *c16DataH = NULL;
+//    RKInt16C *c16DataV = NULL;
+//    RKInt16C *userDataH = NULL;
+//    RKInt16C *userDataV = NULL;
+
     switch (client->netDelimiter.type) {
+        case RKNetworkPacketTypeBeacon:
+            // Ignore beacon
+            if (engine->verbose > 1) {
+                RKLog("%s beacon.\n", engine->name);
+            }
+            break;
+            
+        case RKNetworkPacketTypeProcessorStatus:
+            memcpy(&status, client->userPayload, sizeof(RKProcessorStatus));
+            break;
+            
+        case RKNetworkPacketTypeRayData:
+            break;
+            
+        case RKNetworkPacketTypeRayDisplay:
+            RKLog("%s Display packet -> %d.\n", engine->name, *engine->rayIndex);
+            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
+            
+            productList = ray->header.productList;
+            productCount = __builtin_popcount(productList);
+            for (j = 0; j < productCount; j++) {
+                if (productList & RKProductListDisplayZ) {
+                    productList ^= RKProductListDisplayZ;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                } else if (productList & RKProductListDisplayV) {
+                    productList ^= RKProductListDisplayV;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+                } else if (productList & RKProductListDisplayW) {
+                    productList ^= RKProductListDisplayW;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+                } else if (productList & RKProductListDisplayD) {
+                    productList ^= RKProductListDisplayD;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+                } else if (productList & RKProductListDisplayP) {
+                    productList ^= RKProductListDisplayP;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                } else if (productList & RKProductListDisplayR) {
+                    productList ^= RKProductListDisplayR;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+                } else if (productList & RKProductListDisplayK) {
+                    productList ^= RKProductListDisplayK;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                } else if (productList & RKProductListDisplayS) {
+                    productList ^= RKProductListDisplayS;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
+                } else {
+                    u8Data = NULL;
+                }
+                
+                if (u8Data) {
+                    memcpy(u8Data, client->userPayload + j * ray->header.gateCount * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
+                }
+            }
+            ray->header.s = RKRayStatusReady;
+
+            *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferDepth);
+            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            ray->header.s = RKRayStatusVacant;
+            break;
+            
+        case RKNetworkPacketTypePlainText:
+            break;
+
         case RKNetworkPacketTypeHealth:
             // Queue up the health
+            RKLog("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
+            k = *engine->healthIndex;
+            health = &engine->healthBuffer[k];
+            strncpy(health->string, client->userPayload, RKMaximumStringLength);
+            health->flag = RKHealthFlagReady;
+            k = RKNextModuloS(k, engine->healthBufferDepth);
+            health = &engine->healthBuffer[k];
+            health->string[0] = '\0';
+            health->flag = RKHealthFlagVacant;
+            *engine->healthIndex = k;
             break;
 
         case RKNetworkPacketTypeCommandResponse:
+        case RKNetworkPacketTypeControls:
             // Queue up the feedback
             strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
             engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
             break;
+            
         default:
-            RKLog("%s New type %d\n", client->netDelimiter.type);
+            RKLog("%s New type %d\n", engine->name, client->netDelimiter.type);
             break;
     }
 
@@ -39,7 +131,6 @@ static int RKRadarRelayRead(RKClient *client) {
 
 static void *radarRelay(void *in) {
     RKRadarRelay *engine = (RKRadarRelay *)in;
-    //RKRadarDesc *desc = engine->radarDescription;
 
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
@@ -77,10 +168,9 @@ static void *radarRelay(void *in) {
 
     RKClientStart(engine->client, true);
 
-    size_t size = sprintf(cmd, "sh" RKEOL);
-    printf("Sending command (%zu) ...\n", size);
+    size_t size = sprintf(cmd, "a RKRelay nopassword" RKEOL);
     pthread_mutex_lock(&engine->client->lock);
-    RKNetworkSendPackets(engine->client->sd, "sh" RKEOL, size, NULL);
+    RKNetworkSendPackets(engine->client->sd, cmd, size, NULL);
     pthread_mutex_unlock(&engine->client->lock);
 
     while (engine->state & RKEngineStateActive) {

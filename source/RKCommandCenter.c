@@ -13,8 +13,40 @@
 int socketCommandHandler(RKOperator *);
 int socketStreamHandler(RKOperator *);
 int socketInitialHandler(RKOperator *);
+int socketTerminateHandler(RKOperator *);
 
 #pragma mark - Helper Functions
+
+static void consolidateStreams(RKCommandCenter *engine) {
+
+    int j, k;
+    char string[RKNameLength];
+    RKStream consolidatedStreams;
+    
+    // Consolidate streams
+    for (j = 0; j < RKCommandCenterMaxRadars; j++) {
+        RKRadar *radar = engine->radars[j];
+        if (radar == NULL) {
+            continue;
+        }
+        consolidatedStreams = RKStreamNull;
+        for (k = 0; k < RKCommandCenterMaxConnections; k++) {
+            RKUser *user = &engine->users[k];
+            if (radar == user->radar) {
+                consolidatedStreams |= user->streams;
+            }
+        }
+        if (engine->relayStreams != consolidatedStreams) {
+            engine->relayStreams = consolidatedStreams;
+            string[0] = 's';
+            RKFlagToString(string + 1, engine->relayStreams);
+            RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
+            RKRadarRelayExec(radar->radarRelay, string, string);
+        } else {
+            RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
+        }
+    }
+}
 
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
@@ -46,7 +78,7 @@ int socketCommandHandler(RKOperator *O) {
     char *commandStringEnd = NULL;
 
     RKStripTail(commandString);
-
+    
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
@@ -54,8 +86,8 @@ int socketCommandHandler(RKOperator *O) {
         // Command 'ping' is most frequent, check this first
         if (!strncmp(commandString, "ping", 4)) {
             user->pingCount++;
-            if (engine->verbose && user->pingCount % 10 == 0) {
-                RKLog("%s %s ping x %d\n", engine->name, O->name, user->pingCount);
+            if (engine->verbose && user->pingCount % 100 == 0) {
+                RKLog("%s %s ping x %s\n", engine->name, O->name, RKIntegerToCommaStyleString(user->pingCount));
             }
             // There is no need to send a response. The delegate function socketStreamHandler sends a beacon periodically
         } else if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -114,7 +146,12 @@ int socketCommandHandler(RKOperator *O) {
                             break;
                         case 'r':
                             // 'dr' - Restart DSP engines
-                            
+                            RKMomentEngineStop(user->radar->momentEngine);
+                            RKPulseCompressionEngineStop(user->radar->pulseCompressionEngine);
+                            RKPulseCompressionEngineStart(user->radar->pulseCompressionEngine);
+                            RKMomentEngineStart(user->radar->momentEngine);
+                            sprintf(string, "ACK. %s and %s restarted." RKEOL,
+                                    user->radar->pulseCompressionEngine->name, user->radar->momentEngine->name);
                             break;
                         case 't':
                             // 'dt' - DSP threshold in SNR dB
@@ -236,21 +273,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->streams |= RKStreamDisplayZ;
                     user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
                     break;
-                    
-                case 's':
-                    // Stream varrious data
-                    user->streams = RKStringToFlag(commandString + 1);
-                    k = user->rayIndex;
-                    // Fast foward some indices
-                    user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
-                    user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
-                    user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
-                    user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
-                    sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
-                            (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
-                    RKOperatorSendCommandResponse(O, string);
-                    break;
-                    
+
                 case 'p':
                     // Pass everything to pedestal
                     if (strlen(commandString) < 2) {
@@ -270,6 +293,20 @@ int socketCommandHandler(RKOperator *O) {
                     sprintf(string, "Bye." RKEOL);
                     RKOperatorSendCommandResponse(O, string);
                     RKOperatorHangUp(O);
+                    break;
+                    
+                case 's':
+                    // Stream varrious data
+                    user->streams = RKStringToFlag(commandString + 1);
+                    k = user->rayIndex;
+                    // Fast foward some indices
+                    user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
+                    user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
+                    user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
+                    user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
+                    sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                            (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
+                    RKOperatorSendCommandResponse(O, string);
                     break;
                     
                 case 't':
@@ -312,6 +349,13 @@ int socketCommandHandler(RKOperator *O) {
             }
         } else {
             switch (commandString[0]) {
+                case 'a':
+                    RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
+                    RKRadarRelayExec(user->radar->radarRelay, commandString, string);
+                    O->delimTx.type = RKNetworkPacketTypeControls;
+                    O->delimTx.size = (uint32_t)strlen(string);
+                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
+
                 case 'r':
                     sscanf("%s", commandString + 1, sval1);
                     RKLog(">%s %s selected radar %s\n", engine->name, O->name, sval1);
@@ -320,7 +364,19 @@ int socketCommandHandler(RKOperator *O) {
                     break;
                     
                 case 's':
-                    // Consolidate streams
+                    // Stream varrious data
+                    user->streams = RKStringToFlag(commandString + 1);
+                    
+                    consolidateStreams(engine);
+
+                    k = user->rayIndex;
+                    // Fast foward some indices
+                    user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
+                    user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
+                    user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
+                    sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                            (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
+                    RKOperatorSendCommandResponse(O, string);
                     break;
                     
                 default:
@@ -384,68 +440,70 @@ int socketStreamHandler(RKOperator *O) {
         RKLog("User %s has no associated radar.\n", user->login);
         return 0;
     }
-
-    if (user->streams & user->access && td >= 0.05) {
-        // Stream "1" - Overall status
-        if (user->streams & RKStreamStatusPulses) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
-                         RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
-                         RKPositionEngineStatusString(user->radar->positionEngine),
-                         RKMomentEngineStatusString(user->radar->momentEngine),
-                         RKDataRecorderStatusString(user->radar->dataRecorder));
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-            user->timeLastOut = time;
-        }
-        // Stream "3" - Positions
-        if (user->streams & RKStreamStatusPositions) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
-                         RKPositionEnginePositionString(user->radar->positionEngine));
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-            user->timeLastOut = time;
-        }
-        // Stream "4" - Internal Engines
-        if (user->streams & RKStreamStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%03x/%04d  Pul:0x%03x/%05d  Mom:0x%03x/%04d  Hea:0x%03x/%02d  Swe:0x%03x  Fil:0x%03x" RKEOL,
-                         user->radar->positionEngine->state,
-                         user->radar->positionIndex,
-                         user->radar->pulseCompressionEngine->state,
-                         user->radar->pulseIndex,
-                         user->radar->momentEngine->state,
-                         user->radar->rayIndex,
-                         user->radar->healthEngine->state,
-                         user->radar->healthIndex,
-                         user->radar->sweepEngine->state,
-                         user->radar->dataRecorder->state);
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-            user->timeLastOut = time;
-        }
-    }
     
-    // Stream "2" - Level-II / Moment status - no skipping
-    if (user->streams & user->access & RKStreamStatusRays) {
-        j = 0;
-        k = 0;
-        endIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-        while (user->rayStatusIndex != endIndex && k < RKMaximumStringLength - 200) {
-            c = user->radar->momentEngine->rayStatusBuffer[user->rayStatusIndex];
-            k += sprintf(user->string + k, "%s\n", c);
-            user->rayStatusIndex = RKNextModuloS(user->rayStatusIndex, RKBufferSSlotCount);
-            j++;
+    if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        if (user->streams & user->access && td >= 0.05) {
+            // Stream "1" - Overall status
+            if (user->streams & RKStreamStatusPulses) {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
+                             RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
+                             RKPositionEngineStatusString(user->radar->positionEngine),
+                             RKMomentEngineStatusString(user->radar->momentEngine),
+                             RKDataRecorderStatusString(user->radar->dataRecorder));
+                O->delimTx.type = RKNetworkPacketTypePlainText;
+                O->delimTx.size = k + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+                user->timeLastOut = time;
+            }
+            // Stream "3" - Positions
+            if (user->streams & RKStreamStatusPositions) {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                             RKPositionEnginePositionString(user->radar->positionEngine));
+                O->delimTx.type = RKNetworkPacketTypePlainText;
+                O->delimTx.size = k + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+                user->timeLastOut = time;
+            }
+            // Stream "4" - Internal Engines
+            if (user->streams & RKStreamStatusEngines) {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%03x/%04d  Pul:0x%03x/%05d  Mom:0x%03x/%04d  Hea:0x%03x/%02d  Swe:0x%03x  Fil:0x%03x" RKEOL,
+                             user->radar->positionEngine->state,
+                             user->radar->positionIndex,
+                             user->radar->pulseCompressionEngine->state,
+                             user->radar->pulseIndex,
+                             user->radar->momentEngine->state,
+                             user->radar->rayIndex,
+                             user->radar->healthEngine->state,
+                             user->radar->healthIndex,
+                             user->radar->sweepEngine->state,
+                             user->radar->dataRecorder->state);
+                O->delimTx.type = RKNetworkPacketTypePlainText;
+                O->delimTx.size = k + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+                user->timeLastOut = time;
+            }
         }
-        if (j) {
-            // Take out the last '\n', replace it with somethign else + EOL
-            snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+        
+        // Stream "2" - Level-II / Moment status - no skipping
+        if (user->streams & user->access & RKStreamStatusRays) {
+            j = 0;
+            k = 0;
+            endIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+            while (user->rayStatusIndex != endIndex && k < RKMaximumStringLength - 200) {
+                c = user->radar->momentEngine->rayStatusBuffer[user->rayStatusIndex];
+                k += sprintf(user->string + k, "%s\n", c);
+                user->rayStatusIndex = RKNextModuloS(user->rayStatusIndex, RKBufferSSlotCount);
+                j++;
+            }
+            if (j) {
+                // Take out the last '\n', replace it with somethign else + EOL
+                snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
+                O->delimTx.type = RKNetworkPacketTypePlainText;
+                O->delimTx.size = k + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            }
+            user->timeLastOut = time;
         }
-        user->timeLastOut = time;
     }
     
     // Health Status
@@ -698,6 +756,19 @@ int socketInitialHandler(RKOperator *O) {
 
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
+    
+    O->delimTx.type = RKNetworkPacketTypeRadarDescription;
+    O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
+    RKOperatorSendPackets(O, &O->delimTx, &user->radar->desc, NULL);
+    return RKResultNoError;
+}
+
+int socketTerminateHandler(RKOperator *O) {
+    RKCommandCenter *engine = O->userResource;
+    RKUser *user = &engine->users[O->iid];
+    RKLog(">%s %s User[%d]   Stream reset.\n", engine->name, O->name, O->iid);
+    user->streams = RKStreamNull;
+    consolidateStreams(engine);
     return RKResultNoError;
 }
 
@@ -810,7 +881,8 @@ int RKFlagToString(char *string, RKStream flag) {
     if (flag & RKStreamDisplayS)          { j += sprintf(string + j, "s"); }
     if (flag & RKStreamProductS)          { j += sprintf(string + j, "S"); }
     if (flag & RKStreamDisplayIQ)         { j += sprintf(string + j, "i"); }
-    if (flag & RKStreamProductIQ)         {      sprintf(string + j, "I"); }
+    if (flag & RKStreamProductIQ)         { j += sprintf(string + j, "I"); }
+    string[j] = '\0';
     return 0;
 }
 
@@ -833,6 +905,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     RKServerSetWelcomeHandler(engine->server, &socketInitialHandler);
     RKServerSetCommandHandler(engine->server, &socketCommandHandler);
     RKServerSetStreamHandler(engine->server, &socketStreamHandler);
+    RKServerSetTerminateHandler(engine->server, &socketTerminateHandler);
     RKServerSetSharedResource(engine->server, engine);
     return engine;
 }

@@ -412,6 +412,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                           radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth,
                                           radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
                                           radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+        RKRadarRelaySetVerbose(radar->radarRelay, 2);
         radar->memoryUsage += radar->radarRelay->memoryUsage;
         radar->state |= RKRadarStateRadarRelayInitialized;
     }
@@ -1003,6 +1004,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
+
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
@@ -1245,7 +1247,6 @@ int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
     if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
-        //exit(EXIT_FAILURE);
         return NULL;
     }
     RKPosition *position = &radar->positions[radar->positionIndex];

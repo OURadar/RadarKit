@@ -12,6 +12,7 @@
 #include <RadarKit/RKRadar.h>
 
 #define RKCommandCenterMaxConnections 32
+#define RKCommandCenterMaxRadars       4
 
 typedef struct  rk_user {
     char         login[64];
@@ -41,7 +42,7 @@ typedef struct rk_command_center {
     // User set variables
     char         name[RKNameLength];
     int          verbose;
-    RKRadar      *radars[4];
+    RKRadar      *radars[RKCommandCenterMaxRadars];
     
     // Program set variables
     bool         relayMode;
@@ -50,6 +51,8 @@ typedef struct rk_command_center {
     int          radarCount;
     int          developerInspect;
     RKUser       users[RKCommandCenterMaxConnections];
+    RKStream     relayStreams;
+    RKStream     relayStreamsLevel2;
 } RKCommandCenter;
 
 RKStream RKStringToFlag(const char *);

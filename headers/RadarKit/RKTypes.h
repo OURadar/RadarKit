@@ -438,6 +438,7 @@ enum RKStream {
     RKStreamStatusRays               = (1 << 3),                     //
     RKStreamStatusPositions          = (1 << 4),                     //
     RKStreamStatusEngines            = (1 << 6),                     //
+    RKStreamStatusProcessorStatus    = (1 << 7),                     // Consolidated binary from of the system status
     RKStreamStatusAll                = 0xFE,                         //
     RKStreamDisplayIQ                = (1 << 8),                     // Low rate IQ (sub-smpled)
     RKStreamDisplayIQFiltered        = (1 << 9),                     // Filtered IQ (usually matched filter is applied)
