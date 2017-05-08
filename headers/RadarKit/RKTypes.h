@@ -687,7 +687,6 @@ typedef struct rk_control {
     char             command[RKMaximumStringLength];                  // Control command
 } RKControl;
 
-
 typedef struct rk_processor_status {
     uint8_t          pulseOrigin;
     uint8_t          pulseMonitorLag;
