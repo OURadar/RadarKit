@@ -485,6 +485,7 @@ int main(int argc, const char **argv) {
     } else if (user.relay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, user.relayHost);
+        RKSetDoNotWrite(myRadar, true);
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);

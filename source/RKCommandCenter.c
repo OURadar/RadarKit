@@ -17,27 +17,34 @@ int socketTerminateHandler(RKOperator *);
 
 #pragma mark - Helper Functions
 
-static void consolidateStreams(RKOperator *O) {
-    RKCommandCenter *engine = O->userResource;
-    RKUser *user = &engine->users[O->iid];
-    
-    int k;
+static void consolidateStreams(RKCommandCenter *engine) {
+
+    int j, k;
     char string[RKNameLength];
     RKStream consolidatedStreams;
     
     // Consolidate streams
-    consolidatedStreams = RKStreamNull;
-    for (k = 0; k < RKCommandCenterMaxConnections; k++) {
-        consolidatedStreams |= user->streams;
-    }
-    if (engine->relayStreams != consolidatedStreams) {
-        engine->relayStreams = consolidatedStreams;
-        string[0] = 's';
-        RKFlagToString(string + 1, engine->relayStreams);
-        RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
-        RKRadarRelayExec(user->radar->radarRelay, string, string);
-    } else {
-        RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
+    for (j = 0; j < RKCommandCenterMaxRadars; j++) {
+        RKRadar *radar = engine->radars[j];
+        if (radar == NULL) {
+            continue;
+        }
+        consolidatedStreams = RKStreamNull;
+        for (k = 0; k < RKCommandCenterMaxConnections; k++) {
+            RKUser *user = &engine->users[k];
+            if (radar == user->radar) {
+                consolidatedStreams |= user->streams;
+            }
+        }
+        if (engine->relayStreams != consolidatedStreams) {
+            engine->relayStreams = consolidatedStreams;
+            string[0] = 's';
+            RKFlagToString(string + 1, engine->relayStreams);
+            RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
+            RKRadarRelayExec(radar->radarRelay, string, string);
+        } else {
+            RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
+        }
     }
 }
 
@@ -79,8 +86,8 @@ int socketCommandHandler(RKOperator *O) {
         // Command 'ping' is most frequent, check this first
         if (!strncmp(commandString, "ping", 4)) {
             user->pingCount++;
-            if (engine->verbose && user->pingCount % 10 == 0) {
-                RKLog("%s %s ping x %d\n", engine->name, O->name, user->pingCount);
+            if (engine->verbose && user->pingCount % 100 == 0) {
+                RKLog("%s %s ping x %s\n", engine->name, O->name, RKIntegerToCommaStyleString(user->pingCount));
             }
             // There is no need to send a response. The delegate function socketStreamHandler sends a beacon periodically
         } else if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -360,7 +367,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Stream varrious data
                     user->streams = RKStringToFlag(commandString + 1);
                     
-                    consolidateStreams(O);
+                    consolidateStreams(engine);
 
                     k = user->rayIndex;
                     // Fast foward some indices
@@ -761,7 +768,7 @@ int socketTerminateHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     RKLog(">%s %s User[%d]   Stream reset.\n", engine->name, O->name, O->iid);
     user->streams = RKStreamNull;
-    consolidateStreams(O);
+    consolidateStreams(engine);
     return RKResultNoError;
 }
 
