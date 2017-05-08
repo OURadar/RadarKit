@@ -21,10 +21,12 @@ static int RKRadarRelayRead(RKClient *client) {
     RKHealth *health;
     RKProcessorStatus status;
     
-    RKRay *ray;
+    RKRay *ray = engine->rayBuffer;
     uint8_t *u8Data = NULL;
     uint32_t productList;
     uint32_t productCount;
+    uint32_t remoteRayCapacity = 0;
+    const uint32_t localRayCapacity = ray->header.capacity;
 
 //    RKPulse *pulse;
 //    RKPulseHeader pulseHeader;
@@ -49,7 +51,18 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
             
         case RKNetworkPacketTypeRayDisplay:
-            RKLog("%s Display packet -> %d.\n", engine->name, *engine->rayIndex);
+            // Override the status of the payload
+            ray = (RKRay *)client->userPayload;
+            remoteRayCapacity = ray->header.capacity;
+
+            //printf("%s Display packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->rayIndex, ray->header.capacity, localRayCapacity);
+
+            ray->header.capacity = localRayCapacity;
+            if (ray->header.gateCount > ray->header.capacity) {
+                ray->header.gateCount = ray->header.capacity;
+            }
+            ray->header.s = RKRayStatusProcessing;
+
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
             
@@ -85,7 +98,7 @@ static int RKRadarRelayRead(RKClient *client) {
                 }
                 
                 if (u8Data) {
-                    memcpy(u8Data, client->userPayload + j * ray->header.gateCount * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
+                    memcpy(u8Data, client->userPayload + j * remoteRayCapacity * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
                 }
             }
             ray->header.s = RKRayStatusReady;
@@ -100,7 +113,7 @@ static int RKRadarRelayRead(RKClient *client) {
 
         case RKNetworkPacketTypeHealth:
             // Queue up the health
-            RKLog("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
+            printf("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
             k = *engine->healthIndex;
             health = &engine->healthBuffer[k];
             strncpy(health->string, client->userPayload, RKMaximumStringLength);
