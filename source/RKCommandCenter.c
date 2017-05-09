@@ -652,7 +652,11 @@ int socketStreamHandler(RKOperator *O) {
         }
         user->timeLastDisplayIQOut = time;
     } else if (user->streams & user->access & RKStreamDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
-        endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
+        if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
+        } else {
+            endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+        }
         pulse = RKGetPulse(user->radar->pulses, endIndex);
         memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
 
@@ -667,12 +671,15 @@ int socketStreamHandler(RKOperator *O) {
 
         // Default stride: k = 1
         k = 1;
-        gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
         switch (engine->developerInspect) {
             case 3:
                 // Show the waveform that was used through the forward sampling path
                 pulseHeader.gateCount = 1000;
+                if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
+                    break;
+                }
                 i = 0;
+                gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
                 for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                     *userDataH++ = *c16DataH++;
                     *userDataV++ = *c16DataV++;

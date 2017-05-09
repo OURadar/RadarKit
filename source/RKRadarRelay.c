@@ -22,18 +22,20 @@ static int RKRadarRelayRead(RKClient *client) {
     RKProcessorStatus status;
     
     RKRay *ray = engine->rayBuffer;
+    RKPulse *pulse = engine->pulseBuffer;
+
     uint8_t *u8Data = NULL;
     uint32_t productList;
     uint32_t productCount;
-    uint32_t remoteRayCapacity = 0;
-    const uint32_t localRayCapacity = ray->header.capacity;
+    uint32_t remoteCapacity = 0;
 
-//    RKPulse *pulse;
-//    RKPulseHeader pulseHeader;
-//    RKInt16C *c16DataH = NULL;
-//    RKInt16C *c16DataV = NULL;
-//    RKInt16C *userDataH = NULL;
-//    RKInt16C *userDataV = NULL;
+    const uint32_t localRayCapacity = ray->header.capacity;
+    const uint32_t localPulseCapacity = pulse->header.capacity;
+
+    RKInt16C *c16DataH = NULL;
+    RKInt16C *c16DataV = NULL;
+    RKPulseStatus pulseStatus = RKPulseStatusVacant;
+    uint32_t pulseSize = 0;
 
     switch (client->netDelimiter.type) {
         case RKNetworkPacketTypeBeacon:
@@ -49,11 +51,44 @@ static int RKRadarRelayRead(RKClient *client) {
             
         case RKNetworkPacketTypeRayData:
             break;
-            
+
+        case RKNetworkPacketTypePulseData:
+            // Override the status of the payload
+            pulse = (RKPulse *)client->userPayload;
+            pulseStatus = pulse->header.s;
+            remoteCapacity = pulse->header.capacity;
+
+            printf("%s Pulse packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->pulseIndex, pulse->header.capacity, localPulseCapacity);
+
+            pulse->header.capacity = localPulseCapacity;
+            if (pulse->header.gateCount > pulse->header.capacity) {
+                pulse->header.gateCount = pulse->header.capacity;
+            }
+            pulse->header.s = RKPulseStatusInspected;
+
+            // Now we get a slot to fill it in
+            pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
+            memcpy(&pulse->header, client->userPayload, sizeof(RKPulseHeader));
+
+            pulseSize = pulse->header.gateCount * sizeof(RKInt16C);
+
+            c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
+            c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
+
+            memcpy(c16DataH, client->userPayload + sizeof(RKPulseHeader), pulseSize);
+            memcpy(c16DataV, client->userPayload + sizeof(RKPulseHeader) + pulseSize, pulseSize);
+
+            pulse->header.s = pulseStatus;
+
+            *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->pulseBufferDepth);
+            pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
+            pulse->header.s = RKPulseStatusVacant;
+            break;
+
         case RKNetworkPacketTypeRayDisplay:
             // Override the status of the payload
             ray = (RKRay *)client->userPayload;
-            remoteRayCapacity = ray->header.capacity;
+            remoteCapacity = ray->header.capacity;
 
             //printf("%s Display packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->rayIndex, ray->header.capacity, localRayCapacity);
 
@@ -63,6 +98,7 @@ static int RKRadarRelayRead(RKClient *client) {
             }
             ray->header.s = RKRayStatusProcessing;
 
+            // Now we get a slot to fill it in
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
             
@@ -98,7 +134,7 @@ static int RKRadarRelayRead(RKClient *client) {
                 }
                 
                 if (u8Data) {
-                    memcpy(u8Data, client->userPayload + j * remoteRayCapacity * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
+                    memcpy(u8Data, client->userPayload + j * remoteCapacity * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
                 }
             }
             ray->header.s = RKRayStatusReady;
@@ -113,7 +149,7 @@ static int RKRadarRelayRead(RKClient *client) {
 
         case RKNetworkPacketTypeHealth:
             // Queue up the health
-            printf("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
+            //printf("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
             k = *engine->healthIndex;
             health = &engine->healthBuffer[k];
             strncpy(health->string, client->userPayload, RKMaximumStringLength);
@@ -181,7 +217,7 @@ static void *radarRelay(void *in) {
 
     RKClientStart(engine->client, true);
 
-    size_t size = sprintf(cmd, "a RKRelay nopassword" RKEOL);
+    uint32_t size = sprintf(cmd, "a RKRelay nopassword" RKEOL);
     pthread_mutex_lock(&engine->client->lock);
     RKNetworkSendPackets(engine->client->sd, cmd, size, NULL);
     pthread_mutex_unlock(&engine->client->lock);
@@ -317,7 +353,7 @@ int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) 
         }
         int s = 0;
         uint32_t responseIndex = engine->responseIndex;
-        size_t size = snprintf(engine->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
+        uint32_t size = snprintf(engine->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
         RKNetworkSendPackets(client->sd, engine->latestCommand, size, NULL);
         while (responseIndex == engine->responseIndex) {
             usleep(10000);
