@@ -16,7 +16,7 @@ static int RKRadarRelayRead(RKClient *client) {
 
     int j, k;
     RKHealth *health;
-    RKProcessorStatus status;
+    RKStatus status;
     
     RKRay *ray = engine->rayBuffer;
     RKPulse *pulse = engine->pulseBuffer;
@@ -43,7 +43,7 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
             
         case RKNetworkPacketTypeProcessorStatus:
-            memcpy(&status, client->userPayload, sizeof(RKProcessorStatus));
+            memcpy(&status, client->userPayload, sizeof(RKStatus));
             break;
             
         case RKNetworkPacketTypeRayData:
