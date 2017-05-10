@@ -14,9 +14,6 @@ static int RKRadarRelayRead(RKClient *client) {
     // The shared user resource pointer
     RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
 
-//    char *string = client->userPayload;
-//    RKStripTail(string);
-
     int j, k;
     RKHealth *health;
     RKProcessorStatus status;
@@ -58,7 +55,7 @@ static int RKRadarRelayRead(RKClient *client) {
             pulseStatus = pulse->header.s;
             remoteCapacity = pulse->header.capacity;
 
-            printf("%s Pulse packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->pulseIndex, pulse->header.capacity, localPulseCapacity);
+            //printf("%s Pulse packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->pulseIndex, pulse->header.capacity, localPulseCapacity);
 
             pulse->header.capacity = localPulseCapacity;
             if (pulse->header.gateCount > pulse->header.capacity) {
