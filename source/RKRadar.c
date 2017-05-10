@@ -1000,7 +1000,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
     uint32_t healthIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
-    RKProcessorStatus status;
+    RKStatus status;
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;

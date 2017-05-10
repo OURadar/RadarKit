@@ -76,6 +76,7 @@ struct rk_radar {
     //
     // Buffers
     //
+    RKStatus                   *status;                              // Overall RadarKit engine status
     RKConfig                   *configs;
     RKHealth                   *healths;
     RKPosition                 *positions;

@@ -692,7 +692,7 @@ typedef struct rk_control {
     char             command[RKMaximumStringLength];                  // Control command
 } RKControl;
 
-typedef struct rk_processor_status {
+typedef struct rk_status {
     uint8_t          pulseOrigin;
     uint8_t          pulseMonitorLag;
     uint8_t          pulseSkipCount;
@@ -705,7 +705,7 @@ typedef struct rk_processor_status {
     uint8_t          rayCoreUsage[RKProcessorStatusRayCoreCount];
     uint8_t          recorderOrigin;
     uint8_t          recorderLag;
-} RKProcessorStatus;
+} RKStatus;
 
 #pragma pack(pop)
 
