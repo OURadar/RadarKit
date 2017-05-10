@@ -56,7 +56,7 @@
 #define RKFileManagerDefaultUsageLimit     (size_t)1024 * 1024 * 1024 * 1024 * 15 / 10
 #define RKFileManagerRawDataRatio          500
 #define RKFileManagerMomentDataRatio       1000
-#define RKFileManagerHealthDataRatio       2
+#define RKFileManagerHealthDataRatio       10
 #define RKFileManagerLogDataRatio          1
 #define RKFileManagerTotalRatio            (RKFileManagerRawDataRatio + RKFileManagerMomentDataRatio + RKFileManagerHealthDataRatio + RKFileManagerLogDataRatio)
 #define RKFileManagerDefaultLogAgeInDays   30
