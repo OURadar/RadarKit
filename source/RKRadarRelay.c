@@ -24,7 +24,7 @@ static int RKRadarRelayRead(RKClient *client) {
     uint8_t *u8Data = NULL;
     uint32_t productList;
     uint32_t productCount;
-    uint32_t remoteCapacity = 0;
+    uint32_t rxGateCount = 0;
 
     const uint32_t localRayCapacity = ray->header.capacity;
     const uint32_t localPulseCapacity = pulse->header.capacity;
@@ -53,7 +53,7 @@ static int RKRadarRelayRead(RKClient *client) {
             // Override the status of the payload
             pulse = (RKPulse *)client->userPayload;
             pulseStatus = pulse->header.s;
-            remoteCapacity = pulse->header.capacity;
+            rxGateCount = pulse->header.capacity;
 
             //printf("%s Pulse packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->pulseIndex, pulse->header.capacity, localPulseCapacity);
 
@@ -85,20 +85,20 @@ static int RKRadarRelayRead(RKClient *client) {
         case RKNetworkPacketTypeRayDisplay:
             // Override the status of the payload
             ray = (RKRay *)client->userPayload;
-            remoteCapacity = ray->header.capacity;
+            rxGateCount = ray->header.gateCount;
 
             //printf("%s Display packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->rayIndex, ray->header.capacity, localRayCapacity);
 
             ray->header.capacity = localRayCapacity;
-            if (ray->header.gateCount > ray->header.capacity) {
-                ray->header.gateCount = ray->header.capacity;
+            if (ray->header.gateCount > localRayCapacity) {
+                ray->header.gateCount = localRayCapacity;
             }
             ray->header.s = RKRayStatusProcessing;
 
             // Now we get a slot to fill it in
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
-            
+
             productList = ray->header.productList;
             productCount = __builtin_popcount(productList);
             for (j = 0; j < productCount; j++) {
@@ -131,10 +131,10 @@ static int RKRadarRelayRead(RKClient *client) {
                 }
                 
                 if (u8Data) {
-                    memcpy(u8Data, client->userPayload + j * remoteCapacity * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
+                    memcpy(u8Data, client->userPayload + sizeof(RKRayHeader) + j * rxGateCount * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
                 }
             }
-            ray->header.s = RKRayStatusReady;
+            ray->header.s = RKRayStatusProcessed | RKRayStatusReady;
 
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);

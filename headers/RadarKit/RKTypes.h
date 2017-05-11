@@ -449,7 +449,7 @@ enum RKStream {
     RKStreamDisplayIQFiltered        = (1 << 9),                     // Filtered IQ (usually matched filter is applied)
     RKStreamProductIQ                = (1 << 10),                    // Full rate IQ
     RKStreamProductIQFiltered        = (1 << 11),                    // Full rate filtered IQ
-    RKStreamDisplayZ                 = (1 << 16),                    // Display
+    RKStreamDisplayZ                 = (1 << 16),                    // Display: Z = 0x00010000
     RKStreamDisplayV                 = (1 << 17),                    //
     RKStreamDisplayW                 = (1 << 18),                    //
     RKStreamDisplayD                 = (1 << 19),                    //
