@@ -200,6 +200,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
     RKLog(">sizeof(RKHealth) = %d", (int)sizeof(RKHealth));
     RKLog(">sizeof(RKFileHeader) = %d", (int)sizeof(RKFileHeader));
+    RKLog(">sizeof(RKRadarDesc) = %d", (int)sizeof(RKRadarDesc));
     rkGlobalParameters.stream = stream;
 }
 
