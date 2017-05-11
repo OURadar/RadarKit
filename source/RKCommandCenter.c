@@ -440,7 +440,7 @@ int socketStreamHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-    int i, j, k;
+    int i, j, k, s;
     char *c;
     static struct timeval t0;
 
@@ -471,7 +471,7 @@ int socketStreamHandler(RKOperator *O) {
         RKLog("User %s has no associated radar.\n", user->login);
         return 0;
     }
-    
+
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         if (user->streams & user->access && td >= 0.05) {
             // Stream "1" - Overall status
@@ -539,106 +539,141 @@ int socketStreamHandler(RKOperator *O) {
     
     // Health Status
     if (user->streams & user->access & RKStreamStatusHealth) {
-        j = 0;
-        k = 0;
-        endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
-        while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
-            c = user->radar->healths[user->healthIndex].string;
-            k += sprintf(user->string + k, "%s\n", c);
-            user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
-            j++;
+        if (user->streamsInProgress & RKStreamStatusHealth) {
+            endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
+        } else {
+            endIndex = user->radar->healthIndex;
+            s = 0;
+            while (user->radar->healths[endIndex].flag == RKHealthFlagVacant && engine->server->state == RKServerStateActive && s < 20) {
+                if (++s % 10 == 0 && engine->verbose > 1) {
+                    RKLog("%s sleep 0/%.1f s  RKHealth\n", engine->name, s * 0.1f);
+                }
+                usleep(100000);
+            }
         }
-        if (j) {
-            // Take out the last '\n', replace it with somethign else + EOL
-            snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
-            O->delimTx.type = RKNetworkPacketTypeHealth;
-            O->delimTx.size = k;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+        if (user->radar->healths[endIndex].flag == RKHealthFlagReady && engine->server->state == RKServerStateActive) {
+            user->streamsInProgress |= RKStreamStatusHealth;
+            j = 0;
+            k = 0;
+            while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
+                c = user->radar->healths[user->healthIndex].string;
+                k += sprintf(user->string + k, "%s\n", c);
+                user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
+                j++;
+            }
+            if (j) {
+                // Take out the last '\n', replace it with somethign else + EOL
+                snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
+                O->delimTx.type = RKNetworkPacketTypeHealth;
+                O->delimTx.size = k;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            }
+        } else {
+            printf("No Health / Deactivated.\n");
         }
     }
 
     // Product streams - no skipping
     if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
-        endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
-        while (user->rayIndex != endIndex) {
+        if (user->streamsInProgress & RKStreamDisplayZVWDPRKS) {
+            endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
             ray = RKGetRay(user->radar->rays, user->rayIndex);
-            // Duplicate and send the header with only selected products
-            memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
-            // Gather the products to be sent
-            rayHeader.productList = RKProductListNone;
-            if (user->streams & RKStreamDisplayZ) {
-                rayHeader.productList |= RKProductListDisplayZ;
-            }
-            if (user->streams & RKStreamDisplayV) {
-                rayHeader.productList |= RKProductListDisplayV;
-            }
-            if (user->streams & RKStreamDisplayW) {
-                rayHeader.productList |= RKProductListDisplayW;
-            }
-            if (user->streams & RKStreamDisplayD) {
-                rayHeader.productList |= RKProductListDisplayD;
-            }
-            if (user->streams & RKStreamDisplayP) {
-                rayHeader.productList |= RKProductListDisplayP;
-            }
-            if (user->streams & RKStreamDisplayR) {
-                rayHeader.productList |= RKProductListDisplayR;
-            }
-            if (user->streams & RKStreamDisplayK) {
-                rayHeader.productList |= RKProductListDisplayK;
-            }
-            if (user->streams & RKStreamDisplayS) {
-                rayHeader.productList |= RKProductListDisplayS;
-            }
-            uint32_t productList = rayHeader.productList;
-            uint32_t productCount = __builtin_popcount(productList);
-            //RKLog("ProductCount = %d / %x\n", productCount, productList);
-
-            rayHeader.gateCount /= user->rayDownSamplingRatio;
-            rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
-
-            O->delimTx.type = 'm';
-            O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
-
-            for (j = 0; j < productCount; j++) {
-                if (productList & RKProductListDisplayZ) {
-                    productList ^= RKProductListDisplayZ;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-                } else if (productList & RKProductListDisplayV) {
-                    productList ^= RKProductListDisplayV;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
-                } else if (productList & RKProductListDisplayW) {
-                    productList ^= RKProductListDisplayW;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
-                } else if (productList & RKProductListDisplayD) {
-                    productList ^= RKProductListDisplayD;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
-                } else if (productList & RKProductListDisplayP) {
-                    productList ^= RKProductListDisplayP;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
-                } else if (productList & RKProductListDisplayR) {
-                    productList ^= RKProductListDisplayR;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
-                } else if (productList & RKProductListDisplayK) {
-                    productList ^= RKProductListDisplayK;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
-                } else if (productList & RKProductListDisplayS) {
-                    productList ^= RKProductListDisplayS;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
-                } else {
-                    u8Data = NULL;
+        } else {
+            endIndex = user->radar->rayIndex;
+            ray = RKGetRay(user->radar->rays, user->rayIndex);
+            s = 0;
+            while (ray->header.s == RKRayStatusVacant && engine->server->state == RKServerStateActive && s < 20) {
+                if (++s == 10) {
+                    RKLog("%s sleep 0/%.1f s  RKRay\n", engine->name, s * 0.1f);
                 }
+                usleep(100000);
+            }
+        }
 
-                if (u8Data) {
-                    uint8_t *lowRateData = (uint8_t *)user->string;
-                    for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
-                        lowRateData[i] = u8Data[k];
+        if (ray->header.s == RKRayStatusReady && engine->server->state == RKServerStateActive) {
+            user->streamsInProgress |= (user->streams & RKStreamDisplayZVWDPRKS);
+            while (user->rayIndex != endIndex) {
+                ray = RKGetRay(user->radar->rays, user->rayIndex);
+                // Duplicate and send the header with only selected products
+                memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                // Gather the products to be sent
+                rayHeader.productList = RKProductListNone;
+                if (user->streams & RKStreamDisplayZ) {
+                    rayHeader.productList |= RKProductListDisplayZ;
+                }
+                if (user->streams & RKStreamDisplayV) {
+                    rayHeader.productList |= RKProductListDisplayV;
+                }
+                if (user->streams & RKStreamDisplayW) {
+                    rayHeader.productList |= RKProductListDisplayW;
+                }
+                if (user->streams & RKStreamDisplayD) {
+                    rayHeader.productList |= RKProductListDisplayD;
+                }
+                if (user->streams & RKStreamDisplayP) {
+                    rayHeader.productList |= RKProductListDisplayP;
+                }
+                if (user->streams & RKStreamDisplayR) {
+                    rayHeader.productList |= RKProductListDisplayR;
+                }
+                if (user->streams & RKStreamDisplayK) {
+                    rayHeader.productList |= RKProductListDisplayK;
+                }
+                if (user->streams & RKStreamDisplayS) {
+                    rayHeader.productList |= RKProductListDisplayS;
+                }
+                uint32_t productList = rayHeader.productList;
+                uint32_t productCount = __builtin_popcount(productList);
+                //RKLog("ProductCount = %d / %x\n", productCount, productList);
+
+                rayHeader.gateCount /= user->rayDownSamplingRatio;
+                rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
+
+                O->delimTx.type = 'm';
+                O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+
+                for (j = 0; j < productCount; j++) {
+                    if (productList & RKProductListDisplayZ) {
+                        productList ^= RKProductListDisplayZ;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                    } else if (productList & RKProductListDisplayV) {
+                        productList ^= RKProductListDisplayV;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+                    } else if (productList & RKProductListDisplayW) {
+                        productList ^= RKProductListDisplayW;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+                    } else if (productList & RKProductListDisplayD) {
+                        productList ^= RKProductListDisplayD;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+                    } else if (productList & RKProductListDisplayP) {
+                        productList ^= RKProductListDisplayP;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                    } else if (productList & RKProductListDisplayR) {
+                        productList ^= RKProductListDisplayR;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+                    } else if (productList & RKProductListDisplayK) {
+                        productList ^= RKProductListDisplayK;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                    } else if (productList & RKProductListDisplayS) {
+                        productList ^= RKProductListDisplayS;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
+                    } else {
+                        u8Data = NULL;
                     }
-                    RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
+
+                    if (u8Data) {
+                        uint8_t *lowRateData = (uint8_t *)user->string;
+                        for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
+                            lowRateData[i] = u8Data[k];
+                        }
+                        RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
+                    }
                 }
+                user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
             }
-            user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
+        } else {
+            printf("No Ray / Deactivated.\n");
         }
     }
 
@@ -652,113 +687,128 @@ int socketStreamHandler(RKOperator *O) {
         }
         user->timeLastDisplayIQOut = time;
     } else if (user->streams & user->access & RKStreamDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
-        if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
+        if (user->streamsInProgress & RKStreamDisplayIQ) {
+            if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+                endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
+            } else {
+                endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+            }
+            pulse = RKGetPulse(user->radar->pulses, endIndex);
         } else {
-            endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+            endIndex = user->radar->pulseIndex;
+            pulse = RKGetPulse(user->radar->pulses, user->pulseIndex);
+            s = 0;
+            while (pulse->header.s == RKPulseStatusVacant && engine->server->state == RKServerStateActive && s++ < 20) {
+                if (s % 10 == 0) {
+                    RKLog("%s sleep 0/%.1f s  RKPulse\n", engine->name, s * 0.1f);
+                }
+                usleep(100000);
+            }
         }
-        pulse = RKGetPulse(user->radar->pulses, endIndex);
-        memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
 
-        c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
-        c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
+        if (pulse->header.s == RKPulseStatusReadyForMoment && engine->server->state == RKServerStateActive) {
+            user->streamsInProgress |= RKStreamDisplayIQ;
+            memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
+            c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
+            c16DataV = RKGetInt16CDataFromPulse(pulse, 1);
+            userDataH = user->samples[0];
+            userDataV = user->samples[1];
+            RKComplex *yH;
+            RKComplex *yV;
 
-        userDataH = user->samples[0];
-        userDataV = user->samples[1];
+            // Default stride: k = 1
+            k = 1;
+            switch (engine->developerInspect) {
+                case 3:
+                    // Show the waveform that was used through the forward sampling path
+                    pulseHeader.gateCount = 1000;
+                    if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
+                        break;
+                    }
+                    i = 0;
+                    gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
+                    for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                        *userDataH++ = *c16DataH++;
+                        *userDataV++ = *c16DataV++;
+                        i++;
+                    }
+                    for (; k < MIN(203, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                        userDataH->i   = 0;
+                        userDataH++->q = 0;
+                        userDataV->i   = 0;
+                        userDataV++->q = 0;
+                        i++;
+                    }
+                    // Show the filter that was used as matched filter
+                    yH = user->radar->pulseCompressionEngine->filters[gid][0];
+                    yV = user->radar->pulseCompressionEngine->filters[gid][0];
+                    for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                        userDataH->i   = (int16_t)(300000.0f * yH->i);
+                        userDataH++->q = (int16_t)(300000.0f * yH++->q);
 
-        RKComplex *yH;
-        RKComplex *yV;
+                        userDataV->i   = (int16_t)(300000.0f * yV->i);
+                        userDataV++->q = (int16_t)(300000.0f * yV++->q);
+                        i++;
+                    }
 
-        // Default stride: k = 1
-        k = 1;
-        switch (engine->developerInspect) {
-            case 3:
-                // Show the waveform that was used through the forward sampling path
-                pulseHeader.gateCount = 1000;
-                if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
+                    // The third part of is the processed data
+                    yH = RKGetComplexDataFromPulse(pulse, 0);
+                    yV = RKGetComplexDataFromPulse(pulse, 1);
+                    for (; i < pulseHeader.gateCount; i++) {
+                        userDataH->i   = (int16_t)(yH->i);
+                        userDataH++->q = (int16_t)(yH++->q);
+
+                        userDataV->i   = (int16_t)(yV->i);
+                        userDataV++->q = (int16_t)(yV++->q);
+                    }
                     break;
-                }
-                i = 0;
-                gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
-                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
-                    *userDataH++ = *c16DataH++;
-                    *userDataV++ = *c16DataV++;
-                    i++;
-                }
-                for (; k < MIN(203, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-                    userDataH->i   = 0;
-                    userDataH++->q = 0;
-                    userDataV->i   = 0;
-                    userDataV++->q = 0;
-                    i++;
-                }
-                // Show the filter that was used as matched filter
-                yH = user->radar->pulseCompressionEngine->filters[gid][0];
-                yV = user->radar->pulseCompressionEngine->filters[gid][0];
-                for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
-                    userDataH->i   = (int16_t)(300000.0f * yH->i);
-                    userDataH++->q = (int16_t)(300000.0f * yH++->q);
 
-                    userDataV->i   = (int16_t)(300000.0f * yV->i);
-                    userDataV++->q = (int16_t)(300000.0f * yV++->q);
-                    i++;
-                }
+                case 2:
+                    k = user->pulseDownSamplingRatio;
 
-                // The third part of is the processed data
-                yH = RKGetComplexDataFromPulse(pulse, 0);
-                yV = RKGetComplexDataFromPulse(pulse, 1);
-                for (; i < pulseHeader.gateCount; i++) {
-                    userDataH->i   = (int16_t)(yH->i);
-                    userDataH++->q = (int16_t)(yH++->q);
+                    pulseHeader.gateCount /= k;
+                    pulseHeader.gateSizeMeters *= (float)k;
 
-                    userDataV->i   = (int16_t)(yV->i);
-                    userDataV++->q = (int16_t)(yV++->q);
-                }
-                break;
+                    yH = RKGetComplexDataFromPulse(pulse, 0);
+                    yV = RKGetComplexDataFromPulse(pulse, 1);
+                    for (i = 0; i < pulseHeader.gateCount; i++) {
+                        userDataH->i   = (int16_t)(0.04f * yH->i);
+                        userDataH++->q = (int16_t)(0.04f * yH->q);
+                        yH += k;
 
-            case 2:
-                k = user->pulseDownSamplingRatio;
+                        userDataV->i   = (int16_t)(0.04f * yV->i);
+                        userDataV++->q = (int16_t)(0.04f * yV->q);
+                        yV += k;
+                    }
+                    break;
 
-                pulseHeader.gateCount /= k;
-                pulseHeader.gateSizeMeters *= (float)k;
+                case 1:
+                    k = user->pulseDownSamplingRatio;
 
-                yH = RKGetComplexDataFromPulse(pulse, 0);
-                yV = RKGetComplexDataFromPulse(pulse, 1);
-                for (i = 0; i < pulseHeader.gateCount; i++) {
-                    userDataH->i   = (int16_t)(0.04f * yH->i);
-                    userDataH++->q = (int16_t)(0.04f * yH->q);
-                    yH += k;
-
-                    userDataV->i   = (int16_t)(0.04f * yV->i);
-                    userDataV++->q = (int16_t)(0.04f * yV->q);
-                    yV += k;
-                }
-                break;
-                
-            case 1:
-                k = user->pulseDownSamplingRatio;
-
-            default:
-                pulseHeader.gateCount /= k;
-                pulseHeader.gateCount = MIN(pulseHeader.gateCount, 1000);
-                pulseHeader.gateSizeMeters *= (float)k;
-                for (i = 0; i < pulseHeader.gateCount; i++) {
-                    *userDataH++ = *c16DataH;
-                    *userDataV++ = *c16DataV;
-
-                    c16DataH += k;
-                    c16DataV += k;
-                }
-                break;
+                default:
+                    pulseHeader.gateCount /= k;
+                    pulseHeader.gateCount = MIN(pulseHeader.gateCount, 1000);
+                    pulseHeader.gateSizeMeters *= (float)k;
+                    for (i = 0; i < pulseHeader.gateCount; i++) {
+                        *userDataH++ = *c16DataH;
+                        *userDataV++ = *c16DataV;
+                        
+                        c16DataH += k;
+                        c16DataV += k;
+                    }
+                    break;
+            }
+            
+            size = pulseHeader.gateCount * sizeof(RKInt16C);
+            
+            O->delimTx.type = RKNetworkPacketTypePulseData;
+            O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, sizeof(RKPulseHeader), user->samples[0], size, user->samples[1], size, NULL);
+            
+            user->timeLastDisplayIQOut = time;
+        } else {
+            printf("No IQ / Deactivated.\n");
         }
-
-        size = pulseHeader.gateCount * sizeof(RKInt16C);
-
-        O->delimTx.type = RKNetworkPacketTypePulseData;
-        O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
-        RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, sizeof(RKPulseHeader), user->samples[0], size, user->samples[1], size, NULL);
-
-        user->timeLastDisplayIQOut = time;
     }
 
     // Re-evaluate td = time - user->timeLastOut; send a heart beat if nothing has been sent
@@ -789,7 +839,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamControl;
     user->radar = engine->radars[0];
     user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
-    user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 1000);
+    user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 2000);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
     snprintf(user->login, 63, "radarop");

@@ -321,6 +321,7 @@ int RKRadarRelayStop(RKRadarRelay *engine) {
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
+    RKClientStop(engine->client);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     pthread_join(engine->tidBackground, NULL);

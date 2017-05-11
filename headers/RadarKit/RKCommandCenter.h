@@ -17,9 +17,8 @@
 typedef struct  rk_user {
     char         login[64];
     RKStream     access;             // Authorized access priviledge
-    RKStream     accessLevel2;
     RKStream     streams;
-    RKStream     streamsLevel2;
+    RKStream     streamsInProgress;
     double       timeLastOut;
     double       timeLastHealthOut;
     double       timeLastDisplayIQOut;
