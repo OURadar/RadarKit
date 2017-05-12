@@ -29,6 +29,9 @@ static void consolidateStreams(RKCommandCenter *engine) {
         if (radar == NULL) {
             continue;
         }
+        if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            continue;
+        }
         consolidatedStreams = RKStreamNull;
         for (k = 0; k < RKCommandCenterMaxConnections; k++) {
             RKUser *user = &engine->users[k];
@@ -41,7 +44,6 @@ static void consolidateStreams(RKCommandCenter *engine) {
             string[0] = 's';
             RKFlagToString(string + 1, engine->relayStreams);
             RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
-            RKRadarRelayExec(radar->radarRelay, string, string);
         } else {
             RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
         }
@@ -78,7 +80,9 @@ int socketCommandHandler(RKOperator *O) {
     char *commandStringEnd = NULL;
 
     RKStripTail(commandString);
-    
+
+    RKStream newStream;
+
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
@@ -297,15 +301,14 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 's':
                     // Stream varrious data
-                    user->streams = RKStringToFlag(commandString + 1);
+                    newStream = RKStringToFlag(commandString + 1);
                     k = user->rayIndex;
-                    // Fast foward some indices
                     pthread_mutex_lock(&user->mutex);
-                    user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
-                    user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
-                    user->rayStatusIndex = RKPreviousNModuloS(user->radar->momentEngine->rayStatusBufferIndex, 2, RKBufferSSlotCount);
-                    user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
-                    user->streamsInProgress = RKStreamDisplayZVWDPRKS;
+                    if (!(newStream & RKStreamDisplayZVWDPRKS)) {
+                        // Clear in-progress flags
+                        user->streamsInProgress &= ~RKStreamDisplayZVWDPRKS;
+                    }
+                    user->streams = newStream;
                     pthread_mutex_unlock(&user->mutex);
                     sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
@@ -373,10 +376,6 @@ int socketCommandHandler(RKOperator *O) {
                     consolidateStreams(engine);
 
                     k = user->rayIndex;
-                    // Fast foward some indices
-                    //user->rayIndex = RKPreviousNModuloS(user->radar->rayIndex, 2, user->radar->desc.rayBufferDepth);
-                    //user->pulseIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2, user->radar->desc.pulseBufferDepth);
-                    //user->healthIndex = RKPreviousNModuloS(user->radar->healthIndex, 2, user->radar->desc.healthBufferDepth);
                     pthread_mutex_lock(&user->mutex);
                     user->streamsInProgress = RKStreamNull;
                     pthread_mutex_unlock(&user->mutex);
@@ -554,19 +553,17 @@ int socketStreamHandler(RKOperator *O) {
 
     // Product streams - no skipping
     if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
-        if (user->streamsInProgress & RKStreamDisplayZVWDPRKS) {
-            if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-                endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
-            } else {
-                endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
-            }
-            ray = RKGetRay(user->radar->rays, user->rayIndex);
+        if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
         } else {
-            endIndex = user->radar->rayIndex;
+            endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+        }
+        ray = RKGetRay(user->radar->rays, endIndex);
+
+        if (!(user->streamsInProgress & RKStreamDisplayZVWDPRKS)) {
             user->rayIndex = endIndex;
-            ray = RKGetRay(user->radar->rays, user->rayIndex);
             s = 0;
-            while (ray->header.s == RKRayStatusVacant && engine->server->state == RKServerStateActive && s++ < 20) {
+            while (!(ray->header.s & RKRayStatusReady) && engine->server->state == RKServerStateActive && s++ < 20) {
                 if (s % 10 == 0 && engine->verbose > 1) {
                     RKLog("%s %s sleep 0/%.1f s  RKRay\n", engine->name, O->name, s * 0.1f);
                 }
@@ -659,7 +656,10 @@ int socketStreamHandler(RKOperator *O) {
                 user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
             }
         } else {
-            printf("No Ray / Deactivated.  0x%08x  0x%08x\n", user->streamsInProgress, user->streamsInProgress & RKStreamDisplayZVWDPRKS);
+            if ((int)ray->header.i > 0) {
+                RKLog("%s %s No Ray / Deactivated.  streamsInProgress = 0x%08x\n",
+                      engine->name, O->name, user->streamsInProgress);
+            }
         }
     }
 
@@ -673,18 +673,17 @@ int socketStreamHandler(RKOperator *O) {
         }
         user->timeLastDisplayIQOut = time;
     } else if (user->streams & user->access & RKStreamDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
-        if (user->streamsInProgress & RKStreamDisplayIQ) {
-            if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-                endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
-            } else {
-                endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
-            }
-            pulse = RKGetPulse(user->radar->pulses, endIndex);
+        if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
         } else {
-            endIndex = user->radar->pulseIndex;
-            pulse = RKGetPulse(user->radar->pulses, user->pulseIndex);
+            endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
+        }
+        pulse = RKGetPulse(user->radar->pulses, endIndex);
+
+        if (!(user->streamsInProgress & RKStreamDisplayIQ)) {
+            user->pulseIndex = endIndex;
             s = 0;
-            while (pulse->header.s == RKPulseStatusVacant && engine->server->state == RKServerStateActive && s++ < 20) {
+            while (!(pulse->header.s & RKPulseStatusReadyForMoment) && engine->server->state == RKServerStateActive && s++ < 20) {
                 if (s % 10 == 0) {
                     RKLog("%s %s sleep 0/%.1f s  RKPulse\n", engine->name, O->name, s * 0.1f);
                 }
@@ -793,7 +792,10 @@ int socketStreamHandler(RKOperator *O) {
             
             user->timeLastDisplayIQOut = time;
         } else {
-            printf("No IQ / Deactivated.\n");
+            if ((int)pulse->header.i > 0) {
+                RKLog("%s %s No IQ / Deactivated.  streamsInProgress = 0x%08x\n",
+                       engine->name, O->name, user->streamsInProgress);
+            }
         }
     }
 
@@ -827,7 +829,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamControl;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-        user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500);
+        user->rayDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000);
     } else {
         user->rayDownSamplingRatio = 1;
     }
@@ -837,7 +839,7 @@ int socketInitialHandler(RKOperator *O) {
 
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
-    
+
     O->delimTx.type = RKNetworkPacketTypeRadarDescription;
     O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
     RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->desc, sizeof(RKRadarDesc), NULL);
