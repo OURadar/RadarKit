@@ -448,6 +448,7 @@ int socketStreamHandler(RKOperator *O) {
     }
 
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        // Modes "1", "2", "3" and "4" are for signal processor only - showing the latest summary text view
         if (user->streams & user->access && td >= 0.05) {
             // Stream "1" - Overall status
             if (user->streams & RKStreamStatusPulses) {
@@ -514,6 +515,20 @@ int socketStreamHandler(RKOperator *O) {
 
     pthread_mutex_lock(&user->mutex);
 
+    // For contiguous streaming:
+    // If we just started a connection, grab the payload that is either:
+    // 1) Up to latest available:
+    //      i) For a health, it is radar->healthIndex - 1
+    //     ii) For a ray, it is radar->rayIndex - (number of workers)
+    //    iii) For a pulse, it is readar->pulseIndex - (number of workers)
+    // 2) The latest slot it will be stored. It is crucial to ensure that:
+    //      i) For a health, it is RKStatusReady
+    //     ii) For a ray, it has RKRayStatusReady set
+    //    iii) For a pulse, it has RKPulseStatusReadyForMoment set
+    // 3) Once the first payload is sent, the stream is consider in progress (streamsInProgress)
+    // 4) If (2) can't be met within 2 secs, in progress flag is not set so (2) will be checked
+    //    again in the next iteraction.
+
     // Health Status
     if (user->streams & user->access & RKStreamStatusHealth) {
         if (user->streamsInProgress & RKStreamStatusHealth) {
@@ -521,7 +536,7 @@ int socketStreamHandler(RKOperator *O) {
         } else {
             endIndex = user->radar->healthIndex;
             s = 0;
-            while (user->radar->healths[endIndex].flag == RKHealthFlagVacant && engine->server->state == RKServerStateActive && s++ < 20) {
+            while (!(user->radar->healths[endIndex].flag == RKHealthFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
                 if (s % 10 == 0 && engine->verbose > 1) {
                     RKLog("%s %s sleep 0/%.1f s  RKHealth\n", engine->name, O->name, s * 0.1f);
                 }
