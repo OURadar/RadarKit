@@ -166,7 +166,7 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
             
         default:
-            RKLog("%s New type %d\n", engine->name, client->netDelimiter.type);
+            RKLog("%s New type %d of size %s\n", engine->name, client->netDelimiter.type, RKIntegerToCommaStyleString(client->netDelimiter.size));
             break;
     }
 

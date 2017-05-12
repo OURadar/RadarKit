@@ -44,6 +44,7 @@ static void consolidateStreams(RKCommandCenter *engine) {
             string[0] = 's';
             RKFlagToString(string + 1, engine->relayStreams);
             RKLog("%s streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
+            RKRadarRelayExec(radar->radarRelay, string, string);
         } else {
             RKLog("%s streams remain 0x%08x\n", engine->name, engine->relayStreams);
         }
@@ -271,7 +272,13 @@ int socketCommandHandler(RKOperator *O) {
                         RKOperatorSendCommandResponse(O, string);
                     }
                     break;
-                    
+
+                case 'i':
+                    O->delimTx.type = RKNetworkPacketTypeRadarDescription;
+                    O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
+                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->desc, sizeof(RKRadarDesc), NULL);
+                    break;
+
                 case 'm':
                     RKLog(">%s %s display data\n", engine->name, O->name);
                     user->streams |= RKStreamDisplayZ;
@@ -855,9 +862,6 @@ int socketInitialHandler(RKOperator *O) {
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
 
-    O->delimTx.type = RKNetworkPacketTypeRadarDescription;
-    O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
-    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->desc, sizeof(RKRadarDesc), NULL);
     return RKResultNoError;
 }
 
