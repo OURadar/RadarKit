@@ -627,6 +627,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
+    engine->memoryUsage = sizeof(RKPulseCompressionEngine);
     pthread_mutex_init(&engine->coreMutex, NULL);
     return engine;
 }

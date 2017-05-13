@@ -1300,3 +1300,16 @@ void RKTestCountFiles(void) {
     long count = RKCountFilesInPath(folder);
     printf("%ld files in %s\n", count, folder);
 }
+
+static void RKTestCallback(void *in) {
+    RKFileMonitor *engine = (RKFileMonitor *)in;
+    RKLog("%s I am a callback function.\n", engine->name);
+    return;
+}
+
+void RKTestFileMonitor(void) {
+    const char *file = "pref.conf";
+    RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback);
+    sleep(10);
+    RKFileMonitorFree(mon);
+}

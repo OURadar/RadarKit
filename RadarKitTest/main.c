@@ -267,6 +267,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 9:
                         RKTestCountFiles();
                         break;
+                    case 10:
+                        RKTestFileMonitor();
+                        break;
                     default:
                     break;
                 }
