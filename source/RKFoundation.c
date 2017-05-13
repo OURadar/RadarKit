@@ -579,3 +579,85 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
         string[0] = '\0';
     }
 }
+
+static void *fileMonitorRunLoop(void *in) {
+    RKFileMonitor *engine = (RKFileMonitor *)in;
+
+    int s;
+    struct stat fileStat;
+    
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
+
+    stat(engine->filename, &fileStat);
+    time_t mtime = fileStat.st_mtime;
+
+    RKLog("%s Started.   file = %s B\n", engine->name, engine->filename);
+
+    while (engine->state & RKEngineStateActive) {
+        engine->state |= RKEngineStateSleep1;
+        s = 0;
+        while (s++ < 10 && engine->state & RKEngineStateActive) {
+            if (s % 10 == 0 && engine->verbose > 2) {
+                RKLog("%s", engine->name);
+            }
+            usleep(100000);
+        }
+        engine->state ^= RKEngineStateSleep1;
+        stat(engine->filename, &fileStat);
+        if (mtime != fileStat.st_mtime) {
+            mtime = fileStat.st_mtime;
+            RKLog("%s %s modified.\n", engine->name, engine->filename);
+            if (engine->callbackRoutine) {
+                engine->callbackRoutine(engine);
+            }
+        }
+    }
+    return NULL;
+}
+
+RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *)) {
+    RKFileMonitor *engine = (RKFileMonitor *)malloc(sizeof(RKFileMonitor));
+    if (engine == NULL) {
+        RKLog("Error allocating a file monitor.\n");
+        return NULL;
+    }
+    memset(engine, 0, sizeof(RKFileMonitor));
+    sprintf(engine->name, "%s<FileMonitor>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMisc) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
+    engine->state = RKEngineStateAllocated | RKEngineStateProperlyWired | RKEngineStateActivating;
+    engine->memoryUsage = sizeof(RKFileMonitor);
+    strncpy(engine->filename, filename, RKMaximumPathLength);
+    engine->callbackRoutine = routine;
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
+    if (pthread_create(&engine->tid, NULL, fileMonitorRunLoop, engine)) {
+        RKLog("%s Error creating file monitor.\n", engine->name);
+        free(engine);
+        return NULL;
+    }
+    return engine;
+}
+
+int RKFileMonitorFree(RKFileMonitor *engine) {
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
+    pthread_join(engine->tid, NULL);
+    engine->state ^= RKEngineStateDeactivating;
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+    }
+    free(engine);
+    return RKResultSuccess;
+}

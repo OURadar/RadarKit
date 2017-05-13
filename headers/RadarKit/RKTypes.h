@@ -232,7 +232,8 @@ enum RKEngineColor {
     RKEngineColorPedestalRelayPedzy = 10,
     RKEngineColorHealthRelayTweeta = 0,
     RKEngineColorRadarRelay = 12,
-    RKEngineColorClock = 14
+    RKEngineColorClock = 14,
+    RKEngineColorMisc = 15
 };
 
 typedef uint32_t RKPositionFlag;
@@ -706,6 +707,21 @@ typedef struct rk_status {
     uint8_t          recorderOrigin;
     uint8_t          recorderLag;
 } RKStatus;
+
+typedef struct rk_file_monitor {
+    // User set variables
+    char             name[RKNameLength];
+    char             filename[RKMaximumPathLength];
+    void             (*callbackRoutine)(void *);
+
+    // Program set variables
+    uint8_t          verbose;
+    pthread_t        tid;
+    
+    // Status / health
+    RKEngineState    state;
+    uint32_t         memoryUsage;
+} RKFileMonitor;
 
 #pragma pack(pop)
 
