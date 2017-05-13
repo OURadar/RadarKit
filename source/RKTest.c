@@ -1310,6 +1310,10 @@ static void RKTestCallback(void *in) {
 void RKTestFileMonitor(void) {
     const char *file = "pref.conf";
     RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback);
-    sleep(10);
+    RKLog("Touching file %s ...\n", file);
+    char command[strlen(file) + 10];
+    sprintf(command, "touch %s", file);
+    system(command);
+    sleep(2);
     RKFileMonitorFree(mon);
 }
