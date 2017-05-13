@@ -184,6 +184,7 @@ int RKSetLogfileToDefault(void) {
 void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
+    // Keeep current output stream and temporary change to screen output
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
     RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
@@ -201,6 +202,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKHealth) = %d", (int)sizeof(RKHealth));
     RKLog(">sizeof(RKFileHeader) = %d", (int)sizeof(RKFileHeader));
     RKLog(">sizeof(RKRadarDesc) = %d", (int)sizeof(RKRadarDesc));
+    // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
 
@@ -598,7 +600,7 @@ static void *fileMonitorRunLoop(void *in) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
         while (s++ < 10 && engine->state & RKEngineStateActive) {
-            if (s % 10 == 0 && engine->verbose > 2) {
+            if (engine->verbose > 2) {
                 RKLog("%s", engine->name);
             }
             usleep(100000);
@@ -637,6 +639,9 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *)) 
         RKLog("%s Error creating file monitor.\n", engine->name);
         free(engine);
         return NULL;
+    }
+    while (!(engine->state & RKEngineStateActive)) {
+        usleep(100000);
     }
     return engine;
 }
