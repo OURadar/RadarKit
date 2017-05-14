@@ -192,16 +192,24 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
     RKLog(">sizeof(RKFloat) = %d", (int)sizeof(RKFloat));
     RKLog(">sizeof(RKComplex) = %d", (int)sizeof(RKComplex));
+    RKLog(">sizeof(RKRadarDesc) = %d", (int)sizeof(RKRadarDesc));
     RKLog(">sizeof(RKConfig) = %d", (int)sizeof(RKConfig));
+    RKLog(">sizeof(RKHealth) = %d", (int)sizeof(RKHealth));
+    RKLog(">sizeof(RKNodalHealth) = %d", (int)sizeof(RKNodalHealth));
+    RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
     RKLog(">sizeof(RKPulseHeader) = %d", (int)sizeof(RKPulseHeader));
     RKLog(">sizeof(RKPulseParameters) = %d", (int)sizeof(RKPulseParameters));
-    RKLog(">sizeof(pulse->headerBytes) = %d", (int)sizeof(pulse->headerBytes));
+    RKLog(">sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
+    RKLog(">sizeof(RKPulse) = %d", (int)sizeof(RKPulse));
     RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
-    RKLog(">sizeof(ray->headerBytes) = %d", (int)sizeof(ray->headerBytes));
-    RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
-    RKLog(">sizeof(RKHealth) = %d", (int)sizeof(RKHealth));
+    RKLog(">sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
+    RKLog(">sizeof(RKRay) = %d", (int)sizeof(RKRay));
+    RKLog(">sizeof(RKScratch) = %d", (int)sizeof(RKScratch));
     RKLog(">sizeof(RKFileHeader) = %d", (int)sizeof(RKFileHeader));
-    RKLog(">sizeof(RKRadarDesc) = %d", (int)sizeof(RKRadarDesc));
+    RKLog(">sizeof(RKPreferenceObject) = %d", (int)sizeof(RKPreferenceObject));
+    RKLog(">sizeof(RKControl) = %d", (int)sizeof(RKControl));
+    RKLog(">sizeof(RKStatus) = %d", (int)sizeof(RKStatus));
+    RKLog(">sizeof(RKFileMonitor) = %d", (int)sizeof(RKFileMonitor));
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }

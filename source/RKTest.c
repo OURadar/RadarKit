@@ -1142,6 +1142,8 @@ void RKTestWindow(void) {
     double param;
     RKFloat *window = (RKFloat *)malloc(n * sizeof(RKFloat));
 
+    printf("=================\nWindow Functions:\n=================\n\n");
+    
     printf("Hamming:\n");
     RKWindowMake(window, RKWindowTypeHamming, n);
     for (k = 0; k < n; k++) {
