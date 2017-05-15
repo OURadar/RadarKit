@@ -412,7 +412,7 @@ void RKGoThroughKeywords(const char *string) {
     char *ks;
     char *sks;
     if (*str != '{') {
-        fprintf(stderr, "Expected '{'.\n");
+        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
     }
 
     ks = str + 1;

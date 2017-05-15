@@ -47,7 +47,7 @@ static void RKProcessHealthKeywords(RKHealthLogger *engine, const char *string) 
     char *ks;
     char *sks;
     if (*str != '{') {
-        fprintf(stderr, "Expected '{'.\n");
+        fprintf(stderr, "RKProcessHealthKeywords() - Expected '{'.\n");
     }
 
     ks = str + 1;
