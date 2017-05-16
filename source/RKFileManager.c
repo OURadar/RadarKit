@@ -148,7 +148,7 @@ static void refreshFileList(RKFileRemover *me) {
     if (me->count < me->capacity) {
         me->reusable = true;
     } else {
-        RKLog("%s Warning. Experimental mode for '%s'.\n", me->parent->name, me->path);
+        RKLog("%s Info. Experimental mode for '%s'.\n", me->parent->name, me->path);
         // Re-calculate the usage
         me->usage = 0;
         for (k = 0; k < folderCount; k++) {
@@ -166,7 +166,7 @@ static void refreshFileList(RKFileRemover *me) {
             }
             closedir(did);
         }
-        RKLog("%s Trucated list with total usage %s\n", me->parent->name, RKIntegerToCommaStyleString(me->usage));
+        RKLog("%s Truncated list with total usage = %s B\n", me->parent->name, RKIntegerToCommaStyleString(me->usage));
     }
 }
 

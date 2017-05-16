@@ -316,6 +316,7 @@ int socketCommandHandler(RKOperator *O) {
                         user->streamsInProgress &= ~RKStreamDisplayZVWDPRKS;
                     }
                     user->streams = newStream;
+                    user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                     pthread_mutex_unlock(&user->mutex);
                     sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
