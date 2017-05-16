@@ -157,7 +157,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->a = 1.0 - clock->b;
                 RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
             } else if (clock->b > 5.0 * dx / n) {
-                RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e\n", clock->name, dx / n);
+                RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, dx / n);
             }
         }
         // Update the references as decaying function of the stride size
