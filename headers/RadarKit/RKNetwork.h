@@ -48,7 +48,8 @@ enum RKNetworkPacketType {
     RKNetworkPacketTypeCommandResponse,
     RKNetworkPacketTypeRadarDescription,
     RKNetworkPacketTypeProcessorStatus,
-    RKNetworkPacketTypeRayDisplay = 'm',
+    RKNetworkPacketTypeRayDisplay         = 'm',
+    RKNetworkPacketTypeAlertMessage,
     RKNetworkPacketTypeConfig
 };
 
