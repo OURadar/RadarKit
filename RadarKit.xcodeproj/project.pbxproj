@@ -150,6 +150,7 @@
 		B565B53F1E5A3E23000C8503 /* RKWaveform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKWaveform.h; path = headers/RadarKit/RKWaveform.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B565B5411E5A3E60000C8503 /* RKWaveform.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKWaveform.c; path = source/RKWaveform.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		B565B5441E5A4623000C8503 /* bessi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bessi.c; path = source/bessi.c; sourceTree = "<group>"; };
+		B57CF6A81ECB893400DACA9D /* python */ = {isa = PBXFileReference; lastKnownFileType = folder; path = python; sourceTree = "<group>"; };
 		B594718E1D89B43400EEE77C /* RadarKit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RadarKit.c; path = source/RadarKit.c; sourceTree = SOURCE_ROOT; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B59471981D8C4F0500EEE77C /* RKCommandCenter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = RKCommandCenter.c; path = source/RKCommandCenter.c; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.c; };
@@ -208,6 +209,7 @@
 				B565B53E1E5A3A39000C8503 /* Template */,
 				B5324D8D1AB8CCEE00C00517 /* Headers */,
 				B5324DC91AB8D1A400C00517 /* Source */,
+				B57CF6A81ECB893400DACA9D /* python */,
 				B565B5431E5A4605000C8503 /* Imported */,
 				B5C1F3451AB9C118004F88CD /* RadarKitTest */,
 				B5324D501AB8A5A000C00517 /* Products */,
