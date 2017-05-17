@@ -19,4 +19,6 @@ if __name__ == "__main__":
     print("Connecting to %s:%d ..." % (args.host, args.port))
 
     radar = radarkit.Radar(ipAddress=args.host)
+
+    radar.start()
     
