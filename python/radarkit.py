@@ -37,26 +37,11 @@ class Radar(object):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(timeout)
 
+        self.verbose = 1
         self.netDelimiter = bytearray(16)
         self.payload = bytearray(BUFFER_SIZE)
 
-    def _next_firing_data(self, attempt_no, retries):
-        try:
-            length = self.socket.recv_into(self.payload, PACKET_DELIM_SIZE)
-            if length != PACKET_DELIM_SIZE:
-                raise ValueError('Length should be {}, not {}'.format(PACKET_DELIM_SIZE, length))
-            return self.payload
-        
-        except (socket.timeout, ValueError) as e:
-            logger.exception(e)
-            if attempt_no >= retries:
-                # raise OSError instead of socket.error since socket.error
-                # is an alias for OSError anyway.
-                raise OSError('Could not retrieve socket data in {} tries'.format(retries))
-        
-        return self._next_firing_data(attempt_no + 1, retries)
-
-    def recv(self):
+    def _recv(self):
         try:
             length = self.socket.recv_into(self.netDelimiter, PACKET_DELIM_SIZE)
             if length != PACKET_DELIM_SIZE:
@@ -71,6 +56,8 @@ class Radar(object):
                 length = self.socket.recv_into(self.payload, payloadSize)
                 if length != payloadSize:
                     raise ValueError('Length should be {}, not {}'.format(payloadSize, length))
+                if self.verbose > 1:
+                    print(self.payload.decode('utf-8'))
 
         except (socket.timeout, ValueError) as e:
             logger.exception(e)
@@ -84,7 +71,7 @@ class Radar(object):
         self.socket.send(b'sh\r\n')
 
         while self.active:
-            self.recv()
+            self._recv()
 
     def close(self):
         self.socket.close()
