@@ -1,7 +1,7 @@
 from distutils.core import setup, Extension
 
 # Define the extension module
-radarkit = Extension('radarkit', sources=['radarkitmodule.c'])
+rkstruct = Extension('rkstruct', sources=['rkstruct.c'])
 
 # Run the setup
-setup(ext_modules=[radarkit])
+setup(ext_modules=[rkstruct])

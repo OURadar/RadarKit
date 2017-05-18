@@ -1,7 +1,7 @@
-all: radarkit.so
+all: rkstruct.so
 
-radarkit.so: setup.py radarkitmodule.c
-	python3 setup.py build_ext --inplace
+rkstruct.so: setup.py rkstruct.c
+	python3 setup.py build_ext --inplace --include-dirs=/usr/local/include --library-dirs=/usr/local/lib --libraries=RadarKit
 
 clean:
-	rm -f radarkit.so
+	rm -f rkstruct.so

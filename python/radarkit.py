@@ -9,6 +9,8 @@ import struct
 import sys
 import numpy as N
 
+import rkstruct
+
 __all__ = ['IP_ADDRESS', 'RADAR_PORT']
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,9 @@ decodedSize = b'I'
 delimiterPad = b'HH'
 RKNetDelimiter = netType + subType + packedSize + decodedSize + delimiterPad
 del netType, subType, packedSize, decodedSize, delimiterPad
+
+def test():
+    rkstruct.test()
 
 class Radar(object):
     """Handles the connection to the radar (created by RadarKit)
@@ -67,7 +72,7 @@ class Radar(object):
     def start(self):
         self.active = True
 
-        print('Connecting ...')
+        print('Connecting {}:{}...'.format(self.ipAddress, self.port))
         self.socket.connect((self.ipAddress, self.port))
         self.socket.send(b'sh\r\n')
 
