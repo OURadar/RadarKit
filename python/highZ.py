@@ -16,11 +16,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--port", default=10000, type=int, help="port (default 10000)")
     args = parser.parse_args()
 
-    print("Connecting to %s:%d ..." % (args.host, args.port))
-
     radarkit.test()
 
-#radar = radarkit.Radar(ipAddress=args.host)
-
-#   radar.start()
-    
+    radar = radarkit.Radar(ipAddress=args.host)
+    radar.start()

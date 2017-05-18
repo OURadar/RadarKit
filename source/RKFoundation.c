@@ -189,8 +189,8 @@ void RKShowTypeSizes(void) {
     rkGlobalParameters.stream = stdout;
     RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
     RKLog(">sizeof(RKByte) = %d", (int)sizeof(RKByte));
-    RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
     RKLog(">sizeof(RKFloat) = %d", (int)sizeof(RKFloat));
+    RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
     RKLog(">sizeof(RKComplex) = %d", (int)sizeof(RKComplex));
     RKLog(">sizeof(RKRadarDesc) = %d", (int)sizeof(RKRadarDesc));
     RKLog(">sizeof(RKConfig) = %d", (int)sizeof(RKConfig));
