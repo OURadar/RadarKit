@@ -7,13 +7,14 @@ import math
 import socket
 import struct
 import sys
+import numpy as N
 
-__all__ = ['RadarKit', 'RADADRKIT_PORT', 'IP_ADDRESS']
+__all__ = ['IP_ADDRESS', 'RADAR_PORT']
 
 logger = logging.getLogger(__name__)
 
 IP_ADDRESS = '127.0.0.1'
-RADADRKIT_PORT = 10000
+RADAR_PORT = 10000
 BUFFER_SIZE = 10240
 PACKET_DELIM_SIZE = 16
 
@@ -31,7 +32,7 @@ class Radar(object):
     This class allows to retrieval of base data from the radar
 
     """
-    def __init__(self, ipAddress=IP_ADDRESS, port=RADADRKIT_PORT, timeout=2):
+    def __init__(self, ipAddress=IP_ADDRESS, port=RADAR_PORT, timeout=2):
         self.ipAddress = ipAddress
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
