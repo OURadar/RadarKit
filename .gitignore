@@ -8,6 +8,7 @@ xcuserdata/
 core.*
 *.log
 *.dSYM
+*.so
 
 data
 moment
