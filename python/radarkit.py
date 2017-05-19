@@ -47,6 +47,8 @@ class Radar(object):
         self.netDelimiter = bytearray(16)
         self.payload = bytearray(BUFFER_SIZE)
 
+        self.algorithms = []
+
     def _recv(self):
         try:
             length = self.socket.recv_into(self.netDelimiter, PACKET_DELIM_SIZE)
@@ -59,9 +61,15 @@ class Radar(object):
             print('Delimiter type {} of size {} {}'.format(payloadType, payloadSize, delimiter[3]))
 
             if payloadSize > 0:
-                length = self.socket.recv_into(self.payload, payloadSize)
-                if length != payloadSize:
-                    raise ValueError('Length should be {}, not {}'.format(payloadSize, length))
+                anchor = memoryview(self.payload)
+                #length = self.socket.recv_into(self.payload, payloadSize)
+                #if length != payloadSize:
+                #    raise ValueError('Length should be {}, not {}'.format(payloadSize, length))
+                toRead = payloadSize
+                while toRead:
+                    length = self.socket.recv_into(anchor, toRead)
+                    anchor = anchor[length:]
+                    toRead -= length
                 if self.verbose > 1:
                     print(self.payload.decode('utf-8'))
 
@@ -78,9 +86,14 @@ class Radar(object):
 
         while self.active:
             self._recv()
+            for algo in self.algorithms:
+                print('Algorithm {}'.format(algo))
 
     def close(self):
         self.socket.close()
 
     def __del__(self):
         self.close()
+
+    def addAlgorithm(self, name):
+        self.algorithms.append(name)
