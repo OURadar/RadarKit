@@ -9,6 +9,7 @@ core.*
 *.log
 *.dSYM
 *.so
+*.pyc
 
 data
 moment
