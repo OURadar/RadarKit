@@ -311,10 +311,7 @@ int socketCommandHandler(RKOperator *O) {
                     newStream = RKStringToFlag(commandString + 1);
                     k = user->rayIndex;
                     pthread_mutex_lock(&user->mutex);
-                    if (!(newStream & RKStreamDisplayZVWDPRKS)) {
-                        // Clear in-progress flags
-                        user->streamsInProgress &= ~RKStreamDisplayZVWDPRKS;
-                    }
+                    user->streamsInProgress = RKStreamNull;
                     user->streams = newStream;
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                     pthread_mutex_unlock(&user->mutex);
@@ -737,7 +734,7 @@ int socketStreamHandler(RKOperator *O) {
         if (!(user->streamsInProgress & RKStreamDisplayIQ)) {
             user->pulseIndex = endIndex;
             s = 0;
-            while (!(pulse->header.s & RKPulseStatusReadyForMoment) && engine->server->state == RKServerStateActive && s++ < 20) {
+            while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->server->state == RKServerStateActive && s++ < 20) {
                 if (s % 10 == 0) {
                     RKLog("%s %s sleep 0/%.1f s  RKPulse\n", engine->name, O->name, s * 0.1f);
                 }
@@ -745,7 +742,7 @@ int socketStreamHandler(RKOperator *O) {
             }
         }
 
-        if (pulse->header.s & RKPulseStatusReadyForMoment && engine->server->state == RKServerStateActive) {
+        if (pulse->header.s & RKPulseStatusHasIQData && engine->server->state == RKServerStateActive) {
             user->streamsInProgress |= RKStreamDisplayIQ;
             memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
             c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
@@ -847,8 +844,8 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastDisplayIQOut = time;
         } else {
             if ((int)pulse->header.i > 0) {
-                RKLog("%s %s No IQ / Deactivated.  streamsInProgress = 0x%08x\n",
-                       engine->name, O->name, user->streamsInProgress);
+                RKLog("%s %s No IQ / Deactivated.  streamsInProgress = 0x%08x  header.s = %x\n",
+                       engine->name, O->name, user->streamsInProgress, pulse->header.s);
             }
         }
     }

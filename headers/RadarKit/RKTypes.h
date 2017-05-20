@@ -6,6 +6,8 @@
 //
 //  █
 //
+//  1.2.1  - Improved stream reset mechanism
+//
 //  1.2    - Radar display stream relay with internal consolidation
 //         - RadarKit system engine status
 //         - On-demand raw data recording
@@ -67,7 +69,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2"
+#define RKVersionString                  "1.2.1"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
