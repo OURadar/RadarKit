@@ -23,6 +23,47 @@ enum RKWaveformType {
     RKWaveformTypeTimeFrequencyMultiplexing
 };
 
+// ----
+//  File header
+//  - name
+//  - group count
+// ----
+//
+// ----
+//  RKWaveFileGroup (0)
+//  - type
+//  - depth
+//  - filter count
+// ----
+//
+// ----
+//  - (RKFilterAnchor) x filter count
+//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+// ---
+//
+// ----
+//  RKWaveFileGroup (1)
+//  - type
+//  - depth
+//  - filter count
+// ----
+//
+// ----
+//  - (RKFilterAnchor) x filter count
+//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+// ---
+//
+typedef struct rk_wave_file_header {
+    char         name[RKNameLength];
+    uint8_t      groupCount;
+} RKWaveFileHeader;
+
+typedef struct rk_wave_file_group {
+    RKWaveformType  type;
+    uint32_t        depth;
+    uint32_t        filterCounts;
+} RKWaveFileGroup;
+
 typedef struct rk_waveform {
     int             count;                                                 // Number of groups
     int             depth;                                                 // Maximum number of samples
