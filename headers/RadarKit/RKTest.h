@@ -90,5 +90,6 @@ void RKTestMakeHops(void);
 void RKTestPreferenceReading(void);
 void RKTestCountFiles(void);
 void RKTestFileMonitor(void);
+void RKTestWriteWaveform(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

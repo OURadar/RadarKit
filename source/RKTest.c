@@ -1319,3 +1319,10 @@ void RKTestFileMonitor(void) {
     sleep(2);
     RKFileMonitorFree(mon);
 }
+
+void RKTestWriteWaveform(void) {
+    RKWaveform *waveform = RKWaveformInit();
+    RKWaveformHops(waveform, 2.0, 1.0);
+    RKWaveformWrite(waveform, "h4011");
+    RKWaveformFree(waveform);
+}
