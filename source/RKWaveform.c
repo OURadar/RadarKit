@@ -167,7 +167,31 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 }
 
 void RKWaveformRead(RKWaveform *waveform, const char *filename) {
-    
+    FILE *fid = fopen(filename, "r");
+    if (fid == NULL) {
+        RKLog("Error. Unable to read wave file %s\n", filename);
+        return;
+    }
+    int k;
+    RKWaveFileHeader fileHeader;
+    RKWaveFileGroup waveGroup;
+    fread(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
+
+    //
+    for (k = 0; k < fileHeader.groupCount; k++) {
+        fread(&waveGroup, sizeof(RKWaveFileGroup), 1, fid);
+        if (waveform->depth < waveGroup.depth) {
+            RKLog("Error. Unable to fit waveform %s into supplied buffer.\n");
+            return;
+        }
+        waveform->type = waveGroup.type;
+        waveform->filterCounts[k] = waveGroup.filterCounts;
+    }
+    fclose(fid);
+}
+
+void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
+
 }
 
 void RKWaveformCalculateGain(RKWaveform *waveform) {

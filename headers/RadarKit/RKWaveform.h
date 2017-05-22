@@ -83,6 +83,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
 void RKWaveformConjuate(RKWaveform *waveform);
 void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
 void RKWaveformRead(RKWaveform *waveform, const char *filename);
+void RKWaveformWrite(RKWaveform *waveform, const char *filename);
 
 void RKWaveformCalculateGain(RKWaveform *waveform);
 
