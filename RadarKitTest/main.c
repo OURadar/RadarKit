@@ -270,6 +270,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 10:
                         RKTestFileMonitor();
                         break;
+                    case 11:
+                        RKTestWriteWaveform();
+                        break;
                     default:
                     break;
                 }

@@ -62,14 +62,13 @@ class Radar(object):
 
             if payloadSize > 0:
                 anchor = memoryview(self.payload)
-                #length = self.socket.recv_into(self.payload, payloadSize)
-                #if length != payloadSize:
-                #    raise ValueError('Length should be {}, not {}'.format(payloadSize, length))
+                k = 0
                 toRead = payloadSize
                 while toRead:
                     length = self.socket.recv_into(anchor, toRead)
                     anchor = anchor[length:]
                     toRead -= length
+                    k++
                 if self.verbose > 1:
                     print(self.payload.decode('utf-8'))
 
