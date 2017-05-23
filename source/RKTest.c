@@ -1322,15 +1322,13 @@ void RKTestFileMonitor(void) {
 
 void RKTestWriteWaveform(void) {
     RKLog("Creating waveform file ...\n");
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(5, 1024);
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(22, 1024);
     RKWaveformHops(waveform, 2.0, 1.0);
     RKWaveformWrite(waveform, "h4011");
     
     RKLog("Reading waveform file ...\n");
     RKWaveform *loadedWaveform = RKWaveformInitFromFile("h4011");
     
-    printf("depth = %d vs %d\n", waveform->depth, loadedWaveform->depth);
-
     RKWaveformFree(waveform);
     RKWaveformFree(loadedWaveform);
 }
