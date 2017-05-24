@@ -1332,3 +1332,9 @@ void RKTestWriteWaveform(void) {
     RKWaveformFree(waveform);
     RKWaveformFree(loadedWaveform);
 }
+
+void RKTestWaveformTFM(void) {
+    RKLog("TFM Waveform Test\n");
+    RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+    RKWaveformFree(waveform);
+}

@@ -273,6 +273,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 11:
                         RKTestWriteWaveform();
                         break;
+                    case 12:
+                        RKTestWaveformTFM();
+                        break;
                     default:
                     break;
                 }
@@ -479,10 +482,10 @@ int main(int argc, const char **argv) {
         myRadar->configs[0].prf[0] = user.prf;
         myRadar->desc.heading = 180.0f;
 
-        //RKWaveform *waveform = RKWaveformInitWithCountAndDepth (22, 25);
-        //RKWaveformHops(waveform, 5.0, 4.0);
-        //RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
-
+        RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+        RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
+        RKWaveformFree(waveform);
+        
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
