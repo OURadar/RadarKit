@@ -166,8 +166,8 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
 
 RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
     int i, j;
-    const int longPulseWidth = 100;
-    const int shortPulseWidth = 50;
+    const int longPulseWidth = 500;
+    const int shortPulseWidth = 25;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
     
     waveform->type = RKWaveformTypeTimeFrequencyMultiplexing;
@@ -175,16 +175,18 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
     waveform->count = 1;
     waveform->filterCounts[0] = 2;
     
+    // Long pulse
     waveform->filterAnchors[0][0].name = 0;
-    waveform->filterAnchors[0][0].origin = 0;
+    waveform->filterAnchors[0][0].origin = longPulseWidth;
     waveform->filterAnchors[0][0].length = longPulseWidth;
-    waveform->filterAnchors[0][0].maxDataLength = waveform->depth;
+    waveform->filterAnchors[0][0].maxDataLength = RKGateCount;
     waveform->filterAnchors[0][0].subCarrierFrequency = -0.25f;
     
+    // Short pulse
     waveform->filterAnchors[0][1].name = 1;
-    waveform->filterAnchors[0][1].origin = longPulseWidth;
+    waveform->filterAnchors[0][1].origin = 0;
     waveform->filterAnchors[0][1].length = shortPulseWidth;
-    waveform->filterAnchors[0][1].maxDataLength = waveform->depth;
+    waveform->filterAnchors[0][1].maxDataLength = longPulseWidth;
     waveform->filterAnchors[0][1].subCarrierFrequency = +0.25f;
     
     RKComplex *x;
