@@ -166,7 +166,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
 
 RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
     int i, j;
-    const int longPulseWidth = 500;
+    const int longPulseWidth = 400;
     const int shortPulseWidth = 25;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
     
@@ -186,18 +186,20 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
     waveform->filterAnchors[0][1].name = 1;
     waveform->filterAnchors[0][1].origin = 0;
     waveform->filterAnchors[0][1].length = shortPulseWidth;
-    waveform->filterAnchors[0][1].maxDataLength = longPulseWidth;
+    waveform->filterAnchors[0][1].maxDataLength = longPulseWidth + shortPulseWidth;
     waveform->filterAnchors[0][1].subCarrierFrequency = +0.25f;
     
-    RKComplex *x;
+    RKFloat a;
     RKInt16C *w;
+    RKComplex *x;
     for (j = 0; j < waveform->filterCounts[0]; j++) {
+        a = 2.0f / sqrtf(waveform->filterAnchors[0][j].length);
         x = &waveform->samples[0][waveform->filterAnchors[0][j].origin];
         w = &waveform->iSamples[0][waveform->filterAnchors[0][j].origin];
         printf("Filter[%d] - %d\n", j, waveform->filterAnchors[0][j].length);
         for (i = 0; i < waveform->filterAnchors[0][j].length; i++) {
-            x->i = (RKFloat)cosf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
-            x->q = (RKFloat)sinf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
+            x->i = a * cosf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
+            x->q = a * sinf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
             x++;
             w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
             w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
