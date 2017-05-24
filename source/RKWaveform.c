@@ -203,7 +203,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
     int k;
     RKWaveFileHeader fileHeader;
-    RKWaveFileGroup waveGroup;
+    RKWaveFileGroup groupHeader;
     FILE *fid = fopen(filename, "w");
     if (fid == NULL) {
         RKLog("Error. Unable to write wave file %s\n", filename);
@@ -220,17 +220,16 @@ void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
     fileHeader.depth = waveform->depth;
     fwrite(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
     for (k = 0; k < waveform->count; k++) {
-        waveGroup.type = waveform->type;
-        waveGroup.depth = waveform->depth;
-        waveGroup.filterCounts = waveform->filterCounts[k];
-        fwrite(&waveGroup, sizeof(RKWaveFileGroup), 1, fid);
-        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveGroup.filterCounts, fid);
+        groupHeader.type = waveform->type;
+        groupHeader.depth = waveform->depth;
+        groupHeader.filterCounts = waveform->filterCounts[k];
+        fwrite(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
+        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
         for (int j = 0; j < waveform->filterCounts[k]; j++) {
-            RKLog("> - Filter[%2d][%d/%d] @ %d %+6.3f\n", k, j, waveGroup.filterCounts, waveGroup.depth, waveform->filterAnchors[k][j].subCarrierFrequency);
+            RKLog("> - Filter[%2d][%d/%d] @ %d %+6.3f\n", k, j, groupHeader.filterCounts, groupHeader.depth, waveform->filterAnchors[k][j].subCarrierFrequency);
         }
-        fwrite(waveform->samples[k], sizeof(RKComplex), waveGroup.depth, fid);
-        fwrite(waveform->iSamples[k], sizeof(RKInt16C), waveGroup.depth, fid);
-        //printf("k = %d   depth = %d\n", k, waveform->depth);
+        fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
+        fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
     }
     printf("File size = %s B\n", RKIntegerToCommaStyleString(ftell(fid)));
     fclose(fid);
