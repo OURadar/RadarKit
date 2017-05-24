@@ -290,7 +290,7 @@ static void *pulseCompressionCore(void *_in) {
                     Y += engine->filterAnchors[gid][j].origin;
                     Z.i += engine->filterAnchors[gid][j].origin;
                     Z.q += engine->filterAnchors[gid][j].origin;
-                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].length + 1, engine->filterAnchors[gid][j].maxDataLength);
+                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].origin, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = out[i][0];
                         Y++->q = out[i][1];
