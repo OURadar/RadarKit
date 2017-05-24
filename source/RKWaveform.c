@@ -164,6 +164,48 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
     }
 }
 
+RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
+    int i, j;
+    const int longPulseWidth = 100;
+    const int shortPulseWidth = 50;
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
+    
+    waveform->type = RKWaveformTypeTimeFrequencyMultiplexing;
+    
+    waveform->count = 1;
+    waveform->filterCounts[0] = 2;
+    
+    waveform->filterAnchors[0][0].name = 0;
+    waveform->filterAnchors[0][0].origin = 0;
+    waveform->filterAnchors[0][0].length = longPulseWidth;
+    waveform->filterAnchors[0][0].maxDataLength = waveform->depth;
+    waveform->filterAnchors[0][0].subCarrierFrequency = -0.25f;
+    
+    waveform->filterAnchors[0][1].name = 1;
+    waveform->filterAnchors[0][1].origin = longPulseWidth;
+    waveform->filterAnchors[0][1].length = shortPulseWidth;
+    waveform->filterAnchors[0][1].maxDataLength = waveform->depth;
+    waveform->filterAnchors[0][1].subCarrierFrequency = +0.25f;
+    
+    RKComplex *x;
+    RKInt16C *w;
+    for (j = 0; j < waveform->filterCounts[0]; j++) {
+        x = &waveform->samples[0][waveform->filterAnchors[0][j].origin];
+        w = &waveform->iSamples[0][waveform->filterAnchors[0][j].origin];
+        printf("Filter[%d] - %d\n", j, waveform->filterAnchors[0][j].length);
+        for (i = 0; i < waveform->filterAnchors[0][j].length; i++) {
+            x->i = (RKFloat)cosf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
+            x->q = (RKFloat)sinf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
+            x++;
+            w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
+            w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
+            w++;
+        }
+    }
+    
+    return waveform;
+}
+
 void RKWaveformConjuate(RKWaveform *waveform) {
     int i, k;
     RKComplex *x;
