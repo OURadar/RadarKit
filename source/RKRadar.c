@@ -749,7 +749,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             // The user knows how many samples each pulse has, override maxDataLength with the supplied gateCount
-            waveform->filterAnchors[k][j].maxDataLength = gateCount - waveform->filterAnchors[k][j].origin;
+            waveform->filterAnchors[k][j].maxDataLength = MIN(gateCount - waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].maxDataLength);
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
                                         filter,
