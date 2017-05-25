@@ -483,7 +483,7 @@ int main(int argc, const char **argv) {
         myRadar->desc.heading = 180.0f;
 
         RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
-        RKSetWaveform(myRadar, waveform, desc.pulseBufferDepth);
+        RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
         
         // Radar going live, then wait indefinitely until something happens

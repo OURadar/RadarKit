@@ -234,7 +234,7 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int momentProcessorCoreCount);
 
 // Some operating parameters
-int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int group, const int maxDataLength);
+int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int group);
 int RKSetWaveformToImpulse(RKRadar *radar);
 uint32_t RKGetPulseCapacity(RKRadar *radar);
 ```
