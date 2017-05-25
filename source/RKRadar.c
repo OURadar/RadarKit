@@ -739,7 +739,7 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     return RKResultNoError;
 }
 
-int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
+int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->pulseCompressionEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
@@ -748,8 +748,6 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
-            // The user knows how many samples each pulse has, override maxDataLength with the supplied gateCount
-            waveform->filterAnchors[k][j].maxDataLength = MIN(gateCount - waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].maxDataLength);
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
                                         filter,
@@ -772,7 +770,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int gateCount) {
 // NOTE: Function incomplete, need to define file format
 // ingest the samples, convert, etc.
 //
-int RKSetWaveformByFilename(RKRadar *radar, const char *filename, const int group, const int maxDataLength) {
+int RKSetWaveformByFilename(RKRadar *radar, const char *filename) {
     if (radar->pulseCompressionEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
@@ -782,7 +780,8 @@ int RKSetWaveformByFilename(RKRadar *radar, const char *filename, const int grou
     // Advance operating parameter, add in the newest set
     RKComplex filter[] = {{1.0f, 0.0f}};
     RKFilterAnchor anchor = RKFilterAnchorDefault;
-    anchor.maxDataLength = maxDataLength;
+    //    anchor.maxDataLength = maxDataLength;
+    int group = radar->pulseCompressionEngine->filterGroupCount;
     return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, group, 0);
 }
 
