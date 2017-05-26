@@ -482,7 +482,15 @@ int main(int argc, const char **argv) {
         myRadar->configs[0].prf[0] = user.prf;
         myRadar->desc.heading = 180.0f;
 
-        RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+        RKWaveform *waveform = NULL;
+        const char wavfile[] = "tfm";
+        if (RKFilenameExists(wavfile)) {
+            RKLog("Loading waveform from file '%s'...\n", wavfile);
+            waveform = RKWaveformInitFromFile(wavfile);
+        } else {
+            RKLog("Generating waveform using function ...\n");
+            waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+        }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
         
