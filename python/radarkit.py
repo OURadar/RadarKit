@@ -68,7 +68,7 @@ class Radar(object):
                     length = self.socket.recv_into(anchor, toRead)
                     anchor = anchor[length:]
                     toRead -= length
-                    k++
+                    k += 1
                 if self.verbose > 1:
                     print(self.payload.decode('utf-8'))
 
