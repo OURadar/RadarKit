@@ -1321,21 +1321,23 @@ void RKTestFileMonitor(void) {
 }
 
 void RKTestWriteWaveform(void) {
-    RKLog("Creating waveform file ...\n");
+    const char filename[] = "waveforms/h4011.rkwav";
+    RKLog("Creating waveform file '%s' ...\n", filename);
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(22, 1024);
     RKWaveformHops(waveform, 2.0, 1.0);
-    RKWaveformWrite(waveform, "h4011");
+    RKWaveformWrite(waveform, filename);
     
     RKLog("Reading waveform file ...\n");
-    RKWaveform *loadedWaveform = RKWaveformInitFromFile("h4011");
+    RKWaveform *loadedWaveform = RKWaveformInitFromFile(filename);
     
     RKWaveformFree(waveform);
     RKWaveformFree(loadedWaveform);
 }
 
 void RKTestWaveformTFM(void) {
+    const char filename[] = "waveforms/tfm.rkwav";
     RKLog("TFM Waveform Test\n");
     RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
-    RKWaveformWrite(waveform, "tfm");
+    RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
