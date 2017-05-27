@@ -42,7 +42,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     RKWaveFileGroup waveGroup;
     fread(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
     
-    RKLog(">Waveform %s    groupCount = %d   depth = %d\n", fileHeader.name, fileHeader.groupCount, fileHeader.depth);
+    RKLog(">Waveform '%s'   groupCount = %d   depth = %d\n", fileHeader.name, fileHeader.groupCount, fileHeader.depth);
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
     //
@@ -196,7 +196,7 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
         a = 2.0f / sqrtf(waveform->filterAnchors[0][j].length);
         x = &waveform->samples[0][waveform->filterAnchors[0][j].origin];
         w = &waveform->iSamples[0][waveform->filterAnchors[0][j].origin];
-        printf("Filter[%d] - %d\n", j, waveform->filterAnchors[0][j].length);
+        RKLog("> - Filter[%2d][0] - %s\n", j, RKIntegerToCommaStyleString(waveform->filterAnchors[0][j].length));
         for (i = 0; i < waveform->filterAnchors[0][j].length; i++) {
             x->i = a * cosf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
             x->q = a * sinf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
@@ -250,6 +250,7 @@ void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
     int k;
     RKWaveFileHeader fileHeader;
     RKWaveFileGroup groupHeader;
+    RKPreparePath(filename);
     FILE *fid = fopen(filename, "w");
     if (fid == NULL) {
         RKLog("Error. Unable to write wave file %s\n", filename);
@@ -272,7 +273,8 @@ void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
         fwrite(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
         fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
         for (int j = 0; j < waveform->filterCounts[k]; j++) {
-            RKLog("> - Filter[%2d][%d/%d] @ %d %+6.3f\n", k, j, groupHeader.filterCounts, groupHeader.depth, waveform->filterAnchors[k][j].subCarrierFrequency);
+            RKLog("> - Filter[%2d][%d/%d] @ %s %+6.3f\n",
+                  k, j, groupHeader.filterCounts, RKIntegerToCommaStyleString(groupHeader.depth), waveform->filterAnchors[k][j].subCarrierFrequency);
         }
         fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
         fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
