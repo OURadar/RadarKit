@@ -483,7 +483,7 @@ int main(int argc, const char **argv) {
         myRadar->desc.heading = 180.0f;
 
         RKWaveform *waveform = NULL;
-        const char wavfile[] = "waveform/tfm.rkwav";
+        const char wavfile[] = "waveforms/tfm.rkwav";
         if (RKFilenameExists(wavfile)) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);
