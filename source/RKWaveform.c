@@ -246,6 +246,38 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     }
 }
 
+// ----
+//  File header
+//  - name
+//  - group count
+//  - global depth
+// ----
+//
+// ----
+//  RKWaveFileGroup (0)
+//  - type
+//  - depth (may be different in the future)
+//  - filter count
+// ----
+//
+// ----
+//  - (RKFilterAnchor) x filter count
+//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+// ---
+//
+// ----
+//  RKWaveFileGroup (1)
+//  - type
+//  - depth
+//  - filter count
+// ----
+//
+// ----
+//  - (RKFilterAnchor) x filter count
+//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+// ---
+//
+
 void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
     int k;
     RKWaveFileHeader fileHeader;
