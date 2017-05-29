@@ -262,7 +262,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 //
 // ----
 //  - (RKFilterAnchor) x filter count
-//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+//  - depth x sizeof(RKComplex)
+//  - depth x sizeof(RKInt16C)
 // ---
 //
 // ----
@@ -274,7 +275,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 //
 // ----
 //  - (RKFilterAnchor) x filter count
-//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+//  - depth x sizeof(RKComplex)
+//  - depth x sizeof(RKInt16C)
 // ---
 //
 
@@ -282,36 +284,43 @@ void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
     int k;
     RKWaveFileHeader fileHeader;
     RKWaveFileGroup groupHeader;
+
+    memset(&fileHeader, 0, sizeof(RKWaveFileHeader));
+    memset(&groupHeader, 0, sizeof(RKWaveFileGroup));
+
+    // Get the path created if it doesn't exist
     RKPreparePath(filename);
     FILE *fid = fopen(filename, "w");
     if (fid == NULL) {
         RKLog("Error. Unable to write wave file %s\n", filename);
         return;
     }
-    memset(&fileHeader, 0, sizeof(RKWaveFileHeader));
     char *lastPart = strchr(filename, '/');
     if (lastPart == NULL) {
         strcpy(fileHeader.name, filename);
     } else {
         strcpy(fileHeader.name, lastPart + 1);
     }
+    // File header
     fileHeader.groupCount = waveform->count;
     fileHeader.depth = waveform->depth;
     fwrite(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
     for (k = 0; k < waveform->count; k++) {
+        // Group header
         groupHeader.type = waveform->type;
         groupHeader.depth = waveform->depth;
         groupHeader.filterCounts = waveform->filterCounts[k];
         fwrite(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
+        // Filter anchors
         fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
         for (int j = 0; j < waveform->filterCounts[k]; j++) {
             RKLog("> - Filter[%2d][%d/%d] @ %s %+6.3f\n",
                   k, j, groupHeader.filterCounts, RKIntegerToCommaStyleString(groupHeader.depth), waveform->filterAnchors[k][j].subCarrierFrequency);
         }
+        // Waveform samples
         fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
         fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
     }
-    printf("File size = %s B\n", RKIntegerToCommaStyleString(ftell(fid)));
     fclose(fid);
 }
 
