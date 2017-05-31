@@ -79,6 +79,9 @@ class Radar(object):
     def start(self):
         self.active = True
 
+        # Loop through all the files under 'algorithms' folder
+        mod = __import__('highZ')
+
         print('Connecting {}:{}...'.format(self.ipAddress, self.port))
         self.socket.connect((self.ipAddress, self.port))
         self.socket.send(b'sh\r\n')
@@ -87,6 +90,8 @@ class Radar(object):
             self._recv()
             for algo in self.algorithms:
                 print('Algorithm {}'.format(algo))
+                func = getattr(mod, algo)
+                func(self.payload)
 
     def close(self):
         self.socket.close()

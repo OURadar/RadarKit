@@ -9,7 +9,10 @@ import struct
 from argparse import ArgumentParser
 
 import radarkit
-import algorithms.highZ
+
+sys.path.insert(0, 'algorithms')
+
+import highZ
 
 if __name__ == "__main__":
     parser = ArgumentParser(prog="main")
