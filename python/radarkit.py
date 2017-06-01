@@ -34,6 +34,12 @@ del netType, subType, packedSize, decodedSize, delimiterPad
 def test():
     rkstruct.test()
 
+def init():
+    rkstruct.init()
+
+def showColors():
+    rkstruct.showColors()
+
 # Radar class
 class Radar(object):
     """Handles the connection to the radar (created by RadarKit)
@@ -85,11 +91,13 @@ class Radar(object):
 
         # Loop through all the files under 'algorithms' folder
         print('Loading algorithms ...\n')
+        algorithmObjects = []
         for script in glob.glob('algorithms/*.py'):
             basename = os.path.basename(script)[:-3]
             mod = __import__(basename)
-            algorithmObject = getattr(mod, 'main')()
-            print('File {} -> {} -> {}'.format(script, basename, algorithmObject.name()))
+            obj = getattr(mod, 'main')()
+            algorithmObjects.append(obj)
+            print('File {} -> {} -> {}'.format(script, basename, obj.name()))
 
         print('')
         print('Connecting {}:{}...'.format(self.ipAddress, self.port))
@@ -98,7 +106,8 @@ class Radar(object):
 
         while self.active:
             self._recv()
-            algorithmObject.process(self.payload)
+            for obj in algorithmObjects:
+                obj.process(self.payload)
 
     def close(self):
         self.socket.close()
