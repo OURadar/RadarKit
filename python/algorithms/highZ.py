@@ -1,8 +1,17 @@
 import numpy
 import scipy
+import radarkit
 
-def highZ(sweep):
-    print('highZ algorithm\n')
+class main(object):
+    def __init__(self):
+        self.threshold = 1.0
 
-def lowZ(sweep):
-    print('lowZ algorithm\n')
+    # Every algorithm should have this function defined
+    def process(self,sweep):
+        print('highZ algorithm\n')
+        radarkit.test()
+
+    # Every algorithm should have this function defined
+    def name(self):
+        string = 'High Reflectivity'
+        return string
