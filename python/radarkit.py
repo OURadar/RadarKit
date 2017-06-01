@@ -6,7 +6,9 @@ import logging
 import math
 import socket
 import struct
+import os
 import sys
+import glob
 import numpy as N
 
 import rkstruct
@@ -28,9 +30,11 @@ delimiterPad = b'HH'
 RKNetDelimiter = netType + subType + packedSize + decodedSize + delimiterPad
 del netType, subType, packedSize, decodedSize, delimiterPad
 
+# Generic functions
 def test():
     rkstruct.test()
 
+# Radar class
 class Radar(object):
     """Handles the connection to the radar (created by RadarKit)
 
@@ -80,24 +84,24 @@ class Radar(object):
         self.active = True
 
         # Loop through all the files under 'algorithms' folder
-        mod = __import__('highZ')
+        print('Loading algorithms ...\n')
+        for script in glob.glob('algorithms/*.py'):
+            basename = os.path.basename(script)[:-3]
+            mod = __import__(basename)
+            algorithmObject = getattr(mod, 'main')()
+            print('File {} -> {} -> {}'.format(script, basename, algorithmObject.name()))
 
+        print('')
         print('Connecting {}:{}...'.format(self.ipAddress, self.port))
         self.socket.connect((self.ipAddress, self.port))
         self.socket.send(b'sh\r\n')
 
         while self.active:
             self._recv()
-            for algo in self.algorithms:
-                print('Algorithm {}'.format(algo))
-                func = getattr(mod, algo)
-                func(self.payload)
+            algorithmObject.process(self.payload)
 
     def close(self):
         self.socket.close()
 
     def __del__(self):
         self.close()
-
-    def addAlgorithm(self, name):
-        self.algorithms.append(name)
