@@ -54,7 +54,7 @@ class Radar(object):
         self.socket.settimeout(timeout)
 
         self.verbose = 1
-        self.netDelimiter = bytearray(16)
+        self.netDelimiter = bytearray(PACKET_DELIM_SIZE)
         self.payload = bytearray(BUFFER_SIZE)
 
         self.algorithms = []
