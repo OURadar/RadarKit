@@ -56,7 +56,8 @@ Follow these steps to get the project
 [NetCDF]: http://www.unidata.ucar.edu/software/netcdf
 [Homebrew]: http://brew.sh
 
-## Basic Usage ##
+
+## Basic Usage for a Radar Host ##
 
 1. Initialize a _radar_ object (although RadarKit is not an objective implementation but it is easier to think this way). Supply the necessary _tranceiver_ routines and _pedestal_ routines. The _health relay_ is omitted here for simplicity.
 
@@ -161,6 +162,11 @@ Follow these steps to get the project
     ``````
 
 This example is extremely simple. Many optional arguments were set to NULL (execution and free routines were omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
+
+
+## Basic Usage on Signap Processing Space ##
+
+A seprate processing space to generate high-level products is implemented in Python.
 
 
 Design Philosophy
