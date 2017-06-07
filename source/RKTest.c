@@ -408,8 +408,9 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     int j, p, g, n;
     float a;
-    double t = 0.0f;
+    double t = 0.0;
     double dt = 0.0;
+    long tic;
     struct timeval t0, t1;
     
     const int chunkSize = MAX(1, (int)floor(0.1 / transceiver->prt));
@@ -433,9 +434,7 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
-    //    uint32_t gateCount1 = 60000;
-    //uint32_t gateCount2 = 16000;
-
+    
     while (transceiver->state & RKEngineStateActive) {
         
         for (j = 0; j < chunkSize && transceiver->state & RKEngineStateActive; j++) {
@@ -447,20 +446,13 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
-/*            if (pulse->header.i % 10 < 5) {
-                pulse->header.gateCount = gateCount1;
-            } else {
-                pulse->header.gateCount = gateCount2;
-            }
-            printf("gateCount = %d\n", pulse->header.gateCount);
-*/
             a = cosf(2.0 * M_PI * 0.1 * t);
             a *= a;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 
-                // Some seemingly random pattern for testing
+                // Some random pattern for testing
                 //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
                 for (g = 0; g < transceiver->gateCount; g++) {
                     X->i = (int16_t)(16.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f)) + (rand() & 0xF) - 8;
@@ -470,12 +462,18 @@ void *RKTestTransceiverRunLoop(void *input) {
             }
             
             RKSetPulseHasData(radar, pulse);
-            
-            if (transceiver->sleepInterval > 0 && transceiver->counter % transceiver->sleepInterval == 0) {
-                RKLog("%s sleeping at counter = %s / %s ...",
-                      transceiver->name, RKIntegerToCommaStyleString(transceiver->counter), RKIntegerToCommaStyleString(transceiver->sleepInterval));
-                sleep(3);
+
+            tic = transceiver->prt * transceiver->counter;
+
+            if (transceiver->sleepInterval > 0 && tic > 0 && tic % transceiver->sleepInterval == 0) {
+                RKLog("%s sleeping at counter = %s / %s ... %.2e %.2e / %.2e %.2e\n",
+                      transceiver->name,
+                      RKIntegerToCommaStyleString((long)(transceiver->prt * transceiver->counter)),
+                      RKIntegerToCommaStyleString(transceiver->sleepInterval),
+                      radar->pulseClock->a, radar->pulseClock->b, radar->positionClock->a, radar->positionClock->b);
+                sleep(2);
                 transceiver->counter = 0;
+                t += 2.0;
             }
             t += transceiver->prt;
         }
