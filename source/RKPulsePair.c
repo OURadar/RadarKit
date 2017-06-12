@@ -138,8 +138,50 @@ int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
 
 }
 
+int RKPulsePairStaggeredPRT(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+
+    //
+    // Staggered PRT processing
+    //
+    //  o o   o o   o o
+    //  | |   | |   | |
+    //  +-+---+-+---+-+---
+    //   t  t  t  t  t
+    //   1  2  1  2  1
+    //
+    // Properties:
+    //   - Reflectivity from odd pulses
+    //   - Velocity from PRT1 + PRT2
+    //       - Unfold using ratio
+    //   - Spectrum width?
+    //   - Polarimetric variables from even pulses
+    //
+    // Important tasks:
+    //   - Calculate ACF (prt 1 & prt 2)
+    //
+
+    return 0;
+}
+
 int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 
+    //
+    // Frequency Hopping processing
+    //
+    //  f f   f f   f f
+    //  1 1   2 2   3 3
+    //
+    //  o o   o o   o o
+    //  | |   | |   | |
+    //  +-+---+-+---+-+---
+    //
+    // Properties:
+    //   - Reflectivity from odd pulses
+    //   - Velocity from PRT1 + PRT2
+    //       - Unfold using ratio
+    //   - Spectrum width?
+    //   - Polarimetric variables from even pulses
+    //
     // Process
     // Identify odd pulses and even pulses
     // Calculate R0, R1
