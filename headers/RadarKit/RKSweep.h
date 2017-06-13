@@ -33,6 +33,8 @@ struct rk_sweep_engine {
     uint8_t                verbose;
     bool                   doNotWrite;
     bool                   hasHandleFilesScript;
+    bool                   handleFilesScriptProducesTgz;
+    bool                   handleFilesScriptProducesZip;
     char                   handleFilesScript[RKMaximumPathLength];
     RKFileManager          *fileManager;
 
@@ -67,7 +69,7 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
-void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script);
+void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const bool expectTgz);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);

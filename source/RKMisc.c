@@ -496,6 +496,13 @@ char *RKLastTwoPartsOfPath(const char *path) {
     return a0;
 }
 
+void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement) {
+    char *needle = strstr(filename, pattern);
+    if (needle) {
+        strcpy(needle, replacement);
+    }
+}
+
 #if defined(__APPLE__)
 
 int sched_getaffinity(pid_t pid, size_t cpu_size, cpu_set_t *cpu_set) {
