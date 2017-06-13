@@ -104,5 +104,6 @@ void RKReplaceKeyValue(char *string, const char *key, int value);
 
 long RKCountFilesInPath(const char *);
 char *RKLastTwoPartsOfPath(const char *path);
+void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
 
 #endif /* rk_misc_h */
