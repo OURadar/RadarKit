@@ -280,10 +280,12 @@ static void *fileRemover(void *in) {
             if (engine->verbose) {
                 RKLog("%s %s Removing %s", engine->name, name, path);
             }
-            sprintf(command, "rm -f %s", path);
-            system(command);
+            //sprintf(command, "rm -f %s", path);
+            //system(command);
+            remove(path);
             me->usage -= indexedStats[me->index].size;
             me->index++;
+            RKLog("%s %s Usage -> %s B\n", engine->name, name, RKIntegerToCommaStyleString(me->usage));
 
             // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
             if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {
@@ -430,8 +432,9 @@ static void *folderWatcher(void *in) {
                 }
                 if (fileStat.st_ctime < now - longTime) {
                     RKLog("%s Removing %s ...\n", engine->name, string);
-                    snprintf(string, RKMaximumPathLength - 1, "rm -f %s/%s", logPath, dir->d_name);
-                    system(string);
+                    //snprintf(string, RKMaximumPathLength - 1, "rm -f %s/%s", logPath, dir->d_name);
+                    //system(string);
+                    remove(string);
                 }
             }
             closedir(did);
