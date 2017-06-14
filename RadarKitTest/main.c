@@ -494,6 +494,8 @@ int main(int argc, const char **argv) {
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
         
+        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
+
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);

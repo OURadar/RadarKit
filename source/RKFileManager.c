@@ -617,7 +617,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     me->usage += fileStat.st_size;
     
     if (engine->verbose > 2) {
-        RKLog("%s Added file '%s' %d\n", engine->name, filename, k);
+        RKLog("%s Added '%s'   %s B  k%d\n", engine->name, filename, RKIntegerToCommaStyleString(indexedStats[k].size), k);
     }
     
     me->count = RKNextModuloS(me->count, me->capacity);
