@@ -53,7 +53,7 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKFileManagerDefaultUsageLimit     (size_t)1024 * 1024 * 1024 * 1024 * 15 / 10
+#define RKFileManagerDefaultUsageLimit     (size_t)1024 * 1024 * 1024 * 1024 * 12 / 10
 #define RKFileManagerRawDataRatio          500
 #define RKFileManagerMomentDataRatio       1000
 #define RKFileManagerHealthDataRatio       10
