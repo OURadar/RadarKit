@@ -758,6 +758,9 @@ void *RKTestPedestalRunLoop(void *input) {
             } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
                 scanStartEndPPI = true;
             }
+            if (scanStartEndPPI && azimuth > 1.0f && azimuth < 359.0f) {
+                fprintf(stderr, "Unexpected. azimuth = %.2f   position->azimuthDegrees = %.2f\n", azimuth, position->azimuthDegrees);
+            }
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
             if (elTransition) {
                 elevation -= 2.0f * pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
