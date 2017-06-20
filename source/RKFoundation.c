@@ -381,12 +381,12 @@ RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
     return (RKRay *)((void *)ray + k * raySize);
 }
 
-uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const uint32_t m) {
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
-float *RKGetFloatDataFromRay(RKRay *ray, const uint32_t m) {
+float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
     d += RKMaxProductCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
