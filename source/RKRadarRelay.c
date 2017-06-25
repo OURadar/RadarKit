@@ -53,7 +53,7 @@ static int RKRadarRelayRead(RKClient *client) {
             // Override the status of the payload
             pulse = (RKPulse *)client->userPayload;
             pulseStatus = pulse->header.s;
-            rxGateCount = pulse->header.capacity;
+            //rxGateCount = pulse->header.capacity;
 
             //printf("%s Pulse packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->pulseIndex, pulse->header.capacity, localPulseCapacity);
 
@@ -61,7 +61,7 @@ static int RKRadarRelayRead(RKClient *client) {
             if (pulse->header.gateCount > pulse->header.capacity) {
                 pulse->header.gateCount = pulse->header.capacity;
             }
-            pulse->header.s = RKPulseStatusInspected;
+            pulse->header.s |= RKPulseStatusInspected;
 
             // Now we get a slot to fill it in
             pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
