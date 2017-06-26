@@ -7,6 +7,7 @@
 //  █
 //
 //  1.2.1  - Improved stream reset mechanism
+//         - Multiple filters within a filter group
 //
 //  1.2    - Radar display stream relay with internal consolidation
 //         - RadarKit system engine status
