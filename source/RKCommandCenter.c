@@ -305,7 +305,13 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     RKOperatorHangUp(O);
                     break;
-                    
+
+                case 'r':
+                    user->radar->dataRecorder->doNotWrite = !user->radar->dataRecorder->doNotWrite;
+                    sprintf(string, "ACK. Data recorder set to %s." RKEOL, user->radar->dataRecorder->doNotWrite ? "active" : "standby");
+                    RKOperatorSendCommandResponse(O, string);
+                    break;
+
                 case 's':
                     // Stream varrious data
                     newStream = RKStringToFlag(commandString + 1);
