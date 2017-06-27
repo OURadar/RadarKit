@@ -18,7 +18,7 @@ pulses = single(pulses);
 
 %%
 N = 6;
-ng = min(size(pulses, 1), 50);
+ng = min(size(pulses, 1), 75);
 ns = min(size(pulses, 2), 500);
 
 t_fast = (1:ng) / 50;
@@ -57,6 +57,7 @@ end
 boonlib('bsizewin', gcf, [3200 1080])
 set(gcf, 'Menubar', 'None');
 set(ht, 'HorizontalAlignment', 'Right');
+lp = linkprop(ha, {'XLim'});
 
 return
 
