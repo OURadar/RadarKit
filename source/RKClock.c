@@ -12,13 +12,17 @@
 #pragma mark Life Cycle
 
 RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
+    if (size < stride) {
+        RKLog("Error. Clock size must be greater than stride.\n");
+        return NULL;
+    }
     RKClock *clock = (RKClock *)malloc(sizeof(RKClock));
     if (clock == NULL) {
         RKLog("Error. Unable to alloccate an RKClock.\n");
         return NULL;
     }
     memset(clock, 0, sizeof(RKClock));
-    
+
     // Copy over / set some non-zero parameters
     clock->size = size;
     clock->stride = stride;
@@ -156,11 +160,15 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->b = 0.002 * dx / n;
                 clock->a = 1.0 - clock->b;
                 RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+                RKClockReset(clock);
+                return x;
             } else if (clock->b > 5.0 * dx / n) {
                 RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, dx / n);
-                clock->b = 0.2 * dx / n;
+                clock->b = dx / n;
                 clock->a = 1.0 - clock->b;
                 RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+                RKClockReset(clock);
+                return x;
             }
         }
         // Update the references as decaying function of the stride size

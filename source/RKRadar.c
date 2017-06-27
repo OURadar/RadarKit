@@ -780,7 +780,6 @@ int RKSetWaveformByFilename(RKRadar *radar, const char *filename) {
     // Advance operating parameter, add in the newest set
     RKComplex filter[] = {{1.0f, 0.0f}};
     RKFilterAnchor anchor = RKFilterAnchorDefault;
-    //    anchor.maxDataLength = maxDataLength;
     int group = radar->pulseCompressionEngine->filterGroupCount;
     return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, group, 0);
 }
@@ -851,6 +850,23 @@ void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const cha
     RKControl *control = &radar->controls[index];
     strncpy(control->label, label, RKNameLength - 1);
     strncpy(control->command, command, RKMaximumStringLength - 1);
+}
+
+#pragma mark - Developer Access
+
+void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size) {
+    memcpy(value, (void *)radar + registerOffset, size);
+}
+
+void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size) {
+    memcpy((void *)radar + registerOffset, value, size);
+}
+
+void RKShowOffsets(RKRadar *radar) {
+    printf("radar->active       @ %ld\n", (unsigned long)((void *)radar - (void *)&radar->active));
+    printf("radar->configIndex  @ %ld\n", (unsigned long)((void *)radar - (void *)&radar->configIndex));
+    printf("radar->pulseCompressionEngine  @ %ld\n", (unsigned long)((void *)radar - (void *)radar->pulseCompressionEngine));
+    printf("radar->dataRecorder->doNotWrite  @ %ld\n", (unsigned long)((void *)radar - (void *)radar->dataRecorder->doNotWrite));
 }
 
 #pragma mark - Interaction / State Change
