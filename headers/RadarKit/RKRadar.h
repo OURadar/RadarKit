@@ -251,4 +251,9 @@ RKConfig *RKGetLatestConfig(RKRadar *radar);
 void RKAddControl(RKRadar *, const char *label, const char *command);
 void RKUpdateControl(RKRadar *, uint8_t, const char *label, const char *command);
 
+// Absolute address value query
+void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
+void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
+void RKShowOffsets(RKRadar *radar);
+
 #endif /* defined(__RadarKit_RKRadar__) */
