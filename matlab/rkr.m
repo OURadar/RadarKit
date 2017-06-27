@@ -2,6 +2,8 @@ filename = boonlib('choosefile', '~/Downloads', '*.rkr');
 
 dat = iqread(filename);
 
+fprintf('Rearranging data ...\n');
+
 %%
 disp(dat.pulses(1))
 
@@ -35,7 +37,7 @@ xlim([0 100])
 %%
 figure(2)
 clf
-M = 22;
+M = 18;
 FIG.ax = zeros(M * N, 1);
 FIG.pl = zeros(M * N, 3);
 FIG.ht = zeros(M * N, 1);
@@ -54,7 +56,7 @@ for ii = 1 : M * N
     FIG.ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
     ylim(11500 * [-1 1])
 end
-boonlib('bsizewin', gcf, [3200 1080])
+boonlib('bsizewin', gcf, [2500 1080])
 set(gcf, 'Menubar', 'None');
 set(FIG.ht, 'HorizontalAlignment', 'Right');
 lp = linkprop(FIG.ax, {'XLim'});

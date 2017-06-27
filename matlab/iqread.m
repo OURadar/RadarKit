@@ -12,7 +12,6 @@ classdef iqread
     properties
         filename = '';
         header = struct('preface', [], 'buildNo', 0, 'desc', [], 'config', []);
-        config = [];
         pulses = []
     end
     methods
@@ -91,9 +90,13 @@ classdef iqread
             pulse_header.s = fread(fid, 1, 'uint32');
             pulse_header.capacity = fread(fid, 1, 'uint32');
             pulse_header.gateCount = fread(fid, 1, 'uint32');
+            fclose(fid);
+
+            % Some dimensions
             fprintf('gateCount = %d   capacity = %d\n', pulse_header.gateCount, pulse_header.capacity);
-            
-            % Map
+            fprintf('Reading pulses ...\n');
+
+            % Pulses
             m = memmapfile(self.filename, ...
                 'Offset', self.constants.RKFileHeaderSize, ...
                 'Format', { ...
@@ -120,8 +123,6 @@ classdef iqread
                     'single', [1 1], 'azimuthVelocityDegreesPerSecond'; ...
                     'int16',  [2 pulse_header.gateCount 2], 'iq'});
             self.pulses = m.Data;
-
-            fclose(fid);
         end
     end
 end
