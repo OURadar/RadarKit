@@ -105,7 +105,6 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     double x, dx, du, n;
     struct timeval t;
     bool recent = true;
-    bool resetLater = false;
     
     // Get the time
     gettimeofday(&t, NULL);

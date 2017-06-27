@@ -276,6 +276,11 @@ UserParams processInput(int argc, const char **argv) {
                     case 12:
                         RKTestWaveformTFM();
                         break;
+                    case 13:
+                        myRadar = RKInitLean();
+                        RKShowOffsets(myRadar);
+                        RKFree(myRadar);
+                        break;
                     default:
                     break;
                 }
