@@ -8,7 +8,7 @@ fprintf('Rearranging data ...\n');
 disp(dat.pulses(1))
 
 % Original data in I/Q, gate, channel, pulse count
-pulses = cat(4, dat(:).pulses.iq);
+pulses = cat(4, dat.pulses(:).iq);
 
 % Marry I and Q into a complex number
 pulses = complex(pulses(1, :, :, :), pulses(2, :, :, :));
@@ -72,7 +72,7 @@ while (jj < size(pulses, 2))
         set(FIG.pl(ii, 1), 'YData', real(pulses(1:ng, k, 2)));
         set(FIG.pl(ii, 2), 'YData', imag(pulses(1:ng, k, 2)));
         set(FIG.pl(ii, 3), 'YData', abs(pulses(1:ng, k, 2)));
-        set(FIG.pl(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
+        set(FIG.ht(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
             dat.pulses(k).n, floor(rem(double(dat.pulses(k).n), M) / 2) - 5, ...
             dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
     end
