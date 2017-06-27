@@ -1,12 +1,14 @@
 classdef iqread
     properties (Constant)
+        RKNameLength = 256;
         RKFileHeaderSize = 4096;
         RKMaxMatchedFilterCount = 4;
         RKMaximumStringLength = 4096;
+        RKMaximumPathLength = 1024;
     end
     properties
         filename = '';
-        fileHeader = [];
+        header = struct('preface', [], 'buildNo', 0, 'desc', []);
         config = [];
         pulses = []
     end
@@ -20,30 +22,55 @@ classdef iqread
                 error('Unable to open file.');
             end
             
-            rk_config_size = 4;
-            rk_config_size = rk_config_size + 4 * 4 * self.RKMaxMatchedFilterCount;
-            rk_config_size = rk_config_size + self.RKMaximumStringLength;
-            rk_config_size = rk_config_size + 4 * 2 * 4;
-            rk_config_size = rk_config_size + 4;     % censorSNR
-            rk_config_size = rk_config_size + 2 * 4; % sweepElevation, sweepAzimuth
-            rk_config_size = rk_config_size + 4;     % RKMarker
+%             rk_config_size = 4;
+%             rk_config_size = rk_config_size + 4 * 4 * self.RKMaxMatchedFilterCount;
+%             rk_config_size = rk_config_size + self.RKMaximumStringLength;
+%             rk_config_size = rk_config_size + 4 * 2 * 4;
+%             rk_config_size = rk_config_size + 4;     % censorSNR
+%             rk_config_size = rk_config_size + 2 * 4; % sweepElevation, sweepAzimuth
+%             rk_config_size = rk_config_size + 4;     % RKMarker
 
-            % Properties
-            self.fileHeader = fread(fid, self.RKFileHeaderSize, 'char=>char');
-            self.config = fread(fid, rk_config_size, 'char=>char');
-
+            % Header
+            self.header.preface = fread(fid, [1 self.RKNameLength], 'char=>char');
+            self.header.buildNo = fread(fid, 1, 'uint32');
+            
+            % Header->desc
+            h = memmapfile(self.filename, ...
+                'Offset', self.RKNameLength + 4, ...    % RKNameLength * (char) + (uint32_t)
+                'Repeat', 1, ...
+                'Format', { ...
+                    'uint32', [1 1], 'initFlags'; ...
+                    'uint32', [1 1], 'pulseCapacity'; ...
+                    'uint32', [1 1], 'pulseToRayRatio'; ...
+                    'uint32', [1 1], 'healthNodeCount'; ...
+                    'uint32', [1 1], 'configBufferDepth'; ...
+                    'uint32', [1 1], 'positionBufferDepth'; ...
+                    'uint32', [1 1], 'pulseBufferDepth'; ...
+                    'uint32', [1 1], 'rayBufferDepth'; ...
+                    'uint32', [1 1], 'controlCount'; ...
+                    'double', [1 1], 'latitude'; ...
+                    'double', [1 1], 'longitude'; ...
+                    'single', [1 1], 'heading'; ...
+                    'single', [1 1], 'radarHeight'; ...
+                    'single', [1 1], 'wavelength'; ...
+                    'uint8',  [1 self.RKNameLength], 'name'; ...
+                    'uint8',  [1 self.RKNameLength], 'filePrefix'; ...
+                    'uint8',  [1 self.RKMaximumPathLength], 'dataPath'});
+            self.header.desc = h.data;
+            
             % Partially read the very first pulse
+            fseek(fid, self.RKFileHeaderSize, 'bof');
             pulse_header.i = fread(fid, 1, 'uint64');
             pulse_header.n = fread(fid, 1, 'uint64');
             pulse_header.t = fread(fid, 1, 'uint64');
             pulse_header.s = fread(fid, 1, 'uint32');
             pulse_header.capacity = fread(fid, 1, 'uint32');
             pulse_header.gateCount = fread(fid, 1, 'uint32');
-            fprintf('gateCount = %d   offset = %d\n', pulse_header.gateCount, 4096 + rk_config_size);
+            fprintf('gateCount = %d   capacity = %d   offset = %d\n', pulse_header.gateCount, pulse_header.capacity, self.RKFileHeaderSize);
             
             % Map
             m = memmapfile(self.filename, ...
-                'Offset', 4096 + rk_config_size, ...
+                'Offset', self.RKFileHeaderSize, ...
                 'Format', { ...
                         'uint64', [1 1], 'i'; ...
                         'uint64', [1 1], 'n'; ...
@@ -67,7 +94,6 @@ classdef iqread
                         'single', [1 1], 'elevationVelocityDegreesPerSecond'; ...
                         'single', [1 1], 'azimuthVelocityDegreesPerSecond'; ...
                         'int16',  [2 pulse_header.gateCount 2], 'iq'});
-            
             self.pulses = m.Data;
 
             fclose(fid);
