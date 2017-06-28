@@ -16,21 +16,14 @@ classdef iqread
     end
     methods
         % Constructor
-        function self = iqread(filename)
+        function self = iqread(filename, maxPulse)
+            if ~exist('maxPulse', 'var'), maxPulse = inf; end
             fprintf('Filename: %s\n', filename);
             self.filename = filename;
             fid = fopen(self.filename);
             if (fid < 0)
                 error('Unable to open file.');
             end
-            
-%             rk_config_size = 4;
-%             rk_config_size = rk_config_size + 4 * 4 * self.RKMaxMatchedFilterCount;
-%             rk_config_size = rk_config_size + self.RKMaximumStringLength;
-%             rk_config_size = rk_config_size + 4 * 2 * 4;
-%             rk_config_size = rk_config_size + 4;     % censorSNR
-%             rk_config_size = rk_config_size + 2 * 4; % sweepElevation, sweepAzimuth
-%             rk_config_size = rk_config_size + 4;     % RKMarker
 
             % Header
             self.header.preface = fread(fid, [1 self.constants.RKNameLength], 'char=>char');
@@ -94,11 +87,16 @@ classdef iqread
 
             % Some dimensions
             fprintf('gateCount = %d   capacity = %d\n', pulse_header.gateCount, pulse_header.capacity);
-            fprintf('Reading pulses ...\n');
-
+            if isfinite(maxPulse)
+                fprintf('Reading %d pulses ...\n', maxPulse);
+            else
+                fprintf('Reading all pulses ...\n');
+            end
+            
             % Pulses
             m = memmapfile(self.filename, ...
                 'Offset', self.constants.RKFileHeaderSize, ...
+                'Repeat', maxPulse, ...
                 'Format', { ...
                     'uint64', [1 1], 'i'; ...
                     'uint64', [1 1], 'n'; ...
