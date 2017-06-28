@@ -20,10 +20,10 @@ if ~exist('dat', 'var')
     pulses = single(pulses);
 end
 
-td = cat(1, dat.pulses(:).timeDouble);
 tv_sec = cat(1, dat.pulses(:).time_tv_sec);
 tv_usec = cat(1, dat.pulses(:).time_tv_usec);
 tv = double(tv_sec) + 1.0e-6 * double(tv_usec);
+td = cat(1, dat.pulses(:).timeDouble);
 
 
 %% 
@@ -32,7 +32,7 @@ figure(1003)
 clf
 FIG.lines = plot( 1:n, 1e3 * diff(tv), '.', 1:n, 1e3 * diff(td), '.');
 grid on
-legend('Raw', 'RadarKit')
+legend('Raw - tv', 'RadarKit - td')
 xlabel('Sample Index')
 ylabel('Time (usec)')
 title('Time Difference Between Samples')
