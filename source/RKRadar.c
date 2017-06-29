@@ -739,6 +739,16 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     return RKResultNoError;
 }
 
+int RKSetDataRecorder(RKRadar *radar, const bool record) {
+    radar->dataRecorder->doNotWrite = !record;
+    return RKResultNoError;
+}
+
+int RKToggleDataRecorder(RKRadar *radar) {
+    radar->dataRecorder->doNotWrite = !radar->dataRecorder->doNotWrite;
+    return RKResultNoError;
+}
+
 int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->pulseCompressionEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
@@ -1035,12 +1045,13 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
                         "\"Network\":{\"Value\":true,\"Enum\":0},"
-                        "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3},"
+                        "\"Recorder\":{\"Value\":%s,\"Enum\":%d},"
                         "\"Noise\":[%.3f,%.3f]"
                         "}",
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1]
                         );
                 RKSetHealthReady(radar, health);

@@ -47,7 +47,9 @@ static void *pulseRecorder(void *in) {
     int i, j, k, n, s;
     
     struct timeval t0, t1;
-    
+
+    bool doNotWrite1 = engine->doNotWrite;
+
     RKPulse *pulse;
     RKConfig *config;
     
@@ -105,7 +107,19 @@ static void *pulseRecorder(void *in) {
         
         // Consider we are writing to a file at this point
         engine->state |= RKEngineStateWritingFile;
-        
+
+        // Transition from record to standby
+        if (doNotWrite1 == true && engine->doNotWrite == false) {
+            len += RKDataRecorderCacheFlush(engine);
+            close(engine->fd);
+            if (engine->verbose) {
+                RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
+            }
+            engine->fd = 0;
+            // Notify file manager of a new addition
+            RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
+        }
+
         // Assess the configIndex
         if (j != pulse->header.configIndex || n >= engine->maximumRecordDepth) {
             j = pulse->header.configIndex;
@@ -123,6 +137,7 @@ static void *pulseRecorder(void *in) {
                     if (engine->verbose) {
                         RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
                     }
+                    engine->fd = 0;
                     // Notify file manager of a new addition
                     RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
                 }
@@ -158,7 +173,7 @@ static void *pulseRecorder(void *in) {
         // Actual cache and write happen here.
         if (engine->doNotWrite) {
             len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
-        } else {
+        } else if (engine->fd) {
             len += RKDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
             len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
             len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
@@ -176,6 +191,7 @@ static void *pulseRecorder(void *in) {
         
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
+        doNotWrite1 = engine->doNotWrite;
         n++;
     }
     
@@ -232,6 +248,13 @@ void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *de
 
 void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value) {
     engine->doNotWrite = value;
+//    RKDataRecorderCacheFlush(engine);
+//    close(engine->fd);
+//    if (engine->verbose) {
+//        RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
+//    }
+//    // Notify file manager of a new addition
+//    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
 }
 
 void RKDataRecorderSetMaximumRecordDepth(RKDataRecorder *engine, const uint32_t depth) {

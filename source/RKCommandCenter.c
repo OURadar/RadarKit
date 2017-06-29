@@ -308,7 +308,7 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 'r':
                     user->radar->dataRecorder->doNotWrite = !user->radar->dataRecorder->doNotWrite;
-                    sprintf(string, "ACK. Data recorder set to %s." RKEOL, user->radar->dataRecorder->doNotWrite ? "active" : "standby");
+                    sprintf(string, "ACK. IQ data recorder set to %s." RKEOL, user->radar->dataRecorder->doNotWrite ? "standby" : "active");
                     RKOperatorSendCommandResponse(O, string);
                     break;
 
