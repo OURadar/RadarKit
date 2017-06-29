@@ -311,7 +311,7 @@ static void *pulseCompressionCore(void *_in) {
                 } // filterCount
                 pulse->parameters.filterCounts[p] = j;
             } // p - polarization
-            pulse->header.gateCount = blindGateCount;
+            pulse->header.pulseWidthSampleCount = blindGateCount;
             pulse->header.s |= RKPulseStatusCompressed | RKPulseStatusProcessed;
         }
         // Record down the latest processed pulse index
