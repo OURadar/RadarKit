@@ -187,11 +187,15 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
+#pragma mark -
+
 // Some states of the radar
 int RKSetVerbose(RKRadar *, const int verbose);
 int RKSetDataPath(RKRadar *, const char *path);
 int RKSetDataUsageLimit(RKRadar *, const size_t limit);
 int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
+int RKSetDataRecorder(RKRadar *, const bool record);
+int RKToggleDataRecorder(RKRadar *);
 
 // Some operating parameters
 int RKSetWaveform(RKRadar *, RKWaveform *);
