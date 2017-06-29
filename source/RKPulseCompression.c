@@ -76,6 +76,8 @@ static void *pulseCompressionCore(void *_in) {
     const int c = me->id;
     const int multiplyMethod = 1;
 
+    uint32_t blindGateCount = 0;
+
     // Find the semaphore
     sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
     if (sem == SEM_FAILED) {
@@ -232,11 +234,13 @@ static void *pulseCompressionCore(void *_in) {
 
             // Process each polarization separately and indepently
             for (p = 0; p < 2; p++) {
-                // Go through all the filters in this fitler group
+                // Go through all the filters in this filter group
+                blindGateCount = 0;
                 for (j = 0; j < engine->filterCounts[gid]; j++) {
                     // Get the plan index and size from parent engine
                     planIndex = engine->planIndices[i0][j];
                     planSize = engine->planSizes[planIndex];
+                    blindGateCount += engine->filterAnchors[gid][j].length;
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -307,6 +311,7 @@ static void *pulseCompressionCore(void *_in) {
                 } // filterCount
                 pulse->parameters.filterCounts[p] = j;
             } // p - polarization
+            pulse->header.gateCount = blindGateCount;
             pulse->header.s |= RKPulseStatusCompressed | RKPulseStatusProcessed;
         }
         // Record down the latest processed pulse index
