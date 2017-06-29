@@ -30,13 +30,14 @@ td = cat(1, dat.pulses(:).timeDouble);
 n = numel(td) - 1;
 figure(1003)
 clf
+FIG.axes = axes;
 FIG.lines = plot( 1:n, 1e3 * diff(tv), '.', 1:n, 1e3 * diff(td), '.');
 grid on
 legend('Raw - tv', 'RadarKit - td')
 xlabel('Sample Index')
 ylabel('Time (usec)')
 title('Time Difference Between Samples')
-FIG.prop = linkprop(FIG.lines, {'XLim', 'YLim'});
+FIG.prop = linkprop(FIG.axes, {'XLim', 'YLim'});
 set(FIG.lines, 'MarkerSize', 18)
 xlim([50 100])
 pan on
