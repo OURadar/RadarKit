@@ -48,7 +48,7 @@ static void *pulseRecorder(void *in) {
     
     struct timeval t0, t1;
 
-    bool doNotWrite1 = engine->doNotWrite;
+    bool doNotWrite = engine->doNotWrite;
 
     RKPulse *pulse;
     RKConfig *config;
@@ -108,25 +108,13 @@ static void *pulseRecorder(void *in) {
         // Consider we are writing to a file at this point
         engine->state |= RKEngineStateWritingFile;
 
-        // Transition from record to standby
-        if (doNotWrite1 == true && engine->doNotWrite == false) {
-            len += RKDataRecorderCacheFlush(engine);
-            close(engine->fd);
-            if (engine->verbose) {
-                RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
-            }
-            engine->fd = 0;
-            // Notify file manager of a new addition
-            RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
-        }
-
-        // Assess the configIndex
-        if (j != pulse->header.configIndex || n >= engine->maximumRecordDepth) {
+        // Assess the configIndex, or if we reached the maximum pulse count for a file; or when user just decided to start/stop recording
+        if (j != pulse->header.configIndex || n >= engine->maximumRecordDepth || doNotWrite != engine->doNotWrite) {
             j = pulse->header.configIndex;
             config = &engine->configBuffer[pulse->header.configIndex];
             
             // Close the current file
-            if (engine->doNotWrite) {
+            if (engine->doNotWrite && doNotWrite) {
                 if (engine->verbose && strlen(filename)) {
                     RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
                 }
@@ -154,13 +142,12 @@ static void *pulseRecorder(void *in) {
             n = 0;
             
             if (engine->doNotWrite) {
-                if (engine->verbose > 1) {
+                if (engine->verbose) {
                     RKLog("%s Skipping %s ...\n", engine->name, filename);
                 }
-                //len = 4096 + sizeof(RKConfig);
                 len = sizeof(RKFileHeader);
             } else {
-                if (engine->verbose > 1) {
+                if (engine->verbose) {
                     RKLog("%s Creating %s ...\n", engine->name, filename);
                 }
                 RKPreparePath(filename);
@@ -191,7 +178,7 @@ static void *pulseRecorder(void *in) {
         
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->pulseBufferDepth);
-        doNotWrite1 = engine->doNotWrite;
+        doNotWrite = engine->doNotWrite;
         n++;
     }
     
