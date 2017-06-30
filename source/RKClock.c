@@ -159,14 +159,14 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
                 clock->b = 0.002 * dx / n;
                 clock->a = 1.0 - clock->b;
-                RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+                RKLog("%s updated to minor / major.   a = %.4e  b = %.4e", clock->name, clock->a, clock->b);
                 RKClockReset(clock);
                 return x;
             } else if (clock->b > 5.0 * dx / n) {
                 RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, dx / n);
                 clock->b = dx / n;
                 clock->a = 1.0 - clock->b;
-                RKLog("%s updated to minor / major.   a = %.3e  b = %.3e", clock->name, clock->a, clock->b);
+                RKLog("%s updated to minor / major.   a = %.4e  b = %.4e", clock->name, clock->a, clock->b);
                 RKClockReset(clock);
                 return x;
             }

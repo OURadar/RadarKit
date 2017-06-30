@@ -141,15 +141,12 @@ static void *pulseRecorder(void *in) {
             
             n = 0;
             
+            if (engine->verbose) {
+                RKLog("%s New file %s ...\n", engine->name, filename);
+            }
             if (engine->doNotWrite) {
-                if (engine->verbose) {
-                    RKLog("%s Skipping %s ...\n", engine->name, filename);
-                }
                 len = sizeof(RKFileHeader);
             } else {
-                if (engine->verbose) {
-                    RKLog("%s Creating %s ...\n", engine->name, filename);
-                }
                 RKPreparePath(filename);
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
