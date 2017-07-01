@@ -13,7 +13,7 @@
 
 // A clock derived from counter and request time
 #define RKClockDefaultBufferDepth        2000
-#define RKClockDefaultStride             500
+#define RKClockDefaultStride             1000
 #define RKClockAWhile                    300.0
 
 typedef struct rk_clock {
@@ -23,6 +23,7 @@ typedef struct rk_clock {
     int              verbose;
     bool             autoSync;
     bool             hasWisdom;                   // User provided dudt
+    bool             highPrecision;               // High precision mode
     uint32_t         size;                        // User changeable depth
     uint32_t         stride;                      // Size to compute average
     uint64_t         tic;                         // An internal tic in case user doesn't obey the rule
@@ -39,6 +40,7 @@ typedef struct rk_clock {
     
     uint32_t         index;
     uint64_t         count;
+    double           initDay;
     double           initTime;
     double           latestTime;
     double           typicalPeriod;
@@ -57,14 +59,14 @@ void RKClockFree(RKClock *);
 
 void RKClockSetName(RKClock *, const char *);
 void RKClockSetVerbose(RKClock *, const int);
-void RKClockSetManualSync(RKClock *clock);
+void RKClockSetManualSync(RKClock *);
 void RKClockSetOffset(RKClock *, const double);
 void RKClockSetDxDu(RKClock *, const double);
+void RKClockSetHighPrecision(RKClock *, const bool);
 
 //void RKClockSync(RKClock *clock, const double u);
 
 double RKClockGetTime(RKClock *, const double, struct timeval *);
-double RKClockGetTimeSinceInit(RKClock *, const double);
 
 void RKClockReset(RKClock *);
 

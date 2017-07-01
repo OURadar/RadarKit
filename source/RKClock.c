@@ -27,6 +27,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
     clock->size = size;
     clock->stride = stride;
     clock->autoSync = true;
+    clock->highPrecision = true;
     sprintf(clock->name, "<RKClock %p>", clock);
     clock->tBuffer = (struct timeval *)malloc(clock->size * sizeof(struct timeval));
     clock->xBuffer = (double *)malloc(clock->size * sizeof(double));
@@ -45,6 +46,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
     struct timeval t;
     gettimeofday(&t, NULL);
     clock->initTime = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
+    clock->initDay = floor(clock->initTime / 86400.0) * 86400.0;
     clock->b = 1.0 / (double)clock->stride;
     clock->a = 1.0 - clock->b;
     return clock;
@@ -100,6 +102,10 @@ void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     RKLog("%s Received dx/du = %.2e as wisdom\n", clock->name, dxdu);
 }
 
+void RKClockSetHighPrecision(RKClock *clock, const bool value) {
+    clock->highPrecision = value;
+}
+
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     int j, k;
     double x, dx, du, n;
@@ -108,9 +114,13 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     
     // Get the time
     gettimeofday(&t, NULL);
-    x = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
     if (timeval) {
         *timeval = t;
+    }
+    if (clock->highPrecision) {
+        x = ((double)t.tv_sec - clock->initDay) + 1.0e-6 * (double)t.tv_usec;
+    } else {
+        x = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
     }
     // Reset the references when clock count = 0 or it has been a while
     if (clock->count == 0 || x - clock->latestTime > RKClockAWhile) {
@@ -190,10 +200,6 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     clock->index = RKNextModuloS(k, clock->size);
     clock->count++;
     return x;
-}
-
-double RKClockGetTimeSinceInit(RKClock *clock, const double time) {
-    return time - clock->initTime;
 }
 
 #pragma mark -

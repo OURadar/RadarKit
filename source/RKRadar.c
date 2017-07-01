@@ -1286,6 +1286,7 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
         RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
+    //printf("position @ %.7f\n", position->timeDouble);
     position->flag |= RKPositionFlagReady;
     radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
     return;
@@ -1320,6 +1321,7 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
     }
     if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
         pulse->header.timeDouble = RKClockGetTime(radar->pulseClock, (double)pulse->header.t, &pulse->header.time);
+        //printf("pulse @ %.7f\n", pulse->header.timeDouble);
     }
     if (pulse->header.gateCount > pulse->header.capacity) {
         RKLog("Error. gateCount = %s > capacity = %s\n",
