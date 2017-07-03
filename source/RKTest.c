@@ -691,11 +691,11 @@ void *RKTestPedestalRunLoop(void *input) {
 
     RKLog("%s Started.   mem = %s B\n", pedestal->name, RKIntegerToCommaStyleString(pedestal->memoryUsage));
     
-    int scanMode = pedestal->scanMode;
+    int commandCount = pedestal->commandCount;
     
     while (pedestal->state & RKEngineStateActive) {
-        if (scanMode != pedestal->scanMode) {
-            scanMode = pedestal->scanMode;
+        if (commandCount != pedestal->commandCount) {
+            commandCount = pedestal->commandCount;
             elevation = pedestal->scanElevation;
             azimuth = pedestal->scanAzimuth;
         }
@@ -867,6 +867,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         k = sscanf(command, "%s %s %s", sval[0], sval[1], sval[2]);
         if (k == 3) {
             pedestal->scanMode = RKTestPedestalScanModePPI;
+            pedestal->commandCount++;
             pedestal->scanElevation = atof(sval[1]);
             pedestal->speedAzimuth = atof(sval[2]);
         }
@@ -877,6 +878,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         k = sscanf(command, "%s %s %s %s", sval[0], sval[1], sval[2], sval[3]);
         if (k == 4) {
             pedestal->scanMode = RKTestPedestalScanModeRHI;
+            pedestal->commandCount++;
             pedestal->scanAzimuth = atof(sval[1]);
             pedestal->speedElevation = atof(sval[3]);
             sscanf(sval[2], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
@@ -887,6 +889,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         }
     } else if (!strncmp(command, "bad", 3)) {
         pedestal->scanMode = RKTestPedestalScanModeBadPedestal;
+        pedestal->commandCount++;
         if (response != NULL) {
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
