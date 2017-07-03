@@ -52,6 +52,7 @@ typedef struct rk_test_pedestal {
     char           name[RKNameLength];
     long           counter;
     int            scanMode;
+    int            commandCount;
     float          scanElevation;
     float          scanAzimuth;
     float          speedAzimuth;

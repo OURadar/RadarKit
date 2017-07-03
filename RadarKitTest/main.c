@@ -415,6 +415,7 @@ int main(int argc, const char **argv) {
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
     
     RKAddControl(myRadar, "PPI EL 3 deg @ 45 dps", "p ppi 3 90");
+    RKAddControl(myRadar, "PPI EL 4 deg @ 12 dps", "p ppi 4 12");
     RKAddControl(myRadar, "PPI EL 4 deg @ 6 dps", "p ppi 4 6");
     RKAddControl(myRadar, "PPI EL 5 deg @ 1 dps", "p ppi 5 1");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
