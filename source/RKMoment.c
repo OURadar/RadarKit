@@ -420,7 +420,6 @@ static void *momentCore(void *in) {
             ray->header.endElevation    = E->header.elevationDegrees;
             ray->header.configIndex     = S->header.configIndex;
             ray->header.gateSizeMeters  = S->header.gateSizeMeters * (float)stride;
-            marker = RKMarkerNull;
             
             config = &engine->configBuffer[S->header.configIndex];
             
@@ -448,16 +447,19 @@ static void *momentCore(void *in) {
                 space->KDPFactor = 1.0f / S->header.gateSizeMeters;
             }
             
+            // Consolidate the pulse marker into ray marker
+            marker = RKMarkerNull;
+            i = is;
+            k = 0;
+            do {
+                pulse = RKGetPulse(engine->pulseBuffer, i);
+                marker |= pulse->header.marker;
+                pulses[k++] = pulse;
+                i = RKNextModuloS(i, engine->pulseBufferDepth);
+            } while (k < path.length);
+
             // Duplicate a linear array for processor if we are to process; otherwise just skip this group
             if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
-                k = 0;
-                i = is;
-                do {
-                    pulse = RKGetPulse(engine->pulseBuffer, i);
-                    marker |= pulse->header.marker;
-                    pulses[k++] = pulse;
-                    i = RKNextModuloS(i, engine->pulseBufferDepth);
-                } while (k < path.length);
                 if (ie != i) {
                     RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
                 }
