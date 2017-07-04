@@ -414,10 +414,12 @@ int main(int argc, const char **argv) {
     RKSetVerbose(myRadar, user.verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
     
-    RKAddControl(myRadar, "PPI EL 3 deg @ 45 dps", "p ppi 3 90");
-    RKAddControl(myRadar, "PPI EL 4 deg @ 12 dps", "p ppi 4 12");
+    RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
+    RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
+    RKAddControl(myRadar, "PPI EL 6 deg @ 24 dps", "p ppi 6 24");
+    RKAddControl(myRadar, "PPI EL 5 deg @ 12 dps", "p ppi 5 12");
     RKAddControl(myRadar, "PPI EL 4 deg @ 6 dps", "p ppi 4 6");
-    RKAddControl(myRadar, "PPI EL 5 deg @ 1 dps", "p ppi 5 1");
+    RKAddControl(myRadar, "PPI EL 3 deg @ 1 dps", "p ppi 3 1");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
     RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
 
