@@ -472,6 +472,7 @@ int socketStreamHandler(RKOperator *O) {
     RKRay *ray;
     RKRayHeader rayHeader;
     uint8_t *u8Data = NULL;
+    float *f32Data = NULL;
 
     RKPulse *pulse;
     RKPulseHeader pulseHeader;
@@ -608,8 +609,119 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
-    // Product streams - no skipping
-    if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
+    // Product or display streams - no skipping
+    if (user->streams & user->access & RKStreamProductZVWDPRKS) {
+        // Product streams - assume no display as display data can be derived later
+        if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
+        } else {
+            endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
+        }
+        ray = RKGetRay(user->radar->rays, endIndex);
+
+        if (!(user->streamsInProgress & RKStreamProductZVWDPRKS)) {
+            user->rayIndex = endIndex;
+            s = 0;
+            while (!(ray->header.s & RKRayStatusReady) && engine->server->state == RKServerStateActive && s++ < 20) {
+                if (s % 10 == 0 && engine->verbose > 1) {
+                    RKLog("%s %s sleep 0/%.1f s  RKRay\n", engine->name, O->name, s * 0.1f);
+                }
+                usleep(100000);
+            }
+        }
+
+        if (ray->header.s & RKRayStatusReady && engine->server->state == RKServerStateActive) {
+            if (!(user->streamsInProgress & RKStreamProductZVWDPRKS)) {
+                user->streamsInProgress |= (user->streams & RKStreamProductZVWDPRKS);
+            }
+            while (user->rayIndex != endIndex) {
+                ray = RKGetRay(user->radar->rays, user->rayIndex);
+                // Duplicate and send the header with only selected products
+                memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                // Gather the products to be sent
+                rayHeader.productList = RKProductListNone;
+                if (user->streams & RKStreamProductZ) {
+                    rayHeader.productList |= RKProductListProductZ;
+                }
+                if (user->streams & RKStreamProductV) {
+                    rayHeader.productList |= RKProductListProductV;
+                }
+                if (user->streams & RKStreamProductW) {
+                    rayHeader.productList |= RKProductListProductW;
+                }
+                if (user->streams & RKStreamProductD) {
+                    rayHeader.productList |= RKProductListProductD;
+                }
+                if (user->streams & RKStreamProductP) {
+                    rayHeader.productList |= RKProductListProductP;
+                }
+                if (user->streams & RKStreamProductR) {
+                    rayHeader.productList |= RKProductListProductR;
+                }
+                if (user->streams & RKStreamProductK) {
+                    rayHeader.productList |= RKProductListProductK;
+                }
+                if (user->streams & RKStreamProductS) {
+                    rayHeader.productList |= RKProductListProductS;
+                }
+                uint32_t productList = rayHeader.productList & RKStreamProductZVWDPRKS;
+                uint32_t productCount = __builtin_popcount(productList);
+                //RKLog("ProductCount = %d / %x\n", productCount, productList);
+                
+                rayHeader.gateCount /= user->rayDownSamplingRatio;
+                rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
+                
+                O->delimTx.type = RKNetworkPacketTypeRayDisplay;
+                O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(float));
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+                
+                for (j = 0; j < productCount; j++) {
+                    if (productList & RKProductListProductZ) {
+                        productList ^= RKProductListProductZ;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+                    } else if (productList & RKProductListProductV) {
+                        productList ^= RKProductListProductV;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexV);
+                    } else if (productList & RKProductListProductW) {
+                        productList ^= RKProductListProductW;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexW);
+                    } else if (productList & RKProductListProductD) {
+                        productList ^= RKProductListProductD;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexD);
+                    } else if (productList & RKProductListProductP) {
+                        productList ^= RKProductListProductP;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexP);
+                    } else if (productList & RKProductListProductR) {
+                        productList ^= RKProductListProductR;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexR);
+                    } else if (productList & RKProductListProductK) {
+                        productList ^= RKProductListProductK;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
+                    } else if (productList & RKProductListProductS) {
+                        productList ^= RKProductListProductS;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexS);
+                    } else {
+                        f32Data = NULL;
+                    }
+                    
+                    if (f32Data) {
+                        float *lowRateData = (float *)user->string;
+                        for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
+                            lowRateData[i] = f32Data[k];
+                        }
+                        RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(float), NULL);
+                    }
+                }
+                user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
+            }
+        } else {
+            if ((int)ray->header.i > 0) {
+                RKLog("%s %s No Ray / Deactivated.  streamsInProgress = 0x%08x\n",
+                      engine->name, O->name, user->streamsInProgress);
+            }
+        }
+    } else if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
+        // Display streams - no skipping
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
         } else {

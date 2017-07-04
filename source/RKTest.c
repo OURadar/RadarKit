@@ -707,7 +707,7 @@ void *RKTestPedestalRunLoop(void *input) {
         position->azimuthDegrees = azimuth;
         position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
         position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
-        position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthEnabled;
+        position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
 
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             position->sweepElevationDegrees = pedestal->scanElevation;
