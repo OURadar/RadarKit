@@ -664,7 +664,7 @@ int socketStreamHandler(RKOperator *O) {
                 if (user->streams & RKStreamProductS) {
                     rayHeader.productList |= RKProductListProductS;
                 }
-                uint32_t productList = rayHeader.productList & RKStreamProductZVWDPRKS;
+                uint32_t productList = rayHeader.productList & RKProductListProductZVWDPRK;
                 uint32_t productCount = __builtin_popcount(productList);
                 //RKLog("ProductCount = %d / %x\n", productCount, productList);
                 
@@ -774,41 +774,41 @@ int socketStreamHandler(RKOperator *O) {
                 if (user->streams & RKStreamDisplayS) {
                     rayHeader.productList |= RKProductListDisplayS;
                 }
-                uint32_t productList = rayHeader.productList;
-                uint32_t productCount = __builtin_popcount(productList);
-                //RKLog("ProductCount = %d / %x\n", productCount, productList);
+                uint32_t displayList = rayHeader.productList & RKProductListDisplayZVWDPRKS;
+                uint32_t displayCount = __builtin_popcount(displayList);
+                //RKLog("displayCount = %d / %x\n", productCount, productList);
 
                 rayHeader.gateCount /= user->rayDownSamplingRatio;
                 rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
 
                 O->delimTx.type = RKNetworkPacketTypeRayDisplay;
-                O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(uint8_t));
+                O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + displayCount * rayHeader.gateCount * sizeof(uint8_t));
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
 
-                for (j = 0; j < productCount; j++) {
-                    if (productList & RKProductListDisplayZ) {
-                        productList ^= RKProductListDisplayZ;
+                for (j = 0; j < displayCount; j++) {
+                    if (displayList & RKProductListDisplayZ) {
+                        displayList ^= RKProductListDisplayZ;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-                    } else if (productList & RKProductListDisplayV) {
-                        productList ^= RKProductListDisplayV;
+                    } else if (displayList & RKProductListDisplayV) {
+                        displayList ^= RKProductListDisplayV;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
-                    } else if (productList & RKProductListDisplayW) {
-                        productList ^= RKProductListDisplayW;
+                    } else if (displayList & RKProductListDisplayW) {
+                        displayList ^= RKProductListDisplayW;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
-                    } else if (productList & RKProductListDisplayD) {
-                        productList ^= RKProductListDisplayD;
+                    } else if (displayList & RKProductListDisplayD) {
+                        displayList ^= RKProductListDisplayD;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
-                    } else if (productList & RKProductListDisplayP) {
-                        productList ^= RKProductListDisplayP;
+                    } else if (displayList & RKProductListDisplayP) {
+                        displayList ^= RKProductListDisplayP;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
-                    } else if (productList & RKProductListDisplayR) {
-                        productList ^= RKProductListDisplayR;
+                    } else if (displayList & RKProductListDisplayR) {
+                        displayList ^= RKProductListDisplayR;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
-                    } else if (productList & RKProductListDisplayK) {
-                        productList ^= RKProductListDisplayK;
+                    } else if (displayList & RKProductListDisplayK) {
+                        displayList ^= RKProductListDisplayK;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
-                    } else if (productList & RKProductListDisplayS) {
-                        productList ^= RKProductListDisplayS;
+                    } else if (displayList & RKProductListDisplayS) {
+                        displayList ^= RKProductListDisplayS;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
                     } else {
                         u8Data = NULL;
