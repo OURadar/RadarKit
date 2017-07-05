@@ -134,7 +134,6 @@ UserParams processInput(int argc, const char **argv) {
     user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
-    user.prf = 2000;
 
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
