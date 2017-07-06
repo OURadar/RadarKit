@@ -285,7 +285,7 @@ static void *fileRemover(void *in) {
             remove(path);
             me->usage -= indexedStats[me->index].size;
             me->index++;
-            RKLog("%s %s Usage -> %s B\n", engine->name, name, RKIntegerToCommaStyleString(me->usage));
+            RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
 
             // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
             if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {
