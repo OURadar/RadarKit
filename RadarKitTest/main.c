@@ -13,12 +13,12 @@
 #define UNDERLINE(x)                "\033[4m" x "\033[24m"
 #define ROOT_PATH                   "data"
 
-
 // User parameters in a struct
 typedef struct user_params {
     int   coresForPulseCompression;
     int   coresForProductGenerator;
     int   prf;
+    int   sprt;
     int   gateCount;
     int   verbose;
     int   testPulseCompression;
@@ -299,7 +299,10 @@ UserParams processInput(int argc, const char **argv) {
                 sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
                 break;
             case 'f':
-                user.prf = (int)atof(optarg);
+                k = sscanf(optarg, "%d,%d", &user.prf, &user.sprt);
+                if (k < 2) {
+                    user.sprt = 0;
+                }
                 break;
             case 'g':
                 user.gateCount = (int)atof(optarg);
@@ -448,7 +451,11 @@ int main(int argc, const char **argv) {
         int i = 0;
         char cmd[64] = "";
         if (user.prf) {
-            i += sprintf(cmd + i, " f %d", user.prf);
+            if (user.sprt > 1) {
+                i += sprintf(cmd + i, " f %d,%d", user.prf, user.sprt);
+            } else {
+                i += sprintf(cmd + i, " f %d", user.prf);
+            }
         }
         if (user.gateCount) {
             i += sprintf(cmd + i, " g %d", user.gateCount);

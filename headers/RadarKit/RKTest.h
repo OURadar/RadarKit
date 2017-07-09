@@ -42,6 +42,7 @@ typedef struct rk_test_transceiver {
     long           counter;
     double         fs;
     double         prt;
+    RKByte         sprt;
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
