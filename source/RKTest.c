@@ -35,7 +35,6 @@ void RKTestModuloMath(void) {
     k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
 }
 
-
 void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKSIMD_show_info();
     
@@ -399,7 +398,6 @@ void RKTestParseCommaDelimitedValues(void) {
     RKLog("%s -> %d %d %d\n", string, i[0], i[1], i[2]);
 }
 
-
 #pragma mark - Transceiver Emulator
 
 void *RKTestTransceiverRunLoop(void *input) {
@@ -410,7 +408,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     float a;
     double t = 0.0;
     double dt = 0.0;
-    long tic;
+    long tic = 0;
     struct timeval t0, t1;
     bool even = true;
     
@@ -446,6 +444,8 @@ void *RKTestTransceiverRunLoop(void *input) {
     transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
     (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+    const long ticEven = (long)(periodEven * 1.0e6);
+    const long ticOdd = (long)(periodOdd * 1.0e6);
     
     while (transceiver->state & RKEngineStateActive) {
         
@@ -475,7 +475,12 @@ void *RKTestTransceiverRunLoop(void *input) {
             
             RKSetPulseHasData(radar, pulse);
 
-            tic = transceiver->prt * transceiver->counter;
+            // tic = transceiver->prt * transceiver->counter;
+            if (even) {
+                tic += ticEven;
+            } else {
+                tic += ticOdd;
+            }
 
             if (transceiver->sleepInterval > 0 && tic > 0 && tic % transceiver->sleepInterval == 0) {
                 RKLog("%s sleeping at counter = %s / %s ... %.2e %.2e / %.2e %.2e\n",
@@ -486,6 +491,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 sleep(2);
                 transceiver->counter = 0;
                 even = true;
+                tic = 0;
                 t += 2.0;
             }
             if (even) {
@@ -493,6 +499,7 @@ void *RKTestTransceiverRunLoop(void *input) {
             } else {
                 t += periodOdd;
             }
+            even = !even;
         }
 
         // Report health
@@ -528,7 +535,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     }
     return NULL;
 }
-
 
 RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 
