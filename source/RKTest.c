@@ -412,6 +412,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     double dt = 0.0;
     long tic;
     struct timeval t0, t1;
+    bool even = true;
     
     const int chunkSize = MAX(1, (int)floor(0.1 / transceiver->prt));
     
@@ -423,17 +424,28 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s PRF = %s Hz   gateCount = %s   range = %.1f km\n",
+        RKLog("%s %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
-              RKIntegerToCommaStyleString((int)(1.0f / transceiver->prt)),
+              transceiver->sprt > 1 ? "Base " : "",
+              RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+              1000.0 * transceiver->prt,
+              transceiver->sprt == 1 ? "Normal" :
+              (transceiver->sprt == 2 ? "2:3 Staggered" :
+               (transceiver->sprt == 3 ? "3:4 Staggered" :
+                (transceiver->sprt == 4 ? "4:5 Staggered" : "Normal"))));
+        RKLog("%s gateCount = %s   R = %.1f km   chunkSize = %s   tics = %s\n",
+              transceiver->name,
               RKIntegerToCommaStyleString(transceiver->gateCount),
-              transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3);
-        RKLog("%s chunk size = %s   tics = %s\n",
-              transceiver->name,
+              transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3,
               RKIntegerToCommaStyleString(chunkSize),
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
+    const double periodEven = transceiver->prt;
+    const double periodOdd =
+    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
     
     while (transceiver->state & RKEngineStateActive) {
         
@@ -473,9 +485,14 @@ void *RKTestTransceiverRunLoop(void *input) {
                       radar->pulseClock->a, radar->pulseClock->b, radar->positionClock->a, radar->positionClock->b);
                 sleep(2);
                 transceiver->counter = 0;
+                even = true;
                 t += 2.0;
             }
-            t += transceiver->prt;
+            if (even) {
+                t += periodEven;
+            } else {
+                t += periodOdd;
+            }
         }
 
         // Report health
@@ -530,6 +547,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->gateCount = RKGetPulseCapacity(radar);
     transceiver->state = RKEngineStateAllocated;
     
+    int i, j, k;
+    
     // Parse out input parameters
     if (input) {
         char *sb = (char *)input, *se = NULL, *sv = NULL;
@@ -543,9 +562,22 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             sv = se + 1;
             switch (*sb) {
                 case 'f':
-                    transceiver->prt = 1.0 / (double)atof(sv);
+                    i = sscanf(sv, "%d,%d", &j, &k);
+                    transceiver->prt = 1.0 / (double)j;
+                    if (i == 2) {
+                        transceiver->sprt = k;
+                    } else {
+                        transceiver->sprt = 1;
+                    }
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">%s prf = %s Hz\n", transceiver->name, RKIntegerToCommaStyleString((long)(1.0f / transceiver->prt)));
+                        RKLog("%s PRF = %s Hz   (PRT = %.3f ms, %s)\n",
+                              transceiver->name,
+                              RKIntegerToCommaStyleString((long)j),
+                              1000.0 * transceiver->prt,
+                              transceiver->sprt == 1 ? "Normal" :
+                              (transceiver->sprt == 2 ? "2:3 Staggered" :
+                               (transceiver->sprt == 3 ? "3:4 Staggered" :
+                                (transceiver->sprt == 4 ? "4:5 Staggered" : "Normal"))));
                     }
                     break;
                 case 'F':

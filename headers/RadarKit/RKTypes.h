@@ -120,8 +120,7 @@
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
 
-typedef uint8_t   RKBoolean;
-typedef int8_t    RKByte;
+typedef uint8_t   RKByte;
 typedef float     RKFloat;           // We can change this to double if we decided one day
 typedef ssize_t   RKResult;          // Generic return from functions, 0 for no errors and !0 for others.
 typedef void *    RKBuffer;
