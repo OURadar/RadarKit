@@ -405,6 +405,7 @@ int main(int argc, const char **argv) {
     desc.latitude = 35.181251;
     desc.longitude = -97.436752;
     desc.radarHeight = 2.5f;
+    desc.wavelength = 0.03f;
     strcpy(desc.dataPath, ROOT_PATH);
     myRadar = RKInitWithDesc(desc);
     
