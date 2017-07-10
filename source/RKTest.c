@@ -405,7 +405,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKRadar *radar = transceiver->radar;
 
     int j, p, g, n;
-    float a;
     double t = 0.0;
     double dt = 0.0;
     long tic = 0;
@@ -447,8 +446,15 @@ void *RKTestTransceiverRunLoop(void *input) {
     const long ticEven = (long)(periodEven * 1.0e6);
     const long ticOdd = (long)(periodOdd * 1.0e6);
     
+    double periodTotal;
+    float a;
+    float phi;
+    float noise;
+
     while (transceiver->state & RKEngineStateActive) {
-        
+
+        periodTotal = 0.0;
+
         for (j = 0; j < chunkSize && transceiver->state & RKEngineStateActive; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
@@ -459,16 +465,18 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
             a = cosf(2.0 * M_PI * 0.1 * t);
-            a *= a;
+            a = 24.0f * a * a;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                
+
                 // Some random pattern for testing
-                //n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
+                phi = 1.047e3f * t;
+                noise = (float)rand() / RAND_MAX * 2.0f * M_PI;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    X->i = (int16_t)(16.0f * a * cosf((float)g * transceiver->gateSizeMeters * 0.0001f)) + (rand() & 0xF) - 8;
-                    //X->q = (rand() & 0xF) - 8;
+                    phi += transceiver->gateSizeMeters * 209.4f;
+                    X->i = (int16_t)(a * cosf(phi) + cosf(noise));
+                    X->q = (int16_t)(a * sinf(phi) + sinf(noise));
                     X++;
                 }
             }
@@ -488,15 +496,17 @@ void *RKTestTransceiverRunLoop(void *input) {
                       RKIntegerToCommaStyleString((long)(transceiver->prt * transceiver->counter)),
                       RKIntegerToCommaStyleString(transceiver->sleepInterval),
                       radar->pulseClock->a, radar->pulseClock->b, radar->positionClock->a, radar->positionClock->b);
-                sleep(2);
                 transceiver->counter = 0;
                 even = true;
                 tic = 0;
                 t += 2.0;
+                sleep(2);
             }
             if (even) {
+                periodTotal += periodEven;
                 t += periodEven;
             } else {
+                periodTotal += periodOdd;
                 t += periodOdd;
             }
             even = !even;
@@ -530,7 +540,10 @@ void *RKTestTransceiverRunLoop(void *input) {
             dt = RKTimevalDiff(t1, t0);
             usleep(100);
             n++;
-        } while (radar->active && dt < transceiver->prt * chunkSize);
+            if (n % 10000 == 0) {
+                printf("Sleeping ... n = %d ...\n", n);
+            }
+        } while (radar->active && dt < periodTotal);
         t0 = t1;
     }
     return NULL;
