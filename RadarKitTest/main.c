@@ -506,7 +506,7 @@ int main(int argc, const char **argv) {
             waveform = RKWaveformInitFromFile(wavfile);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
-            waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+            waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);

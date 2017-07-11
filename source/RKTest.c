@@ -772,6 +772,7 @@ void *RKTestPedestalRunLoop(void *input) {
         if (scanStartEndPPI) {
             scanStartEndPPI = false;
             position->flag |= RKPositionFlagAzimuthComplete;
+            RKLog("%s scanStartEndPPI\n", pedestal->name);
         }
         if (scanStartRHI) {
             scanStartRHI = false;
