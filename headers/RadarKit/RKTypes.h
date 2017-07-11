@@ -306,16 +306,18 @@ enum RKInitFlag {
     RKInitFlagVerbose                = 0x0001,
     RKInitFlagVeryVerbose            = 0x0002,
     RKInitFlagVeryVeryVerbose        = 0x0004,
-    RKInitFlagAllocConfigBuffer      = 0x0100,
-    RKInitFlagAllocRawIQBuffer       = 0x0200,
-    RKInitFlagAllocPositionBuffer    = 0x0400,
-    RKInitFlagAllocMomentBuffer      = 0x0800,
-    RKInitFlagAllocHealthBuffer      = 0x1000,
-    RKInitFlagAllocHealthNodes       = 0x2000,
-    RKInitFlagSignalProcessor        = 0x8000,
-    RKInitFlagRelay                  = 0x3B03,                       // Everything = 0xBF00 - 0x8000 - 0x0400
-    RKInitFlagAllocEverything        = 0xBF01,
-    RKInitFlagAllocEverythingQuiet   = 0xBF00,
+    RKInitFlagAllocStatusBuffer      = 0x0100,                       // 1 << 8
+    RKInitFlagAllocConfigBuffer      = 0x0200,                       // 1 << 9
+    RKInitFlagAllocRawIQBuffer       = 0x0400,                       // 1 << 10
+    RKInitFlagAllocPositionBuffer    = 0x0800,                       // 1 << 11
+    RKInitFlagAllocMomentBuffer      = 0x1000,                       // 1 << 12
+    RKInitFlagAllocHealthBuffer      = 0x2000,                       // 1 << 13
+    RKInitFlagAllocHealthNodes       = 0x4000,                       // 1 << 14
+    RKInitFlagSignalProcessor        = 0x8000,                       // 1 << 15
+    //RKInitFlagRelay                  = 0x3B03,                       // Everything = 0xBF00 - 0x8000 - 0x0400
+    RKInitFlagRelay                  = 0x7703,                       // Everything = 0xFF00 - 0x8000(DSP) - 0x0800(Pos)
+    RKInitFlagAllocEverything        = 0xFF01,
+    RKInitFlagAllocEverythingQuiet   = 0xFF00,
 };
 
 typedef uint32_t RKProductList;
@@ -480,6 +482,7 @@ typedef struct rk_radar_desc {
     uint32_t         pulseToRayRatio;
     uint32_t         healthNodeCount;
     uint32_t         healthBufferDepth;
+    uint32_t         statusBufferDepth;
     uint32_t         configBufferDepth;
     uint32_t         positionBufferDepth;
     uint32_t         pulseBufferDepth;
@@ -696,17 +699,14 @@ typedef struct rk_control {
 } RKControl;
 
 typedef struct rk_status {
-    uint8_t          pulseOrigin;
     uint8_t          pulseMonitorLag;
     uint8_t          pulseSkipCount;
     uint8_t          pulseCoreLags[RKProcessorStatusPulseCoreCount];
     uint8_t          pulseCoreUsage[RKProcessorStatusPulseCoreCount];
-    uint8_t          rayOrigin;
     uint8_t          rayMonitorLag;
     uint8_t          raySkipCount;
     uint8_t          rayCoreLags[RKProcessorStatusRayCoreCount];
     uint8_t          rayCoreUsage[RKProcessorStatusRayCoreCount];
-    uint8_t          recorderOrigin;
     uint8_t          recorderLag;
 } RKStatus;
 

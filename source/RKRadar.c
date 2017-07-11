@@ -99,7 +99,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Set some non-zero variables
     sprintf(radar->name, "%s<MasterController>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(13) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-    radar->state |= RKRadarStateBaseAllocated;
     radar->memoryUsage += bytes;
 
     // Copy over the input flags and constaint the capacity and depth to hard-coded limits
@@ -125,6 +124,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->desc.pulseCapacity = (radar->desc.pulseCapacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     if (radar->desc.pulseCapacity != desc.pulseCapacity) {
         RKLog("Info. Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+    }
+    if (radar->desc.statusBufferDepth > RKBufferSSlotCount) {
+        radar->desc.statusBufferDepth = RKBufferSSlotCount;
+        RKLog("Info. Status buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
+    } else if (radar->desc.statusBufferDepth == 0) {
+        radar->desc.statusBufferDepth = 90;
     }
     if (radar->desc.configBufferDepth > RKBufferCSlotCount) {
         radar->desc.configBufferDepth = RKBufferCSlotCount;
@@ -168,6 +173,30 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(radar->desc.dataPath, RKDefaultDataPath);
     }
 
+    // Status buffer
+    if (radar->desc.initFlags & RKInitFlagAllocStatusBuffer) {
+        radar->state |= RKRadarStateStatusBufferAllocating;
+        bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for status buffer?\n");
+            radar->desc.statusBufferDepth = 25;
+            bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
+        }
+        radar->status = (RKStatus *)malloc(bytes);
+        if (radar->status == NULL) {
+            RKLog("Error. Unable to allocate memory for status buffer");
+            exit(EXIT_FAILURE);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Status buffer occupies %s B  (%s sets)\n",
+                  RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
+        }
+        memset(radar->status, 0, bytes);
+        radar->memoryUsage += bytes;
+        radar->state ^= RKRadarStateStatusBufferAllocating;
+        radar->state |= RKRadarStateStatusBufferInitialized;
+    }
+
     // Config buffer
     if (radar->desc.initFlags & RKInitFlagAllocConfigBuffer) {
         radar->state |= RKRadarStateConfigBufferAllocating;
@@ -179,7 +208,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->configs = (RKConfig *)malloc(bytes);
         if (radar->configs == NULL) {
-            RKLog("Error. Unable to allocate memory for pulse parameters");
+            RKLog("Error. Unable to allocate memory for config buffer");
             exit(EXIT_FAILURE);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -341,7 +370,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             control->uid = i;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("Controls occupy %s B (%s)",
+            RKLog("Controls occupy %s B (%s units)",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(radar->desc.controlCount));
         }
@@ -880,6 +909,7 @@ void RKShowOffsets(RKRadar *radar) {
 }
 
 #pragma mark - Interaction / State Change
+
 //
 // Set the radar to go live. All the engines will be ignited with this function, going into infinite
 // loops waiting for incoming samples or events, which come from network connections.
@@ -945,7 +975,7 @@ int RKGoLive(RKRadar *radar) {
 
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar live. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
+        RKLog("Radar live. All data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
               RKIntegerToCommaStyleString(radar->memoryUsage),
               RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
@@ -1034,6 +1064,7 @@ int RKWaitWhileActive(RKRadar *radar) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
                 s = 0;
+                // General Health
                 transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
                 pedestalOkay = positionIndex == radar->positionIndex ? false : true;
                 healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
@@ -1063,18 +1094,17 @@ int RKWaitWhileActive(RKRadar *radar) {
                 healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
             }
             // Put together a system status
-            status.pulseOrigin = radar->pulseIndex;
             status.pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
             for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
                 status.pulseCoreLags[k] = (uint8_t)(99.5f * radar->pulseCompressionEngine->workers[k].lag);
                 status.pulseCoreUsage[k] = (uint8_t)(99.5 * radar->pulseCompressionEngine->workers[k].dutyCycle);
             }
-            status.rayOrigin = radar->momentEngine->processedPulseIndex;
             status.rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
             for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
                 status.rayCoreLags[k] = (uint8_t)(99.5f * radar->momentEngine->workers[k].lag);
                 status.rayCoreUsage[k] = (uint8_t)(99.5 * radar->momentEngine->workers[k].dutyCycle);
             }
+            status.recorderLag = radar->dataRecorder->lag;
         }
         usleep(100000);
     }
