@@ -520,6 +520,9 @@ static void *rayGatherer(void *in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->rayBufferDepth);
     }
+    if (tidSweepWriter) {
+        pthread_join(tidSweepWriter, NULL);
+    }
     return NULL;
 }
 
