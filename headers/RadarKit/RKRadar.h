@@ -86,6 +86,7 @@ struct rk_radar {
     //
     // Anchor indices of the buffers
     //
+    uint32_t                   statusIndex;
     uint32_t                   configIndex;
     uint32_t                   healthIndex;
     uint32_t                   positionIndex;

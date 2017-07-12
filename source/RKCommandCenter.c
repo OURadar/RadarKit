@@ -544,9 +544,28 @@ int socketStreamHandler(RKOperator *O) {
     // Processor Status
     if (user->streams & user->access & RKStreamStatusProcessorStatus) {
         if (user->streamsInProgress & RKStreamStatusHealth) {
-            //endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
+            endIndex = RKPreviousNModuloS(user->radar->statusIndex, 1, user->radar->desc.statusBufferDepth);
         } else {
-            //endIndex = user->radar->healthIndex;
+            endIndex = user->radar->statusIndex;
+            s = 0;
+            while (!(user->radar->status[endIndex].flag == RKStatusFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
+                if (s % 10 == 0 && engine->verbose > 1) {
+                    RKLog("%s %s sleep 0/%.1f s  RKStatus\n", engine->name, O->name, s * 0.1f);
+                }
+                usleep(100000);
+            }
+        }
+        if (user->radar->status[endIndex].flag == RKStatusFlagReady && engine->server->state == RKServerStateActive) {
+            user->streamsInProgress |= RKStreamStatusProcessorStatus;
+            j = 0;
+            k = 0;
+            while (user->statusIndex != endIndex) {
+                O->delimTx.type = RKNetworkPacketTypeProcessorStatus;
+                O->delimTx.size = (uint32_t)sizeof(RKStatus);
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->status[user->healthIndex], sizeof(RKStatus), NULL);
+            }
+        } else {
+            printf("No Status / Deactivated.\n");
         }
     }
     
@@ -566,7 +585,6 @@ int socketStreamHandler(RKOperator *O) {
         }
         if (user->radar->healths[endIndex].flag == RKHealthFlagReady && engine->server->state == RKServerStateActive) {
             user->streamsInProgress |= RKStreamStatusHealth;
-
             j = 0;
             k = 0;
             while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
