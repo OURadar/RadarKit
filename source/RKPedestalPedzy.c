@@ -24,7 +24,6 @@ static int RKPedestalPedzyRead(RKClient *client) {
     if (client->netDelimiter.type == 'p') {
         // The payload just read by RKClient
         RKPosition *position = (RKPosition *)client->userPayload;
-        
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
             RKLog("Position   %010ld   %010ld   %08x EL %.2f  AZ %.2f --> %d\n",
                   position->i,
@@ -38,6 +37,11 @@ static int RKPedestalPedzyRead(RKClient *client) {
             RKLog("%s failed to get a vacant position.\n", client->name);
             return RKResultFailedToGetVacantPosition;
         }
+        // Unset the time and flag prior to memcpy
+        position->time.tv_sec = 0;
+        position->time.tv_usec = 0;
+        position->timeDouble = 0.0;
+        position->flag = RKPositionFlagVacant;
         memcpy(newPosition, client->userPayload, sizeof(RKPosition));
         // Correct by radar heading
         newPosition->azimuthDegrees += radar->desc.heading + 180.0f;
