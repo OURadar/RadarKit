@@ -483,7 +483,6 @@ void *RKTestTransceiverRunLoop(void *input) {
             
             RKSetPulseHasData(radar, pulse);
 
-            // tic = transceiver->prt * transceiver->counter;
             if (even) {
                 tic += ticEven;
             } else {
