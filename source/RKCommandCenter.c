@@ -541,6 +541,15 @@ int socketStreamHandler(RKOperator *O) {
     // 4) If (2) can't be met within 2 secs, in progress flag is not set so (2) will be checked
     //    again in the next iteraction.
 
+    // Processor Status
+    if (user->streams & user->access & RKStreamStatusProcessorStatus) {
+        if (user->streamsInProgress & RKStreamStatusHealth) {
+            //endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
+        } else {
+            //endIndex = user->radar->healthIndex;
+        }
+    }
+    
     // Health Status
     if (user->streams & user->access & RKStreamStatusHealth) {
         if (user->streamsInProgress & RKStreamStatusHealth) {
