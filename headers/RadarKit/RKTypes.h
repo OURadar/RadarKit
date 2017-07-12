@@ -259,6 +259,12 @@ enum RKPositionFlag {
     RKPositionFlagReady              = (1 << 31)
 };
 
+typedef uint32_t RKStatusFlag;
+enum RKStatusFlag {
+    RKStatusFlagVacant               = 0,
+    RKStatusFlagReady                = 1
+};
+
 typedef uint32_t RKHealthFlag;
 enum RKHealthFlag {
     RKHealthFlagVacant               = 0,
@@ -314,7 +320,6 @@ enum RKInitFlag {
     RKInitFlagAllocHealthBuffer      = 0x2000,                       // 1 << 13
     RKInitFlagAllocHealthNodes       = 0x4000,                       // 1 << 14
     RKInitFlagSignalProcessor        = 0x8000,                       // 1 << 15
-    //RKInitFlagRelay                  = 0x3B03,                       // Everything = 0xBF00 - 0x8000 - 0x0400
     RKInitFlagRelay                  = 0x7703,                       // Everything = 0xFF00 - 0x8000(DSP) - 0x0800(Pos)
     RKInitFlagAllocEverything        = 0xFF01,
     RKInitFlagAllocEverythingQuiet   = 0xFF00,
@@ -708,6 +713,7 @@ typedef struct rk_status {
     uint8_t          rayCoreLags[RKProcessorStatusRayCoreCount];
     uint8_t          rayCoreUsage[RKProcessorStatusRayCoreCount];
     uint8_t          recorderLag;
+    RKStatusFlag     flag;
 } RKStatus;
 
 typedef struct rk_file_monitor {
