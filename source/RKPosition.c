@@ -150,7 +150,7 @@ static void *pulseTagger(void *in) {
         // Wait until we have a position newer than pulse time.
         s = 0;
         i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
-        while (engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble && engine->state & RKEngineStateActive) {
+        while ((!(engine->positionBuffer[i].flag & RKPositionFlagReady) || engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble) && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 3/%.1f s   k = %d   latestTime = %s <= %s = header.timeDouble\n",
@@ -224,12 +224,12 @@ static void *pulseTagger(void *in) {
         
         // Second set of logics are derived from marker change
         // NOTE: hasComplete indicates that a sweep complete has been encountered during the search, which may be prior to positionBefore
-        // NOTE: i = 1 means this loop is still using the same pair of positionBefore and positionAfter
-        //       i = 2 means the next pair was valid, this is the case when pulses come in equal or faster than positions
-        //       i > 2 means the next pair was invalid, this is the case when pulses come in slower than positions
-        if (i == 2 && (positionBefore->flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete))) {
+        // NOTE: i = 0 means this loop is still using the same pair of positionBefore and positionAfter
+        //       i = 1 means the next pair was valid, this is the case when pulses come in equal or faster than positions
+        //       i > 1 means the next pair was invalid, this is the case when pulses come in slower than positions
+        if (i == 1 && (positionBefore->flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete))) {
             marker0 |= RKMarkerSweepEnd;
-        } else if (i > 2 && hasSweepEnd && !(marker1 & RKMarkerSweepEnd)) {
+        } else if (i > 1 && hasSweepEnd && !(marker1 & RKMarkerSweepEnd)) {
             marker0 |= RKMarkerSweepEnd;
         }
         if (!(marker1 & RKMarkerSweepMiddle) && (marker0 & RKMarkerSweepMiddle)) {
