@@ -191,8 +191,8 @@ static void *pulseTagger(void *in) {
         positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;
         
         // Roll back one slot, which should be the position just before the pulse was acquired.
-        j = RKPreviousModuloS(j, engine->positionBufferDepth);
-        positionBefore = &engine->positionBuffer[j];   timeBefore = positionBefore->timeDouble;
+        s = RKPreviousModuloS(j, engine->positionBufferDepth);
+        positionBefore = &engine->positionBuffer[s];   timeBefore = positionBefore->timeDouble;
         
         // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
         alpha = (pulse->header.timeDouble - timeBefore) / (timeAfter - timeBefore);
