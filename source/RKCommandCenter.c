@@ -588,12 +588,12 @@ int socketStreamHandler(RKOperator *O) {
         }
         if (user->radar->status[endIndex].flag == RKStatusFlagReady && engine->server->state == RKServerStateActive) {
             user->streamsInProgress |= RKStreamStatusProcessorStatus;
-            j = 0;
-            k = 0;
             while (user->statusIndex != endIndex) {
                 O->delimTx.type = RKNetworkPacketTypeProcessorStatus;
                 O->delimTx.size = (uint32_t)sizeof(RKStatus);
-                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->status[user->healthIndex], sizeof(RKStatus), NULL);
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->status[user->statusIndex], sizeof(RKStatus), NULL);
+                printf("status %d sent.\n", user->statusIndex);
+                user->statusIndex = RKNextModuloS(user->statusIndex, user->radar->desc.statusBufferDepth);
             }
         } else {
             printf("No Status / Deactivated.\n");
@@ -1072,6 +1072,9 @@ RKStream RKStringToFlag(const char * string) {
             case '4':
                 flag |= RKStreamStatusEngines;
                 break;
+            case '!':
+                flag |= RKStreamStatusProcessorStatus;
+                break;
             case 'z':
                 flag |= RKStreamDisplayZ;
                 break;
@@ -1136,29 +1139,30 @@ RKStream RKStringToFlag(const char * string) {
 
 int RKFlagToString(char *string, RKStream flag) {
     int j = 0;
-    if (flag & RKStreamStatusPulses)      { j += sprintf(string + j, "1"); }
-    if (flag & RKStreamStatusRays)        { j += sprintf(string + j, "2"); }
-    if (flag & RKStreamStatusPositions)   { j += sprintf(string + j, "3"); }
-    if (flag & RKStreamStatusEngines)     { j += sprintf(string + j, "4"); }
-    if (flag & RKStreamStatusHealth)      { j += sprintf(string + j, "h"); }
-    if (flag & RKStreamDisplayZ)          { j += sprintf(string + j, "z"); }
-    if (flag & RKStreamProductZ)          { j += sprintf(string + j, "Z"); }
-    if (flag & RKStreamDisplayV)          { j += sprintf(string + j, "v"); }
-    if (flag & RKStreamProductV)          { j += sprintf(string + j, "V"); }
-    if (flag & RKStreamDisplayW)          { j += sprintf(string + j, "w"); }
-    if (flag & RKStreamProductW)          { j += sprintf(string + j, "W"); }
-    if (flag & RKStreamDisplayD)          { j += sprintf(string + j, "d"); }
-    if (flag & RKStreamProductD)          { j += sprintf(string + j, "D"); }
-    if (flag & RKStreamDisplayP)          { j += sprintf(string + j, "p"); }
-    if (flag & RKStreamProductP)          { j += sprintf(string + j, "P"); }
-    if (flag & RKStreamDisplayR)          { j += sprintf(string + j, "r"); }
-    if (flag & RKStreamProductR)          { j += sprintf(string + j, "R"); }
-    if (flag & RKStreamDisplayK)          { j += sprintf(string + j, "k"); }
-    if (flag & RKStreamProductK)          { j += sprintf(string + j, "K"); }
-    if (flag & RKStreamDisplayS)          { j += sprintf(string + j, "s"); }
-    if (flag & RKStreamProductS)          { j += sprintf(string + j, "S"); }
-    if (flag & RKStreamDisplayIQ)         { j += sprintf(string + j, "i"); }
-    if (flag & RKStreamProductIQ)         { j += sprintf(string + j, "I"); }
+    if (flag & RKStreamStatusPulses)          { j += sprintf(string + j, "1"); }
+    if (flag & RKStreamStatusRays)            { j += sprintf(string + j, "2"); }
+    if (flag & RKStreamStatusPositions)       { j += sprintf(string + j, "3"); }
+    if (flag & RKStreamStatusEngines)         { j += sprintf(string + j, "4"); }
+    if (flag & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
+    if (flag & RKStreamStatusHealth)          { j += sprintf(string + j, "h"); }
+    if (flag & RKStreamDisplayZ)              { j += sprintf(string + j, "z"); }
+    if (flag & RKStreamProductZ)              { j += sprintf(string + j, "Z"); }
+    if (flag & RKStreamDisplayV)              { j += sprintf(string + j, "v"); }
+    if (flag & RKStreamProductV)              { j += sprintf(string + j, "V"); }
+    if (flag & RKStreamDisplayW)              { j += sprintf(string + j, "w"); }
+    if (flag & RKStreamProductW)              { j += sprintf(string + j, "W"); }
+    if (flag & RKStreamDisplayD)              { j += sprintf(string + j, "d"); }
+    if (flag & RKStreamProductD)              { j += sprintf(string + j, "D"); }
+    if (flag & RKStreamDisplayP)              { j += sprintf(string + j, "p"); }
+    if (flag & RKStreamProductP)              { j += sprintf(string + j, "P"); }
+    if (flag & RKStreamDisplayR)              { j += sprintf(string + j, "r"); }
+    if (flag & RKStreamProductR)              { j += sprintf(string + j, "R"); }
+    if (flag & RKStreamDisplayK)              { j += sprintf(string + j, "k"); }
+    if (flag & RKStreamProductK)              { j += sprintf(string + j, "K"); }
+    if (flag & RKStreamDisplayS)              { j += sprintf(string + j, "s"); }
+    if (flag & RKStreamProductS)              { j += sprintf(string + j, "S"); }
+    if (flag & RKStreamDisplayIQ)             { j += sprintf(string + j, "i"); }
+    if (flag & RKStreamProductIQ)             { j += sprintf(string + j, "I"); }
     string[j] = '\0';
     return 0;
 }

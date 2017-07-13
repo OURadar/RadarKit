@@ -704,6 +704,8 @@ typedef struct rk_control {
 } RKControl;
 
 typedef struct rk_status {
+    uint64_t         i;
+    RKStatusFlag     flag;
     uint8_t          pulseMonitorLag;
     uint8_t          pulseSkipCount;
     uint8_t          pulseCoreLags[RKProcessorStatusPulseCoreCount];
@@ -713,7 +715,6 @@ typedef struct rk_status {
     uint8_t          rayCoreLags[RKProcessorStatusRayCoreCount];
     uint8_t          rayCoreUsage[RKProcessorStatusRayCoreCount];
     uint8_t          recorderLag;
-    RKStatusFlag     flag;
 } RKStatus;
 
 typedef struct rk_file_monitor {
