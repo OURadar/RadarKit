@@ -874,16 +874,45 @@ char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
 
 void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKLog("%s I/Q filter set.  group count = %d\n", engine->name, engine->filterGroupCount);
-    for (int i = 0; i < engine->filterGroupCount; i += 2) {
-        for (int j = 0; j < engine->filterCounts[i]; j++) {
-            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f, %s}\n",
-                  engine->name, i, j,
-                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].dataOrigin),
+    int i, j;
+    char format[1024];
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, engine->filterAnchors[0][0].maxDataLength)));
+    for (i = 0; i < engine->filterGroupCount; i += 2) {
+//        for (int j = 0; j < engine->filterCounts[i]; j++) {
+//            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f, %s}\n",
+//                  engine->name, i, j,
+//                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].dataOrigin),
+//                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
+//                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength),
+//                  engine->filterAnchors[i][j].name,
+//                  engine->filterAnchors[i][j].subCarrierFrequency,
+//                  RKFloatToCommaStyleString(engine->filterAnchors[i][j].gain));
+//        }
+        int w0 = 0, w1 = 0, w2 = 0;
+        for (j = 0; j < engine->filterCounts[i]; j++) {
+            w0 = MAX(w0, (int)log10f((float)engine->filterAnchors[i][j].length));
+            w1 = MAX(w1, (int)log10f((float)engine->filterAnchors[i][j].dataOrigin));
+            w2 = MAX(w2, (int)log10f((float)engine->filterAnchors[i][j].maxDataLength));
+        }
+        w0 += (w0 / 3);
+        w1 += (w1 / 3);
+        w2 += (w2 / 3);
+        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   omega = %%+6.3f   X @ (%%%ds, %%%ds)\n",
+                (int)log10f((float)engine->filterGroupCount) + 1,
+                (int)log10f((float)engine->filterCounts[i]) + 1,
+                w0 + 1,
+                (int)log10f(nfft) + 1,
+                w1 + 1,
+                w2 + 1);
+        for (j = 0; j < engine->filterCounts[i]; j++) {
+            RKLog(format,
+                  engine->name, i, j, engine->filterCounts[i],
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
-                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength),
-                  engine->filterAnchors[i][j].name,
+                  RKIntegerToCommaStyleString(nfft),
                   engine->filterAnchors[i][j].subCarrierFrequency,
-                  RKFloatToCommaStyleString(engine->filterAnchors[i][j].gain));
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].dataOrigin),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
     }
 }
