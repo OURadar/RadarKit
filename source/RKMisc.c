@@ -229,19 +229,21 @@ bool RKFilenameExists(const char *filename) {
 
 void RKPreparePath(const char *filename) {
     char path[1024];
-    strcpy(path, filename);
+    strncpy(path, filename, 1023);
     char *c = strrchr(path, '/');
     if (c == NULL) {
         return;
     }
-    *c = '\0';
+    memset(c, 0, 1024 - (path - c));
     DIR *dir = opendir(path);
     if (dir == NULL) {
         char cmd[1024];
         sprintf(cmd, "mkdir -p %s", path);
         system(cmd);
     } else {
-        closedir(dir);
+        if (closedir(dir)) {
+            fprintf(stderr, "Error in closedir() for %s\n", path);
+        }
     }
     return;
 }

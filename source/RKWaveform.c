@@ -196,10 +196,11 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
         a = 2.0f / sqrtf(waveform->filterAnchors[0][j].length);
         x = &waveform->samples[0][waveform->filterAnchors[0][j].origin];
         w = &waveform->iSamples[0][waveform->filterAnchors[0][j].origin];
-        RKLog("> - Filter[%2d][0] - %s\n", j, RKIntegerToCommaStyleString(waveform->filterAnchors[0][j].length));
+        RKLog("> - Filter[0][%d] - %s\n", j, RKIntegerToCommaStyleString(waveform->filterAnchors[0][j].length));
+        const float omega = 2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency;
         for (i = 0; i < waveform->filterAnchors[0][j].length; i++) {
-            x->i = a * cosf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
-            x->q = a * sinf(2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency * i);
+            x->i = a * cosf(omega * i);
+            x->q = a * sinf(omega * i);
             x++;
             w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
             w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
