@@ -19,8 +19,12 @@ int RKLog(const char *whatever, ...) {
     time_t utc;
     va_list args;
     struct tm tm;
-    char *msg = (char *)malloc(RKMaximumStringLength);
-    char *filename = (char *)malloc(RKMaximumPathLength);
+    char *msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
+    char *filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
+    if (msg == NULL || filename == NULL) {
+        fprintf(stderr, "Error in RKLog().\n");
+        return -1;
+    }
 
     // Get the time
     time(&utc);

@@ -509,7 +509,6 @@ int main(int argc, const char **argv) {
             RKLog("Waveform generated.\n");
         }
         RKSetWaveform(myRadar, waveform);
-        RKLog("Waveform set.\n");
         RKWaveformFree(waveform);
         
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
