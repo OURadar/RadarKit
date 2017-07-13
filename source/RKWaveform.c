@@ -56,7 +56,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         waveform->filterCounts[k] = waveGroup.filterCounts;
         fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
         for (j = 0; j < waveGroup.filterCounts; j++) {
-            RKLog("> - Filter[%2d][%d/%d] @ %d %+6.3f\n", k, j, waveGroup.filterCounts, waveGroup.depth, waveform->filterAnchors[k][j].subCarrierFrequency);
+            RKLog("> - Filter[%2d][%d/%d] @ %d/%d %+6.3f\n", k, j, waveGroup.filterCounts, waveform->filterAnchors[k][j].length, waveGroup.depth, waveform->filterAnchors[k][j].subCarrierFrequency);
         }
         fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
         fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
@@ -166,29 +166,31 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
 
 RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
     int i, j;
-    const int longPulseWidth = 400;
-    const int shortPulseWidth = 25;
+    const uint32_t longPulseWidth = 400;
+    const uint32_t shortPulseWidth = 25;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
     
     waveform->type = RKWaveformTypeTimeFrequencyMultiplexing;
-    
-    waveform->count = 1;
+
+    // Two filters per waveform
     waveform->filterCounts[0] = 2;
     
     // Long pulse
     waveform->filterAnchors[0][0].name = 0;
-    waveform->filterAnchors[0][0].origin = longPulseWidth;
+    waveform->filterAnchors[0][0].origin = 0;
     waveform->filterAnchors[0][0].length = longPulseWidth;
+    waveform->filterAnchors[0][0].dataOrigin = longPulseWidth;
     waveform->filterAnchors[0][0].maxDataLength = RKGateCount;
     waveform->filterAnchors[0][0].subCarrierFrequency = -0.25f;
     
     // Short pulse
     waveform->filterAnchors[0][1].name = 1;
-    waveform->filterAnchors[0][1].origin = 0;
+    waveform->filterAnchors[0][1].origin = longPulseWidth;
     waveform->filterAnchors[0][1].length = shortPulseWidth;
+    waveform->filterAnchors[0][1].dataOrigin = 0;
     waveform->filterAnchors[0][1].maxDataLength = longPulseWidth + shortPulseWidth;
     waveform->filterAnchors[0][1].subCarrierFrequency = +0.25f;
-    
+
     RKFloat a;
     RKInt16C *w;
     RKComplex *x;
@@ -196,7 +198,6 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
         a = 2.0f / sqrtf(waveform->filterAnchors[0][j].length);
         x = &waveform->samples[0][waveform->filterAnchors[0][j].origin];
         w = &waveform->iSamples[0][waveform->filterAnchors[0][j].origin];
-        RKLog("> - Filter[0][%d] - %s\n", j, RKIntegerToCommaStyleString(waveform->filterAnchors[0][j].length));
         const float omega = 2.0f * M_PI * waveform->filterAnchors[0][j].subCarrierFrequency;
         for (i = 0; i < waveform->filterAnchors[0][j].length; i++) {
             x->i = a * cosf(omega * i);
@@ -207,7 +208,7 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
             w++;
         }
     }
-    
+
     return waveform;
 }
 
@@ -237,6 +238,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
         waveform->filterAnchors[k][0].origin /= stride;
         waveform->filterAnchors[k][0].length /= stride;
         waveform->filterAnchors[k][0].gain /= stride;
+        waveform->filterAnchors[k][0].dataOrigin /= stride;
+        waveform->filterAnchors[k][0].maxDataLength /= stride;
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         for (j = 0, i = 0; j < waveform->depth; j++, i += stride) {
@@ -315,8 +318,13 @@ void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
         // Filter anchors
         fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
         for (int j = 0; j < waveform->filterCounts[k]; j++) {
-            RKLog("> - Filter[%2d][%d/%d] @ %s %+6.3f\n",
-                  k, j, groupHeader.filterCounts, RKIntegerToCommaStyleString(groupHeader.depth), waveform->filterAnchors[k][j].subCarrierFrequency);
+            RKLog("> - Filter[%2d][%d/%d] @ (%s, %s)   omega = %+6.3f   X @ (%s, %s)\n",
+                  k, j, groupHeader.filterCounts,
+                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
+                  RKIntegerToCommaStyleString(groupHeader.depth),
+                  waveform->filterAnchors[k][j].subCarrierFrequency,
+                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].dataOrigin),
+                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength));
         }
         // Waveform samples
         fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);

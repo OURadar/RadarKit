@@ -244,8 +244,8 @@ static void *pulseCompressionCore(void *_in) {
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                    X += engine->filterAnchors[gid][j].origin;
-                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].origin);
+                    X += engine->filterAnchors[gid][j].dataOrigin;
+                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin);
                     for (k = 0; k < bound; k++) {
                         in[k][0] = (RKFloat)X->i;
                         in[k][1] = (RKFloat)X++->q;
@@ -291,10 +291,10 @@ static void *pulseCompressionCore(void *_in) {
 
                     RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-                    Y += engine->filterAnchors[gid][j].origin;
-                    Z.i += engine->filterAnchors[gid][j].origin;
-                    Z.q += engine->filterAnchors[gid][j].origin;
-                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].origin, engine->filterAnchors[gid][j].maxDataLength);
+                    Y += engine->filterAnchors[gid][j].dataOrigin;
+                    Z.i += engine->filterAnchors[gid][j].dataOrigin;
+                    Z.q += engine->filterAnchors[gid][j].dataOrigin;
+                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = out[i][0];
                         Y++->q = out[i][1];
@@ -878,7 +878,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         for (int j = 0; j < engine->filterCounts[i]; j++) {
             RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f, %s}\n",
                   engine->name, i, j,
-                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].origin),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].dataOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength),
                   engine->filterAnchors[i][j].name,
