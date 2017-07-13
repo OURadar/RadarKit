@@ -225,7 +225,11 @@ int RKResetEngines(RKRadar *);
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
 void RKMeasureNoise(RKRadar *);
-void RKSetSNRThreshold(RKRadar *radar, const RKFloat);
+void RKSetSNRThreshold(RKRadar *, const RKFloat);
+
+// Status
+RKStatus *RKGetVacantStatus(RKRadar *);
+void RKSetStatusReady(RKRadar *, RKStatus *);
 
 // Healths
 RKHealthNode RKRequestHealthNode(RKRadar *);

@@ -193,6 +193,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         memset(radar->status, 0, bytes);
         radar->memoryUsage += bytes;
+        for (i = 0; i < radar->desc.statusBufferDepth; i++) {
+            radar->status[i].i = (uint64_t)(-1) - radar->desc.statusBufferDepth + i;
+        }
         radar->state ^= RKRadarStateStatusBufferAllocating;
         radar->state |= RKRadarStateStatusBufferInitialized;
     }
@@ -634,6 +637,9 @@ int RKFree(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Freeing radar '%s' ...\n", radar->desc.name);
     }
+    if (radar->state & RKRadarStateStatusBufferInitialized) {
+        free(radar->status);
+    }
     if (radar->state & RKRadarStateConfigBufferInitialized) {
         free(radar->configs);
     }
@@ -1056,7 +1062,6 @@ int RKWaitWhileActive(RKRadar *radar) {
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
     uint32_t healthIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
-    RKStatus status;
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
@@ -1095,17 +1100,19 @@ int RKWaitWhileActive(RKRadar *radar) {
                 healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
             }
             // Put together a system status
-            status.pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
+            RKStatus *status = RKGetVacantStatus(radar);
+            status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
             for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-                status.pulseCoreLags[k] = (uint8_t)(99.5f * radar->pulseCompressionEngine->workers[k].lag);
-                status.pulseCoreUsage[k] = (uint8_t)(99.5 * radar->pulseCompressionEngine->workers[k].dutyCycle);
+                status->pulseCoreLags[k] = (uint8_t)(99.5f * radar->pulseCompressionEngine->workers[k].lag);
+                status->pulseCoreUsage[k] = (uint8_t)(99.5 * radar->pulseCompressionEngine->workers[k].dutyCycle);
             }
-            status.rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
+            status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
             for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
-                status.rayCoreLags[k] = (uint8_t)(99.5f * radar->momentEngine->workers[k].lag);
-                status.rayCoreUsage[k] = (uint8_t)(99.5 * radar->momentEngine->workers[k].dutyCycle);
+                status->rayCoreLags[k] = (uint8_t)(99.5f * radar->momentEngine->workers[k].lag);
+                status->rayCoreUsage[k] = (uint8_t)(99.5 * radar->momentEngine->workers[k].dutyCycle);
             }
-            status.recorderLag = radar->dataRecorder->lag;
+            status->recorderLag = radar->dataRecorder->lag;
+            RKSetStatusReady(radar, status);
         }
         usleep(100000);
     }
@@ -1245,6 +1252,20 @@ void RKMeasureNoise(RKRadar *radar) {
 
 void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
     RKAddConfig(radar, RKConfigKeySNRThreshold, threshold, RKConfigKeyNull);
+}
+
+#pragma mark - Status
+
+RKStatus *RKGetVacantStatus(RKRadar *radar) {
+    RKStatus *status = &radar->status[radar->statusIndex];
+    status->i += radar->desc.statusBufferDepth;
+    status->flag = RKStatusFlagVacant;
+    return status;
+}
+
+void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
+    status->flag |= RKStatusFlagReady;
+    radar->statusIndex = RKNextModuloS(radar->statusIndex, radar->desc.statusBufferDepth);
 }
 
 #pragma mark - Healths
