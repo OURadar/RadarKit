@@ -281,7 +281,7 @@ UserParams processInput(int argc, const char **argv) {
                         RKFree(myRadar);
                         break;
                     default:
-                    break;
+                        break;
                 }
                 exit(EXIT_SUCCESS);
                 break;
