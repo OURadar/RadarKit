@@ -228,23 +228,31 @@ bool RKFilenameExists(const char *filename) {
 }
 
 void RKPreparePath(const char *filename) {
-    char path[1024];
+    char *path = (char *)malloc(1024);
+    if (path == NULL) {
+        fprintf(stderr, "RKPreparePath() unable to continue.\n");
+        return;
+    }
     strncpy(path, filename, 1023);
     char *c = strrchr(path, '/');
     if (c == NULL) {
+        free(path);
         return;
     }
-    memset(c, 0, 1024 - (path - c));
+    size_t n = 1024 - (size_t)(c - path);
+    memset(c, 0, n);
     DIR *dir = opendir(path);
     if (dir == NULL) {
-        char cmd[1024];
+        char *cmd = (char *)malloc(1024);
         sprintf(cmd, "mkdir -p %s", path);
         system(cmd);
+        free(cmd);
     } else {
         if (closedir(dir)) {
             fprintf(stderr, "Error in closedir() for %s\n", path);
         }
     }
+    free(path);
     return;
 }
 

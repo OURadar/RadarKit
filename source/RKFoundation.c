@@ -16,11 +16,11 @@ int RKLog(const char *whatever, ...) {
     }
     int i = 0;
     size_t len;
-    va_list args;
     time_t utc;
+    va_list args;
     struct tm tm;
-    char msg[RKMaximumStringLength];
-    char filename[RKMaximumPathLength];
+    char *msg = (char *)malloc(RKMaximumStringLength);
+    char *filename = (char *)malloc(RKMaximumPathLength);
 
     // Get the time
     time(&utc);
@@ -107,7 +107,9 @@ int RKLog(const char *whatever, ...) {
             i = 0;
         }
         strftime(filename + i, RKNameLength - i, "%Y%m%d.log", &tm);
-        RKPreparePath(filename);
+        if (i) {
+            RKPreparePath(filename);
+        }
         logFileID = fopen(filename, "a");
     } else if (strlen(rkGlobalParameters.logfile)) {
         RKPreparePath(rkGlobalParameters.logfile);
@@ -117,6 +119,8 @@ int RKLog(const char *whatever, ...) {
         fprintf(logFileID, "%s", msg);
         fclose(logFileID);
     }
+    free(filename);
+    free(msg);
     return 0;
 }
 
