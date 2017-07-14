@@ -281,7 +281,7 @@ UserParams processInput(int argc, const char **argv) {
                         RKFree(myRadar);
                         break;
                     default:
-                    break;
+                        break;
                 }
                 exit(EXIT_SUCCESS);
                 break;
@@ -429,8 +429,7 @@ int main(int argc, const char **argv) {
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
     RKCommandCenterAddRadar(center, myRadar);
-    RKCommandCenterStart(center);
-    
+
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
@@ -507,6 +506,7 @@ int main(int argc, const char **argv) {
         } else {
             RKLog("Generating waveform using built-in function ...\n");
             waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
+            RKLog("Waveform generated.\n");
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
@@ -515,6 +515,7 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
+        RKCommandCenterStart(center);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
@@ -525,6 +526,7 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
+        RKCommandCenterStart(center);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
         
