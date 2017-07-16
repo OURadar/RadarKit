@@ -47,21 +47,41 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
     char format[1024];
 
-    //
     for (k = 0; k < fileHeader.groupCount; k++) {
+        // Read in the waveform of each group
         fread(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
         if (waveform->depth < groupHeader.depth) {
             RKLog("Error. Unable to fit waveform %s into supplied buffer. (%d vs %d)\n", filename, waveform->depth, groupHeader.depth);
+            fclose(fid);
             return NULL;
         }
         waveform->type = groupHeader.type;
         waveform->filterCounts[k] = groupHeader.filterCounts;
         fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
-//        for (j = 0; j < waveGroup.filterCounts; j++) {
-//            RKLog("> - Filter[%2d][%d/%d] @ %d/%d %+6.3f\n", k, j, waveGroup.filterCounts, waveform->filterAnchors[k][j].length, waveGroup.depth, waveform->filterAnchors[k][j].subCarrierFrequency);
-//        }
+        // Build an output format with appropriate width for length, dataOrigin and maxDataLength. Also check some parameter bounds.
         int w0 = 0, w1 = 0, w2 = 0;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
+            if (waveform->filterAnchors[k][j].length > waveform->depth) {
+                RKLog("Error. This waveform is invalid.  length = %s > depth %s\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
+                      RKIntegerToCommaStyleString(waveform->depth));
+                fclose(fid);
+                return NULL;
+            }
+            if (waveform->filterAnchors[k][j].origin > RKGateCount) {
+                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKGateCount)\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].origin),
+                      RKIntegerToCommaStyleString(RKGateCount));
+                fclose(fid);
+                return NULL;
+            }
+            if (waveform->filterAnchors[k][j].maxDataLength > RKGateCount) {
+                RKLog("Error. This waveform is invalid.  maxDataLength = %s > %s (RKGateCount)\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
+                      RKIntegerToCommaStyleString(RKGateCount));
+                fclose(fid);
+                return NULL;
+            }
             w0 = MAX(w0, (int)log10f((float)waveform->filterAnchors[k][j].length));
             w1 = MAX(w1, (int)log10f((float)waveform->filterAnchors[k][j].dataOrigin));
             w2 = MAX(w2, (int)log10f((float)waveform->filterAnchors[k][j].maxDataLength));
@@ -76,6 +96,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 (int)log10f((float)groupHeader.depth) + 1,
                 w1 + 1,
                 w2 + 1);
+        // Now we show the summary
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKLog(format,
                   k, j, groupHeader.filterCounts,
