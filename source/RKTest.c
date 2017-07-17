@@ -472,7 +472,8 @@ void *RKTestTransceiverRunLoop(void *input) {
 
                 // Some random pattern for testing
                 phi = 1.047e3f * t;
-                noise = (float)rand() / RAND_MAX * 2.0f * M_PI;
+                //noise = (float)rand() / RAND_MAX * 2.0f * M_PI;
+                noise = 0.0f;
                 for (g = 0; g < transceiver->gateCount; g++) {
                     phi += transceiver->gateSizeMeters * 209.4f;
                     X->i = (int16_t)(a * cosf(phi) + cosf(noise));
