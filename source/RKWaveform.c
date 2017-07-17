@@ -8,6 +8,8 @@
 
 #include <RadarKit/RKWaveform.h>
 
+#pragma mark - Life Cycle
+
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
     int k;
     RKWaveform *waveform = (RKWaveform *)malloc(sizeof(RKWaveform));
@@ -45,13 +47,14 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     RKLog(">Waveform '%s'   groupCount = %d   depth = %d\n", fileHeader.name, fileHeader.groupCount, fileHeader.depth);
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-    char format[1024];
+    char format[256];
 
     for (k = 0; k < fileHeader.groupCount; k++) {
         // Read in the waveform of each group
         fread(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
         if (waveform->depth < groupHeader.depth) {
             RKLog("Error. Unable to fit waveform %s into supplied buffer. (%d vs %d)\n", filename, waveform->depth, groupHeader.depth);
+            RKWaveformFree(waveform);
             fclose(fid);
             return NULL;
         }
@@ -65,6 +68,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 RKLog("Error. This waveform is invalid.  length = %s > depth %s\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
                       RKIntegerToCommaStyleString(waveform->depth));
+                RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
@@ -72,6 +76,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 RKLog("Error. This waveform is invalid.  origin = %s > %s (RKGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].origin),
                       RKIntegerToCommaStyleString(RKGateCount));
+                RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
@@ -79,6 +84,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 RKLog("Error. This waveform is invalid.  maxDataLength = %s > %s (RKGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
                       RKIntegerToCommaStyleString(RKGateCount));
+                RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
@@ -259,6 +265,8 @@ RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double ba
 
     return waveform;
 }
+
+#pragma mark - Generic Manipulation
 
 void RKWaveformConjuate(RKWaveform *waveform) {
     int i, k;
