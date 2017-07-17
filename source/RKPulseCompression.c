@@ -244,8 +244,9 @@ static void *pulseCompressionCore(void *_in) {
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                    X += engine->filterAnchors[gid][j].dataOrigin;
-                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin);
+                    //X += engine->filterAnchors[gid][j].dataOrigin;
+                    //bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin);
+                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount);
                     for (k = 0; k < bound; k++) {
                         in[k][0] = (RKFloat)X->i;
                         in[k][1] = (RKFloat)X++->q;
@@ -879,16 +880,6 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, engine->filterAnchors[0][0].maxDataLength)));
     for (i = 0; i < engine->filterGroupCount; i += 2) {
-//        for (int j = 0; j < engine->filterCounts[i]; j++) {
-//            RKLog(">%s  - Filter[%2d][%d] @ {%s, %s, %s / %02d, %+.3f, %s}\n",
-//                  engine->name, i, j,
-//                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].dataOrigin),
-//                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
-//                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength),
-//                  engine->filterAnchors[i][j].name,
-//                  engine->filterAnchors[i][j].subCarrierFrequency,
-//                  RKFloatToCommaStyleString(engine->filterAnchors[i][j].gain));
-//        }
         int w0 = 0, w1 = 0, w2 = 0;
         for (j = 0; j < engine->filterCounts[i]; j++) {
             w0 = MAX(w0, (int)log10f((float)engine->filterAnchors[i][j].length));
