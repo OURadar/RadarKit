@@ -36,6 +36,7 @@ enum RKTestPedestalScanMode {
 
 typedef struct rk_test_transceiver {
     char           name[RKNameLength];
+    int            verbose;
     int            sleepInterval;
     int            gateCount;
     float          gateSizeMeters;
@@ -51,6 +52,7 @@ typedef struct rk_test_transceiver {
 
 typedef struct rk_test_pedestal {
     char           name[RKNameLength];
+    int            verbose;
     long           counter;
     int            scanMode;
     int            commandCount;
