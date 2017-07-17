@@ -400,7 +400,7 @@ int main(int argc, const char **argv) {
     } else {
         desc.pulseToRayRatio = 1;
     }
-    desc.pulseBufferDepth = 5000;
+    desc.pulseBufferDepth = 8000;
     desc.rayBufferDepth = 1440;
     desc.latitude = 35.181251;
     desc.longitude = -97.436752;
