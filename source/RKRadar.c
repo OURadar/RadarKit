@@ -401,7 +401,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(name, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
-        RKClockSetOffset(radar->positionClock, -0.01);
+        RKClockSetOffset(radar->positionClock, -0.005);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine

@@ -575,9 +575,9 @@ int socketStreamHandler(RKOperator *O) {
     // Processor Status
     if (user->streams & user->access & RKStreamStatusProcessorStatus) {
         if (user->streamsInProgress & RKStreamStatusProcessorStatus) {
-            printf("Fast forward RKStatus.\n");
             endIndex = RKPreviousNModuloS(user->radar->statusIndex, 1, user->radar->desc.statusBufferDepth);
         } else {
+            printf("Fast forward RKStatus.\n");
             endIndex = user->radar->statusIndex;
             s = 0;
             while (!(user->radar->status[endIndex].flag == RKStatusFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
