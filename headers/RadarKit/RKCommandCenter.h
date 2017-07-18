@@ -54,6 +54,7 @@ typedef struct rk_command_center {
     RKUser             users[RKCommandCenterMaxConnections];
     RKStream           relayStreams;
     RKStream           relayStreamsLevel2;
+    size_t             memoryUsage;
 } RKCommandCenter;
 
 RKStream RKStringToFlag(const char *);

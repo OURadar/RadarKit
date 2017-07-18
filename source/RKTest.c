@@ -741,7 +741,11 @@ void *RKTestPedestalRunLoop(void *input) {
     pedestal->state &= ~RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B\n", pedestal->name, RKIntegerToCommaStyleString(pedestal->memoryUsage));
-    
+
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("%s fs = %s Hz\n", pedestal->name, RKIntegerToCommaStyleString((long)(1.0 / PEDESTAL_SAMPLING_TIME)));
+    }
+
     int commandCount = pedestal->commandCount;
     
     while (pedestal->state & RKEngineStateActive) {
@@ -868,12 +872,17 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     pedestal->memoryUsage = sizeof(RKTestPedestal);
     pedestal->radar = radar;
     pedestal->state = RKEngineStateAllocated;
-    
+
+    // Parse input here if there is any
+
+    // Use a counter that mimics microsecond increments
+    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+
     pedestal->state |= RKEngineStateActivating;
     if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {
         RKLog("%s. Unable to create pedestal run loop.\n", pedestal->name);
     }
-    RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
+    //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
     while (!(pedestal->state & RKEngineStateActive)) {
         usleep(10000);
     }

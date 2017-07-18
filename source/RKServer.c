@@ -64,19 +64,20 @@ void *RKServerRoutine(void *in) {
 
     // Listen
     if (listen(M->sd, M->maxClient + 1) < 0) {
-        RKLog("%s Error. Gailed at listen().\n", M->name);
+        RKLog("%s Error. Failed at listen().\n", M->name);
         M->state = RKServerStateNull;
         return NULL;
     }
 
     if (M->verbose) {
         RKLog("%s sd = %d   port = %d\n", M->name, M->sd, M->port);
+    } else {
+        RKLog("%s listening to port %d\n", M->name, M->port);
+
     }
 
     M->state = RKServerStateActive;
     
-    RKLog("%s listening on port %d\n", M->name, M->port);
-
     int             sid;
     fd_set          rfd;
     struct timeval  timeout;
@@ -544,9 +545,9 @@ void RKServerStart(RKServer *M) {
     while (M->state > RKServerStateNull && M->state < RKServerStateActive) {
         usleep(25000);
     }
-    if (M->verbose) {
-        RKLog("%s Started.\n", M->name);
-    }
+//    if (M->verbose) {
+//        RKLog("%s Started.\n", M->name);
+//    }
 }
 
 
