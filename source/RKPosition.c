@@ -152,10 +152,12 @@ static void *pulseTagger(void *in) {
         i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
         while ((!(engine->positionBuffer[i].flag & RKPositionFlagReady) || engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble) && engine->state & RKEngineStateActive) {
             usleep(1000);
-            if (++s % 200 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 3/%.1f s   k = %d   latestTime = %s <= %s = header.timeDouble\n",
-                      engine->name, (float)s * 0.001f, k ,
-                      RKFloatToCommaStyleString(engine->positionBuffer[i].timeDouble), RKFloatToCommaStyleString(pulse->header.timeDouble));
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 3/%.1f s   k = %d   positionTime = %s %s %s = pulseTime\n",
+                      engine->name, (float)s * 0.001f, k,
+                      RKFloatToCommaStyleString(engine->positionBuffer[i].timeDouble),
+                      engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble ? "<=" : ">",
+                      RKFloatToCommaStyleString(pulse->header.timeDouble));
             }
             i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
         }
