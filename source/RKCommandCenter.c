@@ -1182,6 +1182,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->developerInspect = 0;
+    engine->memoryUsage = sizeof(RKCommandCenter);
     engine->server = RKServerInit();
     RKServerSetName(engine->server, engine->name);
     RKServerSetWelcomeHandler(engine->server, &socketInitialHandler);
@@ -1259,6 +1260,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
 void RKCommandCenterStart(RKCommandCenter *center) {
     RKLog("%s Starting ...\n", center->name);
     RKServerStart(center->server);
+    RKLog("%s Started.   mem = %s B   radarCount = %s\n", center->name, RKIntegerToCommaStyleString(center->memoryUsage), RKIntegerToCommaStyleString(center->radarCount));
 }
 
 void RKCommandCenterStop(RKCommandCenter *center) {
