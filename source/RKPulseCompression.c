@@ -72,6 +72,7 @@ static void *pulseCompressionCore(void *_in) {
     int bound;
     int i, j, k, p;
     struct timeval t0, t1, t2;
+    fftwf_complex *o;
 
     const int c = me->id;
     const int multiplyMethod = 1;
@@ -244,9 +245,8 @@ static void *pulseCompressionCore(void *_in) {
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                    //X += engine->filterAnchors[gid][j].dataOrigin;
-                    //bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin);
-                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount);
+                    X += engine->filterAnchors[gid][j].dataOrigin;
+                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin);
                     for (k = 0; k < bound; k++) {
                         in[k][0] = (RKFloat)X->i;
                         in[k][1] = (RKFloat)X++->q;
@@ -295,12 +295,16 @@ static void *pulseCompressionCore(void *_in) {
                     Y += engine->filterAnchors[gid][j].dataOrigin;
                     Z.i += engine->filterAnchors[gid][j].dataOrigin;
                     Z.q += engine->filterAnchors[gid][j].dataOrigin;
+
+                    o = out + engine->filterAnchors[gid][j].dataOrigin;
+
                     bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
-                        Y->i = out[i][0];
-                        Y++->q = out[i][1];
-                        *Z.i++ = out[i][0];
-                        *Z.q++ = out[i][1];
+                        Y->i = (*o)[0];
+                        Y++->q = (*o)[1];
+                        *Z.i++ = (*o)[0];
+                        *Z.q++ = (*o)[1];
+                        o++;
                     }
 
                     //Y = RKGetComplexDataFromPulse(pulse, p);
@@ -534,7 +538,8 @@ static void *pulseWatcher(void *_in) {
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->filterAnchors[gid][j].maxDataLength)));
+                //planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->filterAnchors[gid][j].maxDataLength)));
+                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin, engine->filterAnchors[gid][j].maxDataLength)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {

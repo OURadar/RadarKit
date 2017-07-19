@@ -449,7 +449,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     double periodTotal;
     float a;
     float phi;
-    float noise;
+    //float noise;
 
     while (transceiver->state & RKEngineStateActive) {
 
@@ -464,20 +464,19 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
-            a = cosf(2.0 * M_PI * 0.1 * t);
-            a = 24.0f * a * a;
+            //a = cosf(2.0 * M_PI * 0.1 * t);
+            //a = 24.0f * a * a;
+            a = 12.0f;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
-                phi = 1.047e3f * t;
-                //noise = (float)rand() / RAND_MAX * 2.0f * M_PI;
-                noise = 0.0f;
+                phi = 1.046e3f * t;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    phi += transceiver->gateSizeMeters * 209.4f;
-                    X->i = (int16_t)(a * cosf(phi) + cosf(noise));
-                    X->q = (int16_t)(a * sinf(phi) + sinf(noise));
+                    phi += transceiver->gateSizeMeters * 207.0f;
+                    X->i = (int16_t)(a * cosf(phi) + (float)rand() / RAND_MAX - 0.5f);
+                    X->q = (int16_t)(a * sinf(phi) + (float)rand() / RAND_MAX - 0.5f);
                     X++;
                 }
             }
@@ -636,7 +635,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
 
     // Derive some calculated parameters
-    transceiver->gateSizeMeters = 60.0e3f / transceiver->gateCount;
+    transceiver->gateSizeMeters = transceiver->fs * 6.0e-6;
 
     // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
