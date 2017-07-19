@@ -364,10 +364,10 @@ static void *pulseWatcher(void *_in) {
     sem_t *sem[engine->coreCount];
 
     bool found;
-    int gid;
-    int planSize;
-    int planIndex = 0;
-    int skipCounter = 0;
+    unsigned int gid;
+    unsigned int planSize;
+    unsigned int planIndex = 0;
+    unsigned int skipCounter = 0;
     float lag;
     struct timeval t0, t1;
 
@@ -566,6 +566,7 @@ static void *pulseWatcher(void *_in) {
                     exportWisdom = true;
                 }
                 engine->planIndices[k][j] = planIndex;
+                engine->planUseCount[planIndex]++;
             }
         }
 

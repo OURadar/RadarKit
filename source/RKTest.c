@@ -523,7 +523,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
-                "\"NULL\": %ld}",
+                "\"TransceiverCounter\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,

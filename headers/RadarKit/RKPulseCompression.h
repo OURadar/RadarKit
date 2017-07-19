@@ -56,8 +56,9 @@ struct rk_pulse_compression_engine {
     RKComplex                        *filters[RKMaxFilterGroups][RKMaxFilterCount];
 
     // Program set variables
-    int                              planCount;
-    int                              planSizes[RKPulseCompressionDFTPlanCount];
+    unsigned int                     planCount;
+    unsigned int                     planSizes[RKPulseCompressionDFTPlanCount];
+    unsigned int                     planUseCount[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planForwardInPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planForwardOutPlace[RKPulseCompressionDFTPlanCount];
     fftwf_plan                       planBackwardInPlace[RKPulseCompressionDFTPlanCount];
