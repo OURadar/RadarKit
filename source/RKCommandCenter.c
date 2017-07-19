@@ -724,6 +724,9 @@ int socketStreamHandler(RKOperator *O) {
         } else {
             endIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
         }
+        if (endIndex >= user->radar->desc.rayBufferDepth) {
+            RKLog("%s Error. endIndex = %s > %s\n", engine->name, RKIntegerToCommaStyleString(endIndex), RKIntegerToCommaStyleString(user->radar->desc.rayBufferDepth));
+        }
         ray = RKGetRay(user->radar->rays, endIndex);
 
         if (!(user->streamsInProgress & RKStreamDisplayZVWDPRKS)) {
