@@ -180,6 +180,24 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         Ki++;
         Ri++;
     }
+    // If the space has been used for the same gateCount calculations, it should remain zero
+    if (*Zi != 0.0 || *zu != 0) {
+        memset(zu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(vu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(wu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(du, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(pu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(ku, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(ru, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(Zi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Vi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Wi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Di, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Pi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Ki, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Ri, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        ray->header.marker |= RKMarkerMemoryManagement;
+    }
     ray->header.productList = RKProductListProductZVWDPRK;
     return i;
 }
