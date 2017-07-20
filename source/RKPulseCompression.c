@@ -242,11 +242,11 @@ static void *pulseCompressionCore(void *_in) {
                     planIndex = engine->planIndices[i0][j];
                     planSize = engine->planSizes[planIndex];
                     blindGateCount += engine->filterAnchors[gid][j].length;
+                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin, engine->filterAnchors[gid][j].maxDataLength);
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                    X += engine->filterAnchors[gid][j].dataOrigin;
-                    bound = MIN(engine->filterAnchors[gid][j].maxDataLength, pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin);
+                    X += engine->filterAnchors[gid][j].inputOrigin;
                     for (k = 0; k < bound; k++) {
                         in[k][0] = (RKFloat)X->i;
                         in[k][1] = (RKFloat)X++->q;
@@ -265,7 +265,7 @@ static void *pulseCompressionCore(void *_in) {
                     //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
 
                     if (multiplyMethod == 1) {
-                        // In-place SIMD multiplication using the interleaved format
+                        // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
                         RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
                     } else if (multiplyMethod == 2) {
                         // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
@@ -292,13 +292,12 @@ static void *pulseCompressionCore(void *_in) {
 
                     RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-                    Y += engine->filterAnchors[gid][j].dataOrigin;
-                    Z.i += engine->filterAnchors[gid][j].dataOrigin;
-                    Z.q += engine->filterAnchors[gid][j].dataOrigin;
+                    Y += engine->filterAnchors[gid][j].inputOrigin;
+                    Z.i += engine->filterAnchors[gid][j].inputOrigin;
+                    Z.q += engine->filterAnchors[gid][j].inputOrigin;
 
-                    o = out + engine->filterAnchors[gid][j].dataOrigin;
+                    o = out + engine->filterAnchors[gid][j].outputOrigin;
 
-                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
@@ -538,8 +537,7 @@ static void *pulseWatcher(void *_in) {
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                //planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount, engine->filterAnchors[gid][j].maxDataLength)));
-                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].dataOrigin, engine->filterAnchors[gid][j].maxDataLength)));
+                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin, engine->filterAnchors[gid][j].maxDataLength)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {
@@ -886,29 +884,33 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, engine->filterAnchors[0][0].maxDataLength)));
     for (i = 0; i < engine->filterGroupCount; i += 2) {
-        int w0 = 0, w1 = 0, w2 = 0;
+        int w0 = 0, w1 = 0, w2 = 0, w3 = 0;
         for (j = 0; j < engine->filterCounts[i]; j++) {
             w0 = MAX(w0, (int)log10f((float)engine->filterAnchors[i][j].length));
-            w1 = MAX(w1, (int)log10f((float)engine->filterAnchors[i][j].dataOrigin));
-            w2 = MAX(w2, (int)log10f((float)engine->filterAnchors[i][j].maxDataLength));
+            w1 = MAX(w1, (int)log10f((float)engine->filterAnchors[i][j].inputOrigin));
+            w2 = MAX(w1, (int)log10f((float)engine->filterAnchors[i][j].outputOrigin));
+            w3 = MAX(w2, (int)log10f((float)engine->filterAnchors[i][j].maxDataLength));
         }
         w0 += (w0 / 3);
         w1 += (w1 / 3);
         w2 += (w2 / 3);
-        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   omega = %%+6.3f   X @ (%%%ds, %%%ds)\n",
+        w3 += (w3 / 3);
+        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   omega = %%+6.3f   X @ (i:%%%ds, o:%%%ds, l:%%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
                 (int)log10f(nfft) + 1,
                 w1 + 1,
-                w2 + 1);
+                w2 + 1,
+                w3 + 1);
         for (j = 0; j < engine->filterCounts[i]; j++) {
             RKLog(format,
                   engine->name, i, j, engine->filterCounts[i],
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
                   engine->filterAnchors[i][j].subCarrierFrequency,
-                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].dataOrigin),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].outputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
     }
