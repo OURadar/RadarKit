@@ -282,7 +282,8 @@ enum RKMarker {
     RKMarkerVolumeEnd                = (1 << 4),
     RKMarkerPPIScan                  = (1 << 8),
     RKMarkerRHIScan                  = (1 << 9),
-    RKMarkerPointScan                = (1 << 10)
+    RKMarkerPointScan                = (1 << 10),
+    RKMarkerMemoryManagement         = (1 << 15)
 };
 
 typedef uint32_t RKPulseStatus;
