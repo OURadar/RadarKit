@@ -472,9 +472,9 @@ void *RKTestTransceiverRunLoop(void *input) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
-                phi = 1.046e3f * t;
+                phi = (double)(tic & 0xFFFF) * 2.0 * M_PI;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    phi += transceiver->gateSizeMeters * 207.0f;
+                    phi += transceiver->gateSizeMeters * 0.1531995963856f;
                     X->i = (int16_t)(a * cosf(phi) + (float)rand() / RAND_MAX - 0.5f);
                     X->q = (int16_t)(a * sinf(phi) + (float)rand() / RAND_MAX - 0.5f);
                     X++;
