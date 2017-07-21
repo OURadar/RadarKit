@@ -61,7 +61,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         waveform->type = groupHeader.type;
         waveform->filterCounts[k] = groupHeader.filterCounts;
         fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
-        // Build an output format with appropriate width for length, inputOrigin and maxDataLength. Also check some parameter bounds.
+        // Build an output format with appropriate width for length, inputOrigin, outputOrigin and maxDataLength. Also check some parameter bounds.
         int w0 = 0, w1 = 0, w2 = 0, w3 = 0;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             if (waveform->filterAnchors[k][j].length > waveform->depth) {
@@ -106,8 +106,8 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
             }
             w0 = MAX(w0, (int)log10f((float)waveform->filterAnchors[k][j].length));
             w1 = MAX(w1, (int)log10f((float)waveform->filterAnchors[k][j].inputOrigin));
-            w2 = MAX(w1, (int)log10f((float)waveform->filterAnchors[k][j].outputOrigin));
-            w3 = MAX(w2, (int)log10f((float)waveform->filterAnchors[k][j].maxDataLength));
+            w2 = MAX(w2, (int)log10f((float)waveform->filterAnchors[k][j].outputOrigin));
+            w3 = MAX(w3, (int)log10f((float)waveform->filterAnchors[k][j].maxDataLength));
         }
         w0 += (w0 / 3);
         w1 += (w1 / 3);
@@ -203,7 +203,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
         waveform->filterAnchors[k][0].name = n;
         waveform->filterAnchors[k][0].origin = 0;
         waveform->filterAnchors[k][0].length = waveform->depth;
-        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;  // Replace with actual depth later
+        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;   // Replace with actual depth later
         waveform->filterAnchors[k][0].subCarrierFrequency = omega;
         //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, waveform->omega);
         x = waveform->samples[k];
