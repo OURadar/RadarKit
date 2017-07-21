@@ -744,7 +744,7 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
 // Input:
 //     engine - the compression engine
 // Output:
-//     filter - filter coefficients
+//     filter - filter coefficients, always start at index 0
 //     anchor - origin - not used
 //            - length - length of filter coefficients to use
 //            - inputOrigin - origin of the intput data to process

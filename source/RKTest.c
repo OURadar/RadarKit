@@ -448,6 +448,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     double periodTotal;
     float a;
+    float r;
     float phi;
     //float noise;
 
@@ -464,19 +465,23 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
-            //a = cosf(2.0 * M_PI * 0.1 * t);
-            //a = 24.0f * a * a;
-            a = 12.0f;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
-                phi = (double)(tic & 0xFFFF) * 2.0 * M_PI;
+                r = 0.0f;
+                phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
                 for (g = 0; g < transceiver->gateCount; g++) {
+                    r = (float)g;
+                    a = 60.0f * (cos(0.001f * r)
+                                  + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
+                                  + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
+                                  + 0.2f * cosf(0.01f * r + 0.3f)
+                                  + 0.5f);
                     phi += transceiver->gateSizeMeters * 0.1531995963856f;
-                    X->i = (int16_t)(a * cosf(phi) + (float)rand() / RAND_MAX - 0.5f);
-                    X->q = (int16_t)(a * sinf(phi) + (float)rand() / RAND_MAX - 0.5f);
+                    X->i = (int16_t)(a * cosf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
+                    X->q = (int16_t)(a * sinf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
                     X++;
                 }
             }

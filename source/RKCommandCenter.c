@@ -972,7 +972,7 @@ int socketStreamHandler(RKOperator *O) {
 
                 default:
                     pulseHeader.gateCount /= k;
-                    pulseHeader.gateCount = MIN(pulseHeader.gateCount, 1000);
+                    pulseHeader.gateCount = MIN(pulseHeader.gateCount, 2000);
                     pulseHeader.gateSizeMeters *= (float)k;
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
