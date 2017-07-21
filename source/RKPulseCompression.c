@@ -760,6 +760,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
     memcpy(&engine->filterAnchors[group][index], &anchor, sizeof(RKFilterAnchor));
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
+    engine->filterAnchors[group][index].maxDataLength = (uint32_t)MIN(pulse->header.capacity - anchor.inputOrigin, anchor.maxDataLength);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
     return RKResultNoError;
@@ -895,7 +896,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   omega = %%+6.3f   X @ (i:%%%ds, o:%%%ds, l:%%%ds)\n",
+        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (%%%ds / %%%ds)   omega = %%+6.3f   X @ (i:%%%ds, o:%%%ds, l:%%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
