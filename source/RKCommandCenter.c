@@ -342,7 +342,8 @@ int socketCommandHandler(RKOperator *O) {
                     break;
                     
                 case 'x':
-                    engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
+                    //engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
+                    user->ascopeMode = RKNextModuloS(engine->developerInspect, 4);
                     sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
                     RKOperatorSendCommandResponse(O, string);
                     break;
@@ -872,7 +873,7 @@ int socketStreamHandler(RKOperator *O) {
 
             // Default stride: k = 1
             k = 1;
-            switch (engine->developerInspect) {
+            switch (user->ascopeMode) {
                 case 3:
                     // Show the waveform that was used through the forward sampling path
                     pulseHeader.gateCount = 1000;
@@ -1003,6 +1004,7 @@ int socketInitialHandler(RKOperator *O) {
         user->rayDownSamplingRatio = 1;
     }
     user->pulseDownSamplingRatio = (uint16_t)(user->radar->desc.pulseCapacity / 1000);
+    user->ascopeMode = 1;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
