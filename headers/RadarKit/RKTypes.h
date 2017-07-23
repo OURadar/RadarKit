@@ -160,16 +160,17 @@ typedef union rk_four_byte {
 
 typedef struct rk_filter_anchor {
     uint32_t      name;
-    uint32_t      origin;
-    uint32_t      length;
-    uint32_t      dataOrigin;
+    uint32_t      origin;                                            // Filter origin to be used with RKWaveform
+    uint32_t      length;                                            // Filter length to be used with RKWaveform
+    uint32_t      inputOrigin;
+    uint32_t      outputOrigin;
     uint32_t      maxDataLength;
     RKFloat       subCarrierFrequency;
     RKFloat       gain;
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault                      {0, 0, 1, 0, 1024, 0.0f, 1.0f}
-#define RKFilterAnchorDefaultWithMaxDataLength(x)  {0, 0, 1, 0, (x),  0.0f, 1.0f}
+#define RKFilterAnchorDefault                      {0, 0, 1, 0, 0, 1024, 0.0f, 1.0f}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)  {0, 0, 1, 0, 0, (x),  0.0f, 1.0f}
 
 typedef struct rk_modulo_path {
     uint32_t      origin;
@@ -282,7 +283,8 @@ enum RKMarker {
     RKMarkerVolumeEnd                = (1 << 4),
     RKMarkerPPIScan                  = (1 << 8),
     RKMarkerRHIScan                  = (1 << 9),
-    RKMarkerPointScan                = (1 << 10)
+    RKMarkerPointScan                = (1 << 10),
+    RKMarkerMemoryManagement         = (1 << 15)
 };
 
 typedef uint32_t RKPulseStatus;

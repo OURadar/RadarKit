@@ -121,7 +121,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.pulseCapacity == 0) {
         radar->desc.pulseCapacity = 512;
     }
-    radar->desc.pulseCapacity = (radar->desc.pulseCapacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
+    radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + RKSIMDAlignSize - 1) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     if (radar->desc.pulseCapacity != desc.pulseCapacity) {
         RKLog("Info. Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     }
@@ -812,21 +812,14 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 // Sets the waveform from a pre-defined file that specifies the digital samples for an
 // arbitrary waveform generator.
 //
-// NOTE: Function incomplete, need to define file format
-// ingest the samples, convert, etc.
-//
 int RKSetWaveformByFilename(RKRadar *radar, const char *filename) {
     if (radar->pulseCompressionEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
     }
     // Load in the waveform
-    // Call a transceiver delegate function to fill in the DAC
-    // Advance operating parameter, add in the newest set
-    RKComplex filter[] = {{1.0f, 0.0f}};
-    RKFilterAnchor anchor = RKFilterAnchorDefault;
-    int group = radar->pulseCompressionEngine->filterGroupCount;
-    return RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, group, 0);
+    RKWaveform *waveform = RKWaveformInitFromFile(filename);
+    return RKSetWaveform(radar, waveform);
 }
 
 int RKSetWaveformToImpulse(RKRadar *radar) {
@@ -1083,13 +1076,19 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
                         "\"Network\":{\"Value\":true,\"Enum\":0},"
                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d},"
-                        "\"Noise\":[%.3f,%.3f]"
+                        "\"Noise\":[%.3f,%.3f],"
+                        "\"DFTPlanUsage\":[%d,%d,%d,%d,%d]"
                         "}",
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
-                        config->noise[0], config->noise[1]
+                        config->noise[0], config->noise[1],
+                        radar->pulseCompressionEngine->planUseCount[0],
+                        radar->pulseCompressionEngine->planUseCount[1],
+                        radar->pulseCompressionEngine->planUseCount[2],
+                        radar->pulseCompressionEngine->planUseCount[3],
+                        radar->pulseCompressionEngine->planUseCount[4]
                         );
                 RKSetHealthReady(radar, health);
 

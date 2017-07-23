@@ -305,7 +305,7 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 break;
             case 'g':
-                user.gateCount = (int)atof(optarg);
+                user.gateCount = atoi(optarg);
                 break;
             case 'h':
                 showHelp();

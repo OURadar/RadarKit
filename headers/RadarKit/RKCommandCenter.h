@@ -32,6 +32,8 @@ typedef struct  rk_user {
     uint32_t           commandCount;
     uint16_t           pulseDownSamplingRatio;
     uint16_t           rayDownSamplingRatio;
+    uint16_t           ascopeMode;
+    uint16_t           reserved;
     pthread_mutex_t    mutex;
     char               string[RKMaximumStringLength];
     RKInt16C           samples[2][RKGateCount];

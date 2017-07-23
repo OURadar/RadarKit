@@ -448,8 +448,9 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     double periodTotal;
     float a;
+    float r;
     float phi;
-    float noise;
+    //float noise;
 
     while (transceiver->state & RKEngineStateActive) {
 
@@ -464,20 +465,23 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
-            a = cosf(2.0 * M_PI * 0.1 * t);
-            a = 24.0f * a * a;
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
-                phi = 1.047e3f * t;
-                //noise = (float)rand() / RAND_MAX * 2.0f * M_PI;
-                noise = 0.0f;
+                r = 0.0f;
+                phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
                 for (g = 0; g < transceiver->gateCount; g++) {
-                    phi += transceiver->gateSizeMeters * 209.4f;
-                    X->i = (int16_t)(a * cosf(phi) + cosf(noise));
-                    X->q = (int16_t)(a * sinf(phi) + sinf(noise));
+                    r = (float)g;
+                    a = 60.0f * (cos(0.001f * r)
+                                  + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
+                                  + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
+                                  + 0.2f * cosf(0.01f * r + 0.3f)
+                                  + 0.5f);
+                    phi += transceiver->gateSizeMeters * 0.1531995963856f;
+                    X->i = (int16_t)(a * cosf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
+                    X->q = (int16_t)(a * sinf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
                     X++;
                 }
             }
@@ -524,7 +528,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
-                "\"NULL\": %ld}",
+                "\"TransceiverCounter\": %ld}",
                 temp, temp > 80.0f ? 1 : 0,
                 volt, volt > 12.2f ? 1 : 0,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
@@ -636,7 +640,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
 
     // Derive some calculated parameters
-    transceiver->gateSizeMeters = 60.0e3f / transceiver->gateCount;
+    transceiver->gateSizeMeters = transceiver->fs * 6.0e-6;
 
     // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
