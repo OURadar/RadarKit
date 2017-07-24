@@ -44,6 +44,7 @@ static int RKRadarRelayRead(RKClient *client) {
             
         case RKNetworkPacketTypeProcessorStatus:
             memcpy(&status, client->userPayload, sizeof(RKStatus));
+            printf("RKNetworkPacketTypeProcessorStatus: %llu\n", status.i);
             break;
             
         case RKNetworkPacketTypeRayData:
