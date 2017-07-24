@@ -1258,13 +1258,17 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
     status->i += radar->desc.statusBufferDepth;
-    status->flag = RKStatusFlagVacant;
+    if (status->flag != RKStatusFlagVacant) {
+        RKLog("Error. radar->status[%d] should be vacant.\n", radar->statusIndex);
+        status->flag = RKStatusFlagVacant;
+    }
+    radar->statusIndex = RKNextModuloS(radar->statusIndex, radar->desc.statusBufferDepth);
+    radar->status[radar->statusIndex].flag = RKStatusFlagVacant;
     return status;
 }
 
 void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
     status->flag |= RKStatusFlagReady;
-    radar->statusIndex = RKNextModuloS(radar->statusIndex, radar->desc.statusBufferDepth);
 }
 
 #pragma mark - Healths
