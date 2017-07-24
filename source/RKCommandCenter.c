@@ -544,26 +544,27 @@ int socketStreamHandler(RKOperator *O) {
 
     // Processor Status
     if (user->streams & user->access & RKStreamStatusProcessorStatus) {
-        if (user->streamsInProgress & RKStreamStatusProcessorStatus) {
-            endIndex = RKPreviousNModuloS(user->radar->statusIndex, 1, user->radar->desc.statusBufferDepth);
-        } else {
-            printf("Fast forward RKStatus.\n");
-            endIndex = user->radar->statusIndex;
-            s = 0;
-            while (!(user->radar->status[endIndex].flag == RKStatusFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
-                if (s % 10 == 0 && engine->verbose > 1) {
-                    RKLog("%s %s sleep 0/%.1f s  RKStatus\n", engine->name, O->name, s * 0.1f);
-                }
-                usleep(100000);
+        endIndex = RKPreviousModuloS(user->radar->statusIndex, user->radar->desc.statusBufferDepth);
+        if (!(user->streamsInProgress & RKStreamStatusProcessorStatus)) {
+            if (engine->verbose) {
+                RKLog("%s Fast forward RKStatus -> %d (%s).\n", engine->name, endIndex,
+                      user->radar->status[user->radar->statusIndex].flag == RKStatusFlagVacant ? "vacant" : "ready");
             }
+            user->statusIndex = endIndex;
         }
-        if (user->radar->status[endIndex].flag == RKStatusFlagReady && engine->server->state == RKServerStateActive) {
+        s = 0;
+        while (!(user->radar->status[user->statusIndex].flag == RKStatusFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
+            if (s % 10 == 0 && engine->verbose > 1) {
+                RKLog("%s %s sleep 0/%.1f s  RKStatus\n", engine->name, O->name, s * 0.1f);
+            }
+            usleep(100000);
+        }
+        if (user->radar->status[user->statusIndex].flag == RKStatusFlagReady && engine->server->state == RKServerStateActive) {
             user->streamsInProgress |= RKStreamStatusProcessorStatus;
             while (user->statusIndex != endIndex) {
                 O->delimTx.type = RKNetworkPacketTypeProcessorStatus;
                 O->delimTx.size = (uint32_t)sizeof(RKStatus);
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->status[user->statusIndex], sizeof(RKStatus), NULL);
-                printf("status %d sent.\n", user->statusIndex);
                 user->statusIndex = RKNextModuloS(user->statusIndex, user->radar->desc.statusBufferDepth);
             }
         } else {
@@ -573,19 +574,22 @@ int socketStreamHandler(RKOperator *O) {
     
     // Health Status
     if (user->streams & user->access & RKStreamStatusHealth) {
-        if (user->streamsInProgress & RKStreamStatusHealth) {
-            endIndex = RKPreviousNModuloS(user->radar->healthIndex, 1, user->radar->desc.healthBufferDepth);
-        } else {
-            endIndex = user->radar->healthIndex;
-            s = 0;
-            while (!(user->radar->healths[endIndex].flag == RKHealthFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
-                if (s % 10 == 0 && engine->verbose > 1) {
-                    RKLog("%s %s sleep 0/%.1f s  RKHealth\n", engine->name, O->name, s * 0.1f);
-                }
-                usleep(100000);
+        endIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
+        if (!(user->streamsInProgress & RKStreamStatusHealth)) {
+            if (engine->verbose) {
+                RKLog("%s Fast forward RKHealth -> %d (%s).\n", engine->name, endIndex,
+                      user->radar->healths[user->radar->healthIndex].flag == RKStatusFlagVacant ? "vacant" : "ready");
             }
+            user->healthIndex = endIndex;
         }
-        if (user->radar->healths[endIndex].flag == RKHealthFlagReady && engine->server->state == RKServerStateActive) {
+        s = 0;
+        while (!(user->radar->healths[user->healthIndex].flag == RKHealthFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
+            if (s % 10 == 0 && engine->verbose > 1) {
+                RKLog("%s %s sleep 0/%.1f s  RKHealth\n", engine->name, O->name, s * 0.1f);
+            }
+            usleep(100000);
+        }
+        if (user->radar->healths[user->healthIndex].flag == RKHealthFlagReady && engine->server->state == RKServerStateActive) {
             user->streamsInProgress |= RKStreamStatusHealth;
             j = 0;
             k = 0;
