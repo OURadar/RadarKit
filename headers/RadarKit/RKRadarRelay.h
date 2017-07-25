@@ -27,16 +27,14 @@ typedef struct rk_radar_relay {
     RKRadarDesc            *radarDescription;
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
-    uint32_t               configBufferDepth;
     RKHealth               *healthBuffer;
     uint32_t               *healthIndex;
-    uint32_t               healthBufferDepth;
+    RKStatus               *statusBuffer;
+    uint32_t               *statusIndex;
     RKBuffer               pulseBuffer;                        // Buffer of raw pulses
     uint32_t               *pulseIndex;                        // The refence index to watch for
-    uint32_t               pulseBufferDepth;                   // Size of the buffer
     RKBuffer               rayBuffer;
     uint32_t               *rayIndex;
-    uint32_t               rayBufferDepth;
     uint8_t                verbose;
     RKFileManager          *fileManager;
 
@@ -61,11 +59,12 @@ RKRadarRelay *RKRadarRelayInit(void);
 void RKRadarRelayFree(RKRadarRelay *);
 
 void RKRadarRelaySetVerbose(RKRadarRelay *, const int verbose);
-void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *, RKRadarDesc *, RKFileManager *,
-                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                       RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth,
-                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth,
-                                       RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
+void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *, const RKRadarDesc *, RKFileManager *,
+                                       RKConfig *configBuffer, uint32_t *configIndex,
+                                       RKHealth *healthBuffer, uint32_t *healthIndex,
+                                       RKStatus *statusBuffer, uint32_t *statusIndex,
+                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,
+                                       RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKRadarRelaySetHost(RKRadarRelay *, const char *hostname);
 
 int RKRadarRelayStart(RKRadarRelay *);
