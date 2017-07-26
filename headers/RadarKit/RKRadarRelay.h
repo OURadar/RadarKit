@@ -60,9 +60,9 @@ void RKRadarRelayFree(RKRadarRelay *);
 
 void RKRadarRelaySetVerbose(RKRadarRelay *, const int verbose);
 void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *, const RKRadarDesc *, RKFileManager *,
+                                       RKStatus *statusBuffer, uint32_t *statusIndex,
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKHealth *healthBuffer, uint32_t *healthIndex,
-                                       RKStatus *statusBuffer, uint32_t *statusIndex,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKRadarRelaySetHost(RKRadarRelay *, const char *hostname);

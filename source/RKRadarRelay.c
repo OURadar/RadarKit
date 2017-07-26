@@ -17,7 +17,6 @@ static int RKRadarRelayRead(RKClient *client) {
     int j, k;
     RKHealth *health;
     RKStatus *status;
-    
     RKRay *ray = engine->rayBuffer;
     RKPulse *pulse = engine->pulseBuffer;
 
@@ -280,13 +279,15 @@ void RKRadarRelaySetVerbose(RKRadarRelay *engine, const int verbose) {
 }
 
 void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *engine, const RKRadarDesc *desc, RKFileManager *fileManager,
+                                       RKStatus *statusBuffer, uint32_t *statusIndex,
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKHealth *healthBuffer, uint32_t *healthIndex,
-                                       RKStatus *statusBuffer, uint32_t *statusIndex,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex) {
     engine->radarDescription  = (RKRadarDesc *)desc;
     engine->fileManager       = fileManager;
+    engine->statusBuffer      = statusBuffer;
+    engine->statusIndex       = statusIndex;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
     engine->healthBuffer      = healthBuffer;
