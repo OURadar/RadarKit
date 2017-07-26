@@ -440,9 +440,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         // Radar relay
         radar->radarRelay = RKRadarRelayInit();
         RKRadarRelaySetInputOutputBuffers(radar->radarRelay, &radar->desc, radar->fileManager,
+                                          radar->status, &radar->statusIndex,
                                           radar->configs, &radar->configIndex,
                                           radar->healths, &radar->healthIndex,
-                                          radar->status, &radar->statusIndex,
                                           radar->pulses, &radar->pulseIndex,
                                           radar->rays, &radar->rayIndex);
         RKRadarRelaySetVerbose(radar->radarRelay, 2);
