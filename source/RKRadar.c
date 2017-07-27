@@ -406,9 +406,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         
         // Pulse compression engine
         radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
-        RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine,
-                                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                                      radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+        RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, &radar->desc,
+                                                      radar->configs, &radar->configIndex,
+                                                      radar->pulses, &radar->pulseIndex);
         radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
         radar->state |= RKRadarStatePulseCompressionEngineInitialized;
         
@@ -440,10 +440,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         // Radar relay
         radar->radarRelay = RKRadarRelayInit();
         RKRadarRelaySetInputOutputBuffers(radar->radarRelay, &radar->desc, radar->fileManager,
-                                          radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                          radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth,
-                                          radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
-                                          radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+                                          radar->status, &radar->statusIndex,
+                                          radar->configs, &radar->configIndex,
+                                          radar->healths, &radar->healthIndex,
+                                          radar->pulses, &radar->pulseIndex,
+                                          radar->rays, &radar->rayIndex);
         RKRadarRelaySetVerbose(radar->radarRelay, 2);
         radar->memoryUsage += radar->radarRelay->memoryUsage;
         radar->state |= RKRadarStateRadarRelayInitialized;

@@ -16,8 +16,7 @@ static int RKRadarRelayRead(RKClient *client) {
 
     int j, k;
     RKHealth *health;
-    RKStatus status;
-    
+    RKStatus *status;
     RKRay *ray = engine->rayBuffer;
     RKPulse *pulse = engine->pulseBuffer;
 
@@ -43,10 +42,39 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
             
         case RKNetworkPacketTypeProcessorStatus:
-            memcpy(&status, client->userPayload, sizeof(RKStatus));
-            printf("RKNetworkPacketTypeProcessorStatus: %llu\n", status.i);
+            // Queue up the status
+            k = *engine->statusIndex;
+            status = &engine->statusBuffer[k];
+            ((RKStatus *)(client->userPayload))->flag = status->flag;
+            memcpy(status, client->userPayload, sizeof(RKStatus));
+            status->flag = RKStatusFlagReady;
+            k = RKNextModuloS(k, engine->radarDescription->statusBufferDepth);
+            status = &engine->statusBuffer[k];
+            status->flag = RKStatusFlagVacant;
+            *engine->statusIndex = k;
+            if (engine->verbose > 1) {
+                RKLog("%s RKNetworkPacketTypeProcessorStatus: %llu\n", engine->name, k);
+            }
             break;
             
+        case RKNetworkPacketTypeHealth:
+            // Queue up the health
+            k = *engine->healthIndex;
+            health = &engine->healthBuffer[k];
+            ((RKHealth *)(client->userPayload))->flag = health->flag;
+            strncpy(health->string, client->userPayload, RKMaximumStringLength);
+            health->flag = RKHealthFlagReady;
+            //k = RKNextModuloS(k, engine->healthBufferDepth);
+            k = RKNextModuloS(k, engine->radarDescription->healthBufferDepth);
+            health = &engine->healthBuffer[k];
+            health->string[0] = '\0';
+            health->flag = RKHealthFlagVacant;
+            *engine->healthIndex = k;
+            if (engine->verbose > 1) {
+                RKLog("%s RKNetworkPacketTypeHealth: %llu\n", engine->name, k);
+            }
+            break;
+
         case RKNetworkPacketTypeRayData:
             break;
 
@@ -78,7 +106,7 @@ static int RKRadarRelayRead(RKClient *client) {
 
             pulse->header.s = pulseStatus;
 
-            *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->pulseBufferDepth);
+            *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth);
             pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
             pulse->header.s = RKPulseStatusVacant;
             break;
@@ -137,26 +165,12 @@ static int RKRadarRelayRead(RKClient *client) {
             }
             ray->header.s = RKRayStatusProcessed | RKRayStatusReady;
 
-            *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->rayBufferDepth);
+            *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
             ray->header.s = RKRayStatusVacant;
             break;
             
         case RKNetworkPacketTypePlainText:
-            break;
-
-        case RKNetworkPacketTypeHealth:
-            // Queue up the health
-            //printf("%s health packet -> %d.\n", engine->name, *engine->healthIndex);
-            k = *engine->healthIndex;
-            health = &engine->healthBuffer[k];
-            strncpy(health->string, client->userPayload, RKMaximumStringLength);
-            health->flag = RKHealthFlagReady;
-            k = RKNextModuloS(k, engine->healthBufferDepth);
-            health = &engine->healthBuffer[k];
-            health->string[0] = '\0';
-            health->flag = RKHealthFlagVacant;
-            *engine->healthIndex = k;
             break;
 
         case RKNetworkPacketTypeCommandResponse:
@@ -264,25 +278,24 @@ void RKRadarRelaySetVerbose(RKRadarRelay *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *engine, RKRadarDesc *desc, RKFileManager *fileManager,
-                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                       RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth,
-                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth,
-                                       RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth) {
-    engine->radarDescription  = desc;
+void RKRadarRelaySetInputOutputBuffers(RKRadarRelay *engine, const RKRadarDesc *desc, RKFileManager *fileManager,
+                                       RKStatus *statusBuffer, uint32_t *statusIndex,
+                                       RKConfig *configBuffer, uint32_t *configIndex,
+                                       RKHealth *healthBuffer, uint32_t *healthIndex,
+                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,
+                                       RKBuffer rayBuffer,     uint32_t *rayIndex) {
+    engine->radarDescription  = (RKRadarDesc *)desc;
     engine->fileManager       = fileManager;
+    engine->statusBuffer      = statusBuffer;
+    engine->statusIndex       = statusIndex;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
-    engine->configBufferDepth = configBufferDepth;
     engine->healthBuffer      = healthBuffer;
     engine->healthIndex       = healthIndex;
-    engine->healthBufferDepth = healthBufferDepth;
     engine->pulseBuffer       = pulseBuffer;
     engine->pulseIndex        = pulseIndex;
-    engine->pulseBufferDepth  = pulseBufferDepth;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
-    engine->rayBufferDepth    = rayBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
 

@@ -25,7 +25,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     string[RKMaximumStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
-    i = *engine->pulseIndex * RKStatusBarWidth / engine->pulseBufferDepth;
+    i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'C';
     
@@ -153,7 +153,7 @@ static void *pulseCompressionCore(void *_in) {
     gettimeofday(&t2, NULL);
     
     // The last index of the pulse buffer
-    uint32_t i0 = engine->pulseBufferDepth - engine->coreCount + c;
+    uint32_t i0 = engine->radarDescription->pulseBufferDepth - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -204,7 +204,7 @@ static void *pulseCompressionCore(void *_in) {
         gettimeofday(&t1, NULL);
 
         // Start of getting busy
-        i0 = RKNextNModuloS(i0, engine->coreCount, engine->pulseBufferDepth);
+        i0 = RKNextNModuloS(i0, engine->coreCount, engine->radarDescription->pulseBufferDepth);
 
         RKPulse *pulse = RKGetPulse(engine->pulseBuffer, i0);
 
@@ -320,7 +320,7 @@ static void *pulseCompressionCore(void *_in) {
         }
         // Record down the latest processed pulse index
         me->pid = i0;
-        me->lag = fmodf((float)(*engine->pulseIndex + engine->pulseBufferDepth - me->pid) / engine->pulseBufferDepth, 1.0f);
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);
@@ -504,7 +504,7 @@ static void *pulseWatcher(void *_in) {
         }
 
         // Lag of the engine
-        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
         // Assess the lag of the workers
         lag = engine->workers[0].lag;
@@ -513,11 +513,11 @@ static void *pulseWatcher(void *_in) {
         }
         if (skipCounter == 0 && lag > 0.9f) {
             engine->almostFull++;
-            skipCounter = engine->pulseBufferDepth / 10;
+            skipCounter = engine->radarDescription->pulseBufferDepth / 10;
             RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
             i = *engine->pulseIndex;
             do {
-                i = RKPreviousModuloS(i, engine->pulseBufferDepth);
+                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 engine->filterGid[i] = -1;
                 pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
             } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
@@ -592,7 +592,7 @@ static void *pulseWatcher(void *_in) {
         }
     
         // Update k to catch up for the next watch
-        k = RKNextModuloS(k, engine->pulseBufferDepth);
+        k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
 
     // Wait for workers to return
@@ -674,20 +674,23 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *engine, const 
 // index - the reference index watch, *index is the latest reading in *pulses
 // size - number of slots in *pulses
 //
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine,
-                                                   RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *engine, const RKRadarDesc *desc,
+                                                   RKConfig *configBuffer, uint32_t *configIndex,
+                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+    engine->radarDescription  = (RKRadarDesc *)desc;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
-    engine->configBufferDepth = configBufferDepth;
     engine->pulseBuffer       = pulseBuffer;
     engine->pulseIndex        = pulseIndex;
-    engine->pulseBufferDepth  = pulseBufferDepth;
+
+    size_t bytes;
 
     if (engine->filterGid != NULL) {
         free(engine->filterGid);
     }
-    engine->filterGid = (int *)malloc(pulseBufferDepth * sizeof(int));
+    bytes = engine->radarDescription->pulseBufferDepth * sizeof(int);
+    engine->memoryUsage += bytes;
+    engine->filterGid = (int *)malloc(bytes);
     if (engine->filterGid == NULL) {
         RKLog("%s Error. Unable to allocate filterGid.\n", engine->name);
         exit(EXIT_FAILURE);
@@ -696,8 +699,9 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     if (engine->planIndices != NULL) {
         free(engine->planIndices);
     }
-    engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(pulseBufferDepth * sizeof(RKPulseCompressionPlanIndex));
-    engine->memoryUsage += pulseBufferDepth * sizeof(RKPulseCompressionPlanIndex);
+    bytes = engine->radarDescription->pulseBufferDepth * sizeof(RKPulseCompressionPlanIndex);
+    engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(bytes);
+    engine->memoryUsage += bytes;
     if (engine->planIndices == NULL) {
         RKLog("%s Error. Unable to allocate planIndices.\n", engine->name);
         exit(EXIT_FAILURE);

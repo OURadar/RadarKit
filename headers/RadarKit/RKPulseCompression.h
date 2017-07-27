@@ -40,12 +40,11 @@ struct rk_pulse_compression_worker {
 struct rk_pulse_compression_engine {
     // User set variables
     char                             name[RKNameLength];
+    RKRadarDesc                      *radarDescription;
     RKBuffer                         pulseBuffer;                        // Buffer of raw pulses
     uint32_t                         *pulseIndex;                        // The refence index to watch for
-    uint32_t                         pulseBufferDepth;                   // Size of the buffer
     RKConfig                         *configBuffer;
     uint32_t                         *configIndex;
-    uint32_t                         configBufferDepth;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
@@ -82,9 +81,9 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *);
 
 void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *,
-                                                   RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
+void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *, const RKRadarDesc *,
+                                                   RKConfig *configBuffer, uint32_t *configIndex,
+                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex);
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *, const uint8_t);
 void RKPulseCompressionEngineSetCoreOrigin(RKPulseCompressionEngine *, const uint8_t);
 
