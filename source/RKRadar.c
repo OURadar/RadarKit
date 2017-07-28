@@ -414,10 +414,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         
         // Position engine
         radar->positionEngine = RKPositionEngineInit();
-        RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
-                                              radar->positions, &radar->positionIndex, radar->desc.positionBufferDepth,
-                                              radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                              radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+        RKPositionEngineSetInputOutputBuffers(radar->positionEngine, &radar->desc,
+                                              radar->positions, &radar->positionIndex,
+                                              radar->configs, &radar->configIndex,
+                                              radar->pulses, &radar->pulseIndex);
         radar->memoryUsage += radar->positionEngine->memoryUsage;
         radar->state |= RKRadarStatePositionEngineInitialized;
 

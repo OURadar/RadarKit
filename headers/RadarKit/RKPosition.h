@@ -53,6 +53,7 @@ typedef struct rk_position_engine RKPositionEngine;
 struct rk_position_engine {
     // User set variables
     char                   name[RKNameLength];
+    RKRadarDesc            *radarDescription;
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
     uint32_t               pulseBufferDepth;
@@ -90,10 +91,10 @@ RKPositionEngine *RKPositionEngineInit();
 void RKPositionEngineFree(RKPositionEngine *);
 
 void RKPositionEngineSetVerbose(RKPositionEngine *, const int);
-void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *,
-                                           RKPosition *, uint32_t *, const uint32_t,
-                                           RKConfig *,   uint32_t *, const uint32_t,
-                                           RKPulse *,    uint32_t *, const uint32_t);
+void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *, const RKRadarDesc *,
+                                           RKPosition *, uint32_t *,
+                                           RKConfig *,   uint32_t *,
+                                           RKPulse *,    uint32_t *);
 
 int RKPositionEngineStart(RKPositionEngine *);
 int RKPositionEngineStop(RKPositionEngine *);
