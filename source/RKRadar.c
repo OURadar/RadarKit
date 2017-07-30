@@ -1272,8 +1272,47 @@ void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
     status->flag |= RKStatusFlagReady;
 }
 
+#pragma mark - Configs
+
+//
+// Add a configuration to change the operational setting.
+// This is an internally used function, shouldn't be used by
+// user program.
+// Input:
+//     RKConfigKey key - the key that describes what comes next
+//     value(s) - values of the key
+// Output:
+//     None
+// Note:
+//     The last key must be RKConfigKeyNull
+// Example:
+//     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
+//     RKConfigAdd(radar, RKConfigKeyNoise, 0.3, 0.2, RKConfigNull) to set noise
+//
+// Users normally don't have to deal with these
+//
+void RKAddConfig(RKRadar *radar, ...) {
+    va_list args;
+    va_start(args, radar);
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("RKAddConfig() ...\n");
+    }
+    return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
+}
+
+RKConfig *RKGetLatestConfig(RKRadar *radar) {
+    return &radar->configs[radar->configIndex];
+}
+
 #pragma mark - Healths
 
+//
+// Request a health reporting node.
+// Input:
+//     RKRadar radar - the radar
+// Output:
+//     An RKHealthNode to identifity that node
+//
 RKHealthNode RKRequestHealthNode(RKRadar *radar) {
     RKHealthNode node = RKHealthNodeUser1 + radar->healthNodeCount;
     if (node == RKHealthNodeCount) {
@@ -1284,6 +1323,14 @@ RKHealthNode RKRequestHealthNode(RKRadar *radar) {
     return node;
 }
 
+//
+// Get a health slot for a specific node
+// Input:
+//     RKRadar radar - the radar
+//     RKHealthNode node - the node to report the health later
+// Output
+//     A vacant slot to fill in health information
+//
 RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     if (radar->healthEngine == NULL) {
         RKLog("Error. Health engine has not started.\n");
@@ -1422,34 +1469,4 @@ void RKGetVacanRay(RKRadar *radar) {
 
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
     ray->header.s |= RKRayStatusReady;
-}
-
-#pragma mark - Internal Functions
-
-//
-// Add a configuration to change the operational setting
-// Input:
-//     RKConfigKey key - the key that describes what comes next
-//     value(s) - values of the key
-// Output:
-//     None
-// Note:
-//     The last key must be RKConfigKeyNull
-// Example:
-//     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
-//     RKConfigAdd(radar, RKConfigKeyNoise, 0.3, 0.2, RKConfigNull) to set noise
-//
-// Users normally don't have to deal with these
-//
-void RKAddConfig(RKRadar *radar, ...) {
-    va_list args;
-    va_start(args, radar);
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("RKAddConfig() ...\n");
-    }
-    return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
-}
-
-RKConfig *RKGetLatestConfig(RKRadar *radar) {
-    return &radar->configs[radar->configIndex];
 }

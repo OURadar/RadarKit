@@ -231,6 +231,10 @@ void RKSetSNRThreshold(RKRadar *, const RKFloat);
 RKStatus *RKGetVacantStatus(RKRadar *);
 void RKSetStatusReady(RKRadar *, RKStatus *);
 
+// Configs
+void RKAddConfig(RKRadar *radar, ...);
+RKConfig *RKGetLatestConfig(RKRadar *radar);
+
 // Healths
 RKHealthNode RKRequestHealthNode(RKRadar *);
 RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode node);
@@ -252,10 +256,6 @@ RKPulse *RKGetLatestPulse(RKRadar *radar);
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
-
-// Configs
-void RKAddConfig(RKRadar *radar, ...);
-RKConfig *RKGetLatestConfig(RKRadar *radar);
 
 // Controls
 void RKAddControl(RKRadar *, const char *label, const char *command);
