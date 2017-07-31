@@ -158,7 +158,7 @@ static void *healthConsolidator(void *in) {
         }
 
         // Update pulseIndex for the next watch
-        k = RKNextModuloS(k, engine->healthBufferDepth);
+        k = RKNextModuloS(k, desc->healthBufferDepth);
         health = &engine->healthBuffer[k];
         health->string[0] = '\0';
         health->flag = RKHealthFlagVacant;
@@ -193,14 +193,13 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, RKRadarDesc *desc,
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, const RKRadarDesc *desc,
                                          RKNodalHealth *healthNodes,
-                                         RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
-    engine->radarDescription  = desc;
+                                         RKHealth *healthBuffer, uint32_t *healthIndex) {
+    engine->radarDescription  = (RKRadarDesc *)desc;
     engine->healthNodes       = healthNodes;
     engine->healthBuffer      = healthBuffer;
     engine->healthIndex       = healthIndex;
-    engine->healthBufferDepth = healthBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
 
@@ -249,5 +248,5 @@ int RKHealthEngineStop(RKHealthEngine *engine) {
 }
 
 char *RKHealthEngineStatusString(RKHealthEngine *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, engine->healthBufferDepth)];
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, engine->radarDescription->healthBufferDepth)];
 }

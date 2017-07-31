@@ -433,7 +433,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         // Health engine
         radar->healthEngine = RKHealthEngineInit();
         RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc, radar->healthNodes,
-                                            radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+                                            radar->healths, &radar->healthIndex);
         radar->memoryUsage += radar->healthEngine->memoryUsage;
         radar->state |= RKRadarStateHealthEngineInitialized;
     } else {
