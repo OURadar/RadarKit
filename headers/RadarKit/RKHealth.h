@@ -22,7 +22,6 @@ struct rk_health_engine {
     RKNodalHealth          *healthNodes;
     RKHealth               *healthBuffer;
     uint32_t               *healthIndex;
-    uint32_t               healthBufferDepth;
     uint8_t                verbose;
 
     // Program set variables
@@ -40,9 +39,9 @@ RKHealthEngine *RKHealthEngineInit();
 void RKHealthEngineFree(RKHealthEngine *);
 
 void RKHealthEngineSetVerbose(RKHealthEngine *, const int);
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *, RKRadarDesc *,
+void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *, const RKRadarDesc *,
                                          RKNodalHealth *healthNodes,
-                                         RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth);
+                                         RKHealth *healthBuffer, uint32_t *healthIndex);
 
 int RKHealthEngineStart(RKHealthEngine *);
 int RKHealthEngineStop(RKHealthEngine *);
