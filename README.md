@@ -5,7 +5,7 @@ RadarKit
 
 First of all. Thanks for your interest in the framework! :smile: :thumbsup: :punch:
 
-This is a toolkit with various components of a radar signal processor. Mainly the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to _base moment_ products. The main idea is to have user only implement the interface between a _digital transceiver_, a _pedestal_, and a generic _health relay_. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
+The RadarKit is a straight C framework. This is a toolkit with various components of a radar signal processor. Mainly the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to _base moment_ products. The main idea is to have user only implement the interface between a _digital transceiver_, a _pedestal_, and a generic _health relay_. RadarKit combines all of these information, generates radar product files, provides display live streams and redirects the control commands to the hardware.
 
 ## System Requirements ##
 - Processors capable of SSE, SSE2, SSE3
@@ -172,7 +172,7 @@ A seprate processing space to generate high-level products is implemented in Pyt
 Design Philosophy
 =================
 
-Three major hardware components of a radar: (i) a __digital transceiver__, (ii) a __pedestal__, and (iii) a __health relay__ (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so it can be interfaced with other libraries, which are specific to these hardware. It is the user responsibility to implement the appropriate interface routines to bridge the data transport and/or control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_; these are routines to construct the object, interact with the object and destruct the object, respectively. The _exec_ routine has the form to accept text command and produce text response. Some keywords for the command are already defined in the framework so user should not use them. More in the Advanced Usage section later.
+Three major hardware components of a radar: (i) a __digital transceiver__, (ii) a __pedestal__, and (iii) a __health relay__ (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so that the RadarKit can be interfaced with other libraries, which are specific to the hardware and/or vendor design. It is the responsibility of user to implement the appropriate interface routines to bridge the data transport and/or control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_, which are routines to construct an object (akin to object oriented programming, althought RadarKit is a straight C implementation), interact with the object and destruct the object, respectively. The _exec_ routine has the form to accept text command and produce text response. Some keywords for the command are already defined in the framework so user should not use them. They are intercepted prior to passing down to the _exec_ routine. Detailed usage on these functions will be revisited later.
 
 The __digital transceiver__ is the hardware that requires high-speed data throughput. RadarKit is designed so that redudant memory copy is minimized. That is, a pointer to the memory space for payload will be provided upon a request. User defined routines fill in the data, typically through a copy mechanism through DMA to transport the I/Q data from a transceiver memory to the host memory, which is initialized and managed by RadarKit. The fundamental form is signed 16-bit I and Q, which is a part of `RKPulse` defined in the framework.
 
@@ -272,10 +272,18 @@ void RKSetHealthReady(RKRadar *, RKHealth *);
 
 ``````
 
-Advanced Usage
-==============
+Hardware Routines
+=================
 
-To use the other two routines in _transceiver_, _pedestal_, and _health relay_, the execution routine must be in the form of
+As mentioend previously, the initialization, execution and deallocation routines of the _transceiver_, _pedestal_, and _health relay_ must have a strict form, as follows. The intialization of the hardware must be in the form of
+
+```c
+RKTransceiver initRoutine(RKRadar *, void *);
+RKPedestal    initRoutine(RKRadar *, void *);
+RKHealthRelay initRoutine(RKRadar *, void *);
+``````
+
+while the execution of command and the return of response must be in the form of
 
 ```c
 int execRoutine(RKTransceiver, const char *command, char *response);
@@ -283,7 +291,7 @@ int execRoutine(RKPedestal, const char *command, char *response);
 int execRoutine(RKHealthRelay, const char *command, char *response);
 ``````
 
-while the resource free routine must be in the form of
+and finally, the resource free routine must be in the form of
 
 ```c
 int freeRoutine(RKTransceiver);
