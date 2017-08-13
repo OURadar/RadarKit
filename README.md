@@ -164,7 +164,7 @@ Follow these steps to get the project
 This example is extremely simple. Many optional arguments were set to NULL (execution and free routines were omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
 
-## Basic Usage on Signap Processing Space ##
+## Basic Usage on Signal Processing Space ##
 
 A seprate processing space to generate high-level products is implemented in Python.
 
@@ -172,7 +172,7 @@ A seprate processing space to generate high-level products is implemented in Pyt
 Design Philosophy
 =================
 
-Three major hardware components of a radar: (i) a __digital transceiver__, (ii) a __pedestal__, and (iii) a __health relay__ (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so that the RadarKit can be interfaced with other libraries, which are specific to the hardware and/or vendor design. It is the responsibility of user to implement the appropriate interface routines to bridge the data transport and/or control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_, which are routines to construct an object (akin to object oriented programming, althought RadarKit is a straight C implementation), interact with the object and destruct the object, respectively. The _exec_ routine has the form to accept text command and produce text response. Some keywords for the command are already defined in the framework so user should not use them. They are intercepted prior to passing down to the _exec_ routine. Detailed usage on these functions will be revisited later.
+Three major hardware components of a radar: (i) a __digital transceiver__, (ii) a __pedestal__, and (iii) a __health relay__ (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so that the RadarKit can be interfaced with other libraries, which are specific to the hardware and/or vendor design. It is the responsibility of user to implement the appropriate interface routines to bridge the data transport and/or control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_, which are routines to allocate an object--akin to object oriented programming, althought RadarKit is a straight C implementation, interact with the object and deallocate the object, respectively. The _exec_ routine has the form to accept text command and produce text response. Some keywords for the command are already defined in the framework so user should not use them. They are intercepted prior to passing down to the _exec_ routine. Detailed usage on these functions will be revisited later.
 
 The __digital transceiver__ is the hardware that requires high-speed data throughput. RadarKit is designed so that redudant memory copy is minimized. That is, a pointer to the memory space for payload will be provided upon a request. User defined routines fill in the data, typically through a copy mechanism through DMA to transport the I/Q data from a transceiver memory to the host memory, which is initialized and managed by RadarKit. The fundamental form is signed 16-bit I and Q, which is a part of `RKPulse` defined in the framework.
 
