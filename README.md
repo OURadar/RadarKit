@@ -9,7 +9,7 @@ The RadarKit is a straight C framework. This is a toolkit with various component
 
 ## System Requirements ##
 - Processors capable of SSE, SSE2, SSE3
-- Optional: AVX
+- Optional: AVX, AVX-256
 
 ## Getting the Project ##
 
