@@ -465,11 +465,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
     
-    // Raw data recorder (to be modified)
+    // Raw data recorder
     radar->dataRecorder = RKDataRecorderInit();
     RKDataRecorderSetInputOutputBuffers(radar->dataRecorder, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                      radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+                                      radar->configs, &radar->configIndex,
+                                      radar->pulses, &radar->pulseIndex);
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
