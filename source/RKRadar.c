@@ -450,14 +450,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRadarRelayInitialized;
     }
 
-    // Health logger
+    // Health logger (to be modified)
     radar->healthLogger = RKHealthLoggerInit();
     RKHealthLoggerSetInputOutputBuffers(radar->healthLogger, &radar->desc, radar->fileManager,
                                         radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->state |= RKRadarStateHealthLoggerInitialized;
 
-    // Sweep engine
+    // Sweep engine (to be modified)
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
                                       radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
@@ -468,8 +468,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Raw data recorder
     radar->dataRecorder = RKDataRecorderInit();
     RKDataRecorderSetInputOutputBuffers(radar->dataRecorder, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                      radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+                                      radar->configs, &radar->configIndex,
+                                      radar->pulses, &radar->pulseIndex);
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
