@@ -1256,6 +1256,15 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 
 #pragma mark - Status
 
+//
+// Get a vacant slot to fill in system status
+// This method is usually used by the RadarKit internally to report
+// system status.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
     status->i += radar->desc.statusBufferDepth;
@@ -1373,6 +1382,13 @@ int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
 
 #pragma mark - Positions
 
+//
+// Get a vacant slot to fill in position data from the pedestal
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
     if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
@@ -1402,6 +1418,13 @@ RKPosition *RKGetLatestPosition(RKRadar *radar) {
 
 #pragma mark - Pulses
 
+//
+// Get a vacant slot to fill in pulse data from the digital transceiver
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKPulse *RKGetVacantPulse(RKRadar *radar) {
     if (radar->pulses == NULL) {
         RKLog("Error. Buffer for raw pulses has not been allocated.\n");
