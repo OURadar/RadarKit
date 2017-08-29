@@ -230,8 +230,8 @@ static void *healthLogger(void *in) {
         RKProcessHealthKeywords(engine, health->string);
 
         // Update pulseIndex for the next watch
-        k = RKNextModuloS(k, engine->healthBufferDepth);
-        if (k >= engine->healthBufferDepth) {
+        k = RKNextModuloS(k, engine->radarDescription->healthBufferDepth);
+        if (k >= engine->radarDescription->healthBufferDepth) {
             RKLog("Error. k = %d\n", k);
             k = *engine->healthIndex;
             RKLog("Error. --> %d\n", k);
@@ -270,12 +270,11 @@ void RKHealthLoggerSetVerbose(RKHealthLogger *engine, const int verbose) {
 }
 
 void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *engine, RKRadarDesc *desc, RKFileManager *fileManager,
-                                         RKHealth *healthBuffer, uint32_t *healthIndex, const uint32_t healthBufferDepth) {
+                                         RKHealth *healthBuffer, uint32_t *healthIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->healthBuffer      = healthBuffer;
     engine->healthIndex       = healthIndex;
-    engine->healthBufferDepth = healthBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
 
@@ -328,5 +327,5 @@ int RKHealthLoggerStop(RKHealthLogger *engine) {
 }
 
 char *RKHealthLoggerStatusString(RKHealthLogger *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, engine->healthBufferDepth)];
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, engine->radarDescription->healthBufferDepth)];
 }

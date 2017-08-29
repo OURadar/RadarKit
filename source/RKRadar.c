@@ -453,7 +453,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Health logger (to be modified)
     radar->healthLogger = RKHealthLoggerInit();
     RKHealthLoggerSetInputOutputBuffers(radar->healthLogger, &radar->desc, radar->fileManager,
-                                        radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+                                        radar->healths, &radar->healthIndex);
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->state |= RKRadarStateHealthLoggerInitialized;
 
