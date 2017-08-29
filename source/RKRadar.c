@@ -1256,6 +1256,15 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 
 #pragma mark - Status
 
+//
+// Get a vacant slot to fill in system status
+// This method is usually used by the RadarKit internally to report
+// system status.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
     status->i += radar->desc.statusBufferDepth;
@@ -1324,7 +1333,7 @@ RKHealthNode RKRequestHealthNode(RKRadar *radar) {
 }
 
 //
-// Get a health slot for a specific node
+// Get a health slot for a specific node.
 // Input:
 //     RKRadar radar - the radar
 //     RKHealthNode node - the node to report the health later
@@ -1373,6 +1382,13 @@ int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
 
 #pragma mark - Positions
 
+//
+// Get a vacant slot to fill in position data from the pedestal.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
     if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
@@ -1402,6 +1418,13 @@ RKPosition *RKGetLatestPosition(RKRadar *radar) {
 
 #pragma mark - Pulses
 
+//
+// Get a vacant slot to fill in pulse data from the digital transceiver.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKPulse *RKGetVacantPulse(RKRadar *radar) {
     if (radar->pulses == NULL) {
         RKLog("Error. Buffer for raw pulses has not been allocated.\n");
@@ -1452,7 +1475,16 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
 
 #pragma mark - Rays
 
-void RKGetVacanRay(RKRadar *radar) {
+//
+// Get a vacant slot to fill in ray data.
+// MomentEngine doesn't rely on this function.
+// This function may be used for a relay to fill the buffer.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
+RKRay *RKGetVacanRay(RKRadar *radar) {
     if (radar->rays == NULL) {
         RKLog("Error. Buffer for rays has not been allocated.\n");
         exit(EXIT_FAILURE);
@@ -1465,6 +1497,7 @@ void RKGetVacanRay(RKRadar *radar) {
     ray->header.endTime.tv_sec = 0;
     ray->header.endTime.tv_usec = 0;
     radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    return ray;
 }
 
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
