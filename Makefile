@@ -1,4 +1,7 @@
 UNAME := $(shell uname)
+UNAME_M := $(shell uname -m)
+
+$(info $$UNAME_M = [${UNAME_M}])
 
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 #CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
@@ -19,6 +22,7 @@ OBJS += RKDataRecorder.o RKSweep.o RKHealthLogger.o
 OBJS += RKWaveform.o
 RKLIB = libRadarKit.a
 
+
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
 #CFLAGS += -mavx2 -mavx512f
@@ -29,8 +33,14 @@ ifeq ($(UNAME), Darwin)
 CC = clang
 CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
 else
+# Old Debian
+ifeq ($(UNAME_M), i686)
+CFLAGS += -D_GNU_SOURCE -D_EXPLICIT_INTRINSIC -msse -msse2 -msse3 -msse4 -msse4.1
+LDFLAGS += -L /usr/lib64
+else
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS += -L /usr/lib64
+endif
 endif
 
 LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm
