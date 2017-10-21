@@ -26,10 +26,8 @@ struct rk_sweep_engine {
     RKRadarDesc            *radarDescription;
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
-    uint32_t               configBufferDepth;
     RKBuffer               rayBuffer;
     uint32_t               *rayIndex;
-    uint32_t               rayBufferDepth;
     uint8_t                verbose;
     bool                   doNotWrite;
     bool                   hasHandleFilesScript;
@@ -66,8 +64,8 @@ void RKSweepEngineFree(RKSweepEngine *);
 
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
 void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileManager *,
-                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                       RKBuffer rayBuffer,     uint32_t *rayIndex,    const uint32_t rayBufferDepth);
+                                       RKConfig *configBuffer, uint32_t *configIndex,
+                                       RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const bool expectTgz);
 

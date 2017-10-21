@@ -489,15 +489,15 @@ static void *rayGatherer(void *in) {
         }
         
         // Lag of the engine
-        engine->lag = fmodf(((float)*engine->rayIndex + engine->rayBufferDepth - k) / engine->rayBufferDepth, 1.0f);
+        engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - k) / engine->radarDescription->rayBufferDepth, 1.0f);
         if (ray->header.marker & RKMarkerSweepEnd) {
             n = 0;
             do {
                 ray = RKGetRay(engine->rayBuffer, is);
                 ray->header.n = is;
                 rays[n++] = ray;
-                is = RKNextModuloS(is, engine->rayBufferDepth);
-            } while (is != k && n < RKMaxRaysPerSweep - 1 && n < engine->rayBufferDepth);
+                is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
+            } while (is != k && n < RKMaxRaysPerSweep - 1 && n < engine->radarDescription->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
@@ -518,7 +518,7 @@ static void *rayGatherer(void *in) {
         }
 
         // Update k to catch up for the next watch
-        k = RKNextModuloS(k, engine->rayBufferDepth);
+        k = RKNextModuloS(k, engine->radarDescription->rayBufferDepth);
     }
     if (tidSweepWriter) {
         pthread_join(tidSweepWriter, NULL);
@@ -570,16 +570,14 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
 }
 
 void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
-                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                       RKBuffer rayBuffer, uint32_t *rayIndex, const uint32_t rayBufferDepth) {
+                                       RKConfig *configBuffer, uint32_t *configIndex,
+                                       RKBuffer rayBuffer, uint32_t *rayIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
-    engine->configBufferDepth = configBufferDepth;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
-    engine->rayBufferDepth    = rayBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
 

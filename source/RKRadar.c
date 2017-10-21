@@ -460,8 +460,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Sweep engine (to be modified)
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                      radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+                                      radar->configs, &radar->configIndex,
+                                      radar->rays, &radar->rayIndex);
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
     
