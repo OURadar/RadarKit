@@ -27,7 +27,7 @@ static void RKDataRecorderUpdateStatusString(RKDataRecorder *engine) {
     string[RKMaximumStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
-    i = *engine->pulseIndex * RKStatusBarWidth / engine->pulseBufferDepth;
+    i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'F';
     
@@ -99,10 +99,12 @@ static void *pulseRecorder(void *in) {
             break;
         }
         // Lag of the engine
-        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         if (!isfinite(engine->lag)) {
             RKLog("%s Error. %d + %d - %d = %d",
-                  engine->name, *engine->pulseIndex, engine->pulseBufferDepth, k, *engine->pulseIndex + engine->pulseBufferDepth - k, engine->lag);
+                  engine->name,
+                  *engine->pulseIndex, engine->radarDescription->pulseBufferDepth, k,
+                  *engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k, engine->lag);
         }
         
         // Consider we are writing to a file at this point
@@ -174,7 +176,7 @@ static void *pulseRecorder(void *in) {
         engine->state ^= RKEngineStateWritingFile;
         
         // Update pulseIndex for the next watch
-        k = RKNextModuloS(k, engine->pulseBufferDepth);
+        k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
         doNotWrite = engine->doNotWrite;
         n++;
     }
@@ -217,16 +219,14 @@ void RKDataRecorderSetVerbose(RKDataRecorder *engine, const int verbose) {
 }
 
 void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *desc, RKFileManager *fileManager,
-                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth) {
+                                       RKConfig *configBuffer, uint32_t *configIndex,
+                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
-    engine->configBufferDepth = configBufferDepth;
     engine->pulseBuffer       = pulseBuffer;
     engine->pulseIndex        = pulseIndex;
-    engine->pulseBufferDepth  = pulseBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
 

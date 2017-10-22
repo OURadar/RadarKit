@@ -23,10 +23,8 @@ struct rk_data_recorder {
     RKRadarDesc            *radarDescription;
     RKBuffer               pulseBuffer;                    // Buffer of raw pulses
     uint32_t               *pulseIndex;                    // The refence index to watch for
-    uint32_t               pulseBufferDepth;               // Size of the buffer
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
-    uint32_t               configBufferDepth;
     uint8_t                verbose;
     bool                   doNotWrite;
     size_t                 cacheSize;
@@ -54,8 +52,8 @@ void RKDataRecorderFree(RKDataRecorder *engine);
 
 void RKDataRecorderSetVerbose(RKDataRecorder *, const int);
 void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *, RKFileManager *,
-                                       RKConfig *configBuffer, uint32_t *configIndex, const uint32_t configBufferDepth,
-                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex,  const uint32_t pulseBufferDepth);
+                                       RKConfig *configBuffer, uint32_t *configIndex,
+                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex);
 void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value);
 void RKDataRecorderSetMaximumRecordDepth(RKDataRecorder *engine, const uint32_t);
 void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size);

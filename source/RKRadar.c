@@ -414,26 +414,26 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         
         // Position engine
         radar->positionEngine = RKPositionEngineInit();
-        RKPositionEngineSetInputOutputBuffers(radar->positionEngine,
-                                              radar->positions, &radar->positionIndex, radar->desc.positionBufferDepth,
-                                              radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                              radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+        RKPositionEngineSetInputOutputBuffers(radar->positionEngine, &radar->desc,
+                                              radar->positions, &radar->positionIndex,
+                                              radar->configs, &radar->configIndex,
+                                              radar->pulses, &radar->pulseIndex);
         radar->memoryUsage += radar->positionEngine->memoryUsage;
         radar->state |= RKRadarStatePositionEngineInitialized;
 
         // Moment engine
         radar->momentEngine = RKMomentEngineInit();
         RKMomentEngineSetInputOutputBuffers(radar->momentEngine, &radar->desc,
-                                            radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                            radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth,
-                                            radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+                                            radar->configs, &radar->configIndex,
+                                            radar->pulses, &radar->pulseIndex,
+                                            radar->rays, &radar->rayIndex);
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->state |= RKRadarStateMomentEngineInitialized;
 
         // Health engine
         radar->healthEngine = RKHealthEngineInit();
         RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc, radar->healthNodes,
-                                            radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+                                            radar->healths, &radar->healthIndex);
         radar->memoryUsage += radar->healthEngine->memoryUsage;
         radar->state |= RKRadarStateHealthEngineInitialized;
     } else {
@@ -450,26 +450,26 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRadarRelayInitialized;
     }
 
-    // Health logger
+    // Health logger (to be modified)
     radar->healthLogger = RKHealthLoggerInit();
     RKHealthLoggerSetInputOutputBuffers(radar->healthLogger, &radar->desc, radar->fileManager,
-                                        radar->healths, &radar->healthIndex, radar->desc.healthBufferDepth);
+                                        radar->healths, &radar->healthIndex);
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->state |= RKRadarStateHealthLoggerInitialized;
 
-    // Sweep engine
+    // Sweep engine (to be modified)
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                      radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
+                                      radar->configs, &radar->configIndex,
+                                      radar->rays, &radar->rayIndex);
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
     
     // Raw data recorder
     radar->dataRecorder = RKDataRecorderInit();
     RKDataRecorderSetInputOutputBuffers(radar->dataRecorder, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex, radar->desc.configBufferDepth,
-                                      radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
+                                      radar->configs, &radar->configIndex,
+                                      radar->pulses, &radar->pulseIndex);
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
@@ -1256,6 +1256,15 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 
 #pragma mark - Status
 
+//
+// Get a vacant slot to fill in system status
+// This method is usually used by the RadarKit internally to report
+// system status.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
     status->i += radar->desc.statusBufferDepth;
@@ -1272,8 +1281,47 @@ void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
     status->flag |= RKStatusFlagReady;
 }
 
+#pragma mark - Configs
+
+//
+// Add a configuration to change the operational setting.
+// This is an internally used function, shouldn't be used by
+// user program.
+// Input:
+//     RKConfigKey key - the key that describes what comes next
+//     value(s) - values of the key
+// Output:
+//     None
+// Note:
+//     The last key must be RKConfigKeyNull
+// Example:
+//     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
+//     RKConfigAdd(radar, RKConfigKeyNoise, 0.3, 0.2, RKConfigNull) to set noise
+//
+// Users normally don't have to deal with these
+//
+void RKAddConfig(RKRadar *radar, ...) {
+    va_list args;
+    va_start(args, radar);
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("RKAddConfig() ...\n");
+    }
+    return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
+}
+
+RKConfig *RKGetLatestConfig(RKRadar *radar) {
+    return &radar->configs[radar->configIndex];
+}
+
 #pragma mark - Healths
 
+//
+// Request a health reporting node.
+// Input:
+//     RKRadar radar - the radar
+// Output:
+//     An RKHealthNode to identifity that node
+//
 RKHealthNode RKRequestHealthNode(RKRadar *radar) {
     RKHealthNode node = RKHealthNodeUser1 + radar->healthNodeCount;
     if (node == RKHealthNodeCount) {
@@ -1284,6 +1332,14 @@ RKHealthNode RKRequestHealthNode(RKRadar *radar) {
     return node;
 }
 
+//
+// Get a health slot for a specific node.
+// Input:
+//     RKRadar radar - the radar
+//     RKHealthNode node - the node to report the health later
+// Output
+//     A vacant slot to fill in health information
+//
 RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     if (radar->healthEngine == NULL) {
         RKLog("Error. Health engine has not started.\n");
@@ -1326,6 +1382,13 @@ int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
 
 #pragma mark - Positions
 
+//
+// Get a vacant slot to fill in position data from the pedestal.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKPosition *RKGetVacantPosition(RKRadar *radar) {
     if (radar->positionEngine == NULL) {
         RKLog("Error. Pedestal engine has not started.\n");
@@ -1355,6 +1418,13 @@ RKPosition *RKGetLatestPosition(RKRadar *radar) {
 
 #pragma mark - Pulses
 
+//
+// Get a vacant slot to fill in pulse data from the digital transceiver.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
 RKPulse *RKGetVacantPulse(RKRadar *radar) {
     if (radar->pulses == NULL) {
         RKLog("Error. Buffer for raw pulses has not been allocated.\n");
@@ -1405,7 +1475,16 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
 
 #pragma mark - Rays
 
-void RKGetVacanRay(RKRadar *radar) {
+//
+// Get a vacant slot to fill in ray data.
+// MomentEngine doesn't rely on this function.
+// This function may be used for a relay to fill the buffer.
+// Input:
+//     RKRadar *radar - object of the radar
+// Output:
+//     None
+//
+RKRay *RKGetVacanRay(RKRadar *radar) {
     if (radar->rays == NULL) {
         RKLog("Error. Buffer for rays has not been allocated.\n");
         exit(EXIT_FAILURE);
@@ -1418,38 +1497,9 @@ void RKGetVacanRay(RKRadar *radar) {
     ray->header.endTime.tv_sec = 0;
     ray->header.endTime.tv_usec = 0;
     radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    return ray;
 }
 
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
     ray->header.s |= RKRayStatusReady;
-}
-
-#pragma mark - Internal Functions
-
-//
-// Add a configuration to change the operational setting
-// Input:
-//     RKConfigKey key - the key that describes what comes next
-//     value(s) - values of the key
-// Output:
-//     None
-// Note:
-//     The last key must be RKConfigKeyNull
-// Example:
-//     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
-//     RKConfigAdd(radar, RKConfigKeyNoise, 0.3, 0.2, RKConfigNull) to set noise
-//
-// Users normally don't have to deal with these
-//
-void RKAddConfig(RKRadar *radar, ...) {
-    va_list args;
-    va_start(args, radar);
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("RKAddConfig() ...\n");
-    }
-    return RKConfigAdvance(radar->configs, &radar->configIndex, radar->desc.configBufferDepth, args);
-}
-
-RKConfig *RKGetLatestConfig(RKRadar *radar) {
-    return &radar->configs[radar->configIndex];
 }

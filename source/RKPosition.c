@@ -37,7 +37,7 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Use b characters to draw a bar
-    i = engine->processedPulseIndex * RKStatusBarWidth / engine->pulseBufferDepth;
+    i = engine->processedPulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'P';
 
@@ -55,11 +55,11 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[RKMaximumStringLength - 2] = '#';
 
     // Same as previous status, use b characters to draw a bar
-    i = *engine->positionIndex * RKStatusBarWidth / engine->positionBufferDepth;
+    i = *engine->positionIndex * RKStatusBarWidth / engine->radarDescription->positionBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
-    RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->positionBufferDepth)];
+    RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
     snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
              (unsigned long long)position->i,
              rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
@@ -171,17 +171,17 @@ static void *pulseTagger(void *in) {
         }
         
         // Lag of the engine
-        engine->lag = fmodf(((float)*engine->pulseIndex + engine->pulseBufferDepth - k) / engine->pulseBufferDepth, 1.0f);
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         
         // Search until the time just after the pulse was acquired.
         i = 0;
         hasSweepEnd = false;
-        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->pulseBufferDepth) {
+        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->radarDescription->pulseBufferDepth) {
             hasSweepEnd |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
-            j = RKNextModuloS(j, engine->positionBufferDepth);
+            j = RKNextModuloS(j, engine->radarDescription->positionBufferDepth);
             i++;
         }
-        if (i == engine->pulseBufferDepth) {
+        if (i == engine->radarDescription->pulseBufferDepth) {
             if (engine->verbose > 2) {
                 RKLog("Could not find an appropriate position.  %.2f %s %.2f",
                       pulse->header.timeDouble,
@@ -193,7 +193,7 @@ static void *pulseTagger(void *in) {
         positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;
         
         // Roll back one slot, which should be the position just before the pulse was acquired.
-        s = RKPreviousModuloS(j, engine->positionBufferDepth);
+        s = RKPreviousModuloS(j, engine->radarDescription->positionBufferDepth);
         positionBefore = &engine->positionBuffer[s];   timeBefore = positionBefore->timeDouble;
         
         // Linear interpololation : V_interp = V_before + alpha * (V_after - V_before)
@@ -246,7 +246,7 @@ static void *pulseTagger(void *in) {
 
         if (marker0 & RKMarkerSweepBegin) {
             // Add another configuration
-            RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->configBufferDepth,
+            RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
                             RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
                             RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
                             RKConfigPositionMarker,  marker0,
@@ -296,7 +296,7 @@ static void *pulseTagger(void *in) {
         pulse->header.s |= RKPulseStatusHasPosition;
 
         // Update pulseIndex for the next watch
-        k = RKNextModuloS(k, engine->pulseBufferDepth);
+        k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
     return NULL;
 }
@@ -324,19 +324,17 @@ void RKPositionEngineSetVerbose(RKPositionEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine,
-                                           RKPosition *positionBuffer, uint32_t *positionIndex, const uint32_t positionBufferDepth,
-                                           RKConfig   *configBuffer,   uint32_t *configIndex,   const uint32_t configBufferDepth,
-                                           RKPulse    *pulseBuffer,    uint32_t *pulseIndex,    const uint32_t pulseBufferDepth) {
+void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine, const RKRadarDesc *desc,
+                                           RKPosition *positionBuffer, uint32_t *positionIndex,
+                                           RKConfig   *configBuffer,   uint32_t *configIndex,
+                                           RKPulse    *pulseBuffer,    uint32_t *pulseIndex) {
+    engine->radarDescription    = (RKRadarDesc *)desc;
     engine->positionBuffer      = positionBuffer;
     engine->positionIndex       = positionIndex;
-    engine->positionBufferDepth = positionBufferDepth;
     engine->configBuffer        = configBuffer;
     engine->configIndex         = configIndex;
-    engine->configBufferDepth   = configBufferDepth;
     engine->pulseBuffer         = pulseBuffer;
     engine->pulseIndex          = pulseIndex;
-    engine->pulseBufferDepth    = pulseBufferDepth;
     engine->state |= RKEngineStateProperlyWired;
 }
 
