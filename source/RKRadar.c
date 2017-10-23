@@ -668,6 +668,18 @@ int RKFree(RKRadar *radar) {
 
 #pragma mark - Hardware Hooks
 
+//
+// The three major compenents: Digital transceiver, pedestal and general health relay
+//
+// Input:
+//     RKRadar *radar - object of the radar
+//     void *input - user defined input structure / object, de-referenced to void * here
+//     RKTransceiver/RKPedestal/RKHealthRelay initRoutine(RKRadar *, void *) - init routine
+//     int execRoutine(RKTransceiver, const char *, char *) - command execution routine
+//     int freeRoutine(RKTransceiver)) - de-allocation routine
+// Output:
+//     RKResultSuccess if everything was successful
+//
 int RKSetTransceiver(RKRadar *radar,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
@@ -705,10 +717,10 @@ int RKSetHealthRelay(RKRadar *radar,
 }
 
 #pragma mark - Properties
+
 //
 // Property setters are self-explanatory so minimal descriptions are provided here
 //
-
 int RKSetVerbose(RKRadar *radar, const int verbose) {
     if (verbose) {
         RKLog("Setting verbose level to %d ...\n", verbose);
