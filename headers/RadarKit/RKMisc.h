@@ -78,8 +78,8 @@ enum RKJSONObjectType {
 
 void stripTrailingUnwanted(char *str);
 
-char *RKNow();
-char *RKGetColor();
+char *RKNow(void);
+char *RKGetColor(void);
 char *RKGetColorOfIndex(const int i);
 char *RKGetBackgroundColor();
 char *RKGetBackgroundColorOfIndex(const int i);
