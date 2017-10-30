@@ -52,8 +52,23 @@ void *theClient(void *in) {
 
         C->state = RKClientStateResolvingIP;
 
-        if (C->verbose > 1) {
-            RKLog("%s opening a %s socket ...\n", C->name,
+		// Resolve hostname to IP address
+		if (C->verbose > 1) {
+			RKLog("%s Resolving IP address ...\n", C->name);
+		}
+		struct hostent *h = gethostbyname2(C->hostname, AF_INET);
+		if (h == NULL) {
+			RKLog("%s Error. Unable to resolve '%s'\n", C->name, C->hostname);
+			k = RKNetworkReconnectSeconds * 10;
+			do {
+				usleep(100000);
+			} while (k-- > 0 && C->state < RKClientStateReconnecting);
+			continue;
+		}
+		strcpy(C->hostIP, inet_ntoa(*((struct in_addr *)h->h_addr_list[0])));
+
+		if (C->verbose > 1) {
+            RKLog("%s Opening a %s socket ...\n", C->name,
                   C->type == RKNetworkSocketTypeTCP ? "TCP" :
                   (C->type == RKNetworkSocketTypeUDP ? "UDP" : "(NULL)"));
         }
@@ -82,33 +97,7 @@ void *theClient(void *in) {
             setsockopt(C->sd, SOL_SOCKET, SO_BROADCAST, &r, sizeof(r));
         }
 
-        // Resolve hostname to IP address
-        if (C->verbose > 1) {
-            RKLog("%s Resolving IP address ...\n", C->name);
-        }
-        struct hostent *h = gethostbyname2(C->hostname, AF_INET);
-        if (h == NULL) {
-            RKLog("%s Error. Unable to resolve '%s'\n", C->name, C->hostname);
-            k = RKNetworkReconnectSeconds * 10;
-            do {
-                usleep(100000);
-            } while (k-- > 0 && C->state < RKClientStateReconnecting);
-            continue;
-        }
-        strcpy(C->hostIP, inet_ntoa(*((struct in_addr *)h->h_addr_list[0])));
-
         C->state = RKClientStateConfiguringSocket;
-
-        //RKLog("%s <RKClient> --> %d", C->name, sizeof(C->sa.sin_addr.s_addr));
-
-        // Bind to a specific interface
-//        struct sockaddr_in local_addr;
-//        local_addr.sin_family = AF_INET;
-//        local_addr.sin_port = htons(0);
-//        local_addr.sin_addr.s_addr = inet_addr("192.168.2.2");
-//        if (bind(C->sd, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_in))) {
-//            RKLog("%s Error. Unable to fix an interface (errno = %d)\n", C->name, errno);
-//        }
 
         // Configure the socket
         C->sa.sin_family = AF_INET;
