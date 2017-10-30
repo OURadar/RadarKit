@@ -203,7 +203,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
         waveform->filterAnchors[k][0].name = n;
         waveform->filterAnchors[k][0].origin = 0;
         waveform->filterAnchors[k][0].length = waveform->depth;
-        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;   // Replace with actual depth later
+        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;   // Can be replaced with actual depth later
         waveform->filterAnchors[k][0].subCarrierFrequency = omega;
         //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, waveform->omega);
         x = waveform->samples[k];
