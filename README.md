@@ -178,12 +178,13 @@ The __digital transceiver__ is the hardware that requires high-speed data throug
 
 The __pedestal__ is the hardware that is usually low speed, typically on the orders of 10 KBps if the position reading is provided at about 100 samples per second. A RadarKit position structure `RKPosition` is defined in the framework. If an interface software [pedzy] is used, which is a light weight pedestal controller, RadarKit can readily ingest position data through a network connection. Otherwise, an `RKPedestalPedzy` replacement can be implemented to provide same functionality. In this case, user is also free to define a new position type. The RadarKit framework does not restrict this definition.
 
-The __health relay__ is the hardware that is also low speed, typically on the orders of 1 KBps. This is also the hardware that can be called an _auxiliary controller_, where everything else is interfaced through this relay and the health information is probed through this controller. A RadarKit health structure `RKHealth` is defined in the framework. More than one health node can be implemented. They provide health information using JSON strings through TCP/IP socket connections. If an interface software [tweeta] is used, RadarKit can readily ingest auxiliary hardware health data through a TCP/IP network connection. Otherwise, an `RKHealthRelayTweeta` replacement can be implemented to provide same functionality. The RadarKit framework does not restrict this definition.
+The __health relay__ is the hardware that is also low speed, typically on the orders of 1 KBps. This is also the hardware that can be called an _auxiliary controller_, where everything else is interfaced through this relay and the health information is probed through this controller. A RadarKit health structure `RKHealth` is defined in the framework. More than one health node can be implemented. They provide health information using JSON strings through TCP/IP socket connections. If an interface software [tweeta] or [tweeto] is used, RadarKit can readily ingest auxiliary hardware health data through a TCP/IP network connection. Otherwise, an `RKHealthRelayTweeta` replacement can be implemented to provide same functionality. The RadarKit framework does not restrict this definition.
 
 Base radar products are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
 
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
+[tweeto]: https://git.arrc.ou.edu/cheo4524/tweeto.git
 [iRadar]: https://arrc.ou.edu/tools
 
 
