@@ -81,7 +81,7 @@ void stripTrailingUnwanted(char *str);
 char *RKNow(void);
 char *RKGetColor(void);
 char *RKGetColorOfIndex(const int i);
-char *RKGetBackgroundColor();
+char *RKGetBackgroundColor(void);
 char *RKGetBackgroundColorOfIndex(const int i);
 char *RKGetValueOfKey(const char *string, const char *key);
 int RKIndentCopy(char *dst, char *src);
