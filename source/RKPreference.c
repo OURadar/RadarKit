@@ -55,6 +55,7 @@ int RKPreferenceUpdate(RKPreference *preference) {
 
     int i = 0;
     int k = 0;
+	int m = 0;
     while (k < RKPreferenceObjectCount) {
         c = fgets(line, RKMaximumStringLength, fid);
         if (c == NULL) {
@@ -98,19 +99,31 @@ int RKPreferenceUpdate(RKPreference *preference) {
                 (preference->objects[k].valueString[0] == '+' && preference->objects[k].valueString[1] >= '0' && preference->objects[k].valueString[1] <= '9')) {
                 preference->objects[k].isNumeric = true;
                 preference->objects[k].numericCount = sscanf(preference->objects[k].valueString, "%lf %lf %lf %lf",
-                                                             &preference->objects[k].parameters[0],
-                                                             &preference->objects[k].parameters[1],
-                                                             &preference->objects[k].parameters[2],
-                                                             &preference->objects[k].parameters[3]);
-            }
+                                                             &preference->objects[k].doubleValues[0],
+                                                             &preference->objects[k].doubleValues[1],
+                                                             &preference->objects[k].doubleValues[2],
+                                                             &preference->objects[k].doubleValues[3]);
+			} else if (!strncasecmp(preference->objects[k].valueString, "false", 5) ||
+					   !strncasecmp(preference->objects[k].valueString, "true", 4) ||
+					   !strncasecmp(preference->objects[k].valueString, "yes", 3) ||
+					   !strncasecmp(preference->objects[k].valueString, "no", 2)) {
+				sscanf(preference->objects[k].valueString, "%s %s %s %s",
+					   preference->objects[k].subStrings[0],
+					   preference->objects[k].subStrings[1],
+					   preference->objects[k].subStrings[2],
+					   preference->objects[k].subStrings[3]);
+				for (m = 0; m < 4; m++) {
+					preference->objects[k].boolValues[m] = (!strncasecmp(preference->objects[k].subStrings[m], "true", 4) || !strncasecmp(preference->objects[k].subStrings[m], "yes", 4));
+				}
+			}
             preference->count++;
             #if defined(DEBUG)
             printf("Keyword:'%s'   parameters:'%s' (%d)  %d  (%d) %.1f %.1f %.1f\n",
                    preference->objects[k].keyword, preference->objects[k].valueString, (int)strlen(preference->objects[k].valueString),
                    preference->objects[k].isNumeric, preference->objects[k].numericCount,
-                   preference->objects[k].parameters[0],
-                   preference->objects[k].parameters[1],
-                   preference->objects[k].parameters[2]);
+                   preference->objects[k].doubleValues[0],
+                   preference->objects[k].doubleValues[1],
+                   preference->objects[k].doubleValues[2]);
             #endif
             k++;
         }
