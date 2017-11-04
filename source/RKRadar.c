@@ -96,6 +96,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&radar, RKSIMDAlignSize, bytes))
     memset(radar, 0, bytes);
 
+    // Get the number of CPUs
+    radar->processorCount = (uint32_t)sysconf(_SC_NPROCESSORS_ONLN);
+    if (desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Number of online CPUs = %ld\n", radar->processorCount);
+    }
+
     // Set some non-zero variables
     sprintf(radar->name, "%s<MasterController>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(13) : "", rkGlobalParameters.showColor ? RKNoColor : "");
@@ -932,10 +938,6 @@ void RKShowOffsets(RKRadar *radar) {
 //
 int RKGoLive(RKRadar *radar) {
     radar->active = true;
-    
-    // Get the number of CPUs
-    long processorCount = sysconf(_SC_NPROCESSORS_ONLN);
-    RKLog("Number of CPUs = %ld\n", processorCount);
 
     // Offset the pre-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -954,10 +956,10 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Main thread uses 1 CPU. Start the others from 1.
         uint8_t o = 1;
-        if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > processorCount) {
+        if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
             RKLog("Info. Not enough physical cores. Core counts will be adjusted.\n");
-            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, (uint8_t)processorCount / 2);
-            RKMomentEngineSetCoreCount(radar->momentEngine, (uint8_t)processorCount / 2 - 1);
+            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, radar->processorCount / 2);
+            RKMomentEngineSetCoreCount(radar->momentEngine, radar->processorCount / 2 - 1);
         }
         RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
         RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);

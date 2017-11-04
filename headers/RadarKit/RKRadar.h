@@ -74,6 +74,7 @@ struct rk_radar {
     RKRadarState               state;
     bool                       active;
     size_t                     memoryUsage;
+    uint8_t                    processorCount;
     //
     // Buffers
     //
