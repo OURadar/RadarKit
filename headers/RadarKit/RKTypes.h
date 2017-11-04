@@ -695,7 +695,9 @@ typedef struct rk_preferene_object {
     bool             isNumeric;
     bool             isValid;
     int              numericCount;
-    double           parameters[4];
+	char             subStrings[4][RKNameLength];
+    double           doubleValues[4];
+	bool             boolValues[4];
 } RKPreferenceObject;
 
 typedef struct rk_control {
