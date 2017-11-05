@@ -242,7 +242,9 @@ static void *pulseCompressionCore(void *_in) {
                     planIndex = engine->planIndices[i0][j];
                     planSize = engine->planSizes[planIndex];
                     blindGateCount += engine->filterAnchors[gid][j].length;
-                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin, engine->filterAnchors[gid][j].maxDataLength);
+                    bound = MIN(MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+                                    pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin),
+                                    engine->filterAnchors[gid][j].maxDataLength);
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -297,8 +299,8 @@ static void *pulseCompressionCore(void *_in) {
                     Z.q += engine->filterAnchors[gid][j].inputOrigin;
 
                     o = out + engine->filterAnchors[gid][j].outputOrigin;
-                    bound = MIN(planSize - engine->filterAnchors[gid][j].outputOrigin, pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin);
-                    bound = MIN(bound, engine->filterAnchors[gid][j].maxDataLength);
+//                    bound = MIN(planSize - engine->filterAnchors[gid][j].outputOrigin, pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin);
+//                    bound = MIN(bound, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
@@ -760,20 +762,33 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
 //     group - filter group to assign to
 //     index - index within the group to assign to
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const RKFilterAnchor anchor, const int group, const int index) {
-    if (group >= RKMaxFilterGroups) {
-        RKLog("Error. Group %d is invalid.\n", group);
-        return RKResultFailedToSetFilter;
-    }
     if (engine->pulseBuffer == NULL) {
         RKLog("Warning. Pulse buffer has not been set.\n");
         return RKResultNoPulseBuffer;
     }
+    if (group >= RKMaxFilterGroups) {
+        RKLog("Error. Group %d is invalid.\n", group);
+        return RKResultFailedToSetFilter;
+    }
+    // Check if filter anchor is valid
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
+    //size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MIN(anchor.length, pulse->header.capacity), anchor.maxDataLength)));
+    if (anchor.inputOrigin >= pulse->header.capacity) {
+        RKLog("%s Error. Pulse capacity %s while filter input origin %s produce no output.\n", engine->name,
+              RKIntegerToCommaStyleString(pulse->header.capacity),
+              RKIntegerToCommaStyleString(anchor.inputOrigin));
+        return RKResultFailedToSetFilter;
+    }
+    if (anchor.outputOrigin >= nfft) {
+        RKLog("%s Error. NFFT %s with filter output origin %s is invalid.\n", engine->name,
+              RKIntegerToCommaStyleString(nfft),
+              RKIntegerToCommaStyleString(anchor.outputOrigin));
+        return RKResultFailedToSetFilter;
+    }
     if (engine->filters[group][index] != NULL) {
         free(engine->filters[group][index]);
     }
-    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
-    //size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
-    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity), anchor.maxDataLength)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
