@@ -278,19 +278,22 @@ void RKWaveformConjuate(RKWaveform *waveform) {
 }
 
 void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
-    int i, j, k;
+    int i, j, k, l;
     waveform->depth /= stride;
     RKComplex *x;
     RKInt16C *w;
     RKFloat gainAdjust = 1.0f / (RKFloat)stride;
-    for (k = 0; k < waveform->count; k++) {
-        waveform->filterAnchors[k][0].origin /= stride;
-        waveform->filterAnchors[k][0].length /= stride;
-        waveform->filterAnchors[k][0].gain /= stride;
-        waveform->filterAnchors[k][0].inputOrigin /= stride;
-        waveform->filterAnchors[k][0].maxDataLength /= stride;
-        x = waveform->samples[k];
-        w = waveform->iSamples[k];
+    for (l = 0; l < waveform->count; l++) {
+        for (k = 0; k < waveform->filterCounts[l]; k++) {
+            waveform->filterAnchors[l][k].origin /= stride;
+            waveform->filterAnchors[l][k].length /= stride;
+            waveform->filterAnchors[l][k].inputOrigin /= stride;
+            waveform->filterAnchors[l][k].outputOrigin /= stride;
+            waveform->filterAnchors[l][k].maxDataLength /= stride;
+            waveform->filterAnchors[l][k].gain /= stride;
+        }
+        x = waveform->samples[l];
+        w = waveform->iSamples[l];
         for (j = 0, i = 0; j < waveform->depth; j++, i += stride) {
             x[j].i = gainAdjust * x[i].i;
             x[j].q = gainAdjust * x[i].q;
@@ -393,12 +396,11 @@ void RKWaveformSummary(RKWaveform *waveform) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds, %%%ds)   omega = %%+6.3f   X @ (i:%%%ds, o:%%%ds, l:%%%ds)\n",
+        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, l:%%%ds)   omega = %%+6.3f\n",
                 (int)log10f((float)waveform->count) + 1,
-                (int)log10f((float)waveform->filterCounts[k]) + 1,
-                (int)log10f((float)waveform->filterCounts[k]) + 1,
+                (int)log10f((float)waveform->filterCounts[k] + 1),
+                (int)log10f((float)waveform->filterCounts[k] + 1),
                 w0 + 1,
-                (int)log10f((float)waveform->depth) + 1,
                 w1 + 1,
                 w2 + 1,
                 w3 + 1);
@@ -407,13 +409,12 @@ void RKWaveformSummary(RKWaveform *waveform) {
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKLog(format,
-                  k, j, waveform->count,
+                  k, j, waveform->count + 1,
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
-                  RKIntegerToCommaStyleString(waveform->depth),
-                  waveform->filterAnchors[k][j].subCarrierFrequency,
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
-                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength));
+                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
+                  waveform->filterAnchors[k][j].subCarrierFrequency);
         }
     }
 }

@@ -297,7 +297,8 @@ static void *pulseCompressionCore(void *_in) {
                     Z.q += engine->filterAnchors[gid][j].inputOrigin;
 
                     o = out + engine->filterAnchors[gid][j].outputOrigin;
-
+                    bound = MIN(planSize - engine->filterAnchors[gid][j].outputOrigin, pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin);
+                    bound = MIN(bound, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
@@ -771,7 +772,8 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         free(engine->filters[group][index]);
     }
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
-    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
+    //size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity), anchor.maxDataLength)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
