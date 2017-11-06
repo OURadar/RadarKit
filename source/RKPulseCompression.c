@@ -242,9 +242,10 @@ static void *pulseCompressionCore(void *_in) {
                     planIndex = engine->planIndices[i0][j];
                     planSize = engine->planSizes[planIndex];
                     blindGateCount += engine->filterAnchors[gid][j].length;
-                    bound = MIN(MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                                    pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin),
-                                    engine->filterAnchors[gid][j].maxDataLength);
+//                    bound = MIN(MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+//                                    pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin),
+//                                    engine->filterAnchors[gid][j].maxDataLength);
+					bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin, engine->filterAnchors[gid][j].maxDataLength);
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -292,15 +293,14 @@ static void *pulseCompressionCore(void *_in) {
 
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-                    RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
+					bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin, engine->filterAnchors[gid][j].maxDataLength);
+
+					RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
                     Y += engine->filterAnchors[gid][j].inputOrigin;
                     Z.i += engine->filterAnchors[gid][j].inputOrigin;
                     Z.q += engine->filterAnchors[gid][j].inputOrigin;
-
                     o = out + engine->filterAnchors[gid][j].outputOrigin;
-//                    bound = MIN(planSize - engine->filterAnchors[gid][j].outputOrigin, pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin);
-//                    bound = MIN(bound, engine->filterAnchors[gid][j].maxDataLength);
                     for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
