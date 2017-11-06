@@ -147,9 +147,9 @@ void RKWaveformOnes(RKWaveform *waveform) {
 }
 
 //
-// This is actually hop pairs: f0, f0, f1, f1, f2, f2, ...
+// This is actually hop pairs: f0, f0, f1, f1, f2, f2, ... around fc
 //
-void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidth) {
+void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
     int i, k, n;
     double f, omega, psi;
     RKComplex *x;
@@ -166,7 +166,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidt
 
     n = 0;
     for (k = 0; k < waveform->count; k++) {
-        f = delta * (double)n - 0.5 * bandwidth;
+        f = delta * (double)n - 0.5 * bandwidth + fc;
         omega = 2.0 * M_PI * f / fs;
         psi = omega * (double)(waveform->depth / 2);
         waveform->filterCounts[k] = 1;
