@@ -297,11 +297,15 @@ static void *pulseCompressionCore(void *_in) {
 
 					RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-                    Y += engine->filterAnchors[gid][j].inputOrigin;
-                    Z.i += engine->filterAnchors[gid][j].inputOrigin;
-                    Z.q += engine->filterAnchors[gid][j].inputOrigin;
+//                    Y += engine->filterAnchors[gid][j].inputOrigin;
+//                    Z.i += engine->filterAnchors[gid][j].inputOrigin;
+//                    Z.q += engine->filterAnchors[gid][j].inputOrigin;
+//                    o = out + engine->filterAnchors[gid][j].outputOrigin;
+                    Y += engine->filterAnchors[gid][j].length;
+                    Z.i += engine->filterAnchors[gid][j].length;
+                    Z.q += engine->filterAnchors[gid][j].length;
                     o = out + engine->filterAnchors[gid][j].outputOrigin;
-                    for (i = 0; i < bound; i++) {
+                  for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
                         *Z.i++ = (*o)[0];
