@@ -506,6 +506,22 @@ char *RKLastTwoPartsOfPath(const char *path) {
     return a0;
 }
 
+char *RKPathStringByExpandingTilde(const char *path) {
+	static char fullpath[1024];
+	if (path[0] == '~') {
+		char *home = getenv("HOME");
+		if (home != NULL) {
+			snprintf(fullpath, 1024, "%s/%s", getenv("HOME"), path);
+		} else {
+			fprintf(stderr, "Error. HOME environmental variable not set.\n");
+			snprintf(fullpath, 1024, "%s", path);
+		}
+	} else {
+		snprintf(fullpath, 1024, "%s", path);
+	}
+	return fullpath;
+}
+
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement) {
     char *needle = strstr(filename, pattern);
     if (needle) {
