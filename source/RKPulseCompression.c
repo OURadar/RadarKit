@@ -773,15 +773,15 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     // Check if filter anchor is valid
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     //size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
-    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MIN(anchor.length, pulse->header.capacity), anchor.maxDataLength)));
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength)));
     if (anchor.inputOrigin >= pulse->header.capacity) {
-        RKLog("%s Error. Pulse capacity %s while filter input origin %s produce no output.\n", engine->name,
+        RKLog("%s Error. Pulse capacity %s   Filter X @ (i:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(pulse->header.capacity),
               RKIntegerToCommaStyleString(anchor.inputOrigin));
         return RKResultFailedToSetFilter;
     }
     if (anchor.outputOrigin >= nfft) {
-        RKLog("%s Error. NFFT %s with filter output origin %s is invalid.\n", engine->name,
+        RKLog("%s Error. NFFT %s   Filter X @ (o:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),
               RKIntegerToCommaStyleString(anchor.outputOrigin));
         return RKResultFailedToSetFilter;
