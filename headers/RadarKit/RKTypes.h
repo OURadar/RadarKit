@@ -6,6 +6,9 @@
 //
 //  █
 //
+//  1.2.2  - Boolean value parsing in preference
+//         - Waveform generation with fc
+//
 //  1.2.1  - Improved stream reset mechanism
 //         - Multiple filters within a filter group
 //
@@ -70,7 +73,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.1"
+#define RKVersionString                  "1.2.2"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings

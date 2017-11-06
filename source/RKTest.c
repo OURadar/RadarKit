@@ -1395,7 +1395,7 @@ void RKTestWriteWaveform(void) {
     const char filename[] = "waveforms/h4011.rkwav";
     RKLog("Creating waveform file '%s' ...\n", filename);
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(22, 1024);
-    RKWaveformHops(waveform, 2.0, 1.0);
+    RKWaveformHops(waveform, 2.0, 0.0, 1.0);
     RKWaveformWrite(waveform, filename);
     
     RKLog("Reading waveform file ...\n");

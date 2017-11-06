@@ -89,7 +89,7 @@ void RKWaveformFree(RKWaveform *);
 RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
 
 void RKWaveformOnes(RKWaveform *waveform);
-void RKWaveformHops(RKWaveform *waveform, const double fs, const double bandwidth);
+void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth);
 void RKWaveformConjuate(RKWaveform *waveform);
 void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
 
