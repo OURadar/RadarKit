@@ -103,7 +103,8 @@ void RKGoThroughKeywords(const char *string);
 void RKReplaceKeyValue(char *string, const char *key, int value);
 
 long RKCountFilesInPath(const char *);
-char *RKLastTwoPartsOfPath(const char *path);
+char *RKLastTwoPartsOfPath(const char *);
+char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
 
 #endif /* rk_misc_h */

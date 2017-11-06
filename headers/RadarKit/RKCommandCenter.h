@@ -52,7 +52,6 @@ typedef struct rk_command_center {
     bool               suspendHandler;
     RKServer           *server;
     int                radarCount;
-    int                developerInspect;
     RKUser             users[RKCommandCenterMaxConnections];
     RKStream           relayStreams;
     RKStream           relayStreamsLevel2;

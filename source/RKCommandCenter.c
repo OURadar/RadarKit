@@ -342,9 +342,8 @@ int socketCommandHandler(RKOperator *O) {
                     break;
                     
                 case 'x':
-                    //engine->developerInspect = RKNextModuloS(engine->developerInspect, 4);
-                    user->ascopeMode = RKNextModuloS(engine->developerInspect, 4);
-                    sprintf(string, "ACK. Developer inspect set to %d" RKEOL, engine->developerInspect);
+                    user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
+                    sprintf(string, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, string);
                     break;
                     
@@ -1011,7 +1010,7 @@ int socketInitialHandler(RKOperator *O) {
         user->rayDownSamplingRatio = 1;
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
-    user->ascopeMode = 1;
+    user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
@@ -1162,7 +1161,6 @@ RKCommandCenter *RKCommandCenterInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorCommandCenter) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
-    engine->developerInspect = 0;
     engine->memoryUsage = sizeof(RKCommandCenter);
     engine->server = RKServerInit();
     RKServerSetName(engine->server, engine->name);
