@@ -268,6 +268,7 @@ static void *pulseCompressionCore(void *_in) {
                     //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
 
                     if (multiplyMethod == 1) {
+						RKSIMD_yconj((RKComplex *)out, planSize);
                         // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
                         RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
                     } else if (multiplyMethod == 2) {
@@ -278,6 +279,7 @@ static void *pulseCompressionCore(void *_in) {
                         RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
                     } else {
                         // Regular multiplication with compiler optimization -Os
+						RKSIMD_yconj((RKComplex *)in, planSize);
                         RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
                     }
 
@@ -301,11 +303,15 @@ static void *pulseCompressionCore(void *_in) {
 //                    Z.i += engine->filterAnchors[gid][j].inputOrigin;
 //                    Z.q += engine->filterAnchors[gid][j].inputOrigin;
 //                    o = out + engine->filterAnchors[gid][j].outputOrigin;
-                    Y += engine->filterAnchors[gid][j].length;
-                    Z.i += engine->filterAnchors[gid][j].length;
-                    Z.q += engine->filterAnchors[gid][j].length;
-                    o = out + engine->filterAnchors[gid][j].outputOrigin;
-                  for (i = 0; i < bound; i++) {
+//                    Y += engine->filterAnchors[gid][j].length;
+//                    Z.i += engine->filterAnchors[gid][j].length;
+//                    Z.q += engine->filterAnchors[gid][j].length;
+//                    Y += engine->filterAnchors[gid][j].outputOrigin;
+//                    Z.i += engine->filterAnchors[gid][j].outputOrigin;
+//                    Z.q += engine->filterAnchors[gid][j].outputOrigin;
+//                    o = out + engine->filterAnchors[gid][j].outputOrigin;
+					o = out;
+					for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
                         *Z.i++ = (*o)[0];
