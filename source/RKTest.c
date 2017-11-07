@@ -1412,3 +1412,23 @@ void RKTestWaveformTFM(void) {
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
+
+void RKTestHilbertTransform(void) {
+	int i;
+	RKFloat *x = (RKFloat *)malloc(8 * sizeof(RKFloat));
+	RKComplex *y = (RKComplex *)malloc(8 * sizeof(RKComplex));
+	for (i = 0; i < 8; i++) {
+		x[i] = cosf(0.1 * (float)i);
+	}
+	RKHilbertTransform(x, y, 8);
+	printf("\nX =\n\n");
+	for (i = 0; i < 8; i++) {
+		printf("    [ %.4f ]\n", x[i]);
+	}
+	printf("\nH =\n\n");
+	for (i = 0; i < 8; i++) {
+		printf("    [ %.4f %s %.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
+	}
+	free(x);
+	free(y);
+}

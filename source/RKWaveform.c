@@ -302,6 +302,28 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     }
 }
 
+void RKWaveformDownConvert(RKWaveform *waveform, const double fc) {
+//	int i, k;
+//	RKComplex *s, *u, *v;
+//
+//	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+//	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+//
+////	RKComplex *x;
+////	for (int gid = 0; gid < waveform->count; gid++) {
+////		x = waveform->samples[gid];
+////		for (i = 0; i < waveform->depth; i++) {
+////			in[i][0] = (RKFloat)x->i;
+////			in[i][1] = 0.0f;
+////			x++;
+////		}
+////
+////	}
+//
+//	free(s);
+//	free(u);
+}
+
 #pragma mark - Others
 
 // ----

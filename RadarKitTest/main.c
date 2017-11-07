@@ -280,6 +280,9 @@ UserParams processInput(int argc, const char **argv) {
                         RKShowOffsets(myRadar);
                         RKFree(myRadar);
                         break;
+					case 14:
+						RKTestHilbertTransform();
+						break;
                     default:
                         break;
                 }

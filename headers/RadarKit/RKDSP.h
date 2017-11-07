@@ -12,6 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKSIMD.h>
 #include <RadarKit/RKWindow.h>
+#include <fftw3.h>
 
 //
 // Z in [-32.0    ... 95.5]           Zi = (Z) x 2 + 64
@@ -56,6 +57,8 @@ float RKInterpolateAngles(const float angleLeft, const float angleRight, const f
 
 int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse);
 int RKBestStrideOfHops(const int hopCount, const bool showNumbers);
+
+void RKHilbertTransform(RKFloat *x, RKComplex *y, const int n);
 
 //
 // FIR + IIR Filters
