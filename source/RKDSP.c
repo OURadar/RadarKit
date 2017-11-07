@@ -122,3 +122,73 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
     }
     return stride;
 }
+
+void RKHilbertTransform(RKFloat *w, RKComplex *b, const int n) {
+	int i;
+	const int nfft = (int)powf(2.0f, ceilf(log2f((float)n)));
+
+	fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(nfft * sizeof(fftwf_complex));
+	fftwf_complex *out = (fftwf_complex *)fftwf_malloc(nfft * sizeof(fftwf_complex));
+	fftwf_plan plan_fwd = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+	fftwf_plan plan_rev = fftwf_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+	for (i = 0; i < n; i++) {
+		in[i][0] = (float)w[i];
+		in[i][1] = 0.0f;
+	}
+	memset(&in[i][0], 0, (nfft - n) * sizeof(fftwf_complex));
+
+	fftwf_execute(plan_fwd);
+
+	#if defined(DEBUG_HILBERT)
+	for (i = 0; i < nfft; i++) {
+		printf("i:%2d --> %8.4f%+8.4fi\n", i, in[i][0], in[i][1]);
+	}
+	printf("\n");
+
+	for (i = 0; i < nfft; i++) {
+		printf("i:%2d --> %8.4f%+8.4fi\n", i, out[i][0], out[i][1]);
+	}
+	printf("\n");
+	#endif
+
+	//
+	// Coefficients for Hilbert Transform
+	//
+	//  h = [1 2 2 2 ... 2 1 0 0 ... 0];
+	//       ~~~~~~~~~~~~^ ^~~~~~~~~~~
+	//         1st half      2nd half
+	//
+	//
+
+	float s = 1.0f / nfft;
+
+	out[0][0] *= s;
+	out[0][1] *= s;
+	out[nfft >> 1][0] *= s;
+	out[nfft >> 1][1] *= s;
+
+	s = 2.0f / nfft;
+	for (i=1; i<nfft>>1; i++) {
+		out[i][0] *= s;
+		out[i][1] *= s;
+	}
+	memset(&out[(nfft >> 1) + 1][0], 0, ((nfft >> 1) - 1) * sizeof(fftwf_complex));
+
+	fftwf_execute(plan_rev);
+
+	#if defined(DEBUG_HILBERT)
+	for (i = 0; i < nfft; i++) {
+		printf("H[%2d] --> %8.4f%+8.4fi\n", i, in[i][0], in[i][1]);
+	}
+	printf("\n");
+	#endif
+
+	memcpy(b, in, n * sizeof(RKComplex));
+
+	// Destroy the plans
+	fftwf_destroy_plan(plan_fwd);
+	fftwf_destroy_plan(plan_rev);
+	fftwf_free(in);
+	fftwf_free(out);
+}

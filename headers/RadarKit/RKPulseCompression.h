@@ -11,7 +11,6 @@
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
-#include <fftw3.h>
 
 #define RKPulseCompressionDFTPlanCount   16
 

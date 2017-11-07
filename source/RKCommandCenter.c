@@ -182,6 +182,10 @@ int socketCommandHandler(RKOperator *O) {
                                     "\n"
                                     HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
                                     "\n"
+									HIGHLIGHT("d") " [DSP_PAMETER] [VALUE] - DSP parameters,\n"
+									"    where index can be (coming soon):\n"
+									"        t - treshold to censor using VALUE in dB\n"
+									"\n"
                                     HIGHLIGHT("f") " [FILTER_INDEX] - DSP filters,\n"
                                     "    where index can be (coming soon):\n"
                                     "        0 - No ground clutter filter\n"
@@ -876,39 +880,43 @@ int socketStreamHandler(RKOperator *O) {
             userDataV = user->samples[1];
             RKComplex *yH;
             RKComplex *yV;
+			float scale = 1.0f;
 
             // Default stride: k = 1
             k = 1;
             switch (user->ascopeMode) {
                 case 3:
                     // Show the waveform that was used through the forward sampling path
-                    pulseHeader.gateCount = 1000;
+                    pulseHeader.gateCount = 2000;
                     if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
                         break;
                     }
                     i = 0;
                     gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
-                    for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                    for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                         *userDataH++ = *c16DataH++;
                         *userDataV++ = *c16DataV++;
                         i++;
                     }
-                    for (; k < MIN(203, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                    for (; k < MIN(403, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
                         userDataH->i   = 0;
                         userDataH++->q = 0;
                         userDataV->i   = 0;
                         userDataV++->q = 0;
                         i++;
                     }
-                    // Show the filter that was used as matched filter
-                    yH = user->radar->pulseCompressionEngine->filters[gid][0];
+                    // Compute an appropriate normalization factor
+					k = user->radar->pulseCompressionEngine->filterAnchors[gid][0].length / 2;
+					yH = &user->radar->pulseCompressionEngine->filters[gid][0][k];
+					scale = 10000.0f / sqrtf(yH->i * yH->i + yH->q * yH->q);
+					// Show the filter that was used as matched filter
+					yH = user->radar->pulseCompressionEngine->filters[gid][0];
                     yV = user->radar->pulseCompressionEngine->filters[gid][0];
-                    for (k = 0; k < MIN(200, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
-                        userDataH->i   = (int16_t)(300000.0f * yH->i);
-                        userDataH++->q = (int16_t)(300000.0f * yH++->q);
-
-                        userDataV->i   = (int16_t)(300000.0f * yV->i);
-                        userDataV++->q = (int16_t)(300000.0f * yV++->q);
+                    for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                        userDataH->i   = (int16_t)(scale * yH->i);
+                        userDataH++->q = (int16_t)(scale * yH++->q);
+                        userDataV->i   = (int16_t)(scale * yV->i);
+                        userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
 
@@ -918,7 +926,6 @@ int socketStreamHandler(RKOperator *O) {
                     for (; i < pulseHeader.gateCount; i++) {
                         userDataH->i   = (int16_t)(yH->i);
                         userDataH++->q = (int16_t)(yH++->q);
-
                         userDataV->i   = (int16_t)(yV->i);
                         userDataV++->q = (int16_t)(yV++->q);
                     }
@@ -936,7 +943,6 @@ int socketStreamHandler(RKOperator *O) {
                         userDataH->i   = (int16_t)(0.04f * yH->i);
                         userDataH++->q = (int16_t)(0.04f * yH->q);
                         yH += k;
-
                         userDataV->i   = (int16_t)(0.04f * yV->i);
                         userDataV++->q = (int16_t)(0.04f * yV->q);
                         yV += k;
@@ -953,7 +959,6 @@ int socketStreamHandler(RKOperator *O) {
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
                         *userDataV++ = *c16DataV;
-                        
                         c16DataH += k;
                         c16DataV += k;
                     }
