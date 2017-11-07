@@ -313,6 +313,15 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
     return;
 }
 
+void RKSIMD_yconj(RKComplex *src, const int n) {
+	int k;
+	for (k = 0; k < n; k++) {
+		src->q = -src->q;
+		src++;
+	}
+	return;
+}
+
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec r, i, x;
@@ -328,6 +337,34 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
         d++;
     }
     return;
+}
+
+void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
+	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+	RKVec r, i, x;
+	RKVec *s = (RKVec *)src;                                         // [a  b  x  y ]
+	RKVec *d = (RKVec *)dst;                                         // [c  d  z  w ]
+	if (c) {
+		for (k = 0; k < K; k++) {
+			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
+			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
+			x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
+			i = _rk_mm_mul_pf(i, x);                                 // [bd bc yw yz]
+			*d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+			s++;
+			d++;
+		}
+	} else {
+		for (k = 0; k < K; k++) {
+			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
+			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
+			x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
+			i = _rk_mm_mul_pf(i, x);                                 // [bd bc yw yz]
+			*d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+			s++;
+			d++;
+		}
+	}
 }
 
 void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {

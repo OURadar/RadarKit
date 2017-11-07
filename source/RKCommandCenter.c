@@ -854,11 +854,15 @@ int socketStreamHandler(RKOperator *O) {
         user->timeLastDisplayIQOut = time;
     } else if (user->streams & user->access & RKStreamDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
+            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 4 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
         } else {
             endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
         pulse = RKGetPulse(user->radar->pulses, endIndex);
+		s = 0;
+		while (!(pulse->header.s & RKPulseStatusProcessed) && s++ < 100) {
+			usleep(1000);
+		}
 
         if (!(user->streamsInProgress & RKStreamDisplayIQ)) {
             user->pulseIndex = endIndex;
@@ -898,7 +902,7 @@ int socketStreamHandler(RKOperator *O) {
                         *userDataV++ = *c16DataV++;
                         i++;
                     }
-                    for (; k < MIN(403, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 10); k++) {
                         userDataH->i   = 0;
                         userDataH++->q = 0;
                         userDataV->i   = 0;
@@ -919,15 +923,24 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
-
+					for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 10); k++) {
+						userDataH->i   = 0;
+						userDataH++->q = 0;
+						userDataV->i   = 0;
+						userDataV++->q = 0;
+						i++;
+					}
+					// Compute an appropriate normalization factor
+//					scale = 1.0f / (float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length;
+					scale = 10.0f;
                     // The third part of is the processed data
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
                     for (; i < pulseHeader.gateCount; i++) {
-                        userDataH->i   = (int16_t)(yH->i);
-                        userDataH++->q = (int16_t)(yH++->q);
-                        userDataV->i   = (int16_t)(yV->i);
-                        userDataV++->q = (int16_t)(yV++->q);
+                        userDataH->i   = (int16_t)(scale * yH->i);
+                        userDataH++->q = (int16_t)(scale * yH++->q);
+                        userDataV->i   = (int16_t)(scale * yV->i);
+                        userDataV++->q = (int16_t)(scale * yV++->q);
                     }
                     break;
 
@@ -1015,7 +1028,7 @@ int socketInitialHandler(RKOperator *O) {
         user->rayDownSamplingRatio = 1;
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
-    user->ascopeMode = 0;
+    user->ascopeMode = 3;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 

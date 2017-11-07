@@ -302,26 +302,40 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     }
 }
 
-void RKWaveformDownConvert(RKWaveform *waveform, const double fc) {
-//	int i, k;
-//	RKComplex *s, *u, *v;
-//
-//	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
-//	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
-//
-////	RKComplex *x;
-////	for (int gid = 0; gid < waveform->count; gid++) {
-////		x = waveform->samples[gid];
-////		for (i = 0; i < waveform->depth; i++) {
-////			in[i][0] = (RKFloat)x->i;
-////			in[i][1] = 0.0f;
-////			x++;
-////		}
-////
-////	}
-//
-//	free(s);
-//	free(u);
+void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
+	int i;
+	RKFloat *w;
+	RKComplex *s, *u;
+
+	if (waveform->count > 1) {
+		RKLog("WARNING. This function hasn't been extended to count > 1.\n");
+	}
+
+	int nfft = (int)powf(2.0f, ceilf(log2f((float)waveform->depth)));
+
+	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&w, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+
+	for (i = 0; i < waveform->depth; i++) {
+		w[i] = waveform->samples[0][i].i;
+	}
+
+	RKHilbertTransform(w, u, waveform->depth);
+
+	for (i = 0; i < waveform->depth; i++) {
+//		u[i].q = -u[i].q;
+		s[i].i = cosf(-omega * i);
+		s[i].q = sinf(-omega * i);
+	}
+
+	RKSIMD_iymul(s, u, waveform->depth);
+
+	memcpy(waveform->samples[0], u, waveform->depth * sizeof(RKComplex));
+
+	free(w);
+	free(s);
+	free(u);
 }
 
 #pragma mark - Others
