@@ -121,8 +121,8 @@ static void *pedestalHealth(void *in) {
                 "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"Pedestal AZ Position\":{\"Value\":\"%s\",\"Enum\":%d}, "
-                "\"Pedestal EL Position\":{\"Value\":\"%s\",\"Enum\":%d}}",
+                "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
+                "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}}",
                 azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
                 elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
                 vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,

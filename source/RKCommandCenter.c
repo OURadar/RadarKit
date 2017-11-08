@@ -1028,7 +1028,7 @@ int socketInitialHandler(RKOperator *O) {
         user->rayDownSamplingRatio = 1;
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
-    user->ascopeMode = 3;
+    user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
