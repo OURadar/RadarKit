@@ -775,7 +775,6 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     }
     // Check if filter anchor is valid
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
-    //size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, anchor.maxDataLength)));
     size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength)));
     if (anchor.inputOrigin >= pulse->header.capacity) {
         RKLog("%s Error. Pulse capacity %s   Filter X @ (i:%s) invalid.\n", engine->name,
@@ -799,6 +798,12 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
+	RKFloat g = 0.0;
+	for (int k = 0; k < anchor.length; k++) {
+		g += (filter[k].i * filter[k].i + filter[k].q * filter[k].q);
+	}
+	g /= anchor.length;
+	engine->filterAnchors[group][index].gain = g;
     return RKResultNoError;
 }
 
@@ -930,7 +935,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         w0 += (w0 / 3);
         w1 += (w1 / 3);
         w2 += (w2 / 3);
-        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   omega = %%+6.3f   X @ (%%%ds, %%%ds)\n",
+        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   %%+6.3f rad/s   %%+6.2f dB   X @ (%%%ds, %%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
@@ -943,6 +948,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
                   engine->filterAnchors[i][j].subCarrierFrequency,
+				  10.0 * log10f(engine->filterAnchors[i][j].gain),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
