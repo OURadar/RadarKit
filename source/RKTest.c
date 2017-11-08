@@ -208,7 +208,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         // Answers should be 0, 1-3i, 2-10i, 3-21i, ...
         good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
         if (flag & RKTestSIMDFlagShowNumbers) {
-            printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
+            printf("%+9.2f%+9.2fi * %+9.2f%+9.2fi = %+9.2f%+9.2fi  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
         }
         all_good &= good;
     }
@@ -216,7 +216,34 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     
     //
     
-    for (i = 0; i < n; i++) {
+	// Populate some numbers
+	for (i = 0; i < n; i++) {
+		cs[i].i = (RKFloat)i;
+		cs[i].q = (RKFloat)(-i);
+		cd[i].i = (RKFloat)(i + 1);
+		cd[i].q = (RKFloat)(-i);
+	}
+	memcpy(cc, cd, n * sizeof(RKComplex));
+
+	RKSIMD_iymul2(cs, cd, n, true);
+
+	if (flag & RKTestSIMDFlagShowNumbers) {
+		printf("====\n");
+	}
+	all_good = true;
+	for (i = 0; i < n; i++) {
+		// Answers should be 0, 1-3i, 2-10i, 3-21i, ...
+		good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
+		if (flag & RKTestSIMDFlagShowNumbers) {
+			printf("%+9.2f%+9.2fi * %+9.2f%+9.2fi = %+9.2f%+9.2fi  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
+		}
+		all_good &= good;
+	}
+	RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
+
+	//
+	
+	for (i = 0; i < n; i++) {
         cc[i].i = (RKFloat)i;
         cc[i].q = (RKFloat)(-i);
     }
@@ -226,6 +253,8 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         cc[i].q = (RKFloat)(-i);
     }
     RKSIMD_Complex2IQZ(cc, dst, n);
+	memcpy(cpy->i, dst->i, n * sizeof(RKFloat));
+	memcpy(cpy->q, dst->q, n * sizeof(RKFloat));
     RKSIMD_izmul(src, dst, n, false);
     RKSIMD_IQZ2Complex(dst, cc, n);
     if (flag & RKTestSIMDFlagShowNumbers) {
@@ -236,7 +265,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         // Answers should be 0, 1-3i, 2-10i, 3-21i, ...
         good = fabsf(cc[i].i - (RKFloat)i) < tiny && fabsf(cc[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
         if (flag & RKTestSIMDFlagShowNumbers) {
-            printf("%+9.2f%+9.2f * %+9.2f%+9.2f = %+9.2f%+9.2f  %s\n", src->i[i], src->q[i], cpy->i[i], cpy->q[i], dst->i[i], dst->q[i], OXSTR(good));
+            printf("%+9.2f%+9.2fi * %+9.2f%+9.2fi = %+9.2f%+9.2fi  %s\n", src->i[i], src->q[i], cpy->i[i], cpy->q[i], dst->i[i], dst->q[i], OXSTR(good));
         }
         all_good &= good;
     }
@@ -262,7 +291,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         // Answers should be 0-1i, 1-2i, 2-3i, 3-41i, ...
         good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(i - 1)) < tiny;
         if (flag & RKTestSIMDFlagShowNumbers) {
-            printf("%+3d%+3di -> %+5.1f%+5.1f  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
+            printf("%+3d%+3di -> %+5.1f%+5.1fi  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
         }
         all_good &= good;
     }
