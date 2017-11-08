@@ -345,6 +345,22 @@ void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
 	RKVec *s = (RKVec *)src;                                         // [a  b  x  y ]
 	RKVec *d = (RKVec *)dst;                                         // [c  d  z  w ]
 	if (c) {
+#if defined(_rk_mm_fmsubadd_pf)
+		for (k = 0; k < K; k++) {
+			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
+			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
+			x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
+			r = _rk_mm_mul_pf(r, *d);                                // [ac ad xz xw]
+			*d = _rk_mm_fmsubadd_pf(i, x, r);                        // [b b y y] * [d c w z] +/- [ac ad xz xw] = [bd+ac bc-ad yw+xz yz-xw]
+			s++;
+			d++;
+		}
+#else
+		RKComplex *y = dst;
+		for (k = 0; k < n; k++) {
+			y->q = -y->q;
+			y++;
+		}
 		for (k = 0; k < K; k++) {
 			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
 			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
@@ -354,6 +370,7 @@ void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
 			s++;
 			d++;
 		}
+#endif
 	} else {
 		for (k = 0; k < K; k++) {
 			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
@@ -365,6 +382,7 @@ void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
 			d++;
 		}
 	}
+	return;
 }
 
 void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {

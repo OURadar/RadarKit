@@ -35,7 +35,7 @@ struct rk_health_engine {
     size_t                 memoryUsage;
 };
 
-RKHealthEngine *RKHealthEngineInit();
+RKHealthEngine *RKHealthEngineInit(void);
 void RKHealthEngineFree(RKHealthEngine *);
 
 void RKHealthEngineSetVerbose(RKHealthEngine *, const int);

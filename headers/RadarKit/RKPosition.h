@@ -87,7 +87,7 @@ struct rk_position_engine {
 };
 
 
-RKPositionEngine *RKPositionEngineInit();
+RKPositionEngine *RKPositionEngineInit(void);
 void RKPositionEngineFree(RKPositionEngine *);
 
 void RKPositionEngineSetVerbose(RKPositionEngine *, const int);
