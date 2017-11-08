@@ -236,7 +236,7 @@ static void *pulseCompressionCore(void *_in) {
             // Process each polarization separately and indepently
             for (p = 0; p < 2; p++) {
                 // Go through all the filters in this filter group
-                blindGateCount = 0;
+				blindGateCount = 0;
                 for (j = 0; j < engine->filterCounts[gid]; j++) {
                     // Get the plan index and size from parent engine
                     planIndex = engine->planIndices[i0][j];
@@ -540,10 +540,8 @@ static void *pulseWatcher(void *_in) {
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                // planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                //                                             engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                                                            engine->filterAnchors[gid][j].maxDataLength)));
+                                                            engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {
@@ -775,13 +773,13 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     }
     // Check if filter anchor is valid
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
-    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength)));
     if (anchor.inputOrigin >= pulse->header.capacity) {
         RKLog("%s Error. Pulse capacity %s   Filter X @ (i:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(pulse->header.capacity),
               RKIntegerToCommaStyleString(anchor.inputOrigin));
         return RKResultFailedToSetFilter;
     }
+	size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength + anchor.length)));
     if (anchor.outputOrigin >= nfft) {
         RKLog("%s Error. NFFT %s   Filter X @ (o:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),
