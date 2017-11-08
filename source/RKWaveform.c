@@ -189,7 +189,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
             w++;
         }
         // This equation still needs to be checked.
-        gain = sqrtf(gain / waveform->depth);
+        gain = sqrtf(gain);
         x = waveform->samples[k];
         for (i = 0; i < waveform->depth; i++) {
             x->i /= gain;
@@ -289,7 +289,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     waveform->depth /= stride;
     RKComplex *x;
     RKInt16C *w;
-	RKFloat gainAdjust = 1.0f;
+	RKFloat gainAdjust = sqrtf(stride);
     for (l = 0; l < waveform->count; l++) {
         for (k = 0; k < waveform->filterCounts[l]; k++) {
             waveform->filterAnchors[l][k].origin /= stride;
