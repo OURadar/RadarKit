@@ -320,6 +320,10 @@ void RKSIMD_yconj(RKComplex *src, const int n) {
         *s = -*s;
         s += 2;
 	}
+    // for (int k = 0; k < n; k++) {
+    //     src->q = -src->q;
+    //     src++;
+    // }
 	return;
 }
 
