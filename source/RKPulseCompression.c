@@ -230,7 +230,7 @@ static void *pulseCompressionCore(void *_in) {
             // Do some work with this pulse
             // DFT of the raw data is stored in *in
             // DFT of the filter is stored in *out
-            // Their product is stored in *out using in-place multiplication: out[i] = out[i] * in[i]
+            // Their product is stored in *out using in-place multiplication: out[i] = conj(out[i]) * in[i]
             // Then, the inverse DFT is performed to get out back to time domain, which is the compressed pulse
 
             // Process each polarization separately and indepently
@@ -242,10 +242,8 @@ static void *pulseCompressionCore(void *_in) {
                     planIndex = engine->planIndices[i0][j];
                     planSize = engine->planSizes[planIndex];
                     blindGateCount += engine->filterAnchors[gid][j].length;
-//                    bound = MIN(MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-//                                    pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin),
-//                                    engine->filterAnchors[gid][j].maxDataLength);
-					bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin, engine->filterAnchors[gid][j].maxDataLength);
+					bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+                                engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length);
 
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -268,8 +266,8 @@ static void *pulseCompressionCore(void *_in) {
                     //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
 
                     if (multiplyMethod == 1) {
-						RKSIMD_yconj((RKComplex *)out, planSize);
                         // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
+						RKSIMD_yconj((RKComplex *)out, planSize);
                         RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
                     } else if (multiplyMethod == 2) {
                         // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
@@ -299,17 +297,9 @@ static void *pulseCompressionCore(void *_in) {
 
 					RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-//                    Y += engine->filterAnchors[gid][j].inputOrigin;
-//                    Z.i += engine->filterAnchors[gid][j].inputOrigin;
-//                    Z.q += engine->filterAnchors[gid][j].inputOrigin;
-//                    o = out + engine->filterAnchors[gid][j].outputOrigin;
-//                    Y += engine->filterAnchors[gid][j].length;
-//                    Z.i += engine->filterAnchors[gid][j].length;
-//                    Z.q += engine->filterAnchors[gid][j].length;
-//                    Y += engine->filterAnchors[gid][j].outputOrigin;
-//                    Z.i += engine->filterAnchors[gid][j].outputOrigin;
-//                    Z.q += engine->filterAnchors[gid][j].outputOrigin;
-//                    o = out + engine->filterAnchors[gid][j].outputOrigin;
+                    Y += engine->filterAnchors[gid][j].outputOrigin;
+                    Z.i += engine->filterAnchors[gid][j].outputOrigin;
+                    Z.q += engine->filterAnchors[gid][j].outputOrigin;
 					o = out;
 					for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
@@ -550,7 +540,8 @@ static void *pulseWatcher(void *_in) {
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin, engine->filterAnchors[gid][j].maxDataLength)));
+                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+                                                            engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {

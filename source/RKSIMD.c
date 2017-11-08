@@ -314,10 +314,11 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_yconj(RKComplex *src, const int n) {
-	int k;
-	for (k = 0; k < n; k++) {
-		src->q = -src->q;
-		src++;
+    RKFloat *s = (RKFloat *)src;
+    s++;
+	for (int k = 0; k < n; k++) {
+        *s = -*s;
+        s += 2;
 	}
 	return;
 }
