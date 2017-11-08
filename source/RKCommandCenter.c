@@ -909,7 +909,7 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = 0;
                         i++;
                     }
-					scale = 10000.0f;
+					scale = 10000.0f * sqrtf(user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
 					// Show the filter that was used as matched filter
 					yH = user->radar->pulseCompressionEngine->filters[gid][0];
                     yV = user->radar->pulseCompressionEngine->filters[gid][0];
@@ -948,7 +948,7 @@ int socketStreamHandler(RKOperator *O) {
                     pulseHeader.gateSizeMeters *= (float)k;
 
 					gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
-					scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
+					scale = 1.0f;
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
                     for (i = 0; i < pulseHeader.gateCount; i++) {

@@ -796,13 +796,14 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
+	// Calculate the filter gain
 	RKFloat g = 0.0;
 	RKComplex *h = (RKComplex *)filter;
 	for (int k = 0; k < anchor.length; k++) {
 		g += (h->i * h->i + h->q * h->q);
 		h++;
 	}
-	engine->filterAnchors[group][index].gain = sqrtf(g);
+	engine->filterAnchors[group][index].gain = g;
     return RKResultNoError;
 }
 
