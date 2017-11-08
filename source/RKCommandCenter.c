@@ -930,9 +930,8 @@ int socketStreamHandler(RKOperator *O) {
 						userDataV++->q = 0;
 						i++;
 					}
-					// Compute an appropriate normalization factor
-//					scale = 1.0f / (float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length;
-					scale = 10.0f;
+					// Compute an appropriate normalization factor so that 16-bit view on the scope is okay
+					scale = 1.0f / (float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length;
                     // The third part of is the processed data
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);

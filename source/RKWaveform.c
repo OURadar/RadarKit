@@ -188,15 +188,22 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
             x++;
             w++;
         }
-        waveform->filterAnchors[k][0].gain = gain;
         // This equation still needs to be checked.
-        gain = sqrtf(gain);
+        gain = sqrtf(gain / waveform->depth);
         x = waveform->samples[k];
         for (i = 0; i < waveform->depth; i++) {
             x->i /= gain;
             x->q /= gain;
             x++;
         }
+		// Calculate the real gain
+		x = waveform->samples[k];
+		gain = 0.0f;
+		for (i = 0; i < waveform->depth; i++) {
+			gain += (x->i * x->i + x->q * x->q);
+			x++;
+		}
+		waveform->filterAnchors[k][0].gain = gain;
         // Get ready for the next frequency when we are odd index
         if (k % 2 == 1) {
             if (sequential) {
@@ -282,7 +289,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     waveform->depth /= stride;
     RKComplex *x;
     RKInt16C *w;
-    RKFloat gainAdjust = 1.0f / (RKFloat)stride;
+	RKFloat gainAdjust = 1.0f;
     for (l = 0; l < waveform->count; l++) {
         for (k = 0; k < waveform->filterCounts[l]; k++) {
             waveform->filterAnchors[l][k].origin /= stride;
