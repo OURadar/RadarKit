@@ -909,10 +909,7 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = 0;
                         i++;
                     }
-                    // Compute an appropriate normalization factor
-					k = user->radar->pulseCompressionEngine->filterAnchors[gid][0].length / 2;
-					yH = &user->radar->pulseCompressionEngine->filters[gid][0][k];
-					scale = 10000.0f / sqrtf(yH->i * yH->i + yH->q * yH->q);
+					scale = 10000.0f;
 					// Show the filter that was used as matched filter
 					yH = user->radar->pulseCompressionEngine->filters[gid][0];
                     yV = user->radar->pulseCompressionEngine->filters[gid][0];
@@ -931,7 +928,7 @@ int socketStreamHandler(RKOperator *O) {
 						i++;
 					}
 					// Compute an appropriate normalization factor so that 16-bit view on the scope is okay
-					scale = 1.0f / (float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length;
+					scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
                     // The third part of is the processed data
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
@@ -944,27 +941,32 @@ int socketStreamHandler(RKOperator *O) {
                     break;
 
                 case 2:
+					// Down-sampled output data
                     k = user->pulseDownSamplingRatio;
 
                     pulseHeader.gateCount /= k;
                     pulseHeader.gateSizeMeters *= (float)k;
 
+					gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
+					scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
                     for (i = 0; i < pulseHeader.gateCount; i++) {
-                        userDataH->i   = (int16_t)(0.04f * yH->i);
-                        userDataH++->q = (int16_t)(0.04f * yH->q);
+                        userDataH->i   = (int16_t)(scale * yH->i);
+                        userDataH++->q = (int16_t)(scale * yH->q);
                         yH += k;
-                        userDataV->i   = (int16_t)(0.04f * yV->i);
-                        userDataV++->q = (int16_t)(0.04f * yV->q);
+                        userDataV->i   = (int16_t)(scale * yV->i);
+                        userDataV++->q = (int16_t)(scale * yV->q);
                         yV += k;
                     }
                     break;
 
                 case 1:
+					// Down-sampled raw input data
                     k = user->pulseDownSamplingRatio;
 
                 default:
+					// Raw input data
                     pulseHeader.gateCount /= k;
                     pulseHeader.gateCount = MIN(pulseHeader.gateCount, 2000);
                     pulseHeader.gateSizeMeters *= (float)k;
