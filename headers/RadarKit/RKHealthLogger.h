@@ -37,7 +37,7 @@ struct rk_health_logger {
     size_t                 memoryUsage;
 };
 
-RKHealthLogger *RKHealthLoggerInit();
+RKHealthLogger *RKHealthLoggerInit(void);
 void RKHealthLoggerFree(RKHealthLogger *);
 
 void RKHealthLoggerSetVerbose(RKHealthLogger *, const int);

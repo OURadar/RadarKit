@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		B50276A71E3CF20D002C46B1 /* RKHealth.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276A61E3CF20D002C46B1 /* RKHealth.h */; };
 		B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276AA1E3CFC19002C46B1 /* RKHealthRelayTweeta.h */; };
+		B508EA721FB3FC6500A6A83C /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B525FEF41FB0B6A400C5195C /* RKMisc.c in Sources */ = {isa = PBXBuildFile; fileRef = B525FEF31FB0B6A400C5195C /* RKMisc.c */; };
 		B525FEF61FB0B6B800C5195C /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B525FEF51FB0B6B800C5195C /* RadarKit.c */; };
 		B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = B528D9611E74EE8100A7328F /* RKFileManager.h */; };
@@ -24,7 +25,6 @@
 		B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweep.h */; };
 		B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F261E2D206300FA8B2E /* RKConfig.h */; };
 		B565B5351E5A3838000C8503 /* RKPreference.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B5341E5A3838000C8503 /* RKPreference.h */; };
-		B565B53B1E5A3948000C8503 /* RKTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5391E5A3948000C8503 /* RKTemplate.c */; };
 		B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53C1E5A3988000C8503 /* RKTemplate.h */; };
 		B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53F1E5A3E23000C8503 /* RKWaveform.h */; };
 		B565B5451E5A4623000C8503 /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5441E5A4623000C8503 /* bessi.c */; };
@@ -165,12 +165,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B508EA721FB3FC6500A6A83C /* libRadarKit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B508EA711FB3FC6500A6A83C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B50A813F1AB89B6200E12E1F = {
 			isa = PBXGroup;
 			children = (
@@ -182,6 +190,7 @@
 				B565B5431E5A4605000C8503 /* Imported */,
 				B5C1F3451AB9C118004F88CD /* RadarKitTest */,
 				B5324D501AB8A5A000C00517 /* Products */,
+				B508EA711FB3FC6500A6A83C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -387,7 +396,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "__radarkit" */;
+			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -417,7 +426,6 @@
 				B5FFD48B1FB0B5C600319453 /* RKSweep.c in Sources */,
 				B5FFD4801FB0B5C600319453 /* RKRadarRelay.c in Sources */,
 				B5FFD4891FB0B5C600319453 /* RKHealth.c in Sources */,
-				B5FFD4851FB0B5C600319453 /* RKRadar.c in Sources */,
 				B5FFD47B1FB0B5C600319453 /* RKDataRecorder.c in Sources */,
 				B525FEF41FB0B6A400C5195C /* RKMisc.c in Sources */,
 				B5FFD4971FB0B5C600319453 /* RKConfig.c in Sources */,
@@ -440,6 +448,7 @@
 				B5FFD4821FB0B5C600319453 /* RKServer.c in Sources */,
 				B5FFD48D1FB0B5C600319453 /* RKPreference.c in Sources */,
 				B5FFD4921FB0B5C600319453 /* RKWindow.c in Sources */,
+				B5FFD4851FB0B5C600319453 /* RKRadar.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -448,7 +457,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
-				B565B53B1E5A3948000C8503 /* RKTemplate.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -497,6 +505,8 @@
 				OTHER_CFLAGS = (
 					"-I",
 					/usr/local/include,
+					"-I",
+					"${SRCROOT}/headers",
 					"-fPIC",
 					"-mfpmath=sse",
 				);
@@ -548,6 +558,8 @@
 				OTHER_CFLAGS = (
 					"-I",
 					/usr/local/include,
+					"-I",
+					"${SRCROOT}/headers",
 					"-fPIC",
 					"-mfpmath=sse",
 				);
@@ -734,7 +746,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "__radarkit" */ = {
+		B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B50A81441AB89B6200E12E1F /* Debug */,
