@@ -407,7 +407,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(name, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
-        RKClockSetOffset(radar->positionClock, -0.005);
+        RKClockSetOffset(radar->positionClock, -0.002);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine
@@ -1419,7 +1419,12 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
         RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
-    //printf("position @ %.7f\n", position->timeDouble);
+	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
+		struct timeval t;
+		gettimeofday(&t, NULL);
+		printf("position @ %+.4f %+.4f\n", position->timeDouble,
+			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay));
+	}
     position->flag |= RKPositionFlagReady;
     radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
     return;
@@ -1428,6 +1433,13 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
 RKPosition *RKGetLatestPosition(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
     return &radar->positions[index];
+}
+
+float RKGetPositionUpdateRate(RKRadar *radar) {
+	uint32_t n = radar->desc.positionBufferDepth / 2;
+	uint32_t i = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
+	uint32_t o = RKPreviousNModuloS(radar->positionIndex, n, radar->desc.positionBufferDepth);
+	return (float)n / (radar->positions[i].timeDouble - radar->positions[o].timeDouble);
 }
 
 #pragma mark - Pulses
@@ -1461,13 +1473,18 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
     }
     if (pulse->header.timeDouble == 0.0 && pulse->header.time.tv_sec == 0) {
         pulse->header.timeDouble = RKClockGetTime(radar->pulseClock, (double)pulse->header.t, &pulse->header.time);
-        //printf("pulse @ %.7f\n", pulse->header.timeDouble);
     }
     if (pulse->header.gateCount > pulse->header.capacity) {
         RKLog("Error. gateCount = %s > capacity = %s\n",
               RKIntegerToCommaStyleString(pulse->header.gateCount), RKIntegerToCommaStyleString(pulse->header.capacity));
         pulse->header.gateCount = pulse->header.capacity;
     }
+	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (pulse->header.i % 100 == 0)) {
+		struct timeval t;
+		gettimeofday(&t, NULL);
+		printf("         @ %+.4f %+.4f @ pulse\n", pulse->header.timeDouble,
+			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay));
+	}
     pulse->header.s = RKPulseStatusHasIQData;
     return;
 }

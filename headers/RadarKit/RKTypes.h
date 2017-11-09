@@ -318,6 +318,11 @@ enum RKInitFlag {
     RKInitFlagVerbose                = 0x0001,
     RKInitFlagVeryVerbose            = 0x0002,
     RKInitFlagVeryVeryVerbose        = 0x0004,
+	RKInitFlagShowClockOffset        = 0x0008,
+	RKInitFlagReserved1              = 0x0020,
+	RKInitFlagReserved2              = 0x0020,
+	RKInitFlagReserved3              = 0x0040,
+	RKInitFlagReserved4              = 0x0080,
     RKInitFlagAllocStatusBuffer      = 0x0100,                       // 1 << 8
     RKInitFlagAllocConfigBuffer      = 0x0200,                       // 1 << 9
     RKInitFlagAllocRawIQBuffer       = 0x0400,                       // 1 << 10
