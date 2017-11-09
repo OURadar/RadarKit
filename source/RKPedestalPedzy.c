@@ -30,7 +30,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
                   position->tic,
                   position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
         }
-        
+
         // Get a vacant slot for position from Radar, copy over the data, then set it ready
         RKPosition *newPosition = RKGetVacantPosition(radar);
         if (newPosition == NULL) {
@@ -117,17 +117,21 @@ static void *pedestalHealth(void *in) {
             elEnum = RKStatusEnumNormal;
         }
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
+		double rate = RKGetPositionUpdateRate(radar);
         sprintf(health->string,
                 "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
                 "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
-                "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}}",
+                "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
+				"\"Pedestal Update\":\"%.3f Hz\", "
+				"\"PedestalHealthEnd\":0}",
                 azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
                 elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
                 vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
                 azPosition, azEnum,
-                elPosition, elEnum);
+                elPosition, elEnum,
+				rate);
         RKSetHealthReady(radar, health);
         usleep(200000);
     }

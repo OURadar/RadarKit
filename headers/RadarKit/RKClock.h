@@ -24,6 +24,7 @@ typedef struct rk_clock {
     bool             autoSync;
     bool             hasWisdom;                   // User provided dudt
     bool             highPrecision;               // High precision mode
+	bool             infoShown;                   // Show b value
     uint32_t         size;                        // User changeable depth
     uint32_t         stride;                      // Size to compute average
     uint64_t         tic;                         // An internal tic in case user doesn't obey the rule

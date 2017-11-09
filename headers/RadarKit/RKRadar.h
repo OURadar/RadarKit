@@ -247,6 +247,7 @@ int RKGetEnumFromLatestHealth(RKRadar *, const char *keyword);
 RKPosition *RKGetVacantPosition(RKRadar *);
 void RKSetPositionReady(RKRadar *, RKPosition *);
 RKPosition *RKGetLatestPosition(RKRadar *);
+float RKGetPositionUpdateRate(RKRadar *);
 
 // Pulses
 RKPulse *RKGetVacantPulse(RKRadar *);

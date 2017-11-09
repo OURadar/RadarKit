@@ -165,21 +165,26 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->uBuffer[k] = clock->tic++;
                 du = clock->uBuffer[k] - clock->uBuffer[j];
             }
-            if (clock->b < 0.002 * dx / n) {
-                RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, dx / n);
-                clock->b = 0.002 * dx / n;
-                clock->a = 1.0 - clock->b;
-                RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
-                RKClockReset(clock);
-                return x;
-            } else if (clock->b > 5.0 * dx / n) {
-                RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, dx / n);
-                clock->b = dx / n;
-                clock->a = 1.0 - clock->b;
-                RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
-                RKClockReset(clock);
-                return x;
-            }
+			if (clock->count > clock->stride) {
+				if (clock->b < 0.002 * dx / (double)clock->stride) {
+					RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, 0.002 * dx / (double)clock->stride);
+					clock->b = 0.002 * dx / (double)clock->stride;
+					clock->a = 1.0 - clock->b;
+					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
+					RKClockReset(clock);
+					return x;
+				} else if (clock->b > 5.0 * dx / (double)clock->stride) {
+					RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
+					clock->b = 0.1 * dx / (double)clock->stride;
+					clock->a = 1.0 - clock->b;
+					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
+					RKClockReset(clock);
+					return x;
+				} else if (!clock->infoShown) {
+					clock->infoShown = true;
+					RKLog("%s b = %.2e vs %.2e", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
+				}
+			}
         }
         // Update the references as decaying function of the stride size
         clock->x0 = clock->a * clock->x0 + clock->b * x;
@@ -209,4 +214,5 @@ void RKClockReset(RKClock *clock) {
     clock->index = 0;
     clock->count = 0;
     clock->tic = 0;
+	clock->infoShown = false;
 }
