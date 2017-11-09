@@ -15,6 +15,15 @@
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 #define PEDESTAL_SAMPLING_TIME         0.01
 
+#define SHOW_FUNCTION_NAME \
+int _fn_len = strlen(__FUNCTION__); \
+char _fn_str[RKNameLength]; \
+memset(_fn_str, '=', _fn_len); \
+sprintf(_fn_str + _fn_len, "\n%s\n", __FUNCTION__); \
+memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
+_fn_str[3 * _fn_len + 2] = '\0'; \
+printf("%s\n", _fn_str);
+
 void RKTestModuloMath(void) {
     int k;
     const int N = 4;
@@ -1131,7 +1140,8 @@ void RKTestProcessorSpeed(void) {
     return;
 }
 
-void RKTestOneRay(void) {
+void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
+    SHOW_FUNCTION_NAME
     int k, p, n, g;
     RKScratch *space;
     RKBuffer pulseBuffer;
@@ -1168,7 +1178,8 @@ void RKTestOneRay(void) {
         pulses[k] = pulse;
     }
     
-    RKPulsePairHop(space, pulses, pulseCount);
+    //RKPulsePairHop(space, pulses, pulseCount);
+    method(space, pulses, pulseCount);
     
     RKLog("Deallocating buffers ...\n");
 
@@ -1369,6 +1380,7 @@ void RKTestSingleEngine(void) {
 }
 
 void RKTestSingleCommand(void) {
+    SHOW_FUNCTION_NAME
     char string[256] = "{\"Health\":{\"Value\":true,\"Enum\":1}, \"Transceiver\":{\"Value\":true,\"Enum\":1}}\"";
     printf("string = %s\n", string);
     RKReplaceKeyValue(string, "Enum", RKStatusEnumOld);
@@ -1376,6 +1388,7 @@ void RKTestSingleCommand(void) {
 }
 
 void RKTestMakeHops(void) {
+    SHOW_FUNCTION_NAME
     for (int k = 3; k < 15; k++) {
         printf(UNDERLINE("%d Hops:\n"), k);
         RKBestStrideOfHops(k, true);
@@ -1384,6 +1397,7 @@ void RKTestMakeHops(void) {
 }
 
 void RKTestPreferenceReading(void) {
+    SHOW_FUNCTION_NAME
     RKPreference *preference = RKPreferenceInit();;
     RKPreferenceObject *object = NULL;
     object = RKPreferenceFindKeyword(preference, "PedzyHost");
@@ -1398,6 +1412,7 @@ void RKTestPreferenceReading(void) {
 }
 
 void RKTestCountFiles(void) {
+    SHOW_FUNCTION_NAME
     const char *folder = "data";
     long count = RKCountFilesInPath(folder);
     printf("%ld files in %s\n", count, folder);
@@ -1421,6 +1436,7 @@ void RKTestFileMonitor(void) {
 }
 
 void RKTestWriteWaveform(void) {
+    SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/h4011.rkwav";
     RKLog("Creating waveform file '%s' ...\n", filename);
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(22, 1024);
@@ -1435,14 +1451,15 @@ void RKTestWriteWaveform(void) {
 }
 
 void RKTestWaveformTFM(void) {
+    SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/tfm.rkwav";
-    RKLog("TFM Waveform Test\n");
     RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
 
 void RKTestHilbertTransform(void) {
+    SHOW_FUNCTION_NAME
 	int i;
 	RKFloat *x = (RKFloat *)malloc(8 * sizeof(RKFloat));
 	RKComplex *y = (RKComplex *)malloc(8 * sizeof(RKComplex));
