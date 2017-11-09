@@ -12,11 +12,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     //    struct timeval tic, toc;
     //    gettimeofday(&tic, NULL);
         
-    // Process
-    // Identify odd pulses and even pulses
-    // Calculate R0, R1
-    // R0, R1 --> Z, V, W
-    
     int n, j, k, p;
     
     // Get the start pulse to know the capacity

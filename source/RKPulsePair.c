@@ -133,7 +133,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
 
 int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
     usleep(20 * 1000);
-
+    RKLog("Warning. I am not implemented yet\n");
     return 0;
 
 }
@@ -216,17 +216,15 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         j = 0;
         for (; n < count; n += 2) {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
-//            RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
-//            RKSIMD_zcma(&Xn, &Xn, &space->R[p][0], pulse->header.gateCount, 1);          // R[0] += X[n] * X[n]'
             RKVec *si = (RKVec *)Xn.i;
             RKVec *sq = (RKVec *)Xn.q;
             RKVec *mi = (RKVec *)space->mX[p].i;
             RKVec *mq = (RKVec *)space->mX[p].q;
             RKVec *r0 = (RKVec *)space->R[p][0].i;
             for (k = 0; k < K; k++) {
-                *mi = _rk_mm_add_pf(*mi, *si);
-                *mq = _rk_mm_add_pf(*mq, *sq);
-                *r0 = _rk_mm_add_pf(*r0, _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq))); // I += I1 * I2 + Q1 * Q2
+                *mi = _rk_mm_add_pf(*mi, *si);                                                             // mX += X
+                *mq = _rk_mm_add_pf(*mq, *sq);                                                             // mX += X
+                *r0 = _rk_mm_add_pf(*r0, _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq))); // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
                 si++;
                 sq++;
                 mi++;
@@ -236,9 +234,6 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             j++;
         }
         // Divide by n for the average
-        //        RKSIMD_izscl(&space->mX[p], 1.0f / (float)(j), gateCount);                       // mX /= j
-        //        RKSIMD_izscl(&space->R[p][0], 1.0f / (float)(j), gateCount);                     // R[0] /= j   (unbiased)
-        //        RKSIMD_zabs(&space->R[p][0], space->aR[p][0], gateCount);                        // aR[0] = abs(R[0])
         RKVec ss = _rk_mm_set1_pf(1.0f / (float)j);
         RKVec *mi = (RKVec *)space->mX[p].i;
         RKVec *mq = (RKVec *)space->mX[p].q;
@@ -300,7 +295,6 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                               // C += Xh[] * Xv[]'
         j++;
     }
-    //    RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                            // C /= j   (unbiased)
     RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0], space->aR[1][0], 1.0f / (float)(j), gateCount);  // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
 
     //

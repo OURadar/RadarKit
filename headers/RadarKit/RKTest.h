@@ -82,7 +82,7 @@ int RKTestPedestalFree(RKTransceiver);
 
 void RKTestPulseCompression(RKRadar *, RKTestFlag);
 void RKTestProcessorSpeed(void);
-void RKTestOneRay(void);
+void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t));
 
 void RKTestCacheWrite(void);
 void RKTestWindow(void);

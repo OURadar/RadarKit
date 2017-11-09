@@ -144,7 +144,6 @@ UserParams processInput(int argc, const char **argv) {
         {"lean-system"           , no_argument      , NULL, 'L'},
         {"medium-system"         , no_argument      , NULL, 'M'},
         {"test-pulse-compression", optional_argument, NULL, 'P'},
-        {"test-one-ray"          , no_argument      , NULL, 'R'},
         {"test-processor"        , no_argument      , NULL, 'Q'},
         {"test-simd"             , optional_argument, NULL, 'S'},
         {"test"                  , required_argument, NULL, 'T'},
@@ -208,10 +207,6 @@ UserParams processInput(int argc, const char **argv) {
                 user.prf = 5000;
                 user.coresForPulseCompression = 6;
                 user.coresForProductGenerator = 4;
-                break;
-            case 'R':
-                RKTestOneRay();
-                exit(EXIT_SUCCESS);
                 break;
             case 'S':
                 // SIMD Tests
@@ -283,6 +278,15 @@ UserParams processInput(int argc, const char **argv) {
 					case 14:
 						RKTestHilbertTransform();
 						break;
+                    case 15:
+                        RKTestOneRay(RKPulsePair);
+                        break;
+                    case 16:
+                        RKTestOneRay(RKPulsePairHop);
+                        break;
+                    case 17:
+                        RKTestOneRay(RKMultiLag);
+                        break;
                     default:
                         break;
                 }
