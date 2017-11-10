@@ -567,8 +567,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"TransceiverCounter\": %ld}",
-                temp, temp > 80.0f ? 1 : 0,
-                volt, volt > 12.2f ? 1 : 0,
+                temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
                 (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
                 (double)rand() * 0.2 / RAND_MAX + 45,
