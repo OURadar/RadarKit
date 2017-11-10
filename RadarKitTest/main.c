@@ -374,6 +374,10 @@ int main(int argc, const char **argv) {
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
+	if (getenv("TERM") == NULL) {
+		RKSetWantColor(false);
+	}
+
     UserParams user = processInput(argc, argv);
 
     // In the case when no tests are performed, simulate the time-series

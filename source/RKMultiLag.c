@@ -139,7 +139,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
         RKIQZ X[pulseCount];
         const int gateShown = 8;
         for (p = 0; p < 2; p++) {
-            printf("\033[4mChannel %d (%s pol):\033[24m\n", p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
+			printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"), p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
             for (n = 0; n < pulseCount; n++) {
                 X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
             }
@@ -187,7 +187,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
             }
             printf(RKEOL);
         }
-        printf("\033[4mCross-channel:\033[24m\n");
+		printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
         for (j = 0; j < 2 * lagCount - 1; j++) {
             k = j - lagCount + 1;
             sprintf(variable, " C[%2d] = ", k);
