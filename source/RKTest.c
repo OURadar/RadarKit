@@ -1178,7 +1178,15 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
         pulses[k] = pulse;
     }
     
-    //RKPulsePairHop(space, pulses, pulseCount);
+    if (method == RKPulsePairHop) {
+        RKLog("Info. Pulse Pair for Frequency Hopping.\n");
+    } else if (method == RKPulsePair) {
+        RKLog("Info. Pulse Pair.\n");
+    } else if (method == RKMultiLag) {
+        RKLog("Info. Multilag.\n");
+    } else {
+        RKLog("Warning. Unknown.\n");
+    }
     method(space, pulses, pulseCount);
     
     RKLog("Deallocating buffers ...\n");
