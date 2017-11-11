@@ -10,7 +10,7 @@
 #define __RadarKit_PulseRingFilter__
 
 #include <RadarKit/RKFoundation.h>
-#include <RadarKit/DSP.h>
+#include <RadarKit/RKDSP.h>
 
 typedef struct rk_pulse_ring_filter_worker RKPulseRingFilterWorker;
 typedef struct rk_pulse_ring_filter_engine RKPulseRingFilterEngine;
@@ -43,7 +43,7 @@ struct rk_pulse_ring_filter_engine {
     RKComplex                        *filters[2];
     
     // Program set variables
-    RKPulseCompressionWorker         *workers;
+    RKPulseRingFilterWorker          *workers;
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  coreMutex;
     
@@ -60,6 +60,6 @@ struct rk_pulse_ring_filter_engine {
 RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void);
 void RKPulseRingFilterEngineFree(RKPulseRingFilterEngine *);
 
-RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);
+int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);
 
 #endif
