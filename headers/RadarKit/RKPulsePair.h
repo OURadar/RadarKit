@@ -6,8 +6,8 @@
 //  Copyright (c) 2016 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKPulsePair__
-#define __RadarKit_RKPulsePair__
+#ifndef __RadarKit_PulsePair__
+#define __RadarKit_PulsePair__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>

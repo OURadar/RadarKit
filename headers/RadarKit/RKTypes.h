@@ -229,6 +229,7 @@ enum RKResult {
 enum RKEngineColor {
     RKEngineColorCommandCenter = 9,
     RKEngineColorPulseCompressionEngine = 6,
+    RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
     RKEngineColorMomentEngine = 7,
     RKEngineColorHealthEngine = 1,
@@ -296,10 +297,11 @@ enum RKPulseStatus {
     RKPulseStatusVacant              = 0,
     RKPulseStatusHasIQData           = 1,                            // 0x01
     RKPulseStatusHasPosition         = (1 << 1),                     // 0x02
-    RKPulseStatusInspected           = (1 << 2),
-    RKPulseStatusCompressed          = (1 << 3),
-    RKPulseStatusSkipped             = (1 << 4),
-    RKPulseStatusProcessed           = (1 << 5),
+    RKPulseStatusInspected           = (1 << 2),                     // 0x04
+    RKPulseStatusCompressed          = (1 << 3),                     // 0x08
+    RKPulseStatusSkipped             = (1 << 4),                     // 0x10
+    RKPulseStatusProcessed           = (1 << 5),                     // 0x20
+    RKPulseStatusRingFiltered        = (1 << 6),
     RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
 };
 
