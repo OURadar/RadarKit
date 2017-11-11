@@ -206,6 +206,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 
     for (p = 0; p < 2; p++) {
 		for (k = 0; k < gateCount; k++) {
+            // Derive some criteria for lag selection here if desired
 			if (space->nlag == 2) {
 				space->S[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f)
 				/ powf(space->aR[p][2][k], 1.0f / 3.0f);
@@ -239,7 +240,10 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 			}
 		}
     }
-
+    for (k = 0; k < gateCount; k++) {
+        space->ZDR[k] = space->Z[0][k] - space->Z[1][k];
+    }
+    
     // Censoring mask
     for (k = 0; k < gateCount; k++) {
         if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
