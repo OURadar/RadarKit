@@ -6,8 +6,8 @@
 //  Copyright (c) 2015-2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKPulseCompression__
-#define __RadarKit_RKPulseCompression__
+#ifndef __RadarKit_PulseCompression__
+#define __RadarKit_PulseCompression__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
