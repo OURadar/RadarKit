@@ -743,7 +743,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->processor = &RKPulsePairHop;
+    //engine->processor = &RKPulsePairHop;
+	engine->processor = &RKMultiLag;
     engine->processorLagCount = RKLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->coreMutex, NULL);

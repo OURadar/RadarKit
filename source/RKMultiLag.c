@@ -8,6 +8,15 @@
 
 #include <RadarKit/RKMultiLag.h>
 
+enum RKMomentMask {
+	RKMomentMaskCensored = -1,
+	RKMomentMaskNormal = 1,
+	RKMomentMaskLag1 = 1,
+	RKMomentMaskLag2 = 2,
+	RKMomentMaskLag3 = 3,
+	RKMomentMaskLag4 = 4
+};
+
 int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     //    struct timeval tic, toc;
     //    gettimeofday(&tic, NULL);
@@ -206,30 +215,48 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 
     for (p = 0; p < 2; p++) {
 		for (k = 0; k < gateCount; k++) {
-            // Derive some criteria for lag selection here if desired
-			if (space->nlag == 2) {
-				space->S[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f)
-				/ powf(space->aR[p][2][k], 1.0f / 3.0f);
-				space->SNR[p][k] = space->S[p][k] / space->noise[p];
-				num = logf(space->aR[p][1][k]);
-				den = logf(space->aR[p][2][k]);
-			} else if (space->nlag == 3) {
-				space->S[p][k] = powf(space->aR[p][1][k], 6.0f / 7.0f) * powf(space->aR[p][2][k], 3.0f / 7.0f)
-				/ powf(space->aR[p][3][k], 2.0f / 7.0f);
-				space->SNR[p][k] = space->S[p][k] / space->noise[p];
-				num = 11.0f * logf(space->aR[p][1][k]) + 2.0f * logf(space->aR[p][2][k]);
-				den = 13.0f * logf(space->aR[p][3][k]);
-			} else if (space->nlag == 4) {
-				space->S[p][k] = powf(space->aR[p][1][k], 54.0f / 86.0f) * powf(space->aR[p][2][k], 39.0f / 86.0f) * powf(space->aR[p][3][k], 14.0f / 86.0f)
-				/ powf(space->aR[p][4][k], 21.0f / 86.0f);
-				space->SNR[p][k] = space->S[p][k] / space->noise[p];
-				num = 13.0f * logf(space->aR[p][1][k]) + 7.0f * logf(space->aR[p][2][k]);
-				den = 3.0f * logf(space->aR[p][3][k]) + 17.0f * logf(space->aR[p][4][k]);
+            // Derive some criteria for censoring and lag selection
+			space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
+			if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
+				space->mask[k] = RKMomentMaskCensored;
 			} else {
-				space->S[p][k] = space->aR[p][0][k] - space->noise[p];
-				space->SNR[p][k] = space->S[p][k] / space->noise[p];
-				num = logf(space->S[p][k]);
-				den = logf(space->aR[p][1][k]);
+				space->mask[k] = space->nlag;
+			}
+			if (space->mask[k] == RKMomentMaskCensored) {
+				space->Z[p][k] = NAN;
+				space->V[p][k] = NAN;
+				space->W[p][k] = NAN;
+				continue;
+			}
+			switch (space->mask[k]) {
+				default:
+				case RKMomentMaskNormal:
+					space->S[p][k] = space->aR[p][0][k] - space->noise[p];
+					space->SNR[p][k] = space->S[p][k] / space->noise[p];
+					num = logf(space->S[p][k]);
+					den = logf(space->aR[p][1][k]);
+					break;
+				case RKMomentMaskLag2:
+					space->S[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f)
+					/ powf(space->aR[p][2][k], 1.0f / 3.0f);
+					space->SNR[p][k] = space->S[p][k] / space->noise[p];
+					num = logf(space->aR[p][1][k]);
+					den = logf(space->aR[p][2][k]);
+					break;
+				case RKMomentMaskLag3:
+					space->S[p][k] = powf(space->aR[p][1][k], 6.0f / 7.0f) * powf(space->aR[p][2][k], 3.0f / 7.0f)
+					/ powf(space->aR[p][3][k], 2.0f / 7.0f);
+					space->SNR[p][k] = space->S[p][k] / space->noise[p];
+					num = 11.0f * logf(space->aR[p][1][k]) + 2.0f * logf(space->aR[p][2][k]);
+					den = 13.0f * logf(space->aR[p][3][k]);
+					break;
+				case RKMomentMaskLag4:
+					space->S[p][k] = powf(space->aR[p][1][k], 54.0f / 86.0f) * powf(space->aR[p][2][k], 39.0f / 86.0f) * powf(space->aR[p][3][k], 14.0f / 86.0f)
+					/ powf(space->aR[p][4][k], 21.0f / 86.0f);
+					space->SNR[p][k] = space->S[p][k] / space->noise[p];
+					num = 13.0f * logf(space->aR[p][1][k]) + 7.0f * logf(space->aR[p][2][k]);
+					den = 3.0f * logf(space->aR[p][3][k]) + 17.0f * logf(space->aR[p][4][k]);
+					break;
 			}
 			space->Z[p][k] = 10.0f * log10f(space->S[p][k]) + space->rcor[p][k];
 			space->V[p][k] = space->velocityFactor * atan2f(space->R[p][1].i[k], space->R[p][1].q[k]);
@@ -238,19 +265,48 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 			} else {
 				space->W[p][k] = space->widthFactor * sqrtf(num - den);
 			}
+		} // for (k = 0; k < gateCount ...)
+    }
+	// Note (k = j - lagCount + 1) was used for C[j] = lag k; So, lag-0 is stored at index (lagCount), e.g., For lagCount = 3, C in [-2, -1, 0, 1, 2]
+	RKFloat *Ci = space->C[space->lagCount].i;
+	RKFloat *Cq = space->C[space->lagCount].q;
+    for (k = 0; k < gateCount; k++) {
+		if (space->mask[k] == RKMomentMaskCensored) {
+			space->ZDR[k] = NAN;
+			space->PhiDP[k] = NAN;
+			space->RhoHV[k] = NAN;
+			space->KDP[k] = NAN;
+			continue;
 		}
-    }
-    for (k = 0; k < gateCount; k++) {
-        space->ZDR[k] = space->Z[0][k] - space->Z[1][k];
-    }
-    
-    // Censoring mask
-    for (k = 0; k < gateCount; k++) {
-        if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
-            space->mask[k] = true;
-        } else {
-            space->mask[k] = false;
-        }
+		switch (space->mask[k]) {
+			default:
+			case RKMomentMaskNormal:
+				space->ZDR[k] = 10.0f * log10f(space->S[0][k] / space->S[1][k])
+				+ space->dcal;
+				break;
+			case RKMomentMaskLag2:
+				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 4.0f / 3.0f) * powf(space->aR[1][2][k], 1.0f / 3.0f) /
+											   (powf(space->aR[1][1][k], 4.0f / 3.0f) * powf(space->aR[0][2][k], 1.0f / 3.0f)))
+				+ space->dcal;
+				break;
+			case RKMomentMaskLag3:
+				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 6.0f / 7.0f) * powf(space->aR[0][2][k], 3.0f / 7.0f) * powf(space->aR[1][3][k], 2.0f / 7.0f) /
+											   (powf(space->aR[1][1][k], 6.0f / 7.0f) * powf(space->aR[1][2][k], 3.0f / 7.0f) * powf(space->aR[0][3][k], 2.0f / 7.0f)))
+				+ space->dcal;
+				break;
+			case RKMomentMaskLag4:
+				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 54.0f / 86.0f) * powf(space->aR[0][2][k], 39.0f / 86.0f) * powf(space->aR[0][3][k], 14.0f / 86.0f) * powf(space->aR[1][4][k], 21.0f / 86.0f) /
+											   (powf(space->aR[1][1][k], 54.0f / 86.0f) * powf(space->aR[1][2][k], 39.0f / 86.0f) * powf(space->aR[1][3][k], 14.0f / 86.0f) * powf(space->aR[0][4][k], 21.0f / 86.0f)) )
+				+ space->dcal;
+				break;
+		}
+		space->PhiDP[k] = -atan2(Ci[k], Cq[k]) + space->pcal;
+		RKSingleWrapTo2PI(space->PhiDP[k]);
+		if (k > 1) {
+			space->KDP[k] = space->PhiDP[k] - space->PhiDP[k - 1];
+			RKSingleWrapTo2PI(space->KDP[k]);
+			space->KDP[k] = space->KDPFactor * space->KDP[k];
+		}
     }
 
     //    gettimeofday(&toc, NULL);

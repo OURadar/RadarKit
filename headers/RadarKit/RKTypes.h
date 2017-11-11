@@ -687,7 +687,7 @@ typedef struct rk_scratch {
     RKFloat          *PhiDP;                                         // Differential phase PhiDP
     RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
     RKFloat          *KDP;                                           // Specific phase KDP
-    bool             *mask;                                          // Mask for censoring
+    int8_t           *mask;                                          // Mask for censoring
     uint8_t          nlag;                                           // Number of lags in multi-lag estimator
 } RKScratch;
 
