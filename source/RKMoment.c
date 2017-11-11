@@ -266,6 +266,9 @@ static void *momentCore(void *in) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         exit(EXIT_FAILURE);
     }
+	if (engine->userLagChoice != 0) {
+		space->userLagChoice = engine->userLagChoice;
+	}
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -743,8 +746,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    //engine->processor = &RKPulsePairHop;
-	engine->processor = &RKMultiLag;
+    engine->processor = &RKPulsePairHop;
     engine->processorLagCount = RKLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->coreMutex, NULL);
@@ -805,21 +807,6 @@ void RKMomentEngineSetCoreOrigin(RKMomentEngine *engine, const uint8_t origin) {
         return;
     }
     engine->coreOrigin = origin;
-}
-
-void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *engine) {
-    engine->processor = &RKMultiLag;
-    engine->processorLagCount = RKLagCount;
-}
-
-void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
-    engine->processor = &RKPulsePair;
-    engine->processorLagCount = 3;
-}
-
-void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
-    engine->processor = &RKPulsePairHop;
-    engine->processorLagCount = 2;
 }
 
 #pragma mark - Interactions

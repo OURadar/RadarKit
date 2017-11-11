@@ -80,7 +80,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     
     // NOTE: At this point, one can use space->vX[0] & space->vX[1] as signal power for H & V, respectively.
     // However, within the isodop regions, the zero-Doppler power is may have been filtered out by the clutter filter
-    // so S & R are biased unless the filter is turned off. It's common problem with weather radars.
+    // so S & R are biased unless the filter is turned off. This is a downside of clutter filter using mean removal
     
     //
     //  CCF
@@ -220,7 +220,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 			if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
 				space->mask[k] = RKMomentMaskCensored;
 			} else {
-				space->mask[k] = space->nlag;
+				space->mask[k] = space->userLagChoice;
 			}
 			if (space->mask[k] == RKMomentMaskCensored) {
 				space->Z[p][k] = NAN;
@@ -283,21 +283,31 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 			case RKMomentMaskNormal:
 				space->ZDR[k] = 10.0f * log10f(space->S[0][k] / space->S[1][k])
 				+ space->dcal;
+				space->RhoHV[k] = space->gC[k] / sqrtf(space->aR[0][0][k] * space->aR[1][0][k]);
 				break;
 			case RKMomentMaskLag2:
 				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 4.0f / 3.0f) * powf(space->aR[1][2][k], 1.0f / 3.0f) /
 											   (powf(space->aR[1][1][k], 4.0f / 3.0f) * powf(space->aR[0][2][k], 1.0f / 3.0f)))
 				+ space->dcal;
+				space->RhoHV[k] = space->gC[k]
+				* powf(space->aR[0][2][k] * space->aR[1][2][k], 1.0f / 6.0f)
+				/ powf(space->aR[0][1][k] * space->aR[1][1][k], 2.0f / 3.0f);
 				break;
 			case RKMomentMaskLag3:
 				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 6.0f / 7.0f) * powf(space->aR[0][2][k], 3.0f / 7.0f) * powf(space->aR[1][3][k], 2.0f / 7.0f) /
 											   (powf(space->aR[1][1][k], 6.0f / 7.0f) * powf(space->aR[1][2][k], 3.0f / 7.0f) * powf(space->aR[0][3][k], 2.0f / 7.0f)))
 				+ space->dcal;
+				space->RhoHV[k] = space->gC[k]
+				* powf(space->aR[0][3][k] * space->aR[1][3][k], 1.0f / 7.0f)
+				/ (powf(space->aR[0][1][k] * space->aR[1][1][k], 3.0 / 7.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 3.0f / 14.0f));
 				break;
 			case RKMomentMaskLag4:
 				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 54.0f / 86.0f) * powf(space->aR[0][2][k], 39.0f / 86.0f) * powf(space->aR[0][3][k], 14.0f / 86.0f) * powf(space->aR[1][4][k], 21.0f / 86.0f) /
 											   (powf(space->aR[1][1][k], 54.0f / 86.0f) * powf(space->aR[1][2][k], 39.0f / 86.0f) * powf(space->aR[1][3][k], 14.0f / 86.0f) * powf(space->aR[0][4][k], 21.0f / 86.0f)) )
 				+ space->dcal;
+				space->RhoHV[k] = space->gC[k]
+				* powf(space->aR[0][4][k] * space->aR[1][4][k], 21.0f / 172.0f)
+				/ (powf(space->aR[0][1][k] * space->aR[1][1][k], 27.0f / 86.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 39.0 / 172.0f) * powf(space->aR[0][3][k] * space->aR[1][3][k], 7.0f / 86.0f));
 				break;
 		}
 		space->PhiDP[k] = -atan2(Ci[k], Cq[k]) + space->pcal;

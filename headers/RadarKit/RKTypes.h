@@ -221,6 +221,7 @@ enum RKResult {
     RKResultFailedToMeasureNoise,
     RKResultFailedToCreateFileRemover,
     RKResultFileManagerBufferNotResuable,
+	RKResultInvalidMomentParameters,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -688,7 +689,7 @@ typedef struct rk_scratch {
     RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
     RKFloat          *KDP;                                           // Specific phase KDP
     int8_t           *mask;                                          // Mask for censoring
-    uint8_t          nlag;                                           // Number of lags in multi-lag estimator
+    uint8_t          userLagChoice;                                  // Number of lags in multi-lag estimator from user
 } RKScratch;
 
 typedef union rk_file_header {

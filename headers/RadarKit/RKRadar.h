@@ -190,6 +190,10 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
+int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
+int RKSetMomentProcessorToPulsePair(RKRadar *);
+int RKSetMomentProcessorToPulsePairHop(RKRadar *);
+
 #pragma mark -
 
 // Some states of the radar
