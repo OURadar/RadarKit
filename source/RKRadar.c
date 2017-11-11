@@ -827,6 +827,34 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     return RKResultNoError;
 }
 
+int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
+	radar->momentEngine->processor = &RKMultiLag;
+	radar->momentEngine->processorLagCount = RKLagCount;
+	if (lagChoice < 0 || lagChoice > 4) {
+		RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
+		return RKResultInvalidMomentParameters;
+	}
+	radar->momentEngine->userLagChoice = lagChoice;
+	return RKResultNoError;
+}
+
+int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
+	radar->momentEngine->processor = &RKPulsePair;
+	radar->momentEngine->processorLagCount = 3;
+	return RKResultNoError;
+}
+
+int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
+	radar->momentEngine->processor = &RKPulsePairHop;
+	radar->momentEngine->processorLagCount = 2;
+	return RKResultNoError;
+}
+
+int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
+	radar->momentEngine->processorLagCount = 2;
+	return RKResultNoError;
+}
+
 //
 // Sets the waveform from a pre-defined file that specifies the digital samples for an
 // arbitrary waveform generator.

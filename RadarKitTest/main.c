@@ -204,7 +204,7 @@ UserParams processInput(int argc, const char **argv) {
             case 'M':
                 user.simulate = true;
                 user.gateCount = 16000;
-                user.prf = 5000;
+                user.prf = 2000;
                 user.coresForPulseCompression = 6;
                 user.coresForProductGenerator = 4;
                 break;
@@ -427,7 +427,8 @@ int main(int argc, const char **argv) {
 
     RKSetVerbose(myRadar, user.verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-    
+	RKSetMomentProcessorToMultiLag(myRadar, 3);
+
     RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
     RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
     RKAddControl(myRadar, "PPI EL 6 deg @ 24 dps", "p ppi 6 24");

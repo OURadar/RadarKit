@@ -52,6 +52,7 @@ struct rk_moment_engine {
     pthread_t              tidPulseGatherer;
     pthread_mutex_t        coreMutex;
     uint8_t                processorLagCount;
+	uint8_t                userLagChoice;
     
     // Status / health
     uint32_t               processedPulseIndex;
@@ -76,9 +77,9 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
-void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *);
-void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
-void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
+//void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *, const uint8_t);
+//void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
+//void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

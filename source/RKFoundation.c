@@ -423,7 +423,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     space->capacity = capacity;
     space->lagCount = lagCount;
     space->showNumbers = showNumbers;
-	space->nlag = 2;
+	space->nlag = 3;
     
     int j, k;
     size_t bytes = 0;
