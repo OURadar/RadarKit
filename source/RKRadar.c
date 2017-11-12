@@ -1101,7 +1101,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
-    
+
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
