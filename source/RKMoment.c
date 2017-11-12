@@ -836,7 +836,6 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     while (engine->tic == 0) {
         usleep(10000);
     }
-
     return RKResultNoError;
 }
 

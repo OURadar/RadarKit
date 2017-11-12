@@ -85,9 +85,9 @@ static void *ringFilterCore(void *_in) {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "P%02d", c);
+        k += sprintf(name + k, "C%02d", c);
     } else {
-        k += sprintf(name + k, "P%d", c);
+        k += sprintf(name + k, "C%d", c);
     }
     if (rkGlobalParameters.showColor) {
         sprintf(name + k, RKNoColor);
@@ -150,7 +150,7 @@ static void *ringFilterCore(void *_in) {
     //
     uint32_t tic = me->tic;
 
-    while (engine->statusBufferIndex & RKEngineStateActive) {
+    while (engine->state & RKEngineStateActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
             RKLog(">%s sem_wait()\n", coreName);
@@ -210,7 +210,7 @@ static void *ringFilterCore(void *_in) {
     return NULL;
 }
 
-static void *ringPulseWatcher(void *_in) {
+static void *pulseRingWatcher(void *_in) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
     
     int c, i, j, k;
@@ -275,6 +275,7 @@ static void *ringPulseWatcher(void *_in) {
             usleep(1000);
         }
     }
+    engine->state ^= RKEngineStateSleep0;
 
     // Increase the tic once to indicate the engine is ready
     engine->tic++;
@@ -362,6 +363,9 @@ static void *ringPulseWatcher(void *_in) {
                 engine->workers[c].tic++;
             }
         }
+        
+        // Decide whether the pulse has been processed by FIR/IIR filter
+        pulse->header.s |= RKPulseStatusRingProcessed;
 
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
@@ -373,6 +377,7 @@ static void *ringPulseWatcher(void *_in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
+        
     // Wait for workers to return
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];
@@ -425,7 +430,13 @@ void RKPulseRingFilterEngineSetVerbose(RKPulseRingFilterEngine *engine, const in
 void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *engine, const RKRadarDesc *desc,
                                                   RKConfig *configBuffer, uint32_t *configIndex,
                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
-    
+    engine->radarDescription  = (RKRadarDesc *)desc;
+    engine->configBuffer      = configBuffer;
+    engine->configIndex       = configIndex;
+    engine->pulseBuffer       = pulseBuffer;
+    engine->pulseIndex        = pulseIndex;
+
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *engine, const uint8_t count) {
@@ -449,10 +460,58 @@ int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilte
 }
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired.\n", engine->name);
+        return RKResultEngineNotWired;
+    }
+    if (engine->coreCount == 0) {
+        engine->coreCount = 2;
+    }
+    if (engine->coreOrigin == 0) {
+        engine->coreOrigin = 4;
+    }
+    if (engine->workers != NULL) {
+        RKLog("%s Error. workers should be NULL here.\n", engine->name);
+    }
+    engine->workers = (RKPulseRingFilterWorker *)malloc(engine->coreCount * sizeof(RKPulseRingFilterWorker));
+    engine->memoryUsage += engine->coreCount * sizeof(RKPulseRingFilterWorker);
+    memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseRingFilterWorker));
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
+    engine->state |= RKEngineStateActivating;
+    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseRingWatcher, engine) != 0) {
+        RKLog("%s Error. Failed to start.\n", engine->name);
+        return RKResultFailedToStartRingPulseWatcher;
+    }
+    while (engine->tic == 0) {
+        usleep(10000);
+    }
     return RKResultSuccess;
 }
 
 int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose > 1) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
+    }
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
+    pthread_join(engine->tidPulseWatcher, NULL);
+    free(engine->workers);
+    engine->workers = NULL;
+    engine->state ^= RKEngineStateDeactivating;
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+    }
     return RKResultSuccess;
 }
 

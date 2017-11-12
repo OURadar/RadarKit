@@ -204,6 +204,7 @@ enum RKResult {
     RKResultNoMomentEngine,
     RKResultFailedToStartCompressionCore,
     RKResultFailedToStartPulseWatcher,
+    RKResultFailedToStartRingPulseWatcher,
     RKResultFailedToInitiateSemaphore,
     RKResultFailedToRetrieveSemaphore,
     RKResultTooBig,

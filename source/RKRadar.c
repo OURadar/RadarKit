@@ -418,6 +418,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
         radar->state |= RKRadarStatePulseCompressionEngineInitialized;
         
+        // Pulse ring filter engine
+        radar->pulseRingFilterEngine = RKPulseRingFilterEngineInit();
+        RKPulseRingFilterEngineSetInputOutputBuffers(radar->pulseRingFilterEngine, &radar->desc,
+                                                     radar->configs, &radar->configIndex,
+                                                     radar->pulses, &radar->pulseIndex);
+        radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
+        radar->state |= RKRadarStatePulseRingFilterEngineInitialized;
+        
         // Position engine
         radar->positionEngine = RKPositionEngineInit();
         RKPositionEngineSetInputOutputBuffers(radar->positionEngine, &radar->desc,
@@ -609,6 +617,9 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
     }
+    if (radar->state & RKRadarStatePulseRingFilterEngineInitialized) {
+        RKPulseRingFilterEngineFree(radar->pulseRingFilterEngine);
+    }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
         RKPositionEngineFree(radar->positionEngine);
     }
@@ -752,6 +763,9 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     }
     if (radar->pulseCompressionEngine) {
         RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
+    }
+    if (radar->pulseRingFilterEngine) {
+        RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, verbose);
     }
     if (radar->momentEngine) {
         RKMomentEngineSetVerbose(radar->momentEngine, verbose);
@@ -970,6 +984,7 @@ int RKGoLive(RKRadar *radar) {
     // Offset the pre-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
+        radar->memoryUsage -= radar->pulseRingFilterEngine->memoryUsage;
         radar->memoryUsage -= radar->positionEngine->memoryUsage;
         radar->memoryUsage -= radar->momentEngine->memoryUsage;
         radar->memoryUsage -= radar->healthEngine->memoryUsage;
@@ -987,12 +1002,15 @@ int RKGoLive(RKRadar *radar) {
         if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
             RKLog("Info. Not enough physical cores. Core counts will be adjusted.\n");
             RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, radar->processorCount / 2);
+            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, radar->processorCount / 2);
             RKMomentEngineSetCoreCount(radar->momentEngine, radar->processorCount / 2 - 1);
         }
         RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
-        RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
+        RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o + radar->pulseCompressionEngine->coreCount);
+        RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount + radar->pulseRingFilterEngine->coreCount);
         // Now, we start the engines
         RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+        RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
         RKPositionEngineStart(radar->positionEngine);
         RKMomentEngineStart(radar->momentEngine);
         RKHealthEngineStart(radar->healthEngine);
@@ -1006,6 +1024,7 @@ int RKGoLive(RKRadar *radar) {
     // Get the post-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
+        radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
         radar->memoryUsage += radar->positionEngine->memoryUsage;
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->memoryUsage += radar->healthEngine->memoryUsage;
@@ -1198,6 +1217,10 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
+    }
+    if (radar->state & RKRadarStatePulseRingFilterEngineInitialized) {
+        RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
+        radar->state ^= RKRadarStatePulseRingFilterEngineInitialized;
     }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
         RKPositionEngineStop(radar->positionEngine);
@@ -1543,7 +1566,7 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
 // Output:
 //     None
 //
-RKRay *RKGetVacanRay(RKRadar *radar) {
+RKRay *RKGetVacantRay(RKRadar *radar) {
     if (radar->rays == NULL) {
         RKLog("Error. Buffer for rays has not been allocated.\n");
         exit(EXIT_FAILURE);
