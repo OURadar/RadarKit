@@ -265,7 +265,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 			}
 		} // for (k = 0; k < gateCount ...)
     }
-	// Note (k = j - lagCount + 1) was used for C[j] = lag k; So, lag-0 is stored at index (lagCount), e.g., For lagCount = 3, C in [-2, -1, 0, 1, 2]
+    // Note: (k = j - lagCount + 1) was used for C[j] = lag k; So, lag-0 is stored at index (lagCount), e.g., For lagCount = 3, C in [-2, -1, 0, 1, 2]
 	RKFloat *Ci = space->C[space->lagCount].i;
 	RKFloat *Cq = space->C[space->lagCount].q;
     for (k = 0; k < gateCount; k++) {
