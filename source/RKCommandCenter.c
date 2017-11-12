@@ -947,7 +947,6 @@ int socketStreamHandler(RKOperator *O) {
                     pulseHeader.gateCount /= k;
                     pulseHeader.gateSizeMeters *= (float)k;
 
-					gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
 					scale = 1.0f;
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);

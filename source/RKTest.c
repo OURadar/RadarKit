@@ -508,7 +508,6 @@ void *RKTestTransceiverRunLoop(void *input) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
-                r = 0.0f;
                 phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
                 for (g = 0; g < transceiver->gateCount; g++) {
                     r = (float)g;
@@ -1152,7 +1151,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
     RKLog("Allocating buffers ...\n");
     
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    RKScratchAlloc(&space, pulseCapacity, 4, true);
+    RKScratchAlloc(&space, pulseCapacity, RKLagCount, true);
     RKPulse *pulses[pulseCount];
     
     for (k = 0; k < pulseCount; k++) {
@@ -1185,14 +1184,15 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
     } else if (method == RKMultiLag) {
         RKLog("Info. Multilag.\n");
     } else {
-        RKLog("Warning. Unknown.\n");
+        RKLog("Warning. Unknown method.\n");
+        method = RKPulsePair;
     }
     method(space, pulses, pulseCount);
     
     RKLog("Deallocating buffers ...\n");
-
+    
     RKScratchFree(space);
-    free(pulseBuffer);
+    RKPulseBufferFree(pulseBuffer);
     return;
 }
 

@@ -18,9 +18,9 @@ enum RKMomentMask {
 };
 
 int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
-    //    struct timeval tic, toc;
-    //    gettimeofday(&tic, NULL);
-        
+//    struct timeval tic, toc;
+//    gettimeofday(&tic, NULL);
+    
     int n, j, k, p;
     
     // Get the start pulse to know the capacity
@@ -131,21 +131,15 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
         space->gC[n] = expf(w * space->gC[n]);
     }
 
-    // Zero out the tails
-    for (p = 0; p < 2; p++) {
-        for (k = 0; k < lagCount; k++) {
-            RKZeroTailFloat(space->aR[p][k], capacity, gateCount);
+    // Show and tell
+    if (space->showNumbers && gateCount <= 16 && pulseCount <= 32) {
+        char variable[RKNameLength];
+        char *line = (char *)malloc(RKMaximumStringLength);
+        RKIQZ *X = (RKIQZ *)malloc(pulseCount * sizeof(RKIQZ));
+        if (line == NULL || X == NULL) {
+            fprintf(stderr, "Error allocating pulse buffer.\n");
+            exit(EXIT_FAILURE);
         }
-        RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
-        for (j = 0; j < 2 * lagCount - 1; j++) {
-            RKZeroTailFloat(&space->gC[j], capacity, gateCount);
-        }
-    }
-    
-    if (space->showNumbers && gateCount < 16 && pulseCount < 32) {
-        char variable[32];
-        char line[2048];
-        RKIQZ X[pulseCount];
         const int gateShown = 8;
         for (p = 0; p < 2; p++) {
 			printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"), p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
@@ -205,12 +199,16 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
         printf(RKEOL);
         RKShowVecFloat("    gC = ", space->gC, gateShown);
         printf(RKEOL);
+        fflush(stdout);
+
+        free(line);
+        free(X);
     }
 
     //
     //  ACF & CCF to moments
     //
-
+    
 	RKFloat num, den;
 
     for (p = 0; p < 2; p++) {
@@ -319,8 +317,8 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 		}
     }
 
-    //    gettimeofday(&toc, NULL);
-    //    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
+//    gettimeofday(&toc, NULL);
+//    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
     
     return pulseCount;
     

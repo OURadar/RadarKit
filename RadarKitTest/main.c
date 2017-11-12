@@ -376,7 +376,9 @@ int main(int argc, const char **argv) {
 
 	if (getenv("TERM") == NULL) {
 		RKSetWantColor(false);
-	}
+    } else {
+        printf("TERM = %s\n", getenv("TERM"));
+    }
 
     UserParams user = processInput(argc, argv);
 

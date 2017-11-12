@@ -661,9 +661,10 @@ typedef struct rk_ray {
 } RKRay;
 
 typedef struct rk_scratch {
-    bool             showNumbers;
     uint32_t         capacity;                                       // Capacity
+    bool             showNumbers;                                    // A flag for showing numbers
     uint8_t          lagCount;                                       // Number of lags of R & C
+    uint8_t          userLagChoice;                                  // Number of lags in multi-lag estimator from user
     RKIQZ            mX[2];                                          // Mean of X, 2 for dual-pol
     RKIQZ            vX[2];                                          // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
     RKIQZ            R[2][RKLagCount];                               // ACF up to RKLagCount - 1 for each polarization
@@ -691,7 +692,6 @@ typedef struct rk_scratch {
     RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
     RKFloat          *KDP;                                           // Specific phase KDP
     int8_t           *mask;                                          // Mask for censoring
-    uint8_t          userLagChoice;                                  // Number of lags in multi-lag estimator from user
 } RKScratch;
 
 typedef union rk_file_header {

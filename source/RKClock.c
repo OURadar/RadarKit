@@ -108,7 +108,7 @@ void RKClockSetHighPrecision(RKClock *clock, const bool value) {
 
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     int j, k;
-    double x, dx, du, n;
+    double x, dx, du;
     struct timeval t;
     bool recent = true;
     
@@ -147,10 +147,8 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         }
         if (clock->count > clock->stride) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
-            n = (double)clock->stride;
         } else {
             j = 0;
-            n = (double)clock->count;
         }
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
