@@ -374,10 +374,13 @@ int main(int argc, const char **argv) {
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
-	if (getenv("TERM") == NULL) {
+    char *term = getenv("TERM");
+	if (term == NULL) {
 		RKSetWantColor(false);
+    } else if (strcasestr(term, "color") == NULL) {
+        RKSetWantColor(false);
     } else {
-        printf("TERM = %s\n", getenv("TERM"));
+        printf("TERM = %s\n", term);
     }
 
     UserParams user = processInput(argc, argv);
