@@ -60,6 +60,17 @@ struct rk_pulse_ring_filter_engine {
 RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void);
 void RKPulseRingFilterEngineFree(RKPulseRingFilterEngine *);
 
+void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *, const RKRadarDesc *,
+                                                  RKConfig *configBuffer, uint32_t *configIndex,
+                                                  RKBuffer pulseBuffer,   uint32_t *pulseIndex);
+void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_t);
+void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
+
+int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
+
+int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);
+
+char *RKPulseRingFilterEngineStatusString(RKPulseRingFilterEngine *);
 
 #endif

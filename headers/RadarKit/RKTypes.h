@@ -175,6 +175,14 @@ typedef struct rk_filter_anchor {
 #define RKFilterAnchorDefault                      {0, 0, 1, 0, 0, 1024, 0.0f, 1.0f}
 #define RKFilterAnchorDefaultWithMaxDataLength(x)  {0, 0, 1, 0, 0, (x),  0.0f, 1.0f}
 
+typedef struct rk_iir_filter {
+    uint32_t      name;
+    uint32_t      bLength;
+    uint32_t      aLength;
+    RKComplex     *B;
+    RKComplex     *A;
+} RKIIRFilter;
+
 typedef struct rk_modulo_path {
     uint32_t      origin;
     uint32_t      length;
