@@ -269,6 +269,7 @@ static void *momentCore(void *in) {
 	if (engine->userLagChoice != 0) {
 		space->userLagChoice = engine->userLagChoice;
 	}
+
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))

@@ -136,6 +136,7 @@ static void *pulseCompressionCore(void *_in) {
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     mem += 2 * nfft * sizeof(RKFloat);
+    
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -152,7 +153,7 @@ static void *pulseCompressionCore(void *_in) {
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
     
-    // The last index of the pulse buffer
+    // The last index of the pulse buffer for this core (i.e., increment by one will get c)
     uint32_t i0 = engine->radarDescription->pulseBufferDepth - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer

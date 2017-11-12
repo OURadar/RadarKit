@@ -93,11 +93,41 @@ static void *ringFilterCore(void *_in) {
         sprintf(name + k, RKNoColor);
     }
 
-    size_t mem = 0;
+#if defined(_GNU_SOURCE)
     
+    // Set my CPU core
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(engine->coreOrigin + c, &cpuset);
+    sched_setaffinity(0, sizeof(cpuset), &cpuset);
+    pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
+    
+#endif
+
+    RKPulse *pulse;
+    size_t mem = 0;
+
+    double *busyPeriods, *fullPeriods;
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    if (busyPeriods == NULL || fullPeriods == NULL) {
+        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        exit(EXIT_FAILURE);
+    }
+    mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
+    memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
+    memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
+    double allBusyPeriods = 0.0, allFullPeriods = 0.0;
+
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
+
+    // The last index of the pulse buffer
+    uint32_t i0 = engine->radarDescription->pulseBufferDepth - 1;
+
+    // The latest index in the dutyCycle buffer
+    int d0 = 0;
 
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
@@ -121,6 +151,52 @@ static void *ringFilterCore(void *_in) {
     uint32_t tic = me->tic;
 
     while (engine->statusBufferIndex & RKEngineStateActive) {
+        if (engine->useSemaphore) {
+            #ifdef DEBUG_IQ
+            RKLog(">%s sem_wait()\n", coreName);
+            #endif
+            if (sem_wait(sem)) {
+                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, name, errno);
+            }
+        } else {
+            while (tic == me->tic && engine->state & RKEngineStateActive) {
+                usleep(1000);
+            }
+            tic = me->tic;
+        }
+        if (!(engine->state & RKEngineStateActive)) {
+            break;
+        }
+        
+        // Something happened
+        gettimeofday(&t1, NULL);
+        
+        // Start of getting busy
+        i0 = RKNextModuloS(i0, engine->radarDescription->pulseBufferDepth);
+
+        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, i0);
+
+        #ifdef DEBUG_IQ
+        RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
+        #endif
+
+        // Record down the latest processed pulse index
+        me->pid = i0;
+        me->lag = fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);
+
+        // Done processing, get the time
+        gettimeofday(&t0, NULL);
+        
+        // Drop the oldest reading, replace it, and add to the calculation
+        allBusyPeriods -= busyPeriods[d0];
+        allFullPeriods -= fullPeriods[d0];
+        busyPeriods[d0] = RKTimevalDiff(t0, t1);
+        fullPeriods[d0] = RKTimevalDiff(t0, t2);
+        allBusyPeriods += busyPeriods[d0];
+        allFullPeriods += fullPeriods[d0];
+        d0 = RKNextModuloS(d0, RKWorkerDutyCycleBufferDepth);
+        me->dutyCycle = allBusyPeriods / allFullPeriods;
+
         t2 = t0;
     }
 
