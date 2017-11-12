@@ -524,10 +524,8 @@ static void *pulseWatcher(void *_in) {
                 engine->filterGid[i] = -1;
                 pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
             } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
-        }
-
-        // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
-        if (skipCounter > 0) {
+        } else if (skipCounter > 0) {
+            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             engine->filterGid[k] = -1;
             engine->planIndices[k][0] = 0;
             if (--skipCounter == 0) {

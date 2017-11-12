@@ -134,6 +134,185 @@ static void *ringFilterCore(void *_in) {
     return NULL;
 }
 
+static void *ringPulseWatcher(void *_in) {
+    RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
+    
+    int c, i, j, k;
+    
+    sem_t *sem[engine->coreCount];
+    
+    unsigned int skipCounter = 0;
+    float lag;
+    struct timeval t0, t1;
+
+    if (engine->coreCount == 0) {
+        RKLog("Error. No processing core?\n");
+        return NULL;
+    }
+    
+    // The beginning of the buffer is a pulse, it has the capacity info
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
+    RKPulse *pulseToSkip;
+
+    // Change the state to active so all the processing cores stay in the busy loop
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
+
+    // Spin off N workers to process I/Q pulses
+    memset(sem, 0, engine->coreCount * sizeof(sem_t *));
+    for (c = 0; c < engine->coreCount; c++) {
+        RKPulseRingFilterWorker *worker = &engine->workers[c];
+        snprintf(worker->semaphoreName, 16, "rk-cf-%03d", c);
+        sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+        if (sem[c] == SEM_FAILED) {
+            if (engine->verbose > 1) {
+                RKLog(">%s Info. Semaphore %s exists. Try to remove and recreate.\n", engine->name, worker->semaphoreName);
+            }
+            if (sem_unlink(worker->semaphoreName)) {
+                RKLog(">%s Error. Unable to unlink semaphore %s.\n", engine->name, worker->semaphoreName);
+            }
+            // 2nd trial
+            sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+            if (sem[c] == SEM_FAILED) {
+                RKLog(">%s Error. Unable to remove then create semaphore %s\n", engine->name, worker->semaphoreName);
+                return (void *)RKResultFailedToInitiateSemaphore;
+            } else if (engine->verbose > 1) {
+                RKLog(">%s Info. Semaphore %s removed and recreated.\n", engine->name, worker->semaphoreName);
+            }
+        }
+        worker->id = c;
+        worker->sem = sem[c];
+        worker->parentEngine = engine;
+        if (engine->verbose > 1) {
+            RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
+        }
+        if (pthread_create(&worker->tid, NULL, ringFilterCore, worker) != 0) {
+            RKLog(">%s Error. Failed to start a compression core.\n", engine->name);
+            return (void *)RKResultFailedToStartCompressionCore;
+        }
+    }
+
+    // Wait for the workers to increase the tic count once
+    engine->state |= RKEngineStateSleep0;
+    for (c = 0; c < engine->coreCount; c++) {
+        while (engine->workers[c].tic == 0) {
+            usleep(1000);
+        }
+    }
+
+    // Increase the tic once to indicate the engine is ready
+    engine->tic++;
+    
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    
+    gettimeofday(&t1, 0); t1.tv_sec -= 1;
+
+    // Here comes the busy loop
+    // i  anonymous
+    // j  filter index
+    k = 0;   // pulse index
+    c = 0;   // core index
+    int s = 0;
+    while (engine->state & RKEngineStateActive) {
+        // The pulse
+        pulse = RKGetPulse(engine->pulseBuffer, k);
+
+        // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
+        engine->state |= RKEngineStateSleep1;
+        s = 0;
+        while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
+            usleep(200);
+            if (++s % 1000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
+            }
+        }
+        engine->state ^= RKEngineStateSleep1;
+        engine->state |= RKEngineStateSleep2;
+        // Wait until the pulse has has been processed (compressed or skipped) so that this engine won't compete with the pulse compression engine to set the status.
+        s = 0;
+        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateActive) {
+            usleep(200);
+            if (++s % 1000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
+            }
+        }
+        engine->state ^= RKEngineStateSleep2;
+        
+        if (!(engine->state & RKEngineStateActive)) {
+            break;
+        }
+
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
+
+        // Assess the lag of the workers
+        lag = engine->workers[0].lag;
+        for (i = 1; i < engine->coreCount; i++) {
+            lag = MAX(lag, engine->workers[i].lag);
+        }
+        if (skipCounter == 0 && lag > 0.9f) {
+            engine->almostFull++;
+            skipCounter = engine->radarDescription->pulseBufferDepth / 10;
+            RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
+            i = *engine->pulseIndex;
+            do {
+                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
+                // Have some way to skip processing
+                pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
+            } while (!(pulseToSkip->header.s & RKPulseStatusRingFiltered));
+        } else if (skipCounter > 0) {
+            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
+            // Have some way to record skipping
+            if (--skipCounter == 0) {
+                RKLog(">%s Info. Skipped a chunk.\n", engine->name);
+                for (i = 0; i < engine->coreCount; i++) {
+                    engine->workers[i].lag = 0.0f;
+                }
+            }
+        }
+        
+        // The pulse is considered "inspected" whether it will be skipped / filtered by the designated worker
+        pulse->header.s |= RKPulseStatusRingInspected;
+        
+        // Now we post
+        for (c = 0; c < engine->coreCount; c++) {
+            if (engine->useSemaphore) {
+                if (sem_post(sem[c])) {
+                    RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
+                }
+            } else {
+                engine->workers[c].tic++;
+            }
+        }
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKPulseRingFilterUpdateStatusString(engine);
+        }
+
+        // Update k to catch up for the next watch
+        k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+    }
+    // Wait for workers to return
+    for (c = 0; c < engine->coreCount; c++) {
+        RKPulseRingFilterWorker *worker = &engine->workers[c];
+        if (engine->useSemaphore) {
+            sem_post(worker->sem);
+        }
+        pthread_join(worker->tid, NULL);
+        sem_unlink(worker->semaphoreName);
+    }
+    
+    // Clean up
+    
+    
+    return NULL;
+}
+
 #pragma mark - Life Cycle
 
 RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {

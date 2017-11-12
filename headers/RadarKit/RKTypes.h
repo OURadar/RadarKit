@@ -300,6 +300,13 @@ enum RKMarker {
     RKMarkerMemoryManagement         = (1 << 15)
 };
 
+// Typical status progression:
+// -> RKPulseStatusVacant
+// -> RKPulseStatusHasIQData
+// -> RKPulseStatusInspected + RKPulseStatusProcessed (RKPulseStatusCompressed / RKPulseStatusSkipped)
+// -> RKPulseStatusRingInspected + RKPulseStatusRingProcessed (RKPulseStatusRingFiltered / RKPulseStatusRingSkipped)
+// -> RKPulseStatusHasPosition
+// -> RKPulseStatusReadyForMoment
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
     RKPulseStatusVacant              = 0,
@@ -309,7 +316,10 @@ enum RKPulseStatus {
     RKPulseStatusCompressed          = (1 << 3),                     // 0x08
     RKPulseStatusSkipped             = (1 << 4),                     // 0x10
     RKPulseStatusProcessed           = (1 << 5),                     // 0x20
-    RKPulseStatusRingFiltered        = (1 << 6),
+    RKPulseStatusRingInspected       = (1 << 6),
+    RKPulseStatusRingFiltered        = (1 << 7),
+    RKPulseStatusRingSkipped         = (1 << 8),
+    RKPulseStatusRingProcessed       = (1 << 9),
     RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
 };
 
