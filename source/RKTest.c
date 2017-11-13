@@ -1139,7 +1139,7 @@ void RKTestProcessorSpeed(void) {
     return;
 }
 
-void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
+void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int lag) {
     SHOW_FUNCTION_NAME
     int k, p, n, g;
     RKScratch *space;
@@ -1182,15 +1182,57 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
     } else if (method == RKPulsePair) {
         RKLog("Info. Pulse Pair.\n");
     } else if (method == RKMultiLag) {
-        RKLog("Info. Multilag.\n");
+		space->userLagChoice = lag;
+		space->velocityFactor = 1.0f;
+		space->widthFactor = 1.0f;
+        RKLog("Info. Multilag (N = %d).\n", space->userLagChoice);
     } else {
         RKLog("Warning. Unknown method.\n");
         method = RKPulsePair;
     }
     method(space, pulses, pulseCount);
-    
+
+	// Some known results
+	RKFloat err = 0.0f;
+
+	if (method == RKMultiLag && lag >= 2 && lag <= 4) {
+		// Results for lags 2, 3, and 4
+		RKFloat D[3][6] = {
+			{4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
+			{2.7106, -8.4965, -7.8061, -9.1933, -0.7019, -8.4546},
+			{3.7372, -4.2926, -4.1635, -6.0751, -0.7788, -5.9091}
+		};
+
+		RKFloat R[3][6] = {
+			{1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
+			{1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
+			{1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
+		};
+
+		RKFloat P[3][6] = {
+			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
+			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
+			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
+		};
+		for (k = 0; k < gateCount; k++) {
+			err += D[lag - 2][k] - space->ZDR[k];
+		}
+		err /= (RKFloat)gateCount;
+		RKLog("Delta ZDR = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+		for (k = 0; k < gateCount; k++) {
+			err += P[lag - 2][k] - space->PhiDP[k];
+		}
+		err /= (RKFloat)gateCount;
+		RKLog("Delta PhiDP = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+		for (k = 0; k < gateCount; k++) {
+			err += R[lag - 2][k] - space->RhoHV[k];
+		}
+		err /= (RKFloat)gateCount;
+		RKLog("Delta RhoHV = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+	}
+
     RKLog("Deallocating buffers ...\n");
-    
+
     RKScratchFree(space);
     RKPulseBufferFree(pulseBuffer);
     return;

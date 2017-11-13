@@ -279,14 +279,20 @@ UserParams processInput(int argc, const char **argv) {
 						RKTestHilbertTransform();
 						break;
                     case 15:
-                        RKTestOneRay(RKPulsePair);
+                        RKTestOneRay(RKPulsePair, 0);
                         break;
                     case 16:
-                        RKTestOneRay(RKPulsePairHop);
+                        RKTestOneRay(RKPulsePairHop, 0);
                         break;
                     case 17:
-                        RKTestOneRay(RKMultiLag);
+                        RKTestOneRay(RKMultiLag, 2);
                         break;
+					case 18:
+						RKTestOneRay(RKMultiLag, 3);
+						break;
+					case 19:
+						RKTestOneRay(RKMultiLag, 4);
+						break;
                     default:
                         break;
                 }
