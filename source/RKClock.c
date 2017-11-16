@@ -154,7 +154,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         dx = clock->xBuffer[k] - clock->xBuffer[j];
         du = clock->uBuffer[k] - clock->uBuffer[j];
         if (recent) {
-            if (du <= 1.0e-6 || du > 1.0e9) {
+            if (du <= 1.0e-7 || du > 1.0e9) {
                 if (clock->tic == 0) {
                     RKLog("%s Warning. Reference tic change of %.e per second is unexpected.\n", clock->name, du);
                     RKLog("%s Warning. Will be replaced with an internal uniform reference.\n", clock->name);
