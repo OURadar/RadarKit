@@ -449,7 +449,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     struct timeval t0, t1;
     bool even = true;
     
-    const int chunkSize = MAX(1, (int)floor(0.1 / transceiver->prt));
+    const int chunkSize = MAX(1, (int)floor(0.2 / transceiver->prt));
     
     gettimeofday(&t0, NULL);
 
@@ -498,6 +498,7 @@ void *RKTestTransceiverRunLoop(void *input) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
+            pulse->header.n = transceiver->counter;
             pulse->header.i = transceiver->counter++;
             pulse->header.t = (uint64_t)(1.0e6 * t);
             pulse->header.gateCount = transceiver->gateCount;
@@ -560,12 +561,17 @@ void *RKTestTransceiverRunLoop(void *input) {
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":0}, "
                 "\"Ready\":{\"Value\":true,\"Enum\":0}, "
+				"\"PRF\":{\"Value\":\"%.0f Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
+                "\"Transmit Power H\":{\"Value\":\"50 dBm Sim\", \"Enum\":0}, "
+				"\"Transmit Power V\":{\"Value\":\"50 dBm Sim\", \"Enum\":0}, "
+				"\"Waveform\":{\"Value\":\"h4011\", \"Enum\":0}, "
                 "\"TransceiverCounter\": %ld}",
+				1.0 / transceiver->prt,
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
@@ -604,8 +610,10 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
     transceiver->radar = radar;
     transceiver->fs = 5.0e6;
-    transceiver->gateCount = RKGetPulseCapacity(radar);
+    transceiver->gateCount = RKGetPulseCapacity(radar) / 10;
     transceiver->state = RKEngineStateAllocated;
+    transceiver->sprt = 1;
+    transceiver->prt = 0.0003;
     
     int i, j, k;
     
