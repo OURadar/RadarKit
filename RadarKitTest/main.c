@@ -108,9 +108,22 @@ void showHelp() {
            "         1 - Show colors\n"
            "         2 - Show modulo math\n"
            "         3 - Show window types\n"
-           "         4 - Test parsing comma delimited values\n"
-           "         5 - Test parsing values in a JSON string\n"
-           "         6 - Test reading a preference file\n"
+           "         4 - Parsing comma delimited values\n"
+           "         5 - Parsing values in a JSON string\n"
+		   "         6 - Making a frequency hopping sequence\n"
+           "         7 - Initializing a File Manager\n"
+		   "         8 - Reading preference file\n"
+		   "         9 - Count files in a folder RKCountFilesInPath()\n"
+		   "         10 - File monitor\n"
+		   "         11 - Write a waveform file\n"
+		   "         12 - Make a TFM waveform\n"
+		   "         13 - Initializing a radar system\n"
+		   "         14 - Hilbert transform\n"
+		   "         15 - Calculating one ray using pulse pair\n"
+		   "         16 - Calculating one ray using pulse pair hop\n"
+		   "         17 - Calculating one ray using multilag with L = 2\n"
+		   "         18 - Calculating one ray using multilag with L = 3\n"
+		   "         19 - Calculating one ray using multilag with L = 4\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
@@ -253,7 +266,7 @@ UserParams processInput(int argc, const char **argv) {
                         RKTestMakeHops();
                         break;
                     case 7:
-                        RKTestSingleEngine();
+                        RKTestFileManager();
                         break;
                     case 8:
                         RKTestPreferenceReading();

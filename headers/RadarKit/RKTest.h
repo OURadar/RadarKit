@@ -88,7 +88,7 @@ void RKTestCacheWrite(void);
 void RKTestWindow(void);
 void RKTestJSON(void);
 void RKTestShowColors(void);
-void RKTestSingleEngine(void);
+void RKTestFileManager(void);
 void RKTestSingleCommand(void);
 void RKTestMakeHops(void);
 void RKTestPreferenceReading(void);

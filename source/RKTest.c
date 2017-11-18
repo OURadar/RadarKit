@@ -1425,13 +1425,12 @@ void RKTestShowColors(void) {
     }
 }
 
-void RKTestSingleEngine(void) {
+void RKTestFileManager(void) {
     RKFileManager *o = RKFileManagerInit();
     if (o == NULL) {
         fprintf(stderr, "Unable to allocate a File Manager.\n");
         return;
     }
-    //RKFileManagerSetPathToMonitor(o, "/Users/boonleng/Developer/radarkit");
     RKFileManagerSetPathToMonitor(o, "data");
     RKFileManagerStart(o);
     RKFileManagerFree(o);
@@ -1510,8 +1509,9 @@ void RKTestWriteWaveform(void) {
 
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
-    const char filename[] = "waveforms/tfm.rkwav";
+    const char filename[] = "waveforms/test-tfm.rkwav";
     RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+	RKWaveformSummary(waveform);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
