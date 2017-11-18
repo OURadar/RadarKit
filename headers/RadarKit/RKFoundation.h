@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef __RadarKit_RKFoundation__
-#define __RadarKit_RKFoundation__
+#ifndef __RadarKit_Foundation__
+#define __RadarKit_Foundation__
 
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>

@@ -6,8 +6,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKCommandCenter__
-#define __RadarKit_RKCommandCenter__
+#ifndef __RadarKit_CommandCenter__
+#define __RadarKit_CommandCenter__
 
 #include <RadarKit/RKRadar.h>
 

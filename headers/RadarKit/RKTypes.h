@@ -31,8 +31,8 @@
 //  1.0    - First working version
 //
 
-#ifndef __RadarKit_RKTypes__
-#define __RadarKit_RKTypes__
+#ifndef __RadarKit_Types__
+#define __RadarKit_Types__
 
 #include <stdio.h>
 #include <stdlib.h>

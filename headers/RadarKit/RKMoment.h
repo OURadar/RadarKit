@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKMoment__
-#define __RadarKit_RKMoment__
+#ifndef __RadarKit_Moment__
+#define __RadarKit_Moment__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>

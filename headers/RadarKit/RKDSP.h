@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKDSP__
-#define __RadarKit_RKDSP__
+#ifndef __RadarKit_DSP__
+#define __RadarKit_DSP__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKSIMD.h>

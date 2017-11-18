@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKTest__
-#define __RadarKit_RKTest__
+#ifndef __RadarKit_Test__
+#define __RadarKit_Test__
 
 #include <RadarKit/RKRadar.h>
 

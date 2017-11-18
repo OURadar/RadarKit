@@ -10,8 +10,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKClient__
-#define __RadarKit_RKClient__
+#ifndef __RadarKit_Client__
+#define __RadarKit_Client__
 
 #include <RadarKit/RKNetwork.h>
 

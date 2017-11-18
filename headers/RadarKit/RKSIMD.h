@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef __RadarKit_RKSIMD__
-#define __RadarKit_RKSIMD__
+#ifndef __RadarKit_SIMD__
+#define __RadarKit_SIMD__
 
 #include <RadarKit/RKFoundation.h>
 
