@@ -524,6 +524,12 @@ int main(int argc, const char **argv) {
                              RKHealthRelayTweetaInit,
                              RKHealthRelayTweetaExec,
                              RKHealthRelayTweetaFree);
+        } else {
+            RKSetHealthRelay(myRadar,
+                             NULL,
+                             RKTestHealthRelayInit,
+                             RKTestHealthRelayExec,
+                             RKTestHealthRelayFree);
         }
 
         myRadar->configs[0].prf[0] = user.prf;
