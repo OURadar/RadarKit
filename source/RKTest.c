@@ -1101,7 +1101,8 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
 int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
 
 void RKTestProcessorSpeed(void) {
-    int k;
+    SHOW_FUNCTION_NAME
+    int j, k;
     RKScratch *space;
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
@@ -1114,6 +1115,9 @@ void RKTestProcessorSpeed(void) {
 
     RKScratchAlloc(&space, pulseCapacity, 4, true);
 
+    // Other non-zero parameters
+    space->userLagChoice = 3;
+
     RKPulse *pulses[pulseCount];
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
@@ -1122,24 +1126,38 @@ void RKTestProcessorSpeed(void) {
         pulses[k] = pulse;
     }
 
+    double t;
     struct timeval tic, toc;
+    int (*method)(RKScratch *, RKPulse **, const uint16_t);
 
     RKRay *ray = RKGetRay(rayBuffer, 0);
     
-    gettimeofday(&tic, NULL);
-    for (k = 0; k < testCount; k++) {
-        RKPulsePairHop(space, pulses, pulseCount);
-        //RKMultiLag(space, pulses, pulseCount);
-         makeRayFromScratch(space, ray, pulseCapacity, 1);
+    for (j = 0; j < 2; j++) {
+        switch (j) {
+            case 1:
+                method = RKMultiLag;
+                RKLog("MultiLag:\n");
+                break;
+            default:
+                method = RKPulsePairHop;
+                RKLog("PulsePairHop:\n");
+                break;
+        }
+        
+        gettimeofday(&tic, NULL);
+        for (k = 0; k < testCount; k++) {
+            method(space, pulses, pulseCount);
+            makeRayFromScratch(space, ray, pulseCapacity, 1);
+        }
+        gettimeofday(&toc, NULL);
+        t = RKTimevalDiff(toc, tic);
+        RKLog(">Total elapsed time: %.3f s\n", t);
+        RKLog(">Time for each ray (%s pulses x %s gates) = %.3f ms\n",
+              RKIntegerToCommaStyleString(pulseCount),
+              RKIntegerToCommaStyleString(pulseCapacity),
+              1.0e3 * t / testCount);
+        RKLog(">Speed: %.2f rays / sec\n", testCount / t);
     }
-    gettimeofday(&toc, NULL);
-
-    double t = RKTimevalDiff(toc, tic);
-    RKLog("Total elapsed time: %.3f s\n", t);
-    RKLog("Time for each ray (%s pulses x %s gates) = %.3f ms\n",
-          RKIntegerToCommaStyleString(pulseCount),
-          RKIntegerToCommaStyleString(pulseCapacity),
-          1.0e3 * t / testCount);
 
     RKScratchFree(space);
     free(pulseBuffer);

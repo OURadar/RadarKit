@@ -159,7 +159,6 @@ UserParams processInput(int argc, const char **argv) {
         {"lean-system"           , no_argument      , NULL, 'L'},
         {"medium-system"         , no_argument      , NULL, 'M'},
         {"test-pulse-compression", optional_argument, NULL, 'P'},
-        {"test-processor"        , no_argument      , NULL, 'Q'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
@@ -223,6 +222,7 @@ UserParams processInput(int argc, const char **argv) {
                 user.coresForProductGenerator = 4;
                 break;
             case 'T':
+                RKSetWantScreenOutput(true);
                 k = atoi(optarg);
                 switch (k) {
                     case 0:
