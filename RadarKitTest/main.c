@@ -93,37 +93,39 @@ void showHelp() {
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
-           "  --test-simd\n"
-           "         Sets the program to test SIMD instructions.\n"
-           "         To test the SIMD performance, use --test-simd=2\n"
-           "\n"
            "  --test-one-ray\n"
            "         Sets the program to test processing one ray using a selected processor.\n"
            "\n"
            "  --test-pulse-compression\n"
            "         Sets the program to test the pulse compression using a simple case with.\n"
            "         an impulse filter.\n"
+           "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
            "         0 - Show types\n"
            "         1 - Show colors\n"
            "         2 - Show modulo math\n"
            "         3 - Show window types\n"
            "         4 - Parsing comma delimited values\n"
-           "         5 - Parsing values in a JSON string\n"
-		   "         6 - Making a frequency hopping sequence\n"
-           "         7 - Initializing a File Manager\n"
-		   "         8 - Reading preference file\n"
-		   "         9 - Count files in a folder RKCountFilesInPath()\n"
-		   "         10 - File monitor\n"
-		   "         11 - Write a waveform file\n"
-		   "         12 - Make a TFM waveform\n"
-		   "         13 - Initializing a radar system\n"
-		   "         14 - Hilbert transform\n"
-		   "         15 - Calculating one ray using pulse pair\n"
-		   "         16 - Calculating one ray using pulse pair hop\n"
-		   "         17 - Calculating one ray using multilag with L = 2\n"
-		   "         18 - Calculating one ray using multilag with L = 3\n"
-		   "         19 - Calculating one ray using multilag with L = 4\n"
+           "         5 - SIMD quick test\n"
+           "         6 - SIMD test with numbers shown\n"
+           "         7 - SIMD performance tests\n"
+           "         8 - Parsing values in a JSON string\n"
+		   "         9 - Making a frequency hopping sequence\n"
+           "         10 - Initializing a File Manager\n"
+		   "         11 - Reading preference file\n"
+		   "         12 - Count files in a folder RKCountFilesInPath()\n"
+		   "         13 - File monitor\n"
+		   "         14 - Write a waveform file\n"
+		   "         15 - Make a TFM waveform\n"
+		   "         16 - Initializing a radar system\n"
+		   "         17 - Hilbert transform\n"
+		   "         18 - Calculating one ray using pulse pair\n"
+		   "         19 - Calculating one ray using pulse pair hop\n"
+		   "         20 - Calculating one ray using multilag with L = 2\n"
+		   "         21 - Calculating one ray using multilag with L = 3\n"
+		   "         22 - Calculating one ray using multilag with L = 4\n"
+           "         23 - Processor speed\n"
+           "         24 - Cache write\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
@@ -158,7 +160,6 @@ UserParams processInput(int argc, const char **argv) {
         {"medium-system"         , no_argument      , NULL, 'M'},
         {"test-pulse-compression", optional_argument, NULL, 'P'},
         {"test-processor"        , no_argument      , NULL, 'Q'},
-        {"test-simd"             , optional_argument, NULL, 'S'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
@@ -221,26 +222,6 @@ UserParams processInput(int argc, const char **argv) {
                 user.coresForPulseCompression = 6;
                 user.coresForProductGenerator = 4;
                 break;
-            case 'S':
-                // SIMD Tests
-                k = RKTestSIMDFlagNull;
-                if (optarg) {
-                    if (atoi(optarg) > 1) {
-                        k |= RKTestSIMDFlagPerformanceTestAll;
-                    } else {
-                        user.verbose = MAX(1, user.verbose);
-                    }
-                }
-                if (user.verbose) {
-                    k |= RKTestSIMDFlagShowNumbers;
-                }
-                RKTestSIMD(k);
-                exit(EXIT_SUCCESS);
-                break;
-            case 'Q':
-                RKTestProcessorSpeed();
-                exit(EXIT_SUCCESS);
-                break;
             case 'T':
                 k = atoi(optarg);
                 switch (k) {
@@ -260,52 +241,67 @@ UserParams processInput(int argc, const char **argv) {
                         RKTestParseCommaDelimitedValues();
                         break;
                     case 5:
-                        RKTestJSON();
+                        RKTestSIMD(RKTestSIMDFlagNull);
                         break;
                     case 6:
-                        RKTestMakeHops();
+                        RKTestSIMD(RKTestSIMDFlagShowNumbers);
                         break;
                     case 7:
-                        RKTestFileManager();
+                        RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
                         break;
                     case 8:
-                        RKTestPreferenceReading();
+                        RKTestJSON();
                         break;
                     case 9:
-                        RKTestCountFiles();
+                        RKTestMakeHops();
                         break;
                     case 10:
-                        RKTestFileMonitor();
+                        RKTestFileManager();
                         break;
                     case 11:
-                        RKTestWriteWaveform();
+                        RKTestPreferenceReading();
                         break;
                     case 12:
-                        RKTestWaveformTFM();
+                        RKTestCountFiles();
                         break;
                     case 13:
+                        RKTestFileMonitor();
+                        break;
+                    case 14:
+                        RKTestWriteWaveform();
+                        break;
+                    case 15:
+                        RKTestWaveformTFM();
+                        break;
+                    case 16:
                         myRadar = RKInitLean();
                         RKShowOffsets(myRadar);
                         RKFree(myRadar);
                         break;
-					case 14:
+					case 17:
 						RKTestHilbertTransform();
 						break;
-                    case 15:
+                    case 18:
                         RKTestOneRay(RKPulsePair, 0);
                         break;
-                    case 16:
+                    case 19:
                         RKTestOneRay(RKPulsePairHop, 0);
                         break;
-                    case 17:
+                    case 20:
                         RKTestOneRay(RKMultiLag, 2);
                         break;
-					case 18:
+					case 21:
 						RKTestOneRay(RKMultiLag, 3);
 						break;
-					case 19:
+					case 22:
 						RKTestOneRay(RKMultiLag, 4);
 						break;
+                    case 23:
+                        RKTestProcessorSpeed();
+                        break;
+                    case 24:
+                        RKTestCacheWrite();
+                        break;
                     default:
                         break;
                 }
@@ -358,10 +354,6 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'w':
                 user.writeFiles = true;
-                break;
-            case 'y':
-                RKTestCacheWrite();
-                exit(EXIT_SUCCESS);
                 break;
             case 'z':
                 if (optarg) {
@@ -536,7 +528,6 @@ int main(int argc, const char **argv) {
 
         RKWaveform *waveform = NULL;
         const char wavfile[] = "waveforms/ofmd.rkwav";
-//        const char wavfile[] = "/Users/boonleng/Developer/radarkit/waveforms/ofm.rkwav";
         if (RKFilenameExists(wavfile)) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);

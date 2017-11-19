@@ -234,7 +234,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 	}
 	memcpy(cc, cd, n * sizeof(RKComplex));
 
-	RKSIMD_iymul2(cs, cd, n, true);
+	RKSIMD_iymul2(cs, cd, n, false);
 
 	if (flag & RKTestSIMDFlagShowNumbers) {
 		printf("====\n");
