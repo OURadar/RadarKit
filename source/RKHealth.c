@@ -23,7 +23,9 @@ static void *healthConsolidator(void *in) {
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
     
-    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    }
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;

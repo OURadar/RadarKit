@@ -451,7 +451,9 @@ static void *rayGatherer(void *in) {
     uint32_t is = 0;
     pthread_t tidSweepWriter = NULL;
     
-    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    }
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;

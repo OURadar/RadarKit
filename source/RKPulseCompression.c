@@ -165,8 +165,10 @@ static void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
+    if (engine->verbose) {
+        RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
+    }
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -353,7 +355,9 @@ static void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    if (engine->verbose) {
+        RKLog(">%s %s Stopped.\n", engine->name, name);
+    }
     
     return NULL;
 }
@@ -394,20 +398,28 @@ static void *pulseWatcher(void *_in) {
     engine->memoryUsage += 2 * pulse->header.capacity * sizeof(fftwf_complex);
 
     if (RKFilenameExists(wisdomFile)) {
-        RKLog(">%s Loading DFT wisdom ...\n", engine->name);
+        if (engine->verbose) {
+            RKLog(">%s Loading DFT wisdom ...\n", engine->name);
+        }
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
-        RKLog(">%s DFT wisdom file not found.\n", engine->name);
+        if (engine->verbose) {
+            RKLog(">%s DFT wisdom file not found.\n", engine->name);
+        }
         exportWisdom = true;
     }
 
     // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
-        RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
+        if (engine->verbose) {
+            RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
+        }
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-        //fftwf_print_plan(engine->planForwardInPlace[planIndex]);
+        if (engine->verbose > 2) {
+            fftwf_print_plan(engine->planForwardInPlace[planIndex]);
+        }
         engine->planSizes[planIndex++] = planSize;
         engine->planCount++;
         planSize /= 2;
@@ -465,7 +477,9 @@ static void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the engine is ready
     engine->tic++;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    }
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
@@ -553,7 +567,9 @@ static void *pulseWatcher(void *_in) {
                     }
                 }
                 if (!found) {
-                    RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
+                    if (engine->verbose) {
+                        RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
+                    }
                     if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
                         RKLog("%s Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
                         exit(EXIT_FAILURE);
@@ -564,7 +580,9 @@ static void *pulseWatcher(void *_in) {
                     engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
                     engine->planSizes[planIndex] = planSize;
                     engine->planCount++;
-                    RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
+                    if (engine->verbose) {
+                        RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
+                    }
                     exportWisdom = true;
                 }
                 engine->planIndices[k][j] = planIndex;
@@ -611,7 +629,9 @@ static void *pulseWatcher(void *_in) {
 
     // Export wisdom
     if (exportWisdom) {
-        RKLog("%s Saving DFT wisdom ...\n", engine->name);
+        if (engine->verbose) {
+            RKLog("%s Saving DFT wisdom ...\n", engine->name);
+        }
         fftwf_export_wisdom_to_filename(wisdomFile);
     }
 

@@ -14,7 +14,8 @@
 typedef int RKTestFlag;
 enum RKTestFlag {
     RKTestFlagNone         = 0,
-    RKTestFlagShowResults  = 1
+    RKTestFlagVerbose      = 1,
+    RKTestFlagShowResults  = 1 << 1
 };
 
 typedef int RKTestSIMDFlag;
@@ -68,6 +69,16 @@ typedef struct rk_test_pedestal {
     size_t         memoryUsage;
 } RKTestPedestal;
 
+typedef struct rk_test_health_relay {
+    char           name[RKNameLength];
+    int            verbose;
+    long           counter;
+    pthread_t      tidRunLoop;
+    RKEngineState  state;
+    RKRadar        *radar;
+    size_t         memoryUsage;
+} RKTestHealthRelay;
+
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestParseCommaDelimitedValues(void);
@@ -80,7 +91,11 @@ RKPedestal RKTestPedestalInit(RKRadar *, void *);
 int RKTestPedestalExec(RKTransceiver, const char *, char *);
 int RKTestPedestalFree(RKTransceiver);
 
-void RKTestPulseCompression(RKRadar *, RKTestFlag);
+RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
+int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
+int RKTestHealthRelayFree(RKHealthRelay);
+
+void RKTestPulseCompression(RKTestFlag);
 void RKTestProcessorSpeed(void);
 void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int);
 

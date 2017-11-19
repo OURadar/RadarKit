@@ -14,6 +14,7 @@
 #define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 #define PEDESTAL_SAMPLING_TIME         0.01
+#define HEALTH_RELAY_SAMPLING_TIME     0.1
 
 #define SHOW_FUNCTION_NAME \
 int _fn_len = strlen(__FUNCTION__); \
@@ -1015,6 +1016,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
+    
     return RKResultSuccess;
 }
 
@@ -1024,36 +1026,157 @@ int RKTestPedestalFree(RKPedestal pedestalReference) {
     return RKResultSuccess;
 }
 
+#pragma mark - Health Relay Emulator
+
+void *RKTestHealthRelayRunLoop(void *input) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)input;
+    RKRadar *radar = healthRelay->radar;
+    
+    int n;
+    float powerH, powerV;
+    double dt = 0.0;
+    struct timeval t0, t1;
+
+    gettimeofday(&t0, NULL);
+    
+    healthRelay->state |= RKEngineStateActive;
+    healthRelay->state &= ~RKEngineStateActivating;
+    
+    RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKIntegerToCommaStyleString(healthRelay->memoryUsage));
+    
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("%s fs = %s Hz\n", healthRelay->name, RKIntegerToCommaStyleString((long)(1.0 / HEALTH_RELAY_SAMPLING_TIME)));
+    }
+
+    while (healthRelay->state & RKEngineStateActive) {
+        powerH = (float)rand() / RAND_MAX + 53.0f;
+        powerV = (float)rand() / RAND_MAX + 53.0f;
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
+        sprintf(health->string, "{"
+                "\"Transmit H\":{\"Value\":\"%.2f dBm\",\"Enum\":%d}, "
+                "\"Transmit V\":{\"Value\":\"%.2f dBm\",\"Enum\":%d}"
+                "}",
+                powerH, RKStatusEnumNormal,
+                powerV, RKStatusEnumNormal);
+        RKSetHealthReady(radar, health);
+    }
+
+    // Wait to simulate sampling time
+    n = 0;
+    do {
+        gettimeofday(&t1, NULL);
+        dt = RKTimevalDiff(t1, t0);
+        usleep(1000);
+        n++;
+    } while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
+    t0 = t1;
+    return NULL;
+}
+
+RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)malloc(sizeof(RKTestHealthRelay));
+    if (healthRelay == NULL) {
+        RKLog("Error. Unable to allocate a test pedestal.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(healthRelay, 0, sizeof(RKHealthRelay));
+    sprintf(healthRelay->name, "%s<HealthRelayEmulator>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
+    healthRelay->memoryUsage = sizeof(RKTestPedestal);
+    healthRelay->radar = radar;
+    healthRelay->state = RKEngineStateAllocated;
+    
+    // Parse input here if there is any
+    
+    // Use a counter that mimics microsecond increments
+    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    
+    healthRelay->state |= RKEngineStateActivating;
+    if (pthread_create(&healthRelay->tidRunLoop, NULL, RKTestHealthRelayRunLoop, healthRelay)) {
+        RKLog("%s. Unable to create pedestal run loop.\n", healthRelay->name);
+    }
+    //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
+    while (!(healthRelay->state & RKEngineStateActive)) {
+        usleep(10000);
+    }
+    
+    return (RKHealthRelay)healthRelay;
+}
+
+int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *command, char *response) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)healthRelayReference;
+    RKRadar *radar = healthRelay->radar;
+
+    if (!strcmp(command, "disconnect")) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Disconnecting ...", healthRelay->name);
+        }
+        healthRelay->state |= RKEngineStateDeactivating;
+        healthRelay->state ^= RKEngineStateActive;
+        pthread_join(healthRelay->tidRunLoop, NULL);
+        if (response != NULL) {
+            sprintf(response, "ACK. Health Relay stopped." RKEOL);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Stopped.\n", healthRelay->name);
+        }
+        healthRelay->state = RKEngineStateAllocated;
+    } else if (!strcmp(command, "help")) {
+        sprintf(response,
+                "Commands:\n"
+                UNDERLINE("help") " - Help list\n"
+                );
+    } else if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
+    }
+    
+    return RKResultSuccess;
+}
+
+int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)healthRelayReference;
+    free(healthRelay);
+    return RKResultSuccess;
+}
+
 #pragma mark - Data Processing
 
-void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
+void RKTestPulseCompression(RKTestFlag flag) {
+    SHOW_FUNCTION_NAME
+    int k;
     RKPulse *pulse;
     RKInt16C *X;
     RKComplex *F;
     RKComplex *Y;
     RKIQZ Z;
+    RKFilterAnchor anchor = RKFilterAnchorDefaultWithMaxDataLength(8);
+    
+    RKRadar *radar = RKInitLean();
+    RKSetProcessingCoreCounts(radar, 2, 1);
+    
+    // Increases verbosity if set
+    if (flag & RKTestFlagVerbose) {
+        RKSetVerbose(radar, 1);
+    }
+    
+    RKGoLive(radar);
 
     // Change filter to [1, 1i] for case 2
     RKComplex filter[] = {{1.0f, 0.0f}, {0.0f, 1.0f}};
 
-    for (int k = 0; k < 3; k++) {
-        printf("\n");
-
+    for (k = 0; k < 3; k++) {
         switch (k) {
             case 1:
                 // Range average [1 1]
-                printf("Filter [1, 1]:\n\n");
                 RKPulseCompressionSetFilterTo11(radar->pulseCompressionEngine);
                 break;
             case 2:
                 // Change filter to [1, 1i]
-                printf("Filter [1, i]:\n\n");
-                RKFilterAnchor anchor = RKFilterAnchorDefaultWithMaxDataLength(8);
                 RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, 0, 0);
                 break;
             default:
                 // Default is impulse [1];
-                printf("Pulse filter [1]:\n\n");
                 RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
                 break;
         }
@@ -1075,7 +1198,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
         X[4].q = 0;
         RKSetPulseReady(radar, pulse);
 
-        while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
+        while (radar->state & RKRadarStateLive && (pulse->header.s & RKPulseStatusCompressed) == 0) {
             usleep(1000);
         }
 
@@ -1084,6 +1207,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
         Z = RKGetSplitComplexDataFromPulse(pulse, 0);
 
         if (flag & RKTestFlagShowResults) {
+            printf("\n");
             printf("X =                       F =                     Y =                             Z =\n");
             for (int k = 0; k < 8; k++) {
                 printf("    [ %6d %s %6di ]      [ %5.2f %s %5.2fi ]      [ %9.2f %s %9.2fi ]      [ %9.2f %s %9.2fi ]\n",
@@ -1092,8 +1216,11 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
                        Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),
                        Z.i[k], Z.q[k] < 0.0f ? "-" : "+", fabs(Z.q[k]));
             }
+            printf("\n");
         }
-    }
+    } // for (k = 0; k < 3; ...)
+    
+    RKFree(radar);
 }
 
 // Make some private functions available

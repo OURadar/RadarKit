@@ -307,8 +307,12 @@ static void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io));
+    
+    if (engine->verbose) {
+        RKLog(">%s %s Started.   mem = %s B   i0 = %s\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io));
+    }
+    
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -515,7 +519,9 @@ static void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    if (engine->verbose) {
+        RKLog(">%s %s Stopped.\n", engine->name, name);
+    }
 
     return NULL;
 }
@@ -588,11 +594,13 @@ static void *pulseGatherer(void *in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
-    
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
+    }
+    
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
     // Here comes the busy loop

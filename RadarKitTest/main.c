@@ -124,7 +124,7 @@ void showHelp() {
 		   "         20 - Calculating one ray using multilag with L = 2\n"
 		   "         21 - Calculating one ray using multilag with L = 3\n"
 		   "         22 - Calculating one ray using multilag with L = 4\n"
-           "         23 - Processor speed\n"
+           "         23 - Processor speed for various moment methods\n"
            "         24 - Cache write\n"
            "\n"
            "\n"
@@ -302,6 +302,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 24:
                         RKTestCacheWrite();
                         break;
+                    case 100:
+                        RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
+                        break;
                     default:
                         break;
                 }
@@ -385,17 +388,17 @@ int main(int argc, const char **argv) {
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
-    char *term = getenv("TERM");
-	if (term == NULL) {
-		RKSetWantColor(false);
-    } else if (strcasestr(term, "color") == NULL) {
-        RKSetWantColor(false);
-    } else {
-        printf("TERM = %s\n", term);
-    }
-
     UserParams user = processInput(argc, argv);
 
+    char *term = getenv("TERM");
+    if (term == NULL) {
+        RKSetWantColor(false);
+    } else if (strcasestr(term, "color") == NULL) {
+        RKSetWantColor(false);
+    } else if (user.verbose) {
+        printf("TERM = %s\n", term);
+    }
+    
     // In the case when no tests are performed, simulate the time-series
     if (user.simulate == false && user.relay == false && user.testPulseCompression == 0) {
         RKLog("No options specified. Don't want to do anything?\n");
@@ -562,12 +565,6 @@ int main(int argc, const char **argv) {
         RKCommandCenterStart(center);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
-        
-    } else if (user.testPulseCompression) {
-
-        RKLog("Testing pulse compression ...");
-        RKGoLive(myRadar);
-        RKTestPulseCompression(myRadar, RKTestFlagShowResults);
 
     }
     

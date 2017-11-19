@@ -65,7 +65,9 @@ static void *pulseRecorder(void *in) {
     fileHeader->bytes[4094] = 'O';
     fileHeader->bytes[4095] = 'L';
     
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    }
     
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
     
