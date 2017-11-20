@@ -567,7 +567,7 @@ void *RKTestTransceiverRunLoop(void *input) {
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
 				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-				"\"PRF\":{\"Value\":\"%.0f Hz\", \"Enum\":0}, "
+				"\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
@@ -579,7 +579,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"TransceiverCounter\": %ld}",
 				RKStatusEnumActive,
 				RKStatusEnumNormal,
-				1.0 / transceiver->prt,
+				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
