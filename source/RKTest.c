@@ -721,12 +721,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 
 	int k;
 	char *c;
-	char bb[4];
 	double pulsewidth;
 	unsigned int pulsewidthSampleCount;
-
-	// strncpy does not insert '\0'
-	bb[3] = '\0';
 
     if (!strcmp(command, "disconnect")) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
