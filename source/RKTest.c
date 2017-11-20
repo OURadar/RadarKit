@@ -567,7 +567,6 @@ void *RKTestTransceiverRunLoop(void *input) {
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
 				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-                "\"Ready\":{\"Value\":true,\"Enum\":0}, "
 				"\"PRF\":{\"Value\":\"%.0f Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
