@@ -510,8 +510,13 @@ void *RKTestTransceiverRunLoop(void *input) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
+				for (g = 0; g < transceiver->transmitWaveformLength; g++) {
+					X->i = (int16_t)(transceiver->transmitWaveform[g].i + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
+					X->q = (int16_t)(transceiver->transmitWaveform[g].q + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
+					X++;
+				}
                 phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
-                for (g = 0; g < transceiver->gateCount; g++) {
+                for (; g < transceiver->gateCount; g++) {
                     r = (float)g;
                     a = 60.0f * (cos(0.001f * r)
                                   + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
@@ -560,7 +565,8 @@ void *RKTestTransceiverRunLoop(void *input) {
         float temp = 1.0f * rand() / RAND_MAX + 79.5f;
         float volt = 1.0f * rand() / RAND_MAX + 11.5f;
         sprintf(health->string,
-                "{\"Trigger\":{\"Value\":true,\"Enum\":0}, "
+                "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
                 "\"Ready\":{\"Value\":true,\"Enum\":0}, "
 				"\"PRF\":{\"Value\":\"%.0f Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
@@ -568,16 +574,21 @@ void *RKTestTransceiverRunLoop(void *input) {
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
-                "\"Transmit Power H\":{\"Value\":\"50 dBm Sim\", \"Enum\":0}, "
-				"\"Transmit Power V\":{\"Value\":\"50 dBm Sim\", \"Enum\":0}, "
-				"\"Waveform\":{\"Value\":\"h4011\", \"Enum\":0}, "
+                "\"Transmit H\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
+				"\"Transmit V\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
+				"\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
                 "\"TransceiverCounter\": %ld}",
+				RKStatusEnumActive,
+				RKStatusEnumNormal,
 				1.0 / transceiver->prt,
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
                 (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
                 (double)rand() * 0.2 / RAND_MAX + 45,
+				rand() & 0x03,
+				rand() & 0x03,
+				transceiver->transmitWaveformName,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
 
@@ -608,16 +619,17 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     sprintf(transceiver->name, "%s<TransceiverEmulator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
+	transceiver->state = RKEngineStateAllocated;
+	transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
-    transceiver->radar = radar;
-    transceiver->fs = 5.0e6;
     transceiver->gateCount = RKGetPulseCapacity(radar) / 10;
-    transceiver->state = RKEngineStateAllocated;
-    transceiver->sprt = 1;
+	transceiver->fs = 5.0e6;
     transceiver->prt = 0.0003;
-    
+	transceiver->sprt = 1;
+	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKComplex)));
+
     int i, j, k;
-    
+
     // Parse out input parameters
     if (input) {
         char *sb = (char *)input, *se = NULL, *sv = NULL;
@@ -698,13 +710,25 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     while (!(transceiver->state & RKEngineStateActive)) {
         usleep(10000);
     }
-    
+
+	RKTestTransceiverExec(transceiver, "w t10", NULL);
+
     return (RKTransceiver)transceiver;
 }
 
 int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command, char *response) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
+
+	int k;
+	char *c;
+	char bb[4];
+	double pulsewidth;
+	unsigned int pulsewidthSampleCount;
+
+	// strncpy does not insert '\0'
+	bb[3] = '\0';
+
     if (!strcmp(command, "disconnect")) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
@@ -728,23 +752,56 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
         }
     } else if (command[0] == 'h') {
-        sprintf(response,
-                "Commands:\n"
-                "---------\n"
-                UNDERLINE("help") " - Help list.\n"
-                UNDERLINE("prt") " [value] - PRT set to value\n"
-                UNDERLINE("z") " [value] - Sleep interval set to value.\n"
-                );
+		if (response != NULL) {
+			sprintf(response,
+					"Commands:\n"
+					"---------\n"
+					UNDERLINE("help") " - Help list.\n"
+					UNDERLINE("prt") " [value] - PRT set to value\n"
+					UNDERLINE("z") " [value] - Sleep interval set to value.\n"
+					);
+		}
+	} else if (command[0] == 's') {
+		transceiver->sleepInterval = atoi(command + 1);
+		RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
     } else if (command[0] == 't') {
         // Pretend a slow command
-        sleep(2);
+		RKPerformMasterTaskInBackground(radar, "w");
         if (response != NULL) {
             sprintf(response, "ACK. Command executed." RKEOL);
         }
-    } else if (command[0] == 's') {
-        transceiver->sleepInterval = atoi(command + 1);
-        RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
-    } else if (command[0] == 'y') {
+	} else if (command[0] == 'w') {
+		// Waveform
+		c = ((char *)command);
+		if (command[1] == ' ') {
+			c += 2;
+		} else {
+			c++;
+		}
+		if (*c == 's' || *c == 't') {
+			pulsewidth = 1.0e-6 * atof(c + 1);
+			pulsewidthSampleCount = pulsewidth * transceiver->fs;
+			RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
+			strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+			RKWaveform *wave = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
+			if (*c == 's') {
+				// Rectangular single tone
+				RKWaveformHops(wave, transceiver->fs, 0.0, 0.0);
+			} else if (*c == 't') {
+				// Rectangular single tone at 0.1 MHz
+				RKWaveformHops(wave, transceiver->fs, 0.1e6, 0.0);
+			}
+			transceiver->transmitWaveformLength = pulsewidthSampleCount;
+			for (k = 0; k < wave->depth; k++) {
+				transceiver->transmitWaveform[k].i = 0.01 * wave->iSamples[0][k].i;
+				transceiver->transmitWaveform[k].q = 0.01 * wave->iSamples[0][k].q;
+			}
+			free(wave);
+			if (response != NULL) {
+				sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
+			}
+		}
+	} else if (command[0] == 'y') {
         // Everything goes
         radar->pedestalExec(radar->pedestal, "ppi 3 90", radar->pedestalResponse);
         if (response != NULL) {
@@ -764,6 +821,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 
 int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
+	free(transceiver->transmitWaveform);
     free(transceiver);
     return RKResultSuccess;
 }
@@ -842,13 +900,19 @@ void *RKTestPedestalRunLoop(void *input) {
         if (true) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
-                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+					"\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+					"\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+					"\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
                     "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
                     "}",
                     position->azimuthDegrees, RKStatusEnumNormal,
                     position->elevationDegrees, RKStatusEnumNormal,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
+					RKStatusEnumNormal,
+					RKStatusEnumNormal,
+					position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    RKStatusEnumActive);
             RKSetHealthReady(radar, health);
         }
         
@@ -1049,27 +1113,32 @@ void *RKTestHealthRelayRunLoop(void *input) {
     }
 
     while (healthRelay->state & RKEngineStateActive) {
-        powerH = (float)rand() / RAND_MAX + 53.0f;
-        powerV = (float)rand() / RAND_MAX + 53.0f;
+        powerH = (float)rand() / RAND_MAX - 0.5f;
+        powerV = (float)rand() / RAND_MAX - 0.5f;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         sprintf(health->string, "{"
-                "\"Transmit H\":{\"Value\":\"%.2f dBm\",\"Enum\":%d}, "
-                "\"Transmit V\":{\"Value\":\"%.2f dBm\",\"Enum\":%d}"
+				"\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+				"\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+                "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
                 "}",
+				RKStatusEnumNormal,
+				RKStatusEnumNormal,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
-    }
 
-    // Wait to simulate sampling time
-    n = 0;
-    do {
-        gettimeofday(&t1, NULL);
-        dt = RKTimevalDiff(t1, t0);
-        usleep(1000);
-        n++;
-    } while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
-    t0 = t1;
+		// Wait to simulate sampling time
+		n = 0;
+		do {
+			gettimeofday(&t1, NULL);
+			dt = RKTimevalDiff(t1, t0);
+			usleep(10000);
+			n++;
+		} while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
+		t0 = t1;
+	}
+
     return NULL;
 }
 

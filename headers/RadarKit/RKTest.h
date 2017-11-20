@@ -45,6 +45,9 @@ typedef struct rk_test_transceiver {
     double         fs;
     double         prt;
     RKByte         sprt;
+	char           transmitWaveformName[RKNameLength];
+	unsigned int   transmitWaveformLength;
+	RKComplex      *transmitWaveform;
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;

@@ -448,6 +448,13 @@ int main(int argc, const char **argv) {
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
 	RKSetMomentProcessorToMultiLag(myRadar, 3);
 
+	RKAddControl(myRadar, "10us pulse", "t w s10");
+	RKAddControl(myRadar, "20us pulse", "t w s20");
+	RKAddControl(myRadar, "50us pulse", "t w s50");
+	RKAddControl(myRadar, "10us 0.1-MHz tone", "t w t10");
+	RKAddControl(myRadar, "20us 0.1-MHz tone", "t w t20");
+	RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
+
     RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
     RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
     RKAddControl(myRadar, "PPI EL 6 deg @ 24 dps", "p ppi 6 24");
