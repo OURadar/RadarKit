@@ -570,9 +570,6 @@ void *RKTestTransceiverRunLoop(void *input) {
 				"\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"Transmit H\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
 				"\"Transmit V\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
 				"\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
@@ -582,9 +579,6 @@ void *RKTestTransceiverRunLoop(void *input) {
 				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
-                (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
-                (double)rand() * 0.2 / RAND_MAX + 45,
 				rand() & 0x03,
 				rand() & 0x03,
 				transceiver->transmitWaveformName,
@@ -1114,11 +1108,17 @@ void *RKTestHealthRelayRunLoop(void *input) {
         sprintf(health->string, "{"
 				"\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
 				"\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+				"\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+				"\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+				"\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
                 "}",
 				RKStatusEnumNormal,
 				RKStatusEnumNormal,
+				(double)rand() * 8.0e-6 / RAND_MAX + 35.5,
+				(double)rand() * 8.0e-6 / RAND_MAX - 95.5,
+				(double)rand() * 0.2 / RAND_MAX + 45,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
