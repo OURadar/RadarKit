@@ -704,7 +704,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         usleep(10000);
     }
 
-	RKTestTransceiverExec(transceiver, "w t10", NULL);
+	RKTestTransceiverExec(transceiver, "w q10", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -767,7 +767,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 		} else {
 			c++;
 		}
-		if (*c == 's' || *c == 't') {
+		if (*c == 's' || *c == 't' || *c == 'q') {
 			pulsewidth = 1.0e-6 * atof(c + 1);
 			pulsewidthSampleCount = pulsewidth * transceiver->fs;
 			RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
@@ -779,6 +779,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 			} else if (*c == 't') {
 				// Rectangular single tone at 0.1 MHz
 				RKWaveformHops(wave, transceiver->fs, 0.1e6, 0.0);
+			} else if (*c == 'q') {
+				RKWaveformLinearFrequencyModulation(wave, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
 			}
 			transceiver->transmitWaveformLength = pulsewidthSampleCount;
 			for (k = 0; k < wave->depth; k++) {
@@ -1719,7 +1721,7 @@ void RKTestWriteWaveform(void) {
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/test-tfm.rkwav";
-    RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
 	RKWaveformSummary(waveform);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);

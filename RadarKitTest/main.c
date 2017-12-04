@@ -554,8 +554,9 @@ int main(int argc, const char **argv) {
             RKWaveformSummary(waveform);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
-            waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
-            RKLog("Waveform generated.\n");
+            //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
+			waveform = RKWaveformInitAsLinearFrequencyModulation(5.0, 0.0, 10.0, 1.5);
+            RKLog("Waveform LFM generated.\n");
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
