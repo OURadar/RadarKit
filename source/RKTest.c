@@ -25,6 +25,8 @@ memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
 
+#pragma mark - Fundamental Functions
+
 void RKTestModuloMath(void) {
     int k;
     const int N = 4;
@@ -794,7 +796,16 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 		}
 	} else if (command[0] == 'y') {
         // Everything goes
-        radar->pedestalExec(radar->pedestal, "ppi 3 90", radar->pedestalResponse);
+		if (strlen(transceiver->defaultWaveform) == 0) {
+			sprintf(transceiver->defaultWaveform, "s10");
+		}
+		sprintf(transceiver->customCommand, "w %s" RKEOL, transceiver->defaultWaveform);
+		radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
+		if (strlen(transceiver->defaultPedestalMode) == 0) {
+			sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
+		}
+		sprintf(transceiver->customCommand, "p %s" RKEOL, transceiver->defaultPedestalMode);
+        radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
         if (response != NULL) {
             sprintf(response, "ACK. Everything goes." RKEOL);
         }
