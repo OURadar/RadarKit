@@ -287,7 +287,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 	waveform->filterAnchors[0][0].inputOrigin = 0;
 	waveform->filterAnchors[0][0].outputOrigin = waveform->depth;
 	waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
-	waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * fc / fs;
+	waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
 
 	RKFloat gain = 0.0f;
 	RKInt16C *w = waveform->iSamples[0];

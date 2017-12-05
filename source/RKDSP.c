@@ -40,7 +40,7 @@ float RKInterpolateAngles(const float angleBefore, const float angleAfter, const
     return value;
 }
 
-int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse) {
+int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin) {
     int j = 0, k, p;
     k = 0;
     do {
@@ -54,9 +54,9 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse) {
     for (p = 0; p < 2; p++) {
         x = RKGetComplexDataFromPulse(pulse, p);
 		// Add and subtract a few gates to avoid transcient efftects
-		x += 10;
+		x += origin;
         noise[p] = 0.0f;
-        for (j = 0; j < pulse->header.gateCount - 20; j++) {
+        for (j = 0; j < pulse->header.gateCount - 2 * origin; j++) {
             noise[p] += x->i * x->i + x->q * x->q;
             x++;
         }
