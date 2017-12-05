@@ -1285,6 +1285,7 @@ void RKMeasureNoise(RKRadar *radar) {
 	for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
 		origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
 	}
+	origin *= 2;
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
