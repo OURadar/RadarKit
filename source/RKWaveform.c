@@ -168,6 +168,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
 
+	// A good sequence can be achieved through a modulo sequence.
     int stride = RKBestStrideOfHops(waveform->count / 2, false);
 
     n = 0;
@@ -181,7 +182,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
         waveform->filterAnchors[k][0].length = waveform->depth;
         waveform->filterAnchors[k][0].maxDataLength = RKGateCount;   // Can be replaced with actual depth later
         waveform->filterAnchors[k][0].subCarrierFrequency = omega;
-        //RKLog(">f[%d] = %+.1f MHz   omega = %.3f", k, 1.0e-6 * f, waveform->omega);
+        RKLog(">f[%d] = %+.1f MHz   omega = %.3f   n = %d", k, 1.0e-6 * f, omega, n);
         x = waveform->samples[k];
         w = waveform->iSamples[k];
         gain = 0.0f;
@@ -210,7 +211,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
 			x++;
 		}
 		waveform->filterAnchors[k][0].gain = gain;
-        // Get ready for the next frequency when we are odd index
+        // Get ready for the next frequency when we are in odd index
         if (k % 2 == 1) {
             if (sequential) {
                 n = ((k + 1) / 2);
@@ -365,13 +366,9 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 }
 
 void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
-	int i;
+	int i, j;
 	RKFloat *w;
 	RKComplex *s, *u;
-
-	if (waveform->count > 1) {
-		RKLog("WARNING. This function hasn't been extended to count > 1.\n");
-	}
 
 	int nfft = (int)powf(2.0f, ceilf(log2f((float)waveform->depth)));
 
@@ -379,21 +376,22 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 
+	// Demodulation tone
 	for (i = 0; i < waveform->depth; i++) {
-		w[i] = waveform->samples[0][i].i;
-	}
-
-	RKHilbertTransform(w, u, waveform->depth);
-
-	for (i = 0; i < waveform->depth; i++) {
-//		u[i].q = -u[i].q;
+		// There is another convention to flip the sign: u[i].q = -u[i].q;
 		s[i].i = cosf(-omega * i);
 		s[i].q = sinf(-omega * i);
 	}
 
-	RKSIMD_iymul(s, u, waveform->depth);
-
-	memcpy(waveform->samples[0], u, waveform->depth * sizeof(RKComplex));
+	for (j = 0; j < waveform->count; j++) {
+		for (i = 0; i < waveform->depth; i++) {
+			w[i] = waveform->samples[j][i].i;
+		}
+		memset(&w[i], 0, (nfft - i) * sizeof(RKComplex));
+		RKHilbertTransform(w, u, waveform->depth);
+		RKSIMD_iymul(s, u, waveform->depth);
+		memcpy(waveform->samples[j], u, waveform->depth * sizeof(RKComplex));
+	}
 
 	free(w);
 	free(s);
