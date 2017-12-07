@@ -1295,6 +1295,12 @@ void RKMeasureNoise(RKRadar *radar) {
     }
     noiseAverage[0] /= (RKFloat)k;
     noiseAverage[1] /= (RKFloat)k;
+	if (!isfinite(noiseAverage[0])) {
+		noiseAverage[0] = 0.001f;
+	}
+	if (!isfinite(noiseAverage[1])) {
+		noiseAverage[1] = 0.001f;
+	}
     RKAddConfig(radar, RKConfigKeyNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }
 

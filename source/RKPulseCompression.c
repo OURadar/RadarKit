@@ -160,7 +160,6 @@ static void *pulseCompressionCore(void *_in) {
 
     // DFT plan size and plan index in the parent engine
     int planSize = -1, planIndex;
-	int setPlanSize = 0;
 
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
@@ -251,14 +250,12 @@ static void *pulseCompressionCore(void *_in) {
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                     X += engine->filterAnchors[gid][j].inputOrigin;
-//                    for (k = 0; k < bound; k++) {
-//                        in[k][0] = (RKFloat)X->i;
-//                        in[k][1] = (RKFloat)X++->q;
-//                    }
-					memcpy(in, X, bound * sizeof(RKComplex));
+                    for (k = 0; k < bound; k++) {
+                        in[k][0] = (RKFloat)X->i;
+                        in[k][1] = (RKFloat)X++->q;
+                    }
                     // Zero pad the input; a filter is always zero-padded in the setter function.
-                    if (setPlanSize != planSize && planSize > bound) {
-						setPlanSize = planSize;
+                    if (planSize > bound) {
                         memset(in[bound], 0, (planSize - bound) * sizeof(fftwf_complex));
                     }
 
@@ -960,9 +957,10 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         w0 += (w0 / 3);
         w1 += (w1 / 3);
         w2 += (w2 / 3);
-        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   %%+6.3f rad/s   %%+6.2f dB   X @ (%%%ds, %%%ds)\n",
+        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   %%+6.3f rad/s   %%+5.2f dB   X @ (%%%ds, %%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
+				(int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
                 (int)log10f(nfft) + 1,
                 w1 + 1,
