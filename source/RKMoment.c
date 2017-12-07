@@ -549,9 +549,9 @@ static void *pulseGatherer(void *in) {
 	if (engine->processor == &RKMultiLag) {
 		RKLog(">%s Moment processor = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
 	} else if (engine->processor == &RKPulsePairHop) {
-		RKLog(">%s Moment processor = RKPulsePairHop\n", engine->name);
+		RKLog(">%s Moment processor = RKPulsePairHop()\n", engine->name);
 	} else {
-		RKLog(">%s Moment processor %p not recognized\n", engine->name, engine->processor);
+		RKLog(">%s Moment processor %p not recognized()\n", engine->name, engine->processor);
 	}
 
     // Change the state to active so all the processing cores stay in the busy loop
