@@ -902,7 +902,7 @@ int socketStreamHandler(RKOperator *O) {
                         *userDataV++ = *c16DataV++;
                         i++;
                     }
-                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 10); k++) {
+                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
                         userDataH->i   = 0;
                         userDataH++->q = 0;
                         userDataV->i   = 0;
@@ -920,7 +920,7 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
-					for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 10); k++) {
+					for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
 						userDataH->i   = 0;
 						userDataH++->q = 0;
 						userDataV->i   = 0;

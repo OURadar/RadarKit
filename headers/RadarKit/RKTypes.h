@@ -6,6 +6,22 @@
 //
 //  █
 //
+//  1.2.4  -
+//         -
+//
+//  1.2.3  - 12/7/2017
+//         - Default waveform and pedestal task for RKTestTransceiver
+//         - RKTestPulseCompression() is now self contained
+//         - Consolidated many RKTest modules
+//         - GPS reading has been moved to RKTestHealthRelay
+//         - Added handleRadarTgz.sh for LDM server
+//         - Added a MATLAB ACF & CCF calculations for validation
+//         - Added ring worker for FIR / IIR buffer
+//         - Completed multilag estimator
+//         - Status enum expanded
+//         - All filters are now normlized to have unity noise gain
+//         - Added LFM generation to RKWaveform
+//
 //  1.2.2  - Boolean value parsing in preference
 //         - Waveform generation with fc
 //
@@ -73,7 +89,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.2"
+#define RKVersionString                  "1.2.3"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
