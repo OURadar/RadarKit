@@ -344,6 +344,25 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     return;
 }
 
+void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
+	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+	RKVec r, i, x;
+	RKVec *s = (RKVec *)src;                                     // [ a  b  x  y ]
+	RKVec *d = (RKVec *)dst;                                     // [ c  d  z  w ]
+	RKVec c = _rk_mm_set_pf(1.0, -1.0, 1.0, -1.0);
+	for (k = 0; k < K; k++) {
+		r = _rk_mm_moveldup_pf(*s);                              // [  a   a   x   x ]
+		i = _rk_mm_movehdup_pf(*s);                              // [  b   b   y   y ]
+		*d = _rk_mm_mul_pf(*d, c);                               // [  c  -d   z  -w ]
+		x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [ -d   c  -w   z ]
+		i = _rk_mm_mul_pf(i, x);                                 // [-bd  bc -yw  yz ]
+		*d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c -d z -w] -/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
+		s++;
+		d++;
+	}
+	return;
+}
+
 void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
 	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
 	RKVec r, i, x;

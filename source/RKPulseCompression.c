@@ -160,6 +160,7 @@ static void *pulseCompressionCore(void *_in) {
 
     // DFT plan size and plan index in the parent engine
     int planSize = -1, planIndex;
+	int setPlanSize = 0;
 
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
@@ -250,13 +251,15 @@ static void *pulseCompressionCore(void *_in) {
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                     X += engine->filterAnchors[gid][j].inputOrigin;
-                    for (k = 0; k < bound; k++) {
-                        in[k][0] = (RKFloat)X->i;
-                        in[k][1] = (RKFloat)X++->q;
-                    }
+//                    for (k = 0; k < bound; k++) {
+//                        in[k][0] = (RKFloat)X->i;
+//                        in[k][1] = (RKFloat)X++->q;
+//                    }
+					memcpy(in, X, bound * sizeof(RKComplex));
                     // Zero pad the input; a filter is always zero-padded in the setter function.
-                    if (planSize > k) {
-                        memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
+                    if (setPlanSize != planSize && planSize > bound) {
+						setPlanSize = planSize;
+                        memset(in[bound], 0, (planSize - bound) * sizeof(fftwf_complex));
                     }
 
                     fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
@@ -269,9 +272,12 @@ static void *pulseCompressionCore(void *_in) {
 
                     if (multiplyMethod == 1) {
                         // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
+						RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, planSize);
+					} else if (multiplyMethod == 2) {
+						// In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
 						RKSIMD_yconj((RKComplex *)out, planSize);
-                        RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
-                    } else if (multiplyMethod == 2) {
+						RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+					} else if (multiplyMethod == 3) {
                         // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
                         RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
                         RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
@@ -291,7 +297,6 @@ static void *pulseCompressionCore(void *_in) {
 
                     // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
                     RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
-                    //RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize / sqrtf(engine->filterAnchors[gid][j].gain), planSize);
 
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 

@@ -50,6 +50,7 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_div_pf(a, b)          _mm512_div_ps(a, b)
 #define _rk_mm_addsub_pf(a, b)       _mm512_addsub_ps(a, b)
 #define _rk_mm_set1_pf(a)            _mm512_set1_ps(a)
+#define _rk_mm_set_pf(a, b, c, d)    _mm512_set_ps(a, b, c, d)
 #define _rk_mm_movehdup_pf(a)        _mm512_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm512_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm512_shuffle_ps(a, b, m)
@@ -75,6 +76,7 @@ typedef __m128i RKVecCvt;
 #define _rk_mm_div_pf(a, b)          _mm256_div_ps(a, b)
 #define _rk_mm_addsub_pf(a, b)       _mm256_addsub_ps(a, b)
 #define _rk_mm_set1_pf(a)            _mm256_set1_ps(a)
+#define _rk_mm_set_pf(a, b, c, d)    _mm256_set_ps(a, b, c, d, a, b, c, d)
 #define _rk_mm_movehdup_pf(a)        _mm256_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm256_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm256_shuffle_ps(a, b, m)
@@ -103,6 +105,7 @@ typedef __m128 RKVec;
 #define _rk_mm_div_pf(a, b)          _mm_div_ps(a, b)
 #define _rk_mm_addsub_pf(a, b)       _mm_addsub_ps(a, b)
 #define _rk_mm_set1_pf(a)            _mm_set1_ps(a)
+#define _rk_mm_set_pf(a, b, c, d)    _mm_set_ps(a, b, c, d, a, b, c, d, a, b, c, d)
 #define _rk_mm_movehdup_pf(a)        _mm_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm_shuffle_ps(a, b, m)
@@ -144,6 +147,7 @@ void RKSIMD_zscl (RKIQZ *src, const float f, RKIQZ *dst, const int n);
 void RKSIMD_izscl(RKIQZ *srcdst, const float f, const int n);
 void RKSIMD_zabs(RKIQZ *src, float *dst, const int n);
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n);
+void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n);
 void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c);
 void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n);
 void RKSIMD_yconj(RKComplex *src, const int n);

@@ -463,6 +463,8 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
+	pthread_mutex_lock(&user->mutex);
+
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Modes "1", "2", "3" and "4" are for signal processor only - showing the latest summary text view
         if (user->streams & user->access && td >= 0.05) {
@@ -528,8 +530,6 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
     }
-
-    pthread_mutex_lock(&user->mutex);
 
     // For contiguous streaming:
     // If we just started a connection, grab the payload that is either:
