@@ -1227,7 +1227,6 @@ void RKTestPulseCompression(RKTestFlag flag) {
     RKComplex *F;
     RKComplex *Y;
     RKIQZ Z;
-    RKFilterAnchor anchor = RKFilterAnchorDefaultWithMaxDataLength(8);
     
     RKRadar *radar = RKInitLean();
     RKSetProcessingCoreCounts(radar, 2, 1);
@@ -1239,22 +1238,31 @@ void RKTestPulseCompression(RKTestFlag flag) {
     
     RKGoLive(radar);
 
-    // Change filter to [1, 1i] for case 2
-    RKComplex filter[] = {{1.0f, 0.0f}, {0.0f, 1.0f}};
+    // Filter #2
+    RKComplex filter2[] = {{1.0f, 1.0f}};
+    RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(8);
 
-    for (k = 0; k < 3; k++) {
+    // Filter #3
+    RKComplex filter3[] = {{1.0f, 0.0f}, {0.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, -1.0f}};
+    RKFilterAnchor anchor3 = RKFilterAnchorOfLengthAndMaxDataLength(4, 8);
+
+    for (k = 0; k < 4; k++) {
         switch (k) {
-            case 1:
-                // Range average [1 1]
-                RKPulseCompressionSetFilterTo11(radar->pulseCompressionEngine);
-                break;
-            case 2:
-                // Change filter to [1, 1i]
-                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, 0, 0);
-                break;
             default:
                 // Default is impulse [1];
                 RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+                break;
+            case 1:
+                // Two-tap running average [1, 1]
+                RKPulseCompressionSetFilterTo11(radar->pulseCompressionEngine);
+                break;
+            case 2:
+                // Change filter to filter #2: [1 + 1i]
+                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter2, anchor2, 0, 0);
+                break;
+            case 3:
+                // Change filter to filter #3
+                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter3, anchor3, 0, 0);
                 break;
         }
 
@@ -1284,10 +1292,10 @@ void RKTestPulseCompression(RKTestFlag flag) {
         Z = RKGetSplitComplexDataFromPulse(pulse, 0);
 
         if (flag & RKTestFlagShowResults) {
-            printf("\n");
-            printf("X =                       F =                     Y =                             Z =\n");
+            printf("\033[4mTest %d:\n\033[24m", k);
+            printf("X =               F =                    Y =                        Z =\n");
             for (int k = 0; k < 8; k++) {
-                printf("    [ %6d %s %6di ]      [ %5.2f %s %5.2fi ]      [ %9.2f %s %9.2fi ]      [ %9.2f %s %9.2fi ]\n",
+                printf("    [ %2d %s %2di ]      [ %5.2f %s %5.2fi ]      [ %6.2f %s %6.2fi ]      [ %6.2f %s %6.2fi ]\n",
                        X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
                        F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
                        Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),

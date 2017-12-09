@@ -188,8 +188,9 @@ typedef struct rk_filter_anchor {
     RKFloat       gain;
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault                      {0, 0, 1, 0, 0, 1024, 0.0f, 1.0f}
-#define RKFilterAnchorDefaultWithMaxDataLength(x)  {0, 0, 1, 0, 0, (x),  0.0f, 1.0f}
+#define RKFilterAnchorDefault                           {0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)       {0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f}
+#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {0, 0, (x),  0, 0, (y) , 0.0f, 1.0f}
 
 typedef struct rk_modulo_path {
     uint32_t      origin;
