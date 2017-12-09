@@ -102,7 +102,6 @@ int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
 int RKTestHealthRelayFree(RKHealthRelay);
 
 void RKTestPulseCompression(RKTestFlag);
-void RKTestProcessorSpeed(void);
 void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int);
 
 void RKTestCacheWrite(void);
@@ -118,5 +117,8 @@ void RKTestFileMonitor(void);
 void RKTestWriteWaveform(void);
 void RKTestWaveformTFM(void);
 void RKTestHilbertTransform(void);
+
+void RKTestPulseCompressionSpeed(void);
+void RKTestMomentProcessorSpeed(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

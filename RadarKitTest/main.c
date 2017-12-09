@@ -77,28 +77,26 @@ void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
-           "  -L (--test-lean-system)\n"
+           "  -L (--lean-system)\n"
            "         Run with arguments '-v -f 2000 -F 5e6 -c 2,2'.\n"
            "\n"
-           "  -M (--test-medium-system)\n"
+           "  -M (--medium-system)\n"
            "         Run with arguments '-v -f 5000 -F 20e6 -c 4,2'.\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
            "\n"
+           "  -t (--tweeta-host)\n"
+           "         Sets the host of tweeta health relay.\n"
+           "\n"
            "  -s (--simulate)\n"
-           "         Sets the program to simulate data stream (default, if none of the tests\n"
-           "         is specified).\n"
+           "         Sets the program to simulate data stream.\n"
            "\n"
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
            "  --test-one-ray\n"
            "         Sets the program to test processing one ray using a selected processor.\n"
-           "\n"
-           "  --test-pulse-compression\n"
-           "         Sets the program to test the pulse compression using a simple case with.\n"
-           "         an impulse filter.\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
            "          0 - Show types\n"
@@ -119,23 +117,25 @@ void showHelp() {
 		   "         15 - Make a TFM waveform\n"
 		   "         16 - Initializing a radar system\n"
 		   "         17 - Hilbert transform\n"
-		   "         18 - Calculating one ray using pulse pair\n"
-		   "         19 - Calculating one ray using pulse pair hop\n"
-		   "         20 - Calculating one ray using multilag with L = 2\n"
-		   "         21 - Calculating one ray using multilag with L = 3\n"
-		   "         22 - Calculating one ray using multilag with L = 4\n"
-           "         23 - Processor speed for various moment methods\n"
-           "         24 - Cache write\n"
+           "         18 - Pulse compression using simple cases\n"
+           "         19 - Calculating one ray using the Pulse Pair method\n"
+		   "         20 - Calculating one ray using the Pulse Pair Hop method\n"
+		   "         21 - Calculating one ray using the Multi-Lag method with L = 2\n"
+		   "         22 - Calculating one ray using the Multt-Lag method with L = 3\n"
+		   "         23 - Calculating one ray using the Multi-Lag method with L = 4\n"
+           "         24 - Measure the speed of various moment methods\n"
+           "         25 - Measure the speed of pulse compression\n"
+           "         26 - Cache write\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
            "     Here are some examples of typical configurations.\n"
            "\n"
-           "  radar\n"
-           "         Runs the program with default settings.\n"
+           "  rktest -vL\n"
+           "         Runs the program with default settings for a lean system and verbose.\n"
            "\n"
-           "  radar -f 2000\n"
-           "         Runs the program with PRF = 2000 Hz.\n"
+           "  radar -L -f 2000\n"
+           "         Same as above but with PRF = 2000 Hz.\n"
            "\n"
            );
 }
@@ -298,9 +298,12 @@ UserParams processInput(int argc, const char **argv) {
 						RKTestOneRay(RKMultiLag, 4);
 						break;
                     case 24:
-                        RKTestProcessorSpeed();
+                        RKTestMomentProcessorSpeed();
                         break;
                     case 25:
+                        RKTestPulseCompressionSpeed();
+                        break;
+                    case 26:
                         RKTestCacheWrite();
                         break;
                     default:

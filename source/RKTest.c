@@ -25,6 +25,10 @@ memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
 
+// Make some private functions available
+
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
+
 #pragma mark - Fundamental Functions
 
 void RKTestModuloMath(void) {
@@ -1308,75 +1312,6 @@ void RKTestPulseCompression(RKTestFlag flag) {
     RKFree(radar);
 }
 
-// Make some private functions available
-
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
-
-void RKTestProcessorSpeed(void) {
-    SHOW_FUNCTION_NAME
-    int j, k;
-    RKScratch *space;
-    RKBuffer pulseBuffer;
-    RKBuffer rayBuffer;
-    const int testCount = 1000;
-    const int pulseCount = 100;
-    const int pulseCapacity = 4096;
-
-    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
-
-    RKScratchAlloc(&space, pulseCapacity, 4, true);
-
-    // Other non-zero parameters
-    space->userLagChoice = 3;
-
-    RKPulse *pulses[pulseCount];
-    for (k = 0; k < pulseCount; k++) {
-        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
-        pulse->header.t = k;
-        pulse->header.gateCount = pulseCapacity;
-        pulses[k] = pulse;
-    }
-
-    double t;
-    struct timeval tic, toc;
-    int (*method)(RKScratch *, RKPulse **, const uint16_t);
-
-    RKRay *ray = RKGetRay(rayBuffer, 0);
-    
-    for (j = 0; j < 2; j++) {
-        switch (j) {
-            case 1:
-                method = RKMultiLag;
-                RKLog("MultiLag:\n");
-                break;
-            default:
-                method = RKPulsePairHop;
-                RKLog("PulsePairHop:\n");
-                break;
-        }
-        
-        gettimeofday(&tic, NULL);
-        for (k = 0; k < testCount; k++) {
-            method(space, pulses, pulseCount);
-            makeRayFromScratch(space, ray, pulseCapacity, 1);
-        }
-        gettimeofday(&toc, NULL);
-        t = RKTimevalDiff(toc, tic);
-        RKLog(">Total elapsed time: %.3f s\n", t);
-        RKLog(">Time for each ray (%s pulses x %s gates) = %.3f ms\n",
-              RKIntegerToCommaStyleString(pulseCount),
-              RKIntegerToCommaStyleString(pulseCapacity),
-              1.0e3 * t / testCount);
-        RKLog(">Speed: %.2f rays / sec\n", testCount / t);
-    }
-
-    RKScratchFree(space);
-    free(pulseBuffer);
-    free(rayBuffer);
-    return;
-}
-
 void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int lag) {
     SHOW_FUNCTION_NAME
     int k, p, n, g;
@@ -1766,3 +1701,153 @@ void RKTestHilbertTransform(void) {
 	free(x);
 	free(y);
 }
+
+void RKTestPulseCompressionSpeed(void) {
+    SHOW_FUNCTION_NAME
+    int p, i, j, k;
+    const size_t nfft = 1 << 13;
+    fftwf_complex *f, *in, *out;
+    RKInt16C *X;
+    RKComplex *Y;
+    const int testCount = 10000;
+    struct timeval tic, toc;
+    double mint, t;
+    
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&Y, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&f, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    if (in == NULL || out == NULL) {
+        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        return;
+    }
+    
+    fftwf_plan planForwardInPlace = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
+    fftwf_plan planForwardOutPlace = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
+    
+    RKLog(UNDERLINE("PulseCompression") "\n");
+    
+    mint = 999999.0f;
+    for (i = 0; i < 3; i++) {
+        gettimeofday(&tic, NULL);
+        for (j = 0; j < testCount; j++) {
+            for (p = 0; p < 2; p++) {
+                // Converting complex int16_t ADC samples to complex float
+                for (k = 0; k < nfft; k++) {
+                    in[k][0] = (RKFloat)X->i;
+                    in[k][1] = (RKFloat)X->q;
+                }
+                fftwf_execute_dft(planForwardInPlace, in, in);
+                fftwf_execute_dft(planForwardOutPlace, f, out);
+                RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
+                fftwf_execute_dft(planBackwardInPlace, out, out);
+                RKSIMD_iyscl((RKComplex *)out, 1.0f / nfft, nfft);
+                // Copy the output
+                for (k = 0; k < nfft; k++) {
+                    Y[k].i = out[k][0];
+                    Y[k].q = out[k][1];
+                }
+            }
+        }
+        gettimeofday(&toc, NULL);
+        t = RKTimevalDiff(toc, tic);
+        RKLog(">Test %d -> %.3f ms\n", i, 1.0e3 * t);
+        mint = MIN(mint, t);
+    }
+    
+    RKLog(">Elapsed time: %.3f s (Best of 3)\n", mint);
+    RKLog(">Time for each pulse (%s gates) = %.3f ms\n",
+          RKIntegerToCommaStyleString(nfft),
+          1.0e3 * mint / testCount);
+    RKLog(">Speed: %.2f pulses / sec\n", testCount / mint);
+    
+    fftwf_destroy_plan(planForwardInPlace);
+    fftwf_destroy_plan(planForwardOutPlace);
+    fftwf_destroy_plan(planBackwardInPlace);
+    
+    free(X);
+    free(Y);
+    free(f);
+    free(in);
+    free(out);
+}
+
+void RKTestMomentProcessorSpeed(void) {
+    SHOW_FUNCTION_NAME
+    int i, j, k;
+    RKScratch *space;
+    RKBuffer pulseBuffer;
+    RKBuffer rayBuffer;
+    const int testCount = 500;
+    const int pulseCount = 100;
+    const int pulseCapacity = 4096;
+    
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
+    
+    RKScratchAlloc(&space, pulseCapacity, 5, true);
+    
+    RKPulse *pulses[pulseCount];
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
+        pulse->header.t = k;
+        pulse->header.gateCount = pulseCapacity;
+        pulses[k] = pulse;
+    }
+    
+    double t, mint;
+    struct timeval tic, toc;
+    int (*method)(RKScratch *, RKPulse **, const uint16_t);
+    
+    RKRay *ray = RKGetRay(rayBuffer, 0);
+    
+    for (j = 0; j < 4; j++) {
+        switch (j) {
+            default:
+                method = RKPulsePairHop;
+                RKLog(UNDERLINE("PulsePairHop:") "\n");
+                break;
+            case 1:
+                method = RKMultiLag;
+                space->userLagChoice = 2;
+                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                break;
+            case 2:
+                method = RKMultiLag;
+                space->userLagChoice = 3;
+                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                break;
+            case 3:
+                method = RKMultiLag;
+                space->userLagChoice = 4;
+                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                break;
+        }
+        mint = 999999.0f;
+        for (i = 0; i < 3; i++) {
+            gettimeofday(&tic, NULL);
+            for (k = 0; k < testCount; k++) {
+                method(space, pulses, pulseCount);
+                makeRayFromScratch(space, ray, pulseCapacity, 1);
+            }
+            gettimeofday(&toc, NULL);
+            t = RKTimevalDiff(toc, tic);
+            RKLog(">Test %d -> %.3f s\n", i, 1.0e3 * t);
+            mint = MIN(mint, t);
+        }
+        RKLog(">Elapsed time: %.3f s\n", mint);
+        RKLog(">Time for each ray (%s pulses x %s gates) = %.3f ms (Best of 3)\n",
+              RKIntegerToCommaStyleString(pulseCount),
+              RKIntegerToCommaStyleString(pulseCapacity),
+              1.0e3 * mint / testCount);
+        RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
+    }
+    
+    RKScratchFree(space);
+    free(pulseBuffer);
+    free(rayBuffer);
+    return;
+}
+
