@@ -172,7 +172,6 @@ UserParams processInput(int argc, const char **argv) {
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
-        {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };

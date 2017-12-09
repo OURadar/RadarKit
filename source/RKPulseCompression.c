@@ -8,6 +8,8 @@
 
 #include <RadarKit/RKPulseCompression.h>
 
+#define RKPulseCompressionMultiplyMethod 1
+
 // Internal Functions
 
 static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *);
@@ -75,7 +77,6 @@ static void *pulseCompressionCore(void *_in) {
     fftwf_complex *o;
 
     const int c = me->id;
-    const int multiplyMethod = 1;
 
     uint32_t blindGateCount = 0;
 
@@ -267,24 +268,32 @@ static void *pulseCompressionCore(void *_in) {
 
                     //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
 
-                    if (multiplyMethod == 1) {
-                        // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
-						RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, planSize);
-					} else if (multiplyMethod == 2) {
-						// In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
-						RKSIMD_yconj((RKComplex *)out, planSize);
-						RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
-					} else if (multiplyMethod == 3) {
-                        // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
-                        RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
-                        RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
-                        RKSIMD_izmul(zi, zo, planSize, true);
-                        RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
-                    } else {
-                        // Regular multiplication with compiler optimization -Os
-						RKSIMD_yconj((RKComplex *)in, planSize);
-                        RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
-                    }
+#if RKPulseCompressionMultiplyMethod == 1
+                    
+                    // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
+                    RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, planSize);
+
+#elif RKPulseCompressionMultiplyMethod == 2
+
+                    // In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
+                    RKSIMD_yconj((RKComplex *)out, planSize);
+                    RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+
+#elif RKPulseCompressionMultiplyMethod == 3
+
+                    // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
+                    RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
+                    RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
+                    RKSIMD_izmul(zi, zo, planSize, true);
+                    RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
+
+#else
+
+                    // Regular multiplication and let compiler optimize with either -O1 -O2 or -Os
+                    RKSIMD_yconj((RKComplex *)in, planSize);
+                    RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
+
+#endif
 
                     //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
 
