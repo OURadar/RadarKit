@@ -101,16 +101,16 @@ void showHelp() {
            "         an impulse filter.\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
-           "         0 - Show types\n"
-           "         1 - Show colors\n"
-           "         2 - Show modulo math\n"
-           "         3 - Show window types\n"
-           "         4 - Parsing comma delimited values\n"
-           "         5 - SIMD quick test\n"
-           "         6 - SIMD test with numbers shown\n"
-           "         7 - SIMD performance tests\n"
-           "         8 - Parsing values in a JSON string\n"
-		   "         9 - Making a frequency hopping sequence\n"
+           "          0 - Show types\n"
+           "          1 - Show colors\n"
+           "          2 - Show modulo math\n"
+           "          3 - Show window types\n"
+           "          4 - Parsing comma delimited values\n"
+           "          5 - SIMD quick test\n"
+           "          6 - SIMD test with numbers shown\n"
+           "          7 - SIMD performance tests\n"
+           "          8 - Parsing values in a JSON string\n"
+		   "          9 - Making a frequency hopping sequence\n"
            "         10 - Initializing a File Manager\n"
 		   "         11 - Reading preference file\n"
 		   "         12 - Count files in a folder RKCountFilesInPath()\n"
@@ -158,7 +158,6 @@ UserParams processInput(int argc, const char **argv) {
         {"hp-system"             , no_argument      , NULL, 'H'},
         {"lean-system"           , no_argument      , NULL, 'L'},
         {"medium-system"         , no_argument      , NULL, 'M'},
-        {"test-pulse-compression", optional_argument, NULL, 'P'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
@@ -282,28 +281,28 @@ UserParams processInput(int argc, const char **argv) {
 						RKTestHilbertTransform();
 						break;
                     case 18:
-                        RKTestOneRay(RKPulsePair, 0);
+                        RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
                     case 19:
-                        RKTestOneRay(RKPulsePairHop, 0);
+                        RKTestOneRay(RKPulsePair, 0);
                         break;
                     case 20:
+                        RKTestOneRay(RKPulsePairHop, 0);
+                        break;
+                    case 21:
                         RKTestOneRay(RKMultiLag, 2);
                         break;
-					case 21:
+					case 22:
 						RKTestOneRay(RKMultiLag, 3);
 						break;
-					case 22:
+					case 23:
 						RKTestOneRay(RKMultiLag, 4);
 						break;
-                    case 23:
+                    case 24:
                         RKTestProcessorSpeed();
                         break;
-                    case 24:
+                    case 25:
                         RKTestCacheWrite();
-                        break;
-                    case 100:
-                        RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
                     default:
                         break;
@@ -400,9 +399,12 @@ int main(int argc, const char **argv) {
     }
     
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && user.relay == false && user.testPulseCompression == 0) {
+    if (user.simulate == false && user.relay == false) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
+    } else if (user.simulate == true && user.relay == true) {
+        RKLog("Info. Simulate takes precedence over relay.\n");
+        user.relay = false;
     }
 
     // Screen output based on verbosity level
@@ -410,11 +412,6 @@ int main(int argc, const char **argv) {
         RKSetWantScreenOutput(false);
     }
 
-    if (user.simulate == true && user.relay == true) {
-        RKLog("Info. Simulate takes precedence over relay.\n");
-        user.relay = false;
-    }
-    
     // Build an initialization description
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
