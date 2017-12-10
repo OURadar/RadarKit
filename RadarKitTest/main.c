@@ -77,50 +77,62 @@ void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
-           "  -L (--test-lean-system)\n"
+           "  -L (--lean-system)\n"
            "         Run with arguments '-v -f 2000 -F 5e6 -c 2,2'.\n"
            "\n"
-           "  -M (--test-medium-system)\n"
+           "  -M (--medium-system)\n"
            "         Run with arguments '-v -f 5000 -F 20e6 -c 4,2'.\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
            "\n"
+           "  -t (--tweeta-host)\n"
+           "         Sets the host of tweeta health relay.\n"
+           "\n"
            "  -s (--simulate)\n"
-           "         Sets the program to simulate data stream (default, if none of the tests\n"
-           "         is specified).\n"
+           "         Sets the program to simulate data stream.\n"
            "\n"
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
-           "  --test-simd\n"
-           "         Sets the program to test SIMD instructions.\n"
-           "         To test the SIMD performance, use --test-simd=2\n"
-           "\n"
-           "  --test-one-ray\n"
-           "         Sets the program to test processing one ray using a selected processor.\n"
-           "\n"
-           "  --test-pulse-compression\n"
-           "         Sets the program to test the pulse compression using a simple case with.\n"
-           "         an impulse filter.\n"
            "  -T (--test) " UNDERLINE("value") "\n"
-           "         0 - Show types\n"
-           "         1 - Show colors\n"
-           "         2 - Show modulo math\n"
-           "         3 - Show window types\n"
-           "         4 - Test parsing comma delimited values\n"
-           "         5 - Test parsing values in a JSON string\n"
-           "         6 - Test reading a preference file\n"
+           "          0 - Show types\n"
+           "          1 - Show colors\n"
+           "          2 - Show modulo math\n"
+           "          3 - Show window types\n"
+           "          4 - Parsing comma delimited values\n"
+           "          5 - SIMD quick test\n"
+           "          6 - SIMD test with numbers shown\n"
+           "          7 - SIMD performance tests\n"
+           "          8 - Parsing values in a JSON string\n"
+		   "          9 - Making a frequency hopping sequence\n"
+           "         10 - Initializing a File Manager\n"
+		   "         11 - Reading preference file\n"
+		   "         12 - Count files in a folder RKCountFilesInPath()\n"
+		   "         13 - File monitor\n"
+		   "         14 - Write a waveform file\n"
+		   "         15 - Make a TFM waveform\n"
+		   "         16 - Initializing a radar system\n"
+		   "         17 - Hilbert transform\n"
+           "         18 - Pulse compression using simple cases\n"
+           "         19 - Calculating one ray using the Pulse Pair method\n"
+		   "         20 - Calculating one ray using the Pulse Pair Hop method\n"
+		   "         21 - Calculating one ray using the Multi-Lag method with L = 2\n"
+		   "         22 - Calculating one ray using the Multt-Lag method with L = 3\n"
+		   "         23 - Calculating one ray using the Multi-Lag method with L = 4\n"
+           "         24 - Measure the speed of various moment methods\n"
+           "         25 - Measure the speed of pulse compression\n"
+           "         26 - Cache write\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
            "     Here are some examples of typical configurations.\n"
            "\n"
-           "  radar\n"
-           "         Runs the program with default settings.\n"
+           "  rktest -vL\n"
+           "         Runs the program with default settings for a lean system and verbose.\n"
            "\n"
-           "  radar -f 2000\n"
-           "         Runs the program with PRF = 2000 Hz.\n"
+           "  radar -L -f 2000\n"
+           "         Same as above but with PRF = 2000 Hz.\n"
            "\n"
            );
 }
@@ -143,9 +155,6 @@ UserParams processInput(int argc, const char **argv) {
         {"hp-system"             , no_argument      , NULL, 'H'},
         {"lean-system"           , no_argument      , NULL, 'L'},
         {"medium-system"         , no_argument      , NULL, 'M'},
-        {"test-pulse-compression", optional_argument, NULL, 'P'},
-        {"test-processor"        , no_argument      , NULL, 'Q'},
-        {"test-simd"             , optional_argument, NULL, 'S'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
@@ -160,7 +169,6 @@ UserParams processInput(int argc, const char **argv) {
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
-        {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -208,27 +216,8 @@ UserParams processInput(int argc, const char **argv) {
                 user.coresForPulseCompression = 6;
                 user.coresForProductGenerator = 4;
                 break;
-            case 'S':
-                // SIMD Tests
-                k = RKTestSIMDFlagNull;
-                if (optarg) {
-                    if (atoi(optarg) > 1) {
-                        k |= RKTestSIMDFlagPerformanceTestAll;
-                    } else {
-                        user.verbose = MAX(1, user.verbose);
-                    }
-                }
-                if (user.verbose) {
-                    k |= RKTestSIMDFlagShowNumbers;
-                }
-                RKTestSIMD(k);
-                exit(EXIT_SUCCESS);
-                break;
-            case 'Q':
-                RKTestProcessorSpeed();
-                exit(EXIT_SUCCESS);
-                break;
             case 'T':
+                RKSetWantScreenOutput(true);
                 k = atoi(optarg);
                 switch (k) {
                     case 0:
@@ -247,45 +236,72 @@ UserParams processInput(int argc, const char **argv) {
                         RKTestParseCommaDelimitedValues();
                         break;
                     case 5:
-                        RKTestJSON();
+                        RKTestSIMD(RKTestSIMDFlagNull);
                         break;
                     case 6:
-                        RKTestMakeHops();
+                        RKTestSIMD(RKTestSIMDFlagShowNumbers);
                         break;
                     case 7:
-                        RKTestSingleEngine();
+                        RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
                         break;
                     case 8:
-                        RKTestPreferenceReading();
+                        RKTestJSON();
                         break;
                     case 9:
-                        RKTestCountFiles();
+                        RKTestMakeHops();
                         break;
                     case 10:
-                        RKTestFileMonitor();
+                        RKTestFileManager();
                         break;
                     case 11:
-                        RKTestWriteWaveform();
+                        RKTestPreferenceReading();
                         break;
                     case 12:
-                        RKTestWaveformTFM();
+                        RKTestCountFiles();
                         break;
                     case 13:
+                        RKTestFileMonitor();
+                        break;
+                    case 14:
+                        RKTestWriteWaveform();
+                        break;
+                    case 15:
+                        RKTestWaveformTFM();
+                        break;
+                    case 16:
                         myRadar = RKInitLean();
                         RKShowOffsets(myRadar);
                         RKFree(myRadar);
                         break;
-					case 14:
+					case 17:
 						RKTestHilbertTransform();
 						break;
-                    case 15:
-                        RKTestOneRay(RKPulsePair);
+                    case 18:
+                        RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
-                    case 16:
-                        RKTestOneRay(RKPulsePairHop);
+                    case 19:
+                        RKTestOneRay(RKPulsePair, 0);
                         break;
-                    case 17:
-                        RKTestOneRay(RKMultiLag);
+                    case 20:
+                        RKTestOneRay(RKPulsePairHop, 0);
+                        break;
+                    case 21:
+                        RKTestOneRay(RKMultiLag, 2);
+                        break;
+					case 22:
+						RKTestOneRay(RKMultiLag, 3);
+						break;
+					case 23:
+						RKTestOneRay(RKMultiLag, 4);
+						break;
+                    case 24:
+                        RKTestMomentProcessorSpeed();
+                        break;
+                    case 25:
+                        RKTestPulseCompressionSpeed();
+                        break;
+                    case 26:
+                        RKTestCacheWrite();
                         break;
                     default:
                         break;
@@ -340,10 +356,6 @@ UserParams processInput(int argc, const char **argv) {
             case 'w':
                 user.writeFiles = true;
                 break;
-            case 'y':
-                RKTestCacheWrite();
-                exit(EXIT_SUCCESS);
-                break;
             case 'z':
                 if (optarg) {
                     user.sleepInterval = atoi(optarg);
@@ -374,16 +386,24 @@ int main(int argc, const char **argv) {
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
-	if (getenv("TERM") == NULL) {
-		RKSetWantColor(false);
-	}
-
     UserParams user = processInput(argc, argv);
 
+    char *term = getenv("TERM");
+    if (term == NULL) {
+        RKSetWantColor(false);
+    } else if (strcasestr(term, "color") == NULL) {
+        RKSetWantColor(false);
+    } else if (user.verbose) {
+        printf("TERM = %s\n", term);
+    }
+    
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && user.relay == false && user.testPulseCompression == 0) {
+    if (user.simulate == false && user.relay == false) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
+    } else if (user.simulate == true && user.relay == true) {
+        RKLog("Info. Simulate takes precedence over relay.\n");
+        user.relay = false;
     }
 
     // Screen output based on verbosity level
@@ -391,11 +411,6 @@ int main(int argc, const char **argv) {
         RKSetWantScreenOutput(false);
     }
 
-    if (user.simulate == true && user.relay == true) {
-        RKLog("Info. Simulate takes precedence over relay.\n");
-        user.relay = false;
-    }
-    
     // Build an initialization description
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
@@ -428,6 +443,13 @@ int main(int argc, const char **argv) {
     RKSetVerbose(myRadar, user.verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
 	RKSetMomentProcessorToMultiLag(myRadar, 3);
+
+	RKAddControl(myRadar, "10us pulse", "t w s10");
+	RKAddControl(myRadar, "20us pulse", "t w s20");
+	RKAddControl(myRadar, "50us pulse", "t w s50");
+	RKAddControl(myRadar, "10us 0.1-MHz tone", "t w t10");
+	RKAddControl(myRadar, "20us 0.1-MHz tone", "t w t20");
+	RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
 
     RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
     RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
@@ -505,6 +527,12 @@ int main(int argc, const char **argv) {
                              RKHealthRelayTweetaInit,
                              RKHealthRelayTweetaExec,
                              RKHealthRelayTweetaFree);
+        } else {
+            RKSetHealthRelay(myRadar,
+                             NULL,
+                             RKTestHealthRelayInit,
+                             RKTestHealthRelayExec,
+                             RKTestHealthRelayFree);
         }
 
         myRadar->configs[0].prf[0] = user.prf;
@@ -512,7 +540,6 @@ int main(int argc, const char **argv) {
 
         RKWaveform *waveform = NULL;
         const char wavfile[] = "waveforms/ofmd.rkwav";
-//        const char wavfile[] = "/Users/boonleng/Developer/radarkit/waveforms/ofm.rkwav";
         if (RKFilenameExists(wavfile)) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);
@@ -523,8 +550,9 @@ int main(int argc, const char **argv) {
             RKWaveformSummary(waveform);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
-            waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
-            RKLog("Waveform generated.\n");
+            //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
+			waveform = RKWaveformInitAsLinearFrequencyModulation(5.0, 0.0, 10.0, 1.5);
+            RKLog("Waveform LFM generated.\n");
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
@@ -547,12 +575,6 @@ int main(int argc, const char **argv) {
         RKCommandCenterStart(center);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
-        
-    } else if (user.testPulseCompression) {
-
-        RKLog("Testing pulse compression ...");
-        RKGoLive(myRadar);
-        RKTestPulseCompression(myRadar, RKTestFlagShowResults);
 
     }
     

@@ -1,5 +1,3 @@
-[![build status](https://git.arrc.ou.edu/cheo4524/radarkit/badges/master/build.svg)](https://git.arrc.ou.edu/cheo4524/radarkit/commits/master)
-
 RadarKit
 ========
 

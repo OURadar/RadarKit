@@ -14,6 +14,7 @@
 #define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 #define PEDESTAL_SAMPLING_TIME         0.01
+#define HEALTH_RELAY_SAMPLING_TIME     0.1
 
 #define SHOW_FUNCTION_NAME \
 int _fn_len = strlen(__FUNCTION__); \
@@ -23,6 +24,12 @@ sprintf(_fn_str + _fn_len, "\n%s\n", __FUNCTION__); \
 memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
+
+// Make some private functions available
+
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
+
+#pragma mark - Fundamental Functions
 
 void RKTestModuloMath(void) {
     int k;
@@ -234,7 +241,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 	}
 	memcpy(cc, cd, n * sizeof(RKComplex));
 
-	RKSIMD_iymul2(cs, cd, n, true);
+	RKSIMD_iymul2(cs, cd, n, false);
 
 	if (flag & RKTestSIMDFlagShowNumbers) {
 		printf("====\n");
@@ -449,7 +456,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     struct timeval t0, t1;
     bool even = true;
     
-    const int chunkSize = MAX(1, (int)floor(0.1 / transceiver->prt));
+    const int chunkSize = MAX(1, (int)floor(0.2 / transceiver->prt));
     
     gettimeofday(&t0, NULL);
 
@@ -498,6 +505,7 @@ void *RKTestTransceiverRunLoop(void *input) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
+            pulse->header.n = transceiver->counter;
             pulse->header.i = transceiver->counter++;
             pulse->header.t = (uint64_t)(1.0e6 * t);
             pulse->header.gateCount = transceiver->gateCount;
@@ -508,9 +516,13 @@ void *RKTestTransceiverRunLoop(void *input) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Some random pattern for testing
-                r = 0.0f;
+				for (g = 0; g < transceiver->transmitWaveformLength; g++) {
+					X->i = (int16_t)(transceiver->transmitWaveform[g].i + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
+					X->q = (int16_t)(transceiver->transmitWaveform[g].q + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
+					X++;
+				}
                 phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
-                for (g = 0; g < transceiver->gateCount; g++) {
+                for (; g < transceiver->gateCount; g++) {
                     r = (float)g;
                     a = 60.0f * (cos(0.001f * r)
                                   + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
@@ -559,19 +571,23 @@ void *RKTestTransceiverRunLoop(void *input) {
         float temp = 1.0f * rand() / RAND_MAX + 79.5f;
         float volt = 1.0f * rand() / RAND_MAX + 11.5f;
         sprintf(health->string,
-                "{\"Trigger\":{\"Value\":true,\"Enum\":0}, "
-                "\"Ready\":{\"Value\":true,\"Enum\":0}, "
+                "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+				"\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
+                "\"Transmit H\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
+				"\"Transmit V\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
+				"\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
                 "\"TransceiverCounter\": %ld}",
+				RKStatusEnumActive,
+				RKStatusEnumNormal,
+				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
-                (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
-                (double)rand() * 0.2 / RAND_MAX + 45,
+				rand() & 0x03,
+				rand() & 0x03,
+				transceiver->transmitWaveformName,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
 
@@ -602,14 +618,17 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     sprintf(transceiver->name, "%s<TransceiverEmulator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
+	transceiver->state = RKEngineStateAllocated;
+	transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
-    transceiver->radar = radar;
-    transceiver->fs = 5.0e6;
-    transceiver->gateCount = RKGetPulseCapacity(radar);
-    transceiver->state = RKEngineStateAllocated;
-    
+    transceiver->gateCount = RKGetPulseCapacity(radar) / 10;
+	transceiver->fs = 5.0e6;
+    transceiver->prt = 0.0003;
+	transceiver->sprt = 1;
+	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKComplex)));
+
     int i, j, k;
-    
+
     // Parse out input parameters
     if (input) {
         char *sb = (char *)input, *se = NULL, *sv = NULL;
@@ -690,13 +709,21 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     while (!(transceiver->state & RKEngineStateActive)) {
         usleep(10000);
     }
-    
+
+	RKTestTransceiverExec(transceiver, "w q10", NULL);
+
     return (RKTransceiver)transceiver;
 }
 
 int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *command, char *response) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
+
+	int k;
+	char *c;
+	double pulsewidth;
+	unsigned int pulsewidthSampleCount;
+
     if (!strcmp(command, "disconnect")) {
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Disconnecting ...", transceiver->name);
@@ -720,25 +747,69 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
         }
     } else if (command[0] == 'h') {
-        sprintf(response,
-                "Commands:\n"
-                "---------\n"
-                UNDERLINE("help") " - Help list.\n"
-                UNDERLINE("prt") " [value] - PRT set to value\n"
-                UNDERLINE("z") " [value] - Sleep interval set to value.\n"
-                );
+		if (response != NULL) {
+			sprintf(response,
+					"Commands:\n"
+					"---------\n"
+					UNDERLINE("help") " - Help list.\n"
+					UNDERLINE("prt") " [value] - PRT set to value\n"
+					UNDERLINE("z") " [value] - Sleep interval set to value.\n"
+					);
+		}
+	} else if (command[0] == 's') {
+		transceiver->sleepInterval = atoi(command + 1);
+		RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
     } else if (command[0] == 't') {
         // Pretend a slow command
-        sleep(2);
+		RKPerformMasterTaskInBackground(radar, "w");
         if (response != NULL) {
             sprintf(response, "ACK. Command executed." RKEOL);
         }
-    } else if (command[0] == 's') {
-        transceiver->sleepInterval = atoi(command + 1);
-        RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
-    } else if (command[0] == 'y') {
+	} else if (command[0] == 'w') {
+		// Waveform
+		c = ((char *)command);
+		if (command[1] == ' ') {
+			c += 2;
+		} else {
+			c++;
+		}
+		if (*c == 's' || *c == 't' || *c == 'q') {
+			pulsewidth = 1.0e-6 * atof(c + 1);
+			pulsewidthSampleCount = pulsewidth * transceiver->fs;
+			RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
+			strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+			RKWaveform *wave = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
+			if (*c == 's') {
+				// Rectangular single tone
+				RKWaveformHops(wave, transceiver->fs, 0.0, 0.0);
+			} else if (*c == 't') {
+				// Rectangular single tone at 0.1 MHz
+				RKWaveformHops(wave, transceiver->fs, 0.1e6, 0.0);
+			} else if (*c == 'q') {
+				RKWaveformLinearFrequencyModulation(wave, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
+			}
+			transceiver->transmitWaveformLength = pulsewidthSampleCount;
+			for (k = 0; k < wave->depth; k++) {
+				transceiver->transmitWaveform[k].i = 0.01 * wave->iSamples[0][k].i;
+				transceiver->transmitWaveform[k].q = 0.01 * wave->iSamples[0][k].q;
+			}
+			free(wave);
+			if (response != NULL) {
+				sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
+			}
+		}
+	} else if (command[0] == 'y') {
         // Everything goes
-        radar->pedestalExec(radar->pedestal, "ppi 3 90", radar->pedestalResponse);
+		if (strlen(transceiver->defaultWaveform) == 0) {
+			sprintf(transceiver->defaultWaveform, "s10");
+		}
+		sprintf(transceiver->customCommand, "w %s" RKEOL, transceiver->defaultWaveform);
+		radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
+		if (strlen(transceiver->defaultPedestalMode) == 0) {
+			sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
+		}
+		sprintf(transceiver->customCommand, "p %s" RKEOL, transceiver->defaultPedestalMode);
+        radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
         if (response != NULL) {
             sprintf(response, "ACK. Everything goes." RKEOL);
         }
@@ -756,6 +827,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 
 int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
+	free(transceiver->transmitWaveform);
     free(transceiver);
     return RKResultSuccess;
 }
@@ -834,13 +906,19 @@ void *RKTestPedestalRunLoop(void *input) {
         if (true) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
-                    "\"Pedestal Azimuth\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal Elevation\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+					"\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+					"\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+					"\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
                     "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
                     "}",
                     position->azimuthDegrees, RKStatusEnumNormal,
                     position->elevationDegrees, RKStatusEnumNormal,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
+					RKStatusEnumNormal,
+					RKStatusEnumNormal,
+					position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    RKStatusEnumActive);
             RKSetHealthReady(radar, health);
         }
         
@@ -1008,6 +1086,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
+    
     return RKResultSuccess;
 }
 
@@ -1017,37 +1096,177 @@ int RKTestPedestalFree(RKPedestal pedestalReference) {
     return RKResultSuccess;
 }
 
+#pragma mark - Health Relay Emulator
+
+void *RKTestHealthRelayRunLoop(void *input) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)input;
+    RKRadar *radar = healthRelay->radar;
+    
+    int n;
+    float powerH, powerV;
+    double dt = 0.0;
+    struct timeval t0, t1;
+
+    gettimeofday(&t0, NULL);
+    
+    healthRelay->state |= RKEngineStateActive;
+    healthRelay->state &= ~RKEngineStateActivating;
+    
+    RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKIntegerToCommaStyleString(healthRelay->memoryUsage));
+    
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("%s fs = %s Hz\n", healthRelay->name, RKIntegerToCommaStyleString((long)(1.0 / HEALTH_RELAY_SAMPLING_TIME)));
+    }
+
+    while (healthRelay->state & RKEngineStateActive) {
+        powerH = (float)rand() / RAND_MAX - 0.5f;
+        powerV = (float)rand() / RAND_MAX - 0.5f;
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
+        sprintf(health->string, "{"
+				"\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+				"\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+				"\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+				"\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+				"\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
+                "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
+                "}",
+				RKStatusEnumNormal,
+				RKStatusEnumNormal,
+				(double)rand() * 8.0e-6 / RAND_MAX + 35.5,
+				(double)rand() * 8.0e-6 / RAND_MAX - 95.5,
+				(double)rand() * 0.2 / RAND_MAX + 45,
+                powerH, RKStatusEnumNormal,
+                powerV, RKStatusEnumNormal);
+        RKSetHealthReady(radar, health);
+
+		// Wait to simulate sampling time
+		n = 0;
+		do {
+			gettimeofday(&t1, NULL);
+			dt = RKTimevalDiff(t1, t0);
+			usleep(10000);
+			n++;
+		} while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
+		t0 = t1;
+	}
+
+    return NULL;
+}
+
+RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)malloc(sizeof(RKTestHealthRelay));
+    if (healthRelay == NULL) {
+        RKLog("Error. Unable to allocate a test pedestal.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(healthRelay, 0, sizeof(RKHealthRelay));
+    sprintf(healthRelay->name, "%s<HealthRelayEmulator>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
+    healthRelay->memoryUsage = sizeof(RKTestPedestal);
+    healthRelay->radar = radar;
+    healthRelay->state = RKEngineStateAllocated;
+    
+    // Parse input here if there is any
+    
+    // Use a counter that mimics microsecond increments
+    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    
+    healthRelay->state |= RKEngineStateActivating;
+    if (pthread_create(&healthRelay->tidRunLoop, NULL, RKTestHealthRelayRunLoop, healthRelay)) {
+        RKLog("%s. Unable to create pedestal run loop.\n", healthRelay->name);
+    }
+    //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
+    while (!(healthRelay->state & RKEngineStateActive)) {
+        usleep(10000);
+    }
+    
+    return (RKHealthRelay)healthRelay;
+}
+
+int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *command, char *response) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)healthRelayReference;
+    RKRadar *radar = healthRelay->radar;
+
+    if (!strcmp(command, "disconnect")) {
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Disconnecting ...", healthRelay->name);
+        }
+        healthRelay->state |= RKEngineStateDeactivating;
+        healthRelay->state ^= RKEngineStateActive;
+        pthread_join(healthRelay->tidRunLoop, NULL);
+        if (response != NULL) {
+            sprintf(response, "ACK. Health Relay stopped." RKEOL);
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("%s Stopped.\n", healthRelay->name);
+        }
+        healthRelay->state = RKEngineStateAllocated;
+    } else if (!strcmp(command, "help")) {
+        sprintf(response,
+                "Commands:\n"
+                UNDERLINE("help") " - Help list\n"
+                );
+    } else if (response != NULL) {
+        sprintf(response, "NAK. Command not understood." RKEOL);
+    }
+    
+    return RKResultSuccess;
+}
+
+int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
+    RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)healthRelayReference;
+    free(healthRelay);
+    return RKResultSuccess;
+}
+
 #pragma mark - Data Processing
 
-void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
+void RKTestPulseCompression(RKTestFlag flag) {
+    SHOW_FUNCTION_NAME
+    int k;
     RKPulse *pulse;
     RKInt16C *X;
     RKComplex *F;
     RKComplex *Y;
     RKIQZ Z;
+    
+    RKRadar *radar = RKInitLean();
+    RKSetProcessingCoreCounts(radar, 2, 1);
+    
+    // Increases verbosity if set
+    if (flag & RKTestFlagVerbose) {
+        RKSetVerbose(radar, 1);
+    }
+    
+    RKGoLive(radar);
 
-    // Change filter to [1, 1i] for case 2
-    RKComplex filter[] = {{1.0f, 0.0f}, {0.0f, 1.0f}};
+    // Filter #2
+    RKComplex filter2[] = {{1.0f, 1.0f}};
+    RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(8);
 
-    for (int k = 0; k < 3; k++) {
-        printf("\n");
+    // Filter #3
+    RKComplex filter3[] = {{1.0f, 0.0f}, {0.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, -1.0f}};
+    RKFilterAnchor anchor3 = RKFilterAnchorOfLengthAndMaxDataLength(4, 8);
 
+    for (k = 0; k < 4; k++) {
         switch (k) {
+            default:
+                // Default is impulse [1];
+                RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+                break;
             case 1:
-                // Range average [1 1]
-                printf("Filter [1, 1]:\n\n");
+                // Two-tap running average [1, 1]
                 RKPulseCompressionSetFilterTo11(radar->pulseCompressionEngine);
                 break;
             case 2:
-                // Change filter to [1, 1i]
-                printf("Filter [1, i]:\n\n");
-                RKFilterAnchor anchor = RKFilterAnchorDefaultWithMaxDataLength(8);
-                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter, anchor, 0, 0);
+                // Change filter to filter #2: [1 + 1i]
+                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter2, anchor2, 0, 0);
                 break;
-            default:
-                // Default is impulse [1];
-                printf("Pulse filter [1]:\n\n");
-                RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+            case 3:
+                // Change filter to filter #3
+                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter3, anchor3, 0, 0);
                 break;
         }
 
@@ -1068,7 +1287,7 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
         X[4].q = 0;
         RKSetPulseReady(radar, pulse);
 
-        while ((pulse->header.s & RKPulseStatusCompressed) == 0) {
+        while (radar->state & RKRadarStateLive && (pulse->header.s & RKPulseStatusCompressed) == 0) {
             usleep(1000);
         }
 
@@ -1077,70 +1296,23 @@ void RKTestPulseCompression(RKRadar *radar, RKTestFlag flag) {
         Z = RKGetSplitComplexDataFromPulse(pulse, 0);
 
         if (flag & RKTestFlagShowResults) {
-            printf("X =                       F =                     Y =                             Z =\n");
+            printf("\033[4mTest %d:\n\033[24m", k);
+            printf("X =               F =                    Y =                        Z =\n");
             for (int k = 0; k < 8; k++) {
-                printf("    [ %6d %s %6di ]      [ %5.2f %s %5.2fi ]      [ %9.2f %s %9.2fi ]      [ %9.2f %s %9.2fi ]\n",
+                printf("    [ %2d %s %2di ]      [ %5.2f %s %5.2fi ]      [ %6.2f %s %6.2fi ]      [ %6.2f %s %6.2fi ]\n",
                        X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
                        F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
                        Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),
                        Z.i[k], Z.q[k] < 0.0f ? "-" : "+", fabs(Z.q[k]));
             }
+            printf("\n");
         }
-    }
-}
-
-// Make some private functions available
-
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
-
-void RKTestProcessorSpeed(void) {
-    int k;
-    RKScratch *space;
-    RKBuffer pulseBuffer;
-    RKBuffer rayBuffer;
-    const int testCount = 1000;
-    const int pulseCount = 100;
-    const int pulseCapacity = 4096;
-
-    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
-
-    RKScratchAlloc(&space, pulseCapacity, 4, true);
-
-    RKPulse *pulses[pulseCount];
-    for (k = 0; k < pulseCount; k++) {
-        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
-        pulse->header.t = k;
-        pulse->header.gateCount = pulseCapacity;
-        pulses[k] = pulse;
-    }
-
-    struct timeval tic, toc;
-
-    RKRay *ray = RKGetRay(rayBuffer, 0);
+    } // for (k = 0; k < 3; ...)
     
-    gettimeofday(&tic, NULL);
-    for (k = 0; k < testCount; k++) {
-        RKPulsePairHop(space, pulses, pulseCount);
-        //RKMultiLag(space, pulses, pulseCount);
-         makeRayFromScratch(space, ray, pulseCapacity, 1);
-    }
-    gettimeofday(&toc, NULL);
-
-    double t = RKTimevalDiff(toc, tic);
-    RKLog("Total elapsed time: %.3f s\n", t);
-    RKLog("Time for each ray (%s pulses x %s gates) = %.3f ms\n",
-          RKIntegerToCommaStyleString(pulseCount),
-          RKIntegerToCommaStyleString(pulseCapacity),
-          1.0e3 * t / testCount);
-
-    RKScratchFree(space);
-    free(pulseBuffer);
-    free(rayBuffer);
-    return;
+    RKFree(radar);
 }
 
-void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
+void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int lag) {
     SHOW_FUNCTION_NAME
     int k, p, n, g;
     RKScratch *space;
@@ -1152,7 +1324,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
     RKLog("Allocating buffers ...\n");
     
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    RKScratchAlloc(&space, pulseCapacity, 4, true);
+    RKScratchAlloc(&space, pulseCapacity, RKLagCount, true);
     RKPulse *pulses[pulseCount];
     
     for (k = 0; k < pulseCount; k++) {
@@ -1183,16 +1355,59 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t)) {
     } else if (method == RKPulsePair) {
         RKLog("Info. Pulse Pair.\n");
     } else if (method == RKMultiLag) {
-        RKLog("Info. Multilag.\n");
+		space->userLagChoice = lag;
+		space->velocityFactor = 1.0f;
+		space->widthFactor = 1.0f;
+        RKLog("Info. Multilag (N = %d).\n", space->userLagChoice);
     } else {
-        RKLog("Warning. Unknown.\n");
+        RKLog("Warning. Unknown method.\n");
+        method = RKPulsePair;
     }
     method(space, pulses, pulseCount);
-    
+
+	// Some known results
+	RKFloat err = 0.0f;
+
+	if (method == RKMultiLag && lag >= 2 && lag <= 4) {
+		// Results for lags 2, 3, and 4
+		RKFloat D[3][6] = {
+			{4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
+			{2.7106, -8.4965, -7.8061, -9.1933, -0.7019, -8.4546},
+			{3.7372, -4.2926, -4.1635, -6.0751, -0.7788, -5.9091}
+		};
+
+		RKFloat R[3][6] = {
+			{1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
+			{1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
+			{1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
+		};
+
+		RKFloat P[3][6] = {
+			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
+			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
+			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
+		};
+		for (k = 0; k < gateCount; k++) {
+			err += D[lag - 2][k] - space->ZDR[k];
+		}
+		err /= (RKFloat)gateCount;
+		RKLog("Delta ZDR = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+		for (k = 0; k < gateCount; k++) {
+			err += P[lag - 2][k] - space->PhiDP[k];
+		}
+		err /= (RKFloat)gateCount;
+		RKLog("Delta PhiDP = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+		for (k = 0; k < gateCount; k++) {
+			err += R[lag - 2][k] - space->RhoHV[k];
+		}
+		err /= (RKFloat)gateCount;
+		RKLog("Delta RhoHV = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+	}
+
     RKLog("Deallocating buffers ...\n");
 
     RKScratchFree(space);
-    free(pulseBuffer);
+    RKPulseBufferFree(pulseBuffer);
     return;
 }
 
@@ -1375,13 +1590,12 @@ void RKTestShowColors(void) {
     }
 }
 
-void RKTestSingleEngine(void) {
+void RKTestFileManager(void) {
     RKFileManager *o = RKFileManagerInit();
     if (o == NULL) {
         fprintf(stderr, "Unable to allocate a File Manager.\n");
         return;
     }
-    //RKFileManagerSetPathToMonitor(o, "/Users/boonleng/Developer/radarkit");
     RKFileManagerSetPathToMonitor(o, "data");
     RKFileManagerStart(o);
     RKFileManagerFree(o);
@@ -1460,8 +1674,9 @@ void RKTestWriteWaveform(void) {
 
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
-    const char filename[] = "waveforms/tfm.rkwav";
-    RKWaveform *waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+    const char filename[] = "waveforms/test-tfm.rkwav";
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+	RKWaveformSummary(waveform);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
@@ -1486,3 +1701,153 @@ void RKTestHilbertTransform(void) {
 	free(x);
 	free(y);
 }
+
+void RKTestPulseCompressionSpeed(void) {
+    SHOW_FUNCTION_NAME
+    int p, i, j, k;
+    const size_t nfft = 1 << 13;
+    fftwf_complex *f, *in, *out;
+    RKInt16C *X;
+    RKComplex *Y;
+    const int testCount = 10000;
+    struct timeval tic, toc;
+    double mint, t;
+    
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&Y, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&f, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    if (in == NULL || out == NULL) {
+        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        return;
+    }
+    
+    fftwf_plan planForwardInPlace = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
+    fftwf_plan planForwardOutPlace = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
+    
+    RKLog(UNDERLINE("PulseCompression") "\n");
+    
+    mint = 999999.0f;
+    for (i = 0; i < 3; i++) {
+        gettimeofday(&tic, NULL);
+        for (j = 0; j < testCount; j++) {
+            for (p = 0; p < 2; p++) {
+                // Converting complex int16_t ADC samples to complex float
+                for (k = 0; k < nfft; k++) {
+                    in[k][0] = (RKFloat)X->i;
+                    in[k][1] = (RKFloat)X->q;
+                }
+                fftwf_execute_dft(planForwardInPlace, in, in);
+                fftwf_execute_dft(planForwardOutPlace, f, out);
+                RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
+                fftwf_execute_dft(planBackwardInPlace, out, out);
+                RKSIMD_iyscl((RKComplex *)out, 1.0f / nfft, nfft);
+                // Copy the output
+                for (k = 0; k < nfft; k++) {
+                    Y[k].i = out[k][0];
+                    Y[k].q = out[k][1];
+                }
+            }
+        }
+        gettimeofday(&toc, NULL);
+        t = RKTimevalDiff(toc, tic);
+        RKLog(">Test %d -> %.3f ms\n", i, 1.0e3 * t);
+        mint = MIN(mint, t);
+    }
+    
+    RKLog(">Elapsed time: %.3f s (Best of 3)\n", mint);
+    RKLog(">Time for each pulse (%s gates) = %.3f ms\n",
+          RKIntegerToCommaStyleString(nfft),
+          1.0e3 * mint / testCount);
+    RKLog(">Speed: %.2f pulses / sec\n", testCount / mint);
+    
+    fftwf_destroy_plan(planForwardInPlace);
+    fftwf_destroy_plan(planForwardOutPlace);
+    fftwf_destroy_plan(planBackwardInPlace);
+    
+    free(X);
+    free(Y);
+    free(f);
+    free(in);
+    free(out);
+}
+
+void RKTestMomentProcessorSpeed(void) {
+    SHOW_FUNCTION_NAME
+    int i, j, k;
+    RKScratch *space;
+    RKBuffer pulseBuffer;
+    RKBuffer rayBuffer;
+    const int testCount = 500;
+    const int pulseCount = 100;
+    const int pulseCapacity = 4096;
+    
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
+    
+    RKScratchAlloc(&space, pulseCapacity, 5, true);
+    
+    RKPulse *pulses[pulseCount];
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
+        pulse->header.t = k;
+        pulse->header.gateCount = pulseCapacity;
+        pulses[k] = pulse;
+    }
+    
+    double t, mint;
+    struct timeval tic, toc;
+    int (*method)(RKScratch *, RKPulse **, const uint16_t);
+    
+    RKRay *ray = RKGetRay(rayBuffer, 0);
+    
+    for (j = 0; j < 4; j++) {
+        switch (j) {
+            default:
+                method = RKPulsePairHop;
+                RKLog(UNDERLINE("PulsePairHop:") "\n");
+                break;
+            case 1:
+                method = RKMultiLag;
+                space->userLagChoice = 2;
+                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                break;
+            case 2:
+                method = RKMultiLag;
+                space->userLagChoice = 3;
+                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                break;
+            case 3:
+                method = RKMultiLag;
+                space->userLagChoice = 4;
+                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                break;
+        }
+        mint = 999999.0f;
+        for (i = 0; i < 3; i++) {
+            gettimeofday(&tic, NULL);
+            for (k = 0; k < testCount; k++) {
+                method(space, pulses, pulseCount);
+                makeRayFromScratch(space, ray, pulseCapacity, 1);
+            }
+            gettimeofday(&toc, NULL);
+            t = RKTimevalDiff(toc, tic);
+            RKLog(">Test %d -> %.3f s\n", i, 1.0e3 * t);
+            mint = MIN(mint, t);
+        }
+        RKLog(">Elapsed time: %.3f s\n", mint);
+        RKLog(">Time for each ray (%s pulses x %s gates) = %.3f ms (Best of 3)\n",
+              RKIntegerToCommaStyleString(pulseCount),
+              RKIntegerToCommaStyleString(pulseCapacity),
+              1.0e3 * mint / testCount);
+        RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
+    }
+    
+    RKScratchFree(space);
+    free(pulseBuffer);
+    free(rayBuffer);
+    return;
+}
+

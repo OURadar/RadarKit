@@ -269,7 +269,6 @@ static void *momentCore(void *in) {
 	if (engine->userLagChoice != 0) {
 		space->userLagChoice = engine->userLagChoice;
 	}
-
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -308,8 +307,12 @@ static void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io));
+    
+    if (engine->verbose) {
+        RKLog(">%s %s Started.   mem = %s B   i0 = %s\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io));
+    }
+    
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -516,7 +519,9 @@ static void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    if (engine->verbose) {
+        RKLog(">%s %s Stopped.\n", engine->name, name);
+    }
 
     return NULL;
 }
@@ -539,6 +544,17 @@ static void *pulseGatherer(void *in) {
     RKMarker marker;
     RKPulse *pulse;
     RKRay *ray;
+
+	// Show the selected moment processor
+    if (engine->verbose) {
+        if (engine->processor == &RKMultiLag) {
+            RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
+        } else if (engine->processor == &RKPulsePairHop) {
+            RKLog(">%s Method = RKPulsePairHop()\n", engine->name);
+        } else {
+            RKLog(">%s Method %p not recognized\n", engine->name, engine->processor);
+        }
+    }
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state |= RKEngineStateActive;
@@ -589,11 +605,13 @@ static void *pulseGatherer(void *in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
-    
     // Increase the tic once to indicate the watcher is ready
     engine->tic++;
 
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
+    }
+    
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
     // Here comes the busy loop
@@ -742,7 +760,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
-    sprintf(engine->name, "%s<ProductGatherer>%s",
+    sprintf(engine->name, "%s<MomentGenerator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMomentEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;

@@ -9,8 +9,8 @@
 //
 //
 
-#ifndef __RadarKit_RKMisc__
-#define __RadarKit_RKMisc__
+#ifndef __RadarKit_Misc__
+#define __RadarKit_Misc__
 
 #include <stdio.h>
 #include <stdlib.h>

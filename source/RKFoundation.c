@@ -23,6 +23,8 @@ int RKLog(const char *whatever, ...) {
     char *filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
     if (msg == NULL || filename == NULL) {
         fprintf(stderr, "Error in RKLog().\n");
+        free(filename);
+        free(msg);
         return -1;
     }
 
@@ -34,6 +36,8 @@ int RKLog(const char *whatever, ...) {
     va_start(args, whatever);
     if (strlen(whatever) > RKMaximumStringLength - 256) {
         fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
+        free(filename);
+        free(msg);
         return 1;
     }
     if (whatever[0] == '>') {
@@ -237,7 +241,11 @@ void RKShowVecFloat(const char *name, const float *p, const int n) {
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     int i = 0;
     int k = 0;
-    char str[RKMaximumStringLength];
+    char *str = (char *)malloc(RKMaximumStringLength);
+    if (str == NULL) {
+        fprintf(stderr, "Error allocating string buffer.\n");
+        return;
+    }
     k = sprintf(str, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20) {
         k += sprintf(str + k, "%+9.4f%+9.4fi ", p->i[i], p->q[i]);
@@ -245,6 +253,8 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     }
     sprintf(str + k, "]");
     printf("%s\n", str);
+    fflush(stdout);
+    free(str);
 }
 
 #pragma mark -
@@ -312,6 +322,10 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
         i++;
     }
     return bytes;
+}
+
+void RKPulseBufferFree(RKBuffer mem) {
+    return free(mem);
 }
 
 RKPulse *RKGetPulse(RKBuffer buffer, const uint32_t k) {
@@ -384,6 +398,10 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
     return bytes;
 }
 
+void RKRayBufferFree(RKBuffer mem) {
+    return free(mem);
+}
+
 RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
     size_t raySize = RKRayHeaderPaddedSize + RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
@@ -420,10 +438,9 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     memset(*buffer, 0, sizeof(RKScratch));
 
     RKScratch *space = *buffer;
-    space->capacity = capacity;
+    space->capacity = MAX(1, (capacity / RKSIMDAlignSize)) * RKSIMDAlignSize;
     space->lagCount = lagCount;
     space->showNumbers = showNumbers;
-	space->userLagChoice = 3;
     
     int j, k;
     size_t bytes = 0;
@@ -465,7 +482,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     bytes++;
     bytes *= capacity * sizeof(RKFloat);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, capacity * sizeof(int8_t)));
-    bytes += capacity * sizeof(bool);
+    bytes += capacity * sizeof(int8_t);
     bytes += sizeof(RKScratch);
     return bytes;
 }

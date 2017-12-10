@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKDSP__
-#define __RadarKit_RKDSP__
+#ifndef __RadarKit_DSP__
+#define __RadarKit_DSP__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKSIMD.h>
@@ -56,7 +56,7 @@ float RKGetMinorSectorInDegrees(const float angle1, const float angle2);
 float RKInterpolatePositiveAngles(const float angleBefore, const float angleAfter, const float alpha);
 float RKInterpolateAngles(const float angleLeft, const float angleRight, const float alpha);
 
-int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse);
+int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin);
 int RKBestStrideOfHops(const int hopCount, const bool showNumbers);
 
 void RKHilbertTransform(RKFloat *x, RKComplex *y, const int n);

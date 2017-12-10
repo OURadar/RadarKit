@@ -90,7 +90,9 @@ static void *healthLogger(void *in) {
 
     char filename[RKMaximumPathLength] = "";
 
-    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    }
 
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;

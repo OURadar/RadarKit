@@ -95,7 +95,9 @@ static void *pulseTagger(void *in) {
     RKMarker marker0, marker1;
     bool hasSweepEnd;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    }
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;

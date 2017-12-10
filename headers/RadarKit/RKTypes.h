@@ -6,6 +6,22 @@
 //
 //  █
 //
+//  1.2.4  -
+//         -
+//
+//  1.2.3  - 12/7/2017
+//         - Default waveform and pedestal task for RKTestTransceiver
+//         - RKTestPulseCompression() is now self contained
+//         - Consolidated many RKTest modules
+//         - GPS reading has been moved to RKTestHealthRelay
+//         - Added handleRadarTgz.sh for LDM server
+//         - Added a MATLAB ACF & CCF calculations for validation
+//         - Added ring worker for FIR / IIR buffer
+//         - Completed multilag estimator
+//         - Status enum expanded
+//         - All filters are now normlized to have unity noise gain
+//         - Added LFM generation to RKWaveform
+//
 //  1.2.2  - Boolean value parsing in preference
 //         - Waveform generation with fc
 //
@@ -31,8 +47,8 @@
 //  1.0    - First working version
 //
 
-#ifndef __RadarKit_RKTypes__
-#define __RadarKit_RKTypes__
+#ifndef __RadarKit_Types__
+#define __RadarKit_Types__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +89,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.2"
+#define RKVersionString                  "1.2.3"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
@@ -172,8 +188,9 @@ typedef struct rk_filter_anchor {
     RKFloat       gain;
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault                      {0, 0, 1, 0, 0, 1024, 0.0f, 1.0f}
-#define RKFilterAnchorDefaultWithMaxDataLength(x)  {0, 0, 1, 0, 0, (x),  0.0f, 1.0f}
+#define RKFilterAnchorDefault                           {0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)       {0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f}
+#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {0, 0, (x),  0, 0, (y) , 0.0f, 1.0f}
 
 typedef struct rk_iir_filter {
     uint32_t      name;
@@ -457,12 +474,13 @@ enum RKStatusEnum {
     RKStatusEnumOld                  = -3,
     RKStatusEnumInvalid              = -2,
     RKStatusEnumTooLow               = -2,
-	RKStatusEnumLow                  = -1,
+    RKStatusEnumLow                  = -1,
     RKStatusEnumNormal               =  0,
     RKStatusEnumActive               =  0,
     RKStatusEnumHigh                 =  1,
     RKStatusEnumStandby              =  1,
-	RKStatusEnumInactive             =  1,
+    RKStatusEnumInactive             =  1,
+    RKStatusEnumOutOfRange           =  1,
     RKStatusEnumTooHigh              =  2,
     RKStatusEnumNotOperational       =  2,
     RKStatusEnumOff                  =  2,
@@ -680,9 +698,10 @@ typedef struct rk_ray {
 } RKRay;
 
 typedef struct rk_scratch {
-    bool             showNumbers;
     uint32_t         capacity;                                       // Capacity
+    bool             showNumbers;                                    // A flag for showing numbers
     uint8_t          lagCount;                                       // Number of lags of R & C
+    uint8_t          userLagChoice;                                  // Number of lags in multi-lag estimator from user
     RKIQZ            mX[2];                                          // Mean of X, 2 for dual-pol
     RKIQZ            vX[2];                                          // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
     RKIQZ            R[2][RKLagCount];                               // ACF up to RKLagCount - 1 for each polarization
@@ -694,7 +713,7 @@ typedef struct rk_scratch {
     RKFloat          *gC;                                            // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
     RKFloat          noise[2];                                       // Noise floor of each channel
     RKFloat          velocityFactor;                                 // Velocity factor to multiply by atan2(R(1))
-    RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|)
+	RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|) : 
     RKFloat          KDPFactor;                                      // Normalization factor of 1.0 / gateWidth in kilometers
     RKFloat          dcal;                                           // Calibration offset to D
     RKFloat          pcal;                                           // Calibration offset to P (radians)
@@ -710,7 +729,6 @@ typedef struct rk_scratch {
     RKFloat          *RhoHV;                                         // Cross-correlation coefficient RhoHV
     RKFloat          *KDP;                                           // Specific phase KDP
     int8_t           *mask;                                          // Mask for censoring
-    uint8_t          userLagChoice;                                  // Number of lags in multi-lag estimator from user
 } RKScratch;
 
 typedef union rk_file_header {

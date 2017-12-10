@@ -1294,24 +1294,36 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
 //     None
 //
 void RKMeasureNoise(RKRadar *radar) {
+	int k = 0;
     RKFloat noise[2];
     RKFloat noiseAverage[2] = {0.0f, 0.0f};
     uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     RKPulse *pulse = RKGetPulse(radar->pulses, index);
-    int k = 0;
     while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
+	// Avoid data before this offset to exclude the transcient effect right after transmit pulse
+	int origin = 0;
+	for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
+		origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
+	}
+	origin *= 2;
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
-        RKMeasureNoiseFromPulse(noise, pulse);
+        RKMeasureNoiseFromPulse(noise, pulse, origin);
         noiseAverage[0] += noise[0];
         noiseAverage[1] += noise[1];
     }
     noiseAverage[0] /= (RKFloat)k;
     noiseAverage[1] /= (RKFloat)k;
+	if (!isfinite(noiseAverage[0])) {
+		noiseAverage[0] = 0.001f;
+	}
+	if (!isfinite(noiseAverage[1])) {
+		noiseAverage[1] = 0.001f;
+	}
     RKAddConfig(radar, RKConfigKeyNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }
 

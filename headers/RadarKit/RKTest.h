@@ -6,15 +6,16 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKTest__
-#define __RadarKit_RKTest__
+#ifndef __RadarKit_Test__
+#define __RadarKit_Test__
 
 #include <RadarKit/RKRadar.h>
 
 typedef int RKTestFlag;
 enum RKTestFlag {
     RKTestFlagNone         = 0,
-    RKTestFlagShowResults  = 1
+    RKTestFlagVerbose      = 1,
+    RKTestFlagShowResults  = 1 << 1
 };
 
 typedef int RKTestSIMDFlag;
@@ -44,6 +45,12 @@ typedef struct rk_test_transceiver {
     double         fs;
     double         prt;
     RKByte         sprt;
+	char           transmitWaveformName[RKNameLength];
+	unsigned int   transmitWaveformLength;
+	RKComplex      *transmitWaveform;
+	char           defaultWaveform[RKNameLength];
+	char           defaultPedestalMode[RKNameLength];
+	char           customCommand[RKNameLength];
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
@@ -68,6 +75,16 @@ typedef struct rk_test_pedestal {
     size_t         memoryUsage;
 } RKTestPedestal;
 
+typedef struct rk_test_health_relay {
+    char           name[RKNameLength];
+    int            verbose;
+    long           counter;
+    pthread_t      tidRunLoop;
+    RKEngineState  state;
+    RKRadar        *radar;
+    size_t         memoryUsage;
+} RKTestHealthRelay;
+
 void RKTestModuloMath(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestParseCommaDelimitedValues(void);
@@ -80,15 +97,18 @@ RKPedestal RKTestPedestalInit(RKRadar *, void *);
 int RKTestPedestalExec(RKTransceiver, const char *, char *);
 int RKTestPedestalFree(RKTransceiver);
 
-void RKTestPulseCompression(RKRadar *, RKTestFlag);
-void RKTestProcessorSpeed(void);
-void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t));
+RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
+int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
+int RKTestHealthRelayFree(RKHealthRelay);
+
+void RKTestPulseCompression(RKTestFlag);
+void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int);
 
 void RKTestCacheWrite(void);
 void RKTestWindow(void);
 void RKTestJSON(void);
 void RKTestShowColors(void);
-void RKTestSingleEngine(void);
+void RKTestFileManager(void);
 void RKTestSingleCommand(void);
 void RKTestMakeHops(void);
 void RKTestPreferenceReading(void);
@@ -97,5 +117,8 @@ void RKTestFileMonitor(void);
 void RKTestWriteWaveform(void);
 void RKTestWaveformTFM(void);
 void RKTestHilbertTransform(void);
+
+void RKTestPulseCompressionSpeed(void);
+void RKTestMomentProcessorSpeed(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

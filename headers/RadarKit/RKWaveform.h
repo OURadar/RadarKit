@@ -20,6 +20,7 @@ enum RKWaveformType {
     RKWaveformTypeNone,
     RKWaveformTypeSingle,
     RKWaveformTypeFrequencyHopping,
+	RKWaveformTypeLinearFrequencyModulation,
     RKWaveformTypeTimeFrequencyMultiplexing
 };
 
@@ -86,10 +87,13 @@ RKWaveform *RKWaveformInitFromFile(const char *filename);
 RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);
 
-RKWaveform *RKWaveformTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
+RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
+RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
 
 void RKWaveformOnes(RKWaveform *waveform);
 void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth);
+void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double pulsewidth, const double bandwidth);
+
 void RKWaveformConjuate(RKWaveform *waveform);
 void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
 void RKWaveformDownConvert(RKWaveform *waveform, const double omega);

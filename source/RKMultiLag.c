@@ -18,16 +18,20 @@ enum RKMomentMask {
 };
 
 int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
-    //    struct timeval tic, toc;
-    //    gettimeofday(&tic, NULL);
-        
+//    struct timeval tic, toc;
+//    gettimeofday(&tic, NULL);
+    
     int n, j, k, p;
     
     // Get the start pulse to know the capacity
     RKPulse *pulse = input[0];
     const uint32_t capacity = pulse->header.capacity;
     const uint32_t gateCount = pulse->header.gateCount;
-    const int lagCount = MIN(pulseCount, space->lagCount);
+	const int lagCount = space->userLagChoice == 0 ? MIN(pulseCount, space->lagCount) : MIN(space->userLagChoice + 1, space->lagCount);
+
+	if (lagCount > pulseCount) {
+		RKLog("WARNING. Memory leak in RKMultiLag.\n");
+	}
 
     //
     //  ACF
@@ -88,11 +92,11 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     
     RKZeroOutFloat(space->gC, capacity);
     
-    const RKFloat N = (RKFloat)lagCount; // Number of lags
+    const RKFloat N = (RKFloat)lagCount - 1;                                            // N = Number of lags minus one since 0 counts
     RKFloat w = 0.0f;
     
     RKIQZ Xh, Xv;
-    
+
     for (j = 0; j < 2 * lagCount - 1; j++) {
         k = j - lagCount + 1;
         
@@ -131,87 +135,11 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
         space->gC[n] = expf(w * space->gC[n]);
     }
 
-    // Zero out the tails
-    for (p = 0; p < 2; p++) {
-        for (k = 0; k < lagCount; k++) {
-            RKZeroTailFloat(space->aR[p][k], capacity, gateCount);
-        }
-        RKZeroTailIQZ(&space->vX[p], capacity, gateCount);
-        for (j = 0; j < 2 * lagCount - 1; j++) {
-            RKZeroTailFloat(&space->gC[j], capacity, gateCount);
-        }
-    }
-    
-    if (space->showNumbers && gateCount < 16 && pulseCount < 32) {
-        char variable[32];
-        char line[2048];
-        RKIQZ X[pulseCount];
-        const int gateShown = 8;
-        for (p = 0; p < 2; p++) {
-			printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"), p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
-            for (n = 0; n < pulseCount; n++) {
-                X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
-            }
-            
-            /* A block ready for MATLAB
-             
-             - Copy and paste X = [ 0+2j, 0+1j, ...
-            
-            Then, all the previous calculations can be extremely easy.
-             
-             N = 4; % lag count 5 (max lag 4)
-             g = 1; % gate 1
-             C = xcorr(Xh(g, :), Xv(g, :), 4, 'unbiased') .';
-             wn = 3 * N^2 + 3 * N - 1 - 5 * (-N + 1 : N - 1).^2;
-             wd = 3 / ((2 * N - 1) * (2 * N + 1) * (2 * N + 3));
-             gC = exp(wd * sum(wn(:) .* log(abs(C))))
-             
-             */
-            j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
-            for (k = 0; k < gateCount; k++) {
-                for (n = 0; n < pulseCount; n++) {
-                    j += sprintf(line + j, " %.0f%+.0fj,", X[n].i[k], X[n].q[k]);
-                }
-                j += sprintf(line + j - 1, ";...\n") - 1;
-            }
-            sprintf(line + j - 5, "]\n");
-            printf("%s\n", line);
-            
-            for (n = 0; n < pulseCount; n++) {
-                sprintf(variable, "  X[%d] = ", n);
-                RKShowVecIQZ(variable, &X[n], gateShown);
-            }
-            printf(RKEOL);
-            RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                              // mean(X) in MATLAB
-            RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                              // var(X, 1) in MATLAB
-            printf(RKEOL);
-            for (k = 0; k < lagCount; k++) {
-                sprintf(variable, "  R[%d] = ", k);
-                RKShowVecIQZ(variable, &space->R[p][k], gateShown);
-            }
-            printf(RKEOL);
-            for (k = 0; k < lagCount; k++) {
-                sprintf(variable, " aR[%d] = ", k);
-                RKShowVecFloat(variable, space->aR[p][k], gateShown);
-            }
-            printf(RKEOL);
-        }
-		printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
-        for (j = 0; j < 2 * lagCount - 1; j++) {
-            k = j - lagCount + 1;
-            sprintf(variable, " C[%2d] = ", k);
-            RKShowVecIQZ(variable, &space->C[j], gateShown);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
-        }
-        printf(RKEOL);
-        RKShowVecFloat("    gC = ", space->gC, gateShown);
-        printf(RKEOL);
-    }
-
     //
     //  ACF & CCF to moments
     //
-
-	RKFloat num, den;
+    
+	RKFloat num, den, wsc;
 
     for (p = 0; p < 2; p++) {
 		for (k = 0; k < gateCount; k++) {
@@ -235,6 +163,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = logf(space->S[p][k]);
 					den = logf(space->aR[p][1][k]);
+					wsc = 1.0f;
 					break;
 				case RKMomentMaskLag2:
 					space->S[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f)
@@ -242,6 +171,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = logf(space->aR[p][1][k]);
 					den = logf(space->aR[p][2][k]);
+					wsc = 1.0f / sqrtf(3.0f);
 					break;
 				case RKMomentMaskLag3:
 					space->S[p][k] = powf(space->aR[p][1][k], 6.0f / 7.0f) * powf(space->aR[p][2][k], 3.0f / 7.0f)
@@ -249,6 +179,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = 11.0f * logf(space->aR[p][1][k]) + 2.0f * logf(space->aR[p][2][k]);
 					den = 13.0f * logf(space->aR[p][3][k]);
+					wsc = 1.0f / (7.0f * sqrtf(2.0));
 					break;
 				case RKMomentMaskLag4:
 					space->S[p][k] = powf(space->aR[p][1][k], 54.0f / 86.0f) * powf(space->aR[p][2][k], 39.0f / 86.0f) * powf(space->aR[p][3][k], 14.0f / 86.0f)
@@ -256,20 +187,21 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = 13.0f * logf(space->aR[p][1][k]) + 7.0f * logf(space->aR[p][2][k]);
 					den = 3.0f * logf(space->aR[p][3][k]) + 17.0f * logf(space->aR[p][4][k]);
+					wsc = 1.0 / sqrtf(2.0f * 129.0f);
 					break;
 			}
 			space->Z[p][k] = 10.0f * log10f(space->S[p][k]) + space->rcor[p][k];
-			space->V[p][k] = space->velocityFactor * atan2f(space->R[p][1].i[k], space->R[p][1].q[k]);
+			space->V[p][k] = space->velocityFactor * atan2f(space->R[p][1].q[k], space->R[p][1].i[k]);
 			if (num < den) {
 				space->W[p][k] = 0.0f;
 			} else {
-				space->W[p][k] = space->widthFactor * sqrtf(num - den);
+				space->W[p][k] = space->widthFactor * wsc * sqrtf(num - den);
 			}
 		} // for (k = 0; k < gateCount ...)
     }
-	// Note (k = j - lagCount + 1) was used for C[j] = lag k; So, lag-0 is stored at index (lagCount), e.g., For lagCount = 3, C in [-2, -1, 0, 1, 2]
-	RKFloat *Ci = space->C[space->lagCount].i;
-	RKFloat *Cq = space->C[space->lagCount].q;
+    // Note: (k = j - lagCount + 1) was used for C[j] = lag k; So, lag-0 is stored at index (lagCount - 1), e.g., For lagCount = 3, C in [-2, -1, 0, 1, 2], C(lag-0) @ 2
+	RKFloat *Ci = space->C[lagCount - 1].i;
+	RKFloat *Cq = space->C[lagCount - 1].q;
     for (k = 0; k < gateCount; k++) {
 		if (space->mask[k] == RKMomentMaskCensored) {
 			space->ZDR[k] = NAN;
@@ -310,8 +242,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 				/ (powf(space->aR[0][1][k] * space->aR[1][1][k], 27.0f / 86.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 39.0 / 172.0f) * powf(space->aR[0][3][k] * space->aR[1][3][k], 7.0f / 86.0f));
 				break;
 		}
-		space->PhiDP[k] = -atan2(Ci[k], Cq[k]) + space->pcal;
-		RKSingleWrapTo2PI(space->PhiDP[k]);
+		space->PhiDP[k] = -atan2(Cq[k], Ci[k]) + space->pcal;
 		if (k > 1) {
 			space->KDP[k] = space->PhiDP[k] - space->PhiDP[k - 1];
 			RKSingleWrapTo2PI(space->KDP[k]);
@@ -319,8 +250,98 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 		}
     }
 
-    //    gettimeofday(&toc, NULL);
-    //    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
+	// Show and tell
+	if (space->showNumbers && gateCount <= 16 && pulseCount <= 32) {
+		char variable[RKNameLength];
+		char *line = (char *)malloc(RKMaximumStringLength);
+		RKIQZ *X = (RKIQZ *)malloc(pulseCount * sizeof(RKIQZ));
+		if (line == NULL || X == NULL) {
+			fprintf(stderr, "Error allocating pulse buffer.\n");
+			exit(EXIT_FAILURE);
+		}
+		const int gateShown = 8;
+		for (p = 0; p < 2; p++) {
+			printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"), p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
+			for (n = 0; n < pulseCount; n++) {
+				X[n] = RKGetSplitComplexDataFromPulse(input[n], p);
+			}
+
+			/* A block ready for MATLAB
+
+			 - Copy and paste X = [ 0+2j, 0+1j, ...
+
+			 Then, all the previous calculations can be extremely easy.
+
+			 N = 4;                                                    % lag count 5 (max lag 4), be sure this is correct!
+			 g = 1;                                                    % gate 1
+			 C = xcorr(Xh(g, :), Xv(g, :), N, 'unbiased') .';
+			 wn = 3 * N^2 + 3 * N - 1 - 5 * (-N : N).^2;
+			 wd = 3 / ((2 * N - 1) * (2 * N + 1) * (2 * N + 3));
+			 gC = exp(wd * sum(wn(:) .* log(abs(C))))
+
+			 */
+			j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
+			for (k = 0; k < gateCount; k++) {
+				for (n = 0; n < pulseCount; n++) {
+					j += sprintf(line + j, " %.0f%+.0fj,", X[n].i[k], X[n].q[k]);
+				}
+				j += sprintf(line + j - 1, ";...\n") - 1;
+			}
+			sprintf(line + j - 5, "]\n");
+			printf("%s\n", line);
+
+			for (n = 0; n < pulseCount; n++) {
+				sprintf(variable, "  X[%d] = ", n);
+				RKShowVecIQZ(variable, &X[n], gateShown);
+			}
+			printf(RKEOL);
+			RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                              // mean(X) in MATLAB
+			RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                              // var(X, 1) in MATLAB
+			printf(RKEOL);
+			for (k = 0; k < lagCount; k++) {
+				sprintf(variable, "  R[%d] = ", k);
+				RKShowVecIQZ(variable, &space->R[p][k], gateShown);
+			}
+			printf(RKEOL);
+			for (k = 0; k < lagCount; k++) {
+				sprintf(variable, " aR[%d] = ", k);
+				RKShowVecFloat(variable, space->aR[p][k], gateShown);
+			}
+			printf(RKEOL);
+		}
+		printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
+		for (j = 0; j < 2 * lagCount - 1; j++) {
+			k = j - lagCount + 1;
+			sprintf(variable, " C[%2d] = ", k);
+			RKShowVecIQZ(variable, &space->C[j], gateShown);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
+		}
+		printf(RKEOL);
+		RKShowVecFloat("    gC = ", space->gC, gateShown);
+		printf(RKEOL);
+
+		for (p = 0; p < 2; p++) {
+			sprintf(variable, "    S%s = ", p == 0 ? "h" : "v");
+			RKShowVecFloat(variable, space->S[p], gateShown);
+			sprintf(variable, "    V%s = ", p == 0 ? "h" : "v");
+			RKShowVecFloat(variable, space->V[p], gateShown);
+			sprintf(variable, "    W%s = ", p == 0 ? "h" : "v");
+			RKShowVecFloat(variable, space->W[p], gateShown);
+		}
+
+		printf(RKEOL);
+		RKShowVecFloat("   ZDR = ", space->ZDR, gateShown);
+		RKShowVecFloat(" PhiDP = ", space->PhiDP, gateShown);
+		RKShowVecFloat(" RhoHV = ", space->RhoHV, gateShown);
+
+		printf(RKEOL);
+		fflush(stdout);
+
+		free(line);
+		free(X);
+	}
+
+//    gettimeofday(&toc, NULL);
+//    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
     
     return pulseCount;
     

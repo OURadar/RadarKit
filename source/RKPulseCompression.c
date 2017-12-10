@@ -8,6 +8,8 @@
 
 #include <RadarKit/RKPulseCompression.h>
 
+#define RKPulseCompressionMultiplyMethod 1
+
 // Internal Functions
 
 static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *);
@@ -75,7 +77,6 @@ static void *pulseCompressionCore(void *_in) {
     fftwf_complex *o;
 
     const int c = me->id;
-    const int multiplyMethod = 1;
 
     uint32_t blindGateCount = 0;
 
@@ -166,8 +167,10 @@ static void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
+    if (engine->verbose) {
+        RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
+    }
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -254,8 +257,8 @@ static void *pulseCompressionCore(void *_in) {
                         in[k][1] = (RKFloat)X++->q;
                     }
                     // Zero pad the input; a filter is always zero-padded in the setter function.
-                    if (planSize > k) {
-                        memset(in[k], 0, (planSize - k) * sizeof(fftwf_complex));
+                    if (planSize > bound) {
+                        memset(in[bound], 0, (planSize - bound) * sizeof(fftwf_complex));
                     }
 
                     fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
@@ -266,21 +269,32 @@ static void *pulseCompressionCore(void *_in) {
 
                     //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
 
-                    if (multiplyMethod == 1) {
-                        // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
-						RKSIMD_yconj((RKComplex *)out, planSize);
-                        RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
-                    } else if (multiplyMethod == 2) {
-                        // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
-                        RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
-                        RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
-                        RKSIMD_izmul(zi, zo, planSize, true);
-                        RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
-                    } else {
-                        // Regular multiplication with compiler optimization -Os
-						RKSIMD_yconj((RKComplex *)in, planSize);
-                        RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
-                    }
+#if RKPulseCompressionMultiplyMethod == 1
+                    
+                    // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
+                    RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, planSize);
+
+#elif RKPulseCompressionMultiplyMethod == 2
+
+                    // In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
+                    RKSIMD_yconj((RKComplex *)out, planSize);
+                    RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+
+#elif RKPulseCompressionMultiplyMethod == 3
+
+                    // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
+                    RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
+                    RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
+                    RKSIMD_izmul(zi, zo, planSize, true);
+                    RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
+
+#else
+
+                    // Regular multiplication and let compiler optimize with either -O1 -O2 or -Os
+                    RKSIMD_yconj((RKComplex *)in, planSize);
+                    RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
+
+#endif
 
                     //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
 
@@ -290,7 +304,6 @@ static void *pulseCompressionCore(void *_in) {
 
                     // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
                     RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
-                    //RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize / sqrtf(engine->filterAnchors[gid][j].gain), planSize);
 
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
@@ -354,7 +367,9 @@ static void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    if (engine->verbose) {
+        RKLog(">%s %s Stopped.\n", engine->name, name);
+    }
     
     return NULL;
 }
@@ -395,20 +410,28 @@ static void *pulseWatcher(void *_in) {
     engine->memoryUsage += 2 * pulse->header.capacity * sizeof(fftwf_complex);
 
     if (RKFilenameExists(wisdomFile)) {
-        RKLog(">%s Loading DFT wisdom ...\n", engine->name);
+        if (engine->verbose) {
+            RKLog(">%s Loading DFT wisdom ...\n", engine->name);
+        }
         fftwf_import_wisdom_from_filename(wisdomFile);
     } else {
-        RKLog(">%s DFT wisdom file not found.\n", engine->name);
+        if (engine->verbose) {
+            RKLog(">%s DFT wisdom file not found.\n", engine->name);
+        }
         exportWisdom = true;
     }
 
     // Go through the maximum plan size and divide it by two a few times
     for (j = 0; j < 3; j++) {
-        RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
+        if (engine->verbose) {
+            RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
+        }
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-        //fftwf_print_plan(engine->planForwardInPlace[planIndex]);
+        if (engine->verbose > 2) {
+            fftwf_print_plan(engine->planForwardInPlace[planIndex]);
+        }
         engine->planSizes[planIndex++] = planSize;
         engine->planCount++;
         planSize /= 2;
@@ -466,7 +489,9 @@ static void *pulseWatcher(void *_in) {
     // Increase the tic once to indicate the engine is ready
     engine->tic++;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    }
 
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
@@ -552,7 +577,9 @@ static void *pulseWatcher(void *_in) {
                     }
                 }
                 if (!found) {
-                    RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
+                    if (engine->verbose) {
+                        RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
+                    }
                     if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
                         RKLog("%s Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
                         exit(EXIT_FAILURE);
@@ -563,7 +590,9 @@ static void *pulseWatcher(void *_in) {
                     engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
                     engine->planSizes[planIndex] = planSize;
                     engine->planCount++;
-                    RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
+                    if (engine->verbose) {
+                        RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
+                    }
                     exportWisdom = true;
                 }
                 engine->planIndices[k][j] = planIndex;
@@ -610,7 +639,9 @@ static void *pulseWatcher(void *_in) {
 
     // Export wisdom
     if (exportWisdom) {
-        RKLog("%s Saving DFT wisdom ...\n", engine->name);
+        if (engine->verbose) {
+            RKLog("%s Saving DFT wisdom ...\n", engine->name);
+        }
         fftwf_export_wisdom_to_filename(wisdomFile);
     }
 
@@ -933,9 +964,10 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         w0 += (w0 / 3);
         w1 += (w1 / 3);
         w2 += (w2 / 3);
-        sprintf(format, ">%%s - Filter[%%d][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   %%+6.3f rad/s   %%+6.2f dB   X @ (%%%ds, %%%ds)\n",
+        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   %%+6.3f rad/s   %%+5.2f dB   X @ (%%%ds, %%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
+				(int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
                 (int)log10f(nfft) + 1,
                 w1 + 1,

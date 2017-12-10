@@ -6,8 +6,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_RKClock_h__
-#define __RadarKit_RKClock_h__
+#ifndef __RadarKit_Clock_h__
+#define __RadarKit_Clock_h__
 
 #include <RadarKit/RKFoundation.h>
 

@@ -450,8 +450,11 @@ static void *rayGatherer(void *in) {
     // Start and end indices of the input rays
     uint32_t is = 0;
     pthread_t tidSweepWriter = NULL;
-    
-    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+
+    if (engine->verbose) {
+		RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
+        RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    }
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -590,7 +593,6 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
         strcpy(engine->handleFilesScript, script);
         engine->hasHandleFilesScript = true;
         engine->handleFilesScriptProducesTgz = expectTgz;
-        RKLog("%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, expectTgz ? "true" : "false");
     } else {
         RKLog("%s Error. Handle files scirpt does not exist.\n", engine->name);
     }

@@ -108,7 +108,7 @@ void RKClockSetHighPrecision(RKClock *clock, const bool value) {
 
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     int j, k;
-    double x, dx, du, n;
+    double x, dx, du;
     struct timeval t;
     bool recent = true;
     
@@ -147,16 +147,14 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         }
         if (clock->count > clock->stride) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
-            n = (double)clock->stride;
         } else {
             j = 0;
-            n = (double)clock->count;
         }
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
         du = clock->uBuffer[k] - clock->uBuffer[j];
         if (recent) {
-            if (du <= 1.0e-6 || du > 1.0e9) {
+            if (du <= 1.0e-7 || du > 1.0e9) {
                 if (clock->tic == 0) {
                     RKLog("%s Warning. Reference tic change of %.e per second is unexpected.\n", clock->name, du);
                     RKLog("%s Warning. Will be replaced with an internal uniform reference.\n", clock->name);

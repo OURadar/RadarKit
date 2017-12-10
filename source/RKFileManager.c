@@ -240,28 +240,29 @@ static void *fileRemover(void *in) {
     // Use the first folder as the initial value of parentFolder
     strcpy(parentFolder, folders[0]);
 
-    RKLog(">%s %s Started.   mem = %s B   capacity = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(me->capacity));
-    RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
-    
-    if (me->usage > 10 * 1024 * 1024) {
-        RKLog("%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, name,
-              RKIntegerToCommaStyleString(me->count),
-              RKIntegerToCommaStyleString(me->usage / 1024 / 1024),
-              RKIntegerToCommaStyleString(me->limit / 1024 / 1024),
-              100.0f * me->usage / me->limit);
-    } else if (me->usage > 10 * 1024) {
-        RKLog("%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, name,
-              RKIntegerToCommaStyleString(me->count),
-              RKIntegerToCommaStyleString(me->usage / 1024),
-              RKIntegerToCommaStyleString(me->limit / 1024),
-              100.0f * me->usage / me->limit);
-    } else {
-        RKLog("%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, name,
-              RKIntegerToCommaStyleString(me->count),
-              RKIntegerToCommaStyleString(me->usage),
-              RKIntegerToCommaStyleString(me->limit),
-              100.0f * me->usage / me->limit);
+    if (engine->verbose) {
+        RKLog(">%s %s Started.   mem = %s B   capacity = %s\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(me->capacity));
+        RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
+        if (me->usage > 10 * 1024 * 1024) {
+            RKLog("%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, name,
+                  RKIntegerToCommaStyleString(me->count),
+                  RKIntegerToCommaStyleString(me->usage / 1024 / 1024),
+                  RKIntegerToCommaStyleString(me->limit / 1024 / 1024),
+                  100.0f * me->usage / me->limit);
+        } else if (me->usage > 10 * 1024) {
+            RKLog("%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, name,
+                  RKIntegerToCommaStyleString(me->count),
+                  RKIntegerToCommaStyleString(me->usage / 1024),
+                  RKIntegerToCommaStyleString(me->limit / 1024),
+                  100.0f * me->usage / me->limit);
+        } else {
+            RKLog("%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, name,
+                  RKIntegerToCommaStyleString(me->count),
+                  RKIntegerToCommaStyleString(me->usage),
+                  RKIntegerToCommaStyleString(me->limit),
+                  100.0f * me->usage / me->limit);
+        }
     }
 
     me->tic++;
@@ -328,7 +329,9 @@ static void *fileRemover(void *in) {
     free(filenames);
     free(indexedStats);
     
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    if (engine->verbose) {
+        RKLog(">%s %s Stopped.\n", engine->name, name);
+    }
     
     return NULL;
 }
@@ -412,8 +415,10 @@ static void *folderWatcher(void *in) {
     // Increase the tic once to indicate the engine is ready
     engine->tic++;
 
-    RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
-
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
+    }
+    
     // Wait here while the engine should stay active
     time_t now;
     time_t longTime = engine->maximumLogAgeInDays * 86400;
@@ -506,7 +511,9 @@ int RKFileManagerStart(RKFileManager *engine) {
     engine->state |= RKEngineStateProperlyWired;
     if (engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
-        RKLog("%s Usage limit not set, use default " UNDERLINE("%s") " GB\n", engine->name, RKIntegerToCommaStyleString(engine->usagelimit / 1073741824));
+        if (engine->verbose) {
+            RKLog("%s Usage limit not set, use default " UNDERLINE("%s") " GB\n", engine->name, RKIntegerToCommaStyleString(engine->usagelimit / 1073741824));
+        }
     }
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);

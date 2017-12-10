@@ -463,6 +463,8 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
+	pthread_mutex_lock(&user->mutex);
+
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Modes "1", "2", "3" and "4" are for signal processor only - showing the latest summary text view
         if (user->streams & user->access && td >= 0.05) {
@@ -528,8 +530,6 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
     }
-
-    pthread_mutex_lock(&user->mutex);
 
     // For contiguous streaming:
     // If we just started a connection, grab the payload that is either:
@@ -902,7 +902,7 @@ int socketStreamHandler(RKOperator *O) {
                         *userDataV++ = *c16DataV++;
                         i++;
                     }
-                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 10); k++) {
+                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
                         userDataH->i   = 0;
                         userDataH++->q = 0;
                         userDataV->i   = 0;
@@ -920,7 +920,7 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
-					for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 10); k++) {
+					for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
 						userDataH->i   = 0;
 						userDataH++->q = 0;
 						userDataV->i   = 0;
@@ -947,7 +947,6 @@ int socketStreamHandler(RKOperator *O) {
                     pulseHeader.gateCount /= k;
                     pulseHeader.gateSizeMeters *= (float)k;
 
-					gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
 					scale = 1.0f;
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);

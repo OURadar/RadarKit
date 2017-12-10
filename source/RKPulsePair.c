@@ -303,17 +303,14 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
     if (space->showNumbers && count < 50 && gateCount < 50) {
-        char variable[32];
-        char line[4096];
+        char variable[RKNameLength];
+        char line[RKMaximumStringLength];
         RKIQZ *X = (RKIQZ *)malloc(RKMaxPulsesPerRay * sizeof(RKIQZ));
         const int gateShown = 8;
         
         // Go through both polarizations
         for (p = 0; p < 2; p++) {
-            printf("\%sChannel %d (%s pol):%s\n",
-                   rkGlobalParameters.showColor ? "\033[4m" : "",
-                   p, p == 0 ? "H" : (p == 1 ? "V" : "X"),
-                   rkGlobalParameters.showColor ? "\033[24m" : "");
+            printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"), p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
             for (n = 0; n < count; n++) {
                 X[n] = RKGetSplitComplexDataFromPulse(pulses[n], p);
             }
@@ -370,9 +367,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             RKShowVecFloat(variable, space->Z[p], gateShown);
             printf(RKEOL);
         }
-        printf("%sCross-channel:%s\n",
-               rkGlobalParameters.showColor ? "\033[4m" : "",
-               rkGlobalParameters.showColor ? "\033[24m" : "");
+        printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
         RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                  // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
 
