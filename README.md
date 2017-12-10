@@ -345,7 +345,7 @@ rktest --help
 
 Some performance tests are implemented to get an idea of the number of workers to use. Here's an example output from the RaXPol main host:
 
-```shell
+```
 marina:~/radarkit root$ rktest -T 25
 ===========================
 RKTestPulseCompressionSpeed
