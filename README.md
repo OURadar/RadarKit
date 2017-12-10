@@ -1,5 +1,5 @@
 RadarKit
-========
+===
 
 First of all. Thanks for your interest in the framework! :smile: :thumbsup: :punch:
 
@@ -168,7 +168,7 @@ A seprate processing space to generate high-level products is implemented in Pyt
 
 
 Design Philosophy
-=================
+===
 
 Three major hardware components of a radar: (i) a __digital transceiver__, (ii) a __pedestal__, and (iii) a __health relay__ (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so that the RadarKit can be interfaced with other libraries, which are specific to the hardware and/or vendor design. It is the responsibility of user to implement the appropriate interface routines to bridge the data transport and/or control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_, which are routines to allocate an object--akin to object oriented programming, althought RadarKit is a straight C implementation, interact with the object and deallocate the object, respectively. The _exec_ routine has the form to accept text command and produce text response. Some keywords for the command are already defined in the framework so user should not use them. They are intercepted prior to passing down to the _exec_ routine. Detailed usage on these functions will be discussed in detail later.
 
@@ -187,7 +187,7 @@ Base radar products are generated on a ray-by-ray basis. Each ray is of type `RK
 
 
 Radar Struct
-============
+===
 
 This is about the only structure you need to worry about. A radar structure represents an object-like structure where everything is encapsulated.
 
@@ -272,7 +272,7 @@ void RKSetHealthReady(RKRadar *, RKHealth *);
 ``````
 
 Hardware Routines
-=================
+===
 
 As mentioend previously, the initialization, execution and deallocation routines of the _transceiver_, _pedestal_, and _health relay_ must have a strict form, as follows. The intialization of the hardware must be in the form of
 
@@ -322,7 +322,7 @@ int execRoutine(RKTransceiver userTransceiver, const char *command, char *respon
 ``````
 
 Reserved Keywords for Commands
-==============================
+===
 
 ### `disconnect` ###
 
@@ -333,7 +333,7 @@ This is a command the master controller issues when everything should stop.
 This is a command the master controller issues for checking if the component wants to report opereate (1) or standby (0)
 
 RadarKit Test Program
-=====================
+===
 
 A test program is provided to assess if everything can run properly with your system. Call it with a _help_ option to show all the available options.
 
@@ -341,8 +341,8 @@ A test program is provided to assess if everything can run properly with your sy
 rktest --help
 ``````
 
-RadarKit Performance Test
-===
+### RadarKit Performance Test
+
 Some performance tests are implemented to get an idea of the number of workers to use. Here's an example output from the RaXPol main host:
 
 ```shell
@@ -351,42 +351,42 @@ marina:~/radarkit root$ rktest -T 25
 RKTestPulseCompressionSpeed
 ===========================
 2017/12/10 10:30:15 PulseCompression
-Test 0 -> 2984.413 ms
-Test 1 -> 2984.216 ms
-Test 2 -> 2984.532 ms
-Elapsed time: 2.984 s (Best of 3)
-Time for each pulse (8,192 gates) = 0.298 ms
-Speed: 3350.96 pulses / sec
+                    Test 0 -> 2984.413 ms
+                    Test 1 -> 2984.216 ms
+                    Test 2 -> 2984.532 ms
+                    Elapsed time: 2.984 s (Best of 3)
+                    Time for each pulse (8,192 gates) = 0.298 ms
+                    Speed: 3350.96 pulses / sec
 marina:~/radarkit root$ rktest -T 24
 ==========================
 RKTestMomentProcessorSpeed
 ==========================
 2017/12/10 10:30:29 PulsePairHop:
-Test 0 -> 569.116 s
-Test 1 -> 560.882 s
-Test 2 -> 560.983 s
-Elapsed time: 0.561 s
-Time for each ray (100 pulses x 4,096 gates) = 1.122 ms (Best of 3)
-Speed: 891.45 rays / sec
+                    Test 0 -> 569.116 s
+                    Test 1 -> 560.882 s
+                    Test 2 -> 560.983 s
+                    Elapsed time: 0.561 s
+                    Time for each ray (100 pulses x 4,096 gates) = 1.122 ms (Best of 3)
+                    Speed: 891.45 rays / sec
 2017/12/10 10:30:30 MultiLag (L = 2):
-Test 0 -> 2445.533 s
-Test 1 -> 2445.345 s
-Test 2 -> 2445.104 s
-Elapsed time: 2.445 s
-Time for each ray (100 pulses x 4,096 gates) = 4.890 ms (Best of 3)
-Speed: 204.49 rays / sec
+                    Test 0 -> 2445.533 s
+                    Test 1 -> 2445.345 s
+                    Test 2 -> 2445.104 s
+                    Elapsed time: 2.445 s
+                    Time for each ray (100 pulses x 4,096 gates) = 4.890 ms (Best of 3)
+                    Speed: 204.49 rays / sec
 2017/12/10 10:30:38 MultiLag (L = 3):
-Test 0 -> 3312.016 s
-Test 1 -> 3312.891 s
-Test 2 -> 3311.574 s
-Elapsed time: 3.312 s
-Time for each ray (100 pulses x 4,096 gates) = 6.623 ms (Best of 3)
-Speed: 150.99 rays / sec
+                    Test 0 -> 3312.016 s
+                    Test 1 -> 3312.891 s
+                    Test 2 -> 3311.574 s
+                    Elapsed time: 3.312 s
+                    Time for each ray (100 pulses x 4,096 gates) = 6.623 ms (Best of 3)
+                    Speed: 150.99 rays / sec
 2017/12/10 10:30:47 MultiLag (L = 4):
-Test 0 -> 4194.323 s
-Test 1 -> 4193.150 s
-Test 2 -> 4192.706 s
-Elapsed time: 4.193 s
-Time for each ray (100 pulses x 4,096 gates) = 8.385 ms (Best of 3)
-Speed: 119.25 rays / sec
-```
+                    Test 0 -> 4194.323 s
+                    Test 1 -> 4193.150 s
+                    Test 2 -> 4192.706 s
+                    Elapsed time: 4.193 s
+                    Time for each ray (100 pulses x 4,096 gates) = 8.385 ms (Best of 3)
+                    Speed: 119.25 rays / sec
+``````
