@@ -1834,11 +1834,11 @@ void RKTestMomentProcessorSpeed(void) {
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
-            RKLog(">Test %d -> %.3f s\n", i, 1.0e3 * t);
+            RKLog(">Test %d -> %.1f ms\n", i, 1.0e3 * t);
             mint = MIN(mint, t);
         }
         RKLog(">Elapsed time: %.3f s\n", mint);
-        RKLog(">Time for each ray (%s pulses x %s gates) = %.3f ms (Best of 3)\n",
+        RKLog(">Time for each ray (%s pulses x %s gates) = %.1f ms (Best of 3)\n",
               RKIntegerToCommaStyleString(pulseCount),
               RKIntegerToCommaStyleString(pulseCapacity),
               1.0e3 * mint / testCount);

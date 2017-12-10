@@ -340,3 +340,53 @@ A test program is provided to assess if everything can run properly with your sy
 ```
 rktest --help
 ``````
+
+RadarKit Performance Test
+===
+Some performance tests are implemented to get an idea of the number of workers to use. Here's an example output from the RaXPol main host:
+
+```shell
+marina:~/radarkit root$ rktest -T 25
+===========================
+RKTestPulseCompressionSpeed
+===========================
+2017/12/10 10:30:15 PulseCompression
+Test 0 -> 2984.413 ms
+Test 1 -> 2984.216 ms
+Test 2 -> 2984.532 ms
+Elapsed time: 2.984 s (Best of 3)
+Time for each pulse (8,192 gates) = 0.298 ms
+Speed: 3350.96 pulses / sec
+marina:~/radarkit root$ rktest -T 24
+==========================
+RKTestMomentProcessorSpeed
+==========================
+2017/12/10 10:30:29 PulsePairHop:
+Test 0 -> 569.116 s
+Test 1 -> 560.882 s
+Test 2 -> 560.983 s
+Elapsed time: 0.561 s
+Time for each ray (100 pulses x 4,096 gates) = 1.122 ms (Best of 3)
+Speed: 891.45 rays / sec
+2017/12/10 10:30:30 MultiLag (L = 2):
+Test 0 -> 2445.533 s
+Test 1 -> 2445.345 s
+Test 2 -> 2445.104 s
+Elapsed time: 2.445 s
+Time for each ray (100 pulses x 4,096 gates) = 4.890 ms (Best of 3)
+Speed: 204.49 rays / sec
+2017/12/10 10:30:38 MultiLag (L = 3):
+Test 0 -> 3312.016 s
+Test 1 -> 3312.891 s
+Test 2 -> 3311.574 s
+Elapsed time: 3.312 s
+Time for each ray (100 pulses x 4,096 gates) = 6.623 ms (Best of 3)
+Speed: 150.99 rays / sec
+2017/12/10 10:30:47 MultiLag (L = 4):
+Test 0 -> 4194.323 s
+Test 1 -> 4193.150 s
+Test 2 -> 4192.706 s
+Elapsed time: 4.193 s
+Time for each ray (100 pulses x 4,096 gates) = 8.385 ms (Best of 3)
+Speed: 119.25 rays / sec
+```
