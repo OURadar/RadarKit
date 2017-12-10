@@ -52,6 +52,7 @@ void RKTestModuloMath(void) {
 }
 
 void RKTestSIMD(const RKTestSIMDFlag flag) {
+    SHOW_FUNCTION_NAME
     RKSIMD_show_info();
     
     int i;
@@ -360,7 +361,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_iymul_reg(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              -Os: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("              -Ox: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -409,7 +410,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_Int2Complex_reg(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              -Os: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("              -Ox: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
