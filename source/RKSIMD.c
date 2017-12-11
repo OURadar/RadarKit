@@ -15,7 +15,7 @@
 #include <RadarKit/RKSIMD.h>
 
 void RKSIMD_show_info(void) {
-    printf(UNDERLINE("SIMD Info:")"\n");
+    printf(rkGlobalParameters.showColor ? UNDERLINE("SIMD Info:")"\n" : "SIMD Info:\n----------\n");
     #if defined(__AVX512F__)
     printf("AVX512F is active.\n");
     #elif defined(__AVX__)

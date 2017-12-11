@@ -9,9 +9,12 @@
 #include <RadarKit/RKTest.h>
 #include <getopt.h>
 
-#define RKFMT                          "%5d"
-#define RKSIMD_TEST_DESC_FORMAT        "%65s"
-#define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
+#define RKFMT                               "%5d"
+#define RKSIMD_TEST_DESC_FORMAT             "%65s"
+#define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
+#define RKSIMD_TEST_RESULT(clr, str, res)   clr ? \
+    printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed") : \
+    printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 #define PEDESTAL_SAMPLING_TIME         0.01
 #define HEALTH_RELAY_SAMPLING_TIME     0.1
@@ -107,7 +110,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Copy -  zcpy", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Copy -  zcpy", all_good);
     
     //
     
@@ -128,7 +131,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Scaling by a Float -  zscl", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Scaling by a Float -  zscl", all_good);
     
     //
     
@@ -146,7 +149,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Addition -  zadd", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Addition -  zadd", all_good);
     
     //
     
@@ -165,7 +168,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Addition - izadd", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Complex Vector Addition - izadd", all_good);
     
     //
     
@@ -183,7 +186,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Multiplication -  zmul", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Multiplication -  zmul", all_good);
     
     //
     
@@ -202,7 +205,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Multiplication - izmul", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Complex Vector Multiplication - izmul", all_good);
     
     //
     
@@ -229,7 +232,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Deinterleaved Complex Vector Multiplication - iymul", all_good);
     
     //
     
@@ -256,7 +259,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 		}
 		all_good &= good;
 	}
-	RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
+	RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
 
 	//
 	
@@ -286,7 +289,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Deinterleave, Multiply Using iymul, and Interleave", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Deinterleave, Multiply Using iymul, and Interleave", all_good);
     
     //
     
@@ -312,7 +315,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Conversion from i16 to float", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Conversion from i16 to float", all_good);
     
     if (flag & RKTestSIMDFlagPerformanceTestAll) {
         printf("\n==== Performance Test ====\n\n");
@@ -337,7 +340,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
 
         int k;
-        const int m = 100000;
+        const int m = 10000;
         struct timeval t1, t2;
         
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
@@ -346,14 +349,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_zmul(src, src, dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("Regular SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+            printf("Regular SIMD multiplication time for %dK loops = %.3f s\n", m / 1000, RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_izmul(src, dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("In-place SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+            printf("In-place SIMD multiplication time for %dK loops = %.3f s\n", m / 1000, RKTimevalDiff(t2, t1));
             
             printf("Vectorized Complex Multiplication (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -361,21 +364,21 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_iymul_reg(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              reg: %.3f s (Compiler Optimized -O2)\n", RKTimevalDiff(t2, t1));
+            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_iymul(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            iymul: %.3f s (Normal interleaved I/Q)\n", RKTimevalDiff(t2, t1));
+            printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("            izmul: %.3f s (Deinterleaved I/Q)\n", RKTimevalDiff(t2, t1));
+            printf("            izmul: " RKSIMD_TEST_TIME_FORMAT " ms (Deinterleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -384,7 +387,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_IQZ2Complex(dst, cc, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("    E + izmul + D: %.3f s (D, Multiply, I)\n", RKTimevalDiff(t2, t1));
+            printf("    E + izmul + D: " RKSIMD_TEST_TIME_FORMAT " ms (D, Multiply, I)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
         
         if (flag & RKTestSIMDFlagPerformanceTestConversion) {
@@ -395,14 +398,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 memcpy(src->q, dst->q, RKGateCount * sizeof(RKFloat));
             }
             gettimeofday(&t2, NULL);
-            printf("       memcpy x 2: %.3f s (Compiler Optimized -O2)\n", RKTimevalDiff(t2, t1));
+            printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_zcpy(src, dst, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("             zcpy: %.3f s (SIMD)\n", RKTimevalDiff(t2, t1));
+            printf("             zcpy: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             printf("Conversions (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -410,14 +413,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_Int2Complex_reg(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              reg: %.3f s (Compiler Optimized -O2)\n", RKTimevalDiff(t2, t1));
+            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_Int2Complex(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("      cvtepi32_ps: %.3f s (SIMD)\n", RKTimevalDiff(t2, t1));
+            printf("      cvtepi32_ps: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
         
         printf("\n==========================\n");
