@@ -252,7 +252,11 @@ static void *pulseCompressionCore(void *_in) {
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                     X += engine->filterAnchors[gid][j].inputOrigin;
-                    RKSIMD_Int2Complex_reg(X, (RKComplex *)in, bound);
+                    if (engine->filterAnchors[gid][j].inputOrigin % RKSIMDAlignSize == 0) {
+                        RKSIMD_Int2Complex(X, (RKComplex *)in, bound);
+                    } else {
+                        RKSIMD_Int2Complex_reg(X, (RKComplex *)in, bound);
+                    }
 
                     // Zero pad the input; a filter is always zero-padded in the setter function.
                     if (planSize > bound) {
