@@ -6,7 +6,8 @@
 //
 //  █
 //
-//  1.2.4  -
+//  1.2.4  - Improved efficiency of RKPulseCompression
+//         - Reordered RKTest modules
 //         -
 //
 //  1.2.3  - 12/7/2017
@@ -89,7 +90,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.3"
+#define RKVersionString                  "1.2.4"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings

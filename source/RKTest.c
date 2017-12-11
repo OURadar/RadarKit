@@ -59,7 +59,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKSIMD_show_info();
     
     int i;
-    const int n = 32;
+    const int n = RKSIMDAlignSize / sizeof(RKFloat) * 2;
 
     for (i = 1; i <= 8; i++) {
         RKSIMD_show_count(i);
@@ -1695,7 +1695,7 @@ void RKTestPulseCompressionSpeed(void) {
     fftwf_complex *f, *in, *out;
     RKInt16C *X;
     RKComplex *Y;
-    const int testCount = 10000;
+    const int testCount = 2000;
     struct timeval tic, toc;
     double mint, t;
     
@@ -1715,7 +1715,7 @@ void RKTestPulseCompressionSpeed(void) {
     
     RKLog(UNDERLINE("PulseCompression") "\n");
     
-    mint = 999999.0f;
+    mint = INFINITY;
     for (i = 0; i < 3; i++) {
         gettimeofday(&tic, NULL);
         for (j = 0; j < testCount; j++) {
@@ -1724,6 +1724,7 @@ void RKTestPulseCompressionSpeed(void) {
                 RKSIMD_Int2Complex(X, (RKComplex *)in, nfft);
                 fftwf_execute_dft(planForwardInPlace, in, in);
                 fftwf_execute_dft(planForwardOutPlace, f, out);
+				//memcpy(out, f, nfft * sizeof(RKComplex));
                 RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
                 fftwf_execute_dft(planBackwardInPlace, out, out);
                 RKSIMD_iyscl((RKComplex *)out, 1.0f / nfft, nfft);
@@ -1736,14 +1737,11 @@ void RKTestPulseCompressionSpeed(void) {
         }
         gettimeofday(&toc, NULL);
         t = RKTimevalDiff(toc, tic);
-        RKLog(">Test %d -> %.3f ms\n", i, 1.0e3 * t);
+        RKLog(">Test %d -> %.3f ms / pulse\n", i, 1.0e3 * t / testCount);
         mint = MIN(mint, t);
     }
-    
-    RKLog(">Elapsed time: %.3f s (Best of 3)\n", mint);
-    RKLog(">Time for each pulse (%s gates) = %.3f ms\n",
-          RKIntegerToCommaStyleString(nfft),
-          1.0e3 * mint / testCount);
+	RKLog(">Time for each pulse (%s gates) = %.3f ms / pulse (Best of 3)\n",
+		  RKIntegerToCommaStyleString(nfft), 1.0e3 * mint / testCount);
     RKLog(">Speed: %.2f pulses / sec\n", testCount / mint);
     
     fftwf_destroy_plan(planForwardInPlace);
@@ -1763,9 +1761,9 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratch *space;
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
-    const int testCount = 500;
+    const int testCount = 100;
     const int pulseCount = 100;
-    const int pulseCapacity = 4096;
+    const int pulseCapacity = 1 << 12;
     
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
@@ -1773,10 +1771,21 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratchAlloc(&space, pulseCapacity, 5, true);
     
     RKPulse *pulses[pulseCount];
+	RKComplex *X;
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
+		X = RKGetComplexDataFromPulse(pulse, 0);
+		for (j = 0; j < pulseCapacity; j++) {
+			X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
+			X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+		}
+		X = RKGetComplexDataFromPulse(pulse, 1);
+		for (j = 0; j < pulseCapacity; j++) {
+			X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
+			X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+		}
         pulses[k] = pulse;
     }
     
@@ -1808,7 +1817,7 @@ void RKTestMomentProcessorSpeed(void) {
                 RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
                 break;
         }
-        mint = 999999.0f;
+        mint = INFINITY;
         for (i = 0; i < 3; i++) {
             gettimeofday(&tic, NULL);
             for (k = 0; k < testCount; k++) {
@@ -1817,14 +1826,11 @@ void RKTestMomentProcessorSpeed(void) {
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
-            RKLog(">Test %d -> %.1f ms\n", i, 1.0e3 * t);
+            RKLog(">Test %d -> %.2f ms\n", i, 1.0e3 * t / testCount);
             mint = MIN(mint, t);
         }
-        RKLog(">Elapsed time: %.3f s\n", mint);
-        RKLog(">Time for each ray (%s pulses x %s gates) = %.1f ms (Best of 3)\n",
-              RKIntegerToCommaStyleString(pulseCount),
-              RKIntegerToCommaStyleString(pulseCapacity),
-              1.0e3 * mint / testCount);
+        RKLog(">Time for each ray (%s pulses x %s gates) = %.2f ms (Best of 3)\n",
+              RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * t / testCount);
         RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
     }
     

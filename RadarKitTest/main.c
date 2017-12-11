@@ -99,30 +99,34 @@ void showHelp() {
            "          0 - Show types\n"
            "          1 - Show colors\n"
            "          2 - Show modulo math\n"
-           "          3 - Show window types\n"
-           "          4 - Parsing comma delimited values\n"
-           "          5 - SIMD quick test\n"
-           "          6 - SIMD test with numbers shown\n"
-           "          7 - SIMD performance tests\n"
-           "          8 - Parsing values in a JSON string\n"
-		   "          9 - Making a frequency hopping sequence\n"
-           "         10 - Initializing a File Manager\n"
-		   "         11 - Reading preference file\n"
-		   "         12 - Count files in a folder RKCountFilesInPath()\n"
-		   "         13 - File monitor\n"
-		   "         14 - Write a waveform file\n"
-		   "         15 - Make a TFM waveform\n"
-		   "         16 - Initializing a radar system\n"
-		   "         17 - Hilbert transform\n"
-           "         18 - Pulse compression using simple cases\n"
-           "         19 - Calculating one ray using the Pulse Pair method\n"
-		   "         20 - Calculating one ray using the Pulse Pair Hop method\n"
-		   "         21 - Calculating one ray using the Multi-Lag method with L = 2\n"
-		   "         22 - Calculating one ray using the Multt-Lag method with L = 3\n"
-		   "         23 - Calculating one ray using the Multi-Lag method with L = 4\n"
-           "         24 - Measure the speed of various moment methods\n"
-           "         25 - Measure the speed of pulse compression\n"
-           "         26 - Cache write\n"
+           "          3 - Parsing comma delimited values\n"
+           "          4 - Parsing values in a JSON string\n"
+           "          5 - Initializing a File Manager\n"
+		   "          6 - Reading preference file\n"
+		   "          7 - Count files in a folder RKCountFilesInPath()\n"
+		   "          8 - File monitor\n"
+		   "         11 - Initializing a radar system\n"
+		   "\n"
+		   "         20 - SIMD quick test\n"
+		   "         21 - SIMD test with numbers shown\n"
+		   "         22 - Show window types\n"
+		   "         23 - Hilbert transform\n"
+		   "\n"
+		   "         30 - Make a frequency hopping sequence\n"
+		   "         31 - Make a TFM waveform\n"
+		   "         32 - Write a waveform file\n"
+		   "\n"
+           "         40 - Pulse compression using simple cases\n"
+           "         41 - Calculating one ray using the Pulse Pair method\n"
+		   "         42 - Calculating one ray using the Pulse Pair Hop method\n"
+		   "         43 - Calculating one ray using the Multi-Lag method with L = 2\n"
+		   "         44 - Calculating one ray using the Multt-Lag method with L = 3\n"
+		   "         45 - Calculating one ray using the Multi-Lag method with L = 4\n"
+		   "\n"
+		   "         50 - Measure the speed of SIMD calculations\n"
+           "         51 - Measure the speed of pulse compression\n"
+		   "         52 - Measure the speed of various moment methods\n"
+		   "         53 - Measure the speed of cached write\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
@@ -134,6 +138,9 @@ void showHelp() {
            "  radar -L -f 2000\n"
            "         Same as above but with PRF = 2000 Hz.\n"
            "\n"
+		   "  radar -T 50\n"
+		   "         Runs the program to measure SIMD performance.\n"
+		   "\n"
            );
 }
 
@@ -229,81 +236,82 @@ UserParams processInput(int argc, const char **argv) {
                     case 2:
                         RKTestModuloMath();
                         break;
-                    case 3:
+					case 3:
+						RKTestParseCommaDelimitedValues();
+						break;
+					case 4:
+						RKTestJSON();
+						break;
+					case 5:
+						RKTestFileManager();
+						break;
+					case 6:
+						RKTestPreferenceReading();
+						break;
+					case 7:
+						RKTestCountFiles();
+						break;
+					case 8:
+						RKTestFileMonitor();
+						break;
+					case 11:
+						myRadar = RKInitLean();
+						RKShowOffsets(myRadar);
+						RKFree(myRadar);
+						break;
+					case 20:
+						RKTestSIMD(RKTestSIMDFlagNull);
+						break;
+					case 21:
+						RKTestSIMD(RKTestSIMDFlagShowNumbers);
+						break;
+                    case 22:
                         RKTestWindow();
                         break;
-                    case 4:
-                        RKTestParseCommaDelimitedValues();
-                        break;
-                    case 5:
-                        RKTestSIMD(RKTestSIMDFlagNull);
-                        break;
-                    case 6:
-                        RKTestSIMD(RKTestSIMDFlagShowNumbers);
-                        break;
-                    case 7:
-                        RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
-                        break;
-                    case 8:
-                        RKTestJSON();
-                        break;
-                    case 9:
-                        RKTestMakeHops();
-                        break;
-                    case 10:
-                        RKTestFileManager();
-                        break;
-                    case 11:
-                        RKTestPreferenceReading();
-                        break;
-                    case 12:
-                        RKTestCountFiles();
-                        break;
-                    case 13:
-                        RKTestFileMonitor();
-                        break;
-                    case 14:
-                        RKTestWriteWaveform();
-                        break;
-                    case 15:
-                        RKTestWaveformTFM();
-                        break;
-                    case 16:
-                        myRadar = RKInitLean();
-                        RKShowOffsets(myRadar);
-                        RKFree(myRadar);
-                        break;
-					case 17:
+					case 23:
 						RKTestHilbertTransform();
 						break;
-                    case 18:
+                    case 30:
+                        RKTestMakeHops();
+                        break;
+					case 31:
+						RKTestWaveformTFM();
+						break;
+					case 32:
+						RKTestWriteWaveform();
+						break;
+                    case 40:
                         RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
-                    case 19:
+                    case 41:
                         RKTestOneRay(RKPulsePair, 0);
                         break;
-                    case 20:
+                    case 42:
                         RKTestOneRay(RKPulsePairHop, 0);
                         break;
-                    case 21:
+                    case 43:
                         RKTestOneRay(RKMultiLag, 2);
                         break;
-					case 22:
+					case 44:
 						RKTestOneRay(RKMultiLag, 3);
 						break;
-					case 23:
+					case 45:
 						RKTestOneRay(RKMultiLag, 4);
 						break;
-                    case 24:
-                        RKTestMomentProcessorSpeed();
-                        break;
-                    case 25:
-                        RKTestPulseCompressionSpeed();
-                        break;
-                    case 26:
-                        RKTestCacheWrite();
-                        break;
+					case 50:
+						RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
+						break;
+					case 51:
+						RKTestPulseCompressionSpeed();
+						break;
+					case 52:
+						RKTestMomentProcessorSpeed();
+						break;
+					case 53:
+						RKTestCacheWrite();
+						break;
                     default:
+						RKLog("Test %d is invalid.\n", k);
                         break;
                 }
                 exit(EXIT_SUCCESS);
