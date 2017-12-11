@@ -296,8 +296,8 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKInt16C *is = (RKInt16C *)src->i;
     
     for (i = 0; i < n; i++) {
-        is[i].i = i;
-        is[i].q = i - 1;
+        is[i].i = (i % 2 == 0 ? 1 : -1);
+        is[i].q = (i - n / 2) * (i % 2 == 0 ? -1 : 1);
     }
     memset(cd, 0, n * sizeof(RKComplex));
     
@@ -308,8 +308,8 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     }
     all_good = true;
     for (i = 0; i < n; i++) {
-        // Answers should be 0-1i, 1-2i, 2-3i, 3-41i, ...
-        good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(i - 1)) < tiny;
+        // Answers should be 0-16i, 1-15i, 2-14i, 3-131i, ...
+        good = fabsf(cd[i].i - (RKFloat)(i % 2 == 0 ? 1 : -1)) < tiny && fabsf(cd[i].q - (RKFloat)(i - n / 2) * (i % 2 == 0 ? -1 : 1)) < tiny;
         if (flag & RKTestSIMDFlagShowNumbers) {
             printf("%+3d%+3di -> %+5.1f%+5.1fi  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
         }
