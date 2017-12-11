@@ -350,43 +350,43 @@ marina:~/radarkit root$ rktest -T 25
 ===========================
 RKTestPulseCompressionSpeed
 ===========================
-2017/12/10 10:30:15 PulseCompression
-                    Test 0 -> 2984.413 ms
-                    Test 1 -> 2984.216 ms
-                    Test 2 -> 2984.532 ms
-                    Elapsed time: 2.984 s (Best of 3)
-                    Time for each pulse (8,192 gates) = 0.298 ms
-                    Speed: 3350.96 pulses / sec
+2017/12/10 23:06:16 PulseCompression
+                    Test 0 -> 2186.486 ms
+                    Test 1 -> 2185.976 ms
+                    Test 2 -> 2186.101 ms
+                    Elapsed time: 2.186 s (Best of 3)
+                    Time for each pulse (8,192 gates) = 0.219 ms
+                    Speed: 4574.62 pulses / sec
 marina:~/radarkit root$ rktest -T 24
 ==========================
 RKTestMomentProcessorSpeed
 ==========================
-2017/12/10 10:30:29 PulsePairHop:
-                    Test 0 -> 569.116 s
-                    Test 1 -> 560.882 s
-                    Test 2 -> 560.983 s
-                    Elapsed time: 0.561 s
-                    Time for each ray (100 pulses x 4,096 gates) = 1.122 ms (Best of 3)
-                    Speed: 891.45 rays / sec
-2017/12/10 10:30:30 MultiLag (L = 2):
-                    Test 0 -> 2445.533 s
-                    Test 1 -> 2445.345 s
-                    Test 2 -> 2445.104 s
-                    Elapsed time: 2.445 s
-                    Time for each ray (100 pulses x 4,096 gates) = 4.890 ms (Best of 3)
-                    Speed: 204.49 rays / sec
-2017/12/10 10:30:38 MultiLag (L = 3):
-                    Test 0 -> 3312.016 s
-                    Test 1 -> 3312.891 s
-                    Test 2 -> 3311.574 s
-                    Elapsed time: 3.312 s
-                    Time for each ray (100 pulses x 4,096 gates) = 6.623 ms (Best of 3)
-                    Speed: 150.99 rays / sec
-2017/12/10 10:30:47 MultiLag (L = 4):
-                    Test 0 -> 4194.323 s
-                    Test 1 -> 4193.150 s
-                    Test 2 -> 4192.706 s
-                    Elapsed time: 4.193 s
-                    Time for each ray (100 pulses x 4,096 gates) = 8.385 ms (Best of 3)
-                    Speed: 119.25 rays / sec
+2017/12/10 23:06:39 PulsePairHop:
+                    Test 0 -> 567.5 ms
+                    Test 1 -> 560.0 ms
+                    Test 2 -> 560.0 ms
+                    Elapsed time: 0.560 s
+                    Time for each ray (100 pulses x 4,096 gates) = 1.1 ms (Best of 3)
+                    Speed: 892.90 rays / sec
+2017/12/10 23:06:41 MultiLag (L = 2):
+                    Test 0 -> 2443.4 ms
+                    Test 1 -> 2443.6 ms
+                    Test 2 -> 2443.4 ms
+                    Elapsed time: 2.443 s
+                    Time for each ray (100 pulses x 4,096 gates) = 4.9 ms (Best of 3)
+                    Speed: 204.64 rays / sec
+2017/12/10 23:06:48 MultiLag (L = 3):
+                    Test 0 -> 3324.2 ms
+                    Test 1 -> 3320.3 ms
+                    Test 2 -> 3325.2 ms
+                    Elapsed time: 3.320 s
+                    Time for each ray (100 pulses x 4,096 gates) = 6.6 ms (Best of 3)
+                    Speed: 150.59 rays / sec
+2017/12/10 23:06:58 MultiLag (L = 4):
+                    Test 0 -> 4160.3 ms
+                    Test 1 -> 4158.3 ms
+                    Test 2 -> 4158.5 ms
+                    Elapsed time: 4.158 s
+                    Time for each ray (100 pulses x 4,096 gates) = 8.3 ms (Best of 3)
+                    Speed: 120.24 rays / sec
 ``````
