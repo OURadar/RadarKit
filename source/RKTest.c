@@ -361,21 +361,21 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_iymul_reg(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              -Ox: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("              reg: %.3f s (Compiler Optimized -O2)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_iymul(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            iymul: %.3fs (Normal interleaved I/Q)\n", RKTimevalDiff(t2, t1));
+            printf("            iymul: %.3f s (Normal interleaved I/Q)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("            izmul: %.3fs (Deinterleaved I/Q)\n", RKTimevalDiff(t2, t1));
+            printf("            izmul: %.3f s (Deinterleaved I/Q)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -384,7 +384,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_IQZ2Complex(dst, cc, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("    E + izmul + D: %.3fs (D, Multiply, I)\n", RKTimevalDiff(t2, t1));
+            printf("    E + izmul + D: %.3f s (D, Multiply, I)\n", RKTimevalDiff(t2, t1));
         }
         
         if (flag & RKTestSIMDFlagPerformanceTestConversion) {
@@ -395,14 +395,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 memcpy(src->q, dst->q, RKGateCount * sizeof(RKFloat));
             }
             gettimeofday(&t2, NULL);
-            printf("       memcpy x 2: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("       memcpy x 2: %.3f s (Compiler Optimized -O2)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_zcpy(src, dst, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("             zcpy: %.3fs (SIMD)\n", RKTimevalDiff(t2, t1));
+            printf("             zcpy: %.3f s (SIMD)\n", RKTimevalDiff(t2, t1));
             
             printf("Conversions (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -410,14 +410,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_Int2Complex_reg(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              -Ox: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("              reg: %.3f s (Compiler Optimized -O2)\n", RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_Int2Complex(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("      cvtepi32_ps: %.3fs (SIMD)\n", RKTimevalDiff(t2, t1));
+            printf("      cvtepi32_ps: %.3f s (SIMD)\n", RKTimevalDiff(t2, t1));
         }
         
         printf("\n==========================\n");
