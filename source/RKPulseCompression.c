@@ -8,7 +8,8 @@
 
 #include <RadarKit/RKPulseCompression.h>
 
-#define RKPulseCompressionMultiplyMethod 1
+#define RKPulseCompressionConvertMethod   1
+#define RKPulseCompressionMultiplyMethod  1
 
 // Internal Functions
 
@@ -251,10 +252,8 @@ static void *pulseCompressionCore(void *_in) {
                     // Copy and convert the samples
                     RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                     X += engine->filterAnchors[gid][j].inputOrigin;
-                    for (k = 0; k < bound; k++) {
-                        in[k][0] = (RKFloat)X->i;
-                        in[k][1] = (RKFloat)X++->q;
-                    }
+                    RKSIMD_Int2Complex_reg(X, (RKComplex *)in, bound);
+
                     // Zero pad the input; a filter is always zero-padded in the setter function.
                     if (planSize > bound) {
                         memset(in[bound], 0, (planSize - bound) * sizeof(fftwf_complex));

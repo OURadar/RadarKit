@@ -1721,10 +1721,7 @@ void RKTestPulseCompressionSpeed(void) {
         for (j = 0; j < testCount; j++) {
             for (p = 0; p < 2; p++) {
                 // Converting complex int16_t ADC samples to complex float
-                for (k = 0; k < nfft; k++) {
-                    in[k][0] = (RKFloat)X->i;
-                    in[k][1] = (RKFloat)X->q;
-                }
+                RKSIMD_Int2Complex(X, (RKComplex *)in, nfft);
                 fftwf_execute_dft(planForwardInPlace, in, in);
                 fftwf_execute_dft(planForwardOutPlace, f, out);
                 RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
