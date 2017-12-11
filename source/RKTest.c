@@ -301,7 +301,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     }
     memset(cd, 0, n * sizeof(RKComplex));
     
-    RKSIMD_Int2Complex_reg(is, cd, n);
+    RKSIMD_Int2Complex(is, cd, n);
     
     if (flag & RKTestSIMDFlagShowNumbers) {
         printf("====\n");
@@ -322,7 +322,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         printf("Using %s gates\n", RKIntegerToCommaStyleString(RKGateCount));
         
         int k;
-        const int m = 10000;
+        const int m = 20000;
         struct timeval t1, t2;
         
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
