@@ -94,7 +94,7 @@
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
-#define RKBufferPSlotCount               500                         // Positions
+#define RKBufferPSlotCount               1000                        // Positions
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
 #define RKControlCount                   128                         // Controls

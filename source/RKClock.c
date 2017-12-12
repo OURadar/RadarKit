@@ -58,10 +58,11 @@ RKClock *RKClockInit(void) {
 
 void RKClockFree(RKClock *clock) {
 #if defined(CLOCK_CSV)
-    char filename[64];
-    sprintf(filename, "%s", clock->name + 1);
-    filename[strlen(filename) - 1] = '\0';
-    strcat(filename, ".csv");
+    char *c, filename[64];
+	c = strstr(clock->name, "<");
+    sprintf(filename, "%s", c + 1);
+	c = strstr(filename, ">");
+    sprintf(c, ".csv");
     RKLog("%s Dumping buffers ... j = %d  %s\n", clock->name, clock->index, filename);
     FILE *fid = fopen(filename, "w");
     for (int i = 0; i < clock->size; i++) {
@@ -106,6 +107,12 @@ void RKClockSetHighPrecision(RKClock *clock, const bool value) {
     clock->highPrecision = value;
 }
 
+//
+// Important variables:
+//   x - arrival time representation in double (noisy input)
+//   u - reference that are correlated to time (clean source, tic count from controller)
+//   t - predicted time
+//
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     int j, k;
     double x, dx, du;
@@ -163,7 +170,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->uBuffer[k] = clock->tic++;
                 du = clock->uBuffer[k] - clock->uBuffer[j];
             }
-			if (clock->count > clock->stride) {
+			if (clock->count > 3 * clock->stride) {
 				if (clock->b < 0.002 * dx / (double)clock->stride) {
 					RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, 0.002 * dx / (double)clock->stride);
 					clock->b = 0.002 * dx / (double)clock->stride;
@@ -188,21 +195,26 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         clock->x0 = clock->a * clock->x0 + clock->b * x;
         clock->u0 = clock->a * clock->u0 + clock->b * u;
         clock->dx = clock->a * clock->dx + clock->b * dx / du;
-        // Derive time using a linear relation
-        x = clock->x0 + clock->dx * (u - clock->u0) + clock->offsetSeconds;
-        if (!isfinite(x)) {
-            x = 0.0;
-        }
+		if (clock->count > 3 * clock->stride) {
+			// Derive time using a linear relation after it has tracked for a while
+			x = clock->x0 + clock->dx * (u - clock->u0);
+			if (!isfinite(x)) {
+				x = 0.0;
+			}
+		}
     }
     clock->yBuffer[k] = x;
     clock->zBuffer[k] = clock->dx;
 
+	if (x < clock->latestTime && !recent) {
+		RKLog("%s WARNING. Going back in time?  x = %f < %f = latestTime\n", clock->name, x, clock->latestTime);
+	}
     clock->latestTime = x;
 
     // Update the slot index for next call
     clock->index = RKNextModuloS(k, clock->size);
     clock->count++;
-    return x;
+    return x + clock->offsetSeconds;
 }
 
 #pragma mark -
@@ -212,5 +224,7 @@ void RKClockReset(RKClock *clock) {
     clock->index = 0;
     clock->count = 0;
     clock->tic = 0;
+	clock->latestTime = 0;
 	clock->infoShown = false;
+	RKLog("%s reset\n", clock->name);
 }

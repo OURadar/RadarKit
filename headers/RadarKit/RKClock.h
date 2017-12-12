@@ -34,7 +34,7 @@ typedef struct rk_clock {
     double           *xBuffer;                    // A double representation of timeval (dirty)
     double           *uBuffer;                    // Driving reference (clean)
     double           *yBuffer;                    // Predicted time
-    double           *zBuffer;                    //
+    double           *zBuffer;                    // History of dx/du
     
     double           a;                           // Major coefficient
     double           b;                           // Minor coefficient

@@ -156,7 +156,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.positionBufferDepth = RKBufferPSlotCount;
         RKLog("Info. Position buffer clamped to %s\n", radar->desc.positionBufferDepth);
     } else if (radar->desc.positionBufferDepth == 0) {
-        radar->desc.positionBufferDepth = 250;
+        radar->desc.positionBufferDepth = 500;
     }
     if (radar->desc.controlCount > RKControlCount) {
         radar->desc.controlCount = RKControlCount;
@@ -407,7 +407,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(name, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
-        RKClockSetOffset(radar->positionClock, -0.002);
+        RKClockSetOffset(radar->positionClock, -0.00018);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine

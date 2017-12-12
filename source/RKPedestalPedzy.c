@@ -34,7 +34,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
         // Get a vacant slot for position from Radar, copy over the data, then set it ready
         RKPosition *newPosition = RKGetVacantPosition(radar);
         if (newPosition == NULL) {
-            RKLog("%s failed to get a vacant position.\n", client->name);
+            RKLog("%s Error. Failed to get a vacant position.\n", client->name);
             return RKResultFailedToGetVacantPosition;
         }
         // Unset the time and flag prior to memcpy
