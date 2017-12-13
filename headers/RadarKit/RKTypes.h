@@ -528,6 +528,8 @@ typedef struct rk_radar_desc {
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
     uint32_t         controlCount;
+    uint32_t         expectedPulseRate;
+    uint32_t         expectedPositionRate;
     double           latitude;                                       // Latitude (degrees)
     double           longitude;                                      // Longitude (degrees)
     float            heading;                                        // Radar heading

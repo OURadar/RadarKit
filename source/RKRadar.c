@@ -68,6 +68,8 @@ void *masterControllerExecuteInBackground(void *in) {
 //         desc.pulseBufferDepth - the depth of pulse buffer
 //         desc.rayBufferDepth - the depth of ray buffer
 //         desc.controlCount - the maximum number of control
+//         desc.expectedPulseRate - typical number of pulses per second (from the Transceiver)
+//         desc.expectedPositionRate - typical number of positions per second (from the Pedestal)
 //         desc.latitude - latitude in degrees
 //         desc.longitude - longitude in degrees
 //         desc.heading - heading in degrees
@@ -163,6 +165,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         RKLog("Info. Control count limited to %s\n", radar->desc.controlCount);
     } else if (radar->desc.controlCount == 0) {
         radar->desc.controlCount = RKControlCount;
+    }
+    if (radar->desc.expectedPulseRate == 0) {
+        radar->desc.expectedPulseRate = 5000;
+    }
+    if (radar->desc.expectedPositionRate == 0) {
+        radar->desc.expectedPositionRate = 100;
     }
 
     // Read in preference file here, override some values
