@@ -10,6 +10,7 @@ core.*
 *.dSYM
 *.so
 *.pyc
+*.ipynb
 
 data
 moment
