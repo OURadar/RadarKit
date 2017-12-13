@@ -134,6 +134,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
         recent = false;
         clock->x0 = x;
         clock->u0 = u;
+        // We are missing clock->dx here. Perhaps use the supplied wisdom?
     }
     // Predict x0 and u0 using a running average, so we need to keep u's and x's.
     k = clock->index;
