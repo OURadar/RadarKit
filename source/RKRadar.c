@@ -405,7 +405,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Signal processor marries pulse and position data, process for moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Clocks
-        radar->pulseClock = RKClockInitWithSize(15000, 2000);
+        radar->pulseClock = RKClockInitWithSize(15000, 5000);
         sprintf(name, "%s<PulseClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->pulseClock, name);
