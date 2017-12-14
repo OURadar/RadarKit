@@ -26,6 +26,7 @@ typedef struct user_params {
     bool  simulate;
     bool  writeFiles;
     bool  relay;
+    bool  showClocks;
     char  pedzyHost[256];
     char  tweetaHost[256];
     char  relayHost[256];
@@ -427,6 +428,8 @@ int main(int argc, const char **argv) {
     
     if (user.relay) {
         desc.initFlags = RKInitFlagRelay;
+    } else if (user.showClocks) {
+        desc.initFlags = RKInitFlagAllocEverything | RKInitFlagShowClockOffset;
     } else {
         desc.initFlags = RKInitFlagAllocEverything;
     }

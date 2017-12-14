@@ -206,9 +206,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
 //		}
 		if (clock->count < clock->block) {
 			clock->x0 = x;
-			clock->u0 = (u - clock->uBuffer[0]) / clock->count;
+            clock->u0 = (u - clock->uBuffer[0]) / clock->count + clock->uBuffer[0];
 			clock->dx = clock->a * (clock->xBuffer[k - 1] - clock->xBuffer[0]) / (clock->uBuffer[k - 1] - clock->uBuffer[0]) + clock->b * dx / du;
-			printf("%s k = %d / %lu   x0 = %.3e  u0 = %.3e\n", clock->name, k, clock->count, clock->x0, clock->u0);
+			//printf("%s k = %d / %llu   x0 = %.3e  u0 = %.3e\n", clock->name, k, (unsigned long long)clock->count, clock->x0, clock->u0);
 		} else {
 			clock->x0 = clock->a * clock->x0 + clock->b * x;
 			clock->u0 = clock->a * clock->u0 + clock->b * u;

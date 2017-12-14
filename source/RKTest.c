@@ -829,7 +829,7 @@ void *RKTestPedestalRunLoop(void *input) {
     float elevation = 3.0f;
     double dt = 0.0;
     struct timeval t0, t1;
-    unsigned long tic = 0;
+    unsigned long tic = 19760520;
     bool scanStartEndPPI = true;
     bool scanStartRHI = true;
     bool scanEndRHI = true;
@@ -982,7 +982,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     // Parse input here if there is any
 
     // Use a counter that mimics microsecond increments
-    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    //RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
 
     pedestal->state |= RKEngineStateActivating;
     if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {

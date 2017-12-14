@@ -1470,9 +1470,9 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
 	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
 		struct timeval t;
 		gettimeofday(&t, NULL);
-		printf("position @ %+14.4f %+14.4f            x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", position->timeDouble,
+        printf("\033[38;5;222mposition\033[0m @ %+14.4f %+14.4f            x0 = %10.4f  u0 = %10.0f  dx/du = %.3e  k = %u\n", position->timeDouble,
 			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay),
-			   radar->positionClock->x0, radar->positionClock->u0, radar->positionClock->dx);
+			   radar->positionClock->x0, radar->positionClock->u0, radar->positionClock->dx, radar->positionClock->index);
 	}
     position->flag |= RKPositionFlagReady;
     radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
