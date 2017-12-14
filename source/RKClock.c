@@ -25,6 +25,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
 
     // Copy over / set some non-zero parameters
     clock->size = size;
+	clock->block = 16;
     clock->stride = stride;
     clock->autoSync = true;
     clock->highPrecision = true;
@@ -153,10 +154,10 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 recent = false;
             }
         }
-        if (clock->count > clock->stride) {
-            j = RKPreviousNModuloS(k, clock->stride, clock->size);
+        if (clock->count < clock->stride) {
+			j = 0;
         } else {
-            j = 0;
+			j = RKPreviousNModuloS(k, clock->stride, clock->size);
         }
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
@@ -171,37 +172,52 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->uBuffer[k] = clock->tic++;
                 du = clock->uBuffer[k] - clock->uBuffer[j];
             }
-			if (clock->count > 3 * clock->stride) {
-				if (clock->b < 0.002 * dx / (double)clock->stride) {
-					RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, 0.002 * dx / (double)clock->stride);
-					clock->b = 0.002 * dx / (double)clock->stride;
-					clock->a = 1.0 - clock->b;
-					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
-					RKClockReset(clock);
-					return x;
-				} else if (clock->b > 5.0 * dx / (double)clock->stride) {
-					RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
-					clock->b = 0.1 * dx / (double)clock->stride;
-					clock->a = 1.0 - clock->b;
-					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
-					RKClockReset(clock);
-					return x;
-				} else if (!clock->infoShown) {
-					clock->infoShown = true;
-					RKLog("%s b = %.2e vs %.2e", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
-				}
-			}
+//			if (clock->count > 3 * clock->stride) {
+//				if (clock->b < 0.002 * dx / (double)clock->stride) {
+//					RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, 0.002 * dx / (double)clock->stride);
+//					clock->b = 0.002 * dx / (double)clock->stride;
+//					clock->a = 1.0 - clock->b;
+//					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
+//					RKClockReset(clock);
+//					return x;
+//				} else if (clock->b > 5.0 * dx / (double)clock->stride) {
+//					RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
+//					clock->b = 0.1 * dx / (double)clock->stride;
+//					clock->a = 1.0 - clock->b;
+//					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
+//					RKClockReset(clock);
+//					return x;
+//				} else if (!clock->infoShown) {
+//					clock->infoShown = true;
+//					RKLog("%s b = %.2e vs %.2e", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
+//				}
+//			}
         }
-        // Update the references as decaying function of the stride size
-        clock->x0 = clock->a * clock->x0 + clock->b * x;
-        clock->u0 = clock->a * clock->u0 + clock->b * u;
-        clock->dx = clock->a * clock->dx + clock->b * dx / du;
-		if (clock->count > 3 * clock->stride) {
-			// Derive time using a linear relation after it has tracked for a while
-			x = clock->x0 + clock->dx * (u - clock->u0);
-			if (!isfinite(x)) {
-				x = 0.0;
-			}
+//        // Update the references as decaying function of the stride size
+//		clock->x0 = clock->a * clock->x0 + clock->b * x;
+//		clock->u0 = clock->a * clock->u0 + clock->b * u;
+//		clock->dx = clock->a * clock->dx + clock->b * dx / du;
+//		if (clock->count > 3 * clock->stride) {
+//			// Derive time using a linear relation after it has tracked for a while
+//			x = clock->x0 + clock->dx * (u - clock->u0);
+//			if (!isfinite(x)) {
+//				x = 0.0;
+//			}
+//		}
+		if (clock->count < clock->block) {
+			clock->x0 = x;
+			clock->u0 = (u - clock->uBuffer[0]) / clock->count;
+			clock->dx = clock->a * (clock->xBuffer[k - 1] - clock->xBuffer[0]) / (clock->uBuffer[k - 1] - clock->uBuffer[0]) + clock->b * dx / du;
+			printf("%s k = %d / %lu   x0 = %.3e  u0 = %.3e\n", clock->name, k, clock->count, clock->x0, clock->u0);
+		} else {
+			clock->x0 = clock->a * clock->x0 + clock->b * x;
+			clock->u0 = clock->a * clock->u0 + clock->b * u;
+			clock->dx = clock->a * clock->dx + clock->b * dx / du;
+		}
+		// Derive time using a linear relation after it has tracked for a while
+		x = clock->x0 + clock->dx * (u - clock->u0);
+		if (!isfinite(x)) {
+			x = 0.0;
 		}
     }
     clock->yBuffer[k] = x;
@@ -227,5 +243,5 @@ void RKClockReset(RKClock *clock) {
     clock->tic = 0;
 	clock->latestTime = 0;
 	clock->infoShown = false;
-	RKLog("%s reset\n", clock->name);
+	RKLog("%s Reset\n", clock->name);
 }

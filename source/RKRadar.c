@@ -405,7 +405,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Signal processor marries pulse and position data, process for moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Clocks
-        radar->pulseClock = RKClockInitWithSize(15000, 10000);
+        radar->pulseClock = RKClockInitWithSize(15000, 2000);
         sprintf(name, "%s<PulseClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->pulseClock, name);
@@ -1470,8 +1470,9 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
 	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
 		struct timeval t;
 		gettimeofday(&t, NULL);
-		printf("position @ %+.4f %+.4f\n", position->timeDouble,
-			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay));
+		printf("position @ %+14.4f %+14.4f            x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", position->timeDouble,
+			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay),
+			   radar->positionClock->x0, radar->positionClock->u0, radar->positionClock->dx);
 	}
     position->flag |= RKPositionFlagReady;
     radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
@@ -1530,8 +1531,9 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (pulse->header.i % 100 == 0)) {
 		struct timeval t;
 		gettimeofday(&t, NULL);
-		printf("         @ %+.4f %+.4f @ pulse\n", pulse->header.timeDouble,
-			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay));
+		printf("           %+14.4f %+14.4f @ pulse    x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", pulse->header.timeDouble,
+			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay),
+			   radar->pulseClock->x0, radar->pulseClock->u0, radar->pulseClock->dx);
 	}
     pulse->header.s = RKPulseStatusHasIQData;
     return;
