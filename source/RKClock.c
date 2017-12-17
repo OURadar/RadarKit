@@ -259,5 +259,5 @@ void RKClockReset(RKClock *clock) {
     clock->tic = 0;
 	clock->latestTime = 0;
 	clock->infoShown = false;
-	RKLog("%s Reset\n", clock->name);
+	RKLog("%s Reset   du/dx = %s\n", clock->name, RKFloatToCommaStyleString(1.0 / clock->dx));
 }
