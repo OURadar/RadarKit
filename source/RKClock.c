@@ -101,7 +101,11 @@ void RKClockSetOffset(RKClock *clock, double offset) {
 void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     clock->hasWisdom = true;
     clock->dx = dxdu;
-    RKLog("%s Received dx/du = %.2e as wisdom\n", clock->name, dxdu);
+    RKLog("%s Received du/dx = %s as wisdom\n", clock->name, RKFloatToCommaStyleString(1.0 / dxdu));
+}
+
+void RKClockSetDuDx(RKClock *clock, const double dudx) {
+    return RKClockSetDxDu(clock, 1.0 / dudx);
 }
 
 void RKClockSetHighPrecision(RKClock *clock, const bool value) {
@@ -114,9 +118,15 @@ void RKClockSetHighPrecision(RKClock *clock, const bool value) {
 //   u - reference that are correlated to time (clean source, tic count from controller)
 //   t - predicted time
 //
+// NOTE:
+//   Even with double precision, during the year of 2017, we are talking about > 1,500,000,000
+//   seconds since 1970 Jan 1. So, there are only another 6 significant figures left, giving
+//   us up to the precision of microseconds. If more than such precision is needed. The
+//   reference time should be set to a running reference.
+//
 double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
-    int j, k;
-    double x, dx, du;
+    int j = 0;
+    double x, dx, du, y;
     struct timeval t;
     bool recent = true;
     
@@ -125,24 +135,41 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     if (timeval) {
         *timeval = t;
     }
+    // Pre-processing
     if (clock->highPrecision) {
         x = ((double)t.tv_sec - clock->initDay) + 1.0e-6 * (double)t.tv_usec;
     } else {
         x = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
     }
+    y = x;
     // Reset the references when clock count = 0 or it has been a while
-    if (clock->count == 0 || x - clock->latestTime > RKClockAWhile) {
+    if (x - clock->latestTime > RKClockAWhile) {
+        clock->count = 0;
+        clock->index = 0;
+    }
+    // These parameters should be reset when the clock is restarted
+    if (clock->count == 0) {
         recent = false;
         clock->x0 = x;
         clock->u0 = u;
-        // We are missing clock->dx here. Perhaps use the supplied wisdom?
+        clock->sum_x0 = x;
+        clock->sum_u0 = u;
     }
     // Predict x0 and u0 using a running average, so we need to keep u's and x's.
-    k = clock->index;
+    const int k = clock->index;
     clock->tBuffer[k] = t;
     clock->xBuffer[k] = x;
-    clock->uBuffer[k] = u;
+    if (clock->useInternalReference) {
+        clock->uBuffer[k] = clock->tic++;
+    } else {
+        clock->uBuffer[k] = u;
+    }
+    // We are done with the indices; update them for the next call
+    clock->index = RKNextModuloS(k, clock->size);
+    clock->count++;
+    // Derive time only if the clock has been called at least once. Otherwise (1.0 / clock->count) would be undefined
     if (clock->count > 1) {
+        // Quick check on the previous time to make sure we are still continuous
         j = RKPreviousModuloS(k, clock->size);
         if (x - clock->xBuffer[j] > 60.0 || u - clock->uBuffer[j] < 0) {
             // Latest in raw input xBuffer > latest (derived time > x)
@@ -154,10 +181,11 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 recent = false;
             }
         }
-        if (clock->count < clock->stride) {
-			j = 0;
+        // Index of the reading from before of stride
+        if (clock->count > clock->stride) {
+            j = RKPreviousNModuloS(k, clock->stride, clock->size);
         } else {
-			j = RKPreviousNModuloS(k, clock->stride, clock->size);
+            j = 0;
         }
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
@@ -169,69 +197,57 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                     RKLog("%s Warning. Will be replaced with an internal uniform reference.\n", clock->name);
                 }
                 // Override with own tic?
+                clock->useInternalReference = true;
                 clock->uBuffer[k] = clock->tic++;
                 du = clock->uBuffer[k] - clock->uBuffer[j];
             }
-//			if (clock->count > 3 * clock->stride) {
-//				if (clock->b < 0.002 * dx / (double)clock->stride) {
-//					RKLog("%s minor factor %.3e << %.3e may take a long time to converge.\n", clock->name, clock->b, 0.002 * dx / (double)clock->stride);
-//					clock->b = 0.002 * dx / (double)clock->stride;
-//					clock->a = 1.0 - clock->b;
-//					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
-//					RKClockReset(clock);
-//					return x;
-//				} else if (clock->b > 5.0 * dx / (double)clock->stride) {
-//					RKLog("%s The reading can be smoother with lower minor factor. dx / n = %.2e --> %.2e\n", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
-//					clock->b = 0.1 * dx / (double)clock->stride;
-//					clock->a = 1.0 - clock->b;
-//					RKLog("%s updated to minor / major.   a = %.4e   b = %.4e", clock->name, clock->a, clock->b);
-//					RKClockReset(clock);
-//					return x;
-//				} else if (!clock->infoShown) {
-//					clock->infoShown = true;
-//					RKLog("%s b = %.2e vs %.2e", clock->name, clock->b, 0.1 * dx / (double)clock->stride);
-//				}
-//			}
+            if (clock->count == clock->stride) {
+                RKLog("%s b = %.2e   du/dx = %s", clock->name, clock->b, RKFloatToCommaStyleString(1.0 / clock->dx));
+            }
         }
-//        // Update the references as decaying function of the stride size
-//		clock->x0 = clock->a * clock->x0 + clock->b * x;
-//		clock->u0 = clock->a * clock->u0 + clock->b * u;
-//		clock->dx = clock->a * clock->dx + clock->b * dx / du;
-//		if (clock->count > 3 * clock->stride) {
-//			// Derive time using a linear relation after it has tracked for a while
-//			x = clock->x0 + clock->dx * (u - clock->u0);
-//			if (!isfinite(x)) {
-//				x = 0.0;
-//			}
-//		}
-		if (clock->count < clock->block) {
-			clock->x0 = x;
-            clock->u0 = (u - clock->uBuffer[0]) / clock->count + clock->uBuffer[0];
-			clock->dx = clock->a * (clock->xBuffer[k - 1] - clock->xBuffer[0]) / (clock->uBuffer[k - 1] - clock->uBuffer[0]) + clock->b * dx / du;
-			//printf("%s k = %d / %llu   x0 = %.3e  u0 = %.3e\n", clock->name, k, (unsigned long long)clock->count, clock->x0, clock->u0);
-		} else {
-			clock->x0 = clock->a * clock->x0 + clock->b * x;
-			clock->u0 = clock->a * clock->u0 + clock->b * u;
-			clock->dx = clock->a * clock->dx + clock->b * dx / du;
-		}
-		// Derive time using a linear relation after it has tracked for a while
-		x = clock->x0 + clock->dx * (u - clock->u0);
-		if (!isfinite(x)) {
-			x = 0.0;
-		}
+        if (clock->count > clock->stride) {
+            clock->sum_u0 = clock->sum_u0 + u - clock->uBuffer[j];
+            clock->sum_x0 = clock->sum_x0 + x - clock->xBuffer[j];
+            if (clock->count % 2 == 0) {
+                clock->u0 = clock->sum_u0 / clock->stride;
+                clock->x0 = clock->sum_x0 / clock->stride;
+            }
+        } else {
+            clock->sum_u0 += u;
+            clock->sum_x0 += x;
+            if (clock->count % 2 == 0) {
+                clock->u0 = clock->sum_u0 / clock->count;
+                clock->x0 = clock->sum_x0 / clock->count;
+            }
+        }
+        // Update dx / du as a decaying function
+        clock->dx = clock->a * clock->dx + clock->b * dx / du;
+        // Derive time using a linear relation after it has tracked for a while
+        y = clock->x0 + clock->dx * (u - clock->u0);
+        if (!isfinite(y)) {
+            y = 0.0;
+        }
     }
-    clock->yBuffer[k] = x;
+
+#ifdef DEBUG_CLOCK
+    
+    printf("%s k = %d/%llu  j = %d   u = %.1f -> %.1f -> %.1f   x = %.2f -> %.1f -> %.3f   t = %.3f %s\n",
+           clock->name, k, clock->count, j,
+           u, clock->sum_u0, clock->u0,
+           x, clock->sum_x0, clock->x0,
+           y, clock->count > clock->stride ? "-" : "*");
+
+#endif
+
+    clock->yBuffer[k] = y;
     clock->zBuffer[k] = clock->dx;
 
-	if (x < clock->latestTime && !recent) {
-		RKLog("%s WARNING. Going back in time?  x = %f < %f = latestTime\n", clock->name, x, clock->latestTime);
+	if (y < clock->latestTime && !recent) {
+		RKLog("%s WARNING. Going back in time?  x = %f < %f = latestTime\n", clock->name, y, clock->latestTime);
 	}
-    clock->latestTime = x;
+    clock->latestTime = y;
 
-    // Update the slot index for next call
-    clock->index = RKNextModuloS(k, clock->size);
-    clock->count++;
-    return x + clock->offsetSeconds;
+    return y + clock->offsetSeconds;
 }
 
 #pragma mark -

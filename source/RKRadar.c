@@ -1531,7 +1531,7 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (pulse->header.i % 100 == 0)) {
 		struct timeval t;
 		gettimeofday(&t, NULL);
-		printf("           %+14.4f %+14.4f @ pulse    x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", pulse->header.timeDouble,
+		printf("           %+14.4f %+14.4f @ \033[38;5;118mpulse\033[0m    x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", pulse->header.timeDouble,
 			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay),
 			   radar->pulseClock->x0, radar->pulseClock->u0, radar->pulseClock->dx);
 	}
