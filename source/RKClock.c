@@ -212,6 +212,8 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->u0 = clock->sum_u0 / clock->stride;
                 clock->x0 = clock->sum_x0 / clock->stride;
             }
+            // Update dx / du as a decaying function
+            clock->dx = clock->a * clock->dx + clock->b * dx / du;
         } else {
             clock->sum_u0 += u;
             clock->sum_x0 += x;
@@ -219,9 +221,11 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 clock->u0 = clock->sum_u0 / clock->count;
                 clock->x0 = clock->sum_x0 / clock->count;
             }
+            // Update dx / du as a decaying function
+            if (!clock->hasWisdom) {
+                clock->dx = dx / du;
+            }
         }
-        // Update dx / du as a decaying function
-        clock->dx = clock->a * clock->dx + clock->b * dx / du;
         // Derive time using a linear relation after it has tracked for a while
         y = clock->x0 + clock->dx * (u - clock->u0);
         if (!isfinite(y)) {

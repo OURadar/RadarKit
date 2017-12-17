@@ -65,7 +65,7 @@ void RKClockSetVerbose(RKClock *, const int);
 void RKClockSetManualSync(RKClock *);
 void RKClockSetOffset(RKClock *, const double);
 void RKClockSetDxDu(RKClock *, const double);
-void RKClockSetDuDx(RKClock *, const double)
+void RKClockSetDuDx(RKClock *, const double);
 void RKClockSetHighPrecision(RKClock *, const bool);
 
 //void RKClockSync(RKClock *clock, const double u);
