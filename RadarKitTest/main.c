@@ -157,9 +157,9 @@ UserParams processInput(int argc, const char **argv) {
     
     // A structure unit that encapsulates command line user parameters
     UserParams user;
-    memset(&user, 0, sizeof(UserParams));
 
     // Zero out everything and set some default parameters
+	memset(&user, 0, sizeof(UserParams));
     user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
@@ -361,7 +361,6 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'g':
                 user.gateCount = atoi(optarg);
-				user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
                 break;
             case 'h':
                 showHelp();
@@ -416,6 +415,7 @@ UserParams processInput(int argc, const char **argv) {
     } else {
         user.desc.pulseToRayRatio = 1;
     }
+	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
     return user;
 }
 
@@ -440,14 +440,15 @@ int main(int argc, const char **argv) {
     if (user.verbose) {
         printf("TERM = %s\n", term);
     }
-    
+
     // In the case when no tests are performed, simulate the time-series
     if (user.simulate == false && !(user.desc.initFlags & RKInitFlagRelay)) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
-    } else if (user.simulate == true && user.desc.initFlags & RKInitFlagRelay) {
+    } else if (user.simulate == true && user.desc.initFlags == RKInitFlagRelay) {
         RKLog("Info. Simulate takes precedence over relay.\n");
-		user.desc.initFlags &= ~RKInitFlagRelay;
+		user.desc.initFlags = RKInitFlagAllocEverything;
+		user.simulate = true;
     }
 
     // Screen output based on verbosity level
@@ -455,7 +456,7 @@ int main(int argc, const char **argv) {
         RKSetWantScreenOutput(false);
     }
 
-    // Initialize a radar object    
+    // Initialize a radar object
     myRadar = RKInitWithDesc(user.desc);
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate radar.\n");
@@ -556,7 +557,6 @@ int main(int argc, const char **argv) {
         }
 
         myRadar->configs[0].prf[0] = user.prf;
-        myRadar->desc.heading = 180.0f;
 
         RKWaveform *waveform = NULL;
         const char wavfile[] = "waveforms/ofmd.rkwav";

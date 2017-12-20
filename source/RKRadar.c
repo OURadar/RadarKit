@@ -90,6 +90,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKSetUseDailyLog(true);
     RKSetRootFolder(desc.dataPath);
 
+	RKLog("Hello");
+	
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Initializing ... 0x%x", desc.initFlags);
     }

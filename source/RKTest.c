@@ -1830,7 +1830,7 @@ void RKTestMomentProcessorSpeed(void) {
             mint = MIN(mint, t);
         }
         RKLog(">Time for each ray (%s pulses x %s gates) = %.2f ms (Best of 3)\n",
-              RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * t / testCount);
+              RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * mint / testCount);
         RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
     }
     
