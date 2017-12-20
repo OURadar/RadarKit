@@ -16,7 +16,7 @@ Follow these steps to get the project
 1. Clone a git project using the following command in Terminal:
 
     ```shell
-    git clone https://git.arrc.ou.edu/cheo4524/radarkit.git
+    git clone https://git.arrc.ou.edu/radar/radarkit.git
     ```
 
 2. Get the required packages, which can either be installed through one of the package managers or compiled from source.
