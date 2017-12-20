@@ -408,9 +408,7 @@ int main(int argc, const char **argv) {
     RKSetWantScreenOutput(true);
 
     char *term = getenv("TERM");
-    if (term == NULL) {
-        RKSetWantColor(false);
-    } else if (strcasestr(term, "color") == NULL) {
+    if (term == NULL || strcasestr(term, "color") == NULL) {
         RKSetWantColor(false);
     }
  
