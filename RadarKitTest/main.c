@@ -442,7 +442,7 @@ int main(int argc, const char **argv) {
     }
 
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && !(user.desc.initFlags & RKInitFlagRelay)) {
+    if (user.simulate == false && !(user.desc.initFlags = RKInitFlagRelay)) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
     } else if (user.simulate == true && user.desc.initFlags == RKInitFlagRelay) {
