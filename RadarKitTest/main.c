@@ -15,21 +15,20 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    int   coresForPulseCompression;
-    int   coresForProductGenerator;
-    int   prf;
-    int   sprt;
-    int   gateCount;
-    int   verbose;
-    int   testPulseCompression;
-    int   sleepInterval;
-    bool  simulate;
-    bool  writeFiles;
-    bool  relay;
-    bool  showClocks;
-    char  pedzyHost[256];
-    char  tweetaHost[256];
-    char  relayHost[256];
+    int            coresForPulseCompression;
+    int            coresForProductGenerator;
+    int            prf;
+    int            sprt;
+    int            gateCount;                   // Number of gates (simulate mode)
+    int            verbose;
+    int            testPulseCompression;
+    int            sleepInterval;
+    bool           simulate;
+    bool           writeFiles;
+    char           pedzyHost[256];
+    char           tweetaHost[256];
+    char           relayHost[256];
+    RKRadarDesc    desc;
 } UserParams;
 
 // Global variables
@@ -159,9 +158,21 @@ UserParams processInput(int argc, const char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     memset(&user, 0, sizeof(UserParams));
+
+    // Zero out everything and set some default parameters
     user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
+
+    // Build a RKRadar initialization description
+    user.desc.initFlags = RKInitFlagAllocEverything;
+    user.desc.pulseBufferDepth = 8000;
+    user.desc.rayBufferDepth = 1440;
+    user.desc.latitude = 35.181251;
+    user.desc.longitude = -97.436752;
+    user.desc.radarHeight = 2.5f;
+    user.desc.wavelength = 0.03f;
+    strcpy(user.desc.dataPath, ROOT_PATH);
 
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
@@ -202,7 +213,7 @@ UserParams processInput(int argc, const char **argv) {
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'C':
-                user.showClocks = true;
+                user.desc.initFlags |= RKInitFlagShowClockOffset;
                 break;
             case 'D':
                 user.simulate = true;
@@ -350,6 +361,7 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'g':
                 user.gateCount = atoi(optarg);
+				user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
                 break;
             case 'h':
                 showHelp();
@@ -362,7 +374,7 @@ UserParams processInput(int argc, const char **argv) {
                 user.verbose = MAX(user.verbose - 1, 0);
                 break;
             case 'r':
-                user.relay = true;
+				user.desc.initFlags = RKInitFlagRelay;
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;
             case 's':
@@ -392,7 +404,18 @@ UserParams processInput(int argc, const char **argv) {
     if (user.prf > 0 && user.simulate == false) {
         RKLog("Warning. PRF has no effects without simulation.\n");
     }
-    
+    if (user.verbose == 1) {
+        user.desc.initFlags |= RKInitFlagVerbose;
+    } else if (user.verbose == 2) {
+        user.desc.initFlags |= RKInitFlagVeryVerbose;
+    } else if (user.verbose == 3) {
+        user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
+    }
+    if (user.gateCount >= 4000) {
+        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
+    } else {
+        user.desc.pulseToRayRatio = 1;
+    }
     return user;
 }
 
@@ -419,12 +442,12 @@ int main(int argc, const char **argv) {
     }
     
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && user.relay == false) {
+    if (user.simulate == false && !(user.desc.initFlags & RKInitFlagRelay)) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
-    } else if (user.simulate == true && user.relay == true) {
+    } else if (user.simulate == true && user.desc.initFlags & RKInitFlagRelay) {
         RKLog("Info. Simulate takes precedence over relay.\n");
-        user.relay = false;
+		user.desc.initFlags &= ~RKInitFlagRelay;
     }
 
     // Screen output based on verbosity level
@@ -432,32 +455,8 @@ int main(int argc, const char **argv) {
         RKSetWantScreenOutput(false);
     }
 
-    // Build an initialization description
-    RKRadarDesc desc;
-    memset(&desc, 0, sizeof(RKRadarDesc));
-    
-    if (user.relay) {
-        desc.initFlags = RKInitFlagRelay;
-    } else if (user.showClocks) {
-        desc.initFlags = RKInitFlagAllocEverything | RKInitFlagShowClockOffset;
-    } else {
-        desc.initFlags = RKInitFlagAllocEverything;
-    }
-    desc.pulseCapacity = user.gateCount;
-    if (user.gateCount >= 4000) {
-        desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
-    } else {
-        desc.pulseToRayRatio = 1;
-    }
-    desc.pulseBufferDepth = 8000;
-    desc.rayBufferDepth = 1440;
-    desc.latitude = 35.181251;
-    desc.longitude = -97.436752;
-    desc.radarHeight = 2.5f;
-    desc.wavelength = 0.03f;
-    strcpy(desc.dataPath, ROOT_PATH);
-    myRadar = RKInitWithDesc(desc);
-    
+    // Initialize a radar object    
+    myRadar = RKInitWithDesc(user.desc);
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate radar.\n");
         exit(EXIT_FAILURE);
@@ -493,10 +492,8 @@ int main(int argc, const char **argv) {
     signal(SIGKILL, handleSignals);
 
     // Set any parameters here:
-    if (user.relay == false) {
-        RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
-    }
-    if (!user.writeFiles) {
+	RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
+	if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
 
@@ -588,7 +585,7 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
-    } else if (user.relay) {
+    } else if (user.desc.initFlags & RKInitFlagRelay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, user.relayHost);
         RKSetDoNotWrite(myRadar, true);
@@ -599,7 +596,11 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
-    }
+	} else {
+
+		RKLog("Error. This should not happen.");
+
+	}
     
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
