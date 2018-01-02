@@ -129,7 +129,7 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 'd':
                     // DSP related
-                    switch (commandString[1]) {
+					switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
                         case 'f':
                             // 'df' - DSP filter
                             break;
