@@ -67,7 +67,7 @@ void *masterControllerExecuteInBackground(void *in) {
 //         desc.positionBufferDepth - the depth of position readings
 //         desc.pulseBufferDepth - the depth of pulse buffer
 //         desc.rayBufferDepth - the depth of ray buffer
-//         desc.controlCount - the maximum number of control
+//         desc.controlCapacity - the maximum number of control
 //         desc.expectedPulseRate - typical number of pulses per second (from the Transceiver)
 //         desc.expectedPositionRate - typical number of positions per second (from the Pedestal)
 //         desc.latitude - latitude in degrees
@@ -160,11 +160,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.positionBufferDepth == 0) {
         radar->desc.positionBufferDepth = 500;
     }
-    if (radar->desc.controlCount > RKControlCount) {
-        radar->desc.controlCount = RKControlCount;
-        RKLog("Info. Control count limited to %s\n", radar->desc.controlCount);
-    } else if (radar->desc.controlCount == 0) {
-        radar->desc.controlCount = RKControlCount;
+    if (radar->desc.controlCapacity > RKMaxControlCount) {
+        radar->desc.controlCapacity = RKMaxControlCount;
+        RKLog("Info. Control count limited to %s\n", radar->desc.controlCapacity);
+    } else if (radar->desc.controlCapacity == 0) {
+        radar->desc.controlCapacity = RKMaxControlCount;
     }
     if (radar->desc.expectedPulseRate == 0) {
         radar->desc.expectedPulseRate = 5000;
@@ -369,27 +369,27 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     // Controls
-    if (radar->desc.controlCount) {
+    if (radar->desc.controlCapacity) {
         radar->state |= RKRadarStateControlsAllocating;
-        bytes = radar->desc.controlCount * sizeof(RKControl);
+        bytes = radar->desc.controlCapacity * sizeof(RKControl);
         if (bytes == 0) {
             RKLog("Error. Zero storage for controls?\n");
-            radar->desc.controlCount = 64;
-            bytes = radar->desc.controlCount * sizeof(RKControl);
+            radar->desc.controlCapacity = 64;
+            bytes = radar->desc.controlCapacity * sizeof(RKControl);
         }
         radar->controls = (RKControl *)malloc(bytes);
         if (radar->controls == NULL) {
             RKLog("Error. Unable to allocate memory for controls.\n");
             exit(EXIT_FAILURE);
         }
-        for (i = 0; i < radar->desc.controlCount; i++) {
+        for (i = 0; i < radar->desc.controlCapacity; i++) {
             RKControl *control = &radar->controls[i];
             control->uid = i;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Controls occupy %s B (%s units)",
                   RKIntegerToCommaStyleString(bytes),
-                  RKIntegerToCommaStyleString(radar->desc.controlCount));
+                  RKIntegerToCommaStyleString(radar->desc.controlCapacity));
         }
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateControlsAllocating;
@@ -928,7 +928,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
 
 void RKAddControl(RKRadar *radar, const char *label, const char *command) {
     uint8_t index = radar->controlIndex++;
-    if (index >= radar->desc.controlCount) {
+    if (index >= radar->desc.controlCapacity) {
         RKLog("Cannot add anymore controls.\n");
         return;
     }
@@ -936,13 +936,21 @@ void RKAddControl(RKRadar *radar, const char *label, const char *command) {
 }
 
 void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const char *command) {
-    if (index >= radar->desc.controlCount) {
+    if (index >= radar->desc.controlCapacity) {
         RKLog("Error. Unable to update control.\n");
         return;
     }
     RKControl *control = &radar->controls[index];
     strncpy(control->label, label, RKNameLength - 1);
     strncpy(control->command, command, RKMaximumStringLength - 1);
+}
+
+void RKClearControls(RKRadar *radar) {
+	radar->controlIndex = 0;
+}
+
+void RKConcludeControls(RKRadar *radar) {
+	radar->controlSetIndex++;
 }
 
 #pragma mark - Developer Access

@@ -6,9 +6,12 @@
 //
 //  █
 //
+//  1.2.5  - 1/8/2018
+//         - Added RKClearControls(), RKConcludeControls()
+//         - Send updated controls
+//
 //  1.2.4  - Improved efficiency of RKPulseCompression
 //         - Reordered RKTest modules
-//         -
 //
 //  1.2.3  - 12/7/2017
 //         - Default waveform and pedestal task for RKTestTransceiver
@@ -85,19 +88,19 @@
   RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
   RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
   RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
-  RKControlCount The number of controls (buttons)
+  RKcontrolCapacity The number of controls (buttons)
   RKGateCount The maximum number of gates allocated for each pulse
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.4"
+#define RKVersionString                  "1.2.5"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
 #define RKBufferPSlotCount               1000                        // Positions
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
-#define RKControlCount                   128                         // Controls
+#define RKMaxControlCount                128                         // Controls
 #define RKGateCount                      65536                       // Must be a multiple of RKSIMDAlignSize
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
@@ -527,7 +530,7 @@ typedef struct rk_radar_desc {
     uint32_t         positionBufferDepth;
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
-    uint32_t         controlCount;
+    uint32_t         controlCapacity;
     uint32_t         expectedPulseRate;
     uint32_t         expectedPositionRate;
     double           latitude;                                       // Latitude (degrees)

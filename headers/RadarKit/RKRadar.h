@@ -150,6 +150,7 @@ struct rk_radar {
     //
     RKControl                  *controls;
     uint32_t                   controlIndex;
+	uint32_t                   controlSetIndex;
 };
 
 //
@@ -266,6 +267,8 @@ void RKSetRayReady(RKRadar *, RKRay *);
 // Controls
 void RKAddControl(RKRadar *, const char *label, const char *command);
 void RKUpdateControl(RKRadar *, uint8_t, const char *label, const char *command);
+void RKClearControls(RKRadar *);
+void RKConcludeControls(RKRadar *);
 
 // Absolute address value query
 void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);

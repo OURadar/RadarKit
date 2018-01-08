@@ -104,7 +104,12 @@ int socketCommandHandler(RKOperator *O) {
                     // Authenticate
                     sscanf(commandString + 1, "%s %s", sval1, sval2);
                     RKLog(">%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
+					// Check authentication here ...
+					//
+					//
+					// Update some info
                     strncpy(user->login, sval1, sizeof(user->login) - 1);
+					// Build the first response
                     j = sprintf(string, "{\"Radars\":[");
                     for (k = 0; k < engine->radarCount; k++) {
                         RKRadar *radar = engine->radars[k];
@@ -115,8 +120,7 @@ int socketCommandHandler(RKOperator *O) {
                     } else {
                         j += sprintf(string + j, "], ");
                     }
-
-                    RKMakeJSONStringFromControls(sval1, user->radar->controls, RKControlCount);
+                    RKMakeJSONStringFromControls(sval1, user->radar->controls, user->radar->controlIndex);
                     j += sprintf(string + j, "\"Controls\":["
                                  "{\"Label\":\"Go\", \"Command\":\"y\"}, "
                                  "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
@@ -463,6 +467,8 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
+	char sval1[RKMaximumStringLength];
+
 	pthread_mutex_lock(&user->mutex);
 
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -529,6 +535,31 @@ int socketStreamHandler(RKOperator *O) {
             }
             user->timeLastOut = time;
         }
+
+		// Send another set of controls if the radar controls have changed.
+		if (user->controlSetIndex != user->radar->controlSetIndex) {
+			user->controlSetIndex = user->radar->controlSetIndex;
+			j = sprintf(user->string, "{\"Radars\":[");
+			for (k = 0; k < engine->radarCount; k++) {
+				RKRadar *radar = engine->radars[k];
+				j += sprintf(user->string + j, "\"%s\", ", radar->desc.name);
+			}
+			if (k > 0) {
+				j += sprintf(user->string + j - 2, "], ") - 2;
+			} else {
+				j += sprintf(user->string + j, "], ");
+			}
+			// Should only send the controls if the user has been authenticated
+			RKMakeJSONStringFromControls(sval1, user->radar->controls, user->radar->controlIndex);
+			j += sprintf(user->string + j, "\"Controls\":["
+						"{\"Label\":\"Go\", \"Command\":\"y\"}, "
+						"{\"Label\":\"Stop\", \"Command\":\"z\"}, "
+						"%s"
+						"]}" RKEOL, sval1);
+			O->delimTx.type = RKNetworkPacketTypeControls;
+			O->delimTx.size = j;
+			RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+		}
     }
 
     // For contiguous streaming:
@@ -1029,6 +1060,7 @@ int socketInitialHandler(RKOperator *O) {
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->ascopeMode = 0;
+	user->controlSetIndex = user->radar->controlSetIndex;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
@@ -1267,3 +1299,4 @@ void RKCommandCenterStop(RKCommandCenter *center) {
     RKServerStop(center->server);
     RKLog("%s Stopped.\n", center->name);
 }
+
