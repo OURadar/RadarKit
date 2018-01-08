@@ -104,31 +104,13 @@ int socketCommandHandler(RKOperator *O) {
                     // Authenticate
                     sscanf(commandString + 1, "%s %s", sval1, sval2);
                     RKLog(">%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
-					// Check authentication here ...
+					// Check authentication here. For now, control is always authorized
 					//
 					//
+					user->access |= RKStreamControl;
 					// Update some info
                     strncpy(user->login, sval1, sizeof(user->login) - 1);
-					// Build the first response
-                    j = sprintf(string, "{\"Radars\":[");
-                    for (k = 0; k < engine->radarCount; k++) {
-                        RKRadar *radar = engine->radars[k];
-                        j += sprintf(string + j, "\"%s\", ", radar->desc.name);
-                    }
-                    if (k > 0) {
-                        j += sprintf(string + j - 2, "], ") - 2;
-                    } else {
-                        j += sprintf(string + j, "], ");
-                    }
-                    RKMakeJSONStringFromControls(sval1, user->radar->controls, user->radar->controlIndex);
-                    j += sprintf(string + j, "\"Controls\":["
-                                 "{\"Label\":\"Go\", \"Command\":\"y\"}, "
-                                 "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
-                                 "%s"
-                                 "]}" RKEOL, sval1);
-                    O->delimTx.type = RKNetworkPacketTypeControls;
-                    O->delimTx.size = j;
-                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
+					user->controlSetIndex = (uint32_t)-1;
                     break;
                     
                 case 'd':
@@ -537,7 +519,7 @@ int socketStreamHandler(RKOperator *O) {
         }
 
 		// Send another set of controls if the radar controls have changed.
-		if (user->controlSetIndex != user->radar->controlSetIndex) {
+		if (user->controlSetIndex != user->radar->controlSetIndex && user->access & RKStreamControl) {
 			user->controlSetIndex = user->radar->controlSetIndex;
 			j = sprintf(user->string, "{\"Radars\":[");
 			for (k = 0; k < engine->radarCount; k++) {
@@ -1051,7 +1033,6 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamDisplayZVWDPRKS;
     user->access |= RKStreamProductZVWDPRKS;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
-    user->access |= RKStreamControl;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000, 1);
@@ -1060,7 +1041,6 @@ int socketInitialHandler(RKOperator *O) {
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->ascopeMode = 0;
-	user->controlSetIndex = user->radar->controlSetIndex;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s User[%d]   Pul x %d   Ray x %d ...\n", engine->name, O->name, O->iid, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
