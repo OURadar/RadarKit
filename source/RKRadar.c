@@ -415,17 +415,18 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         
         //radar->positionClock = RKClockInit();
         if (radar->desc.positionSmoothFactor > 0) {
-            radar->pulseClock = RKClockInitWithSize(radar->desc.positionSmoothFactor + 1000, radar->desc.positionSmoothFactor);
+            radar->positionClock = RKClockInitWithSize(radar->desc.positionSmoothFactor + 1000, radar->desc.positionSmoothFactor);
         } else {
-            radar->pulseClock = RKClockInit();
+            radar->positionClock = RKClockInit();
         }
-        if (radar->desc.pulseTicsPerSecond > 0) {
-            RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
+        if (radar->desc.positionTicsPerSecond > 0) {
+            RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
         sprintf(name, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
+		RKLog("positionLatency = %.3e\n", radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine

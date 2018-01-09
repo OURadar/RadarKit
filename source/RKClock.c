@@ -101,7 +101,9 @@ void RKClockSetOffset(RKClock *clock, double offset) {
 void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     clock->hasWisdom = true;
     clock->dx = dxdu;
-    RKLog("%s Received du/dx = %s as wisdom\n", clock->name, RKFloatToCommaStyleString(1.0 / dxdu));
+	if (clock->verbose) {
+		RKLog("%s Received du/dx = %s as wisdom\n", clock->name, RKFloatToCommaStyleString(1.0 / dxdu));
+	}
 }
 
 void RKClockSetDuDx(RKClock *clock, const double dudx) {
@@ -202,7 +204,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 du = clock->uBuffer[k] - clock->uBuffer[j];
             }
             if (clock->count == clock->stride) {
-                RKLog("%s b = %.2e   du/dx = %s", clock->name, clock->b, RKFloatToCommaStyleString(1.0 / clock->dx));
+                RKLog("%s b = %.2e   du/dx = %s   offset = %.3f ms", clock->name, clock->b, RKFloatToCommaStyleString(1.0 / clock->dx), 1.0e3 * clock->offsetSeconds);
             }
         }
         if (clock->count > clock->stride) {
