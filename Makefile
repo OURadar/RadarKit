@@ -22,7 +22,6 @@ OBJS += RKDataRecorder.o RKSweep.o RKHealthLogger.o
 OBJS += RKWaveform.o
 RKLIB = libRadarKit.a
 
-
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
 #CFLAGS += -mavx2 -mavx512f

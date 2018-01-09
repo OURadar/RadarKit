@@ -140,7 +140,7 @@ typedef struct rk_int16c {
     int16_t q;
 } RKInt16C;
 
-// Fundamental unit of a (float) + (float) raw complex IQ sample
+// Interleaved complex format. Fundamental unit of a (float) + (float) raw complex IQ sample
 typedef struct rk_complex {
     RKFloat i;
     RKFloat q;
@@ -158,6 +158,7 @@ typedef union rk_four_byte {
     struct { uint16_t u16, u16_2; };
     struct { int16_t i16, i16_2; };
     struct { uint32_t u32; };
+    struct { int32_t i32; };
     struct { float f; };
 } RKFourByte;
 
