@@ -519,7 +519,8 @@ enum RKStream {
     RKStreamEverything               = 0xFFFFFFFFFFULL               //
 };
 
-// A general description of a radar. These should never change after the radar has gone live
+// A general description of a radar. Most parameters are used for initialization. Some may be
+// overriden after the radar has gone live.
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
@@ -532,8 +533,11 @@ typedef struct rk_radar_desc {
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
     uint32_t         controlCapacity;
-    uint32_t         expectedPulseRate;
-    uint32_t         expectedPositionRate;
+    uint32_t         pulseSmoothFactor;                              // Pulse rate (Hz)
+    uint32_t         pulseTicsPerSecond;                             // Pulse tics per second (normally 10e6)
+    uint32_t         positionSmoothFactor;                           // Position rate (Hz)
+    uint32_t         positionTicsPerSecond;                          // Position tics per second
+    double           positionLatency;                                // Position latency (s)
     double           latitude;                                       // Latitude (degrees)
     double           longitude;                                      // Longitude (degrees)
     float            heading;                                        // Radar heading

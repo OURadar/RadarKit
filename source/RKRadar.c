@@ -166,12 +166,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.controlCapacity == 0) {
         radar->desc.controlCapacity = RKMaxControlCount;
     }
-    if (radar->desc.expectedPulseRate == 0) {
-        radar->desc.expectedPulseRate = 5000;
-    }
-    if (radar->desc.expectedPositionRate == 0) {
-        radar->desc.expectedPositionRate = 100;
-    }
 
     // Read in preference file here, override some values
     if (!strlen(radar->desc.name)) {
@@ -405,17 +399,33 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Signal processor marries pulse and position data, process for moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Clocks
-        radar->pulseClock = RKClockInitWithSize(15000, 5000);
+        //radar->pulseClock = RKClockInitWithSize(15000, 5000);
+        if (radar->desc.pulseSmoothFactor > 0) {
+            radar->pulseClock = RKClockInitWithSize(radar->desc.pulseSmoothFactor + 1000, radar->desc.pulseSmoothFactor);
+        } else {
+            radar->pulseClock = RKClockInit();
+        }
+        if (radar->desc.pulseTicsPerSecond > 0) {
+            RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
+        }
         sprintf(name, "%s<PulseClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->pulseClock, name);
         radar->memoryUsage += sizeof(RKClock);
         
-        radar->positionClock = RKClockInit();
+        //radar->positionClock = RKClockInit();
+        if (radar->desc.positionSmoothFactor > 0) {
+            radar->pulseClock = RKClockInitWithSize(radar->desc.positionSmoothFactor + 1000, radar->desc.positionSmoothFactor);
+        } else {
+            radar->pulseClock = RKClockInit();
+        }
+        if (radar->desc.pulseTicsPerSecond > 0) {
+            RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
+        }
         sprintf(name, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
-        RKClockSetOffset(radar->positionClock, -0.00018);
+        RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine
