@@ -118,12 +118,13 @@ int RKPreferenceUpdate(RKPreference *preference) {
 			}
             preference->count++;
             #if defined(DEBUG)
-            printf("Keyword:'%s'   parameters:'%s' (%d)  %d  (%d) %.1f %.1f %.1f\n",
+            printf("Keyword:'%s'   parameters:'%s' (%d)  %d  (%d) %.1f %.1f %.1f %.1f\n",
                    preference->objects[k].keyword, preference->objects[k].valueString, (int)strlen(preference->objects[k].valueString),
                    preference->objects[k].isNumeric, preference->objects[k].numericCount,
                    preference->objects[k].doubleValues[0],
                    preference->objects[k].doubleValues[1],
-                   preference->objects[k].doubleValues[2]);
+                   preference->objects[k].doubleValues[2],
+				   preference->objects[k].doubleValues[3]);
             #endif
             k++;
         }

@@ -545,6 +545,17 @@ static void *pulseGatherer(void *in) {
     RKPulse *pulse;
     RKRay *ray;
 
+	// Show the selected moment processor
+    if (engine->verbose) {
+        if (engine->processor == &RKMultiLag) {
+            RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
+        } else if (engine->processor == &RKPulsePairHop) {
+            RKLog(">%s Method = RKPulsePairHop()\n", engine->name);
+        } else {
+            RKLog(">%s Method %p not recognized\n", engine->name, engine->processor);
+        }
+    }
+
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -749,7 +760,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
-    sprintf(engine->name, "%s<ProductGatherer>%s",
+    sprintf(engine->name, "%s<MomentGenerator>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMomentEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;

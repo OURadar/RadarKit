@@ -67,7 +67,9 @@ void *masterControllerExecuteInBackground(void *in) {
 //         desc.positionBufferDepth - the depth of position readings
 //         desc.pulseBufferDepth - the depth of pulse buffer
 //         desc.rayBufferDepth - the depth of ray buffer
-//         desc.controlCount - the maximum number of control
+//         desc.controlCapacity - the maximum number of control
+//         desc.expectedPulseRate - typical number of pulses per second (from the Transceiver)
+//         desc.expectedPositionRate - typical number of positions per second (from the Pedestal)
 //         desc.latitude - latitude in degrees
 //         desc.longitude - longitude in degrees
 //         desc.heading - heading in degrees
@@ -87,7 +89,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     RKSetUseDailyLog(true);
     RKSetRootFolder(desc.dataPath);
-
+	
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Initializing ... 0x%x", desc.initFlags);
     }
@@ -156,13 +158,19 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.positionBufferDepth = RKBufferPSlotCount;
         RKLog("Info. Position buffer clamped to %s\n", radar->desc.positionBufferDepth);
     } else if (radar->desc.positionBufferDepth == 0) {
-        radar->desc.positionBufferDepth = 250;
+        radar->desc.positionBufferDepth = 500;
     }
-    if (radar->desc.controlCount > RKControlCount) {
-        radar->desc.controlCount = RKControlCount;
-        RKLog("Info. Control count limited to %s\n", radar->desc.controlCount);
-    } else if (radar->desc.controlCount == 0) {
-        radar->desc.controlCount = RKControlCount;
+    if (radar->desc.controlCapacity > RKMaxControlCount) {
+        radar->desc.controlCapacity = RKMaxControlCount;
+        RKLog("Info. Control count limited to %s\n", radar->desc.controlCapacity);
+    } else if (radar->desc.controlCapacity == 0) {
+        radar->desc.controlCapacity = RKMaxControlCount;
+    }
+    if (radar->desc.expectedPulseRate == 0) {
+        radar->desc.expectedPulseRate = 5000;
+    }
+    if (radar->desc.expectedPositionRate == 0) {
+        radar->desc.expectedPositionRate = 100;
     }
 
     // Read in preference file here, override some values
@@ -361,27 +369,27 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     // Controls
-    if (radar->desc.controlCount) {
+    if (radar->desc.controlCapacity) {
         radar->state |= RKRadarStateControlsAllocating;
-        bytes = radar->desc.controlCount * sizeof(RKControl);
+        bytes = radar->desc.controlCapacity * sizeof(RKControl);
         if (bytes == 0) {
             RKLog("Error. Zero storage for controls?\n");
-            radar->desc.controlCount = 64;
-            bytes = radar->desc.controlCount * sizeof(RKControl);
+            radar->desc.controlCapacity = 64;
+            bytes = radar->desc.controlCapacity * sizeof(RKControl);
         }
         radar->controls = (RKControl *)malloc(bytes);
         if (radar->controls == NULL) {
             RKLog("Error. Unable to allocate memory for controls.\n");
             exit(EXIT_FAILURE);
         }
-        for (i = 0; i < radar->desc.controlCount; i++) {
+        for (i = 0; i < radar->desc.controlCapacity; i++) {
             RKControl *control = &radar->controls[i];
             control->uid = i;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Controls occupy %s B (%s units)",
                   RKIntegerToCommaStyleString(bytes),
-                  RKIntegerToCommaStyleString(radar->desc.controlCount));
+                  RKIntegerToCommaStyleString(radar->desc.controlCapacity));
         }
         radar->memoryUsage += bytes;
         radar->state ^= RKRadarStateControlsAllocating;
@@ -397,7 +405,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Signal processor marries pulse and position data, process for moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Clocks
-        radar->pulseClock = RKClockInitWithSize(15000, 10000);
+        radar->pulseClock = RKClockInitWithSize(15000, 5000);
         sprintf(name, "%s<PulseClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->pulseClock, name);
@@ -407,7 +415,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(name, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
         RKClockSetName(radar->positionClock, name);
-        RKClockSetOffset(radar->positionClock, -0.002);
+        RKClockSetOffset(radar->positionClock, -0.00018);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine
@@ -920,7 +928,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
 
 void RKAddControl(RKRadar *radar, const char *label, const char *command) {
     uint8_t index = radar->controlIndex++;
-    if (index >= radar->desc.controlCount) {
+    if (index >= radar->desc.controlCapacity) {
         RKLog("Cannot add anymore controls.\n");
         return;
     }
@@ -928,13 +936,21 @@ void RKAddControl(RKRadar *radar, const char *label, const char *command) {
 }
 
 void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const char *command) {
-    if (index >= radar->desc.controlCount) {
+    if (index >= radar->desc.controlCapacity) {
         RKLog("Error. Unable to update control.\n");
         return;
     }
     RKControl *control = &radar->controls[index];
     strncpy(control->label, label, RKNameLength - 1);
     strncpy(control->command, command, RKMaximumStringLength - 1);
+}
+
+void RKClearControls(RKRadar *radar) {
+	radar->controlIndex = 0;
+}
+
+void RKConcludeControls(RKRadar *radar) {
+	radar->controlSetIndex++;
 }
 
 #pragma mark - Developer Access
@@ -1271,24 +1287,36 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
 //     None
 //
 void RKMeasureNoise(RKRadar *radar) {
+	int k = 0;
     RKFloat noise[2];
     RKFloat noiseAverage[2] = {0.0f, 0.0f};
     uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
     RKPulse *pulse = RKGetPulse(radar->pulses, index);
-    int k = 0;
     while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
+	// Avoid data before this offset to exclude the transcient effect right after transmit pulse
+	int origin = 0;
+	for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
+		origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
+	}
+	origin *= 2;
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
-        RKMeasureNoiseFromPulse(noise, pulse);
+        RKMeasureNoiseFromPulse(noise, pulse, origin);
         noiseAverage[0] += noise[0];
         noiseAverage[1] += noise[1];
     }
     noiseAverage[0] /= (RKFloat)k;
     noiseAverage[1] /= (RKFloat)k;
+	if (!isfinite(noiseAverage[0])) {
+		noiseAverage[0] = 0.001f;
+	}
+	if (!isfinite(noiseAverage[1])) {
+		noiseAverage[1] = 0.001f;
+	}
     RKAddConfig(radar, RKConfigKeyNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }
 
@@ -1450,8 +1478,9 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
 	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
 		struct timeval t;
 		gettimeofday(&t, NULL);
-		printf("position @ %+.4f %+.4f\n", position->timeDouble,
-			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay));
+        printf("\033[38;5;222mposition\033[0m @ %+14.4f %+14.4f            x0 = %10.4f  u0 = %10.0f  dx/du = %.3e  k = %u\n", position->timeDouble,
+			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay),
+			   radar->positionClock->x0, radar->positionClock->u0, radar->positionClock->dx, radar->positionClock->index);
 	}
     position->flag |= RKPositionFlagReady;
     radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
@@ -1510,8 +1539,9 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (pulse->header.i % 100 == 0)) {
 		struct timeval t;
 		gettimeofday(&t, NULL);
-		printf("         @ %+.4f %+.4f @ pulse\n", pulse->header.timeDouble,
-			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay));
+		printf("           %+14.4f %+14.4f @ \033[38;5;118mpulse\033[0m    x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", pulse->header.timeDouble,
+			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay),
+			   radar->pulseClock->x0, radar->pulseClock->u0, radar->pulseClock->dx);
 	}
     pulse->header.s = RKPulseStatusHasIQData;
     return;

@@ -15,20 +15,20 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    int   coresForPulseCompression;
-    int   coresForProductGenerator;
-    int   prf;
-    int   sprt;
-    int   gateCount;
-    int   verbose;
-    int   testPulseCompression;
-    int   sleepInterval;
-    bool  simulate;
-    bool  writeFiles;
-    bool  relay;
-    char  pedzyHost[256];
-    char  tweetaHost[256];
-    char  relayHost[256];
+    int            coresForPulseCompression;
+    int            coresForProductGenerator;
+    int            prf;
+    int            sprt;
+    int            gateCount;                   // Number of gates (simulate mode)
+    int            verbose;
+    int            testPulseCompression;
+    int            sleepInterval;
+    bool           simulate;
+    bool           writeFiles;
+    char           pedzyHost[256];
+    char           tweetaHost[256];
+    char           relayHost[256];
+    RKRadarDesc    desc;
 } UserParams;
 
 // Global variables
@@ -66,6 +66,14 @@ void showHelp() {
            "         and the number of threads for product generator to " UNDERLINE("M") ".\n"
            "         If not specified, the default core counts are 8 / 4.\n"
            "\n"
+           "  -C (--show-clocks)\n"
+           "         Shows the clock assignment for positions and pulses. This mode can be\n"
+           "         used to check if the timing of position and pulses are set properly."
+           "\n"
+           "  -d (--no-decor)\n"
+           "         Removes decoration of text. No color / underline. This should be set for\n"
+           "         terminals that do not support color output through escape sequence.\n"
+           "\n"
            "  -f (--prf) " UNDERLINE("value") "\n"
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
            "         If not specified, the default PRF is 5000 Hz.\n"
@@ -77,65 +85,69 @@ void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
-           "  -L (--test-lean-system)\n"
+           "  -L (--lean-system)\n"
            "         Run with arguments '-v -f 2000 -F 5e6 -c 2,2'.\n"
            "\n"
-           "  -M (--test-medium-system)\n"
+           "  -M (--medium-system)\n"
            "         Run with arguments '-v -f 5000 -F 20e6 -c 4,2'.\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
            "\n"
+           "  -t (--tweeta-host)\n"
+           "         Sets the host of tweeta health relay.\n"
+           "\n"
            "  -s (--simulate)\n"
-           "         Sets the program to simulate data stream (default, if none of the tests\n"
-           "         is specified).\n"
+           "         Sets the program to simulate data stream.\n"
            "\n"
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
-           "  --test-one-ray\n"
-           "         Sets the program to test processing one ray using a selected processor.\n"
-           "\n"
-           "  --test-pulse-compression\n"
-           "         Sets the program to test the pulse compression using a simple case with.\n"
-           "         an impulse filter.\n"
-           "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
-           "         0 - Show types\n"
-           "         1 - Show colors\n"
-           "         2 - Show modulo math\n"
-           "         3 - Show window types\n"
-           "         4 - Parsing comma delimited values\n"
-           "         5 - SIMD quick test\n"
-           "         6 - SIMD test with numbers shown\n"
-           "         7 - SIMD performance tests\n"
-           "         8 - Parsing values in a JSON string\n"
-		   "         9 - Making a frequency hopping sequence\n"
-           "         10 - Initializing a File Manager\n"
-		   "         11 - Reading preference file\n"
-		   "         12 - Count files in a folder RKCountFilesInPath()\n"
-		   "         13 - File monitor\n"
-		   "         14 - Write a waveform file\n"
-		   "         15 - Make a TFM waveform\n"
-		   "         16 - Initializing a radar system\n"
-		   "         17 - Hilbert transform\n"
-		   "         18 - Calculating one ray using pulse pair\n"
-		   "         19 - Calculating one ray using pulse pair hop\n"
-		   "         20 - Calculating one ray using multilag with L = 2\n"
-		   "         21 - Calculating one ray using multilag with L = 3\n"
-		   "         22 - Calculating one ray using multilag with L = 4\n"
-           "         23 - Processor speed for various moment methods\n"
-           "         24 - Cache write\n"
+           "          0 - Show types\n"
+           "          1 - Show colors\n"
+           "          2 - Show modulo math\n"
+           "          3 - Parsing comma delimited values\n"
+           "          4 - Parsing values in a JSON string\n"
+           "          5 - Initializing a File Manager\n"
+           "          6 - Reading preference file\n"
+           "          7 - Count files in a folder RKCountFilesInPath()\n"
+           "          8 - File monitor\n"
+           "         11 - Initializing a radar system\n"
+           "\n"
+           "         20 - SIMD quick test\n"
+           "         21 - SIMD test with numbers shown\n"
+           "         22 - Show window types\n"
+           "         23 - Hilbert transform\n"
+           "\n"
+           "         30 - Make a frequency hopping sequence\n"
+           "         31 - Make a TFM waveform\n"
+           "         32 - Write a waveform file\n"
+           "\n"
+           "         40 - Pulse compression using simple cases\n"
+           "         41 - Calculating one ray using the Pulse Pair method\n"
+           "         42 - Calculating one ray using the Pulse Pair Hop method\n"
+           "         43 - Calculating one ray using the Multi-Lag method with L = 2\n"
+           "         44 - Calculating one ray using the Multt-Lag method with L = 3\n"
+           "         45 - Calculating one ray using the Multi-Lag method with L = 4\n"
+           "\n"
+           "         50 - Measure the speed of SIMD calculations\n"
+           "         51 - Measure the speed of pulse compression\n"
+           "         52 - Measure the speed of various moment methods\n"
+           "         53 - Measure the speed of cached write\n"
            "\n"
            "\n"
            "EXAMPLES:\n"
            "     Here are some examples of typical configurations.\n"
            "\n"
-           "  radar\n"
-           "         Runs the program with default settings.\n"
+           "  rktest -vL\n"
+           "         Runs the program with default settings for a lean system and verbose.\n"
            "\n"
-           "  radar -f 2000\n"
-           "         Runs the program with PRF = 2000 Hz.\n"
+           "  radar -L -f 2000\n"
+           "         Same as above but with PRF = 2000 Hz.\n"
+           "\n"
+           "  radar -T 50\n"
+           "         Runs the program to measure SIMD performance.\n"
            "\n"
            );
 }
@@ -145,24 +157,36 @@ UserParams processInput(int argc, const char **argv) {
     
     // A structure unit that encapsulates command line user parameters
     UserParams user;
-    memset(&user, 0, sizeof(UserParams));
+
+    // Zero out everything and set some default parameters
+	memset(&user, 0, sizeof(UserParams));
     user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
 
+    // Build a RKRadar initialization description
+    user.desc.initFlags = RKInitFlagAllocEverything;
+    user.desc.pulseBufferDepth = 8000;
+    user.desc.rayBufferDepth = 1440;
+    user.desc.latitude = 35.181251;
+    user.desc.longitude = -97.436752;
+    user.desc.radarHeight = 2.5f;
+    user.desc.wavelength = 0.03f;
+    strcpy(user.desc.dataPath, ROOT_PATH);
+
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
-        {"no-color"              , no_argument      , NULL, 'C'},
-        {"debug-demo"            , no_argument      , NULL, 'D'},
+        {"clock"                 , no_argument      , NULL, 'C'},
+        {"demo"                  , no_argument      , NULL, 'D'},
         {"fs"                    , required_argument, NULL, 'F'},
         {"hp-system"             , no_argument      , NULL, 'H'},
         {"lean-system"           , no_argument      , NULL, 'L'},
         {"medium-system"         , no_argument      , NULL, 'M'},
-        {"test-pulse-compression", optional_argument, NULL, 'P'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
         {"core"                  , required_argument, NULL, 'c'},
+        {"no-decor"              , no_argument      , NULL, 'd'},
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
@@ -173,7 +197,6 @@ UserParams processInput(int argc, const char **argv) {
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
-        {"test-write-speed"      , no_argument      , NULL, 'y'},
         {"simulate-sleep"        , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -190,7 +213,7 @@ UserParams processInput(int argc, const char **argv) {
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'C':
-                RKSetWantColor(false);
+                user.desc.initFlags |= RKInitFlagShowClockOffset;
                 break;
             case 'D':
                 user.simulate = true;
@@ -235,77 +258,81 @@ UserParams processInput(int argc, const char **argv) {
                         RKTestModuloMath();
                         break;
                     case 3:
-                        RKTestWindow();
-                        break;
-                    case 4:
                         RKTestParseCommaDelimitedValues();
                         break;
-                    case 5:
-                        RKTestSIMD(RKTestSIMDFlagNull);
-                        break;
-                    case 6:
-                        RKTestSIMD(RKTestSIMDFlagShowNumbers);
-                        break;
-                    case 7:
-                        RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
-                        break;
-                    case 8:
+                    case 4:
                         RKTestJSON();
                         break;
-                    case 9:
-                        RKTestMakeHops();
-                        break;
-                    case 10:
+                    case 5:
                         RKTestFileManager();
                         break;
-                    case 11:
+                    case 6:
                         RKTestPreferenceReading();
                         break;
-                    case 12:
+                    case 7:
                         RKTestCountFiles();
                         break;
-                    case 13:
+                    case 8:
                         RKTestFileMonitor();
                         break;
-                    case 14:
-                        RKTestWriteWaveform();
-                        break;
-                    case 15:
-                        RKTestWaveformTFM();
-                        break;
-                    case 16:
+                    case 11:
                         myRadar = RKInitLean();
                         RKShowOffsets(myRadar);
                         RKFree(myRadar);
                         break;
-					case 17:
-						RKTestHilbertTransform();
-						break;
-                    case 18:
-                        RKTestOneRay(RKPulsePair, 0);
-                        break;
-                    case 19:
-                        RKTestOneRay(RKPulsePairHop, 0);
-                        break;
                     case 20:
-                        RKTestOneRay(RKMultiLag, 2);
+                        RKTestSIMD(RKTestSIMDFlagNull);
                         break;
-					case 21:
-						RKTestOneRay(RKMultiLag, 3);
-						break;
-					case 22:
-						RKTestOneRay(RKMultiLag, 4);
-						break;
+                    case 21:
+                        RKTestSIMD(RKTestSIMDFlagShowNumbers);
+                        break;
+                    case 22:
+                        RKTestWindow();
+                        break;
                     case 23:
-                        RKTestProcessorSpeed();
+                        RKTestHilbertTransform();
                         break;
-                    case 24:
-                        RKTestCacheWrite();
+                    case 30:
+                        RKTestMakeHops();
                         break;
-                    case 100:
+                    case 31:
+                        RKTestWaveformTFM();
+                        break;
+                    case 32:
+                        RKTestWriteWaveform();
+                        break;
+                    case 40:
                         RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
+                    case 41:
+                        RKTestOneRay(RKPulsePair, 0);
+                        break;
+                    case 42:
+                        RKTestOneRay(RKPulsePairHop, 0);
+                        break;
+                    case 43:
+                        RKTestOneRay(RKMultiLag, 2);
+                        break;
+                    case 44:
+                        RKTestOneRay(RKMultiLag, 3);
+                        break;
+                    case 45:
+                        RKTestOneRay(RKMultiLag, 4);
+                        break;
+                    case 50:
+                        RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
+                        break;
+                    case 51:
+                        RKTestPulseCompressionSpeed();
+                        break;
+                    case 52:
+                        RKTestMomentProcessorSpeed();
+                        break;
+                    case 53:
+                        RKTestCacheWrite();
+                        break;
                     default:
+                        RKLog("Test %d is invalid.\n", k);
                         break;
                 }
                 exit(EXIT_SUCCESS);
@@ -322,6 +349,9 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'c':
                 sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
+                break;
+            case 'd':
+                RKSetWantColor(false);
                 break;
             case 'f':
                 k = sscanf(optarg, "%d,%d", &user.prf, &user.sprt);
@@ -343,7 +373,7 @@ UserParams processInput(int argc, const char **argv) {
                 user.verbose = MAX(user.verbose - 1, 0);
                 break;
             case 'r':
-                user.relay = true;
+				user.desc.initFlags = RKInitFlagRelay;
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;
             case 's':
@@ -373,7 +403,19 @@ UserParams processInput(int argc, const char **argv) {
     if (user.prf > 0 && user.simulate == false) {
         RKLog("Warning. PRF has no effects without simulation.\n");
     }
-    
+    if (user.verbose == 1) {
+        user.desc.initFlags |= RKInitFlagVerbose;
+    } else if (user.verbose == 2) {
+        user.desc.initFlags |= RKInitFlagVeryVerbose;
+    } else if (user.verbose == 3) {
+        user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
+    }
+    if (user.gateCount >= 4000) {
+        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
+    } else {
+        user.desc.pulseToRayRatio = 1;
+    }
+	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
     return user;
 }
 
@@ -388,21 +430,25 @@ int main(int argc, const char **argv) {
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
+    char *term = getenv("TERM");
+    if (term == NULL || strcasestr(term, "color") == NULL) {
+        RKSetWantColor(false);
+    }
+ 
     UserParams user = processInput(argc, argv);
 
-    char *term = getenv("TERM");
-    if (term == NULL) {
-        RKSetWantColor(false);
-    } else if (strcasestr(term, "color") == NULL) {
-        RKSetWantColor(false);
-    } else if (user.verbose) {
+    if (user.verbose) {
         printf("TERM = %s\n", term);
     }
-    
+
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && user.relay == false && user.testPulseCompression == 0) {
+    if (user.simulate == false && !(user.desc.initFlags = RKInitFlagRelay)) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
+    } else if (user.simulate == true && user.desc.initFlags == RKInitFlagRelay) {
+        RKLog("Info. Simulate takes precedence over relay.\n");
+		user.desc.initFlags = RKInitFlagAllocEverything;
+		user.simulate = true;
     }
 
     // Screen output based on verbosity level
@@ -410,35 +456,8 @@ int main(int argc, const char **argv) {
         RKSetWantScreenOutput(false);
     }
 
-    if (user.simulate == true && user.relay == true) {
-        RKLog("Info. Simulate takes precedence over relay.\n");
-        user.relay = false;
-    }
-    
-    // Build an initialization description
-    RKRadarDesc desc;
-    memset(&desc, 0, sizeof(RKRadarDesc));
-    
-    if (user.relay) {
-        desc.initFlags = RKInitFlagRelay;
-    } else {
-        desc.initFlags = RKInitFlagAllocEverything;
-    }
-    desc.pulseCapacity = user.gateCount;
-    if (user.gateCount >= 4000) {
-        desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
-    } else {
-        desc.pulseToRayRatio = 1;
-    }
-    desc.pulseBufferDepth = 8000;
-    desc.rayBufferDepth = 1440;
-    desc.latitude = 35.181251;
-    desc.longitude = -97.436752;
-    desc.radarHeight = 2.5f;
-    desc.wavelength = 0.03f;
-    strcpy(desc.dataPath, ROOT_PATH);
-    myRadar = RKInitWithDesc(desc);
-    
+    // Initialize a radar object
+    myRadar = RKInitWithDesc(user.desc);
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate radar.\n");
         exit(EXIT_FAILURE);
@@ -446,14 +465,14 @@ int main(int argc, const char **argv) {
 
     RKSetVerbose(myRadar, user.verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-	RKSetMomentProcessorToMultiLag(myRadar, 3);
+    RKSetMomentProcessorToMultiLag(myRadar, 3);
 
-	RKAddControl(myRadar, "10us pulse", "t w s10");
-	RKAddControl(myRadar, "20us pulse", "t w s20");
-	RKAddControl(myRadar, "50us pulse", "t w s50");
-	RKAddControl(myRadar, "10us 0.1-MHz tone", "t w t10");
-	RKAddControl(myRadar, "20us 0.1-MHz tone", "t w t20");
-	RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
+    RKAddControl(myRadar, "10us pulse", "t w s10");
+    RKAddControl(myRadar, "20us pulse", "t w s20");
+    RKAddControl(myRadar, "50us pulse", "t w s50");
+    RKAddControl(myRadar, "10us 0.1-MHz tone", "t w t10");
+    RKAddControl(myRadar, "20us 0.1-MHz tone", "t w t20");
+    RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
 
     RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
     RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
@@ -474,10 +493,8 @@ int main(int argc, const char **argv) {
     signal(SIGKILL, handleSignals);
 
     // Set any parameters here:
-    if (user.relay == false) {
-        RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
-    }
-    if (!user.writeFiles) {
+	RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
+	if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
 
@@ -540,7 +557,6 @@ int main(int argc, const char **argv) {
         }
 
         myRadar->configs[0].prf[0] = user.prf;
-        myRadar->desc.heading = 180.0f;
 
         RKWaveform *waveform = NULL;
         const char wavfile[] = "waveforms/ofmd.rkwav";
@@ -554,8 +570,9 @@ int main(int argc, const char **argv) {
             RKWaveformSummary(waveform);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
-            waveform = RKWaveformTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
-            RKLog("Waveform generated.\n");
+            //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
+            waveform = RKWaveformInitAsLinearFrequencyModulation(5.0, 0.0, 10.0, 1.5);
+            RKLog("Waveform LFM generated.\n");
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
@@ -568,7 +585,7 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
-    } else if (user.relay) {
+    } else if (user.desc.initFlags & RKInitFlagRelay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, user.relayHost);
         RKSetDoNotWrite(myRadar, true);
@@ -579,7 +596,11 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
-    }
+	} else {
+
+		RKLog("Error. This should not happen.");
+
+	}
     
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
