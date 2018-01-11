@@ -610,6 +610,7 @@ RKRadar *RKInitAsRelay(void) {
 //     RKResultSuccess if no errors
 //
 int RKFree(RKRadar *radar) {
+	int k = radar->desc.initFlags & RKInitFlagVerbose;
     if (radar->active) {
         RKStop(radar);
     }
@@ -688,6 +689,9 @@ int RKFree(RKRadar *radar) {
         free(radar->controls);
     }
     free(radar);
+	if (k) {
+		RKLog("Done.");
+	}
     return RKResultSuccess;
 }
 
@@ -1065,9 +1069,14 @@ int RKGoLive(RKRadar *radar) {
         }
         if (radar->pedestalFree == NULL || radar->pedestalExec == NULL) {
             RKLog("Error. Pedestal incomplete.");
-            exit(EXIT_FAILURE);
+			RKStop(radar);
+			return RKResultIncompletePedestal;
         }
         radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
+		if (radar->pedestal == NULL) {
+			RKStop(radar);
+			return RKResultFailedToStartPedestal;
+		}
         radar->state |= RKRadarStatePedestalInitialized;
     }
 
@@ -1078,9 +1087,14 @@ int RKGoLive(RKRadar *radar) {
         }
         if (radar->healthRelayFree == NULL || radar->healthRelayExec == NULL) {
             RKLog("Error. Health relay incomplete.");
-            exit(EXIT_FAILURE);
+			RKStop(radar);
+			return RKResultIncompleteHealthRelay;
         }
         radar->healthRelay = radar->healthRelayInit(radar, radar->healthRelayInitInput);
+		if (radar->healthRelay == NULL) {
+			RKStop(radar);
+			return RKResultFailedToStartHealthRelay;
+		}
         radar->state |= RKRadarStateHealthRelayInitialized;
     }
     
@@ -1091,9 +1105,14 @@ int RKGoLive(RKRadar *radar) {
         }
         if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
             RKLog("Error. Transceiver incomplete.");
-            exit(EXIT_FAILURE);
+			RKStop(radar);
+			return RKResultIncompleteTransceiver;
         }
         radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
+		if (radar->transceiver == NULL) {
+			RKStop(radar);
+			return RKResultFailedToStartTransceiver;
+		}
         radar->state |= RKRadarStateTransceiverInitialized;
     }
 
