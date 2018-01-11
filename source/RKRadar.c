@@ -1257,6 +1257,10 @@ int RKStop(RKRadar *radar) {
         RKHealthEngineStop(radar->healthEngine);
         radar->state ^= RKRadarStateHealthEngineInitialized;
     }
+	if (radar->state & RKRadarStateHealthLoggerInitialized) {
+		RKHealthLoggerStop(radar->healthLogger);
+		radar->state ^= RKRadarStateHealthLoggerInitialized;
+	}
     if (radar->state & RKRadarStateRadarRelayInitialized) {
         RKRadarRelayStop(radar->radarRelay);
         radar->state ^= RKRadarStateRadarRelayInitialized;
@@ -1268,10 +1272,6 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineStop(radar->sweepEngine);
         radar->state ^= RKRadarStateSweepEngineInitialized;
-    }
-    if (radar->state & RKRadarStateHealthLoggerInitialized) {
-        RKHealthLoggerStop(radar->healthLogger);
-        radar->state ^= RKRadarStateHealthLoggerInitialized;
     }
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("radar->state = 0x%x\n", radar->state);
