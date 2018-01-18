@@ -431,14 +431,14 @@ int main(int argc, const char **argv) {
     RKSetWantScreenOutput(true);
 
     char *term = getenv("TERM");
-    if (term == NULL || strcasestr(term, "color") == NULL) {
+    if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
         RKSetWantColor(false);
     }
  
     UserParams user = processInput(argc, argv);
 
-    if (user.verbose) {
-        printf("TERM = %s\n", term);
+    if (user.verbose > 1) {
+        printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
     }
 
     // In the case when no tests are performed, simulate the time-series
