@@ -11,7 +11,7 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#define RKPreferenceObjectCount   64
+#define RKPreferenceObjectCount   128
 
 typedef struct rk_preference {
     RKPreferenceObject    objects[RKPreferenceObjectCount];
