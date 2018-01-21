@@ -1163,6 +1163,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Network\":{\"Value\":true,\"Enum\":0}, "
                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                         "\"Noise\":[%.3f,%.3f], "
                         "\"DFTPlanUsage\":[%d,%d,%d,%d,%d]"
                         "}",
