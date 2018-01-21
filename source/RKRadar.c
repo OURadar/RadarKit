@@ -1160,12 +1160,12 @@ int RKWaitWhileActive(RKRadar *radar) {
                 RKConfig *config = RKGetLatestConfig(radar);
                 RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
                 sprintf(health->string, "{"
-                        "\"Transceiver\":{\"Value\":%s,\"Enum\":%d},"
-                        "\"Pedestal\":{\"Value\":%s,\"Enum\":%d},"
-                        "\"Health Relay\":{\"Value\":%s,\"Enum\":%d},"
-                        "\"Network\":{\"Value\":true,\"Enum\":0},"
-                        "\"Recorder\":{\"Value\":%s,\"Enum\":%d},"
-                        "\"Noise\":[%.3f,%.3f],"
+                        "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Network\":{\"Value\":true,\"Enum\":0}, "
+                        "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Noise\":[%.3f,%.3f], "
                         "\"DFTPlanUsage\":[%d,%d,%d,%d,%d]"
                         "}",
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,

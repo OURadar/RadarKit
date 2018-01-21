@@ -232,7 +232,7 @@ static void *healthLogger(void *in) {
             sprintf(health->string + strlen(health->string) - 1, ", "
                     "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                    "\"Sys Heading\":{\"Value\":\"%.3f\",\"Enum\":0}, "
+                    "\"Sys Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
                     "\"LocationFromDescriptor\":true}",
                     desc->latitude,
                     desc->longitude,
