@@ -230,6 +230,8 @@ static void *healthLogger(void *in) {
         } else {
             // Concatenate with latitude, longitude and heading values if GPS values are not reported
             sprintf(health->string + strlen(health->string) - 1, ", "
+                    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
+                    "\"GPS from File\":{\"Value\":true,\"Enum\":0}, "
                     "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"GPS Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
