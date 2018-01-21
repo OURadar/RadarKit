@@ -1111,17 +1111,17 @@ void *RKTestHealthRelayRunLoop(void *input) {
         sprintf(health->string, "{"
 				"\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
 				"\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-				"\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-				"\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-				"\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
+                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
                 "}",
 				RKStatusEnumNormal,
 				RKStatusEnumNormal,
-				(double)rand() * 8.0e-6 / RAND_MAX + 35.5,
-				(double)rand() * 8.0e-6 / RAND_MAX - 95.5,
-				(double)rand() * 0.2 / RAND_MAX + 45,
+                (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
+                (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
+                (double)rand() * 0.2 / RAND_MAX + 45,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);

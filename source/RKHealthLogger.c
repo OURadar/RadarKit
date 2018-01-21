@@ -227,6 +227,16 @@ static void *healthLogger(void *in) {
             } else {
                 headingChangeCount = 0;
             }
+        } else {
+            // Concatenate with latitude, longitude and heading values if GPS values are not reported
+            sprintf(health->string + strlen(health->string) - 1, ", "
+                    "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"Sys Heading\":{\"Value\":\"%.3f\",\"Enum\":0}, "
+                    "\"LocationFromDescriptor\":true}",
+                    desc->latitude,
+                    desc->longitude,
+                    desc->heading);
         }
         
         RKProcessHealthKeywords(engine, health->string);
