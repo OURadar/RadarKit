@@ -175,8 +175,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(radar->desc.filePrefix, "RK");
     }
     RKLog("Radar name = '%s'  prefix = '%s'", radar->desc.name, radar->desc.filePrefix);
-    radar->desc.latitude = 35.2550320;
-    radar->desc.longitude = -97.4227810;
     if (strlen(desc.dataPath) == 0) {
         sprintf(radar->desc.dataPath, RKDefaultDataPath);
     }
