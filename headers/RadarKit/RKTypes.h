@@ -417,13 +417,16 @@ enum RKConfigKey {
     RKConfigKeyDualPRF,
     RKConfigKeyGateCount,
     RKConfigKeyWaveformId,
-    RKConfigKeyVCPDefinition,
+    RKConfigKeyNoise,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
-    RKConfigKeyNoise,
+    RKConfigKeyZCal2x2,
+    RKConfigKeyDCal2,
+    RKConfigKeyPCal2,
     RKConfigKeySNRThreshold,
     RKConfigKeyWaveform,
+    RKConfigKeyVCPDefinition,
     RKConfigKeyEnd
 };
 
@@ -557,6 +560,9 @@ typedef struct rk_radar_desc {
 // A running configuration buffer
 typedef struct rk_config {
     uint64_t         i;                                              // Identity counter
+    float            sweepElevation;                                 // Sweep elevation angle (degrees)
+    float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
+    RKMarker         startMarker;                                    // Marker of the start ray
     uint32_t         pw[RKMaxFilterCount];                           // Pulse width (ns)
     uint32_t         prf[RKMaxFilterCount];                          // Pulse repetition frequency (Hz)
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
@@ -566,9 +572,6 @@ typedef struct rk_config {
     RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration
     RKFloat          SNRThreshold;                                   // Censor SNR (dB)
-    float            sweepElevation;                                 // Sweep elevation angle (degrees)
-    float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
-    RKMarker         startMarker;                                    // Marker of the start ray
     char             waveform[RKNameLength];                         // Waveform name
     char             vcpDefinition[RKNameLength];                    // Volume coverage pattern
 } RKConfig;

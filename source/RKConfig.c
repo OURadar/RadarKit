@@ -82,6 +82,23 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->PCal[0] = (RKFloat)va_arg(args, double);
                 RKLog(">PCal = %.2f rad\n", newConfig->PCal[0]);
                 break;
+            case RKConfigKeyZCal2x2:
+                newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
+                newConfig->ZCal[0][1] = (RKFloat)va_arg(args, double);
+                newConfig->ZCal[1][0] = (RKFloat)va_arg(args, double);
+                newConfig->ZCal[1][1] = (RKFloat)va_arg(args, double);
+                RKLog(">ZCal[2x2] = %.2f %.2f %.2f %.2f dB\n", newConfig->ZCal[0][0], newConfig->ZCal[0][1], newConfig->ZCal[1][0], newConfig->ZCal[1][1]);
+                break;
+            case RKConfigKeyDCal2:
+                newConfig->DCal[0] = (RKFloat)va_arg(args, double);
+                newConfig->DCal[1] = (RKFloat)va_arg(args, double);
+                RKLog(">DCal[2] = %.2f %.2fdB\n", newConfig->DCal[0], newConfig->DCal[1]);
+                break;
+            case RKConfigKeyPCal2:
+                newConfig->PCal[0] = (RKFloat)va_arg(args, double);
+                newConfig->PCal[1] = (RKFloat)va_arg(args, double);
+                RKLog(">PCal[2] = %.2f %.2f rad\n", newConfig->PCal[0], newConfig->PCal[1]);
+                break;
             case RKConfigKeySNRThreshold:
                 newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
                 RKLog(">SNRThreshold = %.2f dB\n", newConfig->SNRThreshold);
