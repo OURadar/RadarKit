@@ -588,9 +588,9 @@ typedef union rk_heath {
 } RKHealth;
 
 typedef struct rk_nodal_health {
-    RKHealth         *healths;
-    uint32_t         index;
-    bool             active;
+    RKHealth         *healths;                                       // Pointer (8 byte for 64-bit systems)
+    uint32_t         index;                                          // Index (4 byte)
+    bool             active;                                         // Active flag (1 byte)
 } RKNodalHealth;
 
 typedef union rk_position {
