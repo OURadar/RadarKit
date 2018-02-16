@@ -6,8 +6,12 @@
 //
 //  █
 //
-//  1.2.4  -
-//         -
+//  1.2.5  - 1/8/2018
+//         - Added RKClearControls(), RKConcludeControls()
+//         - Send updated controls
+//
+//  1.2.4  - Improved efficiency of RKPulseCompression
+//         - Reordered RKTest modules
 //
 //  1.2.3  - 12/7/2017
 //         - Default waveform and pedestal task for RKTestTransceiver
@@ -84,19 +88,19 @@
   RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
   RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
   RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
-  RKControlCount The number of controls (buttons)
+  RKcontrolCapacity The number of controls (buttons)
   RKGateCount The maximum number of gates allocated for each pulse
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.3"
+#define RKVersionString                  "1.2.5"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
-#define RKBufferPSlotCount               500                         // Positions
+#define RKBufferPSlotCount               1000                        // Positions
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
-#define RKControlCount                   128                         // Controls
+#define RKMaxControlCount                128                         // Controls
 #define RKGateCount                      65536                       // Must be a multiple of RKSIMDAlignSize
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
@@ -156,7 +160,7 @@ typedef struct rk_int16c {
     int16_t q;
 } RKInt16C;
 
-// Fundamental unit of a (float) + (float) raw complex IQ sample
+// Interleaved complex format. Fundamental unit of a (float) + (float) raw complex IQ sample
 typedef struct rk_complex {
     RKFloat i;
     RKFloat q;
@@ -174,6 +178,7 @@ typedef union rk_four_byte {
     struct { uint16_t u16, u16_2; };
     struct { int16_t i16, i16_2; };
     struct { uint32_t u32; };
+    struct { int32_t i32; };
     struct { float f; };
 } RKFourByte;
 
@@ -211,6 +216,9 @@ enum RKResult {
     RKResultEngineNotWired,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
+	RKResultIncompleteTransceiver,
+	RKResultIncompletePedestal,
+	RKResultIncompleteHealthRelay,
     RKResultErrorCreatingOperatorRoutine,
     RKResultErrorCreatingOperatorCommandRoutine,
     RKResultErrorCreatingClientRoutine,
@@ -243,6 +251,9 @@ enum RKResult {
     RKResultFailedToStartPedestalMonitor,
     RKResultFailedToStartFileManager,
     RKResultFailedToStartFileRemover,
+	RKResultFailedToStartTransceiver,
+	RKResultFailedToStartPedestal,
+	RKResultFailedToStartHealthRelay,
     RKResultPreferenceFileNotFound,
     RKResultFailedToMeasureNoise,
     RKResultFailedToCreateFileRemover,
@@ -420,18 +431,28 @@ enum RKConfigKey {
     RKConfigKeyNull,
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
-    RKConfigPositionMarker,
+    RKConfigKeyPositionMarker,
     RKConfigKeyPRF,
     RKConfigKeyDualPRF,
     RKConfigKeyGateCount,
+    RKConfigKeyWaveform,
     RKConfigKeyWaveformId,
-    RKConfigKeyVCPDefinition,
+    RKConfigKeyFilterCount,
+    RKConfigKeyFilterAnchor,
+    RKConfigKeyFilterAnchor2,
+    RKConfigKeyFilterAnchors,
+    RKConfigKeyNoise,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
-    RKConfigKeyNoise,
+    RKConfigKeyZCal2,
+    RKConfigKeyDCal2,
+    RKConfigKeyPCal2,
+    RKConfigKeyZCals,
+    RKConfigKeyDCals,
+    RKConfigKeyPCals,
     RKConfigKeySNRThreshold,
-    RKConfigKeyWaveform,
+    RKConfigKeyVCPDefinition,
     RKConfigKeyEnd
 };
 
@@ -533,7 +554,8 @@ enum RKStream {
     RKStreamEverything               = 0xFFFFFFFFFFULL               //
 };
 
-// A general description of a radar. These should never change after the radar has gone live
+// A general description of a radar. Most parameters are used for initialization. Some may be
+// overriden after the radar has gone live.
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
@@ -545,7 +567,12 @@ typedef struct rk_radar_desc {
     uint32_t         positionBufferDepth;
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
-    uint32_t         controlCount;
+    uint32_t         controlCapacity;
+    uint32_t         pulseSmoothFactor;                              // Pulse rate (Hz)
+    uint32_t         pulseTicsPerSecond;                             // Pulse tics per second (normally 10e6)
+    uint32_t         positionSmoothFactor;                           // Position rate (Hz)
+    uint32_t         positionTicsPerSecond;                          // Position tics per second
+    double           positionLatency;                                // Position latency (s)
     double           latitude;                                       // Latitude (degrees)
     double           longitude;                                      // Longitude (degrees)
     float            heading;                                        // Radar heading
@@ -559,6 +586,11 @@ typedef struct rk_radar_desc {
 // A running configuration buffer
 typedef struct rk_config {
     uint64_t         i;                                              // Identity counter
+    float            sweepElevation;                                 // Sweep elevation angle (degrees)
+    float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
+    RKMarker         startMarker;                                    // Marker of the start ray
+    uint8_t          filterCount;                                    // Number of filters
+    RKFilterAnchor   filterAnchors[RKMaxFilterCount];                // Filter anchors
     uint32_t         pw[RKMaxFilterCount];                           // Pulse width (ns)
     uint32_t         prf[RKMaxFilterCount];                          // Pulse repetition frequency (Hz)
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
@@ -568,9 +600,6 @@ typedef struct rk_config {
     RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration
     RKFloat          SNRThreshold;                                   // Censor SNR (dB)
-    float            sweepElevation;                                 // Sweep elevation angle (degrees)
-    float            sweepAzimuth;                                   // Sweep azimuth angle (degrees)
-    RKMarker         startMarker;                                    // Marker of the start ray
     char             waveform[RKNameLength];                         // Waveform name
     char             vcpDefinition[RKNameLength];                    // Volume coverage pattern
 } RKConfig;
@@ -587,9 +616,9 @@ typedef union rk_heath {
 } RKHealth;
 
 typedef struct rk_nodal_health {
-    RKHealth         *healths;
-    uint32_t         index;
-    bool             active;
+    RKHealth         *healths;                                       // Pointer (8 byte for 64-bit systems)
+    uint32_t         index;                                          // Index (4 byte)
+    bool             active;                                         // Active flag (1 byte)
 } RKNodalHealth;
 
 typedef union rk_position {

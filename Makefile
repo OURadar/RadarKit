@@ -3,12 +3,13 @@ UNAME_M := $(shell uname -m)
 
 $(info $$UNAME_M = [${UNAME_M}])
 
-#CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
-#CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
-CFLAGS = -ggdb -std=gnu99 -Os -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
-#CFLAGS = -std=gnu99 -march=native -mfpmath=sse -Os -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
-#CFLAGS += -fms-extensions -Wno-microsoft
+#CFLAGS =      -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
+CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+#CFLAGS =      -std=gnu99 -Os -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+CFLAGS += -fms-extensions -Wno-microsoft
+
 LDFLAGS = -L /usr/local/lib
+
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o
 OBJS += RKPreference.o
@@ -23,7 +24,6 @@ OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKDataRecorder.o RKSweep.o RKHealthLogger.o
 OBJS += RKWaveform.o
 RKLIB = libRadarKit.a
-
 
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf

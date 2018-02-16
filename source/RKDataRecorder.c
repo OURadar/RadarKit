@@ -120,14 +120,22 @@ static void *pulseRecorder(void *in) {
             // Close the current file
             if (engine->doNotWrite && doNotWrite) {
                 if (engine->verbose && strlen(filename)) {
-                    RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
+					if (len > 1000000000) {
+						RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
+					} else {
+						RKLog("%s Skipped %s (%s pulses, %s MB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-6f * len));
+					}
                 }
             } else {
                 if (engine->fd != 0) {
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
                     if (engine->verbose) {
-                        RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
+						if (len > 1000000000) {
+                        	RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
+						} else {
+							RKLog("%s Recorded %s (%s pulses, %s MB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-6f * (len + engine->cacheWriteIndex)));
+						}
                     }
                     engine->fd = 0;
                     // Notify file manager of a new addition

@@ -95,7 +95,7 @@ static void *pulseTagger(void *in) {
     RKMarker marker0, marker1;
     bool hasSweepEnd;
 
-    if (engine->verbose) {
+	if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     
@@ -251,7 +251,7 @@ static void *pulseTagger(void *in) {
             RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
                             RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
                             RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
-                            RKConfigPositionMarker,  marker0,
+                            RKConfigKeyPositionMarker,  marker0,
                             RKConfigKeyNull);
             if (engine->verbose) {
                 RKLog("%s New sweep C%02d.   EL %.2f°   AZ %.2f°\n", engine->name, *engine->configIndex,

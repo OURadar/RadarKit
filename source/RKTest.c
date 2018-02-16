@@ -9,9 +9,12 @@
 #include <RadarKit/RKTest.h>
 #include <getopt.h>
 
-#define RKFMT                          "%5d"
-#define RKSIMD_TEST_DESC_FORMAT        "%65s"
-#define RKSIMD_TEST_RESULT(str, res)   printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed");
+#define RKFMT                               "%5d"
+#define RKSIMD_TEST_DESC_FORMAT             "%65s"
+#define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
+#define RKSIMD_TEST_RESULT(clr, str, res)   clr ? \
+    printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed") : \
+    printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
 #define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
 #define PEDESTAL_SAMPLING_TIME         0.01
 #define HEALTH_RELAY_SAMPLING_TIME     0.1
@@ -52,10 +55,11 @@ void RKTestModuloMath(void) {
 }
 
 void RKTestSIMD(const RKTestSIMDFlag flag) {
+    SHOW_FUNCTION_NAME
     RKSIMD_show_info();
     
     int i;
-    const int n = 32;
+    const int n = RKSIMDAlignSize / sizeof(RKFloat) * 2;
 
     for (i = 1; i <= 8; i++) {
         RKSIMD_show_count(i);
@@ -72,15 +76,15 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKComplex *cd;
     RKComplex *cc;
     
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, n * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, n * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, n * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, n * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, n * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, n * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, n * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, n * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, n * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
 
     const RKFloat tiny = 1.0e-3f;
     bool good;
@@ -106,7 +110,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Copy -  zcpy", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Copy -  zcpy", all_good);
     
     //
     
@@ -127,7 +131,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Scaling by a Float -  zscl", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Scaling by a Float -  zscl", all_good);
     
     //
     
@@ -145,7 +149,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Addition -  zadd", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Addition -  zadd", all_good);
     
     //
     
@@ -164,7 +168,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Addition - izadd", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Complex Vector Addition - izadd", all_good);
     
     //
     
@@ -182,7 +186,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Multiplication -  zmul", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Complex Vector Multiplication -  zmul", all_good);
     
     //
     
@@ -201,7 +205,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Multiplication - izmul", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Complex Vector Multiplication - izmul", all_good);
     
     //
     
@@ -228,7 +232,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Deinterleaved Complex Vector Multiplication - iymul", all_good);
     
     //
     
@@ -255,7 +259,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 		}
 		all_good &= good;
 	}
-	RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
+	RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
 
 	//
 	
@@ -285,58 +289,40 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Deinterleave, Multiply Using iymul, and Interleave", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Deinterleave, Multiply Using iymul, and Interleave", all_good);
     
     //
     
     RKInt16C *is = (RKInt16C *)src->i;
     
     for (i = 0; i < n; i++) {
-        is[i].i = i;
-        is[i].q = i - 1;
+        is[i].i = (i % 2 == 0 ? 1 : -1);
+        is[i].q = (i - n / 2) * (i % 2 == 0 ? -1 : 1);
     }
     memset(cd, 0, n * sizeof(RKComplex));
     
-    RKSIMD_Int2Complex_reg(is, cd, n);
+    RKSIMD_Int2Complex(is, cd, n);
     
     if (flag & RKTestSIMDFlagShowNumbers) {
         printf("====\n");
     }
     all_good = true;
     for (i = 0; i < n; i++) {
-        // Answers should be 0-1i, 1-2i, 2-3i, 3-41i, ...
-        good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(i - 1)) < tiny;
+        // Answers should be 0-16i, 1-15i, 2-14i, 3-131i, ...
+        good = fabsf(cd[i].i - (RKFloat)(i % 2 == 0 ? 1 : -1)) < tiny && fabsf(cd[i].q - (RKFloat)(i - n / 2) * (i % 2 == 0 ? -1 : 1)) < tiny;
         if (flag & RKTestSIMDFlagShowNumbers) {
             printf("%+3d%+3di -> %+5.1f%+5.1fi  %s\n", is[i].i, is[i].q, cd[i].i, cd[i].q, OXSTR(good));
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Conversion from i16 to float", all_good);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "Conversion from i16 to float", all_good);
     
     if (flag & RKTestSIMDFlagPerformanceTestAll) {
         printf("\n==== Performance Test ====\n\n");
         printf("Using %s gates\n", RKIntegerToCommaStyleString(RKGateCount));
-        free(src->i);
-        free(src->q);
-        free(dst->i);
-        free(dst->q);
-        free(cpy->i);
-        free(cpy->q);
-        free(cs);
-        free(cd);
-        free(cc);
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
-
+        
         int k;
-        const int m = 100000;
+        const int m = 20000;
         struct timeval t1, t2;
         
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
@@ -345,14 +331,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_zmul(src, src, dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("Regular SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+            printf("Regular SIMD multiplication time for %dK loops = %.3f s\n", m / 1000, RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_izmul(src, dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("In-place SIMD multiplication time for %dK loops = %.3fs\n", m / 1000, RKTimevalDiff(t2, t1));
+            printf("In-place SIMD multiplication time for %dK loops = %.3f s\n", m / 1000, RKTimevalDiff(t2, t1));
             
             printf("Vectorized Complex Multiplication (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -360,21 +346,21 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_iymul_reg(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              -Os: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_iymul(cs, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            iymul: %.3fs (Normal interleaved I/Q)\n", RKTimevalDiff(t2, t1));
+            printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("            izmul: %.3fs (Deinterleaved I/Q)\n", RKTimevalDiff(t2, t1));
+            printf("            izmul: " RKSIMD_TEST_TIME_FORMAT " ms (Deinterleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -383,7 +369,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_IQZ2Complex(dst, cc, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("    E + izmul + D: %.3fs (D, Multiply, I)\n", RKTimevalDiff(t2, t1));
+            printf("    E + izmul + D: " RKSIMD_TEST_TIME_FORMAT " ms (D, Multiply, I)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
         
         if (flag & RKTestSIMDFlagPerformanceTestConversion) {
@@ -394,14 +380,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 memcpy(src->q, dst->q, RKGateCount * sizeof(RKFloat));
             }
             gettimeofday(&t2, NULL);
-            printf("       memcpy x 2: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_zcpy(src, dst, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("             zcpy: %.3fs (SIMD)\n", RKTimevalDiff(t2, t1));
+            printf("             zcpy: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             printf("Conversions (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -409,14 +395,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
                 RKSIMD_Int2Complex_reg(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              -Os: %.3fs (Compiler Optimized)\n", RKTimevalDiff(t2, t1));
+            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
             
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_Int2Complex(is, cd, RKGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("      cvtepi32_ps: %.3fs (SIMD)\n", RKTimevalDiff(t2, t1));
+            printf("      cvtepi32_ps: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
         
         printf("\n==========================\n");
@@ -529,6 +515,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                                   + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
                                   + 0.2f * cosf(0.01f * r + 0.3f)
                                   + 0.5f);
+                    a *= (1000.0 / r);
                     phi += transceiver->gateSizeMeters * 0.1531995963856f;
                     X->i = (int16_t)(a * cosf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
                     X->q = (int16_t)(a * sinf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
@@ -843,7 +830,7 @@ void *RKTestPedestalRunLoop(void *input) {
     float elevation = 3.0f;
     double dt = 0.0;
     struct timeval t0, t1;
-    unsigned long tic = 0;
+    unsigned long tic = 19760520;
     bool scanStartEndPPI = true;
     bool scanStartRHI = true;
     bool scanEndRHI = true;
@@ -996,7 +983,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     // Parse input here if there is any
 
     // Use a counter that mimics microsecond increments
-    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    //RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
 
     pedestal->state |= RKEngineStateActivating;
     if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {
@@ -1125,17 +1112,17 @@ void *RKTestHealthRelayRunLoop(void *input) {
         sprintf(health->string, "{"
 				"\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
 				"\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-				"\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-				"\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-				"\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
+                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
                 "}",
 				RKStatusEnumNormal,
 				RKStatusEnumNormal,
-				(double)rand() * 8.0e-6 / RAND_MAX + 35.5,
-				(double)rand() * 8.0e-6 / RAND_MAX - 95.5,
-				(double)rand() * 0.2 / RAND_MAX + 45,
+                (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
+                (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
+                (double)rand() * 0.2 / RAND_MAX + 45,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
@@ -1709,7 +1696,7 @@ void RKTestPulseCompressionSpeed(void) {
     fftwf_complex *f, *in, *out;
     RKInt16C *X;
     RKComplex *Y;
-    const int testCount = 10000;
+    const int testCount = 2000;
     struct timeval tic, toc;
     double mint, t;
     
@@ -1729,18 +1716,16 @@ void RKTestPulseCompressionSpeed(void) {
     
     RKLog(UNDERLINE("PulseCompression") "\n");
     
-    mint = 999999.0f;
+    mint = INFINITY;
     for (i = 0; i < 3; i++) {
         gettimeofday(&tic, NULL);
         for (j = 0; j < testCount; j++) {
             for (p = 0; p < 2; p++) {
                 // Converting complex int16_t ADC samples to complex float
-                for (k = 0; k < nfft; k++) {
-                    in[k][0] = (RKFloat)X->i;
-                    in[k][1] = (RKFloat)X->q;
-                }
+                RKSIMD_Int2Complex(X, (RKComplex *)in, nfft);
                 fftwf_execute_dft(planForwardInPlace, in, in);
                 fftwf_execute_dft(planForwardOutPlace, f, out);
+				//memcpy(out, f, nfft * sizeof(RKComplex));
                 RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
                 fftwf_execute_dft(planBackwardInPlace, out, out);
                 RKSIMD_iyscl((RKComplex *)out, 1.0f / nfft, nfft);
@@ -1753,14 +1738,11 @@ void RKTestPulseCompressionSpeed(void) {
         }
         gettimeofday(&toc, NULL);
         t = RKTimevalDiff(toc, tic);
-        RKLog(">Test %d -> %.3f ms\n", i, 1.0e3 * t);
+        RKLog(">Test %d -> %.3f ms / pulse\n", i, 1.0e3 * t / testCount);
         mint = MIN(mint, t);
     }
-    
-    RKLog(">Elapsed time: %.3f s (Best of 3)\n", mint);
-    RKLog(">Time for each pulse (%s gates) = %.3f ms\n",
-          RKIntegerToCommaStyleString(nfft),
-          1.0e3 * mint / testCount);
+	RKLog(">Time for each pulse (%s gates) = %.3f ms / pulse (Best of 3)\n",
+		  RKIntegerToCommaStyleString(nfft), 1.0e3 * mint / testCount);
     RKLog(">Speed: %.2f pulses / sec\n", testCount / mint);
     
     fftwf_destroy_plan(planForwardInPlace);
@@ -1780,9 +1762,9 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratch *space;
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
-    const int testCount = 500;
+    const int testCount = 100;
     const int pulseCount = 100;
-    const int pulseCapacity = 4096;
+    const int pulseCapacity = 1 << 12;
     
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
@@ -1790,10 +1772,21 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratchAlloc(&space, pulseCapacity, 5, true);
     
     RKPulse *pulses[pulseCount];
+	RKComplex *X;
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
+		X = RKGetComplexDataFromPulse(pulse, 0);
+		for (j = 0; j < pulseCapacity; j++) {
+			X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
+			X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+		}
+		X = RKGetComplexDataFromPulse(pulse, 1);
+		for (j = 0; j < pulseCapacity; j++) {
+			X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
+			X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+		}
         pulses[k] = pulse;
     }
     
@@ -1825,7 +1818,7 @@ void RKTestMomentProcessorSpeed(void) {
                 RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
                 break;
         }
-        mint = 999999.0f;
+        mint = INFINITY;
         for (i = 0; i < 3; i++) {
             gettimeofday(&tic, NULL);
             for (k = 0; k < testCount; k++) {
@@ -1834,14 +1827,11 @@ void RKTestMomentProcessorSpeed(void) {
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
-            RKLog(">Test %d -> %.3f s\n", i, 1.0e3 * t);
+            RKLog(">Test %d -> %.2f ms\n", i, 1.0e3 * t / testCount);
             mint = MIN(mint, t);
         }
-        RKLog(">Elapsed time: %.3f s\n", mint);
-        RKLog(">Time for each ray (%s pulses x %s gates) = %.3f ms (Best of 3)\n",
-              RKIntegerToCommaStyleString(pulseCount),
-              RKIntegerToCommaStyleString(pulseCapacity),
-              1.0e3 * mint / testCount);
+        RKLog(">Time for each ray (%s pulses x %s gates) = %.2f ms (Best of 3)\n",
+              RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * mint / testCount);
         RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
     }
     

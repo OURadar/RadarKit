@@ -279,14 +279,22 @@ static void *fileRemover(void *in) {
             // Build the complete path from various components
             sprintf(path, "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
             if (engine->verbose) {
-                RKLog("%s %s Removing %s", engine->name, name, path);
+				if (indexedStats[me->index].size > 1.0e9) {
+					RKLog("%s %s Removing %s (%s GB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-9f * indexedStats[me->index].size));
+				} else if (indexedStats[me->index].size > 1.0e6) {
+					RKLog("%s %s Removing %s (%s MB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-6f * indexedStats[me->index].size));
+				} else if (indexedStats[me->index].size > 1.0e3) {
+					RKLog("%s %s Removing %s (%s KB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-3f * indexedStats[me->index].size));
+				} else {
+					RKLog("%s %s Removing %s (%s B)", engine->name, name, path, RKIntegerToCommaStyleString(indexedStats[me->index].size));
+				}
             }
-            //sprintf(command, "rm -f %s", path);
-            //system(command);
             remove(path);
             me->usage -= indexedStats[me->index].size;
             me->index++;
-            RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
+			if (engine->verbose > 1) {
+				RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
+			}
 
             // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
             if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {

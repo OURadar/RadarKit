@@ -15,7 +15,7 @@
 #include <RadarKit/RKSIMD.h>
 
 void RKSIMD_show_info(void) {
-    printf("SIMD Info:\n==========\n");
+    printf(rkGlobalParameters.showColor ? UNDERLINE("SIMD Info:")"\n" : "SIMD Info:\n----------\n");
     #if defined(__AVX512F__)
     printf("AVX512F is active.\n");
     #elif defined(__AVX__)
@@ -451,14 +451,18 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
         *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
     }
 #else
-    __m128i *s = (__m128i *)src;
-    __m128  *d = (__m128 *) dst;
-    __m128i  z = _mm_setzero_si128();
-    int K = (n * sizeof(RKFloat) + sizeof(__m128) - 1) / sizeof(__m128);
+    __m64 *s = (__m64 *)src;
+    __m128 *d = (__m128 *)dst;
+    __m64 z64 = _mm_setzero_si64();
+    __m128i z128i = _mm_setzero_si128();
+    __m128i t;
+    int K = (n * sizeof(RKFloat) + sizeof(__m64) - 1) / sizeof(__m64);
     for (k = 0; k < K; k++) {
-        *d++ = _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_unpacklo_epi16(*s, z)));
-        *d++ = _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_unpackhi_epi16(*s++, z)));
+        t = _mm_unpacklo_epi16(_mm_set_epi64(z64, *s++), z128i);
+        t = _mm_srai_epi32(_mm_slli_epi32(t, 16), 16);
+        *d++ = _mm_cvtepi32_ps(t);
     }
+    
 #endif
     return;
 }

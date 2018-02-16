@@ -47,7 +47,9 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     RKLog(">Waveform '%s'   groupCount = %d   depth = %s\n", fileHeader.name, fileHeader.groupCount, RKIntegerToCommaStyleString(fileHeader.depth));
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-
+    
+    strncpy(waveform->name, fileHeader.name, RKNameLength);
+    
     for (k = 0; k < fileHeader.groupCount; k++) {
         // Read in the waveform of each group
         fread(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);

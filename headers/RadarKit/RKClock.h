@@ -23,9 +23,11 @@ typedef struct rk_clock {
     int              verbose;
     bool             autoSync;
     bool             hasWisdom;                   // User provided dudt
-    bool             highPrecision;               // High precision mode
 	bool             infoShown;                   // Show b value
+    bool             highPrecision;               // High precision mode
+    bool             useInternalReference;        // Use internal reference u
     uint32_t         size;                        // User changeable depth
+	uint32_t         block;                       // Block size of data during burst transfers
     uint32_t         stride;                      // Size to compute average
     uint64_t         tic;                         // An internal tic in case user doesn't obey the rule
 
@@ -34,7 +36,7 @@ typedef struct rk_clock {
     double           *xBuffer;                    // A double representation of timeval (dirty)
     double           *uBuffer;                    // Driving reference (clean)
     double           *yBuffer;                    // Predicted time
-    double           *zBuffer;                    //
+    double           *zBuffer;                    // History of dx/du
     
     double           a;                           // Major coefficient
     double           b;                           // Minor coefficient
@@ -63,6 +65,7 @@ void RKClockSetVerbose(RKClock *, const int);
 void RKClockSetManualSync(RKClock *);
 void RKClockSetOffset(RKClock *, const double);
 void RKClockSetDxDu(RKClock *, const double);
+void RKClockSetDuDx(RKClock *, const double);
 void RKClockSetHighPrecision(RKClock *, const bool);
 
 //void RKClockSync(RKClock *clock, const double u);

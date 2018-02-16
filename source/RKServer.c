@@ -359,10 +359,11 @@ RKOperator *RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->timeoutSeconds = 30;
     O->userResource = M->userResource;
     snprintf(O->ip, RKMaximumStringLength - 1, "%s", ip);
-    snprintf(O->name, RKNameLength - 1, "%sO%d%s",
+    snprintf(O->name, RKNameLength - 1, "%sO%d%s:%s",
              rkGlobalParameters.showColor ? RKGetColorOfIndex(O->iid) : "",
              O->iid,
-             rkGlobalParameters.showColor ? RKNoColor : "");
+             rkGlobalParameters.showColor ? RKNoColor : "",
+             O->ip);
     O->delimString.type = RKNetworkPacketTypePlainText;
     O->delimString.size = 0;
     O->delimString.bytes[sizeof(RKNetDelimiter) - 6] = ' ';

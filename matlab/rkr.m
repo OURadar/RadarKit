@@ -1,4 +1,4 @@
-filename = boonlib('choosefile', '~/Downloads', '*.rkr');
+filename = blib('choosefile', '~/Downloads', '*.rkr');
 
 dat = iqread(filename);
 
@@ -31,7 +31,7 @@ clf
 imagesc(20 * log10(abs(pulses(1:ng, 1:ns, 2))))
 set(gca, 'YDir', 'Normal')
 colorbar
-boonlib('bsizewin', gcf, [800 400])
+blib('bsizewin', gcf, [800 400])
 xlim([0 100])
 
 %%
@@ -56,7 +56,7 @@ for ii = 1 : M * N
     FIG.ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
     ylim(11500 * [-1 1])
 end
-boonlib('bsizewin', gcf, [2500 1080])
+blib('bsizewin', gcf, [2500 1080])
 set(gcf, 'Menubar', 'None');
 set(FIG.ht, 'HorizontalAlignment', 'Right');
 lp = linkprop(FIG.ax, {'XLim'});
