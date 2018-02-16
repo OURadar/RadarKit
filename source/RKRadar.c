@@ -102,6 +102,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->processorCount = (uint32_t)sysconf(_SC_NPROCESSORS_ONLN);
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Number of online CPUs = %ld\n", radar->processorCount);
+		if (radar->processorCount <= 1) {
+			RKLog("Assume Number of CPUs = %d was not correctly reported. Override with 4.\n", radar->processorCount);
+			radar->processorCount = 4;
+		}
     }
 
     // Set some non-zero variables
@@ -1034,9 +1038,10 @@ int RKGoLive(RKRadar *radar) {
         // Main thread uses 1 CPU. Start the others from 1.
         uint8_t o = 1;
         if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
-            RKLog("Info. Not enough physical cores. Core counts will be adjusted.\n");
-            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, radar->processorCount / 2);
-            RKMomentEngineSetCoreCount(radar->momentEngine, radar->processorCount / 2 - 1);
+            RKLog("Info. Not enough physical cores (%d / %d). Core counts will be adjusted.\n",
+				  radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
+            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
+            RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2));
         }
         RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
         RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
