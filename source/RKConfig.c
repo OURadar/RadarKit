@@ -15,8 +15,9 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 }
 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
-    uint32_t  c;
+    uint32_t  c, j, k, s;
     char      *string;
+    char      stringBuffer[RKNameLength];
 
     c = *configIndex;                           RKConfig *oldConfig = &configs[c];
     c = RKNextModuloS(c, configBufferDepth);    RKConfig *newConfig = &configs[c];
@@ -83,21 +84,28 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 RKLog(">PCal = %.2f rad\n", newConfig->PCal[0]);
                 break;
             case RKConfigKeyZCal2:
-                newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[0][1] = (RKFloat)va_arg(args, double);
-                newConfig->ZCal[1][0] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[1][1] = (RKFloat)va_arg(args, double);
                 RKLog(">ZCal[2] = %.2f %.2f %.2f %.2f dB\n", newConfig->ZCal[0][0], newConfig->ZCal[0][1], newConfig->ZCal[1][0], newConfig->ZCal[1][1]);
                 break;
             case RKConfigKeyDCal2:
-                newConfig->DCal[0] = (RKFloat)va_arg(args, double);
                 newConfig->DCal[1] = (RKFloat)va_arg(args, double);
-                RKLog(">DCal[2] = %.2f %.2fdB\n", newConfig->DCal[0], newConfig->DCal[1]);
+                RKLog(">DCal[2] = %.2f %.2f dB\n", newConfig->DCal[0], newConfig->DCal[1]);
                 break;
             case RKConfigKeyPCal2:
-                newConfig->PCal[0] = (RKFloat)va_arg(args, double);
                 newConfig->PCal[1] = (RKFloat)va_arg(args, double);
                 RKLog(">PCal[2] = %.2f %.2f rad\n", newConfig->PCal[0], newConfig->PCal[1]);
+                break;
+            case RKConfigKeyZCals:
+                k = va_arg(args, int);
+                s = sprintf(stringBuffer, ">ZCals =");
+                for (j = 0; j < k; j++) {
+                    newConfig->ZCal[0][j] = (RKFloat)va_arg(args, double);
+                    newConfig->ZCal[1][j] = (RKFloat)va_arg(args, double);
+                    s += sprintf(stringBuffer + s, " (%.2f, %.2f)", newConfig->ZCal[0][j], newConfig->ZCal[1][j]);
+                }
+                sprintf(stringBuffer + s, " dB");
+                RKLog(stringBuffer);
                 break;
             case RKConfigKeySNRThreshold:
                 newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
@@ -109,15 +117,15 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyFilterCount:
                 newConfig->filterCount = (uint8_t)va_arg(args, int);
-                RKLog(">filterCount = %d\n", newConfig->filterCount);
+                RKLog(">Filter Count = %d\n", newConfig->filterCount);
                 break;
             case RKConfigKeyFilterAnchor:
                 memcpy(&newConfig->filterAnchors[0], va_arg(args, void *), sizeof(RKFilterAnchor));
-                RKLog(">Filter1 = %d:%d ", newConfig->filterAnchors[0].outputOrigin, newConfig->filterAnchors[0].maxDataLength);
+                RKLog(">Filter1 @ %d:%d ", newConfig->filterAnchors[0].outputOrigin, newConfig->filterAnchors[0].maxDataLength);
                 break;
             case RKConfigKeyFilterAnchor2:
                 memcpy(&newConfig->filterAnchors[1], va_arg(args, void *), sizeof(RKFilterAnchor));
-                RKLog(">Filter2 = %d:%d ", newConfig->filterAnchors[1].outputOrigin, newConfig->filterAnchors[1].maxDataLength);
+                RKLog(">Filter2 @ %d:%d ", newConfig->filterAnchors[1].outputOrigin, newConfig->filterAnchors[1].maxDataLength);
                 break;
             default:
                 RKLog(">Key %d not understood.\n", key);

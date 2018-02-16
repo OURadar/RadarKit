@@ -421,6 +421,7 @@ enum RKConfigKey {
     RKConfigKeyFilterCount,
     RKConfigKeyFilterAnchor,
     RKConfigKeyFilterAnchor2,
+    RKConfigKeyFilterAnchors,
     RKConfigKeyNoise,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
@@ -428,6 +429,9 @@ enum RKConfigKey {
     RKConfigKeyZCal2,
     RKConfigKeyDCal2,
     RKConfigKeyPCal2,
+    RKConfigKeyZCals,
+    RKConfigKeyDCals,
+    RKConfigKeyPCals,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
     RKConfigKeyEnd
