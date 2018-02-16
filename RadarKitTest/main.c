@@ -559,7 +559,7 @@ int main(int argc, const char **argv) {
         myRadar->configs[0].prf[0] = user.prf;
 
         RKWaveform *waveform = NULL;
-        const char wavfile[] = "waveforms/ofmd.rkwav";
+        const char wavfile[] = "waveforms/ofm.rkwav";
         if (RKFilenameExists(wavfile)) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);

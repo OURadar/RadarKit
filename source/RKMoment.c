@@ -414,6 +414,9 @@ static void *momentCore(void *in) {
                           engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity), stride);
                 }
                 RKFloat r = 0.0f;
+                // Need to modify this part o have multiple corection factors for difference ranges
+                printf("--- gateCount = %d %d\n", config->filterAnchors[0].outputOrigin, config->filterAnchors[0].maxDataLength);
+                printf("--- gateCount = %d %d\n", config->filterAnchors[1].outputOrigin, config->filterAnchors[1].maxDataLength);
                 for (i = 0; i < space->capacity; i++) {
                     r = (RKFloat)i * gateSizeMeters;
                     space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][0];

@@ -37,7 +37,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeySweepAzimuth:
                 newConfig->sweepAzimuth = (float)va_arg(args, double);
                 break;
-            case RKConfigPositionMarker:
+            case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
                 break;
             case RKConfigKeyPRF:
@@ -82,12 +82,12 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->PCal[0] = (RKFloat)va_arg(args, double);
                 RKLog(">PCal = %.2f rad\n", newConfig->PCal[0]);
                 break;
-            case RKConfigKeyZCal2x2:
+            case RKConfigKeyZCal2:
                 newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[0][1] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[1][0] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[1][1] = (RKFloat)va_arg(args, double);
-                RKLog(">ZCal[2x2] = %.2f %.2f %.2f %.2f dB\n", newConfig->ZCal[0][0], newConfig->ZCal[0][1], newConfig->ZCal[1][0], newConfig->ZCal[1][1]);
+                RKLog(">ZCal[2] = %.2f %.2f %.2f %.2f dB\n", newConfig->ZCal[0][0], newConfig->ZCal[0][1], newConfig->ZCal[1][0], newConfig->ZCal[1][1]);
                 break;
             case RKConfigKeyDCal2:
                 newConfig->DCal[0] = (RKFloat)va_arg(args, double);
@@ -106,6 +106,18 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyWaveform:
                 strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
                 RKLog(">Waveform = '%s'\n", newConfig->waveform);
+                break;
+            case RKConfigKeyFilterCount:
+                newConfig->filterCount = (uint8_t)va_arg(args, int);
+                RKLog(">filterCount = %d\n", newConfig->filterCount);
+                break;
+            case RKConfigKeyFilterAnchor:
+                memcpy(&newConfig->filterAnchors[0], va_arg(args, void *), sizeof(RKFilterAnchor));
+                RKLog(">Filter1 = %d:%d ", newConfig->filterAnchors[0].outputOrigin, newConfig->filterAnchors[0].maxDataLength);
+                break;
+            case RKConfigKeyFilterAnchor2:
+                memcpy(&newConfig->filterAnchors[1], va_arg(args, void *), sizeof(RKFilterAnchor));
+                RKLog(">Filter2 = %d:%d ", newConfig->filterAnchors[1].outputOrigin, newConfig->filterAnchors[1].maxDataLength);
                 break;
             default:
                 RKLog(">Key %d not understood.\n", key);
