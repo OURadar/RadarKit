@@ -75,6 +75,7 @@ typedef struct rk_wave_file_group {
 typedef struct rk_waveform {
     int             count;                                                 // Number of groups
     int             depth;                                                 // Maximum number of samples
+    char            name[RKNameLength];                                    // Waveform name in plain string
     RKWaveformType  type;                                                  // Various type of waveforms
     RKComplex       *samples[RKMaxFilterGroups];                           // Samples up to amplitude of 1.0
     RKInt16C        *iSamples[RKMaxFilterGroups];                          // 16-bit full-scale equivalence of the waveforms

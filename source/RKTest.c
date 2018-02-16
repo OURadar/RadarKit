@@ -515,6 +515,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                                   + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
                                   + 0.2f * cosf(0.01f * r + 0.3f)
                                   + 0.5f);
+                    a *= (1000.0 / r);
                     phi += transceiver->gateSizeMeters * 0.1531995963856f;
                     X->i = (int16_t)(a * cosf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
                     X->q = (int16_t)(a * sinf(phi) + ((float)rand() / RAND_MAX) - 0.5f);

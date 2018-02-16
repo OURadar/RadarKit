@@ -251,7 +251,7 @@ static void *pulseTagger(void *in) {
             RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
                             RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
                             RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
-                            RKConfigPositionMarker,  marker0,
+                            RKConfigKeyPositionMarker,  marker0,
                             RKConfigKeyNull);
             if (engine->verbose) {
                 RKLog("%s New sweep C%02d.   EL %.2f°   AZ %.2f°\n", engine->name, *engine->configIndex,

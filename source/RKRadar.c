@@ -829,6 +829,10 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
     }
+    if (waveform->count > 1 && waveform->filterCounts[0] != waveform->filterCounts[1]) {
+        RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
+        return RKResultFailedToSetFilter;
+    }
     int j, k;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
     for (k = 0; k < waveform->count; k++) {
@@ -840,6 +844,22 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                                         k,
                                         j);
         }
+    }
+    if (waveform->filterCounts[0] == 1) {
+        RKAddConfig(radar,
+                    RKConfigKeyWaveform, waveform->name,
+                    RKConfigKeyFilterCount, waveform->filterCounts[0],
+                    RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
+                    RKConfigKeyNull);
+    } else if (waveform->filterCounts[0] == 2) {
+        RKAddConfig(radar,
+                    RKConfigKeyWaveform, waveform->name,
+                    RKConfigKeyFilterCount, waveform->filterCounts[0],
+                    RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
+                    RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
+                    RKConfigKeyNull);
+    } else {
+        RKLog("Error. Multiplexing > 2 filters has not been implemented.\n");
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);

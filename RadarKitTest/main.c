@@ -482,7 +482,7 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "PPI EL 3 deg @ 1 dps", "p ppi 3 1");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
     RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
-
+    
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
     RKCommandCenterAddRadar(center, myRadar);
@@ -559,7 +559,7 @@ int main(int argc, const char **argv) {
         myRadar->configs[0].prf[0] = user.prf;
 
         RKWaveform *waveform = NULL;
-        const char wavfile[] = "waveforms/ofmd.rkwav";
+        const char wavfile[] = "waveforms/ofm.rkwav";
         if (RKFilenameExists(wavfile)) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);
@@ -568,6 +568,7 @@ int main(int argc, const char **argv) {
             RKWaveformDownConvert(waveform, 2.0 * M_PI * 50.0 / 160.0);
             RKWaveformDecimate(waveform, 32);
             RKWaveformSummary(waveform);
+            RKAddConfig(myRadar, RKConfigKeyZCals, 2, -50.0, -50.0, -10.0, -10.0, RKConfigKeyNull);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
             //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
@@ -576,7 +577,7 @@ int main(int argc, const char **argv) {
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
-        
+
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
 
         // Radar going live, then wait indefinitely until something happens
