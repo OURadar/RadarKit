@@ -212,7 +212,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
 			gain += (x->i * x->i + x->q * x->q);
 			x++;
 		}
-		waveform->filterAnchors[k][0].gain = gain;
+		waveform->filterAnchors[k][0].filterGain = gain;
         // Get ready for the next frequency when we are in odd index
         if (k % 2 == 1) {
             if (sequential) {
@@ -319,7 +319,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 		gain += (x->i * x->i + x->q * x->q);
 		x++;
 	}
-	waveform->filterAnchors[0][0].gain = gain;
+	waveform->filterAnchors[0][0].filterGain = gain;
 
 	return;
 }
@@ -355,7 +355,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             waveform->filterAnchors[l][k].inputOrigin /= stride;
             waveform->filterAnchors[l][k].outputOrigin /= stride;
             waveform->filterAnchors[l][k].maxDataLength /= stride;
-            waveform->filterAnchors[l][k].gain /= stride;
+            waveform->filterAnchors[l][k].filterGain /= stride;
         }
         x = waveform->samples[l];
         w = waveform->iSamples[l];
@@ -494,7 +494,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, l:%%%ds)   omega = %%+6.3f\n",
+		sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, l:%%%ds)   omega:%%+6.3f   g:%%+.2f dB\n",
                 (int)log10f((float)waveform->count) + 1,
                 (int)log10f((float)waveform->filterCounts[k] + 1),
                 (int)log10f((float)waveform->filterCounts[k] + 1),
@@ -506,13 +506,20 @@ void RKWaveformSummary(RKWaveform *waveform) {
     // Now we show the summary
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
+			RKFloat g = 0.0;
+			RKComplex *h = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+			for (int i = 0; i < waveform->filterAnchors[k][j].length; i++) {
+				g += (h->i * h->i + h->q * h->q);
+				h++;
+			}
             RKLog(format,
                   k, j, waveform->count + 1,
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
-                  waveform->filterAnchors[k][j].subCarrierFrequency);
+                  waveform->filterAnchors[k][j].subCarrierFrequency,
+				  10.0f * log10f(g));
         }
     }
 }
@@ -528,7 +535,7 @@ void RKWaveformCalculateGain(RKWaveform *waveform) {
                 maxSq = MAX(maxSq, w->i * w->i + w->q * w->q);
                 w++;
             }
-            waveform->filterAnchors[k][j].gain = 1.0 / maxSq * waveform->filterCounts[k];
+            waveform->filterAnchors[k][j].filterGain = 1.0 / maxSq * waveform->filterCounts[k];
         }
     }
 }

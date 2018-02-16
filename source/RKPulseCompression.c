@@ -830,14 +830,15 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
-	// Calculate the filter gain
+	// Calculate the filter gain, this should be very close to 1.0
 	RKFloat g = 0.0;
 	RKComplex *h = (RKComplex *)filter;
 	for (int k = 0; k < anchor.length; k++) {
 		g += (h->i * h->i + h->q * h->q);
 		h++;
 	}
-	engine->filterAnchors[group][index].gain = g;
+	engine->filterAnchors[group][index].filterGain = g;
+	//RKLog("%s Filter gain[%d][%d] = %.2f dB\n", engine->name, group, index, 10.0f * log10f(g));
     return RKResultNoError;
 }
 
@@ -983,7 +984,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
                   engine->filterAnchors[i][j].subCarrierFrequency,
-				  10.0 * log10f(engine->filterAnchors[i][j].gain),
+				  10.0 * log10f(engine->filterAnchors[i][j].filterGain),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
