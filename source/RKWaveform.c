@@ -34,7 +34,7 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
 }
 
 RKWaveform *RKWaveformInitFromFile(const char *filename) {
-    int j, k;
+    int i, j, k;
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to read wave file %s\n", filename);
@@ -106,6 +106,15 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         }
         fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
         fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+		for (j = 0; j < waveform->filterCounts[k]; j++) {
+			RKFloat g = 0.0;
+			RKComplex *h = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+			for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
+				g += (h->i * h->i + h->q * h->q);
+				h++;
+			}
+			waveform->filterAnchors[k][j].filterGain = g;
+		}
     }
     fclose(fid);
     return waveform;
@@ -355,7 +364,6 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             waveform->filterAnchors[l][k].inputOrigin /= stride;
             waveform->filterAnchors[l][k].outputOrigin /= stride;
             waveform->filterAnchors[l][k].maxDataLength /= stride;
-            waveform->filterAnchors[l][k].filterGain /= stride;
         }
         x = waveform->samples[l];
         w = waveform->iSamples[l];
@@ -512,6 +520,12 @@ void RKWaveformSummary(RKWaveform *waveform) {
 				g += (h->i * h->i + h->q * h->q);
 				h++;
 			}
+			if (waveform->filterAnchors[k][j].filterGain / g > 2.0f ||
+				waveform->filterAnchors[k][j].filterGain / g < 0.5f) {
+				RKLog(">Error. Filter gain is not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)",
+					  10.0f * log10f(waveform->filterAnchors[k][j].filterGain),
+					  10.0f * log10f(g));
+			}
             RKLog(format,
                   k, j, waveform->count + 1,
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
@@ -519,7 +533,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
                   waveform->filterAnchors[k][j].subCarrierFrequency,
-				  10.0f * log10f(g));
+				  10.0f * log10f(waveform->filterAnchors[k][j].filterGain));
         }
     }
 }

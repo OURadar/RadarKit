@@ -182,21 +182,24 @@ typedef union rk_four_byte {
     struct { float f; };
 } RKFourByte;
 
-typedef struct rk_filter_anchor {
-    uint32_t      name;
-    uint32_t      origin;                                            // Filter origin to be used with RKWaveform
-    uint32_t      length;                                            // Filter length to be used with RKWaveform
-    uint32_t      inputOrigin;
-    uint32_t      outputOrigin;
-    uint32_t      maxDataLength;
-    RKFloat       subCarrierFrequency;                               // For house keeping only
-	RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms
-    RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 1.0
+typedef union rk_filter_anchor {
+	struct {
+		uint32_t      name;
+		uint32_t      origin;                                            // Filter origin to be used with RKWaveform
+		uint32_t      length;                                            // Filter length to be used with RKWaveform
+		uint32_t      inputOrigin;
+		uint32_t      outputOrigin;
+		uint32_t      maxDataLength;
+		RKFloat       subCarrierFrequency;                               // For house keeping only
+		RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms
+		RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 1.0
+	};
+	char bytes[64];
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault                           {0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f}
-#define RKFilterAnchorDefaultWithMaxDataLength(x)       {0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f}
-#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {0, 0, (x),  0, 0, (y) , 0.0f, 1.0f}
+#define RKFilterAnchorDefault                           {{0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f, 1.0f}}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)       {{0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f, 1.0f}}
+#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{0, 0, (x),  0, 0, (y) , 0.0f, 1.0f, 1.0f}}
 
 typedef struct rk_modulo_path {
     uint32_t      origin;

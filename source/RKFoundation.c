@@ -222,6 +222,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKControl) = %d", (int)sizeof(RKControl));
     RKLog(">sizeof(RKStatus) = %d", (int)sizeof(RKStatus));
     RKLog(">sizeof(RKFileMonitor) = %d", (int)sizeof(RKFileMonitor));
+	RKLog(">sizeof(RKFilterAnchor) = %d", (int)sizeof(RKFilterAnchor));
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
