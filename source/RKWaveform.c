@@ -207,7 +207,6 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
             x->q /= gain;
             x++;
         }
-		waveform->filterAnchors[k][0].filterGain = gain;
         // Get ready for the next frequency when we are in odd index
         if (k % 2 == 1) {
             if (sequential) {
@@ -470,7 +469,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
             w1 = MAX(w1, (int)log10f((float)waveform->filterAnchors[k][j].inputOrigin));
             w2 = MAX(w2, (int)log10f((float)waveform->filterAnchors[k][j].outputOrigin));
             w3 = MAX(w3, (int)log10f((float)waveform->filterAnchors[k][j].maxDataLength));
-            w4 = MAX(w4, (int)log10f(fabs(10.0f * log10f(waveform->filterAnchors[k][j].sensitivityGain))));
+            w4 = MAX(w4, (int)log10f(fabs(waveform->filterAnchors[k][j].sensitivityGain)));
         }
         // Add a space for each comma
         w0 += (w0 / 3);
@@ -486,7 +485,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w1 + 1,
                 w2 + 1,
                 w3 + 1,
-                w4 + 6);
+                w4 + 5);
     }
     // Now we show the summary
     for (k = 0; k < waveform->count; k++) {
@@ -497,11 +496,10 @@ void RKWaveformSummary(RKWaveform *waveform) {
 				g += (h->i * h->i + h->q * h->q);
 				h++;
 			}
-			if (waveform->filterAnchors[k][j].filterGain / g > 1.1f ||
-				waveform->filterAnchors[k][j].filterGain / g < 0.9f) {
-				RKLog(">Error. Filter gain is not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)",
-					  10.0f * log10f(waveform->filterAnchors[k][j].filterGain),
-					  10.0f * log10f(g));
+            g = 10.0f * log10f(g);
+			if (waveform->filterAnchors[k][j].filterGain - g > +0.5f ||
+				waveform->filterAnchors[k][j].filterGain - g < -0.5f) {
+				RKLog(">Error. Filter gain is not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)", waveform->filterAnchors[k][j].filterGain, g);
 			}
             RKLog(format,
                   k, j, waveform->count + 1,
@@ -509,7 +507,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
-                  RKFloatToCommaStyleString(10.0f * log10f(waveform->filterAnchors[k][j].sensitivityGain)),
+                  RKFloatToCommaStyleString(waveform->filterAnchors[k][j].sensitivityGain),
                   waveform->filterAnchors[k][j].subCarrierFrequency);
         }
     }
@@ -530,8 +528,8 @@ void RKWaveformCalculateGain(RKWaveform *waveform) {
                 g += a;
                 w++;
             }
-            waveform->filterAnchors[k][j].sensitivityGain = h;
-            waveform->filterAnchors[k][j].filterGain = g;
+            waveform->filterAnchors[k][j].sensitivityGain = -10.0f * log10f(h);
+            waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
         }
     }
 }

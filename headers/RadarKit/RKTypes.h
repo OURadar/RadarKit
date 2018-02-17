@@ -191,8 +191,8 @@ typedef union rk_filter_anchor {
 		uint32_t      outputOrigin;
 		uint32_t      maxDataLength;
 		RKFloat       subCarrierFrequency;                               // For house keeping only
-		RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms
-		RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 1.0
+		RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms (dB)
+		RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 0.0 (dB)
 	};
 	char bytes[64];
 } RKFilterAnchor;
@@ -427,6 +427,7 @@ enum RKConfigKey {
     RKConfigKeyFilterAnchor2,
     RKConfigKeyFilterAnchors,
     RKConfigKeyNoise,
+    RKConfigKeySystemZCal,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
@@ -581,6 +582,7 @@ typedef struct rk_config {
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     RKFloat          noise[2];                                       // Noise floor (ADU)
+    RKFloat          systemZCal[2];                                  // System-wide reflectivity calibration (dB)
     RKFloat          ZCal[2][RKMaxFilterCount];                      // Reflectivity calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration

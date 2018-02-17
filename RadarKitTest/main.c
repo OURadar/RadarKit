@@ -568,7 +568,8 @@ int main(int argc, const char **argv) {
             RKWaveformDownConvert(waveform, 2.0 * M_PI * 50.0 / 160.0);
             RKWaveformDecimate(waveform, 32);
             RKWaveformSummary(waveform);
-            RKAddConfig(myRadar, RKConfigKeyZCals, 2, -50.0, -50.0, -10.0, -10.0, RKConfigKeyNull);
+            RKAddConfig(myRadar, RKConfigKeySystemZCal, -40.0f, -40.0f, RKConfigKeyNull);
+            RKAddConfig(myRadar, RKConfigKeyZCals, 2, 0.0, 0.0, 40.0, 40.0, RKConfigKeyNull);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
             //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);

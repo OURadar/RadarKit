@@ -977,7 +977,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
                   engine->name, i, j, engine->filterCounts[i],
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
-				  10.0 * log10f(engine->filterAnchors[i][j].filterGain),
+				  engine->filterAnchors[i][j].filterGain,
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].outputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));

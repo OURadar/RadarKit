@@ -780,6 +780,9 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 				transceiver->transmitWaveform[k].i = 0.01 * wave->iSamples[0][k].i;
 				transceiver->transmitWaveform[k].q = 0.01 * wave->iSamples[0][k].q;
 			}
+            if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
+                RKSetWaveform(radar, wave);
+            }
 			free(wave);
 			if (response != NULL) {
 				sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
