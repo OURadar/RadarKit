@@ -34,7 +34,7 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
 }
 
 RKWaveform *RKWaveformInitFromFile(const char *filename) {
-    int i, j, k;
+    int j, k;
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to read wave file %s\n", filename);
@@ -106,17 +106,10 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         }
         fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
         fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
-		for (j = 0; j < waveform->filterCounts[k]; j++) {
-			RKFloat g = 0.0;
-			RKComplex *h = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-			for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-				g += (h->i * h->i + h->q * h->q);
-				h++;
-			}
-			waveform->filterAnchors[k][j].filterGain = g;
-		}
     }
     fclose(fid);
+
+    RKWaveformCalculateGain(waveform);
     return waveform;
 }
 
@@ -214,13 +207,6 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
             x->q /= gain;
             x++;
         }
-		// Calculate the real gain
-		x = waveform->samples[k];
-		gain = 0.0f;
-		for (i = 0; i < waveform->depth; i++) {
-			gain += (x->i * x->i + x->q * x->q);
-			x++;
-		}
 		waveform->filterAnchors[k][0].filterGain = gain;
         // Get ready for the next frequency when we are in odd index
         if (k % 2 == 1) {
@@ -231,6 +217,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
             }
         }
     }
+    RKWaveformCalculateGain(waveform);
 }
 
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
@@ -281,6 +268,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
         }
     }
 
+    RKWaveformCalculateGain(waveform);
     return waveform;
 }
 
@@ -300,36 +288,21 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 	waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
 	waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
 
-	RKFloat gain = 0.0f;
+    RKFloat a = 1.0f / waveform->depth;
 	RKInt16C *w = waveform->iSamples[0];
 	RKComplex *x = waveform->samples[0];
 	double omega_c = 2.0 * M_PI * fc / fs;
 	double k = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
 	for (i = 0; i < waveform->depth; i++) {
-		x->i = cosf(omega_c * i + 0.5 * k * i * i);
-		x->q = sinf(omega_c * i + 0.5 * k * i * i);
+		x->i = a * cosf(omega_c * i + 0.5 * k * i * i);
+		x->q = a * sinf(omega_c * i + 0.5 * k * i * i);
 		w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
 		w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
-		gain += (x->i * x->i + x->q * x->q);
 		x++;
 		w++;
 	}
-	gain = sqrtf(gain);
-	x = waveform->samples[0];
-	for (i = 0; i < waveform->depth; i++) {
-		x->i /= gain;
-		x->q /= gain;
-		x++;
-	}
-	// Calculate the real gain
-	x = waveform->samples[0];
-	gain = 0.0f;
-	for (i = 0; i < waveform->depth; i++) {
-		gain += (x->i * x->i + x->q * x->q);
-		x++;
-	}
-	waveform->filterAnchors[0][0].filterGain = gain;
 
+    RKWaveformCalculateGain(waveform);
 	return;
 }
 
@@ -373,6 +346,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             w[j] = w[i];
         }
     }
+    RKWaveformCalculateGain(waveform);
 }
 
 void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
@@ -490,26 +464,29 @@ void RKWaveformSummary(RKWaveform *waveform) {
     char format[RKMaximumStringLength];
     // Go through all waveforms and filters of each waveform to build the proper format width
     for (k = 0; k < waveform->count; k++) {
-        int w0 = 0, w1 = 0, w2 = 0, w3 = 0;
+        int w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             w0 = MAX(w0, (int)log10f((float)waveform->filterAnchors[k][j].length));
             w1 = MAX(w1, (int)log10f((float)waveform->filterAnchors[k][j].inputOrigin));
             w2 = MAX(w2, (int)log10f((float)waveform->filterAnchors[k][j].outputOrigin));
             w3 = MAX(w3, (int)log10f((float)waveform->filterAnchors[k][j].maxDataLength));
+            w4 = MAX(w4, (int)log10f(fabs(10.0f * log10f(waveform->filterAnchors[k][j].sensitivityGain))));
         }
         // Add a space for each comma
         w0 += (w0 / 3);
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-		sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, l:%%%ds)   omega:%%+6.3f   g:%%+.2f dB\n",
+        w4 += (w4 / 3);
+		sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%%ds dB   %%+6.3f rad/s\n",
                 (int)log10f((float)waveform->count) + 1,
                 (int)log10f((float)waveform->filterCounts[k] + 1),
                 (int)log10f((float)waveform->filterCounts[k] + 1),
                 w0 + 1,
                 w1 + 1,
                 w2 + 1,
-                w3 + 1);
+                w3 + 1,
+                w4 + 6);
     }
     // Now we show the summary
     for (k = 0; k < waveform->count; k++) {
@@ -520,8 +497,8 @@ void RKWaveformSummary(RKWaveform *waveform) {
 				g += (h->i * h->i + h->q * h->q);
 				h++;
 			}
-			if (waveform->filterAnchors[k][j].filterGain / g > 2.0f ||
-				waveform->filterAnchors[k][j].filterGain / g < 0.5f) {
+			if (waveform->filterAnchors[k][j].filterGain / g > 1.1f ||
+				waveform->filterAnchors[k][j].filterGain / g < 0.9f) {
 				RKLog(">Error. Filter gain is not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)",
 					  10.0f * log10f(waveform->filterAnchors[k][j].filterGain),
 					  10.0f * log10f(g));
@@ -532,8 +509,8 @@ void RKWaveformSummary(RKWaveform *waveform) {
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
-                  waveform->filterAnchors[k][j].subCarrierFrequency,
-				  10.0f * log10f(waveform->filterAnchors[k][j].filterGain));
+                  RKFloatToCommaStyleString(10.0f * log10f(waveform->filterAnchors[k][j].sensitivityGain)),
+                  waveform->filterAnchors[k][j].subCarrierFrequency);
         }
     }
 }
@@ -541,16 +518,20 @@ void RKWaveformSummary(RKWaveform *waveform) {
 void RKWaveformCalculateGain(RKWaveform *waveform) {
     // Normalize the peak to get the peak transmit power
     int i, j, k;
+    RKFloat a, g, h;
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
+            h = 0.0f;
+            g = 0.0f;
             RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            RKFloat maxSq = 0.0f;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-                maxSq = MAX(maxSq, w->i * w->i + w->q * w->q);
+                a = w->i * w->i + w->q * w->q;
+                h = MAX(h, a);
+                g += a;
                 w++;
             }
-            waveform->filterAnchors[k][j].filterGain = 1.0 / maxSq * waveform->filterCounts[k];
+            waveform->filterAnchors[k][j].sensitivityGain = h;
+            waveform->filterAnchors[k][j].filterGain = g;
         }
     }
 }
-

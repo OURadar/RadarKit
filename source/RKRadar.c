@@ -868,7 +868,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
     }
-    RKClockReset(radar->pulseClock);
+    if (radar->state & RKRadarStateLive) {
+        RKClockReset(radar->pulseClock);
+    }
     return RKResultNoError;
 }
 

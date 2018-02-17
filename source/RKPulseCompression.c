@@ -830,15 +830,6 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
-	// Calculate the filter gain, this should be very close to 1.0
-	RKFloat g = 0.0;
-	RKComplex *h = (RKComplex *)filter;
-	for (int k = 0; k < anchor.length; k++) {
-		g += (h->i * h->i + h->q * h->q);
-		h++;
-	}
-	engine->filterAnchors[group][index].filterGain = g;
-	//RKLog("%s Filter gain[%d][%d] = %.2f dB\n", engine->name, group, index, 10.0f * log10f(g));
     return RKResultNoError;
 }
 
@@ -961,31 +952,34 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     size_t nfft = 1 << (int)ceilf(log2f((float)MIN(pulse->header.capacity, engine->filterAnchors[0][0].maxDataLength)));
     for (i = 0; i < engine->filterGroupCount; i += 2) {
-        int w0 = 0, w1 = 0, w2 = 0;
+        int w0 = 0, w1 = 0, w2 = 0, w3 = 0;
         for (j = 0; j < engine->filterCounts[i]; j++) {
             w0 = MAX(w0, (int)log10f((float)engine->filterAnchors[i][j].length));
             w1 = MAX(w1, (int)log10f((float)engine->filterAnchors[i][j].inputOrigin));
-            w2 = MAX(w2, (int)log10f((float)engine->filterAnchors[i][j].maxDataLength));
+            w2 = MAX(w2, (int)log10f((float)engine->filterAnchors[i][j].outputOrigin));
+            w3 = MAX(w3, (int)log10f((float)engine->filterAnchors[i][j].maxDataLength));
         }
         w0 += (w0 / 3);
         w1 += (w1 / 3);
         w2 += (w2 / 3);
-        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (0, %%%ds / %%%ds)   %%+6.3f rad/s   %%+5.2f dB   X @ (%%%ds, %%%ds)\n",
+        w3 += (w3 / 3);
+        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   %%+5.2f dB   X @ (i:%%%ds, o:%%%ds, d:%%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
 				(int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
                 (int)log10f(nfft) + 1,
                 w1 + 1,
-                w2 + 1);
+                w2 + 1,
+                w3 + 1);
         for (j = 0; j < engine->filterCounts[i]; j++) {
             RKLog(format,
                   engine->name, i, j, engine->filterCounts[i],
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
-                  engine->filterAnchors[i][j].subCarrierFrequency,
 				  10.0 * log10f(engine->filterAnchors[i][j].filterGain),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
+                  RKIntegerToCommaStyleString(engine->filterAnchors[i][j].outputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
     }
