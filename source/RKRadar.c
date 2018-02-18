@@ -411,7 +411,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
         }
         sprintf(name, "%s<PulseClock>%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->pulseClock, name);
         radar->memoryUsage += sizeof(RKClock);
         
@@ -425,7 +425,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
         sprintf(name, "%s<PositionClock>%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", RKNoColor);
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->positionClock, name);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
 		RKLog("positionLatency = %.3e\n", radar->desc.positionLatency);
