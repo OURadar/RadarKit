@@ -62,6 +62,7 @@ typedef struct rk_wave_file_header {
     char            name[RKNameLength];
     uint8_t         groupCount;
     uint32_t        depth;
+    double          fs;
 } RKWaveFileHeader;
 
 typedef struct rk_wave_file_group {
@@ -75,8 +76,9 @@ typedef struct rk_wave_file_group {
 typedef struct rk_waveform {
     int             count;                                                 // Number of groups
     int             depth;                                                 // Maximum number of samples
-    char            name[RKNameLength];                                    // Waveform name in plain string
+    double          fs;                                                    // Sampling frequency (Hz)
     RKWaveformType  type;                                                  // Various type of waveforms
+    char            name[RKNameLength];                                    // Waveform name in plain string
     RKComplex       *samples[RKMaxFilterGroups];                           // Samples up to amplitude of 1.0
     RKInt16C        *iSamples[RKMaxFilterGroups];                          // 16-bit full-scale equivalence of the waveforms
     uint32_t        filterCounts[RKMaxFilterGroups];                       // Number of filters to applied to each waveform, see filterAnchors
@@ -100,7 +102,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
 void RKWaveformDownConvert(RKWaveform *waveform, const double omega);
 
 void RKWaveformWrite(RKWaveform *waveform, const char *filename);
-void RKWaveformSummary(RKWaveform *waveform);
+void RKWaveformNormalizeNoiseGain(RKWaveform *waveform);
 void RKWaveformCalculateGain(RKWaveform *waveform);
+void RKWaveformSummary(RKWaveform *waveform);
 
 #endif

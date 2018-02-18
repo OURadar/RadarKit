@@ -864,6 +864,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                     RKConfigKeyNull);
     } else {
         RKLog("Error. Multiplexing > 2 filters has not been implemented.\n");
+        RKSetWaveformToImpulse(radar);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);

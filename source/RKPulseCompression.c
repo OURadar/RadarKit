@@ -963,7 +963,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   %%+5.2f dB   X @ (i:%%%ds, o:%%%ds, d:%%%ds)\n",
+        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   %%s%%+5.2f dB%%s   X @ (i:%%%ds, o:%%%ds, d:%%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
 				(int)log10f((float)engine->filterCounts[i]) + 1,
@@ -977,7 +977,9 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
                   engine->name, i, j, engine->filterCounts[i],
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
+                  rkGlobalParameters.showColor && fabs(engine->filterAnchors[i][j].filterGain) > 0.1 ? RKGetColorOfIndex(0) : "",
 				  engine->filterAnchors[i][j].filterGain,
+                  rkGlobalParameters.showColor ? RKNoColor : "",
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].outputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));

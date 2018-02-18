@@ -564,11 +564,11 @@ int main(int argc, const char **argv) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);
             RKWaveformSummary(waveform);
-            RKLog("Adjusting waveform for RX sampling rate ...\n");
+            RKLog("Adjusting waveform to RX sampling rate = %.2f MHz ...\n", 1.0e-6 * waveform->fs / 32);
             RKWaveformDownConvert(waveform, 2.0 * M_PI * 50.0 / 160.0);
             RKWaveformDecimate(waveform, 32);
             RKWaveformSummary(waveform);
-            RKAddConfig(myRadar, RKConfigKeySystemZCal, -40.0f, -40.0f, RKConfigKeyNull);
+            RKAddConfig(myRadar, RKConfigKeySystemZCal, -47.0f, -47.0f, RKConfigKeyNull);
             RKAddConfig(myRadar, RKConfigKeyZCals, 2, 0.0, 0.0, 40.0, 40.0, RKConfigKeyNull);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
