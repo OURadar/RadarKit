@@ -94,8 +94,8 @@ int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
 
 RKPedestal RKTestPedestalInit(RKRadar *, void *);
-int RKTestPedestalExec(RKTransceiver, const char *, char *);
-int RKTestPedestalFree(RKTransceiver);
+int RKTestPedestalExec(RKPedestal, const char *, char *);
+int RKTestPedestalFree(RKPedestal);
 
 RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
 int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
