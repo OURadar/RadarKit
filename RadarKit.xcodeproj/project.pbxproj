@@ -22,6 +22,9 @@
 		B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDD1AB8D9F100C00517 /* RKRadar.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDE1AB8D9F100C00517 /* RKServer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDF1AB8D9F100C00517 /* RKTypes.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = B5377DC52041C18C00972E41 /* RKHostMonitor.h */; };
+		B5377DC82041C1B900972E41 /* RKHostMonitor.c in Sources */ = {isa = PBXBuildFile; fileRef = B5377DC72041C1B900972E41 /* RKHostMonitor.c */; };
+		B5377DC92041C1B900972E41 /* RKHostMonitor.c in Sources */ = {isa = PBXBuildFile; fileRef = B5377DC72041C1B900972E41 /* RKHostMonitor.c */; };
 		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
 		B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweep.h */; };
@@ -103,6 +106,8 @@
 		B5324DDE1AB8D9F100C00517 /* RKServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RKServer.h; path = headers/RadarKit/RKServer.h; sourceTree = "<group>"; };
 		B5324DDF1AB8D9F100C00517 /* RKTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKTypes.h; path = headers/RadarKit/RKTypes.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B536146A1DC533F500DA5F70 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		B5377DC52041C18C00972E41 /* RKHostMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHostMonitor.h; path = headers/RadarKit/RKHostMonitor.h; sourceTree = "<group>"; };
+		B5377DC72041C1B900972E41 /* RKHostMonitor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKHostMonitor.c; path = source/RKHostMonitor.c; sourceTree = "<group>"; };
 		B53AE7EC1D88824400364467 /* RKMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMisc.h; path = headers/RadarKit/RKMisc.h; sourceTree = "<group>"; };
 		B55E437C1DB66682003C40CF /* RKSIMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKSIMD.h; path = headers/RadarKit/RKSIMD.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B55F5F191E2C8F9600FA8B2E /* RKSweep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweep.h; path = headers/RadarKit/RKSweep.h; sourceTree = "<group>"; };
@@ -240,6 +245,7 @@
 				B528D9611E74EE8100A7328F /* RKFileManager.h */,
 				B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */,
 				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
+				B5377DC52041C18C00972E41 /* RKHostMonitor.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
 			name = Headers;
@@ -302,6 +308,7 @@
 				B5FFD4761FB0B5C600319453 /* RKFileManager.c */,
 				B5FFD4631FB0B5C300319453 /* RKRadarRelay.c */,
 				B5FFD4721FB0B5C500319453 /* RKTest.c */,
+				B5377DC72041C1B900972E41 /* RKHostMonitor.c */,
 				B525FEF51FB0B6B800C5195C /* RadarKit.c */,
 			);
 			name = Source;
@@ -314,6 +321,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */,
 				B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */,
 				B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */,
 				B5324DE31AB8DA0800C00517 /* RKNetwork.h in Headers */,
@@ -429,6 +437,7 @@
 				B508EA781FB7AAD500A6A83C /* RKPulseRingFilter.c in Sources */,
 				B5FFD48C1FB0B5C600319453 /* RKHealthLogger.c in Sources */,
 				B5FFD4811FB0B5C600319453 /* RKFoundation.c in Sources */,
+				B5377DC82041C1B900972E41 /* RKHostMonitor.c in Sources */,
 				B5FFD47E1FB0B5C600319453 /* RKWaveform.c in Sources */,
 				B5FFD4911FB0B5C600319453 /* RKPosition.c in Sources */,
 				B5FFD48B1FB0B5C600319453 /* RKSweep.c in Sources */,
@@ -465,6 +474,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
+				B5377DC92041C1B900972E41 /* RKHostMonitor.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
