@@ -500,6 +500,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
+    // Host monitor
+    radar->hostMonitor = RKHostMonitorInit();
+    radar->memoryUsage += radar->hostMonitor->memoryUsage;
+    radar->state |= RKRadarStateHostMonitorInitialized;
+    
     // Total memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
@@ -765,6 +770,9 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     }
     if (radar->fileManager) {
         RKFileManagerSetVerbose(radar->fileManager, verbose);
+    }
+    if (radar->hostMonitor) {
+        RKHostMonitorSetVerbose(radar->hostMonitor, verbose);
     }
     if (radar->pulseClock) {
         RKClockSetVerbose(radar->pulseClock, verbose);
@@ -1034,9 +1042,11 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage -= radar->dataRecorder->memoryUsage;
     radar->memoryUsage -= radar->sweepEngine->memoryUsage;
     radar->memoryUsage -= radar->fileManager->memoryUsage;
+    radar->memoryUsage -= radar->hostMonitor->memoryUsage;
     
     // Start the engines
     RKFileManagerStart(radar->fileManager);
+    RKHostMonitorStart(radar->hostMonitor);
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Main thread uses 1 CPU. Start the others from 1.
         uint8_t o = 1;
@@ -1071,6 +1081,7 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->memoryUsage += radar->fileManager->memoryUsage;
+    radar->memoryUsage += radar->hostMonitor->memoryUsage;
 
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -1267,6 +1278,10 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStateFileManagerInitialized) {
         RKFileManagerStop(radar->fileManager);
         radar->state ^= RKRadarStateFileManagerInitialized;
+    }
+    if (radar->state & RKRadarStateHostMonitorInitialized) {
+        RKHostMonitorStop(radar->hostMonitor);
+        radar->state ^= RKRadarStateHostMonitorInitialized;
     }
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineStop(radar->pulseCompressionEngine);

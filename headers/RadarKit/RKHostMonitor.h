@@ -14,6 +14,8 @@
 typedef struct rk_unit_checker RKUnitChecker;
 typedef struct rk_host_monitor RKHostMonitor;
 
+typedef char RKUnitHost[RKNameLength];
+
 struct rk_unit_checker {
     int                    tic;
     pthread_t              tid;
@@ -25,7 +27,7 @@ struct rk_host_monitor {
     // User set variables
     char                   name[RKNameLength];
     uint8_t                verbose;                             // Verbosity level
-    char                   *hosts[RKNameLength];
+    RKUnitHost             *hosts;
     
     // Program set variables
     int                    workerCount;
@@ -35,7 +37,7 @@ struct rk_host_monitor {
     // Status / health
     RKEngineState          state;
     uint32_t               memoryUsage;
-} RKHostMonitor;
+};
 
 RKHostMonitor *RKHostMonitorInit(void);
 void RKHostMonitorFree(RKHostMonitor *);

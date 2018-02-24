@@ -273,6 +273,7 @@ enum RKEngineColor {
     RKEngineColorPedestalRelayPedzy = 10,
     RKEngineColorHealthRelayTweeta = 0,
     RKEngineColorRadarRelay = 12,
+    RKEngineColorHostMonitor = 11,
     RKEngineColorClock = 14,
     RKEngineColorMisc = 15
 };

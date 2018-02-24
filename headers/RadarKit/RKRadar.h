@@ -25,6 +25,7 @@
 #include <RadarKit/RKPreference.h>
 #include <RadarKit/RKFileManager.h>
 #include <RadarKit/RKRadarRelay.h>
+#include <RadarKit/RKHostMonitor.h>
 
 typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
 enum RKRadarState {
@@ -56,6 +57,7 @@ enum RKRadarState {
     RKRadarStateHealthRelayInitialized               = (1 << 25),
     RKRadarStateTransceiverInitialized               = (1 << 26),
     RKRadarStatePedestalInitialized                  = (1 << 27),
+    RKRadarStateHostMonitorInitialized               = (1 << 28),
     RKRadarStateLive                                 = (1 << 31)
 };
 
@@ -113,6 +115,7 @@ struct rk_radar {
     RKDataRecorder             *dataRecorder;
     RKFileManager              *fileManager;
     RKRadarRelay               *radarRelay;
+    RKHostMonitor              *hostMonitor;
     //
     // Internal copies of things
     //
