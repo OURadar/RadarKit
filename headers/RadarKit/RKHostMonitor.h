@@ -11,15 +11,15 @@
 
 #include <RadarKit/RKFoundation.h>
 
-typedef struct rk_unit_checker RKUnitChecker;
+typedef struct rk_unit_monitor RKUnitMonitor;
 typedef struct rk_host_monitor RKHostMonitor;
 
-typedef char RKUnitHost[RKNameLength];
+typedef char RKHostAddress[RKNameLength];
 
-struct rk_unit_checker {
+struct rk_unit_monitor {
+    int                    id;
     int                    tic;
     pthread_t              tid;
-    char                   address[RKNameLength];
     RKHostMonitor          *parent;
 };
 
@@ -27,11 +27,13 @@ struct rk_host_monitor {
     // User set variables
     char                   name[RKNameLength];
     uint8_t                verbose;                             // Verbosity level
-    RKUnitHost             *hosts;
+    RKHostAddress          *hosts;
     
     // Program set variables
+    int                    tic;
     int                    workerCount;
-    RKUnitChecker          *workers;
+    RKUnitMonitor          *workers;
+    pthread_t              tidHostWatcher;
     pthread_mutex_t        mutex;
 
     // Status / health

@@ -254,6 +254,9 @@ enum RKResult {
     RKResultFailedToCreateFileRemover,
     RKResultFileManagerBufferNotResuable,
 	RKResultInvalidMomentParameters,
+    RKResultFailedToCreateUnitWorker,
+    RKResultFailedToStartHostWatcher,
+    RKResultFailedToStartHostPinger,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
