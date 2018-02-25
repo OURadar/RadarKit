@@ -25,6 +25,20 @@ typedef union rk_host_monitor_packet {
     char bytes[PACKETSIZE];
 } RKHostMonitorPacket;
 
+static uint16_t rk_host_monitor_checksum (void *in, int len) {
+    uint16_t *buf = (uint16_t *)in;
+    uint16_t sum = 0;
+    for (sum = 0; len > 1; len -= 2) {
+        sum += *buf++;
+    }
+    if (len == 1) {
+        sum += *(uint8_t *)buf;
+    }
+    sum = (sum >> 16) + (sum & 0xffff);
+    sum += (sum >> 16);
+    return ~sum;
+}
+
 #pragma mark - Helper Functions
 
 void ping(struct sockaddr_in address) {
@@ -82,9 +96,10 @@ static void *hostPinger(void *in) {
           (address.sin_addr.s_addr & 0x00ff0000) >> 16,
           (address.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
 
-    int sd = socket(PF_INET, SOCK_RAW, protocol->p_proto);
+    RKLog("%s %s proto = %d / %d .\n", engine->name, name, protocol->p_proto, IPPROTO_ICMP);
+    int sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto);
     if (sd < 0) {
-        RKLog("%s %s Error. Unable to open a socket.\n", engine->name, name);
+        RKLog("%s %s Error. Unable to open a socket.  sd = %d\n", engine->name, name, sd);
         return NULL;
     }
     if (setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value))) {
@@ -96,20 +111,38 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
-    char buf[RKNameLength];
+#define RKHostMonitorPacketSize 64
+    
+    char buf[RKHostMonitorPacketSize];
     struct sockaddr_in receiveAddress;
     socklen_t receiveLength;
+    struct ip *ipHeader = (struct ip *)buf;
+//    struct tcphdr *tcpHeader = (struct tcphdr *)&ipHeader[1];
+    
+    ssize_t r = 0;
     
     while (engine->state & RKEngineStateActive) {
         // Ping
         RKLog(">%s %s ping %s\n", engine->name, name, engine->hosts[c]);
         
         if (recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&receiveAddress, &receiveLength)) {
-            RKLog(">%s %s got message\n", engine->name, name);
+            RKLog(">%s %s got message %d: %02x\n", engine->name, name, receiveLength, buf[0]);
         }
         
-        memset(buf, 0, RKNameLength);
+        memset(buf, 0, sizeof(buf));
+
+        ipHeader->ip_hl = 5;
+        ipHeader->ip_v = 4;
+        ipHeader->ip_tos = 0;
+        ipHeader->ip_len = htons(RKHostMonitorPacketSize);
+        ipHeader->ip_id = 0;
+        ipHeader->ip_ttl = 1;
+        ipHeader->ip_sum = rk_host_monitor_checksum(buf, sizeof(struct ip));
         
+        if ((r = sendto(sd, buf, sizeof(buf), 0, (struct sockaddr *)&address, sizeof(struct sockaddr_in))) != 0) {
+            RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
+        }
+
         // Now we wait
         k = 0;
         while (k++ < 10 && engine->state & RKEngineStateActive) {
