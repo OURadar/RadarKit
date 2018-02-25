@@ -7,8 +7,28 @@
 //
 
 #include <RadarKit/RKHostMonitor.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <resolv.h>
+#include <netdb.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+
+#define PACKETSIZE    64
+
+typedef union rk_host_monitor_packet {
+    struct {
+        //struct icmphdr header;
+        char message[0];
+    };
+    char bytes[PACKETSIZE];
+} RKHostMonitorPacket;
 
 #pragma mark - Helper Functions
+
+void ping(struct sockaddr_in address) {
+}
 
 #pragma mark - Delegate Workers
 
@@ -17,8 +37,13 @@ static void *hostPinger(void *in) {
     RKHostMonitor *engine = me->parent;
 
     int k;
-    
+    //struct packet packet;
+    struct sockaddr_in address;
+
     const int c = me->id;
+    const int value = 255;
+    struct protoent *protocol = getprotobyname("ICMP");
+    struct hostent *hostname = gethostbyname(engine->hosts[c]);
 
     char name[RKNameLength];
     
@@ -45,9 +70,45 @@ static void *hostPinger(void *in) {
     
     me->tic++;
     
+    // Resolve my host
+    
+    memset(&address, 0, sizeof(struct sockaddr));
+    address.sin_family = hostname->h_addrtype;
+    address.sin_addr.s_addr = *(unsigned int *)hostname->h_addr;
+    RKLog(">%s %s %s -> 0x%08x -> %d.%d.%d.%d (%d)\n",
+          engine->name, name, engine->hosts[c], address.sin_addr.s_addr,
+          (address.sin_addr.s_addr & 0xff),
+          (address.sin_addr.s_addr & 0x0000ff00) >> 8,
+          (address.sin_addr.s_addr & 0x00ff0000) >> 16,
+          (address.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
+
+    int sd = socket(PF_INET, SOCK_RAW, protocol->p_proto);
+    if (sd < 0) {
+        RKLog("%s %s Error. Unable to open a socket.\n", engine->name, name);
+        return NULL;
+    }
+    if (setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value))) {
+        RKLog("%s %s Error. Failed in setsockopt().\n", engine->name, name);
+        return NULL;
+    }
+    if (fcntl(sd, F_SETFL, O_NONBLOCK)) {
+        RKLog("%s %s Error. Failed in fcntl().\n", engine->name, name);
+        return NULL;
+    }
+    
+    char buf[RKNameLength];
+    struct sockaddr_in receiveAddress;
+    socklen_t receiveLength;
+    
     while (engine->state & RKEngineStateActive) {
         // Ping
         RKLog(">%s %s ping %s\n", engine->name, name, engine->hosts[c]);
+        
+        if (recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&receiveAddress, &receiveLength)) {
+            RKLog(">%s %s got message\n", engine->name, name);
+        }
+        
+        memset(buf, 0, RKNameLength);
         
         // Now we wait
         k = 0;
@@ -136,7 +197,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
     engine->hosts = (RKHostAddress *)malloc(sizeof(RKHostAddress));
     memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
-    RKHostMonitorAddHost(engine, "8.8.8.8");
+    RKHostMonitorAddHost(engine, "bumblebee.arrc.ou.edu");
     return engine;
 }
 
