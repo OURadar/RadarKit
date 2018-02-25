@@ -58,6 +58,7 @@ static void *hostPinger(void *in) {
     const int value = 255;
     struct protoent *protocol = getprotobyname("ICMP");
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
+    struct hostent *localhost = gethostbyname("localhost");
 
     char name[RKNameLength];
     
@@ -88,6 +89,7 @@ static void *hostPinger(void *in) {
     
     memset(&address, 0, sizeof(struct sockaddr));
     address.sin_family = hostname->h_addrtype;
+    address.sin_port = htons(80);
     address.sin_addr.s_addr = *(unsigned int *)hostname->h_addr;
     RKLog(">%s %s %s -> 0x%08x -> %d.%d.%d.%d (%d)\n",
           engine->name, name, engine->hosts[c], address.sin_addr.s_addr,
@@ -132,14 +134,21 @@ static void *hostPinger(void *in) {
         memset(buf, 0, sizeof(buf));
 
         ipHeader->ip_hl = 5;
-        ipHeader->ip_v = 4;
-        ipHeader->ip_tos = 0;
+        ipHeader->ip_v = IPVERSION;
+        ipHeader->ip_tos = IPTOS_PREC_ROUTINE;
         ipHeader->ip_len = htons(RKHostMonitorPacketSize);
-        ipHeader->ip_id = 0;
-        ipHeader->ip_ttl = 1;
+        ipHeader->ip_id = htons(10000);
+        ipHeader->ip_p = 6;
+        ipHeader->ip_ttl = MAXTTL;
+        ipHeader->ip_dst.s_addr = address.sin_addr.s_addr;
+        ipHeader->ip_src.s_addr = *(unsigned int *)localhost->h_addr;
+//        ipHeader->ip_src.s_addr = inet_addr ("239.0.0.1");
+
         ipHeader->ip_sum = rk_host_monitor_checksum(buf, sizeof(struct ip));
+
+//        tcpHeader->th_sport = htons(1234);
         
-        if ((r = sendto(sd, buf, sizeof(buf), 0, (struct sockaddr *)&address, sizeof(struct sockaddr_in))) != 0) {
+        if ((r = sendto(sd, buf, sizeof(buf), 0, (struct sockaddr *)&address, sizeof(struct sockaddr))) != 0) {
             RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
         }
 
