@@ -342,7 +342,7 @@ static void *pulseCompressionCore(void *_in) {
 		int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
 		for (p = 0; p < 2; p++) {
 			RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-			for (i = 0, j = 0; i < pulse->header.gateCount; i++, j+= stride) {
+			for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
 				Z.i[i] = Z.i[j];
 				Z.q[i] = Z.q[j];
 			}

@@ -608,8 +608,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 	transceiver->state = RKEngineStateAllocated;
 	transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
-    transceiver->gateCount = RKGetPulseCapacity(radar) / 10;
-	transceiver->fs = 5.0e6;
+    transceiver->gateCount = RKGetPulseCapacity(radar);
+	transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
+	                 (transceiver->gateCount >= 8000 ? 25.0e6 :
+					 (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
+	transceiver->gateCount /= 10;
     transceiver->prt = 0.0003;
 	transceiver->sprt = 1;
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKComplex)));
@@ -684,7 +687,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
 
     // Derive some calculated parameters
-    transceiver->gateSizeMeters = transceiver->fs * 6.0e-6;
+    transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
 
     // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
