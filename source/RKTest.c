@@ -435,7 +435,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
 
-    int j, p, g, n;
+    int j, k, p, g, n;
     double t = 0.0;
     double dt = 0.0;
     long tic = 0;
@@ -481,7 +481,23 @@ void *RKTestTransceiverRunLoop(void *input) {
     float a;
     float r;
     float phi;
-    //float noise;
+	float noise;
+
+	float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
+	float *rn = (float *)malloc(transceiver->gateCount * sizeof(float));
+	for (g = 0; g < transceiver->gateCount; g++) {
+		r = (float)g * transceiver->gateSizeMeters * 0.1f;
+		a = 60.0f * (cos(0.001f * r)
+					 + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
+					 + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
+					 + 0.2f * cosf(0.01f * r + 0.3f)
+					 + 0.5f);
+		a *= (1000.0 / r);
+		ra[g] = a;
+		rn[g] = ((float)rand() / RAND_MAX - 0.5f);
+	}
+
+	const float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
 
     while (transceiver->state & RKEngineStateActive) {
 
@@ -500,25 +516,22 @@ void *RKTestTransceiverRunLoop(void *input) {
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-
                 // Some random pattern for testing
+				k = rand() % transceiver->gateCount;
 				for (g = 0; g < transceiver->transmitWaveformLength; g++) {
-					X->i = (int16_t)(transceiver->transmitWaveform[g].i + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
-					X->q = (int16_t)(transceiver->transmitWaveform[g].q + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
+					noise = rn[k];
+					X->i = (int16_t)(transceiver->transmitWaveform[g].i + noise);
+					X->q = (int16_t)(transceiver->transmitWaveform[g].q + noise);
+					k = RKNextModuloS(k, transceiver->gateCount);
 					X++;
 				}
-                phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
+                phi = (double)(tic & 0xFFFF) / 655.36 * M_PI;
                 for (; g < transceiver->gateCount; g++) {
-                    r = (float)g * transceiver->gateSizeMeters * 0.1f;
-                    a = 60.0f * (cos(0.001f * r)
-                                  + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
-                                  + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
-                                  + 0.2f * cosf(0.01f * r + 0.3f)
-                                  + 0.5f);
-                    a *= (1000.0 / r);
-                    phi += transceiver->gateSizeMeters * 0.1531995963856f;
-                    X->i = (int16_t)(a * cosf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
-                    X->q = (int16_t)(a * sinf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
+					phi += dphi;
+					noise = rn[k];
+                    X->i = (int16_t)(ra[g] * cosf(phi) + noise);
+                    X->q = (int16_t)(ra[g] * sinf(phi) + noise);
+					k = RKNextModuloS(k, transceiver->gateCount);
                     X++;
                 }
             }
@@ -554,9 +567,10 @@ void *RKTestTransceiverRunLoop(void *input) {
         }
 
         // Report health
-        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
-        float temp = 1.0f * rand() / RAND_MAX + 79.5f;
-        float volt = 1.0f * rand() / RAND_MAX + 11.5f;
+		int nn = rand();
+        float temp = 1.0f * nn / RAND_MAX + 79.5f;
+        float volt = 1.0f * nn / RAND_MAX + 11.5f;
+		RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
 				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
@@ -572,8 +586,8 @@ void *RKTestTransceiverRunLoop(void *input) {
 				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-				rand() & 0x03,
-				rand() & 0x03,
+				nn & 0x03,
+				nn & 0x03,
 				transceiver->transmitWaveformName,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
@@ -591,6 +605,10 @@ void *RKTestTransceiverRunLoop(void *input) {
         } while (radar->active && dt < periodTotal);
         t0 = t1;
     }
+
+	free(ra);
+	free(rn);
+
     return NULL;
 }
 
@@ -780,8 +798,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 			}
 			transceiver->transmitWaveformLength = pulsewidthSampleCount;
 			for (k = 0; k < wave->depth; k++) {
-				transceiver->transmitWaveform[k].i = 0.01 * wave->iSamples[0][k].i;
-				transceiver->transmitWaveform[k].q = 0.01 * wave->iSamples[0][k].q;
+				transceiver->transmitWaveform[k].i = wave->iSamples[0][k].i;
+				transceiver->transmitWaveform[k].q = wave->iSamples[0][k].q;
 			}
             if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
                 RKSetWaveform(radar, wave);

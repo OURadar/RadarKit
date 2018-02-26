@@ -445,7 +445,7 @@ static void *momentCore(void *in) {
                 }
                 RKFloat r = 0.0f;
                 for (k = 0; k < config->filterCount; k++) {
-                    for (i = config->filterAnchors[k].outputOrigin; i < MIN(capacity, config->filterAnchors[k].maxDataLength); i++) {
+                    for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
                         r = (RKFloat)i * gateSizeMeters;
                         space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain;
                         space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain;
@@ -473,9 +473,6 @@ static void *momentCore(void *in) {
                 pulses[k++] = pulse;
                 i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
             } while (k < path.length);
-
-			// Down-sample and move the samples to the first part of the pulse
-			//downSamplePulses(pulses, path.length, stride);
 
 			// Duplicate a linear array for processor if we are to process; otherwise just skip this group
             if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {

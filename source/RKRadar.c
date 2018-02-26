@@ -857,6 +857,8 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                                         j);
         }
     }
+	// Pulse compression engine already made a copy, we can mutate waveform here for the config buffer
+	RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
     if (waveform->filterCounts[0] == 1) {
         RKAddConfig(radar,
                     RKConfigKeyWaveform, waveform->name,

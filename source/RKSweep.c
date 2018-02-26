@@ -51,7 +51,7 @@ static void *sweepWriter(void *in) {
               S->header.startElevation , E->header.endElevation   ,
               S->header.startAzimuth   , E->header.endAzimuth     ,
               S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-              n, S->header.gateCount, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+              S->header.gateCount, n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
     // Mark the state
@@ -74,17 +74,18 @@ static void *sweepWriter(void *in) {
     E = rays[k + n - 1];
     config = &engine->configBuffer[T->header.configIndex];
     if (engine->verbose) {
-        RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s%d%s x %d, %.1f km)\n",
+        RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%d x %s%d%s, %.1f km)\n",
               engine->name,
               T->header.configIndex,
               config->sweepElevation,
               S->header.startElevation , E->header.endElevation,
               S->header.startAzimuth   , E->header.endAzimuth,
               S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-              n != 360 ? RKGetColorOfIndex(1) : "",
+              S->header.gateCount,
+			  n != 360 ? RKGetColorOfIndex(1) : "",
               n,
               RKNoColor,
-			  S->header.gateCount, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+			  1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
     
     char symbol = 'U';
