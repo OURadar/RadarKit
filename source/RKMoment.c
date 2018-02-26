@@ -17,7 +17,8 @@ static void *pulseGatherer(void *);
 
 // Private Functions (accessible for tests)
 
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
+int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride);
 
 #pragma mark -
 #pragma mark Helper Functions
@@ -69,9 +70,43 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const int stride) {
-    int i, k;
-    // Grab the data from scratch space and perform down-sampling according to stride.
+int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
+	int i, j, k, p;
+
+	// Get the start pulse to know the capacity
+	RKPulse *pulse = pulses[0];
+	const uint32_t capacity = pulse->header.capacity;
+	const uint32_t gateCount = pulse->header.gateCount;
+
+	if (gateCount > capacity) {
+		RKLog("Error. gateCount > capacity: %d > %d\n", gateCount, capacity);
+	}
+
+	for (i = 0; i < count; i++) {
+		RKPulse *pulse = pulses[i];
+		if (stride > 1) {
+			for (p = 0; p < 2; p++) {
+				RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulse, p);
+				for (j = 0, k = 0; k < gateCount; j++, k += stride) {
+					Xn.i[j] = Xn.i[k];
+					Xn.q[j] = Xn.q[k];
+				}
+				if (j != (gateCount + stride - 1) / stride) {
+					RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
+						  gateCount, stride, j, (gateCount + stride - 1) / stride);
+				}
+			}
+		}
+		pulse->header.gateCount = (gateCount + stride - 1) / stride;
+		pulse->header.gateSizeMeters *= (float)stride;
+		pulse->header.s |= RKPulseStatusDownSampled;
+	}
+	return pulse->header.gateCount;
+}
+
+int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
+    int k;
+    // Grab the data from scratch space.
     float *Si = space->S[0];
     float *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKProductIndexZ);
     float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKProductIndexV);
@@ -83,7 +118,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
     float SNR;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     // Masking based on SNR
-    for (i = 0, k = 0; k < gateCount; i++, k += stride) {
+    for (k = 0; k < gateCount; k++) {
         SNR = *Si / space->noise[0];
         if (SNR > SNRThreshold) {
             *Zo++ = *Zi;
@@ -102,21 +137,17 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
             *Ko++ = NAN;
             *Ro++ = NAN;
         }
-        Si += stride;
-        Zi += stride;
-        Vi += stride;
-        Wi += stride;
-        Di += stride;
-        Pi += stride;
-        Ki += stride;
-        Ri += stride;
+        Si ++;
+        Zi ++;
+        Vi ++;
+        Wi ++;
+        Di ++;
+        Pi ++;
+        Ki ++;
+        Ri ++;
     }
     // Record down the down-sampled gate count
-    ray->header.gateCount = i;
-    if (i != (gateCount + stride - 1) / stride) {
-        RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
-              gateCount, stride, i, (gateCount + stride - 1) / stride);
-    }
+    ray->header.gateCount = k;
     // Convert float to color representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKFloat lhma[4];
     int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
@@ -197,7 +228,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount, const 
         ray->header.marker |= RKMarkerMemoryManagement;
     }
     ray->header.productList = RKProductListProductZVWDPRK;
-    return i;
+    return k;
 }
 
 static void zeroOutRay(RKRay *ray) {
@@ -334,7 +365,6 @@ static void *momentCore(void *in) {
     uint32_t marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
-    int stride = MAX(1, (int)(roundf((float)pulse->header.capacity / ray->header.capacity)));
 
     char sweepBeginMarker[RKNameLength] = "S", sweepEndMarker[RKNameLength] = "E";
     if (rkGlobalParameters.showColor) {
@@ -400,8 +430,8 @@ static void *momentCore(void *in) {
             ray->header.endAzimuth      = E->header.azimuthDegrees;
             ray->header.endElevation    = E->header.elevationDegrees;
             ray->header.configIndex     = S->header.configIndex;
-            ray->header.gateCount       = S->header.gateCount / stride;
-            ray->header.gateSizeMeters  = S->header.gateSizeMeters * (float)stride;
+            ray->header.gateCount       = S->header.gateCount;
+            ray->header.gateSizeMeters  = S->header.gateSizeMeters;
             
             config = &engine->configBuffer[S->header.configIndex];
             
@@ -410,12 +440,12 @@ static void *momentCore(void *in) {
                 ic = S->header.configIndex;
                 gateSizeMeters = S->header.gateSizeMeters;
                 if (engine->verbose > 1) {
-                    RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s   stride = %d\n",
-                          engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity), stride);
+                    RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s\n",
+                          engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity));
                 }
                 RKFloat r = 0.0f;
                 for (k = 0; k < config->filterCount; k++) {
-                    for (i = config->filterAnchors[k].outputOrigin; i < config->filterAnchors[k].maxDataLength; i++) {
+                    for (i = config->filterAnchors[k].outputOrigin; i < MIN(capacity, config->filterAnchors[k].maxDataLength); i++) {
                         r = (RKFloat)i * gateSizeMeters;
                         space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain;
                         space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain;
@@ -444,7 +474,10 @@ static void *momentCore(void *in) {
                 i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
             } while (k < path.length);
 
-            // Duplicate a linear array for processor if we are to process; otherwise just skip this group
+			// Down-sample and move the samples to the first part of the pulse
+			//downSamplePulses(pulses, path.length, stride);
+
+			// Duplicate a linear array for processor if we are to process; otherwise just skip this group
             if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
                 if (ie != i) {
                     RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
@@ -455,7 +488,7 @@ static void *momentCore(void *in) {
                     RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
                 }
                 // Fill in the ray
-                makeRayFromScratch(space, ray, S->header.gateCount, stride);
+				makeRayFromScratch(space, ray, ray->header.gateCount);
                 ray->header.s |= RKRayStatusProcessed;
             } else {
                 // Zero out the ray

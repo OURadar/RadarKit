@@ -226,7 +226,7 @@ static void *pulseCompressionCore(void *_in) {
             pulse->parameters.planSizes[1][0] = 0;
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
-            pulse->header.s |= RKPulseStatusSkipped | RKPulseStatusProcessed;
+            pulse->header.s |= RKPulseStatusSkipped;
             if (engine->verbose > 1) {
             RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
             }
@@ -335,8 +335,22 @@ static void *pulseCompressionCore(void *_in) {
                 pulse->parameters.filterCounts[p] = j;
             } // p - polarization
             pulse->header.pulseWidthSampleCount = blindGateCount;
-            pulse->header.s |= RKPulseStatusCompressed | RKPulseStatusProcessed;
+            pulse->header.s |= RKPulseStatusCompressed;
         }
+
+		// Down-sampling regardless if the pulse was compressed or skipped
+		int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
+		for (p = 0; p < 2; p++) {
+			RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+			for (i = 0, j = 0; i < pulse->header.gateCount; i++, j+= stride) {
+				Z.i[i] = Z.i[j];
+				Z.q[i] = Z.q[j];
+			}
+		}
+		pulse->header.gateCount /= stride;
+		pulse->header.gateSizeMeters *= (float)stride;
+		pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
+
         // Record down the latest processed pulse index
         me->pid = i0;
         me->lag = fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);

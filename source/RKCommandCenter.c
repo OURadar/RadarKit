@@ -861,7 +861,6 @@ int socketStreamHandler(RKOperator *O) {
         // If I/Q data is sent, there is no need to send another subset of it.
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         while (user->pulseIndex != endIndex) {
-
             user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
         user->timeLastDisplayIQOut = time;

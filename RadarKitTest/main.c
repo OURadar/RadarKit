@@ -233,7 +233,7 @@ UserParams processInput(int argc, const char **argv) {
             case 'L':
                 user.simulate = true;
                 user.gateCount = 2000;
-                user.prf = 2000;
+                user.prf = 1000;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 break;
@@ -411,9 +411,9 @@ UserParams processInput(int argc, const char **argv) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     if (user.gateCount >= 4000) {
-        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
+        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 1000);
     } else {
-        user.desc.pulseToRayRatio = 1;
+        user.desc.pulseToRayRatio = 2;
     }
 	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
     return user;
@@ -568,13 +568,14 @@ int main(int argc, const char **argv) {
             RKWaveformDownConvert(waveform, 2.0 * M_PI * 50.0 / 160.0);
             RKWaveformDecimate(waveform, 32);
             RKWaveformSummary(waveform);
-            RKAddConfig(myRadar, RKConfigKeySystemZCal, -47.0f, -47.0f, RKConfigKeyNull);
+            RKAddConfig(myRadar, RKConfigKeySystemZCal, -55.0f, -55.0f, RKConfigKeyNull);
             RKAddConfig(myRadar, RKConfigKeyZCals, 2, 0.0, 0.0, 40.0, 40.0, RKConfigKeyNull);
         } else {
             RKLog("Generating waveform using built-in function ...\n");
             //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
             waveform = RKWaveformInitAsLinearFrequencyModulation(5.0, 0.0, 10.0, 1.5);
             RKLog("Waveform LFM generated.\n");
+			RKAddConfig(myRadar, RKConfigKeySystemZCal, -55.0f, -55.0f, RKConfigKeyNull);
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);

@@ -338,6 +338,7 @@ enum RKPulseStatus {
     RKPulseStatusSkipped             = (1 << 4),                     // 0x10
     RKPulseStatusProcessed           = (1 << 5),                     // 0x20
     RKPulseStatusRingFiltered        = (1 << 6),
+	RKPulseStatusDownSampled         = (1 << 7),
     RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
 };
 

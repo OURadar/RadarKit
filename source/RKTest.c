@@ -30,7 +30,7 @@ printf("%s\n", _fn_str);
 
 // Make some private functions available
 
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
 
 #pragma mark - Fundamental Functions
 
@@ -509,7 +509,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 				}
                 phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
                 for (; g < transceiver->gateCount; g++) {
-                    r = (float)g;
+                    r = (float)g * transceiver->gateSizeMeters * 0.1f;
                     a = 60.0f * (cos(0.001f * r)
                                   + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
                                   + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
@@ -1826,7 +1826,7 @@ void RKTestMomentProcessorSpeed(void) {
             gettimeofday(&tic, NULL);
             for (k = 0; k < testCount; k++) {
                 method(space, pulses, pulseCount);
-                makeRayFromScratch(space, ray, pulseCapacity, 1);
+                makeRayFromScratch(space, ray, pulseCapacity);
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
