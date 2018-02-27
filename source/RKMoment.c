@@ -76,37 +76,37 @@ int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 }
 
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
-	int i, j, k, p;
+    int i, j, k, p;
 
-	// Get the start pulse to know the capacity
-	RKPulse *pulse = pulses[0];
-	const uint32_t capacity = pulse->header.capacity;
-	const uint32_t gateCount = pulse->header.gateCount;
+    // Get the start pulse to know the capacity
+    RKPulse *pulse = pulses[0];
+    const uint32_t capacity = pulse->header.capacity;
+    const uint32_t gateCount = pulse->header.gateCount;
 
-	if (gateCount > capacity) {
-		RKLog("Error. gateCount > capacity: %d > %d\n", gateCount, capacity);
-	}
+    if (gateCount > capacity) {
+        RKLog("Error. gateCount > capacity: %d > %d\n", gateCount, capacity);
+    }
 
-	for (i = 0; i < count; i++) {
-		RKPulse *pulse = pulses[i];
-		if (stride > 1) {
-			for (p = 0; p < 2; p++) {
-				RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulse, p);
-				for (j = 0, k = 0; k < gateCount; j++, k += stride) {
-					Xn.i[j] = Xn.i[k];
-					Xn.q[j] = Xn.q[k];
-				}
-				if (j != (gateCount + stride - 1) / stride) {
-					RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
-						  gateCount, stride, j, (gateCount + stride - 1) / stride);
-				}
-			}
-		}
-		pulse->header.gateCount = (gateCount + stride - 1) / stride;
-		pulse->header.gateSizeMeters *= (float)stride;
-		pulse->header.s |= RKPulseStatusDownSampled;
-	}
-	return pulse->header.gateCount;
+    for (i = 0; i < count; i++) {
+        RKPulse *pulse = pulses[i];
+        if (stride > 1) {
+            for (p = 0; p < 2; p++) {
+                RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulse, p);
+                for (j = 0, k = 0; k < gateCount; j++, k += stride) {
+                    Xn.i[j] = Xn.i[k];
+                    Xn.q[j] = Xn.q[k];
+                }
+                if (j != (gateCount + stride - 1) / stride) {
+                    RKLog("Equation (314) does not work.  gateCount = %d  stride = %d  i = %d vs %d\n",
+                          gateCount, stride, j, (gateCount + stride - 1) / stride);
+                }
+            }
+        }
+        pulse->header.gateCount = (gateCount + stride - 1) / stride;
+        pulse->header.gateSizeMeters *= (float)stride;
+        pulse->header.s |= RKPulseStatusDownSampled;
+    }
+    return pulse->header.gateCount;
 }
 
 int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
@@ -479,7 +479,7 @@ static void *momentCore(void *in) {
                 i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
             } while (k < path.length);
 
-			// Duplicate a linear array for processor if we are to process; otherwise just skip this group
+            // Duplicate a linear array for processor if we are to process; otherwise just skip this group
             if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
                 if (ie != i) {
                     RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
@@ -490,7 +490,7 @@ static void *momentCore(void *in) {
                     RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
                 }
                 // Fill in the ray
-				makeRayFromScratch(space, ray, ray->header.gateCount);
+                makeRayFromScratch(space, ray, ray->header.gateCount);
                 ray->header.s |= RKRayStatusProcessed;
             } else {
                 // Zero out the ray
@@ -584,7 +584,7 @@ static void *pulseGatherer(void *in) {
     RKPulse *pulse;
     RKRay *ray;
 
-	// Show the selected moment processor
+    // Show the selected moment processor
     if (engine->verbose) {
         if (engine->processor == &RKMultiLag) {
             RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
