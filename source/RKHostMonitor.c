@@ -14,7 +14,10 @@
 // The following structures are obtained from an example from Apple:
 // https://developer.apple.com/library/content/samplecode/SimplePing/
 //
-// They also work on CentOS 7.3
+// They also work on CentOS 7.3.
+// NOTE: To allow root to use icmp sockets, run:
+//
+//     sysctl -w net.ipv4.ping_group_range="0 0"
 //
 
 enum {
@@ -128,7 +131,11 @@ static void *hostPinger(void *in) {
 
     // Open a socket, set some properties for ICMP
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
-        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d   %d / %d\n", engine->name, name, sd, errno, protocol->p_proto, IPPROTO_ICMP);
+        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d\n", engine->name, name, sd, errno);
+        if (errno == EACCES) {
+            RKLog("%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 0\"' ...\n", engine->name, name);
+            RKLog("%s %s Info. to allow root to use icmp sockets\n", engine->name, name);
+        }
         me->state = RKHostStateUnknown;
         me->tic = 2;
         return NULL;
@@ -155,10 +162,14 @@ static void *hostPinger(void *in) {
         // Pong
         if ((r = recvfrom(sd, &buff, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
             offset = (size_t)-1;
-            if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == IPPROTO_ICMP) {
+            if (r == txSize) {
+                offset = 0;
+            } else if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == protocol->p_proto) {
                 ipHeaderLength = (ipv4Header->versionAndHeaderLength & 0x0f) * sizeof(uint32_t);
                 if (r >= ipHeaderLength + sizeof(RKICMPHeader)) {
                     offset = ipHeaderLength;
+                } else {
+                    RKLog("%s %s Error. Unexpected packet size.\n", engine->name, name);
                 }
             }
             if (offset != (size_t)-1) {
@@ -166,19 +177,20 @@ static void *hostPinger(void *in) {
                 receivedChecksum = icmpHeader->checksum;
                 icmpHeader->checksum = 0;
                 calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
+                if (engine->verbose > 1) {
+                    RKLog("%s %s checksum       = %6d   %6d\n", engine->name, name, calculatedChecksum, receivedChecksum);
+                    RKLog("%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
+                    RKLog("%s %s sequenceNumber = %6d   %6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
+                }
+                // Ignore identifier for this since it can be different from UDP implementation
                 if (receivedChecksum == calculatedChecksum &&
                     icmpHeader->type == RKICMPv4EchoReply &&
                     icmpHeader->code == 0 &&
-                    icmpHeader->identifier == me->identifier &&
                     icmpHeader->sequenceNumber == me->sequenceNumber) {
                     me->state = RKHostStateReachable;
                     me->tic++;
                     me->sequenceNumber++;
                     gettimeofday(&me->latestTime, NULL);
-                    if (engine->verbose > 1) {
-                        RKLog(">%s %s Got sequenceNumber %d (receiveAddress length %d)\n",
-                              engine->name, name, icmpHeader->sequenceNumber, returnLength);
-                    }
                 }
             }
         } else {
@@ -214,9 +226,17 @@ static void *hostPinger(void *in) {
 
         // Now we wait
         k = 0;
-        while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
-            usleep(100000);
+        if (me->tic > 1) {
+            while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
+                usleep(100000);
+            }
+        } else {
+            usleep(200000);
         }
+    }
+    
+    if (sd) {
+        close(sd);
     }
 
     if (engine->verbose) {
@@ -329,6 +349,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
     memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
     RKHostMonitorAddHost(engine, "8.8.8.8");
+    RKHostMonitorAddHost(engine, "bumblebee.arrc.ou.edu");
     return engine;
 }
 
