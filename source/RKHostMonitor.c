@@ -15,17 +15,40 @@
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 
-#define PACKETSIZE    64
+#define RKHostMonitorPacketSize 32
 
-typedef union rk_host_monitor_packet {
-    struct {
-        //struct icmphdr header;
-        char message[0];
-    };
-    char bytes[PACKETSIZE];
-} RKHostMonitorPacket;
+enum {
+    RKICMPv4EchoRequest = 8,
+    RKICMPv4EchoReply = 0
+};
 
-static uint16_t rk_host_monitor_checksum (void *in, int len) {
+typedef struct rk_icmp_header {
+    uint8_t     type;                // 8 for IPV4, 128 for IPV6
+    uint8_t     code;                // Always 0
+    uint16_t    checksum;
+    uint16_t    identifier;
+    uint16_t    sequenceNumber;
+    // data...
+} RKICMPHeader;
+
+typedef struct rk_ipv4_header {
+    uint8_t     versionAndHeaderLength;
+    uint8_t     differentiatedServices;
+    uint16_t    totalLength;
+    uint16_t    identification;
+    uint16_t    flagsAndFragmentOffset;
+    uint8_t     timeToLive;
+    uint8_t     protocol;
+    uint16_t    headerChecksum;
+    uint8_t     sourceAddress[4];
+    uint8_t     destinationAddress[4];
+    // options...
+    // data...
+} RKIPV4Header;
+
+#pragma mark - Helper Functions
+
+static uint16_t rk_host_monitor_checksum (void *in, size_t len) {
     uint16_t *buf = (uint16_t *)in;
     uint16_t sum = 0;
     for (sum = 0; len > 1; len -= 2) {
@@ -39,11 +62,6 @@ static uint16_t rk_host_monitor_checksum (void *in, int len) {
     return ~sum;
 }
 
-#pragma mark - Helper Functions
-
-void ping(struct sockaddr_in address) {
-}
-
 #pragma mark - Delegate Workers
 
 static void *hostPinger(void *in) {
@@ -51,14 +69,12 @@ static void *hostPinger(void *in) {
     RKHostMonitor *engine = me->parent;
 
     int k;
-    //struct packet packet;
     struct sockaddr_in address;
 
     const int c = me->id;
     const int value = 255;
     struct protoent *protocol = getprotobyname("ICMP");
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
-    struct hostent *localhost = gethostbyname("localhost");
 
     char name[RKNameLength];
     
@@ -84,6 +100,8 @@ static void *hostPinger(void *in) {
     }
     
     me->tic++;
+    me->sequenceNumber = 0;
+    me->identifier = rand() & 0xffff;
     
     // Resolve my host
     
@@ -98,7 +116,7 @@ static void *hostPinger(void *in) {
           (address.sin_addr.s_addr & 0x00ff0000) >> 16,
           (address.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
 
-    RKLog("%s %s proto = %d / %d .\n", engine->name, name, protocol->p_proto, IPPROTO_ICMP);
+    //RKLog("%s %s proto = %d / %d .\n", engine->name, name, protocol->p_proto, IPPROTO_ICMP);
     int sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto);
     if (sd < 0) {
         RKLog("%s %s Error. Unable to open a socket.  sd = %d\n", engine->name, name, sd);
@@ -113,48 +131,70 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
-#define RKHostMonitorPacketSize 64
-    
     char buf[RKHostMonitorPacketSize];
+    RKICMPHeader *icmpHeader;
+    RKIPV4Header *ipv4Header = (RKIPV4Header *)buf;
     struct sockaddr_in receiveAddress;
     socklen_t receiveLength;
-    struct ip *ipHeader = (struct ip *)buf;
-//    struct tcphdr *tcpHeader = (struct tcphdr *)&ipHeader[1];
-    
+    uint16_t receivedChecksum;
+    uint16_t calculatedChecksum;
+
     ssize_t r = 0;
-    
+    size_t txSize = RKHostMonitorPacketSize - sizeof(RKIPV4Header);
+    size_t ipHeaderLength, offset;
+
     while (engine->state & RKEngineStateActive) {
-        // Ping
-        RKLog(">%s %s ping %s\n", engine->name, name, engine->hosts[c]);
-        
-        if (recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&receiveAddress, &receiveLength)) {
-            RKLog(">%s %s got message %d: %02x\n", engine->name, name, receiveLength, buf[0]);
+        // Pong
+        if ((r = recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&receiveAddress, &receiveLength)) > 0) {
+            offset = (size_t)-1;
+            if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == IPPROTO_ICMP) {
+                ipHeaderLength = (ipv4Header->versionAndHeaderLength & 0x0f) * sizeof(uint32_t);
+                if (r >= ipHeaderLength + sizeof(RKICMPHeader)) {
+                    offset = ipHeaderLength;
+                }
+            }
+            if (offset != (size_t)-1) {
+                icmpHeader = (RKICMPHeader *)(buf + offset);
+                receivedChecksum = icmpHeader->checksum;
+                icmpHeader->checksum = 0;
+                calculatedChecksum = rk_host_monitor_checksum(buf + offset, r - offset);
+                if (receivedChecksum == calculatedChecksum &&
+                    icmpHeader->type == RKICMPv4EchoReply &&
+                    icmpHeader->code == 0 &&
+                    icmpHeader->identifier == me->identifier &&
+                    icmpHeader->sequenceNumber == me->sequenceNumber) {
+                    me->state = RKHostStateReachable;
+                    if (engine->verbose > 1) {
+                        RKLog(">%s %s Got message %d\n", engine->name, name, icmpHeader->sequenceNumber);
+                    }
+                }
+            }
+        } else {
+            me->state = RKHostStateUnreachable;
         }
-        
+
+        // Reset buffer
         memset(buf, 0, sizeof(buf));
 
-        ipHeader->ip_hl = 5;
-        ipHeader->ip_v = IPVERSION;
-        ipHeader->ip_tos = IPTOS_PREC_ROUTINE;
-        ipHeader->ip_len = htons(RKHostMonitorPacketSize);
-        ipHeader->ip_id = htons(10000);
-        ipHeader->ip_p = 6;
-        ipHeader->ip_ttl = MAXTTL;
-        ipHeader->ip_dst.s_addr = address.sin_addr.s_addr;
-        ipHeader->ip_src.s_addr = *(unsigned int *)localhost->h_addr;
-//        ipHeader->ip_src.s_addr = inet_addr ("239.0.0.1");
+        // Prepare echo request packet
+        icmpHeader = (RKICMPHeader *)buf;
+        icmpHeader->type = RKICMPv4EchoRequest;
+        icmpHeader->code = 0;
+        icmpHeader->checksum = 0;
+        icmpHeader->identifier = me->identifier;
+        icmpHeader->sequenceNumber = ++me->sequenceNumber;
+        icmpHeader->checksum = rk_host_monitor_checksum(buf, txSize);
 
-        ipHeader->ip_sum = rk_host_monitor_checksum(buf, sizeof(struct ip));
-
-//        tcpHeader->th_sport = htons(1234);
-        
-        if ((r = sendto(sd, buf, sizeof(buf), 0, (struct sockaddr *)&address, sizeof(struct sockaddr))) != 0) {
+        // Ping
+        if ((r = sendto(sd, buf, txSize, 0, (struct sockaddr *)&address, sizeof(struct sockaddr))) == -1) {
             RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
+        } else if (engine->verbose > 1) {
+            RKLog(">%s %s Ping %s with %d bytes\n", engine->name, name, engine->hosts[c], txSize);
         }
 
         // Now we wait
         k = 0;
-        while (k++ < 10 && engine->state & RKEngineStateActive) {
+        while (k++ < 20 && engine->state & RKEngineStateActive) {
             usleep(100000);
         }
     }
@@ -208,9 +248,19 @@ static void *hostWatcher(void *in) {
 
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateActive) {
+        // Consolidate all the state from all unit watcher
+        for (k = 0; k < engine->workerCount; k++) {
+            RKUnitMonitor *worker = &engine->workers[k];
+            if (worker->sequenceNumber > 1) {
+                RKLog(">%s %s (%d) %s\n", engine->name,
+                      engine->hosts[k],
+                      worker->sequenceNumber,
+                      worker->state == RKHostStateReachable ? "ok" : "not reachable");
+            }
+        }
         // Wait one minute, do it with multiples of 0.1s for a responsive exit
         k = 0;
-        while (k++ < 600 && engine->state & RKEngineStateActive) {
+        while (k++ < 20 && engine->state & RKEngineStateActive) {
             usleep(100000);
         }
     }

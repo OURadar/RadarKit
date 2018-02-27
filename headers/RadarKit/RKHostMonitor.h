@@ -11,6 +11,11 @@
 
 #include <RadarKit/RKFoundation.h>
 
+enum {
+    RKHostStateUnreachable,
+    RKHostStateReachable
+};
+
 typedef struct rk_unit_monitor RKUnitMonitor;
 typedef struct rk_host_monitor RKHostMonitor;
 
@@ -21,6 +26,9 @@ struct rk_unit_monitor {
     int                    tic;
     pthread_t              tid;
     RKHostMonitor          *parent;
+    uint16_t               sequenceNumber;
+    uint16_t               identifier;
+    int                    state;
 };
 
 struct rk_host_monitor {
