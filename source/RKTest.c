@@ -1750,6 +1750,14 @@ void RKTestPulseCompressionSpeed(void) {
     fftwf_plan planForwardOutPlace = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
     fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
     
+    // Set some real values so that we don't have see NAN in the data / results, which could slow down FFTW
+    for (k = 0; k < nfft; k++) {
+        X[k].i = rand();
+        X[k].q = 0;
+        f[k][0] = 1.0f;
+        f[k][1] = 0.0f;
+    }
+    
     RKLog(UNDERLINE("PulseCompression") "\n");
     
     mint = INFINITY;

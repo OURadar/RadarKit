@@ -3,8 +3,8 @@ UNAME_M := $(shell uname -m)
 
 $(info $$UNAME_M = [${UNAME_M}])
 
-#CFLAGS =      -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
-CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+CFLAGS =      -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
+#CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS =      -std=gnu99 -Os -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 CFLAGS += -fms-extensions -Wno-microsoft
 
@@ -26,7 +26,7 @@ RKLIB = libRadarKit.a
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
 #CFLAGS += -mavx2 -mavx512f
-#CFLAGS += -mavx2
+CFLAGS += -mavx2
 
 ifeq ($(UNAME), Darwin)
 # Mac OS X
