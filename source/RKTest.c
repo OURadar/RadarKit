@@ -1787,7 +1787,7 @@ void RKTestPulseCompressionSpeed(void) {
     }
 	RKLog(">Time for each pulse (%s gates) = %.3f ms / pulse (Best of 3)\n",
 		  RKIntegerToCommaStyleString(nfft), 1.0e3 * mint / testCount);
-    RKLog(">Speed: %.2f pulses / sec\n", testCount / mint);
+    RKLog(">Speed: %.2f pulses / sec / core\n", testCount / mint);
     
     fftwf_destroy_plan(planForwardInPlace);
     fftwf_destroy_plan(planForwardOutPlace);
@@ -1876,7 +1876,7 @@ void RKTestMomentProcessorSpeed(void) {
         }
         RKLog(">Time for each ray (%s pulses x %s gates) = %.2f ms (Best of 3)\n",
               RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * mint / testCount);
-        RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
+        RKLog(">Speed: %.2f rays / sec / core\n", testCount / mint);
     }
     
     RKScratchFree(space);
