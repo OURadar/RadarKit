@@ -1204,7 +1204,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Network\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                         "\"Noise\":[%.3f,%.3f], "

@@ -242,7 +242,7 @@ static void *hostWatcher(void *in) {
         
         worker->id = k;
         worker->parent = engine;
-        worker->pingIntervalInSeconds = 3;
+        worker->pingIntervalInSeconds = RKHostMonitorPingInterval;
         
         // Workers that actually ping the hosts
         if (pthread_create(&worker->tid, NULL, hostPinger, worker) != 0) {
@@ -288,11 +288,9 @@ static void *hostWatcher(void *in) {
         }
         engine->allReachable = allReachable;
         engine->anyReachable = anyReachable;
-        RKLog(">%s %d / %d (%d)\n", engine->name,
-              engine->allReachable, engine->anyReachable, engine->workerCount);
         // Wait one minute, do it with multiples of 0.1s for a responsive exit
         k = 0;
-        while (k++ < 20 && engine->state & RKEngineStateActive) {
+        while (k++ < RKHostMonitorPingInterval * 10 && engine->state & RKEngineStateActive) {
             usleep(100000);
         }
     }

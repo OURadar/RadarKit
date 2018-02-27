@@ -6,6 +6,17 @@
 //
 //  █
 //
+//  1.2.6  - 2/27/2018
+//         - Added RKHostMonitor for ICMP echo reqeust
+//         - Default host is Google's 8.8.8.8
+//         - Multiple-range calibration based filter anchors
+//         - All waveforms are required to have unity noise gain
+//         - Sampling frequency change is now in RKWaveform
+//         - Senstivity calculation based on waveform
+//         - Improved CPU core count
+//         - IP address is logged alongside the command
+//         - Improved efficiency of RKTestTransceiver
+//
 //  1.2.5  - 1/8/2018
 //         - Added RKClearControls(), RKConcludeControls()
 //         - Send updated controls
@@ -93,7 +104,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.5"
+#define RKVersionString                  "1.2.6"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
@@ -121,6 +132,7 @@
 #define RKPulseCountForNoiseMeasurement  200
 #define RKProcessorStatusPulseCoreCount  16
 #define RKProcessorStatusRayCoreCount    16
+#define RKHostMonitorPingInterval        3
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
