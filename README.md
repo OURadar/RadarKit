@@ -19,7 +19,7 @@ Follow these steps to get the project
     git clone https://github.com/boonleng/radarkit.git
     ```
 
-2. Get the required packages, which can either be installed through one of the package managers or compiled from source.
+2. Get the required packages, which can either be installed through one of the package managers or compiled from source, which I would recommend for the FFTW library since it can take advantage of SSE, SSE2, AVX and AVX-2 accelerations.
     - [FFTW]
     - [NetCDF]
 
