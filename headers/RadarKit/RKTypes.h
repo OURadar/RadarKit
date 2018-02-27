@@ -548,6 +548,7 @@ enum RKStream {
 typedef uint8_t RKHostState;
 enum RKHostState {
     RKHostStateUnreachable,
+    RKHostStatePartiallyReachable,
     RKHostStateReachable
 };
 

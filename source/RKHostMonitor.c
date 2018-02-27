@@ -79,10 +79,9 @@ static void *hostPinger(void *in) {
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
 
     char name[RKNameLength];
-    
-    char buf[RKHostMonitorPacketSize];
+    char buff[RKHostMonitorPacketSize];
     RKICMPHeader *icmpHeader;
-    RKIPV4Header *ipv4Header = (RKIPV4Header *)buf;
+    RKIPV4Header *ipv4Header = (RKIPV4Header *)buff;
     socklen_t returnLength;
     uint16_t receivedChecksum;
     uint16_t calculatedChecksum;
@@ -90,6 +89,8 @@ static void *hostPinger(void *in) {
     ssize_t r = 0;
     size_t txSize = RKHostMonitorPacketSize - sizeof(RKIPV4Header);
     size_t ipHeaderLength, offset;
+    
+    struct timeval now;
     
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
@@ -111,10 +112,6 @@ static void *hostPinger(void *in) {
         RKLog(">%s %s Started.   host = %s\n",
               engine->name, name, engine->hosts[c]);
     }
-    
-    me->tic++;
-    me->sequenceNumber = 0;
-    me->identifier = rand() & 0xffff;
     
     // Resolve my host
     memset(&targetAddress, 0, sizeof(struct sockaddr_in));
@@ -143,9 +140,14 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
+    me->tic++;
+    me->sequenceNumber = 0;
+    me->identifier = rand() & 0xffff;
+    gettimeofday(&me->latestTime, NULL);
+
     while (engine->state & RKEngineStateActive) {
         // Pong
-        if ((r = recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
+        if ((r = recvfrom(sd, &buff, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
             offset = (size_t)-1;
             if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == IPPROTO_ICMP) {
                 ipHeaderLength = (ipv4Header->versionAndHeaderLength & 0x0f) * sizeof(uint32_t);
@@ -154,16 +156,19 @@ static void *hostPinger(void *in) {
                 }
             }
             if (offset != (size_t)-1) {
-                icmpHeader = (RKICMPHeader *)(buf + offset);
+                icmpHeader = (RKICMPHeader *)(buff + offset);
                 receivedChecksum = icmpHeader->checksum;
                 icmpHeader->checksum = 0;
-                calculatedChecksum = rk_host_monitor_checksum(buf + offset, r - offset);
+                calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
                 if (receivedChecksum == calculatedChecksum &&
                     icmpHeader->type == RKICMPv4EchoReply &&
                     icmpHeader->code == 0 &&
                     icmpHeader->identifier == me->identifier &&
                     icmpHeader->sequenceNumber == me->sequenceNumber) {
                     me->state = RKHostStateReachable;
+                    me->tic++;
+                    me->sequenceNumber++;
+                    gettimeofday(&me->latestTime, NULL);
                     if (engine->verbose > 1) {
                         RKLog(">%s %s Got sequenceNumber %d (receiveAddress length %d)\n",
                               engine->name, name, icmpHeader->sequenceNumber, returnLength);
@@ -171,23 +176,31 @@ static void *hostPinger(void *in) {
                 }
             }
         } else {
-            me->state = RKHostStateUnreachable;
+            gettimeofday(&now, NULL);
+            RKLog(">%s %s now: %u   latest: %u   delta: %e", engine->name, name, now.tv_sec, me->latestTime.tv_sec, RKTimevalDiff(now, me->latestTime));
+            if (RKTimevalDiff(now, me->latestTime) > (double)me->pingIntervalInSeconds + 5.0) {
+                me->state = RKHostStateUnreachable;
+                me->tic++;
+            } else if (me->sequenceNumber > 0) {
+                me->state = RKHostStatePartiallyReachable;
+                me->tic++;
+            }
         }
 
         // Reset buffer
-        memset(buf, 0, sizeof(buf));
+        memset(buff, 0, RKHostMonitorPacketSize);
 
         // Prepare echo request packet
-        icmpHeader = (RKICMPHeader *)buf;
+        icmpHeader = (RKICMPHeader *)buff;
         icmpHeader->type = RKICMPv4EchoRequest;
         icmpHeader->code = 0;
         icmpHeader->checksum = 0;
         icmpHeader->identifier = me->identifier;
-        icmpHeader->sequenceNumber = ++me->sequenceNumber;
-        icmpHeader->checksum = rk_host_monitor_checksum(buf, txSize);
+        icmpHeader->sequenceNumber = me->sequenceNumber;
+        icmpHeader->checksum = rk_host_monitor_checksum(buff, txSize);
 
         // Ping
-        if ((r = sendto(sd, buf, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
+        if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
             RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
         } else if (engine->verbose > 1) {
             RKLog(">%s %s Ping %s with %d bytes\n", engine->name, name, engine->hosts[c], txSize);
@@ -195,7 +208,7 @@ static void *hostPinger(void *in) {
 
         // Now we wait
         k = 0;
-        while (k++ < 20 && engine->state & RKEngineStateActive) {
+        while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
             usleep(100000);
         }
     }
@@ -211,6 +224,7 @@ static void *hostWatcher(void *in) {
     RKHostMonitor *engine = (RKHostMonitor *)in;
     
     int k;
+    bool allReachable, anyReachable;
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -228,6 +242,7 @@ static void *hostWatcher(void *in) {
         
         worker->id = k;
         worker->parent = engine;
+        worker->pingIntervalInSeconds = 3;
         
         // Workers that actually ping the hosts
         if (pthread_create(&worker->tid, NULL, hostPinger, worker) != 0) {
@@ -247,18 +262,34 @@ static void *hostWatcher(void *in) {
         RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
     }
 
+    // Wait another tic for the first ping to response
+    for (k = 0; k < engine->workerCount; k++) {
+        RKUnitMonitor *worker = &engine->workers[k];
+        while (worker->tic == 1 && engine->state & RKEngineStateActive) {
+            usleep(10000);
+        }
+    }
+
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateActive) {
         // Consolidate all the state from all unit watcher
+        allReachable = true;
+        anyReachable = false;
         for (k = 0; k < engine->workerCount; k++) {
             RKUnitMonitor *worker = &engine->workers[k];
-            if (worker->sequenceNumber > 1) {
+            allReachable &= worker->state == RKHostStateReachable;
+            anyReachable |= worker->state == RKHostStateReachable;
+            if (engine->verbose > 1) {
                 RKLog(">%s %s (%d) %s\n", engine->name,
                       engine->hosts[k],
                       worker->sequenceNumber,
                       worker->state == RKHostStateReachable ? "ok" : "not reachable");
             }
         }
+        engine->allReachable = allReachable;
+        engine->anyReachable = anyReachable;
+        RKLog(">%s %d / %d (%d)\n", engine->name,
+              engine->allReachable, engine->anyReachable, engine->workerCount);
         // Wait one minute, do it with multiples of 0.1s for a responsive exit
         k = 0;
         while (k++ < 20 && engine->state & RKEngineStateActive) {

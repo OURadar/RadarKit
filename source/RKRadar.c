@@ -1196,7 +1196,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                 transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
                 pedestalOkay = positionIndex == radar->positionIndex ? false : true;
                 healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
-                networkOkay = radar->hostMonitor->workers[0].state & RKHostStateReachable ? true : false;
+                networkOkay = radar->hostMonitor->allReachable ? true : false;
 
                 RKConfig *config = RKGetLatestConfig(radar);
                 RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
@@ -1213,7 +1213,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                        networkOkay ? "true" : "false", networkOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        networkOkay ? "true" : "false", radar->hostMonitor->allReachable ? RKStatusEnumNormal : (radar->hostMonitor->anyReachable ? RKStatusEnumStandby : RKStatusEnumFault),
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1],
                         radar->pulseCompressionEngine->planUseCount[0],

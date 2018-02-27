@@ -20,10 +20,12 @@ struct rk_unit_monitor {
     int                    id;
     int                    tic;
     pthread_t              tid;
+    RKHostState            state;
     RKHostMonitor          *parent;
+    uint16_t               pingIntervalInSeconds;
     uint16_t               sequenceNumber;
     uint16_t               identifier;
-    RKHostState            state;
+    struct timeval         latestTime;
 };
 
 struct rk_host_monitor {
@@ -38,6 +40,8 @@ struct rk_host_monitor {
     RKUnitMonitor          *workers;
     pthread_t              tidHostWatcher;
     pthread_mutex_t        mutex;
+    bool                   allReachable;
+    bool                   anyReachable;
 
     // Status / health
     RKEngineState          state;
