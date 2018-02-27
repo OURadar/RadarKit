@@ -17,8 +17,9 @@ static void *pulseGatherer(void *);
 
 // Private Functions (accessible for tests)
 
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
+int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count);
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride);
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
 
 #pragma mark -
 #pragma mark Helper Functions
@@ -68,6 +69,10 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
+}
+
+int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+    return 0;
 }
 
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
@@ -585,6 +590,8 @@ static void *pulseGatherer(void *in) {
             RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
         } else if (engine->processor == &RKPulsePairHop) {
             RKLog(">%s Method = RKPulsePairHop()\n", engine->name);
+        } else if (engine->processor == &nullProcessor) {
+            RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
             RKLog(">%s Method %p not recognized\n", engine->name, engine->processor);
         }

@@ -207,7 +207,7 @@ UserParams processInput(int argc, const char **argv) {
         struct option *o = &long_options[k];
         snprintf(str + strlen(str), 1024, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
     }
-    //printf("str = %s\n", str);
+//    printf("str = %s\n", str);
     // Process the input arguments and set the parameters
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
@@ -396,6 +396,7 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 break;
             default:
+                printf("opt = %d   optarg = %c", opt, *optarg);
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -442,7 +443,7 @@ int main(int argc, const char **argv) {
     }
 
     // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && !(user.desc.initFlags = RKInitFlagRelay)) {
+    if (user.simulate == false && !(user.desc.initFlags == RKInitFlagRelay)) {
         RKLog("No options specified. Don't want to do anything?\n");
         exit(EXIT_FAILURE);
     } else if (user.simulate == true && user.desc.initFlags == RKInitFlagRelay) {

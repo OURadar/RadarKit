@@ -8,7 +8,6 @@
 
 #include <RadarKit/RKPulsePair.h>
 
-
 void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) {
     const RKFloat va = space->velocityFactor;
     const RKFloat wa = space->widthFactor;
@@ -131,7 +130,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     }
 }
 
-int RKPulsePair(RKScratch *space, RKPulse **input, const uint16_t count) {
+int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     usleep(20 * 1000);
     RKLog("Warning. I am not implemented yet\n");
     return 0;

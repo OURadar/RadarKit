@@ -909,6 +909,7 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
 }
 
 int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
+    radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
 	radar->momentEngine->processorLagCount = 2;
 	return RKResultNoError;
 }

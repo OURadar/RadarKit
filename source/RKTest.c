@@ -28,6 +28,10 @@ memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
 
+#define TEST_RESULT(clr, str, res)   clr ? \
+printf("%s %s\033[0m\n", str, res ? "\033[32mokay" : "\033[31mtoo high") : \
+printf("%s %s\n", str, res ? "okay" : "too high");
+
 // Make some private functions available
 
 int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
@@ -1379,7 +1383,9 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 	// Some known results
 	RKFloat err = 0.0f;
 
-	if (method == RKMultiLag && lag >= 2 && lag <= 4) {
+    char str[RKNameLength];
+    
+    if (method == RKMultiLag && lag >= 2 && lag <= 4) {
 		// Results for lags 2, 3, and 4
 		RKFloat D[3][6] = {
 			{4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
@@ -1398,21 +1404,27 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
 			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
 		};
-		for (k = 0; k < gateCount; k++) {
+		
+        for (k = 0; k < gateCount; k++) {
 			err += D[lag - 2][k] - space->ZDR[k];
 		}
 		err /= (RKFloat)gateCount;
-		RKLog("Delta ZDR = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
-		for (k = 0; k < gateCount; k++) {
+        sprintf(str, "Delta ZDR = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+		
+        for (k = 0; k < gateCount; k++) {
 			err += P[lag - 2][k] - space->PhiDP[k];
 		}
 		err /= (RKFloat)gateCount;
-		RKLog("Delta PhiDP = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
-		for (k = 0; k < gateCount; k++) {
+        sprintf(str, "Delta PhiDP = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+		
+        for (k = 0; k < gateCount; k++) {
 			err += R[lag - 2][k] - space->RhoHV[k];
 		}
 		err /= (RKFloat)gateCount;
-		RKLog("Delta RhoHV = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+        sprintf(str, "Delta RhoHV = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
 	}
 
     RKLog("Deallocating buffers ...\n");
