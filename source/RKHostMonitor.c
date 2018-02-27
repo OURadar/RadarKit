@@ -110,9 +110,8 @@ static void *hostPinger(void *in) {
     me->identifier = rand() & 0xffff;
     
     // Resolve my host
-    memset(&targetAddress, 0, sizeof(struct sockaddr));
+    memset(&targetAddress, 0, sizeof(struct sockaddr_in));
     targetAddress.sin_family = hostname->h_addrtype;
-    targetAddress.sin_port = htons(80);
     targetAddress.sin_addr.s_addr = *(unsigned int *)hostname->h_addr;
     if (engine->verbose) {
         RKLog(">%s %s %s -> 0x%08x -> %d.%d.%d.%d (%d)\n",
@@ -123,7 +122,7 @@ static void *hostPinger(void *in) {
               (targetAddress.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
     }
 
-    // Open a socket, set some properties
+    // Open a socket, set some properties for ICMP
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
         RKLog("%s %s Error. Unable to open a socket.  sd = %d\n", engine->name, name, sd);
         return NULL;
@@ -284,7 +283,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
     engine->hosts = (RKHostAddress *)malloc(sizeof(RKHostAddress));
     memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
-    RKHostMonitorAddHost(engine, "bumblebee.arrc.ou.edu");
+    RKHostMonitorAddHost(engine, "8.8.8.8");
     return engine;
 }
 
