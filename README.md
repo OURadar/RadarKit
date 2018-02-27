@@ -156,8 +156,9 @@ Follow these steps to get the project
 5. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
     ```shell
-    gcc -o program program.c -lRadarKit -lfftw3 -lnetcdf -lpthread
+    gcc -o program program.c -lRadarKit -lfftw3f -lnetcdf
     ```
+
 
 This example is extremely simple. Many optional arguments were set to NULL (execution and free routines were omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
