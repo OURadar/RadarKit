@@ -10,6 +10,13 @@
 
 #define RKHostMonitorPacketSize 32
 
+//
+// The following structures are obtained from an example from Apple:
+// https://developer.apple.com/library/content/samplecode/SimplePing/
+//
+// They also work on CentOS 7.3
+//
+
 enum {
     RKICMPv4EchoRequest = 8,
     RKICMPv4EchoReply = 0

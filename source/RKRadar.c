@@ -1186,6 +1186,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
+    bool networkOkay;
 
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -1195,6 +1196,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                 transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
                 pedestalOkay = positionIndex == radar->positionIndex ? false : true;
                 healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+                networkOkay = radar->hostMonitor->workers[0].state & RKHostStateReachable ? true : false;
 
                 RKConfig *config = RKGetLatestConfig(radar);
                 RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
@@ -1202,7 +1204,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Network\":{\"Value\":true,\"Enum\":0}, "
+                        "\"Network\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                         "\"Noise\":[%.3f,%.3f], "
@@ -1211,6 +1213,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        networkOkay ? "true" : "false", networkOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1],
                         radar->pulseCompressionEngine->planUseCount[0],

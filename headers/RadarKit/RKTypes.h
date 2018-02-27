@@ -545,6 +545,13 @@ enum RKStream {
     RKStreamEverything               = 0xFFFFFFFFFFULL               //
 };
 
+typedef uint8_t RKHostState;
+enum RKHostState {
+    RKHostStateUnreachable,
+    RKHostStateReachable
+};
+
+
 // A general description of a radar. Most parameters are used for initialization. Some may be
 // overriden after the radar has gone live.
 typedef struct rk_radar_desc {
