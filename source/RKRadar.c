@@ -1188,6 +1188,8 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool healthOkay;
     bool networkOkay;
 
+    RKStatusEnum networkEnum;
+    
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
@@ -1197,6 +1199,10 @@ int RKWaitWhileActive(RKRadar *radar) {
                 pedestalOkay = positionIndex == radar->positionIndex ? false : true;
                 healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
                 networkOkay = radar->hostMonitor->allReachable ? true : false;
+                networkEnum =
+                radar->hostMonitor->allReachable ? RKStatusEnumNormal :
+                (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
+                 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
 
                 RKConfig *config = RKGetLatestConfig(radar);
                 RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
@@ -1213,7 +1219,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                        networkOkay ? "true" : "false", radar->hostMonitor->allReachable ? RKStatusEnumNormal : (radar->hostMonitor->anyReachable ? RKStatusEnumStandby : RKStatusEnumFault),
+                        networkOkay ? "true" : "false", networkEnum,
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1],
                         radar->pulseCompressionEngine->planUseCount[0],

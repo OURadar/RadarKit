@@ -40,6 +40,7 @@ struct rk_host_monitor {
     RKUnitMonitor          *workers;
     pthread_t              tidHostWatcher;
     pthread_mutex_t        mutex;
+    bool                   allKnown;
     bool                   allReachable;
     bool                   anyReachable;
 

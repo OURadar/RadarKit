@@ -904,9 +904,11 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tidPulseGatherer, NULL);
-    free(engine->workers);
-    engine->workers = NULL;
+    if (engine->tidPulseGatherer) {
+        pthread_join(engine->tidPulseGatherer, NULL);
+        free(engine->workers);
+        engine->workers = NULL;
+    }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

@@ -128,15 +128,21 @@ static void *hostPinger(void *in) {
 
     // Open a socket, set some properties for ICMP
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
-        RKLog("%s %s Error. Unable to open a socket.  sd = %d\n", engine->name, name, sd);
+        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d   %d / %d\n", engine->name, name, sd, errno, protocol->p_proto, IPPROTO_ICMP);
+        me->state = RKHostStateUnknown;
+        me->tic = 2;
         return NULL;
     }
     if (setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value))) {
         RKLog("%s %s Error. Failed in setsockopt().\n", engine->name, name);
+        me->state = RKHostStateUnknown;
+        me->tic = 2;
         return NULL;
     }
     if (fcntl(sd, F_SETFL, O_NONBLOCK)) {
         RKLog("%s %s Error. Failed in fcntl().\n", engine->name, name);
+        me->state = RKHostStateUnknown;
+        me->tic = 2;
         return NULL;
     }
     
@@ -224,7 +230,7 @@ static void *hostWatcher(void *in) {
     RKHostMonitor *engine = (RKHostMonitor *)in;
     
     int k;
-    bool allReachable, anyReachable;
+    bool allKnown, allReachable, anyReachable;
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -273,10 +279,12 @@ static void *hostWatcher(void *in) {
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateActive) {
         // Consolidate all the state from all unit watcher
+        allKnown = true;
         allReachable = true;
         anyReachable = false;
         for (k = 0; k < engine->workerCount; k++) {
             RKUnitMonitor *worker = &engine->workers[k];
+            allKnown &= worker->state != RKHostStateUnknown;
             allReachable &= worker->state == RKHostStateReachable;
             anyReachable |= worker->state == RKHostStateReachable;
             if (engine->verbose > 1) {
@@ -286,6 +294,7 @@ static void *hostWatcher(void *in) {
                       worker->state == RKHostStateReachable ? "ok" : "not reachable");
             }
         }
+        engine->allKnown = allKnown;
         engine->allReachable = allReachable;
         engine->anyReachable = anyReachable;
         // Wait one minute, do it with multiples of 0.1s for a responsive exit
@@ -342,6 +351,7 @@ void RKHostMonitorAddHost(RKHostMonitor *engine, const char *address) {
     engine->hosts = realloc(engine->hosts, engine->workerCount * sizeof(RKHostAddress));
     strncpy(engine->hosts[k], address, RKNameLength - 1);
     engine->memoryUsage = sizeof(RKHostMonitor) + engine->workerCount * sizeof(RKHostAddress);
+    engine->state |= RKEngineStateProperlyWired;
 }
 
 #pragma mark - Interactions
@@ -375,6 +385,9 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     // pthread_join ...
+    if (engine->tidHostWatcher) {
+        pthread_join(engine->tidHostWatcher, NULL);
+    }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

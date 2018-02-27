@@ -942,9 +942,11 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tidPulseWatcher, NULL);
-    free(engine->workers);
-    engine->workers = NULL;
+    if (engine->tidPulseWatcher) {
+        pthread_join(engine->tidPulseWatcher, NULL);
+        free(engine->workers);
+        engine->workers = NULL;
+    }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

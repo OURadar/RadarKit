@@ -495,6 +495,7 @@ enum RKEngineState {
 
 typedef uint32_t RKStatusEnum;
 enum RKStatusEnum {
+    RKStatusEnumUnknown              = -3,
     RKStatusEnumOld                  = -3,
     RKStatusEnumInvalid              = -2,
     RKStatusEnumTooLow               = -2,
@@ -559,6 +560,7 @@ enum RKStream {
 
 typedef uint8_t RKHostState;
 enum RKHostState {
+    RKHostStateUnknown,
     RKHostStateUnreachable,
     RKHostStatePartiallyReachable,
     RKHostStateReachable
