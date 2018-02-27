@@ -7,13 +7,6 @@
 //
 
 #include <RadarKit/RKHostMonitor.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <resolv.h>
-#include <netdb.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
 
 #define RKHostMonitorPacketSize 32
 
@@ -69,14 +62,27 @@ static void *hostPinger(void *in) {
     RKHostMonitor *engine = me->parent;
 
     int k;
-    struct sockaddr_in address;
+    int sd;
+    struct sockaddr_in targetAddress;
+    struct sockaddr_in returnAddress;
 
     const int c = me->id;
-    const int value = 255;
+    const int value = 50;
     struct protoent *protocol = getprotobyname("ICMP");
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
 
     char name[RKNameLength];
+    
+    char buf[RKHostMonitorPacketSize];
+    RKICMPHeader *icmpHeader;
+    RKIPV4Header *ipv4Header = (RKIPV4Header *)buf;
+    socklen_t returnLength;
+    uint16_t receivedChecksum;
+    uint16_t calculatedChecksum;
+    
+    ssize_t r = 0;
+    size_t txSize = RKHostMonitorPacketSize - sizeof(RKIPV4Header);
+    size_t ipHeaderLength, offset;
     
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
@@ -104,21 +110,21 @@ static void *hostPinger(void *in) {
     me->identifier = rand() & 0xffff;
     
     // Resolve my host
-    
-    memset(&address, 0, sizeof(struct sockaddr));
-    address.sin_family = hostname->h_addrtype;
-    address.sin_port = htons(80);
-    address.sin_addr.s_addr = *(unsigned int *)hostname->h_addr;
-    RKLog(">%s %s %s -> 0x%08x -> %d.%d.%d.%d (%d)\n",
-          engine->name, name, engine->hosts[c], address.sin_addr.s_addr,
-          (address.sin_addr.s_addr & 0xff),
-          (address.sin_addr.s_addr & 0x0000ff00) >> 8,
-          (address.sin_addr.s_addr & 0x00ff0000) >> 16,
-          (address.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
+    memset(&targetAddress, 0, sizeof(struct sockaddr));
+    targetAddress.sin_family = hostname->h_addrtype;
+    targetAddress.sin_port = htons(80);
+    targetAddress.sin_addr.s_addr = *(unsigned int *)hostname->h_addr;
+    if (engine->verbose) {
+        RKLog(">%s %s %s -> 0x%08x -> %d.%d.%d.%d (%d)\n",
+              engine->name, name, engine->hosts[c], targetAddress.sin_addr.s_addr,
+              (targetAddress.sin_addr.s_addr & 0xff),
+              (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+              (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+              (targetAddress.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
+    }
 
-    //RKLog("%s %s proto = %d / %d .\n", engine->name, name, protocol->p_proto, IPPROTO_ICMP);
-    int sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto);
-    if (sd < 0) {
+    // Open a socket, set some properties
+    if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
         RKLog("%s %s Error. Unable to open a socket.  sd = %d\n", engine->name, name, sd);
         return NULL;
     }
@@ -131,21 +137,9 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
-    char buf[RKHostMonitorPacketSize];
-    RKICMPHeader *icmpHeader;
-    RKIPV4Header *ipv4Header = (RKIPV4Header *)buf;
-    struct sockaddr_in receiveAddress;
-    socklen_t receiveLength;
-    uint16_t receivedChecksum;
-    uint16_t calculatedChecksum;
-
-    ssize_t r = 0;
-    size_t txSize = RKHostMonitorPacketSize - sizeof(RKIPV4Header);
-    size_t ipHeaderLength, offset;
-
     while (engine->state & RKEngineStateActive) {
         // Pong
-        if ((r = recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&receiveAddress, &receiveLength)) > 0) {
+        if ((r = recvfrom(sd, &buf, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
             offset = (size_t)-1;
             if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == IPPROTO_ICMP) {
                 ipHeaderLength = (ipv4Header->versionAndHeaderLength & 0x0f) * sizeof(uint32_t);
@@ -165,7 +159,8 @@ static void *hostPinger(void *in) {
                     icmpHeader->sequenceNumber == me->sequenceNumber) {
                     me->state = RKHostStateReachable;
                     if (engine->verbose > 1) {
-                        RKLog(">%s %s Got message %d\n", engine->name, name, icmpHeader->sequenceNumber);
+                        RKLog(">%s %s Got sequenceNumber %d (receiveAddress length %d)\n",
+                              engine->name, name, icmpHeader->sequenceNumber, returnLength);
                     }
                 }
             }
@@ -186,7 +181,7 @@ static void *hostPinger(void *in) {
         icmpHeader->checksum = rk_host_monitor_checksum(buf, txSize);
 
         // Ping
-        if ((r = sendto(sd, buf, txSize, 0, (struct sockaddr *)&address, sizeof(struct sockaddr))) == -1) {
+        if ((r = sendto(sd, buf, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
             RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
         } else if (engine->verbose > 1) {
             RKLog(">%s %s Ping %s with %d bytes\n", engine->name, name, engine->hosts[c], txSize);

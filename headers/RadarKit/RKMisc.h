@@ -20,16 +20,23 @@
 #include <unistd.h>
 #include <string.h>
 #include <strings.h>
+#include <errno.h>
 #include <math.h>
 #include <signal.h>
 #include <time.h>
+#include <fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <dirent.h>
 #include <pthread.h>
+#include <netdb.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+#include <resolv.h>
 
 #ifdef __MACH__
 #include <mach/mach.h>

@@ -223,6 +223,8 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKStatus) = %d", (int)sizeof(RKStatus));
     RKLog(">sizeof(RKFileMonitor) = %d", (int)sizeof(RKFileMonitor));
 	RKLog(">sizeof(RKFilterAnchor) = %d", (int)sizeof(RKFilterAnchor));
+    RKLog(">sizeof(struct sockaddr) = %d", (int)sizeof(struct sockaddr));
+    RKLog(">sizeof(struct sockaddr_in) = %d", (int)sizeof(struct sockaddr_in));
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
