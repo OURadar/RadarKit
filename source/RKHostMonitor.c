@@ -179,14 +179,17 @@ static void *hostPinger(void *in) {
 		icmpHeader->sequenceNumber = me->sequenceNumber;
 		icmpHeader->checksum = rk_host_monitor_checksum(buff, txSize);
 
+		pthread_mutex_lock(&engine->mutex);
+
 		// Ping
 		if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
 			if (engine->verbose > 1) {
 				RKLog(">%s %s Error. Command sendto() -> %d  %d  %s.", engine->name, name, r, errno, RKErrnoString(errno));
 			}
-			// Now we wait
+			// Now we wait a little
+			pthread_mutex_unlock(&engine->mutex);
 			k = 0;
-			while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
+			while (k++ < 10 && engine->state & RKEngineStateActive) {
 				usleep(100000);
 			}
 			// Delay reporting since other threads may still be waiting for recvfrom()
@@ -254,7 +257,6 @@ static void *hostPinger(void *in) {
 			icmpHeader->checksum = 0;
 			calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
 			if (engine->verbose > 1) {
-				pthread_mutex_lock(&engine->mutex);
 				RKLog("%s %s r = %u   %d.%d.%d.%d   sd = %d\n", engine->name, name, r,
 					  (returnAddress.sin_addr.s_addr & 0xff),
 					  (returnAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
@@ -264,7 +266,6 @@ static void *hostPinger(void *in) {
 				RKLog(">%s %s checksum       = %   6d   %   6d\n", engine->name, name, receivedChecksum, calculatedChecksum);
 				RKLog(">%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
 				RKLog(">%s %s sequenceNumber = %   6d   %   6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
-				pthread_mutex_unlock(&engine->mutex);
 			}
 			// Ignore identifier for this since it can be different for UDP implementations
 			if (receivedChecksum == calculatedChecksum &&
@@ -279,15 +280,14 @@ static void *hostPinger(void *in) {
 		} else {
 			// Timed out
 			gettimeofday(&time, NULL);
-//			if (engine->verbose > 1) {
-//				RKLog(">%s %s r = %d   delta: %.3e", engine->name, name, r, RKTimevalDiff(time, me->latestTime));
-//			}
 			period = RKTimevalDiff(time, me->latestTime);
-			RKLog(">%s %s r = %d   delta: %.3e   %d.%d.%d.%d", engine->name, name, r, RKTimevalDiff(time, me->latestTime),
-				  (targetAddress.sin_addr.s_addr & 0xff),
-				  (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
-				  (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
-				  (targetAddress.sin_addr.s_addr & 0xff000000) >> 24);
+			if (engine->verbose) {
+				RKLog(">%s %s r = %d   delta: %.3e   %d.%d.%d.%d  %d %d", engine->name, name, r, RKTimevalDiff(time, me->latestTime),
+					  (targetAddress.sin_addr.s_addr & 0xff),
+					  (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+					  (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+					  (targetAddress.sin_addr.s_addr & 0xff000000) >> 24, k, offset);
+			}
 			if (period > (double)me->pingIntervalInSeconds * 3.0) {
 				me->state = RKHostStateUnreachable;
 				me->tic++;
@@ -295,7 +295,16 @@ static void *hostPinger(void *in) {
 				me->state = RKHostStatePartiallyReachable;
 				me->tic++;
 			}
+			pthread_mutex_unlock(&engine->mutex);
+			// Wait less if this round failed.
+			k = 0;
+			while (k++ < 10 && engine->state & RKEngineStateActive) {
+				usleep(100000);
+			}
+			continue;
 		}
+
+		pthread_mutex_unlock(&engine->mutex);
 
 		// Now we wait
 		k = 0;
