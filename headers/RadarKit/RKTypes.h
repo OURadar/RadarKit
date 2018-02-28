@@ -132,7 +132,7 @@
 #define RKPulseCountForNoiseMeasurement  200
 #define RKProcessorStatusPulseCoreCount  16
 #define RKProcessorStatusRayCoreCount    16
-#define RKHostMonitorPingInterval        3
+#define RKHostMonitorPingInterval        5
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"

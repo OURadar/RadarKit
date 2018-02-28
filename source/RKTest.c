@@ -1685,8 +1685,7 @@ void RKTestHostMonitor(void) {
         fprintf(stderr, "Unable to allocate a Host Monitor.\n");
         return;
     }
-    RKHostMonitorSetVerbose(o, 1);
-	RKHostMonitorAddHost(o, "bumblebee.arrc.ou.edu");
+    RKHostMonitorSetVerbose(o, 2);
 	RKHostMonitorAddHost(o, "arrc.ou.edu");
 	RKHostMonitorAddHost(o, "10.203.6.126");
     RKHostMonitorStart(o);
