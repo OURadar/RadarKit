@@ -1687,7 +1687,7 @@ void RKTestHostMonitor(void) {
     }
     RKHostMonitorSetVerbose(o, 2);
     RKHostMonitorStart(o);
-    sleep(RKHostMonitorPingInterval * 2 + RKHostMonitorPingInterval - 1);
+    sleep(RKHostMonitorPingInterval * 10 + RKHostMonitorPingInterval - 1);
     RKHostMonitorFree(o);
 }
 

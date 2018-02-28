@@ -111,11 +111,6 @@ static void *hostPinger(void *in) {
         sprintf(name + k, RKNoColor);
     }
 
-    if (engine->verbose) {
-        RKLog(">%s %s Started.   host = %s\n",
-              engine->name, name, engine->hosts[c]);
-    }
-    
     // Resolve my host
     memset(&targetAddress, 0, sizeof(struct sockaddr_in));
     targetAddress.sin_family = hostname->h_addrtype;
@@ -153,6 +148,10 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
+    if (engine->verbose) {
+        RKLog(">%s %s Started.   host = %s   sd = %d\n", engine->name, name, engine->hosts[c], sd);
+    }
+    
     me->tic++;
     me->identifier = rand() & 0xffff;
     gettimeofday(&me->latestTime, NULL);
@@ -177,11 +176,11 @@ static void *hostPinger(void *in) {
                 icmpHeader->checksum = 0;
                 calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
                 if (engine->verbose > 1) {
-                    RKLog("%s %s checksum       = %6d   %6d\n", engine->name, name, calculatedChecksum, receivedChecksum);
+                    RKLog("%s %s checksum       = %6d   %6d\n", engine->name, name, receivedChecksum, calculatedChecksum);
                     RKLog("%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
                     RKLog("%s %s sequenceNumber = %6d   %6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
                 }
-                // Ignore identifier for this since it can be different from UDP implementation
+                // Ignore identifier for this since it can be different for UDP implementations
                 if (receivedChecksum == calculatedChecksum &&
                     icmpHeader->type == RKICMPv4EchoReply &&
                     icmpHeader->code == 0 &&
@@ -224,8 +223,8 @@ static void *hostPinger(void *in) {
         }
 
         // Now we wait
-        k = 0;
         if (me->tic > 1) {
+            k = 0;
             while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
                 usleep(100000);
             }
@@ -346,8 +345,8 @@ RKHostMonitor *RKHostMonitorInit(void) {
     engine->hosts = (RKHostAddress *)malloc(sizeof(RKHostAddress));
     memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
-    RKHostMonitorAddHost(engine, "8.8.8.8");
     RKHostMonitorAddHost(engine, "bumblebee.arrc.ou.edu");
+    RKHostMonitorAddHost(engine, "8.8.8.8");
     return engine;
 }
 
