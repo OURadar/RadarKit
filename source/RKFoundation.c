@@ -622,6 +622,8 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
     }
 }
 
+#pragma mark -
+
 static void *fileMonitorRunLoop(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
 

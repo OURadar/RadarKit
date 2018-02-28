@@ -68,7 +68,7 @@ void showHelp() {
            "\n"
            "  -C (--show-clocks)\n"
            "         Shows the clock assignment for positions and pulses. This mode can be\n"
-           "         used to check if the timing of position and pulses are set properly."
+           "         used to check if the timing of position and pulses are set properly.\n"
            "\n"
            "  -d (--no-decor)\n"
            "         Removes decoration of text. No color / underline. This should be set for\n"
@@ -274,6 +274,9 @@ UserParams processInput(int argc, const char **argv) {
                         break;
                     case 8:
                         RKTestFileMonitor();
+                        break;
+                    case 9:
+                        RKTestHostMonitor();
                         break;
                     case 11:
                         myRadar = RKInitLean();

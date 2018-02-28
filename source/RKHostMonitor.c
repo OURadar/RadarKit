@@ -154,7 +154,6 @@ static void *hostPinger(void *in) {
     }
     
     me->tic++;
-    me->sequenceNumber = 0;
     me->identifier = rand() & 0xffff;
     gettimeofday(&me->latestTime, NULL);
 
@@ -195,7 +194,7 @@ static void *hostPinger(void *in) {
             }
         } else {
             gettimeofday(&now, NULL);
-            RKLog(">%s %s now: %u   latest: %u   delta: %e", engine->name, name, now.tv_sec, me->latestTime.tv_sec, RKTimevalDiff(now, me->latestTime));
+            RKLog(">%s %s r = %d   delta: %.3e", engine->name, name, r, RKTimevalDiff(now, me->latestTime));
             if (RKTimevalDiff(now, me->latestTime) > (double)me->pingIntervalInSeconds + 5.0) {
                 me->state = RKHostStateUnreachable;
                 me->tic++;
@@ -221,7 +220,7 @@ static void *hostPinger(void *in) {
         if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
             RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
         } else if (engine->verbose > 1) {
-            RKLog(">%s %s Ping %s with %d bytes\n", engine->name, name, engine->hosts[c], txSize);
+            RKLog(">%s %s Ping %s   seq = %d   size = %d bytes\n", engine->name, name, engine->hosts[c], me->sequenceNumber, txSize);
         }
 
         // Now we wait
@@ -308,10 +307,9 @@ static void *hostWatcher(void *in) {
             allReachable &= worker->state == RKHostStateReachable;
             anyReachable |= worker->state == RKHostStateReachable;
             if (engine->verbose > 1) {
-                RKLog(">%s %s (%d) %s\n", engine->name,
+                RKLog(">%s %s %s\n", engine->name,
                       engine->hosts[k],
-                      worker->sequenceNumber,
-                      worker->state == RKHostStateReachable ? "ok" : "not reachable");
+                      worker->state == RKHostStateReachable ? "responded" : "not reachable");
             }
         }
         engine->allKnown = allKnown;

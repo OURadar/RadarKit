@@ -114,6 +114,8 @@ void RKTestMakeHops(void);
 void RKTestPreferenceReading(void);
 void RKTestCountFiles(void);
 void RKTestFileMonitor(void);
+void RKTestHostMonitor(void);
+
 void RKTestWriteWaveform(void);
 void RKTestWaveformTFM(void);
 void RKTestHilbertTransform(void);

@@ -1431,7 +1431,6 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 
     RKScratchFree(space);
     RKPulseBufferFree(pulseBuffer);
-    return;
 }
 
 void RKTestCacheWrite(void) {
@@ -1620,6 +1619,7 @@ void RKTestFileManager(void) {
         return;
     }
     RKFileManagerSetPathToMonitor(o, "data");
+    RKFileManagerSetVerbose(o, 1);
     RKFileManagerStart(o);
     RKFileManagerFree(o);
 }
@@ -1666,7 +1666,6 @@ void RKTestCountFiles(void) {
 static void RKTestCallback(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
     RKLog("%s I am a callback function.\n", engine->name);
-    return;
 }
 
 void RKTestFileMonitor(void) {
@@ -1679,6 +1678,20 @@ void RKTestFileMonitor(void) {
     sleep(2);
     RKFileMonitorFree(mon);
 }
+
+void RKTestHostMonitor(void) {
+    RKHostMonitor *o = RKHostMonitorInit();
+    if (o == NULL) {
+        fprintf(stderr, "Unable to allocate a Host Monitor.\n");
+        return;
+    }
+    RKHostMonitorSetVerbose(o, 2);
+    RKHostMonitorStart(o);
+    sleep(RKHostMonitorPingInterval * 2 + RKHostMonitorPingInterval - 1);
+    RKHostMonitorFree(o);
+}
+
+#pragma mark -
 
 void RKTestWriteWaveform(void) {
     SHOW_FUNCTION_NAME
@@ -1882,6 +1895,4 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratchFree(space);
     free(pulseBuffer);
     free(rayBuffer);
-    return;
 }
-
