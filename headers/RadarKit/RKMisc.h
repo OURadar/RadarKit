@@ -50,7 +50,9 @@
 (errno == EINTR        ? "EINTR"        : \
 (errno == EINVAL       ? "EINVAL"       : \
 (errno == ECONNREFUSED ? "ECONNREFUSED" : \
-(errno == EIO          ? "EIO"          : "OTHERS")))))))
+(errno == EHOSTDOWN    ? "EHOSTDOWN"    : \
+(errno == EHOSTUNREACH ? "EHOSTUNREACH" : \
+(errno == EIO          ? "EIO"          : "OTHERS")))))))))
 
 #define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
 
