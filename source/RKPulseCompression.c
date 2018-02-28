@@ -221,14 +221,14 @@ static void *pulseCompressionCore(void *_in) {
 //        printf("pulse i = %u   gid = %d\n", (uint32_t)pulse->header.i, gid);
 
         // Now we process / skip
-        if (gid < 0 || gid >= engine->filterGroupCount) {
+        if (gid < 0 || gid >= engine->filterGroupCount || engine->state & RKEngineStateMemoryChange) {
             pulse->parameters.planSizes[0][0] = 0;
             pulse->parameters.planSizes[1][0] = 0;
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
             pulse->header.s |= RKPulseStatusSkipped;
             if (engine->verbose > 1) {
-            RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
+            	RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
             }
         } else {
             // Do some work with this pulse
@@ -834,16 +834,20 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
               RKIntegerToCommaStyleString(anchor.outputOrigin));
         return RKResultFailedToSetFilter;
     }
-    if (engine->filters[group][index] != NULL) {
-        free(engine->filters[group][index]);
-    }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, nfft * sizeof(RKComplex)))
+	if (engine->filters[group][index] == NULL) {
+		engine->state |= RKEngineStateMemoryChange;
+		size_t filterLength = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
+		POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, filterLength * sizeof(RKComplex)))
+	}
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
     memcpy(&engine->filterAnchors[group][index], &anchor, sizeof(RKFilterAnchor));
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
+	if (engine->state & RKEngineStateMemoryChange) {
+		engine->state ^= RKEngineStateMemoryChange;
+	}
     return RKResultNoError;
 }
 
@@ -896,7 +900,7 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
 
 int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
-        RKLog("%s Error. Not properly wired.\n", engine->name);
+        RKLog("%s Error. Not properly wired.  0x%08x\n", engine->name, engine->state);
         return RKResultEngineNotWired;
     }
     if (engine->filterGroupCount == 0) {

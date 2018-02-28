@@ -490,8 +490,9 @@ enum RKEngineState {
     RKEngineStateSleep3              = (1 << 3),                     // Stage 3 wait
     RKEngineStateSleepMask           = 0x0F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
+	RKEngineStateMemoryChange        = (1 << 5),                     // Some required pointers are being changed
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
-    RKEngineStateProperlyWired       = (1 << 9),                     // ALl required pointers are properly wired up
+    RKEngineStateProperlyWired       = (1 << 9),                     // All required pointers are properly wired up
     RKEngineStateActivating          = (1 << 10),                    // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 11),                    // The main run loop is being deactivated
     RKEngineStateActive              = (1 << 12)                     // The engine is active
