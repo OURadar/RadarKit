@@ -272,6 +272,7 @@ enum RKResult {
     RKResultFailedToCreateUnitWorker,
     RKResultFailedToStartHostWatcher,
     RKResultFailedToStartHostPinger,
+	RKResultNoRadar,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };

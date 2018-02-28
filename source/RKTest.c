@@ -485,6 +485,8 @@ void *RKTestTransceiverRunLoop(void *input) {
     float a;
     float r;
     float phi;
+	float cosv;
+	float sinv;
 	float noise;
 
 	float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
@@ -501,7 +503,16 @@ void *RKTestTransceiverRunLoop(void *input) {
 		rn[g] = ((float)rand() / RAND_MAX - 0.5f);
 	}
 
-	const float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
+	float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
+	while (dphi > M_PI) {
+		dphi -= 2.0 * M_PI;
+	}
+	while (dphi < -M_PI) {
+		dphi += 2.0 * M_PI;
+	}
+	if (dphi < -M_PI || dphi > M_PI) {
+		RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
+	}
 
     while (transceiver->state & RKEngineStateActive) {
 
@@ -529,12 +540,24 @@ void *RKTestTransceiverRunLoop(void *input) {
 					k = RKNextModuloS(k, transceiver->gateCount);
 					X++;
 				}
-                phi = (double)(tic & 0xFFFF) / 655.36 * M_PI;
+				phi = fmod((double)(tic & 0xFFFF) / 655.36 * M_PI + M_PI, 2.0 * M_PI) - M_PI;
                 for (; g < transceiver->gateCount; g++) {
+					// sinf() and cosf() run faster with angle within 0 and 2 PI
 					phi += dphi;
+					if (phi < -3.14159265f) {
+						phi += 6.28318531f;
+					} else if (phi > 3.14159265f) {
+						phi -= 6.28318531f;
+					}
 					noise = rn[k];
-                    X->i = (int16_t)(ra[g] * cosf(phi) + noise);
-                    X->q = (int16_t)(ra[g] * sinf(phi) + noise);
+
+//					 X->i = (int16_t)(ra[g] * cosf(phi) + noise);
+//					 X->q = (int16_t)(ra[g] * sinf(phi) + noise);
+
+					RKFasterSineCosine(phi, &sinv, &cosv);
+					X->i = (int16_t)(ra[g] * cosv + noise);
+					X->q = (int16_t)(ra[g] * sinv + noise);
+
 					k = RKNextModuloS(k, transceiver->gateCount);
                     X++;
                 }

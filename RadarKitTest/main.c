@@ -415,7 +415,7 @@ UserParams processInput(int argc, const char **argv) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     if (user.gateCount >= 4000) {
-        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 1000);
+        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
     } else {
         user.desc.pulseToRayRatio = 2;
     }
@@ -564,7 +564,7 @@ int main(int argc, const char **argv) {
 
         RKWaveform *waveform = NULL;
         const char wavfile[] = "waveforms/ofm.rkwav";
-        if (RKFilenameExists(wavfile)) {
+        if (RKFilenameExists(wavfile) && myRadar->desc.pulseCapacity < 4000) {
             RKLog("Loading waveform from file '%s'...\n", wavfile);
             waveform = RKWaveformInitFromFile(wavfile);
             RKWaveformSummary(waveform);
