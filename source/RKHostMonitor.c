@@ -79,13 +79,12 @@ static void *hostPinger(void *in) {
     const int c = me->id;
     const int value = 50;
     struct protoent *protocol = getprotobyname("ICMP");
-    struct hostent *hostname = gethostbyname(engine->hosts[c]);
 
     char name[RKNameLength];
     char buff[RKHostMonitorPacketSize];
     RKICMPHeader *icmpHeader;
     RKIPV4Header *ipv4Header = (RKIPV4Header *)buff;
-    socklen_t returnLength;
+    socklen_t returnLength = sizeof(struct sockaddr);
     uint16_t receivedChecksum;
     uint16_t calculatedChecksum;
     
@@ -93,7 +92,7 @@ static void *hostPinger(void *in) {
     size_t txSize = RKHostMonitorPacketSize - sizeof(RKIPV4Header);
     size_t ipHeaderLength, offset;
     
-    struct timeval now;
+    struct timeval time;
     
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
@@ -112,17 +111,16 @@ static void *hostPinger(void *in) {
     }
 
     // Resolve my host
+	struct hostent *hostname = gethostbyname(engine->hosts[c]);
+	if (hostname == NULL) {
+		RKLog("%s %s Unable to resolve %s.", engine->name, name, engine->hosts[c]);
+		me->state = RKHostStateUnknown;
+		me->tic = 2;
+		return NULL;
+	}
     memset(&targetAddress, 0, sizeof(struct sockaddr_in));
     targetAddress.sin_family = hostname->h_addrtype;
     targetAddress.sin_addr.s_addr = *(unsigned int *)hostname->h_addr;
-    if (engine->verbose) {
-        RKLog(">%s %s %s -> 0x%08x -> %d.%d.%d.%d (%d)\n",
-              engine->name, name, engine->hosts[c], targetAddress.sin_addr.s_addr,
-              (targetAddress.sin_addr.s_addr & 0xff),
-              (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
-              (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
-              (targetAddress.sin_addr.s_addr & 0xff000000) >> 24, hostname->h_length);
-    }
 
     // Open a socket, set some properties for ICMP
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
@@ -147,90 +145,145 @@ static void *hostPinger(void *in) {
         me->tic = 2;
         return NULL;
     }
-    
+
     if (engine->verbose) {
-        RKLog(">%s %s Started.   host = %s   sd = %d\n", engine->name, name, engine->hosts[c], sd);
+        RKLog(">%s %s Started.   host = %s (%d.%d.%d.%d)   sd = %d\n",
+			  engine->name,
+			  name,
+			  engine->hosts[c],
+			  (targetAddress.sin_addr.s_addr & 0xff),
+			  (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+			  (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+			  (targetAddress.sin_addr.s_addr & 0xff000000) >> 24,
+			  sd);
     }
     
     me->tic++;
+	me->sequenceNumber = 1;
     me->identifier = rand() & 0xffff;
     gettimeofday(&me->latestTime, NULL);
 
+	fd_set rfd, efd;
+
     while (engine->state & RKEngineStateActive) {
-        // Pong
-        if ((r = recvfrom(sd, &buff, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
-            offset = (size_t)-1;
-            if (r == txSize) {
-                offset = 0;
-            } else if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == protocol->p_proto) {
-                ipHeaderLength = (ipv4Header->versionAndHeaderLength & 0x0f) * sizeof(uint32_t);
-                if (r >= ipHeaderLength + sizeof(RKICMPHeader)) {
-                    offset = ipHeaderLength;
-                } else {
-                    RKLog("%s %s Error. Unexpected packet size.\n", engine->name, name);
-                }
-            }
-            if (offset != (size_t)-1) {
-                icmpHeader = (RKICMPHeader *)(buff + offset);
-                receivedChecksum = icmpHeader->checksum;
-                icmpHeader->checksum = 0;
-                calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
-                if (engine->verbose > 1) {
-                    RKLog("%s %s checksum       = %6d   %6d\n", engine->name, name, receivedChecksum, calculatedChecksum);
-                    RKLog("%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
-                    RKLog("%s %s sequenceNumber = %6d   %6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
-                }
-                // Ignore identifier for this since it can be different for UDP implementations
-                if (receivedChecksum == calculatedChecksum &&
-                    icmpHeader->type == RKICMPv4EchoReply &&
-                    icmpHeader->code == 0 &&
-                    icmpHeader->sequenceNumber == me->sequenceNumber) {
-                    me->state = RKHostStateReachable;
-                    me->tic++;
-                    me->sequenceNumber++;
-                    gettimeofday(&me->latestTime, NULL);
-                }
-            }
-        } else {
-            gettimeofday(&now, NULL);
-            RKLog(">%s %s r = %d   delta: %.3e", engine->name, name, r, RKTimevalDiff(now, me->latestTime));
-            if (RKTimevalDiff(now, me->latestTime) > (double)me->pingIntervalInSeconds + 5.0) {
-                me->state = RKHostStateUnreachable;
-                me->tic++;
-            } else if (me->sequenceNumber > 0) {
-                me->state = RKHostStatePartiallyReachable;
-                me->tic++;
-            }
-        }
 
-        // Reset buffer
-        memset(buff, 0, RKHostMonitorPacketSize);
+		// Reset buffer
+		memset(buff, 0, RKHostMonitorPacketSize);
 
-        // Prepare echo request packet
-        icmpHeader = (RKICMPHeader *)buff;
-        icmpHeader->type = RKICMPv4EchoRequest;
-        icmpHeader->code = 0;
-        icmpHeader->checksum = 0;
-        icmpHeader->identifier = me->identifier;
-        icmpHeader->sequenceNumber = me->sequenceNumber;
-        icmpHeader->checksum = rk_host_monitor_checksum(buff, txSize);
+		// Prepare echo request packet
+		icmpHeader = (RKICMPHeader *)buff;
+		icmpHeader->type = RKICMPv4EchoRequest;
+		icmpHeader->code = 0;
+		icmpHeader->checksum = 0;
+		icmpHeader->identifier = me->identifier;
+		icmpHeader->sequenceNumber = me->sequenceNumber;
+		icmpHeader->checksum = rk_host_monitor_checksum(buff, txSize);
 
-        // Ping
-        if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
-            RKLog(">%s %s Error in sendto() -> %d  %d.", engine->name, name, r, errno);
-        } else if (engine->verbose > 1) {
-            RKLog(">%s %s Ping %s   seq = %d   size = %d bytes\n", engine->name, name, engine->hosts[c], me->sequenceNumber, txSize);
-        }
+		// Ping
+		if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
+			if (engine->verbose > 1) {
+				RKLog(">%s %s Error. Command sendto() -> %d  %d  %s.", engine->name, name, r, errno, RKErrnoString(errno));
+			}
+			me->state = RKHostStateUnreachable;
+			// Now we wait
+			k = 0;
+			while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
+				usleep(100000);
+			}
+			continue;
+		} else if (engine->verbose > 1) {
+			RKLog(">%s %s Ping %s (%d.%d.%d.%d)   seq = %d   size = %d bytes\n",
+				  engine->name, name,
+				  engine->hosts[c],
+				  (targetAddress.sin_addr.s_addr & 0xff),
+				  (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+				  (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+				  (targetAddress.sin_addr.s_addr & 0xff000000) >> 24,
+				  me->sequenceNumber,
+				  txSize);
+		}
 
-        // Now we wait
-        if (me->tic > 1) {
-            k = 0;
-            while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
-                usleep(100000);
-            }
-        } else {
-            usleep(200000);
-        }
+		FD_ZERO(&rfd);
+		FD_ZERO(&efd);
+		time.tv_sec = 0;
+		time.tv_usec = 500000;
+		k = select(sd + 1, &rfd, NULL, &efd, &time);
+
+		printf("select() -> %d\n", k);
+		// Reset buffer
+		memset(buff, 0, RKHostMonitorPacketSize);
+
+		// Pong
+		k = 0;
+		offset = (size_t)-1;
+		returnAddress.sin_addr.s_addr = 0;
+		while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount && engine->state & RKEngineStateActive) {
+			if ((r = recvfrom(sd, &buff, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
+				printf("recvfrom() <- %d.%d.%d.%d   sd = %d\n",
+					   (returnAddress.sin_addr.s_addr & 0xff),
+					   (returnAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+					   (returnAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+					   (returnAddress.sin_addr.s_addr & 0xff000000) >> 24,
+					   sd);
+				if (r == txSize) {
+					offset = 0;
+				} else if (r > sizeof(RKIPV4Header) + sizeof(RKICMPHeader) && ipv4Header->protocol == protocol->p_proto) {
+					ipHeaderLength = (ipv4Header->versionAndHeaderLength & 0x0f) * sizeof(uint32_t);
+					if (r >= ipHeaderLength + sizeof(RKICMPHeader)) {
+						offset = ipHeaderLength;
+					} else {
+						RKLog("%s %s Error. Unexpected packet size.\n", engine->name, name);
+						break;
+					}
+				}
+			}
+		}
+		if (offset != (size_t)-1 && returnAddress.sin_addr.s_addr == targetAddress.sin_addr.s_addr) {
+			icmpHeader = (RKICMPHeader *)(buff + offset);
+			receivedChecksum = icmpHeader->checksum;
+			icmpHeader->checksum = 0;
+			calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
+			if (engine->verbose > 1) {
+				pthread_mutex_lock(&engine->mutex);
+				RKLog("%s %s r = %u   %d.%d.%d.%d   sd = %d\n", engine->name, name, r,
+					  (returnAddress.sin_addr.s_addr & 0xff),
+					  (returnAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+					  (returnAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+					  (returnAddress.sin_addr.s_addr & 0xff000000) >> 24,
+					  sd);
+				RKLog(">%s %s checksum       = %   6d   %   6d\n", engine->name, name, receivedChecksum, calculatedChecksum);
+				RKLog(">%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
+				RKLog(">%s %s sequenceNumber = %   6d   %   6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
+				pthread_mutex_unlock(&engine->mutex);
+			}
+			// Ignore identifier for this since it can be different for UDP implementations
+			if (receivedChecksum == calculatedChecksum &&
+				icmpHeader->type == RKICMPv4EchoReply &&
+				icmpHeader->code == 0 &&
+				icmpHeader->sequenceNumber == me->sequenceNumber) {
+				me->state = RKHostStateReachable;
+				me->tic++;
+				me->sequenceNumber++;
+				gettimeofday(&me->latestTime, NULL);
+			}
+		} else {
+			// Timed out in select()
+			gettimeofday(&time, NULL);
+			RKLog(">%s %s r = %d   delta: %.3e", engine->name, name, r, RKTimevalDiff(time, me->latestTime));
+			if (RKTimevalDiff(time, me->latestTime) > (double)me->pingIntervalInSeconds + 5.0) {
+				me->state = RKHostStateUnreachable;
+				me->tic++;
+			} else if (me->sequenceNumber > 0) {
+				me->state = RKHostStatePartiallyReachable;
+				me->tic++;
+			}
+		}
+
+		// Now we wait
+		k = 0;
+		while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
+			usleep(100000);
+		}
     }
     
     if (sd) {
@@ -306,9 +359,11 @@ static void *hostWatcher(void *in) {
             allReachable &= worker->state == RKHostStateReachable;
             anyReachable |= worker->state == RKHostStateReachable;
             if (engine->verbose > 1) {
-                RKLog(">%s %s %s\n", engine->name,
+                RKLog(">%s %s %s%s%s\n", engine->name,
                       engine->hosts[k],
-                      worker->state == RKHostStateReachable ? "responded" : "not reachable");
+					  rkGlobalParameters.showColor ? (worker->state == RKHostStateReachable ? RKGreenColor : RKRedColor) : "",
+                      worker->state == RKHostStateReachable ? "responded" : "not reachable",
+					  rkGlobalParameters.showColor ? RKNoColor : "");
             }
         }
         engine->allKnown = allKnown;
@@ -345,8 +400,9 @@ RKHostMonitor *RKHostMonitorInit(void) {
     engine->hosts = (RKHostAddress *)malloc(sizeof(RKHostAddress));
     memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
-    RKHostMonitorAddHost(engine, "bumblebee.arrc.ou.edu");
+    //RKHostMonitorAddHost(engine, "bumblebee.arrc2.ou.edu");
     RKHostMonitorAddHost(engine, "8.8.8.8");
+	RKHostMonitorAddHost(engine, "10.203.6.128");
     return engine;
 }
 

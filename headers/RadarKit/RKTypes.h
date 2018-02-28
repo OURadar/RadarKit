@@ -141,6 +141,8 @@
 #define RKLogFolder                      "log"
 
 #define RKNoColor                        "\033[0m"
+#define RKRedColor                       "\033[38;5;196m"
+#define RKGreenColor                     "\033[38;5;82m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
 #define RKNameLength                     256
