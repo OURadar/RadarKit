@@ -233,6 +233,14 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForPulseCompression = 8;
             user->coresForProductGenerator = 4;
             break;
+		case 6:
+			// Secret
+			user->simulate = true;
+			user->fs = 200000000;
+			user->gateCount = 200000;
+			user->coresForPulseCompression = 10;
+			user->coresForProductGenerator = 4;
+			break;
         default:
             // Default
             user->simulate = false;
