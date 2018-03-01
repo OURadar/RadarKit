@@ -460,6 +460,13 @@ UserParams processInput(int argc, const char **argv) {
     } else {
         user.desc.pulseToRayRatio = 2;
     }
+	k = user.fs / user.prf;
+	if (user.gateCount > k) {
+		RKLog("Info. Gate count adjusted: %s -> %s for PRF (%s kHz) and bandwidth (%s MHz)",
+			  RKIntegerToCommaStyleString(user.gateCount), RKIntegerToCommaStyleString(k),
+			  RKFloatToCommaStyleString(1.0e-3 * user.prf), RKFloatToCommaStyleString(1.0e-6 * user.fs));
+		user.gateCount = k;
+	}
 	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
     return user;
 }
