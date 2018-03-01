@@ -194,8 +194,8 @@ UserParams processInput(int argc, const char **argv) {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
         {"clock"                 , no_argument      , NULL, 'C'},
         {"demo"                  , no_argument      , NULL, 'D'},
-        {"hp-system"             , no_argument      , NULL, 'H'},
 		{"fast-system"           , no_argument      , NULL, 'F'},
+        {"high-system"           , no_argument      , NULL, 'H'},
 		{"intermediate-system"   , no_argument      , NULL, 'I'},
         {"lean-system"           , no_argument      , NULL, 'L'},
         {"minimum-system"        , no_argument      , NULL, 'M'},
@@ -242,18 +242,26 @@ UserParams processInput(int argc, const char **argv) {
                 user.coresForProductGenerator = 2;
                 break;
             case 'F':
+				user.simulate = true;
+				user.fs = 100000000;
+				user.prf = 1000;
+				user.gateCount = 80000;
+				user.coresForPulseCompression = 10;
+				user.coresForProductGenerator = 4;
+				break;
+			case 'H':
                 user.simulate = true;
 				user.fs = 50000000;
-                user.prf = 5000;
-				user.gateCount = 60000;
-                user.coresForPulseCompression = 10;
+                user.prf = 1000;
+				user.gateCount = 40000;
+                user.coresForPulseCompression = 8;
                 user.coresForProductGenerator = 4;
                 break;
 			case 'I':
 				user.simulate = true;
 				user.fs = 20000000;
-				user.prf = 2000;
-				user.gateCount = 30000;
+				user.prf = 1000;
+				user.gateCount = 20000;
 				user.coresForPulseCompression = 6;
 				user.coresForProductGenerator = 4;
 				break;
@@ -438,7 +446,7 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 break;
             default:
-                printf("opt = %d   optarg = %c", opt, *optarg);
+				fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -453,7 +461,9 @@ UserParams processInput(int argc, const char **argv) {
     } else if (user.verbose == 3) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-	if (user.gateCount >= 20000) {
+	if (user.gateCount >= 40000) {
+		user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 8000);
+	} else if (user.gateCount >= 20000) {
 		user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 4000);
 	} else if (user.gateCount >= 4000) {
         user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);

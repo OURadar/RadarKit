@@ -442,9 +442,14 @@ static void *pulseWatcher(void *_in) {
         if (engine->verbose) {
             RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         }
+		gettimeofday(&t1, NULL);
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
+		gettimeofday(&t0, NULL);
+		if (RKTimevalDiff(t0, t1) > 1.0) {
+			exportWisdom = true;
+		}
         if (engine->verbose > 2) {
             fftwf_print_plan(engine->planForwardInPlace[planIndex]);
         }
