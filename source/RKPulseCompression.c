@@ -218,7 +218,7 @@ static void *pulseCompressionCore(void *_in) {
 
         // Filter group id
         const int gid = engine->filterGid[i0];
-//        printf("pulse i = %u   gid = %d\n", (uint32_t)pulse->header.i, gid);
+        //printf("pulse i = %u   gid = %d\n", (uint32_t)pulse->header.i, gid);
 
         // Now we process / skip
         if (gid < 0 || gid >= engine->filterGroupCount || engine->state & RKEngineStateMemoryChange) {
@@ -228,7 +228,7 @@ static void *pulseCompressionCore(void *_in) {
             pulse->parameters.filterCounts[1] = 0;
             pulse->header.s |= RKPulseStatusSkipped;
             if (engine->verbose > 1) {
-            	RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
+                RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
             }
         } else {
             // Do some work with this pulse
@@ -240,13 +240,13 @@ static void *pulseCompressionCore(void *_in) {
             // Process each polarization separately and indepently
             for (p = 0; p < 2; p++) {
                 // Go through all the filters in this filter group
-				blindGateCount = 0;
+                blindGateCount = 0;
                 for (j = 0; j < engine->filterCounts[gid]; j++) {
                     // Get the plan index and size from parent engine
                     planIndex = engine->planIndices[i0][j];
                     planSize = engine->planSizes[planIndex];
                     blindGateCount += engine->filterAnchors[gid][j].length;
-					bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
                                 engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length);
 
                     // Copy and convert the samples
@@ -309,15 +309,15 @@ static void *pulseCompressionCore(void *_in) {
 
                     //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-					bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin, engine->filterAnchors[gid][j].maxDataLength);
+                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin, engine->filterAnchors[gid][j].maxDataLength);
 
-					RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
+                    RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                     RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
                     Y += engine->filterAnchors[gid][j].outputOrigin;
                     Z.i += engine->filterAnchors[gid][j].outputOrigin;
                     Z.q += engine->filterAnchors[gid][j].outputOrigin;
-					o = out;
-					for (i = 0; i < bound; i++) {
+                    o = out;
+                    for (i = 0; i < bound; i++) {
                         Y->i = (*o)[0];
                         Y++->q = (*o)[1];
                         *Z.i++ = (*o)[0];
@@ -338,18 +338,18 @@ static void *pulseCompressionCore(void *_in) {
             pulse->header.s |= RKPulseStatusCompressed;
         }
 
-		// Down-sampling regardless if the pulse was compressed or skipped
-		int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
-		for (p = 0; p < 2; p++) {
-			RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-			for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
-				Z.i[i] = Z.i[j];
-				Z.q[i] = Z.q[j];
-			}
-		}
-		pulse->header.gateCount /= stride;
-		pulse->header.gateSizeMeters *= (float)stride;
-		pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
+        // Down-sampling regardless if the pulse was compressed or skipped
+        int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
+        for (p = 0; p < 2; p++) {
+            RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+            for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
+                Z.i[i] = Z.i[j];
+                Z.q[i] = Z.q[j];
+            }
+        }
+        pulse->header.gateCount /= stride;
+        pulse->header.gateSizeMeters *= (float)stride;
+        pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
 
         // Record down the latest processed pulse index
         me->pid = i0;
@@ -758,6 +758,16 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
         RKLog("%s Error. Unable to allocate planIndices.\n", engine->name);
         exit(EXIT_FAILURE);
     }
+    size_t filterLength = 1 << (int)ceilf(log2f((float)engine->radarDescription->pulseCapacity));
+    bytes = filterLength * sizeof(RKComplex);
+    engine->state |= RKEngineStateMemoryChange;
+    for (int g = 0; g < RKMaxFilterGroups; g++) {
+        for (int i = 0; i < RKMaxFilterCount; i++) {
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[g][i], RKSIMDAlignSize, bytes))
+            engine->memoryUsage += bytes;
+        }
+    }
+    engine->state ^= RKEngineStateMemoryChange;
     engine->state |= RKEngineStateProperlyWired;
 }
 
@@ -827,27 +837,25 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
               RKIntegerToCommaStyleString(anchor.inputOrigin));
         return RKResultFailedToSetFilter;
     }
-	size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength + anchor.length)));
+    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength + anchor.length)));
     if (anchor.outputOrigin >= nfft) {
         RKLog("%s Error. NFFT %s   Filter X @ (o:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),
               RKIntegerToCommaStyleString(anchor.outputOrigin));
         return RKResultFailedToSetFilter;
     }
-	if (engine->filters[group][index] == NULL) {
-		engine->state |= RKEngineStateMemoryChange;
-		size_t filterLength = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
-		POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[group][index], RKSIMDAlignSize, filterLength * sizeof(RKComplex)))
-	}
+    if (engine->filters[group][index] == NULL) {
+        RKLog("%s Error. Filter memory not allocated.\n", engine->name);
+    }
     memset(engine->filters[group][index], 0, nfft * sizeof(RKComplex));
     memcpy(engine->filters[group][index], filter, anchor.length * sizeof(RKComplex));
     memcpy(&engine->filterAnchors[group][index], &anchor, sizeof(RKFilterAnchor));
     engine->filterAnchors[group][index].length = (uint32_t)MIN(nfft, anchor.length);
     engine->filterGroupCount = MAX(engine->filterGroupCount, group + 1);
     engine->filterCounts[group] = MAX(engine->filterCounts[group], index + 1);
-	if (engine->state & RKEngineStateMemoryChange) {
-		engine->state ^= RKEngineStateMemoryChange;
-	}
+    if (engine->state & RKEngineStateMemoryChange) {
+        engine->state ^= RKEngineStateMemoryChange;
+    }
     return RKResultNoError;
 }
 
@@ -986,7 +994,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
         sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   %%s%%+5.2f dB%%s   X @ (i:%%%ds, o:%%%ds, d:%%%ds)\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
-				(int)log10f((float)engine->filterCounts[i]) + 1,
+                (int)log10f((float)engine->filterCounts[i]) + 1,
                 w0 + 1,
                 (int)log10f(nfft) + 1,
                 w1 + 1,
@@ -998,7 +1006,7 @@ void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].length),
                   RKIntegerToCommaStyleString(nfft),
                   rkGlobalParameters.showColor && fabs(engine->filterAnchors[i][j].filterGain) > 0.1 ? RKGetColorOfIndex(0) : "",
-				  engine->filterAnchors[i][j].filterGain,
+                  engine->filterAnchors[i][j].filterGain,
                   rkGlobalParameters.showColor ? RKNoColor : "",
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].inputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].outputOrigin),

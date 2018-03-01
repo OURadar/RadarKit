@@ -281,7 +281,7 @@ static void *hostPinger(void *in) {
             // Timed out
             gettimeofday(&time, NULL);
             period = RKTimevalDiff(time, me->latestTime);
-            if (engine->verbose) {
+            if (engine->verbose > 1) {
                 RKLog(">%s %s r = %d   delta: %.3e   %d.%d.%d.%d  %d %d", engine->name, name, r, RKTimevalDiff(time, me->latestTime),
                       (targetAddress.sin_addr.s_addr & 0xff),
                       (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
@@ -437,7 +437,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
     memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
     RKHostMonitorAddHost(engine, "8.8.8.8");
-    RKHostMonitorAddHost(engine, "bumblebee.arrc.ou.edu");
+    RKHostMonitorAddHost(engine, "arrc.ou.edu");
     return engine;
 }
 
