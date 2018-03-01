@@ -540,6 +540,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 					k = RKNextModuloS(k, transceiver->gateCount);
 					X++;
 				}
+                // Phase as a function of time (tic) wrapped into [-PI, PI]
 				phi = fmod((double)(tic & 0xFFFF) / 655.36 * M_PI + M_PI, 2.0 * M_PI) - M_PI;
                 for (; g < transceiver->gateCount; g++) {
 					// sinf() and cosf() run faster with angle within 0 and 2 PI
@@ -551,9 +552,14 @@ void *RKTestTransceiverRunLoop(void *input) {
 					}
 					noise = rn[k];
 
-//					 X->i = (int16_t)(ra[g] * cosf(phi) + noise);
-//					 X->q = (int16_t)(ra[g] * sinf(phi) + noise);
-
+                    //
+                    // The following are using faster approximation of sin() and cos().
+                    // They are less precise than the native functions but way faster.
+                    // For a more precise version, use RKFastSineCosine()
+                    //
+                    // X->i = (int16_t)(ra[g] * cosf(phi) + noise);
+                    // X->q = (int16_t)(ra[g] * sinf(phi) + noise);
+                    //
 					RKFasterSineCosine(phi, &sinv, &cosv);
 					X->i = (int16_t)(ra[g] * cosv + noise);
 					X->q = (int16_t)(ra[g] * sinv + noise);
