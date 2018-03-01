@@ -456,8 +456,9 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
+        RKLog("%s fs = %s MHz   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
+			  RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
               transceiver->sprt > 1 ? "Base " : "",
               RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
               1000.0 * transceiver->prt,
@@ -682,6 +683,12 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         while ((se = strchr(sb, ' ')) != NULL) {
             sv = se + 1;
             switch (*sb) {
+				case 'F':
+					transceiver->fs = atof(sv);
+					if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+						RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
+					}
+					break;
                 case 'f':
                     i = sscanf(sv, "%d,%d", &j, &k);
                     transceiver->prt = 1.0 / (double)j;
@@ -699,12 +706,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                               (transceiver->sprt == 2 ? "2:3 Staggered" :
                                (transceiver->sprt == 3 ? "3:4 Staggered" :
                                 (transceiver->sprt == 4 ? "4:5 Staggered" : "Normal"))));
-                    }
-                    break;
-                case 'F':
-                    transceiver->fs = atof(sv);
-                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
                     }
                     break;
                 case 'g':

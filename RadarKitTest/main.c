@@ -17,7 +17,8 @@
 typedef struct user_params {
     int            coresForPulseCompression;
     int            coresForProductGenerator;
-    int            prf;
+	float          fs;                          // Raw gate sampling bandwidth
+    float          prf;
     int            sprt;
     int            gateCount;                   // Number of gates (simulate mode)
     int            verbose;
@@ -58,9 +59,12 @@ void showHelp() {
            "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
-           "     debris particle count is set for each type sequentially by repeating the\n"
-           "     option multiple times for each debris type.\n"
+           "     verbosity is increased by repeating the option multiple times.\n"
            "\n"
+		   "  -b (--bandwidth) " UNDERLINE("value") "\n"
+		   "         Sets the system bandwidth to " UNDERLINE("value") " in Hz.\n"
+		   "         If not specified, the default bandwidth is 5,000,000 Hz.\n"
+		   "\n"
            "  -c (--core) " UNDERLINE("P,M") " (no space after comma)\n"
            "         Sets the number of threads for pulse compression to " UNDERLINE("P") "\n"
            "         and the number of threads for product generator to " UNDERLINE("M") ".\n"
@@ -77,6 +81,11 @@ void showHelp() {
            "  -f (--prf) " UNDERLINE("value") "\n"
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
            "         If not specified, the default PRF is 5000 Hz.\n"
+		   "\n"
+		   "  -f (--prf) " UNDERLINE("value,mode") "\n"
+		   "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz,\n"
+		   "         along with a staggered ratio determined by " UNDERLINE("mode") " where\n"
+		   "         is either 2 for (2:3), 3 for (3:4) and 4 for (4:5).\n"
            "\n"
            "  -g (--gate) " UNDERLINE("value") "\n"
            "         Sets the number range gates to " UNDERLINE("value") ".\n"
@@ -85,11 +94,17 @@ void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
+		   "  -F (--fast-system)\n"
+		   "         Runs with arguments '-s -b 50e6 -f 5000 -g 60000 -c 10,4'.\n"
+		   "\n"
+		   "  -I (--intermediate-system)\n"
+		   "         Runs with arguments '-s -b 20e6 -f 2000 -g 30000 -c 4,2'.\n"
+		   "\n"
            "  -L (--lean-system)\n"
-           "         Run with arguments '-v -f 2000 -F 5e6 -c 2,2'.\n"
+           "         Runs with arguments '-s -b 20e6 -f 1000 -g 16000 -c 4,2'.\n"
            "\n"
-           "  -M (--medium-system)\n"
-           "         Run with arguments '-v -f 5000 -F 20e6 -c 4,2'.\n"
+           "  -M (--minimum-system)\n"
+           "         Runs with arguments '-s -b 5e6 -f 1000 -g 2000 -c 2,2'.\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
@@ -160,6 +175,7 @@ UserParams processInput(int argc, const char **argv) {
 
     // Zero out everything and set some default parameters
 	memset(&user, 0, sizeof(UserParams));
+	user.fs = 5000000;
     user.gateCount = 2000;
     user.coresForPulseCompression = 2;
     user.coresForProductGenerator = 2;
@@ -178,10 +194,11 @@ UserParams processInput(int argc, const char **argv) {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
         {"clock"                 , no_argument      , NULL, 'C'},
         {"demo"                  , no_argument      , NULL, 'D'},
-        {"fs"                    , required_argument, NULL, 'F'},
         {"hp-system"             , no_argument      , NULL, 'H'},
+		{"fast-system"           , no_argument      , NULL, 'F'},
+		{"intermediate-system"   , no_argument      , NULL, 'I'},
         {"lean-system"           , no_argument      , NULL, 'L'},
-        {"medium-system"         , no_argument      , NULL, 'M'},
+        {"minimum-system"        , no_argument      , NULL, 'M'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
@@ -190,10 +207,11 @@ UserParams processInput(int argc, const char **argv) {
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
+		{"interpulse-period"     , required_argument, NULL, 'i'},
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"relay"                 , required_argument, NULL, 'r'},
-        {"sim"                   , no_argument      , NULL, 's'},
+        {"simulate"              , no_argument      , NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
@@ -217,33 +235,44 @@ UserParams processInput(int argc, const char **argv) {
                 break;
             case 'D':
                 user.simulate = true;
-                user.gateCount = 2000;
+				user.fs = 5000000;
                 user.prf = 6;
+				user.gateCount = 1000;
                 user.coresForPulseCompression = 2;
                 user.coresForProductGenerator = 2;
                 break;
-            case 'b':
-            case 'H':
+            case 'F':
                 user.simulate = true;
-                user.gateCount = 60000;
+				user.fs = 50000000;
                 user.prf = 5000;
+				user.gateCount = 60000;
                 user.coresForPulseCompression = 10;
                 user.coresForProductGenerator = 4;
                 break;
+			case 'I':
+				user.simulate = true;
+				user.fs = 20000000;
+				user.prf = 2000;
+				user.gateCount = 30000;
+				user.coresForPulseCompression = 6;
+				user.coresForProductGenerator = 4;
+				break;
             case 'L':
                 user.simulate = true;
-                user.gateCount = 2000;
+				user.fs = 20000000;
                 user.prf = 1000;
-                user.coresForPulseCompression = 2;
+				user.gateCount = 16000;
+                user.coresForPulseCompression = 4;
                 user.coresForProductGenerator = 2;
                 break;
-            case 'M':
-                user.simulate = true;
-                user.gateCount = 16000;
-                user.prf = 2000;
-                user.coresForPulseCompression = 6;
-                user.coresForProductGenerator = 4;
-                break;
+			case 'M':
+				user.simulate = true;
+				user.fs = 5000000;
+				user.prf = 1000;
+				user.gateCount = 2000;
+				user.coresForPulseCompression = 2;
+				user.coresForProductGenerator = 2;
+				break;
             case 'T':
                 RKSetWantScreenOutput(true);
                 k = atoi(optarg);
@@ -350,6 +379,9 @@ UserParams processInput(int argc, const char **argv) {
                     user.testPulseCompression = 1;
                 }
                 break;
+			case 'b':
+				user.fs = roundf(atof(optarg));
+				break;
             case 'c':
                 sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
                 break;
@@ -357,7 +389,7 @@ UserParams processInput(int argc, const char **argv) {
                 RKSetWantColor(false);
                 break;
             case 'f':
-                k = sscanf(optarg, "%d,%d", &user.prf, &user.sprt);
+                k = sscanf(optarg, "%f,%d", &user.prf, &user.sprt);
                 if (k < 2) {
                     user.sprt = 0;
                 }
@@ -369,6 +401,13 @@ UserParams processInput(int argc, const char **argv) {
                 showHelp();
                 exit(EXIT_SUCCESS);
                 break;
+			case 'i':
+				k = sscanf(optarg, "%f,%d", &user.prf, &user.sprt);
+				user.prf = 1.0f / user.prf;
+				if (k < 2) {
+					user.sprt = 0;
+				}
+				break;
             case 'p':
                 strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
                 break;
@@ -414,7 +453,9 @@ UserParams processInput(int argc, const char **argv) {
     } else if (user.verbose == 3) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-    if (user.gateCount >= 4000) {
+	if (user.gateCount >= 20000) {
+		user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 4000);
+	} else if (user.gateCount >= 4000) {
         user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
     } else {
         user.desc.pulseToRayRatio = 2;
@@ -509,11 +550,14 @@ int main(int argc, const char **argv) {
         // Build a series of options for transceiver, only pass down the relevant parameters
         int i = 0;
         char cmd[64] = "";
+		if (user.fs) {
+			i += sprintf(cmd + i, " F %.0f", user.fs);
+		}
         if (user.prf) {
             if (user.sprt > 1) {
-                i += sprintf(cmd + i, " f %d,%d", user.prf, user.sprt);
+                i += sprintf(cmd + i, " f %.0f,%d", user.prf, user.sprt);
             } else {
-                i += sprintf(cmd + i, " f %d", user.prf);
+                i += sprintf(cmd + i, " f %.0f", user.prf);
             }
         }
         if (user.gateCount) {
