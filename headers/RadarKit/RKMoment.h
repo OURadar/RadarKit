@@ -77,9 +77,6 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
-//void RKMomentEngineSetMomentProcessorToMultilag(RKMomentEngine *, const uint8_t);
-//void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
-//void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

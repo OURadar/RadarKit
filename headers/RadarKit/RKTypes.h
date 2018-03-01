@@ -6,6 +6,17 @@
 //
 //  █
 //
+//  1.2.6  - 2/27/2018
+//         - Added RKHostMonitor for ICMP echo reqeust
+//         - Default host is Google's 8.8.8.8
+//         - Multiple-range calibration based filter anchors
+//         - All waveforms are required to have unity noise gain
+//         - Sampling frequency change is now in RKWaveform
+//         - Senstivity calculation based on waveform
+//         - Improved CPU core count
+//         - IP address is logged alongside the command
+//         - Improved efficiency of RKTestTransceiver
+//
 //  1.2.5  - 1/8/2018
 //         - Added RKClearControls(), RKConcludeControls()
 //         - Send updated controls
@@ -93,7 +104,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.5"
+#define RKVersionString                  "1.2.6"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings
@@ -101,7 +112,7 @@
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
 #define RKMaxControlCount                128                         // Controls
-#define RKGateCount                      65536                       // Must be a multiple of RKSIMDAlignSize
+#define RKGateCount                      262144                      // Must be a multiple of RKSIMDAlignSize
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
 #define RKMaxFilterCount                 8                           // Maximum filter count within each group. Check RKPulseParameters
@@ -121,6 +132,7 @@
 #define RKPulseCountForNoiseMeasurement  200
 #define RKProcessorStatusPulseCoreCount  16
 #define RKProcessorStatusRayCoreCount    16
+#define RKHostMonitorPingInterval        5
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
@@ -129,6 +141,9 @@
 #define RKLogFolder                      "log"
 
 #define RKNoColor                        "\033[0m"
+#define RKRedColor                       "\033[38;5;196m"
+#define RKGreenColor                     "\033[38;5;82m"
+#define RKOrangeColor                    "\033[38;5;214m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
 #define RKNameLength                     256
@@ -182,20 +197,24 @@ typedef union rk_four_byte {
     struct { float f; };
 } RKFourByte;
 
-typedef struct rk_filter_anchor {
-    uint32_t      name;
-    uint32_t      origin;                                            // Filter origin to be used with RKWaveform
-    uint32_t      length;                                            // Filter length to be used with RKWaveform
-    uint32_t      inputOrigin;
-    uint32_t      outputOrigin;
-    uint32_t      maxDataLength;
-    RKFloat       subCarrierFrequency;
-    RKFloat       gain;
+typedef union rk_filter_anchor {
+	struct {
+		uint32_t      name;
+		uint32_t      origin;                                            // Filter origin to be used with RKWaveform
+		uint32_t      length;                                            // Filter length to be used with RKWaveform
+		uint32_t      inputOrigin;
+		uint32_t      outputOrigin;
+		uint32_t      maxDataLength;
+		RKFloat       subCarrierFrequency;                               // For house keeping only
+		RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms (dB)
+		RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 0.0 (dB)
+	};
+	char bytes[64];
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault                           {0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f}
-#define RKFilterAnchorDefaultWithMaxDataLength(x)       {0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f}
-#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {0, 0, (x),  0, 0, (y) , 0.0f, 1.0f}
+#define RKFilterAnchorDefault                           {{0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f, 1.0f}}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)       {{0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f, 1.0f}}
+#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{0, 0, (x),  0, 0, (y) , 0.0f, 1.0f, 1.0f}}
 
 typedef struct rk_iir_filter {
     uint32_t      name;
@@ -259,6 +278,10 @@ enum RKResult {
     RKResultFailedToCreateFileRemover,
     RKResultFileManagerBufferNotResuable,
 	RKResultInvalidMomentParameters,
+    RKResultFailedToCreateUnitWorker,
+    RKResultFailedToStartHostWatcher,
+    RKResultFailedToStartHostPinger,
+	RKResultNoRadar,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -278,6 +301,7 @@ enum RKEngineColor {
     RKEngineColorPedestalRelayPedzy = 10,
     RKEngineColorHealthRelayTweeta = 0,
     RKEngineColorRadarRelay = 12,
+    RKEngineColorHostMonitor = 11,
     RKEngineColorClock = 14,
     RKEngineColorMisc = 15
 };
@@ -349,6 +373,7 @@ enum RKPulseStatus {
     RKPulseStatusRingFiltered        = (1 << 7),
     RKPulseStatusRingSkipped         = (1 << 8),
     RKPulseStatusRingProcessed       = (1 << 9),
+	RKPulseStatusDownSampled         = (1 << 10),
     RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
 };
 
@@ -442,6 +467,7 @@ enum RKConfigKey {
     RKConfigKeyFilterAnchor2,
     RKConfigKeyFilterAnchors,
     RKConfigKeyNoise,
+    RKConfigKeySystemZCal,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
@@ -483,8 +509,9 @@ enum RKEngineState {
     RKEngineStateSleep3              = (1 << 3),                     // Stage 3 wait
     RKEngineStateSleepMask           = 0x0F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
+	RKEngineStateMemoryChange        = (1 << 5),                     // Some required pointers are being changed
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
-    RKEngineStateProperlyWired       = (1 << 9),                     // ALl required pointers are properly wired up
+    RKEngineStateProperlyWired       = (1 << 9),                     // All required pointers are properly wired up
     RKEngineStateActivating          = (1 << 10),                    // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 11),                    // The main run loop is being deactivated
     RKEngineStateActive              = (1 << 12)                     // The engine is active
@@ -492,6 +519,7 @@ enum RKEngineState {
 
 typedef uint32_t RKStatusEnum;
 enum RKStatusEnum {
+    RKStatusEnumUnknown              = -3,
     RKStatusEnumOld                  = -3,
     RKStatusEnumInvalid              = -2,
     RKStatusEnumTooLow               = -2,
@@ -554,6 +582,15 @@ enum RKStream {
     RKStreamEverything               = 0xFFFFFFFFFFULL               //
 };
 
+typedef uint8_t RKHostState;
+enum RKHostState {
+    RKHostStateUnknown,
+    RKHostStateUnreachable,
+    RKHostStatePartiallyReachable,
+    RKHostStateReachable
+};
+
+
 // A general description of a radar. Most parameters are used for initialization. Some may be
 // overriden after the radar has gone live.
 typedef struct rk_radar_desc {
@@ -596,6 +633,7 @@ typedef struct rk_config {
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     RKFloat          noise[2];                                       // Noise floor (ADU)
+    RKFloat          systemZCal[2];                                  // System-wide reflectivity calibration (dB)
     RKFloat          ZCal[2][RKMaxFilterCount];                      // Reflectivity calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration

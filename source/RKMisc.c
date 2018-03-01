@@ -239,7 +239,7 @@ void RKPreparePath(const char *filename) {
         free(path);
         return;
     }
-    size_t n = 1024 - (size_t)(c - path);
+    size_t n = 1023 - (size_t)(c - path);
     memset(c, 0, n);
     DIR *dir = opendir(path);
     if (dir == NULL) {

@@ -28,9 +28,13 @@ memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
 
+#define TEST_RESULT(clr, str, res)   clr ? \
+printf("%s %s\033[0m\n", str, res ? "\033[32mokay" : "\033[31mtoo high") : \
+printf("%s %s\n", str, res ? "okay" : "too high");
+
 // Make some private functions available
 
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount, const int stride);
+int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
 
 #pragma mark - Fundamental Functions
 
@@ -435,7 +439,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
 
-    int j, p, g, n;
+    int j, k, p, g, n;
     double t = 0.0;
     double dt = 0.0;
     long tic = 0;
@@ -452,8 +456,9 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
+        RKLog("%s fs = %s MHz   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
+			  RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
               transceiver->sprt > 1 ? "Base " : "",
               RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
               1000.0 * transceiver->prt,
@@ -481,7 +486,34 @@ void *RKTestTransceiverRunLoop(void *input) {
     float a;
     float r;
     float phi;
-    //float noise;
+	float cosv;
+	float sinv;
+	float noise;
+
+	float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
+	float *rn = (float *)malloc(transceiver->gateCount * sizeof(float));
+	for (g = 0; g < transceiver->gateCount; g++) {
+		r = (float)g * transceiver->gateSizeMeters * 0.1f;
+		a = 60.0f * (cos(0.001f * r)
+					 + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
+					 + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
+					 + 0.2f * cosf(0.01f * r + 0.3f)
+					 + 0.5f);
+		a *= (1000.0 / r);
+		ra[g] = a;
+		rn[g] = ((float)rand() / RAND_MAX - 0.5f);
+	}
+
+	float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
+	while (dphi > M_PI) {
+		dphi -= 2.0 * M_PI;
+	}
+	while (dphi < -M_PI) {
+		dphi += 2.0 * M_PI;
+	}
+	if (dphi < -M_PI || dphi > M_PI) {
+		RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
+	}
 
     while (transceiver->state & RKEngineStateActive) {
 
@@ -500,25 +532,40 @@ void *RKTestTransceiverRunLoop(void *input) {
             // Fill in the data...
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-
                 // Some random pattern for testing
+				k = rand() % transceiver->gateCount;
 				for (g = 0; g < transceiver->transmitWaveformLength; g++) {
-					X->i = (int16_t)(transceiver->transmitWaveform[g].i + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
-					X->q = (int16_t)(transceiver->transmitWaveform[g].q + ((float)rand() / RAND_MAX - 0.5f) * 3.0f);
+					noise = rn[k];
+					X->i = (int16_t)(transceiver->transmitWaveform[g].i + noise);
+					X->q = (int16_t)(transceiver->transmitWaveform[g].q + noise);
+					k = RKNextModuloS(k, transceiver->gateCount);
 					X++;
 				}
-                phi = (double)(tic & 0xFFFF) / 65536.0 * 1.0e2 * M_PI;
+                // Phase as a function of time (tic) wrapped into [-PI, PI]
+				phi = fmod((double)(tic & 0xFFFF) / 655.36 * M_PI + M_PI, 2.0 * M_PI) - M_PI;
                 for (; g < transceiver->gateCount; g++) {
-                    r = (float)g;
-                    a = 60.0f * (cos(0.001f * r)
-                                  + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
-                                  + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
-                                  + 0.2f * cosf(0.01f * r + 0.3f)
-                                  + 0.5f);
-                    a *= (1000.0 / r);
-                    phi += transceiver->gateSizeMeters * 0.1531995963856f;
-                    X->i = (int16_t)(a * cosf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
-                    X->q = (int16_t)(a * sinf(phi) + ((float)rand() / RAND_MAX) - 0.5f);
+					// sinf() and cosf() run faster with angle within 0 and 2 PI
+					phi += dphi;
+					if (phi < -3.14159265f) {
+						phi += 6.28318531f;
+					} else if (phi > 3.14159265f) {
+						phi -= 6.28318531f;
+					}
+					noise = rn[k];
+
+                    //
+                    // The following are using faster approximation of sin() and cos().
+                    // They are less precise than the native functions but way faster.
+                    // For a more precise version, use RKFastSineCosine()
+                    //
+                    // X->i = (int16_t)(ra[g] * cosf(phi) + noise);
+                    // X->q = (int16_t)(ra[g] * sinf(phi) + noise);
+                    //
+					RKFasterSineCosine(phi, &sinv, &cosv);
+					X->i = (int16_t)(ra[g] * cosv + noise);
+					X->q = (int16_t)(ra[g] * sinv + noise);
+
+					k = RKNextModuloS(k, transceiver->gateCount);
                     X++;
                 }
             }
@@ -554,9 +601,10 @@ void *RKTestTransceiverRunLoop(void *input) {
         }
 
         // Report health
-        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
-        float temp = 1.0f * rand() / RAND_MAX + 79.5f;
-        float volt = 1.0f * rand() / RAND_MAX + 11.5f;
+		int nn = rand();
+        float temp = 1.0f * nn / RAND_MAX + 79.5f;
+        float volt = 1.0f * nn / RAND_MAX + 11.5f;
+		RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
 				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
@@ -572,8 +620,8 @@ void *RKTestTransceiverRunLoop(void *input) {
 				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-				rand() & 0x03,
-				rand() & 0x03,
+				nn & 0x03,
+				nn & 0x03,
 				transceiver->transmitWaveformName,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
@@ -591,6 +639,10 @@ void *RKTestTransceiverRunLoop(void *input) {
         } while (radar->active && dt < periodTotal);
         t0 = t1;
     }
+
+	free(ra);
+	free(rn);
+
     return NULL;
 }
 
@@ -608,8 +660,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 	transceiver->state = RKEngineStateAllocated;
 	transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
-    transceiver->gateCount = RKGetPulseCapacity(radar) / 10;
-	transceiver->fs = 5.0e6;
+    transceiver->gateCount = RKGetPulseCapacity(radar);
+	transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
+	                 (transceiver->gateCount >= 8000 ? 25.0e6 :
+					 (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
+	transceiver->gateCount /= 10;
     transceiver->prt = 0.0003;
 	transceiver->sprt = 1;
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKComplex)));
@@ -628,6 +683,12 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         while ((se = strchr(sb, ' ')) != NULL) {
             sv = se + 1;
             switch (*sb) {
+				case 'F':
+					transceiver->fs = atof(sv);
+					if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+						RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
+					}
+					break;
                 case 'f':
                     i = sscanf(sv, "%d,%d", &j, &k);
                     transceiver->prt = 1.0 / (double)j;
@@ -645,12 +706,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                               (transceiver->sprt == 2 ? "2:3 Staggered" :
                                (transceiver->sprt == 3 ? "3:4 Staggered" :
                                 (transceiver->sprt == 4 ? "4:5 Staggered" : "Normal"))));
-                    }
-                    break;
-                case 'F':
-                    transceiver->fs = atof(sv);
-                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-                        RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
                     }
                     break;
                 case 'g':
@@ -684,7 +739,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     }
 
     // Derive some calculated parameters
-    transceiver->gateSizeMeters = transceiver->fs * 6.0e-6;
+    transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
 
     // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
@@ -777,9 +832,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 			}
 			transceiver->transmitWaveformLength = pulsewidthSampleCount;
 			for (k = 0; k < wave->depth; k++) {
-				transceiver->transmitWaveform[k].i = 0.01 * wave->iSamples[0][k].i;
-				transceiver->transmitWaveform[k].q = 0.01 * wave->iSamples[0][k].q;
+				transceiver->transmitWaveform[k].i = wave->iSamples[0][k].i;
+				transceiver->transmitWaveform[k].q = wave->iSamples[0][k].q;
 			}
+            if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
+                RKSetWaveform(radar, wave);
+            }
 			free(wave);
 			if (response != NULL) {
 				sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
@@ -1355,7 +1413,9 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 	// Some known results
 	RKFloat err = 0.0f;
 
-	if (method == RKMultiLag && lag >= 2 && lag <= 4) {
+    char str[RKNameLength];
+    
+    if (method == RKMultiLag && lag >= 2 && lag <= 4) {
 		// Results for lags 2, 3, and 4
 		RKFloat D[3][6] = {
 			{4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
@@ -1374,28 +1434,33 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
 			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
 		};
-		for (k = 0; k < gateCount; k++) {
+		
+        for (k = 0; k < gateCount; k++) {
 			err += D[lag - 2][k] - space->ZDR[k];
 		}
 		err /= (RKFloat)gateCount;
-		RKLog("Delta ZDR = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
-		for (k = 0; k < gateCount; k++) {
+        sprintf(str, "Delta ZDR = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+		
+        for (k = 0; k < gateCount; k++) {
 			err += P[lag - 2][k] - space->PhiDP[k];
 		}
 		err /= (RKFloat)gateCount;
-		RKLog("Delta PhiDP = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
-		for (k = 0; k < gateCount; k++) {
+        sprintf(str, "Delta PhiDP = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+		
+        for (k = 0; k < gateCount; k++) {
 			err += R[lag - 2][k] - space->RhoHV[k];
 		}
 		err /= (RKFloat)gateCount;
-		RKLog("Delta RhoHV = %.4e (%s)\n", err, fabsf(err) < 1.0e-4 ? "ok" : "too high");
+        sprintf(str, "Delta RhoHV = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
 	}
 
     RKLog("Deallocating buffers ...\n");
 
     RKScratchFree(space);
     RKPulseBufferFree(pulseBuffer);
-    return;
 }
 
 void RKTestCacheWrite(void) {
@@ -1584,6 +1649,7 @@ void RKTestFileManager(void) {
         return;
     }
     RKFileManagerSetPathToMonitor(o, "data");
+    RKFileManagerSetVerbose(o, 1);
     RKFileManagerStart(o);
     RKFileManagerFree(o);
 }
@@ -1630,7 +1696,6 @@ void RKTestCountFiles(void) {
 static void RKTestCallback(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
     RKLog("%s I am a callback function.\n", engine->name);
-    return;
 }
 
 void RKTestFileMonitor(void) {
@@ -1643,6 +1708,22 @@ void RKTestFileMonitor(void) {
     sleep(2);
     RKFileMonitorFree(mon);
 }
+
+void RKTestHostMonitor(void) {
+    RKHostMonitor *o = RKHostMonitorInit();
+    if (o == NULL) {
+        fprintf(stderr, "Unable to allocate a Host Monitor.\n");
+        return;
+    }
+    RKHostMonitorSetVerbose(o, 2);
+	RKHostMonitorAddHost(o, "arrc.ou.edu");
+	RKHostMonitorAddHost(o, "10.203.6.126");
+    RKHostMonitorStart(o);
+    sleep(RKHostMonitorPingInterval * 10 + RKHostMonitorPingInterval - 1);
+    RKHostMonitorFree(o);
+}
+
+#pragma mark -
 
 void RKTestWriteWaveform(void) {
     SHOW_FUNCTION_NAME
@@ -1714,6 +1795,14 @@ void RKTestPulseCompressionSpeed(void) {
     fftwf_plan planForwardOutPlace = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
     fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
     
+    // Set some real values so that we don't have see NAN in the data / results, which could slow down FFTW
+    for (k = 0; k < nfft; k++) {
+        X[k].i = rand();
+        X[k].q = 0;
+        f[k][0] = 1.0f;
+        f[k][1] = 0.0f;
+    }
+    
     RKLog(UNDERLINE("PulseCompression") "\n");
     
     mint = INFINITY;
@@ -1743,7 +1832,7 @@ void RKTestPulseCompressionSpeed(void) {
     }
 	RKLog(">Time for each pulse (%s gates) = %.3f ms / pulse (Best of 3)\n",
 		  RKIntegerToCommaStyleString(nfft), 1.0e3 * mint / testCount);
-    RKLog(">Speed: %.2f pulses / sec\n", testCount / mint);
+    RKLog(">Speed: %.2f pulses / sec / core\n", testCount / mint);
     
     fftwf_destroy_plan(planForwardInPlace);
     fftwf_destroy_plan(planForwardOutPlace);
@@ -1823,7 +1912,7 @@ void RKTestMomentProcessorSpeed(void) {
             gettimeofday(&tic, NULL);
             for (k = 0; k < testCount; k++) {
                 method(space, pulses, pulseCount);
-                makeRayFromScratch(space, ray, pulseCapacity, 1);
+                makeRayFromScratch(space, ray, pulseCapacity);
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
@@ -1832,12 +1921,10 @@ void RKTestMomentProcessorSpeed(void) {
         }
         RKLog(">Time for each ray (%s pulses x %s gates) = %.2f ms (Best of 3)\n",
               RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * mint / testCount);
-        RKLog(">Speed: %.2f rays / sec\n", testCount / mint);
+        RKLog(">Speed: %.2f rays / sec / core\n", testCount / mint);
     }
     
     RKScratchFree(space);
     free(pulseBuffer);
     free(rayBuffer);
-    return;
 }
-

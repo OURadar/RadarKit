@@ -194,3 +194,76 @@ void RKHilbertTransform(RKFloat *w, RKComplex *b, const int n) {
 	fftwf_free(in);
 	fftwf_free(out);
 }
+
+//
+// Original idea from Michael Baczynski
+// http://lab.polygonal.de/2007/07/18/fast-and-accurate-sinecosine-approximation/
+// These functions only works when x in [-PI, PI]
+//
+void RKFasterSineCosine(float x, float *sin, float *cos) {
+	// sin(phi)
+	if (x < 0.0f) {
+		*sin = 1.27323954f * x + 0.405284735f * x * x;
+	} else {
+		*sin = 1.27323954f * x - 0.405284735f * x * x;
+	}
+	// cos(x) = sin(x + PI/2)
+	x += 1.57079632f;
+	if (x > 3.14159265f) {
+		x -= 6.28318531f;
+	}
+	if (x < 0.0f) {
+		*cos = 1.27323954f * x + 0.405284735f * x * x;
+	} else {
+		*cos = 1.27323954f * x - 0.405284735f * x * x;
+	}
+}
+
+
+void RKFastSineCosine(float x, float *sin, float *cos) {
+	// sin(phi)
+	if (x < 0.0f) {
+		*sin = 1.27323954f * x + 0.405284735f * x * x;
+		if (*sin < 0.0f) {
+			*sin = 0.225f * (*sin * -*sin - *sin) + *sin;
+		} else {
+			*sin = 0.225f * (*sin * *sin - *sin) + *sin;
+		}
+	} else {
+		*sin = 1.27323954 * x - 0.405284735 * x * x;
+		if (*sin < 0.0f) {
+			*sin = 0.225f * (*sin * -*sin - *sin) + *sin;
+		} else {
+			*sin = 0.225f * (*sin * *sin - *sin) + *sin;
+		}
+	}
+	if (*sin < 0) {
+		*sin = MAX(*sin, -1.0f);
+	} else {
+		*sin = MIN(*sin, 1.0f);
+	}
+	// cos(x) = sin(x + PI/2)
+	x += 1.57079632f;
+	if (x >  3.14159265f)
+		x -= 6.28318531f;
+	if (x < 0.0f) {
+		*cos = 1.27323954f * x + 0.405284735f * x * x;
+		if (*cos < 0.0f) {
+			*cos = 0.225f * (*cos * -*cos - *cos) + *cos;
+		} else {
+			*cos = 0.225f * (*cos * *cos - *cos) + *cos;
+		}
+	} else {
+		*cos = 1.27323954 * x - 0.405284735 * x * x;
+		if (*cos < 0.0f) {
+			*cos = 0.225f * (*cos * -*cos - *cos) + *cos;
+		} else {
+			*cos = 0.225f * (*cos * *cos - *cos) + *cos;
+		}
+	}
+	if (*cos < 0) {
+		*cos = MAX(*cos, -1.0f);
+	} else {
+		*cos = MIN(*cos, 1.0f);
+	}
+}

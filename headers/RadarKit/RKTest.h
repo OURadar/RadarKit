@@ -94,8 +94,8 @@ int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
 
 RKPedestal RKTestPedestalInit(RKRadar *, void *);
-int RKTestPedestalExec(RKTransceiver, const char *, char *);
-int RKTestPedestalFree(RKTransceiver);
+int RKTestPedestalExec(RKPedestal, const char *, char *);
+int RKTestPedestalFree(RKPedestal);
 
 RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
 int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
@@ -114,6 +114,8 @@ void RKTestMakeHops(void);
 void RKTestPreferenceReading(void);
 void RKTestCountFiles(void);
 void RKTestFileMonitor(void);
+void RKTestHostMonitor(void);
+
 void RKTestWriteWaveform(void);
 void RKTestWaveformTFM(void);
 void RKTestHilbertTransform(void);

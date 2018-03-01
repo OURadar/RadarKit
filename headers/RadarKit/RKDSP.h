@@ -61,6 +61,9 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers);
 
 void RKHilbertTransform(RKFloat *x, RKComplex *y, const int n);
 
+void RKFasterSineCosine(float x, float *sin, float *cos);
+void RKFastSineCosine(float x, float *sin, float *cos);
+
 //
 // FIR + IIR Filters
 //

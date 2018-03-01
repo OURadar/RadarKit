@@ -861,7 +861,6 @@ int socketStreamHandler(RKOperator *O) {
         // If I/Q data is sent, there is no need to send another subset of it.
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         while (user->pulseIndex != endIndex) {
-
             user->pulseIndex = RKNextModuloS(user->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
         user->timeLastDisplayIQOut = time;
@@ -877,7 +876,7 @@ int socketStreamHandler(RKOperator *O) {
 			usleep(1000);
 		}
 
-        if (!(user->streamsInProgress & RKStreamDisplayIQ)) {
+        if (!(user->streamsInProgress & RKPulseStatusProcessed)) {
             user->pulseIndex = endIndex;
             s = 0;
             while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->server->state == RKServerStateActive && s++ < 20) {
@@ -888,7 +887,7 @@ int socketStreamHandler(RKOperator *O) {
             }
         }
 
-        if (pulse->header.s & RKPulseStatusHasIQData && engine->server->state == RKServerStateActive) {
+        if (pulse->header.s & RKPulseStatusProcessed && engine->server->state == RKServerStateActive) {
             user->streamsInProgress |= RKStreamDisplayIQ;
             memcpy(&pulseHeader, &pulse->header, sizeof(RKPulseHeader));
             c16DataH = RKGetInt16CDataFromPulse(pulse, 0);
@@ -1028,6 +1027,11 @@ int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
+	if (engine->radarCount == 0) {
+		RKLog("%s No radar yet.\n", engine->name);
+		return RKResultNoRadar;
+	}
+	
     memset(user, 0, sizeof(RKUser));
     user->access = RKStreamStatusAll;
     user->access |= RKStreamDisplayZVWDPRKS;

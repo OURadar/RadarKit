@@ -222,6 +222,9 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKControl) = %d", (int)sizeof(RKControl));
     RKLog(">sizeof(RKStatus) = %d", (int)sizeof(RKStatus));
     RKLog(">sizeof(RKFileMonitor) = %d", (int)sizeof(RKFileMonitor));
+	RKLog(">sizeof(RKFilterAnchor) = %d", (int)sizeof(RKFilterAnchor));
+    RKLog(">sizeof(struct sockaddr) = %d", (int)sizeof(struct sockaddr));
+    RKLog(">sizeof(struct sockaddr_in) = %d", (int)sizeof(struct sockaddr_in));
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
@@ -619,6 +622,8 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
     }
 }
 
+#pragma mark -
+
 static void *fileMonitorRunLoop(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
 
@@ -698,7 +703,7 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
         RKLog("%s Stopped.\n", engine->name);
     }
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     free(engine);
     return RKResultSuccess;

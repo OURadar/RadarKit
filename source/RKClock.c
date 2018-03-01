@@ -50,6 +50,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
     clock->initDay = floor(clock->initTime / 86400.0) * 86400.0;
     clock->b = 1.0 / (double)clock->stride;
     clock->a = 1.0 - clock->b;
+    clock->dx = 1.0e-6;
     return clock;
 }
 

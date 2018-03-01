@@ -555,7 +555,7 @@ int RKFileManagerStop(RKFileManager *engine) {
         RKLog("%s Stopped.\n", engine->name);
     }
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
 }

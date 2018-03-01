@@ -120,22 +120,26 @@ static void *pulseRecorder(void *in) {
             // Close the current file
             if (engine->doNotWrite && doNotWrite) {
                 if (engine->verbose && strlen(filename)) {
-					if (len > 1000000000) {
-						RKLog("%s Skipped %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * len));
-					} else {
-						RKLog("%s Skipped %s (%s pulses, %s MB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-6f * len));
-					}
+					RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
+						  engine->name,
+						  filename,
+						  RKIntegerToCommaStyleString(n),
+						  RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
+						  len > 1000000000 ? "G" : "M");
                 }
             } else {
                 if (engine->fd != 0) {
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
                     if (engine->verbose) {
-						if (len > 1000000000) {
-                        	RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
-						} else {
-							RKLog("%s Recorded %s (%s pulses, %s MB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-6f * (len + engine->cacheWriteIndex)));
-						}
+						RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
+							  engine->name,
+							  rkGlobalParameters.showColor ? "\033[38;5;46m" : "",
+							  rkGlobalParameters.showColor ? RKNoColor : "",
+							  filename,
+							  RKIntegerToCommaStyleString(n),
+							  RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
+							  len > 1000000000 ? "G" : "M");
                     }
                     engine->fd = 0;
                     // Notify file manager of a new addition
@@ -310,7 +314,7 @@ int RKDataRecorderStop(RKDataRecorder *engine) {
         RKLog("%s Stopped.\n", engine->name);
     }
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
 }
