@@ -113,7 +113,7 @@ static void showHelp() {
            "         Sets the simulation to run one of the following levels:\n"
            "          1 - 5-MHz 2,000 gates\n"
            "          2 - 10-MHz 10,000 gates\n"
-           "          3 - 20-MHz 25,000 gates\n"
+           "          3 - 20-MHz 20,000 gates\n"
            "          4 - 50-MHz 50,000 gates\n"
 		   "          5 - 100-MHz 100,000 gates\n"
            "\n"
@@ -206,23 +206,23 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->simulate = true;
             user->fs = 10000000;
             user->gateCount = 10000;
-            user->coresForPulseCompression = 4;
+            user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
             break;
         case 3:
             // Intermediate
             user->simulate = true;
             user->fs = 20000000;
-            user->gateCount = 25000;
-            user->coresForPulseCompression = 6;
-            user->coresForProductGenerator = 4;
+            user->gateCount = 20000;
+            user->coresForPulseCompression = 4;
+            user->coresForProductGenerator = 2;
             break;
         case 4:
             // High
             user->simulate = true;
             user->fs = 50000000;
             user->gateCount = 50000;
-            user->coresForPulseCompression = 8;
+            user->coresForPulseCompression = 4;
             user->coresForProductGenerator = 4;
             break;
         case 5:
@@ -230,7 +230,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->simulate = true;
             user->fs = 100000000;
             user->gateCount = 100000;
-            user->coresForPulseCompression = 10;
+            user->coresForPulseCompression = 8;
             user->coresForProductGenerator = 4;
             break;
         default:
