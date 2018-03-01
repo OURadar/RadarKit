@@ -17,7 +17,7 @@
 typedef struct user_params {
     int            coresForPulseCompression;
     int            coresForProductGenerator;
-	float          fs;                          // Raw gate sampling bandwidth
+    float          fs;                          // Raw gate sampling bandwidth
     float          prf;
     int            sprt;
     int            gateCount;                   // Number of gates (simulate mode)
@@ -53,7 +53,7 @@ static void handleSignals(int signal) {
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
 }
 
-void showHelp() {
+static void showHelp() {
     printf("RadarKit Test Program\n\n"
            "rktest [options]\n\n"
            "OPTIONS:\n"
@@ -61,11 +61,11 @@ void showHelp() {
            "     options can be specified multiples times for repetitions. For example, the\n"
            "     verbosity is increased by repeating the option multiple times.\n"
            "\n"
-		   "  -b (--bandwidth) " UNDERLINE("value") "\n"
-		   "         Sets the system bandwidth to " UNDERLINE("value") " in Hz.\n"
-		   "         If not specified, the default bandwidth is 5,000,000 Hz.\n"
-		   "\n"
-           "  -c (--core) " UNDERLINE("P,M") " (no space after comma)\n"
+           "  -b (--bandwidth) " UNDERLINE("value") "\n"
+           "         Sets the system bandwidth to " UNDERLINE("value") " in Hz.\n"
+           "         If not specified, the default bandwidth is 5,000,000 Hz.\n"
+           "\n"
+           "  -c (--core) " UNDERLINE("P,M") " (no space before or after ,)\n"
            "         Sets the number of threads for pulse compression to " UNDERLINE("P") "\n"
            "         and the number of threads for product generator to " UNDERLINE("M") ".\n"
            "         If not specified, the default core counts are 8 / 4.\n"
@@ -80,31 +80,42 @@ void showHelp() {
            "\n"
            "  -f (--prf) " UNDERLINE("value") "\n"
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
-           "         If not specified, the default PRF is 5000 Hz.\n"
-		   "\n"
-		   "  -f (--prf) " UNDERLINE("value,mode") "\n"
-		   "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz,\n"
-		   "         along with a staggered ratio determined by " UNDERLINE("mode") " where\n"
-		   "         is either 2 for (2:3), 3 for (3:4) and 4 for (4:5).\n"
+           "         If not specified, the default PRF is 1,000 Hz.\n"
+           "\n"
+           "  -f (--prf) " UNDERLINE("value,mode") " (no space before or after ,)\n"
+           "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz,\n"
+           "         along with a staggered ratio determined by " UNDERLINE("mode") " where\n"
+           "         is either 2 for (2:3), 3 for (3:4) and 4 for (4:5).\n"
            "\n"
            "  -g (--gate) " UNDERLINE("value") "\n"
-           "         Sets the number range gates to " UNDERLINE("value") ".\n"
-           "         If not specified, the default PRF is 8192 Hz.\n"
+           "         Sets the number range gate capacity to " UNDERLINE("value") ".\n"
+           "         If not specified, the default gate capacity is 8,000 bins.\n"
            "\n"
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
-		   "  -F (--fast-system)\n"
-		   "         Runs with arguments '-s -b 50e6 -f 5000 -g 60000 -c 10,4'.\n"
-		   "\n"
-		   "  -I (--intermediate-system)\n"
-		   "         Runs with arguments '-s -b 20e6 -f 2000 -g 30000 -c 4,2'.\n"
-		   "\n"
-           "  -L (--lean-system)\n"
-           "         Runs with arguments '-s -b 20e6 -f 1000 -g 16000 -c 4,2'.\n"
+           "  -F (--full-system)\n"
+           "         Runs with a level-5 system (see -S).\n"
+           "\n"
+           "  -H (--high-system)\n"
+		   "         Runs with a level-4 system (see -S).\n"
+           "\n"
+           "  -I (--int-system)\n"
+		   "         Runs with a level-3 system (see -S).\n"
+           "\n"
+           "  -L (--low-system)\n"
+		   "         Runs with a level-2 system (see -S).\n"
            "\n"
            "  -M (--minimum-system)\n"
-           "         Runs with arguments '-s -b 5e6 -f 1000 -g 2000 -c 2,2'.\n"
+		   "         Runs with a level-1 system (see -S).\n"
+           "\n"
+           "  -S (--system) " UNDERLINE("level") "\n"
+           "         Sets the simulation to run one of the following levels:\n"
+           "          1 - 5-MHz 2,000 gates\n"
+           "          2 - 10-MHz 10,000 gates\n"
+           "          3 - 20-MHz 25,000 gates\n"
+           "          4 - 50-MHz 50,000 gates\n"
+		   "          5 - 100-MHz 100,000 gates\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
@@ -112,8 +123,9 @@ void showHelp() {
            "  -t (--tweeta-host)\n"
            "         Sets the host of tweeta health relay.\n"
            "\n"
-           "  -s (--simulate)\n"
+           "  -s (--simulate) " UNDERLINE("[system]") "\n"
            "         Sets the program to simulate data stream.\n"
+		   "         The optional system value selectes the system level to simulate (see -S).\n"
            "\n"
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
@@ -156,15 +168,76 @@ void showHelp() {
            "     Here are some examples of typical configurations.\n"
            "\n"
            "  rktest -vL\n"
-           "         Runs the program with default settings for a lean system and verbose.\n"
+		   "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
+		   "\n"
+		   "  rktest -vs1\n"
+		   "         Runs the program in verbose mode, and to simulate a level-1 system.\n"
            "\n"
-           "  radar -L -f 2000\n"
-           "         Same as above but with PRF = 2000 Hz.\n"
+           "  rktest -vL -f 2000\n"
+           "         Same as above but with PRF = 2,000 Hz.\n"
            "\n"
-           "  radar -T 50\n"
+           "  rktest -T 50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n"
            );
+}
+
+static void setSystemLevel(UserParams *user, const int level) {
+    switch (level) {
+        case 0:
+            // Debug
+            user->simulate = true;
+            user->fs = 5000000;
+            user->gateCount = 1000;
+            user->coresForPulseCompression = 2;
+            user->coresForProductGenerator = 2;
+			user->prf = 6;
+            break;
+        case 1:
+            // Minimum
+            user->simulate = true;
+            user->fs = 5000000;
+            user->gateCount = 2000;
+            user->coresForPulseCompression = 2;
+            user->coresForProductGenerator = 2;
+            break;
+        case 2:
+            // Low
+            user->simulate = true;
+            user->fs = 10000000;
+            user->gateCount = 10000;
+            user->coresForPulseCompression = 4;
+            user->coresForProductGenerator = 2;
+            break;
+        case 3:
+            // Intermediate
+            user->simulate = true;
+            user->fs = 20000000;
+            user->gateCount = 25000;
+            user->coresForPulseCompression = 6;
+            user->coresForProductGenerator = 4;
+            break;
+        case 4:
+            // High
+            user->simulate = true;
+            user->fs = 50000000;
+            user->gateCount = 50000;
+            user->coresForPulseCompression = 8;
+            user->coresForProductGenerator = 4;
+            break;
+        case 5:
+            // Full
+            user->simulate = true;
+            user->fs = 100000000;
+            user->gateCount = 100000;
+            user->coresForPulseCompression = 10;
+            user->coresForProductGenerator = 4;
+            break;
+        default:
+            // Default
+            user->simulate = false;
+            break;
+    }
 }
 
 UserParams processInput(int argc, const char **argv) {
@@ -174,11 +247,8 @@ UserParams processInput(int argc, const char **argv) {
     UserParams user;
 
     // Zero out everything and set some default parameters
-	memset(&user, 0, sizeof(UserParams));
-	user.fs = 5000000;
-    user.gateCount = 2000;
-    user.coresForPulseCompression = 2;
-    user.coresForProductGenerator = 2;
+    memset(&user, 0, sizeof(UserParams));
+	setSystemLevel(&user, 2);
 
     // Build a RKRadar initialization description
     user.desc.initFlags = RKInitFlagAllocEverything;
@@ -188,17 +258,19 @@ UserParams processInput(int argc, const char **argv) {
     user.desc.longitude = -97.436752;
     user.desc.radarHeight = 2.5f;
     user.desc.wavelength = 0.03f;
+	user.prf = 1000;
     strcpy(user.desc.dataPath, ROOT_PATH);
 
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
         {"clock"                 , no_argument      , NULL, 'C'},
         {"demo"                  , no_argument      , NULL, 'D'},
-		{"fast-system"           , no_argument      , NULL, 'F'},
+        {"fast-system"           , no_argument      , NULL, 'F'},
         {"high-system"           , no_argument      , NULL, 'H'},
-		{"intermediate-system"   , no_argument      , NULL, 'I'},
-        {"lean-system"           , no_argument      , NULL, 'L'},
-        {"minimum-system"        , no_argument      , NULL, 'M'},
+        {"int-system"            , no_argument      , NULL, 'I'},
+        {"low-system"            , no_argument      , NULL, 'L'},
+        {"min-system"            , no_argument      , NULL, 'M'},
+        {"system"                , required_argument, NULL, 'S'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
@@ -207,11 +279,11 @@ UserParams processInput(int argc, const char **argv) {
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
-		{"interpulse-period"     , required_argument, NULL, 'i'},
+        {"interpulse-period"     , required_argument, NULL, 'i'},
         {"pedzy-host"            , required_argument, NULL, 'p'},
         {"quiet"                 , no_argument      , NULL, 'q'},
         {"relay"                 , required_argument, NULL, 'r'},
-        {"simulate"              , no_argument      , NULL, 's'},
+        {"simulate"              , optional_argument, NULL, 's'},
         {"tweeta-host"           , required_argument, NULL, 't'},
         {"verbose"               , no_argument      , NULL, 'v'},
         {"do-not-write"          , no_argument      , NULL, 'w'},
@@ -234,54 +306,29 @@ UserParams processInput(int argc, const char **argv) {
                 user.desc.initFlags |= RKInitFlagShowClockOffset;
                 break;
             case 'D':
-                user.simulate = true;
-				user.fs = 5000000;
-                user.prf = 6;
-				user.gateCount = 1000;
-                user.coresForPulseCompression = 2;
-                user.coresForProductGenerator = 2;
+                setSystemLevel(&user, 0);
                 break;
             case 'F':
-				user.simulate = true;
-				user.fs = 100000000;
-				user.prf = 1000;
-				user.gateCount = 80000;
-				user.coresForPulseCompression = 10;
-				user.coresForProductGenerator = 4;
-				break;
-			case 'H':
-                user.simulate = true;
-				user.fs = 50000000;
-                user.prf = 1000;
-				user.gateCount = 40000;
-                user.coresForPulseCompression = 8;
-                user.coresForProductGenerator = 4;
+                setSystemLevel(&user, 5);
                 break;
-			case 'I':
-				user.simulate = true;
-				user.fs = 20000000;
-				user.prf = 1000;
-				user.gateCount = 20000;
-				user.coresForPulseCompression = 6;
-				user.coresForProductGenerator = 4;
-				break;
+            case 'H':
+                setSystemLevel(&user, 4);
+                break;
+            case 'I':
+                setSystemLevel(&user, 3);
+                break;
             case 'L':
-                user.simulate = true;
-				user.fs = 20000000;
-                user.prf = 1000;
-				user.gateCount = 16000;
-                user.coresForPulseCompression = 4;
-                user.coresForProductGenerator = 2;
+                setSystemLevel(&user, 2);
                 break;
-			case 'M':
-				user.simulate = true;
-				user.fs = 5000000;
-				user.prf = 1000;
-				user.gateCount = 2000;
-				user.coresForPulseCompression = 2;
-				user.coresForProductGenerator = 2;
-				break;
+            case 'M':
+                setSystemLevel(&user, 1);
+                break;
+            case 'S':
+                k = atoi(optarg);
+                setSystemLevel(&user, k);
+                break;
             case 'T':
+                // A bunch of different tests
                 RKSetWantScreenOutput(true);
                 k = atoi(optarg);
                 switch (k) {
@@ -377,19 +424,9 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 exit(EXIT_SUCCESS);
                 break;
-            case 'U':
-                exit(EXIT_FAILURE);
+            case 'b':
+                user.fs = roundf(atof(optarg));
                 break;
-            case 'P':
-                if (optarg) {
-                    user.testPulseCompression = atoi(optarg);
-                } else {
-                    user.testPulseCompression = 1;
-                }
-                break;
-			case 'b':
-				user.fs = roundf(atof(optarg));
-				break;
             case 'c':
                 sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
                 break;
@@ -409,13 +446,13 @@ UserParams processInput(int argc, const char **argv) {
                 showHelp();
                 exit(EXIT_SUCCESS);
                 break;
-			case 'i':
-				k = sscanf(optarg, "%f,%d", &user.prf, &user.sprt);
-				user.prf = 1.0f / user.prf;
-				if (k < 2) {
-					user.sprt = 0;
-				}
-				break;
+            case 'i':
+                k = sscanf(optarg, "%f,%d", &user.prf, &user.sprt);
+                user.prf = 1.0f / user.prf;
+                if (k < 2) {
+                    user.sprt = 0;
+                }
+                break;
             case 'p':
                 strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
                 break;
@@ -423,11 +460,16 @@ UserParams processInput(int argc, const char **argv) {
                 user.verbose = MAX(user.verbose - 1, 0);
                 break;
             case 'r':
-				user.desc.initFlags = RKInitFlagRelay;
+                user.desc.initFlags = RKInitFlagRelay;
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;
             case 's':
                 user.simulate = true;
+				if (optarg) {
+					setSystemLevel(&user, atoi(optarg));
+				} else {
+					setSystemLevel(&user, 1);
+				}
                 break;
             case 't':
                 strncpy(user.tweetaHost, optarg, sizeof(user.tweetaHost));
@@ -446,7 +488,7 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 break;
             default:
-				fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
+                fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -461,23 +503,23 @@ UserParams processInput(int argc, const char **argv) {
     } else if (user.verbose == 3) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-	if (user.gateCount >= 40000) {
-		user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 8000);
-	} else if (user.gateCount >= 20000) {
-		user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 4000);
-	} else if (user.gateCount >= 4000) {
+    if (user.gateCount >= 40000) {
+        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 8000);
+    } else if (user.gateCount >= 20000) {
+        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 4000);
+    } else if (user.gateCount >= 4000) {
         user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
     } else {
         user.desc.pulseToRayRatio = 2;
     }
-	k = user.fs / user.prf;
-	if (user.gateCount > k) {
-		RKLog("Info. Gate count adjusted: %s -> %s for PRF (%s kHz) and bandwidth (%s MHz)",
-			  RKIntegerToCommaStyleString(user.gateCount), RKIntegerToCommaStyleString(k),
-			  RKFloatToCommaStyleString(1.0e-3 * user.prf), RKFloatToCommaStyleString(1.0e-6 * user.fs));
-		user.gateCount = k;
-	}
-	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
+    k = user.fs / user.prf;
+    if (user.gateCount > k) {
+        RKLog("Info. Gate count adjusted: %s -> %s for PRF (%s kHz) and bandwidth (%s MHz)",
+              RKIntegerToCommaStyleString(user.gateCount), RKIntegerToCommaStyleString(k),
+              RKFloatToCommaStyleString(1.0e-3 * user.prf), RKFloatToCommaStyleString(1.0e-6 * user.fs));
+        user.gateCount = k;
+    }
+    user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
     return user;
 }
 
@@ -509,8 +551,8 @@ int main(int argc, const char **argv) {
         exit(EXIT_FAILURE);
     } else if (user.simulate == true && user.desc.initFlags == RKInitFlagRelay) {
         RKLog("Info. Simulate takes precedence over relay.\n");
-		user.desc.initFlags = RKInitFlagAllocEverything;
-		user.simulate = true;
+        user.desc.initFlags = RKInitFlagAllocEverything;
+        user.simulate = true;
     }
 
     // Screen output based on verbosity level
@@ -555,8 +597,8 @@ int main(int argc, const char **argv) {
     signal(SIGKILL, handleSignals);
 
     // Set any parameters here:
-	RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
-	if (!user.writeFiles) {
+    RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
+    if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
 
@@ -567,9 +609,9 @@ int main(int argc, const char **argv) {
         // Build a series of options for transceiver, only pass down the relevant parameters
         int i = 0;
         char cmd[64] = "";
-		if (user.fs) {
-			i += sprintf(cmd + i, " F %.0f", user.fs);
-		}
+        if (user.fs) {
+            i += sprintf(cmd + i, " F %.0f", user.fs);
+        }
         if (user.prf) {
             if (user.sprt > 1) {
                 i += sprintf(cmd + i, " f %.0f,%d", user.prf, user.sprt);
@@ -640,7 +682,7 @@ int main(int argc, const char **argv) {
             //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
             waveform = RKWaveformInitAsLinearFrequencyModulation(5.0, 0.0, 10.0, 1.5);
             RKLog("Waveform LFM generated.\n");
-			RKAddConfig(myRadar, RKConfigKeySystemZCal, -55.0f, -55.0f, RKConfigKeyNull);
+            RKAddConfig(myRadar, RKConfigKeySystemZCal, -55.0f, -55.0f, RKConfigKeyNull);
         }
         RKSetWaveform(myRadar, waveform);
         RKWaveformFree(waveform);
@@ -664,11 +706,11 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
-	} else {
+    } else {
 
-		RKLog("Error. This should not happen.");
+        RKLog("Error. This should not happen.");
 
-	}
+    }
     
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
