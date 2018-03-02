@@ -216,6 +216,14 @@ typedef union rk_filter_anchor {
 #define RKFilterAnchorDefaultWithMaxDataLength(x)       {{0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f, 1.0f}}
 #define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{0, 0, (x),  0, 0, (y) , 0.0f, 1.0f, 1.0f}}
 
+typedef struct rk_iir_filter {
+    uint32_t      name;
+    uint32_t      bLength;
+    uint32_t      aLength;
+    RKComplex     *B;
+    RKComplex     *A;
+} RKIIRFilter;
+
 typedef struct rk_modulo_path {
     uint32_t      origin;
     uint32_t      length;
@@ -240,6 +248,7 @@ enum RKResult {
     RKResultNoMomentEngine,
     RKResultFailedToStartCompressionCore,
     RKResultFailedToStartPulseWatcher,
+    RKResultFailedToStartRingPulseWatcher,
     RKResultFailedToInitiateSemaphore,
     RKResultFailedToRetrieveSemaphore,
     RKResultTooBig,
@@ -344,6 +353,15 @@ enum RKMarker {
     RKMarkerMemoryManagement         = (1 << 15)
 };
 
+// Typical status progression:
+// -> RKPulseStatusVacant
+// -> RKPulseStatusHasIQData
+// -> RKPulseStatusInspected (main thread)
+// -> RKPulseStatusProcessed (core threads)  (RKPulseStatusCompressed / RKPulseStatusSkipped)
+// -> RKPulseStatusRingInspected (main thread)
+// -> RKPulseStatusRingProcessed (core threads)  (RKPulseStatusRingFiltered / RKPulseStatusRingSkipped)
+// -> RKPulseStatusHasPosition
+// -> RKPulseStatusReadyForMoment
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
     RKPulseStatusVacant              = 0,
@@ -353,9 +371,12 @@ enum RKPulseStatus {
     RKPulseStatusCompressed          = (1 << 3),                     // 0x08
     RKPulseStatusSkipped             = (1 << 4),                     // 0x10
     RKPulseStatusProcessed           = (1 << 5),                     // 0x20
-    RKPulseStatusRingFiltered        = (1 << 6),
-	RKPulseStatusDownSampled         = (1 << 7),
-    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
+    RKPulseStatusRingInspected       = (1 << 6),
+    RKPulseStatusRingFiltered        = (1 << 7),
+    RKPulseStatusRingSkipped         = (1 << 8),
+    RKPulseStatusRingProcessed       = (1 << 9),
+	RKPulseStatusDownSampled         = (1 << 10),
+    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition)
 };
 
 typedef uint32_t RKRayStatus;

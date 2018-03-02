@@ -140,7 +140,7 @@ static void *pulseTagger(void *in) {
         engine->state ^= RKEngineStateSleep2;
         // Wait until the pulse has data & processed. Otherwise, the time stamp is no good and there is a horse raise with the pulse compression engine (setting flag).
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusRingProcessed) && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",

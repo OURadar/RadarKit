@@ -2,6 +2,9 @@
 //  RKPulseRingFilter.h
 //  RadarKit
 //
+//  NOTE: This module was started for FIR/IIR filters but it would
+//  probably never be used so this engine is mostly doing nothing.
+//
 //  Created by Boon Leng Cheong on 11/11/17.
 //  Copyright (c) 2015-2018 Boon Leng Cheong. All rights reserved.
 //
@@ -16,13 +19,13 @@ typedef struct rk_pulse_ring_filter_worker RKPulseRingFilterWorker;
 typedef struct rk_pulse_ring_filter_engine RKPulseRingFilterEngine;
 
 struct rk_pulse_ring_filter_worker {
-    RKPulseRingFilterEngine   *parentEngine;
-    char                      semaphoreName[16];
-    int                       id;
+    RKPulseRingFilterEngine    *parentEngine;
+    char                       semaphoreName[16];
+    int                        id;
     pthread_t                  tid;                                      // Thread ID
     uint32_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];
+    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
     sem_t                      *sem;
@@ -40,7 +43,8 @@ struct rk_pulse_ring_filter_engine {
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
-    RKComplex                        *filters[2];
+    RKComplex                        *filters[2];                        // Coefficients b & a
+    RKModuloPath                     *filterLinePath;                    // The origin and length for each worker
     
     // Program set variables
     RKPulseRingFilterWorker          *workers;
@@ -60,6 +64,18 @@ struct rk_pulse_ring_filter_engine {
 RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void);
 void RKPulseRingFilterEngineFree(RKPulseRingFilterEngine *);
 
+void RKPulseRingFilterEngineSetVerbose(RKPulseRingFilterEngine *, const int);
+void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *, const RKRadarDesc *,
+                                                  RKConfig *configBuffer, uint32_t *configIndex,
+                                                  RKBuffer pulseBuffer,   uint32_t *pulseIndex);
+void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_t);
+void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
+
+int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
+
+int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);
+
+char *RKPulseRingFilterEngineStatusString(RKPulseRingFilterEngine *);
 
 #endif

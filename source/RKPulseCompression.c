@@ -138,6 +138,7 @@ static void *pulseCompressionCore(void *_in) {
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     mem += 2 * nfft * sizeof(RKFloat);
+    
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -154,7 +155,7 @@ static void *pulseCompressionCore(void *_in) {
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
     
-    // The last index of the pulse buffer
+    // The last index of the pulse buffer for this core (i.e., increment by one will get c)
     uint32_t i0 = engine->radarDescription->pulseBufferDepth - engine->coreCount + c;
 
     // The latest index in the dutyCycle buffer
@@ -571,10 +572,8 @@ static void *pulseWatcher(void *_in) {
                 engine->filterGid[i] = -1;
                 pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
             } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
-        }
-
-        // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
-        if (skipCounter > 0) {
+        } else if (skipCounter > 0) {
+            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             engine->filterGid[k] = -1;
             engine->planIndices[k][0] = 0;
             if (--skipCounter == 0) {
@@ -941,9 +940,8 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
         return RKResultFailedToStartPulseWatcher;
     }
     while (engine->tic == 0) {
-        usleep(1000);
+        usleep(10000);
     }
-
     return RKResultNoError;
 }
 

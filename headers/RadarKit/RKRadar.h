@@ -17,6 +17,7 @@
 #include <RadarKit/RKHealth.h>
 #include <RadarKit/RKPosition.h>
 #include <RadarKit/RKPulseCompression.h>
+#include <RadarKit/RKPulseRingFilter.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKHealthLogger.h>
 #include <RadarKit/RKDataRecorder.h>
@@ -46,18 +47,19 @@ enum RKRadarState {
     RKRadarStateControlsAllocating                   = (1 << 14),  //
     RKRadarStateControlsInitialized                  = (1 << 15),  //
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
-    RKRadarStatePositionEngineInitialized            = (1 << 17),
-    RKRadarStateHealthEngineInitialized              = (1 << 18),
-    RKRadarStateMomentEngineInitialized              = (1 << 19),
-    RKRadarStateSweepEngineInitialized               = (1 << 20),
-    RKRadarStateFileRecorderInitialized              = (1 << 21),
-    RKRadarStateHealthLoggerInitialized              = (1 << 22),  // Recorders
-    RKRadarStateFileManagerInitialized               = (1 << 23),
-    RKRadarStateRadarRelayInitialized                = (1 << 24),
-    RKRadarStateHealthRelayInitialized               = (1 << 25),
-    RKRadarStateTransceiverInitialized               = (1 << 26),
-    RKRadarStatePedestalInitialized                  = (1 << 27),
-    RKRadarStateHostMonitorInitialized               = (1 << 28),
+    RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
+    RKRadarStatePositionEngineInitialized            = (1 << 18),  //
+    RKRadarStateHealthEngineInitialized              = (1 << 19),  //
+    RKRadarStateMomentEngineInitialized              = (1 << 20),  //
+    RKRadarStateSweepEngineInitialized               = (1 << 21),  //
+    RKRadarStateFileRecorderInitialized              = (1 << 22),  //
+    RKRadarStateHealthLoggerInitialized              = (1 << 23),  // Recorders
+    RKRadarStateFileManagerInitialized               = (1 << 24),
+    RKRadarStateRadarRelayInitialized                = (1 << 25),
+    RKRadarStateHealthRelayInitialized               = (1 << 26),
+    RKRadarStateTransceiverInitialized               = (1 << 27),
+    RKRadarStatePedestalInitialized                  = (1 << 28),
+    RKRadarStateHostMonitorInitialized               = (1 << 29),
     RKRadarStateLive                                 = (1 << 31)
 };
 
@@ -109,6 +111,7 @@ struct rk_radar {
     RKHealthEngine             *healthEngine;
     RKPositionEngine           *positionEngine;
     RKPulseCompressionEngine   *pulseCompressionEngine;
+    RKPulseRingFilterEngine    *pulseRingFilterEngine;
     RKMomentEngine             *momentEngine;
     RKHealthLogger             *healthLogger;
     RKSweepEngine              *sweepEngine;
