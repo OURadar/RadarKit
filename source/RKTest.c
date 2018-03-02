@@ -792,7 +792,6 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 		if (response != NULL) {
 			sprintf(response,
 					"Commands:\n"
-					"---------\n"
 					UNDERLINE("help") " - Help list.\n"
 					UNDERLINE("prt") " [value] - PRT set to value\n"
 					UNDERLINE("z") " [value] - Sleep interval set to value.\n"
