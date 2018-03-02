@@ -67,7 +67,8 @@ static void *ringFilterCore(void *_in) {
     struct timeval t0, t1, t2;
 
     const int c = me->id;
-    
+	const int ci = engine->coreOrigin + c;
+       
     // Find the semaphore
     sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
     if (sem == SEM_FAILED) {
@@ -98,7 +99,7 @@ static void *ringFilterCore(void *_in) {
     // Set my CPU core
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(engine->coreOrigin + c, &cpuset);
+    CPU_SET(ci, &cpuset);
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
     pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
     
@@ -133,8 +134,8 @@ static void *ringFilterCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem));
+    RKLog(">%s %s Started.   mem = %s B   ci = %d\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), ci);
     
     pthread_mutex_unlock(&engine->coreMutex);
 

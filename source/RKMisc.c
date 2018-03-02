@@ -43,6 +43,8 @@ char *RKGetBackgroundColor(void) {
     return RKGetBackgroundColorOfIndex(c++);
 }
 
+#pragma mark -
+
 char *RKGetBackgroundColorOfIndex(const int i) {
     const uint8_t colors[] = {210, 197, 202, 178, 136, 70, 28, 30, 39, 27, 99, 57, 90, 162, 241, 236};
     static int k = 3;
@@ -555,3 +557,18 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpu_size, cpu_set_t *cpu_set
 }
 
 #endif
+
+long RKGetCPUIndex(void) {
+	static long c = 1;
+	static long count = 0;
+	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_lock(&mutex);
+	if (count == 0) {
+		count = sysconf(_SC_NPROCESSORS_ONLN);
+		if (count == 0) {
+			count = 1;
+		}
+	}
+	pthread_mutex_unlock(&mutex);
+	return c++ % count;
+}
