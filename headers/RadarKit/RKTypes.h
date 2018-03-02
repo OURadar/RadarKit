@@ -356,8 +356,10 @@ enum RKMarker {
 // Typical status progression:
 // -> RKPulseStatusVacant
 // -> RKPulseStatusHasIQData
-// -> RKPulseStatusInspected + RKPulseStatusProcessed (RKPulseStatusCompressed / RKPulseStatusSkipped)
-// -> RKPulseStatusRingInspected + RKPulseStatusRingProcessed (RKPulseStatusRingFiltered / RKPulseStatusRingSkipped)
+// -> RKPulseStatusInspected (main thread)
+// -> RKPulseStatusProcessed (core threads)  (RKPulseStatusCompressed / RKPulseStatusSkipped)
+// -> RKPulseStatusRingInspected (main thread)
+// -> RKPulseStatusRingProcessed (core threads)  (RKPulseStatusRingFiltered / RKPulseStatusRingSkipped)
 // -> RKPulseStatusHasPosition
 // -> RKPulseStatusReadyForMoment
 typedef uint32_t RKPulseStatus;
@@ -374,7 +376,7 @@ enum RKPulseStatus {
     RKPulseStatusRingSkipped         = (1 << 8),
     RKPulseStatusRingProcessed       = (1 << 9),
 	RKPulseStatusDownSampled         = (1 << 10),
-    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusHasPosition)
+    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition)
 };
 
 typedef uint32_t RKRayStatus;

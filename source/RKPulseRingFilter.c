@@ -174,7 +174,13 @@ static void *ringFilterCore(void *_in) {
         // Start of getting busy
         i0 = RKNextModuloS(i0, engine->radarDescription->pulseBufferDepth);
 
-        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, i0);
+        pulse = RKGetPulse(engine->pulseBuffer, i0);
+
+        // Now we do the work
+        // Should only focus on the tasked range bins
+        //
+        // Decide whether the pulse has been processed by FIR/IIR filter
+        pulse->header.s |= RKPulseStatusRingFiltered | RKPulseStatusRingProcessed;
 
         #ifdef DEBUG_IQ
         RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
@@ -213,7 +219,7 @@ static void *ringFilterCore(void *_in) {
 static void *pulseRingWatcher(void *_in) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
     
-    int c, i, j, k;
+    int c, i, k;
     
     sem_t *sem[engine->coreCount];
     
@@ -286,7 +292,6 @@ static void *pulseRingWatcher(void *_in) {
 
     // Here comes the busy loop
     // i  anonymous
-    // j  filter index
     k = 0;   // pulse index
     c = 0;   // core index
     int s = 0;
@@ -364,9 +369,6 @@ static void *pulseRingWatcher(void *_in) {
             }
         }
         
-        // Decide whether the pulse has been processed by FIR/IIR filter
-        pulse->header.s |= RKPulseStatusRingProcessed;
-
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {

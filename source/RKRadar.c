@@ -1072,11 +1072,13 @@ int RKGoLive(RKRadar *radar) {
             RKLog("Info. Not enough physical cores (%d / %d). Core counts will be adjusted.\n",
 				  radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
             RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
+            RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, MAX(1, radar->processorCount / 2));
             RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2 - 1));
         }
+        // For now, pulse compression and ring filter engines both share the same cores
         RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
-        RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o + radar->pulseCompressionEngine->coreCount);
-        RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount + radar->pulseRingFilterEngine->coreCount);
+        RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o);
+        RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
         // Now, we start the engines
         RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
         RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);

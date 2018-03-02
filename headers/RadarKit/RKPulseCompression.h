@@ -30,7 +30,7 @@ struct rk_pulse_compression_worker {
     pthread_t                  tid;                                      // Thread ID
     uint32_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];
+    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
     sem_t                      *sem;
