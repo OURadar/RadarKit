@@ -615,7 +615,8 @@ int main(int argc, const char **argv) {
     if (user.simulate) {
 
         // Now we use the frame work.
-
+		printf("simulate:\n");
+		
         // Build a series of options for transceiver, only pass down the relevant parameters
         int i = 0;
         char cmd[64] = "";

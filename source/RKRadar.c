@@ -956,9 +956,9 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
 	}
 	RKFilterAnchor anchor = RKFilterAnchorDefault;
 	RKAddConfig(radar,
-				RKConfigKeyWaveform, "F1",
+				RKConfigKeyWaveform, "P01",
 				RKConfigKeyFilterCount, 1,
-				RKConfigKeyFilterAnchor, anchor,
+				RKConfigKeyFilterAnchor, &anchor,
 				RKConfigKeyNull);
 	return RKResultNoError;
 }

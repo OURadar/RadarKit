@@ -441,7 +441,7 @@ static void *pulseWatcher(void *_in) {
     }
 
     // Go through the maximum plan size and divide it by two a few times
-    while (planSize >= 512 && planIndex < RKPulseCompressionDFTPlanCount) {
+    while (planSize >= pulse->header.capacity / 4 && planIndex < RKPulseCompressionDFTPlanCount) {
         if (engine->verbose) {
             RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         }
@@ -460,6 +460,10 @@ static void *pulseWatcher(void *_in) {
         engine->planCount++;
         planSize /= 2;
     }
+	if (planIndex == 0) {
+		RKLog("%s No plan was made.\n", engine->name);
+		exit(EXIT_FAILURE);
+	}
 
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state |= RKEngineStateActive;
@@ -589,7 +593,7 @@ static void *pulseWatcher(void *_in) {
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
                 planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                                                            engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
+                                                            engine->filterAnchors[gid][j].length)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {
@@ -843,13 +847,19 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
               RKIntegerToCommaStyleString(anchor.inputOrigin));
         return RKResultFailedToSetFilter;
     }
-    size_t nfft = 1 << (int)ceilf(log2f((float)MIN(MAX(anchor.length, pulse->header.capacity - anchor.inputOrigin), anchor.maxDataLength + anchor.length)));
+	const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
     if (anchor.outputOrigin >= nfft) {
         RKLog("%s Error. NFFT %s   Filter X @ (o:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),
               RKIntegerToCommaStyleString(anchor.outputOrigin));
         return RKResultFailedToSetFilter;
     }
+	if (anchor.length > nfft) {
+		RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
+			  RKIntegerToCommaStyleString(nfft),
+			  RKIntegerToCommaStyleString(anchor.length));
+		return RKResultFailedToSetFilter;
+	}
     if (engine->filters[group][index] == NULL) {
         RKLog("%s Error. Filter memory not allocated.\n", engine->name);
     }
