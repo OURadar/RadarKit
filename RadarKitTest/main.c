@@ -188,10 +188,12 @@ static void setSystemLevel(UserParams *user, const int level) {
             // Debug
             user->simulate = true;
             user->fs = 5000000;
-            user->gateCount = 1000;
+            user->gateCount = 30;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
-			user->prf = 6;
+			user->desc.pulseBufferDepth = 20;
+			user->desc.rayBufferDepth = 20;
+			user->prf = 10;
             break;
         case 1:
             // Minimum

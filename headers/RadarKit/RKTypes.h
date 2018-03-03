@@ -212,7 +212,7 @@ typedef union rk_filter_anchor {
 	char bytes[64];
 } RKFilterAnchor;
 
-#define RKFilterAnchorDefault                           {{0, 0,  1 ,  0, 0, 1024, 0.0f, 1.0f, 1.0f}}
+#define RKFilterAnchorDefault                           {{0, 0,  1 ,  0, 0, RKGateCount, 0.0f, 1.0f, 1.0f}}
 #define RKFilterAnchorDefaultWithMaxDataLength(x)       {{0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f, 1.0f}}
 #define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{0, 0, (x),  0, 0, (y) , 0.0f, 1.0f, 1.0f}}
 

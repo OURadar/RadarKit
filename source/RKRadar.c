@@ -859,16 +859,19 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
         return RKResultFailedToSetFilter;
     }
-    int j, k;
+    int j, k, r;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
-                                        filter,
-                                        waveform->filterAnchors[k][j],
-                                        k,
-                                        j);
+			r = RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
+											filter,
+											waveform->filterAnchors[k][j],
+											k,
+											j);
+			if (r != RKResultNoError) {
+				return RKSetWaveformToImpulse(radar);
+			}
         }
     }
 	// Pulse compression engine already made a copy, we can mutate waveform here for the config buffer
@@ -946,14 +949,30 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    return RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+	RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
+	RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+	if (radar->desc.initFlags & RKInitFlagVerbose) {
+		RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+	}
+	RKFilterAnchor anchor = RKFilterAnchorDefault;
+	RKAddConfig(radar,
+				RKConfigKeyWaveform, "F1",
+				RKConfigKeyFilterCount, 1,
+				RKConfigKeyFilterAnchor, anchor,
+				RKConfigKeyNull);
+	return RKResultNoError;
 }
 
 int RKSetWaveformTo121(RKRadar *radar) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    return RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+	RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
+	RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+	if (radar->desc.initFlags & RKInitFlagVerbose) {
+		RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+	}
+	return RKResultNoError;
 }
 
 int RKSetProcessingCoreCounts(RKRadar *radar,

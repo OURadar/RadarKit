@@ -375,18 +375,34 @@ static void *pulseRingWatcher(void *_in) {
         
         // Now we set this pulse to be "not done" and post
         workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
-        for (c = 0; c < engine->coreCount; c++) {
-            *workerTaskDone++ = false;
-            if (engine->useSemaphore) {
-                if (sem_post(sem[c])) {
-                    RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
-                }
-            } else {
-                engine->workers[c].tic++;
-            }
-        }
-        
-        // Now we check how many pulses are done
+
+		#ifdef SHOW_RING_FILTER_DOUBLE_BUFFERING
+		for (c = 0; c < engine->coreCount; c++) {
+			*workerTaskDone++ = false;
+		}
+		workerTaskDone = engine->workerTaskDone;
+		for (c = 0; c < engine->coreCount; c++) {
+			printf("c=%d:", c);
+			for (i = 0; i < engine->radarDescription->pulseBufferDepth; i++) {
+				printf(" %d", workerTaskDone[i * engine->coreCount + c]);
+			}
+			printf("\n");
+		}
+		printf("===\n");
+		#endif
+
+		for (c = 0; c < engine->coreCount; c++) {
+			*workerTaskDone++ = false;
+			if (engine->useSemaphore) {
+				if (sem_post(sem[c])) {
+					RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
+				}
+			} else {
+				engine->workers[c].tic++;
+			}
+		}
+
+		// Now we check how many pulses are done
         allDone = true;
         while (j != k) {
             // Decide whether the pulse has been processed by FIR/IIR filter

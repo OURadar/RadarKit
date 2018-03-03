@@ -866,6 +866,9 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
+	if (engine->verbose) {
+		RKLog("%s Setting impulse filter...", engine->name);
+	}
     RKComplex filter[] = {{1.0f, 0.0f}};
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     if (pulse == NULL) {
@@ -877,6 +880,7 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
+	anchor.filterGain = 1.0f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -892,6 +896,7 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
+	anchor.filterGain = 2.4495f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -907,6 +912,7 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
+	anchor.filterGain = 1.4142f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 

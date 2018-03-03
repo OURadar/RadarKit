@@ -134,7 +134,7 @@ static void *pulseRecorder(void *in) {
                     if (engine->verbose) {
 						RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
 							  engine->name,
-							  rkGlobalParameters.showColor ? "\033[38;5;46m" : "",
+							  rkGlobalParameters.showColor ? RKGreenColor : "",
 							  rkGlobalParameters.showColor ? RKNoColor : "",
 							  filename,
 							  RKIntegerToCommaStyleString(n),
