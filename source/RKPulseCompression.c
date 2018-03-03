@@ -846,7 +846,9 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 	// Use the first pulse of the buffer to determine the capacity
 	RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     // Check if filter anchor is valid
-	RKLog(">%s Setting filter group %d index %d ...\n", engine->name, group, index);
+	if (engine->verbose > 1) {
+		RKLog(">%s Setting filter group %d index %d ...\n", engine->name, group, index);
+	}
     if (anchor.inputOrigin >= pulse->header.capacity) {
         RKLog("%s Error. Pulse capacity %s   Filter X @ (i:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(pulse->header.capacity),
@@ -883,7 +885,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
-	if (engine->verbose) {
+	if (engine->verbose > 1) {
 		RKLog("%s Setting impulse filter...", engine->name);
 	}
     RKComplex filter[] = {{1.0f, 0.0f}};

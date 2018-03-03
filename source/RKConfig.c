@@ -75,6 +75,10 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->systemZCal[1] = (RKFloat)va_arg(args, double);
                 sprintf(stringBuffer, "SystemZCal = %.2f %.2f dB", newConfig->systemZCal[0], newConfig->systemZCal[1]);
                 break;
+			case RKConfigKeySystemDCal:
+				newConfig->systemDCal = (RKFloat)va_arg(args, double);
+				sprintf(stringBuffer, "SystemDCal = %.2f dB", newConfig->systemDCal);
+				break;
             case RKConfigKeyZCal:
                 newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[1][0] = (RKFloat)va_arg(args, double);

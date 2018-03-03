@@ -474,6 +474,7 @@ enum RKConfigKey {
     RKConfigKeyFilterAnchors,
     RKConfigKeyNoise,
     RKConfigKeySystemZCal,
+	RKConfigKeySystemDCal,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
@@ -640,9 +641,10 @@ typedef struct rk_config {
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     RKFloat          noise[2];                                       // Noise floor (ADU)
     RKFloat          systemZCal[2];                                  // System-wide reflectivity calibration (dB)
-    RKFloat          ZCal[2][RKMaxFilterCount];                      // Reflectivity calibration (dB)
-    RKFloat          DCal[RKMaxFilterCount];                         // ZDR calibration (dB)
-    RKFloat          PCal[RKMaxFilterCount];                         // Phase calibration
+	RKFloat          systemDCal;                                     // System-wide differential reflectivity calibration (dB)
+    RKFloat          ZCal[2][RKMaxFilterCount];                      // Waveform Z calibration (dB)
+    RKFloat          DCal[RKMaxFilterCount];                         // Waveform ZDR calibration (dB)
+    RKFloat          PCal[RKMaxFilterCount];                         // Waveform Phase calibration
     RKFloat          SNRThreshold;                                   // Censor SNR (dB)
     char             waveform[RKNameLength];                         // Waveform name
     char             vcpDefinition[RKNameLength];                    // Volume coverage pattern
