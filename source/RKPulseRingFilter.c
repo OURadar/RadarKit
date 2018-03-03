@@ -68,7 +68,7 @@ static void *ringFilterCore(void *_in) {
 
     const int c = me->id;
 	const int ci = engine->coreOrigin + c;
-       
+    
     // Find the semaphore
     sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
     if (sem == SEM_FAILED) {
@@ -107,6 +107,11 @@ static void *ringFilterCore(void *_in) {
 
     RKPulse *pulse;
     size_t mem = 0;
+    
+    // Allocate local resources, use k to keep track of the total allocation
+    // RKComplex *y[ACount]
+    // RKComplex *x[Bcount]
+    // NOTE: Align them to RKSIMDAlignSize for SIMD
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -180,7 +185,9 @@ static void *ringFilterCore(void *_in) {
         // Now we do the work
         // Should only focus on the tasked range bins
         //
-        engine->pulseDone[c * engine->radarDescription->pulseBufferDepth + i0] = true;
+        
+        // The task for this core is now done at this point
+        engine->workerTaskDone[i0 * engine->coreCount + c] = true;
 
         #ifdef DEBUG_IQ
         RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
@@ -227,6 +234,9 @@ static void *pulseRingWatcher(void *_in) {
     float lag;
     struct timeval t0, t1;
 
+    bool allDone;
+    bool *workerTaskDone;
+    
     if (engine->coreCount == 0) {
         RKLog("Error. No processing core?\n");
         return NULL;
@@ -237,8 +247,8 @@ static void *pulseRingWatcher(void *_in) {
     RKPulse *pulseToSkip;
 
     // Filter status of each worker
-    engine->pulseDone = (bool *)malloc(engine->coreCount * engine->radarDescription->pulseBufferDepth * sizeof(bool));
-    memset(engine->pulseDone, 0, engine->coreCount * engine->radarDescription->pulseBufferDepth * sizeof(bool));
+    engine->workerTaskDone = (bool *)malloc(engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
+    memset(engine->workerTaskDone, 0, engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
     
     // Change the state to active so all the processing cores stay in the busy loop
     engine->state |= RKEngineStateActive;
@@ -363,8 +373,10 @@ static void *pulseRingWatcher(void *_in) {
         // The pulse is considered "inspected" whether it will be skipped / filtered by the designated worker
         pulse->header.s |= RKPulseStatusRingInspected;
         
-        // Now we post
+        // Now we set this pulse to be "not done" and post
+        workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
         for (c = 0; c < engine->coreCount; c++) {
+            *workerTaskDone++ = false;
             if (engine->useSemaphore) {
                 if (sem_post(sem[c])) {
                     RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
@@ -375,11 +387,20 @@ static void *pulseRingWatcher(void *_in) {
         }
         
         // Now we check how many pulses are done
+        allDone = true;
         while (j != k) {
-            pulse = RKGetPulse(engine->pulseBuffer, j);
             // Decide whether the pulse has been processed by FIR/IIR filter
-            pulse->header.s |= RKPulseStatusRingFiltered | RKPulseStatusRingProcessed;
-            j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+            workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
+            for (c = 0; i < engine->coreCount; c++) {
+                allDone &= *workerTaskDone++;
+            }
+            if (allDone) {
+                pulse = RKGetPulse(engine->pulseBuffer, j);
+                pulse->header.s |= RKPulseStatusRingFiltered | RKPulseStatusRingProcessed;
+                j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+            } else {
+                break;
+            }
         }
         
         // Log a message if it has been a while
@@ -404,7 +425,7 @@ static void *pulseRingWatcher(void *_in) {
     }
     
     // Clean up
-    free(engine->pulseDone);
+    free(engine->workerTaskDone);
     
     return NULL;
 }

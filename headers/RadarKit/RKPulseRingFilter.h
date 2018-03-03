@@ -45,7 +45,7 @@ struct rk_pulse_ring_filter_engine {
     bool                             useSemaphore;
     RKComplex                        *filters[2];                        // Coefficients b & a
     RKModuloPath                     *filterLinePath;                    // The origin and length for each worker
-    bool                             *pulseDone;
+    bool                             *workerTaskDone;                    // Task status [coreCount x pulseBufferDepth]
     
     // Program set variables
     RKPulseRingFilterWorker          *workers;
