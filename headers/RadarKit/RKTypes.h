@@ -256,6 +256,7 @@ enum RKResult {
     RKResultFailedToAllocateFilter,
     RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAllocateScratchSpace,
+	RKResultFailedToSetWaveform,
     RKResultFailedToSetFilter,
     RKResultEngineDeactivatedMultipleTimes,
     RKResultFailedToStartMomentCore,

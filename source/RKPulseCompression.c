@@ -827,7 +827,7 @@ int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, cons
 //            - outputOrigin - origin of the output data to deliver
 //            - maxDataLength - maximum length of the output data to deliver
 //            - subCarrierFrequency - not used
-//            - gain - not used
+//            - gain - filter gain in dB
 //     group - filter group to assign to
 //     index - index within the group to assign to
 int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComplex *filter, const RKFilterAnchor anchor, const int group, const int index) {
@@ -836,24 +836,31 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         return RKResultNoPulseBuffer;
     }
     if (group >= RKMaxFilterGroups) {
-        RKLog("Error. Group %d is invalid.\n", group);
+        RKLog("Error. Filter group %d is invalid.\n", group);
         return RKResultFailedToSetFilter;
     }
+	if (index >= RKMaxFilterCount) {
+		RKLog("Error. Filter index %d is invalid.\n", index);
+		return RKResultFailedToSetFilter;
+	}
+	// Use the first pulse of the buffer to determine the capacity
+	RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     // Check if filter anchor is valid
-    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
+	RKLog(">%s Setting filter group %d index %d ...\n", engine->name, group, index);
     if (anchor.inputOrigin >= pulse->header.capacity) {
         RKLog("%s Error. Pulse capacity %s   Filter X @ (i:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(pulse->header.capacity),
               RKIntegerToCommaStyleString(anchor.inputOrigin));
         return RKResultFailedToSetFilter;
     }
+	if (anchor.outputOrigin >= pulse->header.capacity) {
+		RKLog("%s Error. Pulse capacity %s   Filter X @ (o:%s) invalid.\n", engine->name,
+			  RKIntegerToCommaStyleString(pulse->header.capacity),
+			  RKIntegerToCommaStyleString(anchor.outputOrigin));
+		return RKResultFailedToSetFilter;
+	}
+	// Check if this filter works with my capacity & nfft
 	const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
-    if (anchor.outputOrigin >= nfft) {
-        RKLog("%s Error. NFFT %s   Filter X @ (o:%s) invalid.\n", engine->name,
-              RKIntegerToCommaStyleString(nfft),
-              RKIntegerToCommaStyleString(anchor.outputOrigin));
-        return RKResultFailedToSetFilter;
-    }
 	if (anchor.length > nfft) {
 		RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
 			  RKIntegerToCommaStyleString(nfft),
@@ -890,7 +897,7 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
-	anchor.filterGain = 1.0f;
+	anchor.filterGain = 0.0f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -906,7 +913,7 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
-	anchor.filterGain = 2.4495f;
+	anchor.filterGain = 7.78f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -922,7 +929,7 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
-	anchor.filterGain = 1.4142f;
+	anchor.filterGain = 3.01f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 

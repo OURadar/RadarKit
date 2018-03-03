@@ -870,7 +870,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 											k,
 											j);
 			if (r != RKResultNoError) {
-				return RKSetWaveformToImpulse(radar);
+				return RKResultFailedToSetFilter;
 			}
         }
     }
@@ -949,7 +949,6 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-	RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
 	RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
 	if (radar->desc.initFlags & RKInitFlagVerbose) {
 		RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
@@ -967,7 +966,6 @@ int RKSetWaveformTo121(RKRadar *radar) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-	RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
 	RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
 	if (radar->desc.initFlags & RKInitFlagVerbose) {
 		RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);

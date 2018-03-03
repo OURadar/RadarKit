@@ -817,6 +817,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 		if (*c == 's' || *c == 't' || *c == 'q') {
 			pulsewidth = 1.0e-6 * atof(c + 1);
 			pulsewidthSampleCount = pulsewidth * transceiver->fs;
+			if (radar->desc.pulseCapacity < pulsewidthSampleCount) {
+				RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n",
+					  transceiver->name, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+				RKLog("%s Info. Wavefor not changed.\n", transceiver->name);
+				return RKResultFailedToSetWaveform;
+			}
 			RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
 			strncpy(transceiver->transmitWaveformName, c, RKNameLength);
 			RKWaveform *wave = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
