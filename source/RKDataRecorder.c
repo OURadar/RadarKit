@@ -120,26 +120,26 @@ static void *pulseRecorder(void *in) {
             // Close the current file
             if (engine->doNotWrite && doNotWrite) {
                 if (engine->verbose && strlen(filename)) {
-					RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
-						  engine->name,
-						  filename,
-						  RKIntegerToCommaStyleString(n),
-						  RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
-						  len > 1000000000 ? "G" : "M");
+                    RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
+                          engine->name,
+                          filename,
+                          RKIntegerToCommaStyleString(n),
+                          RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
+                          len > 1000000000 ? "G" : "M");
                 }
             } else {
                 if (engine->fd != 0) {
                     len += RKDataRecorderCacheFlush(engine);
                     close(engine->fd);
                     if (engine->verbose) {
-						RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
-							  engine->name,
-							  rkGlobalParameters.showColor ? RKGreenColor : "",
-							  rkGlobalParameters.showColor ? RKNoColor : "",
-							  filename,
-							  RKIntegerToCommaStyleString(n),
-							  RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
-							  len > 1000000000 ? "G" : "M");
+                        RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
+                              engine->name,
+                              rkGlobalParameters.showColor ? RKGreenColor : "",
+                              rkGlobalParameters.showColor ? RKNoColor : "",
+                              filename,
+                              RKIntegerToCommaStyleString(n),
+                              RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
+                              len > 1000000000 ? "G" : "M");
                     }
                     engine->fd = 0;
                     // Notify file manager of a new addition

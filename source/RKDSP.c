@@ -53,8 +53,8 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin) {
     RKComplex *x;
     for (p = 0; p < 2; p++) {
         x = RKGetComplexDataFromPulse(pulse, p);
-		// Add and subtract a few gates to avoid transcient efftects
-		x += origin;
+        // Add and subtract a few gates to avoid transcient efftects
+        x += origin;
         noise[p] = 0.0f;
         for (j = 0; j < pulse->header.gateCount - 2 * origin; j++) {
             noise[p] += x->i * x->i + x->q * x->q;
@@ -126,73 +126,73 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
 }
 
 void RKHilbertTransform(RKFloat *w, RKComplex *b, const int n) {
-	int i;
-	const int nfft = (int)powf(2.0f, ceilf(log2f((float)n)));
+    int i;
+    const int nfft = (int)powf(2.0f, ceilf(log2f((float)n)));
 
-	fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(nfft * sizeof(fftwf_complex));
-	fftwf_complex *out = (fftwf_complex *)fftwf_malloc(nfft * sizeof(fftwf_complex));
-	fftwf_plan plan_fwd = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-	fftwf_plan plan_rev = fftwf_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftwf_complex *in  = (fftwf_complex *)fftwf_malloc(nfft * sizeof(fftwf_complex));
+    fftwf_complex *out = (fftwf_complex *)fftwf_malloc(nfft * sizeof(fftwf_complex));
+    fftwf_plan plan_fwd = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftwf_plan plan_rev = fftwf_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-	for (i = 0; i < n; i++) {
-		in[i][0] = (float)w[i];
-		in[i][1] = 0.0f;
-	}
-	memset(&in[i][0], 0, (nfft - n) * sizeof(fftwf_complex));
+    for (i = 0; i < n; i++) {
+        in[i][0] = (float)w[i];
+        in[i][1] = 0.0f;
+    }
+    memset(&in[i][0], 0, (nfft - n) * sizeof(fftwf_complex));
 
-	fftwf_execute(plan_fwd);
+    fftwf_execute(plan_fwd);
 
-	#if defined(DEBUG_HILBERT)
-	for (i = 0; i < nfft; i++) {
-		printf("i:%2d --> %8.4f%+8.4fi\n", i, in[i][0], in[i][1]);
-	}
-	printf("\n");
+    #if defined(DEBUG_HILBERT)
+    for (i = 0; i < nfft; i++) {
+        printf("i:%2d --> %8.4f%+8.4fi\n", i, in[i][0], in[i][1]);
+    }
+    printf("\n");
 
-	for (i = 0; i < nfft; i++) {
-		printf("i:%2d --> %8.4f%+8.4fi\n", i, out[i][0], out[i][1]);
-	}
-	printf("\n");
-	#endif
+    for (i = 0; i < nfft; i++) {
+        printf("i:%2d --> %8.4f%+8.4fi\n", i, out[i][0], out[i][1]);
+    }
+    printf("\n");
+    #endif
 
-	//
-	// Coefficients for Hilbert Transform
-	//
-	//  h = [1 2 2 2 ... 2 1 0 0 ... 0];
-	//       ~~~~~~~~~~~~^ ^~~~~~~~~~~
-	//         1st half      2nd half
-	//
-	//
+    //
+    // Coefficients for Hilbert Transform
+    //
+    //  h = [1 2 2 2 ... 2 1 0 0 ... 0];
+    //       ~~~~~~~~~~~~^ ^~~~~~~~~~~
+    //         1st half      2nd half
+    //
+    //
 
-	float s = 1.0f / nfft;
+    float s = 1.0f / nfft;
 
-	out[0][0] *= s;
-	out[0][1] *= s;
-	out[nfft >> 1][0] *= s;
-	out[nfft >> 1][1] *= s;
+    out[0][0] *= s;
+    out[0][1] *= s;
+    out[nfft >> 1][0] *= s;
+    out[nfft >> 1][1] *= s;
 
-	s = 2.0f / nfft;
-	for (i=1; i<nfft>>1; i++) {
-		out[i][0] *= s;
-		out[i][1] *= s;
-	}
-	memset(&out[(nfft >> 1) + 1][0], 0, ((nfft >> 1) - 1) * sizeof(fftwf_complex));
+    s = 2.0f / nfft;
+    for (i=1; i<nfft>>1; i++) {
+        out[i][0] *= s;
+        out[i][1] *= s;
+    }
+    memset(&out[(nfft >> 1) + 1][0], 0, ((nfft >> 1) - 1) * sizeof(fftwf_complex));
 
-	fftwf_execute(plan_rev);
+    fftwf_execute(plan_rev);
 
-	#if defined(DEBUG_HILBERT)
-	for (i = 0; i < nfft; i++) {
-		printf("H[%2d] --> %8.4f%+8.4fi\n", i, in[i][0], in[i][1]);
-	}
-	printf("\n");
-	#endif
+    #if defined(DEBUG_HILBERT)
+    for (i = 0; i < nfft; i++) {
+        printf("H[%2d] --> %8.4f%+8.4fi\n", i, in[i][0], in[i][1]);
+    }
+    printf("\n");
+    #endif
 
-	memcpy(b, in, n * sizeof(RKComplex));
+    memcpy(b, in, n * sizeof(RKComplex));
 
-	// Destroy the plans
-	fftwf_destroy_plan(plan_fwd);
-	fftwf_destroy_plan(plan_rev);
-	fftwf_free(in);
-	fftwf_free(out);
+    // Destroy the plans
+    fftwf_destroy_plan(plan_fwd);
+    fftwf_destroy_plan(plan_rev);
+    fftwf_free(in);
+    fftwf_free(out);
 }
 
 //
@@ -201,69 +201,69 @@ void RKHilbertTransform(RKFloat *w, RKComplex *b, const int n) {
 // These functions only works when x in [-PI, PI]
 //
 void RKFasterSineCosine(float x, float *sin, float *cos) {
-	// sin(phi)
-	if (x < 0.0f) {
-		*sin = 1.27323954f * x + 0.405284735f * x * x;
-	} else {
-		*sin = 1.27323954f * x - 0.405284735f * x * x;
-	}
-	// cos(x) = sin(x + PI/2)
-	x += 1.57079632f;
-	if (x > 3.14159265f) {
-		x -= 6.28318531f;
-	}
-	if (x < 0.0f) {
-		*cos = 1.27323954f * x + 0.405284735f * x * x;
-	} else {
-		*cos = 1.27323954f * x - 0.405284735f * x * x;
-	}
+    // sin(phi)
+    if (x < 0.0f) {
+        *sin = 1.27323954f * x + 0.405284735f * x * x;
+    } else {
+        *sin = 1.27323954f * x - 0.405284735f * x * x;
+    }
+    // cos(x) = sin(x + PI/2)
+    x += 1.57079632f;
+    if (x > 3.14159265f) {
+        x -= 6.28318531f;
+    }
+    if (x < 0.0f) {
+        *cos = 1.27323954f * x + 0.405284735f * x * x;
+    } else {
+        *cos = 1.27323954f * x - 0.405284735f * x * x;
+    }
 }
 
 
 void RKFastSineCosine(float x, float *sin, float *cos) {
-	// sin(phi)
-	if (x < 0.0f) {
-		*sin = 1.27323954f * x + 0.405284735f * x * x;
-		if (*sin < 0.0f) {
-			*sin = 0.225f * (*sin * -*sin - *sin) + *sin;
-		} else {
-			*sin = 0.225f * (*sin * *sin - *sin) + *sin;
-		}
-	} else {
-		*sin = 1.27323954 * x - 0.405284735 * x * x;
-		if (*sin < 0.0f) {
-			*sin = 0.225f * (*sin * -*sin - *sin) + *sin;
-		} else {
-			*sin = 0.225f * (*sin * *sin - *sin) + *sin;
-		}
-	}
-	if (*sin < 0) {
-		*sin = MAX(*sin, -1.0f);
-	} else {
-		*sin = MIN(*sin, 1.0f);
-	}
-	// cos(x) = sin(x + PI/2)
-	x += 1.57079632f;
-	if (x >  3.14159265f)
-		x -= 6.28318531f;
-	if (x < 0.0f) {
-		*cos = 1.27323954f * x + 0.405284735f * x * x;
-		if (*cos < 0.0f) {
-			*cos = 0.225f * (*cos * -*cos - *cos) + *cos;
-		} else {
-			*cos = 0.225f * (*cos * *cos - *cos) + *cos;
-		}
-	} else {
-		*cos = 1.27323954 * x - 0.405284735 * x * x;
-		if (*cos < 0.0f) {
-			*cos = 0.225f * (*cos * -*cos - *cos) + *cos;
-		} else {
-			*cos = 0.225f * (*cos * *cos - *cos) + *cos;
-		}
-	}
-	if (*cos < 0) {
-		*cos = MAX(*cos, -1.0f);
-	} else {
-		*cos = MIN(*cos, 1.0f);
-	}
+    // sin(phi)
+    if (x < 0.0f) {
+        *sin = 1.27323954f * x + 0.405284735f * x * x;
+        if (*sin < 0.0f) {
+            *sin = 0.225f * (*sin * -*sin - *sin) + *sin;
+        } else {
+            *sin = 0.225f * (*sin * *sin - *sin) + *sin;
+        }
+    } else {
+        *sin = 1.27323954 * x - 0.405284735 * x * x;
+        if (*sin < 0.0f) {
+            *sin = 0.225f * (*sin * -*sin - *sin) + *sin;
+        } else {
+            *sin = 0.225f * (*sin * *sin - *sin) + *sin;
+        }
+    }
+    if (*sin < 0) {
+        *sin = MAX(*sin, -1.0f);
+    } else {
+        *sin = MIN(*sin, 1.0f);
+    }
+    // cos(x) = sin(x + PI/2)
+    x += 1.57079632f;
+    if (x >  3.14159265f)
+        x -= 6.28318531f;
+    if (x < 0.0f) {
+        *cos = 1.27323954f * x + 0.405284735f * x * x;
+        if (*cos < 0.0f) {
+            *cos = 0.225f * (*cos * -*cos - *cos) + *cos;
+        } else {
+            *cos = 0.225f * (*cos * *cos - *cos) + *cos;
+        }
+    } else {
+        *cos = 1.27323954 * x - 0.405284735 * x * x;
+        if (*cos < 0.0f) {
+            *cos = 0.225f * (*cos * -*cos - *cos) + *cos;
+        } else {
+            *cos = 0.225f * (*cos * *cos - *cos) + *cos;
+        }
+    }
+    if (*cos < 0) {
+        *cos = MAX(*cos, -1.0f);
+    } else {
+        *cos = MIN(*cos, 1.0f);
+    }
 }
