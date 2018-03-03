@@ -181,10 +181,17 @@ static void *ringFilterCore(void *_in) {
         i0 = RKNextModuloS(i0, engine->radarDescription->pulseBufferDepth);
 
         pulse = RKGetPulse(engine->pulseBuffer, i0);
+		if (!(pulse->header.s & RKPulseStatusRingInspected)) {
+			fprintf(stderr, "This should not happen.\n");
+		}
 
         // Now we do the work
         // Should only focus on the tasked range bins
         //
+		if (engine->workerTaskDone[i0 * engine->coreCount + c] != false) {
+			fprintf(stderr, "Already done?\n");
+		}
+
         
         // The task for this core is now done at this point
         engine->workerTaskDone[i0 * engine->coreCount + c] = true;
@@ -380,17 +387,17 @@ static void *pulseRingWatcher(void *_in) {
 		for (c = 0; c < engine->coreCount; c++) {
 			*workerTaskDone++ = false;
 		}
-		workerTaskDone = engine->workerTaskDone;
 		for (c = 0; c < engine->coreCount; c++) {
 			printf("c=%d:", c);
 			for (i = 0; i < engine->radarDescription->pulseBufferDepth; i++) {
-				printf(" %d", workerTaskDone[i * engine->coreCount + c]);
+				printf(" %d", engine->workerTaskDone[i * engine->coreCount + c]);
 			}
 			printf("\n");
 		}
 		printf("===\n");
 		#endif
 
+		workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
 		for (c = 0; c < engine->coreCount; c++) {
 			*workerTaskDone++ = false;
 			if (engine->useSemaphore) {
@@ -404,7 +411,7 @@ static void *pulseRingWatcher(void *_in) {
 
 		// Now we check how many pulses are done
         allDone = true;
-        while (j != k) {
+        while (j != k && allDone) {
             // Decide whether the pulse has been processed by FIR/IIR filter
             workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
             for (c = 0; i < engine->coreCount; c++) {
@@ -414,8 +421,6 @@ static void *pulseRingWatcher(void *_in) {
                 pulse = RKGetPulse(engine->pulseBuffer, j);
                 pulse->header.s |= RKPulseStatusRingFiltered | RKPulseStatusRingProcessed;
                 j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-            } else {
-                break;
             }
         }
         

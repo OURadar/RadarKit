@@ -357,10 +357,13 @@ enum RKMarker {
 // Typical status progression:
 // -> RKPulseStatusVacant
 // -> RKPulseStatusHasIQData
-// -> RKPulseStatusInspected (main thread)
-// -> RKPulseStatusProcessed (core threads)  (RKPulseStatusCompressed / RKPulseStatusSkipped)
-// -> RKPulseStatusRingInspected (main thread)
-// -> RKPulseStatusRingProcessed (core threads)  (RKPulseStatusRingFiltered / RKPulseStatusRingSkipped)
+// -> RKPulseStatusInspected                                (main thread)
+// -> RKPulseStatusCompressed / RKPulseStatusSkipped        (core threads)
+// -> RKPulseStatusDownSampled                              (core threads)
+// -> RKPulseStatusProcessed                                (core thread)
+// -> RKPulseStatusRingInspected                            (main thread)
+// -> RKPulseStatusRingFiltered / RKPulseStatusRingSkipped  (main thread consolidates)
+// -> RKPulseStatusRingProcessed                            (main thread)
 // -> RKPulseStatusHasPosition
 // -> RKPulseStatusReadyForMoment
 typedef uint32_t RKPulseStatus;
@@ -371,12 +374,12 @@ enum RKPulseStatus {
     RKPulseStatusInspected           = (1 << 2),                     // 0x04
     RKPulseStatusCompressed          = (1 << 3),                     // 0x08
     RKPulseStatusSkipped             = (1 << 4),                     // 0x10
-    RKPulseStatusProcessed           = (1 << 5),                     // 0x20
-    RKPulseStatusRingInspected       = (1 << 6),
-    RKPulseStatusRingFiltered        = (1 << 7),
-    RKPulseStatusRingSkipped         = (1 << 8),
-    RKPulseStatusRingProcessed       = (1 << 9),
-	RKPulseStatusDownSampled         = (1 << 10),
+    RKPulseStatusDownSampled         = (1 << 5),                     // 0x20
+	RKPulseStatusProcessed           = (1 << 6),                     // 0x40
+	RKPulseStatusRingInspected       = (1 << 7),                     // 0x80
+    RKPulseStatusRingFiltered        = (1 << 8),
+    RKPulseStatusRingSkipped         = (1 << 9),
+    RKPulseStatusRingProcessed       = (1 << 10),
     RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition)
 };
 

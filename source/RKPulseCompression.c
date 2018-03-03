@@ -593,7 +593,7 @@ static void *pulseWatcher(void *_in) {
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
                 planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                                                            engine->filterAnchors[gid][j].length)));
+                                                            engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 found = false;
                 i = engine->planCount;
                 while (i > 0) {
@@ -633,7 +633,7 @@ static void *pulseWatcher(void *_in) {
 
         // Now we post
         #ifdef DEBUG_IQ
-        RKLog("%s posting core-%d for pulse %d gate %d\n", engine->name, c, k, engine->pulses[k].header.gateCount);
+        RKLog("%s posting core-%d for pulse %d w/ %d gates\n", engine->name, c, k, pulse->header.gateCount);
         #endif
         if (engine->useSemaphore) {
             if (sem_post(sem[c])) {
