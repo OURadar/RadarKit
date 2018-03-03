@@ -52,22 +52,22 @@ void *theClient(void *in) {
 
         C->state = RKClientStateResolvingIP;
 
-		// Resolve hostname to IP address
-		if (C->verbose > 1) {
-			RKLog("%s Resolving IP address ...\n", C->name);
-		}
-		struct hostent *h = gethostbyname2(C->hostname, AF_INET);
-		if (h == NULL) {
-			RKLog("%s Error. Unable to resolve '%s'\n", C->name, C->hostname);
-			k = RKNetworkReconnectSeconds * 10;
-			do {
-				usleep(100000);
-			} while (k-- > 0 && C->state < RKClientStateReconnecting);
-			continue;
-		}
-		strcpy(C->hostIP, inet_ntoa(*((struct in_addr *)h->h_addr_list[0])));
+        // Resolve hostname to IP address
+        if (C->verbose > 1) {
+            RKLog("%s Resolving IP address ...\n", C->name);
+        }
+        struct hostent *h = gethostbyname2(C->hostname, AF_INET);
+        if (h == NULL) {
+            RKLog("%s Error. Unable to resolve '%s'\n", C->name, C->hostname);
+            k = RKNetworkReconnectSeconds * 10;
+            do {
+                usleep(100000);
+            } while (k-- > 0 && C->state < RKClientStateReconnecting);
+            continue;
+        }
+        strcpy(C->hostIP, inet_ntoa(*((struct in_addr *)h->h_addr_list[0])));
 
-		if (C->verbose > 1) {
+        if (C->verbose > 1) {
             RKLog("%s Opening a %s socket ...\n", C->name,
                   C->type == RKNetworkSocketTypeTCP ? "TCP" :
                   (C->type == RKNetworkSocketTypeUDP ? "UDP" : "(NULL)"));
