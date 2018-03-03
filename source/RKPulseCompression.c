@@ -78,6 +78,8 @@ static void *pulseCompressionCore(void *_in) {
     fftwf_complex *o;
 
     const int c = me->id;
+	const int ci = engine->coreOrigin + c;
+	//const int ci = RKGetCPUIndex();
 
     uint32_t blindGateCount = 0;
 
@@ -111,7 +113,7 @@ static void *pulseCompressionCore(void *_in) {
     // Set my CPU core
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(engine->coreOrigin + c, &cpuset);
+	CPU_SET(ci, &cpuset);
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
     pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
 
@@ -169,8 +171,8 @@ static void *pulseCompressionCore(void *_in) {
     engine->memoryUsage += mem;
 
     if (engine->verbose) {
-        RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s\n",
-              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft));
+        RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
     }
 
     pthread_mutex_unlock(&engine->coreMutex);

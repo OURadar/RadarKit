@@ -92,6 +92,7 @@ char *RKGetColor(void);
 char *RKGetColorOfIndex(const int i);
 char *RKGetBackgroundColor(void);
 char *RKGetBackgroundColorOfIndex(const int i);
+
 char *RKGetValueOfKey(const char *string, const char *key);
 int RKIndentCopy(char *dst, char *src);
 
@@ -115,5 +116,7 @@ long RKCountFilesInPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
+
+long RKGetCPUIndex(void);
 
 #endif /* rk_misc_h */

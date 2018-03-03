@@ -252,7 +252,8 @@ static void *momentCore(void *in) {
 
     // My ID that is suppose to be constant
     const int c = me->id;
-    
+	const int ci = engine->coreOrigin + c;
+
     // A tag for header identification, will increase by engine->coreCount later
     uint32_t tag = c;
 
@@ -282,7 +283,7 @@ static void *momentCore(void *in) {
     // Set my CPU core
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(engine->coreOrigin + c, &cpuset);
+    CPU_SET(ci, &cpuset);
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
     pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
     
@@ -345,8 +346,8 @@ static void *momentCore(void *in) {
     engine->memoryUsage += mem;
     
     if (engine->verbose) {
-        RKLog(">%s %s Started.   mem = %s B   i0 = %s\n",
-              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io));
+        RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
+              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
     }
     
     pthread_mutex_unlock(&engine->coreMutex);
