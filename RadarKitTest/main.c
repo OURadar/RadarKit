@@ -600,6 +600,7 @@ int main(int argc, const char **argv) {
 	RKAddConfig(myRadar,
 				RKConfigKeySystemZCal, -55.0f, -55.0f,
 				RKConfigKeySystemDCal, 0.2f,
+                RKConfigKeyZCal2, 20.0f, 20.0f,
 				RKConfigKeyNull);
 
     RKCommandCenter *center = RKCommandCenterInit();

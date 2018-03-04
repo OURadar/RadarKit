@@ -877,13 +877,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKLog("Loading waveform from file '%s'...\n", string);
                     waveform = RKWaveformInitFromFile(string);
                     RKWaveformSummary(waveform);
-                    // Hacks:
-                    // The original PX-1000 waveofmrs are in Ch1-PD, Ch2-PD, Ch1 & Ch2.
-                    // This is not Ch1-PD-I, Ch1-PD-Q, etc.
-                    // We need to zero out the Q components
-                    for (k = 0; k < waveform->depth; k++) {
-                        waveform->samples[0][k].q = 0.0f;
-                        waveform->iSamples[0][k].q = 0;
+                    if (strlen(waveform->name) == 0) {
+                        strncpy(waveform->name, c, RKNameLength);
                     }
                     k = round(waveform->fs / transceiver->fs);
                     RKLog("Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", 1.0e-6 * transceiver->fs, k);
