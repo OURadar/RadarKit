@@ -139,6 +139,7 @@
 #define RKDataFolderMoment               "moment"
 #define RKDataFolderHealth               "health"
 #define RKLogFolder                      "log"
+#define RKWaveformFolder                 "waveforms"
 
 #define RKNoColor                        "\033[0m"
 #define RKRedColor                       "\033[38;5;196m"
@@ -199,13 +200,13 @@ typedef union rk_four_byte {
 
 typedef union rk_filter_anchor {
 	struct {
-		uint32_t      name;
+		uint32_t      name;                                              // Just an internal name id
 		uint32_t      origin;                                            // Filter origin to be used with RKWaveform
 		uint32_t      length;                                            // Filter length to be used with RKWaveform
-		uint32_t      inputOrigin;
-		uint32_t      outputOrigin;
-		uint32_t      maxDataLength;
-		RKFloat       subCarrierFrequency;                               // For house keeping only
+		uint32_t      inputOrigin;                                       // Origin of input
+		uint32_t      outputOrigin;                                      // Origin of output
+		uint32_t      maxDataLength;                                     // Maximum data to decode
+		RKFloat       subCarrierFrequency;                               // For house keeping only, use the waveform->fc for DDC
 		RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms (dB)
 		RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 0.0 (dB)
 	};
@@ -282,6 +283,7 @@ enum RKResult {
     RKResultFailedToCreateUnitWorker,
     RKResultFailedToStartHostWatcher,
     RKResultFailedToStartHostPinger,
+    RKResultFailedToExecuteCommand,
 	RKResultNoRadar,
     RKResultSuccess = 0,
     RKResultNoError = 0

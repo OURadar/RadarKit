@@ -488,10 +488,10 @@ void *RKTestTransceiverRunLoop(void *input) {
     float phi;
 	float cosv;
 	float sinv;
-	float noise;
+	int16_t noise;
 
 	float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
-	float *rn = (float *)malloc(transceiver->gateCount * sizeof(float));
+	int16_t *rn = (int16_t *)malloc(transceiver->gateCount * sizeof(int16_t));
 	for (g = 0; g < transceiver->gateCount; g++) {
 		r = (float)g * transceiver->gateSizeMeters * 0.1f;
 		a = 60.0f * (cos(0.001f * r)
@@ -501,7 +501,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 					 + 0.5f);
 		a *= (1000.0 / r);
 		ra[g] = a;
-		rn[g] = ((float)rand() / RAND_MAX - 0.5f);
+		rn[g] = (int16_t)((float)rand() / RAND_MAX - 0.5f);
 	}
 
 	float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
@@ -536,8 +536,8 @@ void *RKTestTransceiverRunLoop(void *input) {
 				k = rand() % transceiver->gateCount;
 				for (g = 0; g < transceiver->transmitWaveformLength; g++) {
 					noise = rn[k];
-					X->i = (int16_t)(transceiver->transmitWaveform[g].i + noise);
-					X->q = (int16_t)(transceiver->transmitWaveform[g].q + noise);
+					X->i = transceiver->transmitWaveform[g].i + noise;
+					X->q = transceiver->transmitWaveform[g].q + noise;
 					k = RKNextModuloS(k, transceiver->gateCount);
 					X++;
 				}
@@ -661,13 +661,13 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 	transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
     transceiver->gateCount = RKGetPulseCapacity(radar);
-	transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
-	                 (transceiver->gateCount >= 8000 ? 25.0e6 :
-					 (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
+    transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
+                     (transceiver->gateCount >= 8000 ? 25.0e6 :
+                     (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
 	transceiver->gateCount /= 10;
     transceiver->prt = 0.0003;
 	transceiver->sprt = 1;
-	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKComplex)));
+	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKInt16C)));
 
     int i, j, k;
 
@@ -752,7 +752,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         usleep(10000);
     }
 
-	RKTestTransceiverExec(transceiver, "w q10", NULL);
+	//RKTestTransceiverExec(transceiver, "w q10", NULL);
+    RKTestTransceiverExec(transceiver, "w ofm", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -766,113 +767,181 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 	double pulsewidth;
 	unsigned int pulsewidthSampleCount;
 
-    if (!strcmp(command, "disconnect")) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("%s Disconnecting ...", transceiver->name);
-        }
-        transceiver->state |= RKEngineStateDeactivating;
-        transceiver->state ^= RKEngineStateActive;
-        pthread_join(transceiver->tidRunLoop, NULL);
+    RKWaveform *waveform = NULL;
+    char string[RKMaximumPathLength];
+
+    if (!(radar->state & RKRadarStatePulseCompressionEngineInitialized)) {
+        RKLog("%s Error. No I/Q processors yet.", transceiver->name);
         if (response != NULL) {
-            sprintf(response, "ACK. Transceiver stopped." RKEOL);
+            sprintf(response, "NAK. No I/Q processors yet." RKEOL);
         }
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("%s Stopped.\n", transceiver->name);
-        }
-        transceiver->state = RKEngineStateAllocated;
-    } else if (!strncmp(command, "prt", 3)) {
-        transceiver->prt = atof(command + 3);
-        if (response != NULL) {
-            sprintf(response, "ACK. PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
-        }
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
-        }
-    } else if (command[0] == 'h') {
-		if (response != NULL) {
-			sprintf(response,
-					"Commands:\n"
-					UNDERLINE("help") " - Help list.\n"
-					UNDERLINE("prt") " [value] - PRT set to value\n"
-					UNDERLINE("z") " [value] - Sleep interval set to value.\n"
-					);
-		}
-	} else if (command[0] == 's') {
-		transceiver->sleepInterval = atoi(command + 1);
-		RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
-    } else if (command[0] == 't') {
-        // Pretend a slow command
-		RKPerformMasterTaskInBackground(radar, "w");
-        if (response != NULL) {
-            sprintf(response, "ACK. Command executed." RKEOL);
-        }
-	} else if (command[0] == 'w') {
-		// Waveform
-		c = ((char *)command);
-		if (command[1] == ' ') {
-			c += 2;
-		} else {
-			c++;
-		}
-		if (*c == 's' || *c == 't' || *c == 'q') {
-			pulsewidth = 1.0e-6 * atof(c + 1);
-			pulsewidthSampleCount = pulsewidth * transceiver->fs;
-			if (radar->desc.pulseCapacity < pulsewidthSampleCount) {
-				RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n", transceiver->name, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
-				RKLog("%s Info. Wavefor not changed.\n", transceiver->name);
-				if (response != NULL) {
-					sprintf(response, "NAK. Waveform '%s' --> %d samples not allowed (capacity = %s)." RKEOL, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
-				}
-				return RKResultFailedToSetWaveform;
-			}
-			RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
-			strncpy(transceiver->transmitWaveformName, c, RKNameLength);
-			RKWaveform *wave = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
-			if (*c == 's') {
-				// Rectangular single tone
-				RKWaveformHops(wave, transceiver->fs, 0.0, 0.0);
-			} else if (*c == 't') {
-				// Rectangular single tone at 0.1 MHz
-				RKWaveformHops(wave, transceiver->fs, 0.1e6, 0.0);
-			} else if (*c == 'q') {
-				RKWaveformLinearFrequencyModulation(wave, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
-			}
-			transceiver->transmitWaveformLength = pulsewidthSampleCount;
-			for (k = 0; k < wave->depth; k++) {
-				transceiver->transmitWaveform[k].i = wave->iSamples[0][k].i;
-				transceiver->transmitWaveform[k].q = wave->iSamples[0][k].q;
-			}
-            if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
-                RKSetWaveform(radar, wave);
+        return RKResultFailedToExecuteCommand;
+    }
+    
+    switch (command[0]) {
+        case 'd':
+            if (!strcmp(command, "disconnect")) {
+                if (radar->desc.initFlags & RKInitFlagVerbose) {
+                    RKLog("%s Disconnecting ...", transceiver->name);
+                }
+                transceiver->state |= RKEngineStateDeactivating;
+                transceiver->state ^= RKEngineStateActive;
+                pthread_join(transceiver->tidRunLoop, NULL);
+                if (response != NULL) {
+                    sprintf(response, "ACK. Transceiver stopped." RKEOL);
+                }
+                if (radar->desc.initFlags & RKInitFlagVerbose) {
+                    RKLog("%s Stopped.\n", transceiver->name);
+                }
+                transceiver->state = RKEngineStateAllocated;
             }
-			free(wave);
-			if (response != NULL) {
-				sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
-			}
-		}
-	} else if (command[0] == 'y') {
-        // Everything goes
-		if (strlen(transceiver->defaultWaveform) == 0) {
-			sprintf(transceiver->defaultWaveform, "s10");
-		}
-		sprintf(transceiver->customCommand, "w %s" RKEOL, transceiver->defaultWaveform);
-		radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
-		if (strlen(transceiver->defaultPedestalMode) == 0) {
-			sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
-		}
-		sprintf(transceiver->customCommand, "p %s" RKEOL, transceiver->defaultPedestalMode);
-        radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
-        if (response != NULL) {
-            sprintf(response, "ACK. Everything goes." RKEOL);
-        }
-    } else if (command[0] == 'z') {
-        // Everything stops
-        radar->pedestalExec(radar->pedestal, "stop", radar->pedestalResponse);
-        if (response != NULL) {
-            sprintf(response, "ACK. Everything stops." RKEOL);
-        }
-    } else if (response != NULL) {
-        sprintf(response, "NAK. Command not understood." RKEOL);
+            break;
+        case 'h':
+            if (response != NULL) {
+                sprintf(response,
+                        "Commands:\n"
+                        UNDERLINE("help") " - Help list.\n"
+                        UNDERLINE("prt") " [value] - PRT set to value\n"
+                        UNDERLINE("z") " [value] - Sleep interval set to value.\n"
+                        );
+            }
+            break;
+        case 'p':
+            if (!strncmp(command, "prt", 3)) {
+                transceiver->prt = atof(command + 3);
+                if (response != NULL) {
+                    sprintf(response, "ACK. PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                }
+                if (radar->desc.initFlags & RKInitFlagVerbose) {
+                    RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
+                }
+            }
+            break;
+        case 's':
+            transceiver->sleepInterval = atoi(command + 1);
+            RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
+            break;
+        case 't':
+            // Pretend a slow command
+            RKPerformMasterTaskInBackground(radar, "w");
+            if (response != NULL) {
+                sprintf(response, "ACK. Command executed." RKEOL);
+            }
+            break;
+        case 'w':
+            // Waveform
+            c = ((char *)command);
+            if (command[1] == ' ') {
+                c += 2;
+            } else {
+                c++;
+            }
+            if (*c == 's' || *c == 't' || *c == 'q') {
+                pulsewidth = 1.0e-6 * atof(c + 1);
+                pulsewidthSampleCount = pulsewidth * transceiver->fs;
+                if (radar->desc.pulseCapacity < pulsewidthSampleCount) {
+                    RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n", transceiver->name, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                    RKLog("%s Info. Wavefor not changed.\n", transceiver->name);
+                    if (response != NULL) {
+                        sprintf(response, "NAK. Waveform '%s' --> %d samples not allowed (capacity = %s)." RKEOL, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                    }
+                    return RKResultFailedToSetWaveform;
+                }
+                RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
+                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+                waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
+                if (*c == 's') {
+                    // Rectangular single tone
+                    RKWaveformHops(waveform, transceiver->fs, 0.0, 0.0);
+                } else if (*c == 't') {
+                    // Rectangular single tone at 0.1 MHz
+                    RKWaveformHops(waveform, transceiver->fs, 0.1e6, 0.0);
+                } else if (*c == 'q') {
+                    RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
+                }
+                transceiver->transmitWaveformLength = waveform->depth;
+                for (k = 0; k < waveform->depth; k++) {
+                    transceiver->transmitWaveform[k].i = waveform->iSamples[0][k].i;
+                    transceiver->transmitWaveform[k].q = waveform->iSamples[0][k].q;
+                }
+                RKSetWaveform(radar, waveform);
+                RKWaveformFree(waveform);
+                waveform = NULL;
+                if (response != NULL) {
+                    sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
+                }
+            } else {
+                // Load from a file
+                sprintf(string, "%s/%s.rkwav", RKWaveformFolder, c);
+                if (RKFilenameExists(string)) {
+                    RKLog("Loading waveform from file '%s'...\n", string);
+                    waveform = RKWaveformInitFromFile(string);
+                    RKWaveformSummary(waveform);
+                    // Hacks:
+                    // The original PX-1000 waveofmrs are in Ch1-PD, Ch2-PD, Ch1 & Ch2.
+                    // This is not Ch1-PD-I, Ch1-PD-Q, etc.
+                    // We need to zero out the Q components
+                    for (k = 0; k < waveform->depth; k++) {
+                        waveform->samples[0][k].q = 0.0f;
+                        waveform->iSamples[0][k].q = 0;
+                    }
+                    k = round(waveform->fs / transceiver->fs);
+                    RKLog("Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", 1.0e-6 * transceiver->fs, k);
+                    RKWaveformDownConvert(waveform, 2.0 * M_PI * waveform->fc / waveform->fs);
+                    RKWaveformDecimate(waveform, k);
+                    RKWaveformSummary(waveform);
+                    pulsewidthSampleCount = waveform->depth;
+                    if (radar->desc.pulseCapacity < pulsewidthSampleCount) {
+                        RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n", transceiver->name, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                        RKLog("%s Info. Wavefor not changed.\n", transceiver->name);
+                        if (response != NULL) {
+                            sprintf(response, "NAK. Waveform '%s' --> %d samples not allowed (capacity = %s)." RKEOL, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                        }
+                        RKWaveformFree(waveform);
+                        waveform = NULL;
+                        return RKResultFailedToSetWaveform;
+                    }
+                    transceiver->transmitWaveformLength = pulsewidthSampleCount;
+                    memcpy(transceiver->transmitWaveform, waveform->iSamples[0], waveform->depth * sizeof(RKInt16C));
+                    RKSetWaveform(radar, waveform);
+                    RKWaveformFree(waveform);
+                    waveform = NULL;
+                    if (response != NULL) {
+                        sprintf(response, "ACK. Waveform '%s' loaded." RKEOL, c);
+                    }
+                } else if (response != NULL) {
+                    sprintf(response, "NAK. Waveform '%s' not found." RKEOL, string);
+                }
+            }
+            break;
+        case 'y':
+            // Everything goes
+            if (strlen(transceiver->defaultWaveform) == 0) {
+                sprintf(transceiver->defaultWaveform, "s01");
+            }
+            sprintf(transceiver->customCommand, "w %s" RKEOL, transceiver->defaultWaveform);
+            radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
+            if (strlen(transceiver->defaultPedestalMode) == 0) {
+                sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
+            }
+            sprintf(transceiver->customCommand, "p %s" RKEOL, transceiver->defaultPedestalMode);
+            radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
+            if (response != NULL) {
+                sprintf(response, "ACK. Everything goes." RKEOL);
+            }
+            break;
+        case 'z':
+            // Everything stops
+            radar->pedestalExec(radar->pedestal, "stop", radar->pedestalResponse);
+            if (response != NULL) {
+                sprintf(response, "ACK. Everything stops." RKEOL);
+            }
+            break;
+        default:
+            if (response != NULL) {
+                sprintf(response, "NAK. Command not understood." RKEOL);
+            }
+            break;
     }
     return RKResultSuccess;
 }

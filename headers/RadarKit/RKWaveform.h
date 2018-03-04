@@ -58,17 +58,24 @@ enum RKWaveformType {
 
 #pragma pack(push, 1)
 
-typedef struct rk_wave_file_header {
-    char            name[RKNameLength];
-    uint8_t         groupCount;
-    uint32_t        depth;
-    double          fs;
+typedef union rk_wave_file_header {
+    struct {
+        char            name[RKNameLength];
+        uint8_t         groupCount;
+        uint32_t        depth;
+        double          fc;
+        double          fs;
+    };
+    char bytes[512];
 } RKWaveFileHeader;
 
-typedef struct rk_wave_file_group {
-    RKWaveformType  type;
-    uint32_t        depth;
-    uint32_t        filterCounts;
+typedef union rk_wave_file_group {
+    struct {
+        RKWaveformType  type;
+        uint32_t        depth;
+        uint32_t        filterCounts;
+    };
+    char bytes[32];
 } RKWaveFileGroup;
 
 #pragma pack(pop)
@@ -76,6 +83,7 @@ typedef struct rk_wave_file_group {
 typedef struct rk_waveform {
     int             count;                                                 // Number of groups
     int             depth;                                                 // Maximum number of samples
+    double          fc;                                                    // Carrier frequency (Hz)
     double          fs;                                                    // Sampling frequency (Hz)
     RKWaveformType  type;                                                  // Various type of waveforms
     char            name[RKNameLength];                                    // Waveform name in plain string

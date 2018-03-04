@@ -44,10 +44,9 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     RKWaveFileGroup groupHeader;
     fread(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
     
-    RKLog(">Waveform '%s'   groupCount = %d   depth = %s   fs = %.1f MHz\n", fileHeader.name, fileHeader.groupCount, RKIntegerToCommaStyleString(fileHeader.depth), 1.0e-6 * fileHeader.fs);
-    
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
 
+    waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
     strncpy(waveform->name, fileHeader.name, RKNameLength);
     
@@ -110,6 +109,10 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     fclose(fid);
 
+    RKLog(">Waveform '%s'   groupCount = %d   depth = %s   fc = %s MHz   fs = %s MHz\n",
+          fileHeader.name, fileHeader.groupCount, RKIntegerToCommaStyleString(fileHeader.depth),
+          RKFloatToCommaStyleString(1.0e-6 * waveform->fc), RKFloatToCommaStyleString(1.0e-6 * waveform->fs));
+    
     RKWaveformCalculateGain(waveform);
     return waveform;
 }
@@ -351,7 +354,8 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
 }
 
 void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
-	int i, j;
+	int i, j, k;
+    RKFloat a;
 	RKFloat *w;
 	RKComplex *s, *u;
 
@@ -362,21 +366,50 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 
 	// Demodulation tone
-	for (i = 0; i < waveform->depth; i++) {
+	for (j = 0; j < waveform->depth; j++) {
 		// There is another convention to flip the sign: u[i].q = -u[i].q;
-		s[i].i = cosf(-omega * i);
-		s[i].q = sinf(-omega * i);
+		s[j].i = cosf(-omega * j);
+		s[j].q = sinf(-omega * j);
 	}
 
-	for (j = 0; j < waveform->count; j++) {
-		for (i = 0; i < waveform->depth; i++) {
-			w[i] = waveform->samples[j][i].i;
+    RKInt16C *ic = waveform->iSamples[0];
+    RKComplex *fc = waveform->samples[0];
+
+    // Copy over the float samples to int16_t samples and adjust the amplitude so that it (sort of) represents the intended DAC range
+	for (i = 0; i < waveform->count; i++) {
+		for (j = 0; j < waveform->depth; j++) {
+			w[j] = waveform->samples[i][j].i;
 		}
-		memset(&w[i], 0, (nfft - i) * sizeof(RKComplex));
+		memset(&w[j], 0, (nfft - j) * sizeof(RKComplex));
 		RKHilbertTransform(w, u, waveform->depth);
 		RKSIMD_iymul(s, u, waveform->depth);
-		memcpy(waveform->samples[j], u, waveform->depth * sizeof(RKComplex));
-	}
+		memcpy(waveform->samples[i], u, waveform->depth * sizeof(RKComplex));
+        
+        // Go through the waveform samples (filters)
+        ic = waveform->iSamples[i];
+        fc = waveform->samples[i];
+        for (j = 0; j < waveform->filterCounts[i]; j++) {
+            a = powf(10.0f, 0.05f * waveform->filterAnchors[i][j].sensitivityGain) * RKWaveformDigitalAmplitude;
+//            printf("%s a --> %.4e\n", RKFloatToCommaStyleString(waveform->fs), a);
+//            a = powf(10.0f, 0.05f * waveform->filterAnchors[i][j].sensitivityGain * 1.0e-6 * waveform->fs) * RKWaveformDigitalAmplitude;
+//            printf("a --> %.4e\n", a);
+            for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
+                ic->i = (int16_t)(a * fc->i);
+                ic->q = (int16_t)(a * fc->q);
+                ic++;
+                fc++;
+            }
+        }
+//        fc = waveform->samples[i];
+//        for (j = 0; j < waveform->filterCounts[i]; j++) {
+//            a = 0.0f;
+//            for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
+//                a += fc->i * fc->i + fc->q * fc->q;
+//                fc++;
+//            }
+//            printf("a[%d] = %.4f dB\n", j, 10.0 * log10f(a));
+//        }
+    }
 
 	free(w);
 	free(s);
@@ -443,6 +476,7 @@ void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
     // File header
     fileHeader.groupCount = waveform->count;
     fileHeader.depth = waveform->depth;
+    fileHeader.fc = waveform->fc;
     fileHeader.fs = waveform->fs;
     strcpy(fileHeader.name, waveform->name);
     fwrite(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
