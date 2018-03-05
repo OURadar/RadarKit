@@ -456,7 +456,7 @@ static void *momentCore(void *in) {
                         space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain;
                         space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain;
                     }
-                    if (engine->verbose) {
+                    if (engine->verbose > 1) {
                         RKLog(">%s %s ZCal[%d] = %.2f + %.2f + %.2f = %.2f dB @ %d ..< %d\n",
                               engine->name, name, k,
                               config->systemZCal[0],

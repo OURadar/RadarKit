@@ -140,6 +140,7 @@ static void showHelp() {
            "          6 - Reading preference file\n"
            "          7 - Count files in a folder RKCountFilesInPath()\n"
            "          8 - File monitor\n"
+           "          9 - Internet monitor\n"
            "         11 - Initializing a radar system\n"
            "\n"
            "         20 - SIMD quick test\n"
@@ -170,7 +171,7 @@ static void showHelp() {
            "  rktest -vL\n"
 		   "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
 		   "\n"
-		   "  rktest -vs1\n"
+		   "  rktest -vs1  (no space after s)\n"
 		   "         Runs the program in verbose mode, and to simulate a level-1 system.\n"
            "\n"
            "  rktest -vL -f 2000\n"
@@ -245,7 +246,8 @@ static void setSystemLevel(UserParams *user, const int level) {
 			break;
         default:
             // Default
-            user->simulate = false;
+            RKLog("Error. There is no level %d.\n", level);
+            exit(EXIT_FAILURE);
             break;
     }
 }

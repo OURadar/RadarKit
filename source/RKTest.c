@@ -435,6 +435,10 @@ void RKTestParseCommaDelimitedValues(void) {
 
 #pragma mark - Transceiver Emulator
 
+//
+// The transceiver emulator only has minimal functionality to get things going
+// This isn't meant to fully simulate actual target returns
+//
 void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
@@ -877,9 +881,6 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKLog("Loading waveform from file '%s'...\n", string);
                     waveform = RKWaveformInitFromFile(string);
                     RKWaveformSummary(waveform);
-                    if (strlen(waveform->name) == 0) {
-                        strncpy(waveform->name, c, RKNameLength);
-                    }
                     k = round(waveform->fs / transceiver->fs);
                     RKLog("Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", 1.0e-6 * transceiver->fs, k);
                     RKWaveformDownConvert(waveform, 2.0 * M_PI * waveform->fc / waveform->fs);
@@ -897,6 +898,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                         return RKResultFailedToSetWaveform;
                     }
                     transceiver->transmitWaveformLength = pulsewidthSampleCount;
+                    strncpy(transceiver->transmitWaveformName, c, RKNameLength);
                     memcpy(transceiver->transmitWaveform, waveform->iSamples[0], waveform->depth * sizeof(RKInt16C));
                     RKSetWaveform(radar, waveform);
                     RKWaveformFree(waveform);

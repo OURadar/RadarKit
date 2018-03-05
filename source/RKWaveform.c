@@ -340,6 +340,10 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             waveform->filterAnchors[l][k].length /= stride;
             waveform->filterAnchors[l][k].inputOrigin /= stride;
             waveform->filterAnchors[l][k].outputOrigin /= stride;
+            // Account for the odd length ended in another range
+            if (waveform->filterAnchors[l][k].maxDataLength % 2 != 0) {
+                waveform->filterAnchors[l][k].maxDataLength++;
+            }
             waveform->filterAnchors[l][k].maxDataLength /= stride;
         }
         x = waveform->samples[l];
@@ -375,7 +379,9 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
     RKInt16C *ic = waveform->iSamples[0];
     RKComplex *fc = waveform->samples[0];
 
-    // Copy over the float samples to int16_t samples and adjust the amplitude so that it (sort of) represents the intended DAC range
+    // Copy over the float samples to int16_t samples and adjust the amplitude so that it represents the intended transmit envelope
+    // This adjustment will not produce the transmit waveform that takes full advantage of the DAC range
+    // The normalization factor to get the waveform to unity noise gain is no longer known here.
 	for (i = 0; i < waveform->count; i++) {
 		for (j = 0; j < waveform->depth; j++) {
 			w[j] = waveform->samples[i][j].i;
@@ -390,9 +396,6 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
         fc = waveform->samples[i];
         for (j = 0; j < waveform->filterCounts[i]; j++) {
             a = powf(10.0f, 0.05f * waveform->filterAnchors[i][j].sensitivityGain) * RKWaveformDigitalAmplitude;
-//            printf("%s a --> %.4e\n", RKFloatToCommaStyleString(waveform->fs), a);
-//            a = powf(10.0f, 0.05f * waveform->filterAnchors[i][j].sensitivityGain * 1.0e-6 * waveform->fs) * RKWaveformDigitalAmplitude;
-//            printf("a --> %.4e\n", a);
             for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
                 ic->i = (int16_t)(a * fc->i);
                 ic->q = (int16_t)(a * fc->q);
@@ -400,15 +403,6 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
                 fc++;
             }
         }
-//        fc = waveform->samples[i];
-//        for (j = 0; j < waveform->filterCounts[i]; j++) {
-//            a = 0.0f;
-//            for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
-//                a += fc->i * fc->i + fc->q * fc->q;
-//                fc++;
-//            }
-//            printf("a[%d] = %.4f dB\n", j, 10.0 * log10f(a));
-//        }
     }
 
 	free(w);
