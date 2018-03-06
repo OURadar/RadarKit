@@ -752,7 +752,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         usleep(10000);
     }
 
-	RKTestTransceiverExec(transceiver, "w q10", NULL);
+	RKTestTransceiverExec(transceiver, "w q05", NULL);
 
     return (RKTransceiver)transceiver;
 }
