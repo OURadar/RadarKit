@@ -117,6 +117,7 @@ void RKTestFileMonitor(void);
 void RKTestHostMonitor(void);
 
 void RKTestWriteWaveform(void);
+void RKTestWriteFFTWisdom(void);
 void RKTestWaveformTFM(void);
 void RKTestHilbertTransform(void);
 

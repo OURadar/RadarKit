@@ -1814,6 +1814,20 @@ void RKTestWriteWaveform(void) {
     RKWaveformFree(loadedWaveform);
 }
 
+void RKTestWriteFFTWisdom(void) {
+    fftwf_plan plan;
+    fftwf_complex *in;
+    int nfft = 1 << (int)ceilf(log2f((float)RKGateCount));
+    in = fftwf_malloc(nfft * sizeof(fftwf_complex));
+    while (nfft > 2) {
+        RKLog("NFFT %s\n", RKIntegerToCommaStyleString(nfft));
+        plan = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
+        fftwf_destroy_plan(plan);
+        nfft >>= 2;
+    }
+    fftwf_free(in);
+}
+
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/test-tfm.rkwav";

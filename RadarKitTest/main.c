@@ -151,6 +151,7 @@ static void showHelp() {
            "         30 - Make a frequency hopping sequence\n"
            "         31 - Make a TFM waveform\n"
            "         32 - Write a waveform file\n"
+           "         33 - Write a fft-wisdom file\n"
            "\n"
            "         40 - Pulse compression using simple cases\n"
            "         41 - Calculating one ray using the Pulse Pair method\n"
@@ -400,6 +401,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 32:
                         RKTestWriteWaveform();
                         break;
+                    case 33:
+                        RKTestWriteFFTWisdom();
+                        break;
                     case 40:
                         RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
@@ -464,6 +468,8 @@ UserParams processInput(int argc, const char **argv) {
                 if (k < 2) {
                     user.sprt = 0;
                 }
+                break;
+            case 'm':
                 break;
             case 'p':
                 strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
