@@ -451,14 +451,21 @@ static void *momentCore(void *in) {
                 }
                 RKFloat r = 0.0f;
                 for (k = 0; k < config->filterCount; k++) {
-                    for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
+                    for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
                         r = (RKFloat)i * gateSizeMeters;
                         space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain;
                         space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain;
                     }
+                    if (engine->verbose > 1) {
+                        RKLog(">%s %s ZCal[%d] = %.2f + %.2f + %.2f = %.2f dB @ %d ..< %d\n",
+                              engine->name, name, k,
+                              config->systemZCal[0],
+                              config->ZCal[0][k],
+                              config->filterAnchors[k].sensitivityGain,
+                              config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain,
+                              config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+                    }
                 }
-//                printf("---%s  %.2f dB %d  %.2f\n", name, config->ZCal[0][0] + config->filterAnchors[0].sensitivityGain, config->filterAnchors[0].outputOrigin, config->systemZCal[0]);
-//                printf("---%s  %.2f dB %d  %.2f\n", name, config->ZCal[0][1] + config->filterAnchors[1].sensitivityGain, config->filterAnchors[1].outputOrigin, config->systemZCal[1]);
                 space->noise[0] = config->noise[0];
                 space->noise[1] = config->noise[1];
                 space->dcal = config->DCal[0];

@@ -140,6 +140,7 @@ static void showHelp() {
            "          6 - Reading preference file\n"
            "          7 - Count files in a folder RKCountFilesInPath()\n"
            "          8 - File monitor\n"
+           "          9 - Internet monitor\n"
            "         11 - Initializing a radar system\n"
            "\n"
            "         20 - SIMD quick test\n"
@@ -170,7 +171,7 @@ static void showHelp() {
            "  rktest -vL\n"
 		   "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
 		   "\n"
-		   "  rktest -vs1\n"
+		   "  rktest -vs1  (no space after s)\n"
 		   "         Runs the program in verbose mode, and to simulate a level-1 system.\n"
            "\n"
            "  rktest -vL -f 2000\n"
@@ -245,7 +246,8 @@ static void setSystemLevel(UserParams *user, const int level) {
 			break;
         default:
             // Default
-            user->simulate = false;
+            RKLog("Error. There is no level %d.\n", level);
+            exit(EXIT_FAILURE);
             break;
     }
 }
@@ -600,6 +602,7 @@ int main(int argc, const char **argv) {
 	RKAddConfig(myRadar,
 				RKConfigKeySystemZCal, -55.0f, -55.0f,
 				RKConfigKeySystemDCal, 0.2f,
+                RKConfigKeyZCal2, 20.0f, 20.0f,
 				RKConfigKeyNull);
 
     RKCommandCenter *center = RKCommandCenterInit();
@@ -678,26 +681,6 @@ int main(int argc, const char **argv) {
         }
 
         myRadar->configs[0].prf[0] = user.prf;
-
-//		RKWaveform *waveform = NULL;
-//        const char wavfile[] = "waveforms/ofm.rkwav";
-//        if (RKFilenameExists(wavfile) && myRadar->desc.pulseCapacity < 4000) {
-//            RKLog("Loading waveform from file '%s'...\n", wavfile);
-//            waveform = RKWaveformInitFromFile(wavfile);
-//            RKWaveformSummary(waveform);
-//            RKLog("Adjusting waveform to RX sampling rate = %.2f MHz ...\n", 1.0e-6 * waveform->fs / 32);
-//            RKWaveformDownConvert(waveform, 2.0 * M_PI * 50.0 / 160.0);
-//            RKWaveformDecimate(waveform, 32);
-//            RKWaveformSummary(waveform);
-//            RKAddConfig(myRadar, RKConfigKeyZCals, 2, 0.0, 0.0, 40.0, 40.0, RKConfigKeyNull);
-//        } else {
-//            RKLog("Generating waveform using built-in function ...\n");
-//            //waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.25, 100);
-//            waveform = RKWaveformInitAsLinearFrequencyModulation(5.0, 0.0, 10.0, 1.5);
-//            RKLog("Waveform LFM generated.\n");
-//        }
-//        RKSetWaveform(myRadar, waveform);
-//        RKWaveformFree(waveform);
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
 

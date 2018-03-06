@@ -25,7 +25,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
 
     // Copy over / set some non-zero parameters
     clock->size = size;
-	clock->block = 16;
+    clock->block = 16;
     clock->stride = stride;
     clock->autoSync = true;
     clock->highPrecision = true;
@@ -61,9 +61,9 @@ RKClock *RKClockInit(void) {
 void RKClockFree(RKClock *clock) {
 #if defined(CLOCK_CSV)
     char *c, filename[64];
-	c = strstr(clock->name, "<");
+    c = strstr(clock->name, "<");
     sprintf(filename, "%s", c + 1);
-	c = strstr(filename, ">");
+    c = strstr(filename, ">");
     sprintf(c, ".csv");
     RKLog("%s Dumping buffers ... j = %d  %s\n", clock->name, clock->index, filename);
     FILE *fid = fopen(filename, "w");
@@ -102,9 +102,9 @@ void RKClockSetOffset(RKClock *clock, double offset) {
 void RKClockSetDxDu(RKClock *clock, const double dxdu) {
     clock->hasWisdom = true;
     clock->dx = dxdu;
-	if (clock->verbose) {
-		RKLog("%s Received du/dx = %s as wisdom\n", clock->name, RKFloatToCommaStyleString(1.0 / dxdu));
-	}
+    if (clock->verbose) {
+        RKLog("%s Received du/dx = %s as wisdom\n", clock->name, RKFloatToCommaStyleString(1.0 / dxdu));
+    }
 }
 
 void RKClockSetDuDx(RKClock *clock, const double dudx) {
@@ -249,9 +249,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     clock->yBuffer[k] = y;
     clock->zBuffer[k] = clock->dx;
 
-	if (y < clock->latestTime && !recent) {
-		RKLog("%s WARNING. Going back in time?  x = %f < %f = latestTime\n", clock->name, y, clock->latestTime);
-	}
+    if (y < clock->latestTime && !recent) {
+        RKLog("%s WARNING. Going back in time?  x = %f < %f = latestTime\n", clock->name, y, clock->latestTime);
+    }
     clock->latestTime = y;
 
     return y + clock->offsetSeconds;
@@ -264,7 +264,7 @@ void RKClockReset(RKClock *clock) {
     clock->index = 0;
     clock->count = 0;
     clock->tic = 0;
-	clock->latestTime = 0;
-	clock->infoShown = false;
-	RKLog("%s Reset   du/dx = %s\n", clock->name, RKFloatToCommaStyleString(1.0 / clock->dx));
+    clock->latestTime = 0;
+    clock->infoShown = false;
+    RKLog("%s Reset   du/dx = %s\n", clock->name, RKFloatToCommaStyleString(1.0 / clock->dx));
 }

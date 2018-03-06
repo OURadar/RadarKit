@@ -67,7 +67,7 @@ static void *ringFilterCore(void *_in) {
     struct timeval t0, t1, t2;
 
     const int c = me->id;
-	const int ci = engine->coreOrigin + c;
+    const int ci = engine->coreOrigin + c;
     
     // Find the semaphore
     sem_t *sem = sem_open(me->semaphoreName, O_RDWR);

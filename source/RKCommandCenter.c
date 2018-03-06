@@ -104,18 +104,18 @@ int socketCommandHandler(RKOperator *O) {
                     // Authenticate
                     sscanf(commandString + 1, "%s %s", sval1, sval2);
                     RKLog(">%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
-					// Check authentication here. For now, control is always authorized
-					//
-					//
-					user->access |= RKStreamControl;
-					// Update some info
+                    // Check authentication here. For now, control is always authorized
+                    //
+                    //
+                    user->access |= RKStreamControl;
+                    // Update some info
                     strncpy(user->login, sval1, sizeof(user->login) - 1);
-					user->controlSetIndex = (uint32_t)-1;
+                    user->controlSetIndex = (uint32_t)-1;
                     break;
                     
                 case 'd':
                     // DSP related
-					switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
+                    switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
                         case 'f':
                             // 'df' - DSP filter
                             break;
@@ -168,10 +168,10 @@ int socketCommandHandler(RKOperator *O) {
                                     "\n"
                                     HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
                                     "\n"
-									HIGHLIGHT("d") " [DSP_PAMETER] [VALUE] - DSP parameters,\n"
-									"    where index can be (coming soon):\n"
-									"        t - treshold to censor using VALUE in dB\n"
-									"\n"
+                                    HIGHLIGHT("d") " [DSP_PAMETER] [VALUE] - DSP parameters,\n"
+                                    "    where index can be (coming soon):\n"
+                                    "        t - treshold to censor using VALUE in dB\n"
+                                    "\n"
                                     HIGHLIGHT("f") " [FILTER_INDEX] - DSP filters,\n"
                                     "    where index can be (coming soon):\n"
                                     "        0 - No ground clutter filter\n"
@@ -449,20 +449,15 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
-	char sval1[RKMaximumStringLength];
+    char sval1[RKMaximumStringLength];
 
-	pthread_mutex_lock(&user->mutex);
+    pthread_mutex_lock(&user->mutex);
 
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Modes "1", "2", "3" and "4" are for signal processor only - showing the latest summary text view
         if (user->streams & user->access && td >= 0.05) {
             // Stream "1" - Overall status
             if (user->streams & RKStreamStatusPulses) {
-//                k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s |" RKEOL,
-//                             RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
-//                             RKPositionEngineStatusString(user->radar->positionEngine),
-//                             RKMomentEngineStatusString(user->radar->momentEngine),
-//                             RKDataRecorderStatusString(user->radar->dataRecorder));
                 k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s | %s |" RKEOL,
                              RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                              RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
@@ -524,30 +519,30 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
         }
 
-		// Send another set of controls if the radar controls have changed.
-		if (user->controlSetIndex != user->radar->controlSetIndex && user->access & RKStreamControl) {
-			user->controlSetIndex = user->radar->controlSetIndex;
-			j = sprintf(user->string, "{\"Radars\":[");
-			for (k = 0; k < engine->radarCount; k++) {
-				RKRadar *radar = engine->radars[k];
-				j += sprintf(user->string + j, "\"%s\", ", radar->desc.name);
-			}
-			if (k > 0) {
-				j += sprintf(user->string + j - 2, "], ") - 2;
-			} else {
-				j += sprintf(user->string + j, "], ");
-			}
-			// Should only send the controls if the user has been authenticated
-			RKMakeJSONStringFromControls(sval1, user->radar->controls, user->radar->controlIndex);
-			j += sprintf(user->string + j, "\"Controls\":["
-						"{\"Label\":\"Go\", \"Command\":\"y\"}, "
-						"{\"Label\":\"Stop\", \"Command\":\"z\"}, "
-						"%s"
-						"]}" RKEOL, sval1);
-			O->delimTx.type = RKNetworkPacketTypeControls;
-			O->delimTx.size = j;
-			RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-		}
+        // Send another set of controls if the radar controls have changed.
+        if (user->controlSetIndex != user->radar->controlSetIndex && user->access & RKStreamControl) {
+            user->controlSetIndex = user->radar->controlSetIndex;
+            j = sprintf(user->string, "{\"Radars\":[");
+            for (k = 0; k < engine->radarCount; k++) {
+                RKRadar *radar = engine->radars[k];
+                j += sprintf(user->string + j, "\"%s\", ", radar->desc.name);
+            }
+            if (k > 0) {
+                j += sprintf(user->string + j - 2, "], ") - 2;
+            } else {
+                j += sprintf(user->string + j, "], ");
+            }
+            // Should only send the controls if the user has been authenticated
+            RKMakeJSONStringFromControls(sval1, user->radar->controls, user->radar->controlIndex);
+            j += sprintf(user->string + j, "\"Controls\":["
+                        "{\"Label\":\"Go\", \"Command\":\"y\"}, "
+                        "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
+                        "%s"
+                        "]}" RKEOL, sval1);
+            O->delimTx.type = RKNetworkPacketTypeControls;
+            O->delimTx.size = j;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+        }
     }
 
     // For contiguous streaming:
@@ -877,10 +872,10 @@ int socketStreamHandler(RKOperator *O) {
             endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
         pulse = RKGetPulse(user->radar->pulses, endIndex);
-		s = 0;
-		while (!(pulse->header.s & RKPulseStatusProcessed) && s++ < 100) {
-			usleep(1000);
-		}
+        s = 0;
+        while (!(pulse->header.s & RKPulseStatusProcessed) && s++ < 100) {
+            usleep(1000);
+        }
 
         if (!(user->streamsInProgress & RKPulseStatusProcessed)) {
             user->pulseIndex = endIndex;
@@ -902,7 +897,7 @@ int socketStreamHandler(RKOperator *O) {
             userDataV = user->samples[1];
             RKComplex *yH;
             RKComplex *yV;
-			float scale = 1.0f;
+            float scale = 1.0f;
 
             // Default stride: k = 1
             k = 1;
@@ -927,9 +922,9 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = 0;
                         i++;
                     }
-					scale = 10000.0f * sqrtf(user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
-					// Show the filter that was used as matched filter
-					yH = user->radar->pulseCompressionEngine->filters[gid][0];
+                    scale = 10000.0f * sqrtf(user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
+                    // Show the filter that was used as matched filter
+                    yH = user->radar->pulseCompressionEngine->filters[gid][0];
                     yV = user->radar->pulseCompressionEngine->filters[gid][0];
                     for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                         userDataH->i   = (int16_t)(scale * yH->i);
@@ -938,15 +933,15 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
-					for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-						userDataH->i   = 0;
-						userDataH++->q = 0;
-						userDataV->i   = 0;
-						userDataV++->q = 0;
-						i++;
-					}
-					// Compute an appropriate normalization factor so that 16-bit view on the scope is okay
-					scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
+                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                        userDataH->i   = 0;
+                        userDataH++->q = 0;
+                        userDataV->i   = 0;
+                        userDataV++->q = 0;
+                        i++;
+                    }
+                    // Compute an appropriate normalization factor so that 16-bit view on the scope is okay
+                    scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[gid][0].length);
                     // The third part of is the processed data
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
@@ -959,13 +954,13 @@ int socketStreamHandler(RKOperator *O) {
                     break;
 
                 case 2:
-					// Down-sampled output data
+                    // Down-sampled output data
                     k = user->pulseDownSamplingRatio;
 
                     pulseHeader.gateCount /= k;
                     pulseHeader.gateSizeMeters *= (float)k;
 
-					scale = 1.0f;
+                    scale = 1.0f;
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
                     for (i = 0; i < pulseHeader.gateCount; i++) {
@@ -979,11 +974,11 @@ int socketStreamHandler(RKOperator *O) {
                     break;
 
                 case 1:
-					// Down-sampled raw input data
+                    // Down-sampled raw input data
                     k = user->pulseDownSamplingRatio;
 
                 default:
-					// Raw input data
+                    // Raw input data
                     pulseHeader.gateCount /= k;
                     pulseHeader.gateCount = MIN(pulseHeader.gateCount, 2000);
                     pulseHeader.gateSizeMeters *= (float)k;
@@ -1033,11 +1028,11 @@ int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
     
-	if (engine->radarCount == 0) {
-		RKLog("%s No radar yet.\n", engine->name);
-		return RKResultNoRadar;
-	}
-	
+    if (engine->radarCount == 0) {
+        RKLog("%s No radar yet.\n", engine->name);
+        return RKResultNoRadar;
+    }
+    
     memset(user, 0, sizeof(RKUser));
     user->access = RKStreamStatusAll;
     user->access |= RKStreamDisplayZVWDPRKS;
