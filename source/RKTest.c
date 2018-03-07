@@ -1826,6 +1826,7 @@ void RKTestWriteFFTWisdom(void) {
         nfft >>= 2;
     }
     fftwf_free(in);
+    fftwf_export_wisdom_to_filename(RKFFTWisdomFile);
 }
 
 void RKTestWaveformTFM(void) {

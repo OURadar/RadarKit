@@ -420,7 +420,7 @@ static void *pulseWatcher(void *_in) {
     // Maximum plan size
     planSize = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
     bool exportWisdom = false;
-    const char wisdomFile[] = "radarkit-fft-wisdom";
+    const char wisdomFile[] = RKFFTWisdomFile;
 
     // FFTW's memory allocation and plan initialization are not thread safe but others are.
     fftwf_complex *in, *out;

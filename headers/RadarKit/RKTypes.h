@@ -140,6 +140,7 @@
 #define RKDataFolderHealth               "health"
 #define RKLogFolder                      "log"
 #define RKWaveformFolder                 "waveforms"
+#define RKFFTWisdomFile                  "radarkit-fft-wisdom"
 
 #define RKNoColor                        "\033[0m"
 #define RKRedColor                       "\033[38;5;196m"
