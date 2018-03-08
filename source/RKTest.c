@@ -460,9 +460,10 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("%s fs = %s MHz   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
+        RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
 			  RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
+			  transceiver->gateSizeMeters,
               transceiver->sprt > 1 ? "Base " : "",
               RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
               1000.0 * transceiver->prt,
@@ -519,7 +520,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 		RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
 	}
 
-    while (transceiver->state & RKEngineStateActive) {
+	while (transceiver->state & RKEngineStateActive) {
 
         periodTotal = 0.0;
 

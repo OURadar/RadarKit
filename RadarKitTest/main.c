@@ -201,7 +201,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             // Minimum: 5-MHz
             user->simulate = true;
             user->fs = 5000000;
-            user->gateCount = 2000;
+            user->gateCount = 5000;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
             break;
@@ -597,8 +597,8 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
 	RKAddControl(myRadar, "OFM", "t w ofm");
 
-	RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 3 180");
-    RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
+	RKAddControl(myRadar, "PPI EL 9 deg @ 180 dps", "p ppi 9 180");
+    RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 8 90");
     RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
     RKAddControl(myRadar, "PPI EL 6 deg @ 24 dps", "p ppi 6 24");
     RKAddControl(myRadar, "PPI EL 5 deg @ 12 dps", "p ppi 5 12");

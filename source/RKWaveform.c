@@ -382,6 +382,7 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
     // Copy over the float samples to int16_t samples and adjust the amplitude so that it represents the intended transmit envelope
     // This adjustment will not produce the transmit waveform that takes full advantage of the DAC range
     // The normalization factor to get the waveform to unity noise gain is no longer known here.
+	// All filters should have a unity noise gain so an equivalent sensitivity gain at 1-us can be derived.
 	for (i = 0; i < waveform->count; i++) {
 		for (j = 0; j < waveform->depth; j++) {
 			w[j] = waveform->samples[i][j].i;
@@ -394,14 +395,22 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
         // Go through the waveform samples (filters)
         ic = waveform->iSamples[i];
         fc = waveform->samples[i];
+		float x = 0.0f;
         for (j = 0; j < waveform->filterCounts[i]; j++) {
-            a = powf(10.0f, 0.05f * waveform->filterAnchors[i][j].sensitivityGain) * RKWaveformDigitalAmplitude;
+            a = powf(10.0f, 0.05f * waveform->filterAnchors[i][j].sensitivityGain);
+			a *= sqrtf(2.0e-6 * waveform->fs);
+			a *= RKWaveformDigitalAmplitude;
             for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
                 ic->i = (int16_t)(a * fc->i);
                 ic->q = (int16_t)(a * fc->q);
+				x = MAX(x, sqrtf((float)(ic->i * ic->i + ic->q * ic->q)));
                 ic++;
                 fc++;
             }
+			x = fabsf(x) / RKWaveformDigitalAmplitude;
+			if (x < 0.95f || x > 1.05f) {
+				RKLog("Warning. Waveform normlization does not seem to work.  x = %.4f\n", x);
+			}
         }
     }
 
