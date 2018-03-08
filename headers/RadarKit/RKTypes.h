@@ -131,6 +131,7 @@
 #define RKStatusBarWidth                 10
 #define RKPulseCountForNoiseMeasurement  200
 #define RKProcessorStatusPulseCoreCount  16
+#define RKProcessorStatusRingCoreCount   16
 #define RKProcessorStatusRayCoreCount    16
 #define RKHostMonitorPingInterval        5
 
@@ -838,6 +839,7 @@ typedef struct rk_control {
     char             command[RKMaximumStringLength];                  // Control command
 } RKControl;
 
+// This can be a supported feature reported back from client
 typedef struct rk_status {
     uint64_t         i;
     RKStatusFlag     flag;
@@ -845,6 +847,10 @@ typedef struct rk_status {
     uint8_t          pulseSkipCount;
     uint8_t          pulseCoreLags[RKProcessorStatusPulseCoreCount];
     uint8_t          pulseCoreUsage[RKProcessorStatusPulseCoreCount];
+    uint8_t          ringMonitorLag;
+    uint8_t          ringSkipCount;
+    uint8_t          ringCoreLags[RKProcessorStatusRingCoreCount];
+    uint8_t          ringCoreUsage[RKProcessorStatusRingCoreCount];
     uint8_t          rayMonitorLag;
     uint8_t          raySkipCount;
     uint8_t          rayCoreLags[RKProcessorStatusRayCoreCount];
