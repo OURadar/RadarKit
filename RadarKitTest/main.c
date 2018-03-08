@@ -198,7 +198,7 @@ static void setSystemLevel(UserParams *user, const int level) {
 			user->prf = 10;
             break;
         case 1:
-            // Minimum
+            // Minimum: 5-MHz
             user->simulate = true;
             user->fs = 5000000;
             user->gateCount = 2000;
@@ -206,7 +206,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForProductGenerator = 2;
             break;
         case 2:
-            // Low
+			// Low: 10-MHz
             user->simulate = true;
             user->fs = 10000000;
             user->gateCount = 10000;
@@ -214,7 +214,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForProductGenerator = 2;
             break;
         case 3:
-            // Intermediate
+			// Intermediate: 20-MHz
             user->simulate = true;
             user->fs = 20000000;
             user->gateCount = 20000;
@@ -222,7 +222,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForProductGenerator = 2;
             break;
         case 4:
-            // High
+			// High: 50-MHz
             user->simulate = true;
             user->fs = 50000000;
             user->gateCount = 50000;
@@ -230,7 +230,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForProductGenerator = 4;
             break;
         case 5:
-            // Full
+			// Full: 100-MHz
             user->simulate = true;
             user->fs = 100000000;
             user->gateCount = 100000;
@@ -238,7 +238,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForProductGenerator = 4;
             break;
 		case 6:
-			// Secret
+			// Secret: 200-MHz
 			user->simulate = true;
 			user->fs = 200000000;
 			user->gateCount = 200000;
@@ -595,7 +595,9 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "10us 0.1-MHz tone", "t w t10");
     RKAddControl(myRadar, "20us 0.1-MHz tone", "t w t20");
     RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
+	RKAddControl(myRadar, "OFM", "t w ofm");
 
+	RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 3 180");
     RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 7 90");
     RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
     RKAddControl(myRadar, "PPI EL 6 deg @ 24 dps", "p ppi 6 24");

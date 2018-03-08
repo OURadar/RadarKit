@@ -1216,7 +1216,7 @@ int RKGoLive(RKRadar *radar) {
 //     None
 //
 int RKWaitWhileActive(RKRadar *radar) {
-    int k;
+    int j, k;
     int s = 0;
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
@@ -1227,7 +1227,8 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool networkOkay;
 
     RKStatusEnum networkEnum;
-    
+	char FFTPlanUsage[RKNameLength];
+
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
@@ -1244,7 +1245,16 @@ int RKWaitWhileActive(RKRadar *radar) {
 
                 RKConfig *config = RKGetLatestConfig(radar);
                 RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
-                sprintf(health->string, "{"
+
+				k = sprintf(FFTPlanUsage, "{");
+				for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
+					k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
+								 radar->pulseCompressionEngine->planSizes[j],
+								 radar->pulseCompressionEngine->planUseCount[j]);
+				}
+				k += sprintf(FFTPlanUsage + k, "}");
+
+				sprintf(health->string, "{"
                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
@@ -1252,7 +1262,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                         "\"Noise\":[%.3f,%.3f], "
-                        "\"DFTPlanUsage\":[%d,%d,%d,%d,%d]"
+                        "\"FFTPlanUsage\":%s"
                         "}",
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
@@ -1260,11 +1270,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         networkOkay ? "true" : "false", networkEnum,
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1],
-                        radar->pulseCompressionEngine->planUseCount[0],
-                        radar->pulseCompressionEngine->planUseCount[1],
-                        radar->pulseCompressionEngine->planUseCount[2],
-                        radar->pulseCompressionEngine->planUseCount[3],
-                        radar->pulseCompressionEngine->planUseCount[4]
+                        FFTPlanUsage
                         );
                 RKSetHealthReady(radar, health);
 
@@ -1278,13 +1284,13 @@ int RKWaitWhileActive(RKRadar *radar) {
             RKStatus *status = RKGetVacantStatus(radar);
             status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
             for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-                status->pulseCoreLags[k] = (uint8_t)(99.5f * radar->pulseCompressionEngine->workers[k].lag);
-                status->pulseCoreUsage[k] = (uint8_t)(99.5 * radar->pulseCompressionEngine->workers[k].dutyCycle);
+                status->pulseCoreLags[k] = (uint8_t)(99.4f * radar->pulseCompressionEngine->workers[k].lag);
+                status->pulseCoreUsage[k] = (uint8_t)(99.4 * radar->pulseCompressionEngine->workers[k].dutyCycle);
             }
             status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
             for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
-                status->rayCoreLags[k] = (uint8_t)(99.5f * radar->momentEngine->workers[k].lag);
-                status->rayCoreUsage[k] = (uint8_t)(99.5 * radar->momentEngine->workers[k].dutyCycle);
+                status->rayCoreLags[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].lag);
+                status->rayCoreUsage[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].dutyCycle);
             }
             status->recorderLag = radar->dataRecorder->lag;
             RKSetStatusReady(radar, status);

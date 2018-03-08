@@ -330,7 +330,7 @@ float RKUMinDiff(const float m, const float s) {
 
 // ks = start of a keyword, should begin with quote or space
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
-    char *ke;
+    char *ke = NULL;
     while (*ks != '"' && *ks != '\0') {
         ks++;
     }
@@ -339,7 +339,10 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
         ke++;
     }
     if (*ke == '\0') {
-        fprintf(stderr, "Expected a close quote for keyword %s\n", ks);
+		fprintf(stderr, "Expected a close quote for keyword %s\n", ks == NULL ? "(NULL)" : ks);
+		if (ke == NULL) {
+			return NULL;
+		}
     }
     // Now a keyword is in betwee ks & ke
     strncpy(key, ks, ke - ks);
