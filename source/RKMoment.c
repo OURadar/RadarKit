@@ -452,13 +452,14 @@ static void *momentCore(void *in) {
                 }
 				// Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
 				// The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
-				RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 30.0;
+				// The number 60 is for conversion of range from meters to kilometers in the range correction term.
+				RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0;
                 RKFloat r = 0.0f;
                 for (k = 0; k < config->filterCount; k++) {
                     for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
                         r = (RKFloat)i * gateSizeMeters;
-                        space->rcor[0][i] = 20.0f * log10f(r) + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain - f;
-                        space->rcor[1][i] = 20.0f * log10f(r) + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain - f;
+                        space->rcor[0][i] = 20.0f * log10f(r) + config->systemZCal[0] + config->ZCal[0][k] - config->filterAnchors[k].sensitivityGain - f;
+                        space->rcor[1][i] = 20.0f * log10f(r) + config->systemZCal[1] + config->ZCal[1][k] - config->filterAnchors[k].sensitivityGain - f;
                     }
                     if (engine->verbose > 1) {
                         RKLog(">%s %s ZCal[%d] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",

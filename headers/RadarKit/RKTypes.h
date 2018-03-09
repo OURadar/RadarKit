@@ -6,6 +6,16 @@
 //
 //  █
 //
+//  1.2.7b - 3/31/2018
+//         - Added waveform sensitivity gain
+//         - Added calibration adjustment with senstivity gain
+//         - Added calibration adjustment with ADC sampling frequency
+//         - Unity noise gain enforced for compression filters
+//         - Carrier frequency is now in RKWaveform
+//         - Added setSystemLevel() for various configurations
+//         - Added ring filter engine
+//         - Added waveform loading in RKTestTransceiver
+//
 //  1.2.6  - 2/27/2018
 //         - Added RKHostMonitor for ICMP echo reqeust
 //         - Default host is Google's 8.8.8.8
@@ -104,7 +114,7 @@
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKVersionString                  "1.2.6"
+#define RKVersionString                  "1.2.7b"
 #define RKBufferCSlotCount               25                          // Config
 #define RKBufferHSlotCount               25                          // Health
 #define RKBufferSSlotCount               90                          // Status strings

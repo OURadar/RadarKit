@@ -615,7 +615,7 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
 
 	RKAddConfig(myRadar,
-				RKConfigKeySystemZCal, -55.0f, -55.0f,
+				RKConfigKeySystemZCal, -25.0f, -25.0f,
 				RKConfigKeySystemDCal, 0.2f,
                 RKConfigKeyZCal2, 20.0f, 20.0f,
 				RKConfigKeyNull);
