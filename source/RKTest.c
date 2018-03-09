@@ -759,7 +759,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 
 	//RKTestTransceiverExec(transceiver, "w q05", NULL);
 	//RKTestTransceiverExec(transceiver, "w q10", NULL);
-    RKTestTransceiverExec(transceiver, "w ofm", NULL);
+    //RKTestTransceiverExec(transceiver, "w ofm", NULL);
+	RKTestTransceiverExec(transceiver, "w s01", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -854,7 +855,6 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     return RKResultFailedToSetWaveform;
                 }
                 RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
-                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
                 waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
                 if (*c == 's') {
                     // Rectangular single tone
@@ -865,6 +865,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 } else if (*c == 'q') {
                     RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
                 }
+				strncpy(waveform->name, c, RKNameLength);
+				strncpy(transceiver->transmitWaveformName, c, RKNameLength);
                 transceiver->transmitWaveformLength = waveform->depth;
                 for (k = 0; k < waveform->depth; k++) {
                     transceiver->transmitWaveform[k].i = waveform->iSamples[0][k].i;

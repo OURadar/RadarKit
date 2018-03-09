@@ -874,7 +874,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 			}
         }
     }
-	// Pulse compression engine already made a copy, we can mutate waveform here for the config buffer
+	// Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
 	RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
     if (waveform->filterCounts[0] == 1) {
         RKAddConfig(radar,

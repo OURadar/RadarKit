@@ -441,7 +441,7 @@ static void *pulseWatcher(void *_in) {
     }
 
     // Go through the maximum plan size and divide it by two a few times
-    while (planSize >= 16 && planIndex < RKPulseCompressionDFTPlanCount) {
+    while (planSize >= MAX(pulse->header.capacity / 64, 32) && planIndex < RKPulseCompressionDFTPlanCount) {
         if (engine->verbose) {
             RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         }

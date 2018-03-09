@@ -8,6 +8,37 @@
 
 #include <RadarKit/RKWaveform.h>
 
+typedef uint8_t RKWaveformGain;
+enum RKWaveformGain {
+	RKWaveformGainNull          = 0,
+	RKWaveformGainNoise         = 1,
+	RKWaveformGainSensitivity   = 1 << 1,
+	RKWaveformGainBoth          = (RKWaveformGainNoise | RKWaveformGainSensitivity)
+};
+
+static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gain) {
+	// Calculate the noise gain
+	int i, j, k;
+	RKFloat a, g;
+	for (k = 0; k < waveform->count; k++) {
+		for (j = 0; j < waveform->filterCounts[k]; j++) {
+			g = 0.0f;
+			RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+			for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
+				a = w->i * w->i + w->q * w->q;
+				g += a;
+				w++;
+			}
+			if (gain & RKWaveformGainNoise) {
+				waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
+			}
+			if (gain & RKWaveformGainSensitivity) {
+				waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(waveform->filterAnchors[k][j].length / g) - 10.0f * log10f(1.0e-6 * waveform->fs);
+			}
+		}
+	}
+}
+
 #pragma mark - Life Cycle
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
@@ -113,7 +144,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
           fileHeader.name, fileHeader.groupCount, RKIntegerToCommaStyleString(fileHeader.depth),
           RKFloatToCommaStyleString(1.0e-6 * waveform->fc), RKFloatToCommaStyleString(1.0e-6 * waveform->fs));
     
-    RKWaveformCalculateGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
     return waveform;
 }
 
@@ -158,7 +189,8 @@ void RKWaveformOnes(RKWaveform *waveform) {
             w++;
         }
     }
-    RKWaveformCalculateGain(waveform);
+	RKWaveformNormalizeNoiseGain(waveform);
+	RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
 }
 
 //
@@ -212,9 +244,9 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
             }
         }
     }
-    
+
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
 }
 
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
@@ -268,7 +300,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     }
     
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
     return waveform;
 }
 
@@ -305,7 +337,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 		w++;
 	}
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
 	return;
 }
 
@@ -354,7 +386,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             w[j] = w[i];
         }
     }
-    RKWaveformCalculateGain(waveform);
+	RKWaveformCalculateGain(waveform, RKWaveformGainNoise);
 }
 
 void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
@@ -517,29 +549,17 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
                 x->q /= gain;
                 x++;
             }
+			waveform->filterAnchors[k][j].filterGain = 1.0f;
         }
     }
 }
 
-void RKWaveformCalculateGain(RKWaveform *waveform) {
-    // Normalize the peak to get the peak transmit power
-    int i, j, k;
-    RKFloat a, g, h;
-    for (k = 0; k < waveform->count; k++) {
-        for (j = 0; j < waveform->filterCounts[k]; j++) {
-            h = 0.0f;
-            g = 0.0f;
-            RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-                a = w->i * w->i + w->q * w->q;
-                h = MAX(h, a);
-                g += a;
-                w++;
-            }
-            waveform->filterAnchors[k][j].sensitivityGain = -10.0f * log10f(h * 1.0e-6 * waveform->fs);
-            waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
-        }
-    }
+void RKWaveformCalculateNoiseGain(RKWaveform *waveform) {
+	return RKWaveformCalculateGain(waveform, RKWaveformGainNoise);
+}
+
+void RKWaveformCalculateSensitivityGain(RKWaveform *waveform) {
+	return RKWaveformCalculateGain(waveform, RKWaveformGainSensitivity);
 }
 
 void RKWaveformSummary(RKWaveform *waveform) {

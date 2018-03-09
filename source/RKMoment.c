@@ -444,25 +444,30 @@ static void *momentCore(void *in) {
             // Compute the range correction factor if needed.
             if (ic != S->header.configIndex) {
                 ic = S->header.configIndex;
+				// At this point, gateSizeMeters is no longer the spacing of raw pulse, it has been down-sampled according to pulseToRayRatio
                 gateSizeMeters = S->header.gateSizeMeters;
                 if (engine->verbose > 1) {
                     RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s\n",
                           engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity));
                 }
+				// Because pulse-compression engine uses unity noise gain filters, there is an inherent signal gain difference when the ADC is clocked differently
+				// That attenuation is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
+				RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 30.0;
                 RKFloat r = 0.0f;
                 for (k = 0; k < config->filterCount; k++) {
                     for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
                         r = (RKFloat)i * gateSizeMeters;
-                        space->rcor[0][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain;
-                        space->rcor[1][i] = 20.0f * log10f(r) - 30.0f + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain;
+                        space->rcor[0][i] = 20.0f * log10f(r) + config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain - f;
+                        space->rcor[1][i] = 20.0f * log10f(r) + config->ZCal[1][k] + config->systemZCal[1] - config->filterAnchors[k].sensitivityGain - f;
                     }
-                    if (engine->verbose > 1) {
-                        RKLog(">%s %s ZCal[%d] = %.2f + %.2f + %.2f = %.2f dB @ %d ..< %d\n",
+                    if (engine->verbose > 0) {
+                        RKLog(">%s %s ZCal[%d] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
                               engine->name, name, k,
                               config->systemZCal[0],
                               config->ZCal[0][k],
                               config->filterAnchors[k].sensitivityGain,
-                              config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain,
+							  f,
+                              config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain - f,
                               config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
                     }
                 }
