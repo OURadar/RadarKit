@@ -19,13 +19,15 @@ enum RKWaveformGain {
 static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gain) {
 	// Calculate the noise gain
 	int i, j, k;
-	RKFloat a, g;
+	RKFloat a, g, h;
 	for (k = 0; k < waveform->count; k++) {
 		for (j = 0; j < waveform->filterCounts[k]; j++) {
 			g = 0.0f;
+            h = 0.0f;
 			RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
 			for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
 				a = w->i * w->i + w->q * w->q;
+                h = MAX(h, a);
 				g += a;
 				w++;
 			}
@@ -33,7 +35,8 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gain) {
 				waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
 			}
 			if (gain & RKWaveformGainSensitivity) {
-				waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(waveform->filterAnchors[k][j].length / g) - 10.0f * log10f(1.0e-6 * waveform->fs);
+				//waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(waveform->filterAnchors[k][j].length / g) - 10.0f * log10f(1.0e-6 * waveform->fs);
+                waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(1.0f / h) - 10.0f * log10f(1.0e-6 * waveform->fs);
 			}
 		}
 	}
@@ -441,7 +444,7 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
             }
 			x = fabsf(x) / RKWaveformDigitalAmplitude;
 			if (x < 0.95f || x > 1.05f) {
-				RKLog("Warning. Waveform normlization does not seem to work.  x = %.4f\n", x);
+				RKLog("Warning. Waveform normalization does not seem to work.  x[%d] = %.4f\n", j, x);
 			}
         }
     }
@@ -552,14 +555,6 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
 			waveform->filterAnchors[k][j].filterGain = 1.0f;
         }
     }
-}
-
-void RKWaveformCalculateNoiseGain(RKWaveform *waveform) {
-	return RKWaveformCalculateGain(waveform, RKWaveformGainNoise);
-}
-
-void RKWaveformCalculateSensitivityGain(RKWaveform *waveform) {
-	return RKWaveformCalculateGain(waveform, RKWaveformGainSensitivity);
 }
 
 void RKWaveformSummary(RKWaveform *waveform) {

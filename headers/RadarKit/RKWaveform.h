@@ -111,7 +111,6 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega);
 
 void RKWaveformWrite(RKWaveform *waveform, const char *filename);
 void RKWaveformNormalizeNoiseGain(RKWaveform *waveform);
-void RKWaveformCalculateNoiseGain(RKWaveform *waveform);
 void RKWaveformSummary(RKWaveform *waveform);
 
 #endif

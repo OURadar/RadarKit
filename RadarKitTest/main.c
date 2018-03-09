@@ -207,7 +207,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             // Minimum: 5-MHz
             user->simulate = true;
             user->fs = 5000000;
-            user->gateCount = 5000;
+            user->gateCount = 4000;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
             user->desc.pulseToRayRatio = 2;
