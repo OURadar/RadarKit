@@ -74,9 +74,14 @@ static void showHelp() {
            "         Shows the clock assignment for positions and pulses. This mode can be\n"
            "         used to check if the timing of position and pulses are set properly.\n"
            "\n"
-           "  -d (--no-decor)\n"
-           "         Removes decoration of text. No color / underline. This should be set for\n"
-           "         terminals that do not support color output through escape sequence.\n"
+           "  -d (--decimate) " UNDERLINE("value") "\n"
+           "         Sets the decimation factor from pulse to ray buffers to be " UNDERLINE("value") ".\n"
+           "         The default is derived autmatically where the gate spacing of rays\n"
+           "         would be 60 meters.\n"
+           "\n"
+           "  -e (--empty-style)\n"
+           "         Set styles of text to be empty. No color / underline. This should be set\n"
+           "         for terminals that do not support color output through escape sequence.\n"
            "\n"
            "  -f (--prf) " UNDERLINE("value") "\n"
            "         Sets the pulse repetition frequency (PRF) to " UNDERLINE("value") " in Hz.\n"
@@ -295,7 +300,8 @@ UserParams processInput(int argc, const char **argv) {
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
         {"bandwidth"             , required_argument, NULL, 'b'},
         {"core"                  , required_argument, NULL, 'c'},
-        {"no-decor"              , no_argument      , NULL, 'd'},
+        {"decimate"              , required_argument, NULL, 'd'},
+        {"empty-style"           , no_argument      , NULL, 'e'},
         {"prf"                   , required_argument, NULL, 'f'},
         {"gate"                  , required_argument, NULL, 'g'},
         {"help"                  , no_argument      , NULL, 'h'},
@@ -454,6 +460,9 @@ UserParams processInput(int argc, const char **argv) {
                 sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
                 break;
             case 'd':
+                user.desc.pulseToRayRatio = atoi(optarg);
+                break;
+            case 'e':
                 RKSetWantColor(false);
                 break;
             case 'f':
