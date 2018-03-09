@@ -450,8 +450,8 @@ static void *momentCore(void *in) {
                     RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s\n",
                           engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity));
                 }
-				// Because pulse-compression engine uses unity noise gain filters, there is an inherent signal gain difference when the ADC is clocked differently
-				// That attenuation is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
+				// Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
+				// The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
 				RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 30.0;
                 RKFloat r = 0.0f;
                 for (k = 0; k < config->filterCount; k++) {

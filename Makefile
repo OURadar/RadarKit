@@ -28,7 +28,7 @@ RKLIB = libRadarKit.a
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
 #CFLAGS += -mavx2 -mavx512f
-CFLAGS += -mavx2
+#CFLAGS += -mavx -mavx2
 
 ifeq ($(UNAME), Darwin)
 # Mac OS X

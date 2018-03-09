@@ -195,6 +195,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForProductGenerator = 2;
 			user->desc.pulseBufferDepth = 20;
 			user->desc.rayBufferDepth = 20;
+            user->desc.pulseToRayRatio = 2;
 			user->prf = 10;
             break;
         case 1:
@@ -204,6 +205,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 5000;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
+            user->desc.pulseToRayRatio = 2;
             break;
         case 2:
 			// Low: 10-MHz
@@ -212,6 +214,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 10000;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
+            user->desc.pulseToRayRatio = 4;
             break;
         case 3:
 			// Intermediate: 20-MHz
@@ -220,6 +223,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 20000;
             user->coresForPulseCompression = 4;
             user->coresForProductGenerator = 2;
+            user->desc.pulseToRayRatio = 8;
             break;
         case 4:
 			// High: 50-MHz
@@ -228,6 +232,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 50000;
             user->coresForPulseCompression = 4;
             user->coresForProductGenerator = 4;
+            user->desc.pulseToRayRatio = 16;
             break;
         case 5:
 			// Full: 100-MHz
@@ -236,6 +241,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 100000;
             user->coresForPulseCompression = 8;
             user->coresForProductGenerator = 4;
+            user->desc.pulseToRayRatio = 32;
             break;
 		case 6:
 			// Secret: 200-MHz
@@ -244,6 +250,7 @@ static void setSystemLevel(UserParams *user, const int level) {
 			user->gateCount = 200000;
 			user->coresForPulseCompression = 10;
 			user->coresForProductGenerator = 4;
+            user->desc.pulseToRayRatio = 64;
 			break;
         default:
             // Default
@@ -265,7 +272,7 @@ UserParams processInput(int argc, const char **argv) {
 
     // Build a RKRadar initialization description
     user.desc.initFlags = RKInitFlagAllocEverything;
-    user.desc.pulseBufferDepth = 8000;
+    user.desc.pulseBufferDepth = 2000;
     user.desc.rayBufferDepth = 1440;
     user.desc.latitude = 35.181251;
     user.desc.longitude = -97.436752;
@@ -520,15 +527,6 @@ UserParams processInput(int argc, const char **argv) {
         user.desc.initFlags |= RKInitFlagVeryVerbose;
     } else if (user.verbose == 3) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
-    }
-    if (user.gateCount >= 40000) {
-        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 8000);
-    } else if (user.gateCount >= 20000) {
-        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 4000);
-    } else if (user.gateCount >= 4000) {
-        user.desc.pulseToRayRatio = ceilf((float)user.gateCount / 2000);
-    } else {
-        user.desc.pulseToRayRatio = 2;
     }
     k = user.fs / user.prf;
     if (user.gateCount > k) {
