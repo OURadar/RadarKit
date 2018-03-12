@@ -634,6 +634,7 @@ int main(int argc, const char **argv) {
     if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
+	RKLog("doNotWrite = %s\n", myRadar->sweepEngine->doNotWrite ? "true" : "false");
 
     if (user.simulate) {
 

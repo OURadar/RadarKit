@@ -1,10 +1,17 @@
 #!/bin/bash
 
-. ${HOME}/boonlib-sh/boonlib.sh
-
-LOGFILE=${HOME}/handlefiles.log
-
-# slog $@
+HAS_BLIB=0
+if [ -f ${HOME}/blib-sh/blib.sh ]; then
+    HAS_BLIB=1
+    . ${HOME}/blib-sh/blib.sh
+    if [ -d "/data/log" ]; then
+        LOGFILE="/data/log/handlefiles-$(date +%Y%m%d).log"
+    elif [ -d "data/log" ]; then
+        LOGFILE="data/log/handlefiles-$(date +%Y%m%d).log"
+    else
+        LOGFILE="${HOME}/handlefiles.log"
+    fi
+fi
 
 # Use the first file as template for the archive filename
 afile="${1%%-[ZVWDPR].nc}.tgz"
@@ -27,5 +34,7 @@ eval $cmd
 
 # Go back to the previous folder
 cd - > /dev/null
-slog $afile
 
+if [ ${HAS_BLIB} ]; then
+    log $afile
+fi
