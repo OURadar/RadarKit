@@ -31,10 +31,12 @@ static int put_global_text_att(const int ncid, const char *att, const char *text
 
 static void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
-    
+
     int i, j, k, p;
-    uint32_t n = engine->sweep.rayCount;
-    RKRay **rays = engine->sweep.rays;
+
+	uint8_t anchorIndex = RKPreviousModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+	uint32_t n = engine->rayAnchors[anchorIndex].count;
+	RKRay **rays = engine->rayAnchors[anchorIndex].rays;
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
     RKRay *S = rays[0];
@@ -447,7 +449,7 @@ static void *rayGatherer(void *in) {
     int k, s, n;
     
     RKRay *ray;
-    RKRay **rays = engine->sweep.rays;
+    RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
 
     // Start and end indices of the input rays
     uint32_t is = 0;
@@ -506,13 +508,13 @@ static void *rayGatherer(void *in) {
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
-            engine->sweep.rayCount = n;
-            
-            //RKLog(">%s %p %p %p ... %p\n", engine->name, engine->sweep.rays[0], engine->sweep.rays[1], engine->sweep.rays[2], engine->sweep.rays[n - 1]);
+			engine->rayAnchors[engine->rayAnchorsIndex].count = n;
             
             if (tidSweepWriter) {
                 pthread_join(tidSweepWriter, NULL);
             }
+			engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+			rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }

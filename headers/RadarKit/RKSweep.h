@@ -9,14 +9,16 @@
 #ifndef __RadarKit_Sweep__
 #define __RadarKit_Sweep__
 
+#define RKRayAnchorsDepth 4
+
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
 #include <netcdf.h>
 
-typedef struct rk_sweep {
+typedef struct rk_ray_anchors {
     RKRay                  *rays[RKMaxRaysPerSweep];
-    uint32_t               rayCount;
-} RKSweep;
+    uint32_t               count;
+} RKRayAnchors;
 
 typedef struct rk_sweep_engine RKSweepEngine;
 
@@ -38,7 +40,8 @@ struct rk_sweep_engine {
 
     // Program set variables
     pthread_t              tidRayGatherer;
-    RKSweep                sweep;
+    RKRayAnchors           rayAnchors[RKRayAnchorsDepth];
+	uint8_t                rayAnchorsIndex;
     float                  *array1D;
     float                  *array2D;
     char                   filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list

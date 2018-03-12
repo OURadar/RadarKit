@@ -786,6 +786,12 @@ typedef struct rk_ray {
     RKByte           data[0];
 } RKRay;
 
+typedef struct rk_sweep {
+	RKRadarDesc      desc;
+	RKConfig         config;
+	RKBuffer         *rayBuffer;
+} RKSweep;
+
 typedef struct rk_scratch {
     uint32_t         capacity;                                       // Capacity
     bool             showNumbers;                                    // A flag for showing numbers
