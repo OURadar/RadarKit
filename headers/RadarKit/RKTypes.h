@@ -789,7 +789,7 @@ typedef struct rk_ray {
 typedef struct rk_sweep {
 	RKRadarDesc      desc;
 	RKConfig         config;
-	RKBuffer         *rayBuffer;
+	RKBuffer         rayBuffer;
 } RKSweep;
 
 typedef struct rk_scratch {

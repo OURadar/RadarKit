@@ -645,3 +645,37 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
     }
     return RKResultSuccess;
 }
+
+#pragma mark - Reader
+
+RKSweep *RKSweepRead(const char *filename) {
+	int j;
+	int ncid;
+
+	const char name[] = "RKSweepRead()";
+
+	if ((j = nc_open(filename, NC_MODE, &ncid)) > 0) {
+		RKLog("%s Error opening file %s\n", name, filename);
+		return NULL;
+	}
+
+	// Read in the header, compute the capacity.
+	// Get the ray count
+
+	uint32_t capacity = 5000;
+	uint32_t rayCount = 360;
+
+	RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
+	RKRayBufferAlloc(&sweep->rayBuffer, capacity, rayCount);
+
+	// Go through the data
+	// Inteligently go through all products
+
+	return sweep;
+}
+
+int RKSweepFree(RKSweep *sweep) {
+	RKRayBufferFree(sweep->rayBuffer);
+	free(sweep);
+	return RKResultSuccess;
+}
