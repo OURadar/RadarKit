@@ -15,48 +15,48 @@
 #define RKCommandCenterMaxRadars       4
 
 typedef struct  rk_user {
-    char               login[64];
-    RKStream           access;             // Authorized access priviledge
-    RKStream           streams;
-    RKStream           streamsInProgress;
-    double             timeLastOut;
-    double             timeLastHealthOut;
-    double             timeLastDisplayIQOut;
-    double             timeLastIn;
-    uint32_t           statusIndex;
-    uint32_t           healthIndex;
-    uint32_t           rayStatusIndex;
-    uint32_t           pulseIndex;
-    uint32_t           rayIndex;
-    uint32_t           pingCount;
-    uint32_t           commandCount;
-	uint32_t           controlSetIndex;
-    uint16_t           pulseDownSamplingRatio;
-    uint16_t           rayDownSamplingRatio;
-    uint16_t           ascopeMode;
-    uint16_t           reserved;
-    pthread_mutex_t    mutex;
-    char               string[RKMaximumStringLength];
-    RKInt16C           samples[2][RKGateCount];
-    RKOperator         *serverOperator;
-    RKRadar            *radar;
+    char                             login[64];
+    RKStream                         access;             // Authorized access priviledge
+    RKStream                         streams;
+    RKStream                         streamsInProgress;
+    double                           timeLastOut;
+    double                           timeLastHealthOut;
+    double                           timeLastDisplayIQOut;
+    double                           timeLastIn;
+    uint32_t                         statusIndex;
+    uint32_t                         healthIndex;
+    uint32_t                         rayStatusIndex;
+    uint32_t                         pulseIndex;
+    uint32_t                         rayIndex;
+    uint32_t                         pingCount;
+    uint32_t                         commandCount;
+	uint32_t                         controlSetIndex;
+    uint16_t                         pulseDownSamplingRatio;
+    uint16_t                         rayDownSamplingRatio;
+    uint16_t                         ascopeMode;
+    uint16_t                         reserved;
+    pthread_mutex_t                  mutex;
+    char                             string[RKMaximumStringLength];
+    RKInt16C                         samples[2][RKGateCount];
+    RKOperator                       *serverOperator;
+    RKRadar                          *radar;
 } RKUser;
 
 typedef struct rk_command_center {
     // User set variables
-    char               name[RKNameLength];
-    int                verbose;
-    RKRadar            *radars[RKCommandCenterMaxRadars];
+    RKName                           name;
+    int                              verbose;
+    RKRadar                          *radars[RKCommandCenterMaxRadars];
     
     // Program set variables
-    bool               relayMode;
-    bool               suspendHandler;
-    RKServer           *server;
-    int                radarCount;
-    RKUser             users[RKCommandCenterMaxConnections];
-    RKStream           relayStreams;
-    RKStream           relayStreamsLevel2;
-    size_t             memoryUsage;
+    bool                             relayMode;
+    bool                             suspendHandler;
+    RKServer                         *server;
+    int                              radarCount;
+    RKUser                           users[RKCommandCenterMaxConnections];
+    RKStream                         relayStreams;
+    RKStream                         relayStreamsLevel2;
+    size_t                           memoryUsage;
 } RKCommandCenter;
 
 RKStream RKStringToFlag(const char *);

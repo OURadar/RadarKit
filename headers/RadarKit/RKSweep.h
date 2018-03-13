@@ -16,50 +16,50 @@
 #include <netcdf.h>
 
 typedef struct rk_ray_anchors {
-    RKRay                  *rays[RKMaxRaysPerSweep];
-    uint32_t               count;
+    RKRay                            *rays[RKMaxRaysPerSweep];
+    uint32_t                         count;
 } RKRayAnchors;
 
 typedef struct rk_sweep_engine RKSweepEngine;
 
 struct rk_sweep_engine {
     // User set variables
-    char                   name[RKNameLength];
-    RKRadarDesc            *radarDescription;
-    RKConfig               *configBuffer;
-    uint32_t               *configIndex;
-    RKBuffer               rayBuffer;
-    uint32_t               *rayIndex;
-    uint8_t                verbose;
-    bool                   doNotWrite;
-    bool                   hasHandleFilesScript;
-    bool                   handleFilesScriptProducesTgz;
-    bool                   handleFilesScriptProducesZip;
-    char                   handleFilesScript[RKMaximumPathLength];
-    RKFileManager          *fileManager;
+    RKName                           name;
+    RKRadarDesc                      *radarDescription;
+    RKConfig                         *configBuffer;
+    uint32_t                         *configIndex;
+    RKBuffer                         rayBuffer;
+    uint32_t                         *rayIndex;
+    uint8_t                          verbose;
+    bool                             doNotWrite;
+    bool                             hasHandleFilesScript;
+    bool                             handleFilesScriptProducesTgz;
+    bool                             handleFilesScriptProducesZip;
+    char                             handleFilesScript[RKMaximumPathLength];
+    RKFileManager                    *fileManager;
 
     // Program set variables
-    pthread_t              tidRayGatherer;
-    RKRayAnchors           rayAnchors[RKRayAnchorsDepth];
-	uint8_t                rayAnchorsIndex;
-    float                  *array1D;
-    float                  *array2D;
-    char                   filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
-    char                   filename[RKMaximumPathLength];
-    char                   productName[RKNameLength];
-    char                   productUnit[RKNameLength];
-    char                   productColormap[RKNameLength];
-    char                   summary[RKMaximumStringLength];
+    pthread_t                        tidRayGatherer;
+    RKRayAnchors                     rayAnchors[RKRayAnchorsDepth];
+	uint8_t                          rayAnchorsIndex;
+    float                            *array1D;
+    float                            *array2D;
+    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
+    char                             filename[RKMaximumPathLength];
+    char                             productName[RKNameLength];
+    char                             productUnit[RKNameLength];
+    char                             productColormap[RKNameLength];
+    char                             summary[RKMaximumStringLength];
 
     // Status / health
-    uint32_t               processedRayIndex;
-    char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    uint32_t               statusBufferIndex;
-    RKEngineState          state;
-    uint32_t               tic;
-    float                  lag;
-    uint32_t               almostFull;
-    size_t                 memoryUsage;
+    uint32_t                         processedRayIndex;
+    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    uint32_t                         statusBufferIndex;
+    RKEngineState                    state;
+    uint32_t                         tic;
+    float                            lag;
+    uint32_t                         almostFull;
+    size_t                           memoryUsage;
 };
 
 RKSweepEngine *RKSweepEngineInit(void);

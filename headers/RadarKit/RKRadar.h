@@ -73,90 +73,90 @@ struct rk_radar {
     //
     // General attributes
     //
-    char                       name[RKNameLength];                   // Name of the engine
-    RKRadarDesc                desc;
-    RKRadarState               state;
-    bool                       active;
-    size_t                     memoryUsage;
-    uint8_t                    processorCount;
+    RKName                           name;                           // Name of the engine
+    RKRadarDesc                      desc;
+    RKRadarState                     state;
+    bool                             active;
+    size_t                           memoryUsage;
+    uint8_t                          processorCount;
     //
     // Buffers
     //
-    RKStatus                   *status;                              // Overall RadarKit engine status
-    RKConfig                   *configs;
-    RKHealth                   *healths;
-    RKPosition                 *positions;
-    RKBuffer                   pulses;
-    RKBuffer                   rays;
+    RKStatus                         *status;                              // Overall RadarKit engine status
+    RKConfig                         *configs;
+    RKHealth                         *healths;
+    RKPosition                       *positions;
+    RKBuffer                         pulses;
+    RKBuffer                         rays;
     //
     // Anchor indices of the buffers
     //
-    uint32_t                   statusIndex;
-    uint32_t                   configIndex;
-    uint32_t                   healthIndex;
-    uint32_t                   positionIndex;
-    uint32_t                   pulseIndex;
-    uint32_t                   rayIndex;
+    uint32_t                         statusIndex;
+    uint32_t                         configIndex;
+    uint32_t                         healthIndex;
+    uint32_t                         positionIndex;
+    uint32_t                         pulseIndex;
+    uint32_t                         rayIndex;
     //
     // Secondary Health Buffer
     //
-    RKHealthNode               healthNodeCount;
-    RKNodalHealth              *healthNodes;
+    RKHealthNode                     healthNodeCount;
+    RKNodalHealth                    *healthNodes;
     //
     //
     // Internal engines
     //
-    RKClock                    *pulseClock;
-    RKClock                    *positionClock;
-    RKHealthEngine             *healthEngine;
-    RKPositionEngine           *positionEngine;
-    RKPulseCompressionEngine   *pulseCompressionEngine;
-    RKPulseRingFilterEngine    *pulseRingFilterEngine;
-    RKMomentEngine             *momentEngine;
-    RKHealthLogger             *healthLogger;
-    RKSweepEngine              *sweepEngine;
-    RKDataRecorder             *dataRecorder;
-    RKFileManager              *fileManager;
-    RKRadarRelay               *radarRelay;
-    RKHostMonitor              *hostMonitor;
+    RKClock                          *pulseClock;
+    RKClock                          *positionClock;
+    RKHealthEngine                   *healthEngine;
+    RKPositionEngine                 *positionEngine;
+    RKPulseCompressionEngine         *pulseCompressionEngine;
+    RKPulseRingFilterEngine          *pulseRingFilterEngine;
+    RKMomentEngine                   *momentEngine;
+    RKHealthLogger                   *healthLogger;
+    RKSweepEngine                    *sweepEngine;
+    RKDataRecorder                   *dataRecorder;
+    RKFileManager                    *fileManager;
+    RKRadarRelay                     *radarRelay;
+    RKHostMonitor                    *hostMonitor;
     //
     // Internal copies of things
     //
-    RKWaveform                 *waveform;
+    RKWaveform                       *waveform;
     //
-    pthread_mutex_t            mutex;
+    pthread_mutex_t                  mutex;
     //
     // Hardware protocols for controls
     //
-    RKTransceiver              transceiver;
-    RKTransceiver              (*transceiverInit)(RKRadar *, void *);
-    int                        (*transceiverExec)(RKTransceiver, const char *, char *);
-    int                        (*transceiverFree)(RKTransceiver);
-    void                       *transceiverInitInput;
-    char                       transceiverResponse[RKMaximumStringLength];
+    RKTransceiver                    transceiver;
+    RKTransceiver                    (*transceiverInit)(RKRadar *, void *);
+    int                              (*transceiverExec)(RKTransceiver, const char *, char *);
+    int                              (*transceiverFree)(RKTransceiver);
+    void                             *transceiverInitInput;
+    char                             transceiverResponse[RKMaximumStringLength];
     //
-    RKPedestal                 pedestal;
-    RKPedestal                 (*pedestalInit)(RKRadar *, void *);
-    int                        (*pedestalExec)(RKPedestal, const char *, char *);
-    int                        (*pedestalFree)(RKPedestal);
-    void                       *pedestalInitInput;
-    char                       pedestalResponse[RKMaximumStringLength];
+    RKPedestal                       pedestal;
+    RKPedestal                       (*pedestalInit)(RKRadar *, void *);
+    int                              (*pedestalExec)(RKPedestal, const char *, char *);
+    int                              (*pedestalFree)(RKPedestal);
+    void                             *pedestalInitInput;
+    char                             pedestalResponse[RKMaximumStringLength];
     //
-    RKHealthRelay              healthRelay;
-    RKHealthRelay              (*healthRelayInit)(RKRadar *, void *);
-    int                        (*healthRelayExec)(RKHealthRelay, const char *, char *);
-    int                        (*healthRelayFree)(RKHealthRelay);
-    void                       *healthRelayInitInput;
-    char                       healthRelayResponse[RKMaximumStringLength];
+    RKHealthRelay                    healthRelay;
+    RKHealthRelay                    (*healthRelayInit)(RKRadar *, void *);
+    int                              (*healthRelayExec)(RKHealthRelay, const char *, char *);
+    int                              (*healthRelayFree)(RKHealthRelay);
+    void                             *healthRelayInitInput;
+    char                             healthRelayResponse[RKMaximumStringLength];
     //
-    RKMasterController         masterController;
-    int                        (*masterControllerExec)(RKMasterController, const char *, char *);
+    RKMasterController               masterController;
+    int                              (*masterControllerExec)(RKMasterController, const char *, char *);
     //
     // Controls
     //
-    RKControl                  *controls;
-    uint32_t                   controlIndex;
-	uint32_t                   controlSetIndex;
+    RKControl                        *controls;
+    uint32_t                         controlIndex;
+	uint32_t                         controlSetIndex;
 };
 
 //

@@ -648,16 +648,28 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 
 #pragma mark - Reader
 
+void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
+	size_t n = 0;
+	nc_get_att_text(ncid, NC_GLOBAL, name, dst);
+	nc_inq_attlen(ncid, NC_GLOBAL, name, &n);
+	dst[n] = 0;
+}
+
 RKSweep *RKSweepRead(const char *filename) {
-	int j, k;
+	int k, r;
 	int ncid;
 
 	const char name[] = "RKSweepRead()";
 
-    if ((j = nc_open(filename, NC_MODE, &ncid)) > 0) {
-        RKLog("%s Error opening file %s\n", name, filename);
-        return NULL;
-    }
+	if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
+		RKLog("%s Error opening file %s (%s)\n", name, filename, nc_strerror(r));
+		return NULL;
+	}
+
+	RKName typeName;
+
+	getGlobalTextAttribute(typeName, "TypeName", ncid);
+	printf("typeName = %s\n", typeName);
 
 	// Read in the header, compute the capacity.
 	// Get the ray count
@@ -670,16 +682,26 @@ RKSweep *RKSweepRead(const char *filename) {
 
 	// Go through the data
 	// Inteligently go through all products
-    
+
+	float *x;
+	int productIndex;
+
     for (k = 0; k < rayCount; k++) {
         RKRay *ray = RKGetRay(sweep->rayBuffer, k);
-        printf("ray %d @ %p  w/ capacity %s\n", k, ray, RKIntegerToCommaStyleString(ray->header.capacity));
+
+		productIndex = RKProductIndexZ;
+		x = RKGetFloatDataFromRay(ray, productIndex);
+        //printf("ray %d @ %p  w/ capacity %s\n", k, ray, RKIntegerToCommaStyleString(ray->header.capacity));
     }
 
 	return sweep;
 }
 
 int RKSweepFree(RKSweep *sweep) {
+	if (sweep == NULL) {
+		RKLog("No bueno, amigo!\n");
+		return RKResultNullInput;
+	}
 	RKRayBufferFree(sweep->rayBuffer);
 	free(sweep);
 	return RKResultSuccess;

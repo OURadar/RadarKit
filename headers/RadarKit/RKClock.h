@@ -18,14 +18,14 @@
 
 typedef struct rk_clock {
     // User set parameters
-    double           offsetSeconds;
-    char             name[RKNameLength];
+	RKName           name;
     int              verbose;
     bool             autoSync;
     bool             hasWisdom;                   // User provided dudt
 	bool             infoShown;                   // Show b value
     bool             highPrecision;               // High precision mode
     bool             useInternalReference;        // Use internal reference u
+	double           offsetSeconds;               // Time offset set by user
     uint32_t         size;                        // User changeable depth
 	uint32_t         block;                       // Block size of data during burst transfers
     uint32_t         stride;                      // Size to compute average

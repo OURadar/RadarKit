@@ -16,25 +16,25 @@ typedef struct rk_health_logger RKHealthLogger;
 
 struct rk_health_logger {
     // User defined variables
-    char                   name[RKNameLength];
-    RKRadarDesc            *radarDescription;
-    RKHealth               *healthBuffer;
-    uint32_t               *healthIndex;
-    uint32_t               healthBufferDepth;
-    uint8_t                verbose;
-    bool                   doNotWrite;
-    RKHealthRelay          healthRelay;
-    RKFileManager          *fileManager;
+    RKName                           name;
+    RKRadarDesc                      *radarDescription;
+    RKHealth                         *healthBuffer;
+    uint32_t                         *healthIndex;
+    uint32_t                         healthBufferDepth;
+    uint8_t                          verbose;
+    bool                             doNotWrite;
+    RKHealthRelay                    healthRelay;
+    RKFileManager                    *fileManager;
 
     // Program set variables
-    FILE                   *fid;
-    pthread_t              tidBackground;
+    FILE                             *fid;
+    pthread_t                        tidBackground;
 
     // Status / health
-    char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    uint32_t               statusBufferIndex;
-    RKEngineState          state;
-    size_t                 memoryUsage;
+    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    uint32_t                         statusBufferIndex;
+    RKEngineState                    state;
+    size_t                           memoryUsage;
 };
 
 RKHealthLogger *RKHealthLoggerInit(void);

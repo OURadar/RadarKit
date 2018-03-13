@@ -22,37 +22,37 @@
 
 typedef struct rk_radar_relay {
     // User defined variables
-    char                   name[RKNameLength];
-    char                   host[RKNameLength];
-    RKRadarDesc            *radarDescription;
-    RKConfig               *configBuffer;
-    uint32_t               *configIndex;
-    RKHealth               *healthBuffer;
-    uint32_t               *healthIndex;
-    RKStatus               *statusBuffer;
-    uint32_t               *statusIndex;
-    RKBuffer               pulseBuffer;                        // Buffer of raw pulses
-    uint32_t               *pulseIndex;                        // The refence index to watch for
-    RKBuffer               rayBuffer;
-    uint32_t               *rayIndex;
-    uint8_t                verbose;
-    RKFileManager          *fileManager;
+    RKName                           name;
+    RKName                           host;
+    RKRadarDesc                      *radarDescription;
+    RKConfig                         *configBuffer;
+    uint32_t                         *configIndex;
+    RKHealth                         *healthBuffer;
+    uint32_t                         *healthIndex;
+    RKStatus                         *statusBuffer;
+    uint32_t                         *statusIndex;
+    RKBuffer                         pulseBuffer;                        // Buffer of raw pulses
+    uint32_t                         *pulseIndex;                        // The refence index to watch for
+    RKBuffer                         rayBuffer;
+    uint32_t                         *rayIndex;
+    uint8_t                          verbose;
+    RKFileManager                    *fileManager;
 
     // Program set variables
-    RKClient               *client;
-    uint32_t               responseIndex;
-    char                   responses[RKRadarRelayFeedbackDepth][RKRadarRelayFeedbackCapacity];
-    char                   latestCommand[RKMaximumStringLength];
-    pthread_t              tidBackground;
-    RKStream               streams;
+    RKClient                         *client;
+    uint32_t                         responseIndex;
+    char                             responses[RKRadarRelayFeedbackDepth][RKRadarRelayFeedbackCapacity];
+    char                             latestCommand[RKMaximumStringLength];
+    pthread_t                        tidBackground;
+    RKStream                         streams;
 
     // Status / health
-    char                   pulseStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    char                   rayStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    uint32_t               pulseStatusBufferIndex;
-    uint32_t               rayStatusBufferIndex;
-    RKEngineState          state;
-    size_t                 memoryUsage;
+    char                             pulseStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                             rayStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    uint32_t                         pulseStatusBufferIndex;
+    uint32_t                         rayStatusBufferIndex;
+    RKEngineState                    state;
+    size_t                           memoryUsage;
 } RKRadarRelay;
 
 RKRadarRelay *RKRadarRelayInit(void);

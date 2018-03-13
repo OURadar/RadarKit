@@ -33,7 +33,7 @@ struct rk_pulse_ring_filter_worker {
 
 struct rk_pulse_ring_filter_engine {
     // User set variables
-    char                             name[RKNameLength];
+    RKName                           name;
     RKRadarDesc                      *radarDescription;
     RKBuffer                         pulseBuffer;                        // Buffer of raw pulses
     uint32_t                         *pulseIndex;                        // The refence index to watch for

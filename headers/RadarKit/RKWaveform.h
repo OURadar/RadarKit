@@ -60,7 +60,7 @@ enum RKWaveformType {
 
 typedef union rk_wave_file_header {
     struct {
-        char            name[RKNameLength];
+        RKName          name;
         uint8_t         groupCount;
         uint32_t        depth;
         double          fc;
@@ -86,7 +86,7 @@ typedef struct rk_waveform {
     double          fc;                                                    // Carrier frequency (Hz)
     double          fs;                                                    // Sampling frequency (Hz)
     RKWaveformType  type;                                                  // Various type of waveforms
-    char            name[RKNameLength];                                    // Waveform name in plain string
+    RKName          name;                                                  // Waveform name in plain string
     RKComplex       *samples[RKMaxFilterGroups];                           // Samples up to amplitude of 1.0
     RKInt16C        *iSamples[RKMaxFilterGroups];                          // 16-bit full-scale equivalence of the waveforms
     uint32_t        filterCounts[RKMaxFilterGroups];                       // Number of filters to applied to each waveform, see filterAnchors

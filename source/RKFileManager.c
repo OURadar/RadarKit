@@ -178,12 +178,13 @@ static void *fileRemover(void *in) {
 
     const int c = me->id;
     
-    char name[RKNameLength];
     char path[RKMaximumPathLength];
     char command[RKMaximumPathLength];
     char parentFolder[RKFileManagerFilenameLength] = "";
     struct timeval time = {0, 0};
 
+	// Initiate a variable to store my name
+	RKName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");

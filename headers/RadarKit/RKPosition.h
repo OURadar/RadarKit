@@ -52,7 +52,7 @@ typedef struct rk_position_engine RKPositionEngine;
 
 struct rk_position_engine {
     // User set variables
-    char                   name[RKNameLength];
+    RKName                 name;
     RKRadarDesc            *radarDescription;
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;

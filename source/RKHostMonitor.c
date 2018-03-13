@@ -80,7 +80,6 @@ static void *hostPinger(void *in) {
     const int value = 50;
     struct protoent *protocol = getprotobyname("ICMP");
 
-    char name[RKNameLength];
     char buff[RKHostMonitorPacketSize];
     RKICMPHeader *icmpHeader;
     RKIPV4Header *ipv4Header = (RKIPV4Header *)buff;
@@ -96,6 +95,8 @@ static void *hostPinger(void *in) {
     struct timeval time;
     fd_set rfd, efd;
 
+	// Initiate a variable to store my name
+	RKName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
@@ -433,8 +434,6 @@ RKHostMonitor *RKHostMonitorInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHostMonitor) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
-    engine->hosts = (RKHostAddress *)malloc(sizeof(RKHostAddress));
-    memset(engine->hosts, 0, sizeof(RKHostAddress));
     pthread_mutex_init(&engine->mutex, NULL);
     RKHostMonitorAddHost(engine, "8.8.8.8");
     RKHostMonitorAddHost(engine, "arrc.ou.edu");
@@ -457,9 +456,9 @@ void RKHostMonitorSetVerbose(RKHostMonitor *engine, const int verbose) {
 
 void RKHostMonitorAddHost(RKHostMonitor *engine, const char *address) {
     int k = engine->workerCount++;
-    engine->hosts = realloc(engine->hosts, engine->workerCount * sizeof(RKHostAddress));
+    engine->hosts = realloc(engine->hosts, engine->workerCount * sizeof(RKName));
     strncpy(engine->hosts[k], address, RKNameLength - 1);
-    engine->memoryUsage = sizeof(RKHostMonitor) + engine->workerCount * sizeof(RKHostAddress);
+    engine->memoryUsage = sizeof(RKHostMonitor) + engine->workerCount * sizeof(RKName);
     engine->state |= RKEngineStateProperlyWired;
 }
 

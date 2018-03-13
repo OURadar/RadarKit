@@ -17,22 +17,22 @@ typedef struct rk_health_engine RKHealthEngine;
 
 struct rk_health_engine {
     // User defined variables
-    char                   name[RKNameLength];
-    RKRadarDesc            *radarDescription;
-    RKNodalHealth          *healthNodes;
-    RKHealth               *healthBuffer;
-    uint32_t               *healthIndex;
-    uint8_t                verbose;
+    RKName                           name;
+    RKRadarDesc                      *radarDescription;
+    RKNodalHealth                    *healthNodes;
+    RKHealth                         *healthBuffer;
+    uint32_t                         *healthIndex;
+    uint8_t                          verbose;
 
     // Program set variables
-    FILE                   *fid;
-    pthread_t              tidHealthConsolidator;
+    FILE                             *fid;
+    pthread_t                        tidHealthConsolidator;
 
     // Status / health
-    char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    uint32_t               statusBufferIndex;
-    RKEngineState          state;
-    size_t                 memoryUsage;
+    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    uint32_t                         statusBufferIndex;
+    RKEngineState                    state;
+    size_t                           memoryUsage;
 };
 
 RKHealthEngine *RKHealthEngineInit(void);

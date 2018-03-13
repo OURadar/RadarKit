@@ -65,45 +65,45 @@ typedef struct rk_file_remover RKFileRemover;
 typedef struct rk_file_manager RKFileManager;
 
 struct rk_file_remover {
-    int                    id;
-    int                    tic;
-    pthread_t              tid;
-    int                    index;                               // Index to get sorted index for removal
-    int                    count;                               // Dual use index: count and index to add (reusable buffer)
-    int                    capacity;                            // Capcity of *folders, *filenames and *indexedStats
-    size_t                 usage;
-    size_t                 limit;
-    char                   path[RKMaximumPathLength];
-    RKFileManager          *parent;
-    
-    void                   *folders;
-    void                   *filenames;
-    void                   *indexedStats;
-    bool                   reusable;
-    
-    struct timeval         latestTime;
+    int                              id;
+    int                              tic;
+    pthread_t                        tid;
+    int                              index;                               // Index to get sorted index for removal
+    int                              count;                               // Dual use index: count and index to add (reusable buffer)
+    int                              capacity;                            // Capcity of *folders, *filenames and *indexedStats
+    size_t                           usage;
+    size_t                           limit;
+    char                             path[RKMaximumPathLength];
+    RKFileManager                    *parent;
+
+    void                             *folders;
+    void                             *filenames;
+    void                             *indexedStats;
+    bool                             reusable;
+
+    struct timeval                   latestTime;
 };
 
 struct rk_file_manager {
     // User set variables
-    char                   name[RKNameLength];
-    RKRadarDesc            *radarDescription;                   // This takes precedence over dataPath[] if both are set
-    uint8_t                verbose;                             // Verbosity level
-    char                   dataPath[RKMaximumPathLength];       // Can be empty. In this case all folders are relative to the path where it is executed
-    size_t                 usagelimit;                          // Overall usage limit in bytes
-    int                    maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
-    
+    RKName                           name;
+    RKRadarDesc                      *radarDescription;                   // This takes precedence over dataPath[] if both are set
+    uint8_t                          verbose;                             // Verbosity level
+    char                             dataPath[RKMaximumPathLength];       // Can be empty. In this case all folders are relative to the path where it is executed
+    size_t                           usagelimit;                          // Overall usage limit in bytes
+    int                              maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
+
     // Program set variables
-    int                    tic;
-    int                    workerCount;
-    RKFileRemover          *workers;
-    pthread_t              tidFileWatcher;
-    pthread_mutex_t        mutex;
-    char                   scratch[RKMaximumStringLength];
+    int                              tic;
+    int                              workerCount;
+    RKFileRemover                    *workers;
+    pthread_t                        tidFileWatcher;
+    pthread_mutex_t                  mutex;
+    char                             scratch[RKMaximumStringLength];
 
     // Status / health
-    RKEngineState          state;
-    uint32_t               memoryUsage;
+    RKEngineState                    state;
+    uint32_t                         memoryUsage;
 };
 
 RKFileManager *RKFileManagerInit(void);

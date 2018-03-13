@@ -14,7 +14,7 @@
 typedef struct rk_unit_monitor RKUnitMonitor;
 typedef struct rk_host_monitor RKHostMonitor;
 
-typedef char RKHostAddress[RKNameLength];
+//typedef char RKHostAddress[RKNameLength];
 
 struct rk_unit_monitor {
     int                    id;
@@ -30,9 +30,9 @@ struct rk_unit_monitor {
 
 struct rk_host_monitor {
     // User set variables
-    char                   name[RKNameLength];
+    RKName                 name;
     uint8_t                verbose;                             // Verbosity level
-    RKHostAddress          *hosts;
+    RKName                 *hosts;                              // List of names (hostnames)
     
     // Program set variables
     int                    tic;

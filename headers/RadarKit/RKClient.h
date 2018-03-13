@@ -34,8 +34,8 @@ enum RKClientState {
 };
 
 typedef struct rk_client_desc {
-    char                     name[RKNameLength];                 // A program name
-    char                     hostname[RKNameLength];             // Hostname
+    RKName                   name;                               // A program name
+    RKName                   hostname;                           // Hostname
     int                      port;                               // Port number of the server
     int                      timeoutSeconds;                     // Timeout in seconds
     RKNetworkSocketType      type;                               // Socket type
@@ -52,8 +52,8 @@ typedef struct rk_client RKClient;
 struct rk_client {
     // User set parameters
     //    struct rk_client_desc;                                 // Need -fms-extension to compile this properly
-    char                     name[RKNameLength];                 // A program name
-    char                     hostname[RKNameLength];             // Hostname
+    RKName                   name;                               // A program name
+    RKName                   hostname;                           // Hostname
     int                      port;                               // Port number of the server
     int                      timeoutSeconds;                     // Timeout in seconds
     RKNetworkSocketType      type;                               // Socket type

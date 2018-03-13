@@ -75,7 +75,7 @@ void *masterControllerExecuteInBackground(void *in) {
 //         desc.heading - heading in degrees
 //         desc.radarHeight - radar height from the ground
 //         desc.wavelength - radar wavelength in meters
-//         desc.name[RKNameLength] - radar name
+//         desc.name - radar name
 //         desc.filePrefix[RKNameLength] - file prefix user would like to use
 //         desc.dataPath[RKMaximumPathLength] - the root path where data are stored
 // output:
@@ -85,7 +85,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKRadar *radar;
     size_t bytes;
     int i, k;
-    char name[RKNameLength];
 
     RKSetUseDailyLog(true);
     RKSetRootFolder(desc.dataPath);
@@ -399,6 +398,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->state |= RKRadarStateFileManagerInitialized;
 
     // Signal processor marries pulse and position data, process for moment, etc.
+	RKName tmpName;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Clocks
         //radar->pulseClock = RKClockInitWithSize(15000, 5000);
@@ -410,9 +410,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.pulseTicsPerSecond > 0) {
             RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
         }
-        sprintf(name, "%s<PulseClock>%s",
+        sprintf(tmpName, "%s<PulseClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-        RKClockSetName(radar->pulseClock, name);
+        RKClockSetName(radar->pulseClock, tmpName);
         radar->memoryUsage += sizeof(RKClock);
         
         //radar->positionClock = RKClockInit();
@@ -424,9 +424,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.positionTicsPerSecond > 0) {
             RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
-        sprintf(name, "%s<PositionClock>%s",
+        sprintf(tmpName, "%s<PositionClock>%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-        RKClockSetName(radar->positionClock, name);
+        RKClockSetName(radar->positionClock, tmpName);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
 		RKLog("positionLatency = %.3e\n", radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);

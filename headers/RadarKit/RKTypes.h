@@ -179,6 +179,7 @@ typedef void *    RKTransceiver;
 typedef void *    RKPedestal;
 typedef void *    RKHealthRelay;
 typedef void *    RKMasterController;
+typedef char      RKName[RKNameLength];
 
 #pragma pack(push, 1)
 
@@ -245,6 +246,7 @@ typedef struct rk_modulo_path {
 
 enum RKResult {
     RKResultTimeout = -99,
+	RKResultNullInput,
     RKResultEngineNotWired,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
@@ -787,6 +789,9 @@ typedef struct rk_ray {
 } RKRay;
 
 typedef struct rk_sweep {
+	char             name[RKNameLength];
+	char             typeName[RKNameLength];
+	uint32_t         productList;
 	RKRadarDesc      desc;
 	RKConfig         config;
 	RKBuffer         rayBuffer;

@@ -77,7 +77,7 @@ static void *ringFilterCore(void *_in) {
     };
 
     // Initiate a variable to store my name
-    char name[RKNameLength];
+    RKName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->coreMutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");

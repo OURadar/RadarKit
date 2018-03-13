@@ -36,7 +36,7 @@ enum RKTestPedestalScanMode {
 };
 
 typedef struct rk_test_transceiver {
-    char           name[RKNameLength];
+    RKName         name;
     int            verbose;
     int            sleepInterval;
     int            gateCount;
@@ -45,12 +45,12 @@ typedef struct rk_test_transceiver {
     double         fs;
     double         prt;
     RKByte         sprt;
-	char           transmitWaveformName[RKNameLength];
+	RKName         transmitWaveformName;
 	unsigned int   transmitWaveformLength;
 	RKInt16C       *transmitWaveform;
-	char           defaultWaveform[RKNameLength];
-	char           defaultPedestalMode[RKNameLength];
-	char           customCommand[RKNameLength];
+	RKName         defaultWaveform;
+	RKName         defaultPedestalMode;
+	RKName         customCommand;
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
@@ -58,7 +58,7 @@ typedef struct rk_test_transceiver {
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {
-    char           name[RKNameLength];
+    RKName         name;
     int            verbose;
     long           counter;
     int            scanMode;
@@ -76,7 +76,7 @@ typedef struct rk_test_pedestal {
 } RKTestPedestal;
 
 typedef struct rk_test_health_relay {
-    char           name[RKNameLength];
+    RKName         name;
     int            verbose;
     long           counter;
     pthread_t      tidRunLoop;

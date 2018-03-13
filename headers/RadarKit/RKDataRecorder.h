@@ -19,32 +19,32 @@ typedef struct rk_data_recorder RKDataRecorder;
 
 struct rk_data_recorder {
     // User set variables
-    char                   name[RKNameLength];
-    RKRadarDesc            *radarDescription;
-    RKBuffer               pulseBuffer;                    // Buffer of raw pulses
-    uint32_t               *pulseIndex;                    // The refence index to watch for
-    RKConfig               *configBuffer;
-    uint32_t               *configIndex;
-    uint8_t                verbose;
-    bool                   doNotWrite;
-    size_t                 cacheSize;
-    size_t                 maximumRecordDepth;
-    RKFileManager          *fileManager;
+    RKName                           name;
+    RKRadarDesc                      *radarDescription;
+    RKBuffer                         pulseBuffer;                    // Buffer of raw pulses
+    uint32_t                         *pulseIndex;                    // The refence index to watch for
+    RKConfig                         *configBuffer;
+    uint32_t                         *configIndex;
+    uint8_t                          verbose;
+    bool                             doNotWrite;
+    size_t                           cacheSize;
+    size_t                           maximumRecordDepth;
+    RKFileManager                    *fileManager;
 
     // Program set variables
-    int                    fd;
-    FILE                   *fid;
-    void                   *cache;
-    size_t                 cacheWriteIndex;
-    pthread_t              tidPulseRecorder;
+    int                              fd;
+    FILE                             *fid;
+    void                             *cache;
+    size_t                           cacheWriteIndex;
+    pthread_t                        tidPulseRecorder;
 
     // Status / health
-    char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    uint32_t               statusBufferIndex;
-    RKEngineState          state;
-    uint32_t               tic;
-    float                  lag;
-    size_t                 memoryUsage;
+    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    uint32_t                         statusBufferIndex;
+    RKEngineState                    state;
+    uint32_t                         tic;
+    float                            lag;
+    size_t                           memoryUsage;
 };
 
 RKDataRecorder *RKDataRecorderInit(void);
