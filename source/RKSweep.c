@@ -865,14 +865,6 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				}
 			}
 
-			// Go through the data
-//			for (k = 0; k < rayCount; k++) {
-//				RKRay *ray = RKGetRay(sweep->rayBuffer, k);
-//
-//				fv = RKGetFloatDataFromRay(ray, productIndices[k]);
-//				//printf("ray %d @ %p  w/ capacity %s\n", k, ray, RKIntegerToCommaStyleString(ray->header.capacity));
-//			}
-
 			// Product
 			r = nc_inq_varid(ncid, productNames[k], &tmpId);
 			if (r == NC_NOERR) {
@@ -881,7 +873,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				for (j = 0; j < rayCount; j++) {
 					ray = RKGetRay(sweep->rayBuffer, j);
 					fv = RKGetFloatDataFromRay(ray, productIndices[k]);
-					memcpy(fv, scratch, gateCount * sizeof(float));
+					memcpy(fv, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
 				}
 			} else {
 				RKLog("%s not found.\n", productNames[k]);
