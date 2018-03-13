@@ -447,6 +447,13 @@ UserParams processInput(int argc, const char **argv) {
                     case 53:
                         RKTestCacheWrite();
                         break;
+                    case 54:
+                        if (argc == optind) {
+                            RKLog("No filename given.\n");
+                            break;
+                        }
+                        RKTestReadSweep(argv[optind]);
+                        break;
                     default:
                         RKLog("Test %d is invalid.\n", k);
                         break;

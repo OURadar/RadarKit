@@ -2020,3 +2020,10 @@ void RKTestMomentProcessorSpeed(void) {
     free(pulseBuffer);
     free(rayBuffer);
 }
+
+void RKTestReadSweep(const char *file) {
+    RKSweep *sweep = RKSweepRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
+}

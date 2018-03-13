@@ -124,4 +124,6 @@ void RKTestHilbertTransform(void);
 void RKTestPulseCompressionSpeed(void);
 void RKTestMomentProcessorSpeed(void);
 
+void RKTestReadSweep(const char *);
+
 #endif /* defined(__RadarKit_RKFile__) */

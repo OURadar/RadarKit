@@ -649,20 +649,20 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 #pragma mark - Reader
 
 RKSweep *RKSweepRead(const char *filename) {
-	int j;
+	int j, k;
 	int ncid;
 
 	const char name[] = "RKSweepRead()";
 
-	if ((j = nc_open(filename, NC_MODE, &ncid)) > 0) {
-		RKLog("%s Error opening file %s\n", name, filename);
-		return NULL;
-	}
+    if ((j = nc_open(filename, NC_MODE, &ncid)) > 0) {
+        RKLog("%s Error opening file %s\n", name, filename);
+        return NULL;
+    }
 
 	// Read in the header, compute the capacity.
 	// Get the ray count
 
-	uint32_t capacity = 5000;
+	uint32_t capacity = (uint32_t)ceilf((float)5000 / RKSIMDAlignSize) * RKSIMDAlignSize;
 	uint32_t rayCount = 360;
 
 	RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
@@ -670,6 +670,11 @@ RKSweep *RKSweepRead(const char *filename) {
 
 	// Go through the data
 	// Inteligently go through all products
+    
+    for (k = 0; k < rayCount; k++) {
+        RKRay *ray = RKGetRay(sweep->rayBuffer, k);
+        printf("ray %d @ %p  w/ capacity %s\n", k, ray, RKIntegerToCommaStyleString(ray->header.capacity));
+    }
 
 	return sweep;
 }
