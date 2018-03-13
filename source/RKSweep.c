@@ -879,7 +879,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				nc_get_var_float(ncid, tmpId, scratch);
 				fv = (float *)scratch;
 				for (j = 0; j < rayCount; j++) {
-					ray = RKGetRay(sweep->rayBuffer, k);
+					ray = RKGetRay(sweep->rayBuffer, j);
 					fv = RKGetFloatDataFromRay(ray, productIndices[k]);
 					memcpy(fv, scratch, gateCount * sizeof(float));
 				}
@@ -897,6 +897,12 @@ RKSweep *RKSweepRead(const char *inputFile) {
 	sweep->rayCount = (uint32_t)rayCount;
 	sweep->gateCount = (uint32_t)gateCount;
 	sweep->productList = productList;
+
+	for (j = 0; j < rayCount; j++) {
+		ray = RKGetRay(sweep->rayBuffer, j);
+		ray->header.i += sweep->rayCount;
+		ray->header.s = RKRayStatusReady;
+	}
 
 	RKLog("  -> %s%s%s%s%s%s%s\n",
 		  productList & RKProductListProductZ ? "Z" : "",
