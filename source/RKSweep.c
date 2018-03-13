@@ -655,101 +655,253 @@ void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
 	dst[n] = 0;
 }
 
-RKSweep *RKSweepRead(const char *filename) {
-	int k, r;
+RKSweep *RKSweepRead(const char *inputFile) {
+	int j, k, r;
 	int ncid, tmpId;
+	float *fv;
 
-	const char name[] = "RKSweepRead()";
-
-	if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
-		RKLog("%s Error opening file %s (%s)\n", name, filename, nc_strerror(r));
-		return NULL;
-	}
+	MAKE_FUNCTION_NAME(name)
 
 	RKName typeName;
+	char filename[RKMaximumPathLength];
+	strncpy(filename, inputFile, RKMaximumPathLength);
 
-	getGlobalTextAttribute(typeName, "TypeName", ncid);
-	printf("typeName = %s\n", typeName);
+	uint32_t firstPartLength = 0;
 
-	// Read in the header, compute the capacity.
-	// Get the ray count
-
-
-	float *x;
 	uint32_t productList = 0;
+
+	size_t rayCount = 0;
+	size_t gateCount = 0;
+	uint32_t capacity = 0;
+	RKSweep *sweep = NULL;
+	RKRay *ray = NULL;
 
 	// Try to go through all the sublings to gather a productLiset
 	// For now, we only try Z, V, W, D, P, R, K
 	// Filename in conventions of RADAR-20180101-010203-EL10.2-Z.nc
-	char *e = strstr(filename, ".nc");
+
+	// Find the last '.'
+	char *e = NULL;
+	e = strstr(inputFile, ".");
+	while (*(e + 1) >= '0' && *(e + 1) <= '9') {
+		e = strstr(e + 1, ".");
+	}
+	// Find the previous '-'
 	char *b = e;
-	while (b != filename && *b != '-') {
+	while (b != inputFile && *b != '-') {
 		b--;
 	}
-	if (b == filename) {
+	if (b == inputFile) {
 		RKLog("Unable to find product symbol.\n");
-	} else {
-		b++;
-		char symbol[8];
-		memset(symbol, 0, 8);
-		strncpy(symbol, b + 1, MIN(8, e - b - 1));
-		RKLog("product --> %s\n", symbol);
-		if (strcmp(symbol, "Z")) {
-			productList |= RKProductListProductZ;
-		}
-	}
-
-	size_t rayCount = 360;
-	size_t gateCount = 2000;
-
-	if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
-		r = nc_inq_dimid(ncid, "azimuth", &tmpId);
-	}
-	if (r != NC_NOERR) {
-		if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
-			r = nc_inq_dimid(ncid, "beam", &tmpId);
-		}
-	}
-	if (r == NC_NOERR) {
-		nc_inq_dimlen(ncid, tmpId, &rayCount);
-	} else {
-		nc_close(ncid);
-		RKLog("Warning. Early return (rayCount)\n");
-		return NULL;
-	}
-	if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
-		r = nc_inq_dimid(ncid, "gate", &tmpId);
-	if (r == NC_NOERR) {
-		nc_inq_dimlen(ncid, tmpId, &gateCount);
-	} else {
-		RKLog("Warning. Early return (gateCount)\n");
-		nc_close(ncid);
 		return NULL;
 	}
 
-	if (gateCount > RKGateCount) {
-		gateCount = RKGateCount;
-		RKLog("Info. Maximum gateCount = %d\n", RKGateCount);
+	b++;
+	firstPartLength = (uint32_t)(b - inputFile);
+	char symbol[8];
+	memset(symbol, 0, 8);
+	strncpy(symbol, b, MIN(8, e - b));
+	// Substitute symbol with the ones I know
+	char symbols[][RKNameLength] = {"Z", "V", "W", "D", "P", "R", "K"};
+	RKName productNames[] = {
+		"Corrected_Intensity",
+		"Radial_Velocity",
+		"Width",
+		"Differential_Reflectivity",
+		"PhiDP",
+		"RhoHV",
+		"KDP"
+	};
+	uint32_t products[] = {
+		RKProductListProductZ,
+		RKProductListProductV,
+		RKProductListProductW,
+		RKProductListProductD,
+		RKProductListProductP,
+		RKProductListProductR,
+		RKProductListProductK
+	};
+	uint32_t productIndices[] = {
+		RKProductIndexZ,
+		RKProductIndexV,
+		RKProductIndexW,
+		RKProductIndexD,
+		RKProductIndexP,
+		RKProductIndexR,
+		RKProductIndexK
+	};
+
+	void *scratch = (void *)malloc(RKMaxRaysPerSweep * RKGateCount * sizeof(float));
+
+	// Go through all the symbols I know of
+	for (k = 0; k < sizeof(symbols) / RKNameLength; k++) {
+		b = symbols[k];
+		strncpy(filename, inputFile, firstPartLength);
+		snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
+		if (RKFilenameExists(filename)) {
+			productList |= products[k];
+			RKLog("%s %s (*)\n", name, filename);
+
+			// Read the first file
+			if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
+				RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
+				return NULL;
+			}
+
+			getGlobalTextAttribute(typeName, "TypeName", ncid);
+
+			// Read in the header, compute the capacity and retrieve the gate count. Allocate the memory (only during the first file)
+			if (rayCount == 0 && gateCount == 0) {
+				if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
+					r = nc_inq_dimid(ncid, "azimuth", &tmpId);
+				}
+				if (r != NC_NOERR) {
+					if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
+						r = nc_inq_dimid(ncid, "beam", &tmpId);
+					}
+				}
+				if (r == NC_NOERR) {
+					nc_inq_dimlen(ncid, tmpId, &rayCount);
+				} else {
+					nc_close(ncid);
+					RKLog("Warning. Early return (rayCount)\n");
+					return NULL;
+				}
+				if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
+					r = nc_inq_dimid(ncid, "gate", &tmpId);
+				if (r == NC_NOERR) {
+					nc_inq_dimlen(ncid, tmpId, &gateCount);
+				} else {
+					RKLog("Warning. Early return (gateCount)\n");
+					nc_close(ncid);
+					return NULL;
+				}
+
+				if (gateCount > RKGateCount) {
+					RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
+					gateCount = RKGateCount;
+				}
+
+				// Derive the RKSIMDAlignSize compliant capacity
+				capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
+
+				RKLog("rayCount = %s   gateCount = %s   capacity = %s\n",
+					  RKIntegerToCommaStyleString(rayCount), RKIntegerToCommaStyleString(gateCount), RKIntegerToCommaStyleString(capacity));
+
+				// Allocate the return object
+				sweep = (RKSweep *)malloc(sizeof(RKSweep));
+				if (sweep == NULL) {
+					RKLog("Error. Unable to allocate memory.\n");
+					return NULL;
+				}
+				RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
+
+				// Elevation array
+				if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
+					r = nc_inq_varid(ncid, "elevation", &tmpId);
+				}
+				if (r == NC_NOERR) {
+					nc_get_var_float(ncid, tmpId, scratch);
+					fv = (float *)scratch;
+					for (j = 0; j < rayCount; j++) {
+						ray = RKGetRay(sweep->rayBuffer, j);
+						ray->header.startElevation = *fv++;
+						ray->header.endElevation = ray->header.startElevation;
+					}
+				} else {
+					RKLog("Warning. No elevation array.\n");
+				}
+
+				// Azimuth array
+				if ((r = nc_inq_varid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
+					r = nc_inq_varid(ncid, "azimuth", &tmpId);
+				}
+				if (r == NC_NOERR) {
+					nc_get_var_float(ncid, tmpId, scratch);
+					fv = (float *)scratch;
+					for (j = 0; j < rayCount; j++) {
+						ray = RKGetRay(sweep->rayBuffer, j);
+						ray->header.startAzimuth = *fv++;
+					}
+				} else {
+					RKLog("Warning. No azimuth array.\n");
+				}
+
+				// Gatewidth array (this is here for historical reasons)
+				if ((r = nc_inq_varid(ncid, "GateWidth", &tmpId)) != NC_NOERR) {
+					if ((r = nc_inq_varid(ncid, "Gatewidth", &tmpId)) != NC_NOERR) {
+						r = nc_inq_varid(ncid, "gatewidth", &tmpId);
+					}
+				}
+				if (r == NC_NOERR) {
+					nc_get_var_float(ncid, tmpId, scratch);
+					fv = (float *)scratch;
+					for (j = 0; j < rayCount; j++) {
+						ray = RKGetRay(sweep->rayBuffer, j);
+						ray->header.gateCount = gateCount;
+						ray->header.gateSizeMeters = *fv++;
+					}
+				} else {
+					RKLog("Warning. No gatewidth array.\n");
+				}
+
+				// Beamwidth array (this is here for historical reasons)
+				if ((r = nc_inq_varid(ncid, "BeamWidth", &tmpId)) != NC_NOERR) {
+					if ((r = nc_inq_varid(ncid, "Beamwidth", &tmpId)) != NC_NOERR) {
+						r = nc_inq_varid(ncid, "beamwidth", &tmpId);
+					}
+				}
+				if (r == NC_NOERR) {
+					nc_get_var_float(ncid, tmpId, scratch);
+					fv = (float *)scratch;
+					for (j = 0; j < rayCount; j++) {
+						ray = RKGetRay(sweep->rayBuffer, j);
+						ray->header.endAzimuth = ray->header.startAzimuth + *fv;
+						ray->header.endElevation = ray->header.endElevation + *fv++;
+					}
+				} else {
+					RKLog("Warning. No beamwidth array.\n");
+				}
+			}
+
+			// Go through the data
+//			for (k = 0; k < rayCount; k++) {
+//				RKRay *ray = RKGetRay(sweep->rayBuffer, k);
+//
+//				fv = RKGetFloatDataFromRay(ray, productIndices[k]);
+//				//printf("ray %d @ %p  w/ capacity %s\n", k, ray, RKIntegerToCommaStyleString(ray->header.capacity));
+//			}
+
+			// Product
+			r = nc_inq_varid(ncid, productNames[k], &tmpId);
+			if (r == NC_NOERR) {
+				nc_get_var_float(ncid, tmpId, scratch);
+				fv = (float *)scratch;
+				for (j = 0; j < rayCount; j++) {
+					ray = RKGetRay(sweep->rayBuffer, k);
+					fv = RKGetFloatDataFromRay(ray, productIndices[k]);
+					memcpy(fv, scratch, gateCount * sizeof(float));
+				}
+			}
+
+			//nc_get_att_text(ncid, tmp_id, "Units", prod_unit);
+			nc_close(ncid);
+		} else {
+			RKLog("%s not found.\n", filename);
+		}
 	}
 
-	RKLog("rayCount = %s   gateCount = %s\n", RKIntegerToCommaStyleString(rayCount), RKIntegerToCommaStyleString(gateCount));
+	RKLog("  -> %s%s%s%s%s%s%s\n",
+		  productList & RKProductListProductZ ? "Z" : "",
+		  productList & RKProductListProductV ? "V" : "",
+		  productList & RKProductListProductW ? "W" : "",
+		  productList & RKProductListProductD ? "D" : "",
+		  productList & RKProductListProductP ? "P" : "",
+		  productList & RKProductListProductR ? "R" : "",
+		  productList & RKProductListProductK ? "K" : ""
+		  );
 
-	// Derive the RKSIMDAlignSize compliant capacity
-	uint32_t capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
-
-	RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
-	RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
-
-
-	// Go through the data
-    for (k = 0; k < rayCount; k++) {
-        RKRay *ray = RKGetRay(sweep->rayBuffer, k);
-
-		x = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-        //printf("ray %d @ %p  w/ capacity %s\n", k, ray, RKIntegerToCommaStyleString(ray->header.capacity));
-    }
-
-	nc_close(ncid);
+	free(scratch);
 
 	return sweep;
 }

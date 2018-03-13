@@ -56,6 +56,10 @@
 
 #define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
 
+#define MAKE_FUNCTION_NAME(x) \
+RKName x; \
+sprintf(x, "%s()", __FUNCTION__);
+
 #if defined(__APPLE__)
 
 #define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"
