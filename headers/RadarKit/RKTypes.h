@@ -789,8 +789,7 @@ typedef struct rk_ray {
 } RKRay;
 
 typedef struct rk_sweep {
-	char             name[RKNameLength];
-	char             typeName[RKNameLength];
+	RKName           name;                                           // Name
 	uint32_t         productList;
 	RKRadarDesc      desc;
 	RKConfig         config;
@@ -881,7 +880,7 @@ typedef struct rk_status {
 
 typedef struct rk_file_monitor {
     // User set variables
-    char             name[RKNameLength];
+    RKName           name;
     char             filename[RKMaximumPathLength];
     void             (*callbackRoutine)(void *);
 
