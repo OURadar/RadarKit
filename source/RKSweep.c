@@ -794,6 +794,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 					RKLog("Error. Unable to allocate memory.\n");
 					return NULL;
 				}
+				memset(sweep, 0, sizeof(RKSweep));
 				RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
 
 				// Elevation array
@@ -890,6 +891,10 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			RKLog("%s not found.\n", filename);
 		}
 	}
+
+	sweep->rayCount = (uint32_t)rayCount;
+	sweep->gateCount = (uint32_t)gateCount;
+	sweep->productList = productList;
 
 	RKLog("  -> %s%s%s%s%s%s%s\n",
 		  productList & RKProductListProductZ ? "Z" : "",
