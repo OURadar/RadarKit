@@ -897,6 +897,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		ray = RKGetRay(sweep->rayBuffer, j);
 		ray->header.i += sweep->rayCount;
 		ray->header.s = RKRayStatusReady;
+		ray->header.productList = productList;
 	}
 
 	RKLog("  -> %s%s%s%s%s%s%s\n",
