@@ -152,9 +152,12 @@ static int RKRadarRelayRead(RKClient *client) {
                 } else if (productList & RKProductListDisplayK) {
                     productList ^= RKProductListDisplayK;
                     u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
-                } else if (productList & RKProductListDisplayS) {
-                    productList ^= RKProductListDisplayS;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
+                } else if (productList & RKProductListDisplaySh) {
+                    productList ^= RKProductListDisplaySh;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSh);
+                } else if (productList & RKProductListDisplaySv) {
+                    productList ^= RKProductListDisplaySv;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSv);
                 } else {
                     u8Data = NULL;
                 }

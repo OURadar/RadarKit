@@ -680,8 +680,11 @@ int socketStreamHandler(RKOperator *O) {
                 if (user->streams & RKStreamProductK) {
                     rayHeader.productList |= RKProductListProductK;
                 }
-                if (user->streams & RKStreamProductS) {
-                    rayHeader.productList |= RKProductListProductS;
+                if (user->streams & RKStreamProductSh) {
+                    rayHeader.productList |= RKProductListProductSh;
+                }
+                if (user->streams & RKStreamProductSv) {
+                    rayHeader.productList |= RKProductListProductSv;
                 }
                 uint32_t productList = rayHeader.productList & RKProductListProductZVWDPRK;
                 uint32_t productCount = __builtin_popcount(productList);
@@ -716,9 +719,12 @@ int socketStreamHandler(RKOperator *O) {
                     } else if (productList & RKProductListProductK) {
                         productList ^= RKProductListProductK;
                         f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
-                    } else if (productList & RKProductListProductS) {
-                        productList ^= RKProductListProductS;
-                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexS);
+                    } else if (productList & RKProductListProductSh) {
+                        productList ^= RKProductListProductSh;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSh);
+                    } else if (productList & RKProductListProductSv) {
+                        productList ^= RKProductListProductSv;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSv);
                     } else {
                         f32Data = NULL;
                     }
@@ -796,8 +802,11 @@ int socketStreamHandler(RKOperator *O) {
                 if (user->streams & RKStreamDisplayK) {
                     rayHeader.productList |= RKProductListDisplayK;
                 }
-                if (user->streams & RKStreamDisplayS) {
-                    rayHeader.productList |= RKProductListDisplayS;
+                if (user->streams & RKStreamDisplaySh) {
+                    rayHeader.productList |= RKProductListDisplaySh;
+                }
+                if (user->streams & RKStreamDisplaySv) {
+                    rayHeader.productList |= RKProductListDisplaySv;
                 }
                 uint32_t displayList = rayHeader.productList & RKProductListDisplayZVWDPRKS;
                 uint32_t displayCount = __builtin_popcount(displayList);
@@ -832,9 +841,12 @@ int socketStreamHandler(RKOperator *O) {
                     } else if (displayList & RKProductListDisplayK) {
                         displayList ^= RKProductListDisplayK;
                         u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
-                    } else if (displayList & RKProductListDisplayS) {
-                        displayList ^= RKProductListDisplayS;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexS);
+                    } else if (displayList & RKProductListDisplaySh) {
+                        displayList ^= RKProductListDisplaySh;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSh);
+                    } else if (displayList & RKProductListDisplaySv) {
+                        displayList ^= RKProductListDisplaySv;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSv);
                     } else {
                         u8Data = NULL;
                     }
@@ -1134,10 +1146,16 @@ RKStream RKStringToFlag(const char * string) {
                 flag |= RKStreamProductK;
                 break;
             case 's':
-                flag |= RKStreamDisplayS;
+                flag |= RKStreamDisplaySh;
                 break;
             case 'S':
-                flag |= RKStreamProductS;
+                flag |= RKStreamProductSh;
+                break;
+            case 't':
+                flag |= RKStreamDisplaySv;
+                break;
+            case 'T':
+                flag |= RKStreamProductSv;
                 break;
             case 'i':
                 flag |= RKStreamDisplayIQ;
@@ -1175,8 +1193,10 @@ int RKFlagToString(char *string, RKStream flag) {
     if (flag & RKStreamProductR)              { j += sprintf(string + j, "R"); }
     if (flag & RKStreamDisplayK)              { j += sprintf(string + j, "k"); }
     if (flag & RKStreamProductK)              { j += sprintf(string + j, "K"); }
-    if (flag & RKStreamDisplayS)              { j += sprintf(string + j, "s"); }
-    if (flag & RKStreamProductS)              { j += sprintf(string + j, "S"); }
+    if (flag & RKStreamDisplaySh)             { j += sprintf(string + j, "s"); }
+    if (flag & RKStreamProductSh)             { j += sprintf(string + j, "S"); }
+    if (flag & RKStreamDisplaySv)             { j += sprintf(string + j, "t"); }
+    if (flag & RKStreamProductSv)             { j += sprintf(string + j, "T"); }
     if (flag & RKStreamDisplayIQ)             { j += sprintf(string + j, "i"); }
     if (flag & RKStreamProductIQ)             { j += sprintf(string + j, "I"); }
     string[j] = '\0';

@@ -443,7 +443,8 @@ enum RKProductList {
     RKProductListDisplayP            = (1 << 4),                     // Display P - PhiDP
     RKProductListDisplayR            = (1 << 5),                     // Display R - RhoHV
     RKProductListDisplayK            = (1 << 6),                     // Display K - KDP
-    RKProductListDisplayS            = (1 << 7),                     // Display S - Signal
+    RKProductListDisplaySh           = (1 << 7),                     // Display Sh - Signal
+    RKProductListDisplaySv           = (1 << 8),                     // Display Sv - Signal
     RKProductListDisplayZVWDPRKS     = 0x000000FF,                   // Display All
     RKProductListProductZ            = (1 << 16),                    // Data of Z
     RKProductListProductV            = (1 << 17),                    // Data of V
@@ -593,8 +594,9 @@ enum RKStream {
     RKStreamDisplayP                 = (1 << 20),                    //
     RKStreamDisplayR                 = (1 << 21),                    //
     RKStreamDisplayK                 = (1 << 22),                    //
-    RKStreamDisplayS                 = (1 << 23),                    //
-    RKStreamDisplayZVWDPRKS          = 0x0000FF0000,                 //
+    RKStreamDisplaySh                = (1 << 23),                    //
+    RKStreamDisplaySv                = (1 << 24),                    //
+    RKStreamDisplayZVWDPRKS          = 0x00000001FF0000ULL,          //
     RKStreamProductZ                 = (1ULL << 32),                 // Products
     RKStreamProductV                 = (1ULL << 33),                 //
     RKStreamProductW                 = (1ULL << 34),                 //
@@ -602,9 +604,10 @@ enum RKStream {
     RKStreamProductP                 = (1ULL << 36),                 //
     RKStreamProductR                 = (1ULL << 37),                 //
     RKStreamProductK                 = (1ULL << 38),                 //
-    RKStreamProductS                 = (1ULL << 39),                 //
-    RKStreamProductZVWDPRKS          = 0xFF00000000ULL,              //
-    RKStreamEverything               = 0xFFFFFFFFFFULL               //
+    RKStreamProductSh                = (1ULL << 39),                 //
+    RKStreamProductSv                = (1ULL << 40),                 //
+    RKStreamProductZVWDPRKS          = 0x0001FF00000000ULL,          //
+    RKStreamEverything               = 0x0001FFFFFFFFFFULL           //
 };
 
 typedef uint8_t RKHostState;
