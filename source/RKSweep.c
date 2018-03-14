@@ -605,11 +605,13 @@ void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
 RKSweep *RKSweepRead(const char *inputFile) {
 	int j, k, r;
 	int ncid, tmpId;
-	float *fv;
+	float *fp, fv;
+    int iv;
 
 	MAKE_FUNCTION_NAME(name)
 
 	RKName typeName;
+    RKName scanType;
 	char filename[RKMaximumPathLength];
 	strncpy(filename, inputFile, RKMaximumPathLength);
 
@@ -687,7 +689,6 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
 		if (RKFilenameExists(filename)) {
 			productList |= products[k];
-			RKLog("%s %s (*)\n", name, filename);
 
 			// Read the first file
 			if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
@@ -695,10 +696,9 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				return NULL;
 			}
 
-			getGlobalTextAttribute(typeName, "TypeName", ncid);
-
 			// Read in the header, compute the capacity and retrieve the gate count. Allocate the memory (only during the first file)
 			if (rayCount == 0 && gateCount == 0) {
+                // Dimensions
 				if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
 					r = nc_inq_dimid(ncid, "azimuth", &tmpId);
 				}
@@ -744,16 +744,70 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				memset(sweep, 0, sizeof(RKSweep));
 				RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
 
+                ray = (RKRay *)sweep->rayBuffer;
+                
+                // Global attributes
+                getGlobalTextAttribute(typeName, "TypeName", ncid);
+                getGlobalTextAttribute(scanType, "ScanType", ncid);
+                getGlobalTextAttribute(sweep->desc.name, "radarName-value", ncid);
+                r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &sweep->desc.latitude);
+                if (r != NC_NOERR) {
+                    r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
+                    sweep->desc.latitude = (double)fv;
+                }
+                r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->desc.longitude);
+                if (r != NC_NOERR) {
+                    r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
+                    sweep->desc.longitude = (double)fv;
+                }
+                if (!strcmp(scanType, "PPI")) {
+                    sweep->config.sweepElevation = ray->header.sweepElevation;
+                    sweep->config.startMarker |= RKMarkerPPIScan;
+                } else if (!strcmp(scanType, "RHI")) {
+                    sweep->config.sweepAzimuth = ray->header.sweepAzimuth;
+                    sweep->config.startMarker |= RKMarkerRHIScan;
+                }
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->desc.heading);
+                if (r != NC_NOERR) {
+                    RKLog("No radar heading found.\n");
+                }
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Height", &sweep->desc.radarHeight);
+                if (r != NC_NOERR) {
+                    RKLog("No radar height found.\n");
+                }
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Elevation", &ray->header.sweepElevation);
+                if (r != NC_NOERR && sweep->config.startMarker & RKMarkerPPIScan) {
+                    RKLog("Warning. No sweep elevation found.\n");
+                }
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Azimuth", &ray->header.sweepAzimuth);
+                if (r != NC_NOERR && sweep->config.startMarker & RKMarkerRHIScan) {
+                    RKLog("Warning. No sweep azimuth found.\n");
+                }
+                r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
+                if (r == NC_NOERR) {
+                    sweep->config.prf[0] = iv;
+                    if (sweep->config.prf[0] == 0) {
+                        RKLog("Warning. Recorded PRF = 0 Hz.\n");
+                    }
+                } else {
+                    RKLog("Warning. No PRF information found.\n");
+                }
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", &fv);
+                if (r == NC_NOERR) {
+                    sweep->desc.wavelength = 4.0f * fv / (RKFloat)sweep->config.prf[0];
+                    RKLog("Radar wavelength = %.4f m\n", sweep->desc.wavelength);
+                }
+
 				// Elevation array
 				if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
 					r = nc_inq_varid(ncid, "elevation", &tmpId);
 				}
 				if (r == NC_NOERR) {
 					nc_get_var_float(ncid, tmpId, scratch);
-					fv = (float *)scratch;
+					fp = (float *)scratch;
 					for (j = 0; j < rayCount; j++) {
 						ray = RKGetRay(sweep->rayBuffer, j);
-						ray->header.startElevation = *fv++;
+						ray->header.startElevation = *fp++;
 						ray->header.endElevation = ray->header.startElevation;
 					}
 				} else {
@@ -766,10 +820,10 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				}
 				if (r == NC_NOERR) {
 					nc_get_var_float(ncid, tmpId, scratch);
-					fv = (float *)scratch;
+					fp = (float *)scratch;
 					for (j = 0; j < rayCount; j++) {
 						ray = RKGetRay(sweep->rayBuffer, j);
-						ray->header.startAzimuth = *fv++;
+						ray->header.startAzimuth = *fp++;
 					}
 				} else {
 					RKLog("Warning. No azimuth array.\n");
@@ -783,11 +837,11 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				}
 				if (r == NC_NOERR) {
 					nc_get_var_float(ncid, tmpId, scratch);
-					fv = (float *)scratch;
+					fp = (float *)scratch;
 					for (j = 0; j < rayCount; j++) {
 						ray = RKGetRay(sweep->rayBuffer, j);
 						ray->header.gateCount = gateCount;
-						ray->header.gateSizeMeters = *fv++;
+						ray->header.gateSizeMeters = *fp++;
 					}
 				} else {
 					RKLog("Warning. No gatewidth array.\n");
@@ -801,26 +855,28 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				}
 				if (r == NC_NOERR) {
 					nc_get_var_float(ncid, tmpId, scratch);
-					fv = (float *)scratch;
+					fp = (float *)scratch;
 					for (j = 0; j < rayCount; j++) {
 						ray = RKGetRay(sweep->rayBuffer, j);
-						ray->header.endAzimuth = ray->header.startAzimuth + *fv;
-						ray->header.endElevation = ray->header.endElevation + *fv++;
+						ray->header.endAzimuth = ray->header.startAzimuth + *fp;
+						ray->header.endElevation = ray->header.endElevation + *fp++;
 					}
 				} else {
 					RKLog("Warning. No beamwidth array.\n");
 				}
 			}
 
-			// Product
+            RKLog("%s %s (*)\n", name, filename);
+
+            // Product
 			r = nc_inq_varid(ncid, productNames[k], &tmpId);
 			if (r == NC_NOERR) {
 				nc_get_var_float(ncid, tmpId, scratch);
-				fv = (float *)scratch;
+				fp = (float *)scratch;
 				for (j = 0; j < rayCount; j++) {
 					ray = RKGetRay(sweep->rayBuffer, j);
-					fv = RKGetFloatDataFromRay(ray, productIndices[k]);
-					memcpy(fv, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
+					fp = RKGetFloatDataFromRay(ray, productIndices[k]);
+					memcpy(fp, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
 				}
 			} else {
 				RKLog("%s not found.\n", productNames[k]);
