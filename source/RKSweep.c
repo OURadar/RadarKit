@@ -644,7 +644,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		b--;
 	}
 	if (b == inputFile) {
-		RKLog("Unable to find product symbol.\n");
+		RKLog("%s Unable to find product symbol.\n", name);
 		return NULL;
 	}
 
@@ -892,6 +892,10 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		}
 	}
 
+    if (sweep == NULL) {
+        return NULL;
+    }
+    
 	sweep->rayCount = (uint32_t)rayCount;
 	sweep->gateCount = (uint32_t)gateCount;
 	sweep->productList = productList;
