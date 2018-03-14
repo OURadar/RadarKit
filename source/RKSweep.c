@@ -742,7 +742,6 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
 		if (RKFilenameExists(filename)) {
 			productList |= products[k];
-			RKLog("%s %s (*)\n", name, filename);
 
 			// Read the first file
 			if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
@@ -920,7 +919,9 @@ RKSweep *RKSweepRead(const char *inputFile) {
 				}
 			}
 
-			// Product
+            RKLog("%s %s (*)\n", name, filename);
+
+            // Product
 			r = nc_inq_varid(ncid, productNames[k], &tmpId);
 			if (r == NC_NOERR) {
 				nc_get_var_float(ncid, tmpId, scratch);
