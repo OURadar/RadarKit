@@ -613,7 +613,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 	RKName typeName;
     RKName scanType;
 	char filename[RKMaximumPathLength];
-	strncpy(filename, inputFile, RKMaximumPathLength);
+	memset(filename, 0, RKMaximumPathLength);
 
 	uint32_t firstPartLength = 0;
 
@@ -632,6 +632,9 @@ RKSweep *RKSweepRead(const char *inputFile) {
 	// Find the last '.'
 	char *e = NULL;
 	e = strstr(inputFile, ".");
+    if (e == NULL) {
+        e = (char *)inputFile + strlen(inputFile) - 1;
+    }
 	while (*(e + 1) >= '0' && *(e + 1) <= '9') {
 		e = strstr(e + 1, ".");
 	}
