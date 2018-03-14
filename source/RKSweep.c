@@ -90,12 +90,14 @@ static void *sweepWriter(void *in) {
 			  1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
     
-    char symbol = 'U';
     char *filelist = engine->filelist;
     char *filename = engine->filename;
-    char *productName = engine->productName;
+
+	char *symbol = engine->productSymbol;
+	char *productName = engine->productName;
     char *productUnit = engine->productUnit;
     char *productColormap = engine->productColormap;
+	RKProductIndex productIndex;
 
     int ncid;
     int dimensionIds[2];
@@ -125,67 +127,12 @@ static void *sweepWriter(void *in) {
     const float radianToDegree = 180.0f / M_PI;
 
     int summarySize = 0;
-    RKProductIndex productIndex = RKProductIndexS;
     uint32_t productList = S->header.productList;
     int productCount = __builtin_popcount(productList);
-    for (p = 0; p < productCount; p++) {
-        if (productList & RKProductListProductZ) {
-            symbol = 'Z';
-            sprintf(productName, "Corrected_Intensity");
-            sprintf(productUnit, "dBZ");
-            sprintf(productColormap, "Reflectivity");
-            productList ^= RKProductListProductZ;
-            productIndex = RKProductIndexZ;
-        } else if (productList & RKProductListProductV) {
-            symbol = 'V';
-            sprintf(productName, "Radial_Velocity");
-            sprintf(productUnit, "MetersPerSecond");
-            sprintf(productColormap, "Velocity");
-            productList ^= RKProductListProductV;
-            productIndex = RKProductIndexV;
-        } else if (productList & RKProductListProductW) {
-            symbol = 'W';
-            sprintf(productName, "Width");
-            sprintf(productUnit, "MetersPerSecond");
-            sprintf(productColormap, "Width");
-            productList ^= RKProductListProductW;
-            productIndex = RKProductIndexW;
-        } else if (productList & RKProductListProductD) {
-            symbol = 'D';
-            sprintf(productName, "Differential_Reflectivity");
-            sprintf(productUnit, "dB");
-            sprintf(productColormap, "Differential_Reflectivity");
-            productList ^= RKProductListProductD;
-            productIndex = RKProductIndexD;
-        } else if (productList & RKProductListProductP) {
-            symbol = 'P';
-            sprintf(productName, "PhiDP");
-            sprintf(productUnit, "Degrees");
-            sprintf(productColormap, "PhiDP");
-            productList ^= RKProductListProductP;
-            productIndex = RKProductIndexP;
-        } else if (productList & RKProductListProductR) {
-            symbol = 'R';
-            sprintf(productName, "RhoHV");
-            sprintf(productUnit, "Unitless");
-            sprintf(productColormap, "RhoHV");
-            productList ^= RKProductListProductR;
-            productIndex = RKProductIndexR;
-        } else if (productList & RKProductListProductS) {
-            symbol = 'S';
-            sprintf(productName, "Signal");
-            sprintf(productUnit, "dBm");
-            sprintf(productColormap, "Signal");
-            productList ^= RKProductListProductS;
-            productIndex = RKProductIndexS;
-        } else if (productList & RKProductListProductK) {
-            symbol = 'K';
-            sprintf(productName, "KDP");
-            sprintf(productUnit, "DegreesPerMeter");
-            sprintf(productColormap, "KDP");
-            productList ^= RKProductListProductK;
-            productIndex = RKProductIndexK;
-        }
+
+	for (p = 0; p < productCount; p++) {
+		// Get the symbol, name, unit, colormap, etc. from the product list
+		RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &productList);
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
         i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
@@ -193,11 +140,11 @@ static void *sweepWriter(void *in) {
         i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
         i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         if (engine->configBuffer[T->header.configIndex].startMarker & RKMarkerPPIScan) {
-            i += sprintf(filename + i, "-E%.1f-%c", T->header.sweepElevation, symbol);
+            i += sprintf(filename + i, "-E%.1f-%s", T->header.sweepElevation, symbol);
         } else if (engine->configBuffer[S->header.configIndex].startMarker & RKMarkerRHIScan) {
-            i += sprintf(filename + i, "-A%.1f-%c", T->header.sweepAzimuth, symbol);
+            i += sprintf(filename + i, "-A%.1f-%s", T->header.sweepAzimuth, symbol);
         } else {
-            i += sprintf(filename + i, "-N%03d-%c", n, symbol);
+            i += sprintf(filename + i, "-N%03d-%s", n, symbol);
         }
         sprintf(filename + i, ".nc");
         
@@ -208,7 +155,7 @@ static void *sweepWriter(void *in) {
                 // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
                 summarySize = sprintf(engine->summary, "%s ...%s", engine->doNotWrite ? "Skipped" : "Created", RKLastTwoPartsOfPath(filename));
             } else {
-                summarySize += sprintf(engine->summary + summarySize, ", %c", symbol);
+                summarySize += sprintf(engine->summary + summarySize, ", %s", symbol);
             }
         }
 
@@ -416,7 +363,7 @@ static void *sweepWriter(void *in) {
         //printf("CMD: '%s'\n", filelist);
         system(filelist);
         // Potential filenames that may be generated by the custom command. Need to notify file manager about them.
-        sprintf(productName, "-%c.nc", symbol);
+        sprintf(productName, "-%s.nc", symbol);
         RKReplaceFileExtension(filename, productName, ".__");
         if (engine->handleFilesScriptProducesTgz) {
             RKReplaceFileExtension(filename, ".__", ".tgz");

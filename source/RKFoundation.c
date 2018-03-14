@@ -708,3 +708,122 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
     free(engine);
     return RKResultSuccess;
 }
+
+int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
+	if (list == NULL || *list == 0) {
+		return RKResultNullInput;
+	}
+	RKName symbols[] = {
+		"Z",
+		"V",
+		"W",
+		"D",
+		"P",
+		"R",
+		"K",
+		"Sh",
+		"Sv",
+		"U"
+	};
+	RKName names[] = {
+		"Corrected_Intensity",
+		"Radial_Velocity",
+		"Width",
+		"Differential_Reflectivity",
+		"PhiDP",
+		"RhoHV",
+		"KDP",
+		"Signal_Power_H",
+		"Signal_Power_V",
+		"Uknown"
+	};
+	RKName units[] = {
+		"dBZ",
+		"MetersPerSecond",
+		"MetersPerSecond",
+		"dB",
+		"Degrees",
+		"Unitless",
+		"DegreesPerMeter",
+		"dBm",
+		"dBm",
+		"Undefined"
+	};
+	RKName colormaps[] = {
+		"Reflectivity",
+		"Velocity",
+		"Width",
+		"Differential_Reflectivity",
+		"PhiDP",
+		"RhoHV",
+		"KDP",
+		"Power",
+		"Power",
+		"Default"
+	};
+	uint32_t lists[] = {
+		RKProductListProductZ,
+		RKProductListProductV,
+		RKProductListProductW,
+		RKProductListProductD,
+		RKProductListProductP,
+		RKProductListProductR,
+		RKProductListProductK,
+		RKProductListProductSh,
+		RKProductListProductSv,
+		0xFFFF
+	};
+	uint32_t productIndices[] = {
+		RKProductIndexZ,
+		RKProductIndexV,
+		RKProductIndexW,
+		RKProductIndexD,
+		RKProductIndexP,
+		RKProductIndexR,
+		RKProductIndexK,
+		RKProductIndexSh,
+		0
+	};
+	int k = -1;
+	if (*list & RKProductListProductZ) {
+		k = 0;
+	} else if (*list & RKProductListProductV) {
+		k = 1;
+	} else if (*list & RKProductListProductW) {
+		k = 2;
+	} else if (*list & RKProductListProductD) {
+		k = 3;
+	} else if (*list & RKProductListProductP) {
+		k = 4;
+	} else if (*list & RKProductListProductR) {
+		k = 5;
+	} else if (*list & RKProductListProductK) {
+		k = 6;
+	} else if (*list & RKProductListProductSh) {
+		k = 7;
+	} else if (*list & RKProductListProductSv) {
+		k = 8;
+	}
+	if (k < 0) {
+		RKLog("Unable to get description for k = %d\n", k);
+		return RKResultNullInput;
+	}
+	if (symbol) {
+		sprintf(symbol, "%s", symbols[k]);
+	}
+	if (name) {
+		sprintf(name, "%s", names[k]);
+	}
+	if (unit) {
+		sprintf(unit, "%s", units[k]);
+	}
+	if (colormap) {
+		sprintf(colormap, "%s", colormaps[k]);
+	}
+	if (index) {
+		*index = productIndices[k];
+	}
+	*list ^= lists[k];
+	return RKResultSuccess;
+}
+

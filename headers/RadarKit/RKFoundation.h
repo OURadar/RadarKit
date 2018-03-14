@@ -88,4 +88,6 @@ void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *));
 int RKFileMonitorFree(RKFileMonitor *engine);
 
+int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
+
 #endif /* defined(__RadarKit_RKFoundation__) */

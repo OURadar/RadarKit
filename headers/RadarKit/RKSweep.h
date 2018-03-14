@@ -46,9 +46,10 @@ struct rk_sweep_engine {
     float                            *array2D;
     char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
     char                             filename[RKMaximumPathLength];
-    char                             productName[RKNameLength];
-    char                             productUnit[RKNameLength];
-    char                             productColormap[RKNameLength];
+	RKName                           productSymbol;
+    RKName                           productName;
+    RKName                           productUnit;
+    RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
 
     // Status / health

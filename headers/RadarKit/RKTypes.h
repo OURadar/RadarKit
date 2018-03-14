@@ -452,10 +452,11 @@ enum RKProductList {
     RKProductListProductP            = (1 << 20),                    // Data of P
     RKProductListProductR            = (1 << 21),                    // Data of R
     RKProductListProductK            = (1 << 22),                    // Data of K
-    RKProductListProductS            = (1 << 23),                    // Data of S
+    RKProductListProductSh           = (1 << 23),                    // Data of Sh
+	RKProductListProductSv           = (1 << 24),                    // Data of Sv
     RKProductListProductZVWDPR       = 0x003F0000,                   // Base data, i.e., without K, and S
     RKProductListProductZVWDPRK      = 0x007F0000,                   // Base data + K
-    RKProductListProductZVWDPRKS     = 0x00FF0000                    // All data
+    RKProductListProductZVWDPRKS     = 0x01FF0000                    // All data
 };
 
 typedef uint32_t RKProductIndex;
@@ -466,8 +467,9 @@ enum RKProductIndex {
     RKProductIndexD,
     RKProductIndexP,
     RKProductIndexR,
-    RKProductIndexS,
-    RKProductIndexK,
+	RKProductIndexK,
+    RKProductIndexSh,
+	RKProductIndexSv,
     RKProductIndexZv,
     RKProductIndexVv,
     RKProductIndexWv

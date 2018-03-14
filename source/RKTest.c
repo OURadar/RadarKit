@@ -520,6 +520,8 @@ void *RKTestTransceiverRunLoop(void *input) {
 		RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
 	}
 
+	RKAddConfig(radar, RKConfigKeyPRF, 1.0f / transceiver->prt, RKConfigKeyEnd);
+
 	while (transceiver->state & RKEngineStateActive) {
 
         periodTotal = 0.0;
