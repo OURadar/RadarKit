@@ -907,6 +907,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		ray->header.productList = productList;
 	}
 
+	/*
 	RKLog("  -> %s%s%s%s%s%s%s\n",
 		  productList & RKProductListProductZ ? "Z" : "",
 		  productList & RKProductListProductV ? "V" : "",
@@ -916,6 +917,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 		  productList & RKProductListProductR ? "R" : "",
 		  productList & RKProductListProductK ? "K" : ""
 		  );
+	*/
 
 	free(scratch);
 

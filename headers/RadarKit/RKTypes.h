@@ -505,7 +505,7 @@ enum RKConfigKey {
     RKConfigKeyPCals,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
-    RKConfigKeyEnd
+    RKConfigKeyTotalNumberOfKeys
 };
 
 typedef uint8_t RKHealthNode;

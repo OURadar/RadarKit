@@ -48,6 +48,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyDualPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
                 newConfig->prf[1] = va_arg(args, uint32_t);
+				sprintf(stringBuffer, "Dual PRF = %s / %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]), RKIntegerToCommaStyleString(newConfig->prf[1]));
                 break;
             case RKConfigKeyGateCount:
                 newConfig->gateCount[0] = va_arg(args, uint32_t);
