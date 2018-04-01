@@ -90,4 +90,8 @@ int RKFileMonitorFree(RKFileMonitor *engine);
 
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
+RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
+RKStatusEnum RKStatusFromTemperatureForCE(RKConst value);
+RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
+
 #endif /* defined(__RadarKit_RKFoundation__) */

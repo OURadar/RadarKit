@@ -181,6 +181,8 @@ typedef void *    RKHealthRelay;
 typedef void *    RKMasterController;
 typedef char      RKName[RKNameLength];
 
+typedef const float RKConst;
+
 #pragma pack(push, 1)
 
 // Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample

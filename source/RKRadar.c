@@ -1194,8 +1194,10 @@ int RKGoLive(RKRadar *radar) {
     }
 
     // For now, the transceiver is the master controller
-    radar->masterController = radar->transceiver;
-    radar->masterControllerExec = radar->transceiverExec;
+    if (radar->masterController == NULL) {
+        radar->masterController = radar->transceiver;
+        radar->masterControllerExec = radar->transceiverExec;
+    }
     
     // Update memory usage
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
@@ -1398,7 +1400,7 @@ int RKResetEngines(RKRadar *radar) {
 //
 void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
     if (radar->masterController == NULL) {
-        RKLog("Master controller is not valid.\n");
+        RKLog("Master controller is not set.\n");
         return;
     }
     RKTaskInput taskInput;

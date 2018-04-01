@@ -609,7 +609,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
         // Report health
 		int nn = rand();
-        float temp = 1.0f * nn / RAND_MAX + 79.5f;
+        float temp = 1.0f * nn / RAND_MAX + 79.5f + (transceiver->simFault ? 10 : 0);
         float volt = 1.0f * nn / RAND_MAX + 11.5f;
 		RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         sprintf(health->string,
@@ -625,7 +625,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 				RKStatusEnumActive,
 				RKStatusEnumNormal,
 				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
-                temp, temp > 80.0f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                temp, RKStatusFromTemperatureForCE(temp),
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
 				nn & 0x03,
 				nn & 0x03,
@@ -916,6 +916,11 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     sprintf(response, "NAK. Waveform '%s' not found." RKEOL, string);
                 }
             }
+            break;
+        case 'x':
+            // Simulate critical temperature
+            transceiver->simFault = !transceiver->simFault;
+            sprintf(response, "ACK. simFault -> %d" RKEOL, transceiver->simFault);
             break;
         case 'y':
             // Everything goes

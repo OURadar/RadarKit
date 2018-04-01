@@ -55,6 +55,7 @@ typedef struct rk_test_transceiver {
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
+    bool           simFault;
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {

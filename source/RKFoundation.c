@@ -827,3 +827,32 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 	return RKResultSuccess;
 }
 
+// RKStatusEnum zones:
+//              x <= tooLow        --> RKStatusEnumCritical
+// tooLow     < x <= low           --> RKStatusEnumTooLow
+// low        < x <= normalLow     --> RKStatusEnumLow
+// normalLow  < x <= normalHigh    --> RKStatusEnumNormal
+// normalHigh < x <= high          --> RKStatusEnumHigh
+// high       < x <= tooHigh       --> RKStatusEnumTooHigh       
+// tooHigh    < x                  --> RKStatusEnumCritical
+
+RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi) {
+    RKStatusEnum status = !isfinite(value) ? RKStatusEnumUnknown :
+    (value <= tlo ? RKStatusEnumCritical :
+     (value <= lo ? RKStatusEnumTooLow :
+      (value <= nlo ? RKStatusEnumLow :
+       (value <= nhi ? RKStatusEnumNormal :
+        (value <= hi ? RKStatusEnumHigh :
+         (value <= thi ? RKStatusEnumTooHigh : RKStatusEnumCritical))))));
+    return status;
+}
+
+// Typical commercial electronics operates 0 to 70 C
+RKStatusEnum RKStatusFromTemperatureForCE(RKConst value) {
+    return RKValueToEnum(value, -20.0f, -10.0, 0.0f, 70.0f, 80.0f, 90.0f);
+}
+
+// Typical industrial electronics operates -40 to 85 C
+RKStatusEnum RKStatusFromTemperatureForIE(RKConst value) {
+    return RKValueToEnum(value, -60.0f, -50.0, -40.0f, 85.0f, 95.0f, 105.0f);
+}
