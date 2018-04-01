@@ -34,9 +34,6 @@ static void *healthConsolidator(void *in) {
     char *string;
     struct timeval t0, t1;
 
-    bool anyCritical;
-    char criticalKey[RKNameLength];
-    
     gettimeofday(&t1, NULL);
 
     k = 0;   // health index
@@ -158,11 +155,6 @@ static void *healthConsolidator(void *in) {
         sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
         health->flag = RKHealthFlagReady;
 
-        anyCritical = RKAnyCritical(string, false, criticalKey);
-        if (anyCritical) {
-            RKLog("%s %s is in critical condition.\n", engine->name, criticalKey);
-        }
-        
         if (engine->verbose > 2) {
             RKLog("%s", string);
         }

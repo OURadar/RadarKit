@@ -1227,9 +1227,15 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool pedestalOkay;
     bool healthOkay;
     bool networkOkay;
+    bool anyCritical;
 
     RKStatusEnum networkEnum;
 	char FFTPlanUsage[RKNameLength];
+    char criticalKey[RKNameLength];
+    int criticalCount = 0;
+    
+    RKConfig *config;
+    RKHealth *health;
 
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -1245,8 +1251,8 @@ int RKWaitWhileActive(RKRadar *radar) {
                 (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
                  (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
 
-                RKConfig *config = RKGetLatestConfig(radar);
-                RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
+                config = RKGetLatestConfig(radar);
+                health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
 
 				k = sprintf(FFTPlanUsage, "{");
 				for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
@@ -1277,6 +1283,19 @@ int RKWaitWhileActive(RKRadar *radar) {
                 RKSetHealthReady(radar, health);
 
                 //printf("radarkitnode %d\n", radar->healthNodes[RKHealthNodeRadarKit].index);
+                
+                // Get the latest consolidated health
+                health = RKGetLatestHealth(radar);
+                anyCritical = RKAnyCritical(health->string, false, criticalKey);
+                if (anyCritical) {
+                    RKLog("Warning. %s is in critical condition (count = %d).\n", criticalKey, criticalCount);
+                    if (criticalCount++ >= 3) {
+                        RKLog("Info. Shutting down ...\n");
+                        RKStop(radar);
+                    }
+                } else {
+                    criticalCount = 0;
+                }
                 
                 pulseIndex = radar->pulseIndex;
                 positionIndex = radar->positionIndex;
