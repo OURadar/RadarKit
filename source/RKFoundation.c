@@ -856,3 +856,59 @@ RKStatusEnum RKStatusFromTemperatureForCE(RKConst value) {
 RKStatusEnum RKStatusFromTemperatureForIE(RKConst value) {
     return RKValueToEnum(value, -60.0f, -50.0, -40.0f, 85.0f, 95.0f, 105.0f);
 }
+
+bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey) {
+    
+    char *str = (char *)malloc(strlen(string));
+    char *key = (char *)malloc(RKNameLength);
+    char *obj = (char *)malloc(RKNameLength);
+    char *subKey = (char *)malloc(RKNameLength);
+    char *subObj = (char *)malloc(RKNameLength);
+    uint8_t type;
+    uint8_t subType;
+    
+    strcpy(str, string);
+    
+    bool anyCritical = false;
+    
+    int v;
+    char *ks;
+    char *sks;
+    if (*str != '{') {
+        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
+    }
+    
+    ks = str + 1;
+    while (*ks != '\0' && *ks != '}') {
+        ks = RKExtractJSON(ks, &type, key, obj);
+        if (type != RKJSONObjectTypeObject) {
+            continue;
+        }
+        sks = obj + 1;
+        while (*sks != '\0' && *sks != '}') {
+            sks = RKExtractJSON(sks, &subType, subKey, subObj);
+            if (strcmp("Enum", subKey)) {
+                continue;
+            }
+            v = atoi(subObj);
+            if (v == RKStatusEnumCritical && anyCritical == false) {
+                strcpy(firstCriticalKey, key);
+                anyCritical = true;
+            }
+            if (showEnum) {
+                fprintf(stderr, "%s --> '%s' --> %d%s%s%s\n", key, subObj, v,
+                        rkGlobalParameters.showColor ? "\033[38;5;204m" : "",
+                        v == RKStatusEnumCritical ? "  *" : "",
+                        rkGlobalParameters.showColor ? RKNoColor : "");
+            }
+        }
+    }
+
+    free(subKey);
+    free(subObj);
+    free(str);
+    free(key);
+    free(obj);
+    
+    return anyCritical;
+}

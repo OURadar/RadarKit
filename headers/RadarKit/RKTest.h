@@ -126,5 +126,6 @@ void RKTestPulseCompressionSpeed(void);
 void RKTestMomentProcessorSpeed(void);
 
 void RKTestReadSweep(const char *);
+void RKTestTemperatureToStatus(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

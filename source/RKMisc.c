@@ -412,47 +412,6 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     return oe;
 }
 
-void RKGoThroughKeywords(const char *string) {
-
-    char *str = (char *)malloc(strlen(string));
-    char *key = (char *)malloc(1024);
-    char *obj = (char *)malloc(1024);
-    char *subKey = (char *)malloc(1024);
-    char *subObj = (char *)malloc(1024);
-    uint8_t type;
-    uint8_t subType;
-
-    strcpy(str, string);
-
-    char *ks;
-    char *sks;
-    if (*str != '{') {
-        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
-    }
-
-    ks = str + 1;
-    while (*ks != '\0' && *ks != '}') {
-        ks = RKExtractJSON(ks, &type, key, obj);
-        if (type != RKJSONObjectTypeObject) {
-            continue;
-        }
-        sks = obj + 1;
-        while (*sks != '\0' && *sks != '}') {
-            sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (strcmp("Enum", subKey)) {
-                continue;
-            }
-            fprintf(stderr, "%s --> '%s' --> %d\n", key, subObj, atoi(subObj));
-        }
-    }
-
-    free(subKey);
-    free(subObj);
-    free(str);
-    free(key);
-    free(obj);
-}
-
 void RKReplaceKeyValue(char *string, const char *key, int value) {
     int k;
     char *s = strstr(string, key);

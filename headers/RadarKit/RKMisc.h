@@ -81,6 +81,8 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpu_size, cpu_set_t *cpu_set
 
 #endif
 
+#define RKMiscStringLength  1024
+
 enum RKJSONObjectType {
     RKJSONObjectTypeUnknown,
     RKJSONObjectTypePlain,
@@ -113,7 +115,6 @@ int RKStripTail(char *);
 float RKUMinDiff(const float minuend, const float subtrahend);
 
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
-void RKGoThroughKeywords(const char *string);
 void RKReplaceKeyValue(char *string, const char *key, int value);
 
 long RKCountFilesInPath(const char *);

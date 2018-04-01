@@ -1641,6 +1641,7 @@ void RKTestWindow(void) {
 }
 
 void RKTestJSON(void) {
+    SHOW_FUNCTION_NAME
     char str[] = "{"
     "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
     "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
@@ -1650,7 +1651,7 @@ void RKTestJSON(void) {
     "\"10-MHz Clock\":{\"Value\":true,\"Enum\":0}, "
     "\"DAC PLL\":{\"Value\":true,\"Enum\":0}, "
     "\"FPGA Temp\":{\"Value\":\"69.3degC\",\"Enum\":0}, "
-    "\"Core Volt\":{\"Value\":\"1.00 V\",\"Enum\":0}, "
+    "\"Core Volt\":{\"Value\":\"1.00 V\",\"Enum\":4}, "
     "\"Aux. Volt\":{\"Value\":\"2.469 V\",\"Enum\":0}, "
     "\"XMC Volt\":{\"Value\":\"11.649 V\",\"Enum\":0}, "
     "\"XMC 3p3\":{\"Value\":\"3.250 V\",\"Enum\":0}, "
@@ -1687,7 +1688,11 @@ void RKTestJSON(void) {
     "\"I2C Chip\":{\"Value\":\"30.50 degC\",\"Enum\":0}, "
     "\"Event\":\"none\", \"Log Time\":1493410480"
     "}";
-    printf("%s (%d characters)\n", str, (int)strlen(str));
+    printf("%s (%d characters)\n\n", str, (int)strlen(str));
+    
+    // Test getting a specific key
+    printf("Getting specific key:\n");
+    printf("---------------------\n");
     char *stringObject, *stringValue, *stringEnum;
     if ((stringObject = RKGetValueOfKey(str, "latitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
@@ -1697,6 +1702,7 @@ void RKTestJSON(void) {
             printf("latitude = %.7f\n", atof(stringValue));
         }
     }
+    printf("\n");
     if ((stringObject = RKGetValueOfKey(str, "longitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
@@ -1705,7 +1711,19 @@ void RKTestJSON(void) {
             printf("longitude = %.7f\n", atof(stringValue));
         }
     }
-    RKGoThroughKeywords(str);
+    
+    printf("\n");
+    printf("Getting all keys:\n");
+    printf("-----------------\n");
+    char criticalKey[RKNameLength];
+    bool anyCritical = RKAnyCritical(str, true, criticalKey);
+    printf("anyCritical = %s%s%s%s%s\n",
+           rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
+           anyCritical ? "True" : "False",
+           rkGlobalParameters.showColor ? RKNoColor : "",
+           anyCritical ? " --> " : "",
+           anyCritical ? criticalKey : ""
+           );
     
     printf("\n");
     char strObj[] = "0";
@@ -1721,12 +1739,14 @@ void RKTestJSON(void) {
 }
 
 void RKTestShowColors(void) {
+    SHOW_FUNCTION_NAME
     for (int k = 0; k < 16; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
 }
 
 void RKTestFileManager(void) {
+    SHOW_FUNCTION_NAME
     RKFileManager *o = RKFileManagerInit();
     if (o == NULL) {
         fprintf(stderr, "Unable to allocate a File Manager.\n");
@@ -2032,5 +2052,13 @@ void RKTestReadSweep(const char *file) {
     RKSweep *sweep = RKSweepRead(file);
     if (sweep) {
         RKSweepFree(sweep);
+    }
+}
+
+void RKTestTemperatureToStatus(void) {
+    int k;
+    float values[] = {-51.0f, -12.0f, -4.5f, 0.5f, 30.0f, 72.5f, 83.0f, 90.5f};
+    for (k = 0; k < sizeof(values) / sizeof(float); k++) {
+        printf("value = %7.2f -> %d\n", values[k], RKStatusFromTemperatureForCE(values[k]));
     }
 }

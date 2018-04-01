@@ -562,7 +562,7 @@ enum RKStatusEnum {
     RKStatusEnumNotOperational       =  2,
     RKStatusEnumOff                  =  2,
     RKStatusEnumFault                =  2,
-    RKStatusEnumCritical             =  3                            // This would the status we may shutdown the radar
+    RKStatusEnumCritical             =  4                            // This would the status we may shutdown the radar. Co-incidently, red = 0x4
 };
 
 typedef uint32_t RKFileType;

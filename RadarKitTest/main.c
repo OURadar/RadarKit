@@ -393,6 +393,9 @@ UserParams processInput(int argc, const char **argv) {
                         RKShowOffsets(myRadar);
                         RKFree(myRadar);
                         break;
+                    case 12:
+                        RKTestTemperatureToStatus();
+                        break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
                         break;

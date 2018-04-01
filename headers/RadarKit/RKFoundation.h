@@ -93,5 +93,6 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
 RKStatusEnum RKStatusFromTemperatureForCE(RKConst value);
 RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
+bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey);
 
 #endif /* defined(__RadarKit_RKFoundation__) */
