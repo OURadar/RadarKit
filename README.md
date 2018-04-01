@@ -1,7 +1,7 @@
 RadarKit
 ===
 
-First of all, Many thanks for your interest in the framework! :smile: :thumbsup: :punch:
+First of all, many thanks for your interest in the framework! :smile: :thumbsup: :punch:
 
 The RadarKit is a straight C framework. This is a toolkit that abstracts various components of a radar signal processor. Mainly, the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to _base moment_ products. The main idea is to have developers only implement the interface between a _digital transceiver_, a _pedestal_, and a generic _health relay_. The RadarKit framework combines all of these information, generates radar product files, provides live data and display streams, and redirects the control commands to the hardware.
 
