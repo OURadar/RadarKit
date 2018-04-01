@@ -609,7 +609,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
         // Report health
 		int nn = rand();
-        float temp = 1.0f * nn / RAND_MAX + 79.5f + (transceiver->simFault ? 10 : 0);
+        float temp = 1.0f * nn / RAND_MAX + 79.9f + (transceiver->simFault ? 15.0f : 0.0f);
         float volt = 1.0f * nn / RAND_MAX + 11.5f;
 		RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         sprintf(health->string,
@@ -846,17 +846,19 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 c++;
             }
             if (*c == 's' || *c == 't' || *c == 'q') {
+				strcpy(string, c);
+				RKStripTail(string);
                 pulsewidth = 1.0e-6 * atof(c + 1);
                 pulsewidthSampleCount = pulsewidth * transceiver->fs;
                 if (radar->desc.pulseCapacity < pulsewidthSampleCount) {
-                    RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n", transceiver->name, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                    RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n", transceiver->name, string, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                     RKLog("%s Info. Wavefor not changed.\n", transceiver->name);
                     if (response != NULL) {
-                        sprintf(response, "NAK. Waveform '%s' --> %d samples not allowed (capacity = %s)." RKEOL, c, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                        sprintf(response, "NAK. Waveform '%s' --> %d samples not allowed (capacity = %s)." RKEOL, string, pulsewidthSampleCount, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                     }
                     return RKResultFailedToSetWaveform;
                 }
-                RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, c, 1.0e6 * pulsewidth, pulsewidthSampleCount);
+                RKLog("%s Waveform '%s' pulsewidth = %.2f us --> %d samples\n", transceiver->name, string, 1.0e6 * pulsewidth, pulsewidthSampleCount);
                 waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
                 if (*c == 's') {
                     // Rectangular single tone
@@ -867,7 +869,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 } else if (*c == 'q') {
                     RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
                 }
-				strncpy(waveform->name, c, RKNameLength);
+				strncpy(waveform->name, string, RKNameLength);
 				strncpy(transceiver->transmitWaveformName, c, RKNameLength);
                 transceiver->transmitWaveformLength = waveform->depth;
                 for (k = 0; k < waveform->depth; k++) {
@@ -944,6 +946,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             if (response != NULL) {
                 sprintf(response, "ACK. Everything stops." RKEOL);
             }
+			RKStop(radar);
             break;
         default:
             if (response != NULL) {
@@ -1716,7 +1719,8 @@ void RKTestJSON(void) {
     printf("Getting all keys:\n");
     printf("-----------------\n");
     char criticalKey[RKNameLength];
-    bool anyCritical = RKAnyCritical(str, true, criticalKey);
+	char criticalValue[RKNameLength];
+    bool anyCritical = RKAnyCritical(str, true, criticalKey, criticalValue);
     printf("anyCritical = %s%s%s%s%s\n",
            rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
            anyCritical ? "True" : "False",

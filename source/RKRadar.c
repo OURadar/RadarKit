@@ -1232,6 +1232,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     RKStatusEnum networkEnum;
 	char FFTPlanUsage[RKNameLength];
     char criticalKey[RKNameLength];
+	char criticalValue[RKNameLength];
     int criticalCount = 0;
     
     RKConfig *config;
@@ -1286,12 +1287,12 @@ int RKWaitWhileActive(RKRadar *radar) {
                 
                 // Get the latest consolidated health
                 health = RKGetLatestHealth(radar);
-                anyCritical = RKAnyCritical(health->string, false, criticalKey);
+                anyCritical = RKAnyCritical(health->string, false, criticalKey, criticalValue);
                 if (anyCritical) {
-                    RKLog("Warning. %s is in critical condition (count = %d).\n", criticalKey, criticalCount);
+                    RKLog("Warning. %s is in critical condition (value = %s, count = %d).\n", criticalKey, criticalValue, criticalCount);
                     if (criticalCount++ >= 3) {
-                        RKLog("Info. Shutting down ...\n");
-                        RKStop(radar);
+                        RKLog("Info. Suspending ...\n");
+						radar->masterControllerExec(radar->masterController, "z", NULL);
                     }
                 } else {
                     criticalCount = 0;
@@ -1301,20 +1302,24 @@ int RKWaitWhileActive(RKRadar *radar) {
                 positionIndex = radar->positionIndex;
                 healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
             }
-            // Put together a system status
-            RKStatus *status = RKGetVacantStatus(radar);
-            status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
-            for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-                status->pulseCoreLags[k] = (uint8_t)(99.4f * radar->pulseCompressionEngine->workers[k].lag);
-                status->pulseCoreUsage[k] = (uint8_t)(99.4 * radar->pulseCompressionEngine->workers[k].dutyCycle);
-            }
-            status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
-            for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
-                status->rayCoreLags[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].lag);
-                status->rayCoreUsage[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].dutyCycle);
-            }
-            status->recorderLag = radar->dataRecorder->lag;
-            RKSetStatusReady(radar, status);
+			// Check to make sure if the raddar hasn't been suspended from the critical condition evaluation
+			if (!radar->active) {
+				break;
+			}
+			// Put together a system status
+			RKStatus *status = RKGetVacantStatus(radar);
+			status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
+			for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
+				status->pulseCoreLags[k] = (uint8_t)(99.4f * radar->pulseCompressionEngine->workers[k].lag);
+				status->pulseCoreUsage[k] = (uint8_t)(99.4 * radar->pulseCompressionEngine->workers[k].dutyCycle);
+			}
+			status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
+			for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
+				status->rayCoreLags[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].lag);
+				status->rayCoreUsage[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].dutyCycle);
+			}
+			status->recorderLag = radar->dataRecorder->lag;
+			RKSetStatusReady(radar, status);
         }
         usleep(100000);
     }

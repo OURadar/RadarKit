@@ -857,9 +857,12 @@ RKStatusEnum RKStatusFromTemperatureForIE(RKConst value) {
     return RKValueToEnum(value, -60.0f, -50.0, -40.0f, 85.0f, 95.0f, 105.0f);
 }
 
-bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey) {
-    
-    char *str = (char *)malloc(strlen(string));
+bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey, char *firstCriticalValue) {
+
+	if (string == NULL || strlen(string) == 0) {
+		return false;
+	}
+    char *str = (char *)malloc(strlen(string) + 1);
     char *key = (char *)malloc(RKNameLength);
     char *obj = (char *)malloc(RKNameLength);
     char *subKey = (char *)malloc(RKNameLength);
@@ -893,6 +896,7 @@ bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalK
             v = atoi(subObj);
             if (v == RKStatusEnumCritical && anyCritical == false) {
                 strcpy(firstCriticalKey, key);
+				strcpy(firstCriticalValue, obj);
                 anyCritical = true;
             }
             if (showEnum) {
