@@ -862,7 +862,7 @@ RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value) {
     return RKValueToEnum(value, -20.0f, -10.0, 0.0f, 25.0f, 26.0f, 27.0f);
 }
 
-bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey, char *firstCriticalValue) {
+bool RKAnyCritical(const char *string, const bool showEnum,  char * _Nullable firstCriticalKey, char * _Nullable firstCriticalValue) {
 
 	if (string == NULL || strlen(string) == 0) {
 		return false;
@@ -900,8 +900,12 @@ bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalK
             }
             v = atoi(subObj);
             if (v == RKStatusEnumCritical && anyCritical == false) {
-                strcpy(firstCriticalKey, key);
-				strcpy(firstCriticalValue, obj);
+				if (firstCriticalKey) {
+					strcpy(firstCriticalKey, key);
+				}
+				if (firstCriticalValue) {
+					strcpy(firstCriticalValue, obj);
+				}
                 anyCritical = true;
             }
             if (showEnum) {

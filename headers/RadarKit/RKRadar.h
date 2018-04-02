@@ -249,10 +249,11 @@ RKConfig *RKGetLatestConfig(RKRadar *radar);
 
 // Healths
 RKHealthNode RKRequestHealthNode(RKRadar *);
-RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode node);
+RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);
 void RKSetHealthReady(RKRadar *, RKHealth *);
 RKHealth *RKGetLatestHealth(RKRadar *);
-int RKGetEnumFromLatestHealth(RKRadar *, const char *keyword);
+RKHealth *RKGetLatestHealthOfNode(RKRadar *, const RKHealthNode);
+int RKGetEnumFromLatestHealth(RKRadar *, const char *);
 
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
@@ -264,7 +265,7 @@ float RKGetPositionUpdateRate(RKRadar *);
 RKPulse *RKGetVacantPulse(RKRadar *);
 void RKSetPulseHasData(RKRadar *, RKPulse *);
 void RKSetPulseReady(RKRadar *, RKPulse *);
-RKPulse *RKGetLatestPulse(RKRadar *radar);
+RKPulse *RKGetLatestPulse(RKRadar *);
 
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);

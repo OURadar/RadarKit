@@ -1229,7 +1229,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool networkOkay;
     bool anyCritical;
 
-    RKStatusEnum networkEnum;
+    RKStatusEnum networkEnum, pedestalEnum;
 	char FFTPlanUsage[RKNameLength];
     char criticalKey[RKNameLength];
 	char criticalValue[RKNameLength];
@@ -1237,24 +1237,36 @@ int RKWaitWhileActive(RKRadar *radar) {
     
     RKConfig *config;
     RKHealth *health;
+	RKPosition *positionT0, *positionT1;
+
+	positionT1 = RKGetLatestPosition(radar);
 
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
                 s = 0;
                 // General Health
-                transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
-                pedestalOkay = positionIndex == radar->positionIndex ? false : true;
-                healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
-                networkOkay = radar->hostMonitor->allReachable ? true : false;
-                networkEnum =
-                radar->hostMonitor->allReachable ? RKStatusEnumNormal :
-                (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
-                 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
+				transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
+				pedestalOkay = positionIndex == radar->positionIndex ? false : true;
+				healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+				networkOkay = radar->hostMonitor->allReachable ? true : false;
+				networkEnum =
+				radar->hostMonitor->allReachable ? RKStatusEnumNormal :
+				(radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
+				 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
 
-                config = RKGetLatestConfig(radar);
-                health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
+				// Position active / standby
+				positionT0 = RKGetLatestPosition(radar);
+				if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
+					RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
+					pedestalEnum = RKStatusEnumActive;
+				} else {
+					pedestalEnum = RKStatusEnumStandby;
+				}
+				positionT1 = positionT0;
 
+				// Report a health status
+				health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
 				k = sprintf(FFTPlanUsage, "{");
 				for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
 					k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
@@ -1262,7 +1274,7 @@ int RKWaitWhileActive(RKRadar *radar) {
 								 radar->pulseCompressionEngine->planUseCount[j]);
 				}
 				k += sprintf(FFTPlanUsage + k, "}");
-
+				config = RKGetLatestConfig(radar);
 				sprintf(health->string, "{"
                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
@@ -1274,7 +1286,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"FFTPlanUsage\":%s"
                         "}",
                         transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
-                        pedestalOkay ? "true" : "false", pedestalOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
                         networkOkay ? "true" : "false", networkEnum,
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
@@ -1594,6 +1606,11 @@ void RKSetHealthReady(RKRadar *radar, RKHealth *health) {
 RKHealth *RKGetLatestHealth(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
     return &radar->healths[index];
+}
+
+RKHealth *RKGetLatestHealthOfNode(RKRadar *radar, const RKHealthNode node) {
+	uint32_t index = RKPreviousModuloS(radar->healthNodes[node].index, radar->desc.healthBufferDepth);
+	return &radar->healthNodes[node].healths[index];
 }
 
 int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {

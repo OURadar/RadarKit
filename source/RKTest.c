@@ -1066,7 +1066,7 @@ void *RKTestPedestalRunLoop(void *input) {
 					RKStatusEnumNormal,
 					RKStatusEnumNormal,
 					position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    RKStatusEnumActive);
+                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
             RKSetHealthReady(radar, health);
         }
         
