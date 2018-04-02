@@ -619,7 +619,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 				"\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"Room Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
 				"\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
 				"\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "

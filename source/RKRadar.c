@@ -1222,7 +1222,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     int s = 0;
     uint32_t pulseIndex = radar->pulseIndex;
     uint32_t positionIndex = radar->positionIndex;
-    uint32_t healthIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
+    uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
     bool transceiverOkay;
     bool pedestalOkay;
     bool healthOkay;
@@ -1245,7 +1245,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                 // General Health
                 transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
                 pedestalOkay = positionIndex == radar->positionIndex ? false : true;
-                healthOkay = healthIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+                healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
                 networkOkay = radar->hostMonitor->allReachable ? true : false;
                 networkEnum =
                 radar->hostMonitor->allReachable ? RKStatusEnumNormal :
@@ -1301,7 +1301,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                 
                 pulseIndex = radar->pulseIndex;
                 positionIndex = radar->positionIndex;
-                healthIndex = radar->healthNodes[RKHealthNodeTweeta].index;
+                tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
             }
 			// Check to make sure if the raddar hasn't been suspended from the critical condition evaluation
 			if (!radar->active) {
