@@ -609,8 +609,9 @@ void *RKTestTransceiverRunLoop(void *input) {
 
         // Report health
 		int nn = rand();
-        float temp = 1.0f * nn / RAND_MAX + 79.9f + (transceiver->simFault ? 15.0f : 0.0f);
+        float temp = 1.0f * nn / RAND_MAX + 79.5f;
         float volt = 1.0f * nn / RAND_MAX + 11.5f;
+        float room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
 		RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
@@ -618,8 +619,9 @@ void *RKTestTransceiverRunLoop(void *input) {
 				"\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"Transmit H\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
-				"\"Transmit V\":{\"Value\":\"50.%u dBm\", \"Enum\":0}, "
+                "\"Room Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+				"\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
 				"\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
                 "\"TransceiverCounter\": %ld}",
 				RKStatusEnumActive,
@@ -627,8 +629,11 @@ void *RKTestTransceiverRunLoop(void *input) {
 				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, RKStatusFromTemperatureForCE(temp),
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-				nn & 0x03,
-				nn & 0x03,
+                room, RKStatusFromTemperatureForComputers(room),
+                transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
+                transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+				transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
 				transceiver->transmitWaveformName,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
@@ -827,6 +832,13 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             }
             break;
         case 's':
+            if (!strcmp(command, "stop")) {
+                RKLog("%s Stop transmitting.\n", transceiver->name);
+                if (response != NULL) {
+                    sprintf(response, "ACK. Transmitter Off." RKEOL);
+                }
+                break;
+            }
             transceiver->sleepInterval = atoi(command + 1);
             RKLog("%s sleepInterval = %s", transceiver->name, RKIntegerToCommaStyleString(transceiver->sleepInterval));
             break;
@@ -914,10 +926,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     if (response != NULL) {
                         sprintf(response, "ACK. Waveform '%s' loaded." RKEOL, c);
                     }
+                    transceiver->transmitting = true;
                 } else if (response != NULL) {
                     sprintf(response, "NAK. Waveform '%s' not found." RKEOL, string);
                 }
             }
+            transceiver->transmitting = true;
             break;
         case 'x':
             // Simulate critical temperature
@@ -939,6 +953,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             if (response != NULL) {
                 sprintf(response, "ACK. Everything goes." RKEOL);
             }
+            transceiver->transmitting = true;
             break;
         case 'z':
             // Everything stops
@@ -946,7 +961,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             if (response != NULL) {
                 sprintf(response, "ACK. Everything stops." RKEOL);
             }
-			RKStop(radar);
+            transceiver->transmitting = false;
+			//RKStop(radar);
             break;
         default:
             if (response != NULL) {

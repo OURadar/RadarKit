@@ -1290,7 +1290,8 @@ int RKWaitWhileActive(RKRadar *radar) {
                 anyCritical = RKAnyCritical(health->string, false, criticalKey, criticalValue);
                 if (anyCritical) {
                     RKLog("Warning. %s is in critical condition (value = %s, count = %d).\n", criticalKey, criticalValue, criticalCount);
-                    if (criticalCount++ >= 3) {
+                    if (criticalCount++ >= 2) {
+                        criticalCount = 0;
                         RKLog("Info. Suspending ...\n");
 						radar->masterControllerExec(radar->masterController, "z", NULL);
                     }

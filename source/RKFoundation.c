@@ -857,6 +857,11 @@ RKStatusEnum RKStatusFromTemperatureForIE(RKConst value) {
     return RKValueToEnum(value, -60.0f, -50.0, -40.0f, 85.0f, 95.0f, 105.0f);
 }
 
+// Typical computers operates 0 to 25 C
+RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value) {
+    return RKValueToEnum(value, -20.0f, -10.0, 0.0f, 25.0f, 26.0f, 27.0f);
+}
+
 bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey, char *firstCriticalValue) {
 
 	if (string == NULL || strlen(string) == 0) {
