@@ -94,6 +94,7 @@ RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, 
 RKStatusEnum RKStatusFromTemperatureForCE(RKConst value);
 RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
-bool RKAnyCritical(const char *string, const bool showEnum, char *firstCriticalKey, char *firstCriticalValue);
+bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
+bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

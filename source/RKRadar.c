@@ -1229,7 +1229,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool networkOkay;
     bool anyCritical;
 
-    RKStatusEnum networkEnum, pedestalEnum;
+    RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
 	char FFTPlanUsage[RKNameLength];
     char criticalKey[RKNameLength];
 	char criticalValue[RKNameLength];
@@ -1255,6 +1255,15 @@ int RKWaitWhileActive(RKRadar *radar) {
 				(radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
 				 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
 
+				// Transceiver health
+				health = RKGetLatestHealthOfNode(radar, RKHealthNodeTransceiver);
+				if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+					RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+					transceiverEnum = RKStatusEnumStandby;
+				} else {
+					transceiverEnum = RKStatusEnumNormal;
+				}
+
 				// Position active / standby
 				positionT0 = RKGetLatestPosition(radar);
 				if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
@@ -1264,6 +1273,15 @@ int RKWaitWhileActive(RKRadar *radar) {
 					pedestalEnum = RKStatusEnumStandby;
 				}
 				positionT1 = positionT0;
+
+				// Tweeta health
+				health = RKGetLatestHealthOfNode(radar, RKHealthNodeTweeta);
+				if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+					RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+					healthEnum = RKStatusEnumStandby;
+				} else {
+					healthEnum = RKStatusEnumNormal;
+				}
 
 				// Report a health status
 				health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
@@ -1285,9 +1303,9 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Noise\":[%.3f,%.3f], "
                         "\"FFTPlanUsage\":%s"
                         "}",
-                        transceiverOkay ? "true" : "false", transceiverOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
                         pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
-                        healthOkay ? "true" : "false", healthOkay ? RKStatusEnumNormal : RKStatusEnumFault,
+                        healthOkay ? "true" : "false", healthOkay ? healthEnum : RKStatusEnumFault,
                         networkOkay ? "true" : "false", networkEnum,
                         radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1],

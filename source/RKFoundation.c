@@ -862,66 +862,88 @@ RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value) {
     return RKValueToEnum(value, -20.0f, -10.0, 0.0f, 25.0f, 26.0f, 27.0f);
 }
 
-bool RKAnyCritical(const char *string, const bool showEnum,  char * _Nullable firstCriticalKey, char * _Nullable firstCriticalValue) {
+//
+// Examine if any status is critical
+// Input:
+//     const char *string       - JSON description
+//     const bool showEnum      - true or false to show the details
+// Output:
+//     char *firstKey           - (nullable) the key of first critical value
+//     char *firstValue         - (nullable) the object value of the first critical key
+//
+bool RKAnyCritical(const char *string, const bool showEnum, char *firstKey, char *firstValue) {
+	return RKFindCondition(string, RKStatusEnumCritical, showEnum, firstKey, firstValue);
+}
 
+//
+// Examine if any status is (target)
+// Input:
+//     const char *string         - JSON description
+//     const RKStatusEnum target  - The target RKStatusEnum
+//     const bool showEnum        - true or false to show the details
+// Output:
+//     char *firstKey             - (nullable) the key of first critical value
+//     char *firstValue           - (nullable) the object value of the first critical key
+//
+bool RKFindCondition(const char *string, const RKStatusEnum target, const bool showEnum, char *firstKey, char *firstValue) {
 	if (string == NULL || strlen(string) == 0) {
 		return false;
 	}
-    char *str = (char *)malloc(strlen(string) + 1);
-    char *key = (char *)malloc(RKNameLength);
-    char *obj = (char *)malloc(RKNameLength);
-    char *subKey = (char *)malloc(RKNameLength);
-    char *subObj = (char *)malloc(RKNameLength);
-    uint8_t type;
-    uint8_t subType;
-    
-    strcpy(str, string);
-    
-    bool anyCritical = false;
-    
-    int v;
-    char *ks;
-    char *sks;
-    if (*str != '{') {
-        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
-    }
-    
-    ks = str + 1;
-    while (*ks != '\0' && *ks != '}') {
-        ks = RKExtractJSON(ks, &type, key, obj);
-        if (type != RKJSONObjectTypeObject) {
-            continue;
-        }
-        sks = obj + 1;
-        while (*sks != '\0' && *sks != '}') {
-            sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (strcmp("Enum", subKey)) {
-                continue;
-            }
-            v = atoi(subObj);
-            if (v == RKStatusEnumCritical && anyCritical == false) {
-				if (firstCriticalKey) {
-					strcpy(firstCriticalKey, key);
-				}
-				if (firstCriticalValue) {
-					strcpy(firstCriticalValue, obj);
-				}
-                anyCritical = true;
-            }
-            if (showEnum) {
-                fprintf(stderr, "%s --> '%s' --> %d%s%s%s\n", key, subObj, v,
-                        rkGlobalParameters.showColor ? "\033[38;5;204m" : "",
-                        v == RKStatusEnumCritical ? "  *" : "",
-                        rkGlobalParameters.showColor ? RKNoColor : "");
-            }
-        }
-    }
+	char *str = (char *)malloc(strlen(string) + 1);
+	char *key = (char *)malloc(RKNameLength);
+	char *obj = (char *)malloc(RKNameLength);
+	char *subKey = (char *)malloc(RKNameLength);
+	char *subObj = (char *)malloc(RKNameLength);
+	uint8_t type;
+	uint8_t subType;
 
-    free(subKey);
-    free(subObj);
-    free(str);
-    free(key);
-    free(obj);
-    
-    return anyCritical;
+	int v;
+	char *ks;
+	char *sks;
+	if (*string != '{') {
+		fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
+	}
+
+	strcpy(str, string);
+
+	bool found = false;
+
+	ks = str + 1;
+	while (*ks != '\0' && *ks != '}') {
+		ks = RKExtractJSON(ks, &type, key, obj);
+		if (type != RKJSONObjectTypeObject) {
+			continue;
+		}
+		sks = obj + 1;
+		while (*sks != '\0' && *sks != '}') {
+			sks = RKExtractJSON(sks, &subType, subKey, subObj);
+			if (strcmp("Enum", subKey)) {
+				continue;
+			}
+			v = atoi(subObj);
+			if (v == target && found == false) {
+				if (firstKey) {
+					strcpy(firstKey, key);
+				}
+				if (firstValue) {
+					strcpy(firstValue, obj);
+				}
+				found = true;
+			}
+			if (showEnum) {
+				fprintf(stderr, "%s --> '%s' --> %d%s%s%s\n", key, subObj, v,
+						rkGlobalParameters.showColor ? "\033[38;5;204m" : "",
+						v == RKStatusEnumCritical ? "  *" : "",
+						rkGlobalParameters.showColor ? RKNoColor : "");
+			}
+		}
+	}
+
+	free(subKey);
+	free(subObj);
+	free(str);
+	free(key);
+	free(obj);
+
+	return found;
 }
