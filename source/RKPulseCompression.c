@@ -961,6 +961,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("%s Error. Failed to start.\n", engine->name);

@@ -632,6 +632,7 @@ int main(int argc, const char **argv) {
 
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, user.verbose);
+    RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
     // Catch Ctrl-C and exit gracefully
@@ -712,7 +713,6 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
-        RKCommandCenterStart(center);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
@@ -723,7 +723,6 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
-        RKCommandCenterStart(center);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 

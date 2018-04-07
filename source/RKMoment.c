@@ -901,6 +901,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");

@@ -285,6 +285,7 @@ int RKDataRecorderStart(RKDataRecorder *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseRecorder, NULL, pulseRecorder, engine) != 0) {
         RKLog("%s Error. Failed to start pulse recorder.\n", engine->name);

@@ -317,7 +317,6 @@ int RKRadarRelayStart(RKRadarRelay *engine) {
         RKLog("%s Starting ...\n", engine->name);
     }
     engine->state |= RKEngineStateActivating;
-
     if (pthread_create(&engine->tidBackground, NULL, radarRelay, engine)) {
         RKLog("Error. Unable to start radar relay.\n");
         return RKResultFailedToStartHealthWorker;

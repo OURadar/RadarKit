@@ -96,6 +96,13 @@ int socketCommandHandler(RKOperator *O) {
             }
             // There is no need to send a response. The delegate function socketStreamHandler sends a beacon periodically
         } else if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            k = 0;
+            while (!(user->radar->state & RKRadarStateLive)) {
+                usleep(100000);
+                if (++k % 10 == 0 && engine->verbose > 1) {
+                    RKLog("%s sleep 1/%.1f s   radar->state = 0x%04x\n", engine->name, (float)k * 0.1f, user->radar->state);
+                }
+            }
             user->commandCount++;
             RKLog("%s %s Received command '%s'\n", engine->name, O->name, commandString);
             // Process the command
@@ -354,7 +361,7 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     break;
             }
-        } else {
+        } else if (user->radar->desc.initFlags & RKInitFlagRelay) {
             switch (commandString[0]) {
                 case 'a':
                     RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
@@ -364,6 +371,7 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
 
                 case 'r':
+                    // Change radar
                     sscanf("%s", commandString + 1, sval1);
                     RKLog(">%s %s Selected radar %s\n", engine->name, O->name, sval1);
                     snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
@@ -393,6 +401,8 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     break;
             }
+        } else {
+            RKLog("%s The radar is neither a DSP system nor a relay.\n", engine->name);
         }
         // Get to the next command
         if (commandStringEnd != NULL) {

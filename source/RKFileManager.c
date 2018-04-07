@@ -527,6 +527,7 @@ int RKFileManagerStart(RKFileManager *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidFileWatcher, NULL, folderWatcher, engine) != 0) {
         RKLog("Error. Failed to start a ray gatherer.\n");

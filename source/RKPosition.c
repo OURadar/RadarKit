@@ -350,6 +350,7 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->threadId, NULL, pulseTagger, engine)) {
         RKLog("Error. Unable to start position engine.\n");

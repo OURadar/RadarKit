@@ -469,6 +469,7 @@ int RKHostMonitorStart(RKHostMonitor *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidHostWatcher, NULL, hostWatcher, engine) != 0) {
         RKLog("Error. Failed to start a host watcher.\n");
