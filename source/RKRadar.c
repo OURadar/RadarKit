@@ -19,6 +19,76 @@ typedef struct rk_task {
     char command[RKNameLength];
 } RKTaskInput;
 
+#pragma mark - Engine Monitor
+
+static void *engineMonitorRunLoop(void *in) {
+    RKSimpleEngine *engine = (RKSimpleEngine *)in;
+    
+    int k, s;
+    
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
+
+    RKRadar *radar = (RKRadar *)engine->userResource;
+
+    RKLog("%s Started.   radar = %s\n", engine->name, radar->desc.name);
+    
+    while (engine->state & RKEngineStateActive) {
+        engine->state |= RKEngineStateSleep1;
+        s = 0;
+        while (s++ < 10 && engine->state & RKEngineStateActive) {
+            if (engine->verbose > 2) {
+                RKLog("%s", engine->name);
+            }
+            usleep(100000);
+        }
+        engine->state ^= RKEngineStateSleep1;
+        // Put together a system status
+        RKStatus *status = RKGetVacantStatus(radar);
+        status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
+        for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
+            status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
+            status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].dutyCycle);
+        }
+        status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
+        for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
+            status->rayCoreLags[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].lag);
+            status->rayCoreUsage[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].dutyCycle);
+        }
+        status->recorderLag = radar->dataRecorder->lag;
+        RKSetStatusReady(radar, status);
+    }
+    return NULL;
+}
+
+RKSimpleEngine *RKEngineMonitorInit(RKRadar *radar) {
+    RKSimpleEngine *engine = (RKSimpleEngine *)malloc(sizeof(RKSimpleEngine));
+    if (engine == NULL) {
+        RKLog("Error allocating an engine monitor.\n");
+        return NULL;
+    }
+    memset(engine, 0, sizeof(RKSimpleEngine));
+    sprintf(engine->name, "%s<SystemInspector>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorEngineMonitor) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
+    engine->state = RKEngineStateAllocated | RKEngineStateProperlyWired | RKEngineStateActivating;
+    engine->verbose = radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0;
+    engine->memoryUsage = sizeof(RKSimpleEngine);
+    engine->userResource = radar;
+    if (engine->verbose) {
+        RKLog("%s Starting ...\n", engine->name);
+    }
+    if (pthread_create(&engine->tid, NULL, engineMonitorRunLoop, engine)) {
+        RKLog("%s Error creating engine monitor.\n", engine->name);
+        free(engine);
+        return NULL;
+    }
+    while (!(engine->state & RKEngineStateActive)) {
+        usleep(100000);
+    }
+    return engine;
+}
+
 #pragma mark - Helper Functions
 
 void *radarCoPilot(void *in) {
@@ -1108,6 +1178,9 @@ int RKGoLive(RKRadar *radar) {
     RKHealthLoggerStart(radar->healthLogger);
     RKDataRecorderStart(radar->dataRecorder);
     RKSweepEngineStart(radar->sweepEngine);
+    
+    // After all the engines started, we monitor them. This engine should be stopped before stopping the engines.
+    radar->systemInspector = RKEngineMonitorInit(radar);
 
     // Get the post-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -1207,6 +1280,12 @@ int RKGoLive(RKRadar *radar) {
     }
 
     radar->state |= RKRadarStateLive;
+    return RKResultSuccess;
+}
+
+int RKStart(RKRadar *radar) {
+    RKGoLive(radar);
+    RKWaitWhileActive(radar);
     return RKResultSuccess;
 }
 
@@ -1337,20 +1416,6 @@ int RKWaitWhileActive(RKRadar *radar) {
 			if (!radar->active) {
 				break;
 			}
-			// Put together a system status
-			RKStatus *status = RKGetVacantStatus(radar);
-			status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
-			for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-				status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
-				status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].dutyCycle);
-			}
-			status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
-			for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
-				status->rayCoreLags[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].lag);
-				status->rayCoreUsage[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].dutyCycle);
-			}
-			status->recorderLag = radar->dataRecorder->lag;
-			RKSetStatusReady(radar, status);
         }
         usleep(100000);
     }
@@ -1367,6 +1432,9 @@ int RKWaitWhileActive(RKRadar *radar) {
 int RKStop(RKRadar *radar) {
     if (radar->active == false) {
         return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (radar->systemInspector) {
+        RKSimpleEngineFree(radar->systemInspector);
     }
     radar->active = false;
     if (radar->state & RKRadarStatePedestalInitialized) {
@@ -1437,7 +1505,17 @@ int RKStop(RKRadar *radar) {
     return RKResultSuccess;
 }
 
-int RKResetEngines(RKRadar *radar) {
+int RKSoftRestart(RKRadar *radar) {
+    RKSimpleEngineFree(radar->systemInspector);
+    RKMomentEngineStop(radar->momentEngine);
+    RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+    RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+    RKMomentEngineStart(radar->momentEngine);
+    radar->systemInspector = RKEngineMonitorInit(radar);
+    return RKResultSuccess;
+}
+
+int RKResetClocks(RKRadar *radar) {
     RKClockReset(radar->pulseClock);
     RKClockReset(radar->positionClock);
     return RKResultSuccess;

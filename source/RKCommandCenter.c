@@ -144,12 +144,8 @@ int socketCommandHandler(RKOperator *O) {
                             break;
                         case 'r':
                             // 'dr' - Restart DSP engines
-                            RKMomentEngineStop(user->radar->momentEngine);
-                            RKPulseCompressionEngineStop(user->radar->pulseCompressionEngine);
-                            RKPulseCompressionEngineStart(user->radar->pulseCompressionEngine);
-                            RKMomentEngineStart(user->radar->momentEngine);
-                            sprintf(string, "ACK. %s and %s restarted." RKEOL,
-                                    user->radar->pulseCompressionEngine->name, user->radar->momentEngine->name);
+                            RKSoftRestart(user->radar);
+                            sprintf(string, "ACK. Soft restart executed." RKEOL);
                             RKOperatorSendCommandResponse(O, string);
                             break;
                         case 't':
@@ -1315,4 +1311,3 @@ void RKCommandCenterStop(RKCommandCenter *center) {
     RKServerStop(center->server);
     RKLog("%s Stopped.\n", center->name);
 }
-

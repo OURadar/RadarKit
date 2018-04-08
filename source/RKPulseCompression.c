@@ -678,6 +678,9 @@ static void *pulseWatcher(void *_in) {
         fftwf_destroy_plan(engine->planForwardInPlace[k]);
         fftwf_destroy_plan(engine->planForwardOutPlace[k]);
         fftwf_destroy_plan(engine->planBackwardInPlace[k]);
+        engine->planForwardInPlace[k] = NULL;
+        engine->planForwardOutPlace[k] = NULL;
+        engine->planBackwardInPlace[k] = NULL;
     }
     free(in);
     free(out);
@@ -964,6 +967,10 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->planCount = 0;
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
+    for (int k = 0; k < engine->coreCount; k++) {
+        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse->header.s = RKPulseStatusVacant;
+    }
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
         RKLog("%s Error. Failed to start.\n", engine->name);
         return RKResultFailedToStartPulseWatcher;

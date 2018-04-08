@@ -63,11 +63,6 @@ enum RKRadarState {
     RKRadarStateLive                                 = (1 << 31)
 };
 
-/*!
- * @typedef RKRadar
- * @brief The big structure that holds all the necessary buffers
- * @param rawPulse
- */
 typedef struct rk_radar RKRadar;
 struct rk_radar {
     //
@@ -119,6 +114,10 @@ struct rk_radar {
     RKFileManager                    *fileManager;
     RKRadarRelay                     *radarRelay;
     RKHostMonitor                    *hostMonitor;
+    //
+    // System Inspector
+    //
+    RKSimpleEngine                   *systemInspector;
     //
     // Internal copies of things
     //
@@ -232,8 +231,10 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
 
 int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
+int RKStart(RKRadar *);
 int RKStop(RKRadar *);
-int RKResetEngines(RKRadar *);
+int RKSoftRestart(RKRadar *);
+int RKResetClocks(RKRadar *);
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
 void RKMeasureNoise(RKRadar *);

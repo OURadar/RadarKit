@@ -24,7 +24,6 @@
 		B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDF1AB8D9F100C00517 /* RKTypes.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = B5377DC52041C18C00972E41 /* RKHostMonitor.h */; };
 		B5377DC82041C1B900972E41 /* RKHostMonitor.c in Sources */ = {isa = PBXBuildFile; fileRef = B5377DC72041C1B900972E41 /* RKHostMonitor.c */; };
-		B5377DC92041C1B900972E41 /* RKHostMonitor.c in Sources */ = {isa = PBXBuildFile; fileRef = B5377DC72041C1B900972E41 /* RKHostMonitor.c */; };
 		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
 		B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweep.h */; };
@@ -474,7 +473,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5C1F3471AB9C118004F88CD /* main.c in Sources */,
-				B5377DC92041C1B900972E41 /* RKHostMonitor.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

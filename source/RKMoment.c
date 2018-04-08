@@ -903,6 +903,10 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     }
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
+    for (int k = 0; k < engine->coreCount; k++) {
+        RKRay *ray = RKGetRay(engine->rayBuffer, k);
+        ray->header.s = RKRayStatusVacant;
+    }
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
         RKLog("Error. Failed to start a pulse watcher.\n");
         return RKResultFailedToStartPulseGatherer;

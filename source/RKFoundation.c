@@ -622,7 +622,35 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
     }
 }
 
-#pragma mark -
+#pragma mark - Simple Engine Free
+
+int RKSimpleEngineFree(RKSimpleEngine *engine) {
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
+    }
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
+    if (engine->tid) {
+        pthread_join(engine->tid, NULL);
+    }
+    engine->state ^= RKEngineStateDeactivating;
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
+    }
+    free(engine);
+    return RKResultSuccess;
+}
+
+#pragma mark - File Monitor
 
 static void *fileMonitorRunLoop(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
@@ -689,25 +717,10 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *)) 
 }
 
 int RKFileMonitorFree(RKFileMonitor *engine) {
-    if (engine->state & RKEngineStateDeactivating) {
-        if (engine->verbose) {
-            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
-        }
-        return RKResultEngineDeactivatedMultipleTimes;
-    }
-    engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tid, NULL);
-    engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
-    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
-    }
-    free(engine);
-    return RKResultSuccess;
+    return RKSimpleEngineFree((RKSimpleEngine *)engine);
 }
+
+#pragma mark -
 
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
 	if (list == NULL || *list == 0) {

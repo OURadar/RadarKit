@@ -85,8 +85,10 @@ void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char 
 void RKParseQuotedStrings(const char *source, ...);
 void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 
+int RKSimpleEngineFree(RKSimpleEngine *);
+
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *));
-int RKFileMonitorFree(RKFileMonitor *engine);
+int RKFileMonitorFree(RKFileMonitor *);
 
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
