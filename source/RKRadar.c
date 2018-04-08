@@ -1341,13 +1341,13 @@ int RKWaitWhileActive(RKRadar *radar) {
 			RKStatus *status = RKGetVacantStatus(radar);
 			status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
 			for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-				status->pulseCoreLags[k] = (uint8_t)(99.4f * radar->pulseCompressionEngine->workers[k].lag);
-				status->pulseCoreUsage[k] = (uint8_t)(99.4 * radar->pulseCompressionEngine->workers[k].dutyCycle);
+				status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
+				status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].dutyCycle);
 			}
 			status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
 			for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
-				status->rayCoreLags[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].lag);
-				status->rayCoreUsage[k] = (uint8_t)(99.4f * radar->momentEngine->workers[k].dutyCycle);
+				status->rayCoreLags[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].lag);
+				status->rayCoreUsage[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].dutyCycle);
 			}
 			status->recorderLag = radar->dataRecorder->lag;
 			RKSetStatusReady(radar, status);

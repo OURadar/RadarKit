@@ -150,6 +150,7 @@ int socketCommandHandler(RKOperator *O) {
                             RKMomentEngineStart(user->radar->momentEngine);
                             sprintf(string, "ACK. %s and %s restarted." RKEOL,
                                     user->radar->pulseCompressionEngine->name, user->radar->momentEngine->name);
+                            RKOperatorSendCommandResponse(O, string);
                             break;
                         case 't':
                             // 'dt' - DSP threshold in SNR dB
