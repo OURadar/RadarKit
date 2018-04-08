@@ -61,7 +61,7 @@ static void *engineMonitorRunLoop(void *in) {
     return NULL;
 }
 
-RKSimpleEngine *RKEngineMonitorInit(RKRadar *radar) {
+RKSimpleEngine *RKSystemInspector(RKRadar *radar) {
     RKSimpleEngine *engine = (RKSimpleEngine *)malloc(sizeof(RKSimpleEngine));
     if (engine == NULL) {
         RKLog("Error allocating an engine monitor.\n");
@@ -1180,7 +1180,7 @@ int RKGoLive(RKRadar *radar) {
     RKSweepEngineStart(radar->sweepEngine);
     
     // After all the engines started, we monitor them. This engine should be stopped before stopping the engines.
-    radar->systemInspector = RKEngineMonitorInit(radar);
+    radar->systemInspector = RKSystemInspector(radar);
 
     // Get the post-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -1511,7 +1511,7 @@ int RKSoftRestart(RKRadar *radar) {
     RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKMomentEngineStart(radar->momentEngine);
-    radar->systemInspector = RKEngineMonitorInit(radar);
+    radar->systemInspector = RKSystemInspector(radar);
     return RKResultSuccess;
 }
 

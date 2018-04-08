@@ -25,7 +25,6 @@ int RKDefaultTerminateHandler(RKOperator *);
 #pragma mark -
 #pragma mark Private functions
 
-
 void *RKServerRoutine(void *in) {
     RKServer *M = (RKServer *)in;
 
