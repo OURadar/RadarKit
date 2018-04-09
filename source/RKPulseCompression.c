@@ -988,6 +988,10 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+	if (!(engine->state & RKEngineStateActive)) {
+		RKLog("%s Not active.\n", engine->name);
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
@@ -995,6 +999,7 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseWatcher) {
         pthread_join(engine->tidPulseWatcher, NULL);
+		engine->tidPulseWatcher = NULL;
         free(engine->workers);
         engine->workers = NULL;
     }

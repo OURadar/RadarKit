@@ -366,12 +366,25 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 }
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
-    if (engine->verbose > 1) {
+	if (engine->state & RKEngineStateDeactivating) {
+		if (engine->verbose > 1) {
+			RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+		}
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
+	if (!(engine->state & RKEngineStateActive)) {
+		RKLog("%s Not active.\n", engine->name);
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
+    if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->threadId, NULL);
+	if (engine->threadId) {
+		pthread_join(engine->threadId, NULL);
+		engine->threadId = NULL;
+	}
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

@@ -555,6 +555,10 @@ int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+	if (!(engine->state & RKEngineStateActive)) {
+		RKLog("%s Not active.\n", engine->name);
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
@@ -568,7 +572,7 @@ int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
         RKLog("%s Stopped.\n", engine->name);
     }
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->state);
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
 }

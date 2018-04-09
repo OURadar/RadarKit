@@ -1161,11 +1161,11 @@ int RKGoLive(RKRadar *radar) {
             RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
             RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, MAX(1, radar->processorCount / 2));
             RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2 - 1));
+			RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
         }
         // For now, pulse compression and ring filter engines both share the same cores
         RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
         RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o);
-        RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
         // Now, we start the engines
         RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
         RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
@@ -1506,11 +1506,21 @@ int RKStop(RKRadar *radar) {
 }
 
 int RKSoftRestart(RKRadar *radar) {
+	RKLog("Stopping internal engines ...\n");
+	// Stop the inspector
     RKSimpleEngineFree(radar->systemInspector);
+	// Stop all data acquisition and DSP-related engines
     RKMomentEngineStop(radar->momentEngine);
+	RKPositionEngineStop(radar->positionEngine);
+	RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
     RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+	RKLog("Starting internal engines ...\n");
+	// Start them again
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+	RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
+	RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
+	// Start the inspector
     radar->systemInspector = RKSystemInspector(radar);
     return RKResultSuccess;
 }

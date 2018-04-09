@@ -924,6 +924,10 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+	if (!(engine->state & RKEngineStateActive)) {
+		RKLog("%s Not active.\n", engine->name);
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
@@ -931,6 +935,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseGatherer) {
         pthread_join(engine->tidPulseGatherer, NULL);
+		engine->tidPulseGatherer = NULL;
         free(engine->workers);
         engine->workers = NULL;
     }
