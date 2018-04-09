@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#pragma mark -
+#pragma mark - Logger
 
 int RKLog(const char *whatever, ...) {
     if (rkGlobalParameters.stream == NULL && rkGlobalParameters.logfile[0] == 0) {
@@ -132,7 +132,7 @@ int RKLog(const char *whatever, ...) {
     return 0;
 }
 
-#pragma mark -
+#pragma mark - Global Preferences
 
 void RKSetWantColor(const bool showColor) {
     rkGlobalParameters.showColor = showColor;
@@ -191,7 +191,7 @@ int RKSetLogfileToDefault(void) {
     return RKResultSuccess;
 }
 
-#pragma mark -
+#pragma mark - Screen Output
 
 void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
@@ -260,7 +260,7 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     free(str);
 }
 
-#pragma mark -
+#pragma mark - Buffer
 
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity) {
     memset(data, 0, capacity * sizeof(RKFloat));
@@ -280,7 +280,7 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
     memset(&data->q[origin], 0, (capacity - origin) * sizeof(RKFloat));
 }
 
-#pragma mark -
+#pragma mark - Pulse
 
 //
 // Each slot should have a structure as follows
@@ -357,7 +357,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     return data;
 }
 
-#pragma mark -
+#pragma mark - Ray
 
 //
 // Each slot should have a structure as follows
@@ -421,7 +421,7 @@ float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
-#pragma mark -
+#pragma mark - Scratch Space
 
 size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount, const bool showNumbers) {
     if (capacity - (capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat)) {
@@ -527,129 +527,6 @@ void RKScratchFree(RKScratch *space) {
     free(space);
 }
 
-#pragma mark -
-
-void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
-    float *fv;
-    double *fd;
-    int32_t *i32v;
-    uint32_t *u32v;
-    char *copy = (char *)malloc(strlen(valueString));
-    strcpy(copy, valueString);
-    char *c = copy;
-    char *e = strchr(copy, ',');
-    if (e) {
-        *e = '\0';
-    }
-    size_t s = 0;
-    while (c != NULL && s < size) {
-        switch (type) {
-            case RKValueTypeFloat:
-                fv = (float *)valueStorage;
-                fv[s] = atof(c);
-                break;
-            case RKValueTypeDouble:
-                fd = (double *)valueStorage;
-                fd[s] = atof(c);
-                break;
-            case RKValueTypeInt32:
-                i32v = (int32_t *)valueStorage;
-                i32v[s] = (int32_t)atoi(c);
-                break;
-            case RKValueTypeUInt32:
-                u32v = (uint32_t *)valueStorage;
-                u32v[s] = (uint32_t)atoi(c);
-                break;
-            default:
-                break;
-        }
-        s++;
-        if (e) {
-            c = e + 1;
-            if ((e = strchr(c, ',')) != NULL) {
-                *e = '\0';
-            }
-        }
-    }
-    free(copy);
-}
-
-void RKParseQuotedStrings(const char *source, ...) {
-    va_list args;
-    va_start(args, source);
-
-    char *s = (char *)source, *e, q;
-    char *string = va_arg(args, char *);
-    size_t length = 0;
-
-    while (string != NULL) {
-        // Look for the beginning quote
-        while (*s != '"' && *s != '\'' && *s != '\0') {
-            s++;
-        }
-        if (*s == '\0') {
-            break;
-        }
-        q = *s++;
-        // Look for the ending quote
-        e = s;
-        while (*e != q && *e != q) {
-            e++;
-        }
-        length = (size_t)(e - s);
-        strncpy(string, s, length);
-        string[length] = '\0';
-        s = e + 1;
-        // Get the next string
-        string = va_arg(args, char *);
-    }
-}
-
-void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t count) {
-    int i, j = 0;
-    RKControl *control = controls;
-    for (i = 0; i < count; i++) {
-        if (control->label[0] == 0) {
-            break;
-        }
-        j += sprintf(string + j, "{\"Label\":\"%s\",\"Command\":\"%s\"}, ", control->label, control->command);
-        control++;
-    }
-    if (j > 2) {
-        string[j - 2] = '\0';
-    } else {
-        string[0] = '\0';
-    }
-}
-
-#pragma mark - Simple Engine Free
-
-int RKSimpleEngineFree(RKSimpleEngine *engine) {
-    if (engine->state & RKEngineStateDeactivating) {
-        if (engine->verbose) {
-            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
-        }
-        return RKResultEngineDeactivatedMultipleTimes;
-    }
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
-    engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
-    if (engine->tid) {
-        pthread_join(engine->tid, NULL);
-    }
-    engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
-    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
-        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
-    }
-    free(engine);
-    return RKResultSuccess;
-}
-
 #pragma mark - File Monitor
 
 static void *fileMonitorRunLoop(void *in) {
@@ -720,7 +597,7 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
     return RKSimpleEngineFree((RKSimpleEngine *)engine);
 }
 
-#pragma mark -
+#pragma mark - Moment Stuff
 
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
 	if (list == NULL || *list == 0) {
@@ -838,6 +715,102 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 	}
 	*list ^= lists[k];
 	return RKResultSuccess;
+}
+
+#pragma mark - JSON Stuff
+
+
+void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
+    float *fv;
+    double *fd;
+    int32_t *i32v;
+    uint32_t *u32v;
+    char *copy = (char *)malloc(strlen(valueString));
+    strcpy(copy, valueString);
+    char *c = copy;
+    char *e = strchr(copy, ',');
+    if (e) {
+        *e = '\0';
+    }
+    size_t s = 0;
+    while (c != NULL && s < size) {
+        switch (type) {
+            case RKValueTypeFloat:
+                fv = (float *)valueStorage;
+                fv[s] = atof(c);
+                break;
+            case RKValueTypeDouble:
+                fd = (double *)valueStorage;
+                fd[s] = atof(c);
+                break;
+            case RKValueTypeInt32:
+                i32v = (int32_t *)valueStorage;
+                i32v[s] = (int32_t)atoi(c);
+                break;
+            case RKValueTypeUInt32:
+                u32v = (uint32_t *)valueStorage;
+                u32v[s] = (uint32_t)atoi(c);
+                break;
+            default:
+                break;
+        }
+        s++;
+        if (e) {
+            c = e + 1;
+            if ((e = strchr(c, ',')) != NULL) {
+                *e = '\0';
+            }
+        }
+    }
+    free(copy);
+}
+
+void RKParseQuotedStrings(const char *source, ...) {
+    va_list args;
+    va_start(args, source);
+    
+    char *s = (char *)source, *e, q;
+    char *string = va_arg(args, char *);
+    size_t length = 0;
+    
+    while (string != NULL) {
+        // Look for the beginning quote
+        while (*s != '"' && *s != '\'' && *s != '\0') {
+            s++;
+        }
+        if (*s == '\0') {
+            break;
+        }
+        q = *s++;
+        // Look for the ending quote
+        e = s;
+        while (*e != q && *e != q) {
+            e++;
+        }
+        length = (size_t)(e - s);
+        strncpy(string, s, length);
+        string[length] = '\0';
+        s = e + 1;
+        // Get the next string
+        string = va_arg(args, char *);
+    }
+}
+
+void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t count) {
+    int i, j = 0;
+    RKControl *control = controls;
+    for (i = 0; i < count; i++) {
+        if (control->label[0] == 0) {
+            break;
+        }
+        j += sprintf(string + j, "{\"Label\":\"%s\",\"Command\":\"%s\"}, ", control->label, control->command);
+        control++;
+    }
+    if (j > 2) {
+        string[j - 2] = '\0';
+    } else {
+        string[0] = '\0';
+    }
 }
 
 // RKStatusEnum zones:
@@ -959,4 +932,32 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
 	free(obj);
 
 	return found;
+}
+
+#pragma mark - Simple Engine Free
+
+int RKSimpleEngineFree(RKSimpleEngine *engine) {
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
+    }
+    engine->state |= RKEngineStateDeactivating;
+    engine->state ^= RKEngineStateActive;
+    if (engine->tid) {
+        pthread_join(engine->tid, NULL);
+    }
+    engine->state ^= RKEngineStateDeactivating;
+    if (engine->verbose) {
+        RKLog("%s Stopped.\n", engine->name);
+    }
+    if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
+        RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
+    }
+    free(engine);
+    return RKResultSuccess;
 }

@@ -81,22 +81,21 @@ float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const bool);
 void RKScratchFree(RKScratch *);
 
-void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
-void RKParseQuotedStrings(const char *source, ...);
-void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
-
-int RKSimpleEngineFree(RKSimpleEngine *);
-
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *));
 int RKFileMonitorFree(RKFileMonitor *);
 
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
+void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
+void RKParseQuotedStrings(const char *source, ...);
+void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
 RKStatusEnum RKStatusFromTemperatureForCE(RKConst value);
 RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
 bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
 bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
+
+int RKSimpleEngineFree(RKSimpleEngine *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */
