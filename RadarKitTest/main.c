@@ -630,11 +630,6 @@ int main(int argc, const char **argv) {
                 RKConfigKeyZCal2, 20.0f, 20.0f,
 				RKConfigKeyNull);
 
-    RKCommandCenter *center = RKCommandCenterInit();
-    RKCommandCenterSetVerbose(center, user.verbose);
-    RKCommandCenterStart(center);
-    RKCommandCenterAddRadar(center, myRadar);
-
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
@@ -647,6 +642,12 @@ int main(int argc, const char **argv) {
     }
 	RKLog("doNotWrite = %s\n", myRadar->sweepEngine->doNotWrite ? "true" : "false");
 
+    // Make a command center and add the radar to it
+    RKCommandCenter *center = RKCommandCenterInit();
+    RKCommandCenterSetVerbose(center, user.verbose);
+    RKCommandCenterStart(center);
+    RKCommandCenterAddRadar(center, myRadar);
+    
     if (user.simulate) {
 
         // Now we use the frame work.
@@ -669,7 +670,9 @@ int main(int argc, const char **argv) {
         if (user.sleepInterval) {
             i += sprintf(cmd + i, " z %d", user.sleepInterval);
         }
-        RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
+        if (user.verbose > 1) {
+            RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
+        }
         RKSetTransceiver(myRadar,
                          (void *)cmd,
                          RKTestTransceiverInit,
@@ -678,7 +681,9 @@ int main(int argc, const char **argv) {
 
         // Build a series of options for pedestal, only pass down the relevant parameters
         if (strlen(user.pedzyHost)) {
-            RKLog("Pedestal input = '%s'", user.pedzyHost);
+            if (user.verbose > 1) {
+                RKLog("Pedestal input = '%s'", user.pedzyHost);
+            }
             RKSetPedestal(myRadar,
                           (void *)user.pedzyHost,
                           RKPedestalPedzyInit,
@@ -693,7 +698,9 @@ int main(int argc, const char **argv) {
         }
         
         if (strlen(user.tweetaHost)) {
-            RKLog("Health relay input = '%s'", user.tweetaHost);
+            if (user.verbose > 1) {
+                RKLog("Health relay input = '%s'", user.tweetaHost);
+            }
             RKSetHealthRelay(myRadar,
                              (void *)user.tweetaHost,
                              RKHealthRelayTweetaInit,

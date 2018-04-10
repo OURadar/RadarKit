@@ -395,9 +395,24 @@ static void *rayGatherer(void *in) {
     
     int k, s, n;
     
-    RKRay *ray;
+    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
 
+    // Allocate if the arrays have not been allocated
+    if (engine->array1D == NULL) {
+        engine->array1D = (float *)malloc(RKMaxRaysPerSweep * sizeof(float));
+        if (engine->array1D == NULL) {
+            RKLog("%s Error. Unable to allocate memory.\n", engine->name);
+            exit(EXIT_FAILURE);
+        }
+        engine->array2D = (float *)malloc(RKMaxRaysPerSweep * ray->header.capacity * sizeof(float));
+        if (engine->array2D == NULL) {
+            RKLog("%s Error. Unable to allocate memory.\n", engine->name);
+            exit(EXIT_FAILURE);
+        }
+        engine->memoryUsage += RKMaxRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
+    }
+    
     // Start and end indices of the input rays
     uint32_t is = 0;
     pthread_t tidSweepWriter = NULL;
@@ -492,18 +507,8 @@ RKSweepEngine *RKSweepEngineInit(void) {
     sprintf(engine->name, "%s<ProductRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSweepEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    engine->array1D = (float *)malloc(RKMaxRaysPerSweep * sizeof(float));
-    if (engine->array1D == NULL) {
-        RKLog("%s Error. Unable to allocate memory.\n", engine->name);
-        exit(EXIT_FAILURE);
-    }
-    engine->array2D = (float *)malloc(RKMaxRaysPerSweep * RKGateCount * sizeof(float));
-    if (engine->array2D == NULL) {
-        RKLog("%s Error. Unable to allocate memory.\n", engine->name);
-        exit(EXIT_FAILURE);
-    }
     engine->state = RKEngineStateAllocated;
-    engine->memoryUsage = sizeof(RKSweepEngine) + RKMaxRaysPerSweep * (RKGateCount + 1) * sizeof(float);
+    engine->memoryUsage = sizeof(RKSweepEngine);
     engine->doNotWrite = false;
     return engine;
 }
@@ -512,8 +517,10 @@ void RKSweepEngineFree(RKSweepEngine *engine) {
     if (engine->state & RKEngineStateActive) {
         RKSweepEngineStop(engine);
     }
-    free(engine->array1D);
-    free(engine->array2D);
+    if (engine->array1D) {
+        free(engine->array1D);
+        free(engine->array2D);
+    }
     free(engine);
 }
 

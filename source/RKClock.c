@@ -261,6 +261,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
 #pragma mark Interactions
 
 void RKClockReset(RKClock *clock) {
+    if (clock->count == 0) {
+        return;
+    }
     clock->index = 0;
     clock->count = 0;
     clock->tic = 0;
