@@ -565,7 +565,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                         radar->healths, &radar->healthIndex);
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->state |= RKRadarStateHealthLoggerInitialized;
-    RKLog("--> memory usage = %s\n", RKIntegerToCommaStyleString(radar->memoryUsage));
 
     // Sweep engine (to be modified)
     radar->sweepEngine = RKSweepEngineInit();
@@ -574,7 +573,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                       radar->rays, &radar->rayIndex);
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
-    RKLog("--> memory usage = %s\n", RKIntegerToCommaStyleString(radar->memoryUsage));
 
     // Raw data recorder
     radar->dataRecorder = RKDataRecorderInit();
@@ -583,8 +581,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                       radar->pulses, &radar->pulseIndex);
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
-
-    RKLog("--> memory usage = %s\n", RKIntegerToCommaStyleString(radar->memoryUsage));
 
     // Host monitor
     radar->hostMonitor = RKHostMonitorInit();
