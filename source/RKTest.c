@@ -2079,3 +2079,23 @@ void RKTestTemperatureToStatus(void) {
         printf("value = %7.2f -> %d\n", values[k], RKStatusFromTemperatureForCE(values[k]));
     }
 }
+
+void RKTestGetCountry(void) {
+	double latitude;
+	double longitude;
+	char *country;
+
+	double coords[][2] = {
+		{ 35.222567, -97.439478},
+		{ 36.391592, 127.031428},
+		{-11.024860, -75.279694},
+		{ 34.756300, 135.615895}
+	};
+
+	for (int k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
+		latitude = coords[k][0];
+		longitude = coords[k][1];
+		country = RKCountryFromPosition(latitude, longitude);
+		printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
+	}
+}

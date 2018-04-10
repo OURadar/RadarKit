@@ -147,6 +147,8 @@ static void showHelp() {
            "          8 - Test the file monitor module\n"
            "          9 - Test the internet monitor module\n"
            "         11 - Test initializing a radar system\n"
+		   "         12 - Test converting a temperature reading to status\n"
+		   "         13 - Test getting a country name from position\n"
            "\n"
            "         20 - SIMD quick test\n"
            "         21 - SIMD test with numbers shown\n"
@@ -396,6 +398,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 12:
                         RKTestTemperatureToStatus();
                         break;
+					case 13:
+						RKTestGetCountry();
+						break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
                         break;

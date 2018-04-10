@@ -129,4 +129,6 @@ void RKTestMomentProcessorSpeed(void);
 void RKTestReadSweep(const char *);
 void RKTestTemperatureToStatus(void);
 
+void RKTestGetCountry(void);
+
 #endif /* defined(__RadarKit_RKFile__) */

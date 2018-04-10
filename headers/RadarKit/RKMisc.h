@@ -124,4 +124,6 @@ void RKReplaceFileExtension(char *filename, const char *pattern, const char *rep
 
 long RKGetCPUIndex(void);
 
+char *RKCountryFromPosition(const double latitude, const double longitude);
+
 #endif /* rk_misc_h */
