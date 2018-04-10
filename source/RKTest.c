@@ -454,9 +454,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     gettimeofday(&t0, NULL);
 
-    transceiver->state |= RKEngineStateActive;
-    transceiver->state &= ~RKEngineStateActivating;
-
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -478,6 +475,12 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKIntegerToCommaStyleString(chunkSize),
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
+    
+    // Use a counter that mimics microsecond increments
+    RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    
+    transceiver->state |= RKEngineStateActive;
+    transceiver->state &= ~RKEngineStateActivating;
     
     const double periodEven = transceiver->prt;
     const double periodOdd =
@@ -666,7 +669,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
-    sprintf(transceiver->name, "%s<TransceiverEmulator>%s",
+    sprintf(transceiver->name, "%s<TransceiverCast>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
 	transceiver->state = RKEngineStateAllocated;
@@ -752,9 +755,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 
     // Derive some calculated parameters
     transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
-
-    // Use a counter that mimics microsecond increments
-    RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
     transceiver->state |= RKEngineStateActivating;
     if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
@@ -999,15 +999,18 @@ void *RKTestPedestalRunLoop(void *input) {
 
     gettimeofday(&t0, NULL);
 
-    pedestal->state |= RKEngineStateActive;
-    pedestal->state &= ~RKEngineStateActivating;
-
     RKLog("%s Started.   mem = %s B\n", pedestal->name, RKIntegerToCommaStyleString(pedestal->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", pedestal->name, RKIntegerToCommaStyleString((long)(1.0 / PEDESTAL_SAMPLING_TIME)));
     }
 
+    // Use a counter that mimics microsecond increments
+    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    
+    pedestal->state |= RKEngineStateActive;
+    pedestal->state &= ~RKEngineStateActivating;
+    
     int commandCount = pedestal->commandCount;
     
     while (pedestal->state & RKEngineStateActive) {
@@ -1134,7 +1137,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
-    sprintf(pedestal->name, "%s<PedestalEmulator>%s",
+    sprintf(pedestal->name, "%s<AimPedestalCast>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->memoryUsage = sizeof(RKTestPedestal);
@@ -1142,9 +1145,6 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     pedestal->state = RKEngineStateAllocated;
 
     // Parse input here if there is any
-
-    // Use a counter that mimics microsecond increments
-    //RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
 
     pedestal->state |= RKEngineStateActivating;
     if (pthread_create(&pedestal->tidRunLoop, NULL, RKTestPedestalRunLoop, pedestal)) {
@@ -1257,15 +1257,15 @@ void *RKTestHealthRelayRunLoop(void *input) {
 
     gettimeofday(&t0, NULL);
     
-    healthRelay->state |= RKEngineStateActive;
-    healthRelay->state &= ~RKEngineStateActivating;
-    
     RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKIntegerToCommaStyleString(healthRelay->memoryUsage));
     
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", healthRelay->name, RKIntegerToCommaStyleString((long)(1.0 / HEALTH_RELAY_SAMPLING_TIME)));
     }
 
+    healthRelay->state |= RKEngineStateActive;
+    healthRelay->state &= ~RKEngineStateActivating;
+    
     while (healthRelay->state & RKEngineStateActive) {
         powerH = (float)rand() / RAND_MAX - 0.5f;
         powerV = (float)rand() / RAND_MAX - 0.5f;
@@ -1309,7 +1309,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(healthRelay, 0, sizeof(RKHealthRelay));
-    sprintf(healthRelay->name, "%s<HealthRelayEmulator>%s",
+    sprintf(healthRelay->name, "%s<HealthRelayCast>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     healthRelay->memoryUsage = sizeof(RKTestPedestal);
@@ -1317,9 +1317,6 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
     healthRelay->state = RKEngineStateAllocated;
     
     // Parse input here if there is any
-    
-    // Use a counter that mimics microsecond increments
-    RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
     
     healthRelay->state |= RKEngineStateActivating;
     if (pthread_create(&healthRelay->tidRunLoop, NULL, RKTestHealthRelayRunLoop, healthRelay)) {
