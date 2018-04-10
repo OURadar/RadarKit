@@ -304,12 +304,21 @@ int RKDataRecorderStop(RKDataRecorder *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+	if (!(engine->state & RKEngineStateActive)) {
+		RKLog("%s Not active.\n", engine->name);
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tidPulseRecorder, NULL);
+	if (engine->tidPulseRecorder) {
+    	pthread_join(engine->tidPulseRecorder, NULL);
+		engine->tidPulseRecorder = (pthread_t)0;
+	} else {
+		RKLog("%s Invalid thread ID.\n", engine->name);
+	}
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

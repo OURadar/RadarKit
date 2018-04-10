@@ -999,9 +999,11 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseWatcher) {
         pthread_join(engine->tidPulseWatcher, NULL);
-		engine->tidPulseWatcher = NULL;
+		engine->tidPulseWatcher = (pthread_t)0;
         free(engine->workers);
         engine->workers = NULL;
+	} else {
+		RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {

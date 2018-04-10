@@ -11,11 +11,13 @@
 //  █
 //
 //  1.2.8b - 4/31/2018
+//         - Added RKSoftReset() to restart DSP-related engines only
 //         - Added RKSystemInspector() for gathering system status
 //         - Migrated RKFileMonitor() to RKSimpleEngine design
 //         - Added RKSimpleEngine for simple sus-systems
 //
 //  1.2.7  - 3/31/2018
+//         - Added RKSweepRead()
 //         - Added waveform sensitivity gain
 //         - Added calibration adjustment with senstivity gain
 //         - Added calibration adjustment with ADC sampling frequency

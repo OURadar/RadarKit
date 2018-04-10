@@ -935,9 +935,11 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseGatherer) {
         pthread_join(engine->tidPulseGatherer, NULL);
-		engine->tidPulseGatherer = NULL;
+		engine->tidPulseGatherer = (pthread_t)0;
         free(engine->workers);
         engine->workers = NULL;
+	} else {
+		RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {

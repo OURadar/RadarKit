@@ -257,7 +257,7 @@ enum RKEngineColor {
     RKEngineColorHostMonitor = 11,
     RKEngineColorClock = 14,
     RKEngineColorMisc = 15,
-    RKEngineColorEngineMonitor = 4
+    RKEngineColorEngineMonitor = 14
 };
 
 typedef uint32_t RKPositionFlag;

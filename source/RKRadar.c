@@ -585,8 +585,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     
     // Total memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar initialized. Data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
+        RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",
+			  rkGlobalParameters.showColor ? "\033[4m" : "",
               RKIntegerToCommaStyleString(radar->memoryUsage),
+			  rkGlobalParameters.showColor ? "\033[24m" : "",
               RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 
@@ -1198,8 +1200,10 @@ int RKGoLive(RKRadar *radar) {
 
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar live. All data buffers occupy \033[4m%s B\033[24m (%s GiB)\n",
+        RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
+			  rkGlobalParameters.showColor ? "\033[4m" : "",
               RKIntegerToCommaStyleString(radar->memoryUsage),
+			  rkGlobalParameters.showColor ? "\033[24m" : "",
               RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 

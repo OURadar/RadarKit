@@ -564,9 +564,14 @@ int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tidPulseWatcher, NULL);
-    free(engine->workers);
-    engine->workers = NULL;
+	if (engine->tidPulseWatcher) {
+		pthread_join(engine->tidPulseWatcher, NULL);
+		engine->tidPulseWatcher = (pthread_t)0;
+		free(engine->workers);
+		engine->workers = NULL;
+	} else {
+		RKLog("%s Invalid thread ID.\n", engine->name);
+	}
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

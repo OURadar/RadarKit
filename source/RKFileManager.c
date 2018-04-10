@@ -521,7 +521,12 @@ int RKFileManagerStart(RKFileManager *engine) {
     if (engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
         if (engine->verbose) {
-            RKLog("%s Usage limit not set, use default " UNDERLINE("%s") " GB\n", engine->name, RKIntegerToCommaStyleString(engine->usagelimit / 1073741824));
+            RKLog("%s Usage limit not set, use default %s%s B%s (%s GiB)\n",
+				  engine->name,
+				  rkGlobalParameters.showColor ? "\033[4m" : "",
+				  RKIntegerToCommaStyleString(engine->usagelimit),
+				  rkGlobalParameters.showColor ? "\033[24m" : "",
+				  RKFloatToCommaStyleString((double)engine->usagelimit / 1073741824));
         }
     }
     if (engine->verbose) {

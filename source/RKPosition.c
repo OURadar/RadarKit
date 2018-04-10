@@ -383,7 +383,9 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
     engine->state ^= RKEngineStateActive;
 	if (engine->threadId) {
 		pthread_join(engine->threadId, NULL);
-		engine->threadId = NULL;
+		engine->threadId = (pthread_t)0;
+	} else {
+		RKLog("%s Invalid thread ID.\n", engine->name);
 	}
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
