@@ -314,17 +314,12 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress = RKStreamNull;
                     user->streams = newStream;
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+					user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
                     pthread_mutex_unlock(&user->mutex);
                     sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, string);
                     break;
-
-				case 'S':
-					// Sweep request
-					newStream = RKStringToFlag(commandString + 1);
-					k = user->rayIndex;
-					break;
 
                 case 't':
                     // Pass everything to transceiver
@@ -563,13 +558,15 @@ int socketStreamHandler(RKOperator *O) {
     // 1) Up to latest available:
     //      i) For a health, it is radar->healthIndex - 1
     //     ii) For a ray, it is radar->rayIndex - (number of workers)
-    //    iii) For a pulse, it is readar->pulseIndex - (number of workers)
+    //    iii) For a pulse, it is radar->pulseIndex - (number of workers)
+	//     iv) For a sweep, it is radar->sweepEngine->rayAnchorsIndex
     // 2) The latest slot it will be stored. It is crucial to ensure that:
     //      i) For a health, it is RKStatusReady
     //     ii) For a ray, it has RKRayStatusReady set
     //    iii) For a pulse, it has RKPulseStatusReadyForMoment set
+	//     iv) For a sweep, rayAnchorsIndex has increased
     // 3) Once the first payload is sent, the stream is consider in progress (streamsInProgress)
-    // 4) If (2) can't be met within 2 secs, in progress flag is not set so (2) will be checked
+    // 4) If (2) can't be met within X secs, in progress flag is not set so (2) will be checked
     //    again in the next iteraction.
 
     // Processor Status
@@ -881,6 +878,17 @@ int socketStreamHandler(RKOperator *O) {
             }
         }
     }
+
+	// Sweep
+	if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
+		user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+		RKSweep *sweep = RKSweepCollect(user->radar->sweepEngine);
+		RKLog("%s New sweep available  C%02d.  <--\n", engine->name, sweep->rays[0]->header.configIndex);
+	}
+	if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
+		// Sweep streams - no skipping
+		RKLog("Replace me.\n");
+	}
 
     // IQ
     if (user->streams & user->access & RKStreamProductIQ) {
