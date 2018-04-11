@@ -246,6 +246,11 @@ static void *pulseTagger(void *in) {
             marker0 |= RKMarkerSweepBegin;
         }
 
+		// Mode change also indicates a start
+		if ((marker1 & RKPositionFlagScanMode) != (marker0 & RKPositionFlagScanMode)) {
+			marker0 |= RKMarkerSweepBegin;
+		}
+
         if (marker0 & RKMarkerSweepBegin) {
             // Add another configuration
             RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,

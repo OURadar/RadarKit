@@ -148,18 +148,18 @@ typedef union rk_four_byte {
 } RKFourByte;
 
 typedef union rk_filter_anchor {
-	struct {
-		uint32_t      name;                                              // Just an internal name id
-		uint32_t      origin;                                            // Filter origin to be used with RKWaveform
-		uint32_t      length;                                            // Filter length to be used with RKWaveform
-		uint32_t      inputOrigin;                                       // Origin of input
-		uint32_t      outputOrigin;                                      // Origin of output
-		uint32_t      maxDataLength;                                     // Maximum data to decode
-		RKFloat       subCarrierFrequency;                               // For house keeping only, use the waveform->fc for DDC
-		RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms (dB)
-		RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 0.0 (dB)
-	};
-	char bytes[64];
+    struct {
+        uint32_t      name;                                              // Just an internal name id
+        uint32_t      origin;                                            // Filter origin to be used with RKWaveform
+        uint32_t      length;                                            // Filter length to be used with RKWaveform
+        uint32_t      inputOrigin;                                       // Origin of input
+        uint32_t      outputOrigin;                                      // Origin of output
+        uint32_t      maxDataLength;                                     // Maximum data to decode
+        RKFloat       subCarrierFrequency;                               // For house keeping only, use the waveform->fc for DDC
+        RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms (dB)
+        RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 0.0 (dB)
+    };
+    char bytes[64];
 } RKFilterAnchor;
 
 #define RKFilterAnchorDefault                           {{0, 0,  1 ,  0, 0, RKGateCount, 0.0f, 1.0f, 1.0f}}
@@ -182,13 +182,13 @@ typedef struct rk_modulo_path {
 
 enum RKResult {
     RKResultTimeout = -99,
-	RKResultNullInput,
+    RKResultNullInput,
     RKResultEngineNotWired,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
-	RKResultIncompleteTransceiver,
-	RKResultIncompletePedestal,
-	RKResultIncompleteHealthRelay,
+    RKResultIncompleteTransceiver,
+    RKResultIncompletePedestal,
+    RKResultIncompleteHealthRelay,
     RKResultErrorCreatingOperatorRoutine,
     RKResultErrorCreatingOperatorCommandRoutine,
     RKResultErrorCreatingClientRoutine,
@@ -207,7 +207,7 @@ enum RKResult {
     RKResultFailedToAllocateFilter,
     RKResultFailedToAllocateDutyCycleBuffer,
     RKResultFailedToAllocateScratchSpace,
-	RKResultFailedToSetWaveform,
+    RKResultFailedToSetWaveform,
     RKResultFailedToSetFilter,
     RKResultEngineDeactivatedMultipleTimes,
     RKResultFailedToStartMomentCore,
@@ -222,19 +222,19 @@ enum RKResult {
     RKResultFailedToStartPedestalMonitor,
     RKResultFailedToStartFileManager,
     RKResultFailedToStartFileRemover,
-	RKResultFailedToStartTransceiver,
-	RKResultFailedToStartPedestal,
-	RKResultFailedToStartHealthRelay,
+    RKResultFailedToStartTransceiver,
+    RKResultFailedToStartPedestal,
+    RKResultFailedToStartHealthRelay,
     RKResultPreferenceFileNotFound,
     RKResultFailedToMeasureNoise,
     RKResultFailedToCreateFileRemover,
     RKResultFileManagerBufferNotResuable,
-	RKResultInvalidMomentParameters,
+    RKResultInvalidMomentParameters,
     RKResultFailedToCreateUnitWorker,
     RKResultFailedToStartHostWatcher,
     RKResultFailedToStartHostPinger,
     RKResultFailedToExecuteCommand,
-	RKResultNoRadar,
+    RKResultNoRadar,
     RKResultSuccess = 0,
     RKResultNoError = 0
 };
@@ -268,14 +268,17 @@ enum RKPositionFlag {
     RKPositionFlagAzimuthError       = (1 << 2),
     RKPositionFlagAzimuthSweep       = (1 << 8),
     RKPositionFlagAzimuthPoint       = (1 << 9),
+    RKPositionFlagAzimuthMode        = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
     RKPositionFlagAzimuthComplete    = (1 << 10),
     RKPositionFlagElevationEnabled   = (1 << 16),
     RKPositionFlagElevationSafety    = (1 << 17),
     RKPositionFlagElevationError     = (1 << 18),
     RKPositionFlagElevationSweep     = (1 << 24),
     RKPositionFlagElevationPoint     = (1 << 25),
+    RKPositionFlagElevationMode      = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
     RKPositionFlagElevationComplete  = (1 << 26),
     RKPositionFlagScanActive         = (1 << 28),
+    RKPositionFlagScanMode           = (RKPositionFlagAzimuthMode | RKPositionFlagElevationMode),
     RKPositionFlagVCPActive          = (1 << 29),
     RKPositionFlagHardwareMask       = 0x3FFFFFFF,
     RKPositionFlagReady              = (1 << 31)
@@ -328,8 +331,8 @@ enum RKPulseStatus {
     RKPulseStatusCompressed          = (1 << 3),                     // 0x08
     RKPulseStatusSkipped             = (1 << 4),                     // 0x10
     RKPulseStatusDownSampled         = (1 << 5),                     // 0x20
-	RKPulseStatusProcessed           = (1 << 6),                     // 0x40
-	RKPulseStatusRingInspected       = (1 << 7),                     // 0x80
+    RKPulseStatusProcessed           = (1 << 6),                     // 0x40
+    RKPulseStatusRingInspected       = (1 << 7),                     // 0x80
     RKPulseStatusRingFiltered        = (1 << 8),
     RKPulseStatusRingSkipped         = (1 << 9),
     RKPulseStatusRingProcessed       = (1 << 10),
@@ -352,11 +355,11 @@ enum RKInitFlag {
     RKInitFlagVerbose                = 0x0001,
     RKInitFlagVeryVerbose            = 0x0002,
     RKInitFlagVeryVeryVerbose        = 0x0004,
-	RKInitFlagShowClockOffset        = 0x0008,
-	RKInitFlagReserved1              = 0x0020,
-	RKInitFlagReserved2              = 0x0020,
-	RKInitFlagReserved3              = 0x0040,
-	RKInitFlagReserved4              = 0x0080,
+    RKInitFlagShowClockOffset        = 0x0008,
+    RKInitFlagReserved1              = 0x0020,
+    RKInitFlagReserved2              = 0x0020,
+    RKInitFlagReserved3              = 0x0040,
+    RKInitFlagReserved4              = 0x0080,
     RKInitFlagAllocStatusBuffer      = 0x0100,                       // 1 << 8
     RKInitFlagAllocConfigBuffer      = 0x0200,                       // 1 << 9
     RKInitFlagAllocRawIQBuffer       = 0x0400,                       // 1 << 10
@@ -391,7 +394,7 @@ enum RKProductList {
     RKProductListProductR            = (1 << 21),                    // Data of R
     RKProductListProductK            = (1 << 22),                    // Data of K
     RKProductListProductSh           = (1 << 23),                    // Data of Sh
-	RKProductListProductSv           = (1 << 24),                    // Data of Sv
+    RKProductListProductSv           = (1 << 24),                    // Data of Sv
     RKProductListProductZVWDPR       = 0x003F0000,                   // Base data, i.e., without K, and S
     RKProductListProductZVWDPRK      = 0x007F0000,                   // Base data + K
     RKProductListProductZVWDPRKS     = 0x01FF0000                    // All data
@@ -405,9 +408,9 @@ enum RKProductIndex {
     RKProductIndexD,
     RKProductIndexP,
     RKProductIndexR,
-	RKProductIndexK,
+    RKProductIndexK,
     RKProductIndexSh,
-	RKProductIndexSv,
+    RKProductIndexSv,
     RKProductIndexZv,
     RKProductIndexVv,
     RKProductIndexWv
@@ -430,7 +433,7 @@ enum RKConfigKey {
     RKConfigKeyFilterAnchors,
     RKConfigKeyNoise,
     RKConfigKeySystemZCal,
-	RKConfigKeySystemDCal,
+    RKConfigKeySystemDCal,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
@@ -472,7 +475,7 @@ enum RKEngineState {
     RKEngineStateSleep3              = (1 << 3),                     // Stage 3 wait
     RKEngineStateSleepMask           = 0x0F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
-	RKEngineStateMemoryChange        = (1 << 5),                     // Some required pointers are being changed
+    RKEngineStateMemoryChange        = (1 << 5),                     // Some required pointers are being changed
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
     RKEngineStateProperlyWired       = (1 << 9),                     // All required pointers are properly wired up
     RKEngineStateActivating          = (1 << 10),                    // The main run loop is being activated
@@ -524,6 +527,7 @@ enum RKStream {
     RKStreamDisplayIQFiltered        = (1 << 9),                     // Filtered IQ (usually matched filter is applied)
     RKStreamProductIQ                = (1 << 10),                    // Full rate IQ
     RKStreamProductIQFiltered        = (1 << 11),                    // Full rate filtered IQ
+    RKStreamScopeStuff               = 0x0000000000000300ULL,        //
     RKStreamDisplayZ                 = (1 << 16),                    // Display: Z = 0x00010000
     RKStreamDisplayV                 = (1 << 17),                    //
     RKStreamDisplayW                 = (1 << 18),                    //
@@ -533,8 +537,8 @@ enum RKStream {
     RKStreamDisplayK                 = (1 << 22),                    //
     RKStreamDisplaySh                = (1 << 23),                    //
     RKStreamDisplaySv                = (1 << 24),                    //
-    RKStreamDisplayZVWDPRKS          = 0x00000001FF0000ULL,          //
-    RKStreamProductZ                 = (1ULL << 32),                 // Products
+    RKStreamDisplayZVWDPRKS          = 0x0000000001FF0000ULL,          //
+    RKStreamProductZ                 = (1ULL << 32),                 // Products by ray
     RKStreamProductV                 = (1ULL << 33),                 //
     RKStreamProductW                 = (1ULL << 34),                 //
     RKStreamProductD                 = (1ULL << 35),                 //
@@ -543,8 +547,18 @@ enum RKStream {
     RKStreamProductK                 = (1ULL << 38),                 //
     RKStreamProductSh                = (1ULL << 39),                 //
     RKStreamProductSv                = (1ULL << 40),                 //
-    RKStreamProductZVWDPRKS          = 0x0001FF00000000ULL,          //
-    RKStreamEverything               = 0x0001FFFFFFFFFFULL           //
+    RKStreamProductZVWDPRKS          = 0x000001FF00000000ULL,          //
+    RKStreamSweepZ                   = (1ULL << 48),                 // Products by sweep
+    RKStreamSweepV                   = (1ULL << 49),                 //
+    RKStreamSweepW                   = (1ULL << 50),                 //
+    RKStreamSweepD                   = (1ULL << 51),                 //
+    RKStreamSweepP                   = (1ULL << 52),                 //
+    RKStreamSweepR                   = (1ULL << 53),                 //
+    RKStreamSweepK                   = (1ULL << 54),                 //
+    RKStreamSweepSh                  = (1ULL << 55),                 //
+    RKStreamSweepSv                  = (1ULL << 56),                 //
+    RKStreamSweepZVWDPRKS            = 0x01FF000000000000ULL,        //
+    RKStreamEverything               = 0x01FF01FF01FFFFFFULL         // (Don't use this)
 };
 
 typedef uint8_t RKHostState;
@@ -599,7 +613,7 @@ typedef struct rk_config {
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     RKFloat          noise[2];                                       // Noise floor (ADU)
     RKFloat          systemZCal[2];                                  // System-wide reflectivity calibration (dB)
-	RKFloat          systemDCal;                                     // System-wide differential reflectivity calibration (dB)
+    RKFloat          systemDCal;                                     // System-wide differential reflectivity calibration (dB)
     RKFloat          ZCal[2][RKMaxFilterCount];                      // Waveform Z calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // Waveform ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Waveform Phase calibration
@@ -731,15 +745,15 @@ typedef struct rk_ray {
 } RKRay;
 
 typedef struct rk_sweep {
-	RKName           name;                                           // Name
-	uint32_t         rayCount;                                       // Number of rays
-	uint32_t         gateCount;                                      // Number of range gates
-	uint32_t         productList;                                    // List of available products
-	bool             external;                                       // Data is external buffer, reference by *rays[]
-	RKRadarDesc      desc;
-	RKConfig         config;
-	RKBuffer         rayBuffer;
-	RKRay            *rays[RKMaxRaysPerSweep];
+    RKName           name;                                           // Name
+    uint32_t         rayCount;                                       // Number of rays
+    uint32_t         gateCount;                                      // Number of range gates
+    uint32_t         productList;                                    // List of available products
+    bool             external;                                       // Data is external buffer, reference by *rays[]
+    RKRadarDesc      desc;
+    RKConfig         config;
+    RKBuffer         rayBuffer;
+    RKRay            *rays[RKMaxRaysPerSweep];
 } RKSweep;
 
 typedef struct rk_scratch {
@@ -758,7 +772,7 @@ typedef struct rk_scratch {
     RKFloat          *gC;                                            // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
     RKFloat          noise[2];                                       // Noise floor of each channel
     RKFloat          velocityFactor;                                 // Velocity factor to multiply by atan2(R(1))
-	RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|) : 
+    RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|) : 
     RKFloat          KDPFactor;                                      // Normalization factor of 1.0 / gateWidth in kilometers
     RKFloat          dcal;                                           // Calibration offset to D
     RKFloat          pcal;                                           // Calibration offset to P (radians)
@@ -792,9 +806,9 @@ typedef struct rk_preferene_object {
     bool             isNumeric;
     bool             isValid;
     int              numericCount;
-	char             subStrings[4][RKNameLength];
+    char             subStrings[4][RKNameLength];
     double           doubleValues[4];
-	bool             boolValues[4];
+    bool             boolValues[4];
 } RKPreferenceObject;
 
 typedef struct rk_control {

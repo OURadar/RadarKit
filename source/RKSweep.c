@@ -498,7 +498,7 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
         engine->hasHandleFilesScript = true;
         engine->handleFilesScriptProducesTgz = expectTgz;
     } else {
-        RKLog("%s Error. Handle files scirpt does not exist.\n", engine->name);
+        RKLog("%s Error. File handler script does not exist.\n", engine->name);
     }
 }
 
@@ -628,7 +628,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine) {
 	sweep->external = true;
 	memcpy(&sweep->desc, engine->radarDescription, sizeof(RKRadarDesc));
 	memcpy(&sweep->config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
-	memcpy(sweep->rays, rays + k, n);
+	memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
 
 	return sweep;
 }
