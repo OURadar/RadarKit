@@ -309,6 +309,7 @@ int socketCommandHandler(RKOperator *O) {
                 case 's':
                     // Stream varrious data
                     newStream = RKStringToFlag(commandString + 1);
+					newStream |= RKStreamSweepZVWDPRKS;
                     k = user->rayIndex;
                     pthread_mutex_lock(&user->mutex);
                     user->streamsInProgress = RKStreamNull;
@@ -880,16 +881,95 @@ int socketStreamHandler(RKOperator *O) {
     }
 
 	// Sweep
-	if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
-		user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
-		RKSweep *sweep = RKSweepCollect(user->radar->sweepEngine);
-		RKLog("%s New sweep available  C%02d.  <--\n", engine->name, sweep->rays[0]->header.configIndex);
-		O->delimTx.type = RKNetworkPacketTypeSweep;
-		O->delimTx.size = (uint32_t)(sizeof(sweep->header) + sweep->header.rayCount);
-	}
-	if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
+	//if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
+	if (user->access & RKStreamSweepZVWDPRKS) {
 		// Sweep streams - no skipping
-		RKLog("Replace me.\n");
+		if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
+			user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+			RKSweep *sweep = RKSweepCollect(user->radar->sweepEngine);
+			RKLog("%s New sweep available  C%02d.  <--\n", engine->name, sweep->rays[0]->header.configIndex);
+
+			uint32_t availableProducts = sweep->header.productList;
+
+			// Mutate sweep so that header indicates the sweep to be transmitted
+			sweep->header.productList = RKProductListNone;
+			if ((user->streams & RKStreamSweepZ) && (availableProducts & RKProductListProductZ)) {
+				sweep->header.productList |= RKProductListProductZ;
+			}
+			if ((user->streams & RKStreamSweepV) && (availableProducts & RKProductListProductV)) {
+				sweep->header.productList |= RKProductListProductV;
+			}
+			if ((user->streams & RKStreamSweepW) && (availableProducts & RKProductListProductW)) {
+				sweep->header.productList |= RKProductListProductW;
+			}
+			if ((user->streams & RKStreamSweepD) && (availableProducts & RKProductListProductD)) {
+				sweep->header.productList |= RKProductListProductD;
+			}
+			if ((user->streams & RKStreamSweepP) && (availableProducts & RKProductListProductP)) {
+				sweep->header.productList |= RKProductListProductP;
+			}
+			if ((user->streams & RKStreamSweepR) && (availableProducts & RKProductListProductR)) {
+				sweep->header.productList |= RKProductListProductR;
+			}
+			if ((user->streams & RKStreamSweepK) && (availableProducts & RKProductListProductK)) {
+				sweep->header.productList |= RKProductListProductK;
+			}
+			if ((user->streams & RKStreamSweepSh) && (availableProducts & RKProductListProductSh)) {
+				sweep->header.productList |= RKProductListProductSh;
+			}
+			if ((user->streams & RKStreamSweepSv) && (availableProducts & RKProductListProductSv)) {
+				sweep->header.productList |= RKProductListProductSv;
+			}
+			uint32_t productList = sweep->header.productList;
+			uint32_t productCount = __builtin_popcount(productList);
+
+			O->delimTx.type = RKNetworkPacketTypeSweep;
+			O->delimTx.size = (uint32_t)(sizeof(sweep->header) + sweep->header.rayCount * (sizeof(RKRayHeader) + productCount * sweep->header.gateCount * sizeof(float)));
+			RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), sweep->header, sizeof(sweep->header), NULL);
+			RKLog("%s Sending a sweep of size %s B (%d)\n", engine->name, RKIntegerToCommaStyleString(O->delimTx.size), productCount);
+
+			for (k = 0; k < sweep->header.rayCount; k++) {
+				RKRay *ray = sweep->rays[k];
+				RKOperatorSendPackets(O, &ray->header, sizeof(RKRayHeader), NULL);
+				productList = sweep->header.productList;
+				for (j = 0; j < productCount; j++) {
+					if (productList & RKProductListProductZ) {
+						productList ^= RKProductListProductZ;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+					} else if (productList & RKProductListProductV) {
+						productList ^= RKProductListProductV;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexV);
+					} else if (productList & RKProductListProductW) {
+						productList ^= RKProductListProductW;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexW);
+					} else if (productList & RKProductListProductD) {
+						productList ^= RKProductListProductD;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexD);
+					} else if (productList & RKProductListProductP) {
+						productList ^= RKProductListProductP;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexP);
+					} else if (productList & RKProductListProductR) {
+						productList ^= RKProductListProductR;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexR);
+					} else if (productList & RKProductListProductK) {
+						productList ^= RKProductListProductK;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
+					} else if (productList & RKProductListProductSh) {
+						productList ^= RKProductListProductSh;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSh);
+					} else if (productList & RKProductListProductSv) {
+						productList ^= RKProductListProductSv;
+						f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSv);
+					} else {
+						f32Data = NULL;
+					}
+					if (f32Data && (k < 3 || k == 359)) {
+						RKLog(">%s k = %d   j = %d\n", engine->name, k, j);
+					}
+					RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
+				}
+			}
+		}
 	}
 
     // IQ
@@ -1072,6 +1152,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access = RKStreamStatusAll;
     user->access |= RKStreamDisplayZVWDPRKS;
     user->access |= RKStreamProductZVWDPRKS;
+	user->access |= RKStreamSweepZVWDPRKS;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {

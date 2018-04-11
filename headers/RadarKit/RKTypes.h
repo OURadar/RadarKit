@@ -537,7 +537,7 @@ enum RKStream {
     RKStreamDisplayK                 = (1 << 22),                    //
     RKStreamDisplaySh                = (1 << 23),                    //
     RKStreamDisplaySv                = (1 << 24),                    //
-    RKStreamDisplayZVWDPRKS          = 0x0000000001FF0000ULL,          //
+    RKStreamDisplayZVWDPRKS          = 0x0000000001FF0000ULL,        //
     RKStreamProductZ                 = (1ULL << 32),                 // Products by ray
     RKStreamProductV                 = (1ULL << 33),                 //
     RKStreamProductW                 = (1ULL << 34),                 //
@@ -547,7 +547,7 @@ enum RKStream {
     RKStreamProductK                 = (1ULL << 38),                 //
     RKStreamProductSh                = (1ULL << 39),                 //
     RKStreamProductSv                = (1ULL << 40),                 //
-    RKStreamProductZVWDPRKS          = 0x000001FF00000000ULL,          //
+    RKStreamProductZVWDPRKS          = 0x000001FF00000000ULL,        //
     RKStreamSweepZ                   = (1ULL << 48),                 // Products by sweep
     RKStreamSweepV                   = (1ULL << 49),                 //
     RKStreamSweepW                   = (1ULL << 50),                 //
