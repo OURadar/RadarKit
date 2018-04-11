@@ -923,14 +923,16 @@ int socketStreamHandler(RKOperator *O) {
 			uint32_t productList = sweep->header.productList;
 			uint32_t productCount = __builtin_popcount(productList);
 
+			size_t sentSize = 0;
+
 			O->delimTx.type = RKNetworkPacketTypeSweep;
 			O->delimTx.size = (uint32_t)(sizeof(sweep->header) + sweep->header.rayCount * (sizeof(RKRayHeader) + productCount * sweep->header.gateCount * sizeof(float)));
-			RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), sweep->header, sizeof(sweep->header), NULL);
+			sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweep->header, sizeof(sweep->header), NULL);
 			RKLog("%s Sending a sweep of size %s B (%d)\n", engine->name, RKIntegerToCommaStyleString(O->delimTx.size), productCount);
 
 			for (k = 0; k < sweep->header.rayCount; k++) {
 				RKRay *ray = sweep->rays[k];
-				RKOperatorSendPackets(O, &ray->header, sizeof(RKRayHeader), NULL);
+				sentSize += RKOperatorSendPackets(O, &ray->header, sizeof(RKRayHeader), NULL);
 				productList = sweep->header.productList;
 				for (j = 0; j < productCount; j++) {
 					if (productList & RKProductListProductZ) {
@@ -963,12 +965,15 @@ int socketStreamHandler(RKOperator *O) {
 					} else {
 						f32Data = NULL;
 					}
-					if (f32Data && (k < 3 || k == 359)) {
-						RKLog(">%s k = %d   j = %d\n", engine->name, k, j);
+					if (f32Data) {
+						if (k < 3 || k == 359) {
+							RKLog(">%s k = %d   j = %d\n", engine->name, k, j);
+						}
+						sentSize += RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
 					}
-					RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
 				}
 			}
+			RKLog("%s Total size = %s\n", engine->name, RKIntegerToCommaStyleString(sentSize));
 		}
 	}
 
