@@ -149,6 +149,7 @@ static void showHelp() {
            "         11 - Test initializing a radar system\n"
 		   "         12 - Test converting a temperature reading to status\n"
 		   "         13 - Test getting a country name from position\n"
+		   "         14 - Test reading a netcdf file\n"
            "\n"
            "         20 - SIMD quick test\n"
            "         21 - SIMD test with numbers shown\n"
@@ -401,6 +402,13 @@ UserParams processInput(int argc, const char **argv) {
 					case 13:
 						RKTestGetCountry();
 						break;
+					case 14:
+						if (argc == optind) {
+							RKLog("No filename given.\n");
+							break;
+						}
+						RKTestReadSweep(argv[optind]);
+						break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
                         break;
@@ -454,13 +462,6 @@ UserParams processInput(int argc, const char **argv) {
                         break;
                     case 53:
                         RKTestCacheWrite();
-                        break;
-                    case 54:
-                        if (argc == optind) {
-                            RKLog("No filename given.\n");
-                            break;
-                        }
-                        RKTestReadSweep(argv[optind]);
                         break;
                     default:
                         RKLog("Test %d is invalid.\n", k);

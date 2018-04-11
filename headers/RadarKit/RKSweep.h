@@ -76,6 +76,7 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
 
+RKSweep *RKSweepGatherLatest(RKSweepEngine *);
 RKSweep *RKSweepRead(const char *);
 int RKSweepFree(RKSweep *);
 

@@ -119,7 +119,7 @@ int socketCommandHandler(RKOperator *O) {
                     strncpy(user->login, sval1, sizeof(user->login) - 1);
                     user->controlSetIndex = (uint32_t)-1;
                     break;
-                    
+
                 case 'd':
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
@@ -319,7 +319,13 @@ int socketCommandHandler(RKOperator *O) {
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, string);
                     break;
-                    
+
+				case 'S':
+					// Sweep request
+					newStream = RKStringToFlag(commandString + 1);
+					k = user->rayIndex;
+					break;
+
                 case 't':
                     // Pass everything to transceiver
                     if (strlen(commandString) < 2) {
