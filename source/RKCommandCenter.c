@@ -1176,6 +1176,27 @@ RKStream RKStringToFlag(const char * string) {
             case 'I':
                 flag |= RKStreamProductIQ;
                 break;
+			case 'Y':
+				flag |= RKStreamSweepZ;
+				break;
+			case 'U':
+				flag |= RKStreamSweepV;
+				break;
+			case 'X':
+				flag |= RKStreamSweepW;
+				break;
+			case 'C':
+				flag |= RKStreamSweepD;
+				break;
+			case 'O':
+				flag |= RKStreamSweepP;
+				break;
+			case 'Q':
+				flag |= RKStreamSweepR;
+				break;
+			case 'J':
+				flag |= RKStreamSweepK;
+				break;
             default:
                 break;
         }
@@ -1212,6 +1233,13 @@ int RKFlagToString(char *string, RKStream flag) {
     if (flag & RKStreamProductSv)             { j += sprintf(string + j, "T"); }
     if (flag & RKStreamDisplayIQ)             { j += sprintf(string + j, "i"); }
     if (flag & RKStreamProductIQ)             { j += sprintf(string + j, "I"); }
+	if (flag & RKStreamSweepZ)                { j += sprintf(string + j, "Y"); }
+	if (flag & RKStreamSweepV)                { j += sprintf(string + j, "U"); }
+	if (flag & RKStreamSweepW)                { j += sprintf(string + j, "X"); }
+	if (flag & RKStreamSweepD)                { j += sprintf(string + j, "C"); }
+	if (flag & RKStreamSweepP)                { j += sprintf(string + j, "O"); }
+	if (flag & RKStreamSweepR)                { j += sprintf(string + j, "Q"); }
+	if (flag & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
     string[j] = '\0';
     return 0;
 }
