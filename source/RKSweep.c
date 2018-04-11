@@ -66,7 +66,7 @@ static void *sweepWriter(void *in) {
     
     // Some global attributes
     time_t startTime = (time_t)sweep->rays[0]->header.startTime.tv_sec;
-    float va = 0.25f * sweep->desc.wavelength * sweep->config.prf[0];
+    float va = 0.25f * sweep->header.desc.wavelength * sweep->header.config.prf[0];
 
     // Go through all moments
     if (engine->hasHandleFilesScript) {
@@ -76,7 +76,7 @@ static void *sweepWriter(void *in) {
     const float radianToDegree = 180.0f / M_PI;
 
     int summarySize = 0;
-    uint32_t productList = sweep->productList;
+    uint32_t productList = sweep->header.productList;
     int productCount = __builtin_popcount(productList);
 
 	for (p = 0; p < productCount; p++) {
@@ -88,12 +88,12 @@ static void *sweepWriter(void *in) {
         i += strftime(filename + i, 10, "%Y%m%d", gmtime(&startTime));
         i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
         i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-		if (sweep->config.startMarker & RKMarkerPPIScan) {
-            i += sprintf(filename + i, "-E%.1f-%s", sweep->config.sweepElevation, symbol);
-        } else if (sweep->config.startMarker & RKMarkerRHIScan) {
-            i += sprintf(filename + i, "-A%.1f-%s", sweep->config.sweepAzimuth, symbol);
+		if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+            i += sprintf(filename + i, "-E%.1f-%s", sweep->header.config.sweepElevation, symbol);
+        } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
+            i += sprintf(filename + i, "-A%.1f-%s", sweep->header.config.sweepAzimuth, symbol);
         } else {
-            i += sprintf(filename + i, "-N%03d-%s", sweep->rayCount, symbol);
+            i += sprintf(filename + i, "-N%03d-%s", sweep->header.rayCount, symbol);
         }
         sprintf(filename + i, ".nc");
         
@@ -124,14 +124,14 @@ static void *sweepWriter(void *in) {
             return NULL;
         }
 
-        if (sweep->config.startMarker & RKMarkerPPIScan) {
-            nc_def_dim(ncid, "Azimuth", sweep->rayCount, &dimensionIds[0]);
-        } else if (sweep->config.startMarker & RKMarkerRHIScan) {
-            nc_def_dim(ncid, "Elevation", sweep->rayCount, &dimensionIds[0]);
+        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+            nc_def_dim(ncid, "Azimuth", sweep->header.rayCount, &dimensionIds[0]);
+        } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
+            nc_def_dim(ncid, "Elevation", sweep->header.rayCount, &dimensionIds[0]);
         } else {
-            nc_def_dim(ncid, "Beam", sweep->rayCount, &dimensionIds[0]);
+            nc_def_dim(ncid, "Beam", sweep->header.rayCount, &dimensionIds[0]);
         }
-        nc_def_dim(ncid, "Gate", sweep->gateCount, &dimensionIds[1]);
+        nc_def_dim(ncid, "Gate", sweep->header.gateCount, &dimensionIds[1]);
         
         // Define variables
         nc_def_var(ncid, "Azimuth", NC_FLOAT, 1, dimensionIds, &variableIdAzimuth);
@@ -159,9 +159,9 @@ static void *sweepWriter(void *in) {
         // Global attributes - some are WDSS-II required
         nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(productName), productName);
         nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
-        if (sweep->config.startMarker & RKMarkerPPIScan) {
+        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "PPI");
-        } else if (sweep->config.startMarker & RKMarkerRHIScan) {
+        } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "RHI");
         }
         tmpf = engine->radarDescription->latitude;
@@ -190,15 +190,15 @@ static void *sweepWriter(void *in) {
         put_global_text_att(ncid, "ColorMap-value", productColormap);
         
         // Other housekeeping attributes
-        if (sweep->config.startMarker & RKMarkerPPIScan) {
-            nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &sweep->config.sweepElevation);
+        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+            nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &sweep->header.config.sweepElevation);
         } else {
             tmpf = W2_MISSING_DATA;
             nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &tmpf);
         }
         put_global_text_att(ncid, "ElevationUnits", "Degrees");
-        if (sweep->config.startMarker & RKMarkerPPIScan) {
-            nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &sweep->config.sweepAzimuth);
+        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+            nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &sweep->header.config.sweepAzimuth);
         } else {
             tmpf = W2_MISSING_DATA;
             nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &tmpf);
@@ -213,36 +213,36 @@ static void *sweepWriter(void *in) {
         nc_put_att_float(ncid, NC_GLOBAL, "RangeFolded", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "RadarParameters", "PRF PulseWidth MaximumRange");
         put_global_text_att(ncid, "PRF-unit", "Hertz");
-        tmpi = sweep->config.prf[0];
+        tmpi = sweep->header.config.prf[0];
         nc_put_att_int(ncid, NC_GLOBAL, "PRF-value", NC_INT, 1, &tmpi);
         put_global_text_att(ncid, "PulseWidth-unit", "MicroSeconds");
-        tmpf = (float)sweep->config.pw[0] * 0.001f;
+        tmpf = (float)sweep->header.config.pw[0] * 0.001f;
         nc_put_att_float(ncid, NC_GLOBAL, "PulseWidth-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "MaximumRange-unit", "KiloMeters");
-		tmpf = 1.0e-3f * sweep->rays[0]->header.gateSizeMeters * sweep->gateCount;
+		tmpf = 1.0e-3f * sweep->rays[0]->header.gateSizeMeters * sweep->header.gateCount;
         nc_put_att_float(ncid, NC_GLOBAL, "MaximumRange-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "ProcessParameters", "Noise Calib Censor");
-        tmpf = 20.0f * log10f(sweep->config.noise[0]);
+        tmpf = 20.0f * log10f(sweep->header.config.noise[0]);
         put_global_text_att(ncid, "NoiseH-unit", "dB-ADU");
         nc_put_att_float(ncid, NC_GLOBAL, "NoiseH-value", NC_FLOAT, 1, &tmpf);
-        tmpf = 20.0f * log10f(sweep->config.noise[1]);
+        tmpf = 20.0f * log10f(sweep->header.config.noise[1]);
         put_global_text_att(ncid, "NoiseV-unit", "dB-ADU");
         nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "CalibH-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibH-value", NC_FLOAT, 1, &sweep->config.ZCal[0][0]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibH-value", NC_FLOAT, 1, &sweep->header.config.ZCal[0][0]);
         put_global_text_att(ncid, "CalibV-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibV-value", NC_FLOAT, 1, &sweep->config.ZCal[1][0]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibV-value", NC_FLOAT, 1, &sweep->header.config.ZCal[1][0]);
         put_global_text_att(ncid, "CalibD1-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibD1-value", NC_FLOAT, 1, &sweep->config.DCal[0]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibD1-value", NC_FLOAT, 1, &sweep->header.config.DCal[0]);
         put_global_text_att(ncid, "CalibD2-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibD2-value", NC_FLOAT, 1, &sweep->config.DCal[1]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibD2-value", NC_FLOAT, 1, &sweep->header.config.DCal[1]);
         put_global_text_att(ncid, "CalibP1-unit", "Degrees");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibP1-value", NC_FLOAT, 1, &sweep->config.PCal[0]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibP1-value", NC_FLOAT, 1, &sweep->header.config.PCal[0]);
         put_global_text_att(ncid, "CalibP2-unit", "Degrees");
-        nc_put_att_float(ncid, NC_GLOBAL, "CalibP2-value", NC_FLOAT, 1, &sweep->config.PCal[1]);
+        nc_put_att_float(ncid, NC_GLOBAL, "CalibP2-value", NC_FLOAT, 1, &sweep->header.config.PCal[1]);
         put_global_text_att(ncid, "CensorThreshold-unit", "dB");
-        nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-value", NC_FLOAT, 1, &sweep->config.SNRThreshold);
-        put_global_text_att(ncid, "Waveform", sweep->config.waveform);
+        nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-value", NC_FLOAT, 1, &sweep->header.config.SNRThreshold);
+        put_global_text_att(ncid, "Waveform", sweep->header.config.waveform);
         put_global_text_att(ncid, "CreatedBy", "RadarKit");
         put_global_text_att(ncid, "ContactInformation", "http://arrc.ou.edu");
 
@@ -250,19 +250,19 @@ static void *sweepWriter(void *in) {
         nc_enddef(ncid);
 
         // Data
-        for (j = 0; j < sweep->rayCount; j++) {
+        for (j = 0; j < sweep->header.rayCount; j++) {
             array1D[j] = sweep->rays[j]->header.startAzimuth;
         }
         nc_put_var_float(ncid, variableIdAzimuth, array1D);
-        for (j = 0; j < sweep->rayCount; j++) {
+        for (j = 0; j < sweep->header.rayCount; j++) {
             array1D[j] = sweep->rays[j]->header.startElevation;
         }
         nc_put_var_float(ncid, variableIdElevation, array1D);
-        for (j = 0; j < sweep->rayCount; j++) {
+        for (j = 0; j < sweep->header.rayCount; j++) {
             array1D[j] = RKUMinDiff(sweep->rays[j]->header.endAzimuth, sweep->rays[j]->header.startAzimuth);
         }
         nc_put_var_float(ncid, variableIdBeamwidth, array1D);
-        for (j = 0; j < sweep->rayCount; j++) {
+        for (j = 0; j < sweep->header.rayCount; j++) {
             array1D[j] = sweep->rays[j]->header.gateSizeMeters;
         }
         nc_put_var_float(ncid, variableIdGateWidth, array1D);
@@ -270,7 +270,7 @@ static void *sweepWriter(void *in) {
         y = array2D;
         // Should AND it with a user preference
         convertRadiansToDegrees = productIndex == RKProductIndexP || productIndex == RKProductIndexK;
-        for (j = 0; j < sweep->rayCount; j++) {
+        for (j = 0; j < sweep->header.rayCount; j++) {
             x = RKGetFloatDataFromRay(sweep->rays[j], productIndex);
             if (convertRadiansToDegrees) {
                 for (i = 0; i < sweep->rays[0]->header.gateCount; i++) {
@@ -621,13 +621,12 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine) {
 	memset(sweep, 0, sizeof(RKSweep));
 
 	// Populate the contents
-	sprintf(sweep->name, "RKSweep");
-	sweep->rayCount = n;
-	sweep->gateCount = S->header.gateCount;
-	sweep->productList = S->header.productList;
-	sweep->external = true;
-	memcpy(&sweep->desc, engine->radarDescription, sizeof(RKRadarDesc));
-	memcpy(&sweep->config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
+	sweep->header.rayCount = n;
+	sweep->header.gateCount = S->header.gateCount;
+	sweep->header.productList = S->header.productList;
+	sweep->header.external = true;
+	memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
+	memcpy(&sweep->header.config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
 	memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
 
 	return sweep;
@@ -785,44 +784,44 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			// Global attributes
 			getGlobalTextAttribute(typeName, "TypeName", ncid);
 			getGlobalTextAttribute(scanType, "ScanType", ncid);
-			getGlobalTextAttribute(sweep->desc.name, "radarName-value", ncid);
-			r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &sweep->desc.latitude);
+			getGlobalTextAttribute(sweep->header.desc.name, "radarName-value", ncid);
+			r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &sweep->header.desc.latitude);
 			if (r != NC_NOERR) {
 				r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
-				sweep->desc.latitude = (double)fv;
+				sweep->header.desc.latitude = (double)fv;
 			}
-			r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->desc.longitude);
+			r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->header.desc.longitude);
 			if (r != NC_NOERR) {
 				r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
-				sweep->desc.longitude = (double)fv;
+				sweep->header.desc.longitude = (double)fv;
 			}
 			if (!strcmp(scanType, "PPI")) {
-				sweep->config.sweepElevation = ray->header.sweepElevation;
-				sweep->config.startMarker |= RKMarkerPPIScan;
+				sweep->header.config.sweepElevation = ray->header.sweepElevation;
+				sweep->header.config.startMarker |= RKMarkerPPIScan;
 			} else if (!strcmp(scanType, "RHI")) {
-				sweep->config.sweepAzimuth = ray->header.sweepAzimuth;
-				sweep->config.startMarker |= RKMarkerRHIScan;
+				sweep->header.config.sweepAzimuth = ray->header.sweepAzimuth;
+				sweep->header.config.startMarker |= RKMarkerRHIScan;
 			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->desc.heading);
+			r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->header.desc.heading);
 			if (r != NC_NOERR) {
 				RKLog("No radar heading found.\n");
 			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Height", &sweep->desc.radarHeight);
+			r = nc_get_att_float(ncid, NC_GLOBAL, "Height", &sweep->header.desc.radarHeight);
 			if (r != NC_NOERR) {
 				RKLog("No radar height found.\n");
 			}
 			r = nc_get_att_float(ncid, NC_GLOBAL, "Elevation", &ray->header.sweepElevation);
-			if (r != NC_NOERR && sweep->config.startMarker & RKMarkerPPIScan) {
+			if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerPPIScan) {
 				RKLog("Warning. No sweep elevation found.\n");
 			}
 			r = nc_get_att_float(ncid, NC_GLOBAL, "Azimuth", &ray->header.sweepAzimuth);
-			if (r != NC_NOERR && sweep->config.startMarker & RKMarkerRHIScan) {
+			if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerRHIScan) {
 				RKLog("Warning. No sweep azimuth found.\n");
 			}
 			r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
 			if (r == NC_NOERR) {
-				sweep->config.prf[0] = iv;
-				if (sweep->config.prf[0] == 0) {
+				sweep->header.config.prf[0] = iv;
+				if (sweep->header.config.prf[0] == 0) {
 					RKLog("Warning. Recorded PRF = 0 Hz.\n");
 				}
 			} else {
@@ -830,8 +829,8 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			}
 			r = nc_get_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", &fv);
 			if (r == NC_NOERR) {
-				sweep->desc.wavelength = 4.0f * fv / (RKFloat)sweep->config.prf[0];
-				RKLog("Radar wavelength = %.4f m\n", sweep->desc.wavelength);
+				sweep->header.desc.wavelength = 4.0f * fv / (RKFloat)sweep->header.config.prf[0];
+				RKLog("Radar wavelength = %.4f m\n", sweep->header.desc.wavelength);
 			}
 
 			// Elevation array
@@ -959,13 +958,13 @@ RKSweep *RKSweepRead(const char *inputFile) {
         return NULL;
     }
     
-	sweep->rayCount = (uint32_t)rayCount;
-	sweep->gateCount = (uint32_t)gateCount;
-	sweep->productList = productList;
+	sweep->header.rayCount = (uint32_t)rayCount;
+	sweep->header.gateCount = (uint32_t)gateCount;
+	sweep->header.productList = productList;
 
 	for (j = 0; j < rayCount; j++) {
 		ray = RKGetRay(sweep->rayBuffer, j);
-		ray->header.i += sweep->rayCount;
+		ray->header.i += sweep->header.rayCount;
 		ray->header.s = RKRayStatusReady;
 		ray->header.productList = productList;
 	}
@@ -990,7 +989,7 @@ int RKSweepFree(RKSweep *sweep) {
 		RKLog("No es bueno, amigo!\n");
 		return RKResultNullInput;
 	}
-	if (!sweep->external) {
+	if (!sweep->header.external) {
 		if (sweep->rayBuffer == NULL) {
 			RKLog("Esto es malo!\n");
 			return RKResultNullInput;

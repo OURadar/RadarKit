@@ -884,6 +884,8 @@ int socketStreamHandler(RKOperator *O) {
 		user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
 		RKSweep *sweep = RKSweepCollect(user->radar->sweepEngine);
 		RKLog("%s New sweep available  C%02d.  <--\n", engine->name, sweep->rays[0]->header.configIndex);
+		O->delimTx.type = RKNetworkPacketTypeSweep;
+		O->delimTx.size = (uint32_t)(sizeof(sweep->header) + sweep->header.rayCount);
 	}
 	if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
 		// Sweep streams - no skipping

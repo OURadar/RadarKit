@@ -196,6 +196,7 @@ int RKSetLogfileToDefault(void) {
 void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
+    RKSweep *sweep = NULL;
     // Keeep current output stream and temporary change to screen output
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
@@ -216,14 +217,15 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
     RKLog(">sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
     RKLog(">sizeof(RKRay) = %d\n", (int)sizeof(RKRay));
-	RKLog(">sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
+    RKLog(">sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
+    RKLog(">sizeof(sweep->header) = %s\n", RKIntegerToCommaStyleString(sizeof(sweep->header)));
     RKLog(">sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));
     RKLog(">sizeof(RKFileHeader) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileHeader)));
     RKLog(">sizeof(RKPreferenceObject) = %s\n", RKIntegerToCommaStyleString(sizeof(RKPreferenceObject)));
     RKLog(">sizeof(RKControl) = %s\n", RKIntegerToCommaStyleString(sizeof(RKControl)));
     RKLog(">sizeof(RKStatus) = %d\n", (int)sizeof(RKStatus));
     RKLog(">sizeof(RKFileMonitor) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileMonitor)));
-	RKLog(">sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
+    RKLog(">sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
     RKLog(">sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
     RKLog(">sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
     // Restoring previous output stream
@@ -407,7 +409,7 @@ void RKRayBufferFree(RKBuffer mem) {
 }
 
 RKRay *RKGetRay(RKBuffer buffer, const uint32_t k) {
-	RKRay *ray = (RKRay *)buffer;
+    RKRay *ray = (RKRay *)buffer;
     size_t raySize = RKRayHeaderPaddedSize + RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
@@ -602,121 +604,121 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
 #pragma mark - Moment Stuff
 
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
-	if (list == NULL || *list == 0) {
-		return RKResultNullInput;
-	}
-	RKName symbols[] = {
-		"Z",
-		"V",
-		"W",
-		"D",
-		"P",
-		"R",
-		"K",
-		"Sh",
-		"Sv",
-		"U"
-	};
-	RKName names[] = {
-		"Corrected_Intensity",
-		"Radial_Velocity",
-		"Width",
-		"Differential_Reflectivity",
-		"PhiDP",
-		"RhoHV",
-		"KDP",
-		"Signal_Power_H",
-		"Signal_Power_V",
-		"Uknown"
-	};
-	RKName units[] = {
-		"dBZ",
-		"MetersPerSecond",
-		"MetersPerSecond",
-		"dB",
-		"Degrees",
-		"Unitless",
-		"DegreesPerMeter",
-		"dBm",
-		"dBm",
-		"Undefined"
-	};
-	RKName colormaps[] = {
-		"Reflectivity",
-		"Velocity",
-		"Width",
-		"Differential_Reflectivity",
-		"PhiDP",
-		"RhoHV",
-		"KDP",
-		"Power",
-		"Power",
-		"Default"
-	};
-	uint32_t lists[] = {
-		RKProductListProductZ,
-		RKProductListProductV,
-		RKProductListProductW,
-		RKProductListProductD,
-		RKProductListProductP,
-		RKProductListProductR,
-		RKProductListProductK,
-		RKProductListProductSh,
-		RKProductListProductSv,
-		0xFFFF
-	};
-	uint32_t productIndices[] = {
-		RKProductIndexZ,
-		RKProductIndexV,
-		RKProductIndexW,
-		RKProductIndexD,
-		RKProductIndexP,
-		RKProductIndexR,
-		RKProductIndexK,
-		RKProductIndexSh,
-		0
-	};
-	int k = -1;
-	if (*list & RKProductListProductZ) {
-		k = 0;
-	} else if (*list & RKProductListProductV) {
-		k = 1;
-	} else if (*list & RKProductListProductW) {
-		k = 2;
-	} else if (*list & RKProductListProductD) {
-		k = 3;
-	} else if (*list & RKProductListProductP) {
-		k = 4;
-	} else if (*list & RKProductListProductR) {
-		k = 5;
-	} else if (*list & RKProductListProductK) {
-		k = 6;
-	} else if (*list & RKProductListProductSh) {
-		k = 7;
-	} else if (*list & RKProductListProductSv) {
-		k = 8;
-	}
-	if (k < 0) {
-		RKLog("Unable to get description for k = %d\n", k);
-		return RKResultNullInput;
-	}
-	if (symbol) {
-		sprintf(symbol, "%s", symbols[k]);
-	}
-	if (name) {
-		sprintf(name, "%s", names[k]);
-	}
-	if (unit) {
-		sprintf(unit, "%s", units[k]);
-	}
-	if (colormap) {
-		sprintf(colormap, "%s", colormaps[k]);
-	}
-	if (index) {
-		*index = productIndices[k];
-	}
-	*list ^= lists[k];
-	return RKResultSuccess;
+    if (list == NULL || *list == 0) {
+        return RKResultNullInput;
+    }
+    RKName symbols[] = {
+        "Z",
+        "V",
+        "W",
+        "D",
+        "P",
+        "R",
+        "K",
+        "Sh",
+        "Sv",
+        "U"
+    };
+    RKName names[] = {
+        "Corrected_Intensity",
+        "Radial_Velocity",
+        "Width",
+        "Differential_Reflectivity",
+        "PhiDP",
+        "RhoHV",
+        "KDP",
+        "Signal_Power_H",
+        "Signal_Power_V",
+        "Uknown"
+    };
+    RKName units[] = {
+        "dBZ",
+        "MetersPerSecond",
+        "MetersPerSecond",
+        "dB",
+        "Degrees",
+        "Unitless",
+        "DegreesPerMeter",
+        "dBm",
+        "dBm",
+        "Undefined"
+    };
+    RKName colormaps[] = {
+        "Reflectivity",
+        "Velocity",
+        "Width",
+        "Differential_Reflectivity",
+        "PhiDP",
+        "RhoHV",
+        "KDP",
+        "Power",
+        "Power",
+        "Default"
+    };
+    uint32_t lists[] = {
+        RKProductListProductZ,
+        RKProductListProductV,
+        RKProductListProductW,
+        RKProductListProductD,
+        RKProductListProductP,
+        RKProductListProductR,
+        RKProductListProductK,
+        RKProductListProductSh,
+        RKProductListProductSv,
+        0xFFFF
+    };
+    uint32_t productIndices[] = {
+        RKProductIndexZ,
+        RKProductIndexV,
+        RKProductIndexW,
+        RKProductIndexD,
+        RKProductIndexP,
+        RKProductIndexR,
+        RKProductIndexK,
+        RKProductIndexSh,
+        0
+    };
+    int k = -1;
+    if (*list & RKProductListProductZ) {
+        k = 0;
+    } else if (*list & RKProductListProductV) {
+        k = 1;
+    } else if (*list & RKProductListProductW) {
+        k = 2;
+    } else if (*list & RKProductListProductD) {
+        k = 3;
+    } else if (*list & RKProductListProductP) {
+        k = 4;
+    } else if (*list & RKProductListProductR) {
+        k = 5;
+    } else if (*list & RKProductListProductK) {
+        k = 6;
+    } else if (*list & RKProductListProductSh) {
+        k = 7;
+    } else if (*list & RKProductListProductSv) {
+        k = 8;
+    }
+    if (k < 0) {
+        RKLog("Unable to get description for k = %d\n", k);
+        return RKResultNullInput;
+    }
+    if (symbol) {
+        sprintf(symbol, "%s", symbols[k]);
+    }
+    if (name) {
+        sprintf(name, "%s", names[k]);
+    }
+    if (unit) {
+        sprintf(unit, "%s", units[k]);
+    }
+    if (colormap) {
+        sprintf(colormap, "%s", colormaps[k]);
+    }
+    if (index) {
+        *index = productIndices[k];
+    }
+    *list ^= lists[k];
+    return RKResultSuccess;
 }
 
 #pragma mark - JSON Stuff
@@ -860,7 +862,7 @@ RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value) {
 //     char *firstValue         - (nullable) the object value of the first critical key
 //
 bool RKAnyCritical(const char *string, const bool showEnum, char *firstKey, char *firstValue) {
-	return RKFindCondition(string, RKStatusEnumCritical, showEnum, firstKey, firstValue);
+    return RKFindCondition(string, RKStatusEnumCritical, showEnum, firstKey, firstValue);
 }
 
 //
@@ -874,66 +876,66 @@ bool RKAnyCritical(const char *string, const bool showEnum, char *firstKey, char
 //     char *firstValue           - (nullable) the object value of the first critical key
 //
 bool RKFindCondition(const char *string, const RKStatusEnum target, const bool showEnum, char *firstKey, char *firstValue) {
-	if (string == NULL || strlen(string) == 0) {
-		return false;
-	}
-	char *str = (char *)malloc(strlen(string) + 1);
-	char *key = (char *)malloc(RKNameLength);
-	char *obj = (char *)malloc(RKNameLength);
-	char *subKey = (char *)malloc(RKNameLength);
-	char *subObj = (char *)malloc(RKNameLength);
-	uint8_t type;
-	uint8_t subType;
+    if (string == NULL || strlen(string) == 0) {
+        return false;
+    }
+    char *str = (char *)malloc(strlen(string) + 1);
+    char *key = (char *)malloc(RKNameLength);
+    char *obj = (char *)malloc(RKNameLength);
+    char *subKey = (char *)malloc(RKNameLength);
+    char *subObj = (char *)malloc(RKNameLength);
+    uint8_t type;
+    uint8_t subType;
 
-	int v;
-	char *ks;
-	char *sks;
-	if (*string != '{') {
-		fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
-	}
+    int v;
+    char *ks;
+    char *sks;
+    if (*string != '{') {
+        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
+    }
 
-	strcpy(str, string);
+    strcpy(str, string);
 
-	bool found = false;
+    bool found = false;
 
-	ks = str + 1;
-	while (*ks != '\0' && *ks != '}') {
-		ks = RKExtractJSON(ks, &type, key, obj);
-		if (type != RKJSONObjectTypeObject) {
-			continue;
-		}
-		sks = obj + 1;
-		while (*sks != '\0' && *sks != '}') {
-			sks = RKExtractJSON(sks, &subType, subKey, subObj);
-			if (strcmp("Enum", subKey)) {
-				continue;
-			}
-			v = atoi(subObj);
-			if (v == target && found == false) {
-				if (firstKey) {
-					strcpy(firstKey, key);
-				}
-				if (firstValue) {
-					strcpy(firstValue, obj);
-				}
-				found = true;
-			}
-			if (showEnum) {
-				fprintf(stderr, "%s --> '%s' --> %d%s%s%s\n", key, subObj, v,
-						rkGlobalParameters.showColor ? "\033[38;5;204m" : "",
-						v == RKStatusEnumCritical ? "  *" : "",
-						rkGlobalParameters.showColor ? RKNoColor : "");
-			}
-		}
-	}
+    ks = str + 1;
+    while (*ks != '\0' && *ks != '}') {
+        ks = RKExtractJSON(ks, &type, key, obj);
+        if (type != RKJSONObjectTypeObject) {
+            continue;
+        }
+        sks = obj + 1;
+        while (*sks != '\0' && *sks != '}') {
+            sks = RKExtractJSON(sks, &subType, subKey, subObj);
+            if (strcmp("Enum", subKey)) {
+                continue;
+            }
+            v = atoi(subObj);
+            if (v == target && found == false) {
+                if (firstKey) {
+                    strcpy(firstKey, key);
+                }
+                if (firstValue) {
+                    strcpy(firstValue, obj);
+                }
+                found = true;
+            }
+            if (showEnum) {
+                fprintf(stderr, "%s --> '%s' --> %d%s%s%s\n", key, subObj, v,
+                        rkGlobalParameters.showColor ? "\033[38;5;204m" : "",
+                        v == RKStatusEnumCritical ? "  *" : "",
+                        rkGlobalParameters.showColor ? RKNoColor : "");
+            }
+        }
+    }
 
-	free(subKey);
-	free(subObj);
-	free(str);
-	free(key);
-	free(obj);
+    free(subKey);
+    free(subObj);
+    free(str);
+    free(key);
+    free(obj);
 
-	return found;
+    return found;
 }
 
 #pragma mark - Simple Engine Free
