@@ -199,32 +199,33 @@ void RKShowTypeSizes(void) {
     // Keeep current output stream and temporary change to screen output
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
-    RKLog(">sizeof(void *) = %d", (int)sizeof(void *));
-    RKLog(">sizeof(RKByte) = %d", (int)sizeof(RKByte));
-    RKLog(">sizeof(RKFloat) = %d", (int)sizeof(RKFloat));
-    RKLog(">sizeof(RKInt16C) = %d", (int)sizeof(RKInt16C));
-    RKLog(">sizeof(RKComplex) = %d", (int)sizeof(RKComplex));
-    RKLog(">sizeof(RKRadarDesc) = %d", (int)sizeof(RKRadarDesc));
-    RKLog(">sizeof(RKConfig) = %d", (int)sizeof(RKConfig));
-    RKLog(">sizeof(RKHealth) = %d", (int)sizeof(RKHealth));
-    RKLog(">sizeof(RKNodalHealth) = %d", (int)sizeof(RKNodalHealth));
-    RKLog(">sizeof(RKPosition) = %d", (int)sizeof(RKPosition));
-    RKLog(">sizeof(RKPulseHeader) = %d", (int)sizeof(RKPulseHeader));
-    RKLog(">sizeof(RKPulseParameters) = %d", (int)sizeof(RKPulseParameters));
-    RKLog(">sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    RKLog(">sizeof(RKPulse) = %d", (int)sizeof(RKPulse));
-    RKLog(">sizeof(RKRayHeader) = %d", (int)sizeof(RKRayHeader));
-    RKLog(">sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    RKLog(">sizeof(RKRay) = %d", (int)sizeof(RKRay));
-    RKLog(">sizeof(RKScratch) = %d", (int)sizeof(RKScratch));
-    RKLog(">sizeof(RKFileHeader) = %d", (int)sizeof(RKFileHeader));
-    RKLog(">sizeof(RKPreferenceObject) = %d", (int)sizeof(RKPreferenceObject));
-    RKLog(">sizeof(RKControl) = %d", (int)sizeof(RKControl));
-    RKLog(">sizeof(RKStatus) = %d", (int)sizeof(RKStatus));
-    RKLog(">sizeof(RKFileMonitor) = %d", (int)sizeof(RKFileMonitor));
-	RKLog(">sizeof(RKFilterAnchor) = %d", (int)sizeof(RKFilterAnchor));
-    RKLog(">sizeof(struct sockaddr) = %d", (int)sizeof(struct sockaddr));
-    RKLog(">sizeof(struct sockaddr_in) = %d", (int)sizeof(struct sockaddr_in));
+    RKLog(">sizeof(void *) = %d\n", (int)sizeof(void *));
+    RKLog(">sizeof(RKByte) = %d\n", (int)sizeof(RKByte));
+    RKLog(">sizeof(RKFloat) = %d\n", (int)sizeof(RKFloat));
+    RKLog(">sizeof(RKInt16C) = %d\n", (int)sizeof(RKInt16C));
+    RKLog(">sizeof(RKComplex) = %d\n", (int)sizeof(RKComplex));
+    RKLog(">sizeof(RKRadarDesc) = %s\n", RKIntegerToCommaStyleString(sizeof(RKRadarDesc)));
+    RKLog(">sizeof(RKConfig) = %s\n", RKIntegerToCommaStyleString(sizeof(RKConfig)));
+    RKLog(">sizeof(RKHealth) = %s\n", RKIntegerToCommaStyleString(sizeof(RKHealth)));
+    RKLog(">sizeof(RKNodalHealth) = %d\n", (int)sizeof(RKNodalHealth));
+    RKLog(">sizeof(RKPosition) = %d\n", (int)sizeof(RKPosition));
+    RKLog(">sizeof(RKPulseHeader) = %d\n", (int)sizeof(RKPulseHeader));
+    RKLog(">sizeof(RKPulseParameters) = %d\n", (int)sizeof(RKPulseParameters));
+    RKLog(">sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
+    RKLog(">sizeof(RKPulse) = %d\n", (int)sizeof(RKPulse));
+    RKLog(">sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
+    RKLog(">sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
+    RKLog(">sizeof(RKRay) = %d\n", (int)sizeof(RKRay));
+	RKLog(">sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
+    RKLog(">sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));
+    RKLog(">sizeof(RKFileHeader) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileHeader)));
+    RKLog(">sizeof(RKPreferenceObject) = %s\n", RKIntegerToCommaStyleString(sizeof(RKPreferenceObject)));
+    RKLog(">sizeof(RKControl) = %s\n", RKIntegerToCommaStyleString(sizeof(RKControl)));
+    RKLog(">sizeof(RKStatus) = %d\n", (int)sizeof(RKStatus));
+    RKLog(">sizeof(RKFileMonitor) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileMonitor)));
+	RKLog(">sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
+    RKLog(">sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
+    RKLog(">sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
@@ -405,7 +406,8 @@ void RKRayBufferFree(RKBuffer mem) {
     return free(mem);
 }
 
-RKRay *RKGetRay(RKRay *ray, const uint32_t k) {
+RKRay *RKGetRay(RKBuffer buffer, const uint32_t k) {
+	RKRay *ray = (RKRay *)buffer;
     size_t raySize = RKRayHeaderPaddedSize + RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }

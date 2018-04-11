@@ -732,12 +732,14 @@ typedef struct rk_ray {
 
 typedef struct rk_sweep {
 	RKName           name;                                           // Name
-	uint32_t         rayCount;
-	uint32_t         gateCount;
-	uint32_t         productList;
+	uint32_t         rayCount;                                       // Number of rays
+	uint32_t         gateCount;                                      // Number of range gates
+	uint32_t         productList;                                    // List of available products
+	bool             external;                                       // Data is external buffer, reference by *rays[]
 	RKRadarDesc      desc;
 	RKConfig         config;
 	RKBuffer         rayBuffer;
+	RKRay            *rays[RKMaxRaysPerSweep];
 } RKSweep;
 
 typedef struct rk_scratch {

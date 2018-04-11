@@ -74,7 +74,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
 
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t rayCount);
 void RKRayBufferFree(RKBuffer);
-RKRay *RKGetRay(RKRay *, const uint32_t rayIndex);
+RKRay *RKGetRay(RKBuffer, const uint32_t rayIndex);
 uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t productIndex);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 
