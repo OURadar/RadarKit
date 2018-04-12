@@ -889,12 +889,10 @@ RKSweep *RKSweepRead(const char *inputFile) {
 					fp = RKGetFloatDataFromRay(ray, productIndices[k]);
 					memcpy(fp, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
 				}
+                nc_close(ncid);
 			} else {
 				RKLog("%s not found.\n", productNames[k]);
 			}
-
-			//nc_get_att_text(ncid, tmp_id, "Units", prod_unit);
-			nc_close(ncid);
 		} else {
 			RKLog("%s not found.\n", filename);
 		}
