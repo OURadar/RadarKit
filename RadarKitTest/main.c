@@ -276,7 +276,6 @@ UserParams processInput(int argc, const char **argv) {
 
     // Zero out everything and set some default parameters
     memset(&user, 0, sizeof(UserParams));
-	setSystemLevel(&user, 2);
 
     // Build a RKRadar initialization description
     user.desc.initFlags = RKInitFlagAllocEverything;
@@ -286,6 +285,7 @@ UserParams processInput(int argc, const char **argv) {
     user.desc.longitude = -97.436752;
     user.desc.radarHeight = 2.5f;
     user.desc.wavelength = 0.03f;
+	user.desc.pulseToRayRatio = 1;
 	user.prf = 1000;
     strcpy(user.desc.dataPath, ROOT_PATH);
 
@@ -510,6 +510,7 @@ UserParams processInput(int argc, const char **argv) {
                 user.verbose = MAX(user.verbose - 1, 0);
                 break;
             case 'r':
+				user.simulate = false;
                 user.desc.initFlags = RKInitFlagRelay;
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;

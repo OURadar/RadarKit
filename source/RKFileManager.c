@@ -421,13 +421,13 @@ static void *folderWatcher(void *in) {
         snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->dataPath);
     }
     
-    // Increase the tic once to indicate the engine is ready
-    engine->tic++;
-
     if (engine->verbose) {
         RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
     }
     
+	// Increase the tic once to indicate the engine is ready
+	engine->tic++;
+
     // Wait here while the engine should stay active
     time_t now;
     time_t longTime = engine->maximumLogAgeInDays * 86400;

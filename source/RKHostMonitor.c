@@ -360,12 +360,12 @@ static void *hostWatcher(void *in) {
         }
     }
     
-    // Increase the tic once to indicate the engine is ready
-    engine->tic++;
-    
     if (engine->verbose) {
         RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
     }
+
+	// Increase the tic once to indicate the engine is ready
+	engine->tic++;
 
     // Wait another tic for the first ping to respond
     do {
@@ -476,7 +476,7 @@ int RKHostMonitorStart(RKHostMonitor *engine) {
         return RKResultFailedToStartHostWatcher;
     }
     while (engine->tic == 0) {
-        usleep(1000);
+        usleep(10000);
     }
     return RKResultSuccess;
 }
@@ -488,15 +488,21 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+	if (!(engine->state & RKEngineStateActive)) {
+		RKLog("%s Not active.\n", engine->name);
+		return RKResultEngineDeactivatedMultipleTimes;
+	}
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    // pthread_join ...
     if (engine->tidHostWatcher) {
         pthread_join(engine->tidHostWatcher, NULL);
-    }
+		engine->tidHostWatcher = NULL;
+	} else {
+		RKLog("%s Invalid thread ID.\n", engine->name);
+	}
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

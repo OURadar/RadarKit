@@ -263,7 +263,7 @@ RKRadarRelay *RKRadarRelayInit(void) {
     memset(engine, 0, sizeof(RKRadarRelay));
     
     // TCP socket server over port 10000.
-    sprintf(engine->name, "%s<RadarRelay>%s",
+    sprintf(engine->name, "%s<JollyRadarRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarRelay) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;

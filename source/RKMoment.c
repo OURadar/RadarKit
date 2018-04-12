@@ -660,13 +660,13 @@ static void *pulseGatherer(void *in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    // Increase the tic once to indicate the watcher is ready
-    engine->tic++;
-
     if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
     }
     
+	// Increase the tic once to indicate the watcher is ready
+	engine->tic++;
+
     gettimeofday(&t1, 0); t1.tv_sec -= 1;
 
     // Here comes the busy loop

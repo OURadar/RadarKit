@@ -979,6 +979,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 }
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
+	if (radar->momentEngine == NULL) {
+		return RKResultNoMomentEngine;
+	}
 	radar->momentEngine->processor = &RKMultiLag;
 	radar->momentEngine->processorLagCount = RKLagCount;
 	if (lagChoice < 0 || lagChoice > 4) {
@@ -990,18 +993,27 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
 }
 
 int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
+	if (radar->momentEngine == NULL) {
+		return RKResultNoMomentEngine;
+	}
 	radar->momentEngine->processor = &RKPulsePair;
 	radar->momentEngine->processorLagCount = 3;
 	return RKResultNoError;
 }
 
 int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
+	if (radar->momentEngine == NULL) {
+		return RKResultNoMomentEngine;
+	}
 	radar->momentEngine->processor = &RKPulsePairHop;
 	radar->momentEngine->processorLagCount = 2;
 	return RKResultNoError;
 }
 
 int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
+	if (radar->momentEngine == NULL) {
+		return RKResultNoMomentEngine;
+	}
     radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
 	radar->momentEngine->processorLagCount = 2;
 	return RKResultNoError;
@@ -1148,7 +1160,10 @@ int RKGoLive(RKRadar *radar) {
         radar->memoryUsage -= radar->positionEngine->memoryUsage;
         radar->memoryUsage -= radar->momentEngine->memoryUsage;
         radar->memoryUsage -= radar->healthEngine->memoryUsage;
-    }
+		radar->memoryUsage -= radar->systemInspector->memoryUsage;
+	} else {
+		radar->memoryUsage -= radar->radarRelay->memoryUsage;
+	}
     radar->memoryUsage -= radar->healthLogger->memoryUsage;
     radar->memoryUsage -= radar->dataRecorder->memoryUsage;
     radar->memoryUsage -= radar->sweepEngine->memoryUsage;
@@ -1156,8 +1171,6 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage -= radar->hostMonitor->memoryUsage;
     
     // Start the engines
-    RKFileManagerStart(radar->fileManager);
-    RKHostMonitorStart(radar->hostMonitor);
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Main thread uses 1 CPU. Start the others from 1.
         uint8_t o = 1;
@@ -1178,15 +1191,16 @@ int RKGoLive(RKRadar *radar) {
         RKPositionEngineStart(radar->positionEngine);
         RKMomentEngineStart(radar->momentEngine);
         RKHealthEngineStart(radar->healthEngine);
+		// After all the engines started, we monitor them. This engine should be stopped before stopping the engines.
+		radar->systemInspector = RKSystemInspector(radar);
     } else {
         RKRadarRelayStart(radar->radarRelay);
     }
     RKHealthLoggerStart(radar->healthLogger);
     RKDataRecorderStart(radar->dataRecorder);
     RKSweepEngineStart(radar->sweepEngine);
-    
-    // After all the engines started, we monitor them. This engine should be stopped before stopping the engines.
-    radar->systemInspector = RKSystemInspector(radar);
+	RKFileManagerStart(radar->fileManager);
+	RKHostMonitorStart(radar->hostMonitor);
 
     // Get the post-allocated memory
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -1195,7 +1209,10 @@ int RKGoLive(RKRadar *radar) {
         radar->memoryUsage += radar->positionEngine->memoryUsage;
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->memoryUsage += radar->healthEngine->memoryUsage;
-    }
+		radar->memoryUsage += radar->systemInspector->memoryUsage;
+	} else {
+		radar->memoryUsage += radar->radarRelay->memoryUsage;
+	}
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
