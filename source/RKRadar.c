@@ -1155,6 +1155,8 @@ int RKGoLive(RKRadar *radar) {
     radar->active = true;
 
     // Offset the pre-allocated memory
+	radar->memoryUsage -= radar->fileManager->memoryUsage;
+	radar->memoryUsage -= radar->hostMonitor->memoryUsage;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
         radar->memoryUsage -= radar->pulseRingFilterEngine->memoryUsage;
@@ -1167,10 +1169,10 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage -= radar->healthLogger->memoryUsage;
     radar->memoryUsage -= radar->dataRecorder->memoryUsage;
     radar->memoryUsage -= radar->sweepEngine->memoryUsage;
-    radar->memoryUsage -= radar->fileManager->memoryUsage;
-    radar->memoryUsage -= radar->hostMonitor->memoryUsage;
-    
+
     // Start the engines
+	RKFileManagerStart(radar->fileManager);
+	RKHostMonitorStart(radar->hostMonitor);
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Main thread uses 1 CPU. Start the others from 1.
         uint8_t o = 1;
@@ -1199,10 +1201,10 @@ int RKGoLive(RKRadar *radar) {
     RKHealthLoggerStart(radar->healthLogger);
     RKDataRecorderStart(radar->dataRecorder);
     RKSweepEngineStart(radar->sweepEngine);
-	RKFileManagerStart(radar->fileManager);
-	RKHostMonitorStart(radar->hostMonitor);
 
     // Get the post-allocated memory
+	radar->memoryUsage += radar->fileManager->memoryUsage;
+	radar->memoryUsage += radar->hostMonitor->memoryUsage;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
         radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
@@ -1216,8 +1218,6 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
-    radar->memoryUsage += radar->fileManager->memoryUsage;
-    radar->memoryUsage += radar->hostMonitor->memoryUsage;
 
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {

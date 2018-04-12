@@ -35,6 +35,22 @@ static void *sweepWriter(void *in) {
     int i, j, p;
 
 	RKSweep *sweep = RKSweepCollect(engine);
+	if (engine->verbose) {
+		RKRay *S = sweep->rays[0];
+		RKRay *E = sweep->rays[sweep->header.rayCount - 1];
+		RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
+			  engine->name,
+			  S->header.configIndex,
+			  sweep->header.config.sweepElevation,
+			  S->header.startElevation , E->header.endElevation,
+			  S->header.startAzimuth   , E->header.endAzimuth,
+			  S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+			  RKIntegerToCommaStyleString(sweep->header.gateCount),
+			  sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
+			  sweep->header.rayCount,
+			  RKNoColor,
+			  1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+	}
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -594,23 +610,6 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine) {
 		}
 	}
 	S = rays[k];
-	T = rays[k + 1];
-	E = rays[k + n - 1];
-	config = &engine->configBuffer[T->header.configIndex];
-	if (engine->verbose) {
-		RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
-			  engine->name,
-			  T->header.configIndex,
-			  config->sweepElevation,
-			  S->header.startElevation , E->header.endElevation,
-			  S->header.startAzimuth   , E->header.endAzimuth,
-			  S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-			  RKIntegerToCommaStyleString(S->header.gateCount),
-			  n != 360 ? RKGetColorOfIndex(1) : "",
-			  n,
-			  RKNoColor,
-			  1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
-	}
 
 	// Allocate the return object
 	sweep = (RKSweep *)malloc(sizeof(RKSweep));
