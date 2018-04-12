@@ -185,12 +185,12 @@ static void *hostPinger(void *in) {
         // Ping
         if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
             if (engine->verbose > 1) {
-                RKLog(">%s %s Error. Command sendto() -> %d  %d  %s.", engine->name, name, r, errno, RKErrnoString(errno));
+                RKLog("%s %s Error. Command sendto() -> %d   errno = %d / %s.", engine->name, name, r, errno, RKErrnoString(errno));
             }
             // Now we wait a little
             pthread_mutex_unlock(&engine->mutex);
             k = 0;
-            while (k++ < 10 && engine->state & RKEngineStateActive) {
+            while (k++ < 20 && engine->state & RKEngineStateActive) {
                 usleep(100000);
             }
             // Delay reporting since other threads may still be waiting for recvfrom()

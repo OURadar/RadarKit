@@ -587,7 +587,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->hostMonitor = RKHostMonitorInit();
     radar->memoryUsage += radar->hostMonitor->memoryUsage;
     radar->state |= RKRadarStateHostMonitorInitialized;
-    
+
     // Total memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",

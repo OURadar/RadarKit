@@ -1837,7 +1837,6 @@ void RKTestHostMonitor(void) {
         return;
     }
     RKHostMonitorSetVerbose(o, 2);
-	RKHostMonitorAddHost(o, "arrc.ou.edu");
 	RKHostMonitorAddHost(o, "10.203.6.126");
     RKHostMonitorStart(o);
     sleep(RKHostMonitorPingInterval * 10 + RKHostMonitorPingInterval - 1);
