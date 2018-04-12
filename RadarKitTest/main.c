@@ -732,7 +732,8 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
-        RKWaitWhileActive(myRadar);
+		sleep(2);
+        //RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
     } else if (user.desc.initFlags & RKInitFlagRelay) {

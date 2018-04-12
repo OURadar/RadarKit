@@ -1458,10 +1458,10 @@ int RKStop(RKRadar *radar) {
     if (radar->active == false) {
         return RKResultEngineDeactivatedMultipleTimes;
     }
+	radar->active = false;
     if (radar->systemInspector) {
         RKSimpleEngineFree(radar->systemInspector);
     }
-    radar->active = false;
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
             radar->pedestalExec(radar->pedestal, "disconnect", radar->pedestalResponse);

@@ -417,6 +417,8 @@ static void *hostWatcher(void *in) {
         }
     }
 
+	RKLog("%s workerCount = %d\n", engine->name, engine->workerCount);
+
     for (k = 0; k < engine->workerCount; k++) {
         pthread_join(engine->workers[k].tid, NULL);
     }
@@ -483,7 +485,6 @@ int RKHostMonitorStart(RKHostMonitor *engine) {
         RKLog("Error. Failed to start a host watcher.\n");
         return RKResultFailedToStartHostWatcher;
     }
-	RKLog("tidHostWatcher = %llu\n", (unsigned long)engine->tidHostWatcher);
     while (engine->tic == 0) {
         usleep(10000);
     }
@@ -506,7 +507,6 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-	RKLog("tidHostWatcher = %llu\n", (unsigned long)engine->tidHostWatcher);
     if (engine->tidHostWatcher) {
         pthread_join(engine->tidHostWatcher, NULL);
 		engine->tidHostWatcher = (pthread_t)0;
