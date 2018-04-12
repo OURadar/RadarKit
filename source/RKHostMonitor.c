@@ -333,7 +333,11 @@ static void *hostWatcher(void *in) {
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
-    
+
+	if (engine->workers != NULL) {
+		RKLog("%s Workers already allocated.\n", engine->name);
+		return NULL;
+	}
     engine->workers = (RKUnitMonitor *)malloc(engine->workerCount * sizeof(RKUnitMonitor));
     if (engine->workers == NULL) {
         RKLog(">%s Error. Unable to allocate an RKUnitMonitor.\n", engine->name);
@@ -455,6 +459,10 @@ void RKHostMonitorSetVerbose(RKHostMonitor *engine, const int verbose) {
 }
 
 void RKHostMonitorAddHost(RKHostMonitor *engine, const char *address) {
+	if (engine->state & RKEngineStateActive) {
+		RKLog("%s Cannot add host after the engine has started.\n", engine->name);
+		return;
+	}
     int k = engine->workerCount++;
     engine->hosts = realloc(engine->hosts, engine->workerCount * sizeof(RKName));
     strncpy(engine->hosts[k], address, RKNameLength - 1);
@@ -475,6 +483,7 @@ int RKHostMonitorStart(RKHostMonitor *engine) {
         RKLog("Error. Failed to start a host watcher.\n");
         return RKResultFailedToStartHostWatcher;
     }
+	RKLog("tidHostWatcher = %llu\n", (unsigned long)engine->tidHostWatcher);
     while (engine->tic == 0) {
         usleep(10000);
     }
@@ -497,9 +506,10 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
+	RKLog("tidHostWatcher = %llu\n", (unsigned long)engine->tidHostWatcher);
     if (engine->tidHostWatcher) {
         pthread_join(engine->tidHostWatcher, NULL);
-		engine->tidHostWatcher = NULL;
+		engine->tidHostWatcher = (pthread_t)0;
 	} else {
 		RKLog("%s Invalid thread ID.\n", engine->name);
 	}

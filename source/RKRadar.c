@@ -434,7 +434,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     RKLog("memory usage = %s\n", RKIntegerToCommaStyleString(radar->memoryUsage));
-    // Controls
+
+	// Controls
     if (radar->desc.controlCapacity) {
         radar->state |= RKRadarStateControlsAllocating;
         bytes = radar->desc.controlCapacity * sizeof(RKControl);
@@ -1160,7 +1161,6 @@ int RKGoLive(RKRadar *radar) {
         radar->memoryUsage -= radar->positionEngine->memoryUsage;
         radar->memoryUsage -= radar->momentEngine->memoryUsage;
         radar->memoryUsage -= radar->healthEngine->memoryUsage;
-		radar->memoryUsage -= radar->systemInspector->memoryUsage;
 	} else {
 		radar->memoryUsage -= radar->radarRelay->memoryUsage;
 	}

@@ -286,7 +286,6 @@ UserParams processInput(int argc, const char **argv) {
     user.desc.radarHeight = 2.5f;
     user.desc.wavelength = 0.03f;
 	user.desc.pulseToRayRatio = 1;
-	user.prf = 1000;
     strcpy(user.desc.dataPath, ROOT_PATH);
 
     static struct option long_options[] = {
@@ -544,7 +543,9 @@ UserParams processInput(int argc, const char **argv) {
                 break;
         }
     }
-    if (user.prf > 0 && user.simulate == false) {
+	if (user.prf == 0 && user.simulate == true) {
+		user.prf = 1000;
+	} else if (user.prf > 0 && user.simulate == false) {
         RKLog("Warning. PRF has no effects without simulation.\n");
     }
     if (user.verbose == 1) {
@@ -554,14 +555,18 @@ UserParams processInput(int argc, const char **argv) {
     } else if (user.verbose == 3) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-    k = user.fs / user.prf;
-    if (user.gateCount > k) {
-        RKLog("Info. Gate count adjusted: %s -> %s for PRF (%s kHz) and bandwidth (%s MHz)",
-              RKIntegerToCommaStyleString(user.gateCount), RKIntegerToCommaStyleString(k),
-              RKFloatToCommaStyleString(1.0e-3 * user.prf), RKFloatToCommaStyleString(1.0e-6 * user.fs));
-        user.gateCount = k;
-    }
-    user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
+	if (user.prf > 0) {
+		k = user.fs / user.prf;
+	} else {
+		k = user.fs / 1000.0f;
+	}
+	if (user.gateCount > k) {
+		RKLog("Info. Gate count adjusted: %s -> %s for PRF (%s kHz) and bandwidth (%s MHz)",
+			  RKIntegerToCommaStyleString(user.gateCount), RKIntegerToCommaStyleString(k),
+			  RKFloatToCommaStyleString(1.0e-3 * user.prf), RKFloatToCommaStyleString(1.0e-6 * user.fs));
+		user.gateCount = k;
+	}
+	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
     return user;
 }
 
