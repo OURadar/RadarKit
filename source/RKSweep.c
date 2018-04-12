@@ -787,12 +787,16 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &sweep->header.desc.latitude);
 			if (r != NC_NOERR) {
 				r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
-				sweep->header.desc.latitude = (double)fv;
+				if (r == NC_NOERR) {
+					sweep->header.desc.latitude = (double)fv;
+				}
 			}
 			r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->header.desc.longitude);
 			if (r != NC_NOERR) {
 				r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
-				sweep->header.desc.longitude = (double)fv;
+				if (r == NC_NOERR) {
+					sweep->header.desc.longitude = (double)fv;
+				}
 			}
 			if (!strcmp(scanType, "PPI")) {
 				sweep->header.config.sweepElevation = ray->header.sweepElevation;

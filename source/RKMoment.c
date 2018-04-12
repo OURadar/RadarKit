@@ -295,7 +295,6 @@ static void *momentCore(void *in) {
     RKScratch *space;
 
     // Allocate local resources and keep track of the total allocation
-    ray = RKGetRay(engine->rayBuffer, 0);
     pulse = RKGetPulse(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->verbose > 3);

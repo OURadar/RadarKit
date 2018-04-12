@@ -365,7 +365,7 @@ static void *hostWatcher(void *in) {
     }
     
     if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
+        RKLog("%s Started.   mem = %s B   state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
     }
 
 	// Increase the tic once to indicate the engine is ready

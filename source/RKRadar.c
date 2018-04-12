@@ -1396,6 +1396,9 @@ int RKWaitWhileActive(RKRadar *radar) {
 								 radar->pulseCompressionEngine->planUseCount[j]);
 				}
 				k += sprintf(FFTPlanUsage + k, "}");
+				if (k > RKNameLength * 3 / 4) {
+					RKLog("Warning. Too little head room in FFTPlanUsage.\n");
+				}
 				config = RKGetLatestConfig(radar);
 				sprintf(health->string, "{"
                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
@@ -1455,10 +1458,13 @@ int RKWaitWhileActive(RKRadar *radar) {
 //     Always RKResultSuccess
 //
 int RKStop(RKRadar *radar) {
+	pthread_mutex_lock(&radar->mutex);
     if (radar->active == false) {
+		pthread_mutex_unlock(&radar->mutex);
         return RKResultEngineDeactivatedMultipleTimes;
     }
 	radar->active = false;
+	pthread_mutex_unlock(&radar->mutex);
     if (radar->systemInspector) {
         RKSimpleEngineFree(radar->systemInspector);
     }
@@ -1524,8 +1530,8 @@ int RKStop(RKRadar *radar) {
         RKSweepEngineStop(radar->sweepEngine);
         radar->state ^= RKRadarStateSweepEngineInitialized;
     }
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("radar->state = 0x%x\n", radar->state);
+    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+        RKLog("Radar state = 0x%x\n", radar->state);
     }
     return RKResultSuccess;
 }

@@ -250,7 +250,7 @@ static void *pulseRingWatcher(void *_in) {
     }
     
     // The beginning of the buffer is a pulse, it has the capacity info
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
+    RKPulse *pulse;
     RKPulse *pulseToSkip;
 
     // Filter status of each worker
@@ -315,7 +315,7 @@ static void *pulseRingWatcher(void *_in) {
     // i  anonymous
     j = 0;   // filtered pulse index
     k = 0;   // pulse index
-    c = 0;   // core index
+    //c = 0;   // core index
     int s = 0;
     while (engine->state & RKEngineStateActive) {
         // The pulse
@@ -380,9 +380,6 @@ static void *pulseRingWatcher(void *_in) {
         // The pulse is considered "inspected" whether it will be skipped / filtered by the designated worker
         pulse->header.s |= RKPulseStatusRingInspected;
         
-        // Now we set this pulse to be "not done" and post
-        workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
-
 		#ifdef SHOW_RING_FILTER_DOUBLE_BUFFERING
 		for (c = 0; c < engine->coreCount; c++) {
 			*workerTaskDone++ = false;
@@ -397,6 +394,7 @@ static void *pulseRingWatcher(void *_in) {
 		printf("===\n");
 		#endif
 
+		// Now we set this pulse to be "not done" and post
 		workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
 		for (c = 0; c < engine->coreCount; c++) {
 			*workerTaskDone++ = false;

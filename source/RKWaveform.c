@@ -411,8 +411,8 @@ void RKWaveformDownConvert(RKWaveform *waveform, const double omega) {
 		s[j].q = sinf(-omega * j);
 	}
 
-    RKInt16C *ic = waveform->iSamples[0];
-    RKComplex *fc = waveform->samples[0];
+    RKInt16C *ic;
+    RKComplex *fc;
 
     // Copy over the float samples to int16_t samples and adjust the amplitude so that it represents the intended transmit envelope
     // This adjustment will not produce the transmit waveform that takes full advantage of the DAC range
