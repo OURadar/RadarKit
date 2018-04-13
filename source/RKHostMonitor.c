@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKHostMonitor.h>
 
-#define RKHostMonitorPacketSize 32
+#define RKHostMonitorPacketSize 64
 
 //
 // The following structures are obtained from an example from Apple:
@@ -166,6 +166,8 @@ static void *hostPinger(void *in) {
     me->identifier = rand() & 0xffff;
     gettimeofday(&me->latestTime, NULL);
 
+    uint32_t unreachCount = 0;
+
     while (engine->state & RKEngineStateActive) {
 
         // Reset buffer
@@ -196,6 +198,14 @@ static void *hostPinger(void *in) {
             // Delay reporting since other threads may still be waiting for recvfrom()
             me->state = RKHostStateUnreachable;
             me->tic++;
+            if (unreachCount++ > 3) {
+                unreachCount = 0;
+                RKLog("%s %s Reinitiating socket descriptor ...\n", engine->name, name);
+                close(sd);
+                sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto);
+                setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value));
+                fcntl(sd, F_SETFL, O_NONBLOCK);
+            }
             continue;
         } else if (engine->verbose > 1) {
             RKLog(">%s %s Ping %s (%d.%d.%d.%d)   seq = %d   size = %d bytes\n",
