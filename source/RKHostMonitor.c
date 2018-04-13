@@ -240,7 +240,9 @@ static void *hostPinger(void *in) {
         offset = (size_t)-1;
         returnAddress.sin_addr.s_addr = 0;
         while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount && engine->state & RKEngineStateActive) {
-            if ((r = recvfrom(sd, &buff, RKNameLength, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
+            returnLength = sizeof(struct sockaddr);
+            if ((r = recvfrom(sd, &buff, RKNameLength, MSG_WAITALL, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
+                RKLog("%s %s r = %d  / %d\n", engine->name, name, r, (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)));
                 if (engine->verbose > 2) {
                     RKLog("%s %s recvfrom()   sd = %d   %d.%d.%d.%d\n",
                           engine->name, name, sd,
