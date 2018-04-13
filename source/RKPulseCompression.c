@@ -652,7 +652,9 @@ static void *pulseWatcher(void *_in) {
             RKPulseCompressionUpdateStatusString(engine);
         }
     
-        // Update k to catch up for the next watch
+		engine->tic++;
+
+		// Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
 

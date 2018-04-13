@@ -427,7 +427,10 @@ static void *hostWatcher(void *in) {
         engine->allKnown = allKnown;
         engine->allReachable = allReachable;
         engine->anyReachable = anyReachable;
-        // Wait one minute, do it with multiples of 0.1s for a responsive exit
+
+		engine->tic++;
+
+		// Wait one minute, do it with multiples of 0.1s for a responsive exit
         k = 0;
         while (k++ < RKHostMonitorPingInterval * 10 && engine->state & RKEngineStateActive) {
             usleep(100000);

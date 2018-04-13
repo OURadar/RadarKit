@@ -306,7 +306,9 @@ static void *pulseTagger(void *_in) {
         
         pulse->header.s |= RKPulseStatusHasPosition;
 
-        // Update pulseIndex for the next watch
+		engine->tic++;
+
+		// Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
     return NULL;

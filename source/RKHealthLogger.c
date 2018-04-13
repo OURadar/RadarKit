@@ -248,7 +248,9 @@ static void *healthLogger(void *in) {
         
         RKProcessHealthKeywords(engine, health->string);
 
-        // Update pulseIndex for the next watch
+		engine->tic++;
+
+		// Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->healthBufferDepth);
         if (k >= engine->radarDescription->healthBufferDepth) {
             RKLog("Error. k = %d\n", k);

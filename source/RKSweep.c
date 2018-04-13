@@ -355,8 +355,12 @@ static void *sweepWriter(void *in) {
 static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
-    int k, s, n;
+    int j, n, s;
     
+	// Start index
+	uint32_t is = 0;
+	pthread_t tidSweepWriter = NULL;
+
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
 
@@ -375,31 +379,31 @@ static void *rayGatherer(void *in) {
         engine->memoryUsage += RKMaxRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
     }
     
-    // Start and end indices of the input rays
-    uint32_t is = 0;
-    pthread_t tidSweepWriter = NULL;
+	// Update the engine state
+	engine->state |= RKEngineStateActive;
+	engine->state ^= RKEngineStateActivating;
 
-    if (engine->verbose) {
-		RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
+	if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+		RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
     }
-    
-    engine->state |= RKEngineStateActive;
-    engine->state ^= RKEngineStateActivating;
-    
-    k = 0;   // ray index
+
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
+
+    j = 0;   // ray index
     while (engine->state & RKEngineStateActive) {
         // The ray
-        ray = RKGetRay(engine->rayBuffer, k);
+        ray = RKGetRay(engine->rayBuffer, j);
         
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (k == *engine->rayIndex && engine->state & RKEngineStateActive) {
+        while (j == *engine->rayIndex && engine->state & RKEngineStateActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
+                      engine->name, (float)s * 0.01f, j, *engine->rayIndex, ray->header.s);
             }
         }
         engine->state ^= RKEngineStateSleep1;
@@ -410,7 +414,7 @@ static void *rayGatherer(void *in) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.01f, k, *engine->rayIndex, ray->header.s);
+                      engine->name, (float)s * 0.01f, j, *engine->rayIndex, ray->header.s);
             }
         }
         engine->state ^= RKEngineStateSleep2;
@@ -420,7 +424,7 @@ static void *rayGatherer(void *in) {
         }
         
         // Lag of the engine
-        engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - k) / engine->radarDescription->rayBufferDepth, 1.0f);
+        engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - j) / engine->radarDescription->rayBufferDepth, 1.0f);
         if (ray->header.marker & RKMarkerSweepEnd) {
             n = 0;
             do {
@@ -428,7 +432,7 @@ static void *rayGatherer(void *in) {
                 ray->header.n = is;
                 rays[n++] = ray;
                 is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-            } while (is != k && n < RKMaxRaysPerSweep - 1 && n < engine->radarDescription->rayBufferDepth);
+            } while (is != j && n < RKMaxRaysPerSweep - 1 && n < engine->radarDescription->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
@@ -443,13 +447,15 @@ static void *rayGatherer(void *in) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
 
-            is = k;
+            is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
-            is = k;
+            is = j;
         }
 
+		engine->tic++;
+
         // Update k to catch up for the next watch
-        k = RKNextModuloS(k, engine->radarDescription->rayBufferDepth);
+        j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
     }
     if (tidSweepWriter) {
         pthread_join(tidSweepWriter, NULL);
@@ -534,7 +540,7 @@ int RKSweepEngineStart(RKSweepEngine *engine) {
         RKLog("Error. Failed to start a ray gatherer.\n");
         return RKResultFailedToStartRayGatherer;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+    while (engine->tic == 0) {
         usleep(10000);
     }
     return RKResultSuccess;

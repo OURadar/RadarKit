@@ -789,6 +789,8 @@ static void *pulseGatherer(void *_in) {
             RKMomentUpdateStatusString(engine);
         }
 
+		engine->tic++;
+
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }

@@ -188,7 +188,9 @@ static void *pulseRecorder(void *in) {
         
         // Going to wait mode soon
         engine->state ^= RKEngineStateWritingFile;
-        
+
+		engine->tic++;
+
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
         doNotWrite = engine->doNotWrite;

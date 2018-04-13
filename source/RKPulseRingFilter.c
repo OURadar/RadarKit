@@ -428,6 +428,8 @@ static void *pulseRingWatcher(void *_in) {
             RKPulseRingFilterUpdateStatusString(engine);
         }
 
+		engine->tic++;
+
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }

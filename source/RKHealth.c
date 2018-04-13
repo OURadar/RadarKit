@@ -163,6 +163,8 @@ static void *healthConsolidator(void *_in) {
             RKLog("%s", string);
         }
 
+		engine->tic++;
+
         // Update index for the next watch
         k = RKNextModuloS(k, desc->healthBufferDepth);
         health = &engine->healthBuffer[k];
