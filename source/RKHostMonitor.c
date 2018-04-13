@@ -80,7 +80,12 @@ static void *hostPinger(void *in) {
     const int value = 50;
     struct protoent *protocol = getprotobyname("ICMP");
 
-    char buff[RKHostMonitorPacketSize];
+    void *buff = malloc(RKHostMonitorPacketSize);
+	if (buff == NULL) {
+		RKLog("%s Error. Unable to allocate memory. Unable to continue.\n", engine->name);
+		return NULL;
+	}
+
     RKICMPHeader *icmpHeader;
     RKIPV4Header *ipv4Header = (RKIPV4Header *)buff;
     socklen_t returnLength = sizeof(struct sockaddr);
@@ -93,7 +98,6 @@ static void *hostPinger(void *in) {
 
     double period;
     struct timeval time;
-    fd_set rfd, efd;
 
 	// Initiate a variable to store my name
 	RKName name;
@@ -143,12 +147,6 @@ static void *hostPinger(void *in) {
         me->tic = 2;
         return NULL;
     }
-//    if (setsockopt(sd, IPPROTO_IP, IP_RETOPTS, &hold, sizeof(hold))) {
-//        RKLog("%s %s Error. Failed in setsockopt() IP_RETOPTS.\n", engine->name, name);
-//        me->state = RKHostStateUnknown;
-//        me->tic = 2;
-//        return NULL;
-//    }
     if (setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value))) {
         RKLog("%s %s Error. Failed in setsockopt().\n", engine->name, name);
         me->state = RKHostStateUnknown;
@@ -232,24 +230,6 @@ static void *hostPinger(void *in) {
                   txSize);
         }
 
-        // This part does not work as expected.
-        /*
-        if (engine->verbose > 1) {
-            RKLog("%s %s select()   sd = %d\n", engine->name, name, sd);
-        }
-        do {
-            FD_ZERO(&rfd);
-            FD_ZERO(&efd);
-            time.tv_sec = 0;
-            time.tv_usec = 200000;
-            k = select(sd + 1, &rfd, NULL, &efd, &time);
-            if (engine->verbose > 1) {
-                RKLog("%s %s select() -> %d   rfd = %d   efd = %d\n", engine->name, name, k, FD_ISSET(sd, &rfd), FD_ISSET(sd, &efd));
-            }
-        } while (FD_ISSET(sd, &rfd) == 0 && FD_ISSET(sd, &efd) == 0 && engine->state & RKEngineStateActive);
-        RKLog("%s %s select() -> %d   rfd = %d   efd = %d\n", engine->name, name, k, FD_ISSET(sd, &rfd), FD_ISSET(sd, &efd));
-         */
-        
         // Reset buffer
         memset(buff, 0, RKHostMonitorPacketSize);
 
@@ -259,7 +239,7 @@ static void *hostPinger(void *in) {
         returnAddress.sin_addr.s_addr = 0;
         while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount && engine->state & RKEngineStateActive) {
             returnLength = sizeof(struct sockaddr);
-            if ((r = recvfrom(sd, &buff, sizeof(buff), 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
+            if ((r = recvfrom(sd, buff, RKHostMonitorPacketSize, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
                 RKLog(">%s %s r = %d  / %d (%d)\n", engine->name, name, r, (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)), returnLength);
                 if (engine->verbose > 2) {
                     RKLog("%s %s recvfrom()   sd = %d   %d.%d.%d.%d\n",
@@ -347,6 +327,7 @@ static void *hostPinger(void *in) {
     if (sd) {
         close(sd);
     }
+	free(buff);
 
     if (engine->verbose) {
         RKLog(">%s %s Stopped.\n", engine->name, name);
