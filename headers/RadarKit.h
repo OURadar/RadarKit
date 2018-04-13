@@ -11,6 +11,7 @@
 //  █
 //
 //  1.2.8b - 4/31/2018
+//         - Fixed a memory leak in RKHostMonitor
 //         - Added RKSoftReset() to restart DSP-related engines only
 //         - Added RKSystemInspector() for gathering system status
 //         - Migrated RKFileMonitor() to RKSimpleEngine design
