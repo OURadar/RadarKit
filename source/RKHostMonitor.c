@@ -339,7 +339,7 @@ static void *hostWatcher(void *in) {
     RKHostMonitor *engine = (RKHostMonitor *)in;
     
     int k;
-    bool allTrue, allKnown, allReachable, anyReachable;
+    bool anyTrue, allKnown, allReachable, anyReachable;
     
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -374,22 +374,22 @@ static void *hostWatcher(void *in) {
         }
     }
     
+    // Wait another tic for the first ping to respond
+    do {
+        anyTrue = false;
+        for (k = 0; k < engine->workerCount; k++) {
+            RKUnitMonitor *worker = &engine->workers[k];
+            anyTrue |= worker->tic == 1;
+        }
+        usleep(10000);
+    } while (anyTrue && engine->state & RKEngineStateActive);
+    
     if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
     }
 
 	// Increase the tic once to indicate the engine is ready
 	engine->tic++;
-
-    // Wait another tic for the first ping to respond
-    do {
-        allTrue = true;
-        for (k = 0; k < engine->workerCount; k++) {
-            RKUnitMonitor *worker = &engine->workers[k];
-            allTrue &= worker->tic == 1;
-        }
-        usleep(10000);
-    } while (allTrue && engine->state & RKEngineStateActive);
 
     if (engine->verbose > 2) {
         for (k = 0; k < engine->workerCount; k++) {
@@ -398,6 +398,9 @@ static void *hostWatcher(void *in) {
         }
     }
 
+    // Wait half of a cycle so that the probe is more or less at the middle
+    usleep(RKHostMonitorPingInterval * 1000000 / 2);
+    
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateActive) {
         // Consolidate all the state from all unit watcher
