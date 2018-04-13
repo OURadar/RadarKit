@@ -240,34 +240,34 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     
     //
     
-	// Populate some numbers
-	for (i = 0; i < n; i++) {
-		cs[i].i = (RKFloat)i;
-		cs[i].q = (RKFloat)(-i);
-		cd[i].i = (RKFloat)(i + 1);
-		cd[i].q = (RKFloat)(-i);
-	}
-	memcpy(cc, cd, n * sizeof(RKComplex));
+    // Populate some numbers
+    for (i = 0; i < n; i++) {
+        cs[i].i = (RKFloat)i;
+        cs[i].q = (RKFloat)(-i);
+        cd[i].i = (RKFloat)(i + 1);
+        cd[i].q = (RKFloat)(-i);
+    }
+    memcpy(cc, cd, n * sizeof(RKComplex));
 
-	RKSIMD_iymul2(cs, cd, n, false);
+    RKSIMD_iymul2(cs, cd, n, false);
 
-	if (flag & RKTestSIMDFlagShowNumbers) {
-		printf("====\n");
-	}
-	all_good = true;
-	for (i = 0; i < n; i++) {
-		// Answers should be 0, 1-3i, 2-10i, 3-21i, ...
-		good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
-		if (flag & RKTestSIMDFlagShowNumbers) {
-			printf("%+9.2f%+9.2fi * %+9.2f%+9.2fi = %+9.2f%+9.2fi  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
-		}
-		all_good &= good;
-	}
-	RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
+    if (flag & RKTestSIMDFlagShowNumbers) {
+        printf("====\n");
+    }
+    all_good = true;
+    for (i = 0; i < n; i++) {
+        // Answers should be 0, 1-3i, 2-10i, 3-21i, ...
+        good = fabsf(cd[i].i - (RKFloat)i) < tiny && fabsf(cd[i].q - (RKFloat)(-2 * i * i - i)) < tiny;
+        if (flag & RKTestSIMDFlagShowNumbers) {
+            printf("%+9.2f%+9.2fi * %+9.2f%+9.2fi = %+9.2f%+9.2fi  %s\n", cs[i].i, cs[i].q, cc[i].i, cc[i].q, cd[i].i, cd[i].q, OXSTR(good));
+        }
+        all_good &= good;
+    }
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, "In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
 
-	//
-	
-	for (i = 0; i < n; i++) {
+    //
+    
+    for (i = 0; i < n; i++) {
         cc[i].i = (RKFloat)i;
         cc[i].q = (RKFloat)(-i);
     }
@@ -277,8 +277,8 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         cc[i].q = (RKFloat)(-i);
     }
     RKSIMD_Complex2IQZ(cc, dst, n);
-	memcpy(cpy->i, dst->i, n * sizeof(RKFloat));
-	memcpy(cpy->q, dst->q, n * sizeof(RKFloat));
+    memcpy(cpy->i, dst->i, n * sizeof(RKFloat));
+    memcpy(cpy->q, dst->q, n * sizeof(RKFloat));
     RKSIMD_izmul(src, dst, n, false);
     RKSIMD_IQZ2Complex(dst, cc, n);
     if (flag & RKTestSIMDFlagShowNumbers) {
@@ -459,8 +459,8 @@ void *RKTestTransceiverRunLoop(void *input) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
-			  RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
-			  transceiver->gateSizeMeters,
+              RKFloatToCommaStyleString(1.0e-6 * transceiver->fs),
+              transceiver->gateSizeMeters,
               transceiver->sprt > 1 ? "Base " : "",
               RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
               1000.0 * transceiver->prt,
@@ -494,38 +494,38 @@ void *RKTestTransceiverRunLoop(void *input) {
     float a;
     float r;
     float phi;
-	float cosv;
-	float sinv;
-	int16_t noise;
+    float cosv;
+    float sinv;
+    int16_t noise;
 
-	float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
-	int16_t *rn = (int16_t *)malloc(transceiver->gateCount * sizeof(int16_t));
-	for (g = 0; g < transceiver->gateCount; g++) {
-		r = (float)g * transceiver->gateSizeMeters * 0.1f;
-		a = 60.0f * (cos(0.001f * r)
-					 + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
-					 + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
-					 + 0.2f * cosf(0.01f * r + 0.3f)
-					 + 0.5f);
-		a *= (1000.0 / r);
-		ra[g] = a;
-		rn[g] = (int16_t)((float)rand() / RAND_MAX - 0.5f);
-	}
+    float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
+    int16_t *rn = (int16_t *)malloc(transceiver->gateCount * sizeof(int16_t));
+    for (g = 0; g < transceiver->gateCount; g++) {
+        r = (float)g * transceiver->gateSizeMeters * 0.1f;
+        a = 60.0f * (cos(0.001f * r)
+                     + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
+                     + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
+                     + 0.2f * cosf(0.01f * r + 0.3f)
+                     + 0.5f);
+        a *= (1000.0 / r);
+        ra[g] = a;
+        rn[g] = (int16_t)((float)rand() / RAND_MAX - 0.5f);
+    }
 
-	float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
-	while (dphi > M_PI) {
-		dphi -= 2.0 * M_PI;
-	}
-	while (dphi < -M_PI) {
-		dphi += 2.0 * M_PI;
-	}
-	if (dphi < -M_PI || dphi > M_PI) {
-		RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
-	}
+    float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
+    while (dphi > M_PI) {
+        dphi -= 2.0 * M_PI;
+    }
+    while (dphi < -M_PI) {
+        dphi += 2.0 * M_PI;
+    }
+    if (dphi < -M_PI || dphi > M_PI) {
+        RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
+    }
 
-	RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+    RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
 
-	while (transceiver->state & RKEngineStateActive) {
+    while (transceiver->state & RKEngineStateActive) {
 
         periodTotal = 0.0;
 
@@ -543,25 +543,25 @@ void *RKTestTransceiverRunLoop(void *input) {
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 // Some random pattern for testing
-				k = rand() % transceiver->gateCount;
-				for (g = 0; g < transceiver->transmitWaveformLength; g++) {
-					noise = rn[k];
-					X->i = transceiver->transmitWaveform[g].i + noise;
-					X->q = transceiver->transmitWaveform[g].q + noise;
-					k = RKNextModuloS(k, transceiver->gateCount);
-					X++;
-				}
+                k = rand() % transceiver->gateCount;
+                for (g = 0; g < transceiver->transmitWaveformLength; g++) {
+                    noise = rn[k];
+                    X->i = transceiver->transmitWaveform[g].i + noise;
+                    X->q = transceiver->transmitWaveform[g].q + noise;
+                    k = RKNextModuloS(k, transceiver->gateCount);
+                    X++;
+                }
                 // Phase as a function of time (tic) wrapped into [-PI, PI]
-				phi = fmod((double)(tic & 0xFFFF) / 655.36 * M_PI + M_PI, 2.0 * M_PI) - M_PI;
+                phi = fmod((double)(tic & 0xFFFF) / 655.36 * M_PI + M_PI, 2.0 * M_PI) - M_PI;
                 for (; g < transceiver->gateCount; g++) {
-					// sinf() and cosf() run faster with angle within 0 and 2 PI
-					phi += dphi;
-					if (phi < -3.14159265f) {
-						phi += 6.28318531f;
-					} else if (phi > 3.14159265f) {
-						phi -= 6.28318531f;
-					}
-					noise = rn[k];
+                    // sinf() and cosf() run faster with angle within 0 and 2 PI
+                    phi += dphi;
+                    if (phi < -3.14159265f) {
+                        phi += 6.28318531f;
+                    } else if (phi > 3.14159265f) {
+                        phi -= 6.28318531f;
+                    }
+                    noise = rn[k];
 
                     //
                     // The following are using faster approximation of sin() and cos().
@@ -571,11 +571,11 @@ void *RKTestTransceiverRunLoop(void *input) {
                     // X->i = (int16_t)(ra[g] * cosf(phi) + noise);
                     // X->q = (int16_t)(ra[g] * sinf(phi) + noise);
                     //
-					RKFasterSineCosine(phi, &sinv, &cosv);
-					X->i = (int16_t)(ra[g] * cosv + noise);
-					X->q = (int16_t)(ra[g] * sinv + noise);
+                    RKFasterSineCosine(phi, &sinv, &cosv);
+                    X->i = (int16_t)(ra[g] * cosv + noise);
+                    X->q = (int16_t)(ra[g] * sinv + noise);
 
-					k = RKNextModuloS(k, transceiver->gateCount);
+                    k = RKNextModuloS(k, transceiver->gateCount);
                     X++;
                 }
             }
@@ -611,33 +611,33 @@ void *RKTestTransceiverRunLoop(void *input) {
         }
 
         // Report health
-		int nn = rand();
+        int nn = rand();
         float temp = 1.0f * nn / RAND_MAX + 79.5f;
         float volt = 1.0f * nn / RAND_MAX + 11.5f;
         float room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
-		RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
+        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
         sprintf(health->string,
                 "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
-				"\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-				"\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
+                "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+                "\"PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
                 "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
                 "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
                 "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-				"\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-				"\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
+                "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
                 "\"TransceiverCounter\": %ld}",
-				RKStatusEnumActive,
-				RKStatusEnumNormal,
-				RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+                RKStatusEnumActive,
+                RKStatusEnumNormal,
+                RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
                 temp, RKStatusFromTemperatureForCE(temp),
                 volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
                 room, RKStatusFromTemperatureForComputers(room),
                 transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
                 transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-				transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
                 transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-				transceiver->transmitWaveformName,
+                transceiver->transmitWaveformName,
                 transceiver->counter);
         RKSetHealthReady(radar, health);
 
@@ -655,8 +655,8 @@ void *RKTestTransceiverRunLoop(void *input) {
         t0 = t1;
     }
 
-	free(ra);
-	free(rn);
+    free(ra);
+    free(rn);
 
     return NULL;
 }
@@ -672,17 +672,17 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     sprintf(transceiver->name, "%s<TransceiverCast>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-	transceiver->state = RKEngineStateAllocated;
-	transceiver->radar = radar;
+    transceiver->state = RKEngineStateAllocated;
+    transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
     transceiver->gateCount = RKGetPulseCapacity(radar);
     transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
                      (transceiver->gateCount >= 8000 ? 25.0e6 :
                      (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
-	transceiver->gateCount /= 10;
+    transceiver->gateCount /= 10;
     transceiver->prt = 0.0003;
-	transceiver->sprt = 1;
-	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKInt16C)));
+    transceiver->sprt = 1;
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&transceiver->transmitWaveform, RKSIMDAlignSize, radar->desc.pulseCapacity * sizeof(RKInt16C)));
 
     int i, j, k;
 
@@ -698,12 +698,12 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         while ((se = strchr(sb, ' ')) != NULL) {
             sv = se + 1;
             switch (*sb) {
-				case 'F':
-					transceiver->fs = atof(sv);
-					if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
-						RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
-					}
-					break;
+                case 'F':
+                    transceiver->fs = atof(sv);
+                    if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
+                        RKLog(">%s fs = %s Hz", transceiver->name, RKIntegerToCommaStyleString((long)transceiver->fs));
+                    }
+                    break;
                 case 'f':
                     i = sscanf(sv, "%d,%d", &j, &k);
                     transceiver->prt = 1.0 / (double)j;
@@ -764,8 +764,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         usleep(10000);
     }
 
-	RKTestTransceiverExec(transceiver, "w q02", NULL);
-	//RKTestTransceiverExec(transceiver, "w q10", NULL);
+    RKTestTransceiverExec(transceiver, "w q02", NULL);
+    //RKTestTransceiverExec(transceiver, "w q10", NULL);
     //RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
 
@@ -776,10 +776,10 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
 
-	int k;
-	char *c;
-	double pulsewidth;
-	unsigned int pulsewidthSampleCount;
+    int k;
+    char *c;
+    double pulsewidth;
+    unsigned int pulsewidthSampleCount;
 
     RKWaveform *waveform = NULL;
     char string[RKMaximumPathLength];
@@ -858,8 +858,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 c++;
             }
             if (*c == 's' || *c == 't' || *c == 'q') {
-				strcpy(string, c);
-				RKStripTail(string);
+                strcpy(string, c);
+                RKStripTail(string);
                 pulsewidth = 1.0e-6 * atof(c + 1);
                 pulsewidthSampleCount = pulsewidth * transceiver->fs;
                 if (radar->desc.pulseCapacity < pulsewidthSampleCount) {
@@ -881,8 +881,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 } else if (*c == 'q') {
                     RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
                 }
-				strncpy(waveform->name, string, RKNameLength);
-				strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+                strncpy(waveform->name, string, RKNameLength);
+                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
                 transceiver->transmitWaveformLength = waveform->depth;
                 for (k = 0; k < waveform->depth; k++) {
                     transceiver->transmitWaveform[k].i = waveform->iSamples[0][k].i;
@@ -962,7 +962,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 sprintf(response, "ACK. Everything stops." RKEOL);
             }
             transceiver->transmitting = false;
-			//RKStop(radar);
+            //RKStop(radar);
             break;
         default:
             if (response != NULL) {
@@ -975,7 +975,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 
 int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
-	free(transceiver->transmitWaveform);
+    free(transceiver->transmitWaveform);
     free(transceiver);
     return RKResultSuccess;
 }
@@ -1059,16 +1059,16 @@ void *RKTestPedestalRunLoop(void *input) {
             sprintf(health->string, "{"
                     "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
                     "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-					"\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
-					"\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
-					"\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
                     "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
                     "}",
                     position->azimuthDegrees, RKStatusEnumNormal,
                     position->elevationDegrees, RKStatusEnumNormal,
-					RKStatusEnumNormal,
-					RKStatusEnumNormal,
-					position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    RKStatusEnumNormal,
+                    RKStatusEnumNormal,
+                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
                     position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
             RKSetHealthReady(radar, health);
         }
@@ -1271,16 +1271,16 @@ void *RKTestHealthRelayRunLoop(void *input) {
         powerV = (float)rand() / RAND_MAX - 0.5f;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         sprintf(health->string, "{"
-				"\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-				"\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+                "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+                "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
                 "}",
-				RKStatusEnumNormal,
-				RKStatusEnumNormal,
+                RKStatusEnumNormal,
+                RKStatusEnumNormal,
                 (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
                 (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
                 (double)rand() * 0.2 / RAND_MAX + 45,
@@ -1288,16 +1288,16 @@ void *RKTestHealthRelayRunLoop(void *input) {
                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
 
-		// Wait to simulate sampling time
-		n = 0;
-		do {
-			gettimeofday(&t1, NULL);
-			dt = RKTimevalDiff(t1, t0);
-			usleep(10000);
-			n++;
-		} while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
-		t0 = t1;
-	}
+        // Wait to simulate sampling time
+        n = 0;
+        do {
+            gettimeofday(&t1, NULL);
+            dt = RKTimevalDiff(t1, t0);
+            usleep(10000);
+            n++;
+        } while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
+        t0 = t1;
+    }
 
     return NULL;
 }
@@ -1500,9 +1500,9 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     } else if (method == RKPulsePair) {
         RKLog("Info. Pulse Pair.\n");
     } else if (method == RKMultiLag) {
-		space->userLagChoice = lag;
-		space->velocityFactor = 1.0f;
-		space->widthFactor = 1.0f;
+        space->userLagChoice = lag;
+        space->velocityFactor = 1.0f;
+        space->widthFactor = 1.0f;
         RKLog("Info. Multilag (N = %d).\n", space->userLagChoice);
     } else {
         RKLog("Warning. Unknown method.\n");
@@ -1510,52 +1510,52 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     }
     method(space, pulses, pulseCount);
 
-	// Some known results
-	RKFloat err = 0.0f;
+    // Some known results
+    RKFloat err = 0.0f;
 
     char str[RKNameLength];
     
     if (method == RKMultiLag && lag >= 2 && lag <= 4) {
-		// Results for lags 2, 3, and 4
-		RKFloat D[3][6] = {
-			{4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
-			{2.7106, -8.4965, -7.8061, -9.1933, -0.7019, -8.4546},
-			{3.7372, -4.2926, -4.1635, -6.0751, -0.7788, -5.9091}
-		};
+        // Results for lags 2, 3, and 4
+        RKFloat D[3][6] = {
+            {4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
+            {2.7106, -8.4965, -7.8061, -9.1933, -0.7019, -8.4546},
+            {3.7372, -4.2926, -4.1635, -6.0751, -0.7788, -5.9091}
+        };
 
-		RKFloat R[3][6] = {
-			{1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
-			{1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
-			{1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
-		};
+        RKFloat R[3][6] = {
+            {1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
+            {1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
+            {1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
+        };
 
-		RKFloat P[3][6] = {
-			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
-			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
-			{-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
-		};
-		
+        RKFloat P[3][6] = {
+            {-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
+            {-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
+            {-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
+        };
+        
         for (k = 0; k < gateCount; k++) {
-			err += D[lag - 2][k] - space->ZDR[k];
-		}
-		err /= (RKFloat)gateCount;
+            err += D[lag - 2][k] - space->ZDR[k];
+        }
+        err /= (RKFloat)gateCount;
         sprintf(str, "Delta ZDR = %.4e", err);
         TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
-		
+        
         for (k = 0; k < gateCount; k++) {
-			err += P[lag - 2][k] - space->PhiDP[k];
-		}
-		err /= (RKFloat)gateCount;
+            err += P[lag - 2][k] - space->PhiDP[k];
+        }
+        err /= (RKFloat)gateCount;
         sprintf(str, "Delta PhiDP = %.4e", err);
         TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
-		
+        
         for (k = 0; k < gateCount; k++) {
-			err += R[lag - 2][k] - space->RhoHV[k];
-		}
-		err /= (RKFloat)gateCount;
+            err += R[lag - 2][k] - space->RhoHV[k];
+        }
+        err /= (RKFloat)gateCount;
         sprintf(str, "Delta RhoHV = %.4e", err);
         TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
-	}
+    }
 
     RKLog("Deallocating buffers ...\n");
 
@@ -1732,7 +1732,7 @@ void RKTestJSON(void) {
     printf("Getting all keys:\n");
     printf("-----------------\n");
     char criticalKey[RKNameLength];
-	char criticalValue[RKNameLength];
+    char criticalValue[RKNameLength];
     bool anyCritical = RKAnyCritical(str, true, criticalKey, criticalValue);
     printf("anyCritical = %s%s%s%s%s\n",
            rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
@@ -1837,7 +1837,7 @@ void RKTestHostMonitor(void) {
         return;
     }
     RKHostMonitorSetVerbose(o, 2);
-	RKHostMonitorAddHost(o, "10.203.6.126");
+    RKHostMonitorAddHost(o, "amazon.com");
     RKHostMonitorStart(o);
     sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
     RKHostMonitorFree(o);
@@ -1879,30 +1879,30 @@ void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/test-tfm.rkwav";
     RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
-	RKWaveformSummary(waveform);
+    RKWaveformSummary(waveform);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
 
 void RKTestHilbertTransform(void) {
     SHOW_FUNCTION_NAME
-	int i;
-	RKFloat *x = (RKFloat *)malloc(8 * sizeof(RKFloat));
-	RKComplex *y = (RKComplex *)malloc(8 * sizeof(RKComplex));
-	for (i = 0; i < 8; i++) {
-		x[i] = cosf(0.1 * (float)i);
-	}
-	RKHilbertTransform(x, y, 8);
-	printf("\nX =\n\n");
-	for (i = 0; i < 8; i++) {
-		printf("    [ %.4f ]\n", x[i]);
-	}
-	printf("\nH =\n\n");
-	for (i = 0; i < 8; i++) {
-		printf("    [ %.4f %s %.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
-	}
-	free(x);
-	free(y);
+    int i;
+    RKFloat *x = (RKFloat *)malloc(8 * sizeof(RKFloat));
+    RKComplex *y = (RKComplex *)malloc(8 * sizeof(RKComplex));
+    for (i = 0; i < 8; i++) {
+        x[i] = cosf(0.1 * (float)i);
+    }
+    RKHilbertTransform(x, y, 8);
+    printf("\nX =\n\n");
+    for (i = 0; i < 8; i++) {
+        printf("    [ %.4f ]\n", x[i]);
+    }
+    printf("\nH =\n\n");
+    for (i = 0; i < 8; i++) {
+        printf("    [ %.4f %s %.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
+    }
+    free(x);
+    free(y);
 }
 
 void RKTestPulseCompressionSpeed(void) {
@@ -1949,7 +1949,7 @@ void RKTestPulseCompressionSpeed(void) {
                 RKSIMD_Int2Complex(X, (RKComplex *)in, nfft);
                 fftwf_execute_dft(planForwardInPlace, in, in);
                 fftwf_execute_dft(planForwardOutPlace, f, out);
-				//memcpy(out, f, nfft * sizeof(RKComplex));
+                //memcpy(out, f, nfft * sizeof(RKComplex));
                 RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
                 fftwf_execute_dft(planBackwardInPlace, out, out);
                 RKSIMD_iyscl((RKComplex *)out, 1.0f / nfft, nfft);
@@ -1965,8 +1965,8 @@ void RKTestPulseCompressionSpeed(void) {
         RKLog(">Test %d -> %.3f ms / pulse\n", i, 1.0e3 * t / testCount);
         mint = MIN(mint, t);
     }
-	RKLog(">Time for each pulse (%s gates) = %.3f ms / pulse (Best of 3)\n",
-		  RKIntegerToCommaStyleString(nfft), 1.0e3 * mint / testCount);
+    RKLog(">Time for each pulse (%s gates) = %.3f ms / pulse (Best of 3)\n",
+          RKIntegerToCommaStyleString(nfft), 1.0e3 * mint / testCount);
     RKLog(">Speed: %.2f pulses / sec / core\n", testCount / mint);
     
     fftwf_destroy_plan(planForwardInPlace);
@@ -1996,21 +1996,21 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratchAlloc(&space, pulseCapacity, 5, true);
     
     RKPulse *pulses[pulseCount];
-	RKComplex *X;
+    RKComplex *X;
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
-		X = RKGetComplexDataFromPulse(pulse, 0);
-		for (j = 0; j < pulseCapacity; j++) {
-			X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
-			X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
-		}
-		X = RKGetComplexDataFromPulse(pulse, 1);
-		for (j = 0; j < pulseCapacity; j++) {
-			X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
-			X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
-		}
+        X = RKGetComplexDataFromPulse(pulse, 0);
+        for (j = 0; j < pulseCapacity; j++) {
+            X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
+            X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+        }
+        X = RKGetComplexDataFromPulse(pulse, 1);
+        for (j = 0; j < pulseCapacity; j++) {
+            X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
+            X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+        }
         pulses[k] = pulse;
     }
     
@@ -2080,21 +2080,21 @@ void RKTestTemperatureToStatus(void) {
 }
 
 void RKTestGetCountry(void) {
-	double latitude;
-	double longitude;
-	char *country;
+    double latitude;
+    double longitude;
+    char *country;
 
-	double coords[][2] = {
-		{ 35.222567, -97.439478},
-		{ 36.391592, 127.031428},
-		{-11.024860, -75.279694},
-		{ 34.756300, 135.615895}
-	};
+    double coords[][2] = {
+        { 35.222567, -97.439478},
+        { 36.391592, 127.031428},
+        {-11.024860, -75.279694},
+        { 34.756300, 135.615895}
+    };
 
-	for (int k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
-		latitude = coords[k][0];
-		longitude = coords[k][1];
-		country = RKCountryFromPosition(latitude, longitude);
-		printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
-	}
+    for (int k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
+        latitude = coords[k][0];
+        longitude = coords[k][1];
+        country = RKCountryFromPosition(latitude, longitude);
+        printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
+    }
 }

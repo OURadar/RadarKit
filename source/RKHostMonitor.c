@@ -81,10 +81,10 @@ static void *hostPinger(void *in) {
     struct protoent *protocol = getprotobyname("ICMP");
 
     void *buff = malloc(RKHostMonitorPacketSize);
-	if (buff == NULL) {
-		RKLog("%s Error. Unable to allocate memory. Unable to continue.\n", engine->name);
-		return NULL;
-	}
+    if (buff == NULL) {
+        RKLog("%s Error. Unable to allocate memory. Unable to continue.\n", engine->name);
+        return NULL;
+    }
 
     RKICMPHeader *icmpHeader;
     RKIPV4Header *ipv4Header = (RKIPV4Header *)buff;
@@ -99,8 +99,8 @@ static void *hostPinger(void *in) {
     double period;
     struct timeval time;
 
-	// Initiate a variable to store my name
-	RKName name;
+    // Initiate a variable to store my name
+    RKName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
@@ -238,16 +238,16 @@ static void *hostPinger(void *in) {
         offset = (size_t)-1;
         returnAddress.sin_addr.s_addr = 0;
         while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount && engine->state & RKEngineStateActive) {
-            returnLength = sizeof(struct sockaddr);
             if ((r = recvfrom(sd, buff, RKHostMonitorPacketSize, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
-                RKLog(">%s %s r = %d  / %d (%d)\n", engine->name, name, r, (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)), returnLength);
                 if (engine->verbose > 2) {
-                    RKLog("%s %s recvfrom()   sd = %d   %d.%d.%d.%d\n",
+                    RKLog("%s %s recvfrom()   sd = %d   r = %d  / %d   %d.%d.%d.%d   returnLength = %d\n",
                           engine->name, name, sd,
+                          r, (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)),
                           (returnAddress.sin_addr.s_addr & 0xff),
                           (returnAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
                           (returnAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
-                          (returnAddress.sin_addr.s_addr & 0xff000000) >> 24);
+                          (returnAddress.sin_addr.s_addr & 0xff000000) >> 24,
+                          returnLength);
                 }
                 if (r == txSize) {
                     offset = 0;
@@ -268,12 +268,15 @@ static void *hostPinger(void *in) {
             icmpHeader->checksum = 0;
             calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
             if (engine->verbose > 1) {
-                RKLog("%s %s r = %u   %d.%d.%d.%d   sd = %d\n", engine->name, name, r,
+                RKLog("%s %s r = %u   sd = %d   returnAddress = %d.%d.%d.%d   returnLength = %d\n",
+                      engine->name, name,
+                      r,
+                      sd,
                       (returnAddress.sin_addr.s_addr & 0xff),
                       (returnAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
                       (returnAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
                       (returnAddress.sin_addr.s_addr & 0xff000000) >> 24,
-                      sd);
+                      returnLength);
                 RKLog(">%s %s checksum       = %   6d   %   6d\n", engine->name, name, receivedChecksum, calculatedChecksum);
                 RKLog(">%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
                 RKLog(">%s %s sequenceNumber = %   6d   %   6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
@@ -327,7 +330,7 @@ static void *hostPinger(void *in) {
     if (sd) {
         close(sd);
     }
-	free(buff);
+    free(buff);
 
     if (engine->verbose) {
         RKLog(">%s %s Stopped.\n", engine->name, name);
@@ -345,10 +348,10 @@ static void *hostWatcher(void *in) {
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
-	if (engine->workers != NULL) {
-		RKLog("%s Workers already allocated.\n", engine->name);
-		return NULL;
-	}
+    if (engine->workers != NULL) {
+        RKLog("%s Workers already allocated.\n", engine->name);
+        return NULL;
+    }
     engine->workers = (RKUnitMonitor *)malloc(engine->workerCount * sizeof(RKUnitMonitor));
     if (engine->workers == NULL) {
         RKLog(">%s Error. Unable to allocate an RKUnitMonitor.\n", engine->name);
@@ -389,8 +392,8 @@ static void *hostWatcher(void *in) {
         RKLog("%s Started.   mem = %s B   state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
     }
 
-	// Increase the tic once to indicate the engine is ready
-	engine->tic++;
+    // Increase the tic once to indicate the engine is ready
+    engine->tic++;
 
     if (engine->verbose > 2) {
         for (k = 0; k < engine->workerCount; k++) {
@@ -430,8 +433,6 @@ static void *hostWatcher(void *in) {
             usleep(100000);
         }
     }
-
-	RKLog("%s workerCount = %d\n", engine->name, engine->workerCount);
 
     for (k = 0; k < engine->workerCount; k++) {
         pthread_join(engine->workers[k].tid, NULL);
@@ -475,10 +476,10 @@ void RKHostMonitorSetVerbose(RKHostMonitor *engine, const int verbose) {
 }
 
 void RKHostMonitorAddHost(RKHostMonitor *engine, const char *address) {
-	if (engine->state & RKEngineStateActive) {
-		RKLog("%s Cannot add host after the engine has started.\n", engine->name);
-		return;
-	}
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Cannot add host after the engine has started.\n", engine->name);
+        return;
+    }
     int k = engine->workerCount++;
     engine->hosts = realloc(engine->hosts, engine->workerCount * sizeof(RKName));
     strncpy(engine->hosts[k], address, RKNameLength - 1);
@@ -512,10 +513,10 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	if (!(engine->state & RKEngineStateActive)) {
-		RKLog("%s Not active.\n", engine->name);
-		return RKResultEngineDeactivatedMultipleTimes;
-	}
+    if (!(engine->state & RKEngineStateActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
@@ -523,10 +524,10 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
     engine->state ^= RKEngineStateActive;
     if (engine->tidHostWatcher) {
         pthread_join(engine->tidHostWatcher, NULL);
-		engine->tidHostWatcher = (pthread_t)0;
-	} else {
-		RKLog("%s Invalid thread ID.\n", engine->name);
-	}
+        engine->tidHostWatcher = (pthread_t)0;
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
+    }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
