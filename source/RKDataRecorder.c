@@ -65,14 +65,18 @@ static void *pulseRecorder(void *in) {
     fileHeader->bytes[4094] = 'O';
     fileHeader->bytes[4095] = 'L';
     
-    if (engine->verbose) {
+	// Update the engine state
+	engine->state |= RKEngineStateActive;
+	engine->state ^= RKEngineStateActivating;
+
+	if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
     
-    gettimeofday(&t1, 0); t1.tv_sec -= 1;
-    
-    engine->state |= RKEngineStateActive;
-    engine->state ^= RKEngineStateActivating;
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
+
+	gettimeofday(&t1, NULL); t1.tv_sec -= 1;
     
     j = 0;   // config index
     k = 0;   // pulse index

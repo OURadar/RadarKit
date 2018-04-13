@@ -38,7 +38,7 @@ static void *healthConsolidator(void *_in) {
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     k = 0;   // health index
     while (engine->state & RKEngineStateActive) {
