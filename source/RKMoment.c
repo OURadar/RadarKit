@@ -578,24 +578,25 @@ static void *momentCore(void *in) {
     return NULL;
 }
 
-static void *pulseGatherer(void *in) {
-    RKMomentEngine *engine = (RKMomentEngine *)in;
+static void *pulseGatherer(void *_in) {
+    RKMomentEngine *engine = (RKMomentEngine *)_in;
 
     int c, i, j, k, s;
+	struct timeval t0, t1;
+	float lag;
 
-    sem_t *sem[engine->coreCount];
+	sem_t *sem[engine->coreCount];
 
-    // Beam index at t = 0 and t = 1 (previous sample)
+	unsigned int skipCounter = 0;
+
+	// Beam index at t = 0 and t = 1 (previous sample)
     int i0;
     int i1 = 0;
     int count = 0;
-    int skipCounter = 0;
-    float lag;
-    struct timeval t0, t1;
 
-    RKMarker marker;
-    RKPulse *pulse;
+	RKPulse *pulse;
     RKRay *ray;
+	RKMarker marker;
 
     // Show the selected moment processor
     if (engine->verbose) {
@@ -610,7 +611,7 @@ static void *pulseGatherer(void *in) {
         }
     }
 
-    // Change the state to active so all the processing cores stay in the busy loop
+	// Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
@@ -664,9 +665,9 @@ static void *pulseGatherer(void *in) {
     }
     
 	// Increase the tic once to indicate the watcher is ready
-	engine->tic++;
+	engine->tic = 1;
 
-    gettimeofday(&t1, 0); t1.tv_sec -= 1;
+    gettimeofday(&t1, NULL);
 
     // Here comes the busy loop
     j = 0;   // ray index for workers

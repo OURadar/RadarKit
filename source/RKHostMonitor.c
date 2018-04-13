@@ -359,8 +359,8 @@ static void *hostWatcher(void *in) {
     }
     memset(engine->workers, 0, engine->workerCount * sizeof(RKUnitMonitor));
     engine->memoryUsage += engine->workerCount * sizeof(RKUnitMonitor);
-    
-    for (k = 0; k < engine->workerCount; k++) {
+
+	for (k = 0; k < engine->workerCount; k++) {
         RKUnitMonitor *worker = &engine->workers[k];
         
         worker->id = k;
@@ -377,7 +377,7 @@ static void *hostWatcher(void *in) {
             usleep(10000);
         }
     }
-    
+
     // Wait another tic for the first ping to respond
     do {
         anyTrue = false;
@@ -393,7 +393,7 @@ static void *hostWatcher(void *in) {
     }
 
     // Increase the tic once to indicate the engine is ready
-    engine->tic++;
+    engine->tic = 1;
 
     if (engine->verbose > 2) {
         for (k = 0; k < engine->workerCount; k++) {

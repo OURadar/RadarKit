@@ -233,13 +233,13 @@ static void *ringFilterCore(void *_in) {
 static void *pulseRingWatcher(void *_in) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
     
-    int c, i, j, k;
-    
-    sem_t *sem[engine->coreCount];
+    int c, i, j, k, s;
+	struct timeval t0, t1;
+	float lag;
+
+	sem_t *sem[engine->coreCount];
     
     unsigned int skipCounter = 0;
-    float lag;
-    struct timeval t0, t1;
 
     bool allDone;
     bool *workerTaskDone;
@@ -249,15 +249,14 @@ static void *pulseRingWatcher(void *_in) {
         return NULL;
     }
     
-    // The beginning of the buffer is a pulse, it has the capacity info
     RKPulse *pulse;
     RKPulse *pulseToSkip;
 
-    // Filter status of each worker
+	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
     engine->workerTaskDone = (bool *)malloc(engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
     memset(engine->workerTaskDone, 0, engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
     
-    // Change the state to active so all the processing cores stay in the busy loop
+	// Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
@@ -307,16 +306,16 @@ static void *pulseRingWatcher(void *_in) {
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
 	// Increase the tic once to indicate the engine is ready
-	engine->tic++;
+	engine->tic = 1;
 
-    gettimeofday(&t1, 0); t1.tv_sec -= 1;
+    gettimeofday(&t1, NULL);
 
     // Here comes the busy loop
     // i  anonymous
+	// c  core index
     j = 0;   // filtered pulse index
     k = 0;   // pulse index
-    //c = 0;   // core index
-    int s = 0;
+    s = 0;
     while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
