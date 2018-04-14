@@ -160,10 +160,6 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
-    // Update my state
-    me->state |= RKEngineStateChildActive;
-    me->state ^= RKEngineStateChildActivating;
-
     if (engine->verbose) {
         RKLog(">%s %s Started.   host = %s (%d.%d.%d.%d)   sd = %d\n",
               engine->name,
@@ -183,7 +179,7 @@ static void *hostPinger(void *in) {
 
     uint32_t unreachCount = 0;
 
-    while (me->state & RKEngineStateChildActive) {
+    while (engine->state & RKEngineStateActive) {
 
         // Reset buffer
         memset(buff, 0, RKHostMonitorPacketSize);
@@ -207,7 +203,7 @@ static void *hostPinger(void *in) {
             // Now we wait a little
             pthread_mutex_unlock(&engine->mutex);
             k = 0;
-            while (k++ < 20 && me->state & RKEngineStateChildActive) {
+            while (k++ < 10 && engine->state & RKEngineStateActive) {
                 usleep(100000);
             }
             // Delay reporting since other threads may still be waiting for recvfrom()
@@ -240,13 +236,15 @@ static void *hostPinger(void *in) {
         // Pong
         k = 0;
         offset = (size_t)-1;
-        returnAddress.sin_addr.s_addr = 0;
-        while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount && me->state & RKEngineStateChildActive) {
+        returnAddress.sin_addr.s_addr = 0x0100007F;
+        while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount + 1 && engine->state & RKEngineStateActive) {
             if ((r = recvfrom(sd, buff, RKHostMonitorPacketSize, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
-                if (engine->verbose > 2) {
+                if (engine->verbose > 1 && engine->tic != 2) {
                     RKLog("%s %s recvfrom()   sd = %d   r = %d  / %d   %d.%d.%d.%d   returnLength = %d\n",
-                          engine->name, name, sd,
-                          r, (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)),
+                          engine->name, name,
+                          sd,
+                          r,
+                          (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)),
                           (returnAddress.sin_addr.s_addr & 0xff),
                           (returnAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
                           (returnAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
@@ -264,6 +262,8 @@ static void *hostPinger(void *in) {
                         break;
                     }
                 }
+            } else if (engine->verbose > 2) {
+                RKLog("%s %s recvfrom() -> %d\n", engine->name, name, r);
             }
         }
         if (offset != (size_t)-1 && returnAddress.sin_addr.s_addr == targetAddress.sin_addr.s_addr) {
@@ -291,16 +291,21 @@ static void *hostPinger(void *in) {
                 icmpHeader->code == 0 &&
                 icmpHeader->sequenceNumber == me->sequenceNumber) {
                 me->hostStatus = RKHostStatusReachable;
-                me->tic++;
                 me->sequenceNumber++;
                 gettimeofday(&me->latestTime, NULL);
+            } else {
+                me->hostStatus = RKHostStatusReachableUnusual;
             }
+            me->tic++;
         } else {
             // Timed out
             gettimeofday(&time, NULL);
             period = RKTimevalDiff(time, me->latestTime);
             if (engine->verbose > 1) {
-                RKLog(">%s %s r = %d   delta: %.3e   %d.%d.%d.%d  %d %d", engine->name, name, r, RKTimevalDiff(time, me->latestTime),
+                RKLog(">%s %s r = %d   delta: %.3e   %d.%d.%d.%d  %d %d",
+                      engine->name, name,
+                      r,
+                      RKTimevalDiff(time, me->latestTime),
                       (targetAddress.sin_addr.s_addr & 0xff),
                       (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
                       (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
@@ -318,7 +323,7 @@ static void *hostPinger(void *in) {
             
             // Wait less if this round failed.
             k = 0;
-            while (k++ < 10 && me->state & RKEngineStateChildActive) {
+            while (k++ < 10 && engine->state & RKEngineStateActive) {
                 usleep(100000);
             }
             continue;
@@ -328,7 +333,7 @@ static void *hostPinger(void *in) {
 
         // Now we wait
         k = 0;
-        while (k++ < me->pingIntervalInSeconds * 10 && me->state & RKEngineStateChildActive) {
+        while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
             usleep(100000);
         }
     }
@@ -358,7 +363,7 @@ static void *hostWatcher(void *in) {
         RKLog("%s Workers already allocated.\n", engine->name);
         return NULL;
     }
-    engine->workers = (RKUnitMonitor *)malloc(engine->workerCount * sizeof(RKUnitMonitor));
+    engine->workers = (RKUnitMonitor *)malloc(MAX(3, engine->workerCount) * sizeof(RKUnitMonitor));
     if (engine->workers == NULL) {
         RKLog(">%s Error. Unable to allocate an RKUnitMonitor.\n", engine->name);
         return (void *)RKResultFailedToCreateUnitWorker;
@@ -372,44 +377,40 @@ static void *hostWatcher(void *in) {
         worker->id = k;
         worker->parent = engine;
         worker->pingIntervalInSeconds = RKHostMonitorPingInterval;
-        worker->state = RKEngineStateChildActivating;
         
         // Workers that actually ping the hosts
         if (pthread_create(&worker->tid, NULL, hostPinger, worker) != 0) {
             RKLog(">%s Error. Failed to start a host pinger", engine->name);
             return (void *)RKResultFailedToStartHostPinger;
         }
-        while (worker->state & RKEngineStateChildActivating && engine->state & RKEngineStateActive) {
+        
+        while (worker->tic == 0 && engine->state & RKEngineStateActive) {
             usleep(10000);
         }
     }
 
-    // Wait another tic for the first ping to respond
+    // Increase the tic once to indicate the engine is ready
+    engine->tic = 1;
+    
+    // Wait another tic for the first ping to properly respond
     do {
         anyTrue = false;
         for (k = 0; k < engine->workerCount; k++) {
             RKUnitMonitor *worker = &engine->workers[k];
-            anyTrue |= worker->tic == 1;
+            anyTrue |= worker->tic == engine->tic;
         }
         usleep(10000);
     } while (anyTrue && engine->state & RKEngineStateActive);
+
+    // Increase one more now that the children are going
+    engine->tic = 2;
     
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
-    }
-
-    // Increase the tic once to indicate the engine is ready
-    engine->tic = 1;
-
     if (engine->verbose > 2) {
         for (k = 0; k < engine->workerCount; k++) {
             RKUnitMonitor *worker = &engine->workers[k];
             RKLog(">%s tic[%d] = %d\n", engine->name, k, worker->tic);
         }
     }
-
-    // Wait half of a cycle so that the probe is more or less at the middle
-    usleep(RKHostMonitorPingInterval * 1000000 / 2);
     
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateActive) {
@@ -423,31 +424,41 @@ static void *hostWatcher(void *in) {
             allReachable &= worker->hostStatus == RKHostStatusReachable;
             anyReachable |= worker->hostStatus == RKHostStatusReachable;
             if (engine->verbose > 1) {
-                RKLog("%s %s %s%s%s\n", engine->name,
+                RKLog("%s %s %s%s%s (%d)\n", engine->name,
                       engine->hosts[k],
-                      rkGlobalParameters.showColor ? (worker->hostStatus == RKHostStatusReachable ? RKGreenColor : (worker->hostStatus == RKHostStatusPartiallyReachable ? RKOrangeColor : RKRedColor)) : "",
-                      worker->hostStatus == RKHostStatusReachable ? "responded" : (worker->hostStatus == RKHostStatusPartiallyReachable ? "delayed" : "unreachable"),
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+                      rkGlobalParameters.showColor ? (worker->hostStatus == RKHostStatusReachable ? RKGreenColor :
+                                                      (worker->hostStatus == RKHostStatusReachableUnusual ? RKLimeGreenColor :
+                                                       (worker->hostStatus == RKHostStatusPartiallyReachable ? RKOrangeColor : RKRedColor))) : "",
+                      worker->hostStatus == RKHostStatusReachable ? "responded" :
+                      (worker->hostStatus == RKHostStatusReachableUnusual ? "responded *" :
+                       (worker->hostStatus == RKHostStatusPartiallyReachable ? "delayed" : "unreachable")),
+                      rkGlobalParameters.showColor ? RKNoColor : "", engine->tic);
             }
         }
         engine->allKnown = allKnown;
         engine->allReachable = allReachable;
         engine->anyReachable = anyReachable;
 
-		engine->tic++;
-
-		// Wait one minute, do it with multiples of 0.1s for a responsive exit
-        k = 0;
-        while (k++ < RKHostMonitorPingInterval * 10 && engine->state & RKEngineStateActive) {
+        // Wait until all children advance by one tic
+        engine->state |= RKEngineStateSleep1;
+        do {
             usleep(100000);
-        }
+            anyTrue = false;
+            for (k = 0; k < engine->workerCount; k++) {
+                RKUnitMonitor *worker = &engine->workers[k];
+                anyTrue |= worker->tic == engine->tic;
+            }
+            if (engine->verbose > 2) {
+                RKLog("Info. %d %d %d vs %d\n", engine->workers[0].tic, engine->workers[1].tic, engine->workers[2].tic, engine->tic);
+            }
+        } while (anyTrue && engine->state & RKEngineStateActive);
+        engine->state ^= RKEngineStateSleep1;
+
+        engine->tic++;
     }
 
     for (k = 0; k < engine->workerCount; k++) {
-        engine->workers[k].state |= RKEngineStateChildDeactivating;
-        engine->workers[k].state ^= RKEngineStateChildActive;
         pthread_join(engine->workers[k].tid, NULL);
-        engine->workers[k].state ^= RKEngineStateChildDeactivating;
     }
     free(engine->workers);
 

@@ -26,7 +26,6 @@ struct rk_unit_monitor {
     uint16_t               identifier;
     struct timeval         latestTime;
     RKHostStatus           hostStatus;
-    RKEngineState          state;
 };
 
 struct rk_host_monitor {

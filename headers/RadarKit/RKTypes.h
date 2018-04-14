@@ -90,6 +90,7 @@
 #define RKNoColor                        "\033[0m"
 #define RKRedColor                       "\033[38;5;196m"
 #define RKGreenColor                     "\033[38;5;82m"
+#define RKLimeGreenColor                 "\033[38;5;118m"
 #define RKOrangeColor                    "\033[38;5;214m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
@@ -596,6 +597,7 @@ enum RKHostStatus {
     RKHostStatusUnknown,
     RKHostStatusUnreachable,
     RKHostStatusPartiallyReachable,
+    RKHostStatusReachableUnusual,
     RKHostStatusReachable
 };
 

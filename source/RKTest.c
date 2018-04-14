@@ -1837,7 +1837,7 @@ void RKTestHostMonitor(void) {
         return;
     }
     RKHostMonitorSetVerbose(o, 2);
-    RKHostMonitorAddHost(o, "amazon.com");
+    RKHostMonitorAddHost(o, "www.amazon.com");
     RKHostMonitorStart(o);
     sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
     RKHostMonitorFree(o);
