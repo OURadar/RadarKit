@@ -591,12 +591,12 @@ enum RKStream {
     RKStreamEverything               = 0x01FF01FF01FFFFFFULL         // (Don't use this)
 };
 
-typedef uint8_t RKHostState;
-enum RKHostState {
-    RKHostStateUnknown,
-    RKHostStateUnreachable,
-    RKHostStatePartiallyReachable,
-    RKHostStateReachable
+typedef uint8_t RKHostStatus;
+enum RKHostStatus {
+    RKHostStatusUnknown,
+    RKHostStatusUnreachable,
+    RKHostStatusPartiallyReachable,
+    RKHostStatusReachable
 };
 
 

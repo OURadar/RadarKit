@@ -20,12 +20,13 @@ struct rk_unit_monitor {
     int                    id;
     int                    tic;
     pthread_t              tid;
-    RKHostState            state;
     RKHostMonitor          *parent;
     uint16_t               pingIntervalInSeconds;
     uint16_t               sequenceNumber;
     uint16_t               identifier;
     struct timeval         latestTime;
+    RKHostStatus           hostStatus;
+    RKEngineState          state;
 };
 
 struct rk_host_monitor {
