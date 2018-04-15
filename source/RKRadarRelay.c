@@ -19,7 +19,6 @@ static int RKRadarRelayRead(RKClient *client) {
     RKStatus *status;
     RKRay *ray = engine->rayBuffer;
     RKPulse *pulse = engine->pulseBuffer;
-    RKSweep *sweep;
 
     uint8_t *u8Data = NULL;
     uint32_t productList;
@@ -185,20 +184,18 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
             
         case RKNetworkPacketTypeSweepHeader:
-            sweep = (RKSweep *)client->userPayload;
-            engine->sweepRayIndex = 0;
-            engine->sweepRayCount = sweep->header.rayCount;
-            RKLog("%s New sweep S%lu.\n", engine->name, sweep->header.config.i);
+            memcpy(&engine->sweepHeaderCache, client->userPayload, sizeof(RKSweepHeader));
             gettimeofday(&engine->sweepTic, NULL);
+            engine->sweepRayIndex = 0;
             break;
-            
+
         case RKNetworkPacketTypeSweepRay:
             engine->sweepRayIndex++;
-            if (engine->sweepRayIndex == engine->sweepRayCount) {
+            if (engine->sweepRayIndex == engine->sweepHeaderCache.rayCount) {
                 gettimeofday(&engine->sweepToc, NULL);
-                RKLog("%s sweep complete   elapsed time = %.2f ms.\n", engine->name, 1.0e3 * RKTimevalDiff(engine->sweepToc, engine->sweepTic));
-            } else if (engine->sweepRayIndex > engine->sweepRayCount) {
-                RKLog("%s Error. Too many sweep rays.  %d > %d\n", engine->name, engine->sweepRayIndex, engine->sweepRayCount);
+                RKLog("%s New sweep S%lu   Elapsed time = %.2f ms.\n", engine->name, engine->sweepHeaderCache.config.i, 1.0e3 * RKTimevalDiff(engine->sweepToc, engine->sweepTic));
+            } else if (engine->sweepRayIndex > engine->sweepHeaderCache.rayCount) {
+                RKLog("%s Error. Too many sweep rays.  %d > %d\n", engine->name, engine->sweepRayIndex, engine->sweepHeaderCache.rayCount);
             }
             break;
             

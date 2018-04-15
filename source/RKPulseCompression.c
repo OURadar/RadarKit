@@ -529,7 +529,6 @@ static void *pulseWatcher(void *_in) {
     // j  filter index
     k = 0;   // pulse index
     c = 0;   // core index
-    s = 0;
     while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);

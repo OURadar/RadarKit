@@ -733,6 +733,8 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         //RKExecuteCommand(myRadar, "", NULL);
+        usleep(1000000);
+        RKLog("Starting a new PPI ...\n");
         RKTestPedestalExec(myRadar->pedestal, "ppi 4 90", NULL);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);

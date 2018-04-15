@@ -425,7 +425,8 @@ static void *rayGatherer(void *in) {
         
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - j) / engine->radarDescription->rayBufferDepth, 1.0f);
-        if (ray->header.marker & RKMarkerSweepEnd) {
+        if ((ray->header.marker & RKMarkerSweepEnd) ||
+            (ray->header.marker & RKMarkerSweepBegin && is != RKPreviousModuloS(j, engine->radarDescription->rayBufferDepth))) {
             n = 0;
             do {
                 ray = RKGetRay(engine->rayBuffer, is);
@@ -932,6 +933,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			// Open the file
 			if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
 				RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
+                free(scratch);
 				return NULL;
 			}
 
@@ -941,7 +943,6 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			r = nc_inq_varid(ncid, productNames[k], &tmpId);
 			if (r == NC_NOERR) {
 				nc_get_var_float(ncid, tmpId, scratch);
-				fp = (float *)scratch;
 				for (j = 0; j < rayCount; j++) {
 					ray = RKGetRay(sweep->rayBuffer, j);
 					fp = RKGetFloatDataFromRay(ray, productIndices[k]);

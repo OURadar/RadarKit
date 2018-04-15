@@ -315,7 +315,6 @@ static void *pulseRingWatcher(void *_in) {
 	// c  core index
     j = 0;   // filtered pulse index
     k = 0;   // pulse index
-    s = 0;
     while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);

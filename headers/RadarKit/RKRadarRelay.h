@@ -47,7 +47,7 @@ typedef struct rk_radar_relay {
     RKStream                         streams;
 
     // For handling sweeps
-    uint32_t                         sweepRayCount;
+    RKSweepHeader                    sweepHeaderCache;
     uint32_t                         sweepRayIndex;
     struct timeval                   sweepTic;
     struct timeval                   sweepToc;

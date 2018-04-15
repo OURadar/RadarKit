@@ -438,7 +438,7 @@ static void *momentCore(void *in) {
             ray->header.gateCount       = S->header.gateCount;
             ray->header.gateSizeMeters  = S->header.gateSizeMeters;
             
-            config = &engine->configBuffer[S->header.configIndex];
+            config = &engine->configBuffer[E->header.configIndex];
             
             // Compute the range correction factor if needed.
             if (ic != S->header.configIndex) {

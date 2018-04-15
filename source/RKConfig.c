@@ -18,14 +18,16 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     uint32_t  c, j, k, s;
     char      *string;
     char      stringBuffer[RKNameLength] = "";
+    
+    // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
+    pthread_mutex_lock(&rkGlobalParameters.mutex);
 
     c = *configIndex;                             RKConfig *newConfig = &configs[c];
     c = RKPreviousModuloS(c, configBufferDepth);  RKConfig *oldConfig = &configs[c];
 
     uint64_t configId = newConfig->i + configBufferDepth;
     
-    //printf("--- RKConfigAdvance()  %d  %llu\n", *configIndex, configId);
-    // If a mutex is needed, here is the place to lock it.
+    //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 
     // Copy everything
     memcpy(newConfig, oldConfig, sizeof(RKConfig));
@@ -163,6 +165,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Update the identifier and the buffer index
     newConfig->i = configId;
     *configIndex = RKNextModuloS(*configIndex, configBufferDepth);
+    
+    pthread_mutex_unlock(&rkGlobalParameters.mutex);
 }
 
 RKConfig *RKConfigWithId(RKConfig *configs, uint32_t configBufferDepth, uint64_t id) {
