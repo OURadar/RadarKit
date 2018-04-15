@@ -1562,6 +1562,10 @@ int RKResetClocks(RKRadar *radar) {
     return RKResultSuccess;
 }
 
+int RKExecuteCommand(RKRadar *radar, const char *command, char *response) {
+    return RKResultSuccess;
+}
+
 //
 // Performs a function in the background.
 // This function is intended for handling commands that may recurse to itself. Instead of causing a block

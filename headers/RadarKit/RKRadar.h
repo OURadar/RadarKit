@@ -235,6 +235,7 @@ int RKStart(RKRadar *);
 int RKStop(RKRadar *);
 int RKSoftRestart(RKRadar *);
 int RKResetClocks(RKRadar *);
+int RKExecuteCommand(RKRadar *, const char *, char *);
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
 void RKMeasureNoise(RKRadar *);
