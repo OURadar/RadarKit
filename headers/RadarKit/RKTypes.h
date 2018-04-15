@@ -745,15 +745,17 @@ typedef struct rk_ray {
     RKByte           data[0];
 } RKRay;
 
+typedef struct rk_sweep_header {
+    uint32_t         rayCount;                                       // Number of rays
+    uint32_t         gateCount;                                      // Number of range gates
+    uint32_t         productList;                                    // List of available products
+    bool             external;                                       // Data is external buffer, reference by *rays[]
+    RKRadarDesc      desc;
+    RKConfig         config;
+} RKSweepHeader;
+
 typedef struct rk_sweep {
-	struct {
-		uint32_t         rayCount;                                   // Number of rays
-		uint32_t         gateCount;                                  // Number of range gates
-		uint32_t         productList;                                // List of available products
-		bool             external;                                   // Data is external buffer, reference by *rays[]
-		RKRadarDesc      desc;
-		RKConfig         config;
-	} header;
+    RKSweepHeader    header;
     RKBuffer         rayBuffer;
     RKRay            *rays[RKMaxRaysPerSweep];
 } RKSweep;

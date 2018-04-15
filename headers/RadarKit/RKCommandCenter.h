@@ -38,6 +38,7 @@ typedef struct  rk_user {
     uint16_t                         reserved;
     pthread_mutex_t                  mutex;
     char                             string[RKMaximumStringLength];
+    char                             scratch[RKMaximumStringLength];
     RKInt16C                         samples[2][RKGateCount];
     RKOperator                       *serverOperator;
     RKRadar                          *radar;
