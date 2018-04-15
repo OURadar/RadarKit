@@ -65,7 +65,7 @@
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaxRaysPerSweep                1500                        // 1440 is 0.25-deg. This should be plenty
-#define RKMaxPacketSize                  32 * 1024 * 1024
+#define RKMaxPacketSize                  1024 * 1024
 #define RKNetworkTimeoutSeconds          20
 #define RKNetworkReconnectSeconds        3
 #define RKLagRedThreshold                0.5
@@ -650,8 +650,8 @@ typedef struct rk_config {
     RKFloat          DCal[RKMaxFilterCount];                         // Waveform ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Waveform Phase calibration
     RKFloat          SNRThreshold;                                   // Censor SNR (dB)
-    char             waveform[RKNameLength];                         // Waveform name
-    char             vcpDefinition[RKNameLength];                    // Volume coverage pattern
+    RKName           waveform;                                       // Waveform name
+    RKName           vcpDefinition;                                  // Volume coverage pattern
 } RKConfig;
 
 typedef union rk_heath {

@@ -46,6 +46,12 @@ typedef struct rk_radar_relay {
     pthread_t                        tidBackground;
     RKStream                         streams;
 
+    // For handling sweeps
+    uint32_t                         sweepRayCount;
+    uint32_t                         sweepRayIndex;
+    struct timeval                   sweepTic;
+    struct timeval                   sweepToc;
+
     // Status / health
     char                             pulseStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     char                             rayStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];

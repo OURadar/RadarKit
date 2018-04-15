@@ -19,9 +19,12 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     char      *string;
     char      stringBuffer[RKNameLength] = "";
 
-    c = *configIndex;                           RKConfig *oldConfig = &configs[c];
-    c = RKNextModuloS(c, configBufferDepth);    RKConfig *newConfig = &configs[c];
+    c = *configIndex;                             RKConfig *newConfig = &configs[c];
+    c = RKPreviousModuloS(c, configBufferDepth);  RKConfig *oldConfig = &configs[c];
 
+    uint64_t configId = newConfig->i + configBufferDepth;
+    
+    //printf("--- RKConfigAdvance()  %d  %llu\n", *configIndex, configId);
     // If a mutex is needed, here is the place to lock it.
 
     // Copy everything
@@ -158,8 +161,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     va_end(args);
 
     // Update the identifier and the buffer index
-    newConfig->i++;
-    *configIndex = c;
+    newConfig->i = configId;
+    *configIndex = RKNextModuloS(*configIndex, configBufferDepth);
 }
 
 RKConfig *RKConfigWithId(RKConfig *configs, uint32_t configBufferDepth, uint64_t id) {

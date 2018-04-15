@@ -19,6 +19,7 @@ static int RKRadarRelayRead(RKClient *client) {
     RKStatus *status;
     RKRay *ray = engine->rayBuffer;
     RKPulse *pulse = engine->pulseBuffer;
+    RKSweep *sweep;
 
     uint8_t *u8Data = NULL;
     uint32_t productList;
@@ -181,6 +182,24 @@ static int RKRadarRelayRead(RKClient *client) {
             // Queue up the feedback
             strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
             engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
+            break;
+            
+        case RKNetworkPacketTypeSweepHeader:
+            sweep = (RKSweep *)client->userPayload;
+            engine->sweepRayIndex = 0;
+            engine->sweepRayCount = sweep->header.rayCount;
+            RKLog("%s New sweep S%lu.\n", engine->name, sweep->header.config.i);
+            gettimeofday(&engine->sweepTic, NULL);
+            break;
+            
+        case RKNetworkPacketTypeSweepRay:
+            engine->sweepRayIndex++;
+            if (engine->sweepRayIndex == engine->sweepRayCount) {
+                gettimeofday(&engine->sweepToc, NULL);
+                RKLog("%s sweep complete   elapsed time = %.2f ms.\n", engine->name, 1.0e3 * RKTimevalDiff(engine->sweepToc, engine->sweepTic));
+            } else if (engine->sweepRayIndex > engine->sweepRayCount) {
+                RKLog("%s Error. Too many sweep rays.  %d > %d\n", engine->name, engine->sweepRayIndex, engine->sweepRayCount);
+            }
             break;
             
         default:

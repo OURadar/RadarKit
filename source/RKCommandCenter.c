@@ -891,7 +891,9 @@ int socketStreamHandler(RKOperator *O) {
 			sweep = RKSweepCollect(user->radar->sweepEngine);
             memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
-            RKLog("%s New sweep available  C%02d.  <--  %x / %x\n", engine->name, sweep->rays[0]->header.configIndex, sweep->header.productList, sweepHeader.productList);
+            if (engine->verbose) {
+                RKLog("%s New sweep available   C%02d   S%lu.  <--  %x / %x\n", engine->name, sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
+            }
 
             uint32_t productList = sweepHeader.productList;
 
@@ -962,13 +964,20 @@ int socketStreamHandler(RKOperator *O) {
 
 			size_t sentSize = 0;
 
-			O->delimTx.type = RKNetworkPacketTypeSweep;
-			O->delimTx.size = (uint32_t)(sizeof(RKSweepHeader) + sweepHeader.rayCount * (sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float)));
-			sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+			//O->delimTx.type = RKNetworkPacketTypeSweep;
+			//O->delimTx.size = (uint32_t)(sizeof(RKSweepHeader) + sweepHeader.rayCount * (sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float)));
+			//sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+
+            O->delimTx.type = RKNetworkPacketTypeSweepHeader;
+            O->delimTx.size = (uint32_t)sizeof(RKSweepHeader);
+            sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+
+            O->delimTx.type = RKNetworkPacketTypeSweepRay;
+            O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float));
 
 			for (k = 0; k < sweepHeader.rayCount; k++) {
 				ray = sweep->rays[k];
-				sentSize += RKOperatorSendPackets(O, &ray->header, sizeof(RKRayHeader), NULL);
+				sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &ray->header, sizeof(RKRayHeader), NULL);
 				productList = sweepHeader.productList;
                 if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
                     RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);

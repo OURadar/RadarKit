@@ -636,7 +636,7 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
     RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
 
-	RKAddConfig(myRadar,
+    RKAddConfig(myRadar,
 				RKConfigKeySystemZCal, -25.0f, -25.0f,
 				RKConfigKeySystemDCal, 0.2f,
                 RKConfigKeyZCal2, 20.0f, 20.0f,

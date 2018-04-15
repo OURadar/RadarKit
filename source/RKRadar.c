@@ -273,7 +273,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         memset(radar->status, 0, bytes);
         radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.statusBufferDepth; i++) {
-            radar->status[i].i = (uint64_t)(-1) - radar->desc.statusBufferDepth + i;
+            radar->status[i].i = -(uint64_t)radar->desc.statusBufferDepth + i;
         }
         radar->state ^= RKRadarStateStatusBufferAllocating;
         radar->state |= RKRadarStateStatusBufferInitialized;
@@ -300,7 +300,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         memset(radar->configs, 0, bytes);
         radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.configBufferDepth; i++) {
-            radar->configs[i].i = (uint64_t)(-1) - radar->desc.configBufferDepth + i;
+            radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i;
         }
         radar->state ^= RKRadarStateConfigBufferAllocating;
         radar->state |= RKRadarStateConfigBufferInitialized;
@@ -327,7 +327,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         memset(radar->healths, 0, bytes);
         radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-            radar->healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
+            radar->healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
         }
         radar->state ^= RKRadarStateHealthBufferAllocating;
         radar->state |= RKRadarStateHealthBufferInitialized;
@@ -357,7 +357,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         for (k = 0; k < radar->desc.healthNodeCount; k++) {
             for (i = 0; i < radar->desc.healthBufferDepth; i++) {
-                radar->healthNodes[k].healths[i].i = (uint64_t)(-1) - radar->desc.healthBufferDepth + i;
+                radar->healthNodes[k].healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
             }
         }
         radar->state ^= RKRadarStateHealthNodesAllocating;
@@ -384,7 +384,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.positionBufferDepth; i++) {
-            radar->positions[i].i = (uint64_t)(-1) - radar->desc.positionBufferDepth + i;
+            radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
         }
         radar->state ^= RKRadarStatePositionBufferAllocating;
         radar->state |= RKRadarStatePositionBufferInitialized;
