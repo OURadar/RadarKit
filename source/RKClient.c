@@ -259,6 +259,10 @@ void *theClient(void *in) {
                             }
                             readOkay = true;
                             break;
+                        } else if (C->netDelimiter.size > RKMaxPacketSize) {
+                            RKLog("%s Error. Payload size is more than what I can handle.\n", C->name);
+                            readOkay = false;
+                            break;
                         }
                         // Now the actual payload
                         k = 0;
@@ -272,8 +276,8 @@ void *theClient(void *in) {
                                     usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
-                                RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  r=%d  k=%d  errno=%d (%s)\n",
-                                        C->name, r, k, errno, RKErrnoString(errno));
+                                RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  size=%d   r=%d  k=%d  errno=%d (%s)\n",
+                                      C->name, C->netDelimiter.size, r, k, errno, RKErrnoString(errno));
                                 readCount = C->timeoutSeconds * 1000;
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;

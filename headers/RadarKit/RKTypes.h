@@ -65,7 +65,7 @@
 #define RKMaxPulsesPerRay                2000
 #define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaxRaysPerSweep                1500                        // 1440 is 0.25-deg. This should be plenty
-#define RKMaxPacketSize                  1024 * 1024
+#define RKMaxPacketSize                  32 * 1024 * 1024
 #define RKNetworkTimeoutSeconds          20
 #define RKNetworkReconnectSeconds        3
 #define RKLagRedThreshold                0.5

@@ -215,6 +215,7 @@ static void *radarRelay(void *in) {
     desc.verbose = 1;
 
     engine->client = RKClientInitWithDesc(desc);
+    engine->memoryUsage += sizeof(RKClient) + RKMaxPacketSize;
 
     RKClientSetUserResource(engine->client, engine);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
@@ -266,6 +267,7 @@ RKRadarRelay *RKRadarRelayInit(void) {
     sprintf(engine->name, "%s<SmartRadarRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarRelay) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
+    engine->memoryUsage += sizeof(RKRadarRelay);
     engine->state = RKEngineStateAllocated;
 
     return (RKRadarRelay *)engine;
