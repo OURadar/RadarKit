@@ -11,6 +11,8 @@
 //  █
 //
 //  1.2.8b - 4/31/2018
+//         - New stream types: RKSweep, RKSweepHeader and RKSweepRay
+//         - Fixed buffer ID initialization
 //         - Fixed a memory leak in RKHostMonitor
 //         - Added RKSoftReset() to restart DSP-related engines only
 //         - Added RKSystemInspector() for gathering system status
