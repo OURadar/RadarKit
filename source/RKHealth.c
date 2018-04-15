@@ -12,29 +12,33 @@
 
 #pragma mark - Delegate Workers
 
-static void *healthConsolidator(void *in) {
-    RKHealthEngine *engine = (RKHealthEngine *)in;
+static void *healthConsolidator(void *_in) {
+    RKHealthEngine *engine = (RKHealthEngine *)_in;
     RKRadarDesc *desc = engine->radarDescription;
     
     int i, j, k, n, s;
-    
+	struct timeval t0, t1;
+
     RKHealth *health;
-    
+
+	bool allTrue;
+	char *string;
+
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
     
+	// Update the engine state
+	engine->state |= RKEngineStateActive;
+	engine->state ^= RKEngineStateActivating;
+
     if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
     }
     
-    engine->state |= RKEngineStateActive;
-    engine->state ^= RKEngineStateActivating;
-    
-    bool allTrue;
-    char *string;
-    struct timeval t0, t1;
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     k = 0;   // health index
     while (engine->state & RKEngineStateActive) {
@@ -159,6 +163,8 @@ static void *healthConsolidator(void *in) {
             RKLog("%s", string);
         }
 
+		engine->tic++;
+
         // Update index for the next watch
         k = RKNextModuloS(k, desc->healthBufferDepth);
         health = &engine->healthBuffer[k];
@@ -220,7 +226,7 @@ int RKHealthEngineStart(RKHealthEngine *engine) {
         RKLog("Error. Unable to start health engine.\n");
         return RKResultFailedToStartHealthWorker;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+	while (engine->tic == 0) {
         usleep(10000);
     }
     return RKResultSuccess;

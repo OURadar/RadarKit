@@ -396,28 +396,29 @@ static void *pulseCompressionCore(void *_in) {
 static void *pulseWatcher(void *_in) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
 
-    int c, i, j, k;
+    int c, i, j, k, s;
+	struct timeval t0, t1;
+	float lag;
 
-    sem_t *sem[engine->coreCount];
+	sem_t *sem[engine->coreCount];
+
+	unsigned int skipCounter = 0;
 
     bool found;
     unsigned int gid;
     unsigned int planSize;
     unsigned int planIndex = 0;
-    unsigned int skipCounter = 0;
-    float lag;
-    struct timeval t0, t1;
 
     if (engine->coreCount == 0) {
         RKLog("Error. No processing core?\n");
         return NULL;
     }
     
-    // The beginning of the buffer is a pulse, it has the capacity info
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
+    RKPulse *pulse;
     RKPulse *pulseToSkip;
     
-    // Maximum plan size
+	// Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
+	pulse = RKGetPulse(engine->pulseBuffer, 0);
     planSize = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
     bool exportWisdom = false;
     const char wisdomFile[] = RKFFTWisdomFile;
@@ -465,7 +466,7 @@ static void *pulseWatcher(void *_in) {
 		exit(EXIT_FAILURE);
 	}
 
-    // Change the state to active so all the processing cores stay in the busy loop
+	// Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
     
@@ -519,16 +520,16 @@ static void *pulseWatcher(void *_in) {
     }
 
 	// Increase the tic once to indicate the engine is ready
-	engine->tic++;
+	engine->tic = 1;
 
-    gettimeofday(&t1, 0); t1.tv_sec -= 1;
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     // Here comes the busy loop
     // i  anonymous
     // j  filter index
     k = 0;   // pulse index
     c = 0;   // core index
-    int s = 0;
+    s = 0;
     while (engine->state & RKEngineStateActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
@@ -651,7 +652,9 @@ static void *pulseWatcher(void *_in) {
             RKPulseCompressionUpdateStatusString(engine);
         }
     
-        // Update k to catch up for the next watch
+		engine->tic++;
+
+		// Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
 

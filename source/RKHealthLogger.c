@@ -82,6 +82,7 @@ static void *healthLogger(void *in) {
     RKRadarDesc *desc = engine->radarDescription;
 
     int i, k, s;
+	struct timeval t0;
 
     RKHealth *health;
     char *stringValue, *stringEnum, *stringObject;
@@ -90,21 +91,25 @@ static void *healthLogger(void *in) {
 
     char filename[RKMaximumPathLength] = "";
 
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
-    }
+	time_t unixTime;
+	struct tm *timeStruct;
+	int min = -1;
 
+	// Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
-    struct timeval timeNow;
+	if (engine->verbose) {
+		RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+	}
 
-    gettimeofday(&timeNow, NULL);
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
 
-    time_t unixTime;
-    struct tm *timeStruct;
-    int min = -1;
+    gettimeofday(&t0, NULL);
 
+	// Here comes the busy loop
+	// i  anonymous
     k = 0;   // health index
     while (engine->state & RKEngineStateActive) {
         // Get the latest health
@@ -141,7 +146,7 @@ static void *healthLogger(void *in) {
         char *keyValue = RKGetValueOfKey(health->string, "Log Time");
         if (keyValue == NULL) {
             RKLog("%s Error. No log time found.\n", engine->name);
-            unixTime = (time_t)timeNow.tv_sec;
+            unixTime = (time_t)t0.tv_sec;
         } else {
             unixTime = (time_t)atol(keyValue);
         }
@@ -243,7 +248,9 @@ static void *healthLogger(void *in) {
         
         RKProcessHealthKeywords(engine, health->string);
 
-        // Update pulseIndex for the next watch
+		engine->tic++;
+
+		// Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->healthBufferDepth);
         if (k >= engine->radarDescription->healthBufferDepth) {
             RKLog("Error. k = %d\n", k);
@@ -306,12 +313,13 @@ int RKHealthLoggerStart(RKHealthLogger *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+	engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidBackground, NULL, healthLogger, engine)) {
         RKLog("Error. Unable to start health engine.\n");
         return RKResultFailedToStartHealthWorker;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+    while (engine->tic == 0) {
         usleep(10000);
     }
     return RKResultSuccess;

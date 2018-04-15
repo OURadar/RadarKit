@@ -79,33 +79,37 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
 
 #pragma mark - Delegate Workers
 
-static void *pulseTagger(void *in) {
-    RKPositionEngine *engine = (RKPositionEngine *)in;
+static void *pulseTagger(void *_in) {
+    RKPositionEngine *engine = (RKPositionEngine *)_in;
     
     int i, j, k, s;
-    
-    RKPulse *pulse;
+	struct timeval t0, t1;
+
+	RKPulse *pulse;
     RKPosition *positionBefore;
     RKPosition *positionAfter;
     double timeBefore;
     double timeAfter;
     double timeLatest;
     double alpha;
-    struct timeval t0, t1;
-    RKMarker marker0, marker1;
+	RKMarker marker0;
+	RKMarker marker1 = RKMarkerSweepEnd;
     bool hasSweepEnd;
+
+	// Update the engine state
+	engine->state |= RKEngineStateActive;
+	engine->state ^= RKEngineStateActivating;
+
+	// If multiple workers are needed, here will be the time to launch them.
 
 	if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
-    
-    engine->state |= RKEngineStateActive;
-    engine->state ^= RKEngineStateActivating;
-    
-    // If multiple workers are needed, here will be the time to launch them.
 
-    gettimeofday(&t1, 0); t1.tv_sec -= 1;
-    marker1 = RKMarkerSweepEnd;
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
+
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     // Wait until there is something ingested
     s = 0;
@@ -302,7 +306,9 @@ static void *pulseTagger(void *in) {
         
         pulse->header.s |= RKPulseStatusHasPosition;
 
-        // Update pulseIndex for the next watch
+		engine->tic++;
+
+		// Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
     return NULL;
@@ -361,7 +367,7 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+	while (engine->tic == 0) {
         usleep(10000);
     }
     struct timeval t;

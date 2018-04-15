@@ -90,6 +90,7 @@
 #define RKNoColor                        "\033[0m"
 #define RKRedColor                       "\033[38;5;196m"
 #define RKGreenColor                     "\033[38;5;82m"
+#define RKLimeGreenColor                 "\033[38;5;118m"
 #define RKOrangeColor                    "\033[38;5;214m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
@@ -311,7 +312,9 @@ enum RKMarker {
     RKMarkerMemoryManagement         = (1 << 15)
 };
 
+//
 // Typical status progression:
+//
 // -> RKPulseStatusVacant
 // -> RKPulseStatusHasIQData
 // -> RKPulseStatusInspected                                (main thread)
@@ -323,6 +326,7 @@ enum RKMarker {
 // -> RKPulseStatusRingProcessed                            (main thread)
 // -> RKPulseStatusHasPosition
 // -> RKPulseStatusReadyForMoment
+//
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
     RKPulseStatusVacant              = 0,
@@ -467,6 +471,24 @@ enum RKHealthNode {
     RKHealthNodeInvalid = (RKHealthNode)-1
 };
 
+//
+// Typical progression:
+//
+// EngineInit         RKEngineStateAllocated
+// EngineSetXYZ       RKEngineStateProperlyWired
+// EngineStart        RKEngineStateActivating
+//                    RKEngineStateActive
+//                    RKEngineStateChildAllocated
+//                    RKEngineStateChildProperlyWired
+//                    RKEngineStateChildActivating
+//                    RKEngineStateChildActive
+//
+// EngineStop         RKEngineStateDeactivating
+//                    RKEngineStateChildDeactivating
+//                    RKEngineStateChildActive -
+//                    RKEngineStateActive -
+//                    (RKEngineStateChildAllocated | RKEngineStateChildProperlyWired | RKEngineStateAllocated | RKEngineStateProperlyWired)
+//
 typedef uint32_t RKEngineState;
 enum RKEngineState {
     RKEngineStateNull                = 0,
@@ -474,14 +496,22 @@ enum RKEngineState {
     RKEngineStateSleep1              = (1 << 1),                     // Stage 1 wait - usually waiting for pulse
     RKEngineStateSleep2              = (1 << 2),                     // Stage 2 wait
     RKEngineStateSleep3              = (1 << 3),                     // Stage 3 wait
-    RKEngineStateSleepMask           = 0x0F,
+    RKEngineStateSleepMask           = 0x0000000F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
     RKEngineStateMemoryChange        = (1 << 5),                     // Some required pointers are being changed
+	RKEngineStateBusyMask            = 0x000000F0,
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
     RKEngineStateProperlyWired       = (1 << 9),                     // All required pointers are properly wired up
     RKEngineStateActivating          = (1 << 10),                    // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 11),                    // The main run loop is being deactivated
-    RKEngineStateActive              = (1 << 12)                     // The engine is active
+    RKEngineStateActive              = (1 << 12),                    // The engine is active
+	RKEngineStateMainMask            = 0x00001F00,
+	RKEngineStateChildAllocated      = (1 << 16),                    // The child resources have been allocated
+	RKEngineStateChildProperlyWired  = (1 << 17),                    // Probably not used
+	RKEngineStateChildActivating     = (1 << 18),                    // The children are being activated
+	RKEngineStateChildDeactivating   = (1 << 19),                    // The children are being deactivated
+	RKEngineStateChildActive         = (1 << 20),                    // The children are active
+	RKEngineStateChildMask           = 0x001F0000
 };
 
 typedef uint32_t RKStatusEnum;
@@ -562,12 +592,13 @@ enum RKStream {
     RKStreamEverything               = 0x01FF01FF01FFFFFFULL         // (Don't use this)
 };
 
-typedef uint8_t RKHostState;
-enum RKHostState {
-    RKHostStateUnknown,
-    RKHostStateUnreachable,
-    RKHostStatePartiallyReachable,
-    RKHostStateReachable
+typedef uint8_t RKHostStatus;
+enum RKHostStatus {
+    RKHostStatusUnknown,
+    RKHostStatusUnreachable,
+    RKHostStatusPartiallyReachable,
+    RKHostStatusReachableUnusual,
+    RKHostStatusReachable
 };
 
 
