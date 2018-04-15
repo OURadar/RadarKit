@@ -1182,6 +1182,8 @@ int socketTerminateHandler(RKOperator *O) {
     pthread_mutex_destroy(&user->mutex);
     RKLog(">%s %s Stream reset.\n", engine->name, O->name);
     user->streams = RKStreamNull;
+    user->access = RKStreamNull;
+    user->radar = NULL;
     consolidateStreams(engine);
     return RKResultNoError;
 }
@@ -1386,6 +1388,7 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
+    int i, j, k;
     if (engine->suspendHandler) {
         RKLog("Wait for command center.\n");
         int s = 0;
@@ -1398,7 +1401,6 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
         }
     }
     engine->suspendHandler = true;
-    int i;
     for (i = 0; i < engine->radarCount; i++) {
         if (engine->radars[i] == radar) {
             RKLog("%s Removing '%s' ...\n", engine->name, radar->desc.name);
@@ -1415,9 +1417,9 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
         }
     }
     if (engine->radarCount) {
-        int j = 0;
+        j = 0;
         char string[RKMaximumStringLength];
-        for (int k = 0; k < engine->radarCount; k++) {
+        for (k = 0; k < engine->radarCount; k++) {
             RKRadar *radar = engine->radars[k];
             j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->desc.name);
         }
@@ -1440,4 +1442,16 @@ void RKCommandCenterStop(RKCommandCenter *center) {
     }
     RKServerStop(center->server);
     RKLog("%s Stopped.\n", center->name);
+}
+
+void RKCommandCenterReset(RKCommandCenter *engine, RKRadar *radar) {
+    int i;
+    for (i = 0; i < RKCommandCenterMaxConnections; i++) {
+        RKUser *user = &engine->users[i];
+        if (user->radar == radar && radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            user->pulseIndex = RKPreviousNModuloS(radar->pulseIndex, radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
+            user->rayIndex = RKPreviousNModuloS(radar->rayIndex, radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
+            user->healthIndex = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+        }
+    }
 }
