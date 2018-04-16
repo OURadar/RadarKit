@@ -145,6 +145,7 @@ int socketCommandHandler(RKOperator *O) {
                         case 'r':
                             // 'dr' - Restart DSP engines
                             RKSoftRestart(user->radar);
+							RKCommandCenterSkipToCurrent(engine, user->radar);
                             sprintf(string, "ACK. Soft restart executed." RKEOL);
                             RKOperatorSendCommandResponse(O, string);
                             break;
@@ -309,7 +310,6 @@ int socketCommandHandler(RKOperator *O) {
                 case 's':
                     // Stream varrious data
                     newStream = RKStringToFlag(commandString + 1);
-					newStream |= RKStreamSweepZVWDPRKS;
                     k = user->rayIndex;
                     pthread_mutex_lock(&user->mutex);
                     user->streamsInProgress = RKStreamNull;
@@ -863,7 +863,6 @@ int socketStreamHandler(RKOperator *O) {
                     } else {
                         u8Data = NULL;
                     }
-
                     if (u8Data) {
                         uint8_t *lowRateData = (uint8_t *)user->string;
                         for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
@@ -1038,7 +1037,7 @@ int socketStreamHandler(RKOperator *O) {
         user->timeLastDisplayIQOut = time;
     } else if (user->streams & user->access & RKStreamDisplayIQ && time - user->timeLastDisplayIQOut >= 0.05) {
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 4 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
+            endIndex = RKPreviousNModuloS(user->radar->pulseIndex, 2 * user->radar->pulseCompressionEngine->coreCount, user->radar->desc.pulseBufferDepth);
         } else {
             endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
@@ -1501,8 +1500,8 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
         if (user->radar == radar && radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            user->pulseIndex = RKPreviousNModuloS(radar->pulseIndex, radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
-            user->rayIndex = RKPreviousNModuloS(radar->rayIndex, radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
+            user->pulseIndex  = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
+            user->rayIndex    = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
             user->healthIndex = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
         }
     }
