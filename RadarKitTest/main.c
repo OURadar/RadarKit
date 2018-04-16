@@ -746,6 +746,8 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
+		usleep(1000000);
+		RKRadarRelayExec(myRadar->radarRelay, "sY", NULL);
         RKWaitWhileActive(myRadar);
 		//sleep(3);
         RKStop(myRadar);

@@ -883,18 +883,18 @@ int socketStreamHandler(RKOperator *O) {
     }
 
     // Sweep
-    //if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
-    if (user->streams & RKStreamSweepZVWDPRKS) {
+    if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
         if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
             user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
             sweep = RKSweepCollect(user->radar->sweepEngine);
             memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
-            if (engine->verbose) {
+            if (engine->verbose > 1) {
                 RKLog("%s New sweep available   C%02d   S%lu.  <--  %x / %x\n", engine->name, sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
             }
 
+			// Store a copy of the original list of available products
             uint32_t productList = sweepHeader.productList;
 
             // Mutate sweep so that header indicates the sweep to be transmitted
@@ -1003,9 +1003,10 @@ int socketStreamHandler(RKOperator *O) {
             if (engine->verbose) {
                 // Offset scratch by one to get rid of the very first space
                 RKLog(">%s %s productList = %x (%s)\n", engine->name, O->name, sweepHeader.productList, user->scratch + 1);
-                RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
-                RKLog(">%s %s Sent a sweep of size %s / %s B (%d)\n", engine->name, O->name,
-                      RKIntegerToCommaStyleString(O->delimTx.size), RKIntegerToCommaStyleString(sentSize), productCount);
+				if (engine->verbose > 1) {
+					RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
+					RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
+				}
             }
         }
     }
