@@ -754,7 +754,7 @@ int socketStreamHandler(RKOperator *O) {
             }
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No Ray / Deactivated.  streamsInProgress = 0x%08x\n",
+                RKLog("%s %s No product ray / deactivated.  streamsInProgress = 0x%08x\n",
                       engine->name, O->name, user->streamsInProgress);
             }
         }
@@ -875,7 +875,7 @@ int socketStreamHandler(RKOperator *O) {
             }
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No Ray / Deactivated.  streamsInProgress = 0x%08x\n",
+                RKLog("%s %s No display ray / deactivated.  streamsInProgress = 0x%08x\n",
                       engine->name, O->name, user->streamsInProgress);
             }
         }
@@ -1217,7 +1217,7 @@ int socketInitialHandler(RKOperator *O) {
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->ascopeMode = 0;
-    user->streams = RKStreamSweepZVWDPRKS;
+    //user->streams = RKStreamSweepZVWDPRKS;
     pthread_mutex_init(&user->mutex, NULL);
     RKLog(">%s %s Pul x %d   Ray x %d ...\n", engine->name, O->name, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
