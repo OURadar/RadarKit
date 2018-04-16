@@ -1496,7 +1496,7 @@ void RKCommandCenterStop(RKCommandCenter *center) {
     RKLog("%s Stopped.\n", center->name);
 }
 
-void RKCommandCenterReset(RKCommandCenter *engine, RKRadar *radar) {
+void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     int i;
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];

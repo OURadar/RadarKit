@@ -73,6 +73,6 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *, RKRadar *);
 
 void RKCommandCenterStart(RKCommandCenter *);
 void RKCommandCenterStop(RKCommandCenter *);
-void RKCommandCenterReset(RKCommandCenter *, RKRadar *);
+void RKCommandCenterSkipToCurrent(RKCommandCenter *, RKRadar *);
 
 #endif /* __RadarKit_RKCommandCenter__ */

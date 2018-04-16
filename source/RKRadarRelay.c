@@ -196,7 +196,7 @@ static int RKRadarRelayRead(RKClient *client) {
             if (engine->sweepRayIndex == engine->sweepHeaderCache.rayCount) {
                 gettimeofday(&engine->sweepToc, NULL);
                 j = (int)(engine->sweepHeaderCache.config.i - engine->configBuffer[RKPreviousNModuloS(*engine->configIndex, 2, engine->radarDescription->configBufferDepth)].i);
-                RKLog("%s New sweep S%lu   Elapsed time = %.2f ms   delta = %d.\n", engine->name, engine->sweepHeaderCache.config.i, 1.0e3 * RKTimevalDiff(engine->sweepToc, engine->sweepTic), j);
+                RKLog("%s New sweep S%lu   Elapsed time = %.3f s   delta = %d.\n", engine->name, engine->sweepHeaderCache.config.i, RKTimevalDiff(engine->sweepToc, engine->sweepTic), j);
             } else if (engine->sweepRayIndex > engine->sweepHeaderCache.rayCount) {
                 RKLog("%s Error. Too many sweep rays.  %d > %d\n", engine->name, engine->sweepRayIndex, engine->sweepHeaderCache.rayCount);
                 engine->sweepRayIndex = 0;
