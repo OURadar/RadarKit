@@ -184,8 +184,10 @@ static int RKRadarRelayRead(RKClient *client) {
             break;
             
         case RKNetworkPacketTypeSweepHeader:
-            memcpy(&engine->sweepHeaderCache, client->userPayload, sizeof(RKSweepHeader));
             gettimeofday(&engine->sweepTic, NULL);
+            memcpy(&engine->sweepHeaderCache, client->userPayload, sizeof(RKSweepHeader));
+            memcpy(&engine->configBuffer[*engine->configIndex], &engine->sweepHeaderCache.config, sizeof(RKConfig));
+            *engine->configIndex = RKNextModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth);
             engine->sweepRayIndex = 0;
             break;
 
@@ -193,9 +195,11 @@ static int RKRadarRelayRead(RKClient *client) {
             engine->sweepRayIndex++;
             if (engine->sweepRayIndex == engine->sweepHeaderCache.rayCount) {
                 gettimeofday(&engine->sweepToc, NULL);
-                RKLog("%s New sweep S%lu   Elapsed time = %.2f ms.\n", engine->name, engine->sweepHeaderCache.config.i, 1.0e3 * RKTimevalDiff(engine->sweepToc, engine->sweepTic));
+                j = (int)(engine->sweepHeaderCache.config.i - engine->configBuffer[RKPreviousNModuloS(*engine->configIndex, 2, engine->radarDescription->configBufferDepth)].i);
+                RKLog("%s New sweep S%lu   Elapsed time = %.2f ms   delta = %d.\n", engine->name, engine->sweepHeaderCache.config.i, 1.0e3 * RKTimevalDiff(engine->sweepToc, engine->sweepTic), j);
             } else if (engine->sweepRayIndex > engine->sweepHeaderCache.rayCount) {
                 RKLog("%s Error. Too many sweep rays.  %d > %d\n", engine->name, engine->sweepRayIndex, engine->sweepHeaderCache.rayCount);
+                engine->sweepRayIndex = 0;
             }
             break;
             

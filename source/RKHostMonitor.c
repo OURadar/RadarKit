@@ -421,8 +421,8 @@ static void *hostWatcher(void *in) {
         for (k = 0; k < engine->workerCount; k++) {
             RKUnitMonitor *worker = &engine->workers[k];
             allKnown &= worker->hostStatus != RKHostStatusUnknown;
-            allReachable &= worker->hostStatus == RKHostStatusReachable;
             anyReachable |= worker->hostStatus == RKHostStatusReachable;
+            allReachable &= (worker->hostStatus == RKHostStatusReachable || worker->hostStatus == RKHostStatusReachableUnusual);
             if (engine->verbose > 1) {
                 RKLog("%s %s %s%s%s (%d)\n", engine->name,
                       engine->hosts[k],
