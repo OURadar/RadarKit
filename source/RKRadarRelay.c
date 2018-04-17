@@ -10,6 +10,31 @@
 
 #pragma mark - Internal Functions
 
+static int RKRadarRelayGreet(RKClient *client) {
+	// The shared user resource pointer
+	RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
+
+	char command[RKNameLength];
+
+	pthread_mutex_lock(&engine->client->lock);
+
+	uint32_t size = sprintf(command, "a RKRadarRelay nopassword" RKEOL);
+	RKNetworkSendPackets(engine->client->sd, command, size, NULL);
+	if (engine->streams != RKStreamNull) {
+		if (engine->verbose) {
+			RKLog("%s Resuming stream ...\n", engine->name);
+		}
+		size = sprintf(command, "s");
+		size += RKFlagToString(command + size, engine->streams);
+		size += sprintf(command + size, RKEOL);
+		RKNetworkSendPackets(engine->client->sd, command, size, NULL);
+	}
+
+	pthread_mutex_unlock(&engine->client->lock);
+
+	return RKResultSuccess;
+}
+
 static int RKRadarRelayRead(RKClient *client) {
     // The shared user resource pointer
     RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
@@ -238,8 +263,8 @@ static void *radarRelay(void *in) {
     engine->memoryUsage += sizeof(RKClient) + RKMaxPacketSize;
 
     RKClientSetUserResource(engine->client, engine);
+	RKClientSetGreetHandler(engine->client, RKRadarRelayGreet);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
-
     RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
     engine->state |= RKEngineStateActive;
@@ -249,14 +274,7 @@ static void *radarRelay(void *in) {
 
     gettimeofday(&t1, NULL);
 
-    char cmd[RKNameLength];
-
     RKClientStart(engine->client, true);
-
-    uint32_t size = sprintf(cmd, "a RKRelay nopassword" RKEOL);
-    pthread_mutex_lock(&engine->client->lock);
-    RKNetworkSendPackets(engine->client->sd, cmd, size, NULL);
-    pthread_mutex_unlock(&engine->client->lock);
 
     while (engine->state & RKEngineStateActive) {
         // Evaluate the nodal-health buffers every once in a while
@@ -412,4 +430,15 @@ int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) 
         }
     }
     return RKResultSuccess;
+}
+
+int RKRadarRelayUpdateStreams(RKRadarRelay *engine, RKStream newStream) {
+	char command[RKMaximumStringLength];
+	if (engine->streams != newStream) {
+		engine->streams = newStream;
+		sprintf(command, "s");
+		RKFlagToString(command + 1, engine->streams);
+		RKRadarRelayExec(engine, command, NULL);
+	}
+	return RKResultSuccess;
 }

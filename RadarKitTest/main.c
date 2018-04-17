@@ -803,18 +803,19 @@ int main(int argc, const char **argv) {
         RKRadarRelaySetHost(myRadar->radarRelay, user.relayHost);
         RKSetDoNotWrite(myRadar, true);
 
-        // Radar going live, then wait indefinitely until something happens
-        RKGoLive(myRadar);
-
 		// Assembly a string that describes streams
 		if (strlen(user.streams)) {
-			i = sprintf(cmd, "s%s", user.streams);
+			//i = sprintf(cmd, "s%s", user.streams);
+			RKStream stream = RKStringToFlag(user.streams);
 			usleep(1000000);
 			//RKLog("cmd = %s\n", cmd);
-			RKRadarRelayExec(myRadar->radarRelay, cmd, NULL);
+			//RKRadarRelayExec(myRadar->radarRelay, cmd, NULL);
+			RKRadarRelayUpdateStreams(myRadar->radarRelay, stream);
 		}
+
+		// Radar going live, then wait indefinitely until something happens
+        RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
-		//sleep(3);
         RKStop(myRadar);
 
     } else {
