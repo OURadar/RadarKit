@@ -104,7 +104,11 @@ int socketCommandHandler(RKOperator *O) {
                 }
             }
             user->commandCount++;
-            RKLog("%s %s Received command '%s'\n", engine->name, O->name, commandString);
+            RKLog("%s %s Received command '%s%s%s'\n",
+				  engine->name, O->name,
+				  rkGlobalParameters.showColor ? RKGreenColor : "",
+				  commandString,
+				  rkGlobalParameters.showColor ? RKNoColor : "");
             // Process the command
             switch (commandString[0]) {
                 case 'a':

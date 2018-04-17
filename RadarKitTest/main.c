@@ -29,6 +29,7 @@ typedef struct user_params {
     char           pedzyHost[256];
     char           tweetaHost[256];
     char           relayHost[256];
+	char           streams[256];
     RKRadarDesc    desc;
 } UserParams;
 
@@ -122,6 +123,10 @@ static void showHelp() {
            "          4 - 50-MHz 50,000 gates\n"
 		   "          5 - 100-MHz 100,000 gates\n"
            "\n"
+		   "  -r (--relay) " UNDERLINE("host") "[symbols]\n"
+		   "         Runs as a relay and connect to remote " UNDERLINE("host") "\n"
+		   "         If [symbols] are supplied, they will be requested.\n"
+		   "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
            "\n"
@@ -404,7 +409,7 @@ UserParams processInput(int argc, const char **argv) {
 					case 14:
 						if (argc == optind) {
 							RKLog("No filename given.\n");
-							break;
+							exit(EXIT_FAILURE);
 						}
 						RKTestReadSweep(argv[optind]);
 						break;
@@ -511,6 +516,11 @@ UserParams processInput(int argc, const char **argv) {
             case 'r':
 				user.simulate = false;
                 user.desc.initFlags = RKInitFlagRelay;
+				if (argc > optind && argv[optind][0] != '-') {
+					// The next argument is not an option, interpret as streams
+					strcpy(user.streams, argv[optind]);
+					optind++;
+				}
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;
             case 's':
@@ -660,12 +670,15 @@ int main(int argc, const char **argv) {
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
     
-    if (user.simulate) {
+	int i;
+	char *c;
+	RKName cmd = "";
+
+	if (user.simulate) {
 
         // Now we use the frame work.
         // Build a series of options for transceiver, only pass down the relevant parameters
-        int i = 0;
-        char cmd[64] = "";
+		i = 0;
         if (user.fs) {
             i += sprintf(cmd + i, " F %.0f", user.fs);
         }
@@ -746,8 +759,49 @@ int main(int argc, const char **argv) {
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
-		usleep(1000000);
-		RKRadarRelayExec(myRadar->radarRelay, "sY", NULL);
+
+		// Assembly a string that describes streams
+		if (strlen(user.streams)) {
+			i = sprintf(cmd, "s");
+			c = user.streams;
+			while (c < user.streams + strlen(user.streams) && i < 255) {
+				switch (*c++) {
+					case 'z':
+					case 'Z':
+						i += sprintf(cmd + i, "Y");
+						break;
+					case 'v':
+					case 'V':
+						i += sprintf(cmd + i, "U");
+						break;
+					case 'w':
+					case 'W':
+						i += sprintf(cmd + i, "X");
+						break;
+					case 'd':
+					case 'D':
+						i += sprintf(cmd + i, "C");
+						break;
+					case 'p':
+					case 'P':
+						i += sprintf(cmd + i, "O");
+						break;
+					case 'r':
+					case 'R':
+						i += sprintf(cmd + i, "Q");
+						break;
+					case 'k':
+					case 'K':
+						i += sprintf(cmd + i, "J");
+						break;
+					default:
+						break;
+				}
+			}
+			usleep(1000000);
+			//RKLog("cmd = %s\n", cmd);
+			RKRadarRelayExec(myRadar->radarRelay, cmd, NULL);
+		}
         RKWaitWhileActive(myRadar);
 		//sleep(3);
         RKStop(myRadar);
