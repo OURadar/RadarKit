@@ -805,11 +805,9 @@ int main(int argc, const char **argv) {
 
 		// Assembly a string that describes streams
 		if (strlen(user.streams)) {
-			//i = sprintf(cmd, "s%s", user.streams);
 			RKStream stream = RKStringToFlag(user.streams);
+			RKLog("stream = %x\n", stream);
 			usleep(1000000);
-			//RKLog("cmd = %s\n", cmd);
-			//RKRadarRelayExec(myRadar->radarRelay, cmd, NULL);
 			RKRadarRelayUpdateStreams(myRadar->radarRelay, stream);
 		}
 

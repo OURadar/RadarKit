@@ -25,7 +25,7 @@ static int RKRadarRelayGreet(RKClient *client) {
 			RKLog("%s Resuming stream ...\n", engine->name);
 		}
 		size = sprintf(command, "s");
-		size += RKFlagToString(command + size, engine->streams);
+		size += RKStringFromStream(command + size, engine->streams);
 		size += sprintf(command + size, RKEOL);
 		RKNetworkSendPackets(engine->client->sd, command, size, NULL);
 	}
@@ -392,6 +392,9 @@ int RKRadarRelayStop(RKRadarRelay *engine) {
 }
 
 int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) {
+	if (!(engine->state & RKEngineStateActive)) {
+		return RKResultEngineNotActive;
+	}
     RKClient *client = engine->client;
     if (client->verbose > 1) {
         RKLog("%s received '%s'", client->name, command);
@@ -437,7 +440,7 @@ int RKRadarRelayUpdateStreams(RKRadarRelay *engine, RKStream newStream) {
 	if (engine->streams != newStream) {
 		engine->streams = newStream;
 		sprintf(command, "s");
-		RKFlagToString(command + 1, engine->streams);
+		RKStringFromStream(command + 1, engine->streams);
 		RKRadarRelayExec(engine, command, NULL);
 	}
 	return RKResultSuccess;

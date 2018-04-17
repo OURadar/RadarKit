@@ -185,6 +185,7 @@ enum RKResult {
     RKResultTimeout = -99,
     RKResultNullInput,
     RKResultEngineNotWired,
+	RKResultEngineNotActive,
     RKResultIncompleteSend,
     RKResultIncompleteReceive,
     RKResultIncompleteTransceiver,

@@ -20,7 +20,6 @@ int socketTerminateHandler(RKOperator *);
 static void consolidateStreams(RKCommandCenter *engine) {
 
     int j, k;
-//    char string[RKNameLength];
     RKStream consolidatedStreams;
     
     // Consolidate streams
@@ -39,15 +38,6 @@ static void consolidateStreams(RKCommandCenter *engine) {
                 consolidatedStreams |= user->streams;
             }
         }
-//        if (engine->relayStreams != consolidatedStreams) {
-//            engine->relayStreams = consolidatedStreams;
-//            string[0] = 's';
-//            RKFlagToString(string + 1, engine->relayStreams);
-//            RKLog("%s Streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
-//            //RKRadarRelayExec(radar->radarRelay, string, string);
-//        } else {
-//            RKLog("%s Streams remain 0x%08x\n", engine->name, engine->relayStreams);
-//        }
 		RKRadarRelayUpdateStreams(radar->radarRelay, consolidatedStreams);
     }
 }
