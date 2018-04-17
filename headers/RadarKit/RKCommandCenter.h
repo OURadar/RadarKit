@@ -56,8 +56,6 @@ typedef struct rk_command_center {
     RKServer                         *server;
     int                              radarCount;
     RKUser                           users[RKCommandCenterMaxConnections];
-//    RKStream                         relayStreams;
-//    RKStream                         relayStreamsLevel2;
     size_t                           memoryUsage;
 } RKCommandCenter;
 

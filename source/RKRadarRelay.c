@@ -439,8 +439,7 @@ int RKRadarRelayUpdateStreams(RKRadarRelay *engine, RKStream newStream) {
 	char command[RKMaximumStringLength];
 	if (engine->streams != newStream) {
 		engine->streams = newStream;
-		sprintf(command, "s");
-		RKStringFromStream(command + 1, engine->streams);
+		sprintf(command, "s%s", RKStringOfStream(newStream));
 		RKRadarRelayExec(engine, command, NULL);
 	}
 	return RKResultSuccess;

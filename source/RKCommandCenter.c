@@ -304,7 +304,7 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 's':
                     // Stream varrious data
-                    newStream = RKStringToFlag(commandString + 1);
+                    newStream = RKStreamFromString(commandString + 1);
                     //RKLog("%s %s newStream = %llx\n", engine->name, O->name, newStream);
                     k = user->rayIndex;
                     pthread_mutex_lock(&user->mutex);
@@ -375,7 +375,7 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 's':
                     // Stream varrious data
-                    user->streams = RKStringToFlag(commandString + 1);
+                    user->streams = RKStreamFromString(commandString + 1);
                     
                     consolidateStreams(engine);
 

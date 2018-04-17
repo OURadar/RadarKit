@@ -756,7 +756,7 @@ int RKStringFromStream(char *string, RKStream stream) {
 }
 
 char *RKStringOfStream(RKStream stream) {
-	static string[RKNameLength];
+	static char string[RKNameLength];
 	RKStringFromStream(string, stream);
 	return string;
 }

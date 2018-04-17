@@ -805,10 +805,7 @@ int main(int argc, const char **argv) {
 
 		// Assembly a string that describes streams
 		if (strlen(user.streams)) {
-			RKStream stream = RKStringToFlag(user.streams);
-			RKLog("stream = %x\n", stream);
-			usleep(1000000);
-			RKRadarRelayUpdateStreams(myRadar->radarRelay, stream);
+			RKRadarRelayUpdateStreams(myRadar->radarRelay, RKStreamFromString(user.streams));
 		}
 
 		// Radar going live, then wait indefinitely until something happens
