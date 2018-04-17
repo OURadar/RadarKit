@@ -84,6 +84,9 @@ void RKScratchFree(RKScratch *);
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *));
 int RKFileMonitorFree(RKFileMonitor *);
 
+RKStream RKStreamFromString(const char *);
+char *RKStringOfStream(RKStream);
+int RKStringFromStream(char *, RKStream);
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
 void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);

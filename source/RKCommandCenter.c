@@ -20,7 +20,6 @@ int socketTerminateHandler(RKOperator *);
 static void consolidateStreams(RKCommandCenter *engine) {
 
     int j, k;
-    char string[RKNameLength];
     RKStream consolidatedStreams;
     
     // Consolidate streams
@@ -39,15 +38,7 @@ static void consolidateStreams(RKCommandCenter *engine) {
                 consolidatedStreams |= user->streams;
             }
         }
-        if (engine->relayStreams != consolidatedStreams) {
-            engine->relayStreams = consolidatedStreams;
-            string[0] = 's';
-            RKFlagToString(string + 1, engine->relayStreams);
-            RKLog("%s Streams -> 0x%08x '%s'\n", engine->name, engine->relayStreams, string);
-            RKRadarRelayExec(radar->radarRelay, string, string);
-        } else {
-            RKLog("%s Streams remain 0x%08x\n", engine->name, engine->relayStreams);
-        }
+		RKRadarRelayUpdateStreams(radar->radarRelay, consolidatedStreams);
     }
 }
 
@@ -1226,160 +1217,6 @@ int socketTerminateHandler(RKOperator *O) {
     user->radar = NULL;
     consolidateStreams(engine);
     return RKResultNoError;
-}
-
-#pragma mark - Type Conversions
-
-RKStream RKStringToFlag(const char * string) {
-    int j = 0;
-    char *c = (char *)string;
-    RKStream flag = RKStreamNull;
-    while (j++ < strlen(string)) {
-        switch (*c) {
-            case 'h':
-                flag |= RKStreamStatusHealth;
-                break;
-            case '1':
-                flag |= RKStreamStatusPulses;
-                break;
-            case '2':
-                flag |= RKStreamStatusRays;
-                break;
-            case '3':
-                flag |= RKStreamStatusPositions;
-                break;
-            case '4':
-                flag |= RKStreamStatusEngines;
-                break;
-            case '!':
-                flag |= RKStreamStatusProcessorStatus;
-                break;
-            case 'z':
-                flag |= RKStreamDisplayZ;
-                break;
-            case 'Z':
-                flag |= RKStreamProductZ;
-                break;
-            case 'v':
-                flag |= RKStreamDisplayV;
-                break;
-            case 'V':
-                flag |= RKStreamProductV;
-                break;
-            case 'w':
-                flag |= RKStreamDisplayW;
-                break;
-            case 'W':
-                flag |= RKStreamProductW;
-                break;
-            case 'd':
-                flag |= RKStreamDisplayD;
-                break;
-            case 'D':
-                flag |= RKStreamProductD;
-                break;
-            case 'p':
-                flag |= RKStreamDisplayP;
-                break;
-            case 'P':
-                flag |= RKStreamProductP;
-                break;
-            case 'r':
-                flag |= RKStreamDisplayR;
-                break;
-            case 'R':
-                flag |= RKStreamProductR;
-                break;
-            case 'k':
-                flag |= RKStreamDisplayK;
-                break;
-            case 'K':
-                flag |= RKStreamProductK;
-                break;
-            case 's':
-                flag |= RKStreamDisplaySh;
-                break;
-            case 'S':
-                flag |= RKStreamProductSh;
-                break;
-            case 't':
-                flag |= RKStreamDisplaySv;
-                break;
-            case 'T':
-                flag |= RKStreamProductSv;
-                break;
-            case 'i':
-                flag |= RKStreamDisplayIQ;
-                break;
-            case 'I':
-                flag |= RKStreamProductIQ;
-                break;
-            case 'Y':
-                flag |= RKStreamSweepZ;
-                break;
-            case 'U':
-                flag |= RKStreamSweepV;
-                break;
-            case 'X':
-                flag |= RKStreamSweepW;
-                break;
-            case 'C':
-                flag |= RKStreamSweepD;
-                break;
-            case 'O':
-                flag |= RKStreamSweepP;
-                break;
-            case 'Q':
-                flag |= RKStreamSweepR;
-                break;
-            case 'J':
-                flag |= RKStreamSweepK;
-                break;
-            default:
-                break;
-        }
-        c++;
-    }
-    return flag;
-}
-
-int RKFlagToString(char *string, RKStream flag) {
-    int j = 0;
-    if (flag & RKStreamStatusPulses)          { j += sprintf(string + j, "1"); }
-    if (flag & RKStreamStatusRays)            { j += sprintf(string + j, "2"); }
-    if (flag & RKStreamStatusPositions)       { j += sprintf(string + j, "3"); }
-    if (flag & RKStreamStatusEngines)         { j += sprintf(string + j, "4"); }
-    if (flag & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
-    if (flag & RKStreamStatusHealth)          { j += sprintf(string + j, "h"); }
-    if (flag & RKStreamDisplayZ)              { j += sprintf(string + j, "z"); }
-    if (flag & RKStreamProductZ)              { j += sprintf(string + j, "Z"); }
-    if (flag & RKStreamDisplayV)              { j += sprintf(string + j, "v"); }
-    if (flag & RKStreamProductV)              { j += sprintf(string + j, "V"); }
-    if (flag & RKStreamDisplayW)              { j += sprintf(string + j, "w"); }
-    if (flag & RKStreamProductW)              { j += sprintf(string + j, "W"); }
-    if (flag & RKStreamDisplayD)              { j += sprintf(string + j, "d"); }
-    if (flag & RKStreamProductD)              { j += sprintf(string + j, "D"); }
-    if (flag & RKStreamDisplayP)              { j += sprintf(string + j, "p"); }
-    if (flag & RKStreamProductP)              { j += sprintf(string + j, "P"); }
-    if (flag & RKStreamDisplayR)              { j += sprintf(string + j, "r"); }
-    if (flag & RKStreamProductR)              { j += sprintf(string + j, "R"); }
-    if (flag & RKStreamDisplayK)              { j += sprintf(string + j, "k"); }
-    if (flag & RKStreamProductK)              { j += sprintf(string + j, "K"); }
-    if (flag & RKStreamDisplaySh)             { j += sprintf(string + j, "s"); }
-    if (flag & RKStreamProductSh)             { j += sprintf(string + j, "S"); }
-    if (flag & RKStreamDisplaySv)             { j += sprintf(string + j, "t"); }
-    if (flag & RKStreamProductSv)             { j += sprintf(string + j, "T"); }
-    if (flag & RKStreamDisplayIQ)             { j += sprintf(string + j, "i"); }
-    if (flag & RKStreamProductIQ)             { j += sprintf(string + j, "I"); }
-    if (flag & RKStreamSweepZ)                { j += sprintf(string + j, "Y"); }
-    if (flag & RKStreamSweepV)                { j += sprintf(string + j, "U"); }
-    if (flag & RKStreamSweepW)                { j += sprintf(string + j, "X"); }
-    if (flag & RKStreamSweepD)                { j += sprintf(string + j, "C"); }
-    if (flag & RKStreamSweepP)                { j += sprintf(string + j, "O"); }
-    if (flag & RKStreamSweepR)                { j += sprintf(string + j, "Q"); }
-    if (flag & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
-    string[j] = '\0';
-    return 0;
 }
 
 #pragma mark - Life Cycle

@@ -603,6 +603,164 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
 
 #pragma mark - Moment Stuff
 
+RKStream RKStreamFromString(const char * string) {
+	int j = 0;
+	char *c = (char *)string;
+	RKStream flag = RKStreamNull;
+	while (j++ < strlen(string)) {
+		switch (*c) {
+			case 'h':
+				flag |= RKStreamStatusHealth;
+				break;
+			case '1':
+				flag |= RKStreamStatusPulses;
+				break;
+			case '2':
+				flag |= RKStreamStatusRays;
+				break;
+			case '3':
+				flag |= RKStreamStatusPositions;
+				break;
+			case '4':
+				flag |= RKStreamStatusEngines;
+				break;
+			case '!':
+				flag |= RKStreamStatusProcessorStatus;
+				break;
+			case 'z':
+				flag |= RKStreamDisplayZ;
+				break;
+			case 'Z':
+				flag |= RKStreamProductZ;
+				break;
+			case 'v':
+				flag |= RKStreamDisplayV;
+				break;
+			case 'V':
+				flag |= RKStreamProductV;
+				break;
+			case 'w':
+				flag |= RKStreamDisplayW;
+				break;
+			case 'W':
+				flag |= RKStreamProductW;
+				break;
+			case 'd':
+				flag |= RKStreamDisplayD;
+				break;
+			case 'D':
+				flag |= RKStreamProductD;
+				break;
+			case 'p':
+				flag |= RKStreamDisplayP;
+				break;
+			case 'P':
+				flag |= RKStreamProductP;
+				break;
+			case 'r':
+				flag |= RKStreamDisplayR;
+				break;
+			case 'R':
+				flag |= RKStreamProductR;
+				break;
+			case 'k':
+				flag |= RKStreamDisplayK;
+				break;
+			case 'K':
+				flag |= RKStreamProductK;
+				break;
+			case 's':
+				flag |= RKStreamDisplaySh;
+				break;
+			case 'S':
+				flag |= RKStreamProductSh;
+				break;
+			case 't':
+				flag |= RKStreamDisplaySv;
+				break;
+			case 'T':
+				flag |= RKStreamProductSv;
+				break;
+			case 'i':
+				flag |= RKStreamDisplayIQ;
+				break;
+			case 'I':
+				flag |= RKStreamProductIQ;
+				break;
+			case 'Y':
+				flag |= RKStreamSweepZ;
+				break;
+			case 'U':
+				flag |= RKStreamSweepV;
+				break;
+			case 'X':
+				flag |= RKStreamSweepW;
+				break;
+			case 'C':
+				flag |= RKStreamSweepD;
+				break;
+			case 'O':
+				flag |= RKStreamSweepP;
+				break;
+			case 'Q':
+				flag |= RKStreamSweepR;
+				break;
+			case 'J':
+				flag |= RKStreamSweepK;
+				break;
+			default:
+				break;
+		}
+		c++;
+	}
+	return flag;
+}
+
+int RKStringFromStream(char *string, RKStream stream) {
+	int j = 0;
+	if (stream & RKStreamStatusPulses)          { j += sprintf(string + j, "1"); }
+	if (stream & RKStreamStatusRays)            { j += sprintf(string + j, "2"); }
+	if (stream & RKStreamStatusPositions)       { j += sprintf(string + j, "3"); }
+	if (stream & RKStreamStatusEngines)         { j += sprintf(string + j, "4"); }
+	if (stream & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
+	if (stream & RKStreamStatusHealth)          { j += sprintf(string + j, "h"); }
+	if (stream & RKStreamDisplayZ)              { j += sprintf(string + j, "z"); }
+	if (stream & RKStreamProductZ)              { j += sprintf(string + j, "Z"); }
+	if (stream & RKStreamDisplayV)              { j += sprintf(string + j, "v"); }
+	if (stream & RKStreamProductV)              { j += sprintf(string + j, "V"); }
+	if (stream & RKStreamDisplayW)              { j += sprintf(string + j, "w"); }
+	if (stream & RKStreamProductW)              { j += sprintf(string + j, "W"); }
+	if (stream & RKStreamDisplayD)              { j += sprintf(string + j, "d"); }
+	if (stream & RKStreamProductD)              { j += sprintf(string + j, "D"); }
+	if (stream & RKStreamDisplayP)              { j += sprintf(string + j, "p"); }
+	if (stream & RKStreamProductP)              { j += sprintf(string + j, "P"); }
+	if (stream & RKStreamDisplayR)              { j += sprintf(string + j, "r"); }
+	if (stream & RKStreamProductR)              { j += sprintf(string + j, "R"); }
+	if (stream & RKStreamDisplayK)              { j += sprintf(string + j, "k"); }
+	if (stream & RKStreamProductK)              { j += sprintf(string + j, "K"); }
+	if (stream & RKStreamDisplaySh)             { j += sprintf(string + j, "s"); }
+	if (stream & RKStreamProductSh)             { j += sprintf(string + j, "S"); }
+	if (stream & RKStreamDisplaySv)             { j += sprintf(string + j, "t"); }
+	if (stream & RKStreamProductSv)             { j += sprintf(string + j, "T"); }
+	if (stream & RKStreamDisplayIQ)             { j += sprintf(string + j, "i"); }
+	if (stream & RKStreamProductIQ)             { j += sprintf(string + j, "I"); }
+	if (stream & RKStreamSweepZ)                { j += sprintf(string + j, "Y"); }
+	if (stream & RKStreamSweepV)                { j += sprintf(string + j, "U"); }
+	if (stream & RKStreamSweepW)                { j += sprintf(string + j, "X"); }
+	if (stream & RKStreamSweepD)                { j += sprintf(string + j, "C"); }
+	if (stream & RKStreamSweepP)                { j += sprintf(string + j, "O"); }
+	if (stream & RKStreamSweepR)                { j += sprintf(string + j, "Q"); }
+	if (stream & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
+	string[j] = '\0';
+	return j;
+}
+
+char *RKStringOfStream(RKStream stream) {
+	static string[RKNameLength];
+	RKStringFromStream(string, stream);
+	return string;
+}
+
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
     if (list == NULL || *list == 0) {
         return RKResultNullInput;

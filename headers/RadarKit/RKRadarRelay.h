@@ -76,6 +76,7 @@ void RKRadarRelaySetHost(RKRadarRelay *, const char *hostname);
 int RKRadarRelayStart(RKRadarRelay *);
 int RKRadarRelayStop(RKRadarRelay *);
 
-int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response);
+int RKRadarRelayExec(RKRadarRelay *, const char *command, char *response);
+int RKRadarRelayUpdateStreams(RKRadarRelay *, RKStream);
 
 #endif
