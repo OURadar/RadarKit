@@ -201,7 +201,6 @@ static void setSystemLevel(UserParams *user, const int level) {
     switch (level) {
         case 0:
             // Debug
-            user->simulate = true;
             user->fs = 5000000;
             user->gateCount = 30;
             user->coresForPulseCompression = 2;
@@ -213,7 +212,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             break;
         case 1:
             // Minimum: 5-MHz
-            user->simulate = true;
             user->fs = 5000000;
             user->gateCount = 4000;
             user->coresForPulseCompression = 2;
@@ -222,7 +220,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             break;
         case 2:
 			// Low: 10-MHz
-            user->simulate = true;
             user->fs = 10000000;
             user->gateCount = 10000;
             user->coresForPulseCompression = 2;
@@ -231,7 +228,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             break;
         case 3:
 			// Intermediate: 20-MHz
-            user->simulate = true;
             user->fs = 20000000;
             user->gateCount = 20000;
             user->coresForPulseCompression = 4;
@@ -240,7 +236,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             break;
         case 4:
 			// High: 50-MHz
-            user->simulate = true;
             user->fs = 50000000;
             user->gateCount = 50000;
             user->coresForPulseCompression = 4;
@@ -249,7 +244,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             break;
         case 5:
 			// Full: 100-MHz
-            user->simulate = true;
             user->fs = 100000000;
             user->gateCount = 100000;
             user->coresForPulseCompression = 8;
@@ -258,7 +252,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             break;
 		case 6:
 			// Secret: 200-MHz
-			user->simulate = true;
 			user->fs = 200000000;
 			user->gateCount = 200000;
 			user->coresForPulseCompression = 10;
@@ -553,11 +546,26 @@ UserParams processInput(int argc, const char **argv) {
                 break;
         }
     }
-	if (user.prf == 0 && user.simulate == true) {
-		user.prf = 1000;
-	} else if (user.prf > 0 && user.simulate == false) {
-        RKLog("Warning. PRF has no effects without simulation.\n");
-    }
+	if (user.simulate == true) {
+		if (user.prf == 0) {
+			user.prf = 1000;
+		}
+		if (user.desc.initFlags == RKInitFlagRelay) {
+			RKLog("Info. Simulate takes precedence over relay.\n");
+			user.desc.initFlags = RKInitFlagAllocEverything;
+		}
+	} else {
+		if (!(user.desc.initFlags == RKInitFlagRelay)) {
+			RKLog("No options specified. Don't want to do anything?\n");
+			exit(EXIT_FAILURE);
+		}
+		if (user.prf) {
+			RKLog("Warning. PRF has no effects without simulation.\n");
+		}
+		if (user.gateCount == 0) {
+			setSystemLevel(&user, 1);
+		}
+	}
     if (user.verbose == 1) {
         user.desc.initFlags |= RKInitFlagVerbose;
     } else if (user.verbose == 2) {
@@ -577,6 +585,7 @@ UserParams processInput(int argc, const char **argv) {
 		user.gateCount = k;
 	}
 	user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
+
     return user;
 }
 
@@ -600,16 +609,6 @@ int main(int argc, const char **argv) {
 
     if (user.verbose > 1) {
         printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
-    }
-
-    // In the case when no tests are performed, simulate the time-series
-    if (user.simulate == false && !(user.desc.initFlags == RKInitFlagRelay)) {
-        RKLog("No options specified. Don't want to do anything?\n");
-        exit(EXIT_FAILURE);
-    } else if (user.simulate == true && user.desc.initFlags == RKInitFlagRelay) {
-        RKLog("Info. Simulate takes precedence over relay.\n");
-        user.desc.initFlags = RKInitFlagAllocEverything;
-        user.simulate = true;
     }
 
     // Screen output based on verbosity level
