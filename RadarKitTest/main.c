@@ -268,6 +268,7 @@ static void setSystemLevel(UserParams *user, const int level) {
 
 UserParams processInput(int argc, const char **argv) {
     int k;
+	char *c;
     
     // A structure unit that encapsulates command line user parameters
     UserParams user;
@@ -511,7 +512,54 @@ UserParams processInput(int argc, const char **argv) {
                 user.desc.initFlags = RKInitFlagRelay;
 				if (argc > optind && argv[optind][0] != '-') {
 					// The next argument is not an option, interpret as streams
-					strcpy(user.streams, argv[optind]);
+					if (argv[optind][0] == 's') {
+						// Convert product to sweep: Z V W D P R K --> Y U X C O Q J
+						strcpy(user.streams, &argv[optind][1]);
+						c = user.streams;
+						while (c < user.streams + strlen(user.streams)) {
+							switch (*c) {
+								case 'z':
+								case 'Z':
+									*c = 'Y';
+									break;
+								case 'v':
+								case 'V':
+									*c = 'U';
+									break;
+								case 'w':
+								case 'W':
+									*c = 'X';
+									break;
+								case 'd':
+								case 'D':
+									*c = 'C';
+									break;
+								case 'p':
+								case 'P':
+									*c = 'O';
+									break;
+								case 'r':
+								case 'R':
+									*c = 'Q';
+									break;
+								case 'k':
+								case 'K':
+									*c = 'J';
+									break;
+								default:
+									break;
+							}
+							c++;
+						}
+						if (user.verbose) {
+							RKLog("Stream %s --> %s\n", argv[optind], user.streams);
+						}
+					} else {
+						strcpy(user.streams, argv[optind]);
+						if (user.verbose) {
+							RKLog("Stream %s\n", user.streams);
+						}
+					}
 					optind++;
 				}
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
@@ -670,7 +718,6 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
     
 	int i;
-	char *c;
 	RKName cmd = "";
 
 	if (user.simulate) {
@@ -761,42 +808,7 @@ int main(int argc, const char **argv) {
 
 		// Assembly a string that describes streams
 		if (strlen(user.streams)) {
-			i = sprintf(cmd, "s");
-			c = user.streams;
-			while (c < user.streams + strlen(user.streams) && i < 255) {
-				switch (*c++) {
-					case 'z':
-					case 'Z':
-						i += sprintf(cmd + i, "Y");
-						break;
-					case 'v':
-					case 'V':
-						i += sprintf(cmd + i, "U");
-						break;
-					case 'w':
-					case 'W':
-						i += sprintf(cmd + i, "X");
-						break;
-					case 'd':
-					case 'D':
-						i += sprintf(cmd + i, "C");
-						break;
-					case 'p':
-					case 'P':
-						i += sprintf(cmd + i, "O");
-						break;
-					case 'r':
-					case 'R':
-						i += sprintf(cmd + i, "Q");
-						break;
-					case 'k':
-					case 'K':
-						i += sprintf(cmd + i, "J");
-						break;
-					default:
-						break;
-				}
-			}
+			i = sprintf(cmd, "s%s", user.streams);
 			usleep(1000000);
 			//RKLog("cmd = %s\n", cmd);
 			RKRadarRelayExec(myRadar->radarRelay, cmd, NULL);

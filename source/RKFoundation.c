@@ -655,7 +655,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Power",
         "Default"
     };
-    uint32_t lists[] = {
+    uint32_t products[] = {
         RKProductListProductZ,
         RKProductListProductV,
         RKProductListProductW,
@@ -717,7 +717,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
     if (index) {
         *index = productIndices[k];
     }
-    *list ^= lists[k];
+    *list ^= products[k];
     return RKResultSuccess;
 }
 

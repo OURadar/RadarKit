@@ -93,7 +93,7 @@ static void *sweepWriter(void *in) {
 
     int summarySize = 0;
     uint32_t productList = sweep->header.productList;
-    int productCount = __builtin_popcount(productList);
+    int productCount = __builtin_popcount(productList & RKProductListProductZVWDPRKS);
 
 	for (p = 0; p < productCount; p++) {
 		// Get the symbol, name, unit, colormap, etc. from the product list
@@ -314,7 +314,7 @@ static void *sweepWriter(void *in) {
 
         // Notify file manager of a new addition
         RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
-    }
+    } // for (p = 0; p < productCount; p++) ...
 
     // Show a summary of all the files created
     if (engine->verbose && summarySize > 0) {
