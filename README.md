@@ -13,10 +13,14 @@ The RadarKit is a straight C framework. This is a toolkit that abstracts various
 
 Follow these steps to get the project
 
-1. Clone a git project using the following command in Terminal:
+1. Clone a git project using one of the following commands in Terminal:
 
     ```shell
     git clone https://github.com/boonleng/radarkit.git
+    ```
+    or
+    ```shell
+    git clone https://git.arrc.ou.edu/radar/radarkit.git
     ```
 
 2. Get the required packages, which can either be installed through one of the package managers or compiled from source, which I would recommend for the FFTW library since it can take advantage of SSE, SSE2, AVX and AVX-2 accelerations.
