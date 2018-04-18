@@ -24,6 +24,7 @@ void *theClient(void *in) {
 
     int r;
     int k;
+    int flags;
     int readCount, timeoutCount;
     struct timeval timeout;
     struct timeval previousBeaconTime = {0, 0};
@@ -90,14 +91,21 @@ void *theClient(void *in) {
             return NULL;
         }
         if (C->blocking == false) {
-            fcntl(C->sd, F_SETFL, O_NONBLOCK);
+            flags = fcntl(C->sd, F_GETFL);
+            if (fcntl(C->sd, F_SETFL, flags | O_NONBLOCK) == -1) {
+                RKLog("%s Error. Unable to use non-blocking option.\n", C->name);
+            }
         }
         if (C->type == RKNetworkSocketTypeUDP) {
             r = 1;
             setsockopt(C->sd, SOL_SOCKET, SO_BROADCAST, &r, sizeof(r));
         }
 
-        C->state = RKClientStateConfiguringSocket;
+        pthread_mutex_lock(&C->lock);
+        if (C->state == RKClientStateResolvingIP) {
+            C->state = RKClientStateConfiguringSocket;
+        }
+        pthread_mutex_unlock(&C->lock);
 
         // Configure the socket
         C->sa.sin_family = AF_INET;
@@ -110,13 +118,18 @@ void *theClient(void *in) {
             RKLog("%s Configuring socket ...\n", C->name);
         }
 
-        C->state = RKClientStateConnecting;
+        pthread_mutex_lock(&C->lock);
+        if (C->state == RKClientStateConfiguringSocket) {
+            C->state = RKClientStateConnecting;
+        }
+        pthread_mutex_unlock(&C->lock);
 
         // Connect through the IP address and port number
         if (C->verbose) {
             RKLog("%s Connecting %s:%d ...\n", C->name, C->hostIP, C->port);
         }
         if ((r = connect(C->sd, (struct sockaddr *)&C->sa, sizeof(struct sockaddr))) < 0) {
+            RKLog("%s connect() -> %d   errno = %d / %d\n", C->name, r, errno, EINPROGRESS);
             // In progress is not a true failure
             if (errno != EINPROGRESS) {
                 close(C->sd);
@@ -131,19 +144,26 @@ void *theClient(void *in) {
             }
         }
 
-        // Server is ready to receive
+        // Server is almost ready to receive (could be pending EINPROGRESS, then select() -> 0)
         if (C->init) {
             fid = NULL;
             FD_ZERO(&C->wfd);
             FD_ZERO(&C->efd);
             FD_SET(C->sd, &C->wfd);
             FD_SET(C->sd, &C->efd);
-            timeout.tv_sec = C->timeoutSeconds;
-            timeout.tv_usec = 0;
-            r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+            k = 0;
+            do {
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 100000;
+                r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+            } while (r == 0 && k++ < 10 * C->timeoutSeconds && C->state < RKClientStateDisconnecting);
             if (r > 0) {
                 if (FD_ISSET(C->sd, &C->wfd)) {
-                    C->state = RKClientStateConnected;
+                    pthread_mutex_lock(&C->lock);
+                    if (C->state == RKClientStateConnecting) {
+                        C->state = RKClientStateConnected;
+                    }
+                    pthread_mutex_unlock(&C->lock);
                     if (C->verbose) {
                         RKLog("%s Connected.\n", C->name);
                     }
@@ -155,6 +175,7 @@ void *theClient(void *in) {
                 if (C->verbose > 1) {
                     RKLog("Timeout during initialization.\n");
                 }
+                close(C->sd);
                 continue;
             }
         }
@@ -204,9 +225,11 @@ void *theClient(void *in) {
                                           C->name, r, k, errno, RKErrnoString(errno), readCount);
                                 }
                                 readCount = C->timeoutSeconds * 1000;
+                                pthread_mutex_lock(&C->lock);
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;
                                 }
+                                pthread_mutex_unlock(&C->lock);
                             }
                             if (C->verbose > 1) {
                                 RKLog("... errno = %d ...\n", errno);
@@ -243,9 +266,11 @@ void *theClient(void *in) {
                                           C->name, r, k, errno, RKErrnoString(errno));
                                 }
                                 readCount = C->timeoutSeconds * 1000;
+                                pthread_mutex_lock(&C->lock);
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;
                                 }
+                                pthread_mutex_unlock(&C->lock);
                                 break;
                             }
                         }
@@ -279,9 +304,11 @@ void *theClient(void *in) {
                                 RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  size=%d   r=%d  k=%d  errno=%d (%s)\n",
                                       C->name, C->netDelimiter.size, r, k, errno, RKErrnoString(errno));
                                 readCount = C->timeoutSeconds * 1000;
+                                pthread_mutex_lock(&C->lock);
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;
                                 }
+                                pthread_mutex_unlock(&C->lock);
                                 break;
                             }
                         }
@@ -311,9 +338,11 @@ void *theClient(void *in) {
 
                 if (readOkay == false) {
                     RKLog("%s Server disconnected.\n", C->name);
+                    pthread_mutex_lock(&C->lock);
                     if (C->state < RKClientStateDisconnecting) {
                         C->state = RKClientStateReconnecting;
                     }
+                    pthread_mutex_unlock(&C->lock);
                     close(C->sd);
                     fid = NULL;
                     continue;
@@ -321,7 +350,9 @@ void *theClient(void *in) {
                     if (C->verbose) {
                         RKLog("%s Connected.\n", C->name);
                     }
+                    pthread_mutex_unlock(&C->lock);
                     C->state = RKClientStateConnected;
+                    pthread_mutex_lock(&C->lock);
                 }
                 timeoutCount = 0;
                 C->recv(C);

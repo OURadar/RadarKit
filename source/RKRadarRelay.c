@@ -254,7 +254,7 @@ static void *radarRelay(void *in) {
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-    desc.blocking = true;
+    desc.blocking = false;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.verbose = 1;
