@@ -48,6 +48,7 @@ typedef struct rk_radar_relay {
 
     // For handling sweeps
     RKSweepHeader                    sweepHeaderCache;
+	uint32_t                         sweepPacketCount;
     uint32_t                         sweepRayIndex;
     struct timeval                   sweepTic;
     struct timeval                   sweepToc;
@@ -58,6 +59,7 @@ typedef struct rk_radar_relay {
     uint32_t                         pulseStatusBufferIndex;
     uint32_t                         rayStatusBufferIndex;
     RKEngineState                    state;
+	uint32_t                         tic;
     size_t                           memoryUsage;
 } RKRadarRelay;
 

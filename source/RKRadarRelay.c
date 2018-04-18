@@ -225,7 +225,11 @@ static int RKRadarRelayRead(RKClient *client) {
             engine->sweepRayIndex++;
             if (engine->sweepRayIndex == engine->sweepHeaderCache.rayCount) {
                 gettimeofday(&engine->sweepToc, NULL);
-                j = (int)(engine->sweepHeaderCache.config.i - engine->configBuffer[RKPreviousNModuloS(*engine->configIndex, 2, engine->radarDescription->configBufferDepth)].i);
+				if (engine->sweepPacketCount++ == 0) {
+					j = 0;
+				} else {
+                	j = (int)(engine->sweepHeaderCache.config.i - engine->configBuffer[RKPreviousNModuloS(*engine->configIndex, 2, engine->radarDescription->configBufferDepth)].i);
+				}
                 RKLog("%s New sweep S%lu   Elapsed time = %.3f s   delta = %d.\n", engine->name, engine->sweepHeaderCache.config.i, RKTimevalDiff(engine->sweepToc, engine->sweepTic), j);
             } else if (engine->sweepRayIndex > engine->sweepHeaderCache.rayCount) {
                 RKLog("%s Error. Too many sweep rays.  %d > %d\n", engine->name, engine->sweepRayIndex, engine->sweepHeaderCache.rayCount);
@@ -237,6 +241,8 @@ static int RKRadarRelayRead(RKClient *client) {
             RKLog("%s New type %d of size %s\n", engine->name, client->netDelimiter.type, RKIntegerToCommaStyleString(client->netDelimiter.size));
             break;
     }
+
+	engine->tic++;
 
     return RKResultSuccess;
 }
@@ -267,18 +273,21 @@ static void *radarRelay(void *in) {
     engine->client = RKClientInitWithDesc(desc);
     engine->memoryUsage += sizeof(RKClient) + RKMaxPacketSize;
 
-    RKClientSetUserResource(engine->client, engine);
+	// Update the engine state
+	engine->state |= RKEngineStateActive;
+	engine->state ^= RKEngineStateActivating;
+
+	RKClientSetUserResource(engine->client, engine);
 	RKClientSetGreetHandler(engine->client, RKRadarRelayGreet);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
-
-    RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
-
     RKClientStart(engine->client, true);
     
-    engine->state |= RKEngineStateActive;
-    engine->state ^= RKEngineStateActivating;
+	RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
-    struct timeval t0, t1;
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
+
+	struct timeval t0, t1;
 
     gettimeofday(&t1, NULL);
 
@@ -362,12 +371,13 @@ int RKRadarRelayStart(RKRadarRelay *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+	engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidBackground, NULL, radarRelay, engine)) {
         RKLog("Error. Unable to start radar relay.\n");
         return RKResultFailedToStartHealthWorker;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+    while (engine->tic == 0) {
         usleep(10000);
     }
     return RKResultSuccess;
