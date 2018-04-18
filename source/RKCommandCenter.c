@@ -998,7 +998,7 @@ int socketStreamHandler(RKOperator *O) {
 				}
 				if (engine->verbose) {
 					// Offset scratch by one to get rid of the very first space
-					RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.productList, user->scratch + 1, sweepHeader.config.i);
+					RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
 					if (engine->verbose > 1) {
 						RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
 						RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
