@@ -19,7 +19,11 @@ static int RKRadarRelayGreet(RKClient *client) {
 	pthread_mutex_lock(&engine->client->lock);
 
 	uint32_t size = sprintf(command, "a RKRadarRelay nopassword" RKEOL);
-	RKNetworkSendPackets(engine->client->sd, command, size, NULL);
+	ssize_t sentSize = RKNetworkSendPackets(engine->client->sd, command, size, NULL);
+	if (sentSize < 0) {
+		pthread_mutex_unlock(&engine->client->lock);
+		return RKResultIncompleteSend;
+	}
 	if (engine->streams != RKStreamNull) {
 		if (engine->verbose) {
 			RKLog("%s Resuming stream ...\n", engine->name);

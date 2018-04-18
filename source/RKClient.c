@@ -143,7 +143,7 @@ void *theClient(void *in) {
             }
         }
 
-        // Server is almost ready to receive (could be pending EINPROGRESS, then select() -> 0)
+        // Server is almost ready to receive (could still be in EINPROGRESS, then select() -> 0)
         if (C->init) {
             fid = NULL;
             FD_ZERO(&C->wfd);
@@ -157,19 +157,34 @@ void *theClient(void *in) {
                 r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
             } while (r == 0 && k++ < 10 * C->timeoutSeconds && C->state < RKClientStateDisconnecting);
             if (r > 0) {
-                if (FD_ISSET(C->sd, &C->wfd)) {
-                    pthread_mutex_lock(&C->lock);
-                    if (C->state == RKClientStateConnecting) {
-                        C->state = RKClientStateConnected;
-                    }
-                    pthread_mutex_unlock(&C->lock);
-                    if (C->verbose) {
-                        RKLog("%s Connected.\n", C->name);
-                    }
-                } else if (FD_ISSET(C->sd, &C->efd)) {
-                    RKLog("Error. r = %d   errno = %d (%s)\n", r, errno, RKErrnoString(errno));
+				if (FD_ISSET(C->sd, &C->efd)) {
+					RKLog("%s Error. r = %d   errno = %d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+					close(C->sd);
+					continue;
+				} else if (FD_ISSET(C->sd, &C->wfd)) {
+					// Ready to write to socket
+					if (C->init(C)) {
+						if (C->verbose) {
+							RKLog("%s Unable to connect %s:%d.\n", C->name, C->hostIP, C->port);
+						}
+						close(C->sd);
+						// Wait a while before trying to reconnect
+						k = 52;
+						do {
+							if (k % 10 == 0 && C->verbose > 1) {
+								RKLog("%s Reconnect in %d sec%s ...\n", C->name, k / 10, k / 10 > 1 ? "s" : "");
+							}
+							usleep(100000);
+						} while (k-- > 3 && C->state < RKClientStateDisconnecting);
+						continue;
+					} else {
+						pthread_mutex_lock(&C->lock);
+						if (C->state == RKClientStateConnecting) {
+							C->state = RKClientStateConnected;
+						}
+						pthread_mutex_unlock(&C->lock);
+					}
                 }
-                C->init(C);
             } else {
                 if (C->verbose > 1) {
                     RKLog("Timeout during initialization.\n");
