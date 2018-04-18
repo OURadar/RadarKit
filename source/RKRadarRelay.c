@@ -368,11 +368,9 @@ int RKRadarRelayStart(RKRadarRelay *engine) {
         RKLog("%s Error. Unable to start radar relay.\n", engine->name);
         return RKResultFailedToStartHealthWorker;
     }
-	RKLog("%s tic = %d\n", engine->name, engine->tic);
     while (engine->tic == 0) {
         usleep(10000);
     }
-	RKLog("%s tic = %d\n", engine->name, engine->tic);
     return RKResultSuccess;
 }
 

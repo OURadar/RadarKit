@@ -160,7 +160,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKSetRootFolder(desc.dataPath);
 	
     if (desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Initializing ... 0x%x", desc.initFlags);
+        RKLog("Initializing ... 0x%08x", desc.initFlags);
     }
     // Allocate self
     bytes = sizeof(RKRadar);
@@ -170,7 +170,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Get the number of CPUs
     radar->processorCount = (uint32_t)sysconf(_SC_NPROCESSORS_ONLN);
     if (desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Number of online CPUs = %ld\n", radar->processorCount);
+        RKLog("Number of online CPUs = %ld (HT = 2)\n", radar->processorCount);
 		if (radar->processorCount <= 1) {
 			RKLog("Assume Number of CPUs = %d was not correctly reported. Override with 4.\n", radar->processorCount);
 			radar->processorCount = 4;
@@ -1219,15 +1219,6 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
 
-    // Show the udpated memory usage
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
-			  rkGlobalParameters.showColor ? "\033[4m" : "",
-              RKIntegerToCommaStyleString(radar->memoryUsage),
-			  rkGlobalParameters.showColor ? "\033[24m" : "",
-              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
-    }
-
     // Add a dummy config to get things started if there hasn't been one
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
@@ -1297,12 +1288,14 @@ int RKGoLive(RKRadar *radar) {
         radar->masterControllerExec = radar->transceiverExec;
     }
     
-    // Update memory usage
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("Radar Live. Memory usage = %s B (%s GiB)\n",
-              RKIntegerToCommaStyleString(radar->memoryUsage),
-              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
-    }
+	// Show the udpated memory usage
+	if (radar->desc.initFlags & RKInitFlagVerbose) {
+		RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
+			  rkGlobalParameters.showColor ? "\033[4m" : "",
+			  RKIntegerToCommaStyleString(radar->memoryUsage),
+			  rkGlobalParameters.showColor ? "\033[24m" : "",
+			  RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
+	}
 
     radar->state |= RKRadarStateLive;
     return RKResultSuccess;

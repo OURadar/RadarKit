@@ -662,6 +662,7 @@ int main(int argc, const char **argv) {
     if (user.verbose > 1) {
         printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
     }
+	RKLog("Level II recording: %s\n", user.writeFiles ? "true" : "false");
 
     // Screen output based on verbosity level
     if (!user.verbose) {
@@ -713,7 +714,6 @@ int main(int argc, const char **argv) {
     if (!user.writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
-	RKLog("doNotWrite = %s\n", myRadar->sweepEngine->doNotWrite ? "true" : "false");
 
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
