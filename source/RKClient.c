@@ -129,7 +129,6 @@ void *theClient(void *in) {
             RKLog("%s Connecting %s:%d ...\n", C->name, C->hostIP, C->port);
         }
         if ((r = connect(C->sd, (struct sockaddr *)&C->sa, sizeof(struct sockaddr))) < 0) {
-            RKLog("%s connect() -> %d   errno = %d / %d\n", C->name, r, errno, EINPROGRESS);
             // In progress is not a true failure
             if (errno != EINPROGRESS) {
                 close(C->sd);
@@ -511,7 +510,7 @@ void RKClientStart(RKClient *C, const bool waitForConnection) {
     if (!waitForConnection) {
         return;
     }
-    while (C->state < RKClientStateConnected) {
+    while (C->state < RKClientStateConnecting) {
         usleep(100000);
     }
     return;

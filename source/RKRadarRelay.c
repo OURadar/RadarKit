@@ -265,16 +265,17 @@ static void *radarRelay(void *in) {
     RKClientSetUserResource(engine->client, engine);
 	RKClientSetGreetHandler(engine->client, RKRadarRelayGreet);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
+
     RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
+    RKClientStart(engine->client, true);
+    
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
     struct timeval t0, t1;
 
     gettimeofday(&t1, NULL);
-
-    RKClientStart(engine->client, true);
 
     while (engine->state & RKEngineStateActive) {
         // Evaluate the nodal-health buffers every once in a while
