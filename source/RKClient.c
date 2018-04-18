@@ -243,7 +243,10 @@ void *theClient(void *in) {
                                     C->state = RKClientStateReconnecting;
                                 }
                                 pthread_mutex_unlock(&C->lock);
-                            }
+								break;
+							} else {
+								usleep(10000);
+							}
                             if (C->verbose > 1) {
                                 RKLog("... errno = %d ...\n", errno);
                             }
@@ -264,15 +267,17 @@ void *theClient(void *in) {
                         readCount = 0;
                         while (readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, delimiter + k, sizeof(RKNetDelimiter) - k)) > 0) {
-                                k += r;
-                                if (k == sizeof(RKNetDelimiter)) {
-                                    break;
-                                } else if (k > sizeof(RKNetDelimiter)) {
-                                    RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
-                                    break;
-                                } else {
-                                    usleep(10000);
-                                }
+								if (r > 0) {
+									k += r;
+									if (k == sizeof(RKNetDelimiter)) {
+										break;
+									} else if (k > sizeof(RKNetDelimiter)) {
+										RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
+										break;
+									}
+								} else {
+									usleep(10000);
+								}
                             } else if (errno != EAGAIN) {
                                 if (C->verbose > 1) {
                                     RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
@@ -285,9 +290,12 @@ void *theClient(void *in) {
                                 }
                                 pthread_mutex_unlock(&C->lock);
                                 break;
+							} else {
+								usleep(10000);
                             }
                         }
                         if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
+							RKLog("-- imcomplete.\n");
                             break;
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
@@ -298,7 +306,8 @@ void *theClient(void *in) {
                             readOkay = true;
                             break;
                         } else if (C->netDelimiter.size > RKMaxPacketSize) {
-                            RKLog("%s Error. Payload size is more than what I can handle.\n", C->name);
+                            RKLog("%s Error. Payload size = %s (type %d) is more than what I can handle.\n",
+								  C->name, RKIntegerToCommaStyleString(C->netDelimiter.size), C->netDelimiter.type);
                             readOkay = false;
                             break;
                         }
@@ -307,12 +316,21 @@ void *theClient(void *in) {
                         readCount = 0;
                         while (readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, buf + k, C->netDelimiter.size - k)) > 0) {
-                                k += r;
-                                if (k >= C->netDelimiter.size) {
-                                    break;
-                                } else {
-                                    usleep(10000);
-                                }
+								#ifdef DEBUG_RKCLIENT
+								RKLog("%s read() -> %d / %d / %d    readCount = %d / %d\n",
+									  C->name, r, C->netDelimiter.size - k,  C->netDelimiter.size, readCount, C->timeoutSeconds * 100);
+                                #endif
+								if (r > 0) {
+									k += r;
+									if (k == C->netDelimiter.size) {
+										break;
+									} else if (k > C->netDelimiter.size) {
+										RKLog("%s Error. Should not read larger than specified size = %zu\n", C->name, C->netDelimiter.size);
+										break;
+									}
+								} else {
+									usleep(10000);
+								}
                             } else if (errno != EAGAIN) {
                                 RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  size=%d   r=%d  k=%d  errno=%d (%s)\n",
                                       C->name, C->netDelimiter.size, r, k, errno, RKErrnoString(errno));
@@ -323,7 +341,9 @@ void *theClient(void *in) {
                                 }
                                 pthread_mutex_unlock(&C->lock);
                                 break;
-                            }
+							} else {
+								usleep(10000);
+							}
                         }
 						#ifdef DEBUG_RKCLIENT
 						RKLog("%s k = %d   r = %d   readCount = %d\n", C->name, k, r, readCount);
