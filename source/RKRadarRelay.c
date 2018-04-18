@@ -254,7 +254,7 @@ static void *radarRelay(void *in) {
 
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    strcpy(desc.name, engine->name);
+    strncpy(desc.name, engine->name, RKNameLength - 1);
     strncpy(desc.hostname, engine->host, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
@@ -280,25 +280,16 @@ static void *radarRelay(void *in) {
 	RKClientSetUserResource(engine->client, engine);
 	RKClientSetGreetHandler(engine->client, RKRadarRelayGreet);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
-    RKClientStart(engine->client, true);
-    
+
 	RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
+
+	RKClientStart(engine->client, true);
 
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
-	struct timeval t0, t1;
-
-    gettimeofday(&t1, NULL);
-
     while (engine->state & RKEngineStateActive) {
-        // Evaluate the nodal-health buffers every once in a while
-        gettimeofday(&t0, NULL);
-        if (RKTimevalDiff(t0, t1) < 0.5) {
-            usleep(10000);
-            continue;
-        }
-        t1 = t0;
+		usleep(100000);
     }
 
     RKClientStop(engine->client);
@@ -374,12 +365,14 @@ int RKRadarRelayStart(RKRadarRelay *engine) {
 	engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidBackground, NULL, radarRelay, engine)) {
-        RKLog("Error. Unable to start radar relay.\n");
+        RKLog("%s Error. Unable to start radar relay.\n", engine->name);
         return RKResultFailedToStartHealthWorker;
     }
+	RKLog("%s tic = %d\n", engine->name, engine->tic);
     while (engine->tic == 0) {
         usleep(10000);
     }
+	RKLog("%s tic = %d\n", engine->name, engine->tic);
     return RKResultSuccess;
 }
 

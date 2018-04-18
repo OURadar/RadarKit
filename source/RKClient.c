@@ -96,8 +96,9 @@ void *theClient(void *in) {
                 RKLog("%s Error. Unable to use non-blocking option.\n", C->name);
             }
         }
+		r = 1;
+		setsockopt(C->sd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r));
         if (C->type == RKNetworkSocketTypeUDP) {
-            r = 1;
             setsockopt(C->sd, SOL_SOCKET, SO_BROADCAST, &r, sizeof(r));
         }
 
@@ -295,7 +296,7 @@ void *theClient(void *in) {
                             }
                         }
                         if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
-							RKLog("%s Incomplete read() with errors.   errno = %d (%s)\n", errno, RKErrnoString(errno));
+							RKLog("%s Incomplete read() with errors.   errno = %d (%s)\n", C->name, errno, RKErrnoString(errno));
                             break;
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
@@ -483,6 +484,9 @@ RKClient *RKClientInitWithDesc(RKClientDesc desc) {
         desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     }
     memcpy(C, &desc, sizeof(RKClientDesc));
+
+	// Ignore broken pipe for bad connections
+	signal(SIGPIPE, SIG_IGN);
 
     return C;
 }

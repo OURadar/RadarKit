@@ -606,10 +606,6 @@ UserParams processInput(int argc, const char **argv) {
 		if (user.prf == 0) {
 			user.prf = 1000;
 		}
-		if (user.desc.initFlags == RKInitFlagRelay) {
-			RKLog("Info. Simulate takes precedence over relay.\n");
-			user.desc.initFlags = RKInitFlagAllocEverything;
-		}
 	} else {
 		if (!(user.desc.initFlags == RKInitFlagRelay)) {
 			RKLog("No options specified. Don't want to do anything?\n");
