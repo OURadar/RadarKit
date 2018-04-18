@@ -280,7 +280,7 @@ void *theClient(void *in) {
 								}
                             } else if (errno != EAGAIN) {
                                 if (C->verbose > 1) {
-                                    RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r=%d  k=%d  errno=%d (%s)\n",
+                                    RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r = %d  k = %d  errno = %d (%s)\n",
                                           C->name, r, k, errno, RKErrnoString(errno));
                                 }
                                 readCount = C->timeoutSeconds * 1000;
@@ -295,7 +295,7 @@ void *theClient(void *in) {
                             }
                         }
                         if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
-							RKLog("-- imcomplete.\n");
+							RKLog("%s Incomplete read() with errors.   errno = %d (%s)\n", errno, RKErrnoString(errno));
                             break;
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
