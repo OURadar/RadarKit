@@ -202,7 +202,6 @@ void *theClient(void *in) {
                     }
                     break;
                 }
-                //continue;
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
                 switch (C->format) {
 
@@ -311,6 +310,13 @@ void *theClient(void *in) {
                                 break;
                             }
                         }
+						#ifdef DEBUG_RKCLIENT
+						RKLog("%s k = %d   r = %d   readCount = %d\n", C->name, k, r, readCount);
+						for (int j = 0; j < 20; j++) {
+							printf(" %02x/%c", (int)*(cbuf + j), *(cbuf + j));
+						}
+						printf("\n");
+						#endif
                         // Add a NULL character to the end of payload
                         cbuf[k] = '\0';
                         if (readCount >= C->timeoutSeconds * 1000) {

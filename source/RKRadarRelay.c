@@ -86,10 +86,8 @@ static int RKRadarRelayRead(RKClient *client) {
             // Queue up the health
             k = *engine->healthIndex;
             health = &engine->healthBuffer[k];
-            ((RKHealth *)(client->userPayload))->flag = health->flag;
-            strncpy(health->string, client->userPayload, RKMaximumStringLength);
+            strncpy(health->string, client->userPayload, RKMaximumStringLength - 1);
             health->flag = RKHealthFlagReady;
-            //k = RKNextModuloS(k, engine->healthBufferDepth);
             k = RKNextModuloS(k, engine->radarDescription->healthBufferDepth);
             health = &engine->healthBuffer[k];
             health->string[0] = '\0';
@@ -111,11 +109,13 @@ static int RKRadarRelayRead(RKClient *client) {
 
             //printf("%s Pulse packet -> %d (remote/local capacity %d / %d).\n", engine->name, *engine->pulseIndex, pulse->header.capacity, localPulseCapacity);
 
+			// Throw away data if this relay cannot accomodate the data
             pulse->header.capacity = localPulseCapacity;
             if (pulse->header.gateCount > pulse->header.capacity) {
                 pulse->header.gateCount = pulse->header.capacity;
             }
-            pulse->header.s |= RKPulseStatusInspected;
+			// Change the in-transit header status to vacant, will restore after all data are in place
+            pulse->header.s = RKPulseStatusVacant;
 
             // Now we get a slot to fill it in
             pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
@@ -129,6 +129,7 @@ static int RKRadarRelayRead(RKClient *client) {
             memcpy(c16DataH, client->userPayload + sizeof(RKPulseHeader), pulseSize);
             memcpy(c16DataV, client->userPayload + sizeof(RKPulseHeader) + pulseSize, pulseSize);
 
+			// Restore the pulse status
             pulse->header.s = pulseStatus;
 
             *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth);
