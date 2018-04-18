@@ -565,6 +565,10 @@ UserParams processInput(int argc, const char **argv) {
                 strncpy(user.relayHost, optarg, sizeof(user.relayHost));
                 break;
             case 's':
+				if (strlen(user.relayHost)) {
+					RKLog("Relay and simulation? Perhaps no -s.\n");
+					exit(EXIT_FAILURE);
+				}
                 user.simulate = true;
 				if (optarg) {
 					setSystemLevel(&user, atoi(optarg));
