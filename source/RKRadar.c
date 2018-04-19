@@ -433,8 +433,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRayBufferInitialized;
     }
 
-    RKLog("memory usage = %s\n", RKIntegerToCommaStyleString(radar->memoryUsage));
-
 	// Controls
     if (radar->desc.controlCapacity) {
         radar->state |= RKRadarStateControlsAllocating;

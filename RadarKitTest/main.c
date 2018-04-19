@@ -508,10 +508,6 @@ UserParams processInput(int argc, const char **argv) {
                 user.verbose = MAX(user.verbose - 1, 0);
                 break;
             case 'r':
-				if (user.simulate) {
-					RKLog("Simulation and relay?\n");
-					exit(EXIT_FAILURE);
-				}
 				user.simulate = false;
                 user.desc.initFlags = RKInitFlagRelay;
 				if (argc > optind && argv[optind][0] != '-') {
