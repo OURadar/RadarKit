@@ -57,3 +57,21 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
     }
     return grandTotalSentSize;
 }
+
+//#define NAMES C(RED)C(GREEN)C(BLUE)
+//#define C(x) x,
+//enum color { NAMES COLOR_COUNT };
+//#undef C
+//#define C(x) #x,
+//const char * const color_name[] = { NAMES };
+
+void RKNetworkShowPacketTypeNumbers(void) {
+	RKLog(">RKNetworkPacketTypeProcessorStatus = %d\n", RKNetworkPacketTypeProcessorStatus);
+	RKLog(">RKNetworkPacketTypeRayDisplay = %d\n", RKNetworkPacketTypeRayDisplay);
+	RKLog(">RKNetworkPacketTypeAlertMessage = %d\n", RKNetworkPacketTypeAlertMessage);
+	RKLog(">RKNetworkPacketTypeConfig = %d\n", RKNetworkPacketTypeConfig);
+	RKLog(">RKNetworkPacketTypeSweep = %d\n", RKNetworkPacketTypeSweep);
+	RKLog(">RKNetworkPacketTypeSweepHeader = %d\n", RKNetworkPacketTypeSweepHeader);
+	RKLog(">RKNetworkPacketTypeSweepRay = %d\n", RKNetworkPacketTypeSweepRay);
+	//RKLog("Color %s = %d\n", color_name[RED], RED);
+}

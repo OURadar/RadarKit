@@ -361,6 +361,7 @@ UserParams processInput(int argc, const char **argv) {
                 switch (k) {
                     case 0:
                         RKShowTypeSizes();
+						RKNetworkShowPacketTypeNumbers();
                         break;
                     case 1:
                         RKTestShowColors();

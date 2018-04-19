@@ -71,6 +71,7 @@ typedef union rk_net_delimiter {
 #pragma pack(pop)
 
 ssize_t RKNetworkSendPackets(int, ...);
+void RKNetworkShowPacketTypeNumbers(void);
 
 //#ifdef __cplusplus
 //}
