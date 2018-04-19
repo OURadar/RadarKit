@@ -955,7 +955,9 @@ int socketStreamHandler(RKOperator *O) {
 
 				for (k = 0; k < sweepHeader.rayCount; k++) {
 					ray = sweep->rays[k];
-					sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &ray->header, sizeof(RKRayHeader), NULL);
+					memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+					rayHeader.productList = sweepHeader.productList;
+					sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
 					productList = sweepHeader.productList;
 					if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
 						RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
