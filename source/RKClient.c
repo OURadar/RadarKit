@@ -97,7 +97,9 @@ void *theClient(void *in) {
             }
         }
 		r = 1;
+		#if defined(__APPLE__)
 		setsockopt(C->sd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r));
+		#endif
         if (C->type == RKNetworkSocketTypeUDP) {
             setsockopt(C->sd, SOL_SOCKET, SO_BROADCAST, &r, sizeof(r));
         }
