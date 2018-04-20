@@ -131,7 +131,7 @@ static void *hostPinger(void *in) {
 
     // Open a socket, set some properties for ICMP
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
-        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d\n", engine->name, name, sd, errno);
+        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d (%s)\n", engine->name, name, sd, errno, RKErrnoString(errno));
         if (errno == EACCES) {
             RKLog("%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 0\"' ...\n", engine->name, name);
             RKLog("%s %s Info. to allow root to use icmp sockets\n", engine->name, name);

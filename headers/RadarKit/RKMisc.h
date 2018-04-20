@@ -52,7 +52,8 @@
 (errno == ECONNREFUSED ? "ECONNREFUSED" : \
 (errno == EHOSTDOWN    ? "EHOSTDOWN"    : \
 (errno == EHOSTUNREACH ? "EHOSTUNREACH" : \
-(errno == EIO          ? "EIO"          : "OTHERS")))))))))
+(errno == EACCES       ? "EACCES"       : \
+(errno == EIO          ? "EIO"          : "OTHERS"))))))))))
 
 #define POSIX_MEMALIGN_CHECK(x)        if (x) { RKLog("Could not allocate memory.\n"); exit(EXIT_FAILURE); }
 
