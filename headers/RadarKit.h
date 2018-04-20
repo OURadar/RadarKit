@@ -14,7 +14,7 @@
 //         - New stream types: RKSweep, RKSweepHeader and RKSweepRay
 //         - Fixed buffer ID initialization
 //         - Fixed a memory leak in RKHostMonitor
-//         - Added RKSoftReset() to restart DSP-related engines only
+//         - Added RKSoftRestart() to restart DSP-related engines only
 //         - Added RKSystemInspector() for gathering system status
 //         - Migrated RKFileMonitor() to RKSimpleEngine design
 //         - Added RKSimpleEngine for simple sus-systems
