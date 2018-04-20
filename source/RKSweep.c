@@ -800,7 +800,7 @@ RKSweep *RKSweepRead(const char *inputFile) {
 			}
 			r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->header.desc.longitude);
 			if (r != NC_NOERR) {
-				r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
+				r = nc_get_att_float(ncid, NC_GLOBAL, "Longitude", &fv);
 				if (r == NC_NOERR) {
 					sweep->header.desc.longitude = (double)fv;
 				}
