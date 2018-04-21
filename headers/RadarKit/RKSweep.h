@@ -37,6 +37,8 @@ struct rk_sweep_engine {
     bool                             handleFilesScriptProducesZip;
     char                             handleFilesScript[RKMaximumPathLength];
     RKFileManager                    *fileManager;
+    uint32_t                         userProductCount;
+    RKUserProductDesc                *userProductDescriptions;
 
     // Program set variables
     pthread_t                        tidRayGatherer;
@@ -75,6 +77,9 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
+
+RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
+int RKSweepEngineReportProduct(RKSweepEngine *, RKUserProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *);
 RKSweep *RKSweepRead(const char *);

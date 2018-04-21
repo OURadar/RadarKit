@@ -895,6 +895,14 @@ typedef struct rk_file_monitor {
     void             (*callbackRoutine)(void *);
 } RKFileMonitor;
 
+typedef int RKUserProductId;
+
+typedef struct rk_user_product_desc {
+    RKName           name;                                           // Name
+    float            w;                                              // Product to color index weight
+    float            b;                                              // Product to color index bias
+} RKUserProductDesc;
+
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */
