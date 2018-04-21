@@ -896,12 +896,26 @@ typedef struct rk_file_monitor {
     void             (*callbackRoutine)(void *);
 } RKFileMonitor;
 
-typedef int RKUserProductId;
+typedef uint32_t RKUserProductId;
+typedef uint32_t RKUserProductStatus;
+
+enum RKUserProductStatus {
+    RKUserProductStatusVacant        = 0,
+    RKUserProductStatusActive        = 1,
+    RKUserProductStatusBusy          = (1 << 1),                     // Waiting for processing node
+    RKUserProductStatusSleep0        = (1 << 4),                     // Sleep stage 0 -
+    RKUserProductStatusSleep1        = (1 << 5),                     // Sleep stage 1 -
+    RKUserProductStatusSleep2        = (1 << 6),                     // Sleep stage 2 -
+    RKUserProductStatusSleep3        = (1 << 7)                      // Sleep stage 3 -
+};
 
 typedef struct rk_user_product_desc {
-    RKName           name;                                           // Name
-    float            w;                                              // Product to color index weight
-    float            b;                                              // Product to color index bias
+    RKUserProductId      i;
+    RKUserProductStatus  flag;
+    RKName               name;                                       // Name
+    RKName               host;                                       // Host that produces the product
+    float                w;                                          // Product to color index weight
+    float                b;                                          // Product to color index bias
 } RKUserProductDesc;
 
 #pragma pack(pop)

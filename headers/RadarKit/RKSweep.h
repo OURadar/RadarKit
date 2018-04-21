@@ -80,6 +80,7 @@ int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
 
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
+int RKSweeEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
 int RKSweepEngineReportProduct(RKSweepEngine *, RKUserProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *);
