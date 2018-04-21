@@ -37,8 +37,6 @@ struct rk_sweep_engine {
     bool                             handleFilesScriptProducesZip;
     char                             handleFilesScript[RKMaximumPathLength];
     RKFileManager                    *fileManager;
-    uint32_t                         userProductCount;
-    RKUserProductDesc                *userProductDescriptions;
 
     // Program set variables
     pthread_t                        tidRayGatherer;
@@ -53,6 +51,9 @@ struct rk_sweep_engine {
     RKName                           productUnit;
     RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
+    uint32_t                         userProductCount;
+    uint32_t                         userProductIndices[RKMaximumUserProductCount];
+    RKUserProductDesc                userProductDescriptions[RKMaximumUserProductCount];
 
     // Status / health
     uint32_t                         processedRayIndex;

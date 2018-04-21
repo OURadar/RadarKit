@@ -78,6 +78,7 @@
 #define RKProcessorStatusRingCoreCount   16
 #define RKProcessorStatusRayCoreCount    16
 #define RKHostMonitorPingInterval        5
+#define RKMaximumUserProductCount        8
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
