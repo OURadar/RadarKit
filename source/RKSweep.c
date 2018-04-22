@@ -32,7 +32,7 @@ static int put_global_text_att(const int ncid, const char *att, const char *text
 static void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
-    int i, j, p;
+    int i, j, p, s;
 
 	RKSweep *sweep = RKSweepCollect(engine);
 	if (engine->verbose) {
@@ -52,6 +52,34 @@ static void *sweepWriter(void *in) {
 			  1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
 	}
 
+    // Each registered product will report a product that has the same sweep id
+    //
+    bool allReported = true;
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (engine->userProductDescriptions[i].flag & RKUserProductStatusActive) {
+            engine->userProductDescriptions[i].flag |= RKUserProductStatusSleep0;
+            s = 0;
+            while (engine->userProductDescriptions[i].i != sweep->header.config.i &&
+                   engine->userProductTimeoutSeconds * 100 > s &&
+                   engine->state & RKEngineStateActive) {
+                usleep(10000);
+                if (++s % 100 == 0 && engine->verbose > 1) {
+                    RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
+                };
+            }
+            engine->userProductDescriptions[i].flag ^= RKUserProductStatusSleep0;
+            if (engine->userProductDescriptions[i].i != sweep->header.config.i) {
+                engine->userProductDescriptions[i].i = sweep->header.config.i;
+                allReported = false;
+                break;
+            }
+        }
+    }
+    
+    if (engine->verbose) {
+        RKLog("%s allReported = %d    i = %d   s = %d ...\n", engine->name, allReported, engine->userProductDescriptions[0].i, s);
+    }
+    
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
     
@@ -479,6 +507,9 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->doNotWrite = false;
+    engine->userProductTimeoutSeconds = 5;
+    engine->userProductDescriptions[0].i = 0;
+    engine->userProductDescriptions[0].flag = RKUserProductStatusActive;
     return engine;
 }
 
