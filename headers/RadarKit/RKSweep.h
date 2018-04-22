@@ -52,8 +52,8 @@ struct rk_sweep_engine {
     RKName                           productUnit;
     RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
-    uint32_t                         userProductCount;
-    RKUserProductDesc                userProductDescriptions[RKMaximumUserProductCount];
+    RKUserProductId                  userProductIdCount;
+    RKUserProduct                    userProducts[RKMaximumUserProductCount];
 
     // Status / health
     uint32_t                         processedRayIndex;

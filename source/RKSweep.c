@@ -56,28 +56,32 @@ static void *sweepWriter(void *in) {
     //
     bool allReported = true;
     for (i = 0; i < RKMaximumUserProductCount; i++) {
-        if (engine->userProductDescriptions[i].flag & RKUserProductStatusActive) {
-            engine->userProductDescriptions[i].flag |= RKUserProductStatusSleep0;
-            s = 0;
-            while (engine->userProductDescriptions[i].i != sweep->header.config.i &&
-                   engine->userProductTimeoutSeconds * 100 > s &&
-                   engine->state & RKEngineStateActive) {
-                usleep(10000);
-                if (++s % 100 == 0 && engine->verbose > 1) {
-                    RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
-                };
-            }
-            engine->userProductDescriptions[i].flag ^= RKUserProductStatusSleep0;
-            if (engine->userProductDescriptions[i].i != sweep->header.config.i) {
-                engine->userProductDescriptions[i].i = sweep->header.config.i;
-                allReported = false;
-                break;
-            }
+        if (!(engine->userProducts[i].flag & RKUserProductStatusActive)) {
+            continue;
         }
+        engine->userProducts[i].flag |= RKUserProductStatusSleep0;
+        s = 0;
+        while (engine->userProducts[i].i != sweep->header.config.i &&
+               engine->userProductTimeoutSeconds * 100 > s &&
+               engine->state & RKEngineStateActive) {
+            usleep(10000);
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
+            };
+        }
+        engine->userProducts[i].flag ^= RKUserProductStatusSleep0;
+        if (engine->userProducts[i].i != sweep->header.config.i) {
+            engine->userProducts[i].i = sweep->header.config.i;
+            allReported = false;
+            break;
+        }
+    }
+    if (!(engine->state & RKEngineStateActive)) {
+        return NULL;
     }
     
     if (engine->verbose) {
-        RKLog("%s allReported = %d    i = %d   s = %d ...\n", engine->name, allReported, engine->userProductDescriptions[0].i, s);
+        RKLog("%s allReported = %d    i = %llu   s = ...\n", engine->name, allReported, engine->userProducts[0].i);
     }
     
     // Mark the state
@@ -506,10 +510,11 @@ RKSweepEngine *RKSweepEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
-    engine->doNotWrite = false;
     engine->userProductTimeoutSeconds = 5;
-    engine->userProductDescriptions[0].i = 0;
-    engine->userProductDescriptions[0].flag = RKUserProductStatusActive;
+    //engine->userProductIds[0].i = engine->userProductCount++;
+    //engine->userProductDescriptions[0].flag = RKUserProductStatusActive;
+    RKUserProductDesc desc = {.name = "U", .w = 0.5f, .b = -32.0f};
+    RKSweepEngineRegisterProduct(engine, desc);
     return engine;
 }
 
@@ -597,6 +602,34 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
     }
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
+    }
+    return RKResultSuccess;
+}
+
+RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProductDesc desc) {
+    int i = 0;
+    RKUserProductId productId = 1000 + engine->userProductIdCount++;
+    while (engine->userProducts[i].flag != RKUserProductStatusVacant && i < RKMaximumUserProductCount) {
+        i++;
+    }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to add anymore user products.\n", engine->name);
+        return 0;
+    }
+    engine->userProducts[i].i = productId;
+    engine->userProducts[i].flag = RKUserProductStatusActive;
+    engine->userProducts[i].desc = desc;
+    return productId;
+}
+
+int RKSweeEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
+    int i;
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (engine->userProducts[i].i != i) {
+            continue;
+        }
+        engine->userProducts[i].flag = RKUserProductStatusVacant;
+        memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
     }
     return RKResultSuccess;
 }

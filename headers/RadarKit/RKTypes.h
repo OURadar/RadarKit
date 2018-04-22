@@ -896,7 +896,7 @@ typedef struct rk_file_monitor {
     void             (*callbackRoutine)(void *);
 } RKFileMonitor;
 
-typedef uint64_t RKUserProductId;
+typedef int32_t  RKUserProductId;
 typedef uint32_t RKUserProductStatus;
 
 enum RKUserProductStatus {
@@ -911,13 +911,17 @@ enum RKUserProductStatus {
 };
 
 typedef struct rk_user_product_desc {
-    RKUserProductId      i;                                          // Unique Id
-    RKUserProductStatus  flag;                                       // Various state
     RKName               name;                                       // Name of the product
-    RKName               host;                                       // Host that produces the product
     float                w;                                          // Product to color index weight
     float                b;                                          // Product to color index bias
 } RKUserProductDesc;
+
+typedef struct rk_user_product {
+    uint64_t             i;
+    RKUserProductStatus  flag;                                       // Various state
+    RKUserProductDesc    desc;
+    RKUserProductId      uid;
+} RKUserProduct;
 
 #pragma pack(pop)
 
