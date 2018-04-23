@@ -408,6 +408,9 @@ UserParams processInput(int argc, const char **argv) {
 						}
 						RKTestReadSweep(argv[optind]);
 						break;
+					case 15:
+						RKTestWaveformProperties();
+						break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
                         break;

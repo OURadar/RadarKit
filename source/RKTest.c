@@ -768,6 +768,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     //RKTestTransceiverExec(transceiver, "w q10", NULL);
     //RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
+	//RKTestTransceiverExec(transceiver, "w barker03", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -2097,4 +2098,24 @@ void RKTestGetCountry(void) {
         country = RKCountryFromPosition(latitude, longitude);
         printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
     }
+}
+
+void RKTestWaveformProperties(void) {
+	RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+	RKWaveformSummary(waveform);
+	RKWaveformFree(waveform);
+
+	waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+	RKWaveformSummary(waveform);
+	RKWaveformFree(waveform);
+
+	RKLog(">Waveform 's01'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+	RKWaveformSummary(waveform);
+	RKWaveformFree(waveform);
+
+	RKLog(">Waveform 's02'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 0.0);
+	RKWaveformSummary(waveform);
+	RKWaveformFree(waveform);
 }
