@@ -764,11 +764,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         usleep(10000);
     }
 
-    RKTestTransceiverExec(transceiver, "w q02", NULL);
+    //RKTestTransceiverExec(transceiver, "w q02", NULL);
     //RKTestTransceiverExec(transceiver, "w q10", NULL);
     //RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
-	//RKTestTransceiverExec(transceiver, "w barker03", NULL);
+	RKTestTransceiverExec(transceiver, "w barker03", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -904,7 +904,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKWaveformSummary(waveform);
                     k = round(waveform->fs / transceiver->fs);
                     RKLog("Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", 1.0e-6 * transceiver->fs, k);
-                    RKWaveformDownConvert(waveform, 2.0 * M_PI * waveform->fc / waveform->fs);
+                    RKWaveformDownConvert(waveform);
                     RKWaveformDecimate(waveform, k);
                     RKWaveformSummary(waveform);
                     pulsewidthSampleCount = waveform->depth;
@@ -1572,7 +1572,7 @@ void RKTestCacheWrite(void) {
         exit(EXIT_FAILURE);
     }
 
-#ifdef FUNDAMENTAL_CACHE_WRITE_TEST
+    #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
     RKDataRecorderSetCacheSize(fileEngine, 4);
     RKDataRecorderCacheWrite(fileEngine, bytes, 4);
@@ -1580,7 +1580,7 @@ void RKTestCacheWrite(void) {
     RKDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
     RKDataRecorderCacheFlush(fileEngine);
 
-#endif
+    #endif
     
     RKBuffer pulseBuffer;
     RKPulseBufferAlloc(&pulseBuffer, 8192, 100);
@@ -2102,20 +2102,38 @@ void RKTestGetCountry(void) {
 
 void RKTestWaveformProperties(void) {
 	RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformDownConvert(waveform);
 	RKWaveformSummary(waveform);
 	RKWaveformFree(waveform);
 
+    printf("\n");
+    
 	waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+    RKWaveformDownConvert(waveform);
 	RKWaveformSummary(waveform);
 	RKWaveformFree(waveform);
 
+    printf("\n");
+    
 	RKLog(">Waveform 's01'   fc = 50.0 MHz   fs = 160.0 MHz\n");
 	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+    RKWaveformDownConvert(waveform);
 	RKWaveformSummary(waveform);
 	RKWaveformFree(waveform);
 
-	RKLog(">Waveform 's02'   fc = 50.0 MHz   fs = 160.0 MHz\n");
-	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 0.0);
+    printf("\n");
+    
+	RKLog(">Waveform 'q02'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
+    RKWaveformDownConvert(waveform);
 	RKWaveformSummary(waveform);
 	RKWaveformFree(waveform);
+
+    printf("\n");
+
+    RKLog(">Waveform 'q04'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 1.0e6);
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
 }
