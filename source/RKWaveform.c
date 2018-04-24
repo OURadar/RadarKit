@@ -12,32 +12,42 @@ typedef uint8_t RKWaveformGain;
 enum RKWaveformGain {
 	RKWaveformGainNull          = 0,
 	RKWaveformGainNoise         = 1,
-	RKWaveformGainSensitivity   = 1 << 1,
-	RKWaveformGainBoth          = (RKWaveformGainNoise | RKWaveformGainSensitivity)
+    RKWaveformGainFullScale     = 1 << 1,
+    RKWaveformGainSensitivity   = 1 << 2,
+	RKWaveformGainAll          = (RKWaveformGainNoise | RKWaveformGainFullScale | RKWaveformGainSensitivity)
 };
 
 static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCalculationFlag) {
 	// Calculate the noise gain
 	int i, j, k;
-	RKFloat a, g, h;
+	RKFloat a, f, g, h;
 	for (k = 0; k < waveform->count; k++) {
 		for (j = 0; j < waveform->filterCounts[k]; j++) {
+            f = 0.0f;
 			g = 0.0f;
             h = 0.0f;
 			RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
 			for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
 				a = w->i * w->i + w->q * w->q;
+                f = MAX(f, MAX(fabsf(w->i), fabsf(w->q)));
                 h = MAX(h, a);
 				g += a;
 				w++;
 			}
-            RKLog(">o:l = %d:%d --> h = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h);
+            //RKLog(">o:l = %d:%d --> h = %.4e  g = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h, g);
+            if (gainCalculationFlag & RKWaveformGainFullScale) {
+                waveform->filterAnchors[k][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / sqrt(h);
+            }
 			if (gainCalculationFlag & RKWaveformGainNoise) {
 				waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
 			}
 			if (gainCalculationFlag & RKWaveformGainSensitivity) {
 				waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
 			}
+            RKLog("fullScale = %.4e   filterGain = %.2f dB   sensitivityGain = %.2f dB\n",
+                  waveform->filterAnchors[k][j].fullScale,
+                  waveform->filterAnchors[k][j].filterGain,
+                  waveform->filterAnchors[k][j].sensitivityGain);
 		}
 	}
 }
@@ -147,7 +157,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
           fileHeader.name, fileHeader.groupCount, RKIntegerToCommaStyleString(fileHeader.depth),
           RKFloatToCommaStyleString(1.0e-6 * waveform->fc), RKFloatToCommaStyleString(1.0e-6 * waveform->fs));
     
-    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
@@ -193,7 +203,7 @@ void RKWaveformOnes(RKWaveform *waveform) {
         }
     }
 	RKWaveformNormalizeNoiseGain(waveform);
-	RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
+	RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 //
@@ -249,7 +259,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
     }
 
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
@@ -303,7 +313,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     }
     
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
@@ -340,7 +350,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 		w++;
 	}
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainBoth);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 	return;
 }
 
@@ -418,7 +428,7 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
     // Copy over the float samples to int16_t samples and adjust the amplitude so that it represents the intended transmit envelope
     // This adjustment will not produce the transmit waveform that takes full advantage of the DAC range
     // The normalization factor to get the waveform to unity noise gain is no longer known here.
-	// All filters should have a unity noise gain so an equivalent sensitivity gain at 1-us can be derived.
+	// All filters should have a unity noise gain so an equivalent sensitivity gain vs a 1-us pulse can be derived.
 	for (i = 0; i < waveform->count; i++) {
 		for (j = 0; j < waveform->depth; j++) {
 			w[j] = waveform->samples[i][j].i;
@@ -440,12 +450,12 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 				a = MAX(a, fc->i * fc->i + fc->q * fc->q);
 				fc++;
 			}
-            RKLog(">m = %.4e\n", a);
 			a = RKWaveformDigitalAmplitude / sqrtf(a);
-            
+            RKLog(">a = %.4e   vs  %.4e    fs = %.2f\n", a, waveform->filterAnchors[i][j].fullScale, waveform->fs);
+
             //waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
-            b = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain); // g / (h * 1.0e-6 * waveform->fs)
-            b *= 1.0e-6f * waveform->fs;         //  g / h ==> 1.0 / h   [ h = max ( abs() ^ 2 ) ]
+            b = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain) * 1.0e-6f * waveform->fs;
+            //  g / h ==> 1.0 / h   [ h = max ( abs() ^ 2 ) ]
             RKLog(">h' = %.4e\n", 1.0 / b);
             //b = sqrt(1.0 / b);
             b = RKWaveformDigitalAmplitude / sqrtf(b);

@@ -159,6 +159,7 @@ typedef union rk_filter_anchor {
         RKFloat       subCarrierFrequency;                               // For house keeping only, use the waveform->fc for DDC
         RKFloat       sensitivityGain;                                   // Sensitivity gain due to longer/efficient waveforms (dB)
         RKFloat       filterGain;                                        // Filter gain from the filter coefficients, should be 0.0 (dB)
+        RKFloat       fullScale;
     };
     char bytes[64];
 } RKFilterAnchor;
