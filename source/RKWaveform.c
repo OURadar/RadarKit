@@ -31,6 +31,7 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 				g += a;
 				w++;
 			}
+            RKLog(">o:l = %d:%d --> h = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h);
 			if (gainCalculationFlag & RKWaveformGainNoise) {
 				waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
 			}
@@ -430,11 +431,11 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
         // Go through the waveform samples (filters)
 		float x = 0.0f;
         float b;
+        printf("---\n");
         for (j = 0; j < waveform->filterCounts[i]; j++) {
 			// Go through it once to figure out the peak sample
 			a = 0.0f;
 			fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
-			ic = waveform->iSamples[i] + waveform->filterAnchors[i][j].origin;
 			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
 				a = MAX(a, fc->i * fc->i + fc->q * fc->q);
 				fc++;
@@ -444,22 +445,23 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
             
             //waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
             b = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain); // g / (h * 1.0e-6 * waveform->fs)
-            b *= 1.0e-6f * waveform->fs; // g / h = 1.0 / h   [ h = max ( abs() ^ 2 ) ]
-            RKLog(">h = %.4e\n", 1.0 / b);
-            b = sqrtf(b);
-            b *= RKWaveformDigitalAmplitude;
+            b *= 1.0e-6f * waveform->fs;         //  g / h ==> 1.0 / h   [ h = max ( abs() ^ 2 ) ]
+            RKLog(">h' = %.4e\n", 1.0 / b);
+            //b = sqrt(1.0 / b);
+            b = RKWaveformDigitalAmplitude / sqrtf(b);
             
-            RKLog(">a / b = %.4f\n", a / b);
+            RKLog(">                           a / b = %.4f\n", a / b);
             fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			ic = waveform->iSamples[i] + waveform->filterAnchors[i][j].origin;
             for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
                 ic->i = (int16_t)(a * fc->i);
                 ic->q = (int16_t)(a * fc->q);
-				x = MAX(x, sqrtf((float)(ic->i * ic->i + ic->q * ic->q)));
+				x = MAX(x, (float)(ic->i * ic->i + ic->q * ic->q));
                 ic++;
                 fc++;
             }
-			x = fabsf(x) / RKWaveformDigitalAmplitude;
+			x = sqrtf(x) / RKWaveformDigitalAmplitude;
+            RKLog(">x = %.4f\n", x);
 			if (x < 0.95f || x > 1.05f) {
 				RKLog("Warning. Waveform normalization does not seem to work.  x[%d] = %.4f\n", j, x);
 			}
@@ -564,7 +566,7 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
             }
             gain = sqrtf(gain);
             x = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            for (i = 0; i < waveform->depth; i++) {
+            for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
                 x->i /= gain;
                 x->q /= gain;
                 x++;
