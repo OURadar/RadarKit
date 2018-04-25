@@ -29,8 +29,12 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
             h = 0.0f;
 			w = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
-				a = w->i * w->i + w->q * w->q;
-                f = MAX(f, MAX(fabsf(w->i), fabsf(w->q)));
+				a = (w->i * w->i);
+				f = MAX(f, fabsf(w->i));
+				if (waveform->type & RKWaveformTypeIsComplex) {
+					a += (w->q * w->q);
+					f = MAX(f, fabsf(w->q));
+				}
                 h = MAX(h, a);
 				g += a;
 				w++;
@@ -189,7 +193,7 @@ void RKWaveformOnes(RKWaveform *waveform) {
     RKComplex *x;
     RKInt16C *w;
 
-    waveform->type = RKWaveformTypeSingle;
+    waveform->type = RKWaveformTypeSingleTone;
     double amplitudeScale = 1.0 / sqrt((double)waveform->depth);
 
     for (k = 0; k < waveform->count; k++) {
@@ -220,7 +224,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
     const bool sequential = false;
 
     waveform->fs = fs;
-    waveform->type = RKWaveformTypeFrequencyHopping;
+    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHopping;
     sprintf(waveform->name, "h%02.0f%02d", bandwidth, waveform->count);
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
@@ -272,8 +276,8 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
     
     waveform->fs = fs;
-    waveform->type = RKWaveformTypeTimeFrequencyMultiplexing;
-    sprintf(waveform->name, "tfm-sim");
+    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeTimeFrequencyMultiplexing;
+    sprintf(waveform->name, "tfm-fake");
 
     // Two filters per waveform
     waveform->filterCounts[0] = 2;
@@ -324,7 +328,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 
 	// Other parameters
     waveform->fs = fs;
-	waveform->type = RKWaveformTypeLinearFrequencyModulation;
+	waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeLinearFrequencyModulation;
     sprintf(waveform->name, "lfm");
 
 	waveform->filterCounts[0] = 1;
@@ -415,6 +419,20 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 
+	// Generate an SSB equivalent so that a real-valued function cos(omega t) becomes exp(i omage t)
+	if (!(waveform->type & RKWaveformTypeIsComplex)) {
+		for (i = 0; i < waveform->count; i++) {
+			for (j = 0; j < waveform->depth; j++) {
+				w[j] = waveform->samples[i][j].i;
+			}
+			memset(&w[j], 0, (nfft - j) * sizeof(RKFloat));
+			// Technically, this is a function that generates X = Xi + j Xq from Xi
+			RKHilbertTransform(w, u, nfft);
+			RKSIMD_iymul(s, u, waveform->depth);
+			memcpy(waveform->samples[i], u, waveform->depth * sizeof(RKComplex));
+		}
+	}
+
 	// Demodulation tone
     const double omega = -2.0 * M_PI * waveform->fc / waveform->fs;
 	for (j = 0; j < waveform->depth; j++) {
@@ -431,14 +449,6 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
     // The normalization factor to get the waveform to unity noise gain is no longer known here.
 	// All filters should have a unity noise gain so an equivalent sensitivity gain vs a 1-us pulse can be derived.
 	for (i = 0; i < waveform->count; i++) {
-		for (j = 0; j < waveform->depth; j++) {
-			w[j] = waveform->samples[i][j].i;
-		}
-		memset(&w[j], 0, (nfft - j) * sizeof(RKFloat));
-		RKHilbertTransform(w, u, nfft);
-		RKSIMD_iymul(s, u, waveform->depth);
-		memcpy(waveform->samples[i], u, waveform->depth * sizeof(RKComplex));
-        
         // Go through the waveform samples (filters)
 		float x = 0.0f;
         float b;

@@ -1892,14 +1892,40 @@ void RKTestHilbertTransform(void) {
     RKFloat a = 0.0f;
     RKFloat *x = (RKFloat *)malloc(n * sizeof(RKFloat));
     RKComplex *y = (RKComplex *)malloc(n * sizeof(RKComplex));
-    for (i = 0; i < n; i++) {
+
+	// Simple example of Xr = [1 2 3 4] like hilbert() in MATLAB
+	memset(x, 0, n * sizeof(RKFloat));
+	x[0] = 1.0f;
+	x[1] = 2.0f;
+	x[2] = 3.0f;
+	x[3] = 4.0f;
+	RKHilbertTransform(x, y, 4);
+
+	printf("\n");
+	printf("Example 1:\n");
+	printf("----------\n");
+	printf("\nX =\n\n");
+	for (i = 0; i < 4; i++) {
+		printf("    [ %7.4f ]\n", x[i]);
+	}
+	printf("\nH =\n\n");
+	for (i = 0; i < 4; i++) {
+		printf("    [ %7.4f %s %7.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
+	}
+
+	// Another example to illustrate the noise gain is more or less preserved.
+	for (i = 0; i < n; i++) {
         x[i] = cosf(0.1f * 2.0f * M_PI * (float)i + 0.2);
     }
     RKHilbertTransform(x, y, n);
     for (i = 0; i < n; i++) {
         a += y[i].i * y[i].i + y[i].q * y[i].q;
     }
-    printf("\nX =\n\n");
+
+	printf("\n");
+	printf("Example 2:\n");
+	printf("----------\n");
+	printf("\nX =\n\n");
     for (i = 0; i < n; i++) {
         printf("    [ %7.4f ]\n", x[i]);
     }
@@ -1907,7 +1933,7 @@ void RKTestHilbertTransform(void) {
     for (i = 0; i < n; i++) {
         printf("    [ %7.4f %s %7.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
     }
-    printf("\na = %.4f\n", a);
+    printf("\na = %.4f\n\n", a);
     free(x);
     free(y);
 }
@@ -2115,6 +2141,7 @@ void RKTestWaveformProperties(void) {
     printf("\n");
     
 	waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+	printf("==> isComplex = %d\n", waveform->type & RKWaveformTypeIsComplex);
     RKWaveformDownConvert(waveform);
 	RKWaveformSummary(waveform);
 	RKWaveformFree(waveform);

@@ -17,11 +17,12 @@
 
 typedef uint32_t RKWaveformType;
 enum RKWaveformType {
-    RKWaveformTypeNone,
-    RKWaveformTypeSingle,
-    RKWaveformTypeFrequencyHopping,
-	RKWaveformTypeLinearFrequencyModulation,
-    RKWaveformTypeTimeFrequencyMultiplexing
+    RKWaveformTypeNone                         = 0,
+	RKWaveformTypeIsComplex                    = 1,
+    RKWaveformTypeSingleTone                   = (1 << 1),
+    RKWaveformTypeFrequencyHopping             = (1 << 2),
+	RKWaveformTypeLinearFrequencyModulation    = (1 << 3),
+    RKWaveformTypeTimeFrequencyMultiplexing    = (1 << 4)
 };
 
 // ----
