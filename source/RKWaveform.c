@@ -39,16 +39,16 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 				g += a;
 				w++;
 			}
-			// For waveforms that are not complex at this stage, the down-convert process doubles the power later, so g is doubled here.
-			if (!(waveform->type & RKWaveformTypeIsComplex)) {
-				g *= 2.0f;
-			}
+            // For waveforms that are not complex at this stage, the down-convert process doubles the noise gain later.
+            if (!(waveform->type & RKWaveformTypeIsComplex)) {
+                g *= 2.0f;
+            }
             //RKLog(">o:l = %d:%d --> h = %.4e  g = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h, g);
             if (gainCalculationFlag & RKWaveformGainFullScale) {
-				waveform->filterAnchors[i][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / f;
+                waveform->filterAnchors[i][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(g);
             }
 			if (gainCalculationFlag & RKWaveformGainNoise) {
-				waveform->filterAnchors[i][j].filterGain = 10.0f * log10f(g);
+                waveform->filterAnchors[i][j].filterGain = 10.0f * log10f(g);
 			}
 			if (gainCalculationFlag & RKWaveformGainSensitivity) {
 				waveform->filterAnchors[i][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
@@ -163,9 +163,12 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     fclose(fid);
 
-    RKLog(">Waveform '%s'   groupCount = %d   depth = %s   fc = %s MHz   fs = %s MHz\n",
-          fileHeader.name, fileHeader.groupCount, RKIntegerToCommaStyleString(fileHeader.depth),
-          RKFloatToCommaStyleString(1.0e-6 * waveform->fc), RKFloatToCommaStyleString(1.0e-6 * waveform->fs));
+    RKLog(">Waveform '%s'   groupCount = %d   depth = %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
+          fileHeader.name, fileHeader.groupCount,
+          RKIntegerToCommaStyleString(fileHeader.depth),
+          RKFloatToCommaStyleString(1.0e-6 * waveform->fc),
+          RKFloatToCommaStyleString(1.0e-6 * waveform->fs),
+          RKFloatToCommaStyleString(1.0e6 * waveform->depth / waveform->fs));
 
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
@@ -459,26 +462,28 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
         for (j = 0; j < waveform->filterCounts[i]; j++) {
 			// Go through it once to figure out the peak sample
 			a = 0.0f;
-			f = 0.0f;
 			g = 0.0f;
 			fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
 				a = fc->i * fc->i + fc->q * fc->q;
-				f = MAX(f, MAX(fabs(fc->i), fabs(fc->q)));
 				g += a;
 				fc++;
 			}
-			f = (RKFloat)RKWaveformDigitalAmplitude / f;
+			f = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(g);
             RKLog(">g = %.4f   f = %.4e ==? %.4e\n", g, f, waveform->filterAnchors[i][j].fullScale);
 
             //waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
+            
             b = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain) * 1.0e-6f * waveform->fs;
+            // b = g / h = g / sqrt(g) = sqrt(g)
+            // h ~ 1 / sqrt(g)
             b = (RKFloat)RKWaveformDigitalAmplitude * sqrtf(b);
 			RKLog(">fs' = %.4e\n", b);
 
-			a = b;
+            RKLog(">a / b = %.4f  %.4f\n", f / b, waveform->filterAnchors[i][j].fullScale / f);
 
-            RKLog(">                           a / b = %.4f  %.4f\n", a / b, waveform->filterAnchors[i][j].fullScale / b);
+            a = b;
+
             fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			ic = waveform->iSamples[i] + waveform->filterAnchors[i][j].origin;
             for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
