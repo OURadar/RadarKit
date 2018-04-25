@@ -2139,34 +2139,33 @@ void RKTestWaveformProperties(void) {
 	RKWaveformFree(waveform);
 
     printf("\n");
-    
+
 	waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-	printf("==> isComplex = %d\n", waveform->type & RKWaveformTypeIsComplex);
     RKWaveformDownConvert(waveform);
 	RKWaveformSummary(waveform);
 	RKWaveformFree(waveform);
 
     printf("\n");
-    
-	RKLog(">Waveform 's01'   fc = 50.0 MHz   fs = 160.0 MHz\n");
-	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
-    RKWaveformDownConvert(waveform);
-	RKWaveformSummary(waveform);
-	RKWaveformFree(waveform);
-
-    printf("\n");
-    
-	RKLog(">Waveform 'q02'   fc = 50.0 MHz   fs = 160.0 MHz\n");
-	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
-    RKWaveformDownConvert(waveform);
-	RKWaveformSummary(waveform);
-	RKWaveformFree(waveform);
-
-    printf("\n");
-
-    RKLog(">Waveform 'q04'   fc = 50.0 MHz   fs = 160.0 MHz\n");
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
+//
+//	RKLog(">Waveform 's01'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+//	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+//    RKWaveformDownConvert(waveform);
+//	RKWaveformSummary(waveform);
+//	RKWaveformFree(waveform);
+//
+//    printf("\n");
+//    
+//	RKLog(">Waveform 'q02'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+//	waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
+//    RKWaveformDownConvert(waveform);
+//	RKWaveformSummary(waveform);
+//	RKWaveformFree(waveform);
+//
+//    printf("\n");
+//
+//    RKLog(">Waveform 'q04'   fc = 50.0 MHz   fs = 160.0 MHz\n");
+//    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
+//    RKWaveformDownConvert(waveform);
+//    RKWaveformSummary(waveform);
+//    RKWaveformFree(waveform);
 }
