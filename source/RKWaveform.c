@@ -56,11 +56,6 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 			if (gainCalculationFlag & RKWaveformGainSensitivity) {
 				waveform->filterAnchors[i][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
 			}
-            RKLog(">isCopmlex = %s   fullScale = %.4e   filterGain = %.2f dB   sensitivityGain = %.2f dB\n",
-				  waveform->type & RKWaveformTypeIsComplex ? "True" : "False",
-                  waveform->filterAnchors[i][j].fullScale,
-                  waveform->filterAnchors[i][j].filterGain,
-                  waveform->filterAnchors[i][j].sensitivityGain);
 		}
 	}
 }
@@ -165,13 +160,6 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
     }
     fclose(fid);
-
-    RKLog(">Waveform '%s'   groupCount = %d   depth = %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
-          fileHeader.name, fileHeader.groupCount,
-          RKIntegerToCommaStyleString(fileHeader.depth),
-          RKFloatToCommaStyleString(1.0e-6 * waveform->fc),
-          RKFloatToCommaStyleString(1.0e-6 * waveform->fs),
-          RKFloatToCommaStyleString(1.0e6 * waveform->depth / waveform->fs));
 
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
@@ -339,7 +327,13 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 	// Other parameters
     waveform->fs = fs;
 	waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeLinearFrequencyModulation;
-    sprintf(waveform->name, "lfm");
+    if (bandwidth == 0.0) {
+        sprintf(waveform->name, "s%02d", (int)(1.0e6 * pulsewidth));
+    } else if (bandwidth >= 1.0e6 && bandwidth < 100.0e6f) {
+        sprintf(waveform->name, "q%02d", (int)(1.0e6 * pulsewidth));
+    } else {
+        sprintf(waveform->name, "lfm");
+    }
 
 	waveform->filterCounts[0] = 1;
 
@@ -496,7 +490,7 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
                 fc++;
             }
 			x = sqrtf(x) / RKWaveformDigitalAmplitude;
-            RKLog(">x = %.4f\n", x);
+            //RKLog(">x = %.4f\n", x);
 			if (x < 0.99f || x > 1.01f) {
 				RKLog("Warning. Waveform normalization does not seem to work.  x[%d] = %.4f\n", j, x);
 			}
@@ -643,6 +637,15 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w4 + 5);
     }
     // Now we show the summary
+    RKLog(">Waveform '%s' (%s)   depth = %d x %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
+          waveform->name,
+          waveform->type & RKWaveformTypeIsComplex ? "Complex" : "Real",
+          waveform->count,
+          RKIntegerToCommaStyleString(waveform->depth),
+          RKFloatToCommaStyleString(1.0e-6 * waveform->fc),
+          RKFloatToCommaStyleString(1.0e-6 * waveform->fs),
+          RKFloatToCommaStyleString(1.0e6 * waveform->depth / waveform->fs));
+
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKFloat g = 0.0;
