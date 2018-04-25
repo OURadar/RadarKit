@@ -30,22 +30,25 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 			w = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
 				a = (w->i * w->i);
-				f = MAX(f, fabsf(w->i));
 				if (waveform->type & RKWaveformTypeIsComplex) {
 					a += (w->q * w->q);
-					f = MAX(f, fabsf(w->q));
-				}
+					f = MAX(f, w->i * w->i + w->q * w->q);
+                } else {
+                    f = MAX(f, fabsf(w->i));
+                }
                 h = MAX(h, a);
 				g += a;
 				w++;
 			}
-            // For waveforms that are not complex at this stage, the down-convert process doubles the noise gain later.
-            if (!(waveform->type & RKWaveformTypeIsComplex)) {
+            if (waveform->type & RKWaveformTypeIsComplex) {
+                f = sqrtf(f);
+            } else {
+                // For waveforms that are not complex at this stage, the down-convert process doubles the noise gain later.
                 g *= 2.0f;
             }
             //RKLog(">o:l = %d:%d --> h = %.4e  g = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h, g);
             if (gainCalculationFlag & RKWaveformGainFullScale) {
-                waveform->filterAnchors[i][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(g);
+                waveform->filterAnchors[i][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / f;
             }
 			if (gainCalculationFlag & RKWaveformGainNoise) {
                 waveform->filterAnchors[i][j].filterGain = 10.0f * log10f(g);
@@ -458,45 +461,43 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
         // Go through the waveform samples (filters)
 		RKSIMD_iymul(s, waveform->samples[i], waveform->depth);
 		float x = 0.0f;
-        float b;
         for (j = 0; j < waveform->filterCounts[i]; j++) {
-			// Go through it once to figure out the peak sample
+			// Go through it once to figure out the peak sample. Could be different than RKWaveformCalculateGain()
 			a = 0.0f;
+            f = 0.0f;
 			g = 0.0f;
 			fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
 				a = fc->i * fc->i + fc->q * fc->q;
+                f = MAX(f, a);
 				g += a;
 				fc++;
 			}
-			f = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(g);
-            RKLog(">g = %.4f   f = %.4e ==? %.4e\n", g, f, waveform->filterAnchors[i][j].fullScale);
+			f = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(f);
+            if (fabs(waveform->filterAnchors[i][j].fullScale / f - 1.0f) > 0.01f) {
+                RKLog("Warning. g = %.4f   f = %.4e ==? %.4e  (%.3f)\n", g, f, waveform->filterAnchors[i][j].fullScale, waveform->filterAnchors[i][j].fullScale / f);
+            }
 
-            //waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
-            
-            b = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain) * 1.0e-6f * waveform->fs;
-            // b = g / h = g / sqrt(g) = sqrt(g)
-            // h ~ 1 / sqrt(g)
-            b = (RKFloat)RKWaveformDigitalAmplitude * sqrtf(b);
-			RKLog(">fs' = %.4e\n", b);
-
-            RKLog(">a / b = %.4f  %.4f\n", f / b, waveform->filterAnchors[i][j].fullScale / f);
-
-            a = b;
+            // From before: sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
+            a = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain);
+            a = (RKFloat)RKWaveformDigitalAmplitude * sqrtf(a * 1.0e-6f * waveform->fs);
+            if (fabs(waveform->filterAnchors[i][j].fullScale / a - 1.0f) > 0.01f) {
+                RKLog("Warning. a / f = %.4f  %.4f\n", f / a, waveform->filterAnchors[i][j].fullScale / f);
+                a = f;
+            }
 
             fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
 			ic = waveform->iSamples[i] + waveform->filterAnchors[i][j].origin;
             for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
                 ic->i = (int16_t)(a * fc->i);
                 ic->q = (int16_t)(a * fc->q);
-				//x = MAX(x, (float)(ic->i * ic->i + ic->q * ic->q));
-				x = MAX(x, (float)MAX(abs(ic->i), abs(ic->q)));
+				x = MAX(x, (float)(ic->i * ic->i + ic->q * ic->q));
                 ic++;
                 fc++;
             }
-			x = x / RKWaveformDigitalAmplitude;
+			x = sqrtf(x) / RKWaveformDigitalAmplitude;
             RKLog(">x = %.4f\n", x);
-			if (x < 0.95f || x > 1.05f) {
+			if (x < 0.99f || x > 1.01f) {
 				RKLog("Warning. Waveform normalization does not seem to work.  x[%d] = %.4f\n", j, x);
 			}
         }
