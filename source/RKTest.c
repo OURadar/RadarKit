@@ -1888,20 +1888,26 @@ void RKTestWaveformTFM(void) {
 void RKTestHilbertTransform(void) {
     SHOW_FUNCTION_NAME
     int i;
-    RKFloat *x = (RKFloat *)malloc(8 * sizeof(RKFloat));
-    RKComplex *y = (RKComplex *)malloc(8 * sizeof(RKComplex));
-    for (i = 0; i < 8; i++) {
-        x[i] = cosf(0.1 * (float)i);
+    const int n = 10;
+    RKFloat a = 0.0f;
+    RKFloat *x = (RKFloat *)malloc(n * sizeof(RKFloat));
+    RKComplex *y = (RKComplex *)malloc(n * sizeof(RKComplex));
+    for (i = 0; i < n; i++) {
+        x[i] = cosf(0.1f * 2.0f * M_PI * (float)i + 0.2);
     }
-    RKHilbertTransform(x, y, 8);
+    RKHilbertTransform(x, y, n);
+    for (i = 0; i < n; i++) {
+        a += y[i].i * y[i].i + y[i].q * y[i].q;
+    }
     printf("\nX =\n\n");
-    for (i = 0; i < 8; i++) {
-        printf("    [ %.4f ]\n", x[i]);
+    for (i = 0; i < n; i++) {
+        printf("    [ %7.4f ]\n", x[i]);
     }
     printf("\nH =\n\n");
-    for (i = 0; i < 8; i++) {
-        printf("    [ %.4f %s %.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
+    for (i = 0; i < n; i++) {
+        printf("    [ %7.4f %s %7.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
     }
+    printf("\na = %.4f\n", a);
     free(x);
     free(y);
 }
@@ -2132,7 +2138,7 @@ void RKTestWaveformProperties(void) {
     printf("\n");
 
     RKLog(">Waveform 'q04'   fc = 50.0 MHz   fs = 160.0 MHz\n");
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 1.0e6);
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
     RKWaveformDownConvert(waveform);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);

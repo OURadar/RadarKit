@@ -21,13 +21,14 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 	// Calculate the noise gain
 	int i, j, k;
 	RKFloat a, f, g, h;
-	for (k = 0; k < waveform->count; k++) {
-		for (j = 0; j < waveform->filterCounts[k]; j++) {
+    RKComplex *w;
+	for (i = 0; i < waveform->count; i++) {
+		for (j = 0; j < waveform->filterCounts[i]; j++) {
             f = 0.0f;
 			g = 0.0f;
             h = 0.0f;
-			RKComplex *w = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-			for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
+			w = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
+			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
 				a = w->i * w->i + w->q * w->q;
                 f = MAX(f, MAX(fabsf(w->i), fabsf(w->q)));
                 h = MAX(h, a);
@@ -36,18 +37,19 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 			}
             //RKLog(">o:l = %d:%d --> h = %.4e  g = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h, g);
             if (gainCalculationFlag & RKWaveformGainFullScale) {
-                waveform->filterAnchors[k][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / sqrt(h);
+                waveform->filterAnchors[i][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / sqrt(h);
             }
 			if (gainCalculationFlag & RKWaveformGainNoise) {
-				waveform->filterAnchors[k][j].filterGain = 10.0f * log10f(g);
+				waveform->filterAnchors[i][j].filterGain = 10.0f * log10f(g);
 			}
 			if (gainCalculationFlag & RKWaveformGainSensitivity) {
-				waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
+				waveform->filterAnchors[i][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
 			}
-            RKLog("fullScale = %.4e   filterGain = %.2f dB   sensitivityGain = %.2f dB\n",
-                  waveform->filterAnchors[k][j].fullScale,
-                  waveform->filterAnchors[k][j].filterGain,
-                  waveform->filterAnchors[k][j].sensitivityGain);
+            RKLog(">fullScale = %.4e   filterGain = %.2f dB   sensitivityGain = %.2f dB   h = %.4e --> %.4e\n",
+                  waveform->filterAnchors[i][j].fullScale,
+                  waveform->filterAnchors[i][j].filterGain,
+                  waveform->filterAnchors[i][j].sensitivityGain,
+                  h, waveform->filterAnchors[i][j].fullScale);
 		}
 	}
 }
@@ -336,16 +338,15 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 	waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
 	waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
 
-    RKFloat a = 1.0f / waveform->depth;
 	RKInt16C *w = waveform->iSamples[0];
 	RKComplex *x = waveform->samples[0];
 	double omega_c = 2.0 * M_PI * fc / fs;
 	double k = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
 	for (i = 0; i < waveform->depth; i++) {
-		x->i = a * cosf(omega_c * i + 0.5 * k * i * i);
-		x->q = a * sinf(omega_c * i + 0.5 * k * i * i);
+		x->i = cosf(omega_c * i + 0.5 * k * i * i);
+        x->q = sinf(omega_c * i + 0.5 * k * i * i);
 		w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
-		w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
+        w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
 		x++;
 		w++;
 	}
@@ -415,11 +416,11 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&u, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 
 	// Demodulation tone
-    const double omega = 2.0 * M_PI * waveform->fc / waveform->fs;
+    const double omega = -2.0 * M_PI * waveform->fc / waveform->fs;
 	for (j = 0; j < waveform->depth; j++) {
 		// There is another convention to flip the sign: u[i].q = -u[i].q;
-		s[j].i = cosf(-omega * j);
-		s[j].q = sinf(-omega * j);
+		s[j].i = cosf(omega * j);
+		s[j].q = sinf(omega * j);
 	}
 
     RKInt16C *ic;
@@ -434,14 +435,13 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 			w[j] = waveform->samples[i][j].i;
 		}
 		memset(&w[j], 0, (nfft - j) * sizeof(RKFloat));
-		RKHilbertTransform(w, u, waveform->depth);
+		RKHilbertTransform(w, u, nfft);
 		RKSIMD_iymul(s, u, waveform->depth);
 		memcpy(waveform->samples[i], u, waveform->depth * sizeof(RKComplex));
         
         // Go through the waveform samples (filters)
 		float x = 0.0f;
         float b;
-        printf("---\n");
         for (j = 0; j < waveform->filterCounts[i]; j++) {
 			// Go through it once to figure out the peak sample
 			a = 0.0f;
@@ -450,15 +450,15 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 				a = MAX(a, fc->i * fc->i + fc->q * fc->q);
 				fc++;
 			}
-			a = RKWaveformDigitalAmplitude / sqrtf(a);
-            RKLog(">a = %.4e   vs  %.4e    fs = %.2f\n", a, waveform->filterAnchors[i][j].fullScale, waveform->fs);
+			a = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(a);
+            RKLog(">fs = %.4e ==? %.4e    fs = %.2f\n", a, waveform->filterAnchors[i][j].fullScale, waveform->fs);
 
             //waveform->filterAnchors[k][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
             b = powf(10.0f, 0.1f * waveform->filterAnchors[i][j].sensitivityGain) * 1.0e-6f * waveform->fs;
             //  g / h ==> 1.0 / h   [ h = max ( abs() ^ 2 ) ]
-            RKLog(">h' = %.4e\n", 1.0 / b);
+            RKLog(">h' = %.4e --> %.4e\n", 1.0 / b, (RKFloat)RKWaveformDigitalAmplitude / sqrtf(1.0f / b));
             //b = sqrt(1.0 / b);
-            b = RKWaveformDigitalAmplitude / sqrtf(b);
+            b = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(1.0f / b);
             
             RKLog(">                           a / b = %.4f\n", a / b);
             fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
