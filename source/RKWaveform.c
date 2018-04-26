@@ -10,54 +10,53 @@
 
 typedef uint8_t RKWaveformGain;
 enum RKWaveformGain {
-	RKWaveformGainNull          = 0,
-	RKWaveformGainNoise         = 1,
+    RKWaveformGainNull          = 0,
+    RKWaveformGainNoise         = 1,
     RKWaveformGainFullScale     = 1 << 1,
     RKWaveformGainSensitivity   = 1 << 2,
-	RKWaveformGainAll          = (RKWaveformGainNoise | RKWaveformGainFullScale | RKWaveformGainSensitivity)
+    RKWaveformGainAll          = (RKWaveformGainNoise | RKWaveformGainFullScale | RKWaveformGainSensitivity)
 };
 
 static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCalculationFlag) {
-	// Calculate the noise gain
-	int i, j, k;
-	RKFloat a, f, g, h;
+    // Calculate the noise gain
+    int i, j, k;
+    RKFloat a, f, g, h;
     RKComplex *w;
-	for (i = 0; i < waveform->count; i++) {
-		for (j = 0; j < waveform->filterCounts[i]; j++) {
+    for (i = 0; i < waveform->count; i++) {
+        for (j = 0; j < waveform->filterCounts[i]; j++) {
             f = 0.0f;
-			g = 0.0f;
+            g = 0.0f;
             h = 0.0f;
-			w = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
-			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
-				a = (w->i * w->i);
-				if (waveform->type & RKWaveformTypeIsComplex) {
-					a += (w->q * w->q);
-					f = MAX(f, w->i * w->i + w->q * w->q);
+            w = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
+            for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
+                a = (w->i * w->i);
+                if (waveform->type & RKWaveformTypeIsComplex) {
+                    a += (w->q * w->q);
+                    f = MAX(f, w->i * w->i + w->q * w->q);
                 } else {
                     f = MAX(f, fabsf(w->i));
                 }
                 h = MAX(h, a);
-				g += a;
-				w++;
-			}
+                g += a;
+                w++;
+            }
             if (waveform->type & RKWaveformTypeIsComplex) {
                 f = sqrtf(f);
             } else {
                 // For waveforms that are not complex at this stage, the down-convert process doubles the noise gain later.
                 g *= 2.0f;
             }
-            //RKLog(">o:l = %d:%d --> h = %.4e  g = %.4e\n", waveform->filterAnchors[k][j].origin, waveform->filterAnchors[k][j].length, h, g);
             if (gainCalculationFlag & RKWaveformGainFullScale) {
                 waveform->filterAnchors[i][j].fullScale = (RKFloat)RKWaveformDigitalAmplitude / f;
             }
-			if (gainCalculationFlag & RKWaveformGainNoise) {
+            if (gainCalculationFlag & RKWaveformGainNoise) {
                 waveform->filterAnchors[i][j].filterGain = 10.0f * log10f(g);
-			}
-			if (gainCalculationFlag & RKWaveformGainSensitivity) {
-				waveform->filterAnchors[i][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
-			}
-		}
-	}
+            }
+            if (gainCalculationFlag & RKWaveformGainSensitivity) {
+                waveform->filterAnchors[i][j].sensitivityGain = 10.0f * log10f(g / (h * 1.0e-6 * waveform->fs));
+            }
+        }
+    }
 }
 
 #pragma mark - Life Cycle
@@ -179,9 +178,9 @@ void RKWaveformFree(RKWaveform *waveform) {
 }
 
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
-	RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)(pulsewidth * fs));
-	RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
-	return waveform;
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
+    return waveform;
 }
 
 #pragma mark - Waveforms
@@ -206,8 +205,8 @@ void RKWaveformOnes(RKWaveform *waveform) {
             w++;
         }
     }
-	RKWaveformNormalizeNoiseGain(waveform);
-	RKWaveformCalculateGain(waveform, RKWaveformGainAll);
+    RKWaveformNormalizeNoiseGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 //
@@ -227,7 +226,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
 
-	// A good sequence can be achieved through a modulo sequence.
+    // A good sequence can be achieved through a modulo sequence.
     int stride = RKBestStrideOfHops(waveform->count / 2, false);
 
     n = 0;
@@ -311,7 +310,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
             x->q = a * sinf(omega * i);
             w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
             w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
-			x++;
+            x++;
             w++;
         }
     }
@@ -322,11 +321,12 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
 }
 
 void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double pulsewidth, const double bandwidth) {
-	int i;
+    int i;
 
-	// Other parameters
+    // Other parameters
+    waveform->fc = fc;
     waveform->fs = fs;
-	waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeLinearFrequencyModulation;
+    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeLinearFrequencyModulation;
     if (bandwidth == 0.0) {
         sprintf(waveform->name, "s%02d", (int)(1.0e6 * pulsewidth));
     } else if (bandwidth >= 1.0e6 && bandwidth < 100.0e6f) {
@@ -335,32 +335,32 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
         sprintf(waveform->name, "lfm");
     }
 
-	waveform->filterCounts[0] = 1;
+    waveform->filterCounts[0] = 1;
 
-	// Filter parameters
-	waveform->filterAnchors[0][0].name = 0;
-	waveform->filterAnchors[0][0].origin = 0;
-	waveform->filterAnchors[0][0].length = waveform->depth;
-	waveform->filterAnchors[0][0].inputOrigin = 0;
-	waveform->filterAnchors[0][0].outputOrigin = 0;
-	waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
-	waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
+    // Filter parameters
+    waveform->filterAnchors[0][0].name = 0;
+    waveform->filterAnchors[0][0].origin = 0;
+    waveform->filterAnchors[0][0].length = waveform->depth;
+    waveform->filterAnchors[0][0].inputOrigin = 0;
+    waveform->filterAnchors[0][0].outputOrigin = 0;
+    waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
+    waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
 
-	RKInt16C *w = waveform->iSamples[0];
-	RKComplex *x = waveform->samples[0];
-	double omega_c = 2.0 * M_PI * fc / fs;
-	double k = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
-	for (i = 0; i < waveform->depth; i++) {
-		x->i = cosf(omega_c * i + 0.5 * k * i * i);
+    RKInt16C *w = waveform->iSamples[0];
+    RKComplex *x = waveform->samples[0];
+    double omega_c = 2.0 * M_PI * fc / fs;
+    double k = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
+    for (i = 0; i < waveform->depth; i++) {
+        x->i = cosf(omega_c * i + 0.5 * k * i * i);
         x->q = sinf(omega_c * i + 0.5 * k * i * i);
-		w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
+        w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
         w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
-		x++;
-		w++;
-	}
+        x++;
+        w++;
+    }
     RKWaveformNormalizeNoiseGain(waveform);
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
-	return;
+    return;
 }
 
 #pragma mark - Generic Manipulation
@@ -387,7 +387,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     waveform->depth /= stride;
     RKComplex *x;
     RKInt16C *w;
-	RKFloat gainAdjust = sqrtf(stride);
+    RKFloat gainAdjust = sqrtf(stride);
     for (l = 0; l < waveform->count; l++) {
         for (k = 0; k < waveform->filterCounts[l]; k++) {
             waveform->filterAnchors[l][k].origin /= stride;
@@ -408,41 +408,41 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             w[j] = w[i];
         }
     }
-	RKWaveformCalculateGain(waveform, RKWaveformGainNoise);
+    RKWaveformCalculateGain(waveform, RKWaveformGainNoise);
 }
 
 void RKWaveformDownConvert(RKWaveform *waveform) {
-	int i, j, k;
+    int i, j, k;
     RKFloat a, f, g;
-	RKFloat *w;
-	RKComplex *s;
+    RKFloat *w;
+    RKComplex *s;
 
-	int nfft = (int)powf(2.0f, ceilf(log2f((float)waveform->depth)));
+    int nfft = (int)powf(2.0f, ceilf(log2f((float)waveform->depth)));
 
-	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&w, RKSIMDAlignSize, nfft * sizeof(RKFloat)));
-	POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&w, RKSIMDAlignSize, nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
 
-	// Generate an SSB equivalent so that a real-valued function cos(omega t) becomes exp(i omage t)
-	if (!(waveform->type & RKWaveformTypeIsComplex)) {
-		for (i = 0; i < waveform->count; i++) {
-			for (j = 0; j < waveform->depth; j++) {
-				w[j] = waveform->samples[i][j].i;
-			}
-			memset(&w[j], 0, (nfft - j) * sizeof(RKFloat));
-			// Technically, this is a function that generates X = Xi + j Xq from Xi
-			RKHilbertTransform(w, waveform->samples[i], waveform->depth);
-		}
-		waveform->type |= RKWaveformTypeIsComplex;
-	}
+    // Generate an SSB equivalent so that a real-valued function cos(omega t) becomes exp(i omage t)
+    if (!(waveform->type & RKWaveformTypeIsComplex)) {
+        for (i = 0; i < waveform->count; i++) {
+            for (j = 0; j < waveform->depth; j++) {
+                w[j] = waveform->samples[i][j].i;
+            }
+            memset(&w[j], 0, (nfft - j) * sizeof(RKFloat));
+            // Technically, this is a function that generates X = Xi + j Xq from Xi
+            RKHilbertTransform(w, waveform->samples[i], waveform->depth);
+        }
+        waveform->type |= RKWaveformTypeIsComplex;
+    }
 
-	// Demodulation tone
+    // Demodulation tone
     const RKFloat omega = -2.0f * M_PI * waveform->fc / waveform->fs;
-	const RKFloat m = 1.0f;
-	for (j = 0; j < waveform->depth; j++) {
-		// There is another convention to flip the sign: u[i].q = -u[i].q;
-		s[j].i = m * cosf(omega * j);
-		s[j].q = m * sinf(omega * j);
-	}
+    const RKFloat m = 1.0f;
+    for (j = 0; j < waveform->depth; j++) {
+        // There is another convention to flip the sign: u[i].q = -u[i].q;
+        s[j].i = m * cosf(omega * j);
+        s[j].q = m * sinf(omega * j);
+    }
 
     RKInt16C *ic;
     RKComplex *fc;
@@ -450,24 +450,24 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
     // Copy over the float samples to int16_t samples and adjust the amplitude so that it represents the intended transmit envelope
     // This adjustment will not produce the transmit waveform that takes full advantage of the DAC range
     // The normalization factor to get the waveform to unity noise gain is no longer known here.
-	// All filters should have a unity noise gain so an equivalent sensitivity gain vs a 1-us pulse can be derived.
-	for (i = 0; i < waveform->count; i++) {
+    // All filters should have a unity noise gain so an equivalent sensitivity gain vs a 1-us pulse can be derived.
+    for (i = 0; i < waveform->count; i++) {
         // Go through the waveform samples (filters)
-		RKSIMD_iymul(s, waveform->samples[i], waveform->depth);
-		float x = 0.0f;
+        RKSIMD_iymul(s, waveform->samples[i], waveform->depth);
+        float x = 0.0f;
         for (j = 0; j < waveform->filterCounts[i]; j++) {
-			// Go through it once to figure out the peak sample. Could be different than RKWaveformCalculateGain()
-			a = 0.0f;
+            // Go through it once to figure out the peak sample. Could be different than RKWaveformCalculateGain()
+            a = 0.0f;
             f = 0.0f;
-			g = 0.0f;
-			fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
-			for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
-				a = fc->i * fc->i + fc->q * fc->q;
+            g = 0.0f;
+            fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
+            for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
+                a = fc->i * fc->i + fc->q * fc->q;
                 f = MAX(f, a);
-				g += a;
-				fc++;
-			}
-			f = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(f);
+                g += a;
+                fc++;
+            }
+            f = (RKFloat)RKWaveformDigitalAmplitude / sqrtf(f);
             if (fabs(waveform->filterAnchors[i][j].fullScale / f - 1.0f) > 0.01f) {
                 RKLog("Warning. g = %.4f   f = %.4e ==? %.4e  (%.3f)\n", g, f, waveform->filterAnchors[i][j].fullScale, waveform->filterAnchors[i][j].fullScale / f);
             }
@@ -481,24 +481,27 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
             }
 
             fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
-			ic = waveform->iSamples[i] + waveform->filterAnchors[i][j].origin;
+            ic = waveform->iSamples[i] + waveform->filterAnchors[i][j].origin;
             for (k = 0; k < waveform->filterAnchors[i][j].length; k++) {
                 ic->i = (int16_t)(a * fc->i);
                 ic->q = (int16_t)(a * fc->q);
-				x = MAX(x, (float)(ic->i * ic->i + ic->q * ic->q));
+                x = MAX(x, (float)(ic->i * ic->i + ic->q * ic->q));
                 ic++;
                 fc++;
             }
-			x = sqrtf(x) / RKWaveformDigitalAmplitude;
+            x = sqrtf(x) / RKWaveformDigitalAmplitude;
             //RKLog(">x = %.4f\n", x);
-			if (x < 0.99f || x > 1.01f) {
-				RKLog("Warning. Waveform normalization does not seem to work.  x[%d] = %.4f\n", j, x);
-			}
+            if (x < 0.99f || x > 1.01f) {
+                RKLog("Warning. Waveform normalization does not seem to work.  x[%d] = %.4f\n", j, x);
+            }
         }
     }
 
-	free(w);
-	free(s);
+    // Adjust the fc number since the waveform has been down-converted
+    waveform->fc = 0.0f;
+
+    free(w);
+    free(s);
 }
 
 #pragma mark - Others
@@ -590,10 +593,10 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             x = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-				gain += (x->i * x->i);
-				if (waveform->type & RKWaveformTypeIsComplex) {
-					gain += (x->q * x->q);
-				}
+                gain += (x->i * x->i);
+                if (waveform->type & RKWaveformTypeIsComplex) {
+                    gain += (x->q * x->q);
+                }
             }
             gain = sqrtf(gain);
             x = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
@@ -602,7 +605,7 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
                 x->q /= gain;
                 x++;
             }
-			waveform->filterAnchors[k][j].filterGain = 1.0f;
+            waveform->filterAnchors[k][j].filterGain = 1.0f;
         }
     }
 }
