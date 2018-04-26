@@ -270,6 +270,10 @@ UserParams processInput(int argc, const char **argv) {
     int k;
 	char *c;
     
+    // Read in preference configuration
+    RKPreference *userPreferences = RKPreferenceInit();
+    //RKPreferenceObject *object;
+
     // A structure unit that encapsulates command line user parameters
     UserParams user;
 
@@ -286,6 +290,19 @@ UserParams processInput(int argc, const char **argv) {
     user.desc.wavelength = 0.03f;
 	user.desc.pulseToRayRatio = 1;
     strcpy(user.desc.dataPath, ROOT_PATH);
+
+    const int verb = 0;
+    
+    RKPreferenceUpdateKeyword(userPreferences, verb, "Name",          user.desc.name,       RKParameterTypeString, RKNameLength);
+    RKPreferenceUpdateKeyword(userPreferences, verb, "FilePrefix",    user.desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceUpdateKeyword(userPreferences, verb, "DataPath",      user.desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceUpdateKeyword(userPreferences, verb, "PedzyHost",     user.pedzyHost,       RKParameterTypeString, RKNameLength);
+    RKPreferenceUpdateKeyword(userPreferences, verb, "TweetaHost",    user.tweetaHost,      RKParameterTypeString, RKNameLength);
+
+    RKPreferenceUpdateKeyword(userPreferences, verb, "Latitude",                 &user.desc.latitude,              RKParameterTypeDouble, 1);
+    RKPreferenceUpdateKeyword(userPreferences, verb, "Longitude",                &user.desc.longitude,             RKParameterTypeDouble, 1);
+    RKPreferenceUpdateKeyword(userPreferences, verb, "Heading",                  &user.desc.heading,               RKParameterTypeDouble, 1);
+    //RKPreferenceUpdateKeyword(userPreferences, verb, "Noise", values, ParameterTypeFloat, 2);
 
     static struct option long_options[] = {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z

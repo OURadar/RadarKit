@@ -13,6 +13,15 @@
 
 #define RKPreferenceObjectCount   128
 
+enum RKParameterType {
+    RKParameterTypeInt,
+    RKParameterTypeUInt,
+    RKParameterTypeBool,
+    RKParameterTypeFloat,
+    RKParameterTypeDouble,
+    RKParameterTypeString
+};
+
 typedef struct rk_preference {
     RKPreferenceObject    objects[RKPreferenceObjectCount];
     uint32_t              count;
@@ -36,8 +45,9 @@ RKPreference *RKPreferenceInitWithFile(const char *filename);
 RKPreference *RKPreferenceInit(void);
 void RKPreferenceFree(RKPreference *);
 
-int RKPreferenceUpdate(RKPreference *preference);
-RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *preference, const char *keyword);
-int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword);
+int RKPreferenceUpdate(RKPreference *);
+RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *, const char *keyword);
+int RKPreferenceGetKeywordCount(RKPreference *, const char *keyword);
+void RKPreferenceUpdateKeyword(RKPreference *, const int verb, const char *keyword, void *value, const int type, const int count);
 
 #endif

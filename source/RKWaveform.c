@@ -640,7 +640,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w4 + 5);
     }
     // Now we show the summary
-    RKLog(">Waveform '%s' (%s)   depth = %d x %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
+    RKLog("Waveform '%s' (%s)   depth = %d x %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
           waveform->name,
           waveform->type & RKWaveformTypeIsComplex ? "Complex" : "Real",
           waveform->count,

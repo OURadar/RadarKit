@@ -92,36 +92,36 @@ enum RKJSONObjectType {
     RKJSONObjectTypeObject
 };
 
-void stripTrailingUnwanted(char *str);
-
-char *RKNow(void);
 char *RKGetColor(void);
 char *RKGetColorOfIndex(const int i);
 char *RKGetBackgroundColor(void);
 char *RKGetBackgroundColorOfIndex(const int i);
 
+char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);
-int RKIndentCopy(char *dst, char *src);
+void RKReplaceKeyValue(char *string, const char *key, int value);
 
 char *RKIntegerToCommaStyleString(const long);
 char *RKFloatToCommaStyleString(const double);
 
+char *RKNow(void);
 double RKTimevalDiff(const struct timeval minuend, const struct timeval subtrahend);
 double RKTimespecDiff(const struct timespec minuend, const struct timespec subtrahend);
 void RKUTCTime(struct timespec *);
+
 bool RKFilenameExists(const char *);
 void RKPreparePath(const char *filename);
-char *RKSignalString(const int);
-int RKStripTail(char *);
-float RKUMinDiff(const float minuend, const float subtrahend);
-
-char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
-void RKReplaceKeyValue(char *string, const char *key, int value);
-
 long RKCountFilesInPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
+
+char *RKSignalString(const int);
+
+int RKStripTail(char *);
+int RKIndentCopy(char *dst, char *src);
+
+float RKUMinDiff(const float minuend, const float subtrahend);
 
 long RKGetCPUIndex(void);
 
