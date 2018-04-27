@@ -3,7 +3,7 @@
 //  RadarKitTest
 //
 //  Created by Boon Leng Cheong
-//  Copyright (c) 2016 Boon Leng Cheong. All rights reserved.
+//  Copyright (c) 2016-2018 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>
@@ -26,10 +26,10 @@ typedef struct user_params {
     int            sleepInterval;
     bool           simulate;
     bool           writeFiles;
-    char           pedzyHost[256];
-    char           tweetaHost[256];
-    char           relayHost[256];
-    char           streams[256];
+    RKName         pedzyHost;
+    RKName         tweetaHost;
+    RKName         relayHost;
+    RKName         streams;
     RKRadarDesc    desc;
 } UserParams;
 
@@ -341,17 +341,20 @@ UserParams processInput(int argc, const char **argv) {
     // Read in preference configuration
     RKPreference *userPreferences = RKPreferenceInit();
     //RKPreferenceObject *object;
-    
+
     // Only show the inner working if verbosity level > 1
     const int verb = user.verbose > 1 ? 1 : 0;
-    RKPreferenceUpdateKeyword(userPreferences, verb, "Name",          user.desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "FilePrefix",    user.desc.filePrefix, RKParameterTypeString, RKNameLength);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "DataPath",      user.desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "PedzyHost",     user.pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "TweetaHost",    user.tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "Latitude",      &user.desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "Longitude",     &user.desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceUpdateKeyword(userPreferences, verb, "Heading",       &user.desc.heading,   RKParameterTypeDouble, 1);
+    if (verb) {
+        RKLog("Reading user preferences ...\n");
+    }
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",          user.desc.name,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",    user.desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",      user.desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",     user.pedzyHost,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",    user.tweetaHost,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",      &user.desc.latitude,  RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",     &user.desc.longitude, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",       &user.desc.heading,   RKParameterTypeDouble, 1);
     //RKPreferenceUpdateKeyword(userPreferences, verb, "Noise", values, ParameterTypeFloat, 2);
     
     // Second pass: now we go through all of them.
@@ -701,7 +704,7 @@ int main(int argc, const char **argv) {
     // Initialize a radar object
     myRadar = RKInitWithDesc(user.desc);
     if (myRadar == NULL) {
-        RKLog("Error. Could not allocate radar.\n");
+        RKLog("Error. Could not allocate a radar.\n");
         exit(EXIT_FAILURE);
     }
 

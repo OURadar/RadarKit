@@ -169,7 +169,7 @@ int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
     return k;
 }
 
-void RKPreferenceUpdateKeyword(RKPreference *preference, const int verb, const char *keyword, void *value, const int type, const int count) {
+void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
     RKPreferenceObject *object = RKPreferenceFindKeyword(preference, keyword);
     if (object != NULL) {
         RKName string;
@@ -177,29 +177,29 @@ void RKPreferenceUpdateKeyword(RKPreference *preference, const int verb, const c
         for (int i = 0; i < count; i++) {
             switch (type) {
                 case RKParameterTypeInt:
-                    ((int *)value)[i] =  (int)MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %u", ((int *)value)[i]);
+                    ((int *)target)[i] =  (int)MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %u", ((int *)target)[i]);
                     break;
                 case RKParameterTypeUInt:
-                    ((unsigned int *)value)[i] =  (unsigned int)MIN(MAX(object->doubleValues[i], 0.0), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %u", ((unsigned int *)value)[i]);
+                    ((unsigned int *)target)[i] =  (unsigned int)MIN(MAX(object->doubleValues[i], 0.0), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %u", ((unsigned int *)target)[i]);
                     break;
                 case RKParameterTypeBool:
-                    ((bool *)value)[i] =  object->boolValues[i];
-                    k += snprintf(string + k, RKNameLength - k, " %s", ((bool *)value)[i] ? "True" : "False");
+                    ((bool *)target)[i] =  object->boolValues[i];
+                    k += snprintf(string + k, RKNameLength - k, " %s", ((bool *)target)[i] ? "True" : "False");
                     break;
                 case RKParameterTypeFloat:
-                    ((float *)value)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %.4f", ((float *)value)[i]);
+                    ((float *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %.4f", ((float *)target)[i]);
                     break;
                 case RKParameterTypeDouble:
-                    ((double *)value)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %.7f", ((double *)value)[i]);
+                    ((double *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %.7f", ((double *)target)[i]);
                     break;
                 case RKParameterTypeString:
                     // For string type, count is used as the maximum length, i = count ensure there is only 1 iteration
-                    strncpy((char *)value, object->valueString, count);
-                    k += snprintf(string + k, RKNameLength - k, " %s", (char *)value);
+                    strncpy((char *)target, object->valueString, count);
+                    k += snprintf(string + k, RKNameLength - k, " %s", (char *)target);
                     i = count;
                     break;
                 default:

@@ -48,6 +48,6 @@ void RKPreferenceFree(RKPreference *);
 int RKPreferenceUpdate(RKPreference *);
 RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *, const char *keyword);
 int RKPreferenceGetKeywordCount(RKPreference *, const char *keyword);
-void RKPreferenceUpdateKeyword(RKPreference *, const int verb, const char *keyword, void *value, const int type, const int count);
+void RKPreferenceGetValueOfKeyword(RKPreference *, const int verb, const char *keyword, void *value, const int type, const int count);
 
 #endif

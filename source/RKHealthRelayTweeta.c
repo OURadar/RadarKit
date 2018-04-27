@@ -73,7 +73,7 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     // Tweeta uses a TCP socket server at port 9556. The payload is always a line string terminated by \r\n
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.name, "%s<TweetaRelay>%s",
+    sprintf(desc.name, "%s<TweetaAutoRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
@@ -86,7 +86,6 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-    desc.blocking = true;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.verbose =

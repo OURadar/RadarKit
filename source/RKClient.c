@@ -161,7 +161,9 @@ void *theClient(void *in) {
             } while (r == 0 && k++ < 10 * C->timeoutSeconds && C->state < RKClientStateDisconnecting);
             if (r > 0) {
 				if (FD_ISSET(C->sd, &C->efd)) {
-					RKLog("%s Error. r = %d   errno = %d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                    if (errno != EINPROGRESS) {
+                        RKLog("%s Error. r = %d   errno = %d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                    }
 					close(C->sd);
 					continue;
 				} else if (FD_ISSET(C->sd, &C->wfd)) {
@@ -400,42 +402,42 @@ void *theClient(void *in) {
                 timeoutCount = 0;
                 C->recv(C);
                 cbuf[0] = '\0';
+                
+                // Send in a beacon signal
+                gettimeofday(&timeout, NULL);
+                timeout.tv_sec -= 2;
+                if (timercmp(&timeout, &previousBeaconTime, >=)) {
+                    FD_ZERO(&C->wfd);
+                    FD_ZERO(&C->efd);
+                    FD_SET(C->sd, &C->wfd);
+                    FD_SET(C->sd, &C->efd);
+                    timeout.tv_sec = 0;
+                    timeout.tv_usec = 1000;
+                    r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+                    if (r > 0) {
+                        if (FD_ISSET(C->sd, &C->efd)) {
+                            // Exceptions
+                            RKLog("%s encountered an exception error.\n", C->name);
+                            break;
+                        } else if (FD_ISSET(C->sd, &C->wfd)) {
+                            gettimeofday(&previousBeaconTime, NULL);
+                            //RKLog("%s beacon\n", C->name);
+                            pthread_mutex_lock(&C->lock);
+                            RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
+                            pthread_mutex_unlock(&C->lock);
+                        }
+                    } else {
+                        RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                        break;
+                    }
+                } // if (timercmp(&timeout, &previousBeaconTime, >=)) ...
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
             } else {
                 RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
-            }
-
-            // Send in a beacon signal
-            gettimeofday(&timeout, NULL);
-            timeout.tv_sec -= 2;
-            if (timercmp(&timeout, &previousBeaconTime, >=)) {
-                FD_ZERO(&C->wfd);
-                FD_ZERO(&C->efd);
-                FD_SET(C->sd, &C->wfd);
-                FD_SET(C->sd, &C->efd);
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 1000;
-                r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
-                if (r > 0) {
-                    if (FD_ISSET(C->sd, &C->efd)) {
-                        // Exceptions
-                        RKLog("%s encountered an exception error.\n", C->name);
-                        break;
-                    } else if (FD_ISSET(C->sd, &C->wfd)) {
-                        gettimeofday(&previousBeaconTime, NULL);
-                        //RKLog("%s beacon\n", C->name);
-                        pthread_mutex_lock(&C->lock);
-                        RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
-                        pthread_mutex_unlock(&C->lock);
-                    }
-                } else {
-                    RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                    break;
-                }
-            }
+            } // if (r == 0) ...
         }
 
         // Wait a while before trying to reconnect
