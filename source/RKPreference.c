@@ -168,3 +168,47 @@ int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
     }
     return k;
 }
+
+void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
+    RKPreferenceObject *object = RKPreferenceFindKeyword(preference, keyword);
+    if (object != NULL) {
+        RKName string;
+        int k = snprintf(string, RKNameLength, "Preference.%s", keyword);
+        for (int i = 0; i < count; i++) {
+            switch (type) {
+                case RKParameterTypeInt:
+                    ((int *)target)[i] =  (int)MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %u", ((int *)target)[i]);
+                    break;
+                case RKParameterTypeUInt:
+                    ((unsigned int *)target)[i] =  (unsigned int)MIN(MAX(object->doubleValues[i], 0.0), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %u", ((unsigned int *)target)[i]);
+                    break;
+                case RKParameterTypeBool:
+                    ((bool *)target)[i] =  object->boolValues[i];
+                    k += snprintf(string + k, RKNameLength - k, " %s", ((bool *)target)[i] ? "True" : "False");
+                    break;
+                case RKParameterTypeFloat:
+                    ((float *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %.4f", ((float *)target)[i]);
+                    break;
+                case RKParameterTypeDouble:
+                    ((double *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
+                    k += snprintf(string + k, RKNameLength - k, " %.7f", ((double *)target)[i]);
+                    break;
+                case RKParameterTypeString:
+                    // For string type, count is used as the maximum length, i = count ensure there is only 1 iteration
+                    strncpy((char *)target, object->valueString, count);
+                    k += snprintf(string + k, RKNameLength - k, " %s", (char *)target);
+                    i = count;
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (verb) {
+            RKLog(">%s\n", string);
+        }
+    }
+}
+

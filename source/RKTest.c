@@ -764,10 +764,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         usleep(10000);
     }
 
-    RKTestTransceiverExec(transceiver, "w q02", NULL);
+    //RKTestTransceiverExec(transceiver, "w q02", NULL);
     //RKTestTransceiverExec(transceiver, "w q10", NULL);
     //RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
+	RKTestTransceiverExec(transceiver, "w barker03", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -903,7 +904,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKWaveformSummary(waveform);
                     k = round(waveform->fs / transceiver->fs);
                     RKLog("Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", 1.0e-6 * transceiver->fs, k);
-                    RKWaveformDownConvert(waveform, 2.0 * M_PI * waveform->fc / waveform->fs);
+                    RKWaveformDownConvert(waveform);
                     RKWaveformDecimate(waveform, k);
                     RKWaveformSummary(waveform);
                     pulsewidthSampleCount = waveform->depth;
@@ -1571,7 +1572,7 @@ void RKTestCacheWrite(void) {
         exit(EXIT_FAILURE);
     }
 
-#ifdef FUNDAMENTAL_CACHE_WRITE_TEST
+    #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
     RKDataRecorderSetCacheSize(fileEngine, 4);
     RKDataRecorderCacheWrite(fileEngine, bytes, 4);
@@ -1579,7 +1580,7 @@ void RKTestCacheWrite(void) {
     RKDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
     RKDataRecorderCacheFlush(fileEngine);
 
-#endif
+    #endif
     
     RKBuffer pulseBuffer;
     RKPulseBufferAlloc(&pulseBuffer, 8192, 100);
@@ -1887,20 +1888,52 @@ void RKTestWaveformTFM(void) {
 void RKTestHilbertTransform(void) {
     SHOW_FUNCTION_NAME
     int i;
-    RKFloat *x = (RKFloat *)malloc(8 * sizeof(RKFloat));
-    RKComplex *y = (RKComplex *)malloc(8 * sizeof(RKComplex));
-    for (i = 0; i < 8; i++) {
-        x[i] = cosf(0.1 * (float)i);
+    const int n = 10;
+    RKFloat a = 0.0f;
+    RKFloat *x = (RKFloat *)malloc(n * sizeof(RKFloat));
+    RKComplex *y = (RKComplex *)malloc(n * sizeof(RKComplex));
+
+	// Simple example of Xr = [1 2 3 4] like hilbert() in MATLAB
+	memset(x, 0, n * sizeof(RKFloat));
+	x[0] = 1.0f;
+	x[1] = 2.0f;
+	x[2] = 3.0f;
+	x[3] = 4.0f;
+	RKHilbertTransform(x, y, 4);
+
+	printf("\n");
+	printf("Example 1:\n");
+	printf("----------\n");
+	printf("\nX =\n\n");
+	for (i = 0; i < 4; i++) {
+		printf("    [ %7.4f ]\n", x[i]);
+	}
+	printf("\nH =\n\n");
+	for (i = 0; i < 4; i++) {
+		printf("    [ %7.4f %s %7.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
+	}
+
+	// Another example to illustrate the noise gain is more or less preserved.
+	for (i = 0; i < n; i++) {
+        x[i] = cosf(0.1f * 2.0f * M_PI * (float)i + 0.2);
     }
-    RKHilbertTransform(x, y, 8);
-    printf("\nX =\n\n");
-    for (i = 0; i < 8; i++) {
-        printf("    [ %.4f ]\n", x[i]);
+    RKHilbertTransform(x, y, n);
+    for (i = 0; i < n; i++) {
+        a += y[i].i * y[i].i + y[i].q * y[i].q;
+    }
+
+	printf("\n");
+	printf("Example 2:\n");
+	printf("----------\n");
+	printf("\nX =\n\n");
+    for (i = 0; i < n; i++) {
+        printf("    [ %7.4f ]\n", x[i]);
     }
     printf("\nH =\n\n");
-    for (i = 0; i < 8; i++) {
-        printf("    [ %.4f %s %.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
+    for (i = 0; i < n; i++) {
+        printf("    [ %7.4f %s %7.4fi ]\n", y[i].i, y[i].q < 0 ? "-" : "+", y[i].q < 0.0 ? -y[i].q : y[i].q);
     }
+    printf("\na = %.4f\n\n", a);
     free(x);
     free(y);
 }
@@ -2097,4 +2130,47 @@ void RKTestGetCountry(void) {
         country = RKCountryFromPosition(latitude, longitude);
         printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
     }
+}
+
+void RKTestWaveformProperties(void) {
+	RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+	waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+	RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+    
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
 }

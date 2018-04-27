@@ -152,7 +152,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     // Pedzy uses a TCP socket server at port 9000.
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.name, "%s<PedzyRelay>%s",
+    sprintf(desc.name, "%s<PedzySmartRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
@@ -165,7 +165,6 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-    desc.blocking = true;
     desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.verbose =

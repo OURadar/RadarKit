@@ -263,7 +263,8 @@ void *RKOperatorRoutine(void *in) {
                     }
                     break;
                 }
-                stripTrailingUnwanted(str);
+                //stripTrailingUnwanted(str);
+                RKStripTail(str);
                 O->commandIndexWrite = O->commandIndexWrite == RKServerBufferDepth - 1 ? 0 : O->commandIndexWrite + 1;
                 memset(O->commands[O->commandIndexWrite], 0, RKMaximumStringLength);
             }

@@ -130,5 +130,6 @@ void RKTestReadSweep(const char *);
 void RKTestTemperatureToStatus(void);
 
 void RKTestGetCountry(void);
+void RKTestWaveformProperties(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

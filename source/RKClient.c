@@ -96,7 +96,7 @@ void *theClient(void *in) {
                 RKLog("%s Error. Unable to use non-blocking option.\n", C->name);
             }
         }
-		r = 1;
+        r = 1;
 		#if defined(__APPLE__)
 		setsockopt(C->sd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r));
 		#endif
@@ -160,33 +160,35 @@ void *theClient(void *in) {
                 r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
             } while (r == 0 && k++ < 10 * C->timeoutSeconds && C->state < RKClientStateDisconnecting);
             if (r > 0) {
-				if (FD_ISSET(C->sd, &C->efd)) {
-					RKLog("%s Error. r = %d   errno = %d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-					close(C->sd);
-					continue;
-				} else if (FD_ISSET(C->sd, &C->wfd)) {
-					// Ready to write to socket
-					if (C->init(C)) {
-						if (C->verbose) {
-							RKLog("%s Unable to connect %s:%d.\n", C->name, C->hostIP, C->port);
-						}
-						close(C->sd);
-						// Wait a while before trying to reconnect
-						k = 52;
-						do {
-							if (k % 10 == 0 && C->verbose > 1) {
-								RKLog("%s Reconnect in %d sec%s ...\n", C->name, k / 10, k / 10 > 1 ? "s" : "");
-							}
-							usleep(100000);
-						} while (k-- > 3 && C->state < RKClientStateDisconnecting);
-						continue;
-					} else {
-						pthread_mutex_lock(&C->lock);
-						if (C->state == RKClientStateConnecting) {
-							C->state = RKClientStateConnected;
-						}
-						pthread_mutex_unlock(&C->lock);
-					}
+                if (FD_ISSET(C->sd, &C->efd)) {
+                    if (errno != EINPROGRESS) {
+                        RKLog("%s Error. r = %d   errno = %d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                    }
+                    close(C->sd);
+                    continue;
+                } else if (FD_ISSET(C->sd, &C->wfd)) {
+                    // Ready to write to socket
+                    if (C->init(C)) {
+                        if (C->verbose) {
+                            RKLog("%s Unable to connect %s:%d.\n", C->name, C->hostIP, C->port);
+                        }
+                        close(C->sd);
+                        // Wait a while before trying to reconnect
+                        k = 52;
+                        do {
+                            if (k % 10 == 0 && C->verbose > 1) {
+                                RKLog("%s Reconnect in %d sec%s ...\n", C->name, k / 10, k / 10 > 1 ? "s" : "");
+                            }
+                            usleep(100000);
+                        } while (k-- > 3 && C->state < RKClientStateDisconnecting);
+                        continue;
+                    } else {
+                        pthread_mutex_lock(&C->lock);
+                        if (C->state == RKClientStateConnecting) {
+                            C->state = RKClientStateConnected;
+                        }
+                        pthread_mutex_unlock(&C->lock);
+                    }
                 }
             } else {
                 if (C->verbose > 1) {
@@ -196,7 +198,7 @@ void *theClient(void *in) {
                 continue;
             }
         }
-        
+
         // Actively receive
         timeoutCount = 0;
         while (C->state < RKClientStateReconnecting) {
@@ -210,7 +212,7 @@ void *theClient(void *in) {
             r = select(C->sd + 1, &C->rfd, NULL, &C->efd, &timeout);
             if (C->verbose > 3 || FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s select() returned r = %d   FD_ISSET(rfd) = %d   FD_ISSET(efd) = %d   errno = %d.\n",
-                        C->name, r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
+                      C->name, r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
             }
             if (r == 0) {
                 if (timeoutCount++ / 10 > C->timeoutSeconds) {
@@ -246,10 +248,10 @@ void *theClient(void *in) {
                                     C->state = RKClientStateReconnecting;
                                 }
                                 pthread_mutex_unlock(&C->lock);
-								break;
-							} else {
-								usleep(10000);
-							}
+                                break;
+                            } else {
+                                usleep(10000);
+                            }
                             if (C->verbose > 1) {
                                 RKLog("... errno = %d ...\n", errno);
                             }
@@ -270,17 +272,17 @@ void *theClient(void *in) {
                         readCount = 0;
                         while (readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, delimiter + k, sizeof(RKNetDelimiter) - k)) > 0) {
-								if (r > 0) {
-									k += r;
-									if (k == sizeof(RKNetDelimiter)) {
-										break;
-									} else if (k > sizeof(RKNetDelimiter)) {
-										RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
-										break;
-									}
-								} else {
-									usleep(10000);
-								}
+                                if (r > 0) {
+                                    k += r;
+                                    if (k == sizeof(RKNetDelimiter)) {
+                                        break;
+                                    } else if (k > sizeof(RKNetDelimiter)) {
+                                        RKLog("%s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", C->name, sizeof(RKNetDelimiter));
+                                        break;
+                                    }
+                                } else {
+                                    usleep(10000);
+                                }
                             } else if (errno != EAGAIN) {
                                 if (C->verbose > 1) {
                                     RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r = %d  k = %d  errno = %d (%s)\n",
@@ -293,12 +295,12 @@ void *theClient(void *in) {
                                 }
                                 pthread_mutex_unlock(&C->lock);
                                 break;
-							} else {
-								usleep(10000);
+                            } else {
+                                usleep(10000);
                             }
                         }
                         if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
-							RKLog("%s Incomplete read() with errors.   errno = %d (%s)\n", C->name, errno, RKErrnoString(errno));
+                            RKLog("%s Incomplete read() with errors.   errno = %d (%s)\n", C->name, errno, RKErrnoString(errno));
                             break;
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
@@ -310,7 +312,7 @@ void *theClient(void *in) {
                             break;
                         } else if (C->netDelimiter.size > RKMaxPacketSize) {
                             RKLog("%s Error. Payload size = %s (type %d) is more than what I can handle.\n",
-								  C->name, RKIntegerToCommaStyleString(C->netDelimiter.size), C->netDelimiter.type);
+                                  C->name, RKIntegerToCommaStyleString(C->netDelimiter.size), C->netDelimiter.type);
                             readOkay = false;
                             break;
                         }
@@ -319,21 +321,21 @@ void *theClient(void *in) {
                         readCount = 0;
                         while (readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, buf + k, C->netDelimiter.size - k)) > 0) {
-								#ifdef DEBUG_RKCLIENT
-								RKLog("%s read() -> %d / %d / %d    readCount = %d / %d\n",
-									  C->name, r, C->netDelimiter.size - k,  C->netDelimiter.size, readCount, C->timeoutSeconds * 100);
+                                #ifdef DEBUG_RKCLIENT
+                                RKLog("%s read() -> %d / %d / %d    readCount = %d / %d\n",
+                                      C->name, r, C->netDelimiter.size - k,  C->netDelimiter.size, readCount, C->timeoutSeconds * 100);
                                 #endif
-								if (r > 0) {
-									k += r;
-									if (k == C->netDelimiter.size) {
-										break;
-									} else if (k > C->netDelimiter.size) {
-										RKLog("%s Error. Should not read larger than specified size = %zu\n", C->name, C->netDelimiter.size);
-										break;
-									}
-								} else {
-									usleep(10000);
-								}
+                                if (r > 0) {
+                                    k += r;
+                                    if (k == C->netDelimiter.size) {
+                                        break;
+                                    } else if (k > C->netDelimiter.size) {
+                                        RKLog("%s Error. Should not read larger than specified size = %zu\n", C->name, C->netDelimiter.size);
+                                        break;
+                                    }
+                                } else {
+                                    usleep(10000);
+                                }
                             } else if (errno != EAGAIN) {
                                 RKLog("%s Error. PCMessageFormatFixedHeaderVariableBlock:2  size=%d   r=%d  k=%d  errno=%d (%s)\n",
                                       C->name, C->netDelimiter.size, r, k, errno, RKErrnoString(errno));
@@ -344,17 +346,17 @@ void *theClient(void *in) {
                                 }
                                 pthread_mutex_unlock(&C->lock);
                                 break;
-							} else {
-								usleep(10000);
-							}
+                            } else {
+                                usleep(10000);
+                            }
                         }
-						#ifdef DEBUG_RKCLIENT
-						RKLog("%s k = %d   r = %d   readCount = %d\n", C->name, k, r, readCount);
-						for (int j = 0; j < 20; j++) {
-							printf(" %02x/%c", (int)*(cbuf + j), *(cbuf + j));
-						}
-						printf("\n");
-						#endif
+                        #ifdef DEBUG_RKCLIENT
+                        RKLog("%s k = %d   r = %d   readCount = %d\n", C->name, k, r, readCount);
+                        for (int j = 0; j < 20; j++) {
+                            printf(" %02x/%c", (int)*(cbuf + j), *(cbuf + j));
+                        }
+                        printf("\n");
+                        #endif
                         // Add a NULL character to the end of payload
                         cbuf[k] = '\0';
                         if (readCount >= C->timeoutSeconds * 1000) {
@@ -365,7 +367,7 @@ void *theClient(void *in) {
 
                     case RKNetworkMessageFormatNewLine:
                     default:
-
+                        
                         if (fid == NULL) {
                             fid = fdopen(C->sd, "r");
                             if (fid < 0) {
@@ -377,7 +379,7 @@ void *theClient(void *in) {
                             readOkay = true;
                         }
                         break;
-                }
+                } // switch (C->format) ...
 
                 if (readOkay == false) {
                     RKLog("%s Server disconnected.\n", C->name);
@@ -400,42 +402,42 @@ void *theClient(void *in) {
                 timeoutCount = 0;
                 C->recv(C);
                 cbuf[0] = '\0';
+
+                // Send in a beacon signal
+                gettimeofday(&timeout, NULL);
+                timeout.tv_sec -= 2;
+                if (timercmp(&timeout, &previousBeaconTime, >=)) {
+                    FD_ZERO(&C->wfd);
+                    FD_ZERO(&C->efd);
+                    FD_SET(C->sd, &C->wfd);
+                    FD_SET(C->sd, &C->efd);
+                    timeout.tv_sec = 0;
+                    timeout.tv_usec = 1000;
+                    r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+                    if (r > 0) {
+                        if (FD_ISSET(C->sd, &C->efd)) {
+                            // Exceptions
+                            RKLog("%s encountered an exception error.\n", C->name);
+                            break;
+                        } else if (FD_ISSET(C->sd, &C->wfd)) {
+                            gettimeofday(&previousBeaconTime, NULL);
+                            //RKLog("%s beacon\n", C->name);
+                            pthread_mutex_lock(&C->lock);
+                            RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
+                            pthread_mutex_unlock(&C->lock);
+                        }
+                    } else {
+                        RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                        break;
+                    }
+                } // if (timercmp(&timeout, &previousBeaconTime, >=)) ...
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
             } else {
                 RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
-            }
-
-            // Send in a beacon signal
-            gettimeofday(&timeout, NULL);
-            timeout.tv_sec -= 2;
-            if (timercmp(&timeout, &previousBeaconTime, >=)) {
-                FD_ZERO(&C->wfd);
-                FD_ZERO(&C->efd);
-                FD_SET(C->sd, &C->wfd);
-                FD_SET(C->sd, &C->efd);
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 1000;
-                r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
-                if (r > 0) {
-                    if (FD_ISSET(C->sd, &C->efd)) {
-                        // Exceptions
-                        RKLog("%s encountered an exception error.\n", C->name);
-                        break;
-                    } else if (FD_ISSET(C->sd, &C->wfd)) {
-                        gettimeofday(&previousBeaconTime, NULL);
-                        //RKLog("%s beacon\n", C->name);
-                        pthread_mutex_lock(&C->lock);
-                        RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
-                        pthread_mutex_unlock(&C->lock);
-                    }
-                } else {
-                    RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                    break;
-                }
-            }
+            } // if (r == 0) ...
         }
 
         // Wait a while before trying to reconnect

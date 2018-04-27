@@ -125,6 +125,7 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
     return stride;
 }
 
+// Technically, this is a function that generates X = Xi + j Xq from Xi
 void RKHilbertTransform(RKFloat *w, RKComplex *b, const int n) {
     int i;
     const int nfft = (int)powf(2.0f, ceilf(log2f((float)n)));
@@ -171,7 +172,7 @@ void RKHilbertTransform(RKFloat *w, RKComplex *b, const int n) {
     out[nfft >> 1][1] *= s;
 
     s = 2.0f / nfft;
-    for (i=1; i<nfft>>1; i++) {
+    for (i = 1; i < nfft >> 1; i++) {
         out[i][0] *= s;
         out[i][1] *= s;
     }

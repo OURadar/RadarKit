@@ -17,11 +17,12 @@
 
 typedef uint32_t RKWaveformType;
 enum RKWaveformType {
-    RKWaveformTypeNone,
-    RKWaveformTypeSingle,
-    RKWaveformTypeFrequencyHopping,
-	RKWaveformTypeLinearFrequencyModulation,
-    RKWaveformTypeTimeFrequencyMultiplexing
+    RKWaveformTypeNone                         = 0,
+	RKWaveformTypeIsComplex                    = 1,
+    RKWaveformTypeSingleTone                   = (1 << 1),
+    RKWaveformTypeFrequencyHopping             = (1 << 2),
+	RKWaveformTypeLinearFrequencyModulation    = (1 << 3),
+    RKWaveformTypeTimeFrequencyMultiplexing    = (1 << 4)
 };
 
 // ----
@@ -101,16 +102,16 @@ void RKWaveformFree(RKWaveform *);
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
 
-void RKWaveformOnes(RKWaveform *waveform);
-void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth);
-void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double pulsewidth, const double bandwidth);
+void RKWaveformOnes(RKWaveform *);
+void RKWaveformHops(RKWaveform *, const double fs, const double fc, const double bandwidth);
+void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double pulsewidth, const double bandwidth);
 
-void RKWaveformConjuate(RKWaveform *waveform);
-void RKWaveformDecimate(RKWaveform *waveform, const int decimate);
-void RKWaveformDownConvert(RKWaveform *waveform, const double omega);
+void RKWaveformDecimate(RKWaveform *, const int);
+void RKWaveformConjuate(RKWaveform *);
+void RKWaveformDownConvert(RKWaveform *);
 
-void RKWaveformWrite(RKWaveform *waveform, const char *filename);
-void RKWaveformNormalizeNoiseGain(RKWaveform *waveform);
-void RKWaveformSummary(RKWaveform *waveform);
+void RKWaveformWrite(RKWaveform *, const char *);
+void RKWaveformNormalizeNoiseGain(RKWaveform *);
+void RKWaveformSummary(RKWaveform *);
 
 #endif
