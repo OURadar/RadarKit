@@ -360,6 +360,14 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     return data;
 }
 
+int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
+    for (uint32_t k = 0; k < slots; k++) {
+        RKPulse *pulse = RKGetPulse(buffer, k);
+        memset(pulse->data, 0, 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat)));
+    }
+    return RKResultNoError;
+}
+
 #pragma mark - Ray
 
 //
@@ -423,6 +431,14 @@ float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
     d += RKMaxProductCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
+}
+
+int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
+    for (uint32_t k = 0; k < slots; k++) {
+        RKRay *ray = RKGetRay(buffer, k);
+        memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+    }
+    return RKResultNoError;
 }
 
 #pragma mark - Scratch Space

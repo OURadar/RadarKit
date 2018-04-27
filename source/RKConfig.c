@@ -157,7 +157,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
         }
         if (strlen(stringBuffer)) {
 			RKLog(">%sConfig-0x%08x%s %s\n",
-				  rkGlobalParameters.showColor ? "\033[38;5;15;48;5;28m" : "",
+				  rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
 				  configId,
 				  rkGlobalParameters.showColor ? RKNoColor : "",
 				  stringBuffer);

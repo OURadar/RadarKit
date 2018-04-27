@@ -118,6 +118,12 @@ int socketCommandHandler(RKOperator *O) {
                 case 'd':
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
+                        case 'c':
+                            RKClearPulseBuffer(user->radar->pulses, user->radar->desc.pulseBufferDepth);
+                            RKClearRayBuffer(user->radar->rays, user->radar->desc.rayBufferDepth);
+                            sprintf(string, "ACK. Buffers cleared." RKEOL);
+                            RKOperatorSendCommandResponse(O, string);
+                            break;
                         case 'f':
                             // 'df' - DSP filter
                             break;
