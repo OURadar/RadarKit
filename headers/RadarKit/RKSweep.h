@@ -37,6 +37,7 @@ struct rk_sweep_engine {
     bool                             handleFilesScriptProducesZip;
     char                             handleFilesScript[RKMaximumPathLength];
     RKFileManager                    *fileManager;
+    uint32_t                         userProductTimeoutSeconds;
 
     // Program set variables
     pthread_t                        tidRayGatherer;
@@ -51,6 +52,8 @@ struct rk_sweep_engine {
     RKName                           productUnit;
     RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
+    RKUserProductId                  userProductIdCount;
+    RKUserProduct                    userProducts[RKMaximumUserProductCount];
 
     // Status / health
     uint32_t                         processedRayIndex;
@@ -71,10 +74,15 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
+void RKSweepEngineSetUserProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const bool expectTgz);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
+
+RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
+int RKSweeEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
+int RKSweepEngineReportProduct(RKSweepEngine *, RKUserProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *);
 RKSweep *RKSweepRead(const char *);

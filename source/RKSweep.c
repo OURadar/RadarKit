@@ -32,37 +32,70 @@ static int put_global_text_att(const int ncid, const char *att, const char *text
 static void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
-    int i, j, p;
+    int i, j, p, s;
 
-	RKSweep *sweep = RKSweepCollect(engine);
-	if (engine->verbose) {
-		RKRay *S = sweep->rays[0];
-		RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-		RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
-			  engine->name,
-			  S->header.configIndex,
-			  sweep->header.config.sweepElevation,
-			  S->header.startElevation , E->header.endElevation,
-			  S->header.startAzimuth   , E->header.endAzimuth,
-			  S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-			  RKIntegerToCommaStyleString(sweep->header.gateCount),
-			  sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
-			  sweep->header.rayCount,
-			  RKNoColor,
-			  1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
-	}
+    RKSweep *sweep = RKSweepCollect(engine);
+    if (engine->verbose) {
+        RKRay *S = sweep->rays[0];
+        RKRay *E = sweep->rays[sweep->header.rayCount - 1];
+        RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
+              engine->name,
+              S->header.configIndex,
+              sweep->header.config.sweepElevation,
+              S->header.startElevation , E->header.endElevation,
+              S->header.startAzimuth   , E->header.endAzimuth,
+              S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+              RKIntegerToCommaStyleString(sweep->header.gateCount),
+              sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
+              sweep->header.rayCount,
+              RKNoColor,
+              1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+    }
 
+    // Each registered product will report a product that has the same sweep id
+    //
+    bool allReported = true;
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (!(engine->userProducts[i].flag & RKUserProductStatusActive)) {
+            continue;
+        }
+        engine->userProducts[i].flag |= RKUserProductStatusSleep0;
+        s = 0;
+        while (engine->userProducts[i].i != sweep->header.config.i &&
+               engine->userProductTimeoutSeconds * 100 > s &&
+               engine->state & RKEngineStateActive) {
+            usleep(10000);
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
+            };
+        }
+        engine->userProducts[i].flag ^= RKUserProductStatusSleep0;
+        if (engine->userProducts[i].i != sweep->header.config.i) {
+            engine->userProducts[i].i = sweep->header.config.i;
+            allReported = false;
+            break;
+        }
+    }
+    if (!(engine->state & RKEngineStateActive)) {
+        return NULL;
+    }
+    
+    if (engine->verbose) {
+        RKLog("%s allReported = %d    i = %llu   s = %d %d %d ...\n", engine->name, allReported, engine->userProducts[0].i,
+              engine->userProducts[0].flag, engine->userProducts[1].flag, engine->userProducts[2].flag);
+    }
+    
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
     
     char *filelist = engine->filelist;
     char *filename = engine->filename;
 
-	char *symbol = engine->productSymbol;
-	char *productName = engine->productName;
+    char *symbol = engine->productSymbol;
+    char *productName = engine->productName;
     char *productUnit = engine->productUnit;
     char *productColormap = engine->productColormap;
-	RKProductIndex productIndex;
+    RKProductIndex productIndex;
 
     int ncid;
     int dimensionIds[2];
@@ -95,16 +128,16 @@ static void *sweepWriter(void *in) {
     uint32_t productList = sweep->header.productList;
     int productCount = __builtin_popcount(productList & RKProductListProductZVWDPRKS);
 
-	for (p = 0; p < productCount; p++) {
-		// Get the symbol, name, unit, colormap, etc. from the product list
-		RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &productList);
+    for (p = 0; p < productCount; p++) {
+        // Get the symbol, name, unit, colormap, etc. from the product list
+        RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &productList);
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
         i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
         i += strftime(filename + i, 10, "%Y%m%d", gmtime(&startTime));
         i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
         i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-		if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
             i += sprintf(filename + i, "-E%.1f-%s", sweep->header.config.sweepElevation, symbol);
         } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
             i += sprintf(filename + i, "-A%.1f-%s", sweep->header.config.sweepAzimuth, symbol);
@@ -235,7 +268,7 @@ static void *sweepWriter(void *in) {
         tmpf = (float)sweep->header.config.pw[0] * 0.001f;
         nc_put_att_float(ncid, NC_GLOBAL, "PulseWidth-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "MaximumRange-unit", "KiloMeters");
-		tmpf = 1.0e-3f * sweep->rays[0]->header.gateSizeMeters * sweep->header.gateCount;
+        tmpf = 1.0e-3f * sweep->rays[0]->header.gateSizeMeters * sweep->header.gateCount;
         nc_put_att_float(ncid, NC_GLOBAL, "MaximumRange-value", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "ProcessParameters", "Noise Calib Censor");
         tmpf = 20.0f * log10f(sweep->header.config.noise[0]);
@@ -357,9 +390,9 @@ static void *rayGatherer(void *in) {
     
     int j, n, s;
     
-	// Start index
-	uint32_t is = 0;
-	pthread_t tidSweepWriter = NULL;
+    // Start index
+    uint32_t is = 0;
+    pthread_t tidSweepWriter = NULL;
 
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
@@ -379,17 +412,17 @@ static void *rayGatherer(void *in) {
         engine->memoryUsage += RKMaxRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
     }
     
-	// Update the engine state
-	engine->state |= RKEngineStateActive;
-	engine->state ^= RKEngineStateActivating;
+    // Update the engine state
+    engine->state |= RKEngineStateActive;
+    engine->state ^= RKEngineStateActivating;
 
-	if (engine->verbose) {
+    if (engine->verbose) {
         RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
-		RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
+        RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
     }
 
-	// Increase the tic once to indicate the engine is ready
-	engine->tic = 1;
+    // Increase the tic once to indicate the engine is ready
+    engine->tic = 1;
 
     j = 0;   // ray index
     while (engine->state & RKEngineStateActive) {
@@ -437,13 +470,13 @@ static void *rayGatherer(void *in) {
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
-			engine->rayAnchors[engine->rayAnchorsIndex].count = n;
+            engine->rayAnchors[engine->rayAnchorsIndex].count = n;
             
             if (tidSweepWriter) {
                 pthread_join(tidSweepWriter, NULL);
             }
-			engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
-			rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
+            engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+            rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
@@ -453,7 +486,7 @@ static void *rayGatherer(void *in) {
             is = j;
         }
 
-		engine->tic++;
+        engine->tic++;
 
         // Update k to catch up for the next watch
         j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
@@ -478,7 +511,9 @@ RKSweepEngine *RKSweepEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
-    engine->doNotWrite = false;
+    engine->userProductTimeoutSeconds = 2;
+    RKUserProductDesc desc = {.name = "U", .w = 0.5f, .b = -32.0f};
+    RKSweepEngineRegisterProduct(engine, desc);
     return engine;
 }
 
@@ -570,440 +605,468 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
     return RKResultSuccess;
 }
 
+RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProductDesc desc) {
+    int i = 0;
+    RKUserProductId productId = 1000 + engine->userProductIdCount++;
+    while (engine->userProducts[i].flag != RKUserProductStatusVacant && i < RKMaximumUserProductCount) {
+        i++;
+    }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to add anymore user products.\n", engine->name);
+        return 0;
+    }
+    engine->userProducts[i].i = productId;
+    engine->userProducts[i].flag = RKUserProductStatusActive;
+    engine->userProducts[i].desc = desc;
+    return productId;
+}
+
+int RKSweeEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
+    int i;
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (engine->userProducts[i].i != i) {
+            continue;
+        }
+        engine->userProducts[i].flag = RKUserProductStatusVacant;
+        memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
+    }
+    return RKResultSuccess;
+}
+
 #pragma mark - Reader
 
 void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
-	size_t n = 0;
-	nc_get_att_text(ncid, NC_GLOBAL, name, dst);
-	nc_inq_attlen(ncid, NC_GLOBAL, name, &n);
-	dst[n] = 0;
+    size_t n = 0;
+    nc_get_att_text(ncid, NC_GLOBAL, name, dst);
+    nc_inq_attlen(ncid, NC_GLOBAL, name, &n);
+    dst[n] = 0;
 }
 
 RKSweep *RKSweepCollect(RKSweepEngine *engine) {
-	MAKE_FUNCTION_NAME(name)
-	RKSweep *sweep = NULL;
+    MAKE_FUNCTION_NAME(name)
+    RKSweep *sweep = NULL;
 
-	uint8_t anchorIndex = RKPreviousModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
-	uint32_t n = engine->rayAnchors[anchorIndex].count;
-	RKRay **rays = engine->rayAnchors[anchorIndex].rays;
-	//RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
+    uint8_t anchorIndex = RKPreviousModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+    uint32_t n = engine->rayAnchors[anchorIndex].count;
+    RKRay **rays = engine->rayAnchors[anchorIndex].rays;
+    //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
-	RKRay *S = rays[0];
-	RKRay *T = rays[1];
-	RKRay *E = rays[n - 1];
-	RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    RKRay *S = rays[0];
+    RKRay *T = rays[1];
+    RKRay *E = rays[n - 1];
+    RKConfig *config = &engine->configBuffer[S->header.configIndex];
 
-	if (engine->verbose > 1) {
-		RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x-%03x   (%s x %d, %.1f km)\n",
-			  engine->name,
-			  S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
-			  config->sweepElevation   ,
-			  S->header.startElevation , E->header.endElevation   ,
-			  S->header.startAzimuth   , E->header.endAzimuth     ,
-			  S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
-			  RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
-	}
+    if (engine->verbose > 1) {
+        RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x-%03x   (%s x %d, %.1f km)\n",
+              engine->name,
+              S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
+              config->sweepElevation   ,
+              S->header.startElevation , E->header.endElevation   ,
+              S->header.startAzimuth   , E->header.endAzimuth     ,
+              S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+              RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+    }
 
-	int k = 0;
-	if (n > 360) {
-		if (S->header.marker & RKMarkerSweepBegin) {
-			// 361 beams and start at 0, we discard the extra last beam
-			n = 360;
-			k = 0;
-		} else if (T->header.marker & RKMarkerSweepBegin) {
-			// 361 beams but start at 1, we discard the extra first beam
-			n = 360;
-			k = 1;
-		}
-	}
-	S = rays[k];
+    int k = 0;
+    if (n > 360) {
+        if (S->header.marker & RKMarkerSweepBegin) {
+            // 361 beams and start at 0, we discard the extra last beam
+            n = 360;
+            k = 0;
+        } else if (T->header.marker & RKMarkerSweepBegin) {
+            // 361 beams but start at 1, we discard the extra first beam
+            n = 360;
+            k = 1;
+        }
+    }
+    S = rays[k];
 
-	// Allocate the return object
-	sweep = (RKSweep *)malloc(sizeof(RKSweep));
-	if (sweep == NULL) {
-		RKLog("Error. Unable to allocate memory.\n");
-		return NULL;
-	}
-	memset(sweep, 0, sizeof(RKSweep));
+    // Allocate the return object
+    sweep = (RKSweep *)malloc(sizeof(RKSweep));
+    if (sweep == NULL) {
+        RKLog("Error. Unable to allocate memory.\n");
+        return NULL;
+    }
+    memset(sweep, 0, sizeof(RKSweep));
 
-	// Populate the contents
-	sweep->header.rayCount = n;
-	sweep->header.gateCount = S->header.gateCount;
-	sweep->header.productList = S->header.productList;
-	sweep->header.external = true;
-	memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
-	memcpy(&sweep->header.config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
-	memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
+    // Populate the contents
+    sweep->header.rayCount = n;
+    sweep->header.gateCount = S->header.gateCount;
+    sweep->header.productList = S->header.productList;
+    sweep->header.external = true;
+    memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
+    memcpy(&sweep->header.config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
+    memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
 
-	return sweep;
+    return sweep;
 }
 
 RKSweep *RKSweepRead(const char *inputFile) {
-	int j, k, r;
-	int ncid, tmpId;
-	float *fp, fv;
+    int j, k, r;
+    int ncid, tmpId;
+    float *fp, fv;
     int iv;
 
-	MAKE_FUNCTION_NAME(name)
+    MAKE_FUNCTION_NAME(name)
 
-	RKName typeName;
+    RKName typeName;
     RKName scanType;
-	char filename[RKMaximumPathLength];
-	memset(filename, 0, RKMaximumPathLength);
+    char filename[RKMaximumPathLength];
+    memset(filename, 0, RKMaximumPathLength);
 
-	uint32_t firstPartLength = 0;
+    uint32_t firstPartLength = 0;
 
-	uint32_t productList = 0;
+    uint32_t productList = 0;
 
-	size_t rayCount = 0;
-	size_t gateCount = 0;
-	uint32_t capacity = 0;
-	RKSweep *sweep = NULL;
-	RKRay *ray = NULL;
+    size_t rayCount = 0;
+    size_t gateCount = 0;
+    uint32_t capacity = 0;
+    RKSweep *sweep = NULL;
+    RKRay *ray = NULL;
 
-	// A scratch space for netcdf API
-	void *scratch = NULL;
+    // A scratch space for netcdf API
+    void *scratch = NULL;
 
-	// Try to go through all the sublings to gather a productLiset
-	// For now, we only try Z, V, W, D, P, R, K
-	// Filename in conventions of RADAR-20180101-010203-EL10.2-Z.nc
+    // Try to go through all the sublings to gather a productLiset
+    // For now, we only try Z, V, W, D, P, R, K
+    // Filename in conventions of RADAR-20180101-010203-EL10.2-Z.nc
 
-	// Find the last '.'
-	char *e = NULL;
-	e = strstr(inputFile, ".");
+    // Find the last '.'
+    char *e = NULL;
+    e = strstr(inputFile, ".");
     if (e == NULL) {
         e = (char *)inputFile + strlen(inputFile) - 1;
     }
-	while (*(e + 1) >= '0' && *(e + 1) <= '9') {
-		e = strstr(e + 1, ".");
-	}
-	// Find the previous '-'
-	char *b = e;
-	while (b != inputFile && *b != '-') {
-		b--;
-	}
-	if (b == inputFile) {
-		RKLog("%s Unable to find product symbol.\n", name);
-		return NULL;
-	}
+    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
+        e = strstr(e + 1, ".");
+    }
+    // Find the previous '-'
+    char *b = e;
+    while (b != inputFile && *b != '-') {
+        b--;
+    }
+    if (b == inputFile) {
+        RKLog("%s Unable to find product symbol.\n", name);
+        return NULL;
+    }
 
-	b++;
-	firstPartLength = (uint32_t)(b - inputFile);
-	char symbol[8];
-	memset(symbol, 0, 8);
-	strncpy(symbol, b, MIN(8, e - b));
-	// Substitute symbol with the ones I know
-	char symbols[][RKNameLength] = {"Z", "V", "W", "D", "P", "R", "K"};
-	RKName productNames[] = {
-		"Corrected_Intensity",
-		"Radial_Velocity",
-		"Width",
-		"Differential_Reflectivity",
-		"PhiDP",
-		"RhoHV",
-		"KDP"
-	};
-	uint32_t products[] = {
-		RKProductListProductZ,
-		RKProductListProductV,
-		RKProductListProductW,
-		RKProductListProductD,
-		RKProductListProductP,
-		RKProductListProductR,
-		RKProductListProductK
-	};
-	uint32_t productIndices[] = {
-		RKProductIndexZ,
-		RKProductIndexV,
-		RKProductIndexW,
-		RKProductIndexD,
-		RKProductIndexP,
-		RKProductIndexR,
-		RKProductIndexK
-	};
+    b++;
+    firstPartLength = (uint32_t)(b - inputFile);
+    char symbol[8];
+    memset(symbol, 0, 8);
+    strncpy(symbol, b, MIN(8, e - b));
+    // Substitute symbol with the ones I know
+    char symbols[][RKNameLength] = {"Z", "V", "W", "D", "P", "R", "K"};
+    RKName productNames[] = {
+        "Corrected_Intensity",
+        "Radial_Velocity",
+        "Width",
+        "Differential_Reflectivity",
+        "PhiDP",
+        "RhoHV",
+        "KDP"
+    };
+    uint32_t products[] = {
+        RKProductListProductZ,
+        RKProductListProductV,
+        RKProductListProductW,
+        RKProductListProductD,
+        RKProductListProductP,
+        RKProductListProductR,
+        RKProductListProductK
+    };
+    uint32_t productIndices[] = {
+        RKProductIndexZ,
+        RKProductIndexV,
+        RKProductIndexW,
+        RKProductIndexD,
+        RKProductIndexP,
+        RKProductIndexR,
+        RKProductIndexK
+    };
 
-	// First part: go through all the symbols I know of, get the very first filename
-	for (k = 0; k < sizeof(symbols) / RKNameLength; k++) {
-		b = symbols[k];
-		strncpy(filename, inputFile, firstPartLength);
-		snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
-		// Read in the header from the very first file that exists
-		if (RKFilenameExists(filename)) {
-			// Read the first file
-			if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
-				RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
-				return NULL;
-			}
-			// Dimensions
-			if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
-				r = nc_inq_dimid(ncid, "azimuth", &tmpId);
-			}
-			if (r != NC_NOERR) {
-				if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
-					r = nc_inq_dimid(ncid, "beam", &tmpId);
-				}
-			}
-			if (r == NC_NOERR) {
-				nc_inq_dimlen(ncid, tmpId, &rayCount);
-			} else {
-				nc_close(ncid);
-				RKLog("Warning. Early return (rayCount)\n");
-				return NULL;
-			}
-			if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
-				r = nc_inq_dimid(ncid, "gate", &tmpId);
-			if (r == NC_NOERR) {
-				nc_inq_dimlen(ncid, tmpId, &gateCount);
-			} else {
-				RKLog("Warning. Early return (gateCount)\n");
-				nc_close(ncid);
-				return NULL;
-			}
+    // First part: go through all the symbols I know of, get the very first filename
+    for (k = 0; k < sizeof(symbols) / RKNameLength; k++) {
+        b = symbols[k];
+        strncpy(filename, inputFile, firstPartLength);
+        snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
+        // Read in the header from the very first file that exists
+        if (RKFilenameExists(filename)) {
+            // Read the first file
+            if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
+                RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
+                return NULL;
+            }
+            // Dimensions
+            if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
+                r = nc_inq_dimid(ncid, "azimuth", &tmpId);
+            }
+            if (r != NC_NOERR) {
+                if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
+                    r = nc_inq_dimid(ncid, "beam", &tmpId);
+                }
+            }
+            if (r == NC_NOERR) {
+                nc_inq_dimlen(ncid, tmpId, &rayCount);
+            } else {
+                nc_close(ncid);
+                RKLog("Warning. Early return (rayCount)\n");
+                return NULL;
+            }
+            if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
+                r = nc_inq_dimid(ncid, "gate", &tmpId);
+            if (r == NC_NOERR) {
+                nc_inq_dimlen(ncid, tmpId, &gateCount);
+            } else {
+                RKLog("Warning. Early return (gateCount)\n");
+                nc_close(ncid);
+                return NULL;
+            }
 
-			if (gateCount > RKGateCount) {
-				RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
-				gateCount = RKGateCount;
-			}
+            if (gateCount > RKGateCount) {
+                RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
+                gateCount = RKGateCount;
+            }
 
-			// Derive the RKSIMDAlignSize compliant capacity
-			capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
+            // Derive the RKSIMDAlignSize compliant capacity
+            capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
 
-			RKLog("rayCount = %s   gateCount = %s   capacity = %s\n",
-				  RKIntegerToCommaStyleString(rayCount), RKIntegerToCommaStyleString(gateCount), RKIntegerToCommaStyleString(capacity));
+            RKLog("rayCount = %s   gateCount = %s   capacity = %s\n",
+                  RKIntegerToCommaStyleString(rayCount), RKIntegerToCommaStyleString(gateCount), RKIntegerToCommaStyleString(capacity));
 
-			// A scratch space for netcdf API
-			scratch = (void *)malloc(rayCount * capacity * sizeof(float));
+            // A scratch space for netcdf API
+            scratch = (void *)malloc(rayCount * capacity * sizeof(float));
 
-			// Allocate the return object
-			sweep = (RKSweep *)malloc(sizeof(RKSweep));
-			if (sweep == NULL) {
-				RKLog("Error. Unable to allocate memory.\n");
-				return NULL;
-			}
-			memset(sweep, 0, sizeof(RKSweep));
-			RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
-			for (j = 0; j < rayCount; j++) {
-				sweep->rays[j] = RKGetRay(sweep->rayBuffer, j);
-			}
-			ray = (RKRay *)sweep->rayBuffer;
+            // Allocate the return object
+            sweep = (RKSweep *)malloc(sizeof(RKSweep));
+            if (sweep == NULL) {
+                RKLog("Error. Unable to allocate memory.\n");
+                return NULL;
+            }
+            memset(sweep, 0, sizeof(RKSweep));
+            RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
+            for (j = 0; j < rayCount; j++) {
+                sweep->rays[j] = RKGetRay(sweep->rayBuffer, j);
+            }
+            ray = (RKRay *)sweep->rayBuffer;
 
-			// Global attributes
-			getGlobalTextAttribute(typeName, "TypeName", ncid);
-			getGlobalTextAttribute(scanType, "ScanType", ncid);
-			getGlobalTextAttribute(sweep->header.desc.name, "radarName-value", ncid);
-			r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &sweep->header.desc.latitude);
-			if (r != NC_NOERR) {
-				r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
-				if (r == NC_NOERR) {
-					sweep->header.desc.latitude = (double)fv;
-				}
-			}
-			r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->header.desc.longitude);
-			if (r != NC_NOERR) {
-				r = nc_get_att_float(ncid, NC_GLOBAL, "Longitude", &fv);
-				if (r == NC_NOERR) {
-					sweep->header.desc.longitude = (double)fv;
-				}
-			}
-			if (!strcmp(scanType, "PPI")) {
-				sweep->header.config.sweepElevation = ray->header.sweepElevation;
-				sweep->header.config.startMarker |= RKMarkerPPIScan;
-			} else if (!strcmp(scanType, "RHI")) {
-				sweep->header.config.sweepAzimuth = ray->header.sweepAzimuth;
-				sweep->header.config.startMarker |= RKMarkerRHIScan;
-			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->header.desc.heading);
-			if (r != NC_NOERR) {
-				RKLog("No radar heading found.\n");
-			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Height", &sweep->header.desc.radarHeight);
-			if (r != NC_NOERR) {
-				RKLog("No radar height found.\n");
-			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Elevation", &ray->header.sweepElevation);
-			if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerPPIScan) {
-				RKLog("Warning. No sweep elevation found.\n");
-			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Azimuth", &ray->header.sweepAzimuth);
-			if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerRHIScan) {
-				RKLog("Warning. No sweep azimuth found.\n");
-			}
-			r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
-			if (r == NC_NOERR) {
-				sweep->header.config.prf[0] = iv;
-				if (sweep->header.config.prf[0] == 0) {
-					RKLog("Warning. Recorded PRF = 0 Hz.\n");
-				}
-			} else {
-				RKLog("Warning. No PRF information found.\n");
-			}
-			r = nc_get_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", &fv);
-			if (r == NC_NOERR) {
-				sweep->header.desc.wavelength = 4.0f * fv / (RKFloat)sweep->header.config.prf[0];
-				RKLog("Radar wavelength = %.4f m\n", sweep->header.desc.wavelength);
-			}
+            // Global attributes
+            getGlobalTextAttribute(typeName, "TypeName", ncid);
+            getGlobalTextAttribute(scanType, "ScanType", ncid);
+            getGlobalTextAttribute(sweep->header.desc.name, "radarName-value", ncid);
+            r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &sweep->header.desc.latitude);
+            if (r != NC_NOERR) {
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
+                if (r == NC_NOERR) {
+                    sweep->header.desc.latitude = (double)fv;
+                }
+            }
+            r = nc_get_att(ncid, NC_GLOBAL, "LongitudeDouble", &sweep->header.desc.longitude);
+            if (r != NC_NOERR) {
+                r = nc_get_att_float(ncid, NC_GLOBAL, "Longitude", &fv);
+                if (r == NC_NOERR) {
+                    sweep->header.desc.longitude = (double)fv;
+                }
+            }
+            if (!strcmp(scanType, "PPI")) {
+                sweep->header.config.sweepElevation = ray->header.sweepElevation;
+                sweep->header.config.startMarker |= RKMarkerPPIScan;
+            } else if (!strcmp(scanType, "RHI")) {
+                sweep->header.config.sweepAzimuth = ray->header.sweepAzimuth;
+                sweep->header.config.startMarker |= RKMarkerRHIScan;
+            }
+            r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->header.desc.heading);
+            if (r != NC_NOERR) {
+                RKLog("No radar heading found.\n");
+            }
+            r = nc_get_att_float(ncid, NC_GLOBAL, "Height", &sweep->header.desc.radarHeight);
+            if (r != NC_NOERR) {
+                RKLog("No radar height found.\n");
+            }
+            r = nc_get_att_float(ncid, NC_GLOBAL, "Elevation", &ray->header.sweepElevation);
+            if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerPPIScan) {
+                RKLog("Warning. No sweep elevation found.\n");
+            }
+            r = nc_get_att_float(ncid, NC_GLOBAL, "Azimuth", &ray->header.sweepAzimuth);
+            if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerRHIScan) {
+                RKLog("Warning. No sweep azimuth found.\n");
+            }
+            r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
+            if (r == NC_NOERR) {
+                sweep->header.config.prf[0] = iv;
+                if (sweep->header.config.prf[0] == 0) {
+                    RKLog("Warning. Recorded PRF = 0 Hz.\n");
+                }
+            } else {
+                RKLog("Warning. No PRF information found.\n");
+            }
+            r = nc_get_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", &fv);
+            if (r == NC_NOERR) {
+                sweep->header.desc.wavelength = 4.0f * fv / (RKFloat)sweep->header.config.prf[0];
+                RKLog("Radar wavelength = %.4f m\n", sweep->header.desc.wavelength);
+            }
 
-			// Elevation array
-			if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
-				r = nc_inq_varid(ncid, "elevation", &tmpId);
-			}
-			if (r == NC_NOERR) {
-				nc_get_var_float(ncid, tmpId, scratch);
-				fp = (float *)scratch;
-				for (j = 0; j < rayCount; j++) {
-					ray = RKGetRay(sweep->rayBuffer, j);
-					ray->header.startElevation = *fp++;
-					ray->header.endElevation = ray->header.startElevation;
-				}
-			} else {
-				RKLog("Warning. No elevation array.\n");
-			}
+            // Elevation array
+            if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
+                r = nc_inq_varid(ncid, "elevation", &tmpId);
+            }
+            if (r == NC_NOERR) {
+                nc_get_var_float(ncid, tmpId, scratch);
+                fp = (float *)scratch;
+                for (j = 0; j < rayCount; j++) {
+                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray->header.startElevation = *fp++;
+                    ray->header.endElevation = ray->header.startElevation;
+                }
+            } else {
+                RKLog("Warning. No elevation array.\n");
+            }
 
-			// Azimuth array
-			if ((r = nc_inq_varid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
-				r = nc_inq_varid(ncid, "azimuth", &tmpId);
-			}
-			if (r == NC_NOERR) {
-				nc_get_var_float(ncid, tmpId, scratch);
-				fp = (float *)scratch;
-				for (j = 0; j < rayCount; j++) {
-					ray = RKGetRay(sweep->rayBuffer, j);
-					ray->header.startAzimuth = *fp++;
-				}
-			} else {
-				RKLog("Warning. No azimuth array.\n");
-			}
+            // Azimuth array
+            if ((r = nc_inq_varid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
+                r = nc_inq_varid(ncid, "azimuth", &tmpId);
+            }
+            if (r == NC_NOERR) {
+                nc_get_var_float(ncid, tmpId, scratch);
+                fp = (float *)scratch;
+                for (j = 0; j < rayCount; j++) {
+                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray->header.startAzimuth = *fp++;
+                }
+            } else {
+                RKLog("Warning. No azimuth array.\n");
+            }
 
-			// Gatewidth array (this is here for historical reasons)
-			if ((r = nc_inq_varid(ncid, "GateWidth", &tmpId)) != NC_NOERR) {
-				if ((r = nc_inq_varid(ncid, "Gatewidth", &tmpId)) != NC_NOERR) {
-					r = nc_inq_varid(ncid, "gatewidth", &tmpId);
-				}
-			}
-			if (r == NC_NOERR) {
-				nc_get_var_float(ncid, tmpId, scratch);
-				fp = (float *)scratch;
-				for (j = 0; j < rayCount; j++) {
-					ray = RKGetRay(sweep->rayBuffer, j);
-					ray->header.gateCount = gateCount;
-					ray->header.gateSizeMeters = *fp++;
-				}
-			} else {
-				RKLog("Warning. No gatewidth array.\n");
-			}
+            // Gatewidth array (this is here for historical reasons)
+            if ((r = nc_inq_varid(ncid, "GateWidth", &tmpId)) != NC_NOERR) {
+                if ((r = nc_inq_varid(ncid, "Gatewidth", &tmpId)) != NC_NOERR) {
+                    r = nc_inq_varid(ncid, "gatewidth", &tmpId);
+                }
+            }
+            if (r == NC_NOERR) {
+                nc_get_var_float(ncid, tmpId, scratch);
+                fp = (float *)scratch;
+                for (j = 0; j < rayCount; j++) {
+                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray->header.gateCount = gateCount;
+                    ray->header.gateSizeMeters = *fp++;
+                }
+            } else {
+                RKLog("Warning. No gatewidth array.\n");
+            }
 
-			// Beamwidth array (this is here for historical reasons)
-			if ((r = nc_inq_varid(ncid, "BeamWidth", &tmpId)) != NC_NOERR) {
-				if ((r = nc_inq_varid(ncid, "Beamwidth", &tmpId)) != NC_NOERR) {
-					r = nc_inq_varid(ncid, "beamwidth", &tmpId);
-				}
-			}
-			if (r == NC_NOERR) {
-				nc_get_var_float(ncid, tmpId, scratch);
-				fp = (float *)scratch;
-				for (j = 0; j < rayCount; j++) {
-					ray = RKGetRay(sweep->rayBuffer, j);
-					ray->header.endAzimuth = ray->header.startAzimuth + *fp;
-					ray->header.endElevation = ray->header.endElevation + *fp++;
-				}
-			} else {
-				RKLog("Warning. No beamwidth array.\n");
-			}
+            // Beamwidth array (this is here for historical reasons)
+            if ((r = nc_inq_varid(ncid, "BeamWidth", &tmpId)) != NC_NOERR) {
+                if ((r = nc_inq_varid(ncid, "Beamwidth", &tmpId)) != NC_NOERR) {
+                    r = nc_inq_varid(ncid, "beamwidth", &tmpId);
+                }
+            }
+            if (r == NC_NOERR) {
+                nc_get_var_float(ncid, tmpId, scratch);
+                fp = (float *)scratch;
+                for (j = 0; j < rayCount; j++) {
+                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray->header.endAzimuth = ray->header.startAzimuth + *fp;
+                    ray->header.endElevation = ray->header.endElevation + *fp++;
+                }
+            } else {
+                RKLog("Warning. No beamwidth array.\n");
+            }
 
-			// Be a good citizen, close the file
-			nc_close(ncid);
-			break;
-		}
-	}
+            // Be a good citizen, close the file
+            nc_close(ncid);
+            break;
+        }
+    }
 
-	// If none of the files exist, sweep is NULL. There is no point continuing
-	if (sweep == NULL) {
-		RKLog("%s Inconsistent state.\n", name);
-		return NULL;
-	}
+    // If none of the files exist, sweep is NULL. There is no point continuing
+    if (sweep == NULL) {
+        RKLog("%s Inconsistent state.\n", name);
+        return NULL;
+    }
 
-	// Second pass: go through all the symbols I know of and actually read in the data
-	for (k = 0; k < sizeof(symbols) / RKNameLength; k++) {
-		b = symbols[k];
-		strncpy(filename, inputFile, firstPartLength);
-		snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
-		if (RKFilenameExists(filename)) {
-			productList |= products[k];
+    // Second pass: go through all the symbols I know of and actually read in the data
+    for (k = 0; k < sizeof(symbols) / RKNameLength; k++) {
+        b = symbols[k];
+        strncpy(filename, inputFile, firstPartLength);
+        snprintf(filename + firstPartLength, RKMaximumPathLength - firstPartLength, "%s%s", b, e);
+        if (RKFilenameExists(filename)) {
+            productList |= products[k];
 
-			// Open the file
-			if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
-				RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
+            // Open the file
+            if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
+                RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
                 free(scratch);
-				return NULL;
-			}
+                return NULL;
+            }
 
             RKLog("%s %s (*)\n", name, filename);
 
             // Product
-			r = nc_inq_varid(ncid, productNames[k], &tmpId);
-			if (r == NC_NOERR) {
-				nc_get_var_float(ncid, tmpId, scratch);
-				for (j = 0; j < rayCount; j++) {
-					ray = RKGetRay(sweep->rayBuffer, j);
-					fp = RKGetFloatDataFromRay(ray, productIndices[k]);
-					memcpy(fp, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
-				}
+            r = nc_inq_varid(ncid, productNames[k], &tmpId);
+            if (r == NC_NOERR) {
+                nc_get_var_float(ncid, tmpId, scratch);
+                for (j = 0; j < rayCount; j++) {
+                    ray = RKGetRay(sweep->rayBuffer, j);
+                    fp = RKGetFloatDataFromRay(ray, productIndices[k]);
+                    memcpy(fp, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
+                }
                 nc_close(ncid);
-			} else {
-				RKLog("%s not found.\n", productNames[k]);
-			}
-		} else {
-			RKLog("%s not found.\n", filename);
-		}
-	}
+            } else {
+                RKLog("%s not found.\n", productNames[k]);
+            }
+        } else {
+            RKLog("%s not found.\n", filename);
+        }
+    }
 
-	// We are done with the scratch space at this point, we can free it
-	free(scratch);
+    // We are done with the scratch space at this point, we can free it
+    free(scratch);
 
-	// This really should not happen
+    // This really should not happen
     if (sweep == NULL) {
-		RKLog("%s Inconsistent state towards the end.\n", name);
+        RKLog("%s Inconsistent state towards the end.\n", name);
         return NULL;
     }
     
-	sweep->header.rayCount = (uint32_t)rayCount;
-	sweep->header.gateCount = (uint32_t)gateCount;
-	sweep->header.productList = productList;
+    sweep->header.rayCount = (uint32_t)rayCount;
+    sweep->header.gateCount = (uint32_t)gateCount;
+    sweep->header.productList = productList;
 
-	for (j = 0; j < rayCount; j++) {
-		ray = RKGetRay(sweep->rayBuffer, j);
-		ray->header.i += sweep->header.rayCount;
-		ray->header.s = RKRayStatusReady;
-		ray->header.productList = productList;
-	}
+    for (j = 0; j < rayCount; j++) {
+        ray = RKGetRay(sweep->rayBuffer, j);
+        ray->header.i += sweep->header.rayCount;
+        ray->header.s = RKRayStatusReady;
+        ray->header.productList = productList;
+    }
 
-	/*
-	RKLog("  -> %s%s%s%s%s%s%s\n",
-		  productList & RKProductListProductZ ? "Z" : "",
-		  productList & RKProductListProductV ? "V" : "",
-		  productList & RKProductListProductW ? "W" : "",
-		  productList & RKProductListProductD ? "D" : "",
-		  productList & RKProductListProductP ? "P" : "",
-		  productList & RKProductListProductR ? "R" : "",
-		  productList & RKProductListProductK ? "K" : ""
-		  );
-	*/
+    /*
+    RKLog("  -> %s%s%s%s%s%s%s\n",
+          productList & RKProductListProductZ ? "Z" : "",
+          productList & RKProductListProductV ? "V" : "",
+          productList & RKProductListProductW ? "W" : "",
+          productList & RKProductListProductD ? "D" : "",
+          productList & RKProductListProductP ? "P" : "",
+          productList & RKProductListProductR ? "R" : "",
+          productList & RKProductListProductK ? "K" : ""
+          );
+    */
 
-	return sweep;
+    return sweep;
 }
 
 int RKSweepFree(RKSweep *sweep) {
-	if (sweep == NULL) {
-		RKLog("No es bueno, amigo!\n");
-		return RKResultNullInput;
-	}
-	if (!sweep->header.external) {
-		if (sweep->rayBuffer == NULL) {
-			RKLog("Esto es malo!\n");
-			return RKResultNullInput;
-		}
-		RKRayBufferFree(sweep->rayBuffer);
-	}
-	free(sweep);
-	return RKResultSuccess;
+    if (sweep == NULL) {
+        RKLog("No es bueno, amigo!\n");
+        return RKResultNullInput;
+    }
+    if (!sweep->header.external) {
+        if (sweep->rayBuffer == NULL) {
+            RKLog("Esto es malo!\n");
+            return RKResultNullInput;
+        }
+        RKRayBufferFree(sweep->rayBuffer);
+    }
+    free(sweep);
+    return RKResultSuccess;
 }

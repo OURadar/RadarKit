@@ -974,6 +974,8 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->state & RKRadarStateLive) {
         RKClockReset(radar->pulseClock);
     }
+    RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
+    RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
     return RKResultNoError;
 }
 
@@ -1536,6 +1538,8 @@ int RKSoftRestart(RKRadar *radar) {
 	RKPositionEngineStop(radar->positionEngine);
 	RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
     RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+    RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
+    RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 	RKLog("Starting internal engines ...\n");
 	// Start them again
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);

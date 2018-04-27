@@ -78,6 +78,7 @@
 #define RKProcessorStatusRingCoreCount   16
 #define RKProcessorStatusRayCoreCount    16
 #define RKHostMonitorPingInterval        5
+#define RKMaximumUserProductCount        8
 
 #define RKDefaultDataPath                "data"
 #define RKDataFolderIQ                   "iq"
@@ -261,7 +262,8 @@ enum RKEngineColor {
     RKEngineColorHostMonitor = 11,
     RKEngineColorClock = 14,
     RKEngineColorMisc = 15,
-    RKEngineColorEngineMonitor = 14
+    RKEngineColorEngineMonitor = 14,
+    RKEngineColorConfig = 6
 };
 
 typedef uint32_t RKPositionFlag;
@@ -895,6 +897,33 @@ typedef struct rk_file_monitor {
     char             filename[RKMaximumPathLength];
     void             (*callbackRoutine)(void *);
 } RKFileMonitor;
+
+typedef int32_t  RKUserProductId;
+typedef uint32_t RKUserProductStatus;
+
+enum RKUserProductStatus {
+    RKUserProductStatusVacant        = 0,
+    RKUserProductStatusActive        = 1,
+    RKUserProductStatusBusy          = (1 << 1),                     // Waiting for processing node
+    RKUserProductStatusSkipped       = (1 << 2),
+    RKUserProductStatusSleep0        = (1 << 4),                     // Sleep stage 0 -
+    RKUserProductStatusSleep1        = (1 << 5),                     // Sleep stage 1 -
+    RKUserProductStatusSleep2        = (1 << 6),                     // Sleep stage 2 -
+    RKUserProductStatusSleep3        = (1 << 7),                     // Sleep stage 3 -
+};
+
+typedef struct rk_user_product_desc {
+    RKName               name;                                       // Name of the product
+    float                w;                                          // Product to color index weight
+    float                b;                                          // Product to color index bias
+} RKUserProductDesc;
+
+typedef struct rk_user_product {
+    uint64_t             i;
+    RKUserProductStatus  flag;                                       // Various state
+    RKUserProductDesc    desc;
+    RKUserProductId      uid;
+} RKUserProduct;
 
 #pragma pack(pop)
 

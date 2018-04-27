@@ -824,6 +824,8 @@ int main(int argc, const char **argv) {
         myRadar->configs[0].prf[0] = user.prf;
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
+        //RKUserProductDesc desc;
+        //RKSweepEngineRegisterProduct(myRadar->sweepEngine, <#RKUserProductDesc#>)
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
