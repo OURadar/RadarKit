@@ -45,6 +45,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
+				sprintf(stringBuffer, "New Sweep");
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
@@ -57,6 +58,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyGateCount:
                 newConfig->gateCount[0] = va_arg(args, uint32_t);
+				sprintf(stringBuffer, "GateCount = %s", RKIntegerToCommaStyleString(newConfig->gateCount[0]));
                 break;
             case RKConfigKeyWaveformId:
                 // ???
@@ -154,7 +156,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
         }
         if (strlen(stringBuffer)) {
-            RKLog(">%s\n", stringBuffer);
+			RKLog(">%sConfig-0x%08x%s %s\n",
+				  rkGlobalParameters.showColor ? "\033[38;5;15;48;5;28m" : "",
+				  configId,
+				  rkGlobalParameters.showColor ? RKNoColor : "",
+				  stringBuffer);
         }
         // Get the next key
         key = va_arg(args, RKConfigKey);

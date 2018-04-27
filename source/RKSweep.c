@@ -81,7 +81,8 @@ static void *sweepWriter(void *in) {
     }
     
     if (engine->verbose) {
-        RKLog("%s allReported = %d    i = %llu   s = ...\n", engine->name, allReported, engine->userProducts[0].i);
+        RKLog("%s allReported = %d    i = %llu   s = %d %d %d ...\n", engine->name, allReported, engine->userProducts[0].i,
+			  engine->userProducts[0].flag, engine->userProducts[1].flag, engine->userProducts[2].flag);
     }
     
     // Mark the state
@@ -510,9 +511,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
-    engine->userProductTimeoutSeconds = 5;
-    //engine->userProductIds[0].i = engine->userProductCount++;
-    //engine->userProductDescriptions[0].flag = RKUserProductStatusActive;
+    engine->userProductTimeoutSeconds = 2;
     RKUserProductDesc desc = {.name = "U", .w = 0.5f, .b = -32.0f};
     RKSweepEngineRegisterProduct(engine, desc);
     return engine;
