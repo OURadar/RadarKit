@@ -97,9 +97,9 @@ void *theClient(void *in) {
             }
         }
         r = 1;
-		#if defined(__APPLE__)
-		setsockopt(C->sd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r));
-		#endif
+        #if defined(__APPLE__)
+        setsockopt(C->sd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r));
+        #endif
         if (C->type == RKNetworkSocketTypeUDP) {
             setsockopt(C->sd, SOL_SOCKET, SO_BROADCAST, &r, sizeof(r));
         }
@@ -489,8 +489,8 @@ RKClient *RKClientInitWithDesc(RKClientDesc desc) {
     }
     memcpy(C, &desc, sizeof(RKClientDesc));
 
-	// Ignore broken pipe for bad connections
-	signal(SIGPIPE, SIG_IGN);
+    // Ignore broken pipe for bad connections
+    signal(SIGPIPE, SIG_IGN);
 
     return C;
 }

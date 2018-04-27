@@ -98,7 +98,7 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     RKClientSetUserResource(me->client, me);
     RKClientSetReceiveHandler(me->client, &RKHealthRelayTweetaRead);
     RKClientStart(me->client, false);
-    
+
     return (RKHealthRelay)me;
 }
 
