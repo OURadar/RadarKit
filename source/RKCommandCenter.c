@@ -202,10 +202,14 @@ int socketCommandHandler(RKOperator *O) {
                                     "    e.g.,\n"
                                     "        s zvwd - streams Z, V, W and D.\n"
                                     "        s 1 - Look at the overall system status.\n"
+                                    "        s 2 - Look at the level-II data generation.\n"
+                                    "        s 3 - Look at the pedestal raw data.\n"
                                     "\n"
                                     HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
                                     "    e.g.,\n"
                                     "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
+                                    "\n"
+                                    HIGHLIGHT("b") " - Simulate a push button event from a piece of hardware\n"
                                     "\n"
                                     HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                                     "\n"
@@ -273,12 +277,6 @@ int socketCommandHandler(RKOperator *O) {
                     O->delimTx.type = RKNetworkPacketTypeRadarDescription;
                     O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
                     RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->desc, sizeof(RKRadarDesc), NULL);
-                    break;
-
-                case 'm':
-                    RKLog(">%s %s Display data\n", engine->name, O->name);
-                    user->streams |= RKStreamDisplayZ;
-                    user->rayIndex = RKPreviousModuloS(user->radar->rayIndex, user->radar->desc.rayBufferDepth);
                     break;
 
                 case 'p':
@@ -358,7 +356,7 @@ int socketCommandHandler(RKOperator *O) {
                     break;
                     
                 default:
-                    snprintf(string, RKMaximumStringLength - 1, "Unknown command '%s'." RKEOL, commandString);
+                    snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);
                     RKOperatorSendCommandResponse(O, string);
                     break;
             }
