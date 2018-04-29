@@ -1576,12 +1576,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                 RKLog("Sleep 1/%.1f s   radar->state = 0x%04x\n", (float)k * 0.1f, radar->state);
             }
         }
-        //user->commandCount++;
-//        RKLog("%s %s Received command '%s%s%s'\n",
-//              engine->name, O->name,
-//              rkGlobalParameters.showColor ? RKGreenColor : "",
-//              commandString,
-//              rkGlobalParameters.showColor ? RKNoColor : "");
         // Process the command
         switch (commandString[0]) {
             case 'd':
@@ -1607,7 +1601,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                         } else {
                             sprintf(string, "NAK. Must have two paramters  (k = %d)." RKEOL, k);
                         }
-                        //RKOperatorSendCommandResponse(O, string);
                         break;
                     case 'N':
                         // 'dN' - DSP noise override in dB
@@ -1615,9 +1608,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                     case 'r':
                         // 'dr' - Restart DSP engines
                         RKSoftRestart(radar);
-                        //RKCommandCenterSkipToCurrent(engine, user->radar);
                         sprintf(string, "ACK. Soft restart executed." RKEOL);
-                        //RKOperatorSendCommandResponse(O, string);
                         break;
                     case 't':
                         // 'dt' - DSP threshold in SNR dB

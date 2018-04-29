@@ -112,18 +112,6 @@ int socketCommandHandler(RKOperator *O) {
                     user->controlSetIndex = (uint32_t)-1;
                     break;
 
-                case 'd':
-                case 'h':
-                case 'p':
-                case 'r':
-                case 't':
-                case 'b':  // Button event
-                case 'y':  // Start everything
-                case 'z':  // Stop everything
-                    RKExecuteCommand(user->radar, commandString, string);
-                    RKOperatorSendCommandResponse(O, string);
-                    break;
-
                 case 'i':
                     O->delimTx.type = RKNetworkPacketTypeRadarDescription;
                     O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
@@ -136,6 +124,19 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorHangUp(O);
                     break;
 
+                case 'd':
+                    // DSP related
+                    switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
+                        case 'r':
+                            RKExecuteCommand(user->radar, commandString, string);
+                            RKCommandCenterSkipToCurrent(engine, user->radar);
+                        default:
+                            RKExecuteCommand(user->radar, commandString, string);
+                            break;
+                    }
+                    RKOperatorSendCommandResponse(O, string);
+                    break;
+                    
                 case 's':
                     // Stream varrious data
                     newStream = RKStreamFromString(commandString + 1);
@@ -159,7 +160,7 @@ int socketCommandHandler(RKOperator *O) {
                     break;
                     
                 default:
-                    snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);
+                    RKExecuteCommand(user->radar, commandString, string);
                     RKOperatorSendCommandResponse(O, string);
                     break;
             }

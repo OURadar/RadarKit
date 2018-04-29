@@ -643,7 +643,6 @@ ssize_t RKOperatorSendCommandResponse(RKOperator *O, const char *string) {
 
 ssize_t RKOperatorSendBeacon(RKOperator *O) {
     ssize_t s = RKOperatorSendPackets(O, &O->beacon, sizeof(RKNetDelimiter), NULL);
-    //O->beacon.userParameter1++;
     return s;
 }
 
