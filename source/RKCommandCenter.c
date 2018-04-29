@@ -128,8 +128,19 @@ int socketCommandHandler(RKOperator *O) {
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
                         case 'r':
+                            pthread_mutex_lock(&user->mutex);
+                            newStream = user->streams;
+                            user->streams = RKStreamNull;
+                            user->streamsInProgress = RKStreamNull;
+
                             RKExecuteCommand(user->radar, commandString, string);
+
                             RKCommandCenterSkipToCurrent(engine, user->radar);
+                            
+                            user->streams = newStream;
+                            user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+                            user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+                            pthread_mutex_unlock(&user->mutex);
                         default:
                             RKExecuteCommand(user->radar, commandString, string);
                             break;
@@ -679,8 +690,8 @@ int socketStreamHandler(RKOperator *O) {
             } // while (user->rayIndex != endIndex) ...
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No display ray / deactivated.  streamsInProgress = 0x%08x\n",
-                      engine->name, O->name, user->streamsInProgress);
+                RKLog("%s %s No display ray / deactivated.  streamsInProgress = 0x%08x  user->rayIndex = %d\n",
+                      engine->name, O->name, user->streamsInProgress, user->rayIndex);
             }
         } // if (ray->header.s & RKRayStatusReady && engine->server->state == RKServerStateActive) ...
     } // else if if (user->streams & user->access & RKStreamDisplayZVWDPRKS) ...

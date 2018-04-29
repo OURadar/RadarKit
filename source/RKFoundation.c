@@ -363,6 +363,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
         RKPulse *pulse = RKGetPulse(buffer, k);
+        pulse->header.s = RKPulseStatusVacant;
         memset(pulse->data, 0, 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat)));
     }
     return RKResultNoError;
@@ -436,6 +437,7 @@ float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
         RKRay *ray = RKGetRay(buffer, k);
+        ray->header.s = RKRayStatusVacant;
         memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultNoError;

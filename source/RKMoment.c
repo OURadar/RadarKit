@@ -446,7 +446,7 @@ static void *momentCore(void *in) {
 				// At this point, gateSizeMeters is no longer the spacing of raw pulse, it has been down-sampled according to pulseToRayRatio
                 gateSizeMeters = S->header.gateSizeMeters;
                 if (engine->verbose > 1) {
-                    RKLog("%s %s C%d RCor @ %.2f/%.2f/%.2f dB   capacity = %s\n",
+                    RKLog("%s %s C%02d RCor @ %.2f/%.2f/%.2f dB   capacity = %s\n",
                           engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity));
                 }
 				// Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate

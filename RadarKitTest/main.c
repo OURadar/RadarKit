@@ -831,7 +831,7 @@ int main(int argc, const char **argv) {
         RKGoLive(myRadar);
         usleep(1000000);
         RKLog("Starting a new PPI ...\n");
-        RKExecuteCommand(myRadar, "p ppi 4 90", NULL);
+        RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 
