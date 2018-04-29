@@ -156,10 +156,10 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
         }
         if (strlen(stringBuffer)) {
-			RKLog(">%sConfig-0x%08x%s %s\n",
+			RKLog("%s<ParameterKeeper>%s ConfigId = %s   %s\n",
 				  rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
-				  configId,
 				  rkGlobalParameters.showColor ? RKNoColor : "",
+                  RKIntegerToCommaStyleString(configId),
 				  stringBuffer);
         }
         // Get the next key
