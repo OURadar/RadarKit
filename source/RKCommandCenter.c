@@ -135,6 +135,7 @@ int socketCommandHandler(RKOperator *O) {
 
                             RKExecuteCommand(user->radar, commandString, string);
 
+                            RKLog("%s %s Fast forwarding ...", engine->name, O->name);
                             RKCommandCenterSkipToCurrent(engine, user->radar);
                             
                             user->streams = newStream;
@@ -1147,9 +1148,12 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
         if (user->radar == radar && radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            user->pulseIndex  = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
-            user->rayIndex    = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
-            user->healthIndex = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+            //user->pulseIndex  = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
+            //user->rayIndex    = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
+            //user->healthIndex = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+            user->pulseIndex  = radar->pulseIndex;
+            user->rayIndex    = radar->rayIndex;
+            user->healthIndex = radar->healthIndex;
         }
     }
 }

@@ -158,7 +158,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     RKSetUseDailyLog(true);
     RKSetRootFolder(desc.dataPath);
-	
+    
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Initializing ... 0x%08x", desc.initFlags);
     }
@@ -171,10 +171,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->processorCount = (uint32_t)sysconf(_SC_NPROCESSORS_ONLN);
     if (desc.initFlags & RKInitFlagVerbose) {
         RKLog("Number of online CPUs = %ld (HT = 2)\n", radar->processorCount);
-		if (radar->processorCount <= 1) {
-			RKLog("Assume Number of CPUs = %d was not correctly reported. Override with 4.\n", radar->processorCount);
-			radar->processorCount = 4;
-		}
+        if (radar->processorCount <= 1) {
+            RKLog("Assume Number of CPUs = %d was not correctly reported. Override with 4.\n", radar->processorCount);
+            radar->processorCount = 4;
+        }
     }
 
     // Set some non-zero variables
@@ -433,7 +433,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRayBufferInitialized;
     }
 
-	// Controls
+    // Controls
     if (radar->desc.controlCapacity) {
         radar->state |= RKRadarStateControlsAllocating;
         bytes = radar->desc.controlCapacity * sizeof(RKControl);
@@ -471,7 +471,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->state |= RKRadarStateFileManagerInitialized;
 
     // Signal processor marries pulse and position data, process for moment, etc.
-	RKName tmpName;
+    RKName tmpName;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Clocks
         if (radar->desc.pulseSmoothFactor > 0) {
@@ -589,9 +589,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Total memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",
-			  rkGlobalParameters.showColor ? "\033[4m" : "",
+              rkGlobalParameters.showColor ? "\033[4m" : "",
               RKIntegerToCommaStyleString(radar->memoryUsage),
-			  rkGlobalParameters.showColor ? "\033[24m" : "",
+              rkGlobalParameters.showColor ? "\033[24m" : "",
               RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 
@@ -700,7 +700,7 @@ RKRadar *RKInitAsRelay(void) {
 //     RKResultSuccess if no errors
 //
 int RKFree(RKRadar *radar) {
-	int k = radar->desc.initFlags & RKInitFlagVerbose;
+    int k = radar->desc.initFlags & RKInitFlagVerbose;
     if (radar->active) {
         RKStop(radar);
     }
@@ -782,9 +782,9 @@ int RKFree(RKRadar *radar) {
         free(radar->controls);
     }
     free(radar);
-	if (k) {
-		RKLog("Done.");
-	}
+    if (k) {
+        RKLog("Done.");
+    }
     return RKResultSuccess;
 }
 
@@ -939,18 +939,18 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-			r = RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
-											filter,
-											waveform->filterAnchors[k][j],
-											k,
-											j);
-			if (r != RKResultNoError) {
-				return RKResultFailedToSetFilter;
-			}
+            r = RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
+                                            filter,
+                                            waveform->filterAnchors[k][j],
+                                            k,
+                                            j);
+            if (r != RKResultNoError) {
+                return RKResultFailedToSetFilter;
+            }
         }
     }
-	// Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
-	RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
+    // Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
+    RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
     if (waveform->filterCounts[0] == 1) {
         RKAddConfig(radar,
                     RKConfigKeyWaveform, waveform->name,
@@ -980,44 +980,44 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 }
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
-	if (radar->momentEngine == NULL) {
-		return RKResultNoMomentEngine;
-	}
-	radar->momentEngine->processor = &RKMultiLag;
-	radar->momentEngine->processorLagCount = RKLagCount;
-	if (lagChoice < 0 || lagChoice > 4) {
-		RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
-		return RKResultInvalidMomentParameters;
-	}
-	radar->momentEngine->userLagChoice = lagChoice;
-	return RKResultNoError;
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKMultiLag;
+    radar->momentEngine->processorLagCount = RKLagCount;
+    if (lagChoice < 0 || lagChoice > 4) {
+        RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
+        return RKResultInvalidMomentParameters;
+    }
+    radar->momentEngine->userLagChoice = lagChoice;
+    return RKResultNoError;
 }
 
 int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
-	if (radar->momentEngine == NULL) {
-		return RKResultNoMomentEngine;
-	}
-	radar->momentEngine->processor = &RKPulsePair;
-	radar->momentEngine->processorLagCount = 3;
-	return RKResultNoError;
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKPulsePair;
+    radar->momentEngine->processorLagCount = 3;
+    return RKResultNoError;
 }
 
 int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
-	if (radar->momentEngine == NULL) {
-		return RKResultNoMomentEngine;
-	}
-	radar->momentEngine->processor = &RKPulsePairHop;
-	radar->momentEngine->processorLagCount = 2;
-	return RKResultNoError;
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKPulsePairHop;
+    radar->momentEngine->processorLagCount = 2;
+    return RKResultNoError;
 }
 
 int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
-	if (radar->momentEngine == NULL) {
-		return RKResultNoMomentEngine;
-	}
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
     radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
-	radar->momentEngine->processorLagCount = 2;
-	return RKResultNoError;
+    radar->momentEngine->processorLagCount = 2;
+    return RKResultNoError;
 }
 
 //
@@ -1038,28 +1038,28 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-	RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
-	if (radar->desc.initFlags & RKInitFlagVerbose) {
-		RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
-	}
-	RKFilterAnchor anchor = RKFilterAnchorDefault;
-	RKAddConfig(radar,
-				RKConfigKeyWaveform, "P01",
-				RKConfigKeyFilterCount, 1,
-				RKConfigKeyFilterAnchor, &anchor,
-				RKConfigKeyNull);
-	return RKResultNoError;
+    RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+    }
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    RKAddConfig(radar,
+                RKConfigKeyWaveform, "P01",
+                RKConfigKeyFilterCount, 1,
+                RKConfigKeyFilterAnchor, &anchor,
+                RKConfigKeyNull);
+    return RKResultNoError;
 }
 
 int RKSetWaveformTo121(RKRadar *radar) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-	RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
-	if (radar->desc.initFlags & RKInitFlagVerbose) {
-		RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
-	}
-	return RKResultNoError;
+    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+    }
+    return RKResultNoError;
 }
 
 int RKSetProcessingCoreCounts(RKRadar *radar,
@@ -1117,11 +1117,11 @@ void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const cha
 }
 
 void RKClearControls(RKRadar *radar) {
-	radar->controlIndex = 0;
+    radar->controlIndex = 0;
 }
 
 void RKConcludeControls(RKRadar *radar) {
-	radar->controlSetIndex++;
+    radar->controlSetIndex++;
 }
 
 #pragma mark - Developer Access
@@ -1155,34 +1155,34 @@ int RKGoLive(RKRadar *radar) {
     radar->active = true;
 
     // Offset the pre-allocated memory
-	radar->memoryUsage -= radar->fileManager->memoryUsage;
-	radar->memoryUsage -= radar->hostMonitor->memoryUsage;
+    radar->memoryUsage -= radar->fileManager->memoryUsage;
+    radar->memoryUsage -= radar->hostMonitor->memoryUsage;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
         radar->memoryUsage -= radar->pulseRingFilterEngine->memoryUsage;
         radar->memoryUsage -= radar->positionEngine->memoryUsage;
         radar->memoryUsage -= radar->momentEngine->memoryUsage;
         radar->memoryUsage -= radar->healthEngine->memoryUsage;
-	} else {
-		radar->memoryUsage -= radar->radarRelay->memoryUsage;
-	}
+    } else {
+        radar->memoryUsage -= radar->radarRelay->memoryUsage;
+    }
     radar->memoryUsage -= radar->healthLogger->memoryUsage;
     radar->memoryUsage -= radar->dataRecorder->memoryUsage;
     radar->memoryUsage -= radar->sweepEngine->memoryUsage;
 
     // Start the engines
-	RKFileManagerStart(radar->fileManager);
-	RKHostMonitorStart(radar->hostMonitor);
+    RKFileManagerStart(radar->fileManager);
+    RKHostMonitorStart(radar->hostMonitor);
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Main thread uses 1 CPU. Start the others from 1.
         uint8_t o = 1;
         if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
             RKLog("Info. Not enough physical cores (%d / %d). Core counts will be adjusted.\n",
-				  radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
+                  radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
             RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
             RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, MAX(1, radar->processorCount / 2));
             RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2 - 1));
-			RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
+            RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
         }
         // For now, pulse compression and ring filter engines both share the same cores
         RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
@@ -1193,8 +1193,8 @@ int RKGoLive(RKRadar *radar) {
         RKPositionEngineStart(radar->positionEngine);
         RKMomentEngineStart(radar->momentEngine);
         RKHealthEngineStart(radar->healthEngine);
-		// After all the engines started, we monitor them. This engine should be stopped before stopping the engines.
-		radar->systemInspector = RKSystemInspector(radar);
+        // After all the engines started, we monitor them. This engine should be stopped before stopping the engines.
+        radar->systemInspector = RKSystemInspector(radar);
     } else {
         RKRadarRelayStart(radar->radarRelay);
     }
@@ -1203,18 +1203,18 @@ int RKGoLive(RKRadar *radar) {
     RKSweepEngineStart(radar->sweepEngine);
 
     // Get the post-allocated memory
-	radar->memoryUsage += radar->fileManager->memoryUsage;
-	radar->memoryUsage += radar->hostMonitor->memoryUsage;
+    radar->memoryUsage += radar->fileManager->memoryUsage;
+    radar->memoryUsage += radar->hostMonitor->memoryUsage;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
         radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
         radar->memoryUsage += radar->positionEngine->memoryUsage;
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->memoryUsage += radar->healthEngine->memoryUsage;
-		radar->memoryUsage += radar->systemInspector->memoryUsage;
-	} else {
-		radar->memoryUsage += radar->radarRelay->memoryUsage;
-	}
+        radar->memoryUsage += radar->systemInspector->memoryUsage;
+    } else {
+        radar->memoryUsage += radar->radarRelay->memoryUsage;
+    }
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
@@ -1253,14 +1253,14 @@ int RKGoLive(RKRadar *radar) {
         }
         if (radar->pedestalFree == NULL || radar->pedestalExec == NULL) {
             RKLog("Error. Pedestal incomplete.");
-			RKStop(radar);
-			return RKResultIncompletePedestal;
+            RKStop(radar);
+            return RKResultIncompletePedestal;
         }
         radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
-		if (radar->pedestal == NULL) {
-			RKStop(radar);
-			return RKResultFailedToStartPedestal;
-		}
+        if (radar->pedestal == NULL) {
+            RKStop(radar);
+            return RKResultFailedToStartPedestal;
+        }
         radar->state |= RKRadarStatePedestalInitialized;
     }
 
@@ -1271,14 +1271,14 @@ int RKGoLive(RKRadar *radar) {
         }
         if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
             RKLog("Error. Transceiver incomplete.");
-			RKStop(radar);
-			return RKResultIncompleteTransceiver;
+            RKStop(radar);
+            return RKResultIncompleteTransceiver;
         }
         radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
-		if (radar->transceiver == NULL) {
-			RKStop(radar);
-			return RKResultFailedToStartTransceiver;
-		}
+        if (radar->transceiver == NULL) {
+            RKStop(radar);
+            return RKResultFailedToStartTransceiver;
+        }
         radar->state |= RKRadarStateTransceiverInitialized;
     }
 
@@ -1288,14 +1288,14 @@ int RKGoLive(RKRadar *radar) {
         radar->masterControllerExec = radar->transceiverExec;
     }
     
-	// Show the udpated memory usage
-	if (radar->desc.initFlags & RKInitFlagVerbose) {
-		RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
-			  rkGlobalParameters.showColor ? "\033[4m" : "",
-			  RKIntegerToCommaStyleString(radar->memoryUsage),
-			  rkGlobalParameters.showColor ? "\033[24m" : "",
-			  RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
-	}
+    // Show the udpated memory usage
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
+              rkGlobalParameters.showColor ? "\033[4m" : "",
+              RKIntegerToCommaStyleString(radar->memoryUsage),
+              rkGlobalParameters.showColor ? "\033[24m" : "",
+              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
+    }
 
     radar->state |= RKRadarStateLive;
     return RKResultSuccess;
@@ -1327,73 +1327,73 @@ int RKWaitWhileActive(RKRadar *radar) {
     bool anyCritical;
 
     RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
-	char FFTPlanUsage[RKNameLength];
+    char FFTPlanUsage[RKNameLength];
     char criticalKey[RKNameLength];
-	char criticalValue[RKNameLength];
+    char criticalValue[RKNameLength];
     int criticalCount = 0;
     
     RKConfig *config;
     RKHealth *health;
-	RKPosition *positionT0, *positionT1;
+    RKPosition *positionT0, *positionT1;
 
-	positionT1 = RKGetLatestPosition(radar);
+    positionT1 = RKGetLatestPosition(radar);
 
     while (radar->active) {
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             if (s++ == 3) {
                 s = 0;
                 // General Health
-				transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
-				pedestalOkay = positionIndex == radar->positionIndex ? false : true;
-				healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
-				networkOkay = radar->hostMonitor->allReachable ? true : false;
-				networkEnum =
-				radar->hostMonitor->allReachable ? RKStatusEnumNormal :
-				(radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
-				 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
+                transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
+                pedestalOkay = positionIndex == radar->positionIndex ? false : true;
+                healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+                networkOkay = radar->hostMonitor->allReachable ? true : false;
+                networkEnum =
+                radar->hostMonitor->allReachable ? RKStatusEnumNormal :
+                (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
+                 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
 
-				// Transceiver health
-				health = RKGetLatestHealthOfNode(radar, RKHealthNodeTransceiver);
-				if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-					RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-					transceiverEnum = RKStatusEnumStandby;
-				} else {
-					transceiverEnum = RKStatusEnumNormal;
-				}
+                // Transceiver health
+                health = RKGetLatestHealthOfNode(radar, RKHealthNodeTransceiver);
+                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                    transceiverEnum = RKStatusEnumStandby;
+                } else {
+                    transceiverEnum = RKStatusEnumNormal;
+                }
 
-				// Position active / standby
-				positionT0 = RKGetLatestPosition(radar);
-				if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
-					RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
-					pedestalEnum = RKStatusEnumActive;
-				} else {
-					pedestalEnum = RKStatusEnumStandby;
-				}
-				positionT1 = positionT0;
+                // Position active / standby
+                positionT0 = RKGetLatestPosition(radar);
+                if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
+                    RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
+                    pedestalEnum = RKStatusEnumActive;
+                } else {
+                    pedestalEnum = RKStatusEnumStandby;
+                }
+                positionT1 = positionT0;
 
-				// Tweeta health
-				health = RKGetLatestHealthOfNode(radar, RKHealthNodeTweeta);
-				if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-					RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-					healthEnum = RKStatusEnumStandby;
-				} else {
-					healthEnum = RKStatusEnumNormal;
-				}
+                // Tweeta health
+                health = RKGetLatestHealthOfNode(radar, RKHealthNodeTweeta);
+                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                    healthEnum = RKStatusEnumStandby;
+                } else {
+                    healthEnum = RKStatusEnumNormal;
+                }
 
-				// Report a health status
-				health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
-				k = sprintf(FFTPlanUsage, "{");
-				for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
-					k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
-								 radar->pulseCompressionEngine->planSizes[j],
-								 radar->pulseCompressionEngine->planUseCount[j]);
-				}
-				k += sprintf(FFTPlanUsage + k, "}");
-				if (k > RKNameLength * 3 / 4) {
-					RKLog("Warning. Too little head room in FFTPlanUsage.\n");
-				}
-				config = RKGetLatestConfig(radar);
-				sprintf(health->string, "{"
+                // Report a health status
+                health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
+                k = sprintf(FFTPlanUsage, "{");
+                for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
+                    k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
+                                 radar->pulseCompressionEngine->planSizes[j],
+                                 radar->pulseCompressionEngine->planUseCount[j]);
+                }
+                k += sprintf(FFTPlanUsage + k, "}");
+                if (k > RKNameLength * 3 / 4) {
+                    RKLog("Warning. Too little head room in FFTPlanUsage.\n");
+                }
+                config = RKGetLatestConfig(radar);
+                sprintf(health->string, "{"
                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
@@ -1423,7 +1423,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                     if (criticalCount++ >= 2) {
                         criticalCount = 0;
                         RKLog("Info. Suspending ...\n");
-						radar->masterControllerExec(radar->masterController, "z", NULL);
+                        radar->masterControllerExec(radar->masterController, "z", NULL);
                     }
                 } else {
                     criticalCount = 0;
@@ -1433,10 +1433,10 @@ int RKWaitWhileActive(RKRadar *radar) {
                 positionIndex = radar->positionIndex;
                 tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
             }
-			// Check to make sure if the raddar hasn't been suspended from the critical condition evaluation
-			if (!radar->active) {
-				break;
-			}
+            // Check to make sure if the raddar hasn't been suspended from the critical condition evaluation
+            if (!radar->active) {
+                break;
+            }
         }
         usleep(100000);
     }
@@ -1451,13 +1451,13 @@ int RKWaitWhileActive(RKRadar *radar) {
 //     Always RKResultSuccess
 //
 int RKStop(RKRadar *radar) {
-	pthread_mutex_lock(&radar->mutex);
+    pthread_mutex_lock(&radar->mutex);
     if (radar->active == false) {
-		pthread_mutex_unlock(&radar->mutex);
+        pthread_mutex_unlock(&radar->mutex);
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	radar->active = false;
-	pthread_mutex_unlock(&radar->mutex);
+    radar->active = false;
+    pthread_mutex_unlock(&radar->mutex);
     if (radar->systemInspector) {
         RKSimpleEngineFree(radar->systemInspector);
     }
@@ -1507,10 +1507,10 @@ int RKStop(RKRadar *radar) {
         RKHealthEngineStop(radar->healthEngine);
         radar->state ^= RKRadarStateHealthEngineInitialized;
     }
-	if (radar->state & RKRadarStateHealthLoggerInitialized) {
-		RKHealthLoggerStop(radar->healthLogger);
-		radar->state ^= RKRadarStateHealthLoggerInitialized;
-	}
+    if (radar->state & RKRadarStateHealthLoggerInitialized) {
+        RKHealthLoggerStop(radar->healthLogger);
+        radar->state ^= RKRadarStateHealthLoggerInitialized;
+    }
     if (radar->state & RKRadarStateRadarRelayInitialized) {
         RKRadarRelayStop(radar->radarRelay);
         radar->state ^= RKRadarStateRadarRelayInitialized;
@@ -1530,23 +1530,65 @@ int RKStop(RKRadar *radar) {
 }
 
 int RKSoftRestart(RKRadar *radar) {
-	RKLog("Stopping internal engines ...\n");
-	// Stop the inspector
+    int i, k;
+    size_t bytes;
+    RKLog("Stopping internal engines ...\n");
+    // Stop the inspector
     RKSimpleEngineFree(radar->systemInspector);
-	// Stop all data acquisition and DSP-related engines
+    // Stop all data acquisition and DSP-related engines
+    RKHealthLoggerStop(radar->healthLogger);
+    RKDataRecorderStop(radar->dataRecorder);
     RKMomentEngineStop(radar->momentEngine);
-	RKPositionEngineStop(radar->positionEngine);
-	RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
+    RKPositionEngineStop(radar->positionEngine);
+    RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
     RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+    
+    // Clear out all the buffers
+    bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
+    memset(radar->status, 0, bytes);
+    for (i = 0; i < radar->desc.statusBufferDepth; i++) {
+        radar->status[i].i = -(uint64_t)radar->desc.statusBufferDepth + i;
+    }
+    bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
+    memset(radar->configs, 0, bytes);
+    for (i = 0; i < radar->desc.configBufferDepth; i++) {
+        radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i;
+    }
+    bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+    memset(radar->healths, 0, bytes);
+    for (i = 0; i < radar->desc.healthBufferDepth; i++) {
+        radar->healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
+    }
+    for (k = 0; k < radar->desc.healthNodeCount; k++) {
+        memset(radar->healthNodes[k].healths, 0, bytes);
+        for (i = 0; i < radar->desc.healthBufferDepth; i++) {
+            radar->healthNodes[k].healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
+        }
+    }
+    bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
+    for (i = 0; i < radar->desc.positionBufferDepth; i++) {
+        radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
+    }
     RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
     RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
-	RKLog("Starting internal engines ...\n");
-	// Start them again
+    
+    // To do:
+    // config index... copy to slot 0
+    //
+    radar->statusIndex = 0;
+    radar->healthIndex = 0;
+    radar->positionIndex = 0;
+    radar->pulseIndex = 0;
+    radar->rayIndex = 0;
+    RKLog("Starting internal engines ...\n");
+    // Start them again
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
-	RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
-	RKPositionEngineStart(radar->positionEngine);
+    RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
+    RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
-	// Start the inspector
+    RKDataRecorderStart(radar->dataRecorder);
+    RKHealthLoggerStart(radar->healthLogger);
+    // Start the inspector
     radar->systemInspector = RKSystemInspector(radar);
     return RKResultSuccess;
 }
@@ -1801,7 +1843,7 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
 //     None
 //
 void RKMeasureNoise(RKRadar *radar) {
-	int k = 0;
+    int k = 0;
     RKFloat noise[2];
     RKFloat noiseAverage[2] = {0.0f, 0.0f};
     uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
@@ -1810,12 +1852,12 @@ void RKMeasureNoise(RKRadar *radar) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
-	// Avoid data before this offset to exclude the transcient effect right after transmit pulse
-	int origin = 0;
-	for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
-		origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
-	}
-	origin *= 2;
+    // Avoid data before this offset to exclude the transcient effect right after transmit pulse
+    int origin = 0;
+    for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
+        origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
+    }
+    origin *= 2;
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
@@ -1825,12 +1867,12 @@ void RKMeasureNoise(RKRadar *radar) {
     }
     noiseAverage[0] /= (RKFloat)k;
     noiseAverage[1] /= (RKFloat)k;
-	if (!isfinite(noiseAverage[0])) {
-		noiseAverage[0] = 0.001f;
-	}
-	if (!isfinite(noiseAverage[1])) {
-		noiseAverage[1] = 0.001f;
-	}
+    if (!isfinite(noiseAverage[0])) {
+        noiseAverage[0] = 0.001f;
+    }
+    if (!isfinite(noiseAverage[1])) {
+        noiseAverage[1] = 0.001f;
+    }
     RKAddConfig(radar, RKConfigKeyNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }
 
@@ -1953,8 +1995,8 @@ RKHealth *RKGetLatestHealth(RKRadar *radar) {
 }
 
 RKHealth *RKGetLatestHealthOfNode(RKRadar *radar, const RKHealthNode node) {
-	uint32_t index = RKPreviousModuloS(radar->healthNodes[node].index, radar->desc.healthBufferDepth);
-	return &radar->healthNodes[node].healths[index];
+    uint32_t index = RKPreviousModuloS(radar->healthNodes[node].index, radar->desc.healthBufferDepth);
+    return &radar->healthNodes[node].healths[index];
 }
 
 int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
@@ -1994,13 +2036,13 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
         RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
     }
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
-	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
-		struct timeval t;
-		gettimeofday(&t, NULL);
+    if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
+        struct timeval t;
+        gettimeofday(&t, NULL);
         printf("\033[38;5;222mposition\033[0m @ %+14.4f %+14.4f            x0 = %10.4f  u0 = %10.0f  dx/du = %.3e  k = %u\n", position->timeDouble,
-			   position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay),
-			   radar->positionClock->x0, radar->positionClock->u0, radar->positionClock->dx, radar->positionClock->index);
-	}
+               position->timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->positionClock->initDay),
+               radar->positionClock->x0, radar->positionClock->u0, radar->positionClock->dx, radar->positionClock->index);
+    }
     position->flag |= RKPositionFlagReady;
     radar->positionIndex = RKNextModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
     return;
@@ -2012,10 +2054,10 @@ RKPosition *RKGetLatestPosition(RKRadar *radar) {
 }
 
 float RKGetPositionUpdateRate(RKRadar *radar) {
-	uint32_t n = radar->desc.positionBufferDepth / 2;
-	uint32_t i = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
-	uint32_t o = RKPreviousNModuloS(radar->positionIndex, n, radar->desc.positionBufferDepth);
-	return (float)n / (radar->positions[i].timeDouble - radar->positions[o].timeDouble);
+    uint32_t n = radar->desc.positionBufferDepth / 2;
+    uint32_t i = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
+    uint32_t o = RKPreviousNModuloS(radar->positionIndex, n, radar->desc.positionBufferDepth);
+    return (float)n / (radar->positions[i].timeDouble - radar->positions[o].timeDouble);
 }
 
 #pragma mark - Pulses
@@ -2055,13 +2097,13 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
               RKIntegerToCommaStyleString(pulse->header.gateCount), RKIntegerToCommaStyleString(pulse->header.capacity));
         pulse->header.gateCount = pulse->header.capacity;
     }
-	if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (pulse->header.i % 100 == 0)) {
-		struct timeval t;
-		gettimeofday(&t, NULL);
-		printf("           %+14.4f %+14.4f @ \033[38;5;118mpulse\033[0m    x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", pulse->header.timeDouble,
-			   pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay),
-			   radar->pulseClock->x0, radar->pulseClock->u0, radar->pulseClock->dx);
-	}
+    if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (pulse->header.i % 100 == 0)) {
+        struct timeval t;
+        gettimeofday(&t, NULL);
+        printf("           %+14.4f %+14.4f @ \033[38;5;118mpulse\033[0m    x0 = %10.4f  u0 = %10.0f  dx/du = %.3e\n", pulse->header.timeDouble,
+               pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay),
+               radar->pulseClock->x0, radar->pulseClock->u0, radar->pulseClock->dx);
+    }
     pulse->header.s = RKPulseStatusHasIQData;
     return;
 }
