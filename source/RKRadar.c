@@ -1532,13 +1532,18 @@ int RKStop(RKRadar *radar) {
 int RKSoftRestart(RKRadar *radar) {
     int i, k;
     size_t bytes;
+    if (!(radar->state & RKRadarStateLive)) {
+        RKLog("Error. Radar not live. Unable to restart.\n");
+        return RKResultRadarNotLive;
+    }
     RKLog("Stopping internal engines ...\n");
+    radar->state ^= RKRadarStateLive;
     // Stop the inspector
     RKSimpleEngineFree(radar->systemInspector);
     // Stop all data acquisition and DSP-related engines
-    //radar->transceiverExec(radar->transceiver, "disconnect", NULL);
     RKHealthLoggerStop(radar->healthLogger);
     RKDataRecorderStop(radar->dataRecorder);
+    RKHealthEngineStop(radar->healthEngine);
     RKMomentEngineStop(radar->momentEngine);
     RKPositionEngineStop(radar->positionEngine);
     RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
@@ -1583,16 +1588,21 @@ int RKSoftRestart(RKRadar *radar) {
     radar->positionIndex = 0;
     radar->pulseIndex = 0;
     radar->rayIndex = 0;
+    for (k = 0; k < radar->desc.healthNodeCount; k++) {
+        radar->healthNodes[k].index = 0;
+    }
     RKLog("Starting internal engines ...\n");
     // Start them again
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
     RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
+    RKHealthEngineStart(radar->healthEngine);
     RKDataRecorderStart(radar->dataRecorder);
     RKHealthLoggerStart(radar->healthLogger);
     // Start the inspector
     radar->systemInspector = RKSystemInspector(radar);
+    radar->state ^= RKRadarStateLive;
     return RKResultSuccess;
 }
 
