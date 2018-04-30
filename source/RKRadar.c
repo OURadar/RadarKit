@@ -1537,9 +1537,12 @@ int RKSoftRestart(RKRadar *radar) {
         return RKResultRadarNotLive;
     }
     RKLog("Stopping internal engines ...\n");
+
     radar->state ^= RKRadarStateLive;
+
     // Stop the inspector
     RKSimpleEngineFree(radar->systemInspector);
+
     // Stop all data acquisition and DSP-related engines
     RKHealthLoggerStop(radar->healthLogger);
     RKDataRecorderStop(radar->dataRecorder);
@@ -1548,7 +1551,17 @@ int RKSoftRestart(RKRadar *radar) {
     RKPositionEngineStop(radar->positionEngine);
     RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
     RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
-    
+
+    // Reset all major indices
+    radar->statusIndex = 0;
+    radar->healthIndex = 0;
+    radar->positionIndex = 0;
+    radar->pulseIndex = 0;
+    radar->rayIndex = 0;
+    for (k = 0; k < radar->desc.healthNodeCount; k++) {
+        radar->healthNodes[k].index = 0;
+    }
+
     // Clear out all the buffers
     bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
     memset(radar->status, 0, bytes);
@@ -1577,21 +1590,16 @@ int RKSoftRestart(RKRadar *radar) {
     }
     RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
     RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
-    
+
+    sleep(4);
+
     // To do:
     // config index... copy to slot 0
-    // waveform restore
+    // waveform restore?
     // set waveform to pulse compressor
     //
-    radar->statusIndex = 0;
-    radar->healthIndex = 0;
-    radar->positionIndex = 0;
-    radar->pulseIndex = 0;
-    radar->rayIndex = 0;
-    for (k = 0; k < radar->desc.healthNodeCount; k++) {
-        radar->healthNodes[k].index = 0;
-    }
-    RKLog("Starting internal engines ...\n");
+    RKLog("Starting internal engines ... %d / %d / %d\n", radar->pulseIndex, radar->rayIndex, radar->healthIndex);
+
     // Start them again
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
     RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
@@ -1600,9 +1608,21 @@ int RKSoftRestart(RKRadar *radar) {
     RKHealthEngineStart(radar->healthEngine);
     RKDataRecorderStart(radar->dataRecorder);
     RKHealthLoggerStart(radar->healthLogger);
+
     // Start the inspector
     radar->systemInspector = RKSystemInspector(radar);
+
+    // Show the udpated memory usage
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
+              rkGlobalParameters.showColor ? "\033[4m" : "",
+              RKIntegerToCommaStyleString(radar->memoryUsage),
+              rkGlobalParameters.showColor ? "\033[24m" : "",
+              RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
+    }
+
     radar->state ^= RKRadarStateLive;
+
     return RKResultSuccess;
 }
 

@@ -139,8 +139,6 @@ int socketCommandHandler(RKOperator *O) {
                             RKCommandCenterSkipToCurrent(engine, user->radar);
                             
                             user->streams = newStream;
-                            user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-                            user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
                             pthread_mutex_unlock(&user->mutex);
                             break;
                         default:
@@ -1149,19 +1147,22 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
         if (user->radar == radar && radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            RKLog("%s O%d healthIndex = %d  tic = %d\n", engine->name, i, radar->healthIndex, user->radar->healthEngine->tic);
             while (user->radar->pulseCompressionEngine->tic <= 2 * radar->pulseCompressionEngine->coreCount ||
                    user->radar->momentEngine->tic <= 2 * radar->momentEngine->coreCount ||
                    user->radar->healthEngine->tic <= 2) {
                 usleep(50000);
             }
-            RKLog("%s tics = %d / %d / %d\n", engine->name,
-                  user->radar->pulseCompressionEngine->tic,
-                  user->radar->momentEngine->tic,
-                  user->radar->healthEngine->tic);
-            user->pulseIndex  = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
-            user->rayIndex    = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
-            user->healthIndex = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+            if (engine->verbose > 1) {
+                RKLog("%s tics = %d / %d / %d\n", engine->name,
+                      user->radar->pulseCompressionEngine->tic,
+                      user->radar->momentEngine->tic,
+                      user->radar->healthEngine->tic);
+            }
+            user->pulseIndex      = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
+            user->rayIndex        = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
+            user->healthIndex     = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+            user->rayStatusIndex  = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+            user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
         }
     }
 }
