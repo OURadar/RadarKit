@@ -1536,6 +1536,7 @@ int RKSoftRestart(RKRadar *radar) {
     // Stop the inspector
     RKSimpleEngineFree(radar->systemInspector);
     // Stop all data acquisition and DSP-related engines
+    //radar->transceiverExec(radar->transceiver, "disconnect", NULL);
     RKHealthLoggerStop(radar->healthLogger);
     RKDataRecorderStop(radar->dataRecorder);
     RKMomentEngineStop(radar->momentEngine);
@@ -1574,6 +1575,8 @@ int RKSoftRestart(RKRadar *radar) {
     
     // To do:
     // config index... copy to slot 0
+    // waveform restore
+    // set waveform to pulse compressor
     //
     radar->statusIndex = 0;
     radar->healthIndex = 0;
@@ -1893,13 +1896,15 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 //
 RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
-    status->i += radar->desc.statusBufferDepth;
     if (status->flag != RKStatusFlagVacant) {
         RKLog("Error. radar->status[%d] should be vacant.\n", radar->statusIndex);
         status->flag = RKStatusFlagVacant;
     }
-    radar->statusIndex = RKNextModuloS(radar->statusIndex, radar->desc.statusBufferDepth);
-    radar->status[radar->statusIndex].flag = RKStatusFlagVacant;
+    if (radar->state & RKRadarStateLive) {
+        status->i += radar->desc.statusBufferDepth;
+        radar->statusIndex = RKNextModuloS(radar->statusIndex, radar->desc.statusBufferDepth);
+        radar->status[radar->statusIndex].flag = RKStatusFlagVacant;
+    }
     return status;
 }
 
@@ -1975,11 +1980,18 @@ RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     radar->healthNodes[node].active = true;
     uint32_t index = radar->healthNodes[node].index;
     RKHealth *health = &radar->healthNodes[node].healths[index];
-    health->i += radar->desc.healthBufferDepth;
-    index = RKNextModuloS(index, radar->desc.healthBufferDepth);
-    radar->healthNodes[node].healths[index].flag = RKHealthFlagVacant;
-    radar->healthNodes[node].healths[index].string[0] = '\0';
-    radar->healthNodes[node].index = index;
+//    health->i += radar->desc.healthBufferDepth;
+//    index = RKNextModuloS(index, radar->desc.healthBufferDepth);
+//    radar->healthNodes[node].healths[index].flag = RKHealthFlagVacant;
+//    radar->healthNodes[node].healths[index].string[0] = '\0';
+//    radar->healthNodes[node].index = index;
+    if (radar->state & RKRadarStateLive) {
+        health->i += radar->desc.healthBufferDepth;
+        index = RKNextModuloS(index, radar->desc.healthBufferDepth);
+        radar->healthNodes[node].healths[index].flag = RKHealthFlagVacant;
+        radar->healthNodes[node].healths[index].string[0] = '\0';
+        radar->healthNodes[node].index = index;
+    }
     return health;
 }
 
@@ -2026,8 +2038,10 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
         return NULL;
     }
     RKPosition *position = &radar->positions[radar->positionIndex];
-    position->i += radar->desc.positionBufferDepth;
     position->flag = RKPositionFlagVacant;
+    if (radar->state & RKRadarStateLive) {
+        position->i += radar->desc.positionBufferDepth;
+    }
     return position;
 }
 
@@ -2076,12 +2090,14 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     }
     RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
     pulse->header.s = RKPulseStatusVacant;
-    pulse->header.i += radar->desc.pulseBufferDepth;
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
     pulse->header.configIndex = radar->configIndex;
-    radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
+    if (radar->state & RKRadarStateLive) {
+        pulse->header.i += radar->desc.pulseBufferDepth;
+        radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
+    }
     return pulse;
 }
 
@@ -2141,12 +2157,14 @@ RKRay *RKGetVacantRay(RKRadar *radar) {
     }
     RKRay *ray = RKGetRay(radar->rays, radar->rayIndex);
     ray->header.s = RKRayStatusVacant;
-    ray->header.i += radar->desc.rayBufferDepth;
     ray->header.startTime.tv_sec = 0;
     ray->header.startTime.tv_usec = 0;
     ray->header.endTime.tv_sec = 0;
     ray->header.endTime.tv_usec = 0;
-    radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    if (radar->state & RKRadarStateLive) {
+        ray->header.i += radar->desc.rayBufferDepth;
+        radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    }
     return ray;
 }
 
