@@ -132,12 +132,17 @@ int socketCommandHandler(RKOperator *O) {
                             newStream = user->streams;
                             user->streams = RKStreamNull;
                             user->streamsInProgress = RKStreamNull;
-
                             RKExecuteCommand(user->radar, commandString, string);
+                            pthread_mutex_unlock(&user->mutex);
 
+                            uint64_t tic = user->tic;
+                            do {
+                                usleep(100000);
+                            } while (tic == user->tic);
+
+                            pthread_mutex_lock(&user->mutex);
                             RKLog("%s %s Fast forwarding ...", engine->name, O->name);
                             RKCommandCenterSkipToCurrent(engine, user->radar);
-                            
                             user->streams = newStream;
                             pthread_mutex_unlock(&user->mutex);
                             break;
@@ -978,6 +983,8 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
+    user->tic++;
+
     pthread_mutex_unlock(&user->mutex);
 
     // Re-evaluate td = time - user->timeLastOut; send a heart beat if nothing has been sent
@@ -1144,26 +1151,31 @@ void RKCommandCenterStop(RKCommandCenter *center) {
 
 void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     int i;
+    if (!(radar->desc.initFlags & RKInitFlagSignalProcessor)) {
+        RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
+        return;
+    }
+    while (radar->pulseCompressionEngine->tic <= 2 * radar->pulseCompressionEngine->coreCount ||
+           radar->momentEngine->tic <= 2 * radar->momentEngine->coreCount ||
+           radar->healthEngine->tic <= 2 ||
+           radar->sweepEngine->tic <= 2) {
+        usleep(50000);
+    }
+    if (engine->verbose > 1) {
+        RKLog("%s tics = %d / %d / %d\n", engine->name,
+              radar->pulseCompressionEngine->tic,
+              radar->momentEngine->tic,
+              radar->healthEngine->tic);
+    }
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
-        if (user->radar == radar && radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            while (user->radar->pulseCompressionEngine->tic <= 2 * radar->pulseCompressionEngine->coreCount ||
-                   user->radar->momentEngine->tic <= 2 * radar->momentEngine->coreCount ||
-                   user->radar->healthEngine->tic <= 2 ||
-                   user->radar->sweepEngine->tic <= 2) {
-                usleep(50000);
-            }
-            if (engine->verbose > 1) {
-                RKLog("%s tics = %d / %d / %d\n", engine->name,
-                      user->radar->pulseCompressionEngine->tic,
-                      user->radar->momentEngine->tic,
-                      user->radar->healthEngine->tic);
-            }
-            user->pulseIndex      = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
-            user->rayIndex        = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
-            user->healthIndex     = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
-            user->rayStatusIndex  = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-            user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+        if (user->radar != radar) {
+            continue;
         }
+        user->pulseIndex      = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
+        user->rayIndex        = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
+        user->healthIndex     = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+        user->rayStatusIndex  = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
+        user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
     }
 }

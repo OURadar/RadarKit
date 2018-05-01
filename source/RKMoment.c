@@ -721,11 +721,11 @@ static void *pulseGatherer(void *_in) {
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
             RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   pulseIndex = %d vs %d\n",
                   engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
-            // Skip the ray source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
+            // Skip the ray: set source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
             i = j;
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->rayBufferDepth);
-                engine->momentSource[j].length = 0;
+                engine->momentSource[i].length = 0;
                 ray = RKGetRay(engine->rayBuffer, i);
             } while (!(ray->header.s & RKRayStatusReady));
         } else if (skipCounter > 0) {

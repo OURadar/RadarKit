@@ -1591,7 +1591,7 @@ int RKSoftRestart(RKRadar *radar) {
     RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
     RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 
-    i = 20;
+    i = 5;
     while (i > 0) {
         i--;
         usleep(100000);
