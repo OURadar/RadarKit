@@ -1149,7 +1149,8 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         if (user->radar == radar && radar->desc.initFlags & RKInitFlagSignalProcessor) {
             while (user->radar->pulseCompressionEngine->tic <= 2 * radar->pulseCompressionEngine->coreCount ||
                    user->radar->momentEngine->tic <= 2 * radar->momentEngine->coreCount ||
-                   user->radar->healthEngine->tic <= 2) {
+                   user->radar->healthEngine->tic <= 2 ||
+                   user->radar->sweepEngine->tic <= 2) {
                 usleep(50000);
             }
             if (engine->verbose > 1) {

@@ -1591,7 +1591,14 @@ int RKSoftRestart(RKRadar *radar) {
     RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
     RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 
-    sleep(4);
+    i = 20;
+    while (i > 0) {
+        i--;
+        usleep(100000);
+        RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
+        RKRay *ray = RKGetRay(radar->rays, radar->rayIndex);
+        printf("pulseIndex = %d / %x   rayIndex = %d / %x\n", radar->pulseIndex, pulse->header.s, radar->rayIndex, ray->header.s);
+    }
 
     // To do:
     // config index... copy to slot 0
@@ -2150,12 +2157,16 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
                pulse->header.timeDouble - ((double)t.tv_sec + 1.0e-6 * (double)t.tv_usec - radar->pulseClock->initDay),
                radar->pulseClock->x0, radar->pulseClock->u0, radar->pulseClock->dx);
     }
-    pulse->header.s = RKPulseStatusHasIQData;
+    if (radar->state & RKRadarStateLive) {
+        pulse->header.s = RKPulseStatusHasIQData;
+    }
     return;
 }
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
-    pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+    if (radar->state & RKRadarStateLive) {
+        pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+    }
 }
 
 RKPulse *RKGetLatestPulse(RKRadar *radar) {
@@ -2199,5 +2210,7 @@ RKRay *RKGetVacantRay(RKRadar *radar) {
 }
 
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
-    ray->header.s |= RKRayStatusReady;
+    if (radar->state & RKRadarStateLive) {
+        ray->header.s |= RKRayStatusReady;
+    }
 }
