@@ -87,7 +87,7 @@ struct rk_operator  {
     pthread_mutex_t  lock;                                 // Thread safety mutex of the attendant
 
     RKName           name;                                 // Operator name
-    char             ip[RKMaximumStringLength];            // Client's IP address
+    char             ip[48];                               // Client's IP address
 
     RKNetDelimiter   delimString;                          // Convenient delimiter for text response of commands
     RKNetDelimiter   delimTx;                              // Convenient delimiter for streaming

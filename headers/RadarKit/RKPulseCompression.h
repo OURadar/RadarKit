@@ -25,7 +25,7 @@ typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
 struct rk_pulse_compression_worker {
     RKPulseCompressionEngine   *parentEngine;
-    char                       semaphoreName[16];
+    char                       semaphoreName[32];
     int                        id;
     pthread_t                  tid;                                      // Thread ID
     uint32_t                   tic;                                      // Tic count

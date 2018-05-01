@@ -56,15 +56,19 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
     }
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {
         if (dir->d_type == DT_UNKNOWN && dir->d_name[0] != '.') {
-            sprintf(pathname, "%s/%s", path, dir->d_name);
+            //sprintf(pathname, "%s/%s", path, dir->d_name);
+            int r = sprintf(pathname, "%s/", path);
+            (void)strncpy(pathname + r, dir->d_name, RKMaximumPathLength - r - 1);
             lstat(pathname, &status);
             if ((type == DT_REG && S_ISREG(status.st_mode)) ||
                 (type == DT_DIR && S_ISDIR(status.st_mode))) {
-                snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
+                //snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
+                (void)strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
                 k++;
             }
         } else if (dir->d_type == type && dir->d_name[0] != '.') {
-            snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
+            //snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
+            (void)strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
             k++;
         }
     }
@@ -102,7 +106,7 @@ static bool isFolderEmpty(const char *path) {
 static void refreshFileList(RKFileRemover *me) {
     int j, k;
     struct stat fileStat;
-    char string[RKMaximumPathLength];
+    char string[RKMaximumStringLength];
 
     RKPathname *folders = (RKPathname *)me->folders;
     RKPathname *filenames = (RKPathname *)me->filenames;
@@ -303,7 +307,10 @@ static void *fileRemover(void *in) {
                 if (isFolderEmpty(path)) {
                     RKLog("%s %s Removing folder %s that is empty.\n", engine->name, name, path);
                     sprintf(command, "rm -rf %s", path);
-                    system(command);
+                    k = system(command);
+                    if (k) {
+                        RKLog("Error. system(%s) -> %d   errno = %d\n", command, k, errno);
+                    }
                 }
                 RKLog("%s %s New parentFolder = %s -> %s\n", engine->name, name, parentFolder, folders[indexedStats[me->index].folderId]);
                 strcpy(parentFolder, folders[indexedStats[me->index].folderId]);
@@ -393,11 +400,11 @@ static void *folderWatcher(void *in) {
         worker->parent = engine;
         worker->capacity = capacities[k];
         if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-            snprintf(worker->path, RKMaximumPathLength - 1, "%s/%s", engine->radarDescription->dataPath, folders[k]);
+            snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s/%s", engine->radarDescription->dataPath, folders[k]);
         } else if (strlen(engine->dataPath)) {
-            snprintf(worker->path, RKMaximumPathLength - 1, "%s/%s", engine->dataPath, folders[k]);
+            snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s/%s", engine->dataPath, folders[k]);
         } else {
-            snprintf(worker->path, RKMaximumPathLength - 1, "%s", folders[k]);
+            snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s", folders[k]);
         }
         worker->limit = engine->usagelimit * limits[k] / RKFileManagerTotalRatio;
 
@@ -413,12 +420,12 @@ static void *folderWatcher(void *in) {
     }
 
     // Log path has structure B
-    char string[RKMaximumPathLength];
-    char logPath[RKMaximumPathLength] = RKLogFolder;
+    char string[RKMaximumPathLength + 16];
+    char logPath[RKMaximumPathLength + 16] = RKLogFolder;
     if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-        snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->radarDescription->dataPath);
+        snprintf(logPath, RKMaximumPathLength + 15, "%s/" RKLogFolder, engine->radarDescription->dataPath);
     } else if (strlen(engine->dataPath)) {
-        snprintf(logPath, RKMaximumPathLength - 1, "%s/" RKLogFolder, engine->dataPath);
+        snprintf(logPath, RKMaximumPathLength + 15, "%s/" RKLogFolder, engine->dataPath);
     }
     
     if (engine->verbose) {
@@ -506,7 +513,7 @@ void RKFileManagerSetInputOutputBuffer(RKFileManager *engine, RKRadarDesc *desc)
 }
 
 void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
-    strncpy(engine->dataPath, path, RKMaximumPathLength - 1);
+    strncpy(engine->dataPath, path, RKMaximumFolderPathLength - 1);
 }
 
 void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age) {

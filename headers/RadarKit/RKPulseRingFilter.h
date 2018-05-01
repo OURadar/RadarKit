@@ -20,7 +20,7 @@ typedef struct rk_pulse_ring_filter_engine RKPulseRingFilterEngine;
 
 struct rk_pulse_ring_filter_worker {
     RKPulseRingFilterEngine    *parentEngine;
-    char                       semaphoreName[16];
+    char                       semaphoreName[32];
     int                        id;
     pthread_t                  tid;                                      // Thread ID
     uint32_t                   tic;                                      // Tic count

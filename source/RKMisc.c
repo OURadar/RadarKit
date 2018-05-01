@@ -335,7 +335,10 @@ void RKPreparePath(const char *filename) {
     if (dir == NULL) {
         char *cmd = (char *)malloc(1024);
         sprintf(cmd, "mkdir -p %s", path);
-        system(cmd);
+        int k = system(cmd);
+        if (k) {
+            fprintf(stderr, "Error in system() -> %d\n", k);
+        }
         free(cmd);
     } else {
         if (closedir(dir)) {

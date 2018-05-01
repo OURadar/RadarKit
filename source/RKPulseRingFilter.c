@@ -264,7 +264,7 @@ static void *pulseRingWatcher(void *_in) {
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];
-        snprintf(worker->semaphoreName, 16, "rk-cf-%03d", c);
+        snprintf(worker->semaphoreName, 32, "rk-cf-%03d", c);
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {

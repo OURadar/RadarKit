@@ -95,6 +95,7 @@
 #define RKOrangeColor                    "\033[38;5;214m"
 #define RKMaximumStringLength            4096
 #define RKMaximumPathLength              1024
+#define RKMaximumFolderPathLength        768
 #define RKNameLength                     256
 #define RKPulseHeaderPaddedSize          256                         // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize            128                         // Change this to higher number for post-AVX2 intrinsics
@@ -632,7 +633,7 @@ typedef struct rk_radar_desc {
     float            wavelength;                                     // Radar wavelength (m)
     char             name[RKNameLength];                             // Radar name
     char             filePrefix[RKNameLength];                       // Prefix of output files
-    char             dataPath[RKMaximumPathLength];                  // Root path for the data files
+    char             dataPath[RKMaximumFolderPathLength];            // Root path for the data files
 } RKRadarDesc;
 
 // A running configuration buffer

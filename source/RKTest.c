@@ -944,12 +944,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             if (strlen(transceiver->defaultWaveform) == 0) {
                 sprintf(transceiver->defaultWaveform, "s01");
             }
-            snprintf(transceiver->customCommand, RKNameLength - 1, "w %s" RKEOL, transceiver->defaultWaveform);
+            sprintf(transceiver->customCommand, "w %s" RKEOL, transceiver->defaultWaveform);
             radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
             if (strlen(transceiver->defaultPedestalMode) == 0) {
                 sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
             }
-            snprintf(transceiver->customCommand, RKNameLength - 1, "p %s" RKEOL, transceiver->defaultPedestalMode);
+            sprintf(transceiver->customCommand, "p %s" RKEOL, transceiver->defaultPedestalMode);
             radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
             if (response != NULL) {
                 sprintf(response, "ACK. Everything goes." RKEOL);
@@ -1830,7 +1830,10 @@ void RKTestFileMonitor(void) {
     RKLog("Touching file %s ...\n", file);
     char command[strlen(file) + 10];
     sprintf(command, "touch %s", file);
-    system(command);
+    int k = system(command);
+    if (k) {
+        RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
+    }
     sleep(2);
     RKFileMonitorFree(mon);
 }
