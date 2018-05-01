@@ -763,11 +763,11 @@ static void *pulseGatherer(void *_in) {
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
-                    ray = RKGetRay(engine->rayBuffer, j);
-                    ray->header.s = RKRayStatusVacant;
+                    //ray = RKGetRay(engine->rayBuffer, j);
+                    //ray->header.s = RKRayStatusVacant;
                     count = 0;
                 } else {
-                    // Just started, i0 could be any azimuth bin
+                    // Just started, i0 could refer to any azimuth bin
                 }
             }
             // Keep counting up

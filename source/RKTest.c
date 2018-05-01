@@ -56,6 +56,15 @@ void RKTestModuloMath(void) {
     k = 4;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
     
     k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
+
+    struct timeval t0, t1;
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
+    gettimeofday(&t0, NULL);
+    if (RKTimevalDiff(t0, t1) < 0.1) {
+        RKLog("First iteraction failed.\n");
+    } else {
+        RKLog("First iteraction is as expected.\n");
+    }
 }
 
 void RKTestSIMD(const RKTestSIMDFlag flag) {

@@ -1597,7 +1597,9 @@ int RKSoftRestart(RKRadar *radar) {
         usleep(100000);
         RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
         RKRay *ray = RKGetRay(radar->rays, radar->rayIndex);
-        printf("pulseIndex = %d / %x   rayIndex = %d / %x\n", radar->pulseIndex, pulse->header.s, radar->rayIndex, ray->header.s);
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("pulseIndex = %d / %x   rayIndex = %d / %x\n", radar->pulseIndex, pulse->header.s, radar->rayIndex, ray->header.s);
+        }
     }
 
     // To do:

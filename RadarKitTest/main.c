@@ -710,7 +710,8 @@ int main(int argc, const char **argv) {
 
     RKSetVerbose(myRadar, user.verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-    RKSetMomentProcessorToMultiLag(myRadar, 3);
+    //RKSetMomentProcessorToMultiLag(myRadar, 3);
+    RKSetMomentProcessorToPulsePairHop(myRadar);
 
     RKAddControl(myRadar, "10us pulse", "t w s10");
     RKAddControl(myRadar, "20us pulse", "t w s20");
