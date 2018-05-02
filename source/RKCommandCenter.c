@@ -1159,17 +1159,38 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         return;
     }
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
-           radar->momentEngine->tic <= (2 * radar->momentEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
            radar->healthEngine->tic < 2) {
         usleep(25000);
     }
-    if (engine->verbose > 1) {
-        RKLog("%s tics = %d / %d / %d\n", engine->name,
+    if (engine->verbose) {
+        RKLog("%s tics = %d / %d\n", engine->name,
               radar->pulseCompressionEngine->tic,
-              radar->momentEngine->tic,
               radar->healthEngine->tic);
     }
+
+    int ii, jj, m;
+    char str[1024];
+    RKRay *ray;
+    for (jj = 0; jj < 16; jj++) {
+        ii = 0;
+        for (m = jj * 90; m < (jj + 1) * 90; m++) {
+            ray = RKGetRay(radar->rays, m);
+            ii += sprintf(str + ii, "%x", ray->header.s & RKRayStatusReady);
+        }
+        printf("%4d-%4d: %s\n", jj * 90, (jj + 1) * 90, str);
+    }
+    printf("\n");
+    RKPulse *pulse;
+    for (jj = 0; jj < 16; jj++) {
+        ii = 0;
+        for (m = jj * 90; m < (jj + 1) * 90; m++) {
+            pulse = RKGetPulse(radar->pulses, m);
+            ii += sprintf(str + ii, "%x", pulse->header.s & RKPulseStatusProcessed ? 1 : 0);
+        }
+        printf("%4d-%4d: %s\n", jj * 90, (jj + 1) * 90, str);
+    }
+
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
         if (user->radar != radar) {
