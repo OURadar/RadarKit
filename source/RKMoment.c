@@ -727,7 +727,7 @@ static void *pulseGatherer(void *_in) {
                 i = RKPreviousModuloS(i, engine->radarDescription->rayBufferDepth);
                 engine->momentSource[i].length = 0;
                 ray = RKGetRay(engine->rayBuffer, i);
-            } while (!(ray->header.s & RKRayStatusReady));
+            } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive);
         } else if (skipCounter > 0) {
             // Skip processing if we are in skipping mode
             if (--skipCounter == 0 && engine->verbose) {
@@ -776,7 +776,7 @@ static void *pulseGatherer(void *_in) {
         
         // Check finished rays
         ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
-        while (ray->header.s & RKRayStatusReady) {
+        while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateActive) {
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
         }

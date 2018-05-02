@@ -697,8 +697,8 @@ int socketStreamHandler(RKOperator *O) {
             } // while (user->rayIndex != endIndex) ...
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No display ray / deactivated.  streamsInProgress = 0x%08x  user->rayIndex = %d\n",
-                      engine->name, O->name, user->streamsInProgress, user->rayIndex);
+                RKLog("%s %s No display ray / deactivated.  user->rayIndex = %d   endIndex = %d\n",
+                      engine->name, O->name, user->rayIndex, endIndex);
             }
         } // if (ray->header.s & RKRayStatusReady && engine->server->state == RKServerStateActive) ...
     } // else if if (user->streams & user->access & RKStreamDisplayZVWDPRKS) ...
@@ -1159,6 +1159,7 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     }
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->momentEngine->tic <= (2 * radar->momentEngine->coreCount + 1) ||
+           radar->rayIndex < 2 * radar->momentEngine->coreCount ||
            radar->healthEngine->tic <= 2 ||
            radar->sweepEngine->tic <= 2) {
         usleep(50000);
@@ -1171,7 +1172,7 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     }
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
-        if (user->radar != radar) {
+        if (user->radar != radar || user->streams == RKStreamNull) {
             continue;
         }
         user->pulseIndex      = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
@@ -1184,11 +1185,20 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
             user->healthIndex > 2 ||
             user->rayStatusIndex > 2 ||
             user->rayAnchorsIndex > 2) {
-            RKLog("Warning. pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
+            RKLog("Warning. %s pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
+                  user->serverOperator->name,
                   RKIntegerToCommaStyleString(user->pulseIndex),
                   RKIntegerToCommaStyleString(user->rayIndex),
                   RKIntegerToCommaStyleString(user->healthIndex),
                   RKIntegerToCommaStyleString(user->rayStatusIndex));
         }
+    }
+    for (i = 0; i < 10; i++) {
+        RKRay *ray = RKGetRay(radar->rays, i);
+        RKLog(">ray[%d].header = 0x%08x\n", i, ray->header.s);
+    }
+    for (i = 0; i < 10; i++) {
+        RKPulse *pulse = RKGetPulse(radar->pulses, i);
+        RKLog(">pulse[%d].header = 0x%08x\n", i, pulse->header.s);
     }
 }

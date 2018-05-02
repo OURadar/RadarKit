@@ -466,7 +466,7 @@ static void *rayGatherer(void *in) {
                 ray->header.n = is;
                 rays[n++] = ray;
                 is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-            } while (is != j && n < RKMaxRaysPerSweep - 1 && n < engine->radarDescription->rayBufferDepth);
+            } while (is != j && n < MIN(RKMaxRaysPerSweep - 1, engine->radarDescription->rayBufferDepth));
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
@@ -476,10 +476,16 @@ static void *rayGatherer(void *in) {
                 pthread_join(tidSweepWriter, NULL);
             }
             engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
-            rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
+            // Assume all the rays have been consumed, we can set the rays vacant at this point.
+            while (n > 0) {
+                n--;
+                ray = rays[n];
+                ray->header.s = RKRayStatusVacant;
+            }
+            rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
 
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
