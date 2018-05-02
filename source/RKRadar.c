@@ -934,6 +934,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
     }
+    if (waveform == NULL) {
+        return RKResultFailedToSetFilter;
+    }
     if (waveform->count > 1 && waveform->filterCounts[0] != waveform->filterCounts[1]) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
         return RKResultFailedToSetFilter;
