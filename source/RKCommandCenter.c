@@ -697,8 +697,8 @@ int socketStreamHandler(RKOperator *O) {
             } // while (user->rayIndex != endIndex) ...
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No display ray / deactivated.  user->rayIndex = %d   endIndex = %d\n",
-                      engine->name, O->name, user->rayIndex, endIndex);
+                RKLog("%s %s No display ray / deactivated.  user->rayIndex = %d   endIndex = %d  %lld\n",
+                      engine->name, O->name, user->rayIndex, endIndex, ray->header.i);
             }
         } // if (ray->header.s & RKRayStatusReady && engine->server->state == RKServerStateActive) ...
     } // else if if (user->streams & user->access & RKStreamDisplayZVWDPRKS) ...
@@ -708,7 +708,7 @@ int socketStreamHandler(RKOperator *O) {
         // Sweep streams - no skipping
         if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
             user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
-            sweep = RKSweepCollect(user->radar->sweepEngine);
+            sweep = RKSweepCollect(user->radar->sweepEngine, user->rayAnchorsIndex);
             memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
             if (engine->verbose > 1) {

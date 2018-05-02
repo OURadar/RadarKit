@@ -758,13 +758,13 @@ static void *pulseGatherer(void *_in) {
                     } else {
                         engine->workers[c].tic++;
                     }
-                    // Move to the next core, gather the next ray
+                    // Move to the next core, gather pulses for the next ray
                     c = RKNextModuloS(c, engine->coreCount);
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
-                    //ray = RKGetRay(engine->rayBuffer, j);
-                    //ray->header.s = RKRayStatusVacant;
+                    ray = RKGetRay(engine->rayBuffer, j);
+                    ray->header.s = RKRayStatusVacant;
                     count = 0;
                 } else {
                     // Just started, i0 could refer to any azimuth bin
