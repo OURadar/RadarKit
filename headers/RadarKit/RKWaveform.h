@@ -99,6 +99,8 @@ RKWaveform *RKWaveformInitFromFile(const char *filename);
 RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);
 
+RKWaveform *RKWaveformCopy(RKWaveform *);
+
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
 

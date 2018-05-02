@@ -121,7 +121,7 @@ struct rk_radar {
     //
     // Internal copies of things
     //
-    RKWaveform                       waveform;
+    RKWaveform                       *waveform;
     //
     pthread_mutex_t                  mutex;
     //

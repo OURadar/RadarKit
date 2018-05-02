@@ -743,6 +743,10 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateFileRecorderInitialized) {
         RKDataRecorderFree(radar->dataRecorder);
     }
+    // Internal copies of things
+    if (radar->waveform) {
+        RKWaveformFree(radar->waveform);
+    }
     // Transceiver, pedestal & health relay
     if (radar->pedestal) {
         radar->pedestalFree(radar->pedestal);
@@ -934,9 +938,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
         return RKResultFailedToSetFilter;
     }
-    if (&radar->waveform != waveform) {
+    if (radar->waveform != waveform) {
         RKLog("Waveform '%s' cached.\n", waveform->name);
-        memcpy(&radar->waveform, waveform, sizeof(RKWaveform));
+        radar->waveform = RKWaveformCopy(waveform);
     }
     int j, k, r;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
@@ -1608,10 +1612,9 @@ int RKSoftRestart(RKRadar *radar) {
 
     // To do:
     // config index... copy to slot 0
-    // waveform restore?
     // set waveform to pulse compressor
     //
-    RKSetWaveform(radar, &radar->waveform);
+    RKSetWaveform(radar, radar->waveform);
     
     RKLog("Starting internal engines ... %d / %d / %d\n", radar->pulseIndex, radar->rayIndex, radar->healthIndex);
 
