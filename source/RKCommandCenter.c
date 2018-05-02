@@ -1158,7 +1158,6 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
         return;
     }
-    RKLog("%s Skipping to current ...\n", engine->name);
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->momentEngine->tic <= (2 * radar->momentEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
@@ -1173,7 +1172,7 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
     }
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
         RKUser *user = &engine->users[i];
-        if (user->radar != radar || user->streams == RKStreamNull) {
+        if (user->radar != radar) {
             continue;
         }
         pthread_mutex_lock(&user->mutex);
@@ -1188,26 +1187,20 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
             user->healthIndex > 2 ||
             user->rayStatusIndex > 2 ||
             user->rayAnchorsIndex > 2) {
-            RKLog("%s Warning. pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
+            RKLog("%s Warning. pulse @ %s   ray @ %s   health @ %s   rayStatus @ %s\n",
                   user->serverOperator->name,
                   RKIntegerToCommaStyleString(user->pulseIndex),
                   RKIntegerToCommaStyleString(user->rayIndex),
                   RKIntegerToCommaStyleString(user->healthIndex),
                   RKIntegerToCommaStyleString(user->rayStatusIndex));
         }
-        RKLog("%s %s Warning. pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
-              engine->name, user->serverOperator->name,
-              RKIntegerToCommaStyleString(user->pulseIndex),
-              RKIntegerToCommaStyleString(user->rayIndex),
-              RKIntegerToCommaStyleString(user->healthIndex),
-              RKIntegerToCommaStyleString(user->rayStatusIndex));
     }
-    for (i = 0; i < 10; i++) {
-        RKRay *ray = RKGetRay(radar->rays, i);
-        RKLog(">ray[%d].header = 0x%08x\n", i, ray->header.s);
-    }
-    for (i = 0; i < 10; i++) {
-        RKPulse *pulse = RKGetPulse(radar->pulses, i);
-        RKLog(">pulse[%d].header = 0x%08x\n", i, pulse->header.s);
-    }
+//    for (i = 0; i < 10; i++) {
+//        RKRay *ray = RKGetRay(radar->rays, i);
+//        RKLog(">ray[%d].header = 0x%08x\n", i, ray->header.s);
+//    }
+//    for (i = 0; i < 10; i++) {
+//        RKPulse *pulse = RKGetPulse(radar->pulses, i);
+//        RKLog(">pulse[%d].header = 0x%08x\n", i, pulse->header.s);
+//    }
 }
