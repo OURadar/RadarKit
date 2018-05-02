@@ -1579,17 +1579,13 @@ int RKSoftRestart(RKRadar *radar) {
         radar->healthNodes[k].index = 0;
     }
 
-    // Clear out all the buffers
+    // Clear out some data buffers
     bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
     memset(radar->status, 0, bytes);
     for (i = 0; i < radar->desc.statusBufferDepth; i++) {
         radar->status[i].i = -(uint64_t)radar->desc.statusBufferDepth + i;
     }
     bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
-    memset(radar->configs, 0, bytes);
-    for (i = 0; i < radar->desc.configBufferDepth; i++) {
-        radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i;
-    }
     bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
     memset(radar->healths, 0, bytes);
     for (i = 0; i < radar->desc.healthBufferDepth; i++) {
@@ -1608,13 +1604,12 @@ int RKSoftRestart(RKRadar *radar) {
     RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
     RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 
-    // To do:
-    // config index... copy to slot 0
-
     // Restore the waveform
     RKSetWaveform(radar, radar->waveform);
-    
-    RKLog("Starting internal engines ... %d / %d / %d\n", radar->pulseIndex, radar->rayIndex, radar->healthIndex);
+
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Starting internal engines ... %d / %d / %d\n", radar->pulseIndex, radar->rayIndex, radar->healthIndex);
+    }
 
     // Start them again
     RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
