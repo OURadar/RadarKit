@@ -283,11 +283,12 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
+    pthread_mutex_lock(&user->mutex);
+
     if (!(user->radar->state & RKRadarStateLive)) {
+        pthread_mutex_unlock(&user->mutex);
         return 0;
     }
-
-    pthread_mutex_lock(&user->mutex);
 
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // Modes "1", "2", "3" and "4" are for signal processor only - showing the latest summary text view
@@ -592,6 +593,7 @@ int socketStreamHandler(RKOperator *O) {
             RKLog("%s user->radar->rayIndex = %s / user->radar->desc.rayBufferDepth = %s", engine->name,
                   RKIntegerToCommaStyleString(user->radar->rayIndex),
                   RKIntegerToCommaStyleString(user->radar->desc.rayBufferDepth));
+            endIndex = 0;
         }
         ray = RKGetRay(user->radar->rays, endIndex);
 
@@ -1155,8 +1157,8 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
         return;
     }
-    while (radar->pulseCompressionEngine->tic <= 2 * radar->pulseCompressionEngine->coreCount ||
-           radar->momentEngine->tic <= 2 * radar->momentEngine->coreCount ||
+    while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
+           radar->momentEngine->tic <= (2 * radar->momentEngine->coreCount + 1) ||
            radar->healthEngine->tic <= 2 ||
            radar->sweepEngine->tic <= 2) {
         usleep(50000);
@@ -1177,5 +1179,16 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         user->healthIndex     = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
         user->rayStatusIndex  = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
         user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+        if (user->pulseIndex > radar->desc.pulseBufferDepth ||
+            user->rayIndex > 2 * radar->momentEngine->coreCount ||
+            user->healthIndex > 2 ||
+            user->rayStatusIndex > 2 ||
+            user->rayAnchorsIndex > 2) {
+            RKLog("Warning. pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
+                  RKIntegerToCommaStyleString(user->pulseIndex),
+                  RKIntegerToCommaStyleString(user->rayIndex),
+                  RKIntegerToCommaStyleString(user->healthIndex),
+                  RKIntegerToCommaStyleString(user->rayStatusIndex));
+        }
     }
 }

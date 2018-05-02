@@ -1823,10 +1823,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                         //RKOperatorSendCommandResponse(O, string);
                         break;
                     }
-                    k = 1;
-                    while (commandString[k] == ' ') {
+                    k = 0;
+                    do {
                         k++;
-                    }
+                    } while (commandString[k] == ' ');
                     radar->healthRelayExec(radar->healthRelay, commandString + k, string);
                 }
                 break;
@@ -1835,7 +1835,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                 // Pass everything to pedestal
                 if (strlen(commandString) < 2) {
                     sprintf(string, "NAK. Empty command to pedestal." RKEOL);
-                    //RKOperatorSendCommandResponse(O, string);
                     break;
                 }
                 k = 0;
@@ -1843,7 +1842,19 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                     k++;
                 } while (commandString[k] == ' ');
                 radar->pedestalExec(radar->pedestal, commandString + k, string);
-                //RKOperatorSendCommandResponse(O, string);
+                break;
+
+            case 't':
+                // Pass everything to transceiver
+                if (strlen(commandString) < 2) {
+                    sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                    break;
+                }
+                k = 0;
+                do {
+                    k++;
+                } while (commandString[k] == ' ');
+                radar->transceiverExec(radar->transceiver, commandString + k, string);
                 break;
 
             case 'r':
