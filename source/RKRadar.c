@@ -1560,8 +1560,9 @@ int RKSoftRestart(RKRadar *radar) {
     RKSimpleEngineFree(radar->systemInspector);
 
     // Stop all data acquisition and DSP-related engines
-    RKHealthLoggerStop(radar->healthLogger);
+    RKSweepEngineStop(radar->sweepEngine);
     RKDataRecorderStop(radar->dataRecorder);
+    RKHealthLoggerStop(radar->healthLogger);
     RKHealthEngineStop(radar->healthEngine);
     RKMomentEngineStop(radar->momentEngine);
     RKPositionEngineStop(radar->positionEngine);
@@ -1607,21 +1608,10 @@ int RKSoftRestart(RKRadar *radar) {
     RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
     RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 
-    i = 5;
-    while (i > 0) {
-        i--;
-        usleep(100000);
-        RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
-        RKRay *ray = RKGetRay(radar->rays, radar->rayIndex);
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("pulseIndex = %d / %x   rayIndex = %d / %x\n", radar->pulseIndex, pulse->header.s, radar->rayIndex, ray->header.s);
-        }
-    }
-
     // To do:
     // config index... copy to slot 0
-    // set waveform to pulse compressor
-    //
+
+    // Restore the waveform
     RKSetWaveform(radar, radar->waveform);
     
     RKLog("Starting internal engines ... %d / %d / %d\n", radar->pulseIndex, radar->rayIndex, radar->healthIndex);
@@ -1632,8 +1622,9 @@ int RKSoftRestart(RKRadar *radar) {
     RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
     RKHealthEngineStart(radar->healthEngine);
-    RKDataRecorderStart(radar->dataRecorder);
     RKHealthLoggerStart(radar->healthLogger);
+    RKDataRecorderStart(radar->dataRecorder);
+    RKSweepEngineStart(radar->sweepEngine);
 
     // Start the inspector
     radar->systemInspector = RKSystemInspector(radar);

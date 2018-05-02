@@ -454,7 +454,7 @@ static void *rayGatherer(void *in) {
         // Wait until the ray is ready. This can never happen right? Because rayIndex only advances after the ray is ready
         s = 0;
         while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive) {
-            RKLog("%s I can happen.\n", engine->name);
+            RKLog("%s I can happen.   j = %d   is = %d\n", engine->name, j, is);
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
@@ -624,12 +624,21 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (!(engine->state & RKEngineStateActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tidRayGatherer, NULL);
+    if (engine->tidRayGatherer) {
+        pthread_join(engine->tidRayGatherer, NULL);
+        engine->tidRayGatherer = (pthread_t)0;
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
+    }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);

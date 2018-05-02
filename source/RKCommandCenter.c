@@ -140,9 +140,10 @@ int socketCommandHandler(RKOperator *O) {
                                 usleep(100000);
                             } while (tic == user->tic);
 
-                            pthread_mutex_lock(&user->mutex);
                             RKLog("%s %s Fast forwarding ...", engine->name, O->name);
                             RKCommandCenterSkipToCurrent(engine, user->radar);
+
+                            pthread_mutex_lock(&user->mutex);
                             user->streams = newStream;
                             pthread_mutex_unlock(&user->mutex);
                             break;
@@ -1157,12 +1158,12 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
         return;
     }
+    RKLog("%s Skipping to current ...\n", engine->name);
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->momentEngine->tic <= (2 * radar->momentEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
-           radar->healthEngine->tic <= 2 ||
-           radar->sweepEngine->tic <= 2) {
-        usleep(50000);
+           radar->healthEngine->tic < 2) {
+        usleep(25000);
     }
     if (engine->verbose > 1) {
         RKLog("%s tics = %d / %d / %d\n", engine->name,
@@ -1175,23 +1176,31 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         if (user->radar != radar || user->streams == RKStreamNull) {
             continue;
         }
+        pthread_mutex_lock(&user->mutex);
         user->pulseIndex      = RKPreviousNModuloS(radar->pulseIndex, 2 * radar->pulseCompressionEngine->coreCount, radar->desc.pulseBufferDepth);
         user->rayIndex        = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
         user->healthIndex     = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
         user->rayStatusIndex  = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
         user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+        pthread_mutex_unlock(&user->mutex);
         if (user->pulseIndex > radar->desc.pulseBufferDepth ||
             user->rayIndex > 2 * radar->momentEngine->coreCount ||
             user->healthIndex > 2 ||
             user->rayStatusIndex > 2 ||
             user->rayAnchorsIndex > 2) {
-            RKLog("Warning. %s pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
+            RKLog("%s Warning. pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
                   user->serverOperator->name,
                   RKIntegerToCommaStyleString(user->pulseIndex),
                   RKIntegerToCommaStyleString(user->rayIndex),
                   RKIntegerToCommaStyleString(user->healthIndex),
                   RKIntegerToCommaStyleString(user->rayStatusIndex));
         }
+        RKLog("%s %s Warning. pulseIndex = %s   rayIndex = %s   healthIndex = %s   rayStatusIndex = %s\n",
+              engine->name, user->serverOperator->name,
+              RKIntegerToCommaStyleString(user->pulseIndex),
+              RKIntegerToCommaStyleString(user->rayIndex),
+              RKIntegerToCommaStyleString(user->healthIndex),
+              RKIntegerToCommaStyleString(user->rayStatusIndex));
     }
     for (i = 0; i < 10; i++) {
         RKRay *ray = RKGetRay(radar->rays, i);
