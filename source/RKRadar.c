@@ -938,9 +938,14 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
         return RKResultFailedToSetFilter;
     }
-    if (radar->waveform != waveform) {
+    RKWaveform *newWaveform = RKWaveformCopy(waveform);
+    if (radar->waveform != NULL) {
+        RKLog("Freeing RKWaveform cache ...\n");
+        RKWaveformFree(radar->waveform);
+    }
+    radar->waveform = newWaveform;
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Waveform '%s' cached.\n", waveform->name);
-        radar->waveform = RKWaveformCopy(waveform);
     }
     int j, k, r;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
