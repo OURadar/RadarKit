@@ -929,6 +929,7 @@ int RKToggleDataRecorder(RKRadar *radar) {
     return RKResultNoError;
 }
 
+// NOTE: It is possible to call this function as RKSetWaveform(radar, radar->waveform);
 int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->pulseCompressionEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
@@ -941,12 +942,8 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
         return RKResultFailedToSetFilter;
     }
-    RKWaveform *newWaveform = RKWaveformCopy(waveform);
-    if (radar->waveform != NULL) {
-        RKLog("Freeing RKWaveform cache ...\n");
-        RKWaveformFree(radar->waveform);
-    }
-    radar->waveform = newWaveform;
+    RKWaveform *oldWaveform = radar->waveform;
+    radar->waveform = RKWaveformCopy(waveform);
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Waveform '%s' cached.\n", waveform->name);
     }
@@ -983,6 +980,10 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     } else {
         RKLog("Error. Multiplexing > 2 filters has not been implemented.\n");
         RKSetWaveformToImpulse(radar);
+    }
+    if (oldWaveform != NULL) {
+        RKLog("Freeing RKWaveform cache ...\n");
+        RKWaveformFree(oldWaveform);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);

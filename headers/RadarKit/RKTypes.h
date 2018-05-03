@@ -325,7 +325,7 @@ enum RKMarker {
 // -> RKPulseStatusInspected                                (main thread)
 // -> RKPulseStatusCompressed / RKPulseStatusSkipped        (core threads)
 // -> RKPulseStatusDownSampled                              (core threads)
-// -> RKPulseStatusProcessed                                (core thread)
+// -> RKPulseStatusProcessed                                (core threads)
 // -> RKPulseStatusRingInspected                            (main thread)
 // -> RKPulseStatusRingFiltered / RKPulseStatusRingSkipped  (main thread consolidates)
 // -> RKPulseStatusRingProcessed                            (main thread)

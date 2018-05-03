@@ -318,17 +318,23 @@ int socketStreamHandler(RKOperator *O) {
             }
             // Stream "4" - Internal Engines
             if (user->streams & RKStreamStatusEngines) {
-                k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:0x%03x/%04d  Pul:0x%03x/%05d  Mom:0x%03x/%04d  Hea:0x%03x/%02d  Swe:0x%03x  Fil:0x%03x" RKEOL,
-                             user->radar->positionEngine->state,
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%s:0x%04x/%04d  %s:0x%04x/%05d  %s:0x%04x/%04d  %s:0x%04x/%02d  %s:0x%04x  %s:0x%04x" RKEOL,
+                             user->radar->positionEngine->name,
+                             user->radar->positionEngine->state & 0xFF,
                              user->radar->positionIndex,
-                             user->radar->pulseCompressionEngine->state,
+                             user->radar->pulseCompressionEngine->name,
+                             user->radar->pulseCompressionEngine->state & 0xFF,
                              user->radar->pulseIndex,
-                             user->radar->momentEngine->state,
+                             user->radar->momentEngine->name,
+                             user->radar->momentEngine->state & 0xFF,
                              user->radar->rayIndex,
-                             user->radar->healthEngine->state,
+                             user->radar->healthEngine->name,
+                             user->radar->healthEngine->state & 0xFF,
                              user->radar->healthIndex,
-                             user->radar->sweepEngine->state,
-                             user->radar->dataRecorder->state);
+                             user->radar->sweepEngine->name,
+                             user->radar->sweepEngine->state & 0xFF,
+                             user->radar->dataRecorder->name,
+                             user->radar->dataRecorder->state & 0xFF);
                 O->delimTx.type = RKNetworkPacketTypePlainText;
                 O->delimTx.size = k + 1;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -1162,15 +1168,48 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
           radar->pulseCompressionEngine->tic,
           radar->rayIndex,
           radar->healthEngine->tic);
+
+    // Buffer status
+    int ii, jj, kk, m;
+    int slice = 90;
+    char str[4096];
+    RKRay *ray;
+    RKPulse *pulse;
+
     s = 0;
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
            radar->healthEngine->tic < 2) {
-        if (++s % 10 == 0) {
+        if (++s % 10 == 0 && engine->verbose > 0) {
             RKLog("%s Sleep 1/%.1f s    %d / %d / %d\n", engine->name, 0.01f * s,
                   radar->pulseCompressionEngine->tic,
                   radar->rayIndex,
                   radar->healthEngine->tic);
+
+            kk = 0;
+            slice = 90;
+            for (jj = 0; jj < 16 && kk < radar->desc.rayBufferDepth; jj++) {
+                m = 0;
+                for (ii = 0; ii < slice && kk < radar->desc.rayBufferDepth && m < 4094; ii++) {
+                    ray = RKGetRay(radar->rays, kk);
+                    m += sprintf(str + m, "%x", ray->header.s & RKRayStatusReady);
+                    kk++;
+                }
+                printf("%4d-%4d: %s\n", kk - slice, kk, str);
+            }
+            printf("\n");
+
+            kk = 0;
+            slice = 100;
+            for (jj = 0; jj < 50 && kk < radar->desc.pulseBufferDepth; jj++) {
+                m = 0;
+                for (ii = 0; ii < slice && kk < radar->desc.pulseBufferDepth && m < 4094; ii++) {
+                    pulse = RKGetPulse(radar->pulses, kk);
+                    m += sprintf(str + m, "%02x", pulse->header.s & 0xFF);
+                    kk++;
+                }
+                printf("%4d-%4d: %s\n", kk - slice, kk, str);
+            }
         }
         usleep(10000);
     }
@@ -1179,35 +1218,6 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
               radar->pulseCompressionEngine->tic,
               radar->rayIndex,
               radar->healthEngine->tic);
-    }
-
-    // Buffer status
-    int ii, jj, kk, m;
-    int slice = 90;
-    char str[4096];
-    RKRay *ray;
-
-    kk = 0;
-    for (jj = 0; jj < 16; jj++) {
-        m = 0;
-        for (ii = 0; ii < slice && kk < radar->desc.rayBufferDepth && m < 4094; ii++) {
-            ray = RKGetRay(radar->rays, kk);
-            m += sprintf(str + m, "%x", ray->header.s & RKRayStatusReady);
-            kk++;
-        }
-        printf("%4d-%4d: %s\n", kk - slice, kk, str);
-    }
-    printf("\n");
-
-    RKPulse *pulse;
-    slice = 100;
-    for (jj = 0; jj < 16; jj++) {
-        ii = 0;
-        for (m = jj * slice; m < (jj + 1) * slice; m++) {
-            pulse = RKGetPulse(radar->pulses, m);
-            ii += sprintf(str + ii, "%x", pulse->header.s & RKPulseStatusProcessed & 0x0F);
-        }
-        printf("%4d-%4d: %s\n", jj * slice, (jj + 1) * slice, str);
     }
 
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
@@ -1225,8 +1235,7 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         if (user->pulseIndex > radar->desc.pulseBufferDepth ||
             user->rayIndex > 2 * radar->momentEngine->coreCount ||
             user->healthIndex > 2 ||
-            user->rayStatusIndex > 2 ||
-            user->rayAnchorsIndex > 2) {
+            user->rayStatusIndex > 2) {
             RKLog("%s Warning. pulse @ %s   ray @ %s   health @ %s   rayStatus @ %s\n",
                   user->serverOperator->name,
                   RKIntegerToCommaStyleString(user->pulseIndex),

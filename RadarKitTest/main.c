@@ -729,7 +729,8 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "PPI EL 4 deg @ 6 dps", "p ppi 4 6");
     RKAddControl(myRadar, "PPI EL 3 deg @ 1 dps", "p ppi 3 1");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
-    RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
+    //RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
+    RKAddControl(myRadar, "Developer", "dr");
 
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, -25.0f, -25.0f,
