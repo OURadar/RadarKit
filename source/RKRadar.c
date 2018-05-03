@@ -1158,6 +1158,48 @@ void RKShowOffsets(RKRadar *radar) {
     printf("radar->dataRecorder->doNotWrite  @ %ld\n", (unsigned long)((void *)radar - (void *)radar->dataRecorder->doNotWrite));
 }
 
+void RKBufferOverview(RKRadar *radar, char *text) {
+    // Buffer status
+    int i, j, k, m = 0;
+    int slice;
+    RKRay *ray;
+    RKPulse *pulse;
+
+    // Pulse buffer
+    m = sprintf(text,
+                "Pulse Buffer:\n"
+                "-------------\n");
+    k = 0;
+    slice = 100;
+    for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
+        m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
+        for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
+            pulse = RKGetPulse(radar->pulses, k);
+            m += sprintf(text + m, "%02x", pulse->header.s & 0xFF);
+            k++;
+        }
+        m += sprintf(text + m, "\n");
+    }
+
+    // Ray buffer
+    m += sprintf(text + m,
+                "\n\n"
+                "Ray Buffer:\n"
+                "-----------\n");
+    k = 0;
+    slice = 90;
+    for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
+        m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
+        for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
+            ray = RKGetRay(radar->rays, k);
+            m += sprintf(text + m, "%02x", ray->header.s & 0xFF);
+            k++;
+        }
+        m += sprintf(text + m, "\n");
+    }
+    m += sprintf(text + m, "\n");
+}
+
 #pragma mark - Interaction / State Change
 
 //

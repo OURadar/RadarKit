@@ -176,6 +176,11 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     break;
                     
+                case 'X':
+                    RKBufferOverview(user->radar, string);
+                    RKOperatorSendCommandResponse(O, string);
+                    break;
+
                 default:
                     RKExecuteCommand(user->radar, commandString, string);
                     RKOperatorSendCommandResponse(O, string);
@@ -1169,13 +1174,6 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
           radar->rayIndex,
           radar->healthEngine->tic);
 
-    // Buffer status
-    int ii, jj, kk, m;
-    int slice = 90;
-    char str[4096];
-    RKRay *ray;
-    RKPulse *pulse;
-
     s = 0;
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
@@ -1185,31 +1183,6 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
                   radar->pulseCompressionEngine->tic,
                   radar->rayIndex,
                   radar->healthEngine->tic);
-
-            kk = 0;
-            slice = 90;
-            for (jj = 0; jj < 16 && kk < radar->desc.rayBufferDepth; jj++) {
-                m = 0;
-                for (ii = 0; ii < slice && kk < radar->desc.rayBufferDepth && m < 4094; ii++) {
-                    ray = RKGetRay(radar->rays, kk);
-                    m += sprintf(str + m, "%x", ray->header.s & RKRayStatusReady);
-                    kk++;
-                }
-                printf("%4d-%4d: %s\n", kk - slice, kk, str);
-            }
-            printf("\n");
-
-            kk = 0;
-            slice = 100;
-            for (jj = 0; jj < 50 && kk < radar->desc.pulseBufferDepth; jj++) {
-                m = 0;
-                for (ii = 0; ii < slice && kk < radar->desc.pulseBufferDepth && m < 4094; ii++) {
-                    pulse = RKGetPulse(radar->pulses, kk);
-                    m += sprintf(str + m, "%02x", pulse->header.s & 0xFF);
-                    kk++;
-                }
-                printf("%4d-%4d: %s\n", kk - slice, kk, str);
-            }
         }
         usleep(10000);
     }

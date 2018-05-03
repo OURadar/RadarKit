@@ -439,18 +439,20 @@ static void *momentCore(void *in) {
         config = &engine->configBuffer[E->header.configIndex];
 
         // Compute the range correction factor if needed.
-        if (ic != S->header.configIndex) {
-            ic = S->header.configIndex;
+        if (ic != E->header.configIndex) {
+            ic = E->header.configIndex;
             // At this point, gateSizeMeters is no longer the spacing of raw pulse, it has been down-sampled according to pulseToRayRatio
-            gateSizeMeters = S->header.gateSizeMeters;
+            gateSizeMeters = E->header.gateSizeMeters;
             if (engine->verbose > 1) {
-                RKLog("%s %s C%02d RCor @ %.2f/%.2f/%.2f dB   capacity = %s\n",
-                      engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0], RKIntegerToCommaStyleString(ray->header.capacity));
+                RKLog("%s %s C%02d RCor @ %.2f/%.2f/%.2f dB   filterCount = %d   capacity = %s\n",
+                      engine->name, name, ic, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0],
+                      config->filterCount,
+                      RKIntegerToCommaStyleString(ray->header.capacity));
             }
             // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
             // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
             // The number 60 is for conversion of range from meters to kilometers in the range correction term.
-            RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0;
+            RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
             RKFloat r = 0.0f;
             for (k = 0; k < config->filterCount; k++) {
                 for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {

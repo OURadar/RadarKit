@@ -283,5 +283,6 @@ void RKConcludeControls(RKRadar *);
 void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
 void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
 void RKShowOffsets(RKRadar *radar);
+void RKBufferOverview(RKRadar *radar, char *);
 
 #endif /* defined(__RadarKit_RKRadar__) */

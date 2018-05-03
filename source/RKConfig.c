@@ -15,15 +15,15 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 }
 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
-    uint32_t  c, j, k, s;
+    uint32_t  j, k, s;
     char      *string;
     char      stringBuffer[RKNameLength] = "";
     
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
     pthread_mutex_lock(&rkGlobalParameters.mutex);
 
-    c = *configIndex;                             RKConfig *newConfig = &configs[c];
-    c = RKPreviousModuloS(c, configBufferDepth);  RKConfig *oldConfig = &configs[c];
+    RKConfig *newConfig = &configs[RKNextModuloS(*configIndex, configBufferDepth)];
+    RKConfig *oldConfig = &configs[*configIndex];
 
     const uint64_t configId = newConfig->i + configBufferDepth;
     
@@ -45,7 +45,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer, "New Sweep");
+				sprintf(stringBuffer, "New Sweep   filterCount = %d", newConfig->filterCount);
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
