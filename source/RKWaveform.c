@@ -86,6 +86,7 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
 
 RKWaveform *RKWaveformInitFromFile(const char *filename) {
     int j, k;
+    size_t r;
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to read wave file %s\n", filename);
@@ -93,7 +94,10 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     RKWaveFileHeader fileHeader;
     RKWaveFileGroup groupHeader;
-    fread(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
+    r = fread(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
+    if (r == 0) {
+        RKLog("Error. No file header from %s.\n", filename);
+    }
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
 
@@ -103,7 +107,10 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     
     for (k = 0; k < fileHeader.groupCount; k++) {
         // Read in the waveform of each group
-        fread(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
+        r = fread(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
+        if (r == 0) {
+            RKLog("Error. Failed reading group header from %s.\n", filename);
+        }
         if (waveform->depth < groupHeader.depth) {
             RKLog("Error. Unable to fit %s into supplied buffer. (%d vs %d)\n", filename, waveform->depth, groupHeader.depth);
             RKWaveformFree(waveform);
@@ -112,7 +119,10 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         }
         waveform->type = groupHeader.type;
         waveform->filterCounts[k] = groupHeader.filterCounts;
-        fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
+        r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
+        if (r == 0) {
+            RKLog("Error. Unable to read filter anchors from %s\n", filename);
+        }
         // Output data from the first filter is allowed up to the maximum
         waveform->filterAnchors[k][0].maxDataLength = RKGateCount;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
@@ -149,8 +159,14 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 return NULL;
             }
         }
-        fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
-        fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+        r = fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
+        if (r == 0) {
+            RKLog("Error. Failed reading complex samples from %s.\n", filename);
+        }
+        r = fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+        if (r == 0) {
+            RKLog("Error. Frailed reading int16 samples from %s.\n", filename);
+        }
     }
     fclose(fid);
 

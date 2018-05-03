@@ -27,7 +27,7 @@ Follow these steps to get the project
     - [FFTW]
     - [NetCDF]
 
-    ##### Debian #####
+    ##### Debian / Ubuntu #####
 
     ```shell
     apt-get install libfftw3-dev libnetcdf-dev

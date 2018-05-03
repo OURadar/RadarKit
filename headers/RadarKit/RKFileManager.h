@@ -73,7 +73,7 @@ struct rk_file_remover {
     int                              capacity;                            // Capcity of *folders, *filenames and *indexedStats
     size_t                           usage;
     size_t                           limit;
-    char                             path[RKMaximumPathLength];
+    char                             path[RKMaximumFolderPathLength + 32];
     RKFileManager                    *parent;
 
     void                             *folders;
@@ -89,7 +89,7 @@ struct rk_file_manager {
     RKName                           name;
     RKRadarDesc                      *radarDescription;                   // This takes precedence over dataPath[] if both are set
     uint8_t                          verbose;                             // Verbosity level
-    char                             dataPath[RKMaximumPathLength];       // Can be empty. In this case all folders are relative to the path where it is executed
+    char                             dataPath[RKMaximumFolderPathLength]; // Can be empty. In this case all folders are relative to the path where it is executed
     size_t                           usagelimit;                          // Overall usage limit in bytes
     int                              maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
 

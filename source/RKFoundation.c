@@ -184,9 +184,9 @@ int RKSetLogfile(const char *filename) {
 
 int RKSetLogfileToDefault(void) {
     if (strlen(rkGlobalParameters.rootDataFolder)) {
-        snprintf(rkGlobalParameters.logfile, RKNameLength, "%s", RKDefaultLogfile);
+        snprintf(rkGlobalParameters.logfile, RKMaximumPathLength - 1, "%s", RKDefaultLogfile);
     } else {
-        snprintf(rkGlobalParameters.logfile, RKNameLength, "%s/%s", rkGlobalParameters.rootDataFolder, RKDefaultLogfile);
+        snprintf(rkGlobalParameters.logfile, RKMaximumPathLength - 1, "%s/%s", rkGlobalParameters.rootDataFolder, RKDefaultLogfile);
     }
     return RKResultSuccess;
 }

@@ -19,7 +19,7 @@ typedef struct rk_moment_engine RKMomentEngine;
 
 struct rk_moment_worker {
     RKMomentEngine                   *parentEngine;
-    char                             semaphoreName[16];
+    char                             semaphoreName[32];
     int                              id;
     pthread_t                        tid;
     uint32_t                         tic;

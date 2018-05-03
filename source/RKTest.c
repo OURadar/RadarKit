@@ -953,12 +953,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             if (strlen(transceiver->defaultWaveform) == 0) {
                 sprintf(transceiver->defaultWaveform, "s01");
             }
-            sprintf(transceiver->customCommand, "w %s" RKEOL, transceiver->defaultWaveform);
+            snprintf(transceiver->customCommand, RKNameLength - 1, "w %s" RKEOL, transceiver->defaultWaveform);
             radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
             if (strlen(transceiver->defaultPedestalMode) == 0) {
                 sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
             }
-            sprintf(transceiver->customCommand, "p %s" RKEOL, transceiver->defaultPedestalMode);
+            snprintf(transceiver->customCommand, RKNameLength - 1, "p %s" RKEOL, transceiver->defaultPedestalMode);
             radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
             if (response != NULL) {
                 sprintf(response, "ACK. Everything goes." RKEOL);
@@ -1599,9 +1599,10 @@ void RKTestCacheWrite(void) {
     
     gettimeofday(&time, NULL);
     t1 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
-    
+
+    int j, k;
     uint32_t len = 0;
-    for (int k = 1, j = 1; k < 50000; k++) {
+    for (k = 1, j = 1; k < 50000; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
         pulse->header.gateCount = 16000;
         
@@ -1627,7 +1628,10 @@ void RKTestCacheWrite(void) {
     close(fileEngine->fd);
   
     // Remove the files that was just created.
-    system("rm -f ._testwrite");
+    j = system("rm -f ._testwrite");
+    if (j) {
+        RKLog("Error. System call failed.   errno = %d\n", errno);
+    }
     
     RKDataRecorderFree(fileEngine);
 }
@@ -1839,7 +1843,10 @@ void RKTestFileMonitor(void) {
     RKLog("Touching file %s ...\n", file);
     char command[strlen(file) + 10];
     sprintf(command, "touch %s", file);
-    system(command);
+    int k = system(command);
+    if (k) {
+        RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
+    }
     sleep(2);
     RKFileMonitorFree(mon);
 }

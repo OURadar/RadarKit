@@ -25,7 +25,7 @@
 
 typedef struct RKGlobalParameterStruct {
     char             program[RKNameLength];                      // Name of the program in log
-    char             logfile[RKNameLength];                      // Name of the log file. This is ignored when dailyLog = true
+    char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
     char             rootDataFolder[RKNameLength];               // Root folder where iq, moment health and log files are stored
     bool             dailyLog;                                   // Daily mode where log file is /{rootDataFolder}/log/YYYYMMDD.log
     bool             showColor;                                  // Show colors
