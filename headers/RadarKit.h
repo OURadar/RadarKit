@@ -10,7 +10,10 @@
 //
 //  █
 //
-//  1.2.8b - 4/31/2018
+//  1.2.9b - 5/31/2018
+//         - Improved RKSoftRestart().
+//         - Added 
+//  1.2.8  - 4/31/2018
 //         - New stream types: RKSweep, RKSweepHeader and RKSweepRay
 //         - Fixed buffer ID initialization
 //         - Fixed a memory leak in RKHostMonitor

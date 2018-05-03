@@ -398,7 +398,7 @@ static void *rayGatherer(void *in) {
     
     // Start index
     uint32_t is = 0;
-    pthread_t tidSweepWriter;
+    pthread_t tidSweepWriter = (pthread_t)0;
 
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
@@ -429,13 +429,6 @@ static void *rayGatherer(void *in) {
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
-
-#if defined (DEBUG_RAYMARKER)
-
-    int jj = 0, ii = 0, m;
-    char str[256];
-
-#endif
 
     j = 0;   // ray index
     while (engine->state & RKEngineStateActive) {
@@ -501,22 +494,7 @@ static void *rayGatherer(void *in) {
             if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
-
             is = j;
-
-#if defined (DEBUG_RAYMARKER)
-
-            for (jj = 0; jj < 16; jj++) {
-                ii = 0;
-                for (m = jj * 90; m < (jj + 1) * 90; m++) {
-                    ray = RKGetRay(engine->rayBuffer, m);
-                    ii += sprintf(str + ii, "%x", ray->header.s & RKRayStatusReady);
-                }
-                printf("%4d-%4d: %s\n", jj * 90, (jj + 1) * 90, str);
-            }
-
-#endif
-
         } else if (ray->header.marker & RKMarkerSweepBegin) {
             if (engine->verbose > 1) {
                 RKLog("%s RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
