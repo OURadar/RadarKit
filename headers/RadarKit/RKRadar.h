@@ -155,7 +155,7 @@ struct rk_radar {
     //
     RKControl                        *controls;
     uint32_t                         controlIndex;
-	uint32_t                         controlSetIndex;
+    uint32_t                         controlSetIndex;
 };
 
 //
@@ -283,6 +283,6 @@ void RKConcludeControls(RKRadar *);
 void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
 void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
 void RKShowOffsets(RKRadar *radar);
-void RKBufferOverview(RKRadar *radar, char *);
+int RKBufferOverview(RKRadar *radar, char *);
 
 #endif /* defined(__RadarKit_RKRadar__) */

@@ -529,9 +529,9 @@ static void *momentCore(void *in) {
         string[i] = '#';
 
         // Summary of this ray
-        snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
-                 " %05lu | %s  %05lu...%05lu (%3d)  [C%2d/E%5.2f/A%5.2f]   E%5.2f-%5.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s%s",
-                 (unsigned long)io, name, (unsigned long)is, (unsigned long)ie, path.length,
+        snprintf(string + RKStatusBarWidth, RKNameLength - RKStatusBarWidth,
+                 " %05u | %s  %05u...%05u (%3d)  [C%2d/E%5.2f/A%5.2f]   E%5.2f-%5.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s%s",
+                 (unsigned int)io, name, (unsigned int)is, (unsigned int)ie, path.length,
                  ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,

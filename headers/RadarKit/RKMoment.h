@@ -52,12 +52,12 @@ struct rk_moment_engine {
     pthread_t                        tidPulseGatherer;
     pthread_mutex_t                  coreMutex;
     uint8_t                          processorLagCount;
-	uint8_t                          userLagChoice;
+    uint8_t                          userLagChoice;
     
     // Status / health
     uint32_t                         processedPulseIndex;
-    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    char                             rayStatusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                             statusBuffer[RKBufferSSlotCount][RKNameLength];
+    char                             rayStatusBuffer[RKBufferSSlotCount][RKNameLength];
     uint32_t                         statusBufferIndex;
     uint32_t                         rayStatusBufferIndex;
     RKEngineState                    state;

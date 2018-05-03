@@ -1156,7 +1156,7 @@ void RKShowOffsets(RKRadar *radar) {
     printf("radar->dataRecorder->doNotWrite  @ %ld\n", (unsigned long)((void *)radar - (void *)radar->dataRecorder->doNotWrite));
 }
 
-void RKBufferOverview(RKRadar *radar, char *text) {
+int RKBufferOverview(RKRadar *radar, char *text) {
     // Buffer status
     int i, j, k, m = 0;
     int slice;
@@ -1195,7 +1195,8 @@ void RKBufferOverview(RKRadar *radar, char *text) {
         }
         m += sprintf(text + m, "\n");
     }
-    m += sprintf(text + m, "\n");
+    m += sprintf(text + m, "\n" RKEOL);
+    return m;
 }
 
 #pragma mark - Interaction / State Change
@@ -2074,11 +2075,6 @@ RKHealth *RKGetVacantHealth(RKRadar *radar, const RKHealthNode node) {
     radar->healthNodes[node].active = true;
     uint32_t index = radar->healthNodes[node].index;
     RKHealth *health = &radar->healthNodes[node].healths[index];
-//    health->i += radar->desc.healthBufferDepth;
-//    index = RKNextModuloS(index, radar->desc.healthBufferDepth);
-//    radar->healthNodes[node].healths[index].flag = RKHealthFlagVacant;
-//    radar->healthNodes[node].healths[index].string[0] = '\0';
-//    radar->healthNodes[node].index = index;
     if (radar->state & RKRadarStateLive) {
         health->i += radar->desc.healthBufferDepth;
         index = RKNextModuloS(index, radar->desc.healthBufferDepth);

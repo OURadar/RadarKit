@@ -64,6 +64,24 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
         memset(string + i, '#', RKMaximumStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
+
+    // Status of the pulse
+    string = engine->pulseStatusBuffer[engine->pulseStatusBufferIndex];
+    c = *engine->pulseIndex;
+    i = c * (RKStatusBarWidth + 1) / engine->radarDescription->pulseBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = '#';
+
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, c);
+    RKConfig *config = &engine->configBuffer[pulse->header.configIndex];
+    snprintf(string + RKStatusBarWidth, RKNameLength - RKStatusBarWidth,
+             " %05u | C%2d/E%5.2f/A%6.2f   E%5.2f   A%6.2f   G%s   M%04x",
+             (unsigned int)c,
+             pulse->header.configIndex, config->sweepElevation, config->sweepAzimuth,
+             pulse->header.elevationDegrees, pulse->header.azimuthDegrees, RKIntegerToCommaStyleString(pulse->header.gateCount),
+             pulse->header.marker);
+
+    engine->pulseStatusBufferIndex = RKNextModuloS(engine->pulseStatusBufferIndex, RKBufferSSlotCount);
 }
 
 #pragma mark - Delegate Workers
@@ -78,8 +96,8 @@ static void *pulseCompressionCore(void *_in) {
     fftwf_complex *o;
 
     const int c = me->id;
-	const int ci = engine->coreOrigin + c;
-	//const int ci = RKGetCPUIndex();
+    const int ci = engine->coreOrigin + c;
+    //const int ci = RKGetCPUIndex();
 
     uint32_t blindGateCount = 0;
 
@@ -113,7 +131,7 @@ static void *pulseCompressionCore(void *_in) {
     // Set my CPU core
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-	CPU_SET(ci, &cpuset);
+    CPU_SET(ci, &cpuset);
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
     pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
 
@@ -397,12 +415,12 @@ static void *pulseWatcher(void *_in) {
     RKPulseCompressionEngine *engine = (RKPulseCompressionEngine *)_in;
 
     int c, i, j, k, s;
-	struct timeval t0, t1;
-	float lag;
+    struct timeval t0, t1;
+    float lag;
 
-	sem_t *sem[engine->coreCount];
+    sem_t *sem[engine->coreCount];
 
-	unsigned int skipCounter = 0;
+    unsigned int skipCounter = 0;
 
     bool found;
     unsigned int gid;
@@ -417,8 +435,8 @@ static void *pulseWatcher(void *_in) {
     RKPulse *pulse;
     RKPulse *pulseToSkip;
     
-	// Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
-	pulse = RKGetPulse(engine->pulseBuffer, 0);
+    // Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
+    pulse = RKGetPulse(engine->pulseBuffer, 0);
     planSize = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
     bool exportWisdom = false;
     const char wisdomFile[] = RKFFTWisdomFile;
@@ -446,14 +464,14 @@ static void *pulseWatcher(void *_in) {
         if (engine->verbose) {
             RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         }
-		gettimeofday(&t1, NULL);
+        gettimeofday(&t1, NULL);
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
         engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-		gettimeofday(&t0, NULL);
-		if (RKTimevalDiff(t0, t1) > 1.0) {
-			exportWisdom = true;
-		}
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 1.0) {
+            exportWisdom = true;
+        }
         if (engine->verbose > 2) {
             fftwf_print_plan(engine->planForwardInPlace[planIndex]);
         }
@@ -461,12 +479,12 @@ static void *pulseWatcher(void *_in) {
         engine->planCount++;
         planSize /= 2;
     }
-	if (planIndex == 0) {
-		RKLog("%s No plan was made.\n", engine->name);
-		exit(EXIT_FAILURE);
-	}
+    if (planIndex == 0) {
+        RKLog("%s No plan was made.\n", engine->name);
+        exit(EXIT_FAILURE);
+    }
 
-	// Update the engine state
+    // Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
     
@@ -519,8 +537,8 @@ static void *pulseWatcher(void *_in) {
         RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     }
 
-	// Increase the tic once to indicate the engine is ready
-	engine->tic = 1;
+    // Increase the tic once to indicate the engine is ready
+    engine->tic = 1;
 
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
@@ -651,9 +669,9 @@ static void *pulseWatcher(void *_in) {
             RKPulseCompressionUpdateStatusString(engine);
         }
     
-		engine->tic++;
+        engine->tic++;
 
-		// Update k to catch up for the next watch
+        // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
 
@@ -844,36 +862,36 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         RKLog("Error. Filter group %d is invalid.\n", group);
         return RKResultFailedToSetFilter;
     }
-	if (index >= RKMaxFilterCount) {
-		RKLog("Error. Filter index %d is invalid.\n", index);
-		return RKResultFailedToSetFilter;
-	}
-	// Use the first pulse of the buffer to determine the capacity
-	RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
+    if (index >= RKMaxFilterCount) {
+        RKLog("Error. Filter index %d is invalid.\n", index);
+        return RKResultFailedToSetFilter;
+    }
+    // Use the first pulse of the buffer to determine the capacity
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     // Check if filter anchor is valid
-	if (engine->verbose > 1) {
-		RKLog(">%s Setting filter group %d index %d ...\n", engine->name, group, index);
-	}
+    if (engine->verbose > 1) {
+        RKLog(">%s Setting filter group %d index %d ...\n", engine->name, group, index);
+    }
     if (anchor.inputOrigin >= pulse->header.capacity) {
         RKLog("%s Error. Pulse capacity %s   Filter X @ (i:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(pulse->header.capacity),
               RKIntegerToCommaStyleString(anchor.inputOrigin));
         return RKResultFailedToSetFilter;
     }
-	if (anchor.outputOrigin >= pulse->header.capacity) {
-		RKLog("%s Error. Pulse capacity %s   Filter X @ (o:%s) invalid.\n", engine->name,
-			  RKIntegerToCommaStyleString(pulse->header.capacity),
-			  RKIntegerToCommaStyleString(anchor.outputOrigin));
-		return RKResultFailedToSetFilter;
-	}
-	// Check if this filter works with my capacity & nfft
-	const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
-	if (anchor.length > nfft) {
-		RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
-			  RKIntegerToCommaStyleString(nfft),
-			  RKIntegerToCommaStyleString(anchor.length));
-		return RKResultFailedToSetFilter;
-	}
+    if (anchor.outputOrigin >= pulse->header.capacity) {
+        RKLog("%s Error. Pulse capacity %s   Filter X @ (o:%s) invalid.\n", engine->name,
+              RKIntegerToCommaStyleString(pulse->header.capacity),
+              RKIntegerToCommaStyleString(anchor.outputOrigin));
+        return RKResultFailedToSetFilter;
+    }
+    // Check if this filter works with my capacity & nfft
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    if (anchor.length > nfft) {
+        RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
+              RKIntegerToCommaStyleString(nfft),
+              RKIntegerToCommaStyleString(anchor.length));
+        return RKResultFailedToSetFilter;
+    }
     if (engine->filters[group][index] == NULL) {
         RKLog("%s Error. Filter memory not allocated.\n", engine->name);
     }
@@ -890,9 +908,9 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
-	if (engine->verbose > 1) {
-		RKLog("%s Setting impulse filter...", engine->name);
-	}
+    if (engine->verbose > 1) {
+        RKLog("%s Setting impulse filter...", engine->name);
+    }
     RKComplex filter[] = {{1.0f, 0.0f}};
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     if (pulse == NULL) {
@@ -904,7 +922,7 @@ int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
-	anchor.filterGain = 0.0f;
+    anchor.filterGain = 0.0f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -920,7 +938,7 @@ int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
-	anchor.filterGain = 7.78f;
+    anchor.filterGain = 7.78f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -936,7 +954,7 @@ int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *engine) {
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
-	anchor.filterGain = 3.01f;
+    anchor.filterGain = 3.01f;
     return RKPulseCompressionSetFilter(engine, filter, anchor, 0, 0);
 }
 
@@ -986,10 +1004,10 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	if (!(engine->state & RKEngineStateActive)) {
-		RKLog("%s Not active.\n", engine->name);
-		return RKResultEngineDeactivatedMultipleTimes;
-	}
+    if (!(engine->state & RKEngineStateActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
@@ -997,11 +1015,11 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseWatcher) {
         pthread_join(engine->tidPulseWatcher, NULL);
-		engine->tidPulseWatcher = (pthread_t)0;
+        engine->tidPulseWatcher = (pthread_t)0;
         free(engine->workers);
         engine->workers = NULL;
-	} else {
-		RKLog("%s Invalid thread ID.\n", engine->name);
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
@@ -1015,6 +1033,10 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
+}
+
+char *RKPulseCompressionEnginePulseString(RKPulseCompressionEngine *engine) {
+    return engine->pulseStatusBuffer[RKPreviousModuloS(engine->pulseStatusBufferIndex, RKBufferSSlotCount)];
 }
 
 void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *engine) {

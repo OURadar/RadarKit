@@ -553,14 +553,18 @@ enum RKFileType {
 typedef uint64_t RKStream;
 enum RKStream {
     RKStreamNull                     = 0,                            //
-    RKStreamControl                  = 1,                            // Controls
-    RKStreamStatusHealth             = (1 << 1),                     //
-    RKStreamStatusPulses             = (1 << 2),                     //
-    RKStreamStatusRays               = (1 << 3),                     //
-    RKStreamStatusPositions          = (1 << 4),                     //
-    RKStreamStatusEngines            = (1 << 6),                     //
+    RKStreamStatusMask               = 0x07,                         // Values 0-8 in the lowest 4 bits (exclusive mode)
+    RKStreamStatusPositions          = 1,                            //
+    RKStreamStatusPulses             = 2,                            //
+    RKStreamStatusRays               = 3,                            //
+    RKStreamStatusIngest             = 4,                            // Ingest up keep
+    RKStreamStatusEngines            = 5,                            // State of Engines
+    RKStreamStatusBuffers            = 6,                            // Buffer overview
+    RKStreamControl                  = (1 << 3),                     // Controls
+    RKStreamStatusAll                = 0xF7,
+    RKStreamHealthInJSON             = (1 << 5),                     // Health in JSON
+    RKStreamStatusEngineBinary       = (1 << 6),                     //
     RKStreamStatusProcessorStatus    = (1 << 7),                     // Consolidated binary from of the system status
-    RKStreamStatusAll                = 0xFE,                         //
     RKStreamDisplayIQ                = (1 << 8),                     // Low rate IQ (sub-smpled)
     RKStreamDisplayIQFiltered        = (1 << 9),                     // Filtered IQ (usually matched filter is applied)
     RKStreamProductIQ                = (1 << 10),                    // Full rate IQ

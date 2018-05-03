@@ -31,8 +31,8 @@ typedef struct  rk_user {
     uint32_t                         rayIndex;
     uint32_t                         pingCount;
     uint32_t                         commandCount;
-	uint32_t                         controlSetIndex;
-	uint32_t                         rayAnchorsIndex;
+    uint32_t                         controlSetIndex;
+    uint32_t                         rayAnchorsIndex;
     uint16_t                         pulseDownSamplingRatio;
     uint16_t                         rayDownSamplingRatio;
     uint16_t                         ascopeMode;

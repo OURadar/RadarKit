@@ -67,8 +67,10 @@ struct rk_pulse_compression_engine {
     pthread_mutex_t                  coreMutex;
 
     // Status / health
-    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                             statusBuffer[RKBufferSSlotCount][RKNameLength];
+    char                             pulseStatusBuffer[RKBufferSSlotCount][RKNameLength];
     uint32_t                         statusBufferIndex;
+    uint32_t                         pulseStatusBufferIndex;
     RKEngineState                    state;
     uint32_t                         tic;
     float                            lag;
@@ -102,6 +104,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *);
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *);
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *);
+char *RKPulseCompressionEnginePulseString(RKPulseCompressionEngine *);
 void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *);
 void RKPulseCompressionShowBuffer(fftwf_complex *, const int);
 
