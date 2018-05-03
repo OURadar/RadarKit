@@ -1602,8 +1602,6 @@ int RKSoftRestart(RKRadar *radar) {
     for (i = 0; i < radar->desc.positionBufferDepth; i++) {
         radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
     }
-    RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
-    RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 
     // Restore the waveform
     RKSetWaveform(radar, radar->waveform);

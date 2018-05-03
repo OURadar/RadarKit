@@ -1234,22 +1234,12 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         pthread_mutex_unlock(&user->mutex);
         if (user->pulseIndex > radar->desc.pulseBufferDepth ||
             user->rayIndex > 2 * radar->momentEngine->coreCount ||
-            user->healthIndex > 2 ||
-            user->rayStatusIndex > 2) {
-            RKLog("%s Warning. pulse @ %s   ray @ %s   health @ %s   rayStatus @ %s\n",
+            user->healthIndex > 2) {
+            RKLog("%s Warning. pulse @ %s   ray @ %s   health @ %s\n",
                   user->serverOperator->name,
                   RKIntegerToCommaStyleString(user->pulseIndex),
                   RKIntegerToCommaStyleString(user->rayIndex),
-                  RKIntegerToCommaStyleString(user->healthIndex),
-                  RKIntegerToCommaStyleString(user->rayStatusIndex));
+                  RKIntegerToCommaStyleString(user->healthIndex));
         }
     }
-//    for (i = 0; i < 10; i++) {
-//        RKRay *ray = RKGetRay(radar->rays, i);
-//        RKLog(">ray[%d].header = 0x%08x\n", i, ray->header.s);
-//    }
-//    for (i = 0; i < 10; i++) {
-//        RKPulse *pulse = RKGetPulse(radar->pulses, i);
-//        RKLog(">pulse[%d].header = 0x%08x\n", i, pulse->header.s);
-//    }
 }
