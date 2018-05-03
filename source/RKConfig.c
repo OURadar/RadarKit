@@ -22,8 +22,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
     pthread_mutex_lock(&rkGlobalParameters.mutex);
 
-    RKConfig *newConfig = &configs[RKNextModuloS(*configIndex, configBufferDepth)];
-    RKConfig *oldConfig = &configs[*configIndex];
+//    RKConfig *newConfig = &configs[RKNextModuloS(*configIndex, configBufferDepth)];
+//    RKConfig *oldConfig = &configs[*configIndex];
+
+    RKConfig *newConfig = &configs[*configIndex];
+    RKConfig *oldConfig = &configs[RKPreviousModuloS(*configIndex, configBufferDepth)];
 
     const uint64_t configId = newConfig->i + configBufferDepth;
     

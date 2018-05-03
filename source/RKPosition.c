@@ -83,6 +83,7 @@ static void *pulseTagger(void *_in) {
     RKPositionEngine *engine = (RKPositionEngine *)_in;
     
     int i, j, k, s;
+    uint16_t c0, c1;
 	struct timeval t0, t1;
 
 	RKPulse *pulse;
@@ -122,7 +123,10 @@ static void *pulseTagger(void *_in) {
         }
     }
     engine->state ^= RKEngineStateSleep0;
-    
+
+    c0 = *engine->configIndex;
+    c1 = RKPreviousModuloS(c0, engine->configBufferDepth);
+
     // Set the pulse to have position
     j = 0;   // position index
     k = 0;   // pulse index;
@@ -268,8 +272,13 @@ static void *pulseTagger(void *_in) {
                             RKConfigKeyNull);
         }
 
+        if (c0 != *engine->configIndex) {
+            c0 = *engine->configIndex;
+            c1 = RKPreviousModuloS(c0, engine->configBufferDepth);
+        }
+
         pulse->header.marker = marker0;
-        pulse->header.configIndex = *engine->configIndex;
+        pulse->header.configIndex = c1;
         
         marker1 = marker0;
 

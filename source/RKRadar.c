@@ -1279,13 +1279,11 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
 
     // Add a dummy config to get things started if there hasn't been one
-    if (radar->configIndex == 0) {
-        RKAddConfig(radar,
-                    RKConfigKeySystemZCal, -47.0, -47.0,
-                    RKConfigKeyDCal, -1.0,
-                    RKConfigKeyNoise, 1.0, 1.0,
-                    RKConfigKeyNull);
-    }
+    RKAddConfig(radar,
+                RKConfigKeySystemZCal, -27.0, -27.0,
+                RKConfigKeyDCal, -0.5,
+                RKConfigKeyNoise, 0.1, 0.1,
+                RKConfigKeyNull);
 
     // Health Relay
     if (radar->healthRelayInit != NULL) {

@@ -511,7 +511,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     int16_t *rn = (int16_t *)malloc(transceiver->gateCount * sizeof(int16_t));
     for (g = 0; g < transceiver->gateCount; g++) {
         r = (float)g * transceiver->gateSizeMeters * 0.1f;
-        a = 60.0f * (cos(0.001f * r)
+        a = 600.0f * (cos(0.001f * r)
                      + 0.8f * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f) * cosf(0.003f * r + 0.8f)
                      + 0.3f * cosf(0.007f * r) * cosf(0.007f * r)
                      + 0.2f * cosf(0.01f * r + 0.3f)
