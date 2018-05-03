@@ -1158,14 +1158,19 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
         return;
     }
+    RKLog("%s tics = %d / %d / %d\n", engine->name,
+          radar->pulseCompressionEngine->tic,
+          radar->rayIndex,
+          radar->healthEngine->tic);
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
            radar->healthEngine->tic < 2) {
         usleep(25000);
     }
     if (engine->verbose) {
-        RKLog("%s tics = %d / %d\n", engine->name,
+        RKLog("%s tics = %d / %d / %d\n", engine->name,
               radar->pulseCompressionEngine->tic,
+              radar->rayIndex,
               radar->healthEngine->tic);
     }
 
