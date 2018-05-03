@@ -733,9 +733,10 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "Developer", "dr");
 
     RKAddConfig(myRadar,
-                RKConfigKeySystemZCal, -25.0f, -25.0f,
+                RKConfigKeySystemZCal, -30.0f, -30.0f,
                 RKConfigKeySystemDCal, 0.2f,
                 RKConfigKeyZCal2, 20.0f, 20.0f,
+                RKConfigKeyNoise, 0.1, 0.1,
                 RKConfigKeyNull);
     
     // Catch Ctrl-C and exit gracefully

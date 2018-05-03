@@ -991,8 +991,6 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->state & RKRadarStateLive) {
         RKClockReset(radar->pulseClock);
     }
-    RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
-    RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
     return RKResultNoError;
 }
 
@@ -1278,12 +1276,14 @@ int RKGoLive(RKRadar *radar) {
     radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
 
-    // Add a dummy config to get things started if there hasn't been one
-    RKAddConfig(radar,
-                RKConfigKeySystemZCal, -27.0, -27.0,
-                RKConfigKeyDCal, -0.5,
-                RKConfigKeyNoise, 0.1, 0.1,
-                RKConfigKeyNull);
+    // Add a dummy config to get things started if there hasn't been one from the user
+    if (radar->configIndex == 0) {
+        RKAddConfig(radar,
+                    RKConfigKeySystemZCal, -27.0, -27.0,
+                    RKConfigKeyDCal, -0.5,
+                    RKConfigKeyNoise, 0.1, 0.1,
+                    RKConfigKeyNull);
+    }
 
     // Health Relay
     if (radar->healthRelayInit != NULL) {
@@ -1642,6 +1642,8 @@ int RKSoftRestart(RKRadar *radar) {
     for (i = 0; i < radar->desc.positionBufferDepth; i++) {
         radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
     }
+    RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
+    RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
 
     // Restore the waveform
     RKSetWaveform(radar, radar->waveform);

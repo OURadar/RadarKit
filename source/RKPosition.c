@@ -125,7 +125,7 @@ static void *pulseTagger(void *_in) {
     engine->state ^= RKEngineStateSleep0;
 
     c0 = *engine->configIndex;
-    c1 = RKPreviousModuloS(c0, engine->configBufferDepth);
+    c1 = RKPreviousModuloS(c0, engine->radarDescription->configBufferDepth);
 
     // Set the pulse to have position
     j = 0;   // position index
@@ -274,7 +274,7 @@ static void *pulseTagger(void *_in) {
 
         if (c0 != *engine->configIndex) {
             c0 = *engine->configIndex;
-            c1 = RKPreviousModuloS(c0, engine->configBufferDepth);
+            c1 = RKPreviousModuloS(c0, engine->radarDescription->configBufferDepth);
         }
 
         pulse->header.marker = marker0;

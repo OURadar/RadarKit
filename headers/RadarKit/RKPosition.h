@@ -56,13 +56,10 @@ struct rk_position_engine {
     RKRadarDesc            *radarDescription;
     RKBuffer               pulseBuffer;
     uint32_t               *pulseIndex;
-    uint32_t               pulseBufferDepth;
     RKPosition             *positionBuffer;
     uint32_t               *positionIndex;
-    uint32_t               positionBufferDepth;
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
-    uint32_t               configBufferDepth;
     uint8_t                verbose;
     RKPedestal             pedestal;
     RKPedestal             (*hardwareInit)(void *);
