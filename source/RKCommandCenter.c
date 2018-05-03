@@ -1153,47 +1153,61 @@ void RKCommandCenterStop(RKCommandCenter *center) {
 }
 
 void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
-    int i;
+    int i, s;
     if (!(radar->desc.initFlags & RKInitFlagSignalProcessor)) {
         RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
         return;
     }
-    RKLog("%s tics = %d / %d / %d\n", engine->name,
+    RKLog("%s tics = %d / %d / %d ====\n", engine->name,
           radar->pulseCompressionEngine->tic,
           radar->rayIndex,
           radar->healthEngine->tic);
+    s = 0;
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
            radar->healthEngine->tic < 2) {
-        usleep(25000);
+        if (++s % 10 == 0) {
+            RKLog("%s Sleep 1/%.1f s    %d / %d / %d\n", engine->name, 0.01f * s,
+                  radar->pulseCompressionEngine->tic,
+                  radar->rayIndex,
+                  radar->healthEngine->tic);
+        }
+        usleep(10000);
     }
     if (engine->verbose) {
-        RKLog("%s tics = %d / %d / %d\n", engine->name,
+        RKLog("%s tics = %d / %d / %d ====\n", engine->name,
               radar->pulseCompressionEngine->tic,
               radar->rayIndex,
               radar->healthEngine->tic);
     }
 
-    int ii, jj, m;
-    char str[1024];
+    // Buffer status
+    int ii, jj, kk, m;
+    int slice = 90;
+    char str[4096];
     RKRay *ray;
+
+    kk = 0;
     for (jj = 0; jj < 16; jj++) {
-        ii = 0;
-        for (m = jj * 90; m < (jj + 1) * 90; m++) {
-            ray = RKGetRay(radar->rays, m);
-            ii += sprintf(str + ii, "%x", ray->header.s & RKRayStatusReady);
+        m = 0;
+        for (ii = 0; ii < slice && kk < radar->desc.rayBufferDepth && m < 4094; ii++) {
+            ray = RKGetRay(radar->rays, kk);
+            m += sprintf(str + m, "%x", ray->header.s & RKRayStatusReady);
+            kk++;
         }
-        printf("%4d-%4d: %s\n", jj * 90, (jj + 1) * 90, str);
+        printf("%4d-%4d: %s\n", kk - slice, kk, str);
     }
     printf("\n");
+
     RKPulse *pulse;
+    slice = 100;
     for (jj = 0; jj < 16; jj++) {
         ii = 0;
-        for (m = jj * 90; m < (jj + 1) * 90; m++) {
+        for (m = jj * slice; m < (jj + 1) * slice; m++) {
             pulse = RKGetPulse(radar->pulses, m);
-            ii += sprintf(str + ii, "%x", pulse->header.s & RKPulseStatusProcessed ? 1 : 0);
+            ii += sprintf(str + ii, "%x", pulse->header.s & RKPulseStatusProcessed & 0x0F);
         }
-        printf("%4d-%4d: %s\n", jj * 90, (jj + 1) * 90, str);
+        printf("%4d-%4d: %s\n", jj * slice, (jj + 1) * slice, str);
     }
 
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {

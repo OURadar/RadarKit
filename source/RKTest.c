@@ -1770,6 +1770,10 @@ void RKTestShowColors(void) {
     for (int k = 0; k < 16; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
+    printf("\n");
+    printf("+inf -> %s\n", RKFloatToCommaStyleString(INFINITY));
+    printf("-inf -> %s\n", RKFloatToCommaStyleString(-INFINITY));
+    printf("nan -> %s\n", RKFloatToCommaStyleString(NAN));
 }
 
 void RKTestFileManager(void) {
