@@ -240,6 +240,7 @@ enum RKResult {
     RKResultFailedToStartHostPinger,
     RKResultFailedToExecuteCommand,
 	RKResultFailedToAddHost,
+    RKResultRadarNotLive,
     RKResultNoRadar,
     RKResultSuccess = 0,
     RKResultNoError = 0
@@ -325,7 +326,7 @@ enum RKMarker {
 // -> RKPulseStatusInspected                                (main thread)
 // -> RKPulseStatusCompressed / RKPulseStatusSkipped        (core threads)
 // -> RKPulseStatusDownSampled                              (core threads)
-// -> RKPulseStatusProcessed                                (core thread)
+// -> RKPulseStatusProcessed                                (core threads)
 // -> RKPulseStatusRingInspected                            (main thread)
 // -> RKPulseStatusRingFiltered / RKPulseStatusRingSkipped  (main thread consolidates)
 // -> RKPulseStatusRingProcessed                            (main thread)
@@ -504,6 +505,7 @@ enum RKEngineState {
     RKEngineStateSleepMask           = 0x0000000F,
     RKEngineStateWritingFile         = (1 << 4),                     // Generating an output file
     RKEngineStateMemoryChange        = (1 << 5),                     // Some required pointers are being changed
+    RKEngineStateSuspended           = (1 << 6),                     // All indices stop increasing
 	RKEngineStateBusyMask            = 0x000000F0,
     RKEngineStateAllocated           = (1 << 8),                     // Resources have been allocated
     RKEngineStateProperlyWired       = (1 << 9),                     // All required pointers are properly wired up

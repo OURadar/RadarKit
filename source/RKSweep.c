@@ -34,7 +34,10 @@ static void *sweepWriter(void *in) {
 
     int i, j, p, s;
 
-    RKSweep *sweep = RKSweepCollect(engine);
+    // Grab the anchor reference as soon as possible
+    const uint8_t anchorIndex = RKPreviousModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+
+    RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
@@ -427,6 +430,13 @@ static void *rayGatherer(void *in) {
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
 
+#if defined (DEBUG_RAYMARKER)
+
+    int jj = 0, ii = 0, m;
+    char str[256];
+
+#endif
+
     j = 0;   // ray index
     while (engine->state & RKEngineStateActive) {
         // The ray
@@ -444,9 +454,10 @@ static void *rayGatherer(void *in) {
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
-        // Wait until the ray is ready
+        // Wait until the ray is ready. This can never happen right? Because rayIndex only advances after the ray is ready
         s = 0;
         while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive) {
+            RKLog("%s I can happen.   j = %d   is = %d\n", engine->name, j, is);
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
@@ -461,20 +472,27 @@ static void *rayGatherer(void *in) {
         
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - j) / engine->radarDescription->rayBufferDepth, 1.0f);
-        if ((ray->header.marker & RKMarkerSweepEnd) ||
-            (ray->header.marker & RKMarkerSweepBegin && is != RKPreviousModuloS(j, engine->radarDescription->rayBufferDepth))) {
+
+        // A sweep is complete
+        if (ray->header.marker & RKMarkerSweepEnd) {
+            if (engine->verbose > 1) {
+                RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d\n", engine->name, is, j);
+            }
             n = 0;
             do {
                 ray = RKGetRay(engine->rayBuffer, is);
                 ray->header.n = is;
                 rays[n++] = ray;
                 is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-            } while (is != j && n < RKMaxRaysPerSweep - 1 && n < engine->radarDescription->rayBufferDepth);
+            } while (is != j && n < MIN(RKMaxRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
             engine->rayAnchors[engine->rayAnchorsIndex].count = n;
-            
+            if (engine->verbose > 1) {
+                RKLog("%s Info. RKMarkerSweepEnd   n = %d\n", engine->name, n);
+            }
+
             if (tidSweepWriter) {
                 pthread_join(tidSweepWriter, NULL);
             }
@@ -485,7 +503,24 @@ static void *rayGatherer(void *in) {
             }
 
             is = j;
+
+#if defined (DEBUG_RAYMARKER)
+
+            for (jj = 0; jj < 16; jj++) {
+                ii = 0;
+                for (m = jj * 90; m < (jj + 1) * 90; m++) {
+                    ray = RKGetRay(engine->rayBuffer, m);
+                    ii += sprintf(str + ii, "%x", ray->header.s & RKRayStatusReady);
+                }
+                printf("%4d-%4d: %s\n", jj * 90, (jj + 1) * 90, str);
+            }
+
+#endif
+
         } else if (ray->header.marker & RKMarkerSweepBegin) {
+            if (engine->verbose > 1) {
+                RKLog("%s RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
+            }
             is = j;
         }
 
@@ -592,12 +627,21 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (!(engine->state & RKEngineStateActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
-    pthread_join(engine->tidRayGatherer, NULL);
+    if (engine->tidRayGatherer) {
+        pthread_join(engine->tidRayGatherer, NULL);
+        engine->tidRayGatherer = (pthread_t)0;
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
+    }
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
         RKLog("%s Stopped.\n", engine->name);
@@ -645,11 +689,10 @@ void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
     dst[n] = 0;
 }
 
-RKSweep *RKSweepCollect(RKSweepEngine *engine) {
+RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     MAKE_FUNCTION_NAME(name)
     RKSweep *sweep = NULL;
 
-    uint8_t anchorIndex = RKPreviousModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
     uint32_t n = engine->rayAnchors[anchorIndex].count;
     RKRay **rays = engine->rayAnchors[anchorIndex].rays;
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);

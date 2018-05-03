@@ -710,7 +710,8 @@ int main(int argc, const char **argv) {
 
     RKSetVerbose(myRadar, user.verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-    RKSetMomentProcessorToMultiLag(myRadar, 3);
+    //RKSetMomentProcessorToMultiLag(myRadar, 3);
+    RKSetMomentProcessorToPulsePairHop(myRadar);
 
     RKAddControl(myRadar, "10us pulse", "t w s10");
     RKAddControl(myRadar, "20us pulse", "t w s20");
@@ -728,7 +729,8 @@ int main(int argc, const char **argv) {
     RKAddControl(myRadar, "PPI EL 4 deg @ 6 dps", "p ppi 4 6");
     RKAddControl(myRadar, "PPI EL 3 deg @ 1 dps", "p ppi 3 1");
     RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
-    RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
+    //RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
+    RKAddControl(myRadar, "Developer", "dr");
 
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, -25.0f, -25.0f,
@@ -831,7 +833,7 @@ int main(int argc, const char **argv) {
         RKGoLive(myRadar);
         usleep(1000000);
         RKLog("Starting a new PPI ...\n");
-        RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
+        RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
 

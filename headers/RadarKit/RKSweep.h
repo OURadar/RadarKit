@@ -84,7 +84,7 @@ RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc)
 int RKSweeEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
 int RKSweepEngineReportProduct(RKSweepEngine *, RKUserProductId);
 
-RKSweep *RKSweepCollect(RKSweepEngine *);
+RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
 RKSweep *RKSweepRead(const char *);
 int RKSweepFree(RKSweep *);
 

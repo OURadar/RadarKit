@@ -221,6 +221,7 @@ int RKHealthEngineStart(RKHealthEngine *engine) {
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
+    engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidHealthConsolidator, NULL, healthConsolidator, engine)) {
         RKLog("Error. Unable to start health engine.\n");

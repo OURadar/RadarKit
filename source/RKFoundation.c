@@ -364,6 +364,8 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
         RKPulse *pulse = RKGetPulse(buffer, k);
         pulse->header.s = RKPulseStatusVacant;
+        pulse->header.i = (uint64_t)(-slots) + k;
+        pulse->header.gateCount = 0;
         memset(pulse->data, 0, 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat)));
     }
     return RKResultNoError;
@@ -438,6 +440,8 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
         RKRay *ray = RKGetRay(buffer, k);
         ray->header.s = RKRayStatusVacant;
+        ray->header.i = (uint64_t)(-slots) + k;
+        ray->header.gateCount = 0;
         memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultNoError;

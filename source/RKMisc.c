@@ -254,10 +254,20 @@ char *RKIntegerToCommaStyleString(const long num) {
 //
 char *RKFloatToCommaStyleString(const double num) {
     char *intString = RKIntegerToCommaStyleString((long)num);
-    if (num < 0.0 && num > -1.0) {
-        sprintf(intString, "-0");
+    if (isfinite(num)) {
+        if (num < 0.0 && num > -1.0) {
+            sprintf(intString, "-0");
+        }
+        snprintf(intString + strlen(intString), 32 - strlen(intString), ".%03.0f", 1000.0f * fabs(num - trunc(num)));
+    } else if (isnan(num)) {
+        sprintf(intString, "nan");
+    } else if (isinf(num)) {
+        if (num > 0) {
+            sprintf(intString, "+inf");
+        } else {
+            sprintf(intString, "-inf");
+        }
     }
-    snprintf(intString + strlen(intString), 32 - strlen(intString), ".%03.0f", 1000.0f * fabs(num - trunc(num)));
     return intString;
 }
 
