@@ -18,7 +18,7 @@ typedef struct rk_host_monitor RKHostMonitor;
 
 struct rk_unit_monitor {
     int                    id;
-    int                    tic;
+    uint64_t               tic;
     pthread_t              tid;
     RKHostMonitor          *parent;
     uint16_t               pingIntervalInSeconds;
@@ -35,7 +35,7 @@ struct rk_host_monitor {
     RKName                 *hosts;                              // List of names (hostnames)
     
     // Program set variables
-    int                    tic;
+    uint64_t               tic;
     int                    workerCount;
     RKUnitMonitor          *workers;
     pthread_t              tidHostWatcher;

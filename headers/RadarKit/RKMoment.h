@@ -22,7 +22,7 @@ struct rk_moment_worker {
     char                             semaphoreName[32];
     int                              id;
     pthread_t                        tid;
-    uint32_t                         tic;
+    uint64_t                         tic;
     uint32_t                         pid;
     double                           dutyBuff[RKWorkerDutyCycleBufferDepth];
     double                           dutyCycle;                                // Latest duty cycle estimate
@@ -61,7 +61,7 @@ struct rk_moment_engine {
     uint32_t                         statusBufferIndex;
     uint32_t                         rayStatusBufferIndex;
     RKEngineState                    state;
-    uint32_t                         tic;
+    uint64_t                         tic;
     float                            lag;
     uint32_t                         almostFull;
     size_t                           memoryUsage;

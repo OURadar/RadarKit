@@ -66,7 +66,7 @@ typedef struct rk_file_manager RKFileManager;
 
 struct rk_file_remover {
     int                              id;
-    int                              tic;
+    uint64_t                         tic;
     pthread_t                        tid;
     int                              index;                               // Index to get sorted index for removal
     int                              count;                               // Dual use index: count and index to add (reusable buffer)
@@ -94,7 +94,7 @@ struct rk_file_manager {
     int                              maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
 
     // Program set variables
-    int                              tic;
+    uint64_t                         tic;
     int                              workerCount;
     RKFileRemover                    *workers;
     pthread_t                        tidFileWatcher;

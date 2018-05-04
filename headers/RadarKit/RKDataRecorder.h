@@ -42,7 +42,7 @@ struct rk_data_recorder {
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
     RKEngineState                    state;
-    uint32_t                         tic;
+    uint64_t                         tic;
     float                            lag;
     size_t                           memoryUsage;
 };

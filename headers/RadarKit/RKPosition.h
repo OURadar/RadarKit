@@ -78,7 +78,7 @@ struct rk_position_engine {
     char                   positionStringBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t               statusBufferIndex;
     RKEngineState          state;
-    uint32_t               tic;
+    uint64_t               tic;
     float                  lag;
     size_t                 memoryUsage;
 };

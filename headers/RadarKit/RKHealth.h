@@ -32,7 +32,7 @@ struct rk_health_engine {
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
     RKEngineState                    state;
-	uint32_t                         tic;
+	uint64_t                         tic;
     size_t                           memoryUsage;
 };
 

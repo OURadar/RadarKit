@@ -28,7 +28,7 @@ struct rk_pulse_compression_worker {
     char                       semaphoreName[32];
     int                        id;
     pthread_t                  tid;                                      // Thread ID
-    uint32_t                   tic;                                      // Tic count
+    uint64_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
@@ -72,7 +72,7 @@ struct rk_pulse_compression_engine {
     uint32_t                         statusBufferIndex;
     uint32_t                         pulseStatusBufferIndex;
     RKEngineState                    state;
-    uint32_t                         tic;
+    uint64_t                         tic;
     float                            lag;
     int                              almostFull;
     size_t                           memoryUsage;

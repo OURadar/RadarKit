@@ -29,13 +29,50 @@ static int put_global_text_att(const int ncid, const char *att, const char *text
     return nc_put_att_text(ncid, NC_GLOBAL, att, strlen(text), text);
 }
 
+static void releaseRays(RKSweepEngine *engine, const uint8_t anchorIndex) {
+    MAKE_FUNCTION_NAME(name)
+
+    int i;
+    RKRay *ray;
+
+    for (i = 0; i < engine->rayAnchors[anchorIndex].count; i++) {
+        ray = engine->rayAnchors[anchorIndex].rays[i];
+        ray->header.s = RKRayStatusVacant;
+    }
+}
+
+static void *rayReleaser(void *in) {
+    RKSweepEngine *engine = (RKSweepEngine *)in;
+
+    int s;
+
+    // Grab the anchor reference as soon as possible
+    const uint8_t anchorIndex = engine->rayAnchorsIndex;
+
+    // Notify the thread creator that I have grabbed the parameter
+    engine->tic++;
+
+    // Wait for a second
+    s = 0;
+    do {
+        usleep(100000);
+    } while (++s < 50 && engine->state & RKEngineStateActive);
+
+    releaseRays(engine, anchorIndex);
+
+    return NULL;
+}
+
 static void *sweepWriter(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
     int i, j, p, s;
 
     // Grab the anchor reference as soon as possible
-    const uint8_t anchorIndex = RKPreviousModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+    const uint8_t anchorIndex = engine->rayAnchorsIndex;
+
+    // Notify the thread creator that I have grabbed the parameter
+    engine->tic++;
 
     RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
     if (engine->verbose) {
@@ -390,6 +427,8 @@ static void *sweepWriter(void *in) {
 
     engine->state ^= RKEngineStateWritingFile;
 
+    releaseRays(engine, anchorIndex);
+
     return NULL;
 }
 
@@ -402,7 +441,9 @@ static void *rayGatherer(void *in) {
     
     // Start index
     uint32_t is = 0;
+    uint64_t tic = 0;
     pthread_t tidSweepWriter = (pthread_t)0;
+    pthread_t tidRayReleaser = (pthread_t)0;
 
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
@@ -493,15 +534,48 @@ static void *rayGatherer(void *in) {
             if (tidSweepWriter) {
                 pthread_join(tidSweepWriter, NULL);
             }
-            engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
-            rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
+            // Keep a copy of tic for synchronization
+            tic = engine->tic;
             if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
+            // Wait until engine->rayAnchorsIndex is grabbed.
+            do {
+                usleep(50000);
+            } while (tic == engine->tic && engine->state & RKEngineStateActive);
+            // Ready for next collection while the sweepWriter is busy
+            engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+            rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
             if (engine->verbose > 1) {
                 RKLog("%s RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
+            }
+            if (is != j) {
+                RKLog("%s is = %d   j = %d   C%02d\n", engine->name, is, j, ray->header.configIndex);
+                n = 0;
+                do {
+                    ray = RKGetRay(engine->rayBuffer, is);
+                    ray->header.n = is;
+                    rays[n++] = ray;
+                    is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
+                } while (is != j && n < MIN(RKMaxRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
+                engine->rayAnchors[engine->rayAnchorsIndex].count = n;
+                if (tidRayReleaser) {
+                    pthread_join(tidRayReleaser, NULL);
+                }
+                // Keep a copy of tic for synchronization
+                tic = engine->tic;
+                if (pthread_create(&tidRayReleaser, NULL, rayReleaser, engine)) {
+                    RKLog("%s Error. Unable to launch a ray releaser.\n", engine->name);
+                }
+                // Wait until engine->rayAnchorsIndex is grabbed.
+                do {
+                    usleep(50000);
+                } while (tic == engine->tic && engine->state & RKEngineStateActive);
+                // Ready for next collection while the sweepWriter is busy
+                engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+                rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             }
             is = j;
         }

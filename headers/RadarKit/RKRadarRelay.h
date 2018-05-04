@@ -59,7 +59,7 @@ typedef struct rk_radar_relay {
     uint32_t                         pulseStatusBufferIndex;
     uint32_t                         rayStatusBufferIndex;
     RKEngineState                    state;
-	uint32_t                         tic;
+	uint64_t                         tic;
     size_t                           memoryUsage;
 } RKRadarRelay;
 

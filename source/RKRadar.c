@@ -1190,7 +1190,12 @@ int RKBufferOverview(RKRadar *radar, char *text) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);
-            m += sprintf(text + m, "%02x", ray->header.s & 0xFF);
+            if (ray->header.s == RKRayStatusVacant) {
+                strcpy(text + m, "..");
+                m += 2;
+            } else {
+                m += sprintf(text + m, "%02x", ray->header.s & 0xFF);
+            }
             k++;
         }
         m += sprintf(text + m, "\n");

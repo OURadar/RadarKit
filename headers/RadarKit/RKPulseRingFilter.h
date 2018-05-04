@@ -23,7 +23,7 @@ struct rk_pulse_ring_filter_worker {
     char                       semaphoreName[32];
     int                        id;
     pthread_t                  tid;                                      // Thread ID
-    uint32_t                   tic;                                      // Tic count
+    uint64_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
@@ -56,7 +56,7 @@ struct rk_pulse_ring_filter_engine {
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
     RKEngineState                    state;
-    uint32_t                         tic;
+    uint64_t                         tic;
     float                            lag;
     int                              almostFull;
     size_t                           memoryUsage;
