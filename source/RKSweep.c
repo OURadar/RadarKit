@@ -84,9 +84,12 @@ static void *sweepWriter(void *in) {
     }
     
     if (engine->verbose) {
-        RKLog("%s allReported = %s   i = %llu   s = %d %d %d ...\n", engine->name,
-              allReported ? "True" : "False", engine->userProducts[0].i,
-              engine->userProducts[0].flag, engine->userProducts[1].flag, engine->userProducts[2].flag);
+        j = 0;
+        for (i = 0; i < engine->userProductIdCount; i++) {
+            j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
+        }
+        RKLog("%s Done.   allReported = %s   %s",
+              engine->name, allReported ? "True" : "False", engine->summary);
     }
     
     // Mark the state

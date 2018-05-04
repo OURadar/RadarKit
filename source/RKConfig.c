@@ -48,7 +48,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer, "New Sweep   filterCount = %d", newConfig->filterCount);
+				sprintf(stringBuffer, "New Sweep   EL %.2f°   AZ %.2f°  %s   filterCount = %d",
+                        newConfig->sweepElevation,
+                        newConfig->sweepAzimuth,
+                        newConfig->startMarker & RKMarkerPPIScan ? "PPI" : (newConfig->startMarker & RKMarkerRHIScan ? "RHI" : "UNK"),
+                        newConfig->filterCount);
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
