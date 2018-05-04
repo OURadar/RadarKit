@@ -88,8 +88,8 @@ static void *sweepWriter(void *in) {
         for (i = 0; i < engine->userProductIdCount; i++) {
             j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
         }
-        RKLog("%s Done.   allReported = %s   %s",
-              engine->name, allReported ? "True" : "False", engine->summary);
+        RKLog("%s Concluding sweep.   allReported = %s   %s",
+              engine->name, allReported ? "true" : "false", engine->summary);
     }
     
     // Mark the state
