@@ -162,7 +162,7 @@ static void *pulseRecorder(void *in) {
             n = 0;
             
             if (engine->verbose) {
-                RKLog("%s New file %s ...\n", engine->name, filename);
+                RKLog("%s New I/Q %s ...\n", engine->name, filename);
             }
             if (engine->doNotWrite) {
                 len = sizeof(RKFileHeader);
