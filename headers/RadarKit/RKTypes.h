@@ -906,17 +906,17 @@ typedef struct rk_file_monitor {
 } RKFileMonitor;
 
 typedef int32_t  RKUserProductId;
-typedef uint32_t RKUserProductStatus;
 
+typedef uint32_t RKUserProductStatus;
 enum RKUserProductStatus {
     RKUserProductStatusVacant        = 0,
-    RKUserProductStatusActive        = 1,
-    RKUserProductStatusBusy          = (1 << 1),                     // Waiting for processing node
-    RKUserProductStatusSkipped       = (1 << 2),
-    RKUserProductStatusSleep0        = (1 << 4),                     // Sleep stage 0 -
-    RKUserProductStatusSleep1        = (1 << 5),                     // Sleep stage 1 -
-    RKUserProductStatusSleep2        = (1 << 6),                     // Sleep stage 2 -
-    RKUserProductStatusSleep3        = (1 << 7),                     // Sleep stage 3 -
+    RKUserProductStatusSleep0        = (1 << 0),                     // Sleep stage 0 -
+    RKUserProductStatusSleep1        = (1 << 1),                     // Sleep stage 1 -
+    RKUserProductStatusSleep2        = (1 << 2),                     // Sleep stage 2 -
+    RKUserProductStatusSleep3        = (1 << 3),                     // Sleep stage 3 -
+    RKUserProductStatusSkipped       = (1 << 5),
+    RKUserProductStatusBusy          = (1 << 6),                     // Waiting for processing node
+    RKUserProductStatusActive        = (1 << 7),
 };
 
 typedef struct rk_user_product_desc {

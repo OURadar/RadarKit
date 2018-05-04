@@ -48,7 +48,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer, "New Sweep   filterCount = %d", newConfig->filterCount);
+				sprintf(stringBuffer, "New Sweep   EL %.2f°   AZ %.2f°  %s   filterCount = %d",
+                        newConfig->sweepElevation,
+                        newConfig->sweepAzimuth,
+                        newConfig->startMarker & RKMarkerPPIScan ? "PPI" : (newConfig->startMarker & RKMarkerRHIScan ? "RHI" : "UNK"),
+                        newConfig->filterCount);
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
@@ -159,11 +163,12 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
         }
         if (strlen(stringBuffer)) {
-			RKLog("%s<ParameterKeeper>%s ConfigId = %s   %s\n",
+			RKLog("%s<ParameterKeeper>%s C%02d %s   ConfigId = %s\n",
 				  rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
 				  rkGlobalParameters.showColor ? RKNoColor : "",
-                  RKIntegerToCommaStyleString(configId),
-				  stringBuffer);
+                  *configIndex,
+                  stringBuffer,
+                  RKIntegerToCommaStyleString(configId));
         }
         // Get the next key
         key = va_arg(args, RKConfigKey);

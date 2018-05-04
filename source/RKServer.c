@@ -175,7 +175,7 @@ void *RKOperatorRoutine(void *in) {
         return (void *)RKResultErrorCreatingOperatorCommandRoutine;
     }
 
-    RKLog("%s %s started for the connection from %s (ireq = %d).\n", M->name, O->name, O->ip, M->ireq++);
+    RKLog("%s %s Started.   ireq = %d\n", M->name, O->name, M->ireq++);
 
     // Greet with welcome function
     if (M->w != NULL) {

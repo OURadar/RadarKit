@@ -201,6 +201,9 @@ void RKShowTypeSizes(void) {
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
     RKLog(">sizeof(void *) = %d\n", (int)sizeof(void *));
+    RKLog(">sizeof(uint64_t) = %d\n", (int)sizeof(uint64_t));
+    RKLog(">sizeof(unsigned long) = %d\n", (int)sizeof(unsigned long));
+    RKLog(">sizeof(unsigned long long) = %d\n", (int)sizeof(unsigned long long));
     RKLog(">sizeof(RKByte) = %d\n", (int)sizeof(RKByte));
     RKLog(">sizeof(RKFloat) = %d\n", (int)sizeof(RKFloat));
     RKLog(">sizeof(RKInt16C) = %d\n", (int)sizeof(RKInt16C));
@@ -216,7 +219,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKPulse) = %d\n", (int)sizeof(RKPulse));
     RKLog(">sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
     RKLog(">sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    RKLog(">sizeof(RKRay) = %d\n", (int)sizeof(RKRay));
+    RKLog(">sizeof(RKRay) = %d  (SIMD aligned: %s)\n", (int)sizeof(RKRay), (int)sizeof(RKRay) % RKSIMDAlignSize == 0 ? "true" : "false");
     RKLog(">sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
     RKLog(">sizeof(sweep->header) = %s\n", RKIntegerToCommaStyleString(sizeof(sweep->header)));
     RKLog(">sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));

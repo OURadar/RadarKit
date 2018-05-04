@@ -41,7 +41,7 @@ static void *sweepWriter(void *in) {
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-        RKLog("%s C%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
+        RKLog("%s C%02d E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
               engine->name,
               S->header.configIndex,
               sweep->header.config.sweepElevation,
@@ -84,8 +84,12 @@ static void *sweepWriter(void *in) {
     }
     
     if (engine->verbose) {
-        RKLog("%s allReported = %d    i = %llu   s = %d %d %d ...\n", engine->name, allReported, engine->userProducts[0].i,
-              engine->userProducts[0].flag, engine->userProducts[1].flag, engine->userProducts[2].flag);
+        j = 0;
+        for (i = 0; i < engine->userProductIdCount; i++) {
+            j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
+        }
+        RKLog("%s Concluding sweep.   allReported = %s   %s",
+              engine->name, allReported ? "true" : "false", engine->summary);
     }
     
     // Mark the state

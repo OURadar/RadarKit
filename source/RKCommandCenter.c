@@ -102,7 +102,7 @@ int socketCommandHandler(RKOperator *O) {
                 case 'a':
                     // Authenticate
                     sscanf(commandString + 1, "%s %s", sval1, sval2);
-                    RKLog(">%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
+                    RKLog("%s %s Authenticating %s %s ... (%d) (%d)\n", engine->name, O->name, sval1, sval2, strlen(sval1), sizeof(user->login));
                     // Check authentication here. For now, control is always authorized
                     //
                     //
@@ -140,7 +140,7 @@ int socketCommandHandler(RKOperator *O) {
                                 usleep(100000);
                             } while (tic == user->tic);
 
-                            RKLog("%s %s Fast forwarding ...", engine->name, O->name);
+                            RKLog("%s %s Skipping to current ...", engine->name, O->name);
                             RKCommandCenterSkipToCurrent(engine, user->radar);
 
                             pthread_mutex_lock(&user->mutex);
@@ -418,17 +418,18 @@ int socketStreamHandler(RKOperator *O) {
         if (!(user->streamsInProgress & RKStreamStatusProcessorStatus)) {
             user->streamsInProgress |= RKStreamStatusProcessorStatus;
             if (engine->verbose) {
-                RKLog("%s %s Fast forward RKStatus -> %d (%s).\n", engine->name, O->name, endIndex,
-                      user->radar->status[user->radar->statusIndex].flag == RKStatusFlagVacant ? "vacant" : "ready");
+                RKLog("%s %s Streaming RKStatus -> %d (0x%x %s).\n", engine->name, O->name, endIndex,
+                      user->radar->status[endIndex].flag,
+                      user->radar->status[endIndex].flag == RKStatusFlagVacant ? "vacant" : "ready");
             }
             user->statusIndex = endIndex;
         }
         s = 0;
-        while (!(user->radar->status[user->statusIndex].flag == RKStatusFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
+        while (user->radar->status[user->statusIndex].flag != RKStatusFlagReady && engine->server->state == RKServerStateActive && s++ < 20) {
             if (s % 10 == 0 && engine->verbose > 1) {
                 RKLog("%s %s sleep 0/%.1f s  RKStatus\n", engine->name, O->name, s * 0.1f);
             }
-            usleep(100000);
+            usleep(50000);
         }
         if (user->radar->status[user->statusIndex].flag == RKStatusFlagReady && engine->server->state == RKServerStateActive) {
             while (user->statusIndex != endIndex) {
@@ -448,17 +449,18 @@ int socketStreamHandler(RKOperator *O) {
         if (!(user->streamsInProgress & RKStreamHealthInJSON)) {
             user->streamsInProgress |= RKStreamHealthInJSON;
             if (engine->verbose) {
-                RKLog("%s Fast forward RKHealth -> %d (%s).\n", engine->name, endIndex,
-                      user->radar->healths[user->radar->healthIndex].flag == RKStatusFlagVacant ? "vacant" : "ready");
+                RKLog("%s %s Streaming RKHealth -> %d (0x%x %s).\n", engine->name, O->name, endIndex,
+                      user->radar->healths[endIndex].flag,
+                      user->radar->healths[endIndex].flag == RKStatusFlagVacant ? "vacant" : "ready");
             }
             user->healthIndex = endIndex;
         }
         s = 0;
-        while (!(user->radar->healths[user->healthIndex].flag == RKHealthFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
+        while (user->radar->healths[user->healthIndex].flag != RKHealthFlagReady && engine->server->state == RKServerStateActive && s++ < 20) {
             if (s % 10 == 0 && engine->verbose > 1) {
                 RKLog("%s %s sleep 0/%.1f s  RKHealth\n", engine->name, O->name, s * 0.1f);
             }
-            usleep(100000);
+            usleep(50000);
         }
         if (user->radar->healths[user->healthIndex].flag == RKHealthFlagReady && engine->server->state == RKServerStateActive) {
             j = 0;
@@ -499,7 +501,11 @@ int socketStreamHandler(RKOperator *O) {
                 if (s % 10 == 0 && engine->verbose > 1) {
                     RKLog("%s %s sleep 0/%.1f s  RKRay\n", engine->name, O->name, s * 0.1f);
                 }
-                usleep(100000);
+                usleep(50000);
+            }
+            if (engine->verbose) {
+                RKLog("%s %s Streaming RKRay products -> %d (%s).\n", engine->name, O->name, endIndex,
+                      ray->header.s & RKRayStatusReady ? "ready" : "not ready");
             }
         }
 
@@ -616,10 +622,14 @@ int socketStreamHandler(RKOperator *O) {
             user->rayIndex = endIndex;
             s = 0;
             while (!(ray->header.s & RKRayStatusReady) && engine->server->state == RKServerStateActive && s++ < 20) {
-                if (s % 10 == 0 && engine->verbose > 1) {
+                if (s % 10 == 0 && engine->verbose) {
                     RKLog("%s %s sleep 0/%.1f s  RKRay\n", engine->name, O->name, s * 0.1f);
                 }
-                usleep(100000);
+                usleep(50000);
+            }
+            if (engine->verbose) {
+                RKLog("%s %s Streaming RKRay displays -> %d (0x%02x %s).\n", engine->name, O->name, endIndex,
+                      ray->header.s, ray->header.s & RKRayStatusReady ? "ready" : "not ready");
             }
         }
 
@@ -1043,7 +1053,7 @@ int socketInitialHandler(RKOperator *O) {
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
-    RKLog(">%s %s Pul x %d   Ray x %d ...\n", engine->name, O->name, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
+    RKLog("%s %s Pul x %d   Ray x %d ...\n", engine->name, O->name, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
 
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
@@ -1171,28 +1181,18 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         RKLog("Radar '%s' is not a Signal Processor.\n", radar->name);
         return;
     }
-    RKLog("%s tics = %d / %d / %d ====\n", engine->name,
-          radar->pulseCompressionEngine->tic,
-          radar->rayIndex,
-          radar->healthEngine->tic);
 
     s = 0;
     while (radar->pulseCompressionEngine->tic <= (2 * radar->pulseCompressionEngine->coreCount + 1) ||
            radar->rayIndex < 2 * radar->momentEngine->coreCount ||
            radar->healthEngine->tic < 2) {
-        if (++s % 10 == 0 && engine->verbose > 0) {
+        if (++s % 10 == 0 && engine->verbose > 1) {
             RKLog("%s Sleep 1/%.1f s    %d / %d / %d\n", engine->name, 0.01f * s,
                   radar->pulseCompressionEngine->tic,
                   radar->rayIndex,
                   radar->healthEngine->tic);
         }
         usleep(10000);
-    }
-    if (engine->verbose) {
-        RKLog("%s tics = %d / %d / %d ====\n", engine->name,
-              radar->pulseCompressionEngine->tic,
-              radar->rayIndex,
-              radar->healthEngine->tic);
     }
 
     for (i = 0; i < RKCommandCenterMaxConnections; i++) {
