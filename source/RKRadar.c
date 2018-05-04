@@ -1168,7 +1168,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
                 "Pulse Buffer:\n"
                 "-------------\n");
     k = 0;
-    slice = 100;
+    slice = 50;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
@@ -1185,7 +1185,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
                 "Ray Buffer:\n"
                 "-----------\n");
     k = 0;
-    slice = 90;
+    slice = 45;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {

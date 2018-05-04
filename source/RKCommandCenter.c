@@ -342,23 +342,23 @@ int socketStreamHandler(RKOperator *O) {
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             }
         } else if (k == RKStreamStatusEngines) {
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s:0x%04x/%04d  %s:0x%04x/%05d  %s:0x%04x/%04d  %s:0x%04x/%02d  %s:0x%04x  %s:0x%04x" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "%s%04x/%04d  %s%04x/%05d  %s%04x/%04d  %s%04x/%02d  %s%04x  %s:0x%04x " RKEOL,
                          user->radar->positionEngine->name,
-                         user->radar->positionEngine->state & 0xFF,
+                         user->radar->positionEngine->state & 0xFFFF,
                          user->radar->positionIndex,
                          user->radar->pulseCompressionEngine->name,
-                         user->radar->pulseCompressionEngine->state & 0xFF,
+                         user->radar->pulseCompressionEngine->state & 0xFFFF,
                          user->radar->pulseIndex,
                          user->radar->momentEngine->name,
-                         user->radar->momentEngine->state & 0xFF,
+                         user->radar->momentEngine->state & 0xFFFF,
                          user->radar->rayIndex,
                          user->radar->healthEngine->name,
-                         user->radar->healthEngine->state & 0xFF,
+                         user->radar->healthEngine->state & 0xFFFF,
                          user->radar->healthIndex,
                          user->radar->sweepEngine->name,
-                         user->radar->sweepEngine->state & 0xFF,
+                         user->radar->sweepEngine->state & 0xFFFF,
                          user->radar->dataRecorder->name,
-                         user->radar->dataRecorder->state & 0xFF);
+                         user->radar->dataRecorder->state & 0xFFFF);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
