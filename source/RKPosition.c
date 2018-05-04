@@ -60,8 +60,8 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i,RKMaximumStringLength - i, " %010llu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
-             (unsigned long long)position->i,
+    snprintf(string + i,RKMaximumStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
+             (unsigned long)position->i,
              rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
              rkGlobalParameters.showColor ? RKNoColor : "",
              position->azimuthDegrees,
@@ -291,9 +291,9 @@ static void *pulseTagger(void *_in) {
         }
 
         if (engine->verbose > 2) {
-            RKLog("%s pulse[%04llu]  T [ %.4f %s %.4f %s %.4f ]   A [ %6.2f < %6.2f < %6.2f ]   E [ %.2f < %.2f < %.2f ] %s %08x < \033[3%dm%08x\033[0m < %08x (%d / %d)\n",
+            RKLog("%s pulse[%04lu]  T [ %.4f %s %.4f %s %.4f ]   A [ %6.2f < %6.2f < %6.2f ]   E [ %.2f < %.2f < %.2f ] %s %08x < \033[3%dm%08x\033[0m < %08x (%d / %d)\n",
                   engine->name,
-                  pulse->header.i,
+                  (unsigned long)pulse->header.i,
                   timeBefore,
                   timeBefore <= pulse->header.timeDouble ? "<" : ">=",
                   pulse->header.timeDouble,

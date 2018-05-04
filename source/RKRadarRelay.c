@@ -82,7 +82,7 @@ static int RKRadarRelayRead(RKClient *client) {
             status->flag = RKStatusFlagVacant;
             *engine->statusIndex = k;
             if (engine->verbose > 1) {
-                RKLog("%s RKNetworkPacketTypeProcessorStatus: %llu\n", engine->name, k);
+                RKLog("%s RKNetworkPacketTypeProcessorStatus: %d\n", engine->name, k);
             }
             break;
             
@@ -98,7 +98,7 @@ static int RKRadarRelayRead(RKClient *client) {
             health->flag = RKHealthFlagVacant;
             *engine->healthIndex = k;
             if (engine->verbose > 1) {
-                RKLog("%s RKNetworkPacketTypeHealth: %llu\n", engine->name, k);
+                RKLog("%s RKNetworkPacketTypeHealth: %d\n", engine->name, k);
             }
             break;
 

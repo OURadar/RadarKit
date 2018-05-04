@@ -1166,15 +1166,16 @@ int RKBufferOverview(RKRadar *radar, char *text) {
 
     // Pulse buffer
     m = sprintf(text,
-                "Pulse Buffer:\n"
-                "-------------\n");
+                "\033[2J\033[1;1H"
+                "Pulse Buffer\n"
+                "------------\n");
     k = 0;
     slice = 100;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
-            *(text + m) = pulse->header.s & RKPulseStatusProcessed ? '*' : (pulse->header.s & RKPulseStatusHasPosition ? '+' : '.');
+            *(text + m) = pulse->header.s & RKPulseStatusRingProcessed ? '*' : (pulse->header.s & RKPulseStatusHasIQData ? '-' : '.');
             m++;
             k++;
         }
@@ -1184,8 +1185,8 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     // Ray buffer
     m += sprintf(text + m,
                 "\n\n"
-                "Ray Buffer:\n"
-                "-----------\n");
+                "Ray Buffer\n"
+                "----------\n");
     k = 0;
     slice = 45;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
@@ -1202,7 +1203,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
         }
         m += sprintf(text + m, "\n");
     }
-    m += sprintf(text + m, "\n" RKEOL);
+    m += sprintf(text + m, RKEOL);
     return m;
 }
 

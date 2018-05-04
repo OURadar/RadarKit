@@ -545,7 +545,7 @@ int RKFileManagerStart(RKFileManager *engine) {
         RKLog("Error. Failed to start a ray gatherer.\n");
         return RKResultFailedToStartFileManager;
     }
-	//RKLog("tidFileWatcher = %llu\n", (unsigned long)engine->tidFileWatcher);
+	//RKLog("tidFileWatcher = %lu\n", (unsigned long)engine->tidFileWatcher);
 	while (engine->tic == 0) {
         usleep(10000);
     }

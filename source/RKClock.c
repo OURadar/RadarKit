@@ -238,8 +238,8 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
 
 #ifdef DEBUG_CLOCK
     
-    printf("%s k = %d/%llu  j = %d   u = %.1f -> %.1f -> %.1f   x = %.2f -> %.1f -> %.3f   t = %.3f %s\n",
-           clock->name, k, clock->count, j,
+    printf("%s k = %d/%lu  j = %d   u = %.1f -> %.1f -> %.1f   x = %.2f -> %.1f -> %.3f   t = %.3f %s\n",
+           clock->name, k, (unsigned long)clock->count, j,
            u, clock->sum_u0, clock->u0,
            x, clock->sum_x0, clock->x0,
            y, clock->count > clock->stride ? "-" : "*");
