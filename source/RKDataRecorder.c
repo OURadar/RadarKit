@@ -85,6 +85,7 @@ static void *pulseRecorder(void *in) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         // Wait until the buffer is advanced
+        engine->state |= RKEngineStateSleep1;
         s = 0;
         while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
             usleep(10000);
@@ -93,6 +94,8 @@ static void *pulseRecorder(void *in) {
                       engine->name, (float)s * 0.01f, k, *engine->pulseIndex, pulse->header.s);
             }
         }
+        engine->state ^= RKEngineStateSleep1;
+        engine->state |= RKEngineStateSleep2;
         // Wait until the pulse is completely processed
         while (!(pulse->header.s & RKPulseStatusHasPosition) && engine->state & RKEngineStateActive) {
             usleep(1000);
@@ -101,9 +104,12 @@ static void *pulseRecorder(void *in) {
                       engine->name, (float)s * 0.01f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
+        engine->state ^= RKEngineStateSleep2;
+
         if (!(engine->state & RKEngineStateActive)) {
             break;
         }
+
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         if (!isfinite(engine->lag)) {
