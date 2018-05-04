@@ -528,7 +528,7 @@ static void *pulseWatcher(void *_in) {
     engine->state |= RKEngineStateSleep0;
     for (c = 0; c < engine->coreCount; c++) {
         while (engine->workers[c].tic == 0) {
-            usleep(1000);
+            usleep(10000);
         }
     }
     engine->state ^= RKEngineStateSleep0;

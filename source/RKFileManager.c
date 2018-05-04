@@ -250,19 +250,19 @@ static void *fileRemover(void *in) {
               engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(me->capacity));
         RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
         if (me->usage > 10 * 1024 * 1024) {
-            RKLog("%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, name,
+            RKLog(">%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, name,
                   RKIntegerToCommaStyleString(me->count),
                   RKIntegerToCommaStyleString(me->usage / 1024 / 1024),
                   RKIntegerToCommaStyleString(me->limit / 1024 / 1024),
                   100.0f * me->usage / me->limit);
         } else if (me->usage > 10 * 1024) {
-            RKLog("%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, name,
+            RKLog(">%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, name,
                   RKIntegerToCommaStyleString(me->count),
                   RKIntegerToCommaStyleString(me->usage / 1024),
                   RKIntegerToCommaStyleString(me->limit / 1024),
                   100.0f * me->usage / me->limit);
         } else {
-            RKLog("%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, name,
+            RKLog(">%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, name,
                   RKIntegerToCommaStyleString(me->count),
                   RKIntegerToCommaStyleString(me->usage),
                   RKIntegerToCommaStyleString(me->limit),

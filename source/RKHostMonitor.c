@@ -383,10 +383,18 @@ static void *hostWatcher(void *in) {
             RKLog(">%s Error. Failed to start a host pinger", engine->name);
             return (void *)RKResultFailedToStartHostPinger;
         }
-        
-        while (worker->tic == 0 && engine->state & RKEngineStateActive) {
+    }
+
+    engine->state |= RKEngineStateSleep0;
+    for (k = 0; k < engine->workerCount; k++) {
+        while (engine->workers[k].tic == 0 && engine->state & RKEngineStateActive) {
             usleep(10000);
         }
+    }
+    engine->state ^= RKEngineStateSleep0;
+
+    if (engine->verbose) {
+        RKLog("%s Started.   mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
     }
 
     // Increase the tic once to indicate the engine is ready
