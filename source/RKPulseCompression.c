@@ -205,7 +205,7 @@ static void *pulseCompressionCore(void *_in) {
     //        [ t0 - t1 ]
     // [    t0 - t2     ]
     //
-    uint32_t tic = me->tic;
+    uint64_t tic = me->tic;
 
     while (engine->state & RKEngineStateActive) {
         if (engine->useSemaphore) {

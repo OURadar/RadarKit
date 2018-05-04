@@ -374,6 +374,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
         }
         radar->positions = (RKPosition *)malloc(bytes);
+        memset(radar->positions, 0, bytes);
         if (radar->positions == NULL) {
             RKLog("Error. Unable to allocate memory for positions.");
             exit(EXIT_FAILURE);
@@ -1632,7 +1633,6 @@ int RKSoftRestart(RKRadar *radar) {
     for (i = 0; i < radar->desc.statusBufferDepth; i++) {
         radar->status[i].i = -(uint64_t)radar->desc.statusBufferDepth + i;
     }
-    bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
     bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
     memset(radar->healths, 0, bytes);
     for (i = 0; i < radar->desc.healthBufferDepth; i++) {
@@ -1645,6 +1645,7 @@ int RKSoftRestart(RKRadar *radar) {
         }
     }
     bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
+    memset(radar->positions, 0, bytes);
     for (i = 0; i < radar->desc.positionBufferDepth; i++) {
         radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
     }

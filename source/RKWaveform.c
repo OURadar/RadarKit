@@ -486,7 +486,6 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
         float x = 0.0f;
         for (j = 0; j < waveform->filterCounts[i]; j++) {
             // Go through it once to figure out the peak sample. Could be different than RKWaveformCalculateGain()
-            a = 0.0f;
             f = 0.0f;
             g = 0.0f;
             fc = waveform->samples[i] + waveform->filterAnchors[i][j].origin;
