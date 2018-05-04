@@ -93,7 +93,6 @@ static void *sweepWriter(void *in) {
     }
 
     // Each registered product will report a product that has the same sweep id
-    //
     bool allReported = true;
     for (i = 0; i < RKMaximumUserProductCount; i++) {
         if (!(engine->userProducts[i].flag & RKUserProductStatusActive)) {
@@ -552,7 +551,6 @@ static void *rayGatherer(void *in) {
                 RKLog("%s RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
             }
             if (is != j) {
-                RKLog("%s is = %d   j = %d   C%02d\n", engine->name, is, j, ray->header.configIndex);
                 n = 0;
                 do {
                     ray = RKGetRay(engine->rayBuffer, is);
@@ -605,7 +603,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
-    engine->userProductTimeoutSeconds = 2;
+    engine->userProductTimeoutSeconds = 3;
     RKUserProductDesc desc = {.name = "U", .w = 0.5f, .b = -32.0f};
     RKSweepEngineRegisterProduct(engine, desc);
     return engine;

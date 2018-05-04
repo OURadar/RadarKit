@@ -1169,12 +1169,13 @@ int RKBufferOverview(RKRadar *radar, char *text) {
                 "Pulse Buffer:\n"
                 "-------------\n");
     k = 0;
-    slice = 50;
+    slice = 100;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
-            m += sprintf(text + m, "%02x", pulse->header.s & 0xFF);
+            *(text + m) = pulse->header.s & RKPulseStatusProcessed ? '*' : (pulse->header.s & RKPulseStatusHasPosition ? '+' : '.');
+            m++;
             k++;
         }
         m += sprintf(text + m, "\n");
@@ -2189,7 +2190,11 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
         RKLog("Error. Buffer for raw pulses has not been allocated.\n");
         exit(EXIT_FAILURE);
     }
-    RKPulse *pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
+    // Set the 1/8-old pulse vacant
+    RKPulse *pulse = RKGetPulse(radar->pulses, RKNextNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth >> 3, radar->desc.pulseBufferDepth));
+    pulse->header.s = RKPulseStatusVacant;
+    // Current pulse
+    pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
     pulse->header.s = RKPulseStatusVacant;
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
