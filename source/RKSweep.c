@@ -92,6 +92,11 @@ static void *sweepWriter(void *in) {
               1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
+    // Mark the rays used once after all the rays are inspected
+    for (j = 0; j < sweep->header.rayCount; j++) {
+        sweep->rays[j]->header.s |= RKRayStatusUsedOnce;
+    }
+
     // Each registered product will report a product that has the same sweep id
     bool allReported = true;
     for (i = 0; i < RKMaximumUserProductCount; i++) {

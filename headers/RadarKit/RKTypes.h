@@ -347,7 +347,8 @@ enum RKPulseStatus {
     RKPulseStatusRingFiltered        = (1 << 8),
     RKPulseStatusRingSkipped         = (1 << 9),
     RKPulseStatusRingProcessed       = (1 << 10),
-    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition)
+    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
+    RKPulseStatusUsed                = (1 << 11)
 };
 
 typedef uint32_t RKRayStatus;

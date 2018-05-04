@@ -505,6 +505,10 @@ static void *momentCore(void *in) {
             }
             // Fill in the ray
             makeRayFromScratch(space, ray, ray->header.gateCount);
+            for (k = 0; k < path.length; k++) {
+                pulse = pulses[k];
+                pulse->header.s |= RKPulseStatusUsed;
+            }
             ray->header.s |= RKRayStatusProcessed;
         } else {
             // Zero out the ray
