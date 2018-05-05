@@ -271,10 +271,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                   RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
         }
         memset(radar->status, 0, bytes);
-        radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.statusBufferDepth; i++) {
             radar->status[i].i = -(uint64_t)radar->desc.statusBufferDepth + i;
         }
+        radar->memoryUsage += bytes;
+        radar->desc.statusBufferSize = bytes;
         radar->state ^= RKRadarStateStatusBufferAllocating;
         radar->state |= RKRadarStateStatusBufferInitialized;
     }
@@ -298,10 +299,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                   RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
         }
         memset(radar->configs, 0, bytes);
-        radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.configBufferDepth; i++) {
             radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i;
         }
+        radar->memoryUsage += bytes;
+        radar->desc.configBufferSize = bytes;
         radar->state ^= RKRadarStateConfigBufferAllocating;
         radar->state |= RKRadarStateConfigBufferInitialized;
     }
@@ -325,10 +327,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                   RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
         }
         memset(radar->healths, 0, bytes);
-        radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.healthBufferDepth; i++) {
             radar->healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
         }
+        radar->memoryUsage += bytes;
+        radar->desc.healthBufferSize = bytes;
         radar->state ^= RKRadarStateHealthBufferAllocating;
         radar->state |= RKRadarStateHealthBufferInitialized;
     }
@@ -350,7 +353,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
             memset(radar->healthNodes[i].healths, 0, bytes);
         }
-        radar->memoryUsage += radar->desc.healthNodeCount * bytes;
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Nodal-health buffers occupy %s B  (%d nodes x %s sets)\n",
                   RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), radar->desc.healthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
@@ -360,6 +362,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                 radar->healthNodes[k].healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
             }
         }
+        radar->memoryUsage += radar->desc.healthNodeCount * bytes;
+        radar->desc.healthNodeBufferSize = radar->desc.healthNodeCount * bytes;
         radar->state ^= RKRadarStateHealthNodesAllocating;
         radar->state |= RKRadarStateHealthNodesInitialized;
     }
@@ -383,10 +387,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Position buffer occupies %s B  (%s positions)\n",
                   RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.positionBufferDepth));
         }
-        radar->memoryUsage += bytes;
         for (i = 0; i < radar->desc.positionBufferDepth; i++) {
             radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
         }
+        radar->memoryUsage += bytes;
+        radar->desc.positionBufferSize = bytes;
         radar->state ^= RKRadarStatePositionBufferAllocating;
         radar->state |= RKRadarStatePositionBufferInitialized;
     }
@@ -413,6 +418,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             }
         }
         radar->memoryUsage += bytes;
+        radar->desc.pulseBufferSize = bytes;
         radar->state ^= RKRadarStateRawIQBufferAllocating;
         radar->state |= RKRadarStateRawIQBufferInitialized;
     }
@@ -430,6 +436,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                   RKIntegerToCommaStyleString(k));
         }
         radar->memoryUsage += bytes;
+        radar->desc.rayBufferSize = bytes;
         radar->state ^= RKRadarStateRayBufferAllocating;
         radar->state |= RKRadarStateRayBufferInitialized;
     }
@@ -1161,14 +1168,23 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     // Buffer status
     int i, j, k, m = 0;
     int slice;
+    char *c;
+    size_t s;
     RKRay *ray;
     RKPulse *pulse;
 
     // Pulse buffer
+    c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
     m = sprintf(text,
                 "\033[2J\033[1;1H"
-                "Pulse Buffer\n"
-                "------------\n");
+                "Pulse Buffer (%s B)\n"
+                "-----------------",
+                c);
+    s = strlen(c);
+    memset(text + m, '-', s);
+    m += s;
+    *(text + m++) = '\n';
+    *(text + m++) = '\n';
     k = 0;
     slice = 100;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
@@ -1182,10 +1198,17 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     }
 
     // Ray buffer
+    c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
     m += sprintf(text + m,
                  "\n           . Vacant    : Has Data    o Processed    x Used\n\n\n"
-                 "Ray Buffer\n"
-                 "----------\n");
+                 "Ray Buffer (%s B)\n"
+                 "---------------",
+                 c);
+    s = strlen(c);
+    memset(text + m, '-', s);
+    m += s;
+    *(text + m++) = '\n';
+    *(text + m++) = '\n';
     k = 0;
     slice = 90;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
