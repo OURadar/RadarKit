@@ -1176,7 +1176,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     // Pulse buffer
     c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
     m = sprintf(text,
-                "\033[2J\033[1;1H"
+                "\033[2J\033[1;1H\033[8;5;0m"
                 "Pulse Buffer (%s B)\n"
                 "-----------------",
                 c);
@@ -1187,11 +1187,42 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     *(text + m++) = '\n';
     k = 0;
     slice = 100;
+    uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-        m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
+        m += sprintf(text + m, "\033[0m%04d-%04d: ", k, k + slice);
+        s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
-            *(text + m++) = pulse->header.s & RKPulseStatusUsed ? 'x' : (pulse->header.s & RKPulseStatusRingProcessed ? ':' : (pulse->header.s & RKPulseStatusHasIQData ? '|' : '.'));
+            if (rkGlobalParameters.showColor) {
+                if (pulse->header.s & RKPulseStatusUsed) {
+                    if (pulse->header.s == s1) {
+                        *(text + m++) = 'x';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;39mx");
+                    }
+                } else if (pulse->header.s & RKPulseStatusRingProcessed) {
+                    if (pulse->header.s == s1) {
+                        *(text + m++) = ':';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;46m:");
+                    }
+                } else if (pulse->header.s & RKPulseStatusHasIQData) {
+                    if (pulse->header.s == s1) {
+                        *(text + m++) = '|';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;226m|");
+                    }
+                } else {
+                    if (pulse->header.s == s1) {
+                        *(text + m++) = '.';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;196m.");
+                    }
+                }
+                s1 = pulse->header.s;
+            } else {
+                *(text + m++) = pulse->header.s & RKPulseStatusUsed ? 'x' : (pulse->header.s & RKPulseStatusRingProcessed ? ':' : (pulse->header.s & RKPulseStatusHasIQData ? '|' : '.'));
+            }
             k++;
         }
         *(text + m++) = '\n';
@@ -1199,11 +1230,17 @@ int RKBufferOverview(RKRadar *radar, char *text) {
 
     // Ray buffer
     c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
-    m += sprintf(text + m,
-                 "\n           . Vacant    | Has Data    : Processed    x Used\n\n\n"
-                 "Ray Buffer (%s B)\n"
-                 "---------------",
-                 c);
+    if (rkGlobalParameters.showColor) {
+        m += sprintf(text + m,
+                     "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    : Processed    x Used\n\n\n"
+                     "Ray Buffer (%s B)\n"
+                     "---------------", c);
+    } else {
+        m += sprintf(text + m,
+                     "\n           . Vacant    | Has Data    : Processed    x Used\n\n\n"
+                     "Ray Buffer (%s B)\n"
+                     "---------------", c);
+    }
     s = strlen(c);
     memset(text + m, '-', s);
     m += s;
@@ -1212,17 +1249,54 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     k = 0;
     slice = 90;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-        m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
+        m += sprintf(text + m, "\033[0m%04d-%04d: ", k, k + slice);
+        s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);
-            *(text + m++) = ray->header.s & RKRayStatusBeingConsumed ? '#' : (ray->header.s & RKRayStatusStreamed ? ':' : (ray->header.s & RKRayStatusReady ? '|' : '.'));
+            if (rkGlobalParameters.showColor) {
+                if (ray->header.s & RKRayStatusBeingConsumed) {
+                    if (ray->header.s == s1) {
+                        *(text + m++) = '#';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;39m#");
+                    }
+                } else if (ray->header.s & RKRayStatusStreamed) {
+                    if (ray->header.s == s1) {
+                        *(text + m++) = ':';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;46m:");
+                    }
+                } else if (ray->header.s & RKRayStatusReady) {
+                    if (ray->header.s == s1) {
+                        *(text + m++) = '|';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;226m|");
+                    }
+                } else {
+                    if (ray->header.s == s1) {
+                        *(text + m++) = '.';
+                    } else {
+                        m += sprintf(text + m, "\033[38;5;196m.");
+                    }
+                }
+            } else {
+                *(text + m++) = ray->header.s & RKRayStatusBeingConsumed ? '#' : (ray->header.s & RKRayStatusStreamed ? ':' : (ray->header.s & RKRayStatusReady ? '|' : '.'));
+            }
+            s1 = ray->header.s;
             k++;
         }
         *(text + m++) = '\n';
     }
-    m += sprintf(text + m,
-                 "\n           . Vacant    | Has Data    : Shared   # Algorithms\n"
-                 RKEOL);
+    if (rkGlobalParameters.showColor) {
+        m += sprintf(text + m,
+                     "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    : Shared   # Algorithms\n"
+                     RKEOL);
+    } else {
+        m += sprintf(text + m,
+                     "\n           . Vacant    | Has Data    : Shared   # Algorithms\n"
+                     RKEOL);
+
+    }
     return m;
 }
 
