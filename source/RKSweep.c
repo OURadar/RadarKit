@@ -92,9 +92,9 @@ static void *sweepWriter(void *in) {
               1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
-    // Mark the rays used once after all the rays are inspected
+    // Mark the rays being used by user algorithms
     for (j = 0; j < sweep->header.rayCount; j++) {
-        sweep->rays[j]->header.s |= RKRayStatusUsedOnce;
+        sweep->rays[j]->header.s |= RKRayStatusBeingConsumed;
     }
 
     // Each registered product will report a product that has the same sweep id
@@ -132,7 +132,7 @@ static void *sweepWriter(void *in) {
         RKLog("%s Concluding sweep.   allReported = %s   %s",
               engine->name, allReported ? "true" : "false", engine->summary);
     }
-    
+
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
     

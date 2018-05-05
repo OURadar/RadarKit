@@ -1191,7 +1191,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
-            *(text + m++) = pulse->header.s & RKPulseStatusUsed ? 'x' : (pulse->header.s & RKPulseStatusRingProcessed ? 'o' : (pulse->header.s & RKPulseStatusHasIQData ? '-' : '.'));
+            *(text + m++) = pulse->header.s & RKPulseStatusUsed ? 'x' : (pulse->header.s & RKPulseStatusRingProcessed ? ':' : (pulse->header.s & RKPulseStatusHasIQData ? '|' : '.'));
             k++;
         }
         *(text + m++) = '\n';
@@ -1200,7 +1200,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     // Ray buffer
     c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
     m += sprintf(text + m,
-                 "\n           . Vacant    : Has Data    o Processed    x Used\n\n\n"
+                 "\n           . Vacant    | Has Data    : Processed    x Used\n\n\n"
                  "Ray Buffer (%s B)\n"
                  "---------------",
                  c);
@@ -1215,13 +1215,13 @@ int RKBufferOverview(RKRadar *radar, char *text) {
         m += sprintf(text + m, "%04d-%04d: ", k, k + slice);
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);
-            *(text + m++) = ray->header.s & RKRayStatusUsedOnce ? 'x' : (ray->header.s & RKRayStatusReady ? 'o' : '.');
+            *(text + m++) = ray->header.s & RKRayStatusBeingConsumed ? '#' : (ray->header.s & RKRayStatusStreamed ? ':' : (ray->header.s & RKRayStatusReady ? '|' : '.'));
             k++;
         }
         *(text + m++) = '\n';
     }
     m += sprintf(text + m,
-                 "\n           . Vacant    o Has Data    x Busy\n"
+                 "\n           . Vacant    | Has Data    : Shared   # Algorithms\n"
                  RKEOL);
     return m;
 }

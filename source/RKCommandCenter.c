@@ -593,7 +593,7 @@ int socketStreamHandler(RKOperator *O) {
                         RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(float), NULL);
                     }
                 }
-                ray->header.s |= RKRayStatusUsedOnce;
+                ray->header.s |= RKRayStatusStreamed;
                 user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
             }
         } else {
@@ -718,7 +718,7 @@ int socketStreamHandler(RKOperator *O) {
                         RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
                     }
                 }
-                ray->header.s |= RKRayStatusUsedOnce;
+                ray->header.s |= RKRayStatusStreamed;
                 user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
             } // while (user->rayIndex != endIndex) ...
         } else {
