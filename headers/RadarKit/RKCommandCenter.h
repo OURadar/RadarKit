@@ -14,6 +14,13 @@
 #define RKCommandCenterMaxConnections 32
 #define RKCommandCenterMaxRadars       4
 
+typedef uint32_t RKTextPreferences;
+enum RKTextPreferences {
+    RKTextPreferencesNone            = 0,
+    RKTextPreferencesShowColor       = 1,
+    RKTextPreferencesStandardWidth   = (1 << 1)
+};
+
 typedef struct  rk_user {
     char                             login[64];
     RKStream                         access;             // Authorized access priviledge
@@ -33,6 +40,7 @@ typedef struct  rk_user {
     uint32_t                         commandCount;
     uint32_t                         controlSetIndex;
     uint32_t                         rayAnchorsIndex;
+    RKTextPreferences                textPreferences;
     uint16_t                         pulseDownSamplingRatio;
     uint16_t                         rayDownSamplingRatio;
     uint16_t                         ascopeMode;

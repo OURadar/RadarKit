@@ -426,7 +426,7 @@ UserParams processInput(int argc, const char **argv) {
                         break;
                     case 11:
                         myRadar = RKInitLean();
-                        RKShowOffsets(myRadar);
+                        RKShowOffsets(myRadar, NULL);
                         RKFree(myRadar);
                         break;
                     case 12:

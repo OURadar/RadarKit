@@ -280,9 +280,9 @@ void RKClearControls(RKRadar *);
 void RKConcludeControls(RKRadar *);
 
 // Absolute address value query
-void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
-void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size);
-void RKShowOffsets(RKRadar *radar);
-int RKBufferOverview(RKRadar *radar, char *);
+void RKGetRegisterValue(RKRadar *, void *value, const unsigned long registerOffset, size_t size);
+void RKSetRegisterValue(RKRadar *, void *value, const unsigned long registerOffset, size_t size);
+void RKShowOffsets(RKRadar *, char *);
+int RKBufferOverview(RKRadar *, char *, const bool);
 
 #endif /* defined(__RadarKit_RKRadar__) */

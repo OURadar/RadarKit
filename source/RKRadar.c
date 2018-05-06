@@ -1157,14 +1157,31 @@ void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registe
     memcpy((void *)radar + registerOffset, value, size);
 }
 
-void RKShowOffsets(RKRadar *radar) {
-    printf("radar->active       @ %ld\n", (unsigned long)((void *)radar - (void *)&radar->active));
-    printf("radar->configIndex  @ %ld\n", (unsigned long)((void *)radar - (void *)&radar->configIndex));
-    printf("radar->pulseCompressionEngine  @ %ld\n", (unsigned long)((void *)radar - (void *)radar->pulseCompressionEngine));
-    printf("radar->dataRecorder->doNotWrite  @ %ld\n", (unsigned long)((void *)radar - (void *)radar->dataRecorder->doNotWrite));
+#define xstr(s) str(s)
+#define str(s) #s
+#define RADAR_VARIABLE_OFFSET(STRING, NAME) \
+sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld\n", (unsigned long)((void *)&radar->NAME - (void *)radar))
+
+void RKShowOffsets(RKRadar *radar, char *text) {
+    int k = 0;
+    if (text == NULL) {
+        text = (char *)malloc(RKMaximumStringLength);
+        if (text == NULL) {
+            fprintf(stderr, "Error. Unable to allocate memory.\n");
+            return;
+        }
+    }
+    k += RADAR_VARIABLE_OFFSET(text + k, active);
+    k += RADAR_VARIABLE_OFFSET(text + k, configIndex);
+    k += RADAR_VARIABLE_OFFSET(text + k, dataRecorder->doNotWrite);
+    k += RADAR_VARIABLE_OFFSET(text + k, positionEngine);
+    k += RADAR_VARIABLE_OFFSET(text + k, pulseCompressionEngine);
+    k += RADAR_VARIABLE_OFFSET(text + k, momentEngine);
+    printf("%s", text);
+    free(text);
 }
 
-int RKBufferOverview(RKRadar *radar, char *text) {
+int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     // Buffer status
     int i, j, k, m = 0;
     int slice;
@@ -1187,41 +1204,43 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     *(text + m++) = '\n';
     k = 0;
     slice = 100;
+    uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-        m += sprintf(text + m, "\033[0m%04d-%04d: ", k, k + slice);
+        m += sprintf(text + m, "%s%04d-%04d: ", showColor ? "\033[0m" : "", k, k + slice);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
-            if (rkGlobalParameters.showColor) {
-                if (pulse->header.s & RKPulseStatusUsed) {
-                    if (pulse->header.s == s1) {
+            s0 = pulse->header.s;
+            if (showColor) {
+                if (s0 & RKPulseStatusUsed) {
+                    if (s0 == s1) {
                         *(text + m++) = 'x';
                     } else {
                         m += sprintf(text + m, "\033[38;5;39mx");
                     }
-                } else if (pulse->header.s & RKPulseStatusRingProcessed) {
+                } else if (s0 & RKPulseStatusRingProcessed) {
                     if (pulse->header.s == s1) {
                         *(text + m++) = ':';
                     } else {
                         m += sprintf(text + m, "\033[38;5;46m:");
                     }
-                } else if (pulse->header.s & RKPulseStatusHasIQData) {
+                } else if (s0 & RKPulseStatusHasIQData) {
                     if (pulse->header.s == s1) {
                         *(text + m++) = '|';
                     } else {
                         m += sprintf(text + m, "\033[38;5;226m|");
                     }
                 } else {
-                    if (pulse->header.s == s1) {
+                    if (s0 == s1) {
                         *(text + m++) = '.';
                     } else {
                         m += sprintf(text + m, "\033[38;5;196m.");
                     }
                 }
-                s1 = pulse->header.s;
+                s1 = s0;
             } else {
-                *(text + m++) = pulse->header.s & RKPulseStatusUsed ? 'x' : (pulse->header.s & RKPulseStatusRingProcessed ? ':' : (pulse->header.s & RKPulseStatusHasIQData ? '|' : '.'));
+                *(text + m++) = s0 & RKPulseStatusUsed ? 'x' : (s0 & RKPulseStatusRingProcessed ? ':' : (s0 & RKPulseStatusHasIQData ? '|' : '.'));
             }
             k++;
         }
@@ -1230,7 +1249,7 @@ int RKBufferOverview(RKRadar *radar, char *text) {
 
     // Ray buffer
     c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
-    if (rkGlobalParameters.showColor) {
+    if (showColor) {
         m += sprintf(text + m,
                      "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    : Processed    x Used\n\n\n"
                      "Ray Buffer (%s B)\n"
@@ -1249,45 +1268,46 @@ int RKBufferOverview(RKRadar *radar, char *text) {
     k = 0;
     slice = 90;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-        m += sprintf(text + m, "\033[0m%04d-%04d: ", k, k + slice);
+        m += sprintf(text + m, "%s%04d-%04d: ", showColor ? "\033[0m" : "", k, k + slice);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);
-            if (rkGlobalParameters.showColor) {
-                if (ray->header.s & RKRayStatusBeingConsumed) {
-                    if (ray->header.s == s1) {
+            s0 = ray->header.s;
+            if (showColor) {
+                if (s0 & RKRayStatusBeingConsumed) {
+                    if (s0 == s1) {
                         *(text + m++) = '#';
                     } else {
                         m += sprintf(text + m, "\033[38;5;39m#");
                     }
-                } else if (ray->header.s & RKRayStatusStreamed) {
+                } else if (s0 & RKRayStatusStreamed) {
                     if (ray->header.s == s1) {
                         *(text + m++) = ':';
                     } else {
                         m += sprintf(text + m, "\033[38;5;46m:");
                     }
-                } else if (ray->header.s & RKRayStatusReady) {
+                } else if (s0 & RKRayStatusReady) {
                     if (ray->header.s == s1) {
                         *(text + m++) = '|';
                     } else {
                         m += sprintf(text + m, "\033[38;5;226m|");
                     }
                 } else {
-                    if (ray->header.s == s1) {
+                    if (s0 == s1) {
                         *(text + m++) = '.';
                     } else {
                         m += sprintf(text + m, "\033[38;5;196m.");
                     }
                 }
             } else {
-                *(text + m++) = ray->header.s & RKRayStatusBeingConsumed ? '#' : (ray->header.s & RKRayStatusStreamed ? ':' : (ray->header.s & RKRayStatusReady ? '|' : '.'));
+                *(text + m++) = s0 & RKRayStatusBeingConsumed ? '#' : (s0 & RKRayStatusStreamed ? ':' : (s0 & RKRayStatusReady ? '|' : '.'));
             }
-            s1 = ray->header.s;
+            s1 = s0;
             k++;
         }
         *(text + m++) = '\n';
     }
-    if (rkGlobalParameters.showColor) {
+    if (showColor) {
         m += sprintf(text + m,
                      "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    : Shared   # Algorithms\n"
                      RKEOL);
