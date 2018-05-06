@@ -14,7 +14,7 @@
 //         - Added buffer overview, accessible through terminal
 //         - Added pulse status string, accessible through terminal
 //         - Improved RKSoftRestart()
-//         - Added RKBufferOverview()
+//         - Added RKBufferOverview() with color option
 //
 //  1.2.8  - 4/31/2018
 //         - New stream types: RKSweep, RKSweepHeader and RKSweepRay

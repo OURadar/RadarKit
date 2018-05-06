@@ -1311,7 +1311,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     }
     if (showColor) {
         m += sprintf(text + m,
-                     "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    \033[38;5;46m:\033[0m Shared   \033[38;5;39mx\033[0m Algorithms\n");
+                     "\033[0m\n           \033[38;5;196m.\033[0m Vacant    \033[38;5;226m|\033[0m Has Data    \033[38;5;46m:\033[0m Shared   \033[38;5;39mx\033[0m Algorithms\n");
     } else {
         m += sprintf(text + m,
                      "\n           . Vacant    | Has Data    : Shared   # Algorithms\n");

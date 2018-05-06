@@ -100,21 +100,6 @@ static void showHelp() {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
-           "  -F (--full-system)\n"
-           "         Runs with a level-5 system (see -S).\n"
-           "\n"
-           "  -H (--high-system)\n"
-           "         Runs with a level-4 system (see -S).\n"
-           "\n"
-           "  -I (--int-system)\n"
-           "         Runs with a level-3 system (see -S).\n"
-           "\n"
-           "  -L (--low-system)\n"
-           "         Runs with a level-2 system (see -S).\n"
-           "\n"
-           "  -M (--minimum-system)\n"
-           "         Runs with a level-1 system (see -S).\n"
-           "\n"
            "  -S (--system) " UNDERLINE("level") "\n"
            "         Sets the simulation to run one of the following levels:\n"
            "          1 - 5-MHz 2,000 gates\n"
@@ -180,18 +165,18 @@ static void showHelp() {
            "\n"
            "\n"
            "EXAMPLES:\n"
-           "     Here are some examples of typical configurations.\n"
+           "    Here are some examples of typical configurations.\n"
            "\n"
-           "  rktest -vL\n"
-           "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
-           "\n"
-           "  rktest -vs1  (no space after s)\n"
+           "    -vs1  (no space after s)\n"
            "         Runs the program in verbose mode, and to simulate a level-1 system.\n"
            "\n"
-           "  rktest -vL -f 2000\n"
-           "         Same as above but with PRF = 2,000 Hz.\n"
+           "    -vs2\n"
+           "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
            "\n"
-           "  rktest -T 50\n"
+           "    -v -s1 -L -f 2000\n"
+           "         Same as level-1 system but with PRF = 2,000 Hz.\n"
+           "\n"
+           "    -T 50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n"
            );
@@ -291,11 +276,6 @@ UserParams processInput(int argc, const char **argv) {
         {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
         {"clock"                 , no_argument      , NULL, 'C'},
         {"demo"                  , no_argument      , NULL, 'D'},
-        {"fast-system"           , no_argument      , NULL, 'F'},
-        {"high-system"           , no_argument      , NULL, 'H'},
-        {"int-system"            , no_argument      , NULL, 'I'},
-        {"low-system"            , no_argument      , NULL, 'L'},
-        {"min-system"            , no_argument      , NULL, 'M'},
         {"system"                , required_argument, NULL, 'S'},
         {"test"                  , required_argument, NULL, 'T'},
         {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
