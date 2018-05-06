@@ -1192,6 +1192,11 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     RKRay *ray;
     RKPulse *pulse;
 
+    const char c0 = '.';
+    const char c1 = '|';
+    const char c2 = ':';
+    const char c3 = 'o';
+
     // Pulse buffer
     c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
     m = sprintf(text,
@@ -1203,13 +1208,12 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     memset(text + m, '-', s);
     m += s;
     *(text + m++) = '\n';
-    *(text + m++) = '\n';
     k = 0;
     slice = 100;
     uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-        m += sprintf(text + m, "%s%04d-%04d: ", showColor ? "\033[0m" : "", k, k + slice);
+        m += sprintf(text + m, "%s\n%04d-%04d: ", showColor ? "\033[0m" : "", k, k + slice);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
@@ -1217,60 +1221,67 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
             if (showColor) {
                 if (s0 & RKPulseStatusUsed) {
                     if (s0 == s1) {
-                        *(text + m++) = 'x';
+                        *(text + m++) = c3;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;39mx");
+                        m += sprintf(text + m, "\033[38;5;39m%c", c3);
                     }
                 } else if (s0 & RKPulseStatusRingProcessed) {
                     if (pulse->header.s == s1) {
-                        *(text + m++) = ':';
+                        *(text + m++) = c2;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;46m:");
+                        m += sprintf(text + m, "\033[38;5;46m%c", c2);
                     }
                 } else if (s0 & RKPulseStatusHasIQData) {
                     if (pulse->header.s == s1) {
-                        *(text + m++) = '|';
+                        *(text + m++) = c1;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;226m|");
+                        m += sprintf(text + m, "\033[38;5;226m%c", c1);
                     }
                 } else {
                     if (s0 == s1) {
-                        *(text + m++) = '.';
+                        *(text + m++) = c0;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;196m.");
+                        m += sprintf(text + m, "\033[38;5;196m%c", c0);
                     }
                 }
                 s1 = s0;
             } else {
-                *(text + m++) = s0 & RKPulseStatusUsed ? 'x' : (s0 & RKPulseStatusRingProcessed ? ':' : (s0 & RKPulseStatusHasIQData ? '|' : '.'));
+                *(text + m++) =
+                s0 & RKPulseStatusUsed ? c3 : (s0 & RKPulseStatusRingProcessed ? c2 : (s0 & RKPulseStatusHasIQData ? c1 : c0));
             }
             k++;
         }
-        *(text + m++) = '\n';
     }
 
     // Ray buffer
     c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
     if (showColor) {
         m += sprintf(text + m,
-                     "\033[0m\n           \033[38;5;196m.\033[0m Vacant    \033[38;5;226m|\033[0m Has Data    \033[38;5;46m:\033[0m Processed    \033[38;5;39mx\033[0m Used\n\n\n"
+                     "\033[0m\n\n       "
+                     "    \033[38;5;196m%c\033[0m Vacant"
+                     "    \033[38;5;226m%c\033[0m Has Data"
+                     "    \033[38;5;46m%c\033[0m Processed"
+                     "    \033[38;5;39m%c\033[0m Used\n\n\n"
                      "Ray Buffer (%s B)\n"
-                     "---------------", c);
+                     "---------------", c0, c1, c2, c3, c);
     } else {
         m += sprintf(text + m,
-                     "\n           . Vacant    | Has Data    : Processed    x Used\n\n\n"
+                     "\n\n       "
+                     "    %c Vacant"
+                     "    %c Has Data"
+                     "    %c Processed"
+                     "    %c Used\n\n\n"
                      "Ray Buffer (%s B)\n"
-                     "---------------", c);
+                     "---------------", c0, c1, c2, c3, c);
     }
     s = strlen(c);
     memset(text + m, '-', s);
     m += s;
     *(text + m++) = '\n';
-    *(text + m++) = '\n';
     k = 0;
     slice = 90;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-        m += sprintf(text + m, "%s%04d-%04d: ", showColor ? "\033[0m" : "", k, k + slice);
+        m += sprintf(text + m, "%s\n%04d-%04d: ", showColor ? "\033[0m" : "", k, k + slice);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);
@@ -1278,46 +1289,55 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
             if (showColor) {
                 if (s0 & RKRayStatusBeingConsumed) {
                     if (s0 == s1) {
-                        *(text + m++) = '#';
+                        *(text + m++) = c3;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;39m#");
+                        m += sprintf(text + m, "\033[38;5;39m%c", c3);
                     }
                 } else if (s0 & RKRayStatusStreamed) {
                     if (ray->header.s == s1) {
-                        *(text + m++) = ':';
+                        *(text + m++) = c2;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;46m:");
+                        m += sprintf(text + m, "\033[38;5;46m%c", c2);
                     }
                 } else if (s0 & RKRayStatusReady) {
                     if (ray->header.s == s1) {
-                        *(text + m++) = '|';
+                        *(text + m++) = c1;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;226m|");
+                        m += sprintf(text + m, "\033[38;5;226m%c", c1);
                     }
                 } else {
                     if (s0 == s1) {
-                        *(text + m++) = '.';
+                        *(text + m++) = c0;
                     } else {
-                        m += sprintf(text + m, "\033[38;5;196m.");
+                        m += sprintf(text + m, "\033[38;5;196m%c", c0);
                     }
                 }
             } else {
-                *(text + m++) = s0 & RKRayStatusBeingConsumed ? '#' : (s0 & RKRayStatusStreamed ? ':' : (s0 & RKRayStatusReady ? '|' : '.'));
+                *(text + m++) = s0 & RKRayStatusBeingConsumed ? c3 : (s0 & RKRayStatusStreamed ? c2 : (s0 & RKRayStatusReady ? c1 : c0));
             }
             s1 = s0;
             k++;
         }
-        *(text + m++) = '\n';
     }
     if (showColor) {
         m += sprintf(text + m,
-                     "\033[0m\n           \033[38;5;196m.\033[0m Vacant    \033[38;5;226m|\033[0m Has Data    \033[38;5;46m:\033[0m Shared   \033[38;5;39mx\033[0m Algorithms\n");
+                     "\033[0m\n\n       "
+                     "    \033[38;5;196m%c\033[0m Vacant"
+                     "    \033[38;5;226m%c\033[0m Has Data"
+                     "    \033[38;5;46m%c\033[0m Shared"
+                     "    \033[38;5;39m%c\033[0m Algorithms\n",
+                     c0, c1, c2, c3);
     } else {
         m += sprintf(text + m,
-                     "\n           . Vacant    | Has Data    : Shared   # Algorithms\n");
+                     "\n\n       "
+                     "    %c Vacant"
+                     "    %c Has Data"
+                     "    %c Shared"
+                     "    %c Algorithms\n",
+                     c0, c1, c2, c3);
 
     }
-    m += sprintf(text + m, "\n-- (%s) --\n" RKEOL, RKIntegerToCommaStyleString(m));
+    m += sprintf(text + m, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(m));
     return m;
 }
 
