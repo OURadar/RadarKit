@@ -32,7 +32,7 @@ void *theClient(void *in) {
 
     FILE *fid = NULL;
 
-    void *buf = (void *)malloc(RKMaxPacketSize);
+    void *buf = (void *)malloc(RKMaximumPacketSize);
     if (buf == NULL) {
         RKLog("Error. Unable to allocate space for a buffer.\n");
         return (void *)RKResultErrorCreatingOperatorRoutine;
@@ -310,7 +310,7 @@ void *theClient(void *in) {
                             }
                             readOkay = true;
                             break;
-                        } else if (C->netDelimiter.size > RKMaxPacketSize) {
+                        } else if (C->netDelimiter.size > RKMaximumPacketSize) {
                             RKLog("%s Error. Payload size = %s (type %d) is more than what I can handle.\n",
                                   C->name, RKIntegerToCommaStyleString(C->netDelimiter.size), C->netDelimiter.type);
                             readOkay = false;
@@ -375,7 +375,7 @@ void *theClient(void *in) {
                                 return (void *)-1;
                             }
                         }
-                        if (fgets(buf, RKMaxPacketSize, fid) != NULL) {
+                        if (fgets(buf, RKMaximumPacketSize, fid) != NULL) {
                             readOkay = true;
                         }
                         break;

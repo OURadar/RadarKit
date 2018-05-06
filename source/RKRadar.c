@@ -432,7 +432,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
                   RKIntegerToCommaStyleString(bytes),
                   RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
-                  RKMaxProductCount,
+                  RKMaximumProductCount,
                   RKIntegerToCommaStyleString(k));
         }
         radar->memoryUsage += bytes;
@@ -1157,28 +1157,30 @@ void RKSetRegisterValue(RKRadar *radar, void *value, const unsigned long registe
     memcpy((void *)radar + registerOffset, value, size);
 }
 
-#define xstr(s) str(s)
-#define str(s) #s
-#define RADAR_VARIABLE_OFFSET(STRING, NAME) \
-sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld\n", (unsigned long)((void *)&radar->NAME - (void *)radar))
-
 void RKShowOffsets(RKRadar *radar, char *text) {
     int k = 0;
-    if (text == NULL) {
-        text = (char *)malloc(RKMaximumStringLength);
-        if (text == NULL) {
-            fprintf(stderr, "Error. Unable to allocate memory.\n");
-            return;
-        }
+    char *buffer = (char *)malloc(RKMaximumStringLength);
+    if (buffer == NULL) {
+        fprintf(stderr, "Error. Unable to allocate memory.\n");
+        return;
     }
-    k += RADAR_VARIABLE_OFFSET(text + k, active);
-    k += RADAR_VARIABLE_OFFSET(text + k, configIndex);
-    k += RADAR_VARIABLE_OFFSET(text + k, dataRecorder->doNotWrite);
-    k += RADAR_VARIABLE_OFFSET(text + k, positionEngine);
-    k += RADAR_VARIABLE_OFFSET(text + k, pulseCompressionEngine);
-    k += RADAR_VARIABLE_OFFSET(text + k, momentEngine);
-    printf("%s", text);
-    free(text);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, active);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, statusIndex);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, configIndex);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, healthIndex);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, positionIndex);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, pulseIndex);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, rayIndex);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, dataRecorder->doNotWrite);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, positionEngine);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, pulseCompressionEngine->verbose);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, momentEngine);
+    if (text == NULL) {
+        printf("%s", buffer);
+    } else {
+        memcpy(text, buffer, k + 1);
+    }
+    free(buffer);
 }
 
 int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
@@ -1251,7 +1253,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
     if (showColor) {
         m += sprintf(text + m,
-                     "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    : Processed    x Used\n\n\n"
+                     "\033[0m\n           \033[38;5;196m.\033[0m Vacant    \033[38;5;226m|\033[0m Has Data    \033[38;5;46m:\033[0m Processed    \033[38;5;39mx\033[0m Used\n\n\n"
                      "Ray Buffer (%s B)\n"
                      "---------------", c);
     } else {
@@ -1309,14 +1311,13 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     }
     if (showColor) {
         m += sprintf(text + m,
-                     "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    : Shared   # Algorithms\n"
-                     RKEOL);
+                     "\033[0m\n           . Vacant    \033[38;5;226m|\033[0m Has Data    \033[38;5;46m:\033[0m Shared   \033[38;5;39mx\033[0m Algorithms\n");
     } else {
         m += sprintf(text + m,
-                     "\n           . Vacant    | Has Data    : Shared   # Algorithms\n"
-                     RKEOL);
+                     "\n           . Vacant    | Has Data    : Shared   # Algorithms\n");
 
     }
+    m += sprintf(text + m, "\n-- (%s) --\n" RKEOL, RKIntegerToCommaStyleString(m));
     return m;
 }
 

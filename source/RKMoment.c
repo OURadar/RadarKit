@@ -237,7 +237,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
 }
 
 static void zeroOutRay(RKRay *ray) {
-    memset(ray->data, 0, RKMaxProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+    memset(ray->data, 0, RKMaximumProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
 }
 
 #pragma mark -
@@ -366,7 +366,7 @@ static void *momentCore(void *in) {
     uint64_t tic = me->tic;
 
     RKModuloPath path;
-    RKPulse *S, *E, *pulses[RKMaxPulsesPerRay];
+    RKPulse *S, *E, *pulses[RKMaximumPulsesPerRay];
     uint32_t marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
@@ -751,7 +751,7 @@ static void *pulseGatherer(void *_in) {
             } else {
                 i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
             }
-            if (i1 != i0 || count == RKMaxPulsesPerRay) {
+            if (i1 != i0 || count == RKMaximumPulsesPerRay) {
                 i1 = i0;
                 if (count > 0) {
                     // Number of samples in this ray

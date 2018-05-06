@@ -454,17 +454,17 @@ static void *rayGatherer(void *in) {
 
     // Allocate if the arrays have not been allocated
     if (engine->array1D == NULL) {
-        engine->array1D = (float *)malloc(RKMaxRaysPerSweep * sizeof(float));
+        engine->array1D = (float *)malloc(RKMaximumRaysPerSweep * sizeof(float));
         if (engine->array1D == NULL) {
             RKLog("%s Error. Unable to allocate memory.\n", engine->name);
             exit(EXIT_FAILURE);
         }
-        engine->array2D = (float *)malloc(RKMaxRaysPerSweep * ray->header.capacity * sizeof(float));
+        engine->array2D = (float *)malloc(RKMaximumRaysPerSweep * ray->header.capacity * sizeof(float));
         if (engine->array2D == NULL) {
             RKLog("%s Error. Unable to allocate memory.\n", engine->name);
             exit(EXIT_FAILURE);
         }
-        engine->memoryUsage += RKMaxRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
+        engine->memoryUsage += RKMaximumRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
     }
     
     // Update the engine state
@@ -526,7 +526,7 @@ static void *rayGatherer(void *in) {
                 ray->header.n = is;
                 rays[n++] = ray;
                 is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-            } while (is != j && n < MIN(RKMaxRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
+            } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
@@ -562,7 +562,7 @@ static void *rayGatherer(void *in) {
                     ray->header.n = is;
                     rays[n++] = ray;
                     is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-                } while (is != j && n < MIN(RKMaxRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
+                } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
                 engine->rayAnchors[engine->rayAnchorsIndex].count = n;
                 if (tidRayReleaser) {
                     pthread_join(tidRayReleaser, NULL);

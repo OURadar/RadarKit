@@ -304,7 +304,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     if (space->showNumbers && count < 50 && gateCount < 50) {
         char variable[RKNameLength];
         char line[RKMaximumStringLength];
-        RKIQZ *X = (RKIQZ *)malloc(RKMaxPulsesPerRay * sizeof(RKIQZ));
+        RKIQZ *X = (RKIQZ *)malloc(RKMaximumPulsesPerRay * sizeof(RKIQZ));
         const int gateShown = 8;
         
         // Go through both polarizations

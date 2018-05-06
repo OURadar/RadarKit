@@ -271,7 +271,7 @@ static void *radarRelay(void *in) {
     desc.verbose = 1;
 
     engine->client = RKClientInitWithDesc(desc);
-    engine->memoryUsage += sizeof(RKClient) + RKMaxPacketSize;
+    engine->memoryUsage += sizeof(RKClient) + RKMaximumPacketSize;
 
 	// Update the engine state
 	engine->state |= RKEngineStateActive;

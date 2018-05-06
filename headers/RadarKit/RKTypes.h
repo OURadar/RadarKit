@@ -62,10 +62,10 @@
 #define RKMaxFilterCount                 8                           // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaxFilterGroups                22                          // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth     1000
-#define RKMaxPulsesPerRay                2000
-#define RKMaxProductCount                10                          // 16 to be the absolute max since productList enum is 32-bit (product + display)
-#define RKMaxRaysPerSweep                1500                        // 1440 is 0.25-deg. This should be plenty
-#define RKMaxPacketSize                  1024 * 1024
+#define RKMaximumPulsesPerRay            2000
+#define RKMaximumProductCount            10                          // 16 to be the absolute max since productList enum is 32-bit (product + display)
+#define RKMaximumRaysPerSweep            1500                        // 1440 is 0.25-deg. This should be plenty
+#define RKMaximumPacketSize              1024 * 1024
 #define RKNetworkTimeoutSeconds          20
 #define RKNetworkReconnectSeconds        3
 #define RKLagRedThreshold                0.5
@@ -808,7 +808,7 @@ typedef struct rk_sweep_header {
 typedef struct rk_sweep {
     RKSweepHeader    header;
     RKBuffer         rayBuffer;
-    RKRay            *rays[RKMaxRaysPerSweep];
+    RKRay            *rays[RKMaximumRaysPerSweep];
 } RKSweep;
 
 typedef struct rk_scratch {

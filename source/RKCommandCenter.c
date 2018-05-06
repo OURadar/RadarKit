@@ -112,6 +112,10 @@ int socketCommandHandler(RKOperator *O) {
                     user->controlSetIndex = (uint32_t)-1;
                     break;
 
+                case 'c':
+                    user->textPreferences ^= RKTextPreferencesShowColor;
+                    break;
+                    
                 case 'i':
                     O->delimTx.type = RKNetworkPacketTypeRadarDescription;
                     O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
@@ -372,7 +376,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         } else if (k == RKStreamStatusBuffers) {
-            k = RKBufferOverview(user->radar, user->string, false);
+            k = RKBufferOverview(user->radar, user->string, user->textPreferences & RKTextPreferencesShowColor);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);

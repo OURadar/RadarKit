@@ -16,7 +16,7 @@
 #include <netcdf.h>
 
 typedef struct rk_ray_anchors {
-    RKRay                            *rays[RKMaxRaysPerSweep];
+    RKRay                            *rays[RKMaximumRaysPerSweep];
     uint32_t                         count;
 } RKRayAnchors;
 
