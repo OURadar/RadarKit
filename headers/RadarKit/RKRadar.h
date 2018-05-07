@@ -31,7 +31,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 #define RADAR_VARIABLE_OFFSET(STRING, NAME) \
-sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld -> 0x%08x\n", (unsigned long)((void *)&radar->NAME - (void *)radar), *(unsigned int *)&radar->NAME)
+sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
 typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
 enum RKRadarState {

@@ -366,10 +366,11 @@ RKOperator *RKOperatorCreate(RKServer *M, int sid, const char *ip) {
              O->ip);
     O->delimString.type = RKNetworkPacketTypePlainText;
     O->delimString.size = 0;
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 6] = ' ';
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 5] = 8;
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 4] = ' ';         // Give a spac character to erase
-    O->delimString.bytes[sizeof(RKNetDelimiter) - 3] = 8;           // Use a backspace to erase the previous character
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 7] = '\r';        //
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 6] = ' ';         //
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 5] = ' ';         // Use space characters to erase
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 4] = ' ';         //
+    O->delimString.bytes[sizeof(RKNetDelimiter) - 3] = ' ';         //
     O->delimString.bytes[sizeof(RKNetDelimiter) - 2] = '\r';        // Return line
     O->delimString.bytes[sizeof(RKNetDelimiter) - 1] = '\0';        // End of string
     memcpy(&O->delimTx, &O->delimString, sizeof(RKNetDelimiter));

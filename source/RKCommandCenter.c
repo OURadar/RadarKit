@@ -297,6 +297,13 @@ int socketStreamHandler(RKOperator *O) {
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor  && td >= 0.05) {
         // Signal processor only - showing the latest summary text view
         k = user->streams & user->access & RKStreamStatusMask;
+        if ((user->streamsInProgress & RKStreamStatusMask) != k) {
+            user->streamsInProgress |= k;
+            k = sprintf(user->string, "\033[2J\033[1;1H" RKEOL);
+            O->delimTx.type = RKNetworkPacketTypePlainText;
+            O->delimTx.size = k + 1;
+            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+        }
         if (k == RKStreamStatusPositions) {
             // Stream "0" - Positions
             k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,

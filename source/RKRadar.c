@@ -1200,7 +1200,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     // Pulse buffer
     c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
     m = sprintf(text,
-                "\033[2J\033[1;1H\033[8;5;0m"
+                "\033[1;1H\033[8;5;0m"
                 "Pulse Buffer (%s B)\n"
                 "-----------------",
                 c);
