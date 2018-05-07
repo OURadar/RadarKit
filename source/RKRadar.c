@@ -1184,7 +1184,6 @@ void RKShowOffsets(RKRadar *radar, char *text) {
 }
 
 int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
-    // Buffer status
     int i, j, k, m = 0;
     int slice;
     char *c;
@@ -1192,10 +1191,15 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     RKRay *ray;
     RKPulse *pulse;
 
-    const char m0 = '.';  const char c0[] = "\033[38;5;197m";
-    const char m1 = '|';  const char c1[] = "\033[38;5;226m";
-    const char m2 = ':';  const char c2[] = "\033[38;5;46m";
-    const char m3 = 'o';  const char c3[] = "\033[38;5;33m";
+    // Symbols and corresponding colors
+    const char m0 = '.';  const char c0[] = RKRedColor;
+    const char m1 = '|';  const char c1[] = RKYellowColor;
+    const char m2 = ':';  const char c2[] = RKGreenColor;
+    const char m3 = 'o';  const char c3[] = RKBlueColor;
+
+    char format[64];
+    // Goes like this: [color reset] [new line] %04d-%04d
+    sprintf(format, "%%s\n%%0%dd-%%0%dd ", (int)log10(radar->desc.pulseBufferDepth) + 1, (int)log10(radar->desc.rayBufferDepth) + 1);
 
     // Pulse buffer
     c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
@@ -1213,7 +1217,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-        m += sprintf(text + m, "%s\n%04d-%04d ", showColor ? "\033[0m" : "", k, k + slice);
+        m += sprintf(text + m, format, showColor ? "\033[0m" : "", k, k + slice);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
@@ -1281,7 +1285,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     k = 0;
     slice = 90;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-        m += sprintf(text + m, "%s\n%04d-%04d ", showColor ? "\033[0m" : "", k, k + slice);
+        m += sprintf(text + m, format, showColor ? "\033[0m" : "", k, k + slice);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);

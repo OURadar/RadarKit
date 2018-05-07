@@ -386,6 +386,10 @@ int socketStreamHandler(RKOperator *O) {
             k = RKBufferOverview(user->radar, user->string, user->textPreferences & RKTextPreferencesShowColor);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
+            // Special case to avoid character 007, which is a beep.
+            if ((O->delimTx.size & 0xFF) == 0x07) {
+                O->delimTx.size++;
+            }
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
 
