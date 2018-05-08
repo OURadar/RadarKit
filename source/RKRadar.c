@@ -1196,6 +1196,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     const char m1 = '|';  const char c1[] = RKYellowColor;
     const char m2 = ':';  const char c2[] = RKGreenColor;
     const char m3 = 'o';  const char c3[] = RKBlueColor;
+    const char m4 = '-';  const char c4[] = RKBlueColor;
 
     char format[64];
     // Goes like this: [color reset] [new line] %04d-%04d
@@ -1223,7 +1224,13 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
             pulse = RKGetPulse(radar->pulses, k);
             s0 = pulse->header.s;
             if (showColor) {
-                if (s0 & RKPulseStatusUsed) {
+                if (s0 & RKPulseStatusRecorded) {
+                    if (s0 == s1) {
+                        *(text + m++) = m4;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c4, m4);
+                    }
+                } else if (s0 & RKPulseStatusUsedForMoments) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
                     } else {
@@ -1251,7 +1258,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
                 s1 = s0;
             } else {
                 *(text + m++) =
-                s0 & RKPulseStatusUsed ? m3 : (s0 & RKPulseStatusRingProcessed ? m2 : (s0 & RKPulseStatusHasIQData ? m1 : m0));
+                s0 & RKPulseStatusUsedForMoments ? m3 : (s0 & RKPulseStatusRingProcessed ? m2 : (s0 & RKPulseStatusHasIQData ? m1 : m0));
             }
             k++;
         }

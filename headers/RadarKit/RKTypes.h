@@ -333,7 +333,7 @@ enum RKMarker {
 // -> RKPulseStatusRingFiltered / RKPulseStatusRingSkipped  (main thread consolidates)
 // -> RKPulseStatusRingProcessed                            (main thread)
 // -> RKPulseStatusHasPosition
-// -> RKPulseStatusReadyForMoment
+// -> RKPulseStatusReadyForMoments
 //
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
@@ -349,8 +349,9 @@ enum RKPulseStatus {
     RKPulseStatusRingFiltered        = (1 << 8),
     RKPulseStatusRingSkipped         = (1 << 9),
     RKPulseStatusRingProcessed       = (1 << 10),
-    RKPulseStatusReadyForMoment      = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
-    RKPulseStatusUsed                = (1 << 11)
+    RKPulseStatusReadyForMoments     = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
+    RKPulseStatusUsedForMoments      = (1 << 11),
+    RKPulseStatusRecorded            = (1 << 12)
 };
 
 typedef uint32_t RKRayStatus;

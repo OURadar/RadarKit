@@ -36,6 +36,7 @@ struct rk_data_recorder {
     FILE                             *fid;
     void                             *cache;
     size_t                           cacheWriteIndex;
+    uint64_t                         cacheFlushCount;
     pthread_t                        tidPulseRecorder;
 
     // Status / health

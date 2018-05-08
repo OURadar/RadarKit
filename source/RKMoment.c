@@ -507,7 +507,7 @@ static void *momentCore(void *in) {
             makeRayFromScratch(space, ray, ray->header.gateCount);
             for (k = 0; k < path.length; k++) {
                 pulse = pulses[k];
-                pulse->header.s |= RKPulseStatusUsed;
+                pulse->header.s |= RKPulseStatusUsedForMoments;
             }
             ray->header.s |= RKRayStatusProcessed;
         } else {
@@ -700,7 +700,7 @@ static void *pulseGatherer(void *_in) {
         // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
         // A separate thread applies matched filter to the data (RKPulseStatusProcessed).
         s = 0;
-        while ((pulse->header.s & RKPulseStatusReadyForMoment) != RKPulseStatusReadyForMoment && engine->state & RKEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusReadyForMoments) != RKPulseStatusReadyForMoments && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",

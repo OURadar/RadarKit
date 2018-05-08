@@ -56,7 +56,9 @@ static void *pulseRecorder(void *in) {
     char filename[RKMaximumPathLength] = "";
     
     size_t len = 0;
-    
+    size_t pulseCount = 0;
+    uint64_t cacheFlushCount = 0;
+
     RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
     memset(fileHeader, 0, 4096);
     sprintf(fileHeader->preface, "RadarKit/RawIQ");
@@ -97,8 +99,8 @@ static void *pulseRecorder(void *in) {
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
         // Wait until the pulse is completely processed
-        while (!(pulse->header.s & RKPulseStatusHasPosition) && engine->state & RKEngineStateActive) {
-            usleep(1000);
+        while (!(pulse->header.s & RKPulseStatusUsedForMoments) && engine->state & RKEngineStateActive) {
+            usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.01f, k , *engine->pulseIndex, pulse->header.s);
@@ -188,14 +190,28 @@ static void *pulseRecorder(void *in) {
             len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
             len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
         }
-        
+        pulseCount++;
+
+        if (cacheFlushCount != engine->cacheFlushCount) {
+            cacheFlushCount = engine->cacheFlushCount;
+            i = k;
+            while (pulseCount > 0) {
+                pulseCount--;
+                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
+                pulse = RKGetPulse(engine->pulseBuffer, i);
+                if (pulse->header.s != RKPulseStatusVacant) {
+                    pulse->header.s |= RKPulseStatusRecorded;
+                }
+            }
+        }
+
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
             RKDataRecorderUpdateStatusString(engine);
         }
-        
+
         // Going to wait mode soon
         engine->state ^= RKEngineStateWritingFile;
 
@@ -363,6 +379,7 @@ size_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, con
         if (writtenSize != engine->cacheSize) {
             RKLog("%s Error in write().   writtenSize = %s\n", RKIntegerToCommaStyleString((long)writtenSize));
         }
+        engine->cacheFlushCount++;
         engine->cacheWriteIndex = 0;
         if (remainingSize >= engine->cacheSize) {
             writtenSize += (uint32_t)write(engine->fd, (char *)(payload + lastChunkSize), remainingSize);

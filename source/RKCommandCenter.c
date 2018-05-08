@@ -430,7 +430,7 @@ int socketStreamHandler(RKOperator *O) {
     // 2) The latest slot it will be stored. It is crucial to ensure that:
     //      i) For a health, it is RKStatusReady
     //     ii) For a ray, it has RKRayStatusReady set
-    //    iii) For a pulse, it has RKPulseStatusReadyForMoment set
+    //    iii) For a pulse, it has RKPulseStatusReadyForMoments set
     //     iv) For a sweep, rayAnchorsIndex has increased
     // 3) Once the first payload is sent, the stream is consider in progress (streamsInProgress)
     // 4) If (2) can't be met within X secs, in progress flag is not set so (2) will be checked
