@@ -479,6 +479,9 @@ UserParams processInput(int argc, const char **argv) {
                     case 53:
                         RKTestCacheWrite();
                         break;
+                    case 54:
+                        RKTestBufferOverview();
+                        break;
                     default:
                         RKLog("Test %d is invalid.\n", k);
                         break;

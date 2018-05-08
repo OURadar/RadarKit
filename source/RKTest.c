@@ -2194,3 +2194,11 @@ void RKTestWaveformProperties(void) {
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 }
+
+void RKTestBufferOverview(void) {
+    RKRadar *radar = RKInitLean();
+    char text[RKMaximumStringLength];
+    RKBufferOverview(radar, text, 0xFF);
+    printf("%s\n", text);
+    RKFree(radar);
+}

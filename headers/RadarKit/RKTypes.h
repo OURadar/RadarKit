@@ -944,6 +944,13 @@ typedef struct rk_user_product {
     RKUserProductId      uid;
 } RKUserProduct;
 
+typedef uint32_t RKOverviewFlag;
+enum RKOverviewFlag {
+    RKOverviewFlagNone            = 0,
+    RKOverviewFlagShowColor       = 1,
+    RKOverviewFlagDrawBackground  = (1 << 1)
+};
+
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

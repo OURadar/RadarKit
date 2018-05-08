@@ -131,5 +131,6 @@ void RKTestTemperatureToStatus(void);
 
 void RKTestGetCountry(void);
 void RKTestWaveformProperties(void);
+void RKTestBufferOverview(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

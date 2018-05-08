@@ -297,12 +297,8 @@ int socketStreamHandler(RKOperator *O) {
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor  && td >= 0.05) {
         // Signal processor only - showing the latest summary text view
         k = user->streams & user->access & RKStreamStatusMask;
-        if ((user->streamsInProgress & RKStreamStatusMask) != k) {
+        if ((user->streamsInProgress & RKStreamStatusMask) != k && k != RKStreamStatusBuffers) {
             user->streamsInProgress |= k;
-            k = sprintf(user->string, "\033[2J\033[1;1H" RKEOL);
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         }
         if (k == RKStreamStatusPositions) {
             // Stream "0" - Positions
@@ -383,7 +379,13 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
         } else if (k == RKStreamStatusBuffers) {
-            k = RKBufferOverview(user->radar, user->string, user->textPreferences & RKTextPreferencesShowColor);
+            if ((user->streamsInProgress & RKStreamStatusMask) != k) {
+                user->streamsInProgress |= k;
+                k = RKBufferOverview(user->radar, user->string,
+                                     RKOverviewFlagDrawBackground | (user->textPreferences & RKTextPreferencesShowColor ? RKOverviewFlagShowColor : RKOverviewFlagNone));
+            } else {
+                k = RKBufferOverview(user->radar, user->string, user->textPreferences & RKTextPreferencesShowColor ? RKOverviewFlagShowColor : RKOverviewFlagNone);
+            }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             // Special case to avoid character 007, which is a beep.

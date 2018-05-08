@@ -1183,8 +1183,8 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     free(buffer);
 }
 
-int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
-    int i, j, k, m = 0;
+int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
+    int i, j, k, m = 0, n = 0;
     int slice;
     char *c;
     size_t s;
@@ -1198,32 +1198,102 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
     const char m3 = 'o';  const char c3[] = RKBlueColor;
     const char m4 = '-';  const char c4[] = RKBlueColor;
 
-    char format[64];
-    // Goes like this: [color reset] [new line] %04d-%04d
-    sprintf(format, "%%s\n%%0%dd-%%0%dd ", (int)log10(radar->desc.pulseBufferDepth) + 1, (int)log10(radar->desc.rayBufferDepth) + 1);
+    int w = (int)log10(radar->desc.pulseBufferDepth) + 1;
 
-    // Pulse buffer
-    c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
-    m = sprintf(text,
-                "\033[1;1H\033[8;5;0m"
-                "Pulse Buffer (%s B)\n"
-                "-----------------",
-                c);
-    s = strlen(c);
-    memset(text + m, '-', s);
-    m += s;
-    *(text + m++) = '\n';
+    if (flag & RKOverviewFlagDrawBackground) {
+        // General address format goes like this: [color reset] [new line] %04d-%04d
+        char format[64];
+        sprintf(format, "\n%%0%dd-%%0%dd ", (int)log10(radar->desc.pulseBufferDepth) + 1, (int)log10(radar->desc.rayBufferDepth) + 1);
+
+        // Pulse buffer
+        c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
+        m = sprintf(text,
+                    "\033[2J\033[1;1H\033[0m"
+                    "Pulse Buffer (%s B)\n"
+                    "-----------------",
+                    c);
+        s = strlen(c);
+        memset(text + m, '-', s);
+        m += s;
+        *(text + m++) = '\n';
+        n += 5;
+
+        k = 0;
+        slice = 100;
+        for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
+            m += sprintf(text + m, format, k, k + slice);
+            k += slice;
+            n++;
+        }
+
+        // Ray buffer
+        c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
+        if (flag & RKOverviewFlagShowColor) {
+            m += sprintf(text + m,
+                         "\033[%d;1H       "
+                         "    %s%c\033[0m Vacant"
+                         "    %s%c\033[0m Has I/Q"
+                         "    %s%c\033[0m Processed"
+                         "    %s%c\033[0m Used\n\n\n"
+                         "Ray Buffer (%s B)\n"
+                         "---------------", n, c0, m0, c1, m1, c2, m2, c3, m3, c);
+        } else {
+            m += sprintf(text + m,
+                         "\033[%d;1H       "
+                         "    %c Vacant"
+                         "    %c Has Data"
+                         "    %c Processed"
+                         "    %c Used\n\n\n"
+                         "Ray Buffer (%s B)\n"
+                         "---------------", n, m0, m1, m2, m3, c);
+        }
+        s = strlen(c);
+        memset(text + m, '-', s);
+        m += s;
+        *(text + m++) = '\n';
+        n += 4;
+
+        k = 0;
+        slice = 90;
+        for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
+            m += sprintf(text + m, format, k, k + slice);
+            k += slice;
+            n++;
+        }
+        n++;
+        if (flag & RKOverviewFlagShowColor) {
+            m += sprintf(text + m,
+                         "\033[%d;1H\n\n       "
+                         "    %s%c\033[0m Vacant"
+                         "    %s%c\033[0m Has Data"
+                         "    %s%c\033[0m Shared"
+                         "    %s%c\033[0m Algorithms\n",
+                         n, c0, m0, c1, m1, c2, m2, c3, m3);
+        } else {
+            m += sprintf(text + m,
+                         "\033[%d;1H\n\n       "
+                         "    %c Vacant"
+                         "    %c Has Data"
+                         "    %c Shared"
+                         "    %c Algorithms\n",
+                         n, m0, m1, m2, m3);
+        }
+    }
+
+    w = 2 * w + 3;
+
+    n = 4;
     k = 0;
     slice = 100;
     uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-        m += sprintf(text + m, format, showColor ? "\033[0m" : "", k, k + slice);
+        m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
             pulse = RKGetPulse(radar->pulses, k);
             s0 = pulse->header.s;
-            if (showColor) {
+            if (flag & RKOverviewFlagShowColor) {
                 if (s0 & RKPulseStatusRecorded) {
                     if (s0 == s1) {
                         *(text + m++) = m4;
@@ -1257,47 +1327,23 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
                 }
                 s1 = s0;
             } else {
-                *(text + m++) =
-                s0 & RKPulseStatusUsedForMoments ? m3 : (s0 & RKPulseStatusRingProcessed ? m2 : (s0 & RKPulseStatusHasIQData ? m1 : m0));
+                *(text + m++) = s0 & RKPulseStatusUsedForMoments ? m3 : (s0 & RKPulseStatusRingProcessed ? m2 : (s0 & RKPulseStatusHasIQData ? m1 : m0));
             }
             k++;
         }
+        n++;
     }
 
-    // Ray buffer
-    c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
-    if (showColor) {
-        m += sprintf(text + m,
-                     "\033[0m\n\n       "
-                     "    %s%c\033[0m Vacant"
-                     "    %s%c\033[0m Has I/Q"
-                     "    %s%c\033[0m Processed"
-                     "    %s%c\033[0m Used\n\n\n"
-                     "Ray Buffer (%s B)\n"
-                     "---------------", c0, m0, c1, m1, c2, m2, c3, m3, c);
-    } else {
-        m += sprintf(text + m,
-                     "\n\n       "
-                     "    %c Vacant"
-                     "    %c Has Data"
-                     "    %c Processed"
-                     "    %c Used\n\n\n"
-                     "Ray Buffer (%s B)\n"
-                     "---------------", m0, m1, m2, m3, c);
-    }
-    s = strlen(c);
-    memset(text + m, '-', s);
-    m += s;
-    *(text + m++) = '\n';
+    n += 7;
     k = 0;
     slice = 90;
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-        m += sprintf(text + m, format, showColor ? "\033[0m" : "", k, k + slice);
+        m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
             ray = RKGetRay(radar->rays, k);
             s0 = ray->header.s;
-            if (showColor) {
+            if (flag & RKOverviewFlagShowColor) {
                 if (s0 & RKRayStatusBeingConsumed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
@@ -1329,26 +1375,11 @@ int RKBufferOverview(RKRadar *radar, char *text, const bool showColor) {
             s1 = s0;
             k++;
         }
+        n++;
     }
-    if (showColor) {
-        m += sprintf(text + m,
-                     "\033[0m\n\n       "
-                     "    %s%c\033[0m Vacant"
-                     "    %s%c\033[0m Has Data"
-                     "    %s%c\033[0m Shared"
-                     "    %s%c\033[0m Algorithms\n",
-                     c0, m0, c1, m1, c2, m2, c3, m3);
-    } else {
-        m += sprintf(text + m,
-                     "\n\n       "
-                     "    %c Vacant"
-                     "    %c Has Data"
-                     "    %c Shared"
-                     "    %c Algorithms\n",
-                     m0, m1, m2, m3);
-
-    }
-    m += sprintf(text + m, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(m));
+    n += 4;
+    m += sprintf(text + m, "\033[0m\033[%d;1H== (%s) ==" RKEOL, n, RKIntegerToCommaStyleString(m));
+    *(text + m) = '\0';
     return m;
 }
 
