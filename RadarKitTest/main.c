@@ -264,7 +264,7 @@ UserParams processInput(int argc, const char **argv) {
     // Build a RKRadar initialization description
     user.desc.initFlags = RKInitFlagAllocEverything;
     user.desc.pulseBufferDepth = 2500;
-    user.desc.rayBufferDepth = 1440;
+    user.desc.rayBufferDepth = 1500;
     user.desc.latitude = 35.181251;
     user.desc.longitude = -97.436752;
     user.desc.radarHeight = 2.5f;

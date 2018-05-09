@@ -114,6 +114,7 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 'c':
                     user->textPreferences ^= RKTextPreferencesShowColor;
+                    user->streamsInProgress &= ~RKStreamStatusMask;
                     break;
                     
                 case 'i':
