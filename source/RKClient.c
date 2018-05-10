@@ -30,6 +30,8 @@ void *theClient(void *in) {
     struct timeval previousBeaconTime = {0, 0};
     bool readOkay;
 
+    C->state = RKClientStateCreating;
+
     FILE *fid = NULL;
 
     void *buf = (void *)malloc(RKMaximumPacketSize);
@@ -182,12 +184,6 @@ void *theClient(void *in) {
                             usleep(100000);
                         } while (k-- > 3 && C->state < RKClientStateDisconnecting);
                         continue;
-                    } else {
-                        pthread_mutex_lock(&C->lock);
-                        if (C->state == RKClientStateConnecting) {
-                            C->state = RKClientStateConnected;
-                        }
-                        pthread_mutex_unlock(&C->lock);
                     }
                 }
             } else {
@@ -300,7 +296,9 @@ void *theClient(void *in) {
                             }
                         }
                         if (k != sizeof(RKNetDelimiter) || readCount > C->timeoutSeconds * 100) {
-                            RKLog("%s Incomplete read() with errors.   errno = %d (%s)\n", C->name, errno, RKErrnoString(errno));
+                            if (errno != ECONNREFUSED) {
+                                RKLog("%s Error. Incomplete read().   errno = %d (%s)\n", C->name, errno, RKErrnoString(errno));
+                            }
                             break;
                         }
                         // If the delimiter specifies 0 payload, it could just be a beacon
@@ -382,7 +380,9 @@ void *theClient(void *in) {
                 } // switch (C->format) ...
 
                 if (readOkay == false) {
-                    RKLog("%s Server disconnected.\n", C->name);
+                    if (C->verbose > 1) {
+                        RKLog("%s Server not connected.\n", C->name);
+                    }
                     pthread_mutex_lock(&C->lock);
                     if (C->state < RKClientStateDisconnecting) {
                         C->state = RKClientStateReconnecting;
@@ -555,8 +555,8 @@ void RKClientStart(RKClient *C, const bool waitForConnection) {
         RKLog("Error. Unable to launch a socket client.\n");
         return;
     }
-    C->state = RKClientStateCreating;
     if (!waitForConnection) {
+        RKLog("%s Immediate return.\n", C->name);
         return;
     }
     while (C->state < RKClientStateConnecting) {
@@ -572,6 +572,7 @@ void RKClientStop(RKClient *C) {
         pthread_join(C->threadId, NULL);
         pthread_attr_destroy(&C->threadAttributes);
         pthread_mutex_destroy(&C->lock);
+        C->state = RKClientStateNull;
     } else if (C->verbose > 1) {
         RKLog("%s Info. Client does not seem to be running.\n", C->name);
         return;

@@ -788,6 +788,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 
     int k;
     char *c;
+    double bandwidth;
     double pulsewidth;
     unsigned int pulsewidthSampleCount;
 
@@ -901,6 +902,30 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 RKSetWaveform(radar, waveform);
                 RKWaveformFree(waveform);
                 waveform = NULL;
+                if (response != NULL) {
+                    sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
+                }
+            } else if (*c == 'h') {
+                string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
+                bandwidth = 1.0e6 * atof(string);
+                string[0] = c[3]; string[1] = c[4];
+                k = atoi(string);
+                if (strlen(c) > 5) {
+                    pulsewidth = 1.0e-6 * atof(c + 5);
+                } else {
+                    pulsewidth = 0.5e-6;
+                }
+                //RKLog("bw = %.3f MHz   pw = %.2f us   hops = %d\n", 1.0e-6 * bandwidth, 1.0e6 * pulsewidth, k);
+                waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
+                strncpy(waveform->name, string, RKNameLength);
+                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+                transceiver->transmitWaveformLength = waveform->depth;
+                for (k = 0; k < waveform->depth; k++) {
+                    transceiver->transmitWaveform[k].i = waveform->iSamples[0][k].i;
+                    transceiver->transmitWaveform[k].q = waveform->iSamples[0][k].q;
+                }
+                RKWaveformSummary(waveform);
+                RKWaveformFree(waveform);
                 if (response != NULL) {
                     sprintf(response, "ACK. Waveform '%s' changed." RKEOL, c);
                 }

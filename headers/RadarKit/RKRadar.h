@@ -60,11 +60,11 @@ enum RKRadarState {
     RKRadarStateFileRecorderInitialized              = (1 << 22),  //
     RKRadarStateHealthLoggerInitialized              = (1 << 23),  // Recorders
     RKRadarStateFileManagerInitialized               = (1 << 24),
-    RKRadarStateRadarRelayInitialized                = (1 << 25),
-    RKRadarStateHealthRelayInitialized               = (1 << 26),
-    RKRadarStateTransceiverInitialized               = (1 << 27),
-    RKRadarStatePedestalInitialized                  = (1 << 28),
-    RKRadarStateHostMonitorInitialized               = (1 << 29),
+    RKRadarStateHealthRelayInitialized               = (1 << 25),
+    RKRadarStateTransceiverInitialized               = (1 << 26),
+    RKRadarStatePedestalInitialized                  = (1 << 27),
+    RKRadarStateHostMonitorInitialized               = (1 << 28),
+    RKRadarStateRadarRelayInitialized                = (1 << 30),
     RKRadarStateLive                                 = (1 << 31)
 };
 

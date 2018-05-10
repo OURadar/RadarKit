@@ -106,7 +106,7 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
-        RKLog("%s received '%s'", client->name, command);
+        RKLog("%s Received '%s'", client->name, command);
     }
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);

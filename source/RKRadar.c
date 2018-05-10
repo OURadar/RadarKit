@@ -1485,6 +1485,7 @@ int RKGoLive(RKRadar *radar) {
             return RKResultFailedToStartHealthRelay;
         }
         radar->state |= RKRadarStateHealthRelayInitialized;
+        RKLog("Health relay initialized.  radar->state = 0x%08x\n", radar->state);
     }
     
     // Pedestal
@@ -1702,20 +1703,32 @@ int RKStop(RKRadar *radar) {
     if (radar->systemInspector) {
         RKSimpleEngineFree(radar->systemInspector);
     }
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Radar state = 0x%08x\n", radar->state);
+    }
     if (radar->state & RKRadarStatePedestalInitialized) {
         if (radar->pedestalExec != NULL) {
+            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                RKLog("Sending 'disconnect' to pedestal ...\n");
+            }
             radar->pedestalExec(radar->pedestal, "disconnect", radar->pedestalResponse);
         }
         radar->state ^= RKRadarStatePedestalInitialized;
     }
     if (radar->state & RKRadarStateTransceiverInitialized) {
         if (radar->transceiverExec != NULL) {
+            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                RKLog("Sending 'disconnect' to transceiver ...\n");
+            }
             radar->transceiverExec(radar->transceiver, "disconnect", radar->transceiverResponse);
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
     }
     if (radar->state & RKRadarStateHealthRelayInitialized) {
         if (radar->healthRelayExec != NULL) {
+            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                RKLog("Sending 'disconnect' to health relay ...\n");
+            }
             radar->healthRelayExec(radar->healthRelay, "disconnect", radar->healthRelayResponse);
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;

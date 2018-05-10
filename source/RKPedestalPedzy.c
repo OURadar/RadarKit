@@ -191,12 +191,16 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
-        RKLog("%s received '%s'", client->name, command);
+        RKLog("%s Received '%s'", client->name, command);
     }
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
+        if (client->verbose > 1) {
+            RKLog("%s Current client->state = 0x%08x", client->name, client->state);
+        }
         if (client->state < RKClientStateConnected) {
+            RKLog("%s Pedestal not connected.\n", client->name);
             if (response != NULL) {
                 sprintf(response, "NAK. Pedestal not connected." RKEOL);
             }

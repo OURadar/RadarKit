@@ -267,6 +267,12 @@ RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const dou
     return waveform;
 }
 
+RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count, (uint32_t)round(pulsewidth * fs));
+    RKWaveformHops(waveform, fs, fc, pulsewidth);
+    return waveform;
+}
+
 #pragma mark - Waveforms
 
 void RKWaveformOnes(RKWaveform *waveform) {
