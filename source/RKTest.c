@@ -2222,7 +2222,7 @@ void RKTestWaveformProperties(void) {
 
 void RKTestBufferOverview(void) {
     RKRadar *radar = RKInitLean();
-    char text[RKMaximumStringLength];
+    char text[radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10];
     RKBufferOverview(radar, text, 0xFF);
     printf("%s\n", text);
     RKFree(radar);

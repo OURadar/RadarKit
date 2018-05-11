@@ -1221,7 +1221,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         k = 0;
         slice = 100;
         for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-            m += sprintf(text + m, format, k, k + slice);
+            m += sprintf(text + m, format, k, MIN(radar->desc.pulseBufferDepth, k + slice));
             k += slice;
             n++;
         }
@@ -1255,7 +1255,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
 
         k = 0;
         for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-            m += sprintf(text + m, format, k, k + slice);
+            m += sprintf(text + m, format, k, MIN(k + slice, radar->desc.rayBufferDepth));
             k += slice;
             n++;
         }
