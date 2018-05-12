@@ -753,6 +753,9 @@ int RKFree(RKRadar *radar) {
     }
     // Internal copies of things
     if (radar->waveform) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Freeing waveform '%s' with %d groups.\n", radar->waveform->name, radar->waveform->count);
+        }
         RKWaveformFree(radar->waveform);
     }
     // Transceiver, pedestal & health relay

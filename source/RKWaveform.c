@@ -180,7 +180,6 @@ RKWaveform *RKWaveformInit() {
 
 void RKWaveformFree(RKWaveform *waveform) {
     int k;
-    RKLog("Freeing waveform '%s' with %d groups.\n", waveform->name, waveform->count);
     for (k = 0; k < waveform->count; k++) {
         free(waveform->samples[k]);
         free(waveform->iSamples[k]);
