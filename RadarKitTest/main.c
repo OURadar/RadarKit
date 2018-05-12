@@ -31,6 +31,9 @@ typedef struct user_params {
     RKName         relayHost;
     RKName         streams;
     RKRadarDesc    desc;
+    RKName         labels[256];
+    RKName         commands[256];
+    int            controlCount;
 } UserParams;
 
 // Global variables
@@ -320,7 +323,7 @@ UserParams processInput(int argc, const char **argv) {
     
     // Read in preference configuration
     RKPreference *userPreferences = RKPreferenceInit();
-    //RKPreferenceObject *object;
+    RKPreferenceObject *object;
 
     // Only show the inner working if verbosity level > 1
     const int verb = user.verbose > 1 ? 1 : 0;
@@ -337,6 +340,13 @@ UserParams processInput(int argc, const char **argv) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",       &user.desc.heading,   RKParameterTypeDouble, 1);
     //RKPreferenceUpdateKeyword(userPreferences, verb, "Noise", values, ParameterTypeFloat, 2);
     
+    k = 0;
+    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
+        RKParseQuotedStrings(object->valueString, user.labels[k], user.commands[k], NULL);
+        k++;
+    }
+    user.controlCount = k;
+
     // Second pass: now we go through all of them.
     optind = 1;
     long_index = 0;
@@ -665,6 +675,8 @@ UserParams processInput(int argc, const char **argv) {
 
 int main(int argc, const char **argv) {
 
+    int k;
+
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
@@ -697,24 +709,10 @@ int main(int argc, const char **argv) {
     RKSetMomentProcessorToMultiLag(myRadar, 3);
     //RKSetMomentProcessorToPulsePairHop(myRadar);
 
-    RKAddControl(myRadar, "10us pulse", "t w s10");
-    RKAddControl(myRadar, "20us pulse", "t w s20");
-    RKAddControl(myRadar, "50us pulse", "t w s50");
-    RKAddControl(myRadar, "10us 0.1-MHz tone", "t w t10");
-    RKAddControl(myRadar, "20us 0.1-MHz tone", "t w t20");
-    RKAddControl(myRadar, "50us 0.1-MHz tone", "t w t50");
-    RKAddControl(myRadar, "OFM", "t w ofm");
-    
-    RKAddControl(myRadar, "PPI EL 9 deg @ 180 dps", "p ppi 9 180");
-    RKAddControl(myRadar, "PPI EL 8 deg @ 90 dps", "p ppi 8 90");
-    RKAddControl(myRadar, "PPI EL 7 deg @ 45 dps", "p ppi 7 45");
-    RKAddControl(myRadar, "PPI EL 6 deg @ 24 dps", "p ppi 6 24");
-    RKAddControl(myRadar, "PPI EL 5 deg @ 12 dps", "p ppi 5 12");
-    RKAddControl(myRadar, "PPI EL 4 deg @ 6 dps", "p ppi 4 6");
-    RKAddControl(myRadar, "PPI EL 3 deg @ 1 dps", "p ppi 3 1");
-    RKAddControl(myRadar, "RHI @ AZ 35 deg @ 25 dps", "p rhi 35 0,40 20");
-    //RKAddControl(myRadar, "Simulate Malfunction Pedestal", "p bad");
-    RKAddControl(myRadar, "Developer", "dr");
+    for (k = 0; k < user.controlCount; k++) {
+        //printf("Adding control '%s' '%s' ...\n", user.labels[k], user.commands[k]);
+        RKAddControl(myRadar, user.labels[k], user.commands[k]);
+    }
 
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, -30.0f, -30.0f,

@@ -55,7 +55,7 @@
 #define RKBufferPSlotCount               1000                        // Positions
 #define RKBuffer0SlotCount               20000                       // Raw I/Q
 #define RKBuffer2SlotCount               36000                       // Ray
-#define RKMaxControlCount                128                         // Controls
+#define RKMaximumControlCount            128                         // Controls
 #define RKGateCount                      262144                      // Must be a multiple of RKSIMDAlignSize
 #define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64

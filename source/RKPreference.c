@@ -61,13 +61,14 @@ int RKPreferenceUpdate(RKPreference *preference) {
         if (c == NULL) {
             break;
         }
+        RKStripTail(line);
         if (line[0] == '#' || strlen(line) < 2) {
             #if defined(DEBUG)
             printf("Skip line %d %s\n", i, line);
             #endif
         } else {
             #if defined(DEBUG)
-            printf("Process line %d %s", i, line);
+            printf("Process line %d %s\n", i, line);
             #endif
             // Find the first white space, divide the line into keyword and valueString
             s = line;

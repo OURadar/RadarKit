@@ -233,11 +233,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.positionBufferDepth == 0) {
         radar->desc.positionBufferDepth = 500;
     }
-    if (radar->desc.controlCapacity > RKMaxControlCount) {
-        radar->desc.controlCapacity = RKMaxControlCount;
+    if (radar->desc.controlCapacity > RKMaximumControlCount) {
+        radar->desc.controlCapacity = RKMaximumControlCount;
         RKLog("Info. Control count limited to %s\n", radar->desc.controlCapacity);
     } else if (radar->desc.controlCapacity == 0) {
-        radar->desc.controlCapacity = RKMaxControlCount;
+        radar->desc.controlCapacity = RKMaximumControlCount;
     }
 
     // Read in preference file here, override some values
