@@ -15,14 +15,13 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    int            coresForPulseCompression;
-    int            coresForProductGenerator;
+    int            verbose;                     // Verbosity
+    int            coresForPulseCompression;    // Number of cores for pulse compression
+    int            coresForProductGenerator;    // Number of cores for moment calculations
     float          fs;                          // Raw gate sampling bandwidth
-    float          prf;
-    int            sprt;
+    float          prf;                         // Base PRF (Hz)
+    int            sprt;                        // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
     int            gateCount;                   // Number of gates (simulate mode)
-    int            verbose;
-    int            testPulseCompression;
     int            sleepInterval;
     bool           simulate;
     bool           writeFiles;
@@ -261,6 +260,43 @@ UserParams processInput(int argc, const char **argv) {
     // A structure unit that encapsulates command line user parameters
     UserParams user;
     
+    // Command line options
+    struct option long_options[] = {
+        {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
+        {"clock"             , no_argument      , NULL, 'C'},
+        {"demo"              , no_argument      , NULL, 'D'},
+        {"system"            , required_argument, NULL, 'S'},
+        {"test"              , required_argument, NULL, 'T'},
+        {"azimuth"           , required_argument, NULL, 'a'},    // ASCII 97 - 122 : a - z
+        {"bandwidth"         , required_argument, NULL, 'b'},
+        {"core"              , required_argument, NULL, 'c'},
+        {"decimate"          , required_argument, NULL, 'd'},
+        {"empty-style"       , no_argument      , NULL, 'e'},
+        {"prf"               , required_argument, NULL, 'f'},
+        {"gate"              , required_argument, NULL, 'g'},
+        {"help"              , no_argument      , NULL, 'h'},
+        {"interpulse-period" , required_argument, NULL, 'i'},
+        {"pedzy-host"        , required_argument, NULL, 'p'},
+        {"quiet"             , no_argument      , NULL, 'q'},
+        {"relay"             , required_argument, NULL, 'r'},
+        {"simulate"          , optional_argument, NULL, 's'},
+        {"tweeta-host"       , required_argument, NULL, 't'},
+        {"verbose"           , no_argument      , NULL, 'v'},
+        {"do-not-write"      , no_argument      , NULL, 'w'},
+        {"simulate-sleep"    , required_argument, NULL, 'z'},
+        {0, 0, 0, 0}
+    };
+    
+    // Construct short_options from long_options
+    char str[1024] = "";
+    for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
+        struct option *o = &long_options[k];
+        snprintf(str + strlen(str), 1023, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+    }
+    #if defined(DEBUG)
+    printf("str = %s\n", str);
+    #endif
+
     // Zero out everything and set some default parameters
     memset(&user, 0, sizeof(UserParams));
     
@@ -275,40 +311,6 @@ UserParams processInput(int argc, const char **argv) {
     user.desc.pulseToRayRatio = 1;
     strcpy(user.desc.dataPath, ROOT_PATH);
     
-    struct option long_options[] = {
-        {"alarm"                 , no_argument      , NULL, 'A'}, // ASCII 65 - 90 : A - Z
-        {"clock"                 , no_argument      , NULL, 'C'},
-        {"demo"                  , no_argument      , NULL, 'D'},
-        {"system"                , required_argument, NULL, 'S'},
-        {"test"                  , required_argument, NULL, 'T'},
-        {"azimuth"               , required_argument, NULL, 'a'}, // ASCII 97 - 122 : a - z
-        {"bandwidth"             , required_argument, NULL, 'b'},
-        {"core"                  , required_argument, NULL, 'c'},
-        {"decimate"              , required_argument, NULL, 'd'},
-        {"empty-style"           , no_argument      , NULL, 'e'},
-        {"prf"                   , required_argument, NULL, 'f'},
-        {"gate"                  , required_argument, NULL, 'g'},
-        {"help"                  , no_argument      , NULL, 'h'},
-        {"interpulse-period"     , required_argument, NULL, 'i'},
-        {"pedzy-host"            , required_argument, NULL, 'p'},
-        {"quiet"                 , no_argument      , NULL, 'q'},
-        {"relay"                 , required_argument, NULL, 'r'},
-        {"simulate"              , optional_argument, NULL, 's'},
-        {"tweeta-host"           , required_argument, NULL, 't'},
-        {"verbose"               , no_argument      , NULL, 'v'},
-        {"do-not-write"          , no_argument      , NULL, 'w'},
-        {"simulate-sleep"        , required_argument, NULL, 'z'},
-        {0, 0, 0, 0}
-    };
-    
-    // Construct short_options from long_options
-    char str[1024] = "";
-    for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
-        struct option *o = &long_options[k];
-        snprintf(str + strlen(str), 1023, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
-    }
-    //    printf("str = %s\n", str);
-    
     // First pass: just check for verbosity level
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
@@ -321,25 +323,32 @@ UserParams processInput(int argc, const char **argv) {
         }
     }
     
-    // Read in preference configuration
+    // Going from user.verbose to RKInitFlag
+    if (user.verbose == 1) {
+        user.desc.initFlags |= RKInitFlagVerbose;
+    } else if (user.verbose == 2) {
+        user.desc.initFlags |= RKInitFlagVeryVerbose;
+    } else if (user.verbose == 3) {
+        user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
+    }
+    
+    // Read in preference configuration file (pref.conf by RadarKit default)
     RKPreference *userPreferences = RKPreferenceInit();
     RKPreferenceObject *object;
 
-    // Only show the inner working if verbosity level > 1
+    // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
     const int verb = user.verbose > 1 ? 1 : 0;
     if (verb) {
         RKLog("Reading user preferences ...\n");
     }
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",          user.desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",    user.desc.filePrefix, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",      user.desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",     user.pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",    user.tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",      &user.desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",     &user.desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",       &user.desc.heading,   RKParameterTypeDouble, 1);
-    //RKPreferenceUpdateKeyword(userPreferences, verb, "Noise", values, ParameterTypeFloat, 2);
-    
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",       user.desc.name,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix", user.desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",   user.desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",  user.pedzyHost,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost", user.tweetaHost,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user.desc.latitude,  RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user.desc.longitude, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user.desc.heading,   RKParameterTypeDouble, 1);   
     k = 0;
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
         RKParseQuotedStrings(object->valueString, user.labels[k], user.commands[k], NULL);
@@ -347,7 +356,7 @@ UserParams processInput(int argc, const char **argv) {
     }
     user.controlCount = k;
 
-    // Second pass: now we go through all of them.
+    // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
     optind = 1;
     long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
