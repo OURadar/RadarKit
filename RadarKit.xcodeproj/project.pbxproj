@@ -32,6 +32,7 @@
 		B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53C1E5A3988000C8503 /* RKTemplate.h */; };
 		B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53F1E5A3E23000C8503 /* RKWaveform.h */; };
 		B565B5451E5A4623000C8503 /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5441E5A4623000C8503 /* bessi.c */; };
+		B56AB0AD20A8826A00E73AE9 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = B56AB0AC20A8826A00E73AE9 /* main.c */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; };
 		B5B675581EB0DFAB001BD68D /* RKHealthLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */; };
@@ -76,6 +77,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		B56AB0A820A8826900E73AE9 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		B5C1F3421AB9C118004F88CD /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -117,6 +127,8 @@
 		B565B53F1E5A3E23000C8503 /* RKWaveform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKWaveform.h; path = headers/RadarKit/RKWaveform.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B565B5441E5A4623000C8503 /* bessi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bessi.c; path = source/bessi.c; sourceTree = "<group>"; };
 		B56AB0A520A732DC00E73AE9 /* pref.conf */ = {isa = PBXFileReference; lastKnownFileType = text; path = pref.conf; sourceTree = "<group>"; };
+		B56AB0AA20A8826900E73AE9 /* SimpleEmulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SimpleEmulator; sourceTree = BUILT_PRODUCTS_DIR; };
+		B56AB0AC20A8826A00E73AE9 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
 		B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHealthLogger.h; path = headers/RadarKit/RKHealthLogger.h; sourceTree = "<group>"; };
@@ -170,6 +182,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B56AB0A720A8826900E73AE9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B5C1F3411AB9C118004F88CD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -199,6 +218,7 @@
 				B5FFD45B1FB0B59B00319453 /* Source */,
 				B565B5431E5A4605000C8503 /* Imported */,
 				B5C1F3451AB9C118004F88CD /* RadarKitTest */,
+				B56AB0AB20A8826900E73AE9 /* SimpleEmulator */,
 				B5324D501AB8A5A000C00517 /* Products */,
 				B508EA711FB3FC6500A6A83C /* Frameworks */,
 			);
@@ -209,6 +229,7 @@
 			children = (
 				B5324D4F1AB8A5A000C00517 /* libRadarKit.a */,
 				B5C1F3441AB9C118004F88CD /* RadarKitTest */,
+				B56AB0AA20A8826900E73AE9 /* SimpleEmulator */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -267,6 +288,14 @@
 				B565B5441E5A4623000C8503 /* bessi.c */,
 			);
 			name = Imported;
+			sourceTree = "<group>";
+		};
+		B56AB0AB20A8826900E73AE9 /* SimpleEmulator */ = {
+			isa = PBXGroup;
+			children = (
+				B56AB0AC20A8826A00E73AE9 /* main.c */,
+			);
+			path = SimpleEmulator;
 			sourceTree = "<group>";
 		};
 		B5C1F3451AB9C118004F88CD /* RadarKitTest */ = {
@@ -377,6 +406,23 @@
 			productReference = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		B56AB0A920A8826900E73AE9 /* SimpleEmulator */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "SimpleEmulator" */;
+			buildPhases = (
+				B56AB0A620A8826900E73AE9 /* Sources */,
+				B56AB0A720A8826900E73AE9 /* Frameworks */,
+				B56AB0A820A8826900E73AE9 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SimpleEmulator;
+			productName = SimpleEmulator;
+			productReference = B56AB0AA20A8826900E73AE9 /* SimpleEmulator */;
+			productType = "com.apple.product-type.tool";
+		};
 		B5C1F3431AB9C118004F88CD /* RadarKitTest */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitTest" */;
@@ -407,6 +453,10 @@
 					B5324D4E1AB8A5A000C00517 = {
 						CreatedOnToolsVersion = 6.1;
 					};
+					B56AB0A920A8826900E73AE9 = {
+						CreatedOnToolsVersion = 9.3.1;
+						ProvisioningStyle = Automatic;
+					};
 					B5C1F3431AB9C118004F88CD = {
 						CreatedOnToolsVersion = 6.1;
 					};
@@ -426,6 +476,7 @@
 			targets = (
 				B5324D4E1AB8A5A000C00517 /* RadarKit */,
 				B5C1F3431AB9C118004F88CD /* RadarKitTest */,
+				B56AB0A920A8826900E73AE9 /* SimpleEmulator */,
 			);
 		};
 /* End PBXProject section */
@@ -467,6 +518,14 @@
 				B5FFD48D1FB0B5C600319453 /* RKPreference.c in Sources */,
 				B5FFD4921FB0B5C600319453 /* RKWindow.c in Sources */,
 				B5FFD4851FB0B5C600319453 /* RKRadar.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B56AB0A620A8826900E73AE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B56AB0AD20A8826A00E73AE9 /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -683,6 +742,71 @@
 			};
 			name = Release;
 		};
+		B56AB0AE20A8826A00E73AE9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		B56AB0AF20A8826A00E73AE9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 		B5C1F3481AB9C118004F88CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -782,6 +906,15 @@
 			buildConfigurations = (
 				B5324D521AB8A5A000C00517 /* Debug */,
 				B5324D531AB8A5A000C00517 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "SimpleEmulator" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B56AB0AE20A8826A00E73AE9 /* Debug */,
+				B56AB0AF20A8826A00E73AE9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

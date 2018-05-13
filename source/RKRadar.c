@@ -677,7 +677,7 @@ RKRadar *RKInitFull(void) {
 //     An RKRadar object
 //
 RKRadar *RKInit(void) {
-    return RKInitFull();
+    return RKInitLean();
 }
 
 //

@@ -9,8 +9,6 @@
 #include <RadarKit.h>
 #include <getopt.h>
 
-#define CLEAR                       "\033[0m"
-#define UNDERLINE(x)                "\033[4m" x "\033[24m"
 #define ROOT_PATH                   "data"
 #define PREFERENCE_FILE             "pref.conf"
 

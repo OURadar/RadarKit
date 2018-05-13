@@ -53,7 +53,7 @@ LDFLAGS += -lrt
 endif
 
 #all: $(RKLIB) install rktest
-all: $(RKLIB) rktest
+all: $(RKLIB) rktest simple-emulator
 
 $(OBJS): %.o: source/%.c
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
@@ -64,6 +64,9 @@ $(RKLIB): $(OBJS)
 #rktest: RadarKitTest/main.c /usr/local/lib/libRadarKit.a
 #	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 rktest: RadarKitTest/main.c libRadarKit.a
+	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
+
+simple-emulator: SimpleEmulator/main.c libRadarKit.a
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 clean:
