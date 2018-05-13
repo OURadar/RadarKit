@@ -12,6 +12,7 @@
 #define CLEAR                       "\033[0m"
 #define UNDERLINE(x)                "\033[4m" x "\033[24m"
 #define ROOT_PATH                   "data"
+#define PREFERENCE_FILE             "pref.conf"
 
 // User parameters in a struct
 typedef struct user_params {
@@ -54,6 +55,11 @@ static void handleSignals(int signal) {
     RKStop(myRadar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
+}
+
+static void handlePreferenceFileUpdate(void *in) {
+    RKFileMonitor *engine = (RKFileMonitor *)in;
+    RKLog("%s The preference file has been updated.\n", engine->name);
 }
 
 static void showHelp() {
@@ -264,7 +270,6 @@ UserParams processInput(int argc, const char **argv) {
     struct option long_options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
-        {"demo"              , no_argument      , NULL, 'D'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
         {"azimuth"           , required_argument, NULL, 'a'},    // ASCII 97 - 122 : a - z
@@ -332,8 +337,8 @@ UserParams processInput(int argc, const char **argv) {
         user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     
-    // Read in preference configuration file (pref.conf by RadarKit default)
-    RKPreference *userPreferences = RKPreferenceInit();
+    // Read in preference configuration file
+    RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
     RKPreferenceObject *object;
 
     // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
@@ -363,24 +368,6 @@ UserParams processInput(int argc, const char **argv) {
         switch (opt) {
             case 'C':
                 user.desc.initFlags |= RKInitFlagShowClockOffset;
-                break;
-            case 'D':
-                setSystemLevel(&user, 0);
-                break;
-            case 'F':
-                setSystemLevel(&user, 5);
-                break;
-            case 'H':
-                setSystemLevel(&user, 4);
-                break;
-            case 'I':
-                setSystemLevel(&user, 3);
-                break;
-            case 'L':
-                setSystemLevel(&user, 2);
-                break;
-            case 'M':
-                setSystemLevel(&user, 1);
                 break;
             case 'S':
                 k = atoi(optarg);
@@ -632,7 +619,11 @@ UserParams processInput(int argc, const char **argv) {
                 }
                 break;
             default:
-                fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
+                if (optarg && strlen(optarg)) {
+                    fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
+                } else {
+                    fprintf(stderr, "I don't understand: -%c\n", opt);
+                }
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -652,13 +643,6 @@ UserParams processInput(int argc, const char **argv) {
         if (user.gateCount == 0) {
             setSystemLevel(&user, 1);
         }
-    }
-    if (user.verbose == 1) {
-        user.desc.initFlags |= RKInitFlagVerbose;
-    } else if (user.verbose == 2) {
-        user.desc.initFlags |= RKInitFlagVeryVerbose;
-    } else if (user.verbose == 3) {
-        user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     if (user.prf > 0) {
         k = user.fs / user.prf;
@@ -695,7 +679,7 @@ int main(int argc, const char **argv) {
     }
  
     UserParams user = processInput(argc, argv);
-
+    
     // Screen output based on verbosity level
     if (user.verbose) {
         RKLog("Level II recording: %s\n", user.writeFiles ? "true" : "false");
@@ -819,15 +803,20 @@ int main(int argc, const char **argv) {
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
         //RKUserProductDesc desc;
-        //RKSweepEngineRegisterProduct(myRadar->sweepEngine, <#RKUserProductDesc#>)
+        //RKSweepEngineRegisterProduct(myRadar->sweepEngine, RKUserProductDesc)
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
+
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate);
+        
         usleep(1000000);
         RKLog("Starting a new PPI ...\n");
         RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
         RKWaitWhileActive(myRadar);
         RKStop(myRadar);
+
+        RKFileMonitorFree(preferenceFileMonitor);
 
     } else if (user.desc.initFlags & RKInitFlagRelay) {
 
@@ -850,6 +839,7 @@ int main(int argc, const char **argv) {
         
     }
 
+    
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);

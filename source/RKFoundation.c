@@ -570,7 +570,7 @@ static void *fileMonitorRunLoop(void *in) {
     stat(engine->filename, &fileStat);
     time_t mtime = fileStat.st_mtime;
 
-    RKLog("%s Started.   file = %s B\n", engine->name, engine->filename);
+    RKLog("%s Started.   file = %s\n", engine->name, engine->filename);
 
     while (engine->state & RKEngineStateActive) {
         engine->state |= RKEngineStateSleep1;
@@ -601,7 +601,7 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *)) 
         return NULL;
     }
     memset(engine, 0, sizeof(RKFileMonitor));
-    sprintf(engine->name, "%s<FileMonitor>%s",
+    sprintf(engine->name, "%s<UserFileMonitor>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMisc) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated | RKEngineStateProperlyWired | RKEngineStateActivating;

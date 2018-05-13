@@ -1488,7 +1488,6 @@ int RKGoLive(RKRadar *radar) {
             return RKResultFailedToStartHealthRelay;
         }
         radar->state |= RKRadarStateHealthRelayInitialized;
-        RKLog("Health relay initialized.  radar->state = 0x%08x\n", radar->state);
     }
     
     // Pedestal
