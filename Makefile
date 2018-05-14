@@ -23,7 +23,10 @@ OBJS += RKPosition.o
 OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKDataRecorder.o RKSweep.o RKHealthLogger.o
 OBJS += RKWaveform.o
+
 RKLIB = libRadarKit.a
+
+PROGS = rktest simple-emulator
 
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
@@ -53,7 +56,7 @@ LDFLAGS += -lrt
 endif
 
 #all: $(RKLIB) install rktest
-all: $(RKLIB) rktest simple-emulator
+all: $(RKLIB) $(PROGS)
 
 $(OBJS): %.o: source/%.c
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
@@ -70,6 +73,7 @@ simple-emulator: SimpleEmulator/main.c libRadarKit.a
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 clean:
+	rm -f $(PROGS)
 	rm -f $(RKLIB)
 	rm $(OBJS)
 
