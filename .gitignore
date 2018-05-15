@@ -12,10 +12,15 @@ core.*
 *.pyc
 *.ipynb
 
+# Folders
+__pycache__
 data
 moment
+waveforms
 
+# Programs, etc.
 radar
 rktest
+simple-emulator
 radarkit-fft-wisdom
-__pycache__
+
