@@ -268,7 +268,7 @@ RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const dou
 
 RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, (uint32_t)round(pulsewidth * fs));
-    RKWaveformHops(waveform, fs, fc, pulsewidth);
+    RKWaveformHops(waveform, fs, fc, bandwidth);
     return waveform;
 }
 
@@ -308,10 +308,10 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
     RKInt16C *w;
 
     const bool sequential = false;
-
+    
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHopping;
-    sprintf(waveform->name, "h%02.0f%02d", bandwidth, waveform->count);
+    sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, waveform->count == 1 ? 1 : waveform->count / 2);
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
 

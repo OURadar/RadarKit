@@ -791,7 +791,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     //RKTestTransceiverExec(transceiver, "w q10", NULL);
     //RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
-	RKTestTransceiverExec(transceiver, "w barker03", NULL);
+	//RKTestTransceiverExec(transceiver, "w barker03", NULL);
+    RKTestTransceiverExec(transceiver, "w h20074", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -906,8 +907,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 } else if (*c == 'q') {
                     RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
                 }
-                strncpy(waveform->name, c, RKNameLength);
-//                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
+//                strncpy(waveform->name, c, RKNameLength);
 //                transceiver->transmitWaveformLength = waveform->depth;
 //                for (j = 0; j < waveform->count; j++) {
 //                    for (k = 0; k < waveform->depth; k++) {
@@ -937,10 +938,10 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 } else {
                     pulsewidth = 0.5e-6;
                 }
-                RKLog("bw = %.3f MHz   pw = %.2f us   hops = %d\n", 1.0e-6 * bandwidth, 1.0e6 * pulsewidth, k);
+                RKLog("%s Frequency hopping   pw = %.2f us   bw = %.3f MHz   hops = %d x 2\n", transceiver->name, 1.0e6 * pulsewidth, 1.0e-6 * bandwidth, k);
                 
                 waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
-                strncpy(waveform->name, c, RKNameLength);
+//                strncpy(waveform->name, c, RKNameLength);
 //                strncpy(transceiver->transmitWaveformName, c, RKNameLength);
 //                transceiver->transmitWaveformLength = waveform->depth;
 //                for (j = 0; j < waveform->count; j++) {
@@ -1054,7 +1055,9 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
 //    }
     for (k = 0; k < 2; k++) {
         if (transceiver->waveformCache[k]) {
-            RKLog("%s Freeing waveform cache %d ...\n", transceiver->name);
+            if (transceiver->verbose > 1) {
+                RKLog("%s Freeing waveform cache %d '%s' ...\n", transceiver->name, k, transceiver->waveformCache[k]->name);
+            }
             RKWaveformFree(transceiver->waveformCache[k]);
         }
     }
