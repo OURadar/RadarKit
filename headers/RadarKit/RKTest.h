@@ -46,8 +46,11 @@ typedef struct rk_test_transceiver {
     double         prt;
     RKByte         sprt;
 	RKName         transmitWaveformName;
+    unsigned int   transmitWaveformCount;
 	unsigned int   transmitWaveformLength;
-	RKInt16C       *transmitWaveform;
+	RKInt16C       *transmitWaveform[RKMaxFilterGroups];
+    RKWaveform     *waveformCache[2];
+    unsigned int   waveformCacheIndex;
 	RKName         defaultWaveform;
 	RKName         defaultPedestalMode;
 	char           customCommand[RKNameLength + 16];

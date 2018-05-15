@@ -62,7 +62,7 @@ $(OBJS): %.o: source/%.c
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
 $(RKLIB): $(OBJS)
-	ar rvcs $@ $(OBJS)
+	ar rvcs $@ $<
 
 #rktest: RadarKitTest/main.c /usr/local/lib/libRadarKit.a
 #	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
