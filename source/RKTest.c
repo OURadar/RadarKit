@@ -536,7 +536,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     w = 0;
     
-    int cacheIndex;
+    RKWaveform *waveform;
 
     while (transceiver->state & RKEngineStateActive) {
 
@@ -553,17 +553,14 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
             // Fill in the data...
-            cacheIndex = transceiver->waveformCacheIndex;
+            waveform = transceiver->waveformCache[transceiver->waveformCacheIndex];
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 // Some random pattern for testing
                 k = rand() % transceiver->gateCount;
-                RKInt16C *S = transceiver->waveformCache[cacheIndex]->iSamples[w];
-                //for (g = 0; g < transceiver->transmitWaveformLength; g++) {
-                for (g = 0; g < transceiver->waveformCache[cacheIndex]->depth; g++) {
+                RKInt16C *S = waveform->iSamples[w];
+                for (g = 0; g < waveform->depth; g++) {
                     noise = rn[k];
-                    //X->i = transceiver->transmitWaveform[g].i + noise;
-                    //X->q = transceiver->transmitWaveform[g].q + noise;
                     X->i = S->i + noise;
                     X->q = S->q + noise;
                     k = RKNextModuloS(k, transceiver->gateCount);
@@ -792,7 +789,8 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     //RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
 	//RKTestTransceiverExec(transceiver, "w barker03", NULL);
-    RKTestTransceiverExec(transceiver, "w h05074", NULL);
+    //RKTestTransceiverExec(transceiver, "w h2007.5", NULL);
+    RKTestTransceiverExec(transceiver, "w h0507", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -888,7 +886,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 RKStripTail(string);
                 pulsewidth = 1.0e-6 * atof(c + 1);
                 pulsewidthSampleCount = pulsewidth * transceiver->fs;
-                RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, string, 1.0e6 * pulsewidth);
+                RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
                 waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
                 if (*c == 's') {
                     // Rectangular single tone
@@ -908,9 +906,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 if (strlen(c) > 5) {
                     pulsewidth = 1.0e-6 * atof(c + 5);
                 } else {
-                    pulsewidth = 0.5e-6;
+                    pulsewidth = 1.0e-6;
                 }
-                RKLog("%s Frequency hops   pw = %.2f us   bw = %.3f MHz   count = %d x 2\n", transceiver->name, 1.0e6 * pulsewidth, 1.0e-6 * bandwidth, k);
+                RKLog("%s Waveform '%s'   hops over bw = %.2f MHz @ %d pairs   pw = %.2f us\n", transceiver->name, c, 1.0e-6 * bandwidth, k, 1.0e6 * pulsewidth);
+                if (bandwidth > transceiver->fs) {
+                    RKLog("%s Warning. Aliasing.   bandwidth = %.2f MHz > fs = %.2f MHz\n", transceiver->name, 1.0e-6 * bandwidth, 1.0e-6 * transceiver->fs);
+                }
                 waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
             } else {
                 // Load from a file
@@ -922,7 +923,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKWaveformSummary(waveform);
                     k = round(waveform->fs / transceiver->fs);
                     if (k > 1) {
-                        RKLog("Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", 1.0e-6 * transceiver->fs, k);
+                        RKLog("%s Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", transceiver->name, 1.0e-6 * transceiver->fs, k);
                         RKWaveformDownConvert(waveform);
                         RKWaveformDecimate(waveform, k);
                     }
@@ -932,14 +933,17 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 }
             }
             if (radar->desc.pulseCapacity < waveform->depth) {
-                RKLog("%s Error. Waveform '%s' --> %d samples not allowed (capacity = %s).\n", transceiver->name, string, waveform->depth, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
-                RKLog("%s Info. Wavefor not changed.\n", transceiver->name);
+                RKLog("%s Error. Waveform '%s' with %s samples not allowed (capacity = %s).\n", transceiver->name, string,
+                      RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                RKLog("%s Info. Waveform not changed.\n", transceiver->name);
                 if (response != NULL) {
-                    sprintf(response, "NAK. Waveform '%s' --> %d samples not allowed (capacity = %s)." RKEOL, string, waveform->depth, RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                    sprintf(response, "NAK. Waveform '%s' with %s samples not allowed (capacity = %s)." RKEOL, string,
+                            RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                 }
                 return RKResultFailedToSetWaveform;
             }
-            j = transceiver->waveformCacheIndex == 1 ? 0 : 1;
+            // Next cache index
+            j = RKNextModuloS(transceiver->waveformCacheIndex, 2);
             if (transceiver->waveformCache[j]) {
                 RKLog("%s Freeing cache %d ...\n", transceiver->name, j);
                 RKWaveformFree(transceiver->waveformCache[j]);
