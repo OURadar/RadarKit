@@ -16,7 +16,7 @@ Follow these steps to get the project
 1. Clone a git project using one of the following commands in Terminal:
 
     ```shell
-    git clone https://github.com/boonleng/radarkit.git
+    git clone https://github.com/ouradar/radarkit.git
     ```
     or
     ```shell
