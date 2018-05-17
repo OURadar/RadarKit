@@ -915,6 +915,7 @@ typedef struct rk_file_monitor {
     // User defined variables
     char             filename[RKMaximumPathLength];
     void             (*callbackRoutine)(void *);
+    void             *userResource;
 } RKFileMonitor;
 
 typedef int32_t  RKUserProductId;

@@ -83,7 +83,7 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t rayCount);
 size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const bool);
 void RKScratchFree(RKScratch *);
 
-RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *));
+RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *), void *);
 int RKFileMonitorFree(RKFileMonitor *);
 
 RKStream RKStreamFromString(const char *);

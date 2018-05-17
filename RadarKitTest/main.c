@@ -57,7 +57,7 @@ static void handleSignals(int signal) {
 
 static void handlePreferenceFileUpdate(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
-    RKLog("%s The preference file has been updated.\n", engine->name);
+    RKLog("%s The preference file has been updated.  radar->state = %x.\n", engine->name, myRadar->state);
 }
 
 static void showHelp() {
@@ -806,7 +806,7 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
 
-        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate);
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, myRadar);
         
         usleep(1000000);
         RKLog("Starting a new PPI ...\n");

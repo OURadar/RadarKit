@@ -594,7 +594,7 @@ static void *fileMonitorRunLoop(void *in) {
     return NULL;
 }
 
-RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *)) {
+RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *), void *userResource) {
     RKFileMonitor *engine = (RKFileMonitor *)malloc(sizeof(RKFileMonitor));
     if (engine == NULL) {
         RKLog("Error allocating a file monitor.\n");
@@ -608,6 +608,7 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *)) 
     engine->memoryUsage = sizeof(RKFileMonitor);
     strncpy(engine->filename, filename, RKMaximumPathLength);
     engine->callbackRoutine = routine;
+    engine->userResource = userResource;
     if (engine->verbose) {
         RKLog("%s Starting ...\n", engine->name);
     }
