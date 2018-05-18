@@ -44,21 +44,7 @@ void *exitAfterAWhile(void *s) {
     exit(EXIT_SUCCESS);
 }
 
-static void handleSignals(int signal) {
-    if (myRadar == NULL) {
-        return;
-    }
-    fprintf(stderr, "\n");
-    RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
-    RKStop(myRadar);
-    pthread_t t;
-    pthread_create(&t, NULL, exitAfterAWhile, NULL);
-}
-
-static void handlePreferenceFileUpdate(void *in) {
-    RKFileMonitor *engine = (RKFileMonitor *)in;
-    RKLog("%s The preference file has been updated.  radar->state = %x.\n", engine->name, myRadar->state);
-}
+#pragma mark - Local Functions
 
 static void showHelp() {
     printf("RadarKit Test Program\n\n"
@@ -257,7 +243,69 @@ static void setSystemLevel(UserParams *user, const int level) {
     }
 }
 
-UserParams *processInput(int argc, const char **argv) {
+static void handleSignals(int signal) {
+    if (myRadar == NULL) {
+        return;
+    }
+    fprintf(stderr, "\n");
+    RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
+    RKStop(myRadar);
+    pthread_t t;
+    pthread_create(&t, NULL, exitAfterAWhile, NULL);
+}
+
+#pragma mark - User Parameters
+
+UserParams *userParametersInit(void) {
+    // A structure unit that encapsulates command line user parameters, Zero out everything and set some default parameters
+    UserParams *user = (UserParams *)malloc(sizeof(UserParams));
+    if (user == NULL) {
+        RKLog("Error. Unable to continue.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(user, 0, sizeof(UserParams));
+    
+    // Build a RKRadar initialization description
+    user->desc.initFlags = RKInitFlagAllocEverything;
+    user->desc.pulseBufferDepth = 2500;
+    user->desc.rayBufferDepth = 1500;
+    user->desc.latitude = 35.181251;
+    user->desc.longitude = -97.436752;
+    user->desc.radarHeight = 2.5f;
+    user->desc.wavelength = 0.03f;
+    user->desc.pulseToRayRatio = 1;
+    strcpy(user->desc.dataPath, ROOT_PATH);
+    
+    return user;
+}
+
+static void updateUserParametersFromPreferenceFile(UserParams *user) {
+    // Read in preference configuration file
+    RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
+    RKPreferenceObject *object;
+    
+    // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
+    const int verb = user->verbose > 1 ? 1 : 0;
+    if (verb) {
+        RKLog("Reading user preferences ...\n");
+    }
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",       user->desc.name,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix", user->desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",   user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",  user->pedzyHost,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost", user->tweetaHost,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user->desc.latitude,  RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user->desc.longitude, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user->desc.heading,   RKParameterTypeDouble, 1);
+    int k = 0;
+    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
+        RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
+        k++;
+    }
+    user->controlCount = k;
+}
+
+static void updateUserParametersFromCommandLine(UserParams *user, int argc, const char **argv) {
     int k;
     char *c;
     
@@ -297,25 +345,6 @@ UserParams *processInput(int argc, const char **argv) {
     printf("str = %s\n", str);
     #endif
 
-    // A structure unit that encapsulates command line user parameters, Zero out everything and set some default parameters
-    UserParams *user = (UserParams *)malloc(sizeof(UserParams));
-    if (user == NULL) {
-        RKLog("Error. Unable to continue.\n");
-        exit(EXIT_FAILURE);
-    }
-    memset(user, 0, sizeof(UserParams));
-
-    // Build a RKRadar initialization description
-    user->desc.initFlags = RKInitFlagAllocEverything;
-    user->desc.pulseBufferDepth = 2500;
-    user->desc.rayBufferDepth = 1500;
-    user->desc.latitude = 35.181251;
-    user->desc.longitude = -97.436752;
-    user->desc.radarHeight = 2.5f;
-    user->desc.wavelength = 0.03f;
-    user->desc.pulseToRayRatio = 1;
-    strcpy(user->desc.dataPath, ROOT_PATH);
-    
     // First pass: just check for verbosity level
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
@@ -336,30 +365,6 @@ UserParams *processInput(int argc, const char **argv) {
     } else if (user->verbose == 3) {
         user->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
-    
-    // Read in preference configuration file
-    RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
-    RKPreferenceObject *object;
-
-    // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
-    const int verb = user->verbose > 1 ? 1 : 0;
-    if (verb) {
-        RKLog("Reading user preferences ...\n");
-    }
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",       user->desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix", user->desc.filePrefix, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",   user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",  user->pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost", user->tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user->desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user->desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user->desc.heading,   RKParameterTypeDouble, 1);
-    k = 0;
-    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
-        RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
-        k++;
-    }
-    user->controlCount = k;
 
     // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
     optind = 1;
@@ -656,18 +661,22 @@ UserParams *processInput(int argc, const char **argv) {
         user->gateCount = k;
     }
     user->desc.pulseCapacity = 10 * ceil(0.1 * user->gateCount);
-    
-    return user;
 }
+
+#pragma mark - Radar Parameters
 
 static void updateRadarParameters(UserParams *user) {
     
     int k;
     
+    updateUserParametersFromPreferenceFile(user);
+    
+    RKClearControls(myRadar);
     for (k = 0; k < user->controlCount; k++) {
-        //printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
+        printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
         RKAddControl(myRadar, user->labels[k], user->commands[k]);
     }
+    RKConcludeControls(myRadar);
     
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, -30.0f, -30.0f,
@@ -676,6 +685,20 @@ static void updateRadarParameters(UserParams *user) {
                 RKConfigKeyNoise, 0.1, 0.1,
                 RKConfigKeyNull);
 }
+
+static void handlePreferenceFileUpdate(void *in) {
+    RKFileMonitor *engine = (RKFileMonitor *)in;
+    UserParams *user = (UserParams *)engine->userResource;
+    
+    RKLog("%s The preference file has been updated.  radar->state = %x.\n", engine->name, myRadar->state);
+    
+    // Update user parameters from preference file
+    updateUserParametersFromPreferenceFile(user);
+    
+    updateRadarParameters(user);
+}
+
+#pragma mark - Main
 
 //
 //
@@ -693,8 +716,13 @@ int main(int argc, const char **argv) {
         RKSetWantColor(false);
     }
  
-    UserParams *user = processInput(argc, argv);
-    
+    //UserParams *user = processInput(argc, argv);
+    UserParams *user = userParametersInit();
+
+    // Update user parameters from preference file, then override by command line input
+    updateUserParametersFromPreferenceFile(user);
+    updateUserParametersFromCommandLine(user, argc, argv);
+
     // Screen output based on verbosity level
     if (user->verbose) {
         RKLog("Level II recording: %s\n", user->writeFiles ? "true" : "false");
@@ -813,7 +841,7 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
 
-        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, myRadar);
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, user);
         
         usleep(1000000);
         RKLog("Starting a new PPI ...\n");
