@@ -257,12 +257,9 @@ static void setSystemLevel(UserParams *user, const int level) {
     }
 }
 
-UserParams processInput(int argc, const char **argv) {
+UserParams *processInput(int argc, const char **argv) {
     int k;
     char *c;
-    
-    // A structure unit that encapsulates command line user parameters
-    UserParams user;
     
     // Command line options
     struct option long_options[] = {
@@ -300,39 +297,44 @@ UserParams processInput(int argc, const char **argv) {
     printf("str = %s\n", str);
     #endif
 
-    // Zero out everything and set some default parameters
-    memset(&user, 0, sizeof(UserParams));
-    
+    // A structure unit that encapsulates command line user parameters, Zero out everything and set some default parameters
+    UserParams *user = (UserParams *)malloc(sizeof(UserParams));
+    if (user == NULL) {
+        RKLog("Error. Unable to continue.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(user, 0, sizeof(UserParams));
+
     // Build a RKRadar initialization description
-    user.desc.initFlags = RKInitFlagAllocEverything;
-    user.desc.pulseBufferDepth = 2500;
-    user.desc.rayBufferDepth = 1500;
-    user.desc.latitude = 35.181251;
-    user.desc.longitude = -97.436752;
-    user.desc.radarHeight = 2.5f;
-    user.desc.wavelength = 0.03f;
-    user.desc.pulseToRayRatio = 1;
-    strcpy(user.desc.dataPath, ROOT_PATH);
+    user->desc.initFlags = RKInitFlagAllocEverything;
+    user->desc.pulseBufferDepth = 2500;
+    user->desc.rayBufferDepth = 1500;
+    user->desc.latitude = 35.181251;
+    user->desc.longitude = -97.436752;
+    user->desc.radarHeight = 2.5f;
+    user->desc.wavelength = 0.03f;
+    user->desc.pulseToRayRatio = 1;
+    strcpy(user->desc.dataPath, ROOT_PATH);
     
     // First pass: just check for verbosity level
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'v':
-                user.verbose++;
+                user->verbose++;
                 break;
             default:
                 break;
         }
     }
     
-    // Going from user.verbose to RKInitFlag
-    if (user.verbose == 1) {
-        user.desc.initFlags |= RKInitFlagVerbose;
-    } else if (user.verbose == 2) {
-        user.desc.initFlags |= RKInitFlagVeryVerbose;
-    } else if (user.verbose == 3) {
-        user.desc.initFlags |= RKInitFlagVeryVeryVerbose;
+    // Going from user->verbose to RKInitFlag
+    if (user->verbose == 1) {
+        user->desc.initFlags |= RKInitFlagVerbose;
+    } else if (user->verbose == 2) {
+        user->desc.initFlags |= RKInitFlagVeryVerbose;
+    } else if (user->verbose == 3) {
+        user->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
     
     // Read in preference configuration file
@@ -340,24 +342,24 @@ UserParams processInput(int argc, const char **argv) {
     RKPreferenceObject *object;
 
     // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
-    const int verb = user.verbose > 1 ? 1 : 0;
+    const int verb = user->verbose > 1 ? 1 : 0;
     if (verb) {
         RKLog("Reading user preferences ...\n");
     }
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",       user.desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix", user.desc.filePrefix, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",   user.desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",  user.pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost", user.tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user.desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user.desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user.desc.heading,   RKParameterTypeDouble, 1);   
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",       user->desc.name,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix", user->desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",   user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",  user->pedzyHost,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost", user->tweetaHost,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user->desc.latitude,  RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user->desc.longitude, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user->desc.heading,   RKParameterTypeDouble, 1);
     k = 0;
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
-        RKParseQuotedStrings(object->valueString, user.labels[k], user.commands[k], NULL);
+        RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
         k++;
     }
-    user.controlCount = k;
+    user->controlCount = k;
 
     // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
     optind = 1;
@@ -365,11 +367,11 @@ UserParams processInput(int argc, const char **argv) {
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
             case 'C':
-                user.desc.initFlags |= RKInitFlagShowClockOffset;
+                user->desc.initFlags |= RKInitFlagShowClockOffset;
                 break;
             case 'S':
                 k = atoi(optarg);
-                setSystemLevel(&user, k);
+                setSystemLevel(user, k);
                 break;
             case 'T':
                 // A bunch of different tests
@@ -454,7 +456,7 @@ UserParams processInput(int argc, const char **argv) {
                         RKTestWriteFFTWisdom();
                         break;
                     case 40:
-                        RKTestPulseCompression((user.verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
+                        RKTestPulseCompression((user->verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
                         break;
                     case 41:
                         RKTestOneRay(RKPulsePair, 0);
@@ -493,55 +495,55 @@ UserParams processInput(int argc, const char **argv) {
                 exit(EXIT_SUCCESS);
                 break;
             case 'b':
-                user.fs = roundf(atof(optarg));
+                user->fs = roundf(atof(optarg));
                 break;
             case 'c':
-                sscanf(optarg, "%d,%d", &user.coresForPulseCompression, &user.coresForProductGenerator);
+                sscanf(optarg, "%d,%d", &user->coresForPulseCompression, &user->coresForProductGenerator);
                 break;
             case 'd':
-                user.desc.pulseToRayRatio = atoi(optarg);
+                user->desc.pulseToRayRatio = atoi(optarg);
                 break;
             case 'e':
                 RKSetWantColor(false);
                 break;
             case 'f':
-                k = sscanf(optarg, "%f,%d", &user.prf, &user.sprt);
+                k = sscanf(optarg, "%f,%d", &user->prf, &user->sprt);
                 if (k < 2) {
-                    user.sprt = 0;
+                    user->sprt = 0;
                 }
                 break;
             case 'g':
-                user.gateCount = atoi(optarg);
+                user->gateCount = atoi(optarg);
                 break;
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
                 break;
             case 'i':
-                k = sscanf(optarg, "%f,%d", &user.prf, &user.sprt);
-                user.prf = 1.0f / user.prf;
+                k = sscanf(optarg, "%f,%d", &user->prf, &user->sprt);
+                user->prf = 1.0f / user->prf;
                 if (k < 2) {
-                    user.sprt = 0;
+                    user->sprt = 0;
                 }
                 break;
             case 'm':
                 break;
             case 'p':
-                strncpy(user.pedzyHost, optarg, sizeof(user.pedzyHost));
+                strncpy(user->pedzyHost, optarg, sizeof(user->pedzyHost));
                 break;
             case 'q':
-                user.verbose = MAX(user.verbose - 1, 0);
+                user->verbose = MAX(user->verbose - 1, 0);
                 break;
             case 'r':
-                user.simulate = false;
-                user.desc.initFlags = RKInitFlagRelay;
+                user->simulate = false;
+                user->desc.initFlags = RKInitFlagRelay;
                 if (argc > optind && argv[optind][0] != '-') {
                     // The next argument is not an option, interpret as streams
                     if (argv[optind][0] == 's') {
                         // Convert product to sweep: Z V W D P R K --> Y U X C O Q J
-                        strcpy(user.streams, &argv[optind][1]);
-                        c = user.streams;
-                        while (c < user.streams + strlen(user.streams)) {
+                        strcpy(user->streams, &argv[optind][1]);
+                        c = user->streams;
+                        while (c < user->streams + strlen(user->streams)) {
                             switch (*c) {
                                 case 'z':
                                 case 'Z':
@@ -576,44 +578,44 @@ UserParams processInput(int argc, const char **argv) {
                             }
                             c++;
                         }
-                        if (user.verbose) {
-                            RKLog("Stream %s --> %s\n", argv[optind], user.streams);
+                        if (user->verbose) {
+                            RKLog("Stream %s --> %s\n", argv[optind], user->streams);
                         }
                     } else {
-                        strcpy(user.streams, argv[optind]);
-                        if (user.verbose) {
-                            RKLog("Stream %s\n", user.streams);
+                        strcpy(user->streams, argv[optind]);
+                        if (user->verbose) {
+                            RKLog("Stream %s\n", user->streams);
                         }
                     }
                     optind++;
                 }
-                strncpy(user.relayHost, optarg, sizeof(user.relayHost));
+                strncpy(user->relayHost, optarg, sizeof(user->relayHost));
                 break;
             case 's':
-                if (strlen(user.relayHost)) {
+                if (strlen(user->relayHost)) {
                     RKLog("Relay and simulation? Perhaps no -s.\n");
                     exit(EXIT_FAILURE);
                 }
-                user.simulate = true;
+                user->simulate = true;
                 if (optarg) {
-                    setSystemLevel(&user, atoi(optarg));
+                    setSystemLevel(user, atoi(optarg));
                 } else {
-                    setSystemLevel(&user, 1);
+                    setSystemLevel(user, 1);
                 }
                 break;
             case 't':
-                strncpy(user.tweetaHost, optarg, sizeof(user.tweetaHost));
+                strncpy(user->tweetaHost, optarg, sizeof(user->tweetaHost));
                 break;
             case 'v':
                 break;
             case 'w':
-                user.writeFiles = true;
+                user->writeFiles = true;
                 break;
             case 'z':
                 if (optarg) {
-                    user.sleepInterval = atoi(optarg);
+                    user->sleepInterval = atoi(optarg);
                 } else {
-                    user.sleepInterval = 1000;
+                    user->sleepInterval = 1000;
                 }
                 break;
             default:
@@ -626,36 +628,53 @@ UserParams processInput(int argc, const char **argv) {
                 break;
         }
     }
-    if (user.simulate == true) {
-        if (user.prf == 0) {
-            user.prf = 1000;
+    if (user->simulate == true) {
+        if (user->prf == 0) {
+            user->prf = 1000;
         }
     } else {
-        if (!(user.desc.initFlags == RKInitFlagRelay)) {
+        if (!(user->desc.initFlags == RKInitFlagRelay)) {
             RKLog("No options specified. Don't want to do anything?\n");
             exit(EXIT_FAILURE);
         }
-        if (user.prf) {
+        if (user->prf) {
             RKLog("Warning. PRF has no effects without simulation.\n");
         }
-        if (user.gateCount == 0) {
-            setSystemLevel(&user, 1);
+        if (user->gateCount == 0) {
+            setSystemLevel(user, 1);
         }
     }
-    if (user.prf > 0) {
-        k = user.fs / user.prf;
+    if (user->prf > 0) {
+        k = user->fs / user->prf;
     } else {
-        k = user.fs / 1000.0f;
+        k = user->fs / 1000.0f;
     }
-    if (user.gateCount > k) {
+    if (user->gateCount > k) {
         RKLog("Info. Gate count adjusted: %s -> %s for PRF (%s kHz) and bandwidth (%s MHz)",
-              RKIntegerToCommaStyleString(user.gateCount), RKIntegerToCommaStyleString(k),
-              RKFloatToCommaStyleString(1.0e-3 * user.prf), RKFloatToCommaStyleString(1.0e-6 * user.fs));
-        user.gateCount = k;
+              RKIntegerToCommaStyleString(user->gateCount), RKIntegerToCommaStyleString(k),
+              RKFloatToCommaStyleString(1.0e-3 * user->prf), RKFloatToCommaStyleString(1.0e-6 * user->fs));
+        user->gateCount = k;
     }
-    user.desc.pulseCapacity = 10 * ceil(0.1 * user.gateCount);
+    user->desc.pulseCapacity = 10 * ceil(0.1 * user->gateCount);
     
     return user;
+}
+
+static void updateRadarParameters(UserParams *user) {
+    
+    int k;
+    
+    for (k = 0; k < user->controlCount; k++) {
+        //printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
+        RKAddControl(myRadar, user->labels[k], user->commands[k]);
+    }
+    
+    RKAddConfig(myRadar,
+                RKConfigKeySystemZCal, -30.0f, -30.0f,
+                RKConfigKeySystemDCal, 0.2f,
+                RKConfigKeyZCal2, 20.0f, 20.0f,
+                RKConfigKeyNoise, 0.1, 0.1,
+                RKConfigKeyNull);
 }
 
 //
@@ -666,8 +685,6 @@ UserParams processInput(int argc, const char **argv) {
 
 int main(int argc, const char **argv) {
 
-    int k;
-
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
@@ -676,12 +693,12 @@ int main(int argc, const char **argv) {
         RKSetWantColor(false);
     }
  
-    UserParams user = processInput(argc, argv);
+    UserParams *user = processInput(argc, argv);
     
     // Screen output based on verbosity level
-    if (user.verbose) {
-        RKLog("Level II recording: %s\n", user.writeFiles ? "true" : "false");
-        if (user.verbose > 1) {
+    if (user->verbose) {
+        RKLog("Level II recording: %s\n", user->writeFiles ? "true" : "false");
+        if (user->verbose > 1) {
             printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
         }
     } else {
@@ -689,28 +706,18 @@ int main(int argc, const char **argv) {
     }
 
     // Initialize a radar object
-    myRadar = RKInitWithDesc(user.desc);
+    myRadar = RKInitWithDesc(user->desc);
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate a radar.\n");
         exit(EXIT_FAILURE);
     }
 
-    RKSetVerbose(myRadar, user.verbose);
+    RKSetVerbose(myRadar, user->verbose);
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
     RKSetMomentProcessorToMultiLag(myRadar, 3);
     //RKSetMomentProcessorToPulsePairHop(myRadar);
 
-    for (k = 0; k < user.controlCount; k++) {
-        //printf("Adding control '%s' '%s' ...\n", user.labels[k], user.commands[k]);
-        RKAddControl(myRadar, user.labels[k], user.commands[k]);
-    }
-
-    RKAddConfig(myRadar,
-                RKConfigKeySystemZCal, -30.0f, -30.0f,
-                RKConfigKeySystemDCal, 0.2f,
-                RKConfigKeyZCal2, 20.0f, 20.0f,
-                RKConfigKeyNoise, 0.1, 0.1,
-                RKConfigKeyNull);
+    updateRadarParameters(user);
     
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
@@ -718,42 +725,42 @@ int main(int argc, const char **argv) {
     signal(SIGKILL, handleSignals);
     
     // Set any parameters here:
-    RKSetProcessingCoreCounts(myRadar, user.coresForPulseCompression, user.coresForProductGenerator);
-    if (!user.writeFiles) {
+    RKSetProcessingCoreCounts(myRadar, user->coresForPulseCompression, user->coresForProductGenerator);
+    if (!user->writeFiles) {
         RKSetDoNotWrite(myRadar, true);
     }
     
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
-    RKCommandCenterSetVerbose(center, user.verbose);
+    RKCommandCenterSetVerbose(center, user->verbose);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
     int i;
     RKName cmd = "";
     
-    if (user.simulate) {
+    if (user->simulate) {
 
         // Now we use the frame work.
         // Build a series of options for transceiver, only pass down the relevant parameters
         i = 0;
-        if (user.fs) {
-            i += sprintf(cmd + i, " F %.0f", user.fs);
+        if (user->fs) {
+            i += sprintf(cmd + i, " F %.0f", user->fs);
         }
-        if (user.prf) {
-            if (user.sprt > 1) {
-                i += sprintf(cmd + i, " f %.0f,%d", user.prf, user.sprt);
+        if (user->prf) {
+            if (user->sprt > 1) {
+                i += sprintf(cmd + i, " f %.0f,%d", user->prf, user->sprt);
             } else {
-                i += sprintf(cmd + i, " f %.0f", user.prf);
+                i += sprintf(cmd + i, " f %.0f", user->prf);
             }
         }
-        if (user.gateCount) {
-            i += sprintf(cmd + i, " g %d", user.gateCount);
+        if (user->gateCount) {
+            i += sprintf(cmd + i, " g %d", user->gateCount);
         }
-        if (user.sleepInterval) {
-            i += sprintf(cmd + i, " z %d", user.sleepInterval);
+        if (user->sleepInterval) {
+            i += sprintf(cmd + i, " z %d", user->sleepInterval);
         }
-        if (user.verbose > 1) {
+        if (user->verbose > 1) {
             RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
         }
         RKSetTransceiver(myRadar,
@@ -763,12 +770,12 @@ int main(int argc, const char **argv) {
                          RKTestTransceiverFree);
 
         // Build a series of options for pedestal, only pass down the relevant parameters
-        if (strlen(user.pedzyHost)) {
-            if (user.verbose > 1) {
-                RKLog("Pedestal input = '%s'", user.pedzyHost);
+        if (strlen(user->pedzyHost)) {
+            if (user->verbose > 1) {
+                RKLog("Pedestal input = '%s'", user->pedzyHost);
             }
             RKSetPedestal(myRadar,
-                          (void *)user.pedzyHost,
+                          (void *)user->pedzyHost,
                           RKPedestalPedzyInit,
                           RKPedestalPedzyExec,
                           RKPedestalPedzyFree);
@@ -780,12 +787,12 @@ int main(int argc, const char **argv) {
                           RKTestPedestalFree);
         }
         
-        if (strlen(user.tweetaHost)) {
-            if (user.verbose > 1) {
-                RKLog("Health relay input = '%s'", user.tweetaHost);
+        if (strlen(user->tweetaHost)) {
+            if (user->verbose > 1) {
+                RKLog("Health relay input = '%s'", user->tweetaHost);
             }
             RKSetHealthRelay(myRadar,
-                             (void *)user.tweetaHost,
+                             (void *)user->tweetaHost,
                              RKHealthRelayTweetaInit,
                              RKHealthRelayTweetaExec,
                              RKHealthRelayTweetaFree);
@@ -797,7 +804,7 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        myRadar->configs[0].prf[0] = user.prf;
+        //myRadar->configs[0].prf[0] = user->prf;
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
         //RKUserProductDesc desc;
@@ -816,14 +823,14 @@ int main(int argc, const char **argv) {
 
         RKFileMonitorFree(preferenceFileMonitor);
 
-    } else if (user.desc.initFlags & RKInitFlagRelay) {
+    } else if (user->desc.initFlags & RKInitFlagRelay) {
 
-        RKRadarRelaySetHost(myRadar->radarRelay, user.relayHost);
+        RKRadarRelaySetHost(myRadar->radarRelay, user->relayHost);
         RKSetDoNotWrite(myRadar, true);
 
         // Assembly a string that describes streams
-        if (strlen(user.streams)) {
-            RKRadarRelayUpdateStreams(myRadar->radarRelay, RKStreamFromString(user.streams));
+        if (strlen(user->streams)) {
+            RKRadarRelayUpdateStreams(myRadar->radarRelay, RKStreamFromString(user->streams));
         }
         
         // Radar going live, then wait indefinitely until something happens
@@ -837,7 +844,6 @@ int main(int argc, const char **argv) {
         
     }
 
-    
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);
