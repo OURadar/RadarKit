@@ -32,6 +32,9 @@ typedef struct user_params {
     RKName         labels[256];
     RKName         commands[256];
     int            controlCount;
+    double         systemZCal[2];                // System calibration for Z
+    double         systemDCal[2];                // System calibration for D
+    double         noise[2];                     // System noise level
 } UserParams;
 
 // Global variables
@@ -297,6 +300,9 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user->desc.latitude,  RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user->desc.longitude, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user->desc.heading,   RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal", user->systemZCal,      RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal", user->systemDCal,      RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",      user->noise,           RKParameterTypeDouble, 2);
     int k = 0;
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
         RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
@@ -671,12 +677,15 @@ static void updateRadarParameters(UserParams *user) {
     
     updateUserParametersFromPreferenceFile(user);
     
+    // Always refresh the controls
     RKClearControls(myRadar);
     for (k = 0; k < user->controlCount; k++) {
         printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
         RKAddControl(myRadar, user->labels[k], user->commands[k]);
     }
     RKConcludeControls(myRadar);
+    
+    //user->systemZCal
     
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, -30.0f, -30.0f,
