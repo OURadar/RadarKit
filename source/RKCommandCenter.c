@@ -399,6 +399,7 @@ int socketStreamHandler(RKOperator *O) {
         // Send another set of controls if the radar controls have changed.
         if (user->controlSetIndex != user->radar->controlSetIndex && user->access & RKStreamControl) {
             user->controlSetIndex = user->radar->controlSetIndex;
+            RKLog("%s %s Sending new controls.\n", engine->name, O->name);
             j = sprintf(user->string, "{\"Radars\":[");
             for (k = 0; k < engine->radarCount; k++) {
                 RKRadar *radar = engine->radars[k];
