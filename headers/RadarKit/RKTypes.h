@@ -952,6 +952,14 @@ enum RKOverviewFlag {
     RKOverviewFlagDrawBackground  = (1 << 1)
 };
 
+typedef struct rk_waveform_cal {
+    RKName               name;
+    uint8_t              count;
+    RKFloat              ZCal[2][RKMaxFilterCount];
+    RKFloat              DCal;
+    RKFloat              PCal;
+} RKWaveformCalibration;
+
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_RKTypes__) */

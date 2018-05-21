@@ -231,6 +231,7 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
     RKLog(">sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
     RKLog(">sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
+    RKLog(">sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }

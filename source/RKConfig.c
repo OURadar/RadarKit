@@ -121,6 +121,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 sprintf(stringBuffer, "PCal[2] = %.2f %.2f rad", newConfig->PCal[0], newConfig->PCal[1]);
                 break;
             case RKConfigKeyZCals:
+                // Calibration constants in [H/V][filterIndex] specified as N, ZCal[H][0], ZCal[H][1], ZCal[V][0], ZCal[V][1], ..., ZCal[H][N-1], ZCal[V][N-1]
                 k = va_arg(args, int);
                 s = sprintf(stringBuffer, "ZCals =");
                 for (j = 0; j < k; j++) {

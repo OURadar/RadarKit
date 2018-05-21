@@ -14,27 +14,30 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    int            verbose;                     // Verbosity
-    int            coresForPulseCompression;    // Number of cores for pulse compression
-    int            coresForProductGenerator;    // Number of cores for moment calculations
-    float          fs;                          // Raw gate sampling bandwidth
-    float          prf;                         // Base PRF (Hz)
-    int            sprt;                        // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
-    int            gateCount;                   // Number of gates (simulate mode)
-    int            sleepInterval;
-    bool           simulate;
-    bool           writeFiles;
-    RKName         pedzyHost;
-    RKName         tweetaHost;
-    RKName         relayHost;
-    RKName         streams;
-    RKRadarDesc    desc;
-    RKName         labels[256];
-    RKName         commands[256];
-    int            controlCount;
-    double         systemZCal[2];                // System calibration for Z
-    double         systemDCal[2];                // System calibration for D
-    double         noise[2];                     // System noise level
+    int                     verbose;                     // Verbosity
+    int                     coresForPulseCompression;    // Number of cores for pulse compression
+    int                     coresForProductGenerator;    // Number of cores for moment calculations
+    float                   fs;                          // Raw gate sampling bandwidth
+    float                   prf;                         // Base PRF (Hz)
+    int                     sprt;                        // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
+    int                     gateCount;                   // Number of gates (simulate mode)
+    int                     sleepInterval;
+    bool                    simulate;
+    bool                    writeFiles;
+    RKName                  pedzyHost;
+    RKName                  tweetaHost;
+    RKName                  relayHost;
+    RKName                  streams;
+    RKRadarDesc             desc;
+    RKName                  labels[256];
+    RKName                  commands[256];
+    int                     controlCount;
+    double                  systemZCal[2];                // System calibration for Z
+    double                  systemDCal;                   // System calibration for D
+    double                  systemPCal;                   // System calibration for P
+    double                  noise[2];                     // System noise level
+    double                  thresholdSNR;
+    RKWaveformCalibration   calibrations[4];              // Waveform specific calibration factors
 } UserParams;
 
 // Global variables
@@ -286,7 +289,7 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     // Read in preference configuration file
     RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
     RKPreferenceObject *object;
-    
+
     // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
     const int verb = user->verbose > 1 ? 1 : 0;
     if (verb) {
@@ -301,7 +304,7 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user->desc.longitude, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user->desc.heading,   RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal", user->systemZCal,      RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal", user->systemDCal,      RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal", &user->systemDCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",      user->noise,           RKParameterTypeDouble, 2);
     int k = 0;
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
@@ -680,18 +683,16 @@ static void updateRadarParameters(UserParams *user) {
     // Always refresh the controls
     RKClearControls(myRadar);
     for (k = 0; k < user->controlCount; k++) {
-        printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
+        //printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
         RKAddControl(myRadar, user->labels[k], user->commands[k]);
     }
     RKConcludeControls(myRadar);
     
-    //user->systemZCal
-    
     RKAddConfig(myRadar,
-                RKConfigKeySystemZCal, -30.0f, -30.0f,
-                RKConfigKeySystemDCal, 0.2f,
+                RKConfigKeySystemZCal, user->systemZCal[0], user->systemZCal[1],
+                RKConfigKeySystemDCal, user->systemDCal,
                 RKConfigKeyZCal2, 20.0f, 20.0f,
-                RKConfigKeyNoise, 0.1, 0.1,
+                RKConfigKeyNoise, user->noise[0], user->noise[1],
                 RKConfigKeyNull);
 }
 
