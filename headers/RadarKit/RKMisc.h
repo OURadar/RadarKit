@@ -120,6 +120,7 @@ char *RKSignalString(const int);
 
 int RKStripTail(char *);
 int RKIndentCopy(char *dst, char *src);
+char *RKNextNoneWhite(const char *);
 
 float RKUMinDiff(const float minuend, const float subtrahend);
 

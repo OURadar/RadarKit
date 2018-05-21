@@ -1849,6 +1849,9 @@ void RKTestPreferenceReading(void) {
     if (object) {
         printf("tweeta host = %s\n", object->valueString);
     }
+    RKWaveformCalibration cali;
+    RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0);
+    RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0);
     RKPreferenceFree(preference);
 }
 

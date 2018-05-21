@@ -499,6 +499,17 @@ int RKIndentCopy(char *dst, char *src) {
     return k;
 }
 
+char *RKNextNoneWhite(const char *string) {
+    char *c = (char *)string;
+    while (*c != '\0' && *c != ' ') {
+        c++;
+    }
+    while (*c != '\0' && (*c == ' ' || *c == '\t')) {
+        c++;
+    }
+    return c;
+}
+
 #pragma mark - Math
 
 float RKUMinDiff(const float m, const float s) {

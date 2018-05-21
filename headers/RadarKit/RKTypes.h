@@ -955,9 +955,9 @@ enum RKOverviewFlag {
 typedef struct rk_waveform_cal {
     RKName               name;
     uint8_t              count;
-    RKFloat              ZCal[2][RKMaxFilterCount];
-    RKFloat              DCal;
-    RKFloat              PCal;
+    RKFloat              ZCal[RKMaxFilterCount][2];
+    RKFloat              DCal[RKMaxFilterCount];
+    RKFloat              PCal[RKMaxFilterCount];
 } RKWaveformCalibration;
 
 #pragma pack(pop)

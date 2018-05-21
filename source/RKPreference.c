@@ -171,10 +171,40 @@ int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
 }
 
 void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
+    int j, n;
+    char *c;
     RKPreferenceObject *object = RKPreferenceFindKeyword(preference, keyword);
-    if (object != NULL) {
-        RKName string;
-        int k = snprintf(string, RKNameLength, "Preference.%s", keyword);
+    if (object == NULL) {
+        return;
+    }
+    RKName string;
+    int k = snprintf(string, RKNameLength, "Preference.%s", keyword);
+    if (type == RKParameterTypeWaveformCalibration) {
+        //printf("value = '%s'\n", object->valueString);
+        RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
+        n = sscanf(object->valueString, "%s %" SCNu8, calibration->name, &calibration->count);
+        k += snprintf(string + k, RKNameLength - k, "'%s' (%d)", calibration->name, calibration->count);
+
+        if (calibration->count > RKMaxFilterCount) {
+            RKLog("Warning. Filter count exceeds the limit.  %d > %d\n", calibration->count, RKMaxFilterCount);
+            calibration->count = RKMaxFilterCount;
+        }
+        // Find the first calibration value (Zh0)
+        c = RKNextNoneWhite(object->valueString);
+        c = RKNextNoneWhite(c);
+        for (j = 0; j < calibration->count; j++) {
+            n = sscanf(c, "%f %f %f %f", &calibration->ZCal[j][0], &calibration->ZCal[j][1], &calibration->DCal[j], &calibration->PCal[j]);
+            k += snprintf(string + k, RKNameLength - k, "   %d:(%.2f %.2f %.2f %.2f)", j,
+                          calibration->ZCal[j][0],
+                          calibration->ZCal[j][1],
+                          calibration->DCal[j],
+                          calibration->PCal[j]);
+            c = RKNextNoneWhite(c);
+            c = RKNextNoneWhite(c);
+            c = RKNextNoneWhite(c);
+            c = RKNextNoneWhite(c);
+        }
+    } else {
         for (int i = 0; i < count; i++) {
             switch (type) {
                 case RKParameterTypeInt:
@@ -207,9 +237,9 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
                     break;
             }
         }
-        if (verb) {
-            RKLog(">%s\n", string);
-        }
+    }
+    if (verb) {
+        RKLog(">%s\n", string);
     }
 }
 

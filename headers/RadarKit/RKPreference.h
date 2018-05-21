@@ -19,7 +19,8 @@ enum RKParameterType {
     RKParameterTypeBool,
     RKParameterTypeFloat,
     RKParameterTypeDouble,
-    RKParameterTypeString
+    RKParameterTypeString,
+    RKParameterTypeWaveformCalibration
 };
 
 typedef struct rk_preference {
