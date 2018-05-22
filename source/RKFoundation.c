@@ -338,6 +338,7 @@ void RKPulseBufferFree(RKBuffer mem) {
     return free(mem);
 }
 
+// Get a pulse from a pulse buffer
 RKPulse *RKGetPulse(RKBuffer buffer, const uint32_t k) {
     RKPulse *pulse = (RKPulse *)buffer;
     size_t headerSize = sizeof(pulse->headerBytes);
@@ -345,17 +346,20 @@ RKPulse *RKGetPulse(RKBuffer buffer, const uint32_t k) {
     return (RKPulse *)(buffer + k * pulseSize);
 }
 
+// Get the raw data in 16-bit I/Q from a pulse
 RKInt16C *RKGetInt16CDataFromPulse(RKPulse *pulse, const uint32_t c) {
     void *m = (void *)pulse->data;
     return (RKInt16C *)(m + c * pulse->header.capacity * sizeof(RKInt16C));
 }
 
+// Get the compressed I/Q data in RKComplex from a pulse
 RKComplex *RKGetComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     void *m = (void *)pulse->data;
     m += 2 * pulse->header.capacity * sizeof(RKInt16C);
     return (RKComplex *)(m + c * pulse->header.capacity * sizeof(RKComplex));
 }
 
+// Get the compressed I/Q data in RKIQZ from a pulse
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     void *m = (void *)pulse->data;
     m += 2 * pulse->header.capacity * (sizeof(RKInt16C) + sizeof(RKComplex));
@@ -423,17 +427,20 @@ void RKRayBufferFree(RKBuffer mem) {
     return free(mem);
 }
 
+// Get a ray from a ray buffer
 RKRay *RKGetRay(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
     size_t raySize = RKRayHeaderPaddedSize + RKMaximumProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
+// Get the data in uint8_t from a ray
 uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
+// Get the data in float from a ray
 float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
     d += RKMaximumProductCount * ray->header.capacity * sizeof(uint8_t);
