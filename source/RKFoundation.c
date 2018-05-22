@@ -758,10 +758,18 @@ RKStream RKStreamFromString(const char * string) {
 
 int RKStringFromStream(char *string, RKStream stream) {
     int j = 0;
-//    if (stream & RKStreamStatusPulses)          { j += sprintf(string + j, "1"); }
-//    if (stream & RKStreamStatusRays)            { j += sprintf(string + j, "2"); }
-//    if (stream & RKStreamStatusPositions)       { j += sprintf(string + j, "3"); }
-//    if (stream & RKStreamStatusEngines)         { j += sprintf(string + j, "4"); }
+    // Exclusive part from RKStreamStatusMask
+    if (stream & RKStreamStatusPulses) {
+        j += sprintf(string + j, "1");
+    } else if (stream & RKStreamStatusRays) {
+        j += sprintf(string + j, "2");
+    } else if (stream & RKStreamStatusPositions) {
+        j += sprintf(string + j, "3");
+    } else if (stream & RKStreamStatusEngines) {
+        j += sprintf(string + j, "4");
+    } else if (stream & RKStreamStatusBuffers) {
+        j += sprintf(string + j, "5");
+    }
     if (stream & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
     if (stream & RKStreamHealthInJSON)          { j += sprintf(string + j, "h"); }
     if (stream & RKStreamDisplayZ)              { j += sprintf(string + j, "z"); }
