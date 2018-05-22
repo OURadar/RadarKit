@@ -19,6 +19,31 @@ typedef struct rk_task {
     char command[RKNameLength];
 } RKTaskInput;
 
+#pragma mark - Static Functions
+
+typedef uint32_t UIDType;
+enum UIDType {
+    UIDTypeControl,
+    UIDTypeWaveformCalibration
+};
+
+static uint32_t getUID(UIDType type) {
+    static uint32_t uidControl = 0;
+    static uint32_t uidWaveformCalibration = 0;
+    switch (type) {
+        case UIDTypeControl:
+            return uidControl++;
+            break;
+        case UIDTypeWaveformCalibration:
+            return uidWaveformCalibration++;
+            break;
+        default:
+            RKLog("Warning. Unknown UID Type %d.\n", type);
+            break;
+    }
+    return 0;
+}
+
 #pragma mark - Engine Monitor
 
 static void *engineMonitorRunLoop(void *in) {
@@ -1156,39 +1181,6 @@ void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta) {
 
 void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
-}
-
-void RKAddControl(RKRadar *radar, const char *label, const char *command) {
-    uint8_t index = radar->controlCount++;
-    if (index >= radar->desc.controlCapacity) {
-        RKLog("Cannot add anymore controls.\n");
-        return;
-    }
-    RKUpdateControl(radar, index, label, command);
-}
-
-void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const char *command) {
-    if (index >= radar->desc.controlCapacity) {
-        RKLog("Error. Unable to update control.\n");
-        return;
-    }
-    RKControl *control = &radar->controls[index];
-    strncpy(control->label, label, RKNameLength - 1);
-    strncpy(control->command, command, RKMaximumStringLength - 1);
-}
-
-void RKClearControls(RKRadar *radar) {
-    radar->controlCount = 0;
-}
-
-void RKConcludeControls(RKRadar *radar) {
-    int k;
-    for (k = 0; k < radar->controlCount; k++) {
-        RKControl *control = &radar->controls[k];
-        printf("k = %d   uid = %u", k, control->uid);
-        control->uid += radar->desc.controlCapacity;
-        printf("--> %u\n", control->uid);
-    }
 }
 
 #pragma mark - Developer Access
@@ -2518,5 +2510,70 @@ RKRay *RKGetVacantRay(RKRadar *radar) {
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
     if (radar->state & RKRadarStateLive) {
         ray->header.s |= RKRayStatusReady;
+    }
+}
+
+#pragma mark - Waveform Calibrations
+
+void RKAddWaveformCalibration(RKRadar *radar, const RKWaveformCalibration *calibration) {
+    uint8_t index = radar->waveformCalibrationCount++;
+    if (index >= radar->desc.waveformCalibrationCapacity) {
+        RKLog("Error. Cannot add anymore waveform calibration.\n");
+        return;
+    }
+    RKUpdateWaveformCalibration(radar, index, calibration);
+}
+
+void RKUpdateWaveformCalibration(RKRadar *radar, uint8_t index, const RKWaveformCalibration *calibration) {
+    if (index >= radar->desc.waveformCalibrationCapacity) {
+        RKLog("Error. Unable to update waveform calibration.\n");
+        return;
+    }
+    RKWaveformCalibration *target = &radar->waveformCalibrations[index];
+    memcpy(target, calibration, sizeof(RKWaveformCalibration));
+}
+
+void RKClearWaveformCalibrations(RKRadar *radar) {
+    radar->waveformCalibrationCount = 0;
+}
+
+void RKConcludeWaveformCalibrations(RKRadar *radar) {
+    int k;
+    for (k = 0; k < radar->waveformCalibrationCount; k++) {
+        RKWaveformCalibration *waveformCalibration = &radar->waveformCalibrations[k];
+        waveformCalibration->uid = getUID(UIDTypeWaveformCalibration);
+    }
+}
+
+#pragma mark - Controls
+
+void RKAddControl(RKRadar *radar, const char *label, const char *command) {
+    uint8_t index = radar->controlCount++;
+    if (index >= radar->desc.controlCapacity) {
+        RKLog("Error. Cannot add anymore controls.\n");
+        return;
+    }
+    RKUpdateControl(radar, index, label, command);
+}
+
+void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const char *command) {
+    if (index >= radar->desc.controlCapacity) {
+        RKLog("Error. Unable to update control.\n");
+        return;
+    }
+    RKControl *control = &radar->controls[index];
+    strncpy(control->label, label, RKNameLength - 1);
+    strncpy(control->command, command, RKMaximumStringLength - 1);
+}
+
+void RKClearControls(RKRadar *radar) {
+    radar->controlCount = 0;
+}
+
+void RKConcludeControls(RKRadar *radar) {
+    int k;
+    for (k = 0; k < radar->controlCount; k++) {
+        RKControl *control = &radar->controls[k];
+        control->uid = getUID(UIDTypeControl);
     }
 }

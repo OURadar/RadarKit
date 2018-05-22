@@ -165,7 +165,6 @@ struct rk_radar {
     //
     RKControl                        *controls;
     uint32_t                         controlCount;
-    //uint32_t                         controlSetIndex;
 };
 
 //
@@ -282,6 +281,12 @@ RKPulse *RKGetLatestPulse(RKRadar *);
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
+
+// Waveform Calibrations
+void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);
+void RKUpdateWaveformCalibration(RKRadar *, uint8_t, const RKWaveformCalibration *);
+void RKClearWaveformCalibrations(RKRadar *);
+void RKConcludeWaveformCalibrations(RKRadar *);
 
 // Controls
 void RKAddControl(RKRadar *, const char *label, const char *command);
