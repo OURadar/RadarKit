@@ -239,6 +239,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.controlCapacity == 0) {
         radar->desc.controlCapacity = RKMaximumControlCount;
     }
+    if (radar->desc.waveformCalibrationCapacity > RKMaximumWaveformCalibrationCount) {
+        radar->desc.waveformCalibrationCapacity = RKMaximumWaveformCalibrationCount;
+        RKLog("Info. Waveform calibration count limited to %s\n", radar->desc.controlCapacity);
+    } else if (radar->desc.waveformCalibrationCapacity == 0) {
+        radar->desc.waveformCalibrationCapacity = RKMaximumWaveformCalibrationCount;
+    }
 
     // Read in preference file here, override some values
     if (!strlen(radar->desc.name)) {
@@ -441,13 +447,39 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRayBufferInitialized;
     }
 
+    // Waveform calibrations
+    if (radar->desc.waveformCalibrationCapacity) {
+        bytes = radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for waveform calibrations?\n");
+            radar->desc.waveformCalibrationCapacity = RKMaximumWaveformCalibrationCount / 4;
+            bytes = radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
+        }
+        radar->waveformCalibrations = (RKWaveformCalibration *)malloc(bytes);
+        if (radar->waveformCalibrations == NULL) {
+            RKLog("Error. Unable to allocate memory for waveform calibrations.\n");
+            exit(EXIT_FAILURE);
+        }
+        memset(radar->waveformCalibrations, 0, bytes);
+        for (i = 0; i < radar->desc.waveformCalibrationCapacity; i++) {
+            RKWaveformCalibration *calibration = &radar->waveformCalibrations[i];
+            calibration->uid = -(uint32_t)radar->desc.waveformCalibrationCapacity + i;
+        }
+        if (radar->desc.initFlags & RKInitFlagVerbose) {
+            RKLog("Waveform calibrations occupy %s B (%s units)",
+                  RKIntegerToCommaStyleString(bytes),
+                  RKIntegerToCommaStyleString(radar->desc.waveformCalibrationCapacity));
+        }
+        radar->memoryUsage += bytes;
+        radar->state |= RKRadarStateWaveformCalibrationsInitialized;
+    }
+
     // Controls
     if (radar->desc.controlCapacity) {
-        radar->state |= RKRadarStateControlsAllocating;
         bytes = radar->desc.controlCapacity * sizeof(RKControl);
         if (bytes == 0) {
             RKLog("Error. Zero storage for controls?\n");
-            radar->desc.controlCapacity = 64;
+            radar->desc.controlCapacity = RKMaximumControlCount / 4;
             bytes = radar->desc.controlCapacity * sizeof(RKControl);
         }
         radar->controls = (RKControl *)malloc(bytes);
@@ -455,6 +487,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Error. Unable to allocate memory for controls.\n");
             exit(EXIT_FAILURE);
         }
+        memset(radar->controls, 0, bytes);
         for (i = 0; i < radar->desc.controlCapacity; i++) {
             RKControl *control = &radar->controls[i];
             control->uid = i;
@@ -465,7 +498,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                   RKIntegerToCommaStyleString(radar->desc.controlCapacity));
         }
         radar->memoryUsage += bytes;
-        radar->state ^= RKRadarStateControlsAllocating;
         radar->state |= RKRadarStateControlsInitialized;
     }
 
@@ -796,6 +828,9 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateControlsInitialized) {
         free(radar->controls);
     }
+    if (radar->state & RKRadarStateWaveformCalibrationsInitialized) {
+        free(radar->waveformCalibrations);
+    }
     free(radar);
     if (k) {
         RKLog("Done.");
@@ -1124,7 +1159,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
 }
 
 void RKAddControl(RKRadar *radar, const char *label, const char *command) {
-    uint8_t index = radar->controlIndex++;
+    uint8_t index = radar->controlCount++;
     if (index >= radar->desc.controlCapacity) {
         RKLog("Cannot add anymore controls.\n");
         return;
@@ -1143,11 +1178,16 @@ void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const cha
 }
 
 void RKClearControls(RKRadar *radar) {
-    radar->controlIndex = 0;
+    radar->controlCount = 0;
 }
 
 void RKConcludeControls(RKRadar *radar) {
-    radar->controlSetIndex++;
+    //radar->controlSetIndex++;
+    int k;
+    for (k = 0; k < radar->desc.controlCapacity; k++) {
+        RKControl *control = &radar->controls[k];
+        control->uid += radar->desc.controlCapacity;
+    }
 }
 
 #pragma mark - Developer Access

@@ -109,7 +109,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->access |= RKStreamControl;
                     // Update some info
                     strncpy(user->login, sval1, sizeof(user->login) - 1);
-                    user->controlSetIndex = (uint32_t)-1;
+                    user->controlFirstUID = (uint32_t)-1;
                     break;
 
                 case 'c':
@@ -397,8 +397,8 @@ int socketStreamHandler(RKOperator *O) {
         }
 
         // Send another set of controls if the radar controls have changed.
-        if (user->controlSetIndex != user->radar->controlSetIndex && user->access & RKStreamControl) {
-            user->controlSetIndex = user->radar->controlSetIndex;
+        if (user->controlFirstUID != user->radar->controls[0].uid && user->access & RKStreamControl) {
+            user->controlFirstUID = user->radar->controls[0].uid;
             RKLog("%s %s Sending new controls.\n", engine->name, O->name);
             j = sprintf(user->string, "{\"Radars\":[");
             for (k = 0; k < engine->radarCount; k++) {
@@ -411,7 +411,7 @@ int socketStreamHandler(RKOperator *O) {
                 j += sprintf(user->string + j, "], ");
             }
             // Should only send the controls if the user has been authenticated
-            RKMakeJSONStringFromControls(user->scratch, user->radar->controls, user->radar->controlIndex);
+            RKMakeJSONStringFromControls(user->scratch, user->radar->controls, user->radar->controlCount);
             j += sprintf(user->string + j, "\"Controls\":["
                         "{\"Label\":\"Go\", \"Command\":\"y\"}, "
                         "{\"Label\":\"Stop\", \"Command\":\"z\"}, "

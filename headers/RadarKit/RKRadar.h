@@ -49,8 +49,8 @@ enum RKRadarState {
     RKRadarStateHealthNodesInitialized               = (1 << 11),  //
     RKRadarStatePositionBufferAllocating             = (1 << 12),  //
     RKRadarStatePositionBufferInitialized            = (1 << 13),  //
-    RKRadarStateControlsAllocating                   = (1 << 14),  //
-    RKRadarStateControlsInitialized                  = (1 << 15),  //
+    RKRadarStateControlsInitialized                  = (1 << 14),  //
+    RKRadarStateWaveformCalibrationsInitialized      = (1 << 15),  //
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
     RKRadarStatePositionEngineInitialized            = (1 << 18),  //
@@ -156,11 +156,16 @@ struct rk_radar {
     RKMasterController               masterController;
     int                              (*masterControllerExec)(RKMasterController, const char *, char *);
     //
+    // Waveform calibrations
+    //
+    RKWaveformCalibration            *waveformCalibrations;
+    uint32_t                         waveformCalibrationCount;
+    //
     // Controls
     //
     RKControl                        *controls;
-    uint32_t                         controlIndex;
-    uint32_t                         controlSetIndex;
+    uint32_t                         controlCount;
+    //uint32_t                         controlSetIndex;
 };
 
 //

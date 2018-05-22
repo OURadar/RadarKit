@@ -327,7 +327,7 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
     while (i < slots) {
         RKPulse *pulse = (RKPulse *)m;
         pulse->header.capacity = capacity;
-        pulse->header.i = (uint64_t)(-slots) + i;
+        pulse->header.i = -(uint64_t)slots + i;
         m += pulseSize;
         i++;
     }

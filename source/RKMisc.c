@@ -466,13 +466,6 @@ char *RKSignalString(const int signal) {
 
 #pragma mark - String
 
-//void stripTrailingUnwanted(char *str) {
-//    char *c = str + strlen(str) - 1;
-//    while (c >= str && (*c == '\r' || *c == '\n' || *c == ' ' || *c == 10)) {
-//        *c-- = '\0';
-//    }
-//}
-
 // Strip out \r, \n, white space, \10 (BS), etc.
 int RKStripTail(char *string) {
     int k = 0;
@@ -501,9 +494,15 @@ int RKIndentCopy(char *dst, char *src) {
 
 char *RKNextNoneWhite(const char *string) {
     char *c = (char *)string;
-    while (*c != '\0' && *c != ' ') {
+    // The current character should be non-white but skip it if it is
+    while (*c != '\0' && (*c == ' ' || *c == '\t')) {
         c++;
     }
+    // Then, forward to the next white space
+    while (*c != '\0' && (*c != ' ' && *c != '\t')) {
+        c++;
+    }
+    // Keep going until the white space is over
     while (*c != '\0' && (*c == ' ' || *c == '\t')) {
         c++;
     }

@@ -44,63 +44,65 @@
   RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
   RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
   RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
-  RKcontrolCapacity The number of controls (buttons)
+  RKMaximumControlCount The number of controls (buttons)
+  RKMaximumCalibrationCount The number of waveform calibration set
   RKGateCount The maximum number of gates allocated for each pulse
   RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
  
  */
-#define RKBufferCSlotCount               25                          // Config
-#define RKBufferHSlotCount               25                          // Health
-#define RKBufferSSlotCount               90                          // Status strings
-#define RKBufferPSlotCount               1000                        // Positions
-#define RKBuffer0SlotCount               20000                       // Raw I/Q
-#define RKBuffer2SlotCount               36000                       // Ray
-#define RKMaximumControlCount            128                         // Controls
-#define RKGateCount                      262144                      // Must be a multiple of RKSIMDAlignSize
-#define RKLagCount                       5                           // Number lags of ACF / CCF lag = +/-4 and 0
-#define RKSIMDAlignSize                  64                          // SSE 16, AVX 32, AVX-512 64
-#define RKMaxFilterCount                 8                           // Maximum filter count within each group. Check RKPulseParameters
-#define RKMaxFilterGroups                22                          // Maximum filter group count
-#define RKWorkerDutyCycleBufferDepth     1000
-#define RKMaximumPulsesPerRay            2000
-#define RKMaximumProductCount            10                          // 16 to be the absolute max since productList enum is 32-bit (product + display)
-#define RKMaximumRaysPerSweep            1500                        // 1440 is 0.25-deg. This should be plenty
-#define RKMaximumPacketSize              1024 * 1024
-#define RKNetworkTimeoutSeconds          20
-#define RKNetworkReconnectSeconds        3
-#define RKLagRedThreshold                0.5
-#define RKLagOrangeThreshold             0.7
-#define RKDutyCyleRedThreshold           0.95
-#define RKDutyCyleOrangeThreshold        0.90
-#define RKStatusBarWidth                 10
-#define RKPulseCountForNoiseMeasurement  200
-#define RKProcessorStatusPulseCoreCount  16
-#define RKProcessorStatusRingCoreCount   16
-#define RKProcessorStatusRayCoreCount    16
-#define RKHostMonitorPingInterval        5
-#define RKMaximumUserProductCount        8
+#define RKBufferCSlotCount                   25                      // Config
+#define RKBufferHSlotCount                   25                      // Health
+#define RKBufferSSlotCount                   90                      // Status strings
+#define RKBufferPSlotCount                   1000                    // Positions
+#define RKBuffer0SlotCount                   20000                   // Raw I/Q
+#define RKBuffer2SlotCount                   36000                   // Ray
+#define RKMaximumControlCount                128                     // Controls
+#define RKMaximumWaveformCalibrationCount    128                     // Waveform calibration
+#define RKGateCount                          262144                  // Must be a multiple of RKSIMDAlignSize
+#define RKLagCount                           5                       // Number lags of ACF / CCF lag = +/-4 and 0
+#define RKSIMDAlignSize                      64                      // SSE 16, AVX 32, AVX-512 64
+#define RKMaxFilterCount                     8                       // Maximum filter count within each group. Check RKPulseParameters
+#define RKMaxFilterGroups                    22                      // Maximum filter group count
+#define RKWorkerDutyCycleBufferDepth         1000                    //
+#define RKMaximumPulsesPerRay                2000                    //
+#define RKMaximumProductCount                10                      // 16 to be the absolute max since productList enum is 32-bit (product + display)
+#define RKMaximumRaysPerSweep                1500                    // 1440 is 0.25-deg. This should be plenty
+#define RKMaximumPacketSize                  1024 * 1024
+#define RKNetworkTimeoutSeconds              20
+#define RKNetworkReconnectSeconds            3
+#define RKLagRedThreshold                    0.5
+#define RKLagOrangeThreshold                 0.7
+#define RKDutyCyleRedThreshold               0.95
+#define RKDutyCyleOrangeThreshold            0.90
+#define RKStatusBarWidth                     10
+#define RKPulseCountForNoiseMeasurement      200
+#define RKProcessorStatusPulseCoreCount      16
+#define RKProcessorStatusRingCoreCount       16
+#define RKProcessorStatusRayCoreCount        16
+#define RKHostMonitorPingInterval            5
+#define RKMaximumUserProductCount            8
 
-#define RKDefaultDataPath                "data"
-#define RKDataFolderIQ                   "iq"
-#define RKDataFolderMoment               "moment"
-#define RKDataFolderHealth               "health"
-#define RKLogFolder                      "log"
-#define RKWaveformFolder                 "waveforms"
-#define RKFFTWisdomFile                  "radarkit-fft-wisdom"
+#define RKDefaultDataPath                    "data"
+#define RKDataFolderIQ                       "iq"
+#define RKDataFolderMoment                   "moment"
+#define RKDataFolderHealth                   "health"
+#define RKLogFolder                          "log"
+#define RKWaveformFolder                     "waveforms"
+#define RKFFTWisdomFile                      "radarkit-fft-wisdom"
 
-#define RKNoColor                        "\033[0m"
-#define RKRedColor                       "\033[38;5;196m"
-#define RKGreenColor                     "\033[38;5;82m"
-#define RKLimeGreenColor                 "\033[38;5;118m"
-#define RKOrangeColor                    "\033[38;5;214m"
-#define RKYellowColor                    "\033[38;5;226m"
-#define RKBlueColor                      "\033[38;5;33m"
-#define RKMaximumStringLength            4096
-#define RKMaximumPathLength              1024
-#define RKMaximumFolderPathLength        768
-#define RKNameLength                     256
-#define RKPulseHeaderPaddedSize          256                         // Change this to higher number for post-AVX2 intrinsics
-#define RKRayHeaderPaddedSize            128                         // Change this to higher number for post-AVX2 intrinsics
+#define RKNoColor                            "\033[0m"
+#define RKRedColor                           "\033[38;5;196m"
+#define RKGreenColor                         "\033[38;5;82m"
+#define RKLimeGreenColor                     "\033[38;5;118m"
+#define RKOrangeColor                        "\033[38;5;214m"
+#define RKYellowColor                        "\033[38;5;226m"
+#define RKBlueColor                          "\033[38;5;33m"
+#define RKMaximumStringLength                4096
+#define RKMaximumPathLength                  1024
+#define RKMaximumFolderPathLength            768
+#define RKNameLength                         256
+#define RKPulseHeaderPaddedSize              256                     // Change this to higher number for post-AVX2 intrinsics
+#define RKRayHeaderPaddedSize                128                     // Change this to higher number for post-AVX2 intrinsics
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[91m" : (x > RKDutyCyleOrangeThreshold ? "\033[93m" : "\033[92m"))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[91m" : (x > RKLagOrangeThreshold      ? "\033[93m" : "\033[92m"))
@@ -632,6 +634,7 @@ typedef struct rk_radar_desc {
     uint32_t         pulseBufferDepth;
     uint32_t         rayBufferDepth;
     uint32_t         controlCapacity;
+    uint32_t         waveformCalibrationCapacity;
     uint64_t         healthNodeBufferSize;
     uint64_t         healthBufferSize;
     uint64_t         statusBufferSize;
@@ -870,7 +873,7 @@ typedef struct rk_preferene_object {
 } RKPreferenceObject;
 
 typedef struct rk_control {
-    uint8_t          uid;                                             // A unique identifier
+    uint32_t         uid;                                             // A unique identifier
     uint8_t          state;                                           // Some internal state for house keeping
     uint8_t          level;                                           // Root level controls are for top interface
     char             label[RKNameLength];                             // Label up to RKNameLength
@@ -953,6 +956,7 @@ enum RKOverviewFlag {
 };
 
 typedef struct rk_waveform_cal {
+    uint32_t             uid;                                         // A unique identifier
     RKName               name;
     uint8_t              count;
     RKFloat              ZCal[RKMaxFilterCount][2];
