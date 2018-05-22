@@ -490,7 +490,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         memset(radar->controls, 0, bytes);
         for (i = 0; i < radar->desc.controlCapacity; i++) {
             RKControl *control = &radar->controls[i];
-            control->uid = i;
+            control->uid = -(uint32_t)radar->desc.controlCapacity + i;
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("Controls occupy %s B (%s units)",
@@ -1182,11 +1182,12 @@ void RKClearControls(RKRadar *radar) {
 }
 
 void RKConcludeControls(RKRadar *radar) {
-    //radar->controlSetIndex++;
     int k;
-    for (k = 0; k < radar->desc.controlCapacity; k++) {
+    for (k = 0; k < radar->controlCount; k++) {
         RKControl *control = &radar->controls[k];
+        printf("k = %d   uid = %u", k, control->uid);
         control->uid += radar->desc.controlCapacity;
+        printf("--> %u\n", control->uid);
     }
 }
 
