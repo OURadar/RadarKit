@@ -1033,6 +1033,13 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
             }
         }
     }
+    // Search for the waveform calibration for this waveform
+    for (k = 0; k < radar->waveformCalibrationCount; k++) {
+        if (!strcmp(radar->waveformCalibrations[k].name, waveform->name)) {
+            RKLog("Found waveform calibration for '%s'\n", waveform->name);
+            break;
+        }
+    }
     // Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
     RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
     if (waveform->filterCounts[0] == 1) {
