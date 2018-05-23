@@ -183,6 +183,10 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
         //printf("value = '%s'\n", object->valueString);
         RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
         n = sscanf(object->valueString, "%s %" SCNu8, calibration->name, &calibration->count);
+        if (n != 2) {
+            n = 1;
+            RKLog("Warning. Filter count expected.\n");
+        }
         k += snprintf(string + k, RKNameLength - k, "'%s' (%d)", calibration->name, calibration->count);
 
         if (calibration->count > RKMaxFilterCount) {
@@ -194,6 +198,9 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
         c = RKNextNoneWhite(c);
         for (j = 0; j < calibration->count; j++) {
             n = sscanf(c, "%f %f %f %f", &calibration->ZCal[j][0], &calibration->ZCal[j][1], &calibration->DCal[j], &calibration->PCal[j]);
+            if (n != 4) {
+                RKLog("Warning. Incomplete waveform calibration.\n");
+            }
             k += snprintf(string + k, RKNameLength - k, "   %d:(%.2f %.2f %.2f %.2f)", j,
                           calibration->ZCal[j][0],
                           calibration->ZCal[j][1],
@@ -242,4 +249,3 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
         RKLog(">%s\n", string);
     }
 }
-
