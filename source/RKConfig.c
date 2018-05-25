@@ -121,13 +121,13 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 sprintf(stringBuffer, "PCal[2] = %.2f %.2f rad", newConfig->PCal[0], newConfig->PCal[1]);
                 break;
             case RKConfigKeyZCals:
-                // Calibration constants in [H/V][filterIndex] specified as N, ZCal[H][0], ZCal[H][1], ZCal[V][0], ZCal[V][1], ..., ZCal[H][N-1], ZCal[V][N-1]
+                // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 k = va_arg(args, int);
                 s = sprintf(stringBuffer, "ZCals =");
                 for (j = 0; j < k; j++) {
-                    newConfig->ZCal[0][j] = (RKFloat)va_arg(args, double);
-                    newConfig->ZCal[1][j] = (RKFloat)va_arg(args, double);
-                    s += sprintf(stringBuffer + s, "%s (%.2f, %.2f)", j > 0 ? "," : "", newConfig->ZCal[0][j], newConfig->ZCal[1][j]);
+                    newConfig->ZCal[j][0] = (RKFloat)va_arg(args, double);
+                    newConfig->ZCal[j][1] = (RKFloat)va_arg(args, double);
+                    s += sprintf(stringBuffer + s, "%s (%.2f, %.2f)", j > 0 ? "," : "", newConfig->ZCal[j][0], newConfig->ZCal[j][1]);
                 }
                 sprintf(stringBuffer + s, " dB");
                 break;

@@ -1034,27 +1034,52 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         }
     }
     // Search for the waveform calibration for this waveform
+    RKWaveformCalibration *waveformCalibration = NULL;
     for (k = 0; k < radar->waveformCalibrationCount; k++) {
+        RKLog("Waveform cal %s\n", radar->waveformCalibrations[k].name);
         if (!strcmp(radar->waveformCalibrations[k].name, waveform->name)) {
             RKLog("Found waveform calibration for '%s'\n", waveform->name);
+            waveformCalibration = &radar->waveformCalibrations[k];
             break;
         }
     }
     // Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
     RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
     if (waveform->filterCounts[0] == 1) {
-        RKAddConfig(radar,
-                    RKConfigKeyWaveform, waveform->name,
-                    RKConfigKeyFilterCount, waveform->filterCounts[0],
-                    RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
-                    RKConfigKeyNull);
+        if (waveformCalibration) {
+            RKAddConfig(radar,
+                        RKConfigKeyWaveform, waveform->name,
+                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+                        RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
+                        RKConfigKeyZCals, 1, waveformCalibration->ZCal[0][0], waveformCalibration->ZCal[0][1],
+                        RKConfigKeyNull);
+        } else {
+            RKAddConfig(radar,
+                        RKConfigKeyWaveform, waveform->name,
+                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+                        RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
+                        RKConfigKeyNull);
+        }
     } else if (waveform->filterCounts[0] == 2) {
-        RKAddConfig(radar,
-                    RKConfigKeyWaveform, waveform->name,
-                    RKConfigKeyFilterCount, waveform->filterCounts[0],
-                    RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
-                    RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
-                    RKConfigKeyNull);
+        if (waveformCalibration) {
+            RKLog("Warning. I am here.");
+            RKAddConfig(radar,
+                        RKConfigKeyWaveform, waveform->name,
+                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+                        RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
+                        RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
+                        RKConfigKeyZCals, 2,
+                            waveformCalibration->ZCal[0][0], waveformCalibration->ZCal[0][1],
+                            waveformCalibration->ZCal[1][0], waveformCalibration->ZCal[1][1],
+                        RKConfigKeyNull);
+        } else {
+            RKAddConfig(radar,
+                        RKConfigKeyWaveform, waveform->name,
+                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+                        RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
+                        RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
+                        RKConfigKeyNull);
+        }
     } else {
         RKLog("Error. Multiplexing > 2 filters has not been implemented.\n");
         RKSetWaveformToImpulse(radar);

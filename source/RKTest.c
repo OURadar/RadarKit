@@ -788,11 +788,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
 
     //RKTestTransceiverExec(transceiver, "w q02", NULL);
     //RKTestTransceiverExec(transceiver, "w q10", NULL);
-    //RKTestTransceiverExec(transceiver, "w ofm", NULL);
+    RKTestTransceiverExec(transceiver, "w ofm", NULL);
     //RKTestTransceiverExec(transceiver, "w s01", NULL);
 	//RKTestTransceiverExec(transceiver, "w barker03", NULL);
     //RKTestTransceiverExec(transceiver, "w h2007.5", NULL);
-    RKTestTransceiverExec(transceiver, "w h0507", NULL);
+//    RKTestTransceiverExec(transceiver, "w h0507", NULL);
 
     return (RKTransceiver)transceiver;
 }
