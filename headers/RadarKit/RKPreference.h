@@ -51,4 +51,6 @@ RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *, const char *keyword)
 int RKPreferenceGetKeywordCount(RKPreference *, const char *keyword);
 void RKPreferenceGetValueOfKeyword(RKPreference *, const int verb, const char *keyword, void *value, const int type, const int count);
 
+int RWaveformCalibrationFromPreferenceObject(RKWaveformCalibration *calibration, RKPreferenceObject *object);
+
 #endif

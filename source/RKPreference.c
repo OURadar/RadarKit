@@ -171,8 +171,7 @@ int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
 }
 
 void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
-    int j, n;
-    char *c;
+    int i;
     RKPreferenceObject *object = RKPreferenceFindKeyword(preference, keyword);
     if (object == NULL) {
         return;
@@ -182,37 +181,19 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
     if (type == RKParameterTypeWaveformCalibration) {
         //printf("value = '%s'\n", object->valueString);
         RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
-        n = sscanf(object->valueString, "%s %" SCNu8, calibration->name, &calibration->count);
-        if (n != 2) {
-            n = 1;
-            RKLog("Warning. Filter count expected.\n");
+        if (RWaveformCalibrationFromPreferenceObject(calibration, object)) {
+            return;
         }
         k += snprintf(string + k, RKNameLength - k, "'%s' (%d)", calibration->name, calibration->count);
-
-        if (calibration->count > RKMaxFilterCount) {
-            RKLog("Warning. Filter count exceeds the limit.  %d > %d\n", calibration->count, RKMaxFilterCount);
-            calibration->count = RKMaxFilterCount;
-        }
-        // Find the first calibration value (Zh0)
-        c = RKNextNoneWhite(object->valueString);
-        c = RKNextNoneWhite(c);
-        for (j = 0; j < calibration->count; j++) {
-            n = sscanf(c, "%f %f %f %f", &calibration->ZCal[j][0], &calibration->ZCal[j][1], &calibration->DCal[j], &calibration->PCal[j]);
-            if (n != 4) {
-                RKLog("Warning. Incomplete waveform calibration.\n");
-            }
-            k += snprintf(string + k, RKNameLength - k, "   %d:(%.2f %.2f %.2f %.2f)", j,
-                          calibration->ZCal[j][0],
-                          calibration->ZCal[j][1],
-                          calibration->DCal[j],
-                          calibration->PCal[j]);
-            c = RKNextNoneWhite(c);
-            c = RKNextNoneWhite(c);
-            c = RKNextNoneWhite(c);
-            c = RKNextNoneWhite(c);
+        for (i = 0; i < calibration->count; i++) {
+            k += snprintf(string + k, RKNameLength - k, "   %d:(%.2f %.2f %.2f %.2f)", i,
+                          calibration->ZCal[i][0],
+                          calibration->ZCal[i][1],
+                          calibration->DCal[i],
+                          calibration->PCal[i]);
         }
     } else {
-        for (int i = 0; i < count; i++) {
+        for (i = 0; i < count; i++) {
             switch (type) {
                 case RKParameterTypeInt:
                     ((int *)target)[i] =  (int)MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
@@ -248,4 +229,33 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
     if (verb) {
         RKLog(">%s\n", string);
     }
+}
+
+int RWaveformCalibrationFromPreferenceObject(RKWaveformCalibration *calibration, RKPreferenceObject *object) {
+    int j, n;
+    char *c;
+    n = sscanf(object->valueString, "%s %" SCNu8, calibration->name, &calibration->count);
+    if (n != 2) {
+        n = 1;
+        RKLog("Error. Unable to parse waveform calibration.");
+        return RKResultIncompleteWaveformCalibration;
+    }
+    if (calibration->count > RKMaxFilterCount) {
+        RKLog("Warning. Filter count exceeds the limit.  %d > %d\n", calibration->count, RKMaxFilterCount);
+        calibration->count = RKMaxFilterCount;
+    }
+    // Find the first calibration value (Zh0)
+    c = RKNextNoneWhite(object->valueString);
+    c = RKNextNoneWhite(c);
+    for (j = 0; j < calibration->count; j++) {
+        n = sscanf(c, "%f %f %f %f", &calibration->ZCal[j][0], &calibration->ZCal[j][1], &calibration->DCal[j], &calibration->PCal[j]);
+        if (n != 4) {
+            RKLog("Warning. Incomplete waveform calibration.\n");
+        }
+        c = RKNextNoneWhite(c);
+        c = RKNextNoneWhite(c);
+        c = RKNextNoneWhite(c);
+        c = RKNextNoneWhite(c);
+    }
+    return RKResultSuccess;
 }

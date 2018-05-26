@@ -38,6 +38,7 @@ typedef struct user_params {
     double                  noise[2];                     // System noise level
     double                  thresholdSNR;
     RKWaveformCalibration   calibrations[4];              // Waveform specific calibration factors
+    int                     calibrationCount;
 } UserParams;
 
 // Global variables
@@ -286,6 +287,9 @@ UserParams *userParametersInit(void) {
 }
 
 static void updateUserParametersFromPreferenceFile(UserParams *user) {
+    int k, s;
+    char string[1024];
+
     // Read in preference configuration file
     RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
     RKPreferenceObject *object;
@@ -306,12 +310,33 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal", user->systemZCal,      RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal", &user->systemDCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",      user->noise,           RKParameterTypeDouble, 2);
-    int k = 0;
+    
+    // Shortcuts
+    k = 0;
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
         RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
         k++;
     }
     user->controlCount = k;
+    
+    // Waveform calibrations
+    k = 0;
+    while ((object = RKPreferenceFindKeyword(userPreferences, "WaveformCal")) != NULL && k < 4) {
+        RWaveformCalibrationFromPreferenceObject(&user->calibrations[k], object);
+        if (verb) {
+            s = snprintf(string, RKNameLength, "'%s' (%d)", user->calibrations[k].name, user->calibrations[k].count);
+            for (int i = 0; i < user->calibrations[k].count; i++) {
+                s += snprintf(string + s, RKNameLength - s, "   %d:(%.2f %.2f %.2f %.2f)", i,
+                              user->calibrations[k].ZCal[i][0],
+                              user->calibrations[k].ZCal[i][1],
+                              user->calibrations[k].DCal[i],
+                              user->calibrations[k].PCal[i]);
+            }
+            RKLog("%s\n", string);
+        }
+        k++;
+    }
+    user->calibrationCount = k;
 }
 
 static void updateUserParametersFromCommandLine(UserParams *user, int argc, const char **argv) {
@@ -677,8 +702,6 @@ static void updateUserParametersFromCommandLine(UserParams *user, int argc, cons
 static void updateRadarParameters(UserParams *user) {
     
     int k;
-    
-    updateUserParametersFromPreferenceFile(user);
     
     // Always refresh the controls
     RKClearControls(myRadar);

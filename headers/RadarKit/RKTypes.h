@@ -198,6 +198,7 @@ enum RKResult {
     RKResultIncompleteTransceiver,
     RKResultIncompletePedestal,
     RKResultIncompleteHealthRelay,
+    RKResultIncompleteWaveformCalibration,
     RKResultErrorCreatingOperatorRoutine,
     RKResultErrorCreatingOperatorCommandRoutine,
     RKResultErrorCreatingClientRoutine,
