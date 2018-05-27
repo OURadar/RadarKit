@@ -237,6 +237,7 @@ enum RKResult {
     RKResultFailedToStartPedestal,
     RKResultFailedToStartHealthRelay,
     RKResultPreferenceFileNotFound,
+    RKResultPreferenceKeywordNotFound,
     RKResultFailedToMeasureNoise,
     RKResultFailedToCreateFileRemover,
     RKResultFileManagerBufferNotResuable,

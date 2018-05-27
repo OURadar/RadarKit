@@ -317,7 +317,6 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
         RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
         k++;
     }
-    user->controlCount = k;
     
     // Waveform calibrations
     k = 0;

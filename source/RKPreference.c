@@ -170,11 +170,11 @@ int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
     return k;
 }
 
-void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
+int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
     int i;
     RKPreferenceObject *object = RKPreferenceFindKeyword(preference, keyword);
     if (object == NULL) {
-        return;
+        return RKResultPreferenceKeywordNotFound;
     }
     //printf("value = '%s'\n", object->valueString);
     RKName string;
@@ -182,13 +182,13 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
     if (type == RKParameterTypeControl) {
         RKControl *control = (RKControl *)target;
         if (RKControlFromPreferenceObject(control, object)) {
-            return;
+            return RKResultIncompleteControl;
         }
         k += snprintf(string + k, RKNameLength - k, " '%s' '%s'", control->label, control->command);
     } else if (type == RKParameterTypeWaveformCalibration) {
         RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
         if (RWaveformCalibrationFromPreferenceObject(calibration, object)) {
-            return;
+            return RKResultIncompleteWaveformCalibration;
         }
         k += snprintf(string + k, RKNameLength - k, " '%s' (%d)", calibration->name, calibration->count);
         for (i = 0; i < calibration->count; i++) {
@@ -235,11 +235,13 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
     if (verb) {
         RKLog(">%s\n", string);
     }
+    return RKResultSuccess;
 }
 
 int RKControlFromPreferenceObject(RKControl *control, RKPreferenceObject *object) {
     RKParseQuotedStrings(object->valueString, control->label, control->command, NULL);
     if (strlen(control->label) == 0 || strlen(control->command) == 0) {
+        RKLog("Warning. Incomplete control. %s\n", object->valueString);
         return RKResultIncompleteControl;
     }
     return RKResultSuccess;

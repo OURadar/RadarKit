@@ -50,7 +50,7 @@ void RKPreferenceFree(RKPreference *);
 int RKPreferenceUpdate(RKPreference *);
 RKPreferenceObject *RKPreferenceFindKeyword(RKPreference *, const char *keyword);
 int RKPreferenceGetKeywordCount(RKPreference *, const char *keyword);
-void RKPreferenceGetValueOfKeyword(RKPreference *, const int verb, const char *keyword, void *value, const int type, const int count);
+int RKPreferenceGetValueOfKeyword(RKPreference *, const int verb, const char *keyword, void *value, const int type, const int count);
 
 int RKControlFromPreferenceObject(RKControl *control, RKPreferenceObject *object);
 int RWaveformCalibrationFromPreferenceObject(RKWaveformCalibration *calibration, RKPreferenceObject *object);

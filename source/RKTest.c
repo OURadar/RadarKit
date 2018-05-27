@@ -1839,6 +1839,7 @@ void RKTestMakeHops(void) {
 
 void RKTestPreferenceReading(void) {
     SHOW_FUNCTION_NAME
+    int k;
     RKPreference *preference = RKPreferenceInit();;
     RKPreferenceObject *object = NULL;
     object = RKPreferenceFindKeyword(preference, "PedzyHost");
@@ -1857,12 +1858,18 @@ void RKTestPreferenceReading(void) {
     RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
+    k = 0;
     RKControl control;
-    RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0);
-    RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0);
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
+        k++;
+    }
+    RKLog(">Preference.Shortcut count = %d\n", k);
+    k = 0;
     RKWaveformCalibration cali;
-    RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0);
-    RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0);
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
+        k++;
+    }
+    RKLog(">Preference.WaveformCal count = %d\n", k);
     RKPreferenceFree(preference);
 }
 
