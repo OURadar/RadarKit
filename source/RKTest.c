@@ -1849,6 +1849,17 @@ void RKTestPreferenceReading(void) {
     if (object) {
         printf("tweeta host = %s\n", object->valueString);
     }
+    RKName name;
+    RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
+    double numbers[4];
+    RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
+    RKControl control;
+    RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0);
+    RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0);
     RKWaveformCalibration cali;
     RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0);
     RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0);

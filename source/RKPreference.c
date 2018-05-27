@@ -176,15 +176,21 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
     if (object == NULL) {
         return;
     }
+    //printf("value = '%s'\n", object->valueString);
     RKName string;
     int k = snprintf(string, RKNameLength, "Preference.%s", keyword);
-    if (type == RKParameterTypeWaveformCalibration) {
-        //printf("value = '%s'\n", object->valueString);
+    if (type == RKParameterTypeControl) {
+        RKControl *control = (RKControl *)target;
+        if (RKControlFromPreferenceObject(control, object)) {
+            return;
+        }
+        k += snprintf(string + k, RKNameLength - k, " '%s' '%s'", control->label, control->command);
+    } else if (type == RKParameterTypeWaveformCalibration) {
         RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
         if (RWaveformCalibrationFromPreferenceObject(calibration, object)) {
             return;
         }
-        k += snprintf(string + k, RKNameLength - k, "'%s' (%d)", calibration->name, calibration->count);
+        k += snprintf(string + k, RKNameLength - k, " '%s' (%d)", calibration->name, calibration->count);
         for (i = 0; i < calibration->count; i++) {
             k += snprintf(string + k, RKNameLength - k, "   %d:(%.2f %.2f %.2f %.2f)", i,
                           calibration->ZCal[i][0],
@@ -229,6 +235,14 @@ void RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, con
     if (verb) {
         RKLog(">%s\n", string);
     }
+}
+
+int RKControlFromPreferenceObject(RKControl *control, RKPreferenceObject *object) {
+    RKParseQuotedStrings(object->valueString, control->label, control->command, NULL);
+    if (strlen(control->label) == 0 || strlen(control->command) == 0) {
+        return RKResultIncompleteControl;
+    }
+    return RKResultSuccess;
 }
 
 int RWaveformCalibrationFromPreferenceObject(RKWaveformCalibration *calibration, RKPreferenceObject *object) {
