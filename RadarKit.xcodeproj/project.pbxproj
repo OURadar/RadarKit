@@ -32,6 +32,7 @@
 		B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53C1E5A3988000C8503 /* RKTemplate.h */; };
 		B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53F1E5A3E23000C8503 /* RKWaveform.h */; };
 		B565B5451E5A4623000C8503 /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5441E5A4623000C8503 /* bessi.c */; };
+		B56A750B20BB01C500E8B6E9 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B56AB0AD20A8826A00E73AE9 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = B56AB0AC20A8826A00E73AE9 /* main.c */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; };
@@ -186,6 +187,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B56A750B20BB01C500E8B6E9 /* libRadarKit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

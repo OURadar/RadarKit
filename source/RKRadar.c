@@ -2556,7 +2556,7 @@ void RKAddWaveformCalibration(RKRadar *radar, const RKWaveformCalibration *calib
     RKUpdateWaveformCalibration(radar, index, calibration);
 }
 
-void RKUpdateWaveformCalibration(RKRadar *radar, uint8_t index, const RKWaveformCalibration *calibration) {
+void RKUpdateWaveformCalibration(RKRadar *radar, const uint8_t index, const RKWaveformCalibration *calibration) {
     if (index >= radar->desc.waveformCalibrationCapacity) {
         RKLog("Error. Unable to update waveform calibration.\n");
         return;
@@ -2579,23 +2579,34 @@ void RKConcludeWaveformCalibrations(RKRadar *radar) {
 
 #pragma mark - Controls
 
-void RKAddControl(RKRadar *radar, const char *label, const char *command) {
+void RKAddControl(RKRadar *radar, const RKControl *control) {
     uint8_t index = radar->controlCount++;
     if (index >= radar->desc.controlCapacity) {
         RKLog("Error. Cannot add anymore controls.\n");
         return;
     }
-    RKUpdateControl(radar, index, label, command);
+    RKUpdateControl(radar, index, control);
 }
 
-void RKUpdateControl(RKRadar *radar, uint8_t index, const char *label, const char *command) {
+void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char *command) {
+    uint8_t index = radar->controlCount++;
     if (index >= radar->desc.controlCapacity) {
-        RKLog("Error. Unable to update control.\n");
+        RKLog("Error. Cannot add anymore controls.\n");
         return;
     }
-    RKControl *control = &radar->controls[index];
-    strncpy(control->label, label, RKNameLength - 1);
-    strncpy(control->command, command, RKMaximumStringLength - 1);
+    RKControl *target = &radar->controls[index];
+    strncpy(target->label, label, RKNameLength - 1);
+    strncpy(target->command, command, RKMaximumStringLength - 1);
+}
+
+void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *control) {
+    if (index >= radar->desc.controlCapacity) {
+        RKLog("Error. Control index is out of bound.\n");
+        return;
+    }
+    RKControl *target = &radar->controls[index];
+    strncpy(target->label, control->label, RKNameLength - 1);
+    strncpy(target->command, control->command, RKMaximumStringLength - 1);
 }
 
 void RKClearControls(RKRadar *radar) {

@@ -284,13 +284,14 @@ void RKSetRayReady(RKRadar *, RKRay *);
 
 // Waveform Calibrations
 void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);
-void RKUpdateWaveformCalibration(RKRadar *, uint8_t, const RKWaveformCalibration *);
+void RKUpdateWaveformCalibration(RKRadar *, const uint8_t, const RKWaveformCalibration *);
 void RKClearWaveformCalibrations(RKRadar *);
 void RKConcludeWaveformCalibrations(RKRadar *);
 
 // Controls
-void RKAddControl(RKRadar *, const char *label, const char *command);
-void RKUpdateControl(RKRadar *, uint8_t, const char *label, const char *command);
+void RKAddControl(RKRadar *, const RKControl *);
+void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char *command);
+void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
 void RKClearControls(RKRadar *);
 void RKConcludeControls(RKRadar *);
 

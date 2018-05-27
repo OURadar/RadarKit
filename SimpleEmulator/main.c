@@ -48,10 +48,10 @@ int main(int argc, const char * argv[]) {
     RKSetDoNotWrite(myRadar, true);
 
     // Add some control buttons
-    RKAddControl(myRadar, "10us pulse", "t w s10");
-    RKAddControl(myRadar, "20us pulse", "t w s20");
-    RKAddControl(myRadar, "PPI EL 3 deg @ 45 dps", "p ppi 3 45");
-    RKAddControl(myRadar, "PPI EL 5 deg @ 25 dps", "p ppi 5 12");
+    RKAddControlAsLabelAndCommand(myRadar, "10us pulse", "t w s10");
+    RKAddControlAsLabelAndCommand(myRadar, "20us pulse", "t w s20");
+    RKAddControlAsLabelAndCommand(myRadar, "PPI EL 3 deg @ 45 dps", "p ppi 3 45");
+    RKAddControlAsLabelAndCommand(myRadar, "PPI EL 5 deg @ 25 dps", "p ppi 5 12");
 
     RKSetTransceiver(myRadar,
                      NULL,

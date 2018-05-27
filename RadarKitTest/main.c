@@ -11,6 +11,8 @@
 
 #define ROOT_PATH                   "data"
 #define PREFERENCE_FILE             "pref.conf"
+#define CONTROL_COUNT               256
+#define CAL_COUNT                   4
 
 // User parameters in a struct
 typedef struct user_params {
@@ -29,15 +31,14 @@ typedef struct user_params {
     RKName                  relayHost;
     RKName                  streams;
     RKRadarDesc             desc;
-    RKName                  labels[256];
-    RKName                  commands[256];
-    int                     controlCount;
     double                  systemZCal[2];                // System calibration for Z
     double                  systemDCal;                   // System calibration for D
     double                  systemPCal;                   // System calibration for P
     double                  noise[2];                     // System noise level
     double                  thresholdSNR;
-    RKWaveformCalibration   calibrations[4];              // Waveform specific calibration factors
+    RKControl               controls[CONTROL_COUNT];
+    int                     controlCount;
+    RKWaveformCalibration   calibrations[CAL_COUNT];      // Waveform specific calibration factors
     int                     calibrationCount;
 } UserParams;
 
@@ -314,9 +315,13 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     // Shortcuts
     k = 0;
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
-        RKParseQuotedStrings(object->valueString, user->labels[k], user->commands[k], NULL);
+        RKControlFromPreferenceObject(&user->controls[k], object);
+        if (verb) {
+            RKLog("'%s' '%s'\n", user->controls[k].label, user->controls[k].command);
+        }
         k++;
     }
+    user->controlCount = k;
     
     // Waveform calibrations
     k = 0;
@@ -324,7 +329,7 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
         RWaveformCalibrationFromPreferenceObject(&user->calibrations[k], object);
         if (verb) {
             s = snprintf(string, RKNameLength, "'%s' (%d)", user->calibrations[k].name, user->calibrations[k].count);
-            for (int i = 0; i < user->calibrations[k].count; i++) {
+            for (int i = 0; i < MIN(RKMaximumWaveformCalibrationCount, user->calibrations[k].count); i++) {
                 s += snprintf(string + s, RKNameLength - s, "   %d:(%.2f %.2f %.2f %.2f)", i,
                               user->calibrations[k].ZCal[i][0],
                               user->calibrations[k].ZCal[i][1],
@@ -705,8 +710,7 @@ static void updateRadarParameters(UserParams *user) {
     // Always refresh the controls
     RKClearControls(myRadar);
     for (k = 0; k < user->controlCount; k++) {
-        //printf("Adding control '%s' '%s' ...\n", user->labels[k], user->commands[k]);
-        RKAddControl(myRadar, user->labels[k], user->commands[k]);
+        RKAddControl(myRadar, &user->controls[k]);
     }
     RKConcludeControls(myRadar);
     
@@ -876,6 +880,16 @@ int main(int argc, const char **argv) {
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, user);
         
         usleep(1000000);
+
+        RKLog("Setting a waveform ...\n");
+        RKExecuteCommand(myRadar, "t w ofm", NULL);
+        //RKExecuteCommand(myRadar, "t w q02", NULL);
+        //RKExecuteCommand(myRadar, "t w q10", NULL);
+        //RKExecuteCommand(myRadar, "t w s01", NULL);
+        //RKExecuteCommand(myRadar, "t w barker03", NULL);
+        //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
+        //RKExecuteCommand(myRadar, "t w h0507", NULL);
+
         RKLog("Starting a new PPI ...\n");
         RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
         RKWaitWhileActive(myRadar);

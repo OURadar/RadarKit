@@ -707,6 +707,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->prt = 0.0003;
     transceiver->sprt = 1;
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
+    sprintf(transceiver->waveformCache[0]->name, "s01");
 
     // Parse out input parameters
     if (input) {
@@ -785,14 +786,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     while (!(transceiver->state & RKEngineStateActive)) {
         usleep(10000);
     }
-
-    //RKTestTransceiverExec(transceiver, "w q02", NULL);
-    //RKTestTransceiverExec(transceiver, "w q10", NULL);
-    RKTestTransceiverExec(transceiver, "w ofm", NULL);
-    //RKTestTransceiverExec(transceiver, "w s01", NULL);
-	//RKTestTransceiverExec(transceiver, "w barker03", NULL);
-    //RKTestTransceiverExec(transceiver, "w h2007.5", NULL);
-//    RKTestTransceiverExec(transceiver, "w h0507", NULL);
 
     return (RKTransceiver)transceiver;
 }
@@ -936,6 +929,10 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     sprintf(response, "NAK. Waveform '%s' not found." RKEOL, string);
                     return RKResultFailedToSetWaveform;
                 }
+            }
+            if (waveform == NULL) {
+                RKLog("%s No waveform.\n", transceiver->name);
+                return RKResultFailedToSetWaveform;
             }
             if (radar->desc.pulseCapacity < waveform->depth) {
                 RKLog("%s Warning. Waveform '%s' with %s samples not allowed (capacity = %s).\n", transceiver->name, string,
