@@ -1043,39 +1043,45 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     }
     // Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
     RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
-    if (waveform->filterCounts[0] == 1) {
-        if (waveformCalibration) {
-            RKAddConfig(radar,
-                        RKConfigKeyWaveform, waveform->name,
-                        RKConfigKeyFilterCount, waveform->filterCounts[0],
-                        RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
-                        RKConfigKeyZCals, waveform->filterCounts[0], waveformCalibration->ZCal,
-                        RKConfigKeyNull);
-        } else {
-            RKAddConfig(radar,
-                        RKConfigKeyWaveform, waveform->name,
-                        RKConfigKeyFilterCount, waveform->filterCounts[0],
-                        RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
-                        RKConfigKeyNull);
-        }
-    } else if (waveform->filterCounts[0] == 2) {
-        if (waveformCalibration) {
-            RKLog("Warning. I am here.");
-            RKAddConfig(radar,
-                        RKConfigKeyWaveform, waveform->name,
-                        RKConfigKeyFilterCount, waveform->filterCounts[0],
-                        RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
-                        RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
-                        RKConfigKeyZCals, 2, waveformCalibration->ZCal,
-                        RKConfigKeyNull);
-        } else {
-            RKAddConfig(radar,
-                        RKConfigKeyWaveform, waveform->name,
-                        RKConfigKeyFilterCount, waveform->filterCounts[0],
-                        RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
-                        RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
-                        RKConfigKeyNull);
-        }
+    if (waveform->filterCounts[0] <= 2) {
+//        if (waveformCalibration) {
+//            RKAddConfig(radar,
+//                        RKConfigKeyWaveform, waveform->name,
+//                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+//                        RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
+//                        RKConfigKeyZCals, waveform->filterCounts[0], waveformCalibration->ZCal,
+//                        RKConfigKeyNull);
+//        } else {
+//            RKAddConfig(radar,
+//                        RKConfigKeyWaveform, waveform->name,
+//                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+//                        RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
+//                        RKConfigKeyNull);
+//        }
+//    } else if (waveform->filterCounts[0] == 2) {
+//        if (waveformCalibration) {
+//            RKLog("Warning. I am here.");
+//            RKAddConfig(radar,
+//                        RKConfigKeyWaveform, waveform->name,
+//                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+//                        RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
+//                        RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
+//                        RKConfigKeyZCals, waveform->filterCounts[0], waveformCalibration->ZCal,
+//                        RKConfigKeyNull);
+//        } else {
+//            RKAddConfig(radar,
+//                        RKConfigKeyWaveform, waveform->name,
+//                        RKConfigKeyFilterCount, waveform->filterCounts[0],
+//                        RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
+//                        RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
+//                        RKConfigKeyNull);
+//        }
+        RKAddConfig(radar,
+                    RKConfigKeyWaveform, waveform->name,
+                    RKConfigKeyFilterAnchors, 1, waveform->filterCounts[0], waveform->filterAnchors,
+                    RKConfigKeyZCals, waveform->filterCounts[0], waveformCalibration->ZCal,
+                    RKConfigKeyNull);
+
     } else {
         RKLog("Error. Multiplexing > 2 filters has not been implemented.\n");
         RKSetWaveformToImpulse(radar);
