@@ -314,7 +314,7 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     
     // Shortcuts
     k = 0;
-    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < 256) {
+    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < CONTROL_COUNT) {
         RKControlFromPreferenceObject(&user->controls[k], object);
         if (verb) {
             RKLog("'%s' '%s'\n", user->controls[k].label, user->controls[k].command);
@@ -325,11 +325,11 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     
     // Waveform calibrations
     k = 0;
-    while ((object = RKPreferenceFindKeyword(userPreferences, "WaveformCal")) != NULL && k < 4) {
+    while ((object = RKPreferenceFindKeyword(userPreferences, "WaveformCal")) != NULL && k < CAL_COUNT) {
         RWaveformCalibrationFromPreferenceObject(&user->calibrations[k], object);
         if (verb) {
             s = snprintf(string, RKNameLength, "'%s' (%d)", user->calibrations[k].name, user->calibrations[k].count);
-            for (int i = 0; i < MIN(RKMaximumWaveformCalibrationCount, user->calibrations[k].count); i++) {
+            for (int i = 0; i < MIN(RKMaxFilterCount, user->calibrations[k].count); i++) {
                 s += snprintf(string + s, RKNameLength - s, "   %d:(%.2f %.2f %.2f %.2f)", i,
                               user->calibrations[k].ZCal[i][0],
                               user->calibrations[k].ZCal[i][1],
@@ -871,6 +871,7 @@ int main(int argc, const char **argv) {
         //myRadar->configs[0].prf[0] = user->prf;
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
+        
         //RKUserProductDesc desc;
         //RKSweepEngineRegisterProduct(myRadar->sweepEngine, RKUserProductDesc)
 
