@@ -464,6 +464,7 @@ enum RKConfigKey {
     RKConfigKeyZCals,
     RKConfigKeyDCals,
     RKConfigKeyPCals,
+    RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
     RKConfigKeyTotalNumberOfKeys

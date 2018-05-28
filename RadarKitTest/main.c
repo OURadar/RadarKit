@@ -714,6 +714,13 @@ static void updateRadarParameters(UserParams *user) {
     }
     RKConcludeControls(myRadar);
     
+    // Always refresh waveform calibrations
+    RKClearWaveformCalibrations(myRadar);
+    for (k = 0; k < user->calibrationCount; k++) {
+        RKAddWaveformCalibration(myRadar, &user->calibrations[k]);
+    }
+    RKConcludeControls(myRadar);
+    
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, user->systemZCal[0], user->systemZCal[1],
                 RKConfigKeySystemDCal, user->systemDCal,

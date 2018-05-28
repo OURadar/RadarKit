@@ -1036,9 +1036,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     // Search for the waveform calibration for this waveform
     RKWaveformCalibration *waveformCalibration = NULL;
     for (k = 0; k < radar->waveformCalibrationCount; k++) {
-        RKLog("Waveform cal %s\n", radar->waveformCalibrations[k].name);
         if (!strcmp(radar->waveformCalibrations[k].name, waveform->name)) {
-            RKLog("Found waveform calibration for '%s'\n", waveform->name);
             waveformCalibration = &radar->waveformCalibrations[k];
             break;
         }
@@ -1051,7 +1049,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                         RKConfigKeyWaveform, waveform->name,
                         RKConfigKeyFilterCount, waveform->filterCounts[0],
                         RKConfigKeyFilterAnchor, waveform->filterAnchors[0],
-                        RKConfigKeyZCals, 1, waveformCalibration->ZCal[0][0], waveformCalibration->ZCal[0][1],
+                        RKConfigKeyZCals, waveform->filterCounts[0], waveformCalibration->ZCal,
                         RKConfigKeyNull);
         } else {
             RKAddConfig(radar,
@@ -1068,9 +1066,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                         RKConfigKeyFilterCount, waveform->filterCounts[0],
                         RKConfigKeyFilterAnchor, &waveform->filterAnchors[0][0],
                         RKConfigKeyFilterAnchor2, &waveform->filterAnchors[0][1],
-                        RKConfigKeyZCals, 2,
-                            waveformCalibration->ZCal[0][0], waveformCalibration->ZCal[0][1],
-                            waveformCalibration->ZCal[1][0], waveformCalibration->ZCal[1][1],
+                        RKConfigKeyZCals, 2, waveformCalibration->ZCal,
                         RKConfigKeyNull);
         } else {
             RKAddConfig(radar,

@@ -32,6 +32,9 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     
     //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 
+    RKFloat (*ZCal)[2];
+    RKWaveformCalibration *waveformCal;
+    
     // Copy everything
     memcpy(newConfig, oldConfig, sizeof(RKConfig));
 
@@ -120,13 +123,26 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->PCal[1] = (RKFloat)va_arg(args, double);
                 sprintf(stringBuffer, "PCal[2] = %.2f %.2f rad", newConfig->PCal[0], newConfig->PCal[1]);
                 break;
+            case RKConfigKeyWaveformCalibration:
+                waveformCal = (RKWaveformCalibration *)va_arg(args, void *);
+                for (j = 0; j < waveformCal->count; j++) {
+                    newConfig->ZCal[j][0] = waveformCal->ZCal[j][0];
+                    newConfig->ZCal[j][1] = waveformCal->ZCal[j][1];
+                    newConfig->DCal[j] = waveformCal->DCal[j];
+                    newConfig->PCal[j] = waveformCal->PCal[j];
+                }
+                break;
             case RKConfigKeyZCals:
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 k = va_arg(args, int);
+                ZCal = (RKFloat(*)[2])va_arg(args, void *);
+                if (k == 0 || ZCal == NULL) {
+                    break;
+                }
                 s = sprintf(stringBuffer, "ZCals =");
                 for (j = 0; j < k; j++) {
-                    newConfig->ZCal[j][0] = (RKFloat)va_arg(args, double);
-                    newConfig->ZCal[j][1] = (RKFloat)va_arg(args, double);
+                    newConfig->ZCal[j][0] = ZCal[j][0];
+                    newConfig->ZCal[j][1] = ZCal[j][1];
                     s += sprintf(stringBuffer + s, "%s (%.2f, %.2f)", j > 0 ? "," : "", newConfig->ZCal[j][0], newConfig->ZCal[j][1]);
                 }
                 sprintf(stringBuffer + s, " dB");
