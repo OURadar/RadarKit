@@ -93,9 +93,10 @@ enum RKJSONObjectType {
 };
 
 char *RKGetColor(void);
-char *RKGetColorOfIndex(const int i);
+char *RKGetColorOfIndex(const int);
 char *RKGetBackgroundColor(void);
-char *RKGetBackgroundColorOfIndex(const int i);
+char *RKGetBackgroundColorOfIndex(const int);
+char *RKGetBackgroundColorOfCubeIndex(const int);
 
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);

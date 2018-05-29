@@ -169,7 +169,7 @@ static void *pulseRecorder(void *in) {
             
             n = 0;
             
-            if (engine->verbose) {
+            if (engine->verbose > 1) {
                 RKLog("%s New I/Q %s ...\n", engine->name, filename);
             }
             if (engine->doNotWrite) {

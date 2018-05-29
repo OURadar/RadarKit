@@ -1795,13 +1795,25 @@ void RKTestJSON(void) {
 
 void RKTestShowColors(void) {
     SHOW_FUNCTION_NAME
-    for (int k = 0; k < 16; k++) {
+    for (int k = 0; k < 17; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
     printf("\n");
     printf("+inf -> %s\n", RKFloatToCommaStyleString(INFINITY));
     printf("-inf -> %s\n", RKFloatToCommaStyleString(-INFINITY));
     printf("nan -> %s\n", RKFloatToCommaStyleString(NAN));
+    printf("\n");
+    int c;
+    for (int i = 0; i < 6; i++) {
+        for (int k = 0; k < 6; k++) {
+            for (int j = 0; j < 6; j++) {
+                c = k * 100 + j * 10 + i;
+                printf("%s %03d %s", RKGetBackgroundColorOfCubeIndex(c), c, RKNoColor);
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
 }
 
 void RKTestFileManager(void) {

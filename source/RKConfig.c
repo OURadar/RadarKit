@@ -36,7 +36,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     
     //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 
-    uint32_t groupCount, filterCount;
+    uint32_t filterCount;
     RKFilterAnchor *filterAnchor;
     RKWaveformCalibration *waveformCal;
     RKFloat (*ZCal)[2];
@@ -180,13 +180,9 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         newConfig->filterAnchors[1].sensitivityGain);
                 break;
             case RKConfigKeyFilterAnchors:
-                groupCount = va_arg(args, int);
                 filterCount = va_arg(args, int);
                 filterAnchor = (RKFilterAnchor *)va_arg(args, void *);
-                if (groupCount > 1) {
-                    RKLog("Error. RKConfig cannot accomodate groupCount > 1.\n");
-                    break;
-                } else if (filterAnchor == NULL) {
+                if (filterCount == 0 || filterAnchor == NULL) {
                     break;
                 }
                 memcpy(newConfig->filterAnchors, filterAnchor, filterCount * sizeof(RKFilterAnchor));

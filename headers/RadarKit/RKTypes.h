@@ -254,24 +254,24 @@ enum RKResult {
 };
 
 enum RKEngineColor {
-    RKEngineColorCommandCenter = 9,
-    RKEngineColorPulseCompressionEngine = 6,
+    RKEngineColorCommandCenter = 10,
+    RKEngineColorPulseCompressionEngine = 7,
     RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
-    RKEngineColorMomentEngine = 7,
+    RKEngineColorMomentEngine = 8,
     RKEngineColorHealthEngine = 1,
-    RKEngineColorDataRecorder = 8,
-    RKEngineColorSweepEngine = 13,
+    RKEngineColorDataRecorder = 9,
+    RKEngineColorSweepEngine = 14,
     RKEngineColorHealthLogger = 5,
     RKEngineColorFileManager = 2,
-    RKEngineColorTransceiver = 12,
-    RKEngineColorPedestalRelayPedzy = 10,
+    RKEngineColorTransceiver = 13,
+    RKEngineColorPedestalRelayPedzy = 11,
     RKEngineColorHealthRelayTweeta = 0,
-    RKEngineColorRadarRelay = 12,
-    RKEngineColorHostMonitor = 11,
-    RKEngineColorClock = 14,
-    RKEngineColorMisc = 15,
-    RKEngineColorEngineMonitor = 14,
+    RKEngineColorRadarRelay = 13,
+    RKEngineColorHostMonitor = 12,
+    RKEngineColorClock = 15,
+    RKEngineColorMisc = 16,
+    RKEngineColorEngineMonitor = 15,
     RKEngineColorConfig = 6
 };
 

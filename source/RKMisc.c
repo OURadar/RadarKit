@@ -25,11 +25,27 @@ char *RKGetBackgroundColor(void) {
 }
 
 char *RKGetBackgroundColorOfIndex(const int i) {
-    const uint8_t colors[] = {210, 197, 202, 178, 136, 70, 28, 30, 39, 27, 99, 57, 90, 162, 241, 236};
-    static int k = 3;
+    const uint8_t colors[] = {
+        210, 197, 202, 130, 136,
+         70,  28,  22,  30,  39,
+         27,  99,  57,  90, 162,
+        241, 236
+    };
+    static int s = 3;
     static char str[4][32];
-    k = k == 3 ? 0 : k + 1;
-    snprintf(str[k], 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
+    s = s == 3 ? 0 : s + 1;
+    snprintf(str[s], 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
+    return str[s];
+}
+
+char *RKGetBackgroundColorOfCubeIndex(const int c) {
+    int i = (c / 100) % 10;
+    int j = (c / 10) % 10;
+    int k = c % 10;
+    static int s = 3;
+    static char str[4][32];
+    s = s == 3 ? 0 : s + 1;
+    snprintf(str[k], 31, "\033[1;97;48;5;%dm", 16 + i * 36 + j * 6 + k);
     return str[k];
 }
 
