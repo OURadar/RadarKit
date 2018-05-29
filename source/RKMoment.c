@@ -444,8 +444,8 @@ static void *momentCore(void *in) {
             // At this point, gateSizeMeters is no longer the spacing of raw pulse, it has been down-sampled according to pulseToRayRatio
             gateSizeMeters = E->header.gateSizeMeters;
             if (engine->verbose > 1) {
-                RKLog("%s %s RCor @ %.2f/%.2f/%.2f dB   filterCount = %d   capacity = %s   C%02d\n",
-                      engine->name, name, config->ZCal[0][0], config->ZCal[1][0], config->DCal[0],
+                RKLog("%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
+                      engine->name, name,
                       config->filterCount,
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);

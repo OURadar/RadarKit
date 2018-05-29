@@ -145,6 +145,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 if (filterCount == 0 || ZCal == NULL) {
                     break;
                 }
+                newConfig->filterCount = filterCount;
                 for (j = 0; j < filterCount; j++) {
                     newConfig->ZCal[j][0] = ZCal[j][0];
                     newConfig->ZCal[j][1] = ZCal[j][1];

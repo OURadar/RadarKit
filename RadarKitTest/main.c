@@ -40,6 +40,7 @@ typedef struct user_params {
     int                     controlCount;
     RKWaveformCalibration   calibrations[CAL_COUNT];      // Waveform specific calibration factors
     int                     calibrationCount;
+    uint8_t                 engineVerbose[256];
 } UserParams;
 
 // Global variables
@@ -353,6 +354,7 @@ static void updateUserParametersFromCommandLine(UserParams *user, int argc, cons
         {"clock"             , no_argument      , NULL, 'C'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
+        {"engine-verbose"    , required_argument, NULL, 'V'},
         {"azimuth"           , required_argument, NULL, 'a'},    // ASCII 97 - 122 : a - z
         {"bandwidth"         , required_argument, NULL, 'b'},
         {"core"              , required_argument, NULL, 'c'},
@@ -536,6 +538,13 @@ static void updateUserParametersFromCommandLine(UserParams *user, int argc, cons
                         break;
                 }
                 exit(EXIT_SUCCESS);
+                break;
+            case 'V':
+                c = optarg;
+                do {
+                    //printf("-> %c\n", *c);
+                    user->engineVerbose[(int)*c]++;
+                } while (*++c != '\0');
                 break;
             case 'b':
                 user->fs = roundf(atof(optarg));
@@ -751,6 +760,8 @@ static void handlePreferenceFileUpdate(void *in) {
 
 int main(int argc, const char **argv) {
 
+    int i;
+
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
@@ -784,6 +795,19 @@ int main(int argc, const char **argv) {
     }
 
     RKSetVerbose(myRadar, user->verbose);
+    for (i = 0; i < 256; i++) {
+        switch (i) {
+            case 'm':
+                RKMomentEngineSetVerbose(myRadar->momentEngine, user->verbose + user->engineVerbose[i]);
+                break;
+            case 'p':
+                RKPulseCompressionEngineSetVerbose(myRadar->pulseCompressionEngine, user->verbose + user->engineVerbose[i]);
+                break;
+            default:
+                break;
+        }
+    }
+
     //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
     RKSetMomentProcessorToMultiLag(myRadar, 3);
     //RKSetMomentProcessorToPulsePairHop(myRadar);
@@ -807,7 +831,6 @@ int main(int argc, const char **argv) {
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
-    int i;
     RKName cmd = "";
     
     if (user->simulate) {
