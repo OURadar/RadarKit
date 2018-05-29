@@ -808,13 +808,6 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateFileRecorderInitialized) {
         RKDataRecorderFree(radar->dataRecorder);
     }
-    // Internal copies of things
-    if (radar->waveform) {
-        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Freeing waveform '%s' with %d group%s.\n", radar->waveform->name, radar->waveform->count, radar->waveform->count > 1 ? "s" : "");
-        }
-        RKWaveformFree(radar->waveform);
-    }
     // Transceiver, pedestal & health relay
     if (radar->pedestal) {
         radar->pedestalFree(radar->pedestal);
@@ -824,6 +817,13 @@ int RKFree(RKRadar *radar) {
     }
     if (radar->healthRelay) {
         radar->healthRelayFree(radar->healthRelay);
+    }
+    // Internal copies of things
+    if (radar->waveform) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Freeing waveform '%s' with %d group%s.\n", radar->waveform->name, radar->waveform->count, radar->waveform->count > 1 ? "s" : "");
+        }
+        RKWaveformFree(radar->waveform);
     }
     // Buffers
     if (radar->desc.initFlags & RKInitFlagVerbose) {
@@ -1079,7 +1079,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKAddConfig(radar,
                     RKConfigKeyWaveform, waveform->name,
                     RKConfigKeyFilterAnchors, waveform->filterCounts[0], waveform->filterAnchors,
-                    RKConfigKeyZCals, waveform->filterCounts[0], waveformCalibration->ZCal,
+                    RKConfigKeyWaveformCalibration, waveformCalibration,
                     RKConfigKeyNull);
 
     } else {

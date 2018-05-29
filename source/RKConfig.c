@@ -103,6 +103,10 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 				newConfig->systemDCal = (RKFloat)va_arg(args, double);
 				sprintf(stringBuffer[0], "SystemDCal = %.2f dB", newConfig->systemDCal);
 				break;
+            case RKConfigKeySystemPCal:
+                newConfig->systemPCal = (RKFloat)va_arg(args, double);
+                sprintf(stringBuffer[0], "SystemPCal = %.2f rad", newConfig->systemPCal);
+                break;
             case RKConfigKeyZCal:
                 newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
                 newConfig->ZCal[1][0] = (RKFloat)va_arg(args, double);
@@ -130,12 +134,14 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 sprintf(stringBuffer[0], "PCal[2] = %.2f %.2f rad", newConfig->PCal[0], newConfig->PCal[1]);
                 break;
             case RKConfigKeyWaveformCalibration:
+                // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 waveformCal = (RKWaveformCalibration *)va_arg(args, void *);
                 for (j = 0; j < waveformCal->count; j++) {
                     newConfig->ZCal[j][0] = waveformCal->ZCal[j][0];
                     newConfig->ZCal[j][1] = waveformCal->ZCal[j][1];
                     newConfig->DCal[j] = waveformCal->DCal[j];
                     newConfig->PCal[j] = waveformCal->PCal[j];
+                    sprintf(stringBuffer[j], "%d:ZCal = (%.2f, %.2f) dB   DCal = %.2f dB   PCal = %.2f rad", j, newConfig->ZCal[j][0], newConfig->ZCal[j][1], newConfig->DCal[j], newConfig->PCal[j]);
                 }
                 break;
             case RKConfigKeyZCals:
@@ -146,7 +152,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     break;
                 }
                 newConfig->filterCount = filterCount;
-                for (j = 0; j < filterCount; j++) {
+                for (j = 0; j < newConfig->filterCount; j++) {
                     newConfig->ZCal[j][0] = ZCal[j][0];
                     newConfig->ZCal[j][1] = ZCal[j][1];
                     sprintf(stringBuffer[j], "ZCal[%d] = (%.2f, %.2f) dB", j, newConfig->ZCal[j][0], newConfig->ZCal[j][1]);
@@ -186,6 +192,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 if (filterCount == 0 || filterAnchor == NULL) {
                     break;
                 }
+                newConfig->filterCount = filterCount;
                 memcpy(newConfig->filterAnchors, filterAnchor, filterCount * sizeof(RKFilterAnchor));
                 for (j = 0; j < filterCount; j++) {
                     sprintf(stringBuffer[j], "Filter[%d] @ i:%d, o:%d, d:%d   %.2f dB",

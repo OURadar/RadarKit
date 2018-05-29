@@ -142,14 +142,14 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
             *Ko++ = NAN;
             *Ro++ = NAN;
         }
-        Si ++;
-        Zi ++;
-        Vi ++;
-        Wi ++;
-        Di ++;
-        Pi ++;
-        Ki ++;
-        Ri ++;
+        Si++;
+        Zi++;
+        Vi++;
+        Wi++;
+        Di++;
+        Pi++;
+        Ki++;
+        Ri++;
     }
     // Record down the down-sampled gate count
     ray->header.gateCount = k;
@@ -247,7 +247,7 @@ static void *momentCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
     RKMomentEngine *engine = me->parentEngine;
 
-    int i, k;
+    int i, k, p;
     struct timeval t0, t1, t2;
 
     // My ID that is suppose to be constant
@@ -458,24 +458,28 @@ static void *momentCore(void *in) {
             for (k = 0; k < config->filterCount; k++) {
                 for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
                     r = (RKFloat)i * gateSizeMeters;
-                    space->rcor[0][i] = 20.0f * log10f(r) + config->systemZCal[0] + config->ZCal[0][k] - config->filterAnchors[k].sensitivityGain - f;
-                    space->rcor[1][i] = 20.0f * log10f(r) + config->systemZCal[1] + config->ZCal[1][k] - config->filterAnchors[k].sensitivityGain - f;
+                    for (p = 0; p < 2; p++) {
+                        space->rcor[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - config->filterAnchors[k].sensitivityGain - f;
+                    }
+                    space->dcal[i] = config->systemDCal + config->DCal[k];
+                    space->pcal[i] = config->systemPCal + config->PCal[k];
                 }
                 if (engine->verbose > 1) {
-                    RKLog(">%s %s ZCal[%d] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
-                          engine->name, name, k,
-                          config->systemZCal[0],
-                          config->ZCal[0][k],
-                          config->filterAnchors[k].sensitivityGain,
-                          f,
-                          config->ZCal[0][k] + config->systemZCal[0] - config->filterAnchors[k].sensitivityGain - f,
-                          config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+                    for (p = 0; p < 2; p++) {
+                        RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
+                              engine->name, name, k,
+                              p == 0 ? "H" : (p == 1 ? "V" : "-"),
+                              config->systemZCal[p],
+                              config->ZCal[k][p],
+                              config->filterAnchors[k].sensitivityGain,
+                              f,
+                              config->ZCal[k][p] + config->systemZCal[p] - config->filterAnchors[k].sensitivityGain - f,
+                              config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+                    }
                 }
             }
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
-            space->dcal = config->DCal[0];
-            space->pcal = config->PCal[0];
             space->SNRThreshold = config->SNRThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
             space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);

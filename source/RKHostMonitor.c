@@ -120,7 +120,7 @@ static void *hostPinger(void *in) {
     // Resolve my host
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
     if (hostname == NULL) {
-        RKLog("%s %s Unable to resolve %s.", engine->name, name, engine->hosts[c]);
+        RKLog("%s %s Error. Unable to resolve %s.", engine->name, name, engine->hosts[c]);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
         return NULL;

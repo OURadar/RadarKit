@@ -455,6 +455,7 @@ enum RKConfigKey {
     RKConfigKeyNoise,
     RKConfigKeySystemZCal,
     RKConfigKeySystemDCal,
+    RKConfigKeySystemPCal,
     RKConfigKeyZCal,
     RKConfigKeyDCal,
     RKConfigKeyPCal,
@@ -676,7 +677,8 @@ typedef struct rk_config {
     RKFloat          noise[2];                                       // Noise floor (ADU)
     RKFloat          systemZCal[2];                                  // System-wide reflectivity calibration (dB)
     RKFloat          systemDCal;                                     // System-wide differential reflectivity calibration (dB)
-    RKFloat          ZCal[2][RKMaxFilterCount];                      // Waveform Z calibration (dB)
+    RKFloat          systemPCal;                                     // System-wide phase calibration (rad)
+    RKFloat          ZCal[RKMaxFilterCount][2];                      // Waveform Z calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // Waveform ZDR calibration (dB)
     RKFloat          PCal[RKMaxFilterCount];                         // Waveform Phase calibration
     RKFloat          SNRThreshold;                                   // Censor SNR (dB)
@@ -839,8 +841,8 @@ typedef struct rk_scratch {
     RKFloat          velocityFactor;                                 // Velocity factor to multiply by atan2(R(1))
     RKFloat          widthFactor;                                    // Width factor to multiply by the ln(S/|R(1)|) : 
     RKFloat          KDPFactor;                                      // Normalization factor of 1.0 / gateWidth in kilometers
-    RKFloat          dcal;                                           // Calibration offset to D
-    RKFloat          pcal;                                           // Calibration offset to P (radians)
+    RKFloat          *dcal;                                          // Calibration offset to D
+    RKFloat          *pcal;                                          // Calibration offset to P (radians)
     RKFloat          SNRThreshold;                                   // SNR threshold for masking
     RKFloat          *rcor[2];                                       // Reflectivity range correction factor
     RKFloat          *S[2];                                          // Signal

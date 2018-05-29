@@ -16,7 +16,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
     const RKVec one_pf = _rk_mm_set1_pf(1.0f);
     const RKVec tiny_pf = _rk_mm_set1_pf(1.0e-3f);
-    const RKVec dcal_pf = _rk_mm_set1_pf(space->dcal);
+    //const RKVec dcal_pf = _rk_mm_set1_pf(space->dcal);
     RKVec n_pf;
     RKFloat *s;
     RKFloat *z;
@@ -30,6 +30,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     RKVec *r_pf;
     RKVec *q_pf;
     RKVec *a_pf;
+    RKVec *d_pf;
     RKFloat *ri;
     RKFloat *rq;
     int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
@@ -98,9 +99,11 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     v_pf = (RKVec *)space->SNR[1];
     a_pf = (RKVec *)space->Z[0];
     w_pf = (RKVec *)space->Z[1];
+    d_pf = (RKVec *)space->dcal;
     for (k = 0; k < K; k++) {
         // D: Zh - Zv + DCal
-        *z_pf = _rk_mm_add_pf(_rk_mm_sub_pf(*a_pf, *w_pf), dcal_pf);
+        //*z_pf = _rk_mm_add_pf(_rk_mm_sub_pf(*a_pf, *w_pf), dcal_pf);
+        *z_pf = _rk_mm_add_pf(_rk_mm_sub_pf(*a_pf, *w_pf), *d_pf);
         // R: |C[0]| * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
         *r_pf = _rk_mm_mul_pf(_rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*h_pf)), _rk_mm_add_pf(one_pf, _rk_mm_rcp_pf(*v_pf)));
         *r_pf = _rk_mm_mul_pf(*s_pf, _rk_mm_sqrt_pf(*r_pf));
@@ -113,14 +116,17 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
         v_pf++;
         r_pf++;
         s_pf++;
+        d_pf++;
     }
     s = space->PhiDP;
     v = space->KDP;
+    w = space->pcal;
     ri = space->C[0].i;
     rq = space->C[0].q;
     s[0] = atan2f(*rq++, *ri++);
     for (k = 1; k < gateCount; k++) {
-        s[k] = atan2f(*rq++, *ri++) + space->pcal;
+        //s[k] = atan2f(*rq++, *ri++) + space->pcal;
+        s[k] = atan2f(*rq++, *ri++) + *w++;
         if (s[k] < -M_PI) {
             s[k] += 2.0f * M_PI;
         } else if (s[k] >= M_PI) {
