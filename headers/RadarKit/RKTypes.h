@@ -675,12 +675,12 @@ typedef struct rk_config {
     uint32_t         gateCount[RKMaxFilterCount];                    // Number of range gates
     uint32_t         waveformId[RKMaxFilterCount];                   // Transmit waveform
     RKFloat          noise[2];                                       // Noise floor (ADU)
-    RKFloat          systemZCal[2];                                  // System-wide reflectivity calibration (dB)
-    RKFloat          systemDCal;                                     // System-wide differential reflectivity calibration (dB)
+    RKFloat          systemZCal[2];                                  // System-wide Z calibration (dB)
+    RKFloat          systemDCal;                                     // System-wide ZDR calibration (dB)
     RKFloat          systemPCal;                                     // System-wide phase calibration (rad)
     RKFloat          ZCal[RKMaxFilterCount][2];                      // Waveform Z calibration (dB)
     RKFloat          DCal[RKMaxFilterCount];                         // Waveform ZDR calibration (dB)
-    RKFloat          PCal[RKMaxFilterCount];                         // Waveform Phase calibration
+    RKFloat          PCal[RKMaxFilterCount];                         // Waveform phase calibration (rad)
     RKFloat          SNRThreshold;                                   // Censor SNR (dB)
     RKName           waveform;                                       // Waveform name
     RKName           vcpDefinition;                                  // Volume coverage pattern
