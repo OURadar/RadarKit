@@ -508,7 +508,9 @@ void *RKTestTransceiverRunLoop(void *input) {
     int16_t noise;
 
     float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
+    memset(ra, 0, transceiver->gateCount * sizeof(float));
     int16_t *rn = (int16_t *)malloc(transceiver->gateCount * sizeof(int16_t));
+    memset(rn, 0, transceiver->gateCount * sizeof(int16_t));
     for (g = 0; g < transceiver->gateCount; g++) {
         r = (float)g * transceiver->gateSizeMeters * 0.1f;
         a = 600.0f * (cos(0.001f * r)
@@ -921,7 +923,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKWaveformSummary(waveform);
                     k = round(waveform->fs / transceiver->fs);
                     if (k > 1) {
-                        RKLog("%s Adjusting waveform to RX sampling rate = %.2f MHz (x %d) ...\n", transceiver->name, 1.0e-6 * transceiver->fs, k);
+                        RKLog("%s Adjusting waveform to RX sampling rate = %.2f MHz (x %d)    pw = %.2f us ...\n", transceiver->name, 1.0e-6 * transceiver->fs, k, 1.0e6 * pulsewidth);
                         RKWaveformDownConvert(waveform);
                         RKWaveformDecimate(waveform, k);
                     }

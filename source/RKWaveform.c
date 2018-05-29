@@ -318,9 +318,9 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
     k = sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, waveform->count == 1 ? 1 : waveform->count / 2);
     pw = 1.0e6 * waveform->depth / waveform->fs;
     if (pw < 1.0) {
-        k += sprintf(waveform->name + k, ".%.0f", round(10.0 * pw));
+        sprintf(waveform->name + k, ".%.0f", round(10.0 * pw));
     } else if (pw > 1.000001) {
-        k += sprintf(waveform->name + k, "%.0f", pw);
+        sprintf(waveform->name + k, "%.0f", pw);
     }
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);

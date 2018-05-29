@@ -233,7 +233,7 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
         }
     }
     if (verb) {
-        RKLog(">%s\n", string);
+        RKLog(">%s  (k = %d / %d)\n", string, k, RKNameLength);
     }
     return RKResultSuccess;
 }
@@ -252,7 +252,6 @@ int RWaveformCalibrationFromPreferenceObject(RKWaveformCalibration *calibration,
     char *c;
     n = sscanf(object->valueString, "%s %" SCNu8, calibration->name, &calibration->count);
     if (n != 2) {
-        n = 1;
         RKLog("Error. Unable to parse waveform calibration.");
         return RKResultIncompleteWaveformCalibration;
     }
