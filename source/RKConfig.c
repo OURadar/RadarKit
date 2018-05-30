@@ -195,8 +195,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->filterCount = filterCount;
                 memcpy(newConfig->filterAnchors, filterAnchor, filterCount * sizeof(RKFilterAnchor));
                 for (j = 0; j < filterCount; j++) {
-                    sprintf(stringBuffer[j], "Filter[%d] @ i:%d, o:%d, d:%d   %.2f dB",
-                            j,
+                    sprintf(stringBuffer[j], "Filter[%d/%d] @ i:%d, o:%d, d:%d   %.2f dB",
+                            j, newConfig->filterCount,
                             newConfig->filterAnchors[j].inputOrigin,
                             newConfig->filterAnchors[j].outputOrigin,
                             newConfig->filterAnchors[j].maxDataLength,

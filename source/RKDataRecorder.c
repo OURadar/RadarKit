@@ -238,7 +238,7 @@ RKDataRecorder *RKDataRecorderInit(void) {
     }
     memset(engine, 0, sizeof(RKDataRecorder));
     sprintf(engine->name, "%s<RawDataRecorder>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(8) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorDataRecorder) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKDataRecorderSetCacheSize(engine, RKDataRecorderDefaultCacheSize);
     engine->state = RKEngineStateAllocated;
     engine->maximumRecordDepth = RKDataRecorderDefaultMaximumRecorderDepth;

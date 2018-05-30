@@ -281,6 +281,9 @@ RKHealthLogger *RKHealthLoggerInit() {
 }
 
 void RKHealthLoggerFree(RKHealthLogger *engine) {
+    if (engine->state & RKEngineStateActive) {
+        RKHealthLoggerStop(engine);
+    }
     free(engine);
 }
 
@@ -330,6 +333,10 @@ int RKHealthLoggerStop(RKHealthLogger *engine) {
         if (engine->verbose > 1) {
             RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
         }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (!(engine->state & RKEngineStateActive)) {
+        RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
     if (engine->verbose) {

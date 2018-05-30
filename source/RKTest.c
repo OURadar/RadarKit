@@ -971,12 +971,12 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             if (strlen(transceiver->defaultWaveform) == 0) {
                 sprintf(transceiver->defaultWaveform, "s01");
             }
-            snprintf(transceiver->customCommand, RKNameLength - 1, "w %s" RKEOL, transceiver->defaultWaveform);
+            snprintf(transceiver->customCommand, RKNameLength + 15, "w %s" RKEOL, transceiver->defaultWaveform);
             radar->transceiverExec(radar->transceiver, transceiver->customCommand, radar->transceiverResponse);
             if (strlen(transceiver->defaultPedestalMode) == 0) {
                 sprintf(transceiver->defaultPedestalMode, "ppi 3 90");
             }
-            snprintf(transceiver->customCommand, RKNameLength - 1, "p %s" RKEOL, transceiver->defaultPedestalMode);
+            snprintf(transceiver->customCommand, RKNameLength + 15, "p %s" RKEOL, transceiver->defaultPedestalMode);
             radar->pedestalExec(radar->pedestal, transceiver->customCommand, radar->pedestalResponse);
             if (response != NULL) {
                 sprintf(response, "ACK. Everything goes." RKEOL);
