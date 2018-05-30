@@ -162,18 +162,16 @@ static void *hostPinger(void *in) {
         return NULL;
     }
     
-    if (engine->verbose) {
-        RKLog(">%s %s Started.   host = %s (%d.%d.%d.%d)   sd = %d\n",
-              engine->name,
-              name,
-              engine->hosts[c],
-              (targetAddress.sin_addr.s_addr & 0xff),
-              (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
-              (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
-              (targetAddress.sin_addr.s_addr & 0xff000000) >> 24,
-              sd);
-    }
-    
+    RKLog(">%s %s Started.   host = %s (%d.%d.%d.%d)   sd = %d\n",
+          engine->name,
+          name,
+          engine->hosts[c],
+          (targetAddress.sin_addr.s_addr & 0xff),
+          (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
+          (targetAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
+          (targetAddress.sin_addr.s_addr & 0xff000000) >> 24,
+          sd);
+
     me->tic = 1;
     me->sequenceNumber = 1;
     me->identifier = rand() & 0xffff;
@@ -395,9 +393,7 @@ static void *hostWatcher(void *in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
-    }
+    RKLog("%s Started.   mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
@@ -524,9 +520,7 @@ void RKHostMonitorAddHost(RKHostMonitor *engine, const char *address) {
 
 int RKHostMonitorStart(RKHostMonitor *engine) {
     //RKLog("%s %d %s", engine->name, engine->workerCount, engine->hosts[0]);
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidHostWatcher, NULL, hostWatcher, engine) != 0) {

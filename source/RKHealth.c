@@ -31,10 +31,8 @@ static void *healthConsolidator(void *_in) {
 	engine->state |= RKEngineStateActive;
 	engine->state ^= RKEngineStateActivating;
 
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
-    }
-    
+    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
@@ -218,9 +216,7 @@ int RKHealthEngineStart(RKHealthEngine *engine) {
         RKLog("%s Error. Not properly wired.\n", engine->name);
         return RKResultEngineNotWired;
     }
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidHealthConsolidator, NULL, healthConsolidator, engine)) {
@@ -244,9 +240,7 @@ int RKHealthEngineStop(RKHealthEngine *engine) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
 	if (engine->tidHealthConsolidator) {
@@ -256,9 +250,7 @@ int RKHealthEngineStop(RKHealthEngine *engine) {
 		RKLog("%s Invalid thread ID.\n", engine->name);
 	}
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

@@ -344,11 +344,9 @@ static void *momentCore(void *in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
     
-    if (engine->verbose) {
-        RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
-              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
-    }
-    
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
+
     pthread_mutex_unlock(&engine->coreMutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -669,10 +667,8 @@ static void *pulseGatherer(void *_in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
-    }
-    
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
+
 	// Increase the tic once to indicate the watcher is ready
 	engine->tic = 1;
 
@@ -909,9 +905,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseGatherer, NULL, pulseGatherer, engine) != 0) {
@@ -935,9 +929,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseGatherer) {
@@ -949,9 +941,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
 		RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

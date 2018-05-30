@@ -304,7 +304,7 @@ static void *pulseRingWatcher(void *_in) {
     engine->state ^= RKEngineStateSleep0;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    
+
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
@@ -531,9 +531,7 @@ int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     engine->workers = (RKPulseRingFilterWorker *)malloc(engine->coreCount * sizeof(RKPulseRingFilterWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseRingFilterWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseRingFilterWorker));
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseRingWatcher, engine) != 0) {
@@ -557,9 +555,7 @@ int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
 	if (engine->tidPulseWatcher) {
@@ -571,9 +567,7 @@ int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
 		RKLog("%s Invalid thread ID.\n", engine->name);
 	}
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

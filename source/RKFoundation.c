@@ -1157,18 +1157,14 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     if (engine->tid) {
         pthread_join(engine->tid, NULL);
     }
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

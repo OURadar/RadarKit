@@ -188,10 +188,8 @@ static void *pulseCompressionCore(void *_in) {
     pthread_mutex_lock(&engine->coreMutex);
     engine->memoryUsage += mem;
 
-    if (engine->verbose) {
-        RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
-              engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
-    }
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
+          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -461,9 +459,7 @@ static void *pulseWatcher(void *_in) {
 
     // Go through the maximum plan size and divide it by two a few times
     while (planSize >= MAX(pulse->header.capacity / 64, 32) && planIndex < RKPulseCompressionDFTPlanCount) {
-        if (engine->verbose) {
-            RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
-        }
+        RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
         gettimeofday(&t1, NULL);
         engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
         engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
@@ -533,9 +529,7 @@ static void *pulseWatcher(void *_in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    }
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
@@ -981,9 +975,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->workers = (RKPulseCompressionWorker *)malloc(engine->coreCount * sizeof(RKPulseCompressionWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->planCount = 0;
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
@@ -1008,9 +1000,7 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     if (engine->tidPulseWatcher) {
@@ -1022,9 +1012,7 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

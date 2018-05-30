@@ -562,7 +562,9 @@ void RKClientStart(RKClient *C, const bool waitForConnection) {
         return;
     }
     if (!waitForConnection) {
-        RKLog("%s Immediate return.\n", C->name);
+        if (C->verbose > 1) {
+            RKLog("%s Immediate return.\n", C->name);
+        }
         return;
     }
     while (C->state < RKClientStateConnecting) {
