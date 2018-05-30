@@ -118,7 +118,9 @@ static void *hostPinger(void *in) {
     }
 
     // Resolve my host
+    pthread_mutex_lock(&engine->mutex);
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
+    pthread_mutex_unlock(&engine->mutex);
     if (hostname == NULL) {
         RKLog("%s %s Error. Unable to resolve %s.", engine->name, name, engine->hosts[c]);
         me->hostStatus = RKHostStatusUnknown;

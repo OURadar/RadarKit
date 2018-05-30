@@ -219,6 +219,7 @@ void *theClient(void *in) {
                     break;
                 }
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
+                //RKLog("%s Warning C->state = %d   format = %d\n", C->name, C->state, C->format);
                 switch (C->format) {
 
                     case RKNetworkMessageFormatConstantSize:
@@ -288,6 +289,9 @@ void *theClient(void *in) {
                                 pthread_mutex_lock(&C->lock);
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;
+                                } else {
+                                    pthread_mutex_unlock(&C->lock);
+                                    break;
                                 }
                                 pthread_mutex_unlock(&C->lock);
                                 break;
@@ -391,13 +395,15 @@ void *theClient(void *in) {
                     close(C->sd);
                     fid = NULL;
                     continue;
-                } else if (C->state < RKClientStateDisconnecting && C->state != RKClientStateConnected) {
-                    if (C->verbose) {
-                        RKLog("%s Connected.\n", C->name);
+                } else {
+                    pthread_mutex_lock(&C->lock);
+                    if (C->state < RKClientStateDisconnecting && C->state != RKClientStateConnected) {
+                        if (C->verbose) {
+                            RKLog("%s Connected.\n", C->name);
+                        }
+                        C->state = RKClientStateConnected;
                     }
                     pthread_mutex_unlock(&C->lock);
-                    C->state = RKClientStateConnected;
-                    pthread_mutex_lock(&C->lock);
                 }
                 timeoutCount = 0;
                 C->recv(C);
@@ -568,7 +574,9 @@ void RKClientStart(RKClient *C, const bool waitForConnection) {
 void RKClientStop(RKClient *C) {
     if (C->state > RKClientStateCreating && C->state < RKClientStateDisconnecting) {
         RKLog("%s Disconnecting ...\n", C->name);
+        pthread_mutex_lock(&C->lock);
         C->state = RKClientStateDisconnecting;
+        pthread_mutex_unlock(&C->lock);
         pthread_join(C->threadId, NULL);
         pthread_attr_destroy(&C->threadAttributes);
         pthread_mutex_destroy(&C->lock);

@@ -1534,7 +1534,7 @@ int RKGoLive(RKRadar *radar) {
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
                     RKConfigKeySystemZCal, -27.0, -27.0,
-                    RKConfigKeyDCal, -0.5,
+                    RKConfigKeyDCal, -0.01,
                     RKConfigKeyNoise, 0.1, 0.1,
                     RKConfigKeyNull);
     }

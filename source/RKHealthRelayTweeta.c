@@ -111,11 +111,12 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
-        if (client->state < RKClientStateConnected) {
+        if (client->state != RKClientStateConnected) {
+            RKLog("%s Health Relay not connected for command '%s'.\n", client->name, command);
             if (response != NULL) {
                 sprintf(response, "NAK. Health Relay not connected." RKEOL);
             }
-            return RKResultIncompleteReceive;
+            return RKResultClientNotConnected;
         }
         int s = 0;
         uint32_t responseIndex = me->responseIndex;

@@ -247,6 +247,7 @@ enum RKResult {
     RKResultFailedToStartHostPinger,
     RKResultFailedToExecuteCommand,
 	RKResultFailedToAddHost,
+    RKResultClientNotConnected,
     RKResultRadarNotLive,
     RKResultNoRadar,
     RKResultSuccess = 0,

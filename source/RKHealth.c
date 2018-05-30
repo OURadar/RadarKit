@@ -70,7 +70,7 @@ static void *healthConsolidator(void *_in) {
                 if (++s % 20 == 0 && engine->verbose) {
                     i = sprintf(string, "indices = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
                     for (j = 1; j < desc->healthNodeCount; j++) {
-                        i += sprintf(string + i,  ", %02d", engine->healthNodes[j].active ? indices[j] : -1);
+                        i += sprintf(string + i,  " %02d", engine->healthNodes[j].active ? indices[j] : -1);
                     }
                     sprintf(string + i, "]");
                     RKLog("%s sleep 0/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
@@ -131,7 +131,7 @@ static void *healthConsolidator(void *_in) {
         if (engine->verbose > 1) {
             i = sprintf(string, "indices = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
             for (j = 1; j < desc->healthNodeCount; j++) {
-                i += sprintf(string + i,  ", %02d", engine->healthNodes[j].active ? indices[j] : -1);
+                i += sprintf(string + i,  " %02d", engine->healthNodes[j].active ? indices[j] : -1);
             }
             sprintf(string + i, "]");
             RKLog("%s %s   k = %d\n", engine->name, string, k);
@@ -139,7 +139,7 @@ static void *healthConsolidator(void *_in) {
             i = sprintf(string, "flags   = [%02x", engine->healthNodes[0].healths[n].flag);
             for (j = 1; j < desc->healthNodeCount; j++) {
                 n = indices[j];
-                i += sprintf(string + i,  ", %02x", engine->healthNodes[j].healths[n].flag);
+                i += sprintf(string + i,  " %02x", engine->healthNodes[j].healths[n].flag);
             }
             sprintf(string + i, "]");
             RKLog("%s %s   k = %d   s = %d\n", engine->name, string, k, s);
