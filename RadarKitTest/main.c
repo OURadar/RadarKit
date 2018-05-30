@@ -25,7 +25,7 @@ typedef struct user_params {
     int                     gateCount;                   // Number of gates (simulate mode)
     int                     sleepInterval;
     bool                    simulate;
-    bool                    writeFiles;
+    bool                    recordRawData;
     RKName                  pedzyHost;
     RKName                  tweetaHost;
     RKName                  relayHost;
@@ -288,6 +288,10 @@ UserParams *userParametersInit(void) {
     return user;
 }
 
+void userParametersFree(UserParams *user) {
+    free(user);
+}
+
 static void updateUserParametersFromPreferenceFile(UserParams *user) {
     int k, s;
     char string[1024];
@@ -342,6 +346,8 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
         k++;
     }
     user->calibrationCount = k;
+
+    RKPreferenceFree(userPreferences);
 }
 
 static void updateUserParametersFromCommandLine(UserParams *user, int argc, const char **argv) {
@@ -402,7 +408,7 @@ static void updateUserParametersFromCommandLine(UserParams *user, int argc, cons
         user->desc.initFlags |= RKInitFlagVerbose;
     } else if (user->verbose == 2) {
         user->desc.initFlags |= RKInitFlagVeryVerbose;
-    } else if (user->verbose == 3) {
+    } else if (user->verbose >= 3) {
         user->desc.initFlags |= RKInitFlagVeryVeryVerbose;
     }
 
@@ -661,7 +667,7 @@ static void updateUserParametersFromCommandLine(UserParams *user, int argc, cons
             case 'v':
                 break;
             case 'w':
-                user->writeFiles = true;
+                user->recordRawData = true;
                 break;
             case 'z':
                 if (optarg) {
@@ -728,7 +734,7 @@ static void updateRadarParameters(UserParams *user) {
     for (k = 0; k < user->calibrationCount; k++) {
         RKAddWaveformCalibration(myRadar, &user->calibrations[k]);
     }
-    RKConcludeControls(myRadar);
+    RKConcludeWaveformCalibrations(myRadar);
     
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, user->systemZCal[0], user->systemZCal[1],
@@ -770,7 +776,7 @@ int main(int argc, const char **argv) {
         RKSetWantColor(false);
     }
  
-    //UserParams *user = processInput(argc, argv);
+    // Initial user parameters
     UserParams *user = userParametersInit();
 
     // Update user parameters from preference file, then override by command line input
@@ -779,7 +785,7 @@ int main(int argc, const char **argv) {
 
     // Screen output based on verbosity level
     if (user->verbose) {
-        RKLog("Level II recording: %s\n", user->writeFiles ? "true" : "false");
+        RKLog("Level II recording: %s\n", user->recordRawData ? "true" : "false");
         if (user->verbose > 1) {
             printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
         }
@@ -821,7 +827,7 @@ int main(int argc, const char **argv) {
     
     // Set any parameters here:
     RKSetProcessingCoreCounts(myRadar, user->coresForPulseCompression, user->coresForProductGenerator);
-    if (!user->writeFiles) {
+    if (!user->recordRawData) {
         RKSetDoNotWrite(myRadar, true);
     }
     
@@ -954,6 +960,8 @@ int main(int argc, const char **argv) {
     RKCommandCenterFree(center);
     
     RKFree(myRadar);
-    
+
+    userParametersFree(user);
+
     return 0;
 }

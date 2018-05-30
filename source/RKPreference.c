@@ -178,7 +178,7 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
     }
     //printf("value = '%s'\n", object->valueString);
     RKName string;
-    int k = snprintf(string, RKNameLength, "Preference.%s", keyword);
+    int k = snprintf(string, RKNameLength, "%s", keyword);
     if (type == RKParameterTypeControl) {
         RKControl *control = (RKControl *)target;
         if (RKControlFromPreferenceObject(control, object)) {

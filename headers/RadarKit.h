@@ -10,11 +10,19 @@
 //
 //  █
 //
-//  1.2.9b - 5/31/2018
+//  1.2.10 - 6/30/2018
+//         -
+//
+//  1.2.9  - 5/31/2018
 //         - Added buffer overview, accessible through terminal
 //         - Added pulse status string, accessible through terminal
 //         - Improved RKSoftRestart()
 //         - Added RKBufferOverview() with color option
+//         - Added another state for pulse - RKPulseStatusRecorded
+//         - Added RKFileMonitor(), which can be used for pref.conf
+//         - Added the example simple-emulator
+//         - Added individual waveform calibration
+//         - New thinking for RKAddConfig() for ZCals and filterAnchors
 //
 //  1.2.8  - 4/31/2018
 //         - New stream types: RKSweep, RKSweepHeader and RKSweepRay
