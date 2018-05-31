@@ -343,9 +343,7 @@ static void *hostPinger(void *in) {
     }
     free(buff);
 
-    if (engine->verbose) {
-        RKLog(">%s %s Stopped.\n", engine->name, name);
-    }
+    RKLog(">%s %s Stopped.\n", engine->name, name);
     
     return NULL;
 }
@@ -544,9 +542,7 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     if (engine->tidHostWatcher) {
@@ -556,9 +552,7 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
         RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

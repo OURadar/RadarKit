@@ -402,9 +402,7 @@ static void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    if (engine->verbose) {
-        RKLog(">%s %s Stopped.\n", engine->name, name);
-    }
+    RKLog(">%s %s Stopped.\n", engine->name, name);
     
     return NULL;
 }
