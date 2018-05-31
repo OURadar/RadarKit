@@ -169,7 +169,17 @@ This example is extremely simple. Many optional arguments were set to NULL (exec
 
 ## Basic Usage on Signal Processing Space
 
-A seprate processing space to generate high-level products is implemented in Python.
+A seprate processing space to generate high-level products is implemented through [PyRadarKit], which is primarily housed at
+
+```
+https://git.arrc.ou.edu/radar/PyRadarKit.git
+```
+
+and
+
+```
+https://github.com/OURadar/PyRadarKit
+```
 
 
 Design Philosophy
@@ -189,7 +199,7 @@ Base radar products are generated on a ray-by-ray basis. Each ray is of type `RK
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
 [tweeto]: https://git.arrc.ou.edu/cheo4524/tweeto.git
 [iRadar]: https://arrc.ou.edu/tools
-
+[PyRadarKit]: https://git.arrc.ou.edu/radar/PyRadarKit.git
 
 Radar Struct
 ===
@@ -209,7 +219,6 @@ RKRadar *RKInitFull(void);               // For a high-performance system, PX-10
 RKRadar *RKInit(void);                   // Everything based on default settings, in between mean & lean
 int RKFree(RKRadar *radar);
 ```
-
 
 ### Properties
 
@@ -291,8 +300,7 @@ uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t productIndex);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 ```
 
-Hardware Routines
-===
+# Hardware Routines
 
 As mentioend previously, the initialization, execution and deallocation routines of the _transceiver_, _pedestal_, and _health relay_ must have a strict form, as follows. The intialization of the hardware must be in the form of
 
