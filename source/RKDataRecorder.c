@@ -71,9 +71,7 @@ static void *pulseRecorder(void *in) {
 	engine->state |= RKEngineStateActive;
 	engine->state ^= RKEngineStateActivating;
 
-	if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    }
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
@@ -310,9 +308,7 @@ int RKDataRecorderStart(RKDataRecorder *engine) {
         RKLog("%s Error. Not properly wired.\n", engine->name);
         return RKResultEngineNotWired;
     }
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseRecorder, NULL, pulseRecorder, engine) != 0) {
@@ -336,9 +332,7 @@ int RKDataRecorderStop(RKDataRecorder *engine) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
 	if (engine->tidPulseRecorder) {
@@ -348,9 +342,7 @@ int RKDataRecorderStop(RKDataRecorder *engine) {
 		RKLog("%s Invalid thread ID.\n", engine->name);
 	}
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

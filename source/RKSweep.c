@@ -471,10 +471,8 @@ static void *rayGatherer(void *in) {
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
-    if (engine->verbose) {
-        RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
-        RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
-    }
+    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
@@ -664,9 +662,7 @@ int RKSweepEngineStart(RKSweepEngine *engine) {
         RKLog("%s Error. Not properly wired.\n", engine->name);
         return RKResultEngineNotWired;
     }
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidRayGatherer, NULL, rayGatherer, engine) != 0) {
@@ -690,9 +686,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (engine->verbose) {
-        RKLog("%s Stopping ...\n", engine->name);
-    }
+    RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateActive;
     if (engine->tidRayGatherer) {
@@ -702,9 +696,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
-    if (engine->verbose) {
-        RKLog("%s Stopped.\n", engine->name);
-    }
+    RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
