@@ -671,8 +671,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        w4 += (w4 / 3);
-        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%%ds dB   %%+6.3f rad/s\n",
+        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   %%+6.3f rad/s\n",
                 (int)log10f((float)waveform->count) + 1,
                 (int)log10f((float)waveform->filterCounts[k] + 1),
                 (int)log10f((float)waveform->filterCounts[k] + 1),
@@ -711,7 +710,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                   RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
-                  RKFloatToCommaStyleString(waveform->filterAnchors[k][j].sensitivityGain),
+                  waveform->filterAnchors[k][j].sensitivityGain,
                   waveform->filterAnchors[k][j].subCarrierFrequency);
         }
     }

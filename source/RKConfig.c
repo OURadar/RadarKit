@@ -18,6 +18,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     uint32_t  j, k;
     char      *string;
     char      stringBuffer[RKMaxFilterCount][RKNameLength];
+    char      format[RKNameLength];
+    int       w0 = 0, w1 = 0, w2 = 0, w3 = 0;
 
     for (k = 0; k < RKMaxFilterCount; k++) {
         memset(stringBuffer[k], 0, RKNameLength * sizeof(char));
@@ -136,12 +138,28 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyWaveformCalibration:
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 waveformCal = (RKWaveformCalibration *)va_arg(args, void *);
+                w0 = 0;
+                w1 = 0;
+                w2 = 0;
+                for (j = 0; j < waveformCal->count; j++) {
+                    w0 = MAX(w0, (int)log10f(waveformCal->ZCal[j][0]));
+                    w0 = MAX(w0, (int)log10f(waveformCal->ZCal[j][1]));
+                    w1 = MAX(w1, (int)log10f(waveformCal->DCal[j]));
+                    w2 = MAX(w1, (int)log10f(waveformCal->PCal[j]));
+                }
+                sprintf(format, "WavCal[%%%dd/%%%dd] @ Z = %%+%d.2f, %%+%d.2f dB   D = %%+%d.2f dB   P = %%+%d.2f rad",
+                        (int)log10f((float)waveformCal->count) + 1,
+                        (int)log10f((float)waveformCal->count) + 1,
+                        w0 + 5,
+                        w0 + 5,
+                        w1 + 5,
+                        w2 + 5);
                 for (j = 0; j < waveformCal->count; j++) {
                     newConfig->ZCal[j][0] = waveformCal->ZCal[j][0];
                     newConfig->ZCal[j][1] = waveformCal->ZCal[j][1];
                     newConfig->DCal[j] = waveformCal->DCal[j];
                     newConfig->PCal[j] = waveformCal->PCal[j];
-                    sprintf(stringBuffer[j], "%d:ZCal = (%.2f, %.2f) dB   DCal = %.2f dB   PCal = %.2f rad", j, newConfig->ZCal[j][0], newConfig->ZCal[j][1], newConfig->DCal[j], newConfig->PCal[j]);
+                    sprintf(stringBuffer[j], format, j, waveformCal->count, newConfig->ZCal[j][0], newConfig->ZCal[j][1], newConfig->DCal[j], newConfig->PCal[j]);
                 }
                 break;
             case RKConfigKeyZCals:
@@ -152,10 +170,18 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     break;
                 }
                 newConfig->filterCount = filterCount;
+                w0 = 0;
+                for (j = 0; j < newConfig->filterCount; j++) {
+                    w0 = MAX(w0, (int)log10f(ZCal[j][0]));
+                }
+                sprintf(format, "ZCal[%%%dd] = (%%+%d.2f, %%+%d.2f) dB",
+                        (int)log10f((float)filterCount) + 1,
+                        w0 + 5,
+                        w0 + 5);
                 for (j = 0; j < newConfig->filterCount; j++) {
                     newConfig->ZCal[j][0] = ZCal[j][0];
                     newConfig->ZCal[j][1] = ZCal[j][1];
-                    sprintf(stringBuffer[j], "ZCal[%d] = (%.2f, %.2f) dB", j, newConfig->ZCal[j][0], newConfig->ZCal[j][1]);
+                    sprintf(stringBuffer[j], format, j, newConfig->ZCal[j][0], newConfig->ZCal[j][1]);
                 }
                 break;
             case RKConfigKeySNRThreshold:
@@ -194,14 +220,34 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 }
                 newConfig->filterCount = filterCount;
                 memcpy(newConfig->filterAnchors, filterAnchor, filterCount * sizeof(RKFilterAnchor));
+                w0 = 0;
+                w1 = 0;
+                w2 = 0;
+                w3 = 0;
                 for (j = 0; j < filterCount; j++) {
-                    sprintf(stringBuffer[j], "Filter[%d/%d] @ i:%d, o:%d, d:%d   %.2f dB",
+                    w0 = MAX(w0, (int)log10f((float)newConfig->filterAnchors[j].inputOrigin));
+                    w1 = MAX(w1, (int)log10f((float)newConfig->filterAnchors[j].outputOrigin));
+                    w2 = MAX(w2, (int)log10f((float)newConfig->filterAnchors[j].maxDataLength));
+                    w3 = MAX(w3, (int)log10f(fabsf(newConfig->filterAnchors[j].sensitivityGain)));
+                }
+                w0 += (w0 / 3);
+                w1 += (w1 / 3);
+                w2 += (w2 / 3);
+                w3 += (w3 / 3);
+                sprintf(format, "Filter[%%%dd/%%%dd] @ i:%%%ds, o:%%%ds, d:%%%ds   %%+%d.2f dB",
+                        (int)log10f((float)filterCount) + 1,
+                        (int)log10f((float)filterCount) + 1,
+                        w0 + 1,
+                        w1 + 1,
+                        w2 + 1,
+                        w3 + 5);
+                for (j = 0; j < filterCount; j++) {
+                    sprintf(stringBuffer[j], format,
                             j, newConfig->filterCount,
-                            newConfig->filterAnchors[j].inputOrigin,
-                            newConfig->filterAnchors[j].outputOrigin,
-                            newConfig->filterAnchors[j].maxDataLength,
+                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].inputOrigin),
+                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].outputOrigin),
+                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].maxDataLength),
                             newConfig->filterAnchors[j].sensitivityGain);
-                    
                 }
                 break;
             default:
@@ -210,7 +256,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
         }
         for (k = 0; k < RKMaxFilterCount; k++) {
             if (strlen(stringBuffer[k])) {
-                RKLog("%s<ParameterKeeper>%s C%02d %s   ConfigId = %s\n",
+                RKLog("%s<ParameterKeeper>%s C%02d %s   Id = %s\n",
                       rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       *configIndex,

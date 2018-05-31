@@ -124,14 +124,12 @@ static void *sweepWriter(void *in) {
         return NULL;
     }
     
-    if (engine->verbose) {
-        j = 0;
-        for (i = 0; i < engine->userProductIdCount; i++) {
-            j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
-        }
-        RKLog("%s Concluding sweep.   allReported = %s   %s",
-              engine->name, allReported ? "true" : "false", engine->summary);
+    j = 0;
+    for (i = 0; i < engine->userProductIdCount; i++) {
+        j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
     }
+    RKLog("%s Concluding sweep.   allReported = %s   %s",
+          engine->name, allReported ? "true" : "false", engine->summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -196,13 +194,13 @@ static void *sweepWriter(void *in) {
         
         if (engine->verbose > 1) {
             RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);
-        } else if (engine->verbose) {
-            if (p == 0) {
-                // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
-                summarySize = sprintf(engine->summary, "%s ...%s", engine->doNotWrite ? "Skipped" : "Created", RKLastTwoPartsOfPath(filename));
-            } else {
-                summarySize += sprintf(engine->summary + summarySize, ", %s", symbol);
-            }
+        }
+
+        if (p == 0) {
+            // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
+            summarySize = sprintf(engine->summary, "%s ...%s", engine->doNotWrite ? "Skipped" : "Created", RKLastTwoPartsOfPath(filename));
+        } else {
+            summarySize += sprintf(engine->summary + summarySize, ", %s", symbol);
         }
 
         if (engine->doNotWrite) {

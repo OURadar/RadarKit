@@ -350,7 +350,7 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     RKPreferenceFree(userPreferences);
 }
 
-static void updateUserParametersFromCommandLine(UserParams *user, int argc, const char **argv) {
+static void updateUserParametersFromCommandLine(UserParams *user, int argc, const char **argv, const bool firstPassOnly) {
     int k;
     char *c;
     
@@ -410,6 +410,11 @@ static void updateUserParametersFromCommandLine(UserParams *user, int argc, cons
         user->desc.initFlags |= RKInitFlagVeryVerbose;
     } else if (user->verbose >= 3) {
         user->desc.initFlags |= RKInitFlagVeryVeryVerbose;
+    }
+
+    // Early return if we are only interested in setting the verbosity flag
+    if (firstPassOnly) {
+        return;
     }
 
     // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
@@ -780,8 +785,9 @@ int main(int argc, const char **argv) {
     UserParams *user = userParametersInit();
 
     // Update user parameters from preference file, then override by command line input
+    updateUserParametersFromCommandLine(user, argc, argv, true);
     updateUserParametersFromPreferenceFile(user);
-    updateUserParametersFromCommandLine(user, argc, argv);
+    updateUserParametersFromCommandLine(user, argc, argv, false);
 
     // Screen output based on verbosity level
     if (user->verbose) {
