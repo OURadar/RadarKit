@@ -736,7 +736,6 @@ RKRadar *RKInitAsRelay(void) {
 //     RKResultSuccess if no errors
 //
 int RKFree(RKRadar *radar) {
-    int k = radar->desc.initFlags & RKInitFlagVerbose;
     if (radar->active) {
         RKStop(radar);
     }
@@ -797,9 +796,7 @@ int RKFree(RKRadar *radar) {
         RKWaveformFree(radar->waveform);
     }
     // Buffers
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKLog("Freeing radar '%s' ...\n", radar->desc.name);
-    }
+    RKLog("Freeing radar '%s' ...\n", radar->desc.name);
     if (radar->state & RKRadarStateStatusBufferInitialized) {
         free(radar->status);
     }
@@ -828,9 +825,7 @@ int RKFree(RKRadar *radar) {
         free(radar->waveformCalibrations);
     }
     free(radar);
-    if (k) {
-        RKLog("Done.");
-    }
+    RKLog("Done.");
     return RKResultSuccess;
 }
 
@@ -890,9 +885,7 @@ int RKSetHealthRelay(RKRadar *radar,
 // Property setters are self-explanatory so minimal descriptions are provided here
 //
 int RKSetVerbose(RKRadar *radar, const int verbose) {
-    if (verbose) {
-        RKLog("Setting verbose level to %d ...\n", verbose);
-    }
+    RKLog("Setting verbose level to %d ...\n", verbose);
     if (verbose == 1) {
         radar->desc.initFlags |= RKInitFlagVerbose;
     } else if (verbose == 2) {

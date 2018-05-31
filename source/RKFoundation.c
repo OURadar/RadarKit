@@ -621,9 +621,7 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *), 
     strncpy(engine->filename, filename, RKMaximumPathLength);
     engine->callbackRoutine = routine;
     engine->userResource = userResource;
-    if (engine->verbose) {
-        RKLog("%s Starting ...\n", engine->name);
-    }
+    RKLog("%s Starting ...\n", engine->name);
     if (pthread_create(&engine->tid, NULL, fileMonitorRunLoop, engine)) {
         RKLog("%s Error creating file monitor.\n", engine->name);
         free(engine);

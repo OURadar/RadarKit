@@ -925,7 +925,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKWaveformSummary(waveform);
                     k = round(waveform->fs / transceiver->fs);
                     if (k > 1) {
-                        RKLog("%s Adjusting waveform to RX sampling rate = %.2f MHz (x %d)    pw = %.2f us ...\n", transceiver->name, 1.0e-6 * transceiver->fs, k, 1.0e6 * pulsewidth);
+                        RKLog("%s Adjusting waveform to RX sampling rate = %.2f MHz (x %d)    pw = %.2f us\n", transceiver->name, 1.0e-6 * transceiver->fs, k, 1.0e6 * pulsewidth);
                         RKWaveformDownConvert(waveform);
                         RKWaveformDecimate(waveform, k);
                     }
