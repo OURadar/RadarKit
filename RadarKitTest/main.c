@@ -265,7 +265,7 @@ static void handleSignals(int signal) {
 
 #pragma mark - User Parameters
 
-UserParams *userParametersInit(void) {
+UserParams *systemPreferencesInit(void) {
     // A structure unit that encapsulates command line user parameters, Zero out everything and set some default parameters
     UserParams *user = (UserParams *)malloc(sizeof(UserParams));
     if (user == NULL) {
@@ -292,7 +292,7 @@ void userParametersFree(UserParams *user) {
     free(user);
 }
 
-static void updateUserParametersFromPreferenceFile(UserParams *user) {
+static void updateSystemPreferencesFromControlFile(UserParams *user) {
     int k, s;
     char string[1024];
 
@@ -350,7 +350,7 @@ static void updateUserParametersFromPreferenceFile(UserParams *user) {
     RKPreferenceFree(userPreferences);
 }
 
-static void updateUserParametersFromCommandLine(UserParams *user, int argc, const char **argv, const bool firstPassOnly) {
+static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, const char **argv, const bool firstPassOnly) {
     int k;
     char *c;
     
@@ -753,10 +753,10 @@ static void handlePreferenceFileUpdate(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
     UserParams *user = (UserParams *)engine->userResource;
     
-    RKLog("%s The preference file has been updated.  radar->state = %x.\n", engine->name, myRadar->state);
+    RKLog("%s Preference file '%s' update detected.  radar->state = %x.\n", engine->name, engine->filename, myRadar->state);
     
     // Update user parameters from preference file
-    updateUserParametersFromPreferenceFile(user);
+    updateSystemPreferencesFromControlFile(user);
     
     updateRadarParameters(user);
 }
@@ -771,7 +771,7 @@ static void handlePreferenceFileUpdate(void *in) {
 
 int main(int argc, const char **argv) {
 
-    int i;
+    int k;
 
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
@@ -782,17 +782,17 @@ int main(int argc, const char **argv) {
     }
  
     // Initial user parameters
-    UserParams *user = userParametersInit();
+    UserParams *systemPreferences = systemPreferencesInit();
 
     // Update user parameters from preference file, then override by command line input
-    updateUserParametersFromCommandLine(user, argc, argv, true);
-    updateUserParametersFromPreferenceFile(user);
-    updateUserParametersFromCommandLine(user, argc, argv, false);
+    updateSystemPreferencesFromCommandLine(systemPreferences, argc, argv, true);
+    updateSystemPreferencesFromControlFile(systemPreferences);
+    updateSystemPreferencesFromCommandLine(systemPreferences, argc, argv, false);
 
     // Screen output based on verbosity level
-    if (user->verbose) {
-        RKLog("Level II recording: %s\n", user->recordRawData ? "true" : "false");
-        if (user->verbose > 1) {
+    if (systemPreferences->verbose) {
+        RKLog("Level II recording: %s\n", systemPreferences->recordRawData ? "true" : "false");
+        if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
         }
     } else {
@@ -800,20 +800,26 @@ int main(int argc, const char **argv) {
     }
 
     // Initialize a radar object
-    myRadar = RKInitWithDesc(user->desc);
+    myRadar = RKInitWithDesc(systemPreferences->desc);
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate a radar.\n");
         exit(EXIT_FAILURE);
     }
 
-    RKSetVerbose(myRadar, user->verbose);
-    for (i = 0; i < 256; i++) {
-        switch (i) {
+    RKSetVerbose(myRadar, systemPreferences->verbose);
+    for (k = 0; k < 256; k++) {
+        switch (k) {
+            case 'a':
+                RKPositionEngineSetVerbose(myRadar->positionEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
+                break;
             case 'm':
-                RKMomentEngineSetVerbose(myRadar->momentEngine, user->verbose + user->engineVerbose[i]);
+                RKMomentEngineSetVerbose(myRadar->momentEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
                 break;
             case 'p':
-                RKPulseCompressionEngineSetVerbose(myRadar->pulseCompressionEngine, user->verbose + user->engineVerbose[i]);
+                RKPulseCompressionEngineSetVerbose(myRadar->pulseCompressionEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
+                break;
+            case 's':
+                RKSweepEngineSetVerbose(myRadar->sweepEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
                 break;
             default:
                 break;
@@ -824,7 +830,7 @@ int main(int argc, const char **argv) {
     RKSetMomentProcessorToMultiLag(myRadar, 3);
     //RKSetMomentProcessorToPulsePairHop(myRadar);
 
-    updateRadarParameters(user);
+    updateRadarParameters(systemPreferences);
     
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
@@ -832,42 +838,42 @@ int main(int argc, const char **argv) {
     signal(SIGKILL, handleSignals);
     
     // Set any parameters here:
-    RKSetProcessingCoreCounts(myRadar, user->coresForPulseCompression, user->coresForProductGenerator);
-    if (!user->recordRawData) {
+    RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
+    if (!systemPreferences->recordRawData) {
         RKSetDoNotWrite(myRadar, true);
     }
     
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
-    RKCommandCenterSetVerbose(center, user->verbose);
+    RKCommandCenterSetVerbose(center, systemPreferences->verbose);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
     RKName cmd = "";
     
-    if (user->simulate) {
+    if (systemPreferences->simulate) {
 
         // Now we use the frame work.
         // Build a series of options for transceiver, only pass down the relevant parameters
-        i = 0;
-        if (user->fs) {
-            i += sprintf(cmd + i, " F %.0f", user->fs);
+        k = 0;
+        if (systemPreferences->fs) {
+            k += sprintf(cmd + k, " F %.0f", systemPreferences->fs);
         }
-        if (user->prf) {
-            if (user->sprt > 1) {
-                i += sprintf(cmd + i, " f %.0f,%d", user->prf, user->sprt);
+        if (systemPreferences->prf) {
+            if (systemPreferences->sprt > 1) {
+                k += sprintf(cmd + k, " f %.0f,%d", systemPreferences->prf, systemPreferences->sprt);
             } else {
-                i += sprintf(cmd + i, " f %.0f", user->prf);
+                k += sprintf(cmd + k, " f %.0f", systemPreferences->prf);
             }
         }
-        if (user->gateCount) {
-            i += sprintf(cmd + i, " g %d", user->gateCount);
+        if (systemPreferences->gateCount) {
+            k += sprintf(cmd + k, " g %d", systemPreferences->gateCount);
         }
-        if (user->sleepInterval) {
-            i += sprintf(cmd + i, " z %d", user->sleepInterval);
+        if (systemPreferences->sleepInterval) {
+            k += sprintf(cmd + k, " z %d", systemPreferences->sleepInterval);
         }
-        if (user->verbose > 1) {
-            RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, i, RKIntegerToCommaStyleString(RKMaximumStringLength));
+        if (systemPreferences->verbose > 1) {
+            RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, k, RKIntegerToCommaStyleString(RKMaximumStringLength));
         }
         RKSetTransceiver(myRadar,
                          (void *)cmd,
@@ -876,12 +882,12 @@ int main(int argc, const char **argv) {
                          RKTestTransceiverFree);
 
         // Build a series of options for pedestal, only pass down the relevant parameters
-        if (strlen(user->pedzyHost)) {
-            if (user->verbose > 1) {
-                RKLog("Pedestal input = '%s'", user->pedzyHost);
+        if (strlen(systemPreferences->pedzyHost)) {
+            if (systemPreferences->verbose > 1) {
+                RKLog("Pedestal input = '%s'", systemPreferences->pedzyHost);
             }
             RKSetPedestal(myRadar,
-                          (void *)user->pedzyHost,
+                          (void *)systemPreferences->pedzyHost,
                           RKPedestalPedzyInit,
                           RKPedestalPedzyExec,
                           RKPedestalPedzyFree);
@@ -893,12 +899,12 @@ int main(int argc, const char **argv) {
                           RKTestPedestalFree);
         }
         
-        if (strlen(user->tweetaHost)) {
-            if (user->verbose > 1) {
-                RKLog("Health relay input = '%s'", user->tweetaHost);
+        if (strlen(systemPreferences->tweetaHost)) {
+            if (systemPreferences->verbose > 1) {
+                RKLog("Health relay input = '%s'", systemPreferences->tweetaHost);
             }
             RKSetHealthRelay(myRadar,
-                             (void *)user->tweetaHost,
+                             (void *)systemPreferences->tweetaHost,
                              RKHealthRelayTweetaInit,
                              RKHealthRelayTweetaExec,
                              RKHealthRelayTweetaFree);
@@ -920,7 +926,7 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
 
-        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, user);
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
         
         usleep(200000);
 
@@ -940,14 +946,14 @@ int main(int argc, const char **argv) {
 
         RKFileMonitorFree(preferenceFileMonitor);
 
-    } else if (user->desc.initFlags & RKInitFlagRelay) {
+    } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
 
-        RKRadarRelaySetHost(myRadar->radarRelay, user->relayHost);
+        RKRadarRelaySetHost(myRadar->radarRelay, systemPreferences->relayHost);
         RKSetDoNotWrite(myRadar, true);
 
         // Assembly a string that describes streams
-        if (strlen(user->streams)) {
-            RKRadarRelayUpdateStreams(myRadar->radarRelay, RKStreamFromString(user->streams));
+        if (strlen(systemPreferences->streams)) {
+            RKRadarRelayUpdateStreams(myRadar->radarRelay, RKStreamFromString(systemPreferences->streams));
         }
         
         // Radar going live, then wait indefinitely until something happens
@@ -967,7 +973,7 @@ int main(int argc, const char **argv) {
     
     RKFree(myRadar);
 
-    userParametersFree(user);
+    userParametersFree(systemPreferences);
 
     return 0;
 }
