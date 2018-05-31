@@ -539,7 +539,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->positionClock, tmpName);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
-        RKLog("positionLatency = %.3e\n", radar->desc.positionLatency);
+        RKLog("Position latency = %.3e s\n", radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);
         
         // Pulse compression engine
@@ -1505,7 +1505,7 @@ int RKGoLive(RKRadar *radar) {
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
                     RKConfigKeySystemZCal, -27.0, -27.0,
-                    RKConfigKeyDCal, -0.01,
+                    RKConfigKeySystemDCal, -0.01,
                     RKConfigKeyNoise, 0.1, 0.1,
                     RKConfigKeyNull);
     }

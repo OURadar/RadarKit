@@ -806,7 +806,9 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     char string[RKMaximumPathLength];
 
     if (!(radar->state & RKRadarStatePulseCompressionEngineInitialized)) {
-        RKLog("%s Error. No I/Q processors yet.", transceiver->name);
+        if (transceiver->verbose) {
+            RKLog("%s Warning. No I/Q processors for '%s'.", transceiver->name, command);
+        }
         if (response != NULL) {
             sprintf(response, "NAK. No I/Q processors yet." RKEOL);
         }

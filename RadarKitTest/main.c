@@ -36,7 +36,7 @@ typedef struct user_params {
     double                  systemPCal;                   // System calibration for P
     double                  noise[2];                     // System noise level
     double                  thresholdSNR;
-    RKControl               controls[CONTROL_COUNT];
+    RKControl               controls[CONTROL_COUNT];      // Controls for GUI
     int                     controlCount;
     RKWaveformCalibration   calibrations[CAL_COUNT];      // Waveform specific calibration factors
     int                     calibrationCount;
@@ -739,7 +739,7 @@ static void updateRadarParameters(UserParams *user) {
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, user->systemZCal[0], user->systemZCal[1],
                 RKConfigKeySystemDCal, user->systemDCal,
-                RKConfigKeyZCal2, 20.0f, 20.0f,
+                RKConfigKeySystemPCal, user->systemPCal,
                 RKConfigKeyNoise, user->noise[0], user->noise[1],
                 RKConfigKeyNull);
 }
@@ -916,7 +916,7 @@ int main(int argc, const char **argv) {
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, user);
         
-        usleep(1000000);
+        usleep(200000);
 
         RKLog("Setting a waveform ...\n");
         RKExecuteCommand(myRadar, "t w ofm", NULL);
