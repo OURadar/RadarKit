@@ -11,35 +11,32 @@
 
 #define ROOT_PATH                   "data"
 #define PREFERENCE_FILE             "pref.conf"
-#define CONTROL_COUNT               256
-#define CAL_COUNT                   4
 
 // User parameters in a struct
 typedef struct user_params {
-    int                     verbose;                     // Verbosity
-    int                     coresForPulseCompression;    // Number of cores for pulse compression
-    int                     coresForProductGenerator;    // Number of cores for moment calculations
-    float                   fs;                          // Raw gate sampling bandwidth
-    float                   prf;                         // Base PRF (Hz)
-    int                     sprt;                        // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
-    int                     gateCount;                   // Number of gates (simulate mode)
-    int                     sleepInterval;
-    bool                    simulate;
-    bool                    recordRawData;
+    RKRadarDesc             desc;
     RKName                  pedzyHost;
     RKName                  tweetaHost;
     RKName                  relayHost;
+    RKName                  momentMethod;
     RKName                  streams;
-    RKRadarDesc             desc;
-    double                  systemZCal[2];                // System calibration for Z
-    double                  systemDCal;                   // System calibration for D
-    double                  systemPCal;                   // System calibration for P
-    double                  noise[2];                     // System noise level
+    int                     verbose;                                             // Verbosity
+    int                     coresForPulseCompression;                            // Number of cores for pulse compression
+    int                     coresForProductGenerator;                            // Number of cores for moment calculations
+    float                   fs;                                                  // Raw gate sampling bandwidth
+    float                   prf;                                                 // Base PRF (Hz)
+    int                     sprt;                                                // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
+    int                     gateCount;                                           // Number of gates (simulate mode)
+    int                     sleepInterval;
+    bool                    simulate;
+    bool                    recordRawData;
+    double                  systemZCal[2];                                        // System calibration for Z
+    double                  systemDCal;                                           // System calibration for D
+    double                  systemPCal;                                           // System calibration for P
+    double                  noise[2];                                             // System noise level
     double                  thresholdSNR;
-    RKControl               controls[CONTROL_COUNT];      // Controls for GUI
-    int                     controlCount;
-    RKWaveformCalibration   calibrations[CAL_COUNT];      // Waveform specific calibration factors
-    int                     calibrationCount;
+    RKControl               controls[RKMaximumControlCount];                      // Controls for GUI
+    RKWaveformCalibration   calibrations[RKMaximumWaveformCalibrationCount];      // Waveform specific calibration factors
     uint8_t                 engineVerbose[256];
 } UserParams;
 
@@ -48,7 +45,7 @@ RKRadar *myRadar = NULL;
 
 // Functions
 void *exitAfterAWhile(void *s) {
-    sleep(3);
+    sleep(2);
     RKLog("Forced exit.\n");
     exit(EXIT_SUCCESS);
 }
@@ -319,18 +316,19 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     
     // Shortcuts
     k = 0;
-    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < CONTROL_COUNT) {
+    memset(user->controls, 0, RKMaximumControlCount * sizeof(RKControl));
+    while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < RKMaximumControlCount) {
         RKControlFromPreferenceObject(&user->controls[k], object);
         if (verb) {
             RKLog("'%s' '%s'\n", user->controls[k].label, user->controls[k].command);
         }
         k++;
     }
-    user->controlCount = k;
-    
+
     // Waveform calibrations
     k = 0;
-    while ((object = RKPreferenceFindKeyword(userPreferences, "WaveformCal")) != NULL && k < CAL_COUNT) {
+    memset(user->calibrations, 0, RKMaximumWaveformCalibrationCount * sizeof(RKWaveformCalibration));
+    while ((object = RKPreferenceFindKeyword(userPreferences, "WaveformCal")) != NULL && k < RKMaximumWaveformCalibrationCount) {
         RWaveformCalibrationFromPreferenceObject(&user->calibrations[k], object);
         if (verb) {
             s = snprintf(string, RKNameLength, "'%s' (%d)", user->calibrations[k].name, user->calibrations[k].count);
@@ -345,8 +343,6 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
         }
         k++;
     }
-    user->calibrationCount = k;
-
     RKPreferenceFree(userPreferences);
 }
 
@@ -729,15 +725,19 @@ static void updateRadarParameters(UserParams *user) {
     
     // Always refresh the controls
     RKClearControls(myRadar);
-    for (k = 0; k < user->controlCount; k++) {
+    k = 0;
+    while (user->controls[k].label[0] != '\0' && k < RKMaximumControlCount) {
         RKAddControl(myRadar, &user->controls[k]);
+        k++;
     }
     RKConcludeControls(myRadar);
     
     // Always refresh waveform calibrations
     RKClearWaveformCalibrations(myRadar);
-    for (k = 0; k < user->calibrationCount; k++) {
+    k = 0;
+    while (user->calibrations[k].name[0] != '\0' && k < RKMaximumWaveformCalibrationCount) {
         RKAddWaveformCalibration(myRadar, &user->calibrations[k]);
+        k++;
     }
     RKConcludeWaveformCalibrations(myRadar);
     
