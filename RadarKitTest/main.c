@@ -14,30 +14,30 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    RKRadarDesc             desc;
-    RKName                  pedzyHost;
-    RKName                  tweetaHost;
-    RKName                  relayHost;
-    RKName                  momentMethod;
-    RKName                  streams;
-    int                     verbose;                                             // Verbosity
-    int                     coresForPulseCompression;                            // Number of cores for pulse compression
-    int                     coresForProductGenerator;                            // Number of cores for moment calculations
-    float                   fs;                                                  // Raw gate sampling bandwidth
-    float                   prf;                                                 // Base PRF (Hz)
-    int                     sprt;                                                // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
-    int                     gateCount;                                           // Number of gates (simulate mode)
-    int                     sleepInterval;
-    bool                    simulate;
-    bool                    recordRawData;
-    double                  systemZCal[2];                                        // System calibration for Z
-    double                  systemDCal;                                           // System calibration for D
-    double                  systemPCal;                                           // System calibration for P
-    double                  noise[2];                                             // System noise level
-    double                  thresholdSNR;
-    RKControl               controls[RKMaximumControlCount];                      // Controls for GUI
-    RKWaveformCalibration   calibrations[RKMaximumWaveformCalibrationCount];      // Waveform specific calibration factors
-    uint8_t                 engineVerbose[256];
+    RKRadarDesc              desc;
+    RKName                   pedzyHost;
+    RKName                   tweetaHost;
+    RKName                   relayHost;
+    RKName                   momentMethod;
+    RKName                   streams;
+    int                      verbose;                                             // Verbosity
+    int                      coresForPulseCompression;                            // Number of cores for pulse compression
+    int                      coresForProductGenerator;                            // Number of cores for moment calculations
+    float                    fs;                                                  // Raw gate sampling bandwidth
+    float                    prf;                                                 // Base PRF (Hz)
+    int                      sprt;                                                // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
+    int                      gateCount;                                           // Number of gates (simulate mode)
+    int                      sleepInterval;
+    bool                     simulate;
+    bool                     recordRawData;
+    double                   systemZCal[2];                                        // System calibration for Z
+    double                   systemDCal;                                           // System calibration for D
+    double                   systemPCal;                                           // System calibration for P
+    double                   noise[2];                                             // System noise level
+    double                   thresholdSNR;
+    RKControl                controls[RKMaximumControlCount];                      // Controls for GUI
+    RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];      // Waveform specific calibration factors
+    uint8_t                  engineVerbose[256];
 } UserParams;
 
 // Global variables
@@ -302,17 +302,19 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     if (verb) {
         RKLog("Reading user preferences ...\n");
     }
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",       user->desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix", user->desc.filePrefix, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",   user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",  user->pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost", user->tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",   &user->desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",  &user->desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",    &user->desc.heading,   RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal", user->systemZCal,      RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal", &user->systemDCal,     RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",      user->noise,           RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",         user->desc.name,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",     user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod", user->momentMethod,    RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",   user->systemZCal,      RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",   &user->systemDCal,     RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",        user->noise,           RKParameterTypeDouble, 2);
     
     // Shortcuts
     k = 0;
@@ -737,7 +739,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
         int lagChoice = atoi(systemPreferences->momentMethod + 8);
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
-        RKLog("Setting moment processor to Multilag %d ...", lagChoice);
+        RKLog("Setting moment processor to %sMultilag %d%s ...",
+              rkGlobalParameters.showColor ? "\033[4m" : "",
+              lagChoice,
+              rkGlobalParameters.showColor ? "\033[24m" : "");
     } else {
         RKSetMomentProcessorToPulsePairHop(myRadar);
         RKLog("Moment Processor = Pulse Pair for Frequency Hopping\n");
