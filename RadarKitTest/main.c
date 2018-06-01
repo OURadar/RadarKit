@@ -832,25 +832,9 @@ int main(int argc, const char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    RKSetVerbose(myRadar, systemPreferences->verbose);
-    for (k = 0; k < 256; k++) {
-        switch (k) {
-            case 'a':
-                RKPositionEngineSetVerbose(myRadar->positionEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
-                break;
-            case 'm':
-                RKMomentEngineSetVerbose(myRadar->momentEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
-                break;
-            case 'p':
-                RKPulseCompressionEngineSetVerbose(myRadar->pulseCompressionEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
-                break;
-            case 's':
-                RKSweepEngineSetVerbose(myRadar->sweepEngine, systemPreferences->verbose + systemPreferences->engineVerbose[k]);
-                break;
-            default:
-                break;
-        }
-    }
+    // Verbosity
+    RKSetVerbosity(myRadar, systemPreferences->verbose);
+    RKSetVerbosityUsingArray(myRadar, systemPreferences->engineVerbose);
 
     // Update parameters for RadarKit
     updateRadarParameters(systemPreferences);

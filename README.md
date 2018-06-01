@@ -247,7 +247,7 @@ int RKSetHealthRelay(RKRadar *,
                      int freeRoutine(RKHealthRelay));
 
 // Some states of the radar
-int RKSetVerbose(RKRadar *radar, const int verbose);
+int RKSetVerbosity(RKRadar *radar, const int verbose);
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);

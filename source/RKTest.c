@@ -1420,7 +1420,7 @@ void RKTestPulseCompression(RKTestFlag flag) {
     
     // Increases verbosity if set
     if (flag & RKTestFlagVerbose) {
-        RKSetVerbose(radar, 1);
+        RKSetVerbosity(radar, 1);
     }
     
     RKGoLive(radar);

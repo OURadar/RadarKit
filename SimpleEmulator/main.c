@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
     RKCommandCenterAddRadar(center, myRadar);
     
     // Set some properties of the radar
-    RKSetVerbose(myRadar, 1);
+    RKSetVerbosity(myRadar, 1);
     RKSetDoNotWrite(myRadar, true);
 
     // Add some control buttons

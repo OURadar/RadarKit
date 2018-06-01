@@ -212,8 +212,9 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *);
 #pragma mark -
 
 // Some states of the radar
-int RKSetVerbose(RKRadar *, const int verbose);
-int RKSetDataPath(RKRadar *, const char *path);
+int RKSetVerbosity(RKRadar *, const int);
+int RKSetVerbosityUsingArray(RKRadar *, const uint8_t *);
+int RKSetDataPath(RKRadar *, const char *);
 int RKSetDataUsageLimit(RKRadar *, const size_t limit);
 int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
 int RKSetDataRecorder(RKRadar *, const bool record);
@@ -231,8 +232,8 @@ int RKSetPRF(RKRadar *, const uint32_t prf);
 uint32_t RKGetPulseCapacity(RKRadar *);
 
 // If there is a tic count from firmware, use it as clean reference for time derivation
-void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta);
-void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta);
+void RKSetPulseTicsPerSeconds(RKRadar *, const double);
+void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
 //
 // Interactions

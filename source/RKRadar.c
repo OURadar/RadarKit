@@ -884,7 +884,7 @@ int RKSetHealthRelay(RKRadar *radar,
 //
 // Property setters are self-explanatory so minimal descriptions are provided here
 //
-int RKSetVerbose(RKRadar *radar, const int verbose) {
+int RKSetVerbosity(RKRadar *radar, const int verbose) {
     RKLog("Setting verbose level to %d ...\n", verbose);
     if (verbose == 1) {
         radar->desc.initFlags |= RKInitFlagVerbose;
@@ -931,6 +931,29 @@ int RKSetVerbose(RKRadar *radar, const int verbose) {
     }
     if (radar->dataRecorder) {
         RKDataRecorderSetVerbose(radar->dataRecorder, verbose);
+    }
+    return RKResultNoError;
+}
+
+int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
+    int k;
+    for (k = 'a'; k < 's'; k++) {
+        switch (k) {
+            case 'a':
+                RKPositionEngineSetVerbose(myRadar->positionEngine, array[k]);
+                break;
+            case 'm':
+                RKMomentEngineSetVerbose(myRadar->momentEngine, array[k]);
+                break;
+            case 'p':
+                RKPulseCompressionEngineSetVerbose(myRadar->pulseCompressionEngine, array[k]);
+                break;
+            case 's':
+                RKSweepEngineSetVerbose(myRadar->sweepEngine, array[k]);
+                break;
+            default:
+                break;
+        }
     }
     return RKResultNoError;
 }
