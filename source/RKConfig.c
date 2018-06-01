@@ -138,6 +138,9 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyWaveformCalibration:
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 waveformCal = (RKWaveformCalibration *)va_arg(args, void *);
+                if (waveformCal == NULL) {
+                    return;
+                }
                 w0 = 0;
                 w1 = 0;
                 w2 = 0;
