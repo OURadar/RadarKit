@@ -719,15 +719,35 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
 
 #pragma mark - Radar Parameters
 
-static void updateRadarParameters(UserParams *user) {
+static void updateRadarParameters(UserParams *systemPreferences) {
     
     int k;
     
+    // Some parameters before the radar is live
+    if (!myRadar->active) {
+        RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
+        if (!systemPreferences->recordRawData) {
+            RKSetDoNotWrite(myRadar, true);
+        }
+        //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
+        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
+    }
+
+    // Moment methods
+    if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
+        int lagChoice = atoi(systemPreferences->momentMethod + 8);
+        RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
+        RKLog("Setting moment processor to Multilag %d ...", lagChoice);
+    } else {
+        RKSetMomentProcessorToPulsePairHop(myRadar);
+        RKLog("Moment Processor = Pulse Pair for Frequency Hopping\n");
+    }
+
     // Always refresh the controls
     RKClearControls(myRadar);
     k = 0;
-    while (user->controls[k].label[0] != '\0' && k < RKMaximumControlCount) {
-        RKAddControl(myRadar, &user->controls[k]);
+    while (systemPreferences->controls[k].label[0] != '\0' && k < RKMaximumControlCount) {
+        RKAddControl(myRadar, &systemPreferences->controls[k]);
         k++;
     }
     RKConcludeControls(myRadar);
@@ -735,17 +755,17 @@ static void updateRadarParameters(UserParams *user) {
     // Always refresh waveform calibrations
     RKClearWaveformCalibrations(myRadar);
     k = 0;
-    while (user->calibrations[k].name[0] != '\0' && k < RKMaximumWaveformCalibrationCount) {
-        RKAddWaveformCalibration(myRadar, &user->calibrations[k]);
+    while (systemPreferences->calibrations[k].name[0] != '\0' && k < RKMaximumWaveformCalibrationCount) {
+        RKAddWaveformCalibration(myRadar, &systemPreferences->calibrations[k]);
         k++;
     }
     RKConcludeWaveformCalibrations(myRadar);
     
     RKAddConfig(myRadar,
-                RKConfigKeySystemZCal, user->systemZCal[0], user->systemZCal[1],
-                RKConfigKeySystemDCal, user->systemDCal,
-                RKConfigKeySystemPCal, user->systemPCal,
-                RKConfigKeyNoise, user->noise[0], user->noise[1],
+                RKConfigKeySystemZCal, systemPreferences->systemZCal[0], systemPreferences->systemZCal[1],
+                RKConfigKeySystemDCal, systemPreferences->systemDCal,
+                RKConfigKeySystemPCal, systemPreferences->systemPCal,
+                RKConfigKeyNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeyNull);
 }
 
@@ -826,23 +846,14 @@ int main(int argc, const char **argv) {
         }
     }
 
-    //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-    RKSetMomentProcessorToMultiLag(myRadar, 3);
-    //RKSetMomentProcessorToPulsePairHop(myRadar);
-
+    // Update parameters for RadarKit
     updateRadarParameters(systemPreferences);
     
     // Catch Ctrl-C and exit gracefully
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
     signal(SIGKILL, handleSignals);
-    
-    // Set any parameters here:
-    RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
-    if (!systemPreferences->recordRawData) {
-        RKSetDoNotWrite(myRadar, true);
-    }
-    
+
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, systemPreferences->verbose);
