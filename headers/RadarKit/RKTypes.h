@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define RKVersionString "1.2.8b"
+#define RKVersionString "1.2.9b"
 
 /*
   Memory Blocks

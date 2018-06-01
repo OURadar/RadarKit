@@ -20,16 +20,16 @@ typedef struct user_params {
     RKName                   relayHost;
     RKName                   momentMethod;
     RKName                   streams;
-    int                      verbose;                                             // Verbosity
-    int                      coresForPulseCompression;                          // Number of cores for pulse compression
-    int                      coresForProductGenerator;                          // Number of cores for moment calculations
-    float                    fs;                                                // Raw gate sampling bandwidth
-    float                    prf;                                               // Base PRF (Hz)
-    int                      sprt;                                              // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
-    int                      gateCount;                                         // Number of gates (simulate mode)
-    int                      sleepInterval;
-    bool                     simulate;
-    bool                     recordRawData;
+    uint8_t                  verbose;                                            // Verbosity
+    int                      coresForPulseCompression;                           // Number of cores for pulse compression
+    int                      coresForProductGenerator;                           // Number of cores for moment calculations
+    float                    fs;                                                 // Raw gate sampling bandwidth
+    float                    prf;                                                // Base PRF (Hz)
+    int                      sprt;                                               // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
+    int                      gateCount;                                          // Number of gates (simulate mode)
+    int                      sleepInterval;                                      // Intermittent sleep period in transceiver simulator in seconds
+    bool                     simulate;                                           // Run with transceiver simulator
+    bool                     recordData;                                         // Data recording (I/Q, moment and health logs)
     double                   systemZCal[2];                                      // System calibration for Z
     double                   systemDCal;                                         // System calibration for D
     double                   systemPCal;                                         // System calibration for P
@@ -37,7 +37,7 @@ typedef struct user_params {
     double                   SNRThreshold;                                       // SNR threshold for moment processors
     RKControl                controls[RKMaximumControlCount];                    // Controls for GUI
     RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];    // Waveform specific calibration factors
-    uint8_t                  engineVerbose[256];
+    uint8_t                  engineVerbose[128];                                 // Letter A = 65, 'z' = 122
 } UserParams;
 
 // Global variables
@@ -106,9 +106,9 @@ static void showHelp() {
            "          4 - 50-MHz 50,000 gates\n"
            "          5 - 100-MHz 100,000 gates\n"
            "\n"
-           "  -r (--relay) " UNDERLINE("host") "[symbols]\n"
+           "  -r (--relay) " UNDERLINE("host") " [symbols]\n"
            "         Runs as a relay and connect to remote " UNDERLINE("host") "\n"
-           "         If [symbols] are supplied, they will be requested.\n"
+           "         If [symbols] are supplied, they will be requested initially.\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
@@ -176,7 +176,8 @@ static void showHelp() {
            "\n"
            "    -T 50\n"
            "         Runs the program to measure SIMD performance.\n"
-           "\n"
+           "\n\n"
+           "rktest (RadarKit " RKVersionString ")\n\n"
            );
 }
 
@@ -370,7 +371,6 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"help"              , no_argument      , NULL, 'h'},
         {"interpulse-period" , required_argument, NULL, 'i'},
         {"pedzy-host"        , required_argument, NULL, 'p'},
-        {"quiet"             , no_argument      , NULL, 'q'},
         {"relay"             , required_argument, NULL, 'r'},
         {"simulate"          , optional_argument, NULL, 's'},
         {"tweeta-host"       , required_argument, NULL, 't'},
@@ -421,6 +421,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
+            case 'A':
+                break;
             case 'C':
                 user->desc.initFlags |= RKInitFlagShowClockOffset;
                 break;
@@ -588,13 +590,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     user->sprt = 0;
                 }
                 break;
-            case 'm':
-                break;
             case 'p':
                 strncpy(user->pedzyHost, optarg, sizeof(user->pedzyHost));
-                break;
-            case 'q':
-                user->verbose = MAX(user->verbose - 1, 0);
                 break;
             case 'r':
                 user->simulate = false;
@@ -671,7 +668,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case 'v':
                 break;
             case 'w':
-                user->recordRawData = true;
+                user->recordData = true;
                 break;
             case 'z':
                 if (optarg) {
@@ -729,7 +726,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     // Some parameters before the radar is live
     if (!myRadar->active) {
         RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
-        if (!systemPreferences->recordRawData) {
+        if (!systemPreferences->recordData) {
             RKSetDoNotWrite(myRadar, true);
         }
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
@@ -811,7 +808,7 @@ int main(int argc, const char **argv) {
 
     // Screen output based on verbosity level
     if (systemPreferences->verbose) {
-        RKLog("Level II recording: %s\n", systemPreferences->recordRawData ? "true" : "false");
+        RKLog("Level II recording: %s\n", systemPreferences->recordData ? "true" : "false");
         if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
         }
@@ -909,12 +906,10 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        //myRadar->configs[0].prf[0] = user->prf;
-
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
         
-        //RKUserProductDesc desc;
-        //RKSweepEngineRegisterProduct(myRadar->sweepEngine, RKUserProductDesc)
+//        RKUserProductDesc desc;
+//        RKSweepEngineRegisterProduct(myRadar->sweepEngine, RKUserProductDesc)
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
