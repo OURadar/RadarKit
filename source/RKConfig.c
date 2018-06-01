@@ -91,10 +91,10 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     strncpy(newConfig->vcpDefinition, string, RKNameLength - 1);
                 }
                 break;
-            case RKConfigKeyNoise:
+            case RKConfigKeySystemNoise:
                 newConfig->noise[0] = (RKFloat)va_arg(args, double);
                 newConfig->noise[1] = (RKFloat)va_arg(args, double);
-                sprintf(stringBuffer[0], "Noise = %.2f %.2f ADU^2", newConfig->noise[0], newConfig->noise[1]);
+                sprintf(stringBuffer[0], "SystemNoise = %.2f %.2f ADU^2", newConfig->noise[0], newConfig->noise[1]);
                 break;
             case RKConfigKeySystemZCal:
                 newConfig->systemZCal[0] = (RKFloat)va_arg(args, double);

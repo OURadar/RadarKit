@@ -1074,6 +1074,10 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
         return RKResultInvalidMomentParameters;
     }
     radar->momentEngine->userLagChoice = lagChoice;
+    RKLog("Moment processor set to %sMultilag %d%s",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          lagChoice,
+          rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultNoError;
 }
 
@@ -1083,6 +1087,9 @@ int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
     }
     radar->momentEngine->processor = &RKPulsePair;
     radar->momentEngine->processorLagCount = 3;
+    RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultNoError;
 }
 
@@ -1092,6 +1099,9 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
     }
     radar->momentEngine->processor = &RKPulsePairHop;
     radar->momentEngine->processorLagCount = 2;
+    RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultNoError;
 }
 
@@ -1101,6 +1111,9 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
     }
     radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
     radar->momentEngine->processorLagCount = 2;
+    RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultNoError;
 }
 
@@ -1499,7 +1512,7 @@ int RKGoLive(RKRadar *radar) {
         RKAddConfig(radar,
                     RKConfigKeySystemZCal, -27.0, -27.0,
                     RKConfigKeySystemDCal, -0.01,
-                    RKConfigKeyNoise, 0.1, 0.1,
+                    RKConfigKeySystemNoise, 0.1, 0.1,
                     RKConfigKeyNull);
     }
 
@@ -1952,7 +1965,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                         // 'dn' - DSP noise override
                         k = sscanf(&commandString[2], "%lf %lf", &fval1, &fval2);
                         if (k == 2) {
-                            RKAddConfig(radar, RKConfigKeyNoise, fval1, fval2, RKConfigKeyNull);
+                            RKAddConfig(radar, RKConfigKeySystemNoise, fval1, fval2, RKConfigKeyNull);
                             sprintf(string, "ACK. Noise set to %.4f, %.4f" RKEOL, fval1, fval2);
                         } else if (k == -1) {
                             sprintf(string, "ACK. Current noise is %.4f %.4f" RKEOL, config->noise[0], config->noise[1]);
@@ -1977,7 +1990,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                         } else {
                             sprintf(string, "ACK. Current SNR threshold is %.2f dB" RKEOL, config->SNRThreshold);
                         }
-                        //RKOperatorSendCommandResponse(O, string);
                         break;
                     default:
                         break;
@@ -2210,7 +2222,7 @@ void RKMeasureNoise(RKRadar *radar) {
     if (!isfinite(noiseAverage[1])) {
         noiseAverage[1] = 0.001f;
     }
-    RKAddConfig(radar, RKConfigKeyNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
+    RKAddConfig(radar, RKConfigKeySystemNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }
 
 void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
@@ -2261,7 +2273,7 @@ void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
 //     The last key must be RKConfigKeyNull
 // Example:
 //     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
-//     RKConfigAdd(radar, RKConfigKeyNoise, 0.3, 0.2, RKConfigNull) to set noise
+//     RKConfigAdd(radar, RKConfigKeySystemNoise, 0.3, 0.2, RKConfigNull) to set noise
 //
 // Users normally don't have to deal with these
 //

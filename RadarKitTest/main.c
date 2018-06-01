@@ -21,22 +21,22 @@ typedef struct user_params {
     RKName                   momentMethod;
     RKName                   streams;
     int                      verbose;                                             // Verbosity
-    int                      coresForPulseCompression;                            // Number of cores for pulse compression
-    int                      coresForProductGenerator;                            // Number of cores for moment calculations
-    float                    fs;                                                  // Raw gate sampling bandwidth
-    float                    prf;                                                 // Base PRF (Hz)
-    int                      sprt;                                                // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
-    int                      gateCount;                                           // Number of gates (simulate mode)
+    int                      coresForPulseCompression;                          // Number of cores for pulse compression
+    int                      coresForProductGenerator;                          // Number of cores for moment calculations
+    float                    fs;                                                // Raw gate sampling bandwidth
+    float                    prf;                                               // Base PRF (Hz)
+    int                      sprt;                                              // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
+    int                      gateCount;                                         // Number of gates (simulate mode)
     int                      sleepInterval;
     bool                     simulate;
     bool                     recordRawData;
-    double                   systemZCal[2];                                        // System calibration for Z
-    double                   systemDCal;                                           // System calibration for D
-    double                   systemPCal;                                           // System calibration for P
-    double                   noise[2];                                             // System noise level
-    double                   thresholdSNR;
-    RKControl                controls[RKMaximumControlCount];                      // Controls for GUI
-    RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];      // Waveform specific calibration factors
+    double                   systemZCal[2];                                      // System calibration for Z
+    double                   systemDCal;                                         // System calibration for D
+    double                   systemPCal;                                         // System calibration for P
+    double                   noise[2];                                           // System noise level
+    double                   SNRThreshold;                                       // SNR threshold for moment processors
+    RKControl                controls[RKMaximumControlCount];                    // Controls for GUI
+    RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];    // Waveform specific calibration factors
     uint8_t                  engineVerbose[256];
 } UserParams;
 
@@ -315,6 +315,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",   &user->systemDCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",        user->noise,           RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold", &user->SNRThreshold,   RKParameterTypeDouble, 1);
     
     // Shortcuts
     k = 0;
@@ -736,16 +737,14 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     }
 
     // Moment methods
+    RKName method;
     if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
         int lagChoice = atoi(systemPreferences->momentMethod + 8);
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
-        RKLog("Setting moment processor to %sMultilag %d%s ...",
-              rkGlobalParameters.showColor ? "\033[4m" : "",
-              lagChoice,
-              rkGlobalParameters.showColor ? "\033[24m" : "");
+        sprintf(method, "Multilag %d", lagChoice);
     } else {
         RKSetMomentProcessorToPulsePairHop(myRadar);
-        RKLog("Moment Processor = Pulse Pair for Frequency Hopping\n");
+        sprintf(method, "Pulse Pair for Frequency Hopping");
     }
 
     // Always refresh the controls
@@ -770,7 +769,8 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemZCal, systemPreferences->systemZCal[0], systemPreferences->systemZCal[1],
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
-                RKConfigKeyNoise, systemPreferences->noise[0], systemPreferences->noise[1],
+                RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
+                RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeyNull);
 }
 
@@ -797,6 +797,7 @@ static void handlePreferenceFileUpdate(void *in) {
 int main(int argc, const char **argv) {
 
     int k;
+    RKName cmd = "";
 
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
@@ -806,10 +807,10 @@ int main(int argc, const char **argv) {
         RKSetWantColor(false);
     }
  
-    // Initial user parameters
+    // Initial a struct of user parameters
     UserParams *systemPreferences = systemPreferencesInit();
 
-    // Update user parameters from preference file, then override by command line input
+    // Check for verbosity with first pass, then update user parameters from a preference file, then override by command line arguments
     updateSystemPreferencesFromCommandLine(systemPreferences, argc, argv, true);
     updateSystemPreferencesFromControlFile(systemPreferences);
     updateSystemPreferencesFromCommandLine(systemPreferences, argc, argv, false);
@@ -865,8 +866,6 @@ int main(int argc, const char **argv) {
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
-    RKName cmd = "";
-    
     if (systemPreferences->simulate) {
 
         // Now we use the frame work.

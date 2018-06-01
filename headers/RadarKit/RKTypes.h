@@ -453,7 +453,7 @@ enum RKConfigKey {
     RKConfigKeyFilterAnchor,
     RKConfigKeyFilterAnchor2,
     RKConfigKeyFilterAnchors,
-    RKConfigKeyNoise,
+    RKConfigKeySystemNoise,
     RKConfigKeySystemZCal,
     RKConfigKeySystemDCal,
     RKConfigKeySystemPCal,
