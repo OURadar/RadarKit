@@ -597,7 +597,7 @@ static void *fileMonitorRunLoop(void *in) {
         stat(engine->filename, &fileStat);
         if (mtime != fileStat.st_mtime) {
             mtime = fileStat.st_mtime;
-            RKLog("%s %s modified.\n", engine->name, engine->filename);
+            RKLog("%s File '%s' modified.\n", engine->name, engine->filename);
             if (engine->callbackRoutine) {
                 engine->callbackRoutine(engine);
             }

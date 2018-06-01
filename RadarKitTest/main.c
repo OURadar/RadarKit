@@ -737,14 +737,11 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     }
 
     // Moment methods
-    RKName method;
     if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
         int lagChoice = atoi(systemPreferences->momentMethod + 8);
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
-        sprintf(method, "Multilag %d", lagChoice);
     } else {
         RKSetMomentProcessorToPulsePairHop(myRadar);
-        sprintf(method, "Pulse Pair for Frequency Hopping");
     }
 
     // Always refresh the controls
@@ -778,11 +775,8 @@ static void handlePreferenceFileUpdate(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
     UserParams *user = (UserParams *)engine->userResource;
     
-    RKLog("%s Preference file '%s' update detected.  radar->state = %x.\n", engine->name, engine->filename, myRadar->state);
-    
-    // Update user parameters from preference file
+    // Update user parameters from preference file then update the radar
     updateSystemPreferencesFromControlFile(user);
-    
     updateRadarParameters(user);
 }
 

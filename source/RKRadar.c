@@ -1090,6 +1090,9 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
+    if (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == lagChoice) {
+        return RKResultNoError;
+    }
     radar->momentEngine->processor = &RKMultiLag;
     radar->momentEngine->processorLagCount = RKLagCount;
     if (lagChoice < 0 || lagChoice > 4) {
