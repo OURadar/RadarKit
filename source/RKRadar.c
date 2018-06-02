@@ -1064,7 +1064,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 //                        RKConfigKeyNull);
 //        }
         RKAddConfig(radar,
-                    RKConfigKeyWaveform, waveform->name,
+                    RKConfigKeyWaveformName, waveform->name,
                     RKConfigKeyFilterAnchors, waveform->filterCounts[0], waveform->filterAnchors,
                     RKConfigKeyWaveformCalibration, waveformCalibration,
                     RKConfigKeyNull);
@@ -1167,7 +1167,7 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     }
     RKFilterAnchor anchor = RKFilterAnchorDefault;
     RKAddConfig(radar,
-                RKConfigKeyWaveform, "P01",
+                RKConfigKeyWaveformName, "P01",
                 RKConfigKeyFilterCount, 1,
                 RKConfigKeyFilterAnchor, &anchor,
                 RKConfigKeyNull);

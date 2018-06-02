@@ -449,6 +449,7 @@ enum RKConfigKey {
     RKConfigKeyGateCount,
     RKConfigKeyWaveform,
     RKConfigKeyWaveformId,
+    RKConfigKeyWaveformName,
     RKConfigKeyFilterCount,
     RKConfigKeyFilterAnchor,
     RKConfigKeyFilterAnchor2,
@@ -961,6 +962,29 @@ enum RKOverviewFlag {
     RKOverviewFlagShowColor       = 1,
     RKOverviewFlagDrawBackground  = (1 << 1)
 };
+
+typedef uint32_t RKWaveformType;
+enum RKWaveformType {
+    RKWaveformTypeNone                         = 0,
+    RKWaveformTypeIsComplex                    = 1,
+    RKWaveformTypeSingleTone                   = (1 << 1),
+    RKWaveformTypeFrequencyHopping             = (1 << 2),
+    RKWaveformTypeLinearFrequencyModulation    = (1 << 3),
+    RKWaveformTypeTimeFrequencyMultiplexing    = (1 << 4)
+};
+
+typedef struct rk_waveform {
+    int             count;                                                 // Number of groups
+    int             depth;                                                 // Maximum number of samples
+    double          fc;                                                    // Carrier frequency (Hz)
+    double          fs;                                                    // Sampling frequency (Hz)
+    RKWaveformType  type;                                                  // Various type of waveforms
+    RKName          name;                                                  // Waveform name in plain string
+    RKComplex       *samples[RKMaxFilterGroups];                           // Samples up to amplitude of 1.0
+    RKInt16C        *iSamples[RKMaxFilterGroups];                          // 16-bit full-scale equivalence of the waveforms
+    uint32_t        filterCounts[RKMaxFilterGroups];                       // Number of filters to applied to each waveform, see filterAnchors
+    RKFilterAnchor  filterAnchors[RKMaxFilterGroups][RKMaxFilterCount];    // Filter anchors of each sub-waveform for de-multiplexing
+} RKWaveform;
 
 typedef struct rk_waveform_cal {
     uint32_t             uid;                                         // A unique identifier

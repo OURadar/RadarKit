@@ -40,6 +40,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 
     uint32_t filterCount;
     RKFilterAnchor *filterAnchor;
+    RKWaveform *waveform;
     RKWaveformCalibration *waveformCal;
     RKFloat (*ZCal)[2];
 
@@ -77,10 +78,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyGateCount:
                 newConfig->gateCount[0] = va_arg(args, uint32_t);
 				sprintf(stringBuffer[0], "GateCount = %s", RKIntegerToCommaStyleString(newConfig->gateCount[0]));
-                break;
-            case RKConfigKeyWaveformId:
-                // ???
-                //RKParseCommaDelimitedValues(newConfig->waveformId, RKValueTypeUInt32, RKMaxFilterCount, string);
                 break;
             case RKConfigKeyVCPDefinition:
                 string = va_arg(args, char *);
@@ -134,6 +131,14 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyPCal2:
                 newConfig->PCal[1] = (RKFloat)va_arg(args, double);
                 sprintf(stringBuffer[0], "PCal[2] = %.2f %.2f rad", newConfig->PCal[0], newConfig->PCal[1]);
+                break;
+            case RKConfigKeyWaveform:
+                waveform = (RKWaveform *)va_arg(args, void *);
+                sprintf(stringBuffer[0], "Waveform = '%s'", waveform->name);
+                break;
+            case RKConfigKeyWaveformName:
+                strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
+                sprintf(stringBuffer[0], "Waveform = '%s'", newConfig->waveform);
                 break;
             case RKConfigKeyWaveformCalibration:
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
@@ -190,10 +195,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeySNRThreshold:
                 newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
                 sprintf(stringBuffer[0], "SNRThreshold = %.2f dB", newConfig->SNRThreshold);
-                break;
-            case RKConfigKeyWaveform:
-                strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
-                sprintf(stringBuffer[0], "Waveform = '%s'", newConfig->waveform);
                 break;
             case RKConfigKeyFilterCount:
                 newConfig->filterCount = (uint8_t)va_arg(args, int);
