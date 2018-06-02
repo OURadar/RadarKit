@@ -68,8 +68,8 @@ Follow these steps to get the project
     
     int main() {
         RKRadar *radar = RKInit();
-        RKSetTransceiver(radar, NULL, transceiverInit, NULL, NULL);
-        RKSetPedestal(radar, NULL, pedestalInit, NULL, NULL);
+        RKSetTransceiver(radar, userInput, transceiverInit, transceiverExec, transceiverFree);
+        RKSetPedestal(radar, userInput, pedestalInit, pedestalExec, pedestalFree);
         RKGoLive(radar);
         RKWaitWhileActive(radar);
         RKFree(radar);
@@ -83,13 +83,21 @@ Follow these steps to get the project
         // Allocate your own resources, define your structure somewhere else
         UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
         
-        // Be sure to save a reference to radar
+        // Be sure to save a reference to the radar
         resource->radar = radar
         
         // Create your run loop as a separate thread so you can return immediately
         pthread_create(&resource->tid, NULL, transceiverRunLoop, resource);
         
         return (RKTransceiver)resource;
+    }
+    
+    int transceiverExec(RKTransceiver yourTransceiver, const char *command, char *feedback) {
+        // Execute command
+    }
+    
+    int transceiverFree(RKTransceiver yourTransceiver) {
+        // Free up resources
     }
     
     void *transceiverRunLoop(void *in) {
@@ -128,13 +136,21 @@ Follow these steps to get the project
         // Allocate your own resources, define your structure somewhere else
         UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
         
-        // Be sure to save a reference to radar
+        // Be sure to save a reference to the radar
         resource->radar = radar
         
         // Create your run loop as a separate thread so you can return immediately
         pthread_create(&resource->tid, NULL, pedestalRunLoop, resource);
         
         return (RKPedestal)resource;
+    }
+
+    int pedestalExec(RKPedestal yourPedestal, const char *command, char *feedback) {
+        // Execute command
+    }
+    
+    int transceiverFree(RKPedestal yourPedestal) {
+        // Free up resources
     }
 
     int pedestalRunLoop(void *in) {
