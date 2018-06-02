@@ -225,11 +225,11 @@ static void *pulseTagger(void *_in) {
             marker0 |= RKMarkerSweepMiddle;
         }
         if ((positionBefore->flag & RKPositionFlagElevationPoint) && (positionBefore->flag & RKPositionFlagAzimuthSweep)) {
-            marker0 |= RKMarkerPPIScan;
+            marker0 |= RKMarkerScanTypePPI;
         } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationSweep)) {
-            marker0 |= RKMarkerRHIScan;
+            marker0 |= RKMarkerScanTypeRHI;
         } else if ((positionBefore->flag & RKPositionFlagAzimuthPoint) && (positionBefore->flag & RKPositionFlagElevationPoint)) {
-            marker0 |= RKMarkerPointScan;
+            marker0 |= RKMarkerScanTytpePoint;
         }
         
         // Second set of logics are derived from marker change

@@ -78,13 +78,13 @@ static void *sweepWriter(void *in) {
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-        RKLog("%s C%02d E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x   (%s x %s%d%s, %.1f km)\n",
+        RKLog("%s C%02d E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
               engine->name,
               S->header.configIndex,
               sweep->header.config.sweepElevation,
               S->header.startElevation , E->header.endElevation,
               S->header.startAzimuth   , E->header.endAzimuth,
-              S->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+              S->header.marker & 0xFF, E->header.marker & 0xFF,
               RKIntegerToCommaStyleString(sweep->header.gateCount),
               sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
               sweep->header.rayCount,
@@ -169,6 +169,8 @@ static void *sweepWriter(void *in) {
     }
 
     const float radianToDegree = 180.0f / M_PI;
+    const bool sweepIsPPI = (sweep->header.config.startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+    const bool sweepIsRHI = (sweep->header.config.startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
 
     int summarySize = 0;
     uint32_t productList = sweep->header.productList;
@@ -183,9 +185,9 @@ static void *sweepWriter(void *in) {
         i += strftime(filename + i, 10, "%Y%m%d", gmtime(&startTime));
         i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
         i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+        if (sweepIsPPI) {
             i += sprintf(filename + i, "-E%.1f-%s", sweep->header.config.sweepElevation, symbol);
-        } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
+        } else if (sweepIsRHI) {
             i += sprintf(filename + i, "-A%.1f-%s", sweep->header.config.sweepAzimuth, symbol);
         } else {
             i += sprintf(filename + i, "-N%03d-%s", sweep->header.rayCount, symbol);
@@ -219,9 +221,9 @@ static void *sweepWriter(void *in) {
             return NULL;
         }
 
-        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+        if (sweepIsPPI) {
             nc_def_dim(ncid, "Azimuth", sweep->header.rayCount, &dimensionIds[0]);
-        } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
+        } else if (sweepIsRHI) {
             nc_def_dim(ncid, "Elevation", sweep->header.rayCount, &dimensionIds[0]);
         } else {
             nc_def_dim(ncid, "Beam", sweep->header.rayCount, &dimensionIds[0]);
@@ -254,10 +256,12 @@ static void *sweepWriter(void *in) {
         // Global attributes - some are WDSS-II required
         nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(productName), productName);
         nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
-        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+        if (sweepIsPPI) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "PPI");
-        } else if (sweep->header.config.startMarker & RKMarkerRHIScan) {
+        } else if (sweepIsRHI) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "RHI");
+        } else {
+            nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "Unknown");
         }
         tmpf = engine->radarDescription->latitude;
         nc_put_att_float(ncid, NC_GLOBAL, "Latitude", NC_FLOAT, 1, &tmpf);
@@ -285,14 +289,14 @@ static void *sweepWriter(void *in) {
         put_global_text_att(ncid, "ColorMap-value", productColormap);
         
         // Other housekeeping attributes
-        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+        if (sweepIsPPI) {
             nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &sweep->header.config.sweepElevation);
         } else {
             tmpf = W2_MISSING_DATA;
             nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &tmpf);
         }
         put_global_text_att(ncid, "ElevationUnits", "Degrees");
-        if (sweep->header.config.startMarker & RKMarkerPPIScan) {
+        if (sweepIsRHI) {
             nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &sweep->header.config.sweepAzimuth);
         } else {
             tmpf = W2_MISSING_DATA;
@@ -750,13 +754,13 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
 
     if (engine->verbose > 1) {
-        RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%03x-%03x-%03x   (%s x %d, %.1f km)\n",
+        RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x-%02x   (%s x %d, %.1f km)\n",
               engine->name,
               S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
               config->sweepElevation   ,
               S->header.startElevation , E->header.endElevation   ,
               S->header.startAzimuth   , E->header.endAzimuth     ,
-              S->header.marker & 0xFFFF, T->header.marker & 0xFFFF, E->header.marker & 0xFFFF,
+              S->header.marker & 0xFF, T->header.marker & 0xFF, E->header.marker & 0xFF,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
@@ -963,10 +967,10 @@ RKSweep *RKSweepRead(const char *inputFile) {
             }
             if (!strcmp(scanType, "PPI")) {
                 sweep->header.config.sweepElevation = ray->header.sweepElevation;
-                sweep->header.config.startMarker |= RKMarkerPPIScan;
+                sweep->header.config.startMarker |= RKMarkerScanTypePPI;
             } else if (!strcmp(scanType, "RHI")) {
                 sweep->header.config.sweepAzimuth = ray->header.sweepAzimuth;
-                sweep->header.config.startMarker |= RKMarkerRHIScan;
+                sweep->header.config.startMarker |= RKMarkerScanTypeRHI;
             }
             r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->header.desc.heading);
             if (r != NC_NOERR) {
@@ -977,11 +981,11 @@ RKSweep *RKSweepRead(const char *inputFile) {
                 RKLog("No radar height found.\n");
             }
             r = nc_get_att_float(ncid, NC_GLOBAL, "Elevation", &ray->header.sweepElevation);
-            if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerPPIScan) {
+            if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerScanTypePPI) {
                 RKLog("Warning. No sweep elevation found.\n");
             }
             r = nc_get_att_float(ncid, NC_GLOBAL, "Azimuth", &ray->header.sweepAzimuth);
-            if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerRHIScan) {
+            if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerScanTypeRHI) {
                 RKLog("Warning. No sweep azimuth found.\n");
             }
             r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);

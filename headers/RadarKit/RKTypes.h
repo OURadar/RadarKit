@@ -315,16 +315,28 @@ enum RKHealthFlag {
 typedef uint32_t RKMarker;
 enum RKMarker {
     RKMarkerNull                     = 0,
-    RKMarkerSweepMiddle              = 1,
-    RKMarkerSweepBegin               = (1 << 1),
-    RKMarkerSweepEnd                 = (1 << 2),
-    RKMarkerVolumeBegin              = (1 << 3),
-    RKMarkerVolumeEnd                = (1 << 4),
-    RKMarkerPPIScan                  = (1 << 8),
-    RKMarkerRHIScan                  = (1 << 9),
-    RKMarkerPointScan                = (1 << 10),
-    RKMarkerMemoryManagement         = (1 << 15)
+    RKMarkerSweepMiddle              = 1,                            //
+    RKMarkerSweepBegin               = (1 << 1),                     //  0000 0010
+    RKMarkerSweepEnd                 = (1 << 2),                     //  0000 0100
+    RKMarkerVolumeBegin              = (1 << 3),                     //  0000 1000
+    RKMarkerVolumeEnd                = (1 << 4),                     //  0001 0000
+    RKMarkerScanTypeMask             = 0x60,                         //  0110 0000
+    RKMarkerScanTypeUnknown          = (0 << 5),                     //  .00. ....
+    RKMarkerScanTypePPI              = (1 << 5),                     //  .01. ....
+    RKMarkerScanTypeRHI              = (2 << 5),                     //  .10. ....
+    RKMarkerScanTytpePoint           = (3 << 5),                     //  .11. ....
+    RKMarkerMemoryManagement         = (1 << 7)                      //  1000 0000
 };
+
+#define RKMarkerScanTypeString(x) \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "PPI" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "RHI" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "SPT" : "UNK")))
+
+#define RKMarkerScanTypeShortString(x) \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "P" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "R" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "S" : "U")))
 
 //
 // Typical status progression:

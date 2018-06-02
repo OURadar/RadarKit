@@ -544,7 +544,7 @@ static void *momentCore(void *in) {
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
                  RKIntegerToCommaStyleString(ray->header.gateCount),
                  ray->header.marker,
-                 ray->header.marker & RKMarkerPPIScan ? "P" : ray->header.marker & RKMarkerRHIScan ? "R" : "",
+                 RKMarkerScanTypeShortString(ray->header.marker),
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
 
@@ -742,9 +742,9 @@ static void *pulseGatherer(void *_in) {
         } else {
             // Gather the start and end pulses and post a worker to process for a ray
             marker = engine->configBuffer[pulse->header.configIndex].startMarker;
-            if (marker & RKMarkerPPIScan) {
+            if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
                 i0 = (int)floorf(pulse->header.azimuthDegrees);
-            } else if (marker & RKMarkerRHIScan) {
+            } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
                 i0 = (int)floorf(pulse->header.elevationDegrees);
             } else {
                 i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);

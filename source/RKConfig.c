@@ -48,7 +48,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     memcpy(newConfig, oldConfig, sizeof(RKConfig));
 
     uint32_t key = va_arg(args, RKConfigKey);
-
     // Modify the values based on the supplied keys
     while (key != RKConfigKeyNull) {
         switch (key) {
@@ -63,7 +62,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s   filterCount = %d",
                         newConfig->sweepElevation,
                         newConfig->sweepAzimuth,
-                        newConfig->startMarker & RKMarkerPPIScan ? "PPI" : (newConfig->startMarker & RKMarkerRHIScan ? "RHI" : "UNK"),
+                        RKMarkerScanTypeString(newConfig->startMarker),
                         newConfig->filterCount);
                 break;
             case RKConfigKeyPRF:
