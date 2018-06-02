@@ -296,31 +296,67 @@ uint32_t RKGetPulseCapacity(RKRadar *radar);
 ### Interactions
 
 ```c
-// The radar engine state
+// State
 int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
+int RKStart(RKRadar *);
 int RKStop(RKRadar *);
+int RKSoftRestart(RKRadar *);
+int RKResetClocks(RKRadar *);
+int RKExecuteCommand(RKRadar *, const char *, char *);
+void RKPerformMasterTaskInBackground(RKRadar *, const char *);
+
+// Tasks
+void RKMeasureNoise(RKRadar *);
+void RKSetSNRThreshold(RKRadar *, const RKFloat);
+
+// Status
+RKStatus *RKGetVacantStatus(RKRadar *);
+void RKSetStatusReady(RKRadar *, RKStatus *);
+
+// Configs
+void RKAddConfig(RKRadar *radar, ...);
+RKConfig *RKGetLatestConfig(RKRadar *radar);
+
+// Healths
+RKHealthNode RKRequestHealthNode(RKRadar *);
+RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);
+void RKSetHealthReady(RKRadar *, RKHealth *);
+RKHealth *RKGetLatestHealth(RKRadar *);
+RKHealth *RKGetLatestHealthOfNode(RKRadar *, const RKHealthNode);
+int RKGetEnumFromLatestHealth(RKRadar *, const char *);
 
 // Positions
 RKPosition *RKGetVacantPosition(RKRadar *);
 void RKSetPositionReady(RKRadar *, RKPosition *);
+RKPosition *RKGetLatestPosition(RKRadar *);
+float RKGetPositionUpdateRate(RKRadar *);
 
 // Pulses
 RKPulse *RKGetVacantPulse(RKRadar *);
 void RKSetPulseHasData(RKRadar *, RKPulse *);
 void RKSetPulseReady(RKRadar *, RKPulse *);
+RKPulse *RKGetLatestPulse(RKRadar *);
 
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
 
-// Health
-RKHealth *RKGetVacantHealth(RKRadar *, RKHeathNode);
-void RKSetHealthReady(RKRadar *, RKHealth *);
+// Waveform Calibrations
+void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);
+void RKUpdateWaveformCalibration(RKRadar *, const uint8_t, const RKWaveformCalibration *);
+void RKClearWaveformCalibrations(RKRadar *);
+void RKConcludeWaveformCalibrations(RKRadar *);
 
+// Controls
+void RKAddControl(RKRadar *, const RKControl *);
+void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char *command);
+void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
+void RKClearControls(RKRadar *);
+void RKConcludeControls(RKRadar *);
 ```
 
-### Accessing Data of Pulses / Rays
+### Accessing Data of Pulses / Rays (RKFoundation.h)
 
 Most data are stored in the plain C format within a structure of a pulse or ray. RadarKit uses a carefully designed header structure to ensure SIMD alignment of all the data so that SIMD parallelization can be utilized even at the moment data level. For a pulse, the raw data straight from the ADC is stored as 16-bit signed integer, interleaved between the real and imaginary part. I(0), Q(0), I(1), Q(1), ..., I(N-1), Q(N-1). The pulse compression engine uses these data to produced a compressed pulse through match filtering and stores the result in both interleaved I/Q and blocked I/Q. The interleaved I/Q is I(0), Q(0), I(1), Q(1), ..., I(N-1), Q(N-1) while the blocked I/Q would be in I(0), I(1), ..., I(N-1), Q0, Q1, ..., Q(N-1). Depending on the algorithm you want to introduce, one format may be more efficient than the other. Choose wisely.
 
