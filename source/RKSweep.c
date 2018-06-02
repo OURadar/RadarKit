@@ -605,8 +605,6 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->userProductTimeoutSeconds = 3;
-    RKUserProductDesc desc = {.name = "U", .w = 0.5f, .b = -32.0f};
-    RKSweepEngineRegisterProduct(engine, desc);
     return engine;
 }
 

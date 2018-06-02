@@ -1037,7 +1037,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                     RKConfigKeyNull);
 
     } else {
-        RKLog("Error. Multiplexing = %d filters has not been implemented.\n", waveform->filterCounts[0]);
+        RKLog("Error. Multiplexing = %d filters has not been implemented. Reverting to impulse filter.\n", waveform->filterCounts[0]);
         RKSetWaveformToImpulse(radar);
     }
     if (oldWaveform != NULL) {

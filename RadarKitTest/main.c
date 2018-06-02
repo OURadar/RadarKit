@@ -907,9 +907,10 @@ int main(int argc, const char **argv) {
         }
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
-        
-//        RKUserProductDesc desc;
-//        RKSweepEngineRegisterProduct(myRadar->sweepEngine, RKUserProductDesc)
+
+        // Add a custom product 'U'
+        RKUserProductDesc desc = {.name = "U", .w = 0.5f, .b = -32.0f};
+        RKSweepEngineRegisterProduct(myRadar->sweepEngine, desc);
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
