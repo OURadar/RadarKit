@@ -134,7 +134,42 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyWaveform:
                 waveform = (RKWaveform *)va_arg(args, void *);
+                if (waveform == NULL || waveform->filterCounts[0] == 0) {
+                    return;
+                }
+                newConfig->filterCount = waveform->filterCounts[0];
+                strncpy(newConfig->waveform, waveform->name, RKNameLength - 1);
+                memcpy(newConfig->filterAnchors, waveform->filterAnchors[0], waveform->filterCounts[0] * sizeof(RKFilterAnchor));
+                w0 = 0;
+                w1 = 0;
+                w2 = 0;
+                w3 = 0;
+                for (j = 0; j < newConfig->filterCount; j++) {
+                    w0 = MAX(w0, (int)log10f((float)newConfig->filterAnchors[j].inputOrigin));
+                    w1 = MAX(w1, (int)log10f((float)newConfig->filterAnchors[j].outputOrigin));
+                    w2 = MAX(w2, (int)log10f((float)newConfig->filterAnchors[j].maxDataLength));
+                    w3 = MAX(w3, (int)log10f(fabsf(newConfig->filterAnchors[j].sensitivityGain)));
+                }
+                w0 += (w0 / 3);
+                w1 += (w1 / 3);
+                w2 += (w2 / 3);
+                w3 += (w3 / 3);
+                sprintf(format, "Filter[%%%dd/%%%dd] @ i:%%%ds, o:%%%ds, d:%%%ds   %%+%d.2f dB",
+                        (int)log10f((float)newConfig->filterCount) + 1,
+                        (int)log10f((float)newConfig->filterCount) + 1,
+                        w0 + 1,
+                        w1 + 1,
+                        w2 + 1,
+                        w3 + 5);
                 sprintf(stringBuffer[0], "Waveform = '%s'", waveform->name);
+                for (j = 0; j < newConfig->filterCount; j++) {
+                    sprintf(stringBuffer[j + 1], format,
+                            j, newConfig->filterCount,
+                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].inputOrigin),
+                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].outputOrigin),
+                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].maxDataLength),
+                            newConfig->filterAnchors[j].sensitivityGain);
+                }
                 break;
             case RKConfigKeyWaveformName:
                 strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
