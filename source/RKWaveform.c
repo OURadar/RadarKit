@@ -205,6 +205,32 @@ RKWaveform *RKWaveformCopy(RKWaveform *waveform) {
     return waveformCopy;
 }
 
+RKWaveform *RKWaveformInitAsImpulse(void) {
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, 1);
+    waveform->fs = 1.0;
+    waveform->type = RKWaveformTypeSingleTone;
+    sprintf(waveform->name, "P01");
+    
+    // Single filter
+    waveform->filterCounts[0] = 1;
+    
+    // Everything simple
+    waveform->filterAnchors[0][0].name = 0;
+    waveform->filterAnchors[0][0].origin = 0;
+    waveform->filterAnchors[0][0].length = 1;
+    waveform->filterAnchors[0][0].inputOrigin = 0;
+    waveform->filterAnchors[0][0].outputOrigin = 0;
+    waveform->filterAnchors[0][0].maxDataLength = RKGateCount;
+    waveform->filterAnchors[0][0].subCarrierFrequency = 0.0f;
+    
+    // Only a one. No need to set components that are 0's
+    waveform->samples[0][0].i = 1.0f;
+    waveform->iSamples[0][0].i = RKWaveformDigitalAmplitude;
+
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
+    return waveform;
+}
+
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
     int i, j;
     const uint32_t longPulseWidth = 300;

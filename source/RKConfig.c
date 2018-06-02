@@ -39,7 +39,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 
     uint32_t filterCount;
-    RKFilterAnchor *filterAnchor;
     RKWaveform *waveform;
     RKWaveformCalibration *waveformCal;
     RKFloat (*ZCal)[2];
@@ -229,64 +228,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeySNRThreshold:
                 newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
                 sprintf(stringBuffer[0], "SNRThreshold = %.2f dB", newConfig->SNRThreshold);
-                break;
-            case RKConfigKeyFilterCount:
-                newConfig->filterCount = (uint8_t)va_arg(args, int);
-                sprintf(stringBuffer[0], "Filter Count = %d", newConfig->filterCount);
-                break;
-            case RKConfigKeyFilterAnchor:
-                memcpy(&newConfig->filterAnchors[0], va_arg(args, void *), sizeof(RKFilterAnchor));
-                sprintf(stringBuffer[0], "Filter1 @ i:%d, o:%d, d:%d   %.2f dB",
-                        newConfig->filterAnchors[0].inputOrigin,
-                        newConfig->filterAnchors[0].outputOrigin,
-                        newConfig->filterAnchors[0].maxDataLength,
-                        newConfig->filterAnchors[0].sensitivityGain);
-                break;
-            case RKConfigKeyFilterAnchor2:
-                memcpy(&newConfig->filterAnchors[1], va_arg(args, void *), sizeof(RKFilterAnchor));
-                sprintf(stringBuffer[0], "Filter2 @ i:%d, o:%d, d:%d   %.2f dB",
-                        newConfig->filterAnchors[1].inputOrigin,
-                        newConfig->filterAnchors[1].outputOrigin,
-                        newConfig->filterAnchors[1].maxDataLength,
-                        newConfig->filterAnchors[1].sensitivityGain);
-                break;
-            case RKConfigKeyFilterAnchors:
-                filterCount = va_arg(args, int);
-                filterAnchor = (RKFilterAnchor *)va_arg(args, void *);
-                if (filterCount == 0 || filterAnchor == NULL) {
-                    break;
-                }
-                newConfig->filterCount = filterCount;
-                memcpy(newConfig->filterAnchors, filterAnchor, filterCount * sizeof(RKFilterAnchor));
-                w0 = 0;
-                w1 = 0;
-                w2 = 0;
-                w3 = 0;
-                for (j = 0; j < filterCount; j++) {
-                    w0 = MAX(w0, (int)log10f((float)newConfig->filterAnchors[j].inputOrigin));
-                    w1 = MAX(w1, (int)log10f((float)newConfig->filterAnchors[j].outputOrigin));
-                    w2 = MAX(w2, (int)log10f((float)newConfig->filterAnchors[j].maxDataLength));
-                    w3 = MAX(w3, (int)log10f(fabsf(newConfig->filterAnchors[j].sensitivityGain)));
-                }
-                w0 += (w0 / 3);
-                w1 += (w1 / 3);
-                w2 += (w2 / 3);
-                w3 += (w3 / 3);
-                sprintf(format, "Filter[%%%dd/%%%dd] @ i:%%%ds, o:%%%ds, d:%%%ds   %%+%d.2f dB",
-                        (int)log10f((float)filterCount) + 1,
-                        (int)log10f((float)filterCount) + 1,
-                        w0 + 1,
-                        w1 + 1,
-                        w2 + 1,
-                        w3 + 5);
-                for (j = 0; j < filterCount; j++) {
-                    sprintf(stringBuffer[j], format,
-                            j, newConfig->filterCount,
-                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].inputOrigin),
-                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].outputOrigin),
-                            RKIntegerToCommaStyleString(newConfig->filterAnchors[j].maxDataLength),
-                            newConfig->filterAnchors[j].sensitivityGain);
-                }
                 break;
             default:
                 sprintf(stringBuffer[0], "Key %d not understood.", key);

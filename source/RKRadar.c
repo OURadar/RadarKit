@@ -1132,12 +1132,9 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
     }
-    RKFilterAnchor anchor = RKFilterAnchorDefault;
-    RKAddConfig(radar,
-                RKConfigKeyWaveformName, "P01",
-                RKConfigKeyFilterCount, 1,
-                RKConfigKeyFilterAnchor, &anchor,
-                RKConfigKeyNull);
+    RKWaveform *waveform = RKWaveformInitAsImpulse();
+    RKAddConfig(radar, RKConfigKeyWaveform, waveform, RKConfigKeyNull);
+    RKWaveformFree(waveform);
     return RKResultNoError;
 }
 
