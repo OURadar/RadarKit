@@ -937,6 +937,8 @@ typedef struct rk_file_monitor {
     void             *userResource;
 } RKFileMonitor;
 
+typedef int32_t  RKUserProductId;
+
 typedef uint32_t RKUserProductStatus;
 enum RKUserProductStatus {
     RKUserProductStatusVacant        = 0,                                      //
