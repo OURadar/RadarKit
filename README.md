@@ -93,7 +93,9 @@ Follow these steps to get the project
     }
     
     int transceiverExec(RKTransceiver yourTransceiver, const char *command, char *feedback) {
-        // Execute command
+        // Execute commands stored in const char *command
+        
+        // Provide text feedback to char *feedback
     }
     
     int transceiverFree(RKTransceiver yourTransceiver) {
@@ -146,7 +148,9 @@ Follow these steps to get the project
     }
 
     int pedestalExec(RKPedestal yourPedestal, const char *command, char *feedback) {
-        // Execute command
+        // Execute commands stored in const char *command
+        
+        // Provide text feedback to char *feedback
     }
     
     int transceiverFree(RKPedestal yourPedestal) {
@@ -267,6 +271,21 @@ int RKSetVerbosity(RKRadar *radar, const int verbose);
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const unsigned int pulseCompressionCoreCount,
                               const unsigned int momentProcessorCoreCount);
+
+// Waveform routines
+RKWaveform *RKWaveformInitAsImpulse(void);
+RKWaveform *RKWaveformInitFromFile(const char *filename);
+RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
+RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count);
+void RKWaveformOnes(RKWaveform *);
+void RKWaveformHops(RKWaveform *, const double fs, const double fc, const double bandwidth);
+void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double pulsewidth, const double bandwidth);
+void RKWaveformDecimate(RKWaveform *, const int);
+void RKWaveformConjuate(RKWaveform *);
+void RKWaveformDownConvert(RKWaveform *);
+void RKWaveformWrite(RKWaveform *, const char *);
+void RKWaveformNormalizeNoiseGain(RKWaveform *);
+void RKWaveformSummary(RKWaveform *);
 
 // Some operating parameters
 int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int group);
