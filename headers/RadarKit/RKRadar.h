@@ -239,6 +239,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 // Interactions
 //
 
+// State
 int RKGoLive(RKRadar *);
 int RKWaitWhileActive(RKRadar *);
 int RKStart(RKRadar *);
@@ -248,6 +249,7 @@ int RKResetClocks(RKRadar *);
 int RKExecuteCommand(RKRadar *, const char *, char *);
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
+// Tasks
 void RKMeasureNoise(RKRadar *);
 void RKSetSNRThreshold(RKRadar *, const RKFloat);
 

@@ -67,9 +67,9 @@
 #define RKMaximumPulsesPerRay                2000                              //
 #define RKMaximumProductCount                10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumRaysPerSweep                1500                              // 1440 is 0.25-deg. This should be plenty
-#define RKMaximumPacketSize                  1024 * 1024
-#define RKNetworkTimeoutSeconds              20
-#define RKNetworkReconnectSeconds            3
+#define RKMaximumPacketSize                  1024 * 1024                       //
+#define RKNetworkTimeoutSeconds              20                                //
+#define RKNetworkReconnectSeconds            3                                 //
 #define RKLagRedThreshold                    0.5
 #define RKLagOrangeThreshold                 0.7
 #define RKDutyCyleRedThreshold               0.95
@@ -655,8 +655,8 @@ typedef struct rk_radar_desc {
     uint64_t         statusBufferSize;
     uint64_t         configBufferSize;
     uint64_t         positionBufferSize;
-    uint64_t         pulseBufferSize;
-    uint64_t         rayBufferSize;
+    uint64_t         pulseBufferSize;                                          //
+    uint64_t         rayBufferSize;                                            //
     uint32_t         pulseSmoothFactor;                                        // Pulse rate (Hz)
     uint32_t         pulseTicsPerSecond;                                       // Pulse tics per second (normally 10e6)
     uint32_t         positionSmoothFactor;                                     // Position rate (Hz)
@@ -937,48 +937,51 @@ typedef struct rk_file_monitor {
     void             *userResource;
 } RKFileMonitor;
 
-typedef int32_t  RKUserProductId;
-
 typedef uint32_t RKUserProductStatus;
 enum RKUserProductStatus {
-    RKUserProductStatusVacant        = 0,
+    RKUserProductStatusVacant        = 0,                                      //
     RKUserProductStatusSleep0        = (1 << 0),                               // Sleep stage 0 -
     RKUserProductStatusSleep1        = (1 << 1),                               // Sleep stage 1 -
     RKUserProductStatusSleep2        = (1 << 2),                               // Sleep stage 2 -
     RKUserProductStatusSleep3        = (1 << 3),                               // Sleep stage 3 -
-    RKUserProductStatusSkipped       = (1 << 5),
+    RKUserProductStatusSkipped       = (1 << 5),                               //
     RKUserProductStatusBusy          = (1 << 6),                               // Waiting for processing node
-    RKUserProductStatusActive        = (1 << 7),
+    RKUserProductStatusActive        = (1 << 7),                               //
 };
 
-typedef struct rk_user_product_desc {
-    RKName               name;                                                 // Name of the product
-    float                w;                                                    // Product to color index weight
-    float                b;                                                    // Product to color index bias
+typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
+    struct {                                                                   //
+        RKName               name;                                             // Name of the product
+        float                w;                                                // Product to color index weight
+        float                b;                                                // Product to color index bias
+    };
+    RKByte bytes[1024];
 } RKUserProductDesc;
 
-typedef struct rk_user_product {
-    uint64_t             i;
+typedef struct rk_user_product {                                               // A description of user product
+    uint64_t             i;                                                    // Index of reporting
+    uint64_t             uid;                                                  // Unique identifer
     RKUserProductStatus  flag;                                                 // Various state
-    RKUserProductDesc    desc;
-    RKUserProductId      uid;
+    RKUserProductDesc    desc;                                                 // Description
 } RKUserProduct;
 
-typedef uint32_t RKOverviewFlag;
+typedef uint8_t RKOverviewFlag;
 enum RKOverviewFlag {
-    RKOverviewFlagNone            = 0,
-    RKOverviewFlagShowColor       = 1,
-    RKOverviewFlagDrawBackground  = (1 << 1)
+    RKOverviewFlagNone            = 0,                                         //
+    RKOverviewFlagShowColor       = 1,                                         // Use escape sequence for colors
+    RKOverviewFlagDrawBackground  = (1 << 1)                                   // Repaint the background
 };
 
-typedef uint32_t RKWaveformType;
+typedef uint16_t RKWaveformType;
 enum RKWaveformType {
-    RKWaveformTypeNone                         = 0,
-    RKWaveformTypeIsComplex                    = 1,
-    RKWaveformTypeSingleTone                   = (1 << 1),
-    RKWaveformTypeFrequencyHopping             = (1 << 2),
-    RKWaveformTypeLinearFrequencyModulation    = (1 << 3),
-    RKWaveformTypeTimeFrequencyMultiplexing    = (1 << 4)
+    RKWaveformTypeNone                         = 0,                            //
+    RKWaveformTypeIsComplex                    = 1,                            // Complex form usually represents baseband
+    RKWaveformTypeSingleTone                   = (1 << 1),                     // The traditional single frequency waveform
+    RKWaveformTypeFrequencyHopping             = (1 << 2),                     //
+    RKWaveformTypeLinearFrequencyModulation    = (1 << 3),                     //
+    RKWaveformTypeTimeFrequencyMultiplexing    = (1 << 4),                     //
+    RKWaveformTypeFromFile                     = (1 << 5),                     //
+    RKWaveformTypeFlatAnchors                  = (1 << 6)                      // Frequency hopping has multiple waveforms but the anchors are identical
 };
 
 typedef struct rk_waveform {
@@ -996,11 +999,11 @@ typedef struct rk_waveform {
 
 typedef struct rk_waveform_cal {
     uint32_t             uid;                                                   // A unique identifier
-    RKName               name;
-    uint8_t              count;
-    RKFloat              ZCal[RKMaxFilterCount][2];
-    RKFloat              DCal[RKMaxFilterCount];
-    RKFloat              PCal[RKMaxFilterCount];
+    RKName               name;                                                  // A string description
+    uint8_t              count;                                                 // The number of tones in this waveform
+    RKFloat              ZCal[RKMaxFilterCount][2];                             // Calibration factor for individual tone
+    RKFloat              DCal[RKMaxFilterCount];                                // Calibration factor for individual tone
+    RKFloat              PCal[RKMaxFilterCount];                                // Calibration factor for individual tone
 } RKWaveformCalibration;
 
 #pragma pack(pop)

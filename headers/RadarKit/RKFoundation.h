@@ -44,10 +44,12 @@ enum RKValueType {
     RKValueTypeString
 };
 
-#pragma mark -
+#pragma mark - Common Functions
 
+// Log
 int RKLog(const char *, ...);
 
+// Presentation
 void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
 void RKSetUseDailyLog(const bool);
@@ -56,15 +58,18 @@ int RKSetRootFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
 
+// Common numeric output
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
 
+// Clearing buffer
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);
 void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity);
 void RKZeroTailFloat(RKFloat *data, const uint32_t capacity, const uint32_t origin);
 void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin);
 
+// Pulse
 size_t RKPulseBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t pulseCount);
 void RKPulseBufferFree(RKBuffer);
 RKPulse *RKGetPulse(RKBuffer, const uint32_t pulseIndex);
@@ -73,6 +78,7 @@ RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
 int RKClearPulseBuffer(RKBuffer, const uint32_t pulseCount);
 
+// Ray
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t rayCount);
 void RKRayBufferFree(RKBuffer);
 RKRay *RKGetRay(RKBuffer, const uint32_t rayIndex);
@@ -80,17 +86,21 @@ uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t productIndex);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t rayCount);
 
+// Scratch space for moment processors
 size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const bool);
 void RKScratchFree(RKScratch *);
 
+// Standalone file monitor (one file per thread)
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *), void *);
 int RKFileMonitorFree(RKFileMonitor *);
 
+// Stream symbols / binary
 RKStream RKStreamFromString(const char *);
 char *RKStringOfStream(RKStream);
 int RKStringFromStream(char *, RKStream);
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
+// Parser, enum, strings
 void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
 void RKParseQuotedStrings(const char *source, ...);
 void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
@@ -101,6 +111,7 @@ RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
 bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
 bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
 
+// Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */
