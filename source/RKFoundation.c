@@ -197,69 +197,82 @@ void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
     RKSweep *sweep = NULL;
+    
     // Keeep current output stream and temporary change to screen output
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
-    RKLog(">sizeof(void *) = %d\n", (int)sizeof(void *));
-    RKLog(">sizeof(uint64_t) = %d\n", (int)sizeof(uint64_t));
-    RKLog(">sizeof(unsigned long) = %d\n", (int)sizeof(unsigned long));
-    RKLog(">sizeof(unsigned long long) = %d\n", (int)sizeof(unsigned long long));
-    RKLog(">sizeof(RKByte) = %d\n", (int)sizeof(RKByte));
-    RKLog(">sizeof(RKFloat) = %d\n", (int)sizeof(RKFloat));
-    RKLog(">sizeof(RKInt16C) = %d\n", (int)sizeof(RKInt16C));
-    RKLog(">sizeof(RKComplex) = %d\n", (int)sizeof(RKComplex));
-    RKLog(">sizeof(RKRadarDesc) = %s\n", RKIntegerToCommaStyleString(sizeof(RKRadarDesc)));
-    RKLog(">sizeof(RKConfig) = %s\n", RKIntegerToCommaStyleString(sizeof(RKConfig)));
-    RKLog(">sizeof(RKHealth) = %s\n", RKIntegerToCommaStyleString(sizeof(RKHealth)));
-    RKLog(">sizeof(RKNodalHealth) = %d\n", (int)sizeof(RKNodalHealth));
-    RKLog(">sizeof(RKPosition) = %d\n", (int)sizeof(RKPosition));
-    RKLog(">sizeof(RKPulseHeader) = %d\n", (int)sizeof(RKPulseHeader));
-    RKLog(">sizeof(RKPulseParameters) = %d\n", (int)sizeof(RKPulseParameters));
-    RKLog(">sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    RKLog(">sizeof(RKPulse) = %d\n", (int)sizeof(RKPulse));
-    RKLog(">sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
-    RKLog(">sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    RKLog(">sizeof(RKRay) = %d  (SIMD aligned: %s)\n", (int)sizeof(RKRay), (int)sizeof(RKRay) % RKSIMDAlignSize == 0 ? "true" : "false");
-    RKLog(">sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
-    RKLog(">sizeof(sweep->header) = %s\n", RKIntegerToCommaStyleString(sizeof(sweep->header)));
-    RKLog(">sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));
-    RKLog(">sizeof(RKFileHeader) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileHeader)));
-    RKLog(">sizeof(RKPreferenceObject) = %s\n", RKIntegerToCommaStyleString(sizeof(RKPreferenceObject)));
-    RKLog(">sizeof(RKControl) = %s\n", RKIntegerToCommaStyleString(sizeof(RKControl)));
-    RKLog(">sizeof(RKStatus) = %d\n", (int)sizeof(RKStatus));
-    RKLog(">sizeof(RKFileMonitor) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileMonitor)));
-    RKLog(">sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
-    RKLog(">sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
-    RKLog(">sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
-    RKLog(">sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
+    
+    printf("sizeof(void *) = %d\n", (int)sizeof(void *));
+    printf("sizeof(uint64_t) = %d\n", (int)sizeof(uint64_t));
+    printf("sizeof(unsigned long) = %d\n", (int)sizeof(unsigned long));
+    printf("sizeof(unsigned long long) = %d\n", (int)sizeof(unsigned long long));
+    printf("sizeof(RKByte) = %d\n", (int)sizeof(RKByte));
+    printf("sizeof(RKFloat) = %d\n", (int)sizeof(RKFloat));
+    printf("sizeof(RKInt16C) = %d\n", (int)sizeof(RKInt16C));
+    printf("sizeof(RKComplex) = %d\n", (int)sizeof(RKComplex));
+    printf("sizeof(RKRadarDesc) = %s\n", RKIntegerToCommaStyleString(sizeof(RKRadarDesc)));
+    printf("sizeof(RKConfig) = %s\n", RKIntegerToCommaStyleString(sizeof(RKConfig)));
+    printf("sizeof(RKHealth) = %s\n", RKIntegerToCommaStyleString(sizeof(RKHealth)));
+    printf("sizeof(RKNodalHealth) = %d\n", (int)sizeof(RKNodalHealth));
+    printf("sizeof(RKPosition) = %d\n", (int)sizeof(RKPosition));
+    printf("sizeof(RKPulseHeader) = %d\n", (int)sizeof(RKPulseHeader));
+    printf("sizeof(RKPulseParameters) = %d\n", (int)sizeof(RKPulseParameters));
+    printf("sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
+    printf("sizeof(RKPulse) = %d\n", (int)sizeof(RKPulse));
+    printf("sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
+    printf("sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
+    printf("sizeof(RKRay) = %d  (SIMD aligned: %s)\n", (int)sizeof(RKRay), (int)sizeof(RKRay) % RKSIMDAlignSize == 0 ? "true" : "false");
+    printf("sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
+    printf("sizeof(sweep->header) = %s\n", RKIntegerToCommaStyleString(sizeof(sweep->header)));
+    printf("sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));
+    printf("sizeof(RKFileHeader) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileHeader)));
+    printf("sizeof(RKPreferenceObject) = %s\n", RKIntegerToCommaStyleString(sizeof(RKPreferenceObject)));
+    printf("sizeof(RKControl) = %s\n", RKIntegerToCommaStyleString(sizeof(RKControl)));
+    printf("sizeof(RKStatus) = %d\n", (int)sizeof(RKStatus));
+    printf("sizeof(RKFileMonitor) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileMonitor)));
+    printf("sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
+    printf("sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
+    printf("sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
+    printf("sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
+    
     printf("\n");
-    RKLog(">RKFilterAnchorDefault:\n");
+    
     RKFilterAnchor anchor = RKFilterAnchorDefault;
-    RKLog(">.name = %d", anchor.name);
-    RKLog(">.origin = %d", anchor.origin);
-    RKLog(">.length = %d", anchor.length);
-    RKLog(">.inputOrigin = %d", anchor.inputOrigin);
-    RKLog(">.outputOrigin = %d", anchor.outputOrigin);
-    RKLog(">.maxDataLength = %d", anchor.maxDataLength);
-    RKLog(">.subCarrierFrequency = %.2f", anchor.subCarrierFrequency);
-    RKLog(">.sensitivityGain = %.2f dB", anchor.sensitivityGain);
-    RKLog(">.filterGain = %.2f dB", anchor.filterGain);
-    RKLog(">.fullScale = %.2f", anchor.fullScale);
+    printf("RKFilterAnchorDefault:\n");
+    printf(".name = %d\n", anchor.name);
+    printf(".origin = %d\n", anchor.origin);
+    printf(".length = %d\n", anchor.length);
+    printf(".inputOrigin = %d\n", anchor.inputOrigin);
+    printf(".outputOrigin = %d\n", anchor.outputOrigin);
+    printf(".maxDataLength = %d\n", anchor.maxDataLength);
+    printf(".subCarrierFrequency = %.2f\n", anchor.subCarrierFrequency);
+    printf(".sensitivityGain = %.2f dB\n", anchor.sensitivityGain);
+    printf(".filterGain = %.2f dB\n", anchor.filterGain);
+    printf(".fullScale = %.2f\n", anchor.fullScale);
+    
+    printf("\n");
+    
     RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(1000);
     memcpy(&anchor, &anchor2, sizeof(RKFilterAnchor));
-    printf("\n");
-    RKLog(">RKFilterAnchorDefaultWithMaxDataLength(1000):\n");
-    RKLog(">.name = %d", anchor.name);
-    RKLog(">.origin = %d", anchor.origin);
-    RKLog(">.length = %d", anchor.length);
-    RKLog(">.inputOrigin = %d", anchor.inputOrigin);
-    RKLog(">.outputOrigin = %d", anchor.outputOrigin);
-    RKLog(">.maxDataLength = %d", anchor.maxDataLength);
-    RKLog(">.subCarrierFrequency = %.2f", anchor.subCarrierFrequency);
-    RKLog(">.sensitivityGain = %.2f dB", anchor.sensitivityGain);
-    RKLog(">.filterGain = %.2f dB", anchor.filterGain);
-    RKLog(">.fullScale = %.2f", anchor.fullScale);
+    printf("RKFilterAnchorDefaultWithMaxDataLength(1000):\n");
+    printf(".name = %d\n", anchor.name);
+    printf(".origin = %d\n", anchor.origin);
+    printf(".length = %d\n", anchor.length);
+    printf(".inputOrigin = %d\n", anchor.inputOrigin);
+    printf(".outputOrigin = %d\n", anchor.outputOrigin);
+    printf(".maxDataLength = %d\n", anchor.maxDataLength);
+    printf(".subCarrierFrequency = %.2f\n", anchor.subCarrierFrequency);
+    printf(".sensitivityGain = %.2f dB\n", anchor.sensitivityGain);
+    printf(".filterGain = %.2f dB\n", anchor.filterGain);
+    printf(".fullScale = %.2f\n", anchor.fullScale);
 
+    printf("\n");
+
+    int k = 0;
+    while (k != RKResultCount) {
+        printf("%2d. %s\n", k, rkResultStrings[k]);
+        k++;
+    }
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
@@ -404,7 +417,7 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
         pulse->header.gateCount = 0;
         memset(pulse->data, 0, 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat)));
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 #pragma mark - Ray
@@ -483,7 +496,7 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
         ray->header.gateCount = 0;
         memset(ray->data, 0, RKMaximumProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 #pragma mark - Scratch Space

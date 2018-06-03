@@ -852,7 +852,7 @@ int RKSetTransceiver(RKRadar *radar,
     radar->transceiverInit = initRoutine;
     radar->transceiverExec = execRoutine;
     radar->transceiverFree = freeRoutine;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetPedestal(RKRadar *radar,
@@ -864,7 +864,7 @@ int RKSetPedestal(RKRadar *radar,
     radar->pedestalInit = initRoutine;
     radar->pedestalExec = execRoutine;
     radar->pedestalFree = freeRoutine;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetHealthRelay(RKRadar *radar,
@@ -876,7 +876,7 @@ int RKSetHealthRelay(RKRadar *radar,
     radar->healthRelayInit = initRoutine;
     radar->healthRelayExec = execRoutine;
     radar->healthRelayFree = freeRoutine;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 #pragma mark - Properties
@@ -932,7 +932,7 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
     if (radar->dataRecorder) {
         RKDataRecorderSetVerbose(radar->dataRecorder, verbose);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
@@ -955,36 +955,36 @@ int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
                 break;
         }
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetDataPath(RKRadar *radar, const char *path) {
     memcpy(radar->desc.dataPath, path, RKMaximumPathLength - 1);
     RKSetRootFolder(path);
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
     radar->fileManager->usagelimit = limit;
     RKLog("Usage limit %s B\n", RKIntegerToCommaStyleString(radar->fileManager->usagelimit));
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
     RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
     RKDataRecorderSetDoNotWrite(radar->dataRecorder, doNotWrite);
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetDataRecorder(RKRadar *radar, const bool record) {
     radar->dataRecorder->doNotWrite = !record;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKToggleDataRecorder(RKRadar *radar) {
     radar->dataRecorder->doNotWrite = !radar->dataRecorder->doNotWrite;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 // NOTE: It is possible to call this function as RKSetWaveform(radar, radar->waveform);
@@ -1015,7 +1015,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                                             waveform->filterAnchors[k][j],
                                             k,
                                             j);
-            if (r != RKResultNoError) {
+            if (r != RKResultSuccess) {
                 return RKResultFailedToSetFilter;
             }
         }
@@ -1050,7 +1050,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->state & RKRadarStateLive) {
         RKClockReset(radar->pulseClock);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
@@ -1058,7 +1058,7 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
         return RKResultNoMomentEngine;
     }
     if (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == lagChoice) {
-        return RKResultNoError;
+        return RKResultSuccess;
     }
     radar->momentEngine->processor = &RKMultiLag;
     radar->momentEngine->processorLagCount = RKLagCount;
@@ -1071,7 +1071,7 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
           rkGlobalParameters.showColor ? "\033[4m" : "",
           lagChoice,
           rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
@@ -1083,7 +1083,7 @@ int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
     RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
@@ -1095,7 +1095,7 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
     RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
@@ -1107,7 +1107,7 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
     RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 //
@@ -1135,7 +1135,7 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     RKWaveform *waveform = RKWaveformInitAsImpulse();
     RKAddConfig(radar, RKConfigKeyWaveform, waveform, RKConfigKeyNull);
     RKWaveformFree(waveform);
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetWaveformTo121(RKRadar *radar) {
@@ -1146,7 +1146,7 @@ int RKSetWaveformTo121(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetProcessingCoreCounts(RKRadar *radar,
@@ -1160,12 +1160,12 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
     }
     RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
     RKMomentEngineSetCoreCount(radar->momentEngine, momentProcessorCoreCount);
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKSetPRF(RKRadar *radar, const uint32_t prf) {
     RKAddConfig(radar, RKConfigKeyPRF, prf, RKConfigKeyNull);
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 uint32_t RKGetPulseCapacity(RKRadar *radar) {

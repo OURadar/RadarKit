@@ -1089,7 +1089,7 @@ int socketInitialHandler(RKOperator *O) {
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
 
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int socketTerminateHandler(RKOperator *O) {
@@ -1101,7 +1101,7 @@ int socketTerminateHandler(RKOperator *O) {
     user->access = RKStreamNull;
     user->radar = NULL;
     consolidateStreams(engine);
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 #pragma mark - Life Cycle

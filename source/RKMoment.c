@@ -913,7 +913,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
     while (engine->tic == 0) {
         usleep(10000);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKMomentEngineStop(RKMomentEngine *engine) {
@@ -943,7 +943,7 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 char *RKMomentEngineStatusString(RKMomentEngine *engine) {

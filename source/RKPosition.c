@@ -378,7 +378,7 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
     struct timeval t;
     gettimeofday(&t, NULL);
     engine->startTime = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
@@ -406,7 +406,7 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 char *RKPositionEngineStatusString(RKPositionEngine *engine) {

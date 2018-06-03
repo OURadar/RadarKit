@@ -230,12 +230,12 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             strcpy(response, me->responses[responseIndex]);
         }
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKPedestalPedzyFree(RKPedestal input) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClientFree(me->client);
     free(me);
-    return RKResultNoError;
+    return RKResultSuccess;
 }

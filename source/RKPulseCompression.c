@@ -819,17 +819,17 @@ int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
     for (int k = 1; k < RKMaxFilterCount; k++) {
         engine->filterCounts[k] = 0;
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *engine, const int group, const int count) {
     engine->filterCounts[group] = count;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *engine, const int groupCount) {
     engine->filterGroupCount = groupCount;
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 // Input:
@@ -896,7 +896,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
     if (engine->state & RKEngineStateMemoryChange) {
         engine->state ^= RKEngineStateMemoryChange;
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *engine) {
@@ -984,7 +984,7 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     while (engine->tic == 0) {
         usleep(10000);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
@@ -1014,7 +1014,7 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
-    return RKResultNoError;
+    return RKResultSuccess;
 }
 
 char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *engine) {

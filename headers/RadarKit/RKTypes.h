@@ -212,71 +212,76 @@ typedef struct rk_modulo_path {
 
 #pragma mark - Enums
 
+#define RKResultNames \
+N(RKResultSuccess) \
+N(RKResultTooBig) \
+N(RKResultTimeout) \
+N(RKResultNullInput) \
+N(RKResultEngineNotWired) \
+N(RKResultEngineNotActive) \
+N(RKResultIncompleteSend) \
+N(RKResultIncompleteReceive) \
+N(RKResultIncompleteTransceiver) \
+N(RKResultIncompletePedestal) \
+N(RKResultIncompleteHealthRelay) \
+N(RKResultIncompleteControl) \
+N(RKResultIncompleteWaveformCalibration) \
+N(RKResultErrorCreatingOperatorRoutine) \
+N(RKResultErrorCreatingOperatorCommandRoutine) \
+N(RKResultErrorCreatingClientRoutine) \
+N(RKResultSDToFDError) \
+N(RKResultNoPulseBuffer) \
+N(RKResultNoRayBuffer) \
+N(RKResultNoPulseCompressionEngine) \
+N(RKResultNoMomentEngine) \
+N(RKResultFailedToStartCompressionCore) \
+N(RKResultFailedToStartPulseWatcher) \
+N(RKResultFailedToStartRingPulseWatcher) \
+N(RKResultFailedToInitiateSemaphore) \
+N(RKResultFailedToRetrieveSemaphore) \
+N(RKResultFailedToAllocateFFTSpace) \
+N(RKResultFailedToAllocateFilter) \
+N(RKResultFailedToAllocateDutyCycleBuffer) \
+N(RKResultFailedToAllocateScratchSpace) \
+N(RKResultFailedToSetWaveform) \
+N(RKResultFailedToSetFilter) \
+N(RKResultEngineDeactivatedMultipleTimes) \
+N(RKResultFailedToStartMomentCore) \
+N(RKResultFailedToStartPulseGatherer) \
+N(RKResultUnableToChangeCoreCounts) \
+N(RKResultFailedToStartPedestalWorker) \
+N(RKResultFailedToGetVacantPosition) \
+N(RKResultFailedToGetVacantHealth) \
+N(RKResultFailedToStartRayGatherer) \
+N(RKResultFailedToStartHealthWorker) \
+N(RKResultFailedToStartPulseRecorder) \
+N(RKResultFailedToStartPedestalMonitor) \
+N(RKResultFailedToStartFileManager) \
+N(RKResultFailedToStartFileRemover) \
+N(RKResultFailedToStartTransceiver) \
+N(RKResultFailedToStartPedestal) \
+N(RKResultFailedToStartHealthRelay) \
+N(RKResultPreferenceFileNotFound) \
+N(RKResultPreferenceKeywordNotFound) \
+N(RKResultFailedToMeasureNoise) \
+N(RKResultFailedToCreateFileRemover) \
+N(RKResultFileManagerBufferNotResuable) \
+N(RKResultInvalidMomentParameters) \
+N(RKResultFailedToCreateUnitWorker) \
+N(RKResultFailedToStartHostWatcher) \
+N(RKResultFailedToStartHostPinger) \
+N(RKResultFailedToExecuteCommand) \
+N(RKResultFailedToAddHost) \
+N(RKResultClientNotConnected) \
+N(RKResultRadarNotLive) \
+N(RKResultNoRadar)
+
+#define N(x) x,
 enum RKResult {
-    RKResultTimeout = -99,
-    RKResultNullInput,
-    RKResultEngineNotWired,
-	RKResultEngineNotActive,
-    RKResultIncompleteSend,
-    RKResultIncompleteReceive,
-    RKResultIncompleteTransceiver,
-    RKResultIncompletePedestal,
-    RKResultIncompleteHealthRelay,
-    RKResultIncompleteControl,
-    RKResultIncompleteWaveformCalibration,
-    RKResultErrorCreatingOperatorRoutine,
-    RKResultErrorCreatingOperatorCommandRoutine,
-    RKResultErrorCreatingClientRoutine,
-    RKResultSDToFDError,
-    RKResultNoPulseBuffer,
-    RKResultNoRayBuffer,
-    RKResultNoPulseCompressionEngine,
-    RKResultNoMomentEngine,
-    RKResultFailedToStartCompressionCore,
-    RKResultFailedToStartPulseWatcher,
-    RKResultFailedToStartRingPulseWatcher,
-    RKResultFailedToInitiateSemaphore,
-    RKResultFailedToRetrieveSemaphore,
-    RKResultTooBig,
-    RKResultFailedToAllocateFFTSpace,
-    RKResultFailedToAllocateFilter,
-    RKResultFailedToAllocateDutyCycleBuffer,
-    RKResultFailedToAllocateScratchSpace,
-    RKResultFailedToSetWaveform,
-    RKResultFailedToSetFilter,
-    RKResultEngineDeactivatedMultipleTimes,
-    RKResultFailedToStartMomentCore,
-    RKResultFailedToStartPulseGatherer,
-    RKResultUnableToChangeCoreCounts,
-    RKResultFailedToStartPedestalWorker,
-    RKResultFailedToGetVacantPosition,
-    RKResultFailedToGetVacantHealth,
-    RKResultFailedToStartRayGatherer,
-    RKResultFailedToStartHealthWorker,
-    RKResultFailedToStartPulseRecorder,
-    RKResultFailedToStartPedestalMonitor,
-    RKResultFailedToStartFileManager,
-    RKResultFailedToStartFileRemover,
-    RKResultFailedToStartTransceiver,
-    RKResultFailedToStartPedestal,
-    RKResultFailedToStartHealthRelay,
-    RKResultPreferenceFileNotFound,
-    RKResultPreferenceKeywordNotFound,
-    RKResultFailedToMeasureNoise,
-    RKResultFailedToCreateFileRemover,
-    RKResultFileManagerBufferNotResuable,
-    RKResultInvalidMomentParameters,
-    RKResultFailedToCreateUnitWorker,
-    RKResultFailedToStartHostWatcher,
-    RKResultFailedToStartHostPinger,
-    RKResultFailedToExecuteCommand,
-	RKResultFailedToAddHost,
-    RKResultClientNotConnected,
-    RKResultRadarNotLive,
-    RKResultNoRadar,
-    RKResultSuccess = 0,
-    RKResultNoError = 0
+    RKResultNames
+    RKResultCount,
 };
+#undef N
 
 enum RKEngineColor {
     RKEngineColorCommandCenter = 10,
@@ -542,19 +547,19 @@ enum RKEngineState {
     RKEngineStateWritingFile         = (1 << 4),                               // Generating an output file
     RKEngineStateMemoryChange        = (1 << 5),                               // Some required pointers are being changed
     RKEngineStateSuspended           = (1 << 6),                               // All indices stop increasing
-	RKEngineStateBusyMask            = 0x000000F0,                             //
+    RKEngineStateBusyMask            = 0x000000F0,                             //
     RKEngineStateAllocated           = (1 << 8),                               // Resources have been allocated
     RKEngineStateProperlyWired       = (1 << 9),                               // All required pointers are properly wired up
     RKEngineStateActivating          = (1 << 10),                              // The main run loop is being activated
     RKEngineStateDeactivating        = (1 << 11),                              // The main run loop is being deactivated
     RKEngineStateActive              = (1 << 12),                              // The engine is active
-	RKEngineStateMainMask            = 0x00001F00,                             //
-	RKEngineStateChildAllocated      = (1 << 16),                              // The child resources have been allocated
-	RKEngineStateChildProperlyWired  = (1 << 17),                              // Probably not used
-	RKEngineStateChildActivating     = (1 << 18),                              // The children are being activated
-	RKEngineStateChildDeactivating   = (1 << 19),                              // The children are being deactivated
-	RKEngineStateChildActive         = (1 << 20),                              // The children are active
-	RKEngineStateChildMask           = 0x001F0000
+    RKEngineStateMainMask            = 0x00001F00,                             //
+    RKEngineStateChildAllocated      = (1 << 16),                              // The child resources have been allocated
+    RKEngineStateChildProperlyWired  = (1 << 17),                              // Probably not used
+    RKEngineStateChildActivating     = (1 << 18),                              // The children are being activated
+    RKEngineStateChildDeactivating   = (1 << 19),                              // The children are being deactivated
+    RKEngineStateChildActive         = (1 << 20),                              // The children are active
+    RKEngineStateChildMask           = 0x001F0000
 };
 
 typedef uint32_t RKStatusEnum;

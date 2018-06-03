@@ -34,6 +34,7 @@ typedef struct RKGlobalParameterStruct {
 } RKGlobalParamters;
 
 extern RKGlobalParamters rkGlobalParameters;
+extern const char * const rkResultStrings[];
 
 typedef uint32_t RKValueType;
 enum RKValueType {
