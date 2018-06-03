@@ -232,6 +232,34 @@ void RKShowTypeSizes(void) {
     RKLog(">sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
     RKLog(">sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
     RKLog(">sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
+    printf("\n");
+    RKLog(">RKFilterAnchorDefault:\n");
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    RKLog(">.name = %d", anchor.name);
+    RKLog(">.origin = %d", anchor.origin);
+    RKLog(">.length = %d", anchor.length);
+    RKLog(">.inputOrigin = %d", anchor.inputOrigin);
+    RKLog(">.outputOrigin = %d", anchor.outputOrigin);
+    RKLog(">.maxDataLength = %d", anchor.maxDataLength);
+    RKLog(">.subCarrierFrequency = %.2f", anchor.subCarrierFrequency);
+    RKLog(">.sensitivityGain = %.2f dB", anchor.sensitivityGain);
+    RKLog(">.filterGain = %.2f dB", anchor.filterGain);
+    RKLog(">.fullScale = %.2f", anchor.fullScale);
+    RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(1000);
+    memcpy(&anchor, &anchor2, sizeof(RKFilterAnchor));
+    printf("\n");
+    RKLog(">RKFilterAnchorDefaultWithMaxDataLength(1000):\n");
+    RKLog(">.name = %d", anchor.name);
+    RKLog(">.origin = %d", anchor.origin);
+    RKLog(">.length = %d", anchor.length);
+    RKLog(">.inputOrigin = %d", anchor.inputOrigin);
+    RKLog(">.outputOrigin = %d", anchor.outputOrigin);
+    RKLog(">.maxDataLength = %d", anchor.maxDataLength);
+    RKLog(">.subCarrierFrequency = %.2f", anchor.subCarrierFrequency);
+    RKLog(">.sensitivityGain = %.2f dB", anchor.sensitivityGain);
+    RKLog(">.filterGain = %.2f dB", anchor.filterGain);
+    RKLog(">.fullScale = %.2f", anchor.fullScale);
+
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }

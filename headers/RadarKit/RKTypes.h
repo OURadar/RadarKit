@@ -33,23 +33,25 @@
 
 #define RKVersionString "1.2.9b"
 
-/*
-  Memory Blocks
-  Defines the number of slots and gates of each pulse of the RKRadar structure
- 
-  RKBufferCSlotCount The number of slots for config
-  RKBufferHSlotCount The number of slots for health JSON string
-  RKBufferSSlotCount The number of slots for status string
-  RKBufferPSlotCount The number of slots for position buffer
-  RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
-  RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
-  RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
-  RKMaximumControlCount The number of controls (buttons)
-  RKMaximumCalibrationCount The number of waveform calibration set
-  RKGateCount The maximum number of gates allocated for each pulse
-  RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
- 
- */
+//
+// Memory Blocks
+// Defines the number of slots and gates of each pulse of the RKRadar structure
+//
+// RKBufferCSlotCount The number of slots for config
+// RKBufferHSlotCount The number of slots for health JSON string
+// RKBufferSSlotCount The number of slots for status string
+// RKBufferPSlotCount The number of slots for position buffer
+// RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
+// RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
+// RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
+// RKMaximumControlCount The number of controls (buttons)
+// RKMaximumCalibrationCount The number of waveform calibration set
+// RKGateCount The maximum number of gates allocated for each pulse
+// RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
+//
+
+#pragma mark - Constants
+
 #define RKBufferCSlotCount                   25                                // Config
 #define RKBufferHSlotCount                   25                                // Health
 #define RKBufferSSlotCount                   90                                // Status strings
@@ -112,39 +114,63 @@
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
 
-typedef uint8_t   RKByte;
-typedef float     RKFloat;                                                     // We can change this to double if we decided one day
-typedef ssize_t   RKResult;                                                    // Generic return from functions, 0 for no errors and !0 for others.
-typedef void *    RKBuffer;
-typedef void *    RKTransceiver;
-typedef void *    RKPedestal;
-typedef void *    RKHealthRelay;
-typedef void *    RKMasterController;
-typedef char      RKName[RKNameLength];
+#define RKFilterAnchorDefault                           {.length = (1), .maxDataLength = RKGateCount, .filterGain = 1.0f}
+#define RKFilterAnchorDefaultWithMaxDataLength(x)       {.length = (1), .maxDataLength = (x), .filterGain = 1.0f}
+#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {.length = (x), .maxDataLength = (y), .filterGain = 1.0f}
 
-typedef const float RKConst;
+#define RKMarkerScanTypeString(x) \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "PPI" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "RHI" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "SPT" : "UNK")))
+
+#define RKMarkerScanTypeShortString(x) \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "P" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "R" : \
+(((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "S" : "U")))
+
+#pragma mark - Fundamental Types
+
+typedef uint8_t       RKByte;                                                  //
+typedef float         RKFloat;                                                 // We can change this to double if we decided one day
+typedef ssize_t       RKResult;                                                // Generic return from functions, 0 for no errors and !0 for others.
+typedef void *        RKBuffer;
+typedef void *        RKTransceiver;
+typedef void *        RKPedestal;
+typedef void *        RKHealthRelay;
+typedef void *        RKMasterController;
+typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
+typedef int64_t       RKUserProductId;                                         // Product identifier
+typedef const float   RKConst;
 
 #pragma pack(push, 1)
 
+//
 // Fundamental unit of a (16-bit) + (16-bit) raw complex IQ sample
+//
 typedef struct rk_int16c {
     int16_t i;
     int16_t q;
 } RKInt16C;
 
+//
 // Interleaved complex format. Fundamental unit of a (float) + (float) raw complex IQ sample
+//
 typedef struct rk_complex {
     RKFloat i;
     RKFloat q;
 } RKComplex;
 
+//
 // Deinterleaved complex format for vector library
+//
 typedef struct rk_iqz {
     RKFloat *i;
     RKFloat *q;
 } RKIQZ;
 
+//
 // A convenient way to convert bytes into several other types
+//
 typedef union rk_four_byte {
     struct { uint8_t byte[4]; };
     struct { uint16_t u16, u16_2; };
@@ -165,14 +191,10 @@ typedef union rk_filter_anchor {
         RKFloat       subCarrierFrequency;                                     // For house keeping only, use the waveform->fc for DDC
         RKFloat       sensitivityGain;                                         // Sensitivity gain due to longer/efficient waveforms (dB)
         RKFloat       filterGain;                                              // Filter gain from the filter coefficients, should be 0.0 (dB)
-        RKFloat       fullScale;
+        RKFloat       fullScale;                                               // Scaling factor to get to full scale
     };
     char bytes[64];
 } RKFilterAnchor;
-
-#define RKFilterAnchorDefault                           {{0, 0,  1 ,  0, 0, RKGateCount, 0.0f, 1.0f, 1.0f}}
-#define RKFilterAnchorDefaultWithMaxDataLength(x)       {{0, 0,  1 ,  0, 0, (x) , 0.0f, 1.0f, 1.0f}}
-#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{0, 0, (x),  0, 0, (y) , 0.0f, 1.0f, 1.0f}}
 
 typedef struct rk_iir_filter {
     uint32_t      name;
@@ -187,6 +209,8 @@ typedef struct rk_modulo_path {
     uint32_t      length;
     uint32_t      modulo;
 } RKModuloPath;
+
+#pragma mark - Enums
 
 enum RKResult {
     RKResultTimeout = -99,
@@ -328,16 +352,6 @@ enum RKMarker {
     RKMarkerMemoryManagement         = (1 << 7)                                //  1000 0000
 };
 
-#define RKMarkerScanTypeString(x) \
-(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "PPI" : \
-(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "RHI" : \
-(((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "SPT" : "UNK")))
-
-#define RKMarkerScanTypeShortString(x) \
-(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "P" : \
-(((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "R" : \
-(((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "S" : "U")))
-
 //
 // Typical status progression:
 //
@@ -466,15 +480,15 @@ enum RKConfigKey {
     RKConfigKeySystemZCal,
     RKConfigKeySystemDCal,
     RKConfigKeySystemPCal,
-    RKConfigKeyZCal,                   // deprecating
-    RKConfigKeyDCal,                   // deprecating
-    RKConfigKeyPCal,                   // deprecating
-    RKConfigKeyZCal2,                  // deprecating
-    RKConfigKeyDCal2,                  // deprecating
-    RKConfigKeyPCal2,                  // deprecating
-    RKConfigKeyZCals,                  // deprecating
-    RKConfigKeyDCals,                  // deprecating
-    RKConfigKeyPCals,                  // deprecating
+    RKConfigKeyZCal,                                                           // deprecating
+    RKConfigKeyDCal,                                                           // deprecating
+    RKConfigKeyPCal,                                                           // deprecating
+    RKConfigKeyZCal2,                                                          // deprecating
+    RKConfigKeyDCal2,                                                          // deprecating
+    RKConfigKeyPCal2,                                                          // deprecating
+    RKConfigKeyZCals,                                                          // deprecating
+    RKConfigKeyDCals,                                                          // deprecating
+    RKConfigKeyPCals,                                                          // deprecating
     RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
@@ -574,55 +588,55 @@ enum RKFileType {
 
 typedef uint64_t RKStream;
 enum RKStream {
-    RKStreamNull                     = 0,                                      //
-    RKStreamStatusMask               = 0x07,                                   // Values 0-8 in the lowest 4 bits (exclusive mode)
-    RKStreamStatusPositions          = 1,                                      //
-    RKStreamStatusPulses             = 2,                                      //
-    RKStreamStatusRays               = 3,                                      //
-    RKStreamStatusIngest             = 4,                                      // Ingest up keep
-    RKStreamStatusEngines            = 5,                                      // State of Engines
-    RKStreamStatusBuffers            = 6,                                      // Buffer overview
-    RKStreamControl                  = (1 << 3),                               // Controls
-    RKStreamStatusAll                = 0xF7,                                   //
-    RKStreamHealthInJSON             = (1 << 5),                               // Health in JSON
-    RKStreamStatusEngineBinary       = (1 << 6),                               //
-    RKStreamStatusProcessorStatus    = (1 << 7),                               // Consolidated binary from of the system status
-    RKStreamDisplayIQ                = (1 << 8),                               // Low rate IQ (sub-smpled)
-    RKStreamDisplayIQFiltered        = (1 << 9),                               // Filtered IQ (usually matched filter is applied)
-    RKStreamProductIQ                = (1 << 10),                              // Full rate IQ
-    RKStreamProductIQFiltered        = (1 << 11),                              // Full rate filtered IQ
-    RKStreamScopeStuff               = 0x0000000000000300ULL,                  //
-    RKStreamDisplayZ                 = (1 << 16),                              // Display: Z = 0x00010000
-    RKStreamDisplayV                 = (1 << 17),                              //
-    RKStreamDisplayW                 = (1 << 18),                              //
-    RKStreamDisplayD                 = (1 << 19),                              //
-    RKStreamDisplayP                 = (1 << 20),                              //
-    RKStreamDisplayR                 = (1 << 21),                              //
-    RKStreamDisplayK                 = (1 << 22),                              //
-    RKStreamDisplaySh                = (1 << 23),                              //
-    RKStreamDisplaySv                = (1 << 24),                              //
-    RKStreamDisplayZVWDPRKS          = 0x0000000001FF0000ULL,                  //
-    RKStreamProductZ                 = (1ULL << 32),                           // Products by ray
-    RKStreamProductV                 = (1ULL << 33),                           //
-    RKStreamProductW                 = (1ULL << 34),                           //
-    RKStreamProductD                 = (1ULL << 35),                           //
-    RKStreamProductP                 = (1ULL << 36),                           //
-    RKStreamProductR                 = (1ULL << 37),                           //
-    RKStreamProductK                 = (1ULL << 38),                           //
-    RKStreamProductSh                = (1ULL << 39),                           //
-    RKStreamProductSv                = (1ULL << 40),                           //
-    RKStreamProductZVWDPRKS          = 0x000001FF00000000ULL,                  //
-    RKStreamSweepZ                   = (1ULL << 48),                           // Products by sweep
-    RKStreamSweepV                   = (1ULL << 49),                           //
-    RKStreamSweepW                   = (1ULL << 50),                           //
-    RKStreamSweepD                   = (1ULL << 51),                           //
-    RKStreamSweepP                   = (1ULL << 52),                           //
-    RKStreamSweepR                   = (1ULL << 53),                           //
-    RKStreamSweepK                   = (1ULL << 54),                           //
-    RKStreamSweepSh                  = (1ULL << 55),                           //
-    RKStreamSweepSv                  = (1ULL << 56),                           //
-    RKStreamSweepZVWDPRKS            = 0x01FF000000000000ULL,                  //
-    RKStreamEverything               = 0x01FF01FF01FFFFFFULL                   // (Don't use this)
+    RKStreamNull                                 = 0,                          //
+    RKStreamStatusMask                           = 0x07,                       // Values 0-8 in the lowest 4 bits (exclusive mode)
+    RKStreamStatusPositions                      = 1,                          //
+    RKStreamStatusPulses                         = 2,                          //
+    RKStreamStatusRays                           = 3,                          //
+    RKStreamStatusIngest                         = 4,                          // Ingest up keep
+    RKStreamStatusEngines                        = 5,                          // State of Engines
+    RKStreamStatusBuffers                        = 6,                          // Buffer overview
+    RKStreamControl                              = (1 << 3),                   // Controls
+    RKStreamStatusAll                            = 0xF7,                       //
+    RKStreamHealthInJSON                         = (1 << 5),                   // Health in JSON
+    RKStreamStatusEngineBinary                   = (1 << 6),                   //
+    RKStreamStatusProcessorStatus                = (1 << 7),                   // Consolidated binary from of the system status
+    RKStreamDisplayIQ                            = (1 << 8),                   // Low rate IQ (sub-smpled)
+    RKStreamDisplayIQFiltered                    = (1 << 9),                   // Filtered IQ (usually matched filter is applied)
+    RKStreamProductIQ                            = (1 << 10),                  // Full rate IQ
+    RKStreamProductIQFiltered                    = (1 << 11),                  // Full rate filtered IQ
+    RKStreamScopeStuff                           = 0x0000000000000300ULL,      //
+    RKStreamDisplayZ                             = (1 << 16),                  // Display: Z = 0x00010000
+    RKStreamDisplayV                             = (1 << 17),                  //
+    RKStreamDisplayW                             = (1 << 18),                  //
+    RKStreamDisplayD                             = (1 << 19),                  //
+    RKStreamDisplayP                             = (1 << 20),                  //
+    RKStreamDisplayR                             = (1 << 21),                  //
+    RKStreamDisplayK                             = (1 << 22),                  //
+    RKStreamDisplaySh                            = (1 << 23),                  //
+    RKStreamDisplaySv                            = (1 << 24),                  //
+    RKStreamDisplayZVWDPRKS                      = 0x0000000001FF0000ULL,      //
+    RKStreamProductZ                             = (1ULL << 32),               // Products by ray
+    RKStreamProductV                             = (1ULL << 33),               //
+    RKStreamProductW                             = (1ULL << 34),               //
+    RKStreamProductD                             = (1ULL << 35),               //
+    RKStreamProductP                             = (1ULL << 36),               //
+    RKStreamProductR                             = (1ULL << 37),               //
+    RKStreamProductK                             = (1ULL << 38),               //
+    RKStreamProductSh                            = (1ULL << 39),               //
+    RKStreamProductSv                            = (1ULL << 40),               //
+    RKStreamProductZVWDPRKS                      = 0x000001FF00000000ULL,      //
+    RKStreamSweepZ                               = (1ULL << 48),               // Products by sweep
+    RKStreamSweepV                               = (1ULL << 49),               //
+    RKStreamSweepW                               = (1ULL << 50),               //
+    RKStreamSweepD                               = (1ULL << 51),               //
+    RKStreamSweepP                               = (1ULL << 52),               //
+    RKStreamSweepR                               = (1ULL << 53),               //
+    RKStreamSweepK                               = (1ULL << 54),               //
+    RKStreamSweepSh                              = (1ULL << 55),               //
+    RKStreamSweepSv                              = (1ULL << 56),               //
+    RKStreamSweepZVWDPRKS                        = 0x01FF000000000000ULL,      //
+    RKStreamEverything                           = 0x01FF01FF01FFFFFFULL       // (Don't use this)
 };
 
 typedef uint8_t RKHostStatus;
@@ -634,9 +648,44 @@ enum RKHostStatus {
     RKHostStatusReachable
 };
 
+typedef uint32_t RKUserProductStatus;
+enum RKUserProductStatus {
+    RKUserProductStatusVacant                    = 0,                          //
+    RKUserProductStatusSleep0                    = (1 << 0),                   // Sleep stage 0 -
+    RKUserProductStatusSleep1                    = (1 << 1),                   // Sleep stage 1 -
+    RKUserProductStatusSleep2                    = (1 << 2),                   // Sleep stage 2 -
+    RKUserProductStatusSleep3                    = (1 << 3),                   // Sleep stage 3 -
+    RKUserProductStatusSkipped                   = (1 << 5),                   //
+    RKUserProductStatusBusy                      = (1 << 6),                   // Waiting for processing node
+    RKUserProductStatusActive                    = (1 << 7),                   //
+};
 
-// A general description of a radar. Most parameters are used for initialization. Some may be
-// overriden after the radar has gone live.
+typedef uint8_t RKOverviewFlag;
+enum RKOverviewFlag {
+    RKOverviewFlagNone                           = 0,                          //
+    RKOverviewFlagShowColor                      = 1,                          // Use escape sequence for colors
+    RKOverviewFlagDrawBackground                 = (1 << 1)                    // Repaint the background
+};
+
+typedef uint16_t RKWaveformType;
+enum RKWaveformType {
+    RKWaveformTypeNone                           = 0,                          //
+    RKWaveformTypeIsComplex                      = 1,                          // Complex form usually represents baseband
+    RKWaveformTypeSingleTone                     = (1 << 1),                   // The traditional single frequency waveform
+    RKWaveformTypeFrequencyHopping               = (1 << 2),                   //
+    RKWaveformTypeLinearFrequencyModulation      = (1 << 3),                   //
+    RKWaveformTypeTimeFrequencyMultiplexing      = (1 << 4),                   //
+    RKWaveformTypeFromFile                       = (1 << 5),                   //
+    RKWaveformTypeFlatAnchors                    = (1 << 6)                    // Frequency hopping has multiple waveforms but the anchors are identical
+};
+
+#pragma mark - Structure Definitions
+
+//
+// A general description of a radar.
+// Most parameters are used for initialization.
+// Some may be overriden even when the radar is live.
+//
 typedef struct rk_radar_desc {
     RKInitFlag       initFlags;
     uint32_t         pulseCapacity;
@@ -672,7 +721,9 @@ typedef struct rk_radar_desc {
     char             dataPath[RKMaximumFolderPathLength];                      // Root path for the data files
 } RKRadarDesc;
 
+//
 // A running configuration buffer
+//
 typedef struct rk_config {
     uint64_t         i;                                                        // Identity counter
     float            sweepElevation;                                           // Sweep elevation angle (degrees)
@@ -696,6 +747,9 @@ typedef struct rk_config {
     RKName           vcpDefinition;                                            // Volume coverage pattern
 } RKConfig;
 
+//
+// Consolidated health buffer
+//
 typedef union rk_heath {
     struct {
         uint64_t         i;                                                    // Identity counter
@@ -707,12 +761,18 @@ typedef union rk_heath {
     RKByte               *bytes;
 } RKHealth;
 
+//
+// Individual health buffer
+//
 typedef struct rk_nodal_health {
     RKHealth         *healths;                                                 // Pointer (8 byte for 64-bit systems)
     uint32_t         index;                                                    // Index (4 byte)
     bool             active;                                                   // Active flag (1 byte)
 } RKNodalHealth;
 
+//
+// Raw position reported from a pedestal
+//
 typedef union rk_position {
     struct {
         uint64_t         i;                                                    // Counter
@@ -744,6 +804,9 @@ typedef union rk_position {
     RKByte               bytes[128];
 } RKPosition;
 
+//
+// Pulse header
+//
 typedef struct rk_pulse_header {
     uint64_t         i;                                                        // Identity counter
     uint64_t         n;                                                        // Network counter, may be useful to indicate packet loss
@@ -767,14 +830,20 @@ typedef struct rk_pulse_header {
     float            azimuthVelocityDegreesPerSecond;                          // Velocity of azimuth in degrees / second
 } RKPulseHeader;
 
+//
 // Pulse parameters for matched filters (pulseCompressionCore)
+//
 typedef struct rk_pulse_parameters {
     uint32_t         filterCounts[2];
     uint32_t         planIndices[2][RKMaxFilterCount];
     uint32_t         planSizes[2][RKMaxFilterCount];
 } RKPulseParameters;
 
-// RKPulse struct is padded to a SIMD conformal size
+//
+// Pulse
+//
+// - RKPulse struct is padded to a SIMD alignment
+//
 typedef struct rk_pulse {
     union {
         struct {
@@ -786,6 +855,9 @@ typedef struct rk_pulse {
     RKByte                     data[0];
 } RKPulse;
 
+//
+// Ray header
+//
 typedef struct rk_ray_header {
     uint32_t         capacity;                                                 // Capacity
     RKRayStatus      s;                                                        // Ray status
@@ -810,6 +882,11 @@ typedef struct rk_ray_header {
     float            endElevation;                                             //
 } RKRayHeader;
 
+//
+// Ray
+//
+// - RKRay struct is padded to a SIMD alignment
+//
 typedef struct rk_ray {
     union {
         RKRayHeader  header;
@@ -818,6 +895,9 @@ typedef struct rk_ray {
     RKByte           data[0];
 } RKRay;
 
+//
+// Sweep header
+//
 typedef struct rk_sweep_header {
     uint32_t         rayCount;                                                 // Number of rays
     uint32_t         gateCount;                                                // Number of range gates
@@ -827,12 +907,18 @@ typedef struct rk_sweep_header {
     RKConfig         config;
 } RKSweepHeader;
 
+//
+// Sweep
+//
 typedef struct rk_sweep {
     RKSweepHeader    header;
     RKBuffer         rayBuffer;
     RKRay            *rays[RKMaximumRaysPerSweep];
 } RKSweep;
 
+//
+// A scratch space for moment processor
+//
 typedef struct rk_scratch {
     uint32_t         capacity;                                                 // Capacity
     bool             showNumbers;                                              // A flag for showing numbers
@@ -867,6 +953,9 @@ typedef struct rk_scratch {
     int8_t           *mask;                                                    // Mask for censoring
 } RKScratch;
 
+//
+// File header of raw I/Q data
+//
 typedef union rk_file_header {
     struct {
         char         preface[RKNameLength];
@@ -877,6 +966,9 @@ typedef union rk_file_header {
     RKByte bytes[4096];
 } RKFileHeader;
 
+//
+// Preference entry
+//
 typedef struct rk_preferene_object {
     char             keyword[RKNameLength];
     char             valueString[RKMaximumStringLength];
@@ -888,6 +980,9 @@ typedef struct rk_preferene_object {
     bool             boolValues[4];
 } RKPreferenceObject;
 
+//
+// Control
+//
 typedef struct rk_control {
     uint32_t         uid;                                                      // A unique identifier
     uint8_t          state;                                                    // Some internal state for house keeping
@@ -896,7 +991,11 @@ typedef struct rk_control {
     char             command[RKMaximumStringLength];                           // Control command
 } RKControl;
 
-// This can be a supported feature reported back from client
+//
+// Status
+//
+// - This can be a supported feature reported back from client
+//
 typedef struct rk_status {
     uint64_t         i;
     RKStatusFlag     flag;
@@ -915,6 +1014,11 @@ typedef struct rk_status {
     uint8_t          recorderLag;
 } RKStatus;
 
+//
+// Simple engine
+//
+// - File monitor, etc.
+//
 typedef struct rk_simple_engine {
     RKName           name;
     uint8_t          verbose;
@@ -924,67 +1028,39 @@ typedef struct rk_simple_engine {
     void             *userResource;
 } RKSimpleEngine;
 
-typedef struct rk_file_monitor {
-    // Simple engine template
-    RKName           name;
-    uint8_t          verbose;
-    pthread_t        tid;
-    RKEngineState    state;
-    uint32_t         memoryUsage;
-    // User defined variables
-    char             filename[RKMaximumPathLength];
+//
+// File monitor
+//
+typedef struct rk_file_monitor {                                               // Simple engine template
+    RKName           name;                                                     // Engine name
+    uint8_t          verbose;                                                  //
+    pthread_t        tid;                                                      //
+    RKEngineState    state;                                                    //
+    uint32_t         memoryUsage;                                              //
+    char             filename[RKMaximumPathLength];                            // User defined variables
     void             (*callbackRoutine)(void *);
     void             *userResource;
 } RKFileMonitor;
 
-typedef int32_t  RKUserProductId;
+//
+// User product from other processing nodes
+//
 
-typedef uint32_t RKUserProductStatus;
-enum RKUserProductStatus {
-    RKUserProductStatusVacant        = 0,                                      //
-    RKUserProductStatusSleep0        = (1 << 0),                               // Sleep stage 0 -
-    RKUserProductStatusSleep1        = (1 << 1),                               // Sleep stage 1 -
-    RKUserProductStatusSleep2        = (1 << 2),                               // Sleep stage 2 -
-    RKUserProductStatusSleep3        = (1 << 3),                               // Sleep stage 3 -
-    RKUserProductStatusSkipped       = (1 << 5),                               //
-    RKUserProductStatusBusy          = (1 << 6),                               // Waiting for processing node
-    RKUserProductStatusActive        = (1 << 7),                               //
-};
 
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
-        RKName               name;                                             // Name of the product
-        float                w;                                                // Product to color index weight
-        float                b;                                                // Product to color index bias
+        RKName           name;                                                 // Name of the product
+        float            w;                                                    // Product to color index weight
+        float            b;                                                    // Product to color index bias
     };
     RKByte bytes[1024];
 } RKUserProductDesc;
 
 typedef struct rk_user_product {                                               // A description of user product
-    uint64_t             i;                                                    // Index of reporting
-    uint64_t             uid;                                                  // Unique identifer
-    RKUserProductStatus  flag;                                                 // Various state
+    RKUserProductId      i;                                                    // Product identifier
     RKUserProductDesc    desc;                                                 // Description
+    RKUserProductStatus  flag;                                                 // Various state
 } RKUserProduct;
-
-typedef uint8_t RKOverviewFlag;
-enum RKOverviewFlag {
-    RKOverviewFlagNone            = 0,                                         //
-    RKOverviewFlagShowColor       = 1,                                         // Use escape sequence for colors
-    RKOverviewFlagDrawBackground  = (1 << 1)                                   // Repaint the background
-};
-
-typedef uint16_t RKWaveformType;
-enum RKWaveformType {
-    RKWaveformTypeNone                         = 0,                            //
-    RKWaveformTypeIsComplex                    = 1,                            // Complex form usually represents baseband
-    RKWaveformTypeSingleTone                   = (1 << 1),                     // The traditional single frequency waveform
-    RKWaveformTypeFrequencyHopping             = (1 << 2),                     //
-    RKWaveformTypeLinearFrequencyModulation    = (1 << 3),                     //
-    RKWaveformTypeTimeFrequencyMultiplexing    = (1 << 4),                     //
-    RKWaveformTypeFromFile                     = (1 << 5),                     //
-    RKWaveformTypeFlatAnchors                  = (1 << 6)                      // Frequency hopping has multiple waveforms but the anchors are identical
-};
 
 typedef struct rk_waveform {
     int             count;                                                     // Number of groups
