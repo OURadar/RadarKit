@@ -1033,8 +1033,8 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (waveform->filterCounts[0] > 0 && waveform->filterCounts[0] <= 4) {
         RKAddConfig(radar,
                     RKConfigKeyWaveform, waveform,
-                    RKConfigKeyWaveformCalibration, waveformCalibration,
                     RKConfigKeyNull);
+//        RKConfigKeyWaveformCalibration, waveformCalibration,
 
     } else {
         RKLog("Error. Multiplexing = %d filters has not been implemented. Reverting to impulse filter.\n", waveform->filterCounts[0]);

@@ -157,7 +157,7 @@ static void *pulseTagger(void *_in) {
         engine->state |= RKEngineStateSleep3;
         // Wait until we have a position newer than pulse time.
         s = 0;
-        i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
+        i = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
         while ((!(engine->positionBuffer[i].flag & RKPositionFlagReady) || engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble) && engine->state & RKEngineStateActive) {
             usleep(1000);
             if (++s % 100 == 0 && engine->verbose > 1) {
@@ -167,7 +167,7 @@ static void *pulseTagger(void *_in) {
                       engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble ? "<=" : ">",
                       RKFloatToCommaStyleString(pulse->header.timeDouble));
             }
-            i = RKPreviousModuloS(*engine->positionIndex, RKBufferPSlotCount);
+            i = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
         }
         engine->state ^= RKEngineStateSleep3;
         
@@ -184,7 +184,7 @@ static void *pulseTagger(void *_in) {
         // Search until the time just after the pulse was acquired.
         i = 0;
         hasSweepEnd = false;
-        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->radarDescription->pulseBufferDepth) {
+        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->radarDescription->pulseBufferDepth && engine->state & RKEngineStateActive) {
             hasSweepEnd |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
             j = RKNextModuloS(j, engine->radarDescription->positionBufferDepth);
             i++;

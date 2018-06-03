@@ -177,6 +177,13 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 waveformCal = (RKWaveformCalibration *)va_arg(args, void *);
                 if (waveformCal == NULL) {
+                    for (j = 0; j < newConfig->filterCount; j++) {
+                        newConfig->ZCal[j][0] = 0.0f;
+                        newConfig->ZCal[j][1] = 0.0f;
+                        newConfig->DCal[j] = 0.0f;
+                        newConfig->PCal[j] = 0.0f;
+                        sprintf(stringBuffer[j], "WavCal all zeros.\n");
+                    }
                     return;
                 }
                 w0 = 0;
