@@ -196,6 +196,9 @@ static void *pulseTagger(void *_in) {
                       pulse->header.timeDouble < timeLatest ? "<" : ">=",
                       timeLatest);
             }
+            // Update pulseIndex for the next watch
+            RKLog("%s Warning. Skipping forward ...\n", engine->name);
+            k = RKPreviousModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth);
             continue;
         }
         positionAfter  = &engine->positionBuffer[j];   timeAfter  = positionAfter->timeDouble;

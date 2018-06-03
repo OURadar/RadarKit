@@ -921,6 +921,9 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 if (RKFilenameExists(string)) {
                     RKLog("Loading waveform from file '%s'...\n", string);
                     waveform = RKWaveformInitFromFile(string);
+                    if (waveform == NULL) {
+                        return RKResultFailedToSetWaveform;
+                    }
                     pulsewidth = waveform->depth / waveform->fs;
                     RKWaveformSummary(waveform);
                     k = round(waveform->fs / transceiver->fs);

@@ -54,6 +54,10 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
 // ks = start of a keyword, should begin with quote or space
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     char *ke = NULL;
+    if (*ks == '\0') {
+        fprintf(stderr, "Empty JSON string.\n");
+        return NULL;
+    }
     while (*ks != '"' && *ks != '\0') {
         ks++;
     }

@@ -100,6 +100,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
+    RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
 
     waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
@@ -112,7 +113,8 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
             RKLog("Error. Failed reading group header from %s.\n", filename);
         }
         if (waveform->depth < groupHeader.depth) {
-            RKLog("Error. Unable to fit %s into supplied buffer. (%d vs %d)\n", filename, waveform->depth, groupHeader.depth);
+            RKLog("Error. Unable to fit %s into supplied buffer. (%s B < %s B)\n", filename,
+                  RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(groupHeader.depth));
             RKWaveformFree(waveform);
             fclose(fid);
             return NULL;

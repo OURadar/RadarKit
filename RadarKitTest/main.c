@@ -296,6 +296,11 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
 
     // Read in preference configuration file
     RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
+    if (userPreferences->count == 0) {
+        RKPreferenceFree(userPreferences);
+        return;
+    }
+    
     RKPreferenceObject *object;
 
     // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
@@ -920,14 +925,14 @@ int main(int argc, const char **argv) {
         usleep(200000);
 
         RKLog("Setting a waveform ...\n");
-        //RKExecuteCommand(myRadar, "t w ofm", NULL);
+        RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
         //RKExecuteCommand(myRadar, "t w s01", NULL);
         //RKExecuteCommand(myRadar, "t w barker03", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
-        RKSetWaveformToImpulse(myRadar);
+        //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ...\n");
         RKExecuteCommand(myRadar, "p ppi 4 45", NULL);

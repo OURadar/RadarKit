@@ -672,7 +672,7 @@ enum RKOverviewFlag {
     RKOverviewFlagDrawBackground                 = (1 << 1)                    // Repaint the background
 };
 
-typedef uint16_t RKWaveformType;
+typedef uint32_t RKWaveformType;
 enum RKWaveformType {
     RKWaveformTypeNone                           = 0,                          //
     RKWaveformTypeIsComplex                      = 1,                          // Complex form usually represents baseband
@@ -1050,7 +1050,6 @@ typedef struct rk_file_monitor {                                               /
 //
 // User product from other processing nodes
 //
-
 
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
