@@ -771,6 +771,8 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeyNull);
+
+    RKSetWaveform(myRadar, myRadar->waveform);
 }
 
 static void handlePreferenceFileUpdate(void *in) {

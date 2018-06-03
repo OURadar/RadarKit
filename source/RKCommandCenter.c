@@ -70,7 +70,7 @@ int socketCommandHandler(RKOperator *O) {
 
     RKStripTail(commandString);
 
-    RKStream newStream;
+    RKStream stream;
 
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
@@ -133,13 +133,21 @@ int socketCommandHandler(RKOperator *O) {
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
                         case 'r':
-                            pthread_mutex_lock(&user->mutex);
-                            newStream = user->streams;
-                            user->streams = RKStreamNull;
-                            user->streamsInProgress = RKStreamNull;
-                            RKExecuteCommand(user->radar, commandString, string);
-                            pthread_mutex_unlock(&user->mutex);
+                            // Suspend all user straems
+                            for (k = 0; k < RKCommandCenterMaxConnections; k++) {
+                                if (engine->users[k].radar == user->radar && engine->users[k].streams != RKStreamNull) {
+                                    pthread_mutex_lock(&engine->users[k].mutex);
+                                    engine->users[k].streamsToRestore = engine->users[k].streams;
+                                    engine->users[k].streams = RKStreamNull;
+                                    engine->users[k].streamsInProgress = RKStreamNull;
+                                    pthread_mutex_unlock(&engine->users[k].mutex);
+                                }
+                            }
 
+                            // Reset the radar engines
+                            RKExecuteCommand(user->radar, commandString, string);
+
+                            // Wait until socketStreamHandler to run another iteration
                             uint64_t tic = user->tic;
                             do {
                                 usleep(100000);
@@ -148,9 +156,14 @@ int socketCommandHandler(RKOperator *O) {
                             RKLog("%s %s Skipping to current ...", engine->name, O->name);
                             RKCommandCenterSkipToCurrent(engine, user->radar);
 
-                            pthread_mutex_lock(&user->mutex);
-                            user->streams = newStream;
-                            pthread_mutex_unlock(&user->mutex);
+                            for (k = 0; k < RKCommandCenterMaxConnections; k++) {
+                                if (engine->users[k].radar == user->radar && engine->users[k].streamsToRestore != RKStreamNull) {
+                                    pthread_mutex_lock(&engine->users[k].mutex);
+                                    engine->users[k].streams = engine->users[k].streamsToRestore;
+                                    engine->users[k].streamsToRestore = RKStreamNull;
+                                    pthread_mutex_unlock(&engine->users[k].mutex);
+                                }
+                            }
                             break;
                         default:
                             RKExecuteCommand(user->radar, commandString, string);
@@ -161,11 +174,11 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 's':
                     // Stream varrious data
-                    newStream = RKStreamFromString(commandString + 1);
+                    stream = RKStreamFromString(commandString + 1);
                     k = user->rayIndex;
                     pthread_mutex_lock(&user->mutex);
                     user->streamsInProgress = RKStreamNull;
-                    user->streams = newStream;
+                    user->streams = stream;
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                     user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
                     pthread_mutex_unlock(&user->mutex);
@@ -1241,10 +1254,10 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         if (user->pulseIndex > radar->desc.pulseBufferDepth ||
             user->rayIndex > 2 * radar->momentEngine->coreCount ||
             user->healthIndex > 2) {
-            RKLog("%s Warning. pulse @ %s   ray @ %s   health @ %s\n",
+            RKLog("%s Warning. pulse @ %s / %s   ray @ %s / %s   health @ %s\n",
                   user->serverOperator->name,
-                  RKIntegerToCommaStyleString(user->pulseIndex),
-                  RKIntegerToCommaStyleString(user->rayIndex),
+                  RKIntegerToCommaStyleString(user->pulseIndex), RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth),
+                  RKIntegerToCommaStyleString(user->rayIndex), RKIntegerToCommaStyleString(2 * radar->momentEngine->coreCount),
                   RKIntegerToCommaStyleString(user->healthIndex));
         }
     }
