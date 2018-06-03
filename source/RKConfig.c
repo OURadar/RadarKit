@@ -182,9 +182,9 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         newConfig->ZCal[j][1] = 0.0f;
                         newConfig->DCal[j] = 0.0f;
                         newConfig->PCal[j] = 0.0f;
-                        sprintf(stringBuffer[j], "WavCal all zeros.\n");
+                        sprintf(stringBuffer[j], "WavCal[0/1] @ All zeroes");
                     }
-                    return;
+                    break;
                 }
                 w0 = 0;
                 w1 = 0;
