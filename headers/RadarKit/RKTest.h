@@ -105,19 +105,43 @@ void RKTestReadSweep(const char *);
 void RKTestWaveformProperties(void);
 void RKTestBufferOverviewText(void);
 
-#pragma mark - Test Transceiver
+#pragma mark - DSP Tests
+
+void RKTestSIMD(const RKTestSIMDFlag);
+void RKTestWindow(void);
+void RKTestHilbertTransform(void);
+void RKTestWriteFFTWisdom(void);
+
+#pragma mark - Waveform Tests
+
+void RKTestMakeHops(void);
+void RKTestWaveformTFM(void);
+void RKTestWriteWaveform(void);
+
+#pragma mark - Radar Signal Processing
+
+void RKTestPulseCompression(RKTestFlag);
+void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int);
+
+#pragma mark - Performance Tests
+
+void RKTestPulseCompressionSpeed(void);
+void RKTestMomentProcessorSpeed(void);
+void RKTestCacheWrite(void);
+
+#pragma mark - Transceiver Emulator
 
 RKTransceiver RKTestTransceiverInit(RKRadar *, void *);
 int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
 
-#pragma mark - Test Pedestal
+#pragma mark - Pedestal Emulator
 
 RKPedestal RKTestPedestalInit(RKRadar *, void *);
 int RKTestPedestalExec(RKPedestal, const char *, char *);
 int RKTestPedestalFree(RKPedestal);
 
-#pragma mark - Test Health Relay
+#pragma mark - Health Relay Emulator
 
 RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
 int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
@@ -125,24 +149,6 @@ int RKTestHealthRelayFree(RKHealthRelay);
 
 #pragma mark -
 
-void RKTestPulseCompression(RKTestFlag);
-void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int);
-
-void RKTestCacheWrite(void);
-void RKTestWindow(void);
-
-//void RKTestSingleCommand(void);
-
-void RKTestMakeHops(void);
-
-void RKTestWriteWaveform(void);
-void RKTestWriteFFTWisdom(void);
-void RKTestWaveformTFM(void);
-void RKTestHilbertTransform(void);
-
-void RKTestPulseCompressionSpeed(void);
-void RKTestMomentProcessorSpeed(void);
-
-void RKTestSIMD(const RKTestSIMDFlag);
+void RKTestSingleCommand(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

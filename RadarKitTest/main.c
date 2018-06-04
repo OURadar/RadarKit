@@ -146,11 +146,11 @@ static void showHelp() {
            "         21 - SIMD test with numbers shown\n"
            "         22 - Show window types\n"
            "         23 - Hilbert transform\n"
+           "         24 - Generate an fft-wisdom file\n"
            "\n"
            "         30 - Make a frequency hopping sequence\n"
            "         31 - Make a TFM waveform\n"
            "         32 - Generate a waveform file\n"
-           "         33 - Generate an fft-wisdom file\n"
            "\n"
            "         40 - Pulse compression using simple cases\n"
            "         41 - Calculating one ray using the Pulse Pair method\n"
@@ -400,7 +400,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
         struct option *o = &long_options[k];
-        s += snprintf(str + s, 1023 - s, "%c", o->val);
+        s += snprintf(str + s, 1023 - s, "%c::", o->val);
     }
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
@@ -472,7 +472,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKTestParseCommaDelimitedValues();
                         break;
                     case 5:
-                        RKTestJSON();
+                        RKTestParseJSONString();
                         break;
                     case 6:
                         RKTestFileManager();
@@ -523,6 +523,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     case 23:
                         RKTestHilbertTransform();
                         break;
+                    case 24:
+                        RKTestWriteFFTWisdom();
+                        break;
                     case 30:
                         RKTestMakeHops();
                         break;
@@ -531,9 +534,6 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         break;
                     case 32:
                         RKTestWriteWaveform();
-                        break;
-                    case 33:
-                        RKTestWriteFFTWisdom();
                         break;
                     case 40:
                         RKTestPulseCompression((user->verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
