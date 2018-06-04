@@ -390,6 +390,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"relay"             , required_argument, NULL, 'r'},
         {"simulate"          , optional_argument, NULL, 's'},
         {"tweeta-host"       , required_argument, NULL, 't'},
+        {"version"           , no_argument      , NULL, 'u'},
         {"verbose"           , no_argument      , NULL, 'v'},
         {"do-not-write"      , no_argument      , NULL, 'w'},
         {"simulate-sleep"    , required_argument, NULL, 'z'},
@@ -689,6 +690,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 't':
                 strncpy(user->tweetaHost, optarg, sizeof(user->tweetaHost));
+                break;
+            case 'u':
+                printf("Version " RKVersionString "\n");
+                exit(EXIT_SUCCESS);
                 break;
             case 'v':
                 break;
