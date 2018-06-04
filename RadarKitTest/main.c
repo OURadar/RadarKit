@@ -126,15 +126,16 @@ static void showHelp() {
            "  -T (--test) " UNDERLINE("value") "\n"
            "          0 - Show types\n"
            "          1 - Show colors\n"
-           "          2 - Show modulo math\n"
-           "          3 - Test parsing comma delimited values\n"
-           "          4 - Test parsing values in a JSON string\n"
-           "          5 - Test initializing a File Manager\n"
-           "          6 - Test reading a preference file\n"
-           "          7 - Test counting files using RKCountFilesInPath()\n"
-           "          8 - Test the file monitor module\n"
-           "          9 - Test the internet monitor module\n"
-           "         11 - Test initializing a radar system\n"
+           "          2 - Test pretty strings\n"
+           "          3 - Test modulo math macros\n"
+           "          4 - Test parsing comma delimited values\n"
+           "          5 - Test parsing values in a JSON string\n"
+           "          6 - Test initializing a file maanger - RKFileManagerInit()\n"
+           "          7 - Test reading a preference file - RKPreferenceInit()\n"
+           "          8 - Test counting files using RKCountFilesInPath()\n"
+           "          9 - Test the file monitor module - RKFileMonitor()\n"
+           "         10 - Test the internet monitor module - RKHostMonitorInit()\n"
+           "         11 - Test initializing a radar system - RKRadarInit()\n"
            "         12 - Test converting a temperature reading to status\n"
            "         13 - Test getting a country name from position\n"
            "         14 - Test reading a netcdf file\n"
@@ -364,9 +365,10 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
 }
 
 static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, const char **argv, const bool firstPassOnly) {
-    int k;
+    int k, s;
     char *c;
-    
+    char str[1024];
+
     // Command line options
     struct option long_options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
@@ -394,17 +396,12 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {0, 0, 0, 0}
     };
     
-    // Construct short_options from long_options
-    char str[1024] = "";
+    // First pass: just check for verbosity level
+    s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
         struct option *o = &long_options[k];
-        snprintf(str + strlen(str), 1023, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+        s += snprintf(str + s, 1023 - s, "%c", o->val);
     }
-    #if defined(DEBUG)
-    printf("str = %s\n", str);
-    #endif
-
-    // First pass: just check for verbosity level
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
@@ -431,6 +428,14 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     }
 
     // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
+    s = 0;
+    for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
+        struct option *o = &long_options[k];
+        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+    }
+    #if defined(DEBUG)
+    printf("str = %s\n", str);
+    #endif
     optind = 1;
     long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
@@ -455,30 +460,33 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKNetworkShowPacketTypeNumbers();
                         break;
                     case 1:
-                        RKTestShowColors();
+                        RKTestTerminalColors();
                         break;
                     case 2:
-                        RKTestModuloMath();
+                        RKTestPrettyStrings();
                         break;
                     case 3:
-                        RKTestParseCommaDelimitedValues();
+                        RKTestModuloMath();
                         break;
                     case 4:
-                        RKTestJSON();
+                        RKTestParseCommaDelimitedValues();
                         break;
                     case 5:
-                        RKTestFileManager();
+                        RKTestJSON();
                         break;
                     case 6:
-                        RKTestPreferenceReading();
+                        RKTestFileManager();
                         break;
                     case 7:
-                        RKTestCountFiles();
+                        RKTestPreferenceReading();
                         break;
                     case 8:
-                        RKTestFileMonitor();
+                        RKTestCountFiles();
                         break;
                     case 9:
+                        RKTestFileMonitor();
+                        break;
+                    case 10:
                         RKTestHostMonitor();
                         break;
                     case 11:
@@ -697,8 +705,6 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             default:
                 if (optarg && strlen(optarg)) {
                     fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
-                } else {
-                    fprintf(stderr, "I don't understand: -%c\n", opt);
                 }
                 exit(EXIT_FAILURE);
                 break;

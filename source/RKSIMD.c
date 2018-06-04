@@ -16,16 +16,18 @@
 
 void RKSIMD_show_info(void) {
     printf(rkGlobalParameters.showColor ? UNDERLINE("SIMD Info:")"\n" : "SIMD Info:\n----------\n");
-    #if defined(__AVX512F__)
-    printf("AVX512F is active.\n");
-    #elif defined(__AVX__)
+    #if defined(__SSE__) && defined(__SSE2__)
+    printf("SSE, SSE2 128-bit are active.\n");
+    #endif
+    #if defined(__AVX__)
     #  if defined(__AVX2__)
-    printf("AVX & AVX2 256-bit is active.\n");
+    printf("AVX & AVX2 256-bit are active.\n");
     #  else
     printf("AVX 256-bit (partial 128-bit) is active.\n");
     #  endif
-    #else
-    printf("SSE 128-bit is active.\n");
+    #endif
+    #if defined(__AVX512F__)
+    printf("AVX512F is active.\n");
     #endif
     printf("sizeof(RKVec) = %zu B (%zu RKFloats)\n", sizeof(RKVec), sizeof(RKVec) / sizeof(RKFloat));
     return;

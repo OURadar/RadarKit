@@ -27,36 +27,14 @@ printf("%s %s\n", str, res ? "okay" : "too high");
 
 int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
 
-#pragma mark - Fundamental Functions
+#pragma mark - Static Functions
 
-void RKTestModuloMath(void) {
-    SHOW_FUNCTION_NAME
-    int k;
-    const int N = 4;
-
-    RKLog("Test with SlotCount = %d, N = %d\n", RKBuffer0SlotCount, N);
-    k = 0;                      RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-    k = RKBuffer0SlotCount - 4; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-    k = RKBuffer0SlotCount - 3; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-    k = RKBuffer0SlotCount - 2; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-    k = RKBuffer0SlotCount - 1; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
-    k = RKBuffer0SlotCount - 1; RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    k = 0;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    k = 1;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    k = 2;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    k = 3;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    k = 4;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
-
-    struct timeval t0, t1;
-    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
-    gettimeofday(&t0, NULL);
-    if (RKTimevalDiff(t0, t1) < 0.1) {
-        RKLog("First iteraction failed.\n");
-    } else {
-        RKLog("First iteraction is as expected.\n");
-    }
+static void RKTestCallback(void *in) {
+    RKFileMonitor *engine = (RKFileMonitor *)in;
+    RKLog("%s I am a callback function.\n", engine->name);
 }
+
+#pragma mark - Fundamental Functions
 
 void RKTestSIMD(const RKTestSIMDFlag flag) {
     SHOW_FUNCTION_NAME
@@ -423,6 +401,67 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     free(cc);
 }
 
+void RKTestTerminalColors(void) {
+    SHOW_FUNCTION_NAME
+    for (int k = 0; k < 17; k++) {
+        printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
+    }
+    int c;
+    for (int i = 0; i < 6; i++) {
+        for (int k = 0; k < 6; k++) {
+            for (int j = 0; j < 6; j++) {
+                c = k * 100 + j * 10 + i;
+                printf("%s %03d %s", RKGetBackgroundColorOfCubeIndex(c), c, RKNoColor);
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+}
+
+void RKTestPrettyStrings(void) {
+    SHOW_FUNCTION_NAME
+    int k;
+    float f;
+    printf("\n");
+    for (k = 1020; k < (1 << 30); k += k ^ 2) {
+        printf("k = %11d -> %s\n", k, RKIntegerToCommaStyleString(k));
+    }
+    f = +INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = -INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = NAN;       printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    printf("\n");
+}
+
+void RKTestModuloMath(void) {
+    SHOW_FUNCTION_NAME
+    int k;
+    const int N = 4;
+
+    RKLog("Test with SlotCount = %d, N = %d\n", RKBuffer0SlotCount, N);
+    k = 0;                      RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 4; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 3; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 2; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 1; RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, N, RKBuffer0SlotCount));
+    k = RKBuffer0SlotCount - 1; RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 0;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 1;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 2;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 3;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 4;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
+    k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
+
+    struct timeval t0, t1;
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
+    gettimeofday(&t0, NULL);
+    if (RKTimevalDiff(t0, t1) < 0.1) {
+        RKLog("First iteraction failed.\n");
+    } else {
+        RKLog("First iteraction is as expected.\n");
+    }
+}
+
 void RKTestParseCommaDelimitedValues(void) {
     SHOW_FUNCTION_NAME
     char string[] = "1200,2000,3000,5000";
@@ -432,6 +471,289 @@ void RKTestParseCommaDelimitedValues(void) {
     RKLog("%s -> %.2f %.2f %.2f\n", string, v[0], v[1], v[2]);
     RKParseCommaDelimitedValues(i, RKValueTypeInt32, 3, string);
     RKLog("%s -> %d %d %d\n", string, i[0], i[1], i[2]);
+}
+
+void RKTestParseJSONString(void) {
+    SHOW_FUNCTION_NAME
+    char str[] = "{"
+    "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
+    "\"Health Relay\":{\"Value\":true,\"Enum\":0}, "
+    "\"Network\":{\"Value\":true,\"Enum\":0}, "
+    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3}, "
+    "\"10-MHz Clock\":{\"Value\":true,\"Enum\":0}, "
+    "\"DAC PLL\":{\"Value\":true,\"Enum\":0}, "
+    "\"FPGA Temp\":{\"Value\":\"69.3degC\",\"Enum\":0}, "
+    "\"Core Volt\":{\"Value\":\"1.00 V\",\"Enum\":4}, "
+    "\"Aux. Volt\":{\"Value\":\"2.469 V\",\"Enum\":0}, "
+    "\"XMC Volt\":{\"Value\":\"11.649 V\",\"Enum\":0}, "
+    "\"XMC 3p3\":{\"Value\":\"3.250 V\",\"Enum\":0}, "
+    "\"PRF\":{\"Value\":\"5,008 Hz\",\"Enum\":0,\"Target\":\"5,000 Hz\"}, "
+    "\"Transmit H\":{\"Value\":\"69.706 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-1.877 dBm\",\"Min\":\"-2.945 dBm\"}, "
+    "\"Transmit V\":{\"Value\":\"69.297 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-2.225 dBm\",\"Min\":\"-3.076 dBm\"}, "
+    "\"DAC QI\":{\"Value\":\"0.913\",\"Enum\":0}, "
+    "\"Waveform\":{\"Value\":\"h4011\",\"Enum\":0}, "
+    "\"UnderOver\":[0,-897570], "
+    "\"Lags\":[-139171212,-139171220,-159052813], \"NULL\":[149970], "
+    "\"Pedestal AZ Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal EL Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"VCP Active\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal AZ Position\":{\"Value\":\"26.21 deg\",\"Enum\":0}, "
+    "\"Pedestal EL Position\":{\"Value\":\"2.97 deg\",\"Enum\":0}, "
+    "\"TWT Power\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Warmed Up\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT High Voltage\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Full Power\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT VSWR\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Duty Cycle\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Fans\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Faults Clear\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Cathode Voltage\":{\"Value\":\"-21.54 kV\",\"Enum\":0}, "
+    "\"TWT Body Current\":{\"Value\":\"0.09 A\",\"Enum\":0}, "
+    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
+    "\"GPS Latitude\":{\"Value\":\"35.1812820\",\"Enum\":0}, "
+    "\"GPS Longitude\":{\"Value\":\"-97.4373016\",\"Enum\":0}, "
+    "\"GPS Heading\":{\"Value\":\"88.0 deg\", \"Enum\":0}, "
+    "\"Ground Speed\":{\"Value\":\"0.30 km/h\", \"Enum\":0}, "
+    "\"Platform Pitch\":{\"Value\":\"-0.23 deg\",\"Enum\":0}, "
+    "\"Platform Roll\":{\"Value\":\"0.04 deg\",\"Enum\":0}, "
+    "\"I2C Chip\":{\"Value\":\"30.50 degC\",\"Enum\":0}, "
+    "\"Event\":\"none\", \"Log Time\":1493410480"
+    "}";
+    printf("%s (%d characters)\n\n", str, (int)strlen(str));
+
+    // Test getting a specific key
+    printf("Getting specific key:\n");
+    printf("---------------------\n");
+    char *stringObject, *stringValue, *stringEnum;
+    if ((stringObject = RKGetValueOfKey(str, "latitude")) != NULL) {
+        printf("stringObject = '%s'\n", stringObject);
+        stringValue = RKGetValueOfKey(stringObject, "value");
+        stringEnum = RKGetValueOfKey(stringObject, "enum");
+        if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+            printf("latitude = %.7f\n", atof(stringValue));
+        }
+    }
+    printf("\n");
+    if ((stringObject = RKGetValueOfKey(str, "longitude")) != NULL) {
+        printf("stringObject = '%s'\n", stringObject);
+        stringValue = RKGetValueOfKey(stringObject, "value");
+        stringEnum = RKGetValueOfKey(stringObject, "enum");
+        if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+            printf("longitude = %.7f\n", atof(stringValue));
+        }
+    }
+
+    printf("\n");
+    printf("Getting all keys:\n");
+    printf("-----------------\n");
+    char criticalKey[RKNameLength];
+    char criticalValue[RKNameLength];
+    bool anyCritical = RKAnyCritical(str, true, criticalKey, criticalValue);
+    printf("anyCritical = %s%s%s%s%s\n",
+           rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
+           anyCritical ? "True" : "False",
+           rkGlobalParameters.showColor ? RKNoColor : "",
+           anyCritical ? " --> " : "",
+           anyCritical ? criticalKey : ""
+           );
+
+    printf("\n");
+    char strObj[] = "0";
+    stringObject = strObj;
+    printf("stringObject = '%s'\n", stringObject);
+    stringValue = RKGetValueOfKey(stringObject, "value");
+    stringEnum = RKGetValueOfKey(stringObject, "enum");
+    printf("stringValue = %s\n", stringValue == NULL ? "(NULL)" : stringValue);
+    printf("stringEnum = %s\n", stringEnum == NULL ? "(NULL)" : stringEnum);
+    if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+        printf("longitude = %.7f\n", atof(stringValue));
+    }
+}
+
+void RKTestFileManager(void) {
+    SHOW_FUNCTION_NAME
+    RKFileManager *o = RKFileManagerInit();
+    if (o == NULL) {
+        fprintf(stderr, "Unable to allocate a File Manager.\n");
+        return;
+    }
+    RKFileManagerSetPathToMonitor(o, "data");
+    RKFileManagerSetVerbose(o, 1);
+    RKFileManagerStart(o);
+    RKFileManagerFree(o);
+}
+
+void RKTestPreferenceReading(void) {
+    SHOW_FUNCTION_NAME
+    int k;
+    RKPreference *preference = RKPreferenceInit();;
+    RKPreferenceObject *object = NULL;
+    object = RKPreferenceFindKeyword(preference, "PedzyHost");
+    if (object) {
+        printf("pedzy host = %s\n", object->valueString);
+    }
+    object = RKPreferenceFindKeyword(preference, "TweetaHost");
+    if (object) {
+        printf("tweeta host = %s\n", object->valueString);
+    }
+    RKName name;
+    RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
+    double numbers[4];
+    RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
+    k = 0;
+    RKControl control;
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
+        k++;
+    }
+    RKLog(">Preference.Shortcut count = %d\n", k);
+    k = 0;
+    RKWaveformCalibration cali;
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
+        k++;
+    }
+    RKLog(">Preference.WaveformCal count = %d\n", k);
+    RKPreferenceFree(preference);
+}
+
+void RKTestCountFiles(void) {
+    SHOW_FUNCTION_NAME
+    const char *folder = "data";
+    long count = RKCountFilesInPath(folder);
+    printf("%ld files in %s\n", count, folder);
+}
+
+void RKTestFileMonitor(void) {
+    SHOW_FUNCTION_NAME
+    const char *file = "pref.conf";
+    RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback, NULL);
+    RKLog("Touching file %s ...\n", file);
+    char command[strlen(file) + 10];
+    sprintf(command, "touch %s", file);
+    int k = system(command);
+    if (k) {
+        RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
+    }
+    sleep(2);
+    RKFileMonitorFree(mon);
+}
+
+void RKTestHostMonitor(void) {
+    SHOW_FUNCTION_NAME
+    RKHostMonitor *o = RKHostMonitorInit();
+    if (o == NULL) {
+        fprintf(stderr, "Unable to allocate a Host Monitor.\n");
+        return;
+    }
+    RKHostMonitorSetVerbose(o, 2);
+    RKHostMonitorAddHost(o, "www.amazon.com");
+    RKHostMonitorStart(o);
+    sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
+    RKHostMonitorFree(o);
+}
+
+void RKTestInitializingRadar(void) {
+    SHOW_FUNCTION_NAME
+    RKRadar *aRadar = RKInitLean();
+    RKShowOffsets(aRadar, NULL);
+    RKFree(aRadar);
+}
+
+void RKTestTemperatureToStatus(void) {
+    SHOW_FUNCTION_NAME
+    int k;
+    float values[] = {-51.0f, -12.0f, -4.5f, 0.5f, 30.0f, 72.5f, 83.0f, 90.5f};
+    for (k = 0; k < sizeof(values) / sizeof(float); k++) {
+        printf("value = %7.2f -> %d\n", values[k], RKStatusFromTemperatureForCE(values[k]));
+    }
+}
+
+void RKTestGetCountry(void) {
+    SHOW_FUNCTION_NAME
+    double latitude;
+    double longitude;
+    char *country;
+
+    double coords[][2] = {
+        { 35.222567, -97.439478},
+        { 36.391592, 127.031428},
+        {-11.024860, -75.279694},
+        { 34.756300, 135.615895}
+    };
+
+    for (int k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
+        latitude = coords[k][0];
+        longitude = coords[k][1];
+        country = RKCountryFromPosition(latitude, longitude);
+        printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
+    }
+}
+
+void RKTestReadSweep(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKSweep *sweep = RKSweepRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
+}
+
+void RKTestWaveformProperties(void) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+}
+
+void RKTestBufferOverviewText(void) {
+    SHOW_FUNCTION_NAME
+    RKRadar *radar = RKInitLean();
+    char *text = (char *)malloc((radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10) * sizeof(char));
+    RKBufferOverview(radar, text, 0xFF);
+    printf("%s\n", text);
+    RKFree(radar);
+    free(text);
 }
 
 #pragma mark - Transceiver Emulator
@@ -1696,141 +2018,6 @@ void RKTestWindow(void) {
     free(window);
 }
 
-void RKTestJSON(void) {
-    SHOW_FUNCTION_NAME
-    char str[] = "{"
-    "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
-    "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
-    "\"Health Relay\":{\"Value\":true,\"Enum\":0}, "
-    "\"Network\":{\"Value\":true,\"Enum\":0}, "
-    "\"Recorder (Coming Soon)\":{\"Value\":true,\"Enum\":3}, "
-    "\"10-MHz Clock\":{\"Value\":true,\"Enum\":0}, "
-    "\"DAC PLL\":{\"Value\":true,\"Enum\":0}, "
-    "\"FPGA Temp\":{\"Value\":\"69.3degC\",\"Enum\":0}, "
-    "\"Core Volt\":{\"Value\":\"1.00 V\",\"Enum\":4}, "
-    "\"Aux. Volt\":{\"Value\":\"2.469 V\",\"Enum\":0}, "
-    "\"XMC Volt\":{\"Value\":\"11.649 V\",\"Enum\":0}, "
-    "\"XMC 3p3\":{\"Value\":\"3.250 V\",\"Enum\":0}, "
-    "\"PRF\":{\"Value\":\"5,008 Hz\",\"Enum\":0,\"Target\":\"5,000 Hz\"}, "
-    "\"Transmit H\":{\"Value\":\"69.706 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-1.877 dBm\",\"Min\":\"-2.945 dBm\"}, "
-    "\"Transmit V\":{\"Value\":\"69.297 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-2.225 dBm\",\"Min\":\"-3.076 dBm\"}, "
-    "\"DAC QI\":{\"Value\":\"0.913\",\"Enum\":0}, "
-    "\"Waveform\":{\"Value\":\"h4011\",\"Enum\":0}, "
-    "\"UnderOver\":[0,-897570], "
-    "\"Lags\":[-139171212,-139171220,-159052813], \"NULL\":[149970], "
-    "\"Pedestal AZ Interlock\":{\"Value\":true,\"Enum\":0}, "
-    "\"Pedestal EL Interlock\":{\"Value\":true,\"Enum\":0}, "
-    "\"VCP Active\":{\"Value\":true,\"Enum\":0}, "
-    "\"Pedestal AZ Position\":{\"Value\":\"26.21 deg\",\"Enum\":0}, "
-    "\"Pedestal EL Position\":{\"Value\":\"2.97 deg\",\"Enum\":0}, "
-    "\"TWT Power\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Warmed Up\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT High Voltage\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Full Power\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT VSWR\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Duty Cycle\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Fans\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Interlock\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Faults Clear\":{\"Value\":true,\"Enum\":0}, "
-    "\"TWT Cathode Voltage\":{\"Value\":\"-21.54 kV\",\"Enum\":0}, "
-    "\"TWT Body Current\":{\"Value\":\"0.09 A\",\"Enum\":0}, "
-    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
-    "\"GPS Latitude\":{\"Value\":\"35.1812820\",\"Enum\":0}, "
-    "\"GPS Longitude\":{\"Value\":\"-97.4373016\",\"Enum\":0}, "
-    "\"GPS Heading\":{\"Value\":\"88.0 deg\", \"Enum\":0}, "
-    "\"Ground Speed\":{\"Value\":\"0.30 km/h\", \"Enum\":0}, "
-    "\"Platform Pitch\":{\"Value\":\"-0.23 deg\",\"Enum\":0}, "
-    "\"Platform Roll\":{\"Value\":\"0.04 deg\",\"Enum\":0}, "
-    "\"I2C Chip\":{\"Value\":\"30.50 degC\",\"Enum\":0}, "
-    "\"Event\":\"none\", \"Log Time\":1493410480"
-    "}";
-    printf("%s (%d characters)\n\n", str, (int)strlen(str));
-    
-    // Test getting a specific key
-    printf("Getting specific key:\n");
-    printf("---------------------\n");
-    char *stringObject, *stringValue, *stringEnum;
-    if ((stringObject = RKGetValueOfKey(str, "latitude")) != NULL) {
-        printf("stringObject = '%s'\n", stringObject);
-        stringValue = RKGetValueOfKey(stringObject, "value");
-        stringEnum = RKGetValueOfKey(stringObject, "enum");
-        if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-            printf("latitude = %.7f\n", atof(stringValue));
-        }
-    }
-    printf("\n");
-    if ((stringObject = RKGetValueOfKey(str, "longitude")) != NULL) {
-        printf("stringObject = '%s'\n", stringObject);
-        stringValue = RKGetValueOfKey(stringObject, "value");
-        stringEnum = RKGetValueOfKey(stringObject, "enum");
-        if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-            printf("longitude = %.7f\n", atof(stringValue));
-        }
-    }
-    
-    printf("\n");
-    printf("Getting all keys:\n");
-    printf("-----------------\n");
-    char criticalKey[RKNameLength];
-    char criticalValue[RKNameLength];
-    bool anyCritical = RKAnyCritical(str, true, criticalKey, criticalValue);
-    printf("anyCritical = %s%s%s%s%s\n",
-           rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
-           anyCritical ? "True" : "False",
-           rkGlobalParameters.showColor ? RKNoColor : "",
-           anyCritical ? " --> " : "",
-           anyCritical ? criticalKey : ""
-           );
-    
-    printf("\n");
-    char strObj[] = "0";
-    stringObject = strObj;
-    printf("stringObject = '%s'\n", stringObject);
-    stringValue = RKGetValueOfKey(stringObject, "value");
-    stringEnum = RKGetValueOfKey(stringObject, "enum");
-    printf("stringValue = %s\n", stringValue == NULL ? "(NULL)" : stringValue);
-    printf("stringEnum = %s\n", stringEnum == NULL ? "(NULL)" : stringEnum);
-    if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-        printf("longitude = %.7f\n", atof(stringValue));
-    }
-}
-
-void RKTestShowColors(void) {
-    SHOW_FUNCTION_NAME
-    for (int k = 0; k < 17; k++) {
-        printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
-    }
-    printf("\n");
-    printf("+inf -> %s\n", RKFloatToCommaStyleString(INFINITY));
-    printf("-inf -> %s\n", RKFloatToCommaStyleString(-INFINITY));
-    printf("nan -> %s\n", RKFloatToCommaStyleString(NAN));
-    printf("\n");
-    int c;
-    for (int i = 0; i < 6; i++) {
-        for (int k = 0; k < 6; k++) {
-            for (int j = 0; j < 6; j++) {
-                c = k * 100 + j * 10 + i;
-                printf("%s %03d %s", RKGetBackgroundColorOfCubeIndex(c), c, RKNoColor);
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
-}
-
-void RKTestFileManager(void) {
-    SHOW_FUNCTION_NAME
-    RKFileManager *o = RKFileManagerInit();
-    if (o == NULL) {
-        fprintf(stderr, "Unable to allocate a File Manager.\n");
-        return;
-    }
-    RKFileManagerSetPathToMonitor(o, "data");
-    RKFileManagerSetVerbose(o, 1);
-    RKFileManagerStart(o);
-    RKFileManagerFree(o);
-}
-
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
     char string[256] = "{\"Health\":{\"Value\":true,\"Enum\":1}, \"Transceiver\":{\"Value\":true,\"Enum\":1}}\"";
@@ -1846,83 +2033,6 @@ void RKTestMakeHops(void) {
         RKBestStrideOfHops(k, true);
         printf("\n");
     }
-}
-
-void RKTestPreferenceReading(void) {
-    SHOW_FUNCTION_NAME
-    int k;
-    RKPreference *preference = RKPreferenceInit();;
-    RKPreferenceObject *object = NULL;
-    object = RKPreferenceFindKeyword(preference, "PedzyHost");
-    if (object) {
-        printf("pedzy host = %s\n", object->valueString);
-    }
-    object = RKPreferenceFindKeyword(preference, "TweetaHost");
-    if (object) {
-        printf("tweeta host = %s\n", object->valueString);
-    }
-    RKName name;
-    RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
-    double numbers[4];
-    RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
-    k = 0;
-    RKControl control;
-    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
-        k++;
-    }
-    RKLog(">Preference.Shortcut count = %d\n", k);
-    k = 0;
-    RKWaveformCalibration cali;
-    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
-        k++;
-    }
-    RKLog(">Preference.WaveformCal count = %d\n", k);
-    RKPreferenceFree(preference);
-}
-
-void RKTestCountFiles(void) {
-    SHOW_FUNCTION_NAME
-    const char *folder = "data";
-    long count = RKCountFilesInPath(folder);
-    printf("%ld files in %s\n", count, folder);
-}
-
-static void RKTestCallback(void *in) {
-    RKFileMonitor *engine = (RKFileMonitor *)in;
-    RKLog("%s I am a callback function.\n", engine->name);
-}
-
-void RKTestFileMonitor(void) {
-    SHOW_FUNCTION_NAME
-    const char *file = "pref.conf";
-    RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback, NULL);
-    RKLog("Touching file %s ...\n", file);
-    char command[strlen(file) + 10];
-    sprintf(command, "touch %s", file);
-    int k = system(command);
-    if (k) {
-        RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
-    }
-    sleep(2);
-    RKFileMonitorFree(mon);
-}
-
-void RKTestHostMonitor(void) {
-    SHOW_FUNCTION_NAME
-    RKHostMonitor *o = RKHostMonitorInit();
-    if (o == NULL) {
-        fprintf(stderr, "Unable to allocate a Host Monitor.\n");
-        return;
-    }
-    RKHostMonitorSetVerbose(o, 2);
-    RKHostMonitorAddHost(o, "www.amazon.com");
-    RKHostMonitorStart(o);
-    sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
-    RKHostMonitorFree(o);
 }
 
 #pragma mark -
@@ -2190,103 +2300,4 @@ void RKTestMomentProcessorSpeed(void) {
     RKScratchFree(space);
     free(pulseBuffer);
     free(rayBuffer);
-}
-
-void RKTestInitializingRadar(void) {
-    SHOW_FUNCTION_NAME
-    RKRadar *aRadar = RKInitLean();
-    RKShowOffsets(aRadar, NULL);
-    RKFree(aRadar);
-}
-
-void RKTestTemperatureToStatus(void) {
-    SHOW_FUNCTION_NAME
-    int k;
-    float values[] = {-51.0f, -12.0f, -4.5f, 0.5f, 30.0f, 72.5f, 83.0f, 90.5f};
-    for (k = 0; k < sizeof(values) / sizeof(float); k++) {
-        printf("value = %7.2f -> %d\n", values[k], RKStatusFromTemperatureForCE(values[k]));
-    }
-}
-
-void RKTestGetCountry(void) {
-    SHOW_FUNCTION_NAME
-    double latitude;
-    double longitude;
-    char *country;
-
-    double coords[][2] = {
-        { 35.222567, -97.439478},
-        { 36.391592, 127.031428},
-        {-11.024860, -75.279694},
-        { 34.756300, 135.615895}
-    };
-
-    for (int k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
-        latitude = coords[k][0];
-        longitude = coords[k][1];
-        country = RKCountryFromPosition(latitude, longitude);
-        printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
-    }
-}
-
-void RKTestReadSweep(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
-    }
-}
-
-void RKTestWaveformProperties(void) {
-    SHOW_FUNCTION_NAME
-	RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-	waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-	RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-    
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-}
-
-void RKTestBufferOverviewText(void) {
-    SHOW_FUNCTION_NAME
-    RKRadar *radar = RKInitLean();
-    char *text = (char *)malloc((radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10) * sizeof(char));
-    RKBufferOverview(radar, text, 0xFF);
-    printf("%s\n", text);
-    RKFree(radar);
-    free(text);
 }
