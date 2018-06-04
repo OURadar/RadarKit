@@ -125,11 +125,11 @@ void RKTestHilbertTransform(void);
 void RKTestPulseCompressionSpeed(void);
 void RKTestMomentProcessorSpeed(void);
 
-void RKTestReadSweep(const char *);
+void RKTestInitializingRadar(void);
 void RKTestTemperatureToStatus(void);
-
 void RKTestGetCountry(void);
+void RKTestReadSweep(const char *);
 void RKTestWaveformProperties(void);
-void RKTestBufferOverview(void);
+void RKTestBufferOverviewText(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

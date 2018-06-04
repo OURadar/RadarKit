@@ -138,6 +138,8 @@ static void showHelp() {
            "         12 - Test converting a temperature reading to status\n"
            "         13 - Test getting a country name from position\n"
            "         14 - Test reading a netcdf file\n"
+           "         15 - Test showing waveform properties\n"
+           "         16 - Test generating text for buffer overview\n"
            "\n"
            "         20 - SIMD quick test\n"
            "         21 - SIMD test with numbers shown\n"
@@ -329,9 +331,12 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     while ((object = RKPreferenceFindKeyword(userPreferences, "Shortcut")) != NULL && k < RKMaximumControlCount) {
         RKControlFromPreferenceObject(&user->controls[k], object);
         if (verb) {
-            RKLog("'%s' '%s'\n", user->controls[k].label, user->controls[k].command);
+            RKLog(">Shortcut '%s' '%s'\n", user->controls[k].label, user->controls[k].command);
         }
         k++;
+    }
+    if (verb) {
+        RKLog(">Shortcut count = %d\n", k);
     }
 
     // Waveform calibrations
@@ -348,9 +353,12 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
                               user->calibrations[k].DCal[i],
                               user->calibrations[k].PCal[i]);
             }
-            RKLog("%s\n", string);
+            RKLog(">WavformCal %s\n", string);
         }
         k++;
+    }
+    if (verb) {
+        RKLog(">WavformCal count = %d\n", k);
     }
     RKPreferenceFree(userPreferences);
 }
@@ -366,6 +374,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
         {"engine-verbose"    , required_argument, NULL, 'V'},
+        {"show-preference"   , no_argument      , NULL, 'X'},
         {"azimuth"           , required_argument, NULL, 'a'},    // ASCII 97 - 122 : a - z
         {"bandwidth"         , required_argument, NULL, 'b'},
         {"core"              , required_argument, NULL, 'c'},
@@ -473,9 +482,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKTestHostMonitor();
                         break;
                     case 11:
-                        myRadar = RKInitLean();
-                        RKShowOffsets(myRadar, NULL);
-                        RKFree(myRadar);
+                        RKTestInitializingRadar();
                         break;
                     case 12:
                         RKTestTemperatureToStatus();
@@ -492,6 +499,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         break;
                     case 15:
                         RKTestWaveformProperties();
+                        break;
+                    case 16:
+                        RKTestBufferOverviewText();
                         break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
@@ -547,9 +557,6 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     case 53:
                         RKTestCacheWrite();
                         break;
-                    case 54:
-                        RKTestBufferOverview();
-                        break;
                     default:
                         RKLog("Test %d is invalid.\n", k);
                         break;
@@ -562,6 +569,11 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     //printf("-> %c\n", *c);
                     user->engineVerbose[(int)*c]++;
                 } while (*++c != '\0');
+                break;
+            case 'X':
+                user->verbose = 2;
+                updateSystemPreferencesFromControlFile(user);
+                exit(EXIT_SUCCESS);
                 break;
             case 'b':
                 user->fs = roundf(atof(optarg));
@@ -764,6 +776,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     }
     RKConcludeWaveformCalibrations(myRadar);
     
+    // Refresh all system calibration
     RKAddConfig(myRadar,
                 RKConfigKeySystemZCal, systemPreferences->systemZCal[0], systemPreferences->systemZCal[1],
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
@@ -772,6 +785,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeyNull);
 
+    // Force waveform reload to propagate the new waveform calibration values
     RKSetWaveform(myRadar, myRadar->waveform);
 }
 

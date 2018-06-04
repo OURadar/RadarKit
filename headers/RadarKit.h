@@ -11,7 +11,10 @@
 //  █
 //
 //  1.2.10 - 6/30/2018
-//         -
+//         - Fixed the stream restore for all connected clients
+//         - Fixed a dead lock during waveform calibration
+//         - Added Added RKSetVerbosityUsingArray()
+//         - Improved loggin during quiet mode
 //
 //  1.2.9  - 5/31/2018
 //         - Added buffer overview, accessible through terminal

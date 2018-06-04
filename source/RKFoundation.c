@@ -194,6 +194,7 @@ int RKSetLogfileToDefault(void) {
 #pragma mark - Screen Output
 
 void RKShowTypeSizes(void) {
+    SHOW_FUNCTION_NAME
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
     RKSweep *sweep = NULL;

@@ -61,6 +61,15 @@
 RKName x; \
 sprintf(x, "%s()", __FUNCTION__);
 
+#define SHOW_FUNCTION_NAME \
+int _fn_len = strlen(__FUNCTION__); \
+char _fn_str[RKNameLength]; \
+memset(_fn_str, '=', _fn_len); \
+sprintf(_fn_str + _fn_len, "\n%s\n", __FUNCTION__); \
+memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
+_fn_str[3 * _fn_len + 2] = '\0'; \
+printf("%s\n", _fn_str);
+
 #if defined(__APPLE__)
 
 #define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"

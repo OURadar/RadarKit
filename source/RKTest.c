@@ -19,15 +19,6 @@
 #define PEDESTAL_SAMPLING_TIME         0.01
 #define HEALTH_RELAY_SAMPLING_TIME     0.1
 
-#define SHOW_FUNCTION_NAME \
-int _fn_len = strlen(__FUNCTION__); \
-char _fn_str[RKNameLength]; \
-memset(_fn_str, '=', _fn_len); \
-sprintf(_fn_str + _fn_len, "\n%s\n", __FUNCTION__); \
-memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
-_fn_str[3 * _fn_len + 2] = '\0'; \
-printf("%s\n", _fn_str);
-
 #define TEST_RESULT(clr, str, res)   clr ? \
 printf("%s %s\033[0m\n", str, res ? "\033[32mokay" : "\033[31mtoo high") : \
 printf("%s %s\n", str, res ? "okay" : "too high");
@@ -39,6 +30,7 @@ int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
 #pragma mark - Fundamental Functions
 
 void RKTestModuloMath(void) {
+    SHOW_FUNCTION_NAME
     int k;
     const int N = 4;
 
@@ -54,7 +46,6 @@ void RKTestModuloMath(void) {
     k = 2;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
     k = 3;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
     k = 4;                      RKLog("k = " RKFMT " --> Prev N = " RKFMT "\n", k, RKPreviousNModuloS(k, N, RKBuffer0SlotCount));
-    
     k = 4899;                   RKLog("k = " RKFMT " --> Next N = " RKFMT "\n", k, RKNextNModuloS(k, 100 - 1, RKBuffer0SlotCount));
 
     struct timeval t0, t1;
@@ -433,6 +424,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 }
 
 void RKTestParseCommaDelimitedValues(void) {
+    SHOW_FUNCTION_NAME
     char string[] = "1200,2000,3000,5000";
     float v[4];
     int32_t i[4];
@@ -1902,6 +1894,7 @@ static void RKTestCallback(void *in) {
 }
 
 void RKTestFileMonitor(void) {
+    SHOW_FUNCTION_NAME
     const char *file = "pref.conf";
     RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback, NULL);
     RKLog("Touching file %s ...\n", file);
@@ -1916,6 +1909,7 @@ void RKTestFileMonitor(void) {
 }
 
 void RKTestHostMonitor(void) {
+    SHOW_FUNCTION_NAME
     RKHostMonitor *o = RKHostMonitorInit();
     if (o == NULL) {
         fprintf(stderr, "Unable to allocate a Host Monitor.\n");
@@ -1946,18 +1940,22 @@ void RKTestWriteWaveform(void) {
 }
 
 void RKTestWriteFFTWisdom(void) {
+    SHOW_FUNCTION_NAME
     fftwf_plan plan;
     fftwf_complex *in;
     int nfft = 1 << (int)ceilf(log2f((float)RKGateCount));
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
+    RKLog("Generating FFT wisdom ...\n");
     while (nfft > 2) {
         RKLog("NFFT %s\n", RKIntegerToCommaStyleString(nfft));
         plan = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
         fftwf_destroy_plan(plan);
-        nfft >>= 2;
+        nfft >>= 1;
     }
     fftwf_free(in);
+    RKLog("Exporting FFT wisdom ...\n");
     fftwf_export_wisdom_to_filename(RKFFTWisdomFile);
+    RKLog("Done.\n");
 }
 
 void RKTestWaveformTFM(void) {
@@ -2181,14 +2179,15 @@ void RKTestMomentProcessorSpeed(void) {
     free(rayBuffer);
 }
 
-void RKTestReadSweep(const char *file) {
-    RKSweep *sweep = RKSweepRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
-    }
+void RKTestInitializingRadar(void) {
+    SHOW_FUNCTION_NAME
+    RKRadar *aRadar = RKInitLean();
+    RKShowOffsets(aRadar, NULL);
+    RKFree(aRadar);
 }
 
 void RKTestTemperatureToStatus(void) {
+    SHOW_FUNCTION_NAME
     int k;
     float values[] = {-51.0f, -12.0f, -4.5f, 0.5f, 30.0f, 72.5f, 83.0f, 90.5f};
     for (k = 0; k < sizeof(values) / sizeof(float); k++) {
@@ -2197,6 +2196,7 @@ void RKTestTemperatureToStatus(void) {
 }
 
 void RKTestGetCountry(void) {
+    SHOW_FUNCTION_NAME
     double latitude;
     double longitude;
     char *country;
@@ -2216,7 +2216,16 @@ void RKTestGetCountry(void) {
     }
 }
 
+void RKTestReadSweep(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKSweep *sweep = RKSweepRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
+}
+
 void RKTestWaveformProperties(void) {
+    SHOW_FUNCTION_NAME
 	RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
     RKWaveformSummary(waveform);
 
@@ -2259,10 +2268,12 @@ void RKTestWaveformProperties(void) {
     RKWaveformFree(waveform);
 }
 
-void RKTestBufferOverview(void) {
+void RKTestBufferOverviewText(void) {
+    SHOW_FUNCTION_NAME
     RKRadar *radar = RKInitLean();
-    char text[radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10];
+    char *text = (char *)malloc((radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10) * sizeof(char));
     RKBufferOverview(radar, text, 0xFF);
     printf("%s\n", text);
     RKFree(radar);
+    free(text);
 }
