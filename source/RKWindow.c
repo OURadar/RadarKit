@@ -81,9 +81,9 @@ void kaiser(double *w, const int n, const double beta) {
         return;
     }
     
-    x = (double *)malloc(m * sizeof(double));
+    x = (double *)malloc((m + 1) * sizeof(double));
     v = (double *)malloc(m * sizeof(double));
-    memset(x, 0, m * sizeof(double));
+    memset(x, 0, (m + 1) * sizeof(double));
     memset(v, 0, m * sizeof(double));
     
     if (bes < 0.0) {

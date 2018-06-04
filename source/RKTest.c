@@ -1504,10 +1504,11 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKScratchAlloc(&space, pulseCapacity, RKLagCount, true);
     RKPulse *pulses[pulseCount];
-    
+
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k);
         pulse->header.t = k;
+        pulse->header.i = (uint64_t)(-1) - pulseCount + k;
         pulse->header.gateCount = gateCount;
         // Fill in the data...
         for (p = 0; p < 2; p++) {
@@ -1527,6 +1528,8 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         }
         pulses[k] = pulse;
     }
+
+    printf("pcal[0] = %.2f\n", space->pcal[0]);
     
     if (method == RKPulsePairHop) {
         RKLog("Info. Pulse Pair for Frequency Hopping.\n");
@@ -1926,17 +1929,27 @@ void RKTestHostMonitor(void) {
 
 void RKTestWriteWaveform(void) {
     SHOW_FUNCTION_NAME
-    const char filename[] = "waveforms/h4011.rkwav";
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(14, 100);
+    RKWaveformHops(waveform, 20.0e6, 0.0, 16.0e6);
+
+    char filename[64];
+    sprintf(filename, "waveforms/%s.rkwav", waveform->name);
     RKLog("Creating waveform file '%s' ...\n", filename);
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(22, 1024);
-    RKWaveformHops(waveform, 2.0, 0.0, 1.0);
     RKWaveformWrite(waveform, filename);
     
-    RKLog("Reading waveform file ...\n");
+    RKLog("Reading waveform file '%s' ...\n", filename);
     RKWaveform *loadedWaveform = RKWaveformInitFromFile(filename);
-    
+    RKWaveformSummary(loadedWaveform);
+
     RKWaveformFree(waveform);
     RKWaveformFree(loadedWaveform);
+
+    RKLog("Removing waveform file ...\n");
+    if (remove(filename)) {
+        RKLog("Error removing file '%s'.\n", filename);
+    } else {
+        RKLog("Done.\n");
+    }
 }
 
 void RKTestWriteFFTWisdom(void) {
