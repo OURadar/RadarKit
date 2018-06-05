@@ -792,7 +792,6 @@ int socketStreamHandler(RKOperator *O) {
 
             sweep = RKSweepCollect(user->radar->sweepEngine, user->rayAnchorsIndex);
 
-            user->rayAnchorsIndex = RKNextModuloS(user->rayAnchorsIndex, RKRayAnchorsDepth);
             if (sweep) {
                 memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
@@ -918,8 +917,11 @@ int socketStreamHandler(RKOperator *O) {
                             RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
                         }
                     }
-                } // if (sweep) ...
-            } // if (productCount) ...
+                } // if (productCount) ...
+            } else {
+                RKLog("%s %s Ignore empty sweep at anchorIndex = %d.\n", engine->name, O->name, user->rayAnchorsIndex);
+            } // if (sweep) ...
+            user->rayAnchorsIndex = RKNextModuloS(user->rayAnchorsIndex, RKRayAnchorsDepth);
         } // if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) ...
     } // if (user->streams & user->access & RKStreamSweepZVWDPRKS) ...
 
