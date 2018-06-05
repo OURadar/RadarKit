@@ -786,8 +786,13 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
         if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
-            user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+            //user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+
+            RKLog("Calling sweepWriter() by %s   anchorIndex = %d / %d\n", engine->name, user->rayAnchorsIndex, user->radar->sweepEngine->rayAnchorsIndex);
+
             sweep = RKSweepCollect(user->radar->sweepEngine, user->rayAnchorsIndex);
+
+            user->rayAnchorsIndex = RKNextModuloS(user->rayAnchorsIndex, RKRayAnchorsDepth);
             if (sweep) {
                 memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 

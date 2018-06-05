@@ -74,6 +74,8 @@ static void *sweepWriter(void *in) {
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
+    RKLog("Calling sweepWriter() by %s   anchorIndex = %d\n", engine->name, anchorIndex);
+    
     RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
     if (sweep == NULL) {
         return NULL;
@@ -747,9 +749,11 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     MAKE_FUNCTION_NAME(name)
     RKSweep *sweep = NULL;
 
+    RKLog("%s %s   anchorIndex = %u\n", engine->name, name, anchorIndex);
+
     uint32_t n = engine->rayAnchors[anchorIndex].count;
     if (n < 2) {
-        RKLog("%s Empty sweep.   n = %d\n", engine->name, n);
+        RKLog("%s Empty sweep.   n = %d   anchorIndex = %u\n", engine->name, n, anchorIndex);
         return NULL;
     }
 
