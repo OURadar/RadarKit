@@ -42,6 +42,8 @@ static void consolidateStreams(RKCommandCenter *engine) {
     }
 }
 
+#pragma mark - Handlers
+
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
@@ -171,7 +173,7 @@ int socketCommandHandler(RKOperator *O) {
                     }
                     RKOperatorSendCommandResponse(O, string);
                     break;
-                    
+
                 case 's':
                     // Stream varrious data
                     stream = RKStreamFromString(commandString + 1);
@@ -185,6 +187,10 @@ int socketCommandHandler(RKOperator *O) {
                     sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, string);
+                    break;
+
+                case 'u':
+                    // User product
                     break;
 
                 case 'x':
