@@ -75,6 +75,9 @@ static void *sweepWriter(void *in) {
     engine->tic++;
 
     RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
+    if (sweep == NULL) {
+        return NULL;
+    }
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
@@ -745,13 +748,18 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     RKSweep *sweep = NULL;
 
     uint32_t n = engine->rayAnchors[anchorIndex].count;
-    RKRay **rays = engine->rayAnchors[anchorIndex].rays;
-    //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
+    if (n < 2) {
+        RKLog("%s Empty sweep.   n = %d\n", engine->name, n);
+        return NULL;
+    }
 
+    RKRay **rays = engine->rayAnchors[anchorIndex].rays;
     RKRay *S = rays[0];
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
+
+    //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
     if (engine->verbose > 1) {
         RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x-%02x   (%s x %d, %.1f km)\n",

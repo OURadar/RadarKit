@@ -278,8 +278,7 @@ int socketStreamHandler(RKOperator *O) {
     uint32_t endIndex;
 
     gettimeofday(&t0, NULL);
-    double time = (double)t0.tv_sec + 1.0e-6 * (double)t0.tv_usec;
-    double td = time - user->timeLastOut;
+    const double time = (double)t0.tv_sec + 1.0e-6 * (double)t0.tv_usec;
 
     RKPulse *pulse;
     RKPulseHeader pulseHeader;
@@ -314,7 +313,7 @@ int socketStreamHandler(RKOperator *O) {
         return 0;
     }
 
-    if (user->radar->desc.initFlags & RKInitFlagSignalProcessor  && td >= 0.05) {
+    if (user->radar->desc.initFlags & RKInitFlagSignalProcessor && time - user->timeLastOut >= 0.05) {
         // Signal processor only - showing the latest summary text view
         k = user->streams & user->access & RKStreamStatusMask;
         if ((user->streamsInProgress & RKStreamStatusMask) != k && k != RKStreamStatusBuffers) {
@@ -327,6 +326,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
         } else if (k == RKStreamStatusPulses) {
             // Stream "1" - Pulses
             k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
@@ -334,6 +334,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
         } else if (k == RKStreamStatusRays) {
             // Stream "2" - Rays (no skipping)
             j = 0;
@@ -351,6 +352,7 @@ int socketStreamHandler(RKOperator *O) {
                 O->delimTx.type = RKNetworkPacketTypePlainText;
                 O->delimTx.size = k + 1;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+                user->timeLastOut = time;
             }
         } else if (k == RKStreamStatusIngest) {
             // Stream "3" - Overall status
@@ -363,6 +365,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
         } else if (k == RKStreamStatusEngines) {
             if (user->textPreferences & RKTextPreferencesShowColor) {
                 k = snprintf(user->string, RKMaximumStringLength - 1, "%s%04x/%04d  %s%04x/%05d  %s%04x/%04d  %s%04x/%02d  %s%04x  %s%04x " RKEOL,
@@ -398,6 +401,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
         } else if (k == RKStreamStatusBuffers) {
             if ((user->streamsInProgress & RKStreamStatusMask) != k) {
                 user->streamsInProgress |= k;
@@ -413,6 +417,7 @@ int socketStreamHandler(RKOperator *O) {
                 O->delimTx.size++;
             }
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
         }
 
         // Send another set of controls if the radar controls have changed.
@@ -439,8 +444,8 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.type = RKNetworkPacketTypeControls;
             O->delimTx.size = j;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+            user->timeLastOut = time;
         }
-        user->timeLastOut = time;
     }
 
     // For contiguous streaming:
@@ -782,129 +787,132 @@ int socketStreamHandler(RKOperator *O) {
         if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
             user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
             sweep = RKSweepCollect(user->radar->sweepEngine, user->rayAnchorsIndex);
-            memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
+            if (sweep) {
+                memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
-            if (engine->verbose > 1) {
-                RKLog("%s New sweep available   C%02d   S%lu.  <--  %x / %x\n", engine->name, sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
-            }
-
-            // Store a copy of the original list of available products
-            uint32_t productList = sweepHeader.productList;
-
-            // Mutate sweep so that header indicates the sweep to be transmitted
-            i = 0;
-            user->scratch[0] = '\0';
-            sweepHeader.productList = RKProductListNone;
-            if ((user->streams & RKStreamSweepZ) && (productList & RKProductListProductZ)) {
-                sweepHeader.productList |= RKProductListProductZ;
-                i += sprintf(user->scratch + i, " Z,");
-            }
-            if ((user->streams & RKStreamSweepV) && (productList & RKProductListProductV)) {
-                sweepHeader.productList |= RKProductListProductV;
-                i += sprintf(user->scratch + i, " V,");
-            }
-            if ((user->streams & RKStreamSweepW) && (productList & RKProductListProductW)) {
-                sweepHeader.productList |= RKProductListProductW;
-                i += sprintf(user->scratch + i, " W,");
-            }
-            if ((user->streams & RKStreamSweepD) && (productList & RKProductListProductD)) {
-                sweepHeader.productList |= RKProductListProductD;
-                i += sprintf(user->scratch + i, " D,");
-            }
-            if ((user->streams & RKStreamSweepP) && (productList & RKProductListProductP)) {
-                sweepHeader.productList |= RKProductListProductP;
-                i += sprintf(user->scratch + i, " P,");
-            }
-            if ((user->streams & RKStreamSweepR) && (productList & RKProductListProductR)) {
-                sweepHeader.productList |= RKProductListProductR;
-                i += sprintf(user->scratch + i, " R,");
-            }
-            if ((user->streams & RKStreamSweepK) && (productList & RKProductListProductK)) {
-                sweepHeader.productList |= RKProductListProductK;
-                i += sprintf(user->scratch + i, " K,");
-            }
-            if ((user->streams & RKStreamSweepSh) && (productList & RKProductListProductSh)) {
-                sweepHeader.productList |= RKProductListProductSh;
-                i += sprintf(user->scratch + i, " Sh,");
-            }
-            if ((user->streams & RKStreamSweepSv) && (productList & RKProductListProductSv)) {
-                sweepHeader.productList |= RKProductListProductSv;
-                i += sprintf(user->scratch + i, " Sv,");
-            }
-            // Remove the last ','
-            if (i > 1) {
-                user->scratch[i - 1] = '\0';
-            }
-
-            const uint32_t productCount = __builtin_popcount(sweepHeader.productList);
-
-            if (productCount) {
-                size_t sentSize = 0;
-
-                //O->delimTx.type = RKNetworkPacketTypeSweep;
-                //O->delimTx.size = (uint32_t)(sizeof(RKSweepHeader) + sweepHeader.rayCount * (sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float)));
-                //sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
-
-                O->delimTx.type = RKNetworkPacketTypeSweepHeader;
-                O->delimTx.size = (uint32_t)sizeof(RKSweepHeader);
-                sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
-
-                O->delimTx.type = RKNetworkPacketTypeSweepRay;
-                O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float));
-
-                for (k = 0; k < sweepHeader.rayCount; k++) {
-                    ray = sweep->rays[k];
-                    memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
-                    rayHeader.productList = sweepHeader.productList;
-                    sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
-                    productList = sweepHeader.productList;
-                    if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
-                        RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
-                    }
-                    for (j = 0; j < productCount; j++) {
-                        if (productList & RKProductListProductZ) {
-                            productList ^= RKProductListProductZ;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-                        } else if (productList & RKProductListProductV) {
-                            productList ^= RKProductListProductV;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexV);
-                        } else if (productList & RKProductListProductW) {
-                            productList ^= RKProductListProductW;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexW);
-                        } else if (productList & RKProductListProductD) {
-                            productList ^= RKProductListProductD;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexD);
-                        } else if (productList & RKProductListProductP) {
-                            productList ^= RKProductListProductP;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexP);
-                        } else if (productList & RKProductListProductR) {
-                            productList ^= RKProductListProductR;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexR);
-                        } else if (productList & RKProductListProductK) {
-                            productList ^= RKProductListProductK;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
-                        } else if (productList & RKProductListProductSh) {
-                            productList ^= RKProductListProductSh;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSh);
-                        } else if (productList & RKProductListProductSv) {
-                            productList ^= RKProductListProductSv;
-                            f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSv);
-                        } else {
-                            f32Data = NULL;
-                        }
-                        if (f32Data) {
-                            sentSize += RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
-                        }
-                    }
+                if (engine->verbose > 1) {
+                    RKLog("%s New sweep available   C%02d   S%lu.  <--  %x / %x\n", engine->name, sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
                 }
-                if (engine->verbose) {
-                    // Offset scratch by one to get rid of the very first space
-                    RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
-                    if (engine->verbose > 1) {
-                        RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
-                        RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
-                    }
+
+                // Store a copy of the original list of available products
+                uint32_t productList = sweepHeader.productList;
+
+                // Mutate sweep so that header indicates the sweep to be transmitted
+                i = 0;
+                user->scratch[0] = '\0';
+                sweepHeader.productList = RKProductListNone;
+                if ((user->streams & RKStreamSweepZ) && (productList & RKProductListProductZ)) {
+                    sweepHeader.productList |= RKProductListProductZ;
+                    i += sprintf(user->scratch + i, " Z,");
                 }
+                if ((user->streams & RKStreamSweepV) && (productList & RKProductListProductV)) {
+                    sweepHeader.productList |= RKProductListProductV;
+                    i += sprintf(user->scratch + i, " V,");
+                }
+                if ((user->streams & RKStreamSweepW) && (productList & RKProductListProductW)) {
+                    sweepHeader.productList |= RKProductListProductW;
+                    i += sprintf(user->scratch + i, " W,");
+                }
+                if ((user->streams & RKStreamSweepD) && (productList & RKProductListProductD)) {
+                    sweepHeader.productList |= RKProductListProductD;
+                    i += sprintf(user->scratch + i, " D,");
+                }
+                if ((user->streams & RKStreamSweepP) && (productList & RKProductListProductP)) {
+                    sweepHeader.productList |= RKProductListProductP;
+                    i += sprintf(user->scratch + i, " P,");
+                }
+                if ((user->streams & RKStreamSweepR) && (productList & RKProductListProductR)) {
+                    sweepHeader.productList |= RKProductListProductR;
+                    i += sprintf(user->scratch + i, " R,");
+                }
+                if ((user->streams & RKStreamSweepK) && (productList & RKProductListProductK)) {
+                    sweepHeader.productList |= RKProductListProductK;
+                    i += sprintf(user->scratch + i, " K,");
+                }
+                if ((user->streams & RKStreamSweepSh) && (productList & RKProductListProductSh)) {
+                    sweepHeader.productList |= RKProductListProductSh;
+                    i += sprintf(user->scratch + i, " Sh,");
+                }
+                if ((user->streams & RKStreamSweepSv) && (productList & RKProductListProductSv)) {
+                    sweepHeader.productList |= RKProductListProductSv;
+                    i += sprintf(user->scratch + i, " Sv,");
+                }
+                // Remove the last ','
+                if (i > 1) {
+                    user->scratch[i - 1] = '\0';
+                }
+
+                const uint32_t productCount = __builtin_popcount(sweepHeader.productList);
+
+                if (productCount) {
+                    size_t sentSize = 0;
+
+                    //O->delimTx.type = RKNetworkPacketTypeSweep;
+                    //O->delimTx.size = (uint32_t)(sizeof(RKSweepHeader) + sweepHeader.rayCount * (sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float)));
+                    //sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+
+                    O->delimTx.type = RKNetworkPacketTypeSweepHeader;
+                    O->delimTx.size = (uint32_t)sizeof(RKSweepHeader);
+                    sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+
+                    O->delimTx.type = RKNetworkPacketTypeSweepRay;
+                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float));
+
+                    for (k = 0; k < sweepHeader.rayCount; k++) {
+                        ray = sweep->rays[k];
+                        memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                        rayHeader.productList = sweepHeader.productList;
+                        sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+                        productList = sweepHeader.productList;
+                        if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
+                            RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
+                        }
+                        for (j = 0; j < productCount; j++) {
+                            if (productList & RKProductListProductZ) {
+                                productList ^= RKProductListProductZ;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+                            } else if (productList & RKProductListProductV) {
+                                productList ^= RKProductListProductV;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexV);
+                            } else if (productList & RKProductListProductW) {
+                                productList ^= RKProductListProductW;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexW);
+                            } else if (productList & RKProductListProductD) {
+                                productList ^= RKProductListProductD;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexD);
+                            } else if (productList & RKProductListProductP) {
+                                productList ^= RKProductListProductP;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexP);
+                            } else if (productList & RKProductListProductR) {
+                                productList ^= RKProductListProductR;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexR);
+                            } else if (productList & RKProductListProductK) {
+                                productList ^= RKProductListProductK;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
+                            } else if (productList & RKProductListProductSh) {
+                                productList ^= RKProductListProductSh;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSh);
+                            } else if (productList & RKProductListProductSv) {
+                                productList ^= RKProductListProductSv;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSv);
+                            } else {
+                                f32Data = NULL;
+                            }
+                            if (f32Data) {
+                                sentSize += RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
+                                user->timeLastOut = time;
+                            }
+                        }
+                    }
+                    if (engine->verbose) {
+                        // Offset scratch by one to get rid of the very first space
+                        RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
+                        if (engine->verbose > 1) {
+                            RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
+                            RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
+                        }
+                    }
+                } // if (sweep) ...
             } // if (productCount) ...
         } // if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) ...
     } // if (user->streams & user->access & RKStreamSweepZVWDPRKS) ...
@@ -1050,6 +1058,7 @@ int socketStreamHandler(RKOperator *O) {
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, sizeof(RKPulseHeader), user->samples[0], size, user->samples[1], size, NULL);
             
             user->timeLastDisplayIQOut = time;
+            user->timeLastOut = time;
         } else {
             if ((int)pulse->header.i > 0) {
                 RKLog("%s %s No IQ / Deactivated.  streamsInProgress = 0x%08x  header.s = %x\n",
@@ -1062,13 +1071,16 @@ int socketStreamHandler(RKOperator *O) {
 
     pthread_mutex_unlock(&user->mutex);
 
-    // Re-evaluate td = time - user->timeLastOut; send a heart beat if nothing has been sent
+    // Re-evaluate td = time - user->timeLastOut; send a beacon if nothing has been sent for a while
     if (time - user->timeLastOut >= 1.0) {
-        user->timeLastOut = time;
         if (O->beacon.type != RKNetworkPacketTypeBeacon) {
             RKLog("Beacon has been changed %d\n", O->beacon.type);
         }
+        if (engine->verbose > 1) {
+            RKLog("%s %s Beacon\n", engine->name, O->name);
+        }
         size = RKOperatorSendBeacon(O);
+        user->timeLastOut = time;
         if (size < 0) {
             RKLog("Beacon failed (r = %d).\n", size);
             RKOperatorHangUp(O);

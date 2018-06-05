@@ -2236,7 +2236,7 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
 RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
     if (status->flag != RKStatusFlagVacant) {
-        RKLog("Error. radar->status[%d] should be vacant.\n", radar->statusIndex);
+        RKLog("Warning. radar->status[%d] should be vacant.\n", radar->statusIndex);
         status->flag = RKStatusFlagVacant;
     }
     if (radar->state & RKRadarStateLive) {
