@@ -71,11 +71,11 @@ static void *sweepWriter(void *in) {
     // Grab the anchor reference as soon as possible
     const uint8_t anchorIndex = engine->rayAnchorsIndex;
 
+    RKLog("Calling sweepWriter() by %s   anchorIndex = %d\n", engine->name, anchorIndex);
+
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
-    RKLog("Calling sweepWriter() by %s   anchorIndex = %d\n", engine->name, anchorIndex);
-    
     RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
     if (sweep == NULL) {
         return NULL;
