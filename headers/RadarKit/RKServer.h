@@ -96,9 +96,9 @@ struct rk_operator  {
 
     char             *cmd;                                 // Latest command
 
-    char             commands[RKServerBufferDepth][RKMaximumStringLength];  // A buffer to keep the latest N commands
-    uint8_t          commandIndexWrite;                                     // Index to write to the buffer
-    uint8_t          commandIndexRead;                                      // Index to read from the buffer
+    RKName           commands[RKServerBufferDepth];        // A buffer to keep the latest N commands
+    uint8_t          commandIndexWrite;                    // Index to write to the buffer
+    uint8_t          commandIndexRead;                     // Index to read from the buffer
 
     void             *userResource;                        // User pointer
 };
@@ -126,6 +126,8 @@ void RKServerSetSharedResource(RKServer *, void *);
 void RKServerStart(RKServer *);
 void RKServerWait(RKServer *);
 void RKServerStop(RKServer *);
+
+ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format);
 
 //#ifdef __cplusplus
 //}

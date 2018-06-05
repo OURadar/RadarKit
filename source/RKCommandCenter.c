@@ -190,6 +190,8 @@ int socketCommandHandler(RKOperator *O) {
                 case 'u':
                     // User product return
                     RKLog("%s %s Incoming user product ...\n", engine->name, O->name);
+                    RKServerReceiveUserPayload(O, sval1, RKNetworkMessageFormatConstantSize);
+                    printf("%02x %02x %02x %02x\n", sval1[0], sval1[1], sval1[2], sval1[3]);
                     break;
 
                 case 'x':
