@@ -189,6 +189,7 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 'u':
                     // User product return
+                    RKLog("%s %s Incoming user product ...\n", engine->name, O->name);
                     break;
 
                 case 'x':
