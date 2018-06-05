@@ -91,6 +91,7 @@ struct rk_operator  {
 
     RKNetDelimiter   delimString;                          // Convenient delimiter for text response of commands
     RKNetDelimiter   delimTx;                              // Convenient delimiter for streaming
+    RKNetDelimiter   delimRx;                              // Convenient delimiter for receiving
     RKNetDelimiter   beacon;                               // Beacon
 
     char             *cmd;                                 // Latest command

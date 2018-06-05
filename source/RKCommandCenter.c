@@ -187,6 +187,10 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     break;
 
+                case 'u':
+                    // User product return
+                    break;
+
                 case 'x':
                     user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
                     sprintf(string, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);

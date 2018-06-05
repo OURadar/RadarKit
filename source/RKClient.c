@@ -16,8 +16,7 @@ void *theClient(void *in);
 
 // Implementations
 
-#pragma mark -
-#pragma mark Helper Functions
+#pragma mark - Helper Functions
 
 void *theClient(void *in) {
     RKClient *C = (RKClient *)in;
@@ -469,11 +468,9 @@ void *theClient(void *in) {
     return NULL;
 }
 
-#pragma mark -
-#pragma mark Threads
+#pragma mark - Threads
 
-#pragma mark -
-#pragma mark Life Cycle
+#pragma mark - Life Cycle
 
 RKClient *RKClientInitWithDesc(RKClientDesc desc) {
     if (desc.format == RKNetworkMessageFormatConstantSize && desc.blockLength == 0) {
@@ -551,8 +548,7 @@ void RKClientSetCloseHandler(RKClient *C, int (*routine)(RKClient *)) {
     C->exit = routine;
 }
 
-#pragma mark -
-#pragma mark Interactions
+#pragma mark - Interactions
 
 void RKClientStart(RKClient *C, const bool waitForConnection) {
     pthread_mutex_init(&C->lock, NULL);

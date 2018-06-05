@@ -535,9 +535,7 @@ void RKServerSetSharedResource(RKServer *M, void *resource) {
     M->userResource = resource;
 }
 
-#pragma mark -
-#pragma mark Server actions
-
+#pragma mark - Server actions
 
 void RKServerStart(RKServer *M) {
     M->state = RKServerStateOpening;
@@ -561,14 +559,36 @@ void RKServerWait(RKServer *M) {
 
 
 void RKServerStop(RKServer *M) {
+    pthread_mutex_lock(&M->lock);
     if (M->state == RKServerStateActive) {
         M->state = RKServerStateClosing;
     }
+    pthread_mutex_unlock(&M->lock);
 }
 
-#pragma mark -
-#pragma mark Miscellaneous functions
+#pragma mark - Miscellaneous functions
 
+void RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format) {
+    fd_set rfd;
+    fd_set efd;
+
+    FD_ZERO(&rfd);
+    FD_ZERO(&efd);
+    FD_SET(O->sid, &rfd);
+    FD_SET(O->sid, &efd);
+
+    switch (format) {
+
+        case RKNetworkMessageFormatHeaderDefinedSize:
+            break;
+
+        case RKNetworkMessageFormatConstantSize:
+        case RKNetworkMessageFormatNewLine:
+        default:
+            // Nothing yet
+            break;
+    }
+}
 
 // In counts of 10ms, should be plenty, in-transit buffer should be able to hold it
 #define RKSocketTimeCountOf10ms  10
