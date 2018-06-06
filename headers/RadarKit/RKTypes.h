@@ -873,7 +873,7 @@ typedef struct rk_ray_header {
     uint16_t         configIndex;                                              // Operating configuration index
     uint16_t         configSubIndex;                                           // Operating configuration sub-index
     uint16_t         gateCount;                                                //
-    uint16_t         reserved2;                                                //
+    uint16_t         pulseCount;                                               //
     float            gateSizeMeters;                                           // Size of range gates
     float            sweepElevation;                                           // Sweep elevation for PPI
     float            sweepAzimuth;                                             // Sweep azimuth for RHI

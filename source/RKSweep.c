@@ -520,10 +520,6 @@ static void *rayGatherer(void *in) {
 
         // A sweep is complete
         if (ray->header.marker & RKMarkerSweepEnd) {
-            if (engine->verbose > 1) {
-                RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d\n", engine->name, is, j);
-            }
-
             // Gather the rays
             n = 0;
             do {
@@ -537,7 +533,7 @@ static void *rayGatherer(void *in) {
             rays[n++] = ray;
             engine->rayAnchors[engine->rayAnchorsIndex].count = n;
             if (engine->verbose > 1) {
-                RKLog("%s Info. RKMarkerSweepEnd   n = %d\n", engine->name, n);
+                RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d   n = %d\n", engine->name, is, j, n);
             }
 
             // If the sweepWriter is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
@@ -767,13 +763,18 @@ void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
 
 RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     MAKE_FUNCTION_NAME(name)
+    int k;
     RKSweep *sweep = NULL;
 
-    RKLog("%s %s   anchorIndex = %u\n", engine->name, name, anchorIndex);
+    if (engine->verbose > 2) {
+        RKLog("%s %s   anchorIndex = %u\n", engine->name, name, anchorIndex);
+    }
 
     uint32_t n = engine->rayAnchors[anchorIndex].count;
     if (n < 2) {
-        RKLog("%s Empty sweep.   n = %d   anchorIndex = %u\n", engine->name, n, anchorIndex);
+        if (engine->verbose > 1) {
+            RKLog("%s Empty sweep.   n = %d   anchorIndex = %u\n", engine->name, n, anchorIndex);
+        }
         return NULL;
     }
 
@@ -782,21 +783,30 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    uint32_t overallProductList = 0;
 
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
+    // Consolidate some other information and check consistencies
+    for (k = 0; k < n; k++) {
+        overallProductList |= rays[k]->header.productList;
+        if (rays[k]->header.gateCount != S->header.gateCount) {
+            RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
+                  engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
+                  RKIntegerToCommaStyleString(S->header.gateCount));
+        }
+    }
+
     if (engine->verbose > 1) {
-        RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x-%02x   (%s x %d, %.1f km)\n",
+        RKLog("%s C%02d-%02d-%02d   M%02x-%02x-%02x   products = 0x%x   (%s x %d, %.1f km)\n",
               engine->name,
               S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
-              config->sweepElevation   ,
-              S->header.startElevation , E->header.endElevation   ,
-              S->header.startAzimuth   , E->header.endAzimuth     ,
-              S->header.marker & 0xFF, T->header.marker & 0xFF, E->header.marker & 0xFF,
+              S->header.marker & 0xFF  , T->header.marker & 0xFF  , E->header.marker & 0xFF,
+              overallProductList,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
-    int k = 0;
+    k = 0;
     if (n > 360) {
         if (S->header.marker & RKMarkerSweepBegin) {
             // 361 beams and start at 0, we discard the extra last beam
@@ -809,6 +819,8 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
         }
     }
     S = rays[k];
+    T = rays[k + 1];
+    E = rays[k + n - 1];
 
     // Allocate the return object
     sweep = (RKSweep *)malloc(sizeof(RKSweep));
@@ -819,14 +831,14 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     memset(sweep, 0, sizeof(RKSweep));
 
     // Populate the contents
-    RKLog("productList %x / %x / %x", S->header.productList, T->header.productList, E->header.productList);
     sweep->header.rayCount = n;
     sweep->header.gateCount = S->header.gateCount;
-    sweep->header.productList = S->header.productList;
+    sweep->header.productList = overallProductList;
     sweep->header.external = true;
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
-    memcpy(&sweep->header.config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
+    memcpy(&sweep->header.config, config, sizeof(RKConfig));
     memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
+
 
     return sweep;
 }
