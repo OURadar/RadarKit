@@ -190,6 +190,7 @@ int socketCommandHandler(RKOperator *O) {
                 case 'u':
                     // User product return
                     RKLog("%s %s Incoming user product ...\n", engine->name, O->name);
+
                     RKServerReceiveUserPayload(O, sval1, RKNetworkMessageFormatConstantSize);
                     printf("%02x %02x %02x %02x\n", sval1[0], sval1[1], sval1[2], sval1[3]);
                     break;
@@ -786,17 +787,16 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
         if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
-            //user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
-
-            RKLog("Calling sweepWriter() by %s   anchorIndex = %d / %d\n", engine->name, user->rayAnchorsIndex, user->radar->sweepEngine->rayAnchorsIndex);
-
+            //RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->rayAnchorsIndex, user->radar->sweepEngine->rayAnchorsIndex);
             sweep = RKSweepCollect(user->radar->sweepEngine, user->rayAnchorsIndex);
-
             if (sweep) {
+                // Make a local copy of the sweepHeader and mutate it for this client while keeping the original intact
                 memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
-                if (engine->verbose > 1) {
-                    RKLog("%s New sweep available   C%02d   S%lu.  <--  %x / %x\n", engine->name, sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
+                if (engine->verbose) {
+                    RKLog("%s %s New sweep available   C%02d   S%lu.  <--  %x / %x\n",
+                          engine->name, O->name,
+                          sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
                 }
 
                 // Store a copy of the original list of available products
@@ -918,9 +918,11 @@ int socketStreamHandler(RKOperator *O) {
                         }
                     }
                 } // if (productCount) ...
-            } else {
-                RKLog("%s %s Ignore empty sweep at anchorIndex = %d.\n", engine->name, O->name, user->rayAnchorsIndex);
+                RKSweepFree(sweep);
+            } else if (engine->verbose) {
+                RKLog("%s %s Empty sweep   anchorIndex = %d.\n", engine->name, O->name, user->rayAnchorsIndex);
             } // if (sweep) ...
+            // This rayAnchorsIndex is consumed, moving to the next one
             user->rayAnchorsIndex = RKNextModuloS(user->rayAnchorsIndex, RKRayAnchorsDepth);
         } // if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) ...
     } // if (user->streams & user->access & RKStreamSweepZVWDPRKS) ...

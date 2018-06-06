@@ -71,13 +71,14 @@ static void *sweepWriter(void *in) {
     // Grab the anchor reference as soon as possible
     const uint8_t anchorIndex = engine->rayAnchorsIndex;
 
-    RKLog("Calling sweepWriter() by %s   anchorIndex = %d\n", engine->name, anchorIndex);
-
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
     RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
     if (sweep == NULL) {
+        if (engine->verbose > 1) {
+            RKLog("%s Empty sweep   anchorIndex = %d\n", anchorIndex);
+        }
         return NULL;
     }
     if (engine->verbose) {
@@ -404,6 +405,9 @@ static void *sweepWriter(void *in) {
         RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
     } // for (p = 0; p < productCount; p++) ...
 
+    // We are done with the sweep
+    RKSweepFree(sweep);
+
     // Show a summary of all the files created
     if (engine->verbose && summarySize > 0) {
         RKLog("%s %s", engine->name, engine->summary);
@@ -449,10 +453,10 @@ static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
     int j, n, s;
-    
-    // Start index
-    uint32_t is = 0;
-    uint64_t tic = 0;
+
+    uint32_t is = 0;   // Start index
+    uint64_t tic = 0;  // Local copy of engine tic
+
     pthread_t tidSweepWriter = (pthread_t)0;
     pthread_t tidRayReleaser = (pthread_t)0;
 
@@ -539,7 +543,7 @@ static void *rayGatherer(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s Info. RKMarkerSweepEnd   n = %d\n", engine->name, n);
             }
-
+            // If the sweepWriter is still going, wait for it to finish
             if (tidSweepWriter) {
                 pthread_join(tidSweepWriter, NULL);
             }
@@ -554,7 +558,9 @@ static void *rayGatherer(void *in) {
             } while (tic == engine->tic && engine->state & RKEngineStateActive);
             // Ready for next collection while the sweepWriter is busy
             engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
-            RKLog("%s RKMarkerSweepEnd   rayAnchorsIndex changed to %d.\n", engine->name, engine->rayAnchorsIndex);
+            if (engine->verbose > 1) {
+                RKLog("%s RKMarkerSweepEnd   rayAnchorsIndex -> %d.\n", engine->name, engine->rayAnchorsIndex);
+            }
             rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
@@ -584,7 +590,9 @@ static void *rayGatherer(void *in) {
                 } while (tic == engine->tic && engine->state & RKEngineStateActive);
                 // Ready for next collection while the sweepWriter is busy
                 engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
-                RKLog("%s RKMarkerSweepBegin   rayAnchorsIndex changed to %d.\n", engine->name, engine->rayAnchorsIndex);
+                if (engine->verbose > 1) {
+                    RKLog("%s RKMarkerSweepBegin   rayAnchorsIndex -> %d.\n", engine->name, engine->rayAnchorsIndex);
+                }
                 rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             }
             is = j;
