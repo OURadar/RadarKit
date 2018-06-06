@@ -937,7 +937,7 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
 
 int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
     int k;
-    for (k = 'a'; k < 's'; k++) {
+    for (k = 'a'; k < 'z'; k++) {
         switch (k) {
             case 'a':
                 RKPositionEngineSetVerbose(myRadar->positionEngine, array[k]);

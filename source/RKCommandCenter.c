@@ -910,16 +910,21 @@ int socketStreamHandler(RKOperator *O) {
                         }
                     }
                     if (engine->verbose) {
-                        // Offset scratch by one to get rid of the very first space
+                        // Offset scratch by one to get rid of the very first space character
                         RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
                         if (engine->verbose > 1) {
                             RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
                             RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
                         }
                     }
+                    RKLog("%s %s Expecting user product ...\n", engine->name, O->name);
+
+                    RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatConstantSize);
+                    printf("%02x %02x %02x %02x\n", user->string[0], user->string[1], user->string[2], user->string[3]);
+
                 } // if (productCount) ...
                 RKSweepFree(sweep);
-            } else if (engine->verbose) {
+            } else if (engine->verbose > 1) {
                 RKLog("%s %s Empty sweep   anchorIndex = %d.\n", engine->name, O->name, user->rayAnchorsIndex);
             } // if (sweep) ...
             // This rayAnchorsIndex is consumed, moving to the next one
