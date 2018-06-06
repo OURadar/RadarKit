@@ -187,14 +187,6 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     break;
 
-                case 'u':
-                    // User product return
-                    RKLog("%s %s Incoming user product ...\n", engine->name, O->name);
-
-                    RKServerReceiveUserPayload(O, sval1, RKNetworkMessageFormatConstantSize);
-                    printf("%02x %02x %02x %02x\n", sval1[0], sval1[1], sval1[2], sval1[3]);
-                    break;
-
                 case 'x':
                     user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
                     sprintf(string, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
@@ -919,7 +911,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     RKLog("%s %s Expecting user product ...\n", engine->name, O->name);
 
-                    RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatConstantSize);
+                    RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
                     printf("%02x %02x %02x %02x\n", user->string[0], user->string[1], user->string[2], user->string[3]);
 
                 } // if (productCount) ...

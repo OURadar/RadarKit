@@ -619,6 +619,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 }
                 break;
             }
+            RKLog("Warning. delimiter -> %d %d %d %d\n", delimiter->type, delimiter->subtype, delimiter->size, delimiter->decodedSize);
             // If the delimiter specifies 0 payload, it could just be a beacon
             if (delimiter->size == 0) {
                 if (M->verbose > 1) {
