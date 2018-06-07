@@ -757,14 +757,25 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId produc
         if (engine->userProducts[i].i != i) {
             continue;
         }
+        if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
+            RKLog("%s Warning. The productId = %d has been set vacant.", engine->name, productId);
+        }
         engine->userProducts[i].flag = RKUserProductStatusVacant;
+        engine->userProducts[i].capacity = 0;
+        free(engine->userProducts[i].array);
         memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
     }
     return RKResultSuccess;
 }
 
 int RKSweepEngineReportProduct(RKSweepEngine *engine, RKFloat *data, RKUserProductId productId) {
-    
+    int i;
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (engine->userProducts[i].i != i) {
+            continue;
+        }
+        // Get the corresponding sweep
+    }
     return RKResultSuccess;
 }
 
