@@ -52,7 +52,6 @@ struct rk_sweep_engine {
     RKName                           productUnit;
     RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
-    RKUserProductId                  userProductIdCount;
     RKUserProduct                    userProducts[RKMaximumUserProductCount];
 
     // Status / health
@@ -81,8 +80,8 @@ int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
 
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
-int RKSweeEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
-int RKSweepEngineReportProduct(RKSweepEngine *, RKUserProductId);
+int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
+int RKSweepEngineReportProduct(RKSweepEngine *, RKFloat *, RKUserProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
 RKSweep *RKSweepRead(const char *);

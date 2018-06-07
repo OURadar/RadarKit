@@ -102,7 +102,7 @@ static void *sweepWriter(void *in) {
     // Each registered product will report a product that has the same sweep id
     bool allReported = true;
     for (i = 0; i < RKMaximumUserProductCount; i++) {
-        if (!(engine->userProducts[i].flag & RKUserProductStatusActive)) {
+        if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
             continue;
         }
         engine->userProducts[i].flag |= RKUserProductStatusSleep0;
@@ -127,7 +127,10 @@ static void *sweepWriter(void *in) {
     }
     
     j = 0;
-    for (i = 0; i < engine->userProductIdCount; i++) {
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
+            continue;
+        }
         j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
     }
     RKLog("%s Concluding sweep.   allReported = %s   %s",
@@ -178,6 +181,7 @@ static void *sweepWriter(void *in) {
     uint32_t productList = sweep->header.productList;
     int productCount = __builtin_popcount(productList & RKProductListProductZVWDPRKS);
 
+    // Base products
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
         RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &productList);
@@ -400,6 +404,9 @@ static void *sweepWriter(void *in) {
         // Notify file manager of a new addition
         RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
     } // for (p = 0; p < productCount; p++) ...
+
+    // User products
+
 
     // We are done with the sweep
     RKSweepFree(sweep);
@@ -726,21 +733,25 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProductDesc desc) {
     int i = 0;
-    RKUserProductId productId = 1000 + engine->userProductIdCount++;
+    RKUserProductId productId = 1000;
     while (engine->userProducts[i].flag != RKUserProductStatusVacant && i < RKMaximumUserProductCount) {
+        productId++;
         i++;
     }
     if (i == RKMaximumUserProductCount) {
         RKLog("%s Error. Unable to add anymore user products.\n", engine->name);
         return 0;
     }
+    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     engine->userProducts[i].i = productId;
     engine->userProducts[i].flag = RKUserProductStatusActive;
     engine->userProducts[i].desc = desc;
+    engine->userProducts[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
+    engine->userProducts[i].array = (RKFloat *)malloc(engine->userProducts[i].capacity * sizeof(RKFloat));
     return productId;
 }
 
-int RKSweeEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
+int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
     int i;
     for (i = 0; i < RKMaximumUserProductCount; i++) {
         if (engine->userProducts[i].i != i) {
@@ -749,6 +760,11 @@ int RKSweeEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId product
         engine->userProducts[i].flag = RKUserProductStatusVacant;
         memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
     }
+    return RKResultSuccess;
+}
+
+int RKSweepEngineReportProduct(RKSweepEngine *engine, RKFloat *data, RKUserProductId productId) {
+    
     return RKResultSuccess;
 }
 
@@ -838,7 +854,6 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
     memcpy(&sweep->header.config, config, sizeof(RKConfig));
     memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
-
 
     return sweep;
 }

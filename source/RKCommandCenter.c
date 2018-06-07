@@ -909,7 +909,7 @@ int socketStreamHandler(RKOperator *O) {
                             RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
                         }
                     }
-                    RKLog("%s %s Expecting user product ...\n", engine->name, O->name);
+                    RKLog("%s %s Expecting a user product ...\n", engine->name, O->name);
 
                     RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
 
@@ -920,7 +920,7 @@ int socketStreamHandler(RKOperator *O) {
                     printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
                     num += sweep->header.gateCount;
                     printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
-                    printf("...\n");
+                    printf("[...\n");
                     num = (float *)user->string + (sweep->header.rayCount - 3) * sweep->header.gateCount;
                     printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
                     num = (float *)user->string + (sweep->header.rayCount - 2) * sweep->header.gateCount;

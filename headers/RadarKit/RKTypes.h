@@ -1064,6 +1064,8 @@ typedef struct rk_user_product {                                               /
     RKUserProductId      i;                                                    // Product identifier
     RKUserProductDesc    desc;                                                 // Description
     RKUserProductStatus  flag;                                                 // Various state
+    uint32_t             capacity;                                             // Number of RKFloat elements in *array
+    RKFloat              *array;                                               // Flattened array of user product
 } RKUserProduct;
 
 typedef struct rk_waveform {
