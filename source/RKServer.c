@@ -619,7 +619,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 }
                 break;
             }
-            RKLog("Warning. delimiter -> %d %d %d %d\n", delimiter->type, delimiter->subtype, delimiter->size, delimiter->decodedSize);
+            //RKLog("Warning. delimiter -> %d %d %d %d\n", delimiter->type, delimiter->subtype, delimiter->size, delimiter->decodedSize);
             // If the delimiter specifies 0 payload, it could just be a beacon
             if (delimiter->size == 0) {
                 if (M->verbose > 1) {
@@ -634,6 +634,37 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 break;
             }
             // Now the actual payload
+            k = 0;
+            readCount = 0;
+            while (readCount++ < M->timeoutSeconds * 100) {
+                if ((r = (int)read(O->sid, buffer + k, delimiter->size - k)) > 0) {
+                    k += r;
+                    if (k >= delimiter->size) {
+                        break;
+                    } else {
+                        usleep(10000);
+                    }
+                } else if (errno != EAGAIN) {
+                    if (M->verbose > 1) {
+                        RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
+                              O->name, r, k, errno, RKErrnoString(errno), readCount);
+                    }
+                    readCount = O->timeoutSeconds * 10000;
+                    break;
+                } else {
+                    usleep(10000);
+                }
+                if (M->verbose > 1) {
+                    RKLog("... errno = %d ...\n", errno);
+                }
+            }
+            if (readCount >= O->timeoutSeconds * 100) {
+                if (M->verbose > 1) {
+                    RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", O->name, readCount, errno);
+                }
+                break;
+            }
+            readOkay = true;
 
             break;
             

@@ -912,7 +912,21 @@ int socketStreamHandler(RKOperator *O) {
                     RKLog("%s %s Expecting user product ...\n", engine->name, O->name);
 
                     RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
-                    printf("%02x %02x %02x %02x\n", user->string[0], user->string[1], user->string[2], user->string[3]);
+
+                    // Report back product
+                    float *num = (float *)user->string;
+                    printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
+                    num += sweep->header.gateCount;
+                    printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
+                    num += sweep->header.gateCount;
+                    printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
+                    printf("...\n");
+                    num = (float *)user->string + (sweep->header.rayCount - 3) * sweep->header.gateCount;
+                    printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
+                    num = (float *)user->string + (sweep->header.rayCount - 2) * sweep->header.gateCount;
+                    printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
+                    num = (float *)user->string + (sweep->header.rayCount - 1) * sweep->header.gateCount;
+                    printf("[%6.2f %6.2f %6.2f ... %6.2f %6.2f %6.2f]\n", num[0], num[1], num[2], num[sweep->header.gateCount - 3], num[sweep->header.gateCount - 2], num[sweep->header.gateCount - 1]);
 
                 } // if (productCount) ...
                 RKSweepFree(sweep);
