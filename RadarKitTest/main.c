@@ -401,7 +401,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
         struct option *o = &long_options[k];
-        s += snprintf(str + s, 1023 - s, "%c::", o->val);
+        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->val == 'v' ? "" : "::");
     }
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
@@ -413,7 +413,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
         }
     }
-    
+
     // Going from user->verbose to RKInitFlag
     if (user->verbose == 1) {
         user->desc.initFlags |= RKInitFlagVerbose;
@@ -842,7 +842,10 @@ int main(int argc, const char **argv) {
     if (systemPreferences->verbose) {
         RKLog("Level II recording: %s\n", systemPreferences->recordData ? "true" : "false");
         if (systemPreferences->verbose > 1) {
-            printf("TERM = %s --> %s\n", term, rkGlobalParameters.showColor ? "showColor" : "noColor");
+            printf("TERM = %s --> %s\n", term,
+                   rkGlobalParameters.showColor ?
+                   RKRedColor "s" RKOrangeColor "h" RKYellowColor "o" RKLimeGreenColor "w" RKGreenColor "C" RKTealColor "o" RKBlueColor "l" RKPurpleColor "o" RKRedColor "r" RKNoColor :
+                   "noColor");
         }
     } else {
         RKSetWantScreenOutput(false);
