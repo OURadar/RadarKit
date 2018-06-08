@@ -272,6 +272,7 @@ N(RKResultFailedToStartHostWatcher) \
 N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
 N(RKResultFailedToAddHost) \
+N(RKResultFailedToFindProductId) \
 N(RKResultClientNotConnected) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)

@@ -71,7 +71,8 @@ int socketCommandHandler(RKOperator *O) {
     RKStripTail(commandString);
 
     RKStream stream;
-
+    RKUserProductDesc userProductDescription;
+    
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
@@ -185,6 +186,12 @@ int socketCommandHandler(RKOperator *O) {
                     sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, string);
+                    break;
+                    
+                case 'u':
+                    // Turn this user into an active node with user product return
+                    RKParseQuotedStrings(commandString + 1, userProductDescription.name, NULL);
+                    user->userProductId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     break;
 
                 case 'x':
@@ -1153,6 +1160,10 @@ int socketTerminateHandler(RKOperator *O) {
     user->access = RKStreamNull;
     user->radar = NULL;
     consolidateStreams(engine);
+    if (user->userProductId != 0) {
+        RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->userProductId);
+        user->userProductId = 0;
+    }
     return RKResultSuccess;
 }
 

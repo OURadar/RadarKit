@@ -748,34 +748,46 @@ RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProduc
     engine->userProducts[i].desc = desc;
     engine->userProducts[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
     engine->userProducts[i].array = (RKFloat *)malloc(engine->userProducts[i].capacity * sizeof(RKFloat));
+    RKLog("%s Product %d '%s' registered.\n", engine->name, engine->userProducts[i].i, engine->userProducts[i].desc.name);
     return productId;
 }
 
 int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
-    int i;
-    for (i = 0; i < RKMaximumUserProductCount; i++) {
-        if (engine->userProducts[i].i != i) {
-            continue;
+    int i = 0;
+    while (i < RKMaximumUserProductCount) {
+        if (engine->userProducts[i].i == productId) {
+            break;
         }
-        if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
-            RKLog("%s Warning. The productId = %d has been set vacant.", engine->name, productId);
-        }
-        engine->userProducts[i].flag = RKUserProductStatusVacant;
-        engine->userProducts[i].capacity = 0;
-        free(engine->userProducts[i].array);
-        memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
+        i++;
     }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
+        return RKResultFailedToFindProductId;
+    }
+    if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
+        RKLog("%s Warning. The productId = %d is vacant.", engine->name, productId);
+    }
+    engine->userProducts[i].flag = RKUserProductStatusVacant;
+    engine->userProducts[i].capacity = 0;
+    free(engine->userProducts[i].array);
+    RKLog("%s Product %d '%s' unregistered.\n", engine->name, engine->userProducts[i].i, engine->userProducts[i].desc.name);
+    memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
     return RKResultSuccess;
 }
 
 int RKSweepEngineReportProduct(RKSweepEngine *engine, RKFloat *data, RKUserProductId productId) {
-    int i;
-    for (i = 0; i < RKMaximumUserProductCount; i++) {
-        if (engine->userProducts[i].i != i) {
-            continue;
+    int i = 0;
+    while (i < RKMaximumUserProductCount) {
+        if (engine->userProducts[i].i == productId) {
+            break;
         }
-        // Get the corresponding sweep
+        i++;
     }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
+        return RKResultFailedToFindProductId;
+    }
+    // Get the corresponding sweep
     return RKResultSuccess;
 }
 

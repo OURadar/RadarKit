@@ -1940,6 +1940,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
             }
         }
         // Process the command
+        // Commands 'a', 'c', 'dr', 's', 'u', 'x', 'z' will never arrive here
         switch (commandString[0]) {
             case 'd':
                 // DSP related
