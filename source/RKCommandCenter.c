@@ -42,6 +42,8 @@ static void consolidateStreams(RKCommandCenter *engine) {
     }
 }
 
+#pragma mark - Handlers
+
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
@@ -172,7 +174,7 @@ int socketCommandHandler(RKOperator *O) {
                     }
                     RKOperatorSendCommandResponse(O, string);
                     break;
-                    
+
                 case 's':
                     // Stream varrious data
                     stream = RKStreamFromString(commandString + 1);
@@ -192,6 +194,10 @@ int socketCommandHandler(RKOperator *O) {
                     // Turn this user into an active node with user product return
                     RKParseQuotedStrings(commandString + 1, userProductDescription.name, NULL);
                     user->userProductId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
+                    break;
+
+                case 'u':
+                    // User product
                     break;
 
                 case 'x':

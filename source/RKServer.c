@@ -251,7 +251,6 @@ void *RKOperatorRoutine(void *in) {
             } else if (FD_ISSET(O->sid, &rfd)) {
                 // Ready to read (command)
                 gettimeofday(&latestReadTime, NULL);
-                //if (fgets(str, RKMaximumStringLength, fp) == NULL) {
                 str = O->commands[O->commandIndexWrite];
                 if (fgets(str, RKNameLength - 1, fp) == NULL) {
                     // When the socket has been disconnected by the client
@@ -262,7 +261,6 @@ void *RKOperatorRoutine(void *in) {
                     }
                     break;
                 }
-                //stripTrailingUnwanted(str);
                 RKStripTail(str);
                 O->commandIndexWrite = O->commandIndexWrite == RKServerBufferDepth - 1 ? 0 : O->commandIndexWrite + 1;
                 memset(O->commands[O->commandIndexWrite], 0, RKNameLength);
@@ -791,3 +789,16 @@ void RKOperatorHangUp(RKOperator *O) {
     O->state = RKOperatorStateClosing;
     return;
 }
+
+ssize_t RKServerReadCustomPayload(RKOperator *O, void *payload) {
+    fd_set          rfd;
+    fd_set          efd;
+
+    FD_ZERO(&rfd);
+    FD_ZERO(&efd);
+    FD_SET(O->sid, &rfd);
+    FD_SET(O->sid, &efd);
+
+    return 0;
+}
+

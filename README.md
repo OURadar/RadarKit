@@ -54,6 +54,13 @@ Follow these steps to get the project
     make
     sudo make install
     ```
+    
+4. (Some Linux) Add the following line to /etc/sysctl.conf
+
+    ```
+    net.ipv4.ping_group_range = 0 0
+    ```
+    
 [FFTW]: http://www.fftw.org
 [NetCDF]: http://www.unidata.ucar.edu/software/netcdf
 [Homebrew]: http://brew.sh

@@ -21,7 +21,7 @@ enum RKTextPreferences {
     RKTextPreferencesStandardWidth   = (1 << 1)
 };
 
-typedef struct  rk_user {
+typedef struct rk_user {
     char                             login[64];
     RKStream                         access;             // Authorized access priviledge
     RKStream                         streams;
