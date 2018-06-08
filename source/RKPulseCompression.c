@@ -96,6 +96,7 @@ static void *pulseCompressionCore(void *_in) {
     fftwf_complex *o;
 
     const int c = me->id;
+    const int ci = engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU ? engine->coreOrigin + c : -1;
 
     uint32_t blindGateCount = 0;
 
@@ -128,7 +129,6 @@ static void *pulseCompressionCore(void *_in) {
 
     if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
         // Set my CPU core
-        const int ci = engine->coreOrigin + c;
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
         CPU_SET(ci, &cpuset);

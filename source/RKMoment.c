@@ -252,6 +252,7 @@ static void *momentCore(void *in) {
 
     // My ID that is suppose to be constant
     const int c = me->id;
+    const int ci = engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU ? engine->coreOrigin + c : -1;
 
     // A tag for header identification, will increase by engine->coreCount later
     uint32_t tag = c;
@@ -281,7 +282,6 @@ static void *momentCore(void *in) {
     
     if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
         // Set my CPU core
-        const int ci = engine->coreOrigin + c;
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
         CPU_SET(ci, &cpuset);
