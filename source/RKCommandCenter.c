@@ -196,10 +196,6 @@ int socketCommandHandler(RKOperator *O) {
                     user->userProductId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     break;
 
-                case 'u':
-                    // User product
-                    break;
-
                 case 'x':
                     user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
                     sprintf(string, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
