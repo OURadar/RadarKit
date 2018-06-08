@@ -96,8 +96,6 @@ static void *pulseCompressionCore(void *_in) {
     fftwf_complex *o;
 
     const int c = me->id;
-    const int ci = engine->coreOrigin + c;
-    //const int ci = RKGetCPUIndex();
 
     uint32_t blindGateCount = 0;
 
@@ -128,13 +126,16 @@ static void *pulseCompressionCore(void *_in) {
 
 #if defined(_GNU_SOURCE)
 
-    // Set my CPU core
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(ci, &cpuset);
-    sched_setaffinity(0, sizeof(cpuset), &cpuset);
-    pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
-
+    if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
+        // Set my CPU core
+        const int ci = engine->coreOrigin + c;
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(ci, &cpuset);
+        sched_setaffinity(0, sizeof(cpuset), &cpuset);
+        pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
+    }
+    
 #endif
 
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);

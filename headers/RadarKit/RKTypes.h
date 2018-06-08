@@ -411,7 +411,7 @@ enum RKInitFlag {
     RKInitFlagVeryVerbose            = 0x0002,
     RKInitFlagVeryVeryVerbose        = 0x0004,
     RKInitFlagShowClockOffset        = 0x0008,
-    RKInitFlagReserved1              = 0x0020,
+    RKInitFlagManuallyAssignCPU      = 0x0010,
     RKInitFlagReserved2              = 0x0020,
     RKInitFlagReserved3              = 0x0040,
     RKInitFlagReserved4              = 0x0080,

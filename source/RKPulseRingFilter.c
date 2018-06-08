@@ -67,8 +67,7 @@ static void *ringFilterCore(void *_in) {
     struct timeval t0, t1, t2;
 
     const int c = me->id;
-    const int ci = engine->coreOrigin + c;
-    
+
     // Find the semaphore
     sem_t *sem = sem_open(me->semaphoreName, O_RDWR);
     if (sem == SEM_FAILED) {
@@ -96,12 +95,15 @@ static void *ringFilterCore(void *_in) {
 
 #if defined(_GNU_SOURCE)
     
-    // Set my CPU core
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(ci, &cpuset);
-    sched_setaffinity(0, sizeof(cpuset), &cpuset);
-    pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
+    if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
+        // Set my CPU core
+        const int ci = engine->coreOrigin + c;
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(ci, &cpuset);
+        sched_setaffinity(0, sizeof(cpuset), &cpuset);
+        pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
+    }
     
 #endif
 

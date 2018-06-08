@@ -1454,19 +1454,21 @@ int RKGoLive(RKRadar *radar) {
     RKFileManagerStart(radar->fileManager);
     RKHostMonitorStart(radar->hostMonitor);
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
-        // Main thread uses 1 CPU. Start the others from 1.
-        uint8_t o = 1;
-        if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
-            RKLog("Info. Not enough physical cores (%d / %d). Core counts will be adjusted.\n",
-                  radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
-            RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
-            RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, MAX(1, radar->processorCount / 2));
-            RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2 - 1));
-            RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
+        if (radar->desc.initFlags & RKInitFlagManuallyAssignCPU) {
+            // Main thread uses 1 CPU. Start the others from 1.
+            uint8_t o = 1;
+            if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
+                RKLog("Info. Not enough physical cores (%d / %d). Core counts will be adjusted.\n",
+                      radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
+                RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
+                RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, MAX(1, radar->processorCount / 2));
+                RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2 - 1));
+                RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
+            }
+            // For now, pulse compression and ring filter engines both share the same cores
+            RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
+            RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o);
         }
-        // For now, pulse compression and ring filter engines both share the same cores
-        RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
-        RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o);
         // Now, we start the engines
         RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
         RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
