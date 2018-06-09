@@ -472,6 +472,14 @@ enum RKProductIndex {
     RKProductIndexWv
 };
 
+typedef uint32_t RKProductType;
+enum RKProductType {
+    RKProductTypeUnknown             = 0,                                      // Unspecified
+    RKProductTypeMatchSweepCells     = (1),                                    //
+    RKProductTypePPI                 = (1 << 1),                               //
+    RKProductTypeCAPPI               = (1 << 2)                                //
+};
+
 typedef uint32_t RKConfigKey;
 enum RKConfigKey {
     RKConfigKeyNull,
@@ -1057,6 +1065,7 @@ typedef struct rk_file_monitor {                                               /
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
+        RKProductType    type;
         float            w;                                                    // Product to color index weight
         float            b;                                                    // Product to color index bias
     };
