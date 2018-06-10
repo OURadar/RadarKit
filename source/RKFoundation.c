@@ -1146,7 +1146,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *ks;
     char *sks;
     if (*string != '{') {
-        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
+        fprintf(stderr, "RKFindCondition() - Expected '{'.\n");
     }
 
     strcpy(str, string);

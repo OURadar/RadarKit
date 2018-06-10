@@ -205,6 +205,19 @@ void RKTestParseJSONString(void) {
     if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
         printf("longitude = %.7f\n", atof(stringValue));
     }
+
+    printf("\n===\n\n");
+    
+    sprintf(str, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5]}");
+    printf("%s (%d characters)\n\n", str, (int)strlen(str));
+    stringObject = RKGetValueOfKey(str, "name");
+    printf("name = %s\n", stringObject);
+    stringObject = RKGetValueOfKey(str, "PieceCount");
+    printf("Piece Count = %s\n", stringObject);
+    stringObject = RKGetValueOfKey(str, "b");
+    printf("b = %s\n", stringObject);
+    stringObject = RKGetValueOfKey(str, "w");
+    printf("w = %s\n", stringObject);
 }
 
 void RKTestFileManager(void) {
