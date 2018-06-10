@@ -475,7 +475,7 @@ enum RKProductIndex {
 typedef uint32_t RKProductType;
 enum RKProductType {
     RKProductTypeUnknown             = 0,                                      // Unspecified
-    RKProductTypeMatchSweepCells     = (1),                                    //
+    RKProductTypeCellMatch           = (1),                                    //
     RKProductTypePPI                 = (1 << 1),                               //
     RKProductTypeCAPPI               = (1 << 2)                                //
 };
@@ -1065,9 +1065,12 @@ typedef struct rk_file_monitor {                                               /
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
-        RKProductType    type;
-        float            w;                                                    // Product to color index weight
-        float            b;                                                    // Product to color index bias
+        RKProductType    type;                                                 // RKProductType
+        uint32_t         pieceCount;                                           // Piece-wise function count
+        float            w[16];                                                // Product to color index weight (piece-wise function)
+        float            b[16];                                                // Product to color index bias (piece-wise function)
+        float            mininimumValue;                                       // Minimum value
+        float            maximumValue;                                         // Maximum value
     };
     RKByte bytes[1024];
 } RKUserProductDesc;

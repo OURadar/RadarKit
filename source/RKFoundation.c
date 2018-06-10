@@ -235,6 +235,7 @@ void RKShowTypeSizes(void) {
     printf("sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
     printf("sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
     printf("sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
+    printf("sizeof(RKUserProductDesc) = %d\n", (int)sizeof(RKUserProductDesc));
     
     printf("\n");
     
