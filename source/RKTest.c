@@ -99,7 +99,7 @@ void RKTestModuloMath(void) {
 
 void RKTestParseCommaDelimitedValues(void) {
     SHOW_FUNCTION_NAME
-    char string[] = "1200,2000,3000,5000";
+    char string[] = "1200,2000, 3000,  5000";
     float v[4];
     int32_t i[4];
     RKParseCommaDelimitedValues(v, RKValueTypeFloat, 4, string);
@@ -208,26 +208,34 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
     
+    int k;
+    size_t s;
+    float *nums = (float *)malloc(8 * sizeof(float));
     sprintf(str, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
     printf("%s (%d characters)\n\n", str, (int)strlen(str));
+
     stringObject = RKGetValueOfKey(str, "name");
     printf("name = %s\n", stringObject);
     stringObject = RKGetValueOfKey(str, "PieceCount");
     printf("Piece Count = %s\n", stringObject);
-    stringObject = RKGetValueOfKey(str, "b");
-    printf("b = %s\n", stringObject);
-    stringObject = RKGetValueOfKey(str, "w");
-    printf("w = %s\n", stringObject);
 
-    int k;
-    float *nums = (float *)malloc(8 * sizeof(float));
-    if (*stringObject == '[') {
-        // Array of numbers
-        k = (int)RKParseCommaDelimitedValues(nums, RKValueTypeFloat, 8, stringObject + 1);
-    } else {
-        k = (int)RKParseCommaDelimitedValues(nums, RKValueTypeFloat, 8, stringObject);
+    stringObject = RKGetValueOfKey(str, "b");
+    printf("b = %s -->", stringObject);
+    s = RKParseCommaDelimitedValues(nums, RKValueTypeFloat, 8, stringObject);
+    for (k = 0; k < s; k++) {
+        printf(" %.2f", nums[k]);
     }
-    printf("nums = %.2f %.2f %.2f (k = %d)\n", nums[0], nums[1], nums[2], (int)k);
+    printf(" (count = %zu)\n", s);
+
+    stringObject = RKGetValueOfKey(str, "w");
+    printf("w = %s --> ", stringObject);
+    s = RKParseNumericArray(nums, RKValueTypeFloat, 8, stringObject);
+    for (k = 0; k < s; k++) {
+        printf(" %.2f", nums[k]);
+    }
+    printf(" (count = %zu)\n", s);
+
+    free(nums);
 }
 
 void RKTestFileManager(void) {

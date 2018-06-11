@@ -979,54 +979,76 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 #pragma mark - JSON Stuff
 
 size_t RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
-    float *fv;
-    double *fd;
-    int32_t *i32v;
-    uint32_t *u32v;
+    float *fv = (float *)valueStorage;
+    double *dv = (double *)valueStorage;
+    int32_t *i32v = (int32_t *)valueStorage;
+    uint32_t *u32v = (uint32_t *)valueStorage;
+    int64_t *i64v = (int64_t *)valueStorage;
+    uint64_t *u64v = (uint64_t *)valueStorage;
     char *copy = (char *)malloc(strlen(valueString));
     strcpy(copy, valueString);
     char *c = copy;
     char *e;
     if ((e = strchr(copy, ',')) != NULL) {
         *e = '\0';
-    } else if ((e = strchr(copy, ']')) != NULL) {
-        *e = '\0';
     }
     size_t s = 0;
     while (*c != '\0' && s < size) {
         switch (type) {
             case RKValueTypeFloat:
-                fv = (float *)valueStorage;
-                fv[s] = atof(c);
+                fv[s] = (float)atof(c);
                 break;
             case RKValueTypeDouble:
-                fd = (double *)valueStorage;
-                fd[s] = atof(c);
+                dv[s] = atof(c);
                 break;
             case RKValueTypeInt32:
-                i32v = (int32_t *)valueStorage;
                 i32v[s] = (int32_t)atoi(c);
                 break;
             case RKValueTypeUInt32:
-                u32v = (uint32_t *)valueStorage;
                 u32v[s] = (uint32_t)atoi(c);
+                break;
+            case RKValueTypeInt64:
+                i64v[s] = (int64_t)atol(c);
+                break;
+            case RKValueTypeUInt64:
+                u64v[s] = (uint64_t)atol(c);
                 break;
             default:
                 break;
         }
-        //printf("s = %d   c = %s @ %p / %p\n", (int)s, c == NULL ? "(NULL)" : c, c, e);
+        //printf("s = %d   c = %s @ %16p / %16p\n", (int)s, c == NULL ? "(NULL)" : c, c, e);
         s++;
         if (e) {
             c = e + 1;
             if ((e = strchr(c, ',')) != NULL) {
                 *e = '\0';
-            } else if ((e = strchr(c, ']')) != NULL) {
-                *e = '\0';
             }
+        } else {
+            break;
         }
     }
     free(copy);
     return s;
+}
+
+size_t RKParseNumericArray(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
+    size_t k = 0;
+    char *s, *e;
+    if ((s = strchr(valueString, '[')) == NULL) {
+        fprintf(stderr, "Input string does not appear to be an array.\n");
+        return 0;
+    }
+    if ((e = strchr(valueString, ']')) == NULL) {
+        fprintf(stderr, "Expected a close bracket in an array of numbers.\n");
+        return 0;
+    }
+    char *copy = (char *)malloc(e - s + 1);
+    memcpy(copy, s + 1, e - s - 1);
+    *(copy + (e - s - 1)) = '\0';
+    //printf("copy = %s\n", copy);
+    k = RKParseCommaDelimitedValues(valueStorage, type, size, copy);
+    free(copy);
+    return k;
 }
 
 void RKParseQuotedStrings(const char *source, ...) {

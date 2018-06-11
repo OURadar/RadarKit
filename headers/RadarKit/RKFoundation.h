@@ -40,6 +40,8 @@ typedef uint32_t RKValueType;
 enum RKValueType {
     RKValueTypeInt32,
     RKValueTypeUInt32,
+    RKValueTypeInt64,
+    RKValueTypeUInt64,
     RKValueTypeFloat,
     RKValueTypeDouble,
     RKValueTypeString
@@ -103,6 +105,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 
 // Parser, enum, strings
 size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
+size_t RKParseNumericArray(void *, RKValueType, const size_t, const char *);
 void RKParseQuotedStrings(const char *source, ...);
 void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
