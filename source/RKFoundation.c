@@ -978,8 +978,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 
 #pragma mark - JSON Stuff
 
-
-void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
+size_t RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
     float *fv;
     double *fd;
     int32_t *i32v;
@@ -987,12 +986,14 @@ void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const siz
     char *copy = (char *)malloc(strlen(valueString));
     strcpy(copy, valueString);
     char *c = copy;
-    char *e = strchr(copy, ',');
-    if (e) {
+    char *e;
+    if ((e = strchr(copy, ',')) != NULL) {
+        *e = '\0';
+    } else if ((e = strchr(copy, ']')) != NULL) {
         *e = '\0';
     }
     size_t s = 0;
-    while (c != NULL && s < size) {
+    while (*c != '\0' && s < size) {
         switch (type) {
             case RKValueTypeFloat:
                 fv = (float *)valueStorage;
@@ -1013,15 +1014,19 @@ void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const siz
             default:
                 break;
         }
+        //printf("s = %d   c = %s @ %p / %p\n", (int)s, c == NULL ? "(NULL)" : c, c, e);
         s++;
         if (e) {
             c = e + 1;
             if ((e = strchr(c, ',')) != NULL) {
                 *e = '\0';
+            } else if ((e = strchr(c, ']')) != NULL) {
+                *e = '\0';
             }
         }
     }
     free(copy);
+    return s;
 }
 
 void RKParseQuotedStrings(const char *source, ...) {

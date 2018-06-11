@@ -102,10 +102,10 @@ void RKTestParseCommaDelimitedValues(void) {
     char string[] = "1200,2000,3000,5000";
     float v[4];
     int32_t i[4];
-    RKParseCommaDelimitedValues(v, RKValueTypeFloat, 3, string);
-    RKLog("%s -> %.2f %.2f %.2f\n", string, v[0], v[1], v[2]);
-    RKParseCommaDelimitedValues(i, RKValueTypeInt32, 3, string);
-    RKLog("%s -> %d %d %d\n", string, i[0], i[1], i[2]);
+    RKParseCommaDelimitedValues(v, RKValueTypeFloat, 4, string);
+    RKLog("%s -> %.2f %.2f %.2f %.2f\n", string, v[0], v[1], v[2], v[3]);
+    RKParseCommaDelimitedValues(i, RKValueTypeInt32, 4, string);
+    RKLog("%s -> %d %d %d %d\n", string, i[0], i[1], i[2], i[3]);
 }
 
 void RKTestParseJSONString(void) {
@@ -208,7 +208,7 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
     
-    sprintf(str, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5]}");
+    sprintf(str, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
     printf("%s (%d characters)\n\n", str, (int)strlen(str));
     stringObject = RKGetValueOfKey(str, "name");
     printf("name = %s\n", stringObject);
@@ -218,6 +218,16 @@ void RKTestParseJSONString(void) {
     printf("b = %s\n", stringObject);
     stringObject = RKGetValueOfKey(str, "w");
     printf("w = %s\n", stringObject);
+
+    int k;
+    float *nums = (float *)malloc(8 * sizeof(float));
+    if (*stringObject == '[') {
+        // Array of numbers
+        k = (int)RKParseCommaDelimitedValues(nums, RKValueTypeFloat, 8, stringObject + 1);
+    } else {
+        k = (int)RKParseCommaDelimitedValues(nums, RKValueTypeFloat, 8, stringObject);
+    }
+    printf("nums = %.2f %.2f %.2f (k = %d)\n", nums[0], nums[1], nums[2], (int)k);
 }
 
 void RKTestFileManager(void) {

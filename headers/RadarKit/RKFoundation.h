@@ -102,7 +102,7 @@ int RKStringFromStream(char *, RKStream);
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
 // Parser, enum, strings
-void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
+size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
 void RKParseQuotedStrings(const char *source, ...);
 void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
