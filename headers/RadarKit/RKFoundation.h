@@ -114,6 +114,7 @@ RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
 bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
 bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
+int RKParseUserProductDescription(RKUserProductDesc *, const char *);
 
 // Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);

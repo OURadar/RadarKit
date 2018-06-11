@@ -1035,11 +1035,10 @@ size_t RKParseNumericArray(void *valueStorage, RKValueType type, const size_t si
     size_t k = 0;
     char *s, *e;
     if ((s = strchr(valueString, '[')) == NULL) {
-        fprintf(stderr, "Input string does not appear to be an array.\n");
-        return 0;
+        return RKParseCommaDelimitedValues(valueStorage, type, size, valueString);
     }
     if ((e = strchr(valueString, ']')) == NULL) {
-        fprintf(stderr, "Expected a close bracket in an array of numbers.\n");
+        fprintf(stderr, "Expected a close bracket for an array that begins with '['.\n");
         return 0;
     }
     char *copy = (char *)malloc(e - s + 1);
@@ -1054,7 +1053,7 @@ size_t RKParseNumericArray(void *valueStorage, RKValueType type, const size_t si
 void RKParseQuotedStrings(const char *source, ...) {
     va_list args;
     va_start(args, source);
-    
+
     char *s = (char *)source, *e, q;
     char *string = va_arg(args, char *);
     size_t length = 0;
@@ -1218,6 +1217,10 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     free(obj);
 
     return found;
+}
+
+int RKParseUserProductDescription(RKUserProductDesc *desc, const char *valueString) {
+    return RKResultSuccess;
 }
 
 #pragma mark - Simple Engine Free

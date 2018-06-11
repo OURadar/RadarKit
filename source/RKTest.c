@@ -210,7 +210,8 @@ void RKTestParseJSONString(void) {
     
     int k;
     size_t s;
-    float *nums = (float *)malloc(8 * sizeof(float));
+    const int N = 8;
+    float *nums = (float *)malloc(N * sizeof(float));
     sprintf(str, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
     printf("%s (%d characters)\n\n", str, (int)strlen(str));
 
@@ -221,7 +222,7 @@ void RKTestParseJSONString(void) {
 
     stringObject = RKGetValueOfKey(str, "b");
     printf("b = %s -->", stringObject);
-    s = RKParseCommaDelimitedValues(nums, RKValueTypeFloat, 8, stringObject);
+    s = RKParseNumericArray(nums, RKValueTypeFloat, N, stringObject);
     for (k = 0; k < s; k++) {
         printf(" %.2f", nums[k]);
     }
@@ -229,7 +230,7 @@ void RKTestParseJSONString(void) {
 
     stringObject = RKGetValueOfKey(str, "w");
     printf("w = %s --> ", stringObject);
-    s = RKParseNumericArray(nums, RKValueTypeFloat, 8, stringObject);
+    s = RKParseNumericArray(nums, RKValueTypeFloat, N, stringObject);
     for (k = 0; k < s; k++) {
         printf(" %.2f", nums[k]);
     }

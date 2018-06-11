@@ -192,10 +192,15 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 'u':
                     // Turn this user into an active node with user product return
-                    RKParseQuotedStrings(commandString + 1, userProductDescription.name, NULL);
+                    //RKParseQuotedStrings(commandString + 1, userProductDescription.name, NULL);
+
                     // Scan name,
-                    sprintf(string, "{'name':'U', 'pieceCount': 1, 'b':-32, 'w':[0.5]}");
+                    sprintf(string, "{'Name':'U', 'pieceCount': 1, 'b':-32, 'w':[0.5]}");
+
+                    // Parse the product description
+
                     RKLog("%s Registering user product '%s' ...", engine->name, userProductDescription.name);
+
                     user->userProductId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     break;
 
