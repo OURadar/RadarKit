@@ -284,6 +284,13 @@ void *RKOperatorRoutine(void *in) {
         }
     } // while () ...
 
+    // If the state was changed deliberately by RKOperatorHangUp()
+    if (O->state == RKOperatorStateClosing) {
+        if (M->t != NULL) {
+            M->t(O);
+        }
+    }
+
     // Set the state if all the 'break' conditions signals the RKOperatorCommandRoutine to quit as well.
     O->state = RKOperatorStateClosing;
 
@@ -532,9 +539,7 @@ void RKServerSetSharedResource(RKServer *M, void *resource) {
     M->userResource = resource;
 }
 
-#pragma mark -
-#pragma mark Server actions
-
+#pragma mark - Server actions
 
 void RKServerStart(RKServer *M) {
     M->state = RKServerStateOpening;
@@ -558,14 +563,156 @@ void RKServerWait(RKServer *M) {
 
 
 void RKServerStop(RKServer *M) {
+    pthread_mutex_lock(&M->lock);
     if (M->state == RKServerStateActive) {
         M->state = RKServerStateClosing;
     }
+    pthread_mutex_unlock(&M->lock);
 }
 
-#pragma mark -
-#pragma mark Miscellaneous functions
+#pragma mark - Miscellaneous functions
 
+ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format) {
+    int k;
+    fd_set rfd;
+    fd_set efd;
+    ssize_t r = -1;
+    int readCount;
+    bool readOkay;
+
+    FD_ZERO(&rfd);
+    FD_ZERO(&efd);
+    FD_SET(O->sid, &rfd);
+    FD_SET(O->sid, &efd);
+
+    RKNetDelimiter *delimiter = &O->delimRx;
+    
+    RKServer        *M = O->M;
+
+    const int blockLength = 4;
+    
+    switch (format) {
+
+        case RKNetworkMessageFormatHeaderDefinedSize:
+            //RKNetworkread
+            k = 0;
+            readCount = 0;
+            while (readCount++ < O->timeoutSeconds * 100) {
+                if ((r = read(O->sid, delimiter + k, sizeof(RKNetDelimiter) - k)) > 0) {
+                    if (r) {
+                        k += r;
+                        if (k == sizeof(RKNetDelimiter)) {
+                            break;
+                        } else if (k > sizeof(RKNetDelimiter)) {
+                            RKLog("%s %s Error. Should not read larger than sizeof(RKNetDelimiter) = %zu\n", M->name, O->name, sizeof(RKNetDelimiter));
+                            break;
+                        }
+                    } else {
+                        usleep(10000);
+                    }
+                } else if (errno != EAGAIN) {
+                    RKLog("%s %s Error. RKMessageFormatFixedHeaderVariableBlock:1  r = %d  k = %d  errno = %d (%s)\n",
+                              M->name, O->name, r, k, errno, RKErrnoString(errno));
+                    break;
+                } else {
+                    usleep(10000);
+                }
+            }
+            if (k != sizeof(RKNetDelimiter) || readCount > O->timeoutSeconds * 100) {
+                if (errno != ECONNREFUSED) {
+                    RKLog("%s %s Error. Incomplete read().   errno = %d (%s)\n", M->name, O->name, errno, RKErrnoString(errno));
+                }
+                break;
+            }
+            //RKLog("Warning. delimiter -> %d %d %d %d\n", delimiter->type, delimiter->subtype, delimiter->size, delimiter->decodedSize);
+            // If the delimiter specifies 0 payload, it could just be a beacon
+            if (delimiter->size == 0) {
+                if (M->verbose > 1) {
+                    RKLog("%s netDelimiter.size = 0\n", M->name);
+                }
+                readOkay = true;
+                break;
+            } else if (delimiter->size > RKMaximumPacketSize) {
+                RKLog("%s Error. Payload size = %s (type %d) is more than what I can handle.\n",
+                      M->name, RKIntegerToCommaStyleString(delimiter->size), delimiter->type);
+                readOkay = false;
+                break;
+            }
+            // Now the actual payload
+            k = 0;
+            readCount = 0;
+            while (readCount++ < M->timeoutSeconds * 100) {
+                if ((r = (int)read(O->sid, buffer + k, delimiter->size - k)) > 0) {
+                    k += r;
+                    if (k >= delimiter->size) {
+                        break;
+                    } else {
+                        usleep(10000);
+                    }
+                } else if (errno != EAGAIN) {
+                    if (M->verbose > 1) {
+                        RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
+                              O->name, r, k, errno, RKErrnoString(errno), readCount);
+                    }
+                    readCount = O->timeoutSeconds * 10000;
+                    break;
+                } else {
+                    usleep(10000);
+                }
+                if (M->verbose > 1) {
+                    RKLog("... errno = %d ...\n", errno);
+                }
+            }
+            if (readCount >= O->timeoutSeconds * 100) {
+                if (M->verbose > 1) {
+                    RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", O->name, readCount, errno);
+                }
+                break;
+            }
+            readOkay = true;
+            break;
+            
+        case RKNetworkMessageFormatConstantSize:
+            k = 0;
+            readCount = 0;
+            while (readCount++ < M->timeoutSeconds * 100) {
+                if ((r = (int)read(O->sid, buffer + k, blockLength - k)) > 0) {
+                    k += r;
+                    if (k >= blockLength) {
+                        break;
+                    } else {
+                        usleep(10000);
+                    }
+                } else if (errno != EAGAIN) {
+                    if (M->verbose > 1) {
+                        RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
+                              O->name, r, k, errno, RKErrnoString(errno), readCount);
+                    }
+                    readCount = O->timeoutSeconds * 10000;
+                    break;
+                } else {
+                    usleep(10000);
+                }
+                if (M->verbose > 1) {
+                    RKLog("... errno = %d ...\n", errno);
+                }
+            }
+            if (readCount >= O->timeoutSeconds * 100) {
+                if (M->verbose > 1) {
+                    RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", O->name, readCount, errno);
+                }
+                break;
+            }
+            readOkay = true;
+            break;
+            
+        case RKNetworkMessageFormatNewLine:
+        default:
+            // Nothing yet
+            break;
+    }
+    return (ssize_t)r;
+}
 
 // In counts of 10ms, should be plenty, in-transit buffer should be able to hold it
 #define RKSocketTimeCountOf10ms  10

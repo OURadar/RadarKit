@@ -40,6 +40,8 @@ typedef uint32_t RKValueType;
 enum RKValueType {
     RKValueTypeInt32,
     RKValueTypeUInt32,
+    RKValueTypeInt64,
+    RKValueTypeUInt64,
     RKValueTypeFloat,
     RKValueTypeDouble,
     RKValueTypeString
@@ -102,7 +104,8 @@ int RKStringFromStream(char *, RKStream);
 int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
 
 // Parser, enum, strings
-void RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
+size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
+size_t RKParseNumericArray(void *, RKValueType, const size_t, const char *);
 void RKParseQuotedStrings(const char *source, ...);
 void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
 RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
@@ -111,6 +114,7 @@ RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
 bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
 bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
+int RKParseUserProductDescription(RKUserProductDesc *, const char *);
 
 // Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);

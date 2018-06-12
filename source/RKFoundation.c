@@ -235,6 +235,7 @@ void RKShowTypeSizes(void) {
     printf("sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
     printf("sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
     printf("sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
+    printf("sizeof(RKUserProductDesc) = %d\n", (int)sizeof(RKUserProductDesc));
     
     printf("\n");
     
@@ -977,56 +978,82 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
 
 #pragma mark - JSON Stuff
 
-
-void RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
-    float *fv;
-    double *fd;
-    int32_t *i32v;
-    uint32_t *u32v;
+size_t RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
+    float *fv = (float *)valueStorage;
+    double *dv = (double *)valueStorage;
+    int32_t *i32v = (int32_t *)valueStorage;
+    uint32_t *u32v = (uint32_t *)valueStorage;
+    int64_t *i64v = (int64_t *)valueStorage;
+    uint64_t *u64v = (uint64_t *)valueStorage;
     char *copy = (char *)malloc(strlen(valueString));
     strcpy(copy, valueString);
     char *c = copy;
-    char *e = strchr(copy, ',');
-    if (e) {
+    char *e;
+    if ((e = strchr(copy, ',')) != NULL) {
         *e = '\0';
     }
     size_t s = 0;
-    while (c != NULL && s < size) {
+    while (*c != '\0' && s < size) {
         switch (type) {
             case RKValueTypeFloat:
-                fv = (float *)valueStorage;
-                fv[s] = atof(c);
+                fv[s] = (RKFloat)atof(c);
                 break;
             case RKValueTypeDouble:
-                fd = (double *)valueStorage;
-                fd[s] = atof(c);
+                dv[s] = atof(c);
                 break;
             case RKValueTypeInt32:
-                i32v = (int32_t *)valueStorage;
                 i32v[s] = (int32_t)atoi(c);
                 break;
             case RKValueTypeUInt32:
-                u32v = (uint32_t *)valueStorage;
                 u32v[s] = (uint32_t)atoi(c);
+                break;
+            case RKValueTypeInt64:
+                i64v[s] = (int64_t)atol(c);
+                break;
+            case RKValueTypeUInt64:
+                u64v[s] = (uint64_t)atol(c);
                 break;
             default:
                 break;
         }
+        //printf("s = %d   c = %s @ %16p / %16p\n", (int)s, c == NULL ? "(NULL)" : c, c, e);
         s++;
         if (e) {
             c = e + 1;
             if ((e = strchr(c, ',')) != NULL) {
                 *e = '\0';
             }
+        } else {
+            break;
         }
     }
     free(copy);
+    return s;
+}
+
+size_t RKParseNumericArray(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
+    size_t k = 0;
+    char *s, *e;
+    if ((s = strchr(valueString, '[')) == NULL) {
+        return RKParseCommaDelimitedValues(valueStorage, type, size, valueString);
+    }
+    if ((e = strchr(valueString, ']')) == NULL) {
+        fprintf(stderr, "Expected a close bracket for an array that begins with '['.\n");
+        return 0;
+    }
+    char *copy = (char *)malloc(e - s + 1);
+    memcpy(copy, s + 1, e - s - 1);
+    *(copy + (e - s - 1)) = '\0';
+    //printf("copy = %s\n", copy);
+    k = RKParseCommaDelimitedValues(valueStorage, type, size, copy);
+    free(copy);
+    return k;
 }
 
 void RKParseQuotedStrings(const char *source, ...) {
     va_list args;
     va_start(args, source);
-    
+
     char *s = (char *)source, *e, q;
     char *string = va_arg(args, char *);
     size_t length = 0;
@@ -1145,7 +1172,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *ks;
     char *sks;
     if (*string != '{') {
-        fprintf(stderr, "RKGoThroughKeywords() - Expected '{'.\n");
+        fprintf(stderr, "RKFindCondition() - Expected '{'.\n");
     }
 
     strcpy(str, string);
@@ -1190,6 +1217,69 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     free(obj);
 
     return found;
+}
+
+int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputString) {
+    size_t k;
+    char *keyString;
+
+    memset(desc, 0, sizeof(RKUserProductDesc));
+
+    // Product name is mandatory
+    keyString = RKGetValueOfKey(inputString, "name");
+    if (keyString) {
+        strncpy(desc->name, keyString, RKNameLength - 1);
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    // Product symbol is mandatory
+    keyString = RKGetValueOfKey(inputString, "symbol");
+    if (keyString) {
+        strncpy(desc->symbol, keyString, 7);
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    // Piece count can be assumed to be 1 if not supplied
+    keyString = RKGetValueOfKey(inputString, "PieceCount");
+    if (keyString) {
+        desc->pieceCount = atoi(keyString);
+        if (desc->pieceCount > 8) {
+            desc->pieceCount = 8;
+            fprintf(stderr, "User product piece count truncated to 8.\n");
+        }
+    } else {
+        desc->pieceCount = 1;
+    }
+    // The bias term, b, for 8-bit conversion must be supplied
+    keyString = RKGetValueOfKey(inputString, "b");
+    if (keyString) {
+        k = RKParseNumericArray(desc->b, RKValueTypeFloat, desc->pieceCount, keyString);
+        if (k != desc->pieceCount) {
+            fprintf(stderr, "Parsed %zu values but %u is expected (desc->b).\n", k, desc->pieceCount);
+        }
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    // The weight term, w, for 8-bit conversion must be supplied
+    keyString = RKGetValueOfKey(inputString, "w");
+    if (keyString) {
+        k = RKParseNumericArray(desc->w, RKValueTypeFloat, desc->pieceCount, keyString);
+        if (k != desc->pieceCount) {
+            fprintf(stderr, "Parsed %zu values but %u is expected (desc->w).\n", k, desc->pieceCount);
+        }
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    // Optional values
+    keyString = RKGetValueOfKey(inputString, "minimumValue");
+    if (keyString) {
+        desc->mininimumValue = (RKFloat)atof(keyString);
+    }
+    keyString = RKGetValueOfKey(inputString, "maximumValue");
+    if (keyString) {
+        desc->mininimumValue = (RKFloat)atof(keyString);
+    }
+    return RKResultSuccess;
 }
 
 #pragma mark - Simple Engine Free

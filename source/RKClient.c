@@ -16,8 +16,7 @@ void *theClient(void *in);
 
 // Implementations
 
-#pragma mark -
-#pragma mark Helper Functions
+#pragma mark - Helper Functions
 
 void *theClient(void *in) {
     RKClient *C = (RKClient *)in;
@@ -226,20 +225,20 @@ void *theClient(void *in) {
 
                         k = 0;
                         readCount = 0;
-                        while (readCount++ < C->timeoutSeconds * 1000) {
+                        while (readCount++ < C->timeoutSeconds * 100) {
                             if ((r = (int)read(C->sd, buf + k, C->blockLength - k)) > 0) {
                                 k += r;
                                 if (k >= C->blockLength) {
                                     break;
                                 } else {
-                                    usleep(1000);
+                                    usleep(10000);
                                 }
                             } else if (errno != EAGAIN) {
                                 if (C->verbose > 1) {
                                     RKLog("%s Error. RKMessageFormatFixedBlock   r=%d  k=%d  errno=%d (%s)  %d\n",
                                           C->name, r, k, errno, RKErrnoString(errno), readCount);
                                 }
-                                readCount = C->timeoutSeconds * 1000;
+                                readCount = C->timeoutSeconds * 100;
                                 pthread_mutex_lock(&C->lock);
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;
@@ -253,7 +252,7 @@ void *theClient(void *in) {
                                 RKLog("... errno = %d ...\n", errno);
                             }
                         }
-                        if (readCount >= C->timeoutSeconds * 1000) {
+                        if (readCount >= C->timeoutSeconds * 100) {
                             if (C->verbose > 1) {
                                 RKLog("%s Not a proper frame.  timeoutCount = %d  errno = %d\n", C->name, readCount, errno);
                             }
@@ -285,7 +284,7 @@ void *theClient(void *in) {
                                     RKLog("%s Error. RKMessageFormatFixedHeaderVariableBlock:1  r = %d  k = %d  errno = %d (%s)\n",
                                           C->name, r, k, errno, RKErrnoString(errno));
                                 }
-                                readCount = C->timeoutSeconds * 1000;
+                                readCount = C->timeoutSeconds * 10000;
                                 pthread_mutex_lock(&C->lock);
                                 if (C->state < RKClientStateDisconnecting) {
                                     C->state = RKClientStateReconnecting;
@@ -469,11 +468,9 @@ void *theClient(void *in) {
     return NULL;
 }
 
-#pragma mark -
-#pragma mark Threads
+#pragma mark - Threads
 
-#pragma mark -
-#pragma mark Life Cycle
+#pragma mark - Life Cycle
 
 RKClient *RKClientInitWithDesc(RKClientDesc desc) {
     if (desc.format == RKNetworkMessageFormatConstantSize && desc.blockLength == 0) {
@@ -551,8 +548,7 @@ void RKClientSetCloseHandler(RKClient *C, int (*routine)(RKClient *)) {
     C->exit = routine;
 }
 
-#pragma mark -
-#pragma mark Interactions
+#pragma mark - Interactions
 
 void RKClientStart(RKClient *C, const bool waitForConnection) {
     pthread_mutex_init(&C->lock, NULL);

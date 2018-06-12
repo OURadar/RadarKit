@@ -69,7 +69,7 @@
 #define RKMaximumPulsesPerRay                2000                              //
 #define RKMaximumProductCount                10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumRaysPerSweep                1500                              // 1440 is 0.25-deg. This should be plenty
-#define RKMaximumPacketSize                  1024 * 1024                       //
+#define RKMaximumPacketSize                  16 * 1024 * 1024                  // Maximum network packet size
 #define RKNetworkTimeoutSeconds              20                                //
 #define RKNetworkReconnectSeconds            3                                 //
 #define RKLagRedThreshold                    0.5
@@ -82,7 +82,7 @@
 #define RKProcessorStatusRingCoreCount       16
 #define RKProcessorStatusRayCoreCount        16
 #define RKHostMonitorPingInterval            5
-#define RKMaximumUserProductCount            8
+#define RKMaximumUserProductCount            64
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -141,7 +141,7 @@ typedef void *        RKPedestal;
 typedef void *        RKHealthRelay;
 typedef void *        RKMasterController;
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
-typedef int64_t       RKUserProductId;                                         // Product identifier
+typedef uint32_t      RKUserProductId;                                         // Product identifier
 typedef const float   RKConst;
 
 #pragma pack(push, 1)
@@ -228,6 +228,7 @@ N(RKResultIncompletePedestal) \
 N(RKResultIncompleteHealthRelay) \
 N(RKResultIncompleteControl) \
 N(RKResultIncompleteWaveformCalibration) \
+N(RKResultIncompleteProductDescription) \
 N(RKResultErrorCreatingOperatorRoutine) \
 N(RKResultErrorCreatingOperatorCommandRoutine) \
 N(RKResultErrorCreatingClientRoutine) \
@@ -274,6 +275,7 @@ N(RKResultFailedToStartHostWatcher) \
 N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
 N(RKResultFailedToAddHost) \
+N(RKResultFailedToFindProductId) \
 N(RKResultClientNotConnected) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)
@@ -469,6 +471,14 @@ enum RKProductIndex {
     RKProductIndexZv,
     RKProductIndexVv,
     RKProductIndexWv
+};
+
+typedef uint32_t RKProductType;
+enum RKProductType {
+    RKProductTypeUnknown             = 0,                                      // Unspecified
+    RKProductTypeCellMatch           = (1),                                    //
+    RKProductTypePPI                 = (1 << 1),                               //
+    RKProductTypeCAPPI               = (1 << 2)                                //
 };
 
 typedef uint32_t RKConfigKey;
@@ -875,7 +885,7 @@ typedef struct rk_ray_header {
     uint16_t         configIndex;                                              // Operating configuration index
     uint16_t         configSubIndex;                                           // Operating configuration sub-index
     uint16_t         gateCount;                                                //
-    uint16_t         reserved2;                                                //
+    uint16_t         pulseCount;                                               //
     float            gateSizeMeters;                                           // Size of range gates
     float            sweepElevation;                                           // Sweep elevation for PPI
     float            sweepAzimuth;                                             // Sweep azimuth for RHI
@@ -1056,16 +1066,24 @@ typedef struct rk_file_monitor {                                               /
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
-        float            w;                                                    // Product to color index weight
-        float            b;                                                    // Product to color index bias
+        char             symbol[8];                                            // Product symbol
+        RKProductType    type;                                                 // RKProductType
+        uint32_t         pieceCount;                                           // Piece-wise function count
+        RKFloat          w[16];                                                // Product to color index weight (piece-wise function)
+        RKFloat          b[16];                                                // Product to color index bias (piece-wise function)
+        RKFloat          mininimumValue;                                       // Minimum value
+        RKFloat          maximumValue;                                         // Maximum value
     };
     RKByte bytes[1024];
 } RKUserProductDesc;
 
 typedef struct rk_user_product {                                               // A description of user product
-    RKUserProductId      i;                                                    // Product identifier
+    uint64_t             i;                                                    // Product counter to be synchronized with RKConfig->i
+    RKUserProductId      pid;                                                  // Product identifier from RKUserProductRegister()
     RKUserProductDesc    desc;                                                 // Description
     RKUserProductStatus  flag;                                                 // Various state
+    uint32_t             capacity;                                             // Number of RKFloat elements in *array
+    RKFloat              *array;                                               // Flattened array of user product
 } RKUserProduct;
 
 typedef struct rk_waveform {

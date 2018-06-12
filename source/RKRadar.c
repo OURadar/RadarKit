@@ -937,7 +937,7 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
 
 int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
     int k;
-    for (k = 'a'; k < 's'; k++) {
+    for (k = 'a'; k < 'z'; k++) {
         switch (k) {
             case 'a':
                 RKPositionEngineSetVerbose(myRadar->positionEngine, array[k]);
@@ -1942,6 +1942,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
             }
         }
         // Process the command
+        // Commands 'a', 'c', 'dr', 's', 'u', 'x', 'z' will never arrive here
         switch (commandString[0]) {
             case 'd':
                 // DSP related

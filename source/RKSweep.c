@@ -29,22 +29,11 @@ static int put_global_text_att(const int ncid, const char *att, const char *text
     return nc_put_att_text(ncid, NC_GLOBAL, att, strlen(text), text);
 }
 
-static void releaseRays(RKSweepEngine *engine, const uint8_t anchorIndex) {
-    MAKE_FUNCTION_NAME(name)
-
-    int i;
-    RKRay *ray;
-
-    for (i = 0; i < engine->rayAnchors[anchorIndex].count; i++) {
-        ray = engine->rayAnchors[anchorIndex].rays[i];
-        ray->header.s = RKRayStatusVacant;
-    }
-}
-
 static void *rayReleaser(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
-    int s;
+    int i, s;
+    RKRay *ray;
 
     // Grab the anchor reference as soon as possible
     const uint8_t anchorIndex = engine->rayAnchorsIndex;
@@ -52,13 +41,20 @@ static void *rayReleaser(void *in) {
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
-    // Wait for a second
+    // Wait for a few seconds
     s = 0;
     do {
         usleep(100000);
     } while (++s < 50 && engine->state & RKEngineStateActive);
 
-    releaseRays(engine, anchorIndex);
+    if (engine->verbose > 1) {
+        RKLog("%s rayReleaser()  anchorIndex = %d\n", engine->name, anchorIndex);
+    }
+    // Set them free
+    for (i = 0; i < engine->rayAnchors[anchorIndex].count; i++) {
+        ray = engine->rayAnchors[anchorIndex].rays[i];
+        ray->header.s = RKRayStatusVacant;
+    }
 
     return NULL;
 }
@@ -76,6 +72,9 @@ static void *sweepWriter(void *in) {
 
     RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
     if (sweep == NULL) {
+        if (engine->verbose > 1) {
+            RKLog("%s Empty sweep   anchorIndex = %d\n", anchorIndex);
+        }
         return NULL;
     }
     if (engine->verbose) {
@@ -101,13 +100,18 @@ static void *sweepWriter(void *in) {
     }
 
     // Each registered product will report a product that has the same sweep id
+    s = 0;
     bool allReported = true;
     for (i = 0; i < RKMaximumUserProductCount; i++) {
-        if (!(engine->userProducts[i].flag & RKUserProductStatusActive)) {
+        if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
             continue;
         }
+        if (engine->verbose > 1) {
+            RKLog("%s userProduct 0x%04x @ %zu != %zu\n", engine->name, engine->userProducts[i].pid, engine->userProducts[i].i, sweep->header.config.i);
+        }
+        pthread_mutex_lock(&engine->userProductMutex);
         engine->userProducts[i].flag |= RKUserProductStatusSleep0;
-        s = 0;
+        pthread_mutex_unlock(&engine->userProductMutex);
         while (engine->userProducts[i].i != sweep->header.config.i &&
                engine->userProductTimeoutSeconds * 100 > s &&
                engine->state & RKEngineStateActive) {
@@ -116,11 +120,11 @@ static void *sweepWriter(void *in) {
                 RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
             };
         }
+        pthread_mutex_lock(&engine->userProductMutex);
         engine->userProducts[i].flag ^= RKUserProductStatusSleep0;
+        pthread_mutex_unlock(&engine->userProductMutex);
         if (engine->userProducts[i].i != sweep->header.config.i) {
-            engine->userProducts[i].i = sweep->header.config.i;
             allReported = false;
-            break;
         }
     }
     if (!(engine->state & RKEngineStateActive)) {
@@ -128,8 +132,11 @@ static void *sweepWriter(void *in) {
     }
     
     j = 0;
-    for (i = 0; i < engine->userProductIdCount; i++) {
-        j += sprintf(engine->summary + j, " %d:%lu/0x%x", i, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
+    for (i = 0; i < RKMaximumUserProductCount; i++) {
+        if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
+            continue;
+        }
+        j += sprintf(engine->summary + j, " %d:0x%04x/%lu/0x%x", i, engine->userProducts[i].pid, (unsigned long)engine->userProducts[i].i, engine->userProducts[i].flag);
     }
     RKLog("%s Concluding sweep.   allReported = %s   %s",
           engine->name, allReported ? "true" : "false", engine->summary);
@@ -179,6 +186,7 @@ static void *sweepWriter(void *in) {
     uint32_t productList = sweep->header.productList;
     int productCount = __builtin_popcount(productList & RKProductListProductZVWDPRKS);
 
+    // Base products
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
         RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &productList);
@@ -402,6 +410,12 @@ static void *sweepWriter(void *in) {
         RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
     } // for (p = 0; p < productCount; p++) ...
 
+    // User products
+
+
+    // We are done with the sweep
+    RKSweepFree(sweep);
+
     // Show a summary of all the files created
     if (engine->verbose && summarySize > 0) {
         RKLog("%s %s", engine->name, engine->summary);
@@ -436,8 +450,6 @@ static void *sweepWriter(void *in) {
 
     engine->state ^= RKEngineStateWritingFile;
 
-    releaseRays(engine, anchorIndex);
-
     return NULL;
 }
 
@@ -447,10 +459,10 @@ static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
     int j, n, s;
-    
-    // Start index
-    uint32_t is = 0;
-    uint64_t tic = 0;
+
+    uint32_t is = 0;   // Start index
+    uint64_t tic = 0;  // Local copy of engine tic
+
     pthread_t tidSweepWriter = (pthread_t)0;
     pthread_t tidRayReleaser = (pthread_t)0;
 
@@ -520,9 +532,7 @@ static void *rayGatherer(void *in) {
 
         // A sweep is complete
         if (ray->header.marker & RKMarkerSweepEnd) {
-            if (engine->verbose > 1) {
-                RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d\n", engine->name, is, j);
-            }
+            // Gather the rays
             n = 0;
             do {
                 ray = RKGetRay(engine->rayBuffer, is);
@@ -535,23 +545,38 @@ static void *rayGatherer(void *in) {
             rays[n++] = ray;
             engine->rayAnchors[engine->rayAnchorsIndex].count = n;
             if (engine->verbose > 1) {
-                RKLog("%s Info. RKMarkerSweepEnd   n = %d\n", engine->name, n);
+                RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d   n = %d\n", engine->name, is, j, n);
             }
 
+            // If the sweepWriter is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
             if (tidSweepWriter) {
                 pthread_join(tidSweepWriter, NULL);
             }
-            // Keep a copy of tic for synchronization
             tic = engine->tic;
             if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
-            // Wait until engine->rayAnchorsIndex is grabbed.
             do {
                 usleep(50000);
             } while (tic == engine->tic && engine->state & RKEngineStateActive);
+
+            // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
+            if (tidRayReleaser) {
+                pthread_join(tidRayReleaser, NULL);
+            }
+            tic = engine->tic;
+            if (pthread_create(&tidRayReleaser, NULL, rayReleaser, engine)) {
+                RKLog("%s Error. Unable to launch a ray releaser.\n", engine->name);
+            }
+            do {
+                usleep(50000);
+            } while (tic == engine->tic && engine->state & RKEngineStateActive);
+
             // Ready for next collection while the sweepWriter is busy
             engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+            if (engine->verbose > 1) {
+                RKLog("%s RKMarkerSweepEnd   rayAnchorsIndex -> %d.\n", engine->name, engine->rayAnchorsIndex);
+            }
             rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
@@ -559,6 +584,7 @@ static void *rayGatherer(void *in) {
                 RKLog("%s RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
             }
             if (is != j) {
+                // Gather the rays to release
                 n = 0;
                 do {
                     ray = RKGetRay(engine->rayBuffer, is);
@@ -567,20 +593,24 @@ static void *rayGatherer(void *in) {
                     is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
                 } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
                 engine->rayAnchors[engine->rayAnchorsIndex].count = n;
+
+                // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
                 if (tidRayReleaser) {
                     pthread_join(tidRayReleaser, NULL);
                 }
-                // Keep a copy of tic for synchronization
                 tic = engine->tic;
                 if (pthread_create(&tidRayReleaser, NULL, rayReleaser, engine)) {
                     RKLog("%s Error. Unable to launch a ray releaser.\n", engine->name);
                 }
-                // Wait until engine->rayAnchorsIndex is grabbed.
                 do {
                     usleep(50000);
                 } while (tic == engine->tic && engine->state & RKEngineStateActive);
+
                 // Ready for next collection while the sweepWriter is busy
                 engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+                if (engine->verbose > 1) {
+                    RKLog("%s RKMarkerSweepBegin   rayAnchorsIndex -> %d.\n", engine->name, engine->rayAnchorsIndex);
+                }
                 rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
             }
             is = j;
@@ -612,6 +642,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->userProductTimeoutSeconds = 3;
+    pthread_mutex_init(&engine->userProductMutex, NULL);
     return engine;
 }
 
@@ -623,6 +654,7 @@ void RKSweepEngineFree(RKSweepEngine *engine) {
         free(engine->array1D);
         free(engine->array2D);
     }
+    pthread_mutex_destroy(&engine->userProductMutex);
     free(engine);
 }
 
@@ -708,29 +740,67 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProductDesc desc) {
     int i = 0;
-    RKUserProductId productId = 1000 + engine->userProductIdCount++;
-    while (engine->userProducts[i].flag != RKUserProductStatusVacant && i < RKMaximumUserProductCount) {
+    RKUserProductId productId = 0x0520;
+    while (engine->userProducts[i].pid != 0 && i < RKMaximumUserProductCount) {
+        productId++;
         i++;
     }
     if (i == RKMaximumUserProductCount) {
         RKLog("%s Error. Unable to add anymore user products.\n", engine->name);
         return 0;
     }
-    engine->userProducts[i].i = productId;
-    engine->userProducts[i].flag = RKUserProductStatusActive;
+    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
+    pthread_mutex_lock(&engine->userProductMutex);
+    engine->userProducts[i].i = 0;
+    engine->userProducts[i].pid = productId;
     engine->userProducts[i].desc = desc;
+    engine->userProducts[i].flag = RKUserProductStatusActive;
+    engine->userProducts[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
+    engine->userProducts[i].array = (RKFloat *)malloc(engine->userProducts[i].capacity * sizeof(RKFloat));
+    RKLog("%s Product 0x%04x '%s' (%s) registered.\n", engine->name, engine->userProducts[i].pid, engine->userProducts[i].desc.name, engine->userProducts[i].desc.symbol);
+    pthread_mutex_unlock(&engine->userProductMutex);
     return productId;
 }
 
-int RKSweeEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
-    int i;
-    for (i = 0; i < RKMaximumUserProductCount; i++) {
-        if (engine->userProducts[i].i != i) {
-            continue;
+int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId productId) {
+    int i = 0;
+    while (i < RKMaximumUserProductCount) {
+        if (engine->userProducts[i].pid == productId) {
+            break;
         }
-        engine->userProducts[i].flag = RKUserProductStatusVacant;
-        memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
+        i++;
     }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to locate productId = 0x%04x.\n", engine->name, productId);
+        return RKResultFailedToFindProductId;
+    }
+    if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
+        RKLog("%s Warning. The productId = 0x%04x is vacant.", engine->name, productId);
+    }
+    pthread_mutex_lock(&engine->userProductMutex);
+    engine->userProducts[i].flag = RKUserProductStatusVacant;
+    engine->userProducts[i].capacity = 0;
+    free(engine->userProducts[i].array);
+    RKLog("%s Product 0x%04x '%s' (%s) unregistered.\n", engine->name, engine->userProducts[i].pid, engine->userProducts[i].desc.name, engine->userProducts[i].desc.symbol);
+    memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
+    engine->userProducts[i].pid = 0;
+    pthread_mutex_unlock(&engine->userProductMutex);
+    return RKResultSuccess;
+}
+
+int RKSweepEngineReportProduct(RKSweepEngine *engine, RKFloat *data, RKUserProductId productId) {
+    int i = 0;
+    while (i < RKMaximumUserProductCount) {
+        if (engine->userProducts[i].pid == productId) {
+            break;
+        }
+        i++;
+    }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
+        return RKResultFailedToFindProductId;
+    }
+    // Get the corresponding sweep
     return RKResultSuccess;
 }
 
@@ -745,11 +815,18 @@ void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
 
 RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     MAKE_FUNCTION_NAME(name)
+    int k;
     RKSweep *sweep = NULL;
+
+    if (engine->verbose > 2) {
+        RKLog("%s %s   anchorIndex = %u\n", engine->name, name, anchorIndex);
+    }
 
     uint32_t n = engine->rayAnchors[anchorIndex].count;
     if (n < 2) {
-        RKLog("%s Empty sweep.   n = %d\n", engine->name, n);
+        if (engine->verbose > 1) {
+            RKLog("%s Empty sweep.   n = %d   anchorIndex = %u\n", engine->name, n, anchorIndex);
+        }
         return NULL;
     }
 
@@ -758,21 +835,30 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    uint32_t overallProductList = 0;
 
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
+    // Consolidate some other information and check consistencies
+    for (k = 0; k < n; k++) {
+        overallProductList |= rays[k]->header.productList;
+        if (rays[k]->header.gateCount != S->header.gateCount) {
+            RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
+                  engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
+                  RKIntegerToCommaStyleString(S->header.gateCount));
+        }
+    }
+
     if (engine->verbose > 1) {
-        RKLog("%s C%02d-%02d-%02d   E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x-%02x   (%s x %d, %.1f km)\n",
+        RKLog("%s C%02d-%02d-%02d   M%02x-%02x-%02x   products = 0x%x   (%s x %d, %.1f km)\n",
               engine->name,
               S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
-              config->sweepElevation   ,
-              S->header.startElevation , E->header.endElevation   ,
-              S->header.startAzimuth   , E->header.endAzimuth     ,
-              S->header.marker & 0xFF, T->header.marker & 0xFF, E->header.marker & 0xFF,
+              S->header.marker & 0xFF  , T->header.marker & 0xFF  , E->header.marker & 0xFF,
+              overallProductList,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
-    int k = 0;
+    k = 0;
     if (n > 360) {
         if (S->header.marker & RKMarkerSweepBegin) {
             // 361 beams and start at 0, we discard the extra last beam
@@ -785,6 +871,8 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
         }
     }
     S = rays[k];
+    T = rays[k + 1];
+    E = rays[k + n - 1];
 
     // Allocate the return object
     sweep = (RKSweep *)malloc(sizeof(RKSweep));
@@ -797,10 +885,10 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     // Populate the contents
     sweep->header.rayCount = n;
     sweep->header.gateCount = S->header.gateCount;
-    sweep->header.productList = S->header.productList;
+    sweep->header.productList = overallProductList;
     sweep->header.external = true;
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
-    memcpy(&sweep->header.config, &engine->configBuffer[S->header.configIndex], sizeof(RKConfig));
+    memcpy(&sweep->header.config, config, sizeof(RKConfig));
     memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
 
     return sweep;
