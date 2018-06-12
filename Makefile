@@ -36,7 +36,7 @@ PROGS = rktest simple-emulator
 ifeq ($(UNAME), Darwin)
 # Mac OS X
 CC = clang
-CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
+CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -mmacosx-version-min=10.9
 else
 # Old Debian
 ifeq ($(UNAME_M), i686)
