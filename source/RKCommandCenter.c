@@ -200,7 +200,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Parse the product description
                     RKParseUserProductDescription(&userProductDescription, string);
 
-                    RKLog("%s Registering user product '%s' ...", engine->name, userProductDescription.name);
+                    RKLog("%s Registering user product '%s' (%s) ...", engine->name, userProductDescription.name, userProductDescription.symbol);
 
                     RKUserProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     if (productId) {

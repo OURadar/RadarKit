@@ -82,7 +82,7 @@
 #define RKProcessorStatusRingCoreCount       16
 #define RKProcessorStatusRayCoreCount        16
 #define RKHostMonitorPingInterval            5
-#define RKMaximumUserProductCount            8
+#define RKMaximumUserProductCount            64
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -1066,6 +1066,7 @@ typedef struct rk_file_monitor {                                               /
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
+        char             symbol[8];                                            // Product symbol
         RKProductType    type;                                                 // RKProductType
         uint32_t         pieceCount;                                           // Piece-wise function count
         RKFloat          w[16];                                                // Product to color index weight (piece-wise function)

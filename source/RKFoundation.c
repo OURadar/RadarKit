@@ -1223,10 +1223,19 @@ int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputStri
     size_t k;
     char *keyString;
 
+    memset(desc, 0, sizeof(RKUserProductDesc));
+
     // Product name is mandatory
     keyString = RKGetValueOfKey(inputString, "name");
     if (keyString) {
-        strcpy(desc->name, keyString);
+        strncpy(desc->name, keyString, RKNameLength - 1);
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    // Product symbol is mandatory
+    keyString = RKGetValueOfKey(inputString, "symbol");
+    if (keyString) {
+        strncpy(desc->symbol, keyString, 7);
     } else {
         return RKResultIncompleteProductDescription;
     }
