@@ -734,7 +734,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProductDesc desc) {
     int i = 0;
     RKUserProductId productId = 1000;
-    while (engine->userProducts[i].flag != RKUserProductStatusVacant && i < RKMaximumUserProductCount) {
+    while (engine->userProducts[i].i != 0 && i < RKMaximumUserProductCount) {
         productId++;
         i++;
     }
@@ -744,8 +744,8 @@ RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProduc
     }
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     engine->userProducts[i].i = productId;
-    engine->userProducts[i].flag = RKUserProductStatusActive;
     engine->userProducts[i].desc = desc;
+    engine->userProducts[i].flag = RKUserProductStatusActive;
     engine->userProducts[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
     engine->userProducts[i].array = (RKFloat *)malloc(engine->userProducts[i].capacity * sizeof(RKFloat));
     RKLog("%s Product %d '%s' registered.\n", engine->name, engine->userProducts[i].i, engine->userProducts[i].desc.name);
@@ -772,6 +772,7 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId produc
     free(engine->userProducts[i].array);
     RKLog("%s Product %d '%s' unregistered.\n", engine->name, engine->userProducts[i].i, engine->userProducts[i].desc.name);
     memset(&engine->userProducts[i].desc, 0, sizeof(RKUserProductDesc));
+    engine->userProducts[i].i = 0;
     return RKResultSuccess;
 }
 

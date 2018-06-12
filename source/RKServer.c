@@ -284,6 +284,13 @@ void *RKOperatorRoutine(void *in) {
         }
     } // while () ...
 
+    // If the state was changed deliberately by RKOperatorHangUp()
+    if (O->state == RKOperatorStateClosing) {
+        if (M->t != NULL) {
+            M->t(O);
+        }
+    }
+
     // Set the state if all the 'break' conditions signals the RKOperatorCommandRoutine to quit as well.
     O->state = RKOperatorStateClosing;
 
@@ -663,7 +670,6 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 break;
             }
             readOkay = true;
-
             break;
             
         case RKNetworkMessageFormatConstantSize:

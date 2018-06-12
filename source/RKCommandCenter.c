@@ -120,18 +120,6 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress &= ~RKStreamStatusMask;
                     break;
                     
-                case 'i':
-                    O->delimTx.type = RKNetworkPacketTypeRadarDescription;
-                    O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
-                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->desc, sizeof(RKRadarDesc), NULL);
-                    break;
-                
-                case 'q':
-                    sprintf(string, "Bye." RKEOL);
-                    RKOperatorSendCommandResponse(O, string);
-                    RKOperatorHangUp(O);
-                    break;
-
                 case 'd':
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
@@ -175,6 +163,18 @@ int socketCommandHandler(RKOperator *O) {
                     RKOperatorSendCommandResponse(O, string);
                     break;
 
+                case 'i':
+                    O->delimTx.type = RKNetworkPacketTypeRadarDescription;
+                    O->delimTx.size = (uint32_t)sizeof(RKRadarDesc);
+                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &user->radar->desc, sizeof(RKRadarDesc), NULL);
+                    break;
+
+                case 'q':
+                    sprintf(string, "Bye." RKEOL);
+                    RKOperatorSendCommandResponse(O, string);
+                    RKOperatorHangUp(O);
+                    break;
+
                 case 's':
                     // Stream varrious data
                     stream = RKStreamFromString(commandString + 1);
@@ -198,10 +198,14 @@ int socketCommandHandler(RKOperator *O) {
                     sprintf(string, "{'Name':'U', 'pieceCount': 1, 'b':-32, 'w':[0.5]}");
 
                     // Parse the product description
+                    RKParseUserProductDescription(&userProductDescription, string);
 
                     RKLog("%s Registering user product '%s' ...", engine->name, userProductDescription.name);
 
-                    user->userProductId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
+                    RKUserProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
+                    if (productId) {
+                        user->userProductIds[user->userProductCount++] = productId;
+                    }
                     break;
 
                 case 'x':
@@ -1162,18 +1166,22 @@ int socketInitialHandler(RKOperator *O) {
 }
 
 int socketTerminateHandler(RKOperator *O) {
+    int k;
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
+    for (k = 0; k < user->userProductCount; k++) {
+        if (user->userProductIds[k]) {
+            RKLog(">%s %s Unregistering %d ...\n", engine->name, O->name, user->userProductIds[k]);
+            RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->userProductIds[k]);
+            user->userProductIds[k] = 0;
+        }
+    }
     pthread_mutex_destroy(&user->mutex);
     RKLog(">%s %s Stream reset.\n", engine->name, O->name);
     user->streams = RKStreamNull;
     user->access = RKStreamNull;
     user->radar = NULL;
     consolidateStreams(engine);
-    if (user->userProductId != 0) {
-        RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->userProductId);
-        user->userProductId = 0;
-    }
     return RKResultSuccess;
 }
 

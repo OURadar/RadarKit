@@ -1219,51 +1219,56 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     return found;
 }
 
-int RKParseUserProductDescription(RKUserProductDesc *desc, const char *valueString) {
+int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputString) {
     size_t k;
-    char *objectString;
+    char *keyString;
 
-    objectString = RKGetValueOfKey(valueString, "name");
-    if (objectString) {
-        strcpy(desc->name, objectString);
+    // Product name is mandatory
+    keyString = RKGetValueOfKey(inputString, "name");
+    if (keyString) {
+        strcpy(desc->name, keyString);
     } else {
         return RKResultIncompleteProductDescription;
     }
-    objectString = RKGetValueOfKey(objectString, "PieceCount");
-    if (objectString) {
-        desc->pieceCount = atoi(objectString);
+    // Piece count can be assumed to be 1 if not supplied
+    keyString = RKGetValueOfKey(inputString, "PieceCount");
+    if (keyString) {
+        desc->pieceCount = atoi(keyString);
         if (desc->pieceCount > 8) {
             desc->pieceCount = 8;
             fprintf(stderr, "User product piece count truncated to 8.\n");
         }
     } else {
-        return RKResultIncompleteProductDescription;
+        desc->pieceCount = 1;
     }
-    objectString = RKGetValueOfKey(objectString, "b");
-    if (objectString) {
-        k = RKParseNumericArray(desc->b, RKValueTypeFloat, desc->pieceCount, objectString);
+    // The bias term, b, for 8-bit conversion must be supplied
+    keyString = RKGetValueOfKey(inputString, "b");
+    if (keyString) {
+        k = RKParseNumericArray(desc->b, RKValueTypeFloat, desc->pieceCount, keyString);
         if (k != desc->pieceCount) {
-            fprintf(stderr, "Parsed %zu values but %u is expected.\n", k, desc->pieceCount);
+            fprintf(stderr, "Parsed %zu values but %u is expected (desc->b).\n", k, desc->pieceCount);
         }
     } else {
         return RKResultIncompleteProductDescription;
     }
-    objectString = RKGetValueOfKey(valueString, "w");
-    if (objectString) {
-        k = RKParseNumericArray(desc->w, RKValueTypeFloat, desc->pieceCount, objectString);
+    // The weight term, w, for 8-bit conversion must be supplied
+    keyString = RKGetValueOfKey(inputString, "w");
+    if (keyString) {
+        k = RKParseNumericArray(desc->w, RKValueTypeFloat, desc->pieceCount, keyString);
         if (k != desc->pieceCount) {
-            fprintf(stderr, "Parsed %zu values but %u is expected.\n", k, desc->pieceCount);
+            fprintf(stderr, "Parsed %zu values but %u is expected (desc->w).\n", k, desc->pieceCount);
         }
     } else {
         return RKResultIncompleteProductDescription;
     }
-    objectString = RKGetValueOfKey(valueString, "minimumValue");
-    if (objectString) {
-        desc->mininimumValue = (RKFloat)atof(objectString);
+    // Optional values
+    keyString = RKGetValueOfKey(inputString, "minimumValue");
+    if (keyString) {
+        desc->mininimumValue = (RKFloat)atof(keyString);
     }
-    objectString = RKGetValueOfKey(valueString, "maximumValue");
-    if (objectString) {
-        desc->mininimumValue = (RKFloat)atof(objectString);
+    keyString = RKGetValueOfKey(inputString, "maximumValue");
+    if (keyString) {
+        desc->mininimumValue = (RKFloat)atof(keyString);
     }
     return RKResultSuccess;
 }
