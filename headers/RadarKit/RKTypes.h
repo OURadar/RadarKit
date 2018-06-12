@@ -228,6 +228,7 @@ N(RKResultIncompletePedestal) \
 N(RKResultIncompleteHealthRelay) \
 N(RKResultIncompleteControl) \
 N(RKResultIncompleteWaveformCalibration) \
+N(RKResultIncompleteProductDescription) \
 N(RKResultErrorCreatingOperatorRoutine) \
 N(RKResultErrorCreatingOperatorCommandRoutine) \
 N(RKResultErrorCreatingClientRoutine) \
@@ -1067,10 +1068,10 @@ typedef union rk_user_product_desc {                                           /
         RKName           name;                                                 // Name of the product
         RKProductType    type;                                                 // RKProductType
         uint32_t         pieceCount;                                           // Piece-wise function count
-        float            w[16];                                                // Product to color index weight (piece-wise function)
-        float            b[16];                                                // Product to color index bias (piece-wise function)
-        float            mininimumValue;                                       // Minimum value
-        float            maximumValue;                                         // Maximum value
+        RKFloat          w[16];                                                // Product to color index weight (piece-wise function)
+        RKFloat          b[16];                                                // Product to color index bias (piece-wise function)
+        RKFloat          mininimumValue;                                       // Minimum value
+        RKFloat          maximumValue;                                         // Maximum value
     };
     RKByte bytes[1024];
 } RKUserProductDesc;

@@ -996,7 +996,7 @@ size_t RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const s
     while (*c != '\0' && s < size) {
         switch (type) {
             case RKValueTypeFloat:
-                fv[s] = (float)atof(c);
+                fv[s] = (RKFloat)atof(c);
                 break;
             case RKValueTypeDouble:
                 dv[s] = atof(c);
@@ -1220,6 +1220,51 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
 }
 
 int RKParseUserProductDescription(RKUserProductDesc *desc, const char *valueString) {
+    size_t k;
+    char *objectString;
+
+    objectString = RKGetValueOfKey(valueString, "name");
+    if (objectString) {
+        strcpy(desc->name, objectString);
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    objectString = RKGetValueOfKey(objectString, "PieceCount");
+    if (objectString) {
+        desc->pieceCount = atoi(objectString);
+        if (desc->pieceCount > 8) {
+            desc->pieceCount = 8;
+            fprintf(stderr, "User product piece count truncated to 8.\n");
+        }
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    objectString = RKGetValueOfKey(objectString, "b");
+    if (objectString) {
+        k = RKParseNumericArray(desc->b, RKValueTypeFloat, desc->pieceCount, objectString);
+        if (k != desc->pieceCount) {
+            fprintf(stderr, "Parsed %zu values but %u is expected.\n", k, desc->pieceCount);
+        }
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    objectString = RKGetValueOfKey(valueString, "w");
+    if (objectString) {
+        k = RKParseNumericArray(desc->w, RKValueTypeFloat, desc->pieceCount, objectString);
+        if (k != desc->pieceCount) {
+            fprintf(stderr, "Parsed %zu values but %u is expected.\n", k, desc->pieceCount);
+        }
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
+    objectString = RKGetValueOfKey(valueString, "minimumValue");
+    if (objectString) {
+        desc->mininimumValue = (RKFloat)atof(objectString);
+    }
+    objectString = RKGetValueOfKey(valueString, "maximumValue");
+    if (objectString) {
+        desc->mininimumValue = (RKFloat)atof(objectString);
+    }
     return RKResultSuccess;
 }
 
