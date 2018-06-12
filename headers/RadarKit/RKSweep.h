@@ -53,6 +53,7 @@ struct rk_sweep_engine {
     RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
     RKUserProduct                    userProducts[RKMaximumUserProductCount];
+    pthread_mutex_t                  userProductMutex;
 
     // Status / health
     uint32_t                         processedRayIndex;

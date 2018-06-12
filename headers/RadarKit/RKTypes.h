@@ -141,7 +141,7 @@ typedef void *        RKPedestal;
 typedef void *        RKHealthRelay;
 typedef void *        RKMasterController;
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
-typedef int64_t       RKUserProductId;                                         // Product identifier
+typedef uint32_t      RKUserProductId;                                         // Product identifier
 typedef const float   RKConst;
 
 #pragma pack(push, 1)
@@ -1077,7 +1077,8 @@ typedef union rk_user_product_desc {                                           /
 } RKUserProductDesc;
 
 typedef struct rk_user_product {                                               // A description of user product
-    RKUserProductId      i;                                                    // Product identifier
+    uint64_t             i;                                                    // Product counter to be synchronized with RKConfig->i
+    RKUserProductId      pid;                                                  // Product identifier from RKUserProductRegister()
     RKUserProductDesc    desc;                                                 // Description
     RKUserProductStatus  flag;                                                 // Various state
     uint32_t             capacity;                                             // Number of RKFloat elements in *array
