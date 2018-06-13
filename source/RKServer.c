@@ -783,6 +783,7 @@ ssize_t RKOperatorSendDelimitedString(RKOperator *O, const char *string) {
 ssize_t RKOperatorSendCommandResponse(RKOperator *O, const char *string) {
     O->delimString.type = RKNetworkPacketTypeCommandResponse;
     O->delimString.size = (uint32_t)strlen(string);
+    RKLog("Warning. Response size = %d\n", (int)O->delimString.size);
     return RKOperatorSendPackets(O, &O->delimString, sizeof(RKNetDelimiter), string, O->delimString.size, NULL);
 }
 

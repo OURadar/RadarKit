@@ -49,12 +49,11 @@ int socketCommandHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     
     int j, k;
-    char string[RKMaximumStringLength * 2];
 
-    j = snprintf(string, RKMaximumStringLength - 1, "%s %d radar:", engine->name, engine->radarCount);
+    j = snprintf(user->commandResponse, RKMaximumPacketSize - 1, "%s %d radar:", engine->name, engine->radarCount);
     for (k = 0; k < engine->radarCount; k++) {
         RKRadar *radar = engine->radars[k];
-        j += snprintf(string + j, RKMaximumStringLength - j - 1, " %s", radar->desc.name);
+        j += snprintf(user->commandResponse + j, RKMaximumPacketSize - j - 1, " %s", radar->desc.name);
     }
 
     //int ival;
@@ -136,7 +135,7 @@ int socketCommandHandler(RKOperator *O) {
                             }
 
                             // Reset the radar engines
-                            RKExecuteCommand(user->radar, commandString, string);
+                            RKExecuteCommand(user->radar, commandString, user->commandResponse);
 
                             // Wait until socketStreamHandler to run another iteration
                             uint64_t tic = user->tic;
@@ -157,10 +156,10 @@ int socketCommandHandler(RKOperator *O) {
                             }
                             break;
                         default:
-                            RKExecuteCommand(user->radar, commandString, string);
+                            RKExecuteCommand(user->radar, commandString, user->commandResponse);
                             break;
                     }
-                    RKOperatorSendCommandResponse(O, string);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
 
                 case 'i':
@@ -170,8 +169,8 @@ int socketCommandHandler(RKOperator *O) {
                     break;
 
                 case 'q':
-                    sprintf(string, "Bye." RKEOL);
-                    RKOperatorSendCommandResponse(O, string);
+                    sprintf(user->commandResponse, "Bye." RKEOL);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     RKOperatorHangUp(O);
                     break;
 
@@ -185,55 +184,57 @@ int socketCommandHandler(RKOperator *O) {
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                     user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
                     pthread_mutex_unlock(&user->mutex);
-                    sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                    sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%lx, \"streams\": 0x%lx, \"indices\": [%d, %d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
-                    RKOperatorSendCommandResponse(O, string);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
                     
                 case 'u':
                     // Turn this user into an active node with user product return
                     //RKParseQuotedStrings(commandString + 1, userProductDescription.name, NULL);
 
-                    // Scan name,
-                    sprintf(string, "{'Name':'U', 'pieceCount': 1, 'b':-32, 'w':[0.5]}");
-
                     // Parse the product description
-                    RKParseUserProductDescription(&userProductDescription, string);
+                    RKParseUserProductDescription(&userProductDescription, commandString + 1);
 
                     RKLog("%s Registering user product '%s' (%s) ...", engine->name, userProductDescription.name, userProductDescription.symbol);
 
                     RKUserProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     if (productId) {
                         user->userProductIds[user->userProductCount++] = productId;
+                        sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"symbol\":\"%s\", \"pid\":%d}" RKEOL,
+                                userProductDescription.symbol, productId);
+                    } else {
+                        sprintf(user->commandResponse, "NAK. Unable to register product." RKEOL);
                     }
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
 
                 case 'x':
                     user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
-                    sprintf(string, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
-                    RKOperatorSendCommandResponse(O, string);
+                    sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
                     
                 default:
-                    RKExecuteCommand(user->radar, commandString, string);
-                    RKOperatorSendCommandResponse(O, string);
+                    RKExecuteCommand(user->radar, commandString, user->commandResponse);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
             }
         } else if (user->radar->desc.initFlags & RKInitFlagRelay) {
             switch (commandString[0]) {
                 case 'a':
                     RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
-                    RKRadarRelayExec(user->radar->radarRelay, commandString, string);
+                    RKRadarRelayExec(user->radar->radarRelay, commandString, user->commandResponse);
                     O->delimTx.type = RKNetworkPacketTypeControls;
-                    O->delimTx.size = (uint32_t)strlen(string);
-                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), string, O->delimTx.size, NULL);
+                    O->delimTx.size = (uint32_t)strlen(user->commandResponse);
+                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->commandResponse, O->delimTx.size, NULL);
 
                 case 'r':
                     // Change radar
                     sscanf("%s", commandString + 1, sval1);
                     RKLog(">%s %s Selected radar %s\n", engine->name, O->name, sval1);
-                    snprintf(string, RKMaximumStringLength - 1, "ACK. %s selected." RKEOL, sval1);
-                    RKOperatorSendCommandResponse(O, string);
+                    snprintf(user->commandResponse, RKMaximumPacketSize - 1, "ACK. %s selected." RKEOL, sval1);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
                     
                 case 's':
@@ -247,16 +248,16 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress = RKStreamNull;
                     pthread_mutex_unlock(&user->mutex);
                     RKLog(">%s %s Reset progress.\n", engine->name, O->name);
-                    sprintf(string, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                    sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
-                    RKOperatorSendCommandResponse(O, string);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
                     
                 default:
                     // Just forward to the right radar
                     RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
-                    RKRadarRelayExec(user->radar->radarRelay, commandString, string);
-                    RKOperatorSendCommandResponse(O, string);
+                    RKRadarRelayExec(user->radar->radarRelay, commandString, user->commandResponse);
+                    RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
             }
         } else {

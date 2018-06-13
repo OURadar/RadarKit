@@ -49,6 +49,7 @@ typedef struct rk_user {
     pthread_mutex_t                  mutex;
     char                             string[RKMaximumPacketSize];
     char                             scratch[RKMaximumPacketSize];
+    char                             commandResponse[RKMaximumPacketSize];
     RKInt16C                         samples[2][RKGateCount];
     RKOperator                       *serverOperator;
     RKRadar                          *radar;
