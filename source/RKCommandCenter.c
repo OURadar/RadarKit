@@ -184,7 +184,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                     user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
                     pthread_mutex_unlock(&user->mutex);
-                    sprintf(user->commandResponse, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                    sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%lx, \"streams\": 0x%lx, \"indices\": [%d, %d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -201,7 +201,8 @@ int socketCommandHandler(RKOperator *O) {
                     RKUserProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     if (productId) {
                         user->userProductIds[user->userProductCount++] = productId;
-                        sprintf(user->commandResponse, "ACK. {\"pid\":%d}" RKEOL, productId);
+                        sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"symbol\":\"%s\", \"pid\":%d}" RKEOL,
+                                userProductDescription.symbol, productId);
                     } else {
                         sprintf(user->commandResponse, "NAK. Unable to register product." RKEOL);
                     }
@@ -247,7 +248,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress = RKStreamNull;
                     pthread_mutex_unlock(&user->mutex);
                     RKLog(">%s %s Reset progress.\n", engine->name, O->name);
-                    sprintf(user->commandResponse, "{\"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                    sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
