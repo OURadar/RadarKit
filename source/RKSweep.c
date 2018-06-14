@@ -132,6 +132,7 @@ static void *sweepWriter(void *in) {
     }
     
     j = 0;
+    engine->summary[0] = '\0';
     for (i = 0; i < RKMaximumUserProductCount; i++) {
         if (engine->userProducts[i].flag == RKUserProductStatusVacant) {
             continue;
