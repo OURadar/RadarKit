@@ -465,7 +465,7 @@ int socketStreamHandler(RKOperator *O) {
         if (user->controlFirstUID != user->radar->controls[0].uid && user->access & RKStreamControl) {
             user->controlFirstUID = user->radar->controls[0].uid;
             RKLog("%s %s Sending new controls.\n", engine->name, O->name);
-            j = sprintf(user->string, "{\"Radars\":[");
+            j = sprintf(user->string, "{\"Radars\": [");
             for (k = 0; k < engine->radarCount; k++) {
                 RKRadar *radar = engine->radars[k];
                 j += sprintf(user->string + j, "\"%s\", ", radar->desc.name);
@@ -477,9 +477,9 @@ int socketStreamHandler(RKOperator *O) {
             }
             // Should only send the controls if the user has been authenticated
             RKMakeJSONStringFromControls(user->scratch, user->radar->controls, user->radar->controlCount);
-            j += sprintf(user->string + j, "\"Controls\":["
-                        "{\"Label\":\"Go\", \"Command\":\"y\"}, "
-                        "{\"Label\":\"Stop\", \"Command\":\"z\"}, "
+            j += sprintf(user->string + j, "\"Controls\": ["
+                        "{\"Label\": \"Go\", \"Command\": \"y\"}, "
+                        "{\"Label\": \"Stop\", \"Command\": \"z\"}, "
                         "%s"
                         "]}" RKEOL, user->scratch);
             O->delimTx.type = RKNetworkPacketTypeControls;
