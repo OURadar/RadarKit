@@ -310,6 +310,35 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     free(str);
 }
 
+static char *arrayHeadTailElementsInString(const float *d, const int length) {
+    int c, k = 0;
+    static char line[1024];
+    for (c = 0; c < 3; c++) {
+        k += sprintf(line + k, " %6.2f", *(d + c));
+    }
+    k += sprintf(line + k, " ...");
+    for (c = length - 3; c < length; c++) {
+        k += sprintf(line + k, " %6.2f", *(d + c));
+    }
+    return line;
+}
+
+void RKShowArray(const float *data, const char *letter, const int width, const int height) {
+    int j, k = 0;
+    char text[1024];
+    k = sprintf(text, "    %s%s%s = [ %s ]\n",
+                rkGlobalParameters.showColor ? RKYellowColor : "", letter,
+                rkGlobalParameters.showColor ? RKNoColor : "",
+                arrayHeadTailElementsInString(data, width));
+    k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
+    k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
+    k += sprintf(text + k, "        [  ...\n");
+    for (j = height - 3; j < height; j++) {
+        k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
+    }
+    printf("%s", text);
+}
+
 #pragma mark - Buffer
 
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity) {

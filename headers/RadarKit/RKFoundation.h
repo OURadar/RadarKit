@@ -65,6 +65,7 @@ int RKSetLogfileToDefault(void);
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
+void RKShowArray(const float *data, const char *letter, const int width, const int height);
 
 // Clearing buffer
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);

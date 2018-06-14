@@ -42,31 +42,6 @@ static void consolidateStreams(RKCommandCenter *engine) {
     }
 }
 
-static char *arrayInString(const float *d, const int width) {
-    int c, k = 0;
-    static char line[1024];
-    for (c = 0; c < 3; c++) {
-        k += sprintf(line + k, " %6.2f", *(d + c));
-    }
-    k += sprintf(line + k, " ...");
-    for (c = width - 3; c < width; c++) {
-        k += sprintf(line + k, " %6.2f", *(d + c));
-    }
-    return line;
-}
-
-static void showArray(const float *data, const char *letter, const int width, const int height) {
-    int j;
-    printf("    %s%s%s = [ %s ]\n",
-           rkGlobalParameters.showColor ? RKYellowColor : "", letter, rkGlobalParameters.showColor ? RKNoColor : "",
-           arrayInString(data, width));
-    printf("        [ %s ]\n", arrayInString(&data[width], width));
-    printf("        [ %s ]\n", arrayInString(&data[2 * width], width));
-    printf("        [  ...\n");
-    for (j = height - 3; j < height; j++) {
-        printf("        [ %s ]\n", arrayInString(&data[j * width], width));
-    }
-}
 #pragma mark - Handlers
 
 int socketCommandHandler(RKOperator *O) {
@@ -961,7 +936,7 @@ int socketStreamHandler(RKOperator *O) {
                     RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
 
                     // Report back product
-                    showArray((float *)user->string, "Y", sweep->header.gateCount, sweep->header.rayCount);
+                    RKShowArray((float *)user->string, "Y", sweep->header.gateCount, sweep->header.rayCount);
                 } // if (productCount) ...
                 RKSweepFree(sweep);
             } else if (engine->verbose > 1) {
