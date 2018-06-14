@@ -267,10 +267,12 @@ static void *pulseTagger(void *_in) {
             }
             // Add another configuration
             RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
-                            RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
-                            RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
-                            RKConfigKeyPositionMarker,  marker0,
-                            RKConfigKeyNull);
+                                    RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
+                                    RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
+                                    RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,
+                                    RKConfigKeyPulseGateCount, pulse->header.gateCount,
+                                    RKConfigKeyPositionMarker, marker0,
+                                    RKConfigKeyNull);
         }
 
         if (c0 != *engine->configIndex) {

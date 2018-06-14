@@ -489,7 +489,8 @@ enum RKConfigKey {
     RKConfigKeyPositionMarker,
     RKConfigKeyPRF,
     RKConfigKeyDualPRF,
-    RKConfigKeyGateCount,
+    RKConfigKeyPulseGateCount,
+    RKConfigKeyPulseGateSize,
     RKConfigKeyWaveform,
     RKConfigKeyWaveformId,
     RKConfigKeyWaveformName,
@@ -919,6 +920,7 @@ typedef struct rk_sweep_header {
     uint32_t         rayCount;                                                 // Number of rays
     uint32_t         gateCount;                                                // Number of range gates
     uint32_t         productList;                                              // List of available products
+    RKFloat          gateSizeMeters;                                           // Gate size in meters
     bool             external;                                                 // Data is external buffer, reference by *rays[]
     RKRadarDesc      desc;
     RKConfig         config;
