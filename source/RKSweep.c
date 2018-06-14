@@ -847,6 +847,11 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
                   engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
                   RKIntegerToCommaStyleString(S->header.gateCount));
         }
+        if (rays[k]->header.gateSizeMeters != S->header.gateSizeMeters) {
+            RKLog("%s Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
+                  engine->name, RKIntegerToCommaStyleString(k), RKFloatToCommaStyleString(rays[k]->header.gateSizeMeters),
+                  RKFloatToCommaStyleString(S->header.gateSizeMeters));
+        }
     }
 
     if (engine->verbose > 1) {
@@ -885,6 +890,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     // Populate the contents
     sweep->header.rayCount = n;
     sweep->header.gateCount = S->header.gateCount;
+    sweep->header.gateSizeMeters = S->header.gateSizeMeters;
     sweep->header.productList = overallProductList;
     sweep->header.external = true;
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
@@ -1221,9 +1227,12 @@ RKSweep *RKSweepRead(const char *inputFile) {
         RKLog("%s Inconsistent state towards the end.\n", name);
         return NULL;
     }
-    
+
+    ray = RKGetRay(sweep->rayBuffer, 0);
+
     sweep->header.rayCount = (uint32_t)rayCount;
     sweep->header.gateCount = (uint32_t)gateCount;
+    sweep->header.gateSizeMeters = ray->header.gateSizeMeters;
     sweep->header.productList = productList;
 
     for (j = 0; j < rayCount; j++) {
