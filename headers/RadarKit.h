@@ -11,10 +11,17 @@
 //  █
 //
 //  1.2.10 - 6/30/2018
+//         - Product identifier from PyRadarKit is ingested
+//         - Added RKWaveform definition to RKTypes.h
+//         - Added support for multiple user products from a client
+//         - Introduced scan type mask
 //         - Fixed the stream restore for all connected clients
 //         - Fixed a dead lock during waveform calibration
-//         - Added Added RKSetVerbosityUsingArray()
-//         - Improved loggin during quiet mode
+//         - Added individual waveform calibration constants
+//         - Added preference file monitor using RKFileMonitor()
+//         - New thinking in terms of adding ZCal, DCal, filter anchors, etc.
+//         - Added RKSetVerbosityUsingArray()
+//         - Improved logging during quiet mode
 //
 //  1.2.9  - 5/31/2018
 //         - Added buffer overview, accessible through terminal
