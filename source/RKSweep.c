@@ -741,7 +741,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKUserProductDesc desc) {
     int i = 0;
-    RKUserProductId productId = 0x0520;
+    RKUserProductId productId = 42;
     while (engine->userProducts[i].pid != 0 && i < RKMaximumUserProductCount) {
         productId++;
         i++;

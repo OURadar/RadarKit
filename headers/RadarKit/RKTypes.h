@@ -751,7 +751,8 @@ typedef struct rk_config {
     RKFilterAnchor   filterAnchors[RKMaxFilterCount];                          // Filter anchors
     uint32_t         pw[RKMaxFilterCount];                                     // Pulse width (ns)
     uint32_t         prf[RKMaxFilterCount];                                    // Pulse repetition frequency (Hz)
-    uint32_t         gateCount[RKMaxFilterCount];                              // Number of range gates
+    uint32_t         pulseGateCount;                                           // Number of range gates
+    RKFloat          pulseGateSize;                                            // Size of range gate (m)
     uint32_t         waveformId[RKMaxFilterCount];                             // Transmit waveform
     RKFloat          noise[2];                                                 // Noise floor (ADU)
     RKFloat          systemZCal[2];                                            // System-wide Z calibration (dB)

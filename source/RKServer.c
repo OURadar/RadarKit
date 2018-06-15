@@ -573,7 +573,7 @@ void RKServerStop(RKServer *M) {
 #pragma mark - Miscellaneous functions
 
 ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format) {
-    int k;
+    int k = 0;
     fd_set rfd;
     fd_set efd;
     ssize_t r = -1;
@@ -611,7 +611,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                         usleep(10000);
                     }
                 } else if (errno != EAGAIN) {
-                    RKLog("%s %s Error. RKMessageFormatFixedHeaderVariableBlock:1  r = %d  k = %d  errno = %d (%s)\n",
+                    RKLog("%s %s Error. RKMessageFormatFixedHeaderVariableBlock   r = %d   k = %d   errno = %d (%s)\n",
                               M->name, O->name, r, k, errno, RKErrnoString(errno));
                     break;
                 } else {
@@ -669,6 +669,9 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 }
                 break;
             }
+            if (k > 0 && k < RKMaximumPacketSize) {
+                *((char *)buffer + k) = '\0';
+            }
             readOkay = true;
             break;
             
@@ -703,6 +706,9 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 }
                 break;
             }
+            if (k > 0 && k < RKMaximumPacketSize) {
+                *((char *)buffer + k) = '\0';
+            }
             readOkay = true;
             break;
             
@@ -712,9 +718,9 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
             break;
     }
     if (readOkay) {
-        return r;
+        return k;
     }
-    return -1;
+    return r;
 }
 
 // In counts of 10ms, should be plenty, in-transit buffer should be able to hold it
