@@ -578,7 +578,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
     fd_set efd;
     ssize_t r = -1;
     int readCount;
-    bool readOkay;
+    bool readOkay = false;
 
     FD_ZERO(&rfd);
     FD_ZERO(&efd);
@@ -711,7 +711,10 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
             // Nothing yet
             break;
     }
-    return (ssize_t)r;
+    if (readOkay) {
+        return r;
+    }
+    return -1;
 }
 
 // In counts of 10ms, should be plenty, in-transit buffer should be able to hold it
