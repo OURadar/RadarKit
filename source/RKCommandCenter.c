@@ -931,12 +931,15 @@ int socketStreamHandler(RKOperator *O) {
                             RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
                         }
                     }
-                    RKLog("%s %s Expecting a user product ...\n", engine->name, O->name);
 
-                    RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
-
-                    // Report back product
-                    RKShowArray((float *)user->string, "Y", sweep->header.gateCount, sweep->header.rayCount);
+                    for (k = 0; k < user->userProductCount; k++) {
+                        RKLog("%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
+                        RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
+                        RKLog("%s %s %s (%d)\n", engine->name, O->name, user->string, strlen(user->string));
+                        RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
+                        // Report back product
+                        RKShowArray((float *)user->string, "Y", sweep->header.gateCount, sweep->header.rayCount);
+                    }
                 } // if (productCount) ...
                 RKSweepFree(sweep);
             } else if (engine->verbose > 1) {
