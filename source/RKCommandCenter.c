@@ -313,6 +313,9 @@ int socketStreamHandler(RKOperator *O) {
     RKInt16C *userDataH = NULL;
     RKInt16C *userDataV = NULL;
 
+    RKIdentifier identifier;
+    RKUserProductId userProductId;
+
     if (engine->radarCount < 1) {
         return 0;
     }
@@ -935,10 +938,18 @@ int socketStreamHandler(RKOperator *O) {
                     for (k = 0; k < user->userProductCount; k++) {
                         RKLog("%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
                         RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
-                        RKLog("%s %s %s (%d)\n", engine->name, O->name, user->string, strlen(user->string));
-                        RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
+                        userProductId = RKUserProductIdFromString(RKGetValueOfKey(user->string, "productId"));
+                        identifier = RKIdentifierFromString(RKGetValueOfKey(user->string, "configId"));
+                        if (user->userProductIds[k] != userProductId) {
+                            RKLog("%s %s Warning. Inconsistent userProduct = %d != %d\n", engine->name, O->name, user->userProductIds[k], userProductId);
+                        }
+                        RKFloat *storage = RKSweepEngineGetBufferForUserProduct(user->radar->sweepEngine, sweep, userProductId);
+                        RKLog("%s %s %s (%d) -> %u %zu ==? %zu\n",
+                              engine->name, O->name, user->string, strlen(user->string), userProductId, identifier, sweepHeader.config.i);
+                        RKServerReceiveUserPayload(O, storage, RKNetworkMessageFormatHeaderDefinedSize);
+                        RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
                         // Report back product
-                        RKShowArray((float *)user->string, "Y", sweep->header.gateCount, sweep->header.rayCount);
+                        RKShowArray(storage, "Y", sweep->header.gateCount, sweep->header.rayCount);
                     }
                 } // if (productCount) ...
                 RKSweepFree(sweep);

@@ -789,7 +789,22 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKUserProductId produc
     return RKResultSuccess;
 }
 
-int RKSweepEngineReportProduct(RKSweepEngine *engine, RKFloat *data, RKUserProductId productId) {
+RKFloat *RKSweepEngineGetBufferForUserProduct(RKSweepEngine *engine, RKSweep *sweep, RKUserProductId productId) {
+    int i = 0;
+    while (i < RKMaximumUserProductCount) {
+        if (engine->userProducts[i].pid == productId) {
+            break;
+        }
+        i++;
+    }
+    if (i == RKMaximumUserProductCount) {
+        RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
+        return NULL;
+    }
+    return engine->userProducts[i].array;
+}
+
+int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKUserProductId productId) {
     int i = 0;
     while (i < RKMaximumUserProductCount) {
         if (engine->userProducts[i].pid == productId) {
@@ -801,7 +816,8 @@ int RKSweepEngineReportProduct(RKSweepEngine *engine, RKFloat *data, RKUserProdu
         RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
         return RKResultFailedToFindProductId;
     }
-    // Get the corresponding sweep
+    engine->userProducts[i].flag |= RKUserProductStatusActive;
+    RKLog("%s userProduct %u / %lu reported.\n", engine->name, productId, sweep->header.config.i);
     return RKResultSuccess;
 }
 

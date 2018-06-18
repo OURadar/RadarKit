@@ -323,7 +323,7 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
     return line;
 }
 
-void RKShowArray(const float *data, const char *letter, const int width, const int height) {
+void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
     int j, k = 0;
     char text[1024];
     k = sprintf(text, "    %s%s%s = [ %s ]\n",
@@ -1309,6 +1309,14 @@ int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputStri
         desc->mininimumValue = (RKFloat)atof(keyString);
     }
     return RKResultSuccess;
+}
+
+RKUserProductId RKUserProductIdFromString(const char *string) {
+    return (RKUserProductId)strtoul(string, NULL, 10);
+}
+
+RKIdentifier RKIdentifierFromString(const char *string) {
+    return (RKIdentifier)strtouq(string, NULL, 10);
 }
 
 #pragma mark - Simple Engine Free

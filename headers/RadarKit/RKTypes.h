@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <strings.h>
+#include <limits.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
@@ -141,7 +142,8 @@ typedef void *        RKPedestal;
 typedef void *        RKHealthRelay;
 typedef void *        RKMasterController;
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
-typedef uint32_t      RKUserProductId;                                         // Product identifier
+typedef uint8_t       RKUserProductId;                                         // Product identifier
+typedef uint64_t      RKIdentifier;                                            // Pulse identifier, ray identifier, config identifier, etc.
 typedef const float   RKConst;
 
 #pragma pack(push, 1)
@@ -743,7 +745,7 @@ typedef struct rk_radar_desc {
 // A running configuration buffer
 //
 typedef struct rk_config {
-    uint64_t         i;                                                        // Identity counter
+    RKIdentifier     i;                                                        // Identity counter
     float            sweepElevation;                                           // Sweep elevation angle (degrees)
     float            sweepAzimuth;                                             // Sweep azimuth angle (degrees)
     RKMarker         startMarker;                                              // Marker of the start ray
@@ -771,7 +773,7 @@ typedef struct rk_config {
 //
 typedef union rk_heath {
     struct {
-        uint64_t         i;                                                    // Identity counter
+        RKIdentifier     i;                                                    // Identity counter
         RKHealthFlag     flag;                                                 // Health flag
         struct timeval   time;                                                 // Time in struct timeval
         double           timeDouble;                                           // Time in double
@@ -794,7 +796,7 @@ typedef struct rk_nodal_health {
 //
 typedef union rk_position {
     struct {
-        uint64_t         i;                                                    // Counter
+        RKIdentifier     i;                                                    // Counter
         uint64_t         tic;                                                  // Time tic
         RKFourByte       rawElevation;                                         // Raw elevation readout
         RKFourByte       rawAzimuth;                                           // Raw azimuth readout
@@ -827,8 +829,8 @@ typedef union rk_position {
 // Pulse header
 //
 typedef struct rk_pulse_header {
-    uint64_t         i;                                                        // Identity counter
-    uint64_t         n;                                                        // Network counter, may be useful to indicate packet loss
+    RKIdentifier     i;                                                        // Identity counter
+    RKIdentifier     n;                                                        // Network counter, may be useful to indicate packet loss
     uint64_t         t;                                                        // A clean clock-related tic count
     RKPulseStatus    s;                                                        // Status flag
     uint32_t         capacity;                                                 // Allocated capacity
@@ -880,8 +882,8 @@ typedef struct rk_pulse {
 typedef struct rk_ray_header {
     uint32_t         capacity;                                                 // Capacity
     RKRayStatus      s;                                                        // Ray status
-    uint64_t         i;                                                        // Ray indentity
-    uint64_t         n;                                                        // Ray network counter
+    RKIdentifier     i;                                                        // Ray indentity
+    RKIdentifier     n;                                                        // Ray network counter
     RKMarker         marker;                                                   // Volume / sweep / radial marker
     RKProductList    productList;                                              // 16-bit MSB for products + 16-bit LSB for display
     uint16_t         configIndex;                                              // Operating configuration index
@@ -1017,7 +1019,7 @@ typedef struct rk_control {
 // - This can be a supported feature reported back from client
 //
 typedef struct rk_status {
-    uint64_t         i;
+    RKIdentifier     i;
     RKStatusFlag     flag;
     uint8_t          pulseMonitorLag;
     uint8_t          pulseSkipCount;
@@ -1081,7 +1083,7 @@ typedef union rk_user_product_desc {                                           /
 } RKUserProductDesc;
 
 typedef struct rk_user_product {                                               // A description of user product
-    uint64_t             i;                                                    // Product counter to be synchronized with RKConfig->i
+    RKIdentifier         i;                                                    // Product counter to be synchronized with RKConfig->i
     RKUserProductId      pid;                                                  // Product identifier from RKUserProductRegister()
     RKUserProductDesc    desc;                                                 // Description
     RKUserProductStatus  flag;                                                 // Various state

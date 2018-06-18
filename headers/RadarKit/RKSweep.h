@@ -82,7 +82,8 @@ int RKSweepEngineStop(RKSweepEngine *);
 
 RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
 int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
-int RKSweepEngineReportProduct(RKSweepEngine *, RKFloat *, RKUserProductId);
+RKFloat *RKSweepEngineGetBufferForUserProduct(RKSweepEngine *, RKSweep *, RKUserProductId);
+int RKSweepEngineReportProduct(RKSweepEngine *, RKSweep *, RKUserProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
 RKSweep *RKSweepRead(const char *);

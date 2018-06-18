@@ -65,7 +65,7 @@ int RKSetLogfileToDefault(void);
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
-void RKShowArray(const float *data, const char *letter, const int width, const int height);
+void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
 
 // Clearing buffer
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);
@@ -116,6 +116,8 @@ RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
 bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
 bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
 int RKParseUserProductDescription(RKUserProductDesc *, const char *);
+RKUserProductId RKUserProductIdFromString(const char *);
+RKIdentifier RKIdentifierFromString(const char *);
 
 // Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);
