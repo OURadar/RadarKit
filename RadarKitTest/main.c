@@ -174,7 +174,7 @@ static void showHelp() {
            "    -vs2\n"
            "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
            "\n"
-           "    -v -s1 -L -f 2000\n"
+           "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
            "\n"
            "    -T 50\n"
@@ -440,6 +440,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     optind = 1;
     long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
+        #if defined(DEBUG)
+        fprintf(stderr, "--> %c = %s\n", opt, optarg ? optarg : "NULL");
+        #endif
         switch (opt) {
             case 'A':
                 break;
@@ -575,7 +578,6 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case 'V':
                 c = optarg;
                 do {
-                    //printf("-> %c\n", *c);
                     user->engineVerbose[(int)*c]++;
                 } while (*++c != '\0');
                 break;
@@ -603,7 +605,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 }
                 break;
             case 'g':
-                user->gateCount = atoi(optarg);
+                k = (int)strtol(optarg, NULL, 10);
+                if (k > 0) {
+                    user->gateCount = k;
+                }
                 break;
             case 'h':
                 showHelp();
@@ -683,7 +688,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 }
                 user->simulate = true;
                 if (optarg) {
-                    setSystemLevel(user, atoi(optarg));
+                    k = (int)strtol(optarg, NULL, 10);
+                    setSystemLevel(user, k);
                 } else {
                     setSystemLevel(user, 1);
                 }
@@ -707,6 +713,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     user->sleepInterval = 1000;
                 }
                 break;
+            case ':':
+                fprintf(stderr, "Missing option argument.\n");
+            case '?':
             default:
                 if (optarg && strlen(optarg)) {
                     fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);

@@ -957,7 +957,6 @@ int socketStreamHandler(RKOperator *O) {
                             continue;
                         }
                         RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
-                        RKShowArray(storage, "Y", sweep->header.gateCount, sweep->header.rayCount);
                     }
                 } // if (productCount) ...
                 RKSweepFree(sweep);

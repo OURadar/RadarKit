@@ -801,6 +801,9 @@ RKFloat *RKSweepEngineGetBufferForUserProduct(RKSweepEngine *engine, RKSweep *sw
         RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
         return NULL;
     }
+    pthread_mutex_lock(&engine->userProductMutex);
+    engine->userProducts[i].flag |= RKUserProductStatusSleep1;
+    pthread_mutex_unlock(&engine->userProductMutex);
     return engine->userProducts[i].array;
 }
 
@@ -816,10 +819,20 @@ int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKUserProd
         RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
         return RKResultFailedToFindProductId;
     }
-    pthread_mutex_lock(&engine->userProductMutex);
-    engine->userProducts[i].flag |= RKUserProductStatusSleep1;
-    pthread_mutex_unlock(&engine->userProductMutex);
-    RKLog("%s userProduct %u / %lu reported.\n", engine->name, productId, sweep->header.config.i);
+    if (engine->userProducts[i].pid == productId) {
+        RKLog("%s userProductid[%d] = %lu -> %lu\n", engine->name, i, engine->userProducts[i].i, sweep->header.config.i);
+        engine->userProducts[i].i = sweep->header.config.i;
+    }
+    if (engine->userProducts[i].flag & RKUserProductStatusSleep1) {
+        pthread_mutex_lock(&engine->userProductMutex);
+        engine->userProducts[i].flag ^= RKUserProductStatusSleep1;
+        pthread_mutex_unlock(&engine->userProductMutex);
+    } else {
+        RKLog("%s That's weird, this buffer has not been requested.\n", engine->name);
+    }
+    if (engine->verbose > 1) {
+        RKShowArray(engine->userProducts[i].array, engine->userProducts[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
+    }
     return RKResultSuccess;
 }
 
