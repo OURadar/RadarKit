@@ -926,29 +926,37 @@ int socketStreamHandler(RKOperator *O) {
                             }
                         }
                     }
-                    if (engine->verbose) {
-                        // Offset scratch by one to get rid of the very first space character
-                        RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
-                        if (engine->verbose > 1) {
-                            RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
-                            RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
-                        }
+                    // Offset scratch by one to get rid of the very first space character
+                    RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
+                    if (engine->verbose > 1) {
+                        RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
+                        RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
                     }
 
                     for (k = 0; k < user->userProductCount; k++) {
                         RKLog("%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
-                        RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
+                        size = RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
+                        if (size < 0) {
+                            RKLog("%s %s Error. Failed receiving user product header ...\n", engine->name, O->name);
+                            continue;
+                        }
                         userProductId = RKUserProductIdFromString(RKGetValueOfKey(user->string, "productId"));
                         identifier = RKIdentifierFromString(RKGetValueOfKey(user->string, "configId"));
                         if (user->userProductIds[k] != userProductId) {
-                            RKLog("%s %s Warning. Inconsistent userProduct = %d != %d\n", engine->name, O->name, user->userProductIds[k], userProductId);
+                            RKLog("%s %s Warning. Inconsistent userProduct = %d (expected) != %d (reported)\n", engine->name, O->name, user->userProductIds[k], userProductId);
+                        }
+                        if (sweep->header.config.i != identifier) {
+                            RKLog("%s %s Warning. Inconsistent configId = %lu (expected) != %lu (reported)\n", engine->name, O->name, sweep->header.config.i, identifier);
                         }
                         RKFloat *storage = RKSweepEngineGetBufferForUserProduct(user->radar->sweepEngine, sweep, userProductId);
-                        RKLog("%s %s %s (%d) -> %u %zu ==? %zu\n",
-                              engine->name, O->name, user->string, strlen(user->string), userProductId, identifier, sweepHeader.config.i);
-                        RKServerReceiveUserPayload(O, storage, RKNetworkMessageFormatHeaderDefinedSize);
+                        RKLog("%s %s %s (%d) -> %u %zu\n",
+                              engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
+                        size = RKServerReceiveUserPayload(O, storage, RKNetworkMessageFormatHeaderDefinedSize);
+                        if (size < 0) {
+                            RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
+                            continue;
+                        }
                         RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
-                        // Report back product
                         RKShowArray(storage, "Y", sweep->header.gateCount, sweep->header.rayCount);
                     }
                 } // if (productCount) ...

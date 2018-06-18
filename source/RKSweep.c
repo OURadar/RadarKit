@@ -816,7 +816,9 @@ int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKUserProd
         RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
         return RKResultFailedToFindProductId;
     }
-    engine->userProducts[i].flag |= RKUserProductStatusActive;
+    pthread_mutex_lock(&engine->userProductMutex);
+    engine->userProducts[i].flag |= RKUserProductStatusSleep1;
+    pthread_mutex_unlock(&engine->userProductMutex);
     RKLog("%s userProduct %u / %lu reported.\n", engine->name, productId, sweep->header.config.i);
     return RKResultSuccess;
 }
