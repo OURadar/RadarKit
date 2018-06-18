@@ -810,7 +810,7 @@ int socketStreamHandler(RKOperator *O) {
                 // Make a local copy of the sweepHeader and mutate it for this client while keeping the original intact
                 memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
 
-                if (engine->verbose) {
+                if (engine->verbose > 1) {
                     RKLog("%s %s New sweep available   C%02d   S%lu.  <--  %x / %x\n",
                           engine->name, O->name,
                           sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
@@ -927,7 +927,7 @@ int socketStreamHandler(RKOperator *O) {
                         }
                     }
                     // Offset scratch by one to get rid of the very first space character
-                    RKLog("%s %s Sent sweep S%d (0x%08x) (%s)\n", engine->name, O->name, sweepHeader.config.i, sweepHeader.productList, user->scratch + 1);
+                    RKLog("%s %s Sweep S%d sent (%s)\n", engine->name, O->name, sweepHeader.config.i, user->scratch + 1);
                     if (engine->verbose > 1) {
                         RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
                         RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
