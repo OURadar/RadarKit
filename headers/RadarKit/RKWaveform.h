@@ -51,7 +51,7 @@
 
 typedef union rk_wave_file_header {
     struct {
-        RKName          name;
+        char            name[256];
         uint8_t         groupCount;
         uint32_t        depth;
         double          fc;

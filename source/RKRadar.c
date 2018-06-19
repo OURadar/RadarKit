@@ -16,7 +16,7 @@
 
 typedef struct rk_task {
     RKRadar *radar;
-    char command[RKNameLength];
+    RKCommand command;
 } RKTaskInput;
 
 #pragma mark - Static Functions
@@ -445,7 +445,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
-              RKBaseProductCount,
+              RKBaseMomentCount,
               RKIntegerToCommaStyleString(k));
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
@@ -2173,7 +2173,7 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
     }
     RKTaskInput taskInput;
     taskInput.radar = radar;
-    strncpy(taskInput.command, command, RKNameLength - 1);
+    strncpy(taskInput.command, command, RKMaximumCommandLength - 1);
     pthread_t tid;
     pthread_create(&tid, NULL, &masterControllerExecuteInBackground, &taskInput);
 }

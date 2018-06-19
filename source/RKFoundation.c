@@ -159,7 +159,7 @@ int RKSetProgramName(const char *name) {
 }
 
 int RKSetRootFolder(const char *folder) {
-    if (strlen(folder) > RKNameLength - 64) {
+    if (strlen(folder) > RKMaximumPathLength - 64) {
         fprintf(stderr, "WARNING. Very long root folder.\n");
     }
     sprintf(rkGlobalParameters.rootDataFolder, "%s", folder);
@@ -175,10 +175,10 @@ int RKSetLogfile(const char *filename) {
     if (filename == NULL) {
         rkGlobalParameters.logfile[0] = '\0';
         return 0;
-    } else if (strlen(filename) >= RKNameLength) {
+    } else if (strlen(filename) >= RKMaximumPathLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, RKNameLength, "%s", filename);
+    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s", filename);
     return RKResultSuccess;
 }
 
@@ -457,8 +457,8 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int8 _t            idata[RKBaseProductCount][capacity];
-//    float              fdata[RKBaseProductCount][capacity];
+//    int8 _t            idata[RKBaseMomentCount][capacity];
+//    float              fdata[RKBaseMomentCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity != (capacity / RKSIMDAlignSize) * RKSIMDAlignSize) {
@@ -471,7 +471,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = headerSize + RKBaseProductCount * capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(raySize));
         return 0;
@@ -502,20 +502,20 @@ void RKRayBufferFree(RKBuffer mem) {
 // Get a ray from a ray buffer
 RKRay *RKGetRay(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
-    size_t raySize = RKRayHeaderPaddedSize + RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = RKRayHeaderPaddedSize + RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
 // Get the data in uint8_t from a ray
-uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseProductIndex m) {
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
     void *d = (void *)ray->data;
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
 // Get the data in float from a ray
-float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseProductIndex m) {
+float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
     void *d = (void *)ray->data;
-    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
+    d += RKBaseMomentCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
@@ -525,7 +525,7 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
         ray->header.s = RKRayStatusVacant;
         ray->header.i = -(uint64_t)slots + k;
         ray->header.gateCount = 0;
-        memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+        memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultSuccess;
 }
@@ -940,46 +940,46 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Default"
     };
     uint32_t products[] = {
-        RKBaseProductListProductZ,
-        RKBaseProductListProductV,
-        RKBaseProductListProductW,
-        RKBaseProductListProductD,
-        RKBaseProductListProductP,
-        RKBaseProductListProductR,
-        RKBaseProductListProductK,
-        RKBaseProductListProductSh,
-        RKBaseProductListProductSv,
+        RKBaseMomentListProductZ,
+        RKBaseMomentListProductV,
+        RKBaseMomentListProductW,
+        RKBaseMomentListProductD,
+        RKBaseMomentListProductP,
+        RKBaseMomentListProductR,
+        RKBaseMomentListProductK,
+        RKBaseMomentListProductSh,
+        RKBaseMomentListProductSv,
         0xFFFF
     };
     uint32_t productIndices[] = {
-        RKBaseProductIndexZ,
-        RKBaseProductIndexV,
-        RKBaseProductIndexW,
-        RKBaseProductIndexD,
-        RKBaseProductIndexP,
-        RKBaseProductIndexR,
-        RKBaseProductIndexK,
-        RKBaseProductIndexSh,
+        RKBaseMomentIndexZ,
+        RKBaseMomentIndexV,
+        RKBaseMomentIndexW,
+        RKBaseMomentIndexD,
+        RKBaseMomentIndexP,
+        RKBaseMomentIndexR,
+        RKBaseMomentIndexK,
+        RKBaseMomentIndexSh,
         0
     };
     int k = -1;
-    if (*list & RKBaseProductListProductZ) {
+    if (*list & RKBaseMomentListProductZ) {
         k = 0;
-    } else if (*list & RKBaseProductListProductV) {
+    } else if (*list & RKBaseMomentListProductV) {
         k = 1;
-    } else if (*list & RKBaseProductListProductW) {
+    } else if (*list & RKBaseMomentListProductW) {
         k = 2;
-    } else if (*list & RKBaseProductListProductD) {
+    } else if (*list & RKBaseMomentListProductD) {
         k = 3;
-    } else if (*list & RKBaseProductListProductP) {
+    } else if (*list & RKBaseMomentListProductP) {
         k = 4;
-    } else if (*list & RKBaseProductListProductR) {
+    } else if (*list & RKBaseMomentListProductR) {
         k = 5;
-    } else if (*list & RKBaseProductListProductK) {
+    } else if (*list & RKBaseMomentListProductK) {
         k = 6;
-    } else if (*list & RKBaseProductListProductSh) {
+    } else if (*list & RKBaseMomentListProductSh) {
         k = 7;
-    } else if (*list & RKBaseProductListProductSv) {
+    } else if (*list & RKBaseMomentListProductSv) {
         k = 8;
     }
     if (k < 0) {

@@ -177,22 +177,22 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
         return RKResultPreferenceKeywordNotFound;
     }
     //printf("value = '%s'\n", object->valueString);
-    RKName string;
-    int k = snprintf(string, RKNameLength, "%s", keyword);
+    char string[RKMaximumStringLength];
+    int k = snprintf(string, RKMaximumStringLength, "%s", keyword);
     if (type == RKParameterTypeControl) {
         RKControl *control = (RKControl *)target;
         if (RKControlFromPreferenceObject(control, object)) {
             return RKResultIncompleteControl;
         }
-        k += snprintf(string + k, RKNameLength - k, " '%s' '%s'", control->label, control->command);
+        k += snprintf(string + k, RKMaximumStringLength - k, " '%s' '%s'", control->label, control->command);
     } else if (type == RKParameterTypeWaveformCalibration) {
         RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
         if (RWaveformCalibrationFromPreferenceObject(calibration, object)) {
             return RKResultIncompleteWaveformCalibration;
         }
-        k += snprintf(string + k, RKNameLength - k, " '%s' (%d)", calibration->name, calibration->count);
+        k += snprintf(string + k, RKMaximumStringLength - k, " '%s' (%d)", calibration->name, calibration->count);
         for (i = 0; i < calibration->count; i++) {
-            k += snprintf(string + k, RKNameLength - k, "   %d:(%.2f %.2f %.2f %.2f)", i,
+            k += snprintf(string + k, RKMaximumStringLength - k, "   %d:(%.2f %.2f %.2f %.2f)", i,
                           calibration->ZCal[i][0],
                           calibration->ZCal[i][1],
                           calibration->DCal[i],
@@ -203,28 +203,28 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
             switch (type) {
                 case RKParameterTypeInt:
                     ((int *)target)[i] =  (int)MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %u", ((int *)target)[i]);
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %u", ((int *)target)[i]);
                     break;
                 case RKParameterTypeUInt:
                     ((unsigned int *)target)[i] =  (unsigned int)MIN(MAX(object->doubleValues[i], 0.0), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %u", ((unsigned int *)target)[i]);
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %u", ((unsigned int *)target)[i]);
                     break;
                 case RKParameterTypeBool:
                     ((bool *)target)[i] =  object->boolValues[i];
-                    k += snprintf(string + k, RKNameLength - k, " %s", ((bool *)target)[i] ? "True" : "False");
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %s", ((bool *)target)[i] ? "True" : "False");
                     break;
                 case RKParameterTypeFloat:
                     ((float *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %.4f", ((float *)target)[i]);
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %.4f", ((float *)target)[i]);
                     break;
                 case RKParameterTypeDouble:
                     ((double *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKNameLength - k, " %.7f", ((double *)target)[i]);
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %.7f", ((double *)target)[i]);
                     break;
                 case RKParameterTypeString:
                     // For string type, count is used as the maximum length, i = count ensure there is only 1 iteration
                     strncpy((char *)target, object->valueString, count);
-                    k += snprintf(string + k, RKNameLength - k, " %s", (char *)target);
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %s", (char *)target);
                     i = count;
                     break;
                 default:
@@ -233,7 +233,7 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
         }
     }
     if (verb) {
-        RKLog(">%s  (k = %d / %d)\n", string, k, RKNameLength);
+        RKLog(">%s  (k = %d / %d)\n", string, k, RKMaximumStringLength);
     }
     return RKResultSuccess;
 }

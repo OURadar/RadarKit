@@ -152,7 +152,7 @@ static void *sweepWriter(void *in) {
     char *productName = engine->productName;
     char *productUnit = engine->productUnit;
     char *productColormap = engine->productColormap;
-    RKBaseProductIndex productIndex;
+    RKBaseMomentIndex productIndex;
 
     int ncid;
     int dimensionIds[2];
@@ -184,13 +184,13 @@ static void *sweepWriter(void *in) {
     const bool sweepIsRHI = (sweep->header.config.startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
 
     int summarySize = 0;
-    uint32_t productList = sweep->header.productList;
-    int productCount = __builtin_popcount(productList & RKBaseProductListProductZVWDPRKS);
+    RKBaseMomentList momentList = sweep->header.baseMomentList;
+    int productCount = __builtin_popcount(momentList & RKBaseMomentListProductZVWDPRKS);
 
     // Base products
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
-        RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &productList);
+        RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &momentList);
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
         i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
@@ -380,7 +380,7 @@ static void *sweepWriter(void *in) {
         
         y = array2D;
         // Should AND it with a user preference
-        convertRadiansToDegrees = productIndex == RKBaseProductIndexP || productIndex == RKBaseProductIndexK;
+        convertRadiansToDegrees = productIndex == RKBaseMomentIndexP || productIndex == RKBaseMomentIndexK;
         for (j = 0; j < sweep->header.rayCount; j++) {
             x = RKGetFloatDataFromRay(sweep->rays[j], productIndex);
             if (convertRadiansToDegrees) {
@@ -867,13 +867,13 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
-    uint32_t overallProductList = 0;
+    RKBaseMomentList overallMomentList = 0;
 
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
     // Consolidate some other information and check consistencies
     for (k = 0; k < n; k++) {
-        overallProductList |= rays[k]->header.productList;
+        overallMomentList |= rays[k]->header.baseMomentList;
         if (rays[k]->header.gateCount != S->header.gateCount) {
             RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
                   engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
@@ -891,7 +891,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
               engine->name,
               S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
               S->header.marker & 0xFF  , T->header.marker & 0xFF  , E->header.marker & 0xFF,
-              overallProductList,
+              overallMomentList,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
@@ -923,7 +923,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
     sweep->header.rayCount = n;
     sweep->header.gateCount = S->header.gateCount;
     sweep->header.gateSizeMeters = S->header.gateSizeMeters;
-    sweep->header.productList = overallProductList;
+    sweep->header.baseMomentList = overallMomentList;
     sweep->header.external = true;
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
     memcpy(&sweep->header.config, config, sizeof(RKConfig));
@@ -998,22 +998,22 @@ RKSweep *RKSweepRead(const char *inputFile) {
         "KDP"
     };
     uint32_t products[] = {
-        RKBaseProductListProductZ,
-        RKBaseProductListProductV,
-        RKBaseProductListProductW,
-        RKBaseProductListProductD,
-        RKBaseProductListProductP,
-        RKBaseProductListProductR,
-        RKBaseProductListProductK
+        RKBaseMomentListProductZ,
+        RKBaseMomentListProductV,
+        RKBaseMomentListProductW,
+        RKBaseMomentListProductD,
+        RKBaseMomentListProductP,
+        RKBaseMomentListProductR,
+        RKBaseMomentListProductK
     };
     uint32_t productIndices[] = {
-        RKBaseProductIndexZ,
-        RKBaseProductIndexV,
-        RKBaseProductIndexW,
-        RKBaseProductIndexD,
-        RKBaseProductIndexP,
-        RKBaseProductIndexR,
-        RKBaseProductIndexK
+        RKBaseMomentIndexZ,
+        RKBaseMomentIndexV,
+        RKBaseMomentIndexW,
+        RKBaseMomentIndexD,
+        RKBaseMomentIndexP,
+        RKBaseMomentIndexR,
+        RKBaseMomentIndexK
     };
 
     // First part: go through all the symbols I know of, get the very first filename
@@ -1265,24 +1265,24 @@ RKSweep *RKSweepRead(const char *inputFile) {
     sweep->header.rayCount = (uint32_t)rayCount;
     sweep->header.gateCount = (uint32_t)gateCount;
     sweep->header.gateSizeMeters = ray->header.gateSizeMeters;
-    sweep->header.productList = productList;
+    sweep->header.baseMomentList = productList;
 
     for (j = 0; j < rayCount; j++) {
         ray = RKGetRay(sweep->rayBuffer, j);
         ray->header.i += sweep->header.rayCount;
         ray->header.s = RKRayStatusReady;
-        ray->header.productList = productList;
+        ray->header.baseMomentList = productList;
     }
 
     /*
     RKLog("  -> %s%s%s%s%s%s%s\n",
-          productList & RKBaseProductListProductZ ? "Z" : "",
-          productList & RKBaseProductListProductV ? "V" : "",
-          productList & RKBaseProductListProductW ? "W" : "",
-          productList & RKBaseProductListProductD ? "D" : "",
-          productList & RKBaseProductListProductP ? "P" : "",
-          productList & RKBaseProductListProductR ? "R" : "",
-          productList & RKBaseProductListProductK ? "K" : ""
+          productList & RKBaseMomentListProductZ ? "Z" : "",
+          productList & RKBaseMomentListProductV ? "V" : "",
+          productList & RKBaseMomentListProductW ? "W" : "",
+          productList & RKBaseMomentListProductD ? "D" : "",
+          productList & RKBaseMomentListProductP ? "P" : "",
+          productList & RKBaseMomentListProductR ? "R" : "",
+          productList & RKBaseMomentListProductK ? "K" : ""
           );
     */
 
