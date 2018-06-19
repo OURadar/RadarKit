@@ -34,7 +34,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     RKConfig *newConfig = &configs[*configIndex];
     RKConfig *oldConfig = &configs[RKPreviousModuloS(*configIndex, configBufferDepth)];
 
-    const uint64_t configId = newConfig->i + configBufferDepth;
+    const RKIdentifier configId = newConfig->i + configBufferDepth;
     
     //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 

@@ -887,7 +887,7 @@ char *RKStringOfStream(RKStream stream) {
     return string;
 }
 
-int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
+int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *index, RKBaseMomentList *list) {
     if (list == NULL || *list == 0) {
         return RKResultNullInput;
     }
@@ -939,7 +939,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Power",
         "Default"
     };
-    uint32_t products[] = {
+    RKBaseMomentList baseMoments[] = {
         RKBaseMomentListProductZ,
         RKBaseMomentListProductV,
         RKBaseMomentListProductW,
@@ -951,7 +951,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         RKBaseMomentListProductSv,
         0xFFFF
     };
-    uint32_t productIndices[] = {
+    RKBaseMomentIndex baseMomentIndices[] = {
         RKBaseMomentIndexZ,
         RKBaseMomentIndexV,
         RKBaseMomentIndexW,
@@ -999,9 +999,9 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         sprintf(colormap, "%s", colormaps[k]);
     }
     if (index) {
-        *index = productIndices[k];
+        *index = baseMomentIndices[k];
     }
-    *list ^= products[k];
+    *list ^= baseMoments[k];
     return RKResultSuccess;
 }
 

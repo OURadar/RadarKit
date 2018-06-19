@@ -712,8 +712,7 @@ typedef struct rk_radar_desc {
     RKInitFlag           initFlags;                                            //
     uint32_t             pulseCapacity;                                        //
     uint16_t             pulseToRayRatio;                                      //
-    uint8_t              baseProductsPerRay;                                   // Number of base products in each ray
-    uint8_t              doNotUse;                                             //
+    uint16_t             doNotUse;                                             //
     uint32_t             healthNodeCount;                                      //
     uint32_t             healthBufferDepth;                                    //
     uint32_t             statusBufferDepth;                                    //

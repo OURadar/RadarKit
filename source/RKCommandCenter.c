@@ -878,7 +878,7 @@ int socketStreamHandler(RKOperator *O) {
                     sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
 
                     O->delimTx.type = RKNetworkPacketTypeSweepRay;
-                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float));
+                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(RKFloat));
 
                     for (k = 0; k < sweepHeader.rayCount; k++) {
                         ray = sweep->rays[k];

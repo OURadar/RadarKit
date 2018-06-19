@@ -152,7 +152,6 @@ static void *sweepWriter(void *in) {
     char *productName = engine->productName;
     char *productUnit = engine->productUnit;
     char *productColormap = engine->productColormap;
-    RKBaseMomentIndex productIndex;
 
     int ncid;
     int dimensionIds[2];
@@ -184,13 +183,14 @@ static void *sweepWriter(void *in) {
     const bool sweepIsRHI = (sweep->header.config.startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
 
     int summarySize = 0;
+    RKBaseMomentIndex momentIndex;
     RKBaseMomentList momentList = sweep->header.baseMomentList;
     int productCount = __builtin_popcount(momentList & RKBaseMomentListProductZVWDPRKS);
 
     // Base products
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
-        RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &productIndex, &momentList);
+        RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &momentIndex, &momentList);
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
         i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
@@ -380,9 +380,9 @@ static void *sweepWriter(void *in) {
         
         y = array2D;
         // Should AND it with a user preference
-        convertRadiansToDegrees = productIndex == RKBaseMomentIndexP || productIndex == RKBaseMomentIndexK;
+        convertRadiansToDegrees = momentIndex == RKBaseMomentIndexP || momentIndex == RKBaseMomentIndexK;
         for (j = 0; j < sweep->header.rayCount; j++) {
-            x = RKGetFloatDataFromRay(sweep->rays[j], productIndex);
+            x = RKGetFloatDataFromRay(sweep->rays[j], momentIndex);
             if (convertRadiansToDegrees) {
                 for (i = 0; i < sweep->rays[0]->header.gateCount; i++) {
                     if (isfinite(*x)) {
