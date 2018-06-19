@@ -20,6 +20,18 @@ typedef struct rk_ray_anchors {
     uint32_t                         count;
 } RKRayAnchors;
 
+typedef struct rk_sweep_scratch {
+    char                             symbol[8];
+    RKName                           name;
+    RKName                           unit;
+    RKName                           colormap;
+    float                            *array1D;
+    float                            *array2D;
+    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
+    char                             filename[RKMaximumPathLength];
+    char                             summary[RKMaximumStringLength];
+} RKSweepScratchSpace;
+
 typedef struct rk_sweep_engine RKSweepEngine;
 
 struct rk_sweep_engine {
@@ -41,17 +53,15 @@ struct rk_sweep_engine {
 
     // Program set variables
     pthread_t                        tidRayGatherer;
+    RKSweepScratchSpace              scratchSpaces[RKRayAnchorsDepth];
     RKRayAnchors                     rayAnchors[RKRayAnchorsDepth];
     uint8_t                          rayAnchorsIndex;
-    char                             rayProductSymbol[8];
-    RKName                           rayProductName;
-    RKName                           rayProductUnit;
-    RKName                           rayProductColormap;
-    float                            *array1D;
-    float                            *array2D;
-    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
-    char                             filename[RKMaximumPathLength];
-    char                             summary[RKMaximumStringLength];
+//    char                             rayProductSymbol[8];
+//    RKName                           rayProductName;
+//    RKName                           rayProductUnit;
+//    RKName                           rayProductColormap;
+//    float                            *array1D;
+//    float                            *array2D;
     RKProduct                        products[RKMaximumProductCount];
     pthread_mutex_t                  productMutex;
 

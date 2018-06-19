@@ -17,12 +17,6 @@
 #define NC_MODE  NC_CLOBBER
 #endif
 
-// Internal Functions
-
-static int put_global_text_att(const int ncid, const char *att, const char *text);
-static void *sweepWriter(void *);
-static void *rayGatherer(void *in);
-
 #pragma mark - Helper Functions
 
 static int put_global_text_att(const int ncid, const char *att, const char *text) {
@@ -130,28 +124,31 @@ static void *sweepWriter(void *in) {
     if (!(engine->state & RKEngineStateActive)) {
         return NULL;
     }
-    
+
+    // Localize the storage
+    char *symbol = engine->scratchSpaces[anchorIndex].symbol;
+    char *productName = engine->scratchSpaces[anchorIndex].name;
+    char *productUnit = engine->scratchSpaces[anchorIndex].unit;
+    char *productColormap = engine->scratchSpaces[anchorIndex].colormap;
+    char *filename = engine->scratchSpaces[anchorIndex].filename;
+    char *filelist = engine->scratchSpaces[anchorIndex].filelist;
+    char *summary = engine->scratchSpaces[anchorIndex].summary;
+    float *array1D = engine->scratchSpaces[anchorIndex].array1D;
+    float *array2D = engine->scratchSpaces[anchorIndex].array2D;
+
     j = 0;
-    engine->summary[0] = '\0';
+    summary[0] = '\0';
     for (i = 0; i < RKMaximumProductCount; i++) {
         if (engine->products[i].flag == RKProductStatusVacant) {
             continue;
         }
-        j += sprintf(engine->summary + j, " %d:0x%04x/%lu/0x%x", i, engine->products[i].pid, (unsigned long)engine->products[i].i, engine->products[i].flag);
+        j += sprintf(summary + j, " %d:0x%04x/%lu/0x%x", i, engine->products[i].pid, (unsigned long)engine->products[i].i, engine->products[i].flag);
     }
     RKLog("%s Concluding sweep.   allReported = %s   %s",
-          engine->name, allReported ? "true" : "false", engine->summary);
+          engine->name, allReported ? "true" : "false", summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
-    
-    char *filelist = engine->filelist;
-    char *filename = engine->filename;
-
-    char *symbol = engine->rayProductSymbol;
-    char *productName = engine->rayProductName;
-    char *productUnit = engine->rayProductUnit;
-    char *productColormap = engine->rayProductColormap;
 
     int ncid;
     int dimensionIds[2];
@@ -163,8 +160,6 @@ static void *sweepWriter(void *in) {
     
     int tmpi;
     float tmpf;
-    float *array1D = engine->array1D;
-    float *array2D = engine->array2D;
     float *x;
     float *y;
     bool convertRadiansToDegrees;
@@ -212,9 +207,9 @@ static void *sweepWriter(void *in) {
 
         if (p == 0) {
             // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
-            summarySize = sprintf(engine->summary, "%s ...%s", engine->doNotWrite ? "Skipped" : "Created", RKLastTwoPartsOfPath(filename));
+            summarySize = sprintf(summary, "%s ...%s", engine->doNotWrite ? "Skipped" : "Created", RKLastTwoPartsOfPath(filename));
         } else {
-            summarySize += sprintf(engine->summary + summarySize, ", %s", symbol);
+            summarySize += sprintf(summary + summarySize, ", %s", symbol);
         }
 
         if (engine->doNotWrite) {
@@ -419,7 +414,7 @@ static void *sweepWriter(void *in) {
 
     // Show a summary of all the files created
     if (engine->verbose && summarySize > 0) {
-        RKLog("%s %s", engine->name, engine->summary);
+        RKLog("%s %s", engine->name, summary);
     }
 
     if (!engine->doNotWrite && engine->hasHandleFilesScript) {
@@ -459,7 +454,7 @@ static void *sweepWriter(void *in) {
 static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
-    int j, n, s;
+    int j, k, n, s;
 
     uint32_t is = 0;   // Start index
     uint64_t tic = 0;  // Local copy of engine tic
@@ -471,20 +466,23 @@ static void *rayGatherer(void *in) {
     RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
 
     // Allocate if the arrays have not been allocated
-    if (engine->array1D == NULL) {
-        engine->array1D = (float *)malloc(RKMaximumRaysPerSweep * sizeof(float));
-        if (engine->array1D == NULL) {
-            RKLog("%s Error. Unable to allocate memory.\n", engine->name);
-            exit(EXIT_FAILURE);
+    for (k = 0; k < RKRayAnchorsDepth; k++) {
+        if (engine->scratchSpaces[k].array1D == NULL) {
+            engine->scratchSpaces[k].array1D = (float *)malloc(RKMaximumRaysPerSweep * sizeof(float));
+            if (engine->scratchSpaces[k].array1D == NULL) {
+                RKLog("%s Error. Unable to allocate memory (1D).\n", engine->name);
+                exit(EXIT_FAILURE);
+            }
+            engine->scratchSpaces[k].array2D = (float *)malloc(RKMaximumRaysPerSweep * ray->header.capacity * sizeof(float));
+            if (engine->scratchSpaces[k].array2D == NULL) {
+                RKLog("%s Error. Unable to allocate memory (2D).\n", engine->name);
+                exit(EXIT_FAILURE);
+            }
+
+            engine->memoryUsage += RKMaximumRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
         }
-        engine->array2D = (float *)malloc(RKMaximumRaysPerSweep * ray->header.capacity * sizeof(float));
-        if (engine->array2D == NULL) {
-            RKLog("%s Error. Unable to allocate memory.\n", engine->name);
-            exit(EXIT_FAILURE);
-        }
-        engine->memoryUsage += RKMaximumRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
     }
-    
+
     // Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
@@ -625,6 +623,12 @@ static void *rayGatherer(void *in) {
     if (tidSweepWriter) {
         pthread_join(tidSweepWriter, NULL);
     }
+    for (k = 0; k < RKRayAnchorsDepth; k++) {
+        free(engine->scratchSpaces[k].array1D);
+        free(engine->scratchSpaces[k].array2D);
+        engine->scratchSpaces[k].array1D = NULL;
+        engine->scratchSpaces[k].array2D = NULL;
+    }
     return NULL;
 }
 
@@ -650,10 +654,6 @@ RKSweepEngine *RKSweepEngineInit(void) {
 void RKSweepEngineFree(RKSweepEngine *engine) {
     if (engine->state & RKEngineStateActive) {
         RKSweepEngineStop(engine);
-    }
-    if (engine->array1D) {
-        free(engine->array1D);
-        free(engine->array2D);
     }
     pthread_mutex_destroy(&engine->productMutex);
     free(engine);
