@@ -42,12 +42,12 @@ struct rk_sweep_engine {
     // Program set variables
     pthread_t                        tidRayGatherer;
     RKRayAnchors                     rayAnchors[RKRayAnchorsDepth];
-	uint8_t                          rayAnchorsIndex;
+    uint8_t                          rayAnchorsIndex;
     float                            *array1D;
     float                            *array2D;
     char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
     char                             filename[RKMaximumPathLength];
-	char                             productSymbol[8];
+    char                             productSymbol[8];
     RKName                           productName;
     RKName                           productUnit;
     RKName                           productColormap;

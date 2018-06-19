@@ -1074,6 +1074,7 @@ typedef struct rk_file_monitor {                                               /
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
+        RKName           unit;
         RKName           colormap;                                             // Name of the colormap on the UI
         char             symbol[8];                                            // Product symbol
         RKProductType    type;                                                 // RKProductType
@@ -1091,7 +1092,8 @@ typedef struct rk_user_product {                                               /
     RKProductId          pid;                                                  // Product identifier from RKProductRegister()
     RKProductDesc        desc;                                                 // Description
     RKProductStatus      flag;                                                 // Various state
-    uint32_t             capacity;                                             // Number of RKFloat elements in *array
+    uint32_t             depth;                                                // Number of arrays
+    uint32_t             capacity;                                             // Number of RKFloat elements in blcok of array
     RKFloat              *array;                                               // Flattened array of user product
 } RKProduct;
 
