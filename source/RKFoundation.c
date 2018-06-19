@@ -1300,6 +1300,14 @@ int RKParseProductDescription(RKProductDesc *desc, const char *inputString) {
         return RKResultIncompleteProductDescription;
     }
     // Optional values
+    keyString = RKGetValueOfKey(inputString, "unit");
+    if (keyString) {
+        strncpy(desc->unit, keyString, 5);
+    }
+    keyString = RKGetValueOfKey(inputString, "colormap");
+    if (keyString) {
+        strncpy(desc->colormap, keyString, 9);
+    }
     keyString = RKGetValueOfKey(inputString, "minimumValue");
     if (keyString) {
         desc->mininimumValue = (RKFloat)atof(keyString);

@@ -125,11 +125,11 @@ static void *sweepWriter(void *in) {
         return NULL;
     }
 
-    // Localize the storage
+    // Localize the scratch space storage
     char *symbol = engine->scratchSpaces[scratchSpaceIndex].symbol;
-    char *productName = engine->scratchSpaces[scratchSpaceIndex].name;
-    char *productUnit = engine->scratchSpaces[scratchSpaceIndex].unit;
-    char *productColormap = engine->scratchSpaces[scratchSpaceIndex].colormap;
+    char *name = engine->scratchSpaces[scratchSpaceIndex].name;
+    char *unit = engine->scratchSpaces[scratchSpaceIndex].unit;
+    char *colormap = engine->scratchSpaces[scratchSpaceIndex].colormap;
     char *filename = engine->scratchSpaces[scratchSpaceIndex].filename;
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
@@ -144,8 +144,7 @@ static void *sweepWriter(void *in) {
         }
         j += sprintf(summary + j, " %d:0x%04x/%lu/0x%x", i, engine->products[i].pid, (unsigned long)engine->products[i].i, engine->products[i].flag);
     }
-    RKLog("%s Concluding sweep.   allReported = %s   %s",
-          engine->name, allReported ? "true" : "false", summary);
+    RKLog("%s Concluding sweep.   allReported = %s   %s", engine->name, allReported ? "true" : "false", summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -185,7 +184,7 @@ static void *sweepWriter(void *in) {
     // Base products
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
-        RKGetNextProductDescription(symbol, productName, productUnit, productColormap, &momentIndex, &momentList);
+        RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
 
         // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
         i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
@@ -242,13 +241,13 @@ static void *sweepWriter(void *in) {
         nc_def_var(ncid, "Elevation", NC_FLOAT, 1, dimensionIds, &variableIdElevation);
         nc_def_var(ncid, "Beamwidth", NC_FLOAT, 1, dimensionIds, &variableIdBeamwidth);
         nc_def_var(ncid, "GateWidth", NC_FLOAT, 1, dimensionIds, &variableIdGateWidth);
-        nc_def_var(ncid, productName, NC_FLOAT, 2, dimensionIds, &variableIdData);
+        nc_def_var(ncid, name, NC_FLOAT, 2, dimensionIds, &variableIdData);
 
         nc_put_att_text(ncid, variableIdAzimuth, "Units", 7, "Degrees");
         nc_put_att_text(ncid, variableIdElevation, "Units", 7, "Degrees");
         nc_put_att_text(ncid, variableIdBeamwidth, "Units", 7, "Degrees");
         nc_put_att_text(ncid, variableIdGateWidth, "Units", 6, "Meters");
-        nc_put_att_text(ncid, variableIdData, "Units", strlen(productUnit), productUnit);
+        nc_put_att_text(ncid, variableIdData, "Units", strlen(unit), unit);
 
 #if defined (COMPRESSED_NETCDF)
 
@@ -261,7 +260,7 @@ static void *sweepWriter(void *in) {
 #endif
         
         // Global attributes - some are WDSS-II required
-        nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(productName), productName);
+        nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(name), name);
         nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
         if (sweepIsPPI) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "PPI");
@@ -285,7 +284,7 @@ static void *sweepWriter(void *in) {
         put_global_text_att(ncid, "Nyquist_Vel-unit", "MetersPerSecond");
         nc_put_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", NC_FLOAT, 1, &va);
         put_global_text_att(ncid, "Unit-unit", "dimensionless");
-        put_global_text_att(ncid, "Unit-value", productUnit);
+        put_global_text_att(ncid, "Unit-value", unit);
         put_global_text_att(ncid, "radarName-unit", "dimensionless");
         put_global_text_att(ncid, "radarName-value", engine->radarDescription->name);
         put_global_text_att(ncid, "vcp-unit", "dimensionless");
@@ -293,7 +292,7 @@ static void *sweepWriter(void *in) {
         
         // WDSS-II auxiliary
         put_global_text_att(ncid, "ColorMap-unit", "dimensionless");
-        put_global_text_att(ncid, "ColorMap-value", productColormap);
+        put_global_text_att(ncid, "ColorMap-value", colormap);
         
         // Other housekeeping attributes
         if (sweepIsPPI) {
@@ -407,7 +406,17 @@ static void *sweepWriter(void *in) {
     } // for (p = 0; p < productCount; p++) ...
 
     // User products
-
+    for (p = 0; p < RKMaximumProductCount; p++) {
+        if (engine->products[p].flag == RKProductStatusVacant) {
+            continue;
+        }
+        RKProduct *product = &engine->products[p];
+        if (engine->verbose) {
+            RKLog("%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
+            RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
+            RKShowArray(product->array, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
+        }
+    }
 
     // We are done with the sweep
     RKSweepFree(sweep);
@@ -424,8 +433,8 @@ static void *sweepWriter(void *in) {
             RKLog("Error. Failed using system() -> %d   errno = %d\n", j, errno);
         }
         // Potential filenames that may be generated by the custom command. Need to notify file manager about them.
-        sprintf(productName, "-%s.nc", symbol);
-        RKReplaceFileExtension(filename, productName, ".__");
+        sprintf(name, "-%s.nc", symbol);
+        RKReplaceFileExtension(filename, name, ".__");
         if (engine->handleFilesScriptProducesTgz) {
             RKReplaceFileExtension(filename, ".__", ".tgz");
             RKLog("%s %s", engine->name, filename);
@@ -820,7 +829,7 @@ int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductI
         return RKResultFailedToFindProductId;
     }
     if (engine->products[i].pid == productId) {
-        RKLog("%s userProductid[%d] = %lu -> %lu\n", engine->name, i, engine->products[i].i, sweep->header.config.i);
+        RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->products[i].i, sweep->header.config.i);
         engine->products[i].i = sweep->header.config.i;
     }
     if (engine->products[i].flag & RKProductStatusSleep1) {
