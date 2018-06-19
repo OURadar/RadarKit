@@ -40,7 +40,7 @@ typedef struct rk_user {
     uint32_t                         pingCount;
     uint32_t                         commandCount;
     uint32_t                         controlFirstUID;
-    uint32_t                         rayAnchorsIndex;
+    uint32_t                         scratchSpaceIndex;
     RKTextPreferences                textPreferences;
     uint16_t                         pulseDownSamplingRatio;
     uint16_t                         rayDownSamplingRatio;

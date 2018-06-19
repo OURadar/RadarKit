@@ -30,7 +30,7 @@ static void *rayReleaser(void *in) {
     RKRay *ray;
 
     // Grab the anchor reference as soon as possible
-    const uint8_t anchorIndex = engine->rayAnchorsIndex;
+    const uint8_t scratchSpaceIndex = engine->scratchSpaceIndex;
 
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
@@ -42,11 +42,11 @@ static void *rayReleaser(void *in) {
     } while (++s < 50 && engine->state & RKEngineStateActive);
 
     if (engine->verbose > 1) {
-        RKLog("%s rayReleaser()  anchorIndex = %d\n", engine->name, anchorIndex);
+        RKLog("%s rayReleaser()  scratchSpaceIndex = %d\n", engine->name, scratchSpaceIndex);
     }
     // Set them free
-    for (i = 0; i < engine->rayAnchors[anchorIndex].count; i++) {
-        ray = engine->rayAnchors[anchorIndex].rays[i];
+    for (i = 0; i < engine->scratchSpaces[scratchSpaceIndex].rayCount; i++) {
+        ray = engine->scratchSpaces[scratchSpaceIndex].rays[i];
         ray->header.s = RKRayStatusVacant;
     }
 
@@ -59,15 +59,15 @@ static void *sweepWriter(void *in) {
     int i, j, p, s;
 
     // Grab the anchor reference as soon as possible
-    const uint8_t anchorIndex = engine->rayAnchorsIndex;
+    const uint8_t scratchSpaceIndex = engine->scratchSpaceIndex;
 
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
-    RKSweep *sweep = RKSweepCollect(engine, anchorIndex);
+    RKSweep *sweep = RKSweepCollect(engine, scratchSpaceIndex);
     if (sweep == NULL) {
         if (engine->verbose > 1) {
-            RKLog("%s Empty sweep   anchorIndex = %d\n", anchorIndex);
+            RKLog("%s Empty sweep   scratchSpaceIndex = %d\n", scratchSpaceIndex);
         }
         return NULL;
     }
@@ -126,15 +126,15 @@ static void *sweepWriter(void *in) {
     }
 
     // Localize the storage
-    char *symbol = engine->scratchSpaces[anchorIndex].symbol;
-    char *productName = engine->scratchSpaces[anchorIndex].name;
-    char *productUnit = engine->scratchSpaces[anchorIndex].unit;
-    char *productColormap = engine->scratchSpaces[anchorIndex].colormap;
-    char *filename = engine->scratchSpaces[anchorIndex].filename;
-    char *filelist = engine->scratchSpaces[anchorIndex].filelist;
-    char *summary = engine->scratchSpaces[anchorIndex].summary;
-    float *array1D = engine->scratchSpaces[anchorIndex].array1D;
-    float *array2D = engine->scratchSpaces[anchorIndex].array2D;
+    char *symbol = engine->scratchSpaces[scratchSpaceIndex].symbol;
+    char *productName = engine->scratchSpaces[scratchSpaceIndex].name;
+    char *productUnit = engine->scratchSpaces[scratchSpaceIndex].unit;
+    char *productColormap = engine->scratchSpaces[scratchSpaceIndex].colormap;
+    char *filename = engine->scratchSpaces[scratchSpaceIndex].filename;
+    char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
+    char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
+    float *array1D = engine->scratchSpaces[scratchSpaceIndex].array1D;
+    float *array2D = engine->scratchSpaces[scratchSpaceIndex].array2D;
 
     j = 0;
     summary[0] = '\0';
@@ -463,10 +463,10 @@ static void *rayGatherer(void *in) {
     pthread_t tidRayReleaser = (pthread_t)0;
 
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
-    RKRay **rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
+    RKRay **rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
 
     // Allocate if the arrays have not been allocated
-    for (k = 0; k < RKRayAnchorsDepth; k++) {
+    for (k = 0; k < RKSweepScratchSpaceDepth; k++) {
         if (engine->scratchSpaces[k].array1D == NULL) {
             engine->scratchSpaces[k].array1D = (float *)malloc(RKMaximumRaysPerSweep * sizeof(float));
             if (engine->scratchSpaces[k].array1D == NULL) {
@@ -542,7 +542,7 @@ static void *rayGatherer(void *in) {
             ray = RKGetRay(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
-            engine->rayAnchors[engine->rayAnchorsIndex].count = n;
+            engine->scratchSpaces[engine->scratchSpaceIndex].rayCount = n;
             if (engine->verbose > 1) {
                 RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d   n = %d\n", engine->name, is, j, n);
             }
@@ -572,11 +572,11 @@ static void *rayGatherer(void *in) {
             } while (tic == engine->tic && engine->state & RKEngineStateActive);
 
             // Ready for next collection while the sweepWriter is busy
-            engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+            engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
             if (engine->verbose > 1) {
-                RKLog("%s RKMarkerSweepEnd   rayAnchorsIndex -> %d.\n", engine->name, engine->rayAnchorsIndex);
+                RKLog("%s RKMarkerSweepEnd   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
             }
-            rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
+            rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
             if (engine->verbose > 1) {
@@ -591,7 +591,7 @@ static void *rayGatherer(void *in) {
                     rays[n++] = ray;
                     is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
                 } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
-                engine->rayAnchors[engine->rayAnchorsIndex].count = n;
+                engine->scratchSpaces[engine->scratchSpaceIndex].rayCount = n;
 
                 // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
                 if (tidRayReleaser) {
@@ -606,11 +606,11 @@ static void *rayGatherer(void *in) {
                 } while (tic == engine->tic && engine->state & RKEngineStateActive);
 
                 // Ready for next collection while the sweepWriter is busy
-                engine->rayAnchorsIndex = RKNextModuloS(engine->rayAnchorsIndex, RKRayAnchorsDepth);
+                engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
                 if (engine->verbose > 1) {
-                    RKLog("%s RKMarkerSweepBegin   rayAnchorsIndex -> %d.\n", engine->name, engine->rayAnchorsIndex);
+                    RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
                 }
-                rays = engine->rayAnchors[engine->rayAnchorsIndex].rays;
+                rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
             }
             is = j;
         }
@@ -623,7 +623,7 @@ static void *rayGatherer(void *in) {
     if (tidSweepWriter) {
         pthread_join(tidSweepWriter, NULL);
     }
-    for (k = 0; k < RKRayAnchorsDepth; k++) {
+    for (k = 0; k < RKSweepScratchSpaceDepth; k++) {
         free(engine->scratchSpaces[k].array1D);
         free(engine->scratchSpaces[k].array2D);
         engine->scratchSpaces[k].array1D = NULL;
@@ -845,24 +845,24 @@ void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
     dst[n] = 0;
 }
 
-RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t anchorIndex) {
+RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) {
     MAKE_FUNCTION_NAME(name)
     int k;
     RKSweep *sweep = NULL;
 
     if (engine->verbose > 2) {
-        RKLog("%s %s   anchorIndex = %u\n", engine->name, name, anchorIndex);
+        RKLog("%s %s   anchorIndex = %u\n", engine->name, name, scratchSpaceIndex);
     }
 
-    uint32_t n = engine->rayAnchors[anchorIndex].count;
+    uint32_t n = engine->scratchSpaces[scratchSpaceIndex].rayCount;
     if (n < 2) {
         if (engine->verbose > 1) {
-            RKLog("%s Empty sweep.   n = %d   anchorIndex = %u\n", engine->name, n, anchorIndex);
+            RKLog("%s Empty sweep.   n = %d   anchorIndex = %u\n", engine->name, n, scratchSpaceIndex);
         }
         return NULL;
     }
 
-    RKRay **rays = engine->rayAnchors[anchorIndex].rays;
+    RKRay **rays = engine->scratchSpaces[scratchSpaceIndex].rays;
     RKRay *S = rays[0];
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];

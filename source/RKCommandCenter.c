@@ -182,7 +182,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress = RKStreamNull;
                     user->streams = stream;
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-                    user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+                    user->scratchSpaceIndex = user->radar->sweepEngine->scratchSpaceIndex;
                     pthread_mutex_unlock(&user->mutex);
                     sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%lx, \"streams\": 0x%lx, \"indices\": [%d, %d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
@@ -473,12 +473,12 @@ int socketStreamHandler(RKOperator *O) {
     //      i) For a health, it is radar->healthIndex - 1
     //     ii) For a ray, it is radar->rayIndex - (number of workers)
     //    iii) For a pulse, it is radar->pulseIndex - (number of workers)
-    //     iv) For a sweep, it is radar->sweepEngine->rayAnchorsIndex
+    //     iv) For a sweep, it is radar->sweepEngine->scratchSpaceIndex
     // 2) The latest slot it will be stored. It is crucial to ensure that:
     //      i) For a health, it is RKStatusReady
     //     ii) For a ray, it has RKRayStatusReady set
     //    iii) For a pulse, it has RKPulseStatusReadyForMoments set
-    //     iv) For a sweep, rayAnchorsIndex has increased
+    //     iv) For a sweep, scratchSpaceIndex has increased
     // 3) Once the first payload is sent, the stream is consider in progress (streamsInProgress)
     // 4) If (2) can't be met within X secs, in progress flag is not set so (2) will be checked
     //    again in the next iteraction.
@@ -803,9 +803,9 @@ int socketStreamHandler(RKOperator *O) {
     // Sweep
     if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
-        if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) {
-            //RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->rayAnchorsIndex, user->radar->sweepEngine->rayAnchorsIndex);
-            sweep = RKSweepCollect(user->radar->sweepEngine, user->rayAnchorsIndex);
+        if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) {
+            //RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->scratchSpaceIndex, user->radar->sweepEngine->scratchSpaceIndex);
+            sweep = RKSweepCollect(user->radar->sweepEngine, user->scratchSpaceIndex);
             if (sweep) {
                 // Make a local copy of the sweepHeader and mutate it for this client while keeping the original intact
                 memcpy(&sweepHeader, &sweep->header, sizeof(RKSweepHeader));
@@ -961,11 +961,11 @@ int socketStreamHandler(RKOperator *O) {
                 } // if (productCount) ...
                 RKSweepFree(sweep);
             } else if (engine->verbose > 1) {
-                RKLog("%s %s Empty sweep   anchorIndex = %d.\n", engine->name, O->name, user->rayAnchorsIndex);
+                RKLog("%s %s Empty sweep   anchorIndex = %d.\n", engine->name, O->name, user->scratchSpaceIndex);
             } // if (sweep) ...
-            // This rayAnchorsIndex is consumed, moving to the next one
-            user->rayAnchorsIndex = RKNextModuloS(user->rayAnchorsIndex, RKRayAnchorsDepth);
-        } // if (user->rayAnchorsIndex != user->radar->sweepEngine->rayAnchorsIndex) ...
+            // This scratchSpaceIndex is consumed, moving to the next one
+            user->scratchSpaceIndex = RKNextModuloS(user->scratchSpaceIndex, RKSweepScratchSpaceDepth);
+        } // if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) ...
     } // if (user->streams & user->access & RKStreamSweepZVWDPRKS) ...
 
     // IQ
@@ -1326,7 +1326,7 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         user->rayIndex        = RKPreviousNModuloS(radar->rayIndex, 2 * radar->momentEngine->coreCount, radar->desc.rayBufferDepth);
         user->healthIndex     = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
         user->rayStatusIndex  = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
-        user->rayAnchorsIndex = user->radar->sweepEngine->rayAnchorsIndex;
+        user->scratchSpaceIndex = user->radar->sweepEngine->scratchSpaceIndex;
         pthread_mutex_unlock(&user->mutex);
         if (user->pulseIndex > radar->desc.pulseBufferDepth ||
             user->rayIndex > 2 * radar->momentEngine->coreCount ||
