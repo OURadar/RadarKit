@@ -43,17 +43,17 @@ struct rk_sweep_engine {
     pthread_t                        tidRayGatherer;
     RKRayAnchors                     rayAnchors[RKRayAnchorsDepth];
     uint8_t                          rayAnchorsIndex;
+    char                             rayProductSymbol[8];
+    RKName                           rayProductName;
+    RKName                           rayProductUnit;
+    RKName                           rayProductColormap;
     float                            *array1D;
     float                            *array2D;
     char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
     char                             filename[RKMaximumPathLength];
-    char                             productSymbol[8];
-    RKName                           productName;
-    RKName                           productUnit;
-    RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
-    RKProduct                        userProducts[RKMaximumProductCount];
-    pthread_mutex_t                  userProductMutex;
+    RKProduct                        products[RKMaximumProductCount];
+    pthread_mutex_t                  productMutex;
 
     // Status / health
     uint32_t                         processedRayIndex;
