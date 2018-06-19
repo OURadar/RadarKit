@@ -17,12 +17,12 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
     uint32_t  j, k;
     char      *string;
-    char      stringBuffer[RKMaxFilterCount][RKNameLength];
-    char      format[RKNameLength];
+    char      stringBuffer[RKMaxFilterCount][RKMaximumStringLength];
+    char      format[RKMaximumStringLength];
     int       w0 = 0, w1 = 0, w2 = 0, w3 = 0;
 
     for (k = 0; k < RKMaxFilterCount; k++) {
-        memset(stringBuffer[k], 0, RKNameLength * sizeof(char));
+        memset(stringBuffer[k], 0, RKMaximumStringLength * sizeof(char));
     }
     
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
@@ -91,7 +91,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     sprintf(stringBuffer[0], "VCP = (NULL)\n");
                 } else {
                     sprintf(stringBuffer[0], "VCP = %s\n", string);
-                    strncpy(newConfig->vcpDefinition, string, RKNameLength - 1);
+                    strncpy(newConfig->vcpDefinition, string, RKMaximumCommandLength - 8);
                 }
                 break;
             case RKConfigKeySystemNoise:

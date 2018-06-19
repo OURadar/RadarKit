@@ -829,7 +829,7 @@ static void handlePreferenceFileUpdate(void *in) {
 int main(int argc, const char **argv) {
 
     int k;
-    RKName cmd = "";
+    RKCommand cmd = "";
 
     RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);

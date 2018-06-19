@@ -252,7 +252,7 @@ void *RKOperatorRoutine(void *in) {
                 // Ready to read (command)
                 gettimeofday(&latestReadTime, NULL);
                 str = O->commands[O->commandIndexWrite];
-                if (fgets(str, RKNameLength - 1, fp) == NULL) {
+                if (fgets(str, RKMaximumCommandLength - 1, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
                     RKLog("%s %s Client disconnected.\n", M->name, O->name);
@@ -263,7 +263,7 @@ void *RKOperatorRoutine(void *in) {
                 }
                 RKStripTail(str);
                 O->commandIndexWrite = O->commandIndexWrite == RKServerBufferDepth - 1 ? 0 : O->commandIndexWrite + 1;
-                memset(O->commands[O->commandIndexWrite], 0, RKNameLength);
+                memset(O->commands[O->commandIndexWrite], 0, RKMaximumCommandLength);
             }
         } else if (r < 0) {
             // Errors

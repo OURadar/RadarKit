@@ -96,7 +96,7 @@ struct rk_operator  {
 
     char             *cmd;                                 // Latest command
 
-    RKName           commands[RKServerBufferDepth];        // A buffer to keep the latest N commands
+    RKCommand        commands[RKServerBufferDepth];        // A buffer to keep the latest N commands
     uint8_t          commandIndexWrite;                    // Index to write to the buffer
     uint8_t          commandIndexRead;                     // Index to read from the buffer
 

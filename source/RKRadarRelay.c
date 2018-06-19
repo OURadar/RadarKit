@@ -14,7 +14,7 @@ static int RKRadarRelayGreet(RKClient *client) {
 	// The shared user resource pointer
 	RKRadarRelay *engine = (RKRadarRelay *)client->userResource;
 
-	char command[RKNameLength];
+	RKCommand command;
 
 	pthread_mutex_lock(&engine->client->lock);
 

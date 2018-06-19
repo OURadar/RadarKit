@@ -105,7 +105,8 @@
 #define RKMaximumStringLength                4096
 #define RKMaximumPathLength                  1024
 #define RKMaximumFolderPathLength            768
-#define RKNameLength                         256
+#define RKMaximumCommandLength               512
+#define RKNameLength                         128
 #define RKPulseHeaderPaddedSize              256                               // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
 
@@ -142,6 +143,7 @@ typedef void *        RKPedestal;
 typedef void *        RKHealthRelay;
 typedef void *        RKMasterController;
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
+typedef char          RKCommand[RKMaximumCommandLength];                       // RKCommand x = char x[RKCommandLength]
 typedef uint8_t       RKUserProductId;                                         // Product identifier
 typedef uint64_t      RKIdentifier;                                            // Pulse identifier, ray identifier, config identifier, etc.
 typedef const float   RKConst;
@@ -765,7 +767,7 @@ typedef struct rk_config {
     RKFloat          PCal[RKMaxFilterCount];                                   // Waveform phase calibration (rad)
     RKFloat          SNRThreshold;                                             // Censor SNR (dB)
     RKName           waveform;                                                 // Waveform name
-    RKName           vcpDefinition;                                            // Volume coverage pattern
+    char             vcpDefinition[RKMaximumCommandLength];                    // Volume coverage pattern
 } RKConfig;
 
 //
@@ -1071,11 +1073,12 @@ typedef struct rk_file_monitor {                                               /
 typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
+        RKName           colormap;                                             // Name of the colormap on the UI
         char             symbol[8];                                            // Product symbol
         RKProductType    type;                                                 // RKProductType
-        uint32_t         pieceCount;                                           // Piece-wise function count
-        RKFloat          w[16];                                                // Product to color index weight (piece-wise function)
-        RKFloat          b[16];                                                // Product to color index bias (piece-wise function)
+        uint32_t         pieceCount;                                           // Count of piece-wise function that maps data to color index
+        RKFloat          w[16];                                                // Data to color index weight (piece-wise function)
+        RKFloat          b[16];                                                // Data to color index bias (piece-wise function)
         RKFloat          mininimumValue;                                       // Minimum value
         RKFloat          maximumValue;                                         // Maximum value
     };
@@ -1092,16 +1095,16 @@ typedef struct rk_user_product {                                               /
 } RKUserProduct;
 
 typedef struct rk_waveform {
-    int             count;                                                     // Number of groups
-    int             depth;                                                     // Maximum number of samples
-    double          fc;                                                        // Carrier frequency (Hz)
-    double          fs;                                                        // Sampling frequency (Hz)
-    RKWaveformType  type;                                                      // Various type of waveforms
-    RKName          name;                                                      // Waveform name in plain string
-    RKComplex       *samples[RKMaxFilterGroups];                               // Samples up to amplitude of 1.0
-    RKInt16C        *iSamples[RKMaxFilterGroups];                              // 16-bit full-scale equivalence of the waveforms
-    uint32_t        filterCounts[RKMaxFilterGroups];                           // Number of filters to applied to each waveform, see filterAnchors
-    RKFilterAnchor  filterAnchors[RKMaxFilterGroups][RKMaxFilterCount];        // Filter anchors of each sub-waveform for de-multiplexing
+    int                  count;                                                // Number of groups
+    int                  depth;                                                // Maximum number of samples
+    double               fc;                                                   // Carrier frequency (Hz)
+    double               fs;                                                   // Sampling frequency (Hz)
+    RKWaveformType       type;                                                 // Various type of waveforms
+    RKName               name;                                                 // Waveform name in plain string
+    RKComplex            *samples[RKMaxFilterGroups];                          // Samples up to amplitude of 1.0
+    RKInt16C             *iSamples[RKMaxFilterGroups];                         // 16-bit full-scale equivalence of the waveforms
+    uint32_t             filterCounts[RKMaxFilterGroups];                      // Number of filters to applied to each waveform, see filterAnchors
+    RKFilterAnchor       filterAnchors[RKMaxFilterGroups][RKMaxFilterCount];   // Filter anchors of each sub-waveform for de-multiplexing
 } RKWaveform;
 
 typedef struct rk_waveform_cal {
@@ -1115,4 +1118,4 @@ typedef struct rk_waveform_cal {
 
 #pragma pack(pop)
 
-#endif /* defined(__RadarKit_RKTypes__) */
+#endif /* defined(__RadarKit_Types__) */

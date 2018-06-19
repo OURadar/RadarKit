@@ -49,7 +49,7 @@ typedef struct rk_test_transceiver {
     unsigned int   waveformCacheIndex;
 	RKName         defaultWaveform;
 	RKName         defaultPedestalMode;
-	char           customCommand[RKNameLength + 16];
+	RKCommand      customCommand;
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;

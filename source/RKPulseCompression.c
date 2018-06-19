@@ -74,7 +74,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
 
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, c);
     RKConfig *config = &engine->configBuffer[pulse->header.configIndex];
-    snprintf(string + RKStatusBarWidth, RKNameLength - RKStatusBarWidth,
+    snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
              " %05u | C%2d/E%5.2f/A%6.2f   E%5.2f   A%6.2f   G%s   M%04x",
              (unsigned int)c,
              pulse->header.configIndex, config->sweepElevation, config->sweepAzimuth,

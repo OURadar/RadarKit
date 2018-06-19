@@ -159,7 +159,7 @@ int RKSetProgramName(const char *name) {
 }
 
 int RKSetRootFolder(const char *folder) {
-    if (strlen(folder) > RKNameLength - 64) {
+    if (strlen(folder) > RKMaximumPathLength - 64) {
         fprintf(stderr, "WARNING. Very long root folder.\n");
     }
     sprintf(rkGlobalParameters.rootDataFolder, "%s", folder);
@@ -175,10 +175,10 @@ int RKSetLogfile(const char *filename) {
     if (filename == NULL) {
         rkGlobalParameters.logfile[0] = '\0';
         return 0;
-    } else if (strlen(filename) >= RKNameLength) {
+    } else if (strlen(filename) >= RKMaximumPathLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, RKNameLength, "%s", filename);
+    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s", filename);
     return RKResultSuccess;
 }
 
