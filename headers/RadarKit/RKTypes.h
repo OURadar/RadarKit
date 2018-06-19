@@ -63,27 +63,27 @@
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKGateCount                          262144                            // Must be a multiple of RKSIMDAlignSize
 #define RKLagCount                           5                                 // Number lags of ACF / CCF lag = +/-4 and 0
+#define RKBaseProductCount                   10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
 #define RKMaxFilterCount                     8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaxFilterGroups                    22                                // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth         1000                              //
 #define RKMaximumPulsesPerRay                2000                              //
-#define RKMaximumProductCount                10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumRaysPerSweep                1500                              // 1440 is 0.25-deg. This should be plenty
 #define RKMaximumPacketSize                  16 * 1024 * 1024                  // Maximum network packet size
 #define RKNetworkTimeoutSeconds              20                                //
 #define RKNetworkReconnectSeconds            3                                 //
-#define RKLagRedThreshold                    0.5
-#define RKLagOrangeThreshold                 0.7
-#define RKDutyCyleRedThreshold               0.95
-#define RKDutyCyleOrangeThreshold            0.90
-#define RKStatusBarWidth                     10
-#define RKPulseCountForNoiseMeasurement      200
-#define RKProcessorStatusPulseCoreCount      16
-#define RKProcessorStatusRingCoreCount       16
-#define RKProcessorStatusRayCoreCount        16
-#define RKHostMonitorPingInterval            5
-#define RKMaximumUserProductCount            64
+#define RKLagRedThreshold                    0.5                               //
+#define RKLagOrangeThreshold                 0.7                               //
+#define RKDutyCyleRedThreshold               0.95                              //
+#define RKDutyCyleOrangeThreshold            0.90                              //
+#define RKStatusBarWidth                     10                                //
+#define RKPulseCountForNoiseMeasurement      200                               //
+#define RKProcessorStatusPulseCoreCount      16                                //
+#define RKProcessorStatusRingCoreCount       16                                //
+#define RKProcessorStatusRayCoreCount        16                                //
+#define RKHostMonitorPingInterval            5                                 //
+#define RKMaximumProductCount                64                                //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -136,13 +136,13 @@
 typedef uint8_t       RKByte;                                                  //
 typedef float         RKFloat;                                                 // We can change this to double if we decided one day
 typedef ssize_t       RKResult;                                                // Generic return from functions, 0 for no errors and !0 for others.
-typedef void *        RKBuffer;
-typedef void *        RKTransceiver;
-typedef void *        RKPedestal;
-typedef void *        RKHealthRelay;
-typedef void *        RKMasterController;
+typedef void *        RKBuffer;                                                //
+typedef void *        RKTransceiver;                                           //
+typedef void *        RKPedestal;                                              //
+typedef void *        RKHealthRelay;                                           //
+typedef void *        RKMasterController;                                      //
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
-typedef uint8_t       RKUserProductId;                                         // Product identifier
+typedef uint8_t       RKProductId;                                             // Product identifier
 typedef uint64_t      RKIdentifier;                                            // Pulse identifier, ray identifier, config identifier, etc.
 typedef const float   RKConst;
 
@@ -432,47 +432,47 @@ enum RKInitFlag {
     RKInitFlagAllocEverythingQuiet   = 0xFF00,
 };
 
-typedef uint32_t RKProductList;
-enum RKProductList {
-    RKProductListNone                = 0,                                      // None
-    RKProductListDisplayZ            = (1),                                    // Display Z - Reflectivity dBZ
-    RKProductListDisplayV            = (1 << 1),                               // Display V - Velocity
-    RKProductListDisplayW            = (1 << 2),                               // Display W - Width
-    RKProductListDisplayD            = (1 << 3),                               // Display D - Differential Reflectivity
-    RKProductListDisplayP            = (1 << 4),                               // Display P - PhiDP
-    RKProductListDisplayR            = (1 << 5),                               // Display R - RhoHV
-    RKProductListDisplayK            = (1 << 6),                               // Display K - KDP
-    RKProductListDisplaySh           = (1 << 7),                               // Display Sh - Signal
-    RKProductListDisplaySv           = (1 << 8),                               // Display Sv - Signal
-    RKProductListDisplayZVWDPRKS     = 0x000000FF,                             // Display All
-    RKProductListProductZ            = (1 << 16),                              // Data of Z
-    RKProductListProductV            = (1 << 17),                              // Data of V
-    RKProductListProductW            = (1 << 18),                              // Data of W
-    RKProductListProductD            = (1 << 19),                              // Data of D
-    RKProductListProductP            = (1 << 20),                              // Data of P
-    RKProductListProductR            = (1 << 21),                              // Data of R
-    RKProductListProductK            = (1 << 22),                              // Data of K
-    RKProductListProductSh           = (1 << 23),                              // Data of Sh
-    RKProductListProductSv           = (1 << 24),                              // Data of Sv
-    RKProductListProductZVWDPR       = 0x003F0000,                             // Base data, i.e., without K, and S
-    RKProductListProductZVWDPRK      = 0x007F0000,                             // Base data + K
-    RKProductListProductZVWDPRKS     = 0x01FF0000                              // All data
+typedef uint32_t RKBaseProductList;
+enum RKBaseProductList {
+    RKBaseProductListNone                = 0,                                  // None
+    RKBaseProductListDisplayZ            = (1),                                // Display Z - Reflectivity dBZ
+    RKBaseProductListDisplayV            = (1 << 1),                           // Display V - Velocity
+    RKBaseProductListDisplayW            = (1 << 2),                           // Display W - Width
+    RKBaseProductListDisplayD            = (1 << 3),                           // Display D - Differential Reflectivity
+    RKBaseProductListDisplayP            = (1 << 4),                           // Display P - PhiDP
+    RKBaseProductListDisplayR            = (1 << 5),                           // Display R - RhoHV
+    RKBaseProductListDisplayK            = (1 << 6),                           // Display K - KDP
+    RKBaseProductListDisplaySh           = (1 << 7),                           // Display Sh - Signal
+    RKBaseProductListDisplaySv           = (1 << 8),                           // Display Sv - Signal
+    RKBaseProductListDisplayZVWDPRKS     = 0x000000FF,                         // Display All
+    RKBaseProductListProductZ            = (1 << 16),                          // Data of Z
+    RKBaseProductListProductV            = (1 << 17),                          // Data of V
+    RKBaseProductListProductW            = (1 << 18),                          // Data of W
+    RKBaseProductListProductD            = (1 << 19),                          // Data of D
+    RKBaseProductListProductP            = (1 << 20),                          // Data of P
+    RKBaseProductListProductR            = (1 << 21),                          // Data of R
+    RKBaseProductListProductK            = (1 << 22),                          // Data of K
+    RKBaseProductListProductSh           = (1 << 23),                          // Data of Sh
+    RKBaseProductListProductSv           = (1 << 24),                          // Data of Sv
+    RKBaseProductListProductZVWDPR       = 0x003F0000,                         // Base data, i.e., without K, and S
+    RKBaseProductListProductZVWDPRK      = 0x007F0000,                         // Base data + K
+    RKBaseProductListProductZVWDPRKS     = 0x01FF0000                          // All data
 };
 
-typedef uint32_t RKProductIndex;
-enum RKProductIndex {
-    RKProductIndexZ,
-    RKProductIndexV,
-    RKProductIndexW,
-    RKProductIndexD,
-    RKProductIndexP,
-    RKProductIndexR,
-    RKProductIndexK,
-    RKProductIndexSh,
-    RKProductIndexSv,
-    RKProductIndexZv,
-    RKProductIndexVv,
-    RKProductIndexWv
+typedef uint32_t RKBaseProductIndex;
+enum RKBaseProductIndex {
+    RKBaseProductIndexZ,
+    RKBaseProductIndexV,
+    RKBaseProductIndexW,
+    RKBaseProductIndexD,
+    RKBaseProductIndexP,
+    RKBaseProductIndexR,
+    RKBaseProductIndexK,
+    RKBaseProductIndexSh,
+    RKBaseProductIndexSv,
+    RKBaseProductIndexZv,
+    RKBaseProductIndexVv,
+    RKBaseProductIndexWv
 };
 
 typedef uint32_t RKProductType;
@@ -530,7 +530,7 @@ enum RKHealthNode {
     RKHealthNodeUser7,
     RKHealthNodeUser8,
     RKHealthNodeCount,
-    RKHealthNodeInvalid = (RKHealthNode)-1
+    RKHealthNodeInvalid = (RKHealthNode) - 1
 };
 
 //
@@ -553,7 +553,7 @@ enum RKHealthNode {
 //
 typedef uint32_t RKEngineState;
 enum RKEngineState {
-    RKEngineStateNull                = 0,
+    RKEngineStateNull                = 0,                                      //
     RKEngineStateSleep0              = 1,                                      // Usually for a wait just outside of the main while loop
     RKEngineStateSleep1              = (1 << 1),                               // Stage 1 wait - usually waiting for pulse
     RKEngineStateSleep2              = (1 << 2),                               // Stage 2 wait
@@ -574,26 +574,26 @@ enum RKEngineState {
     RKEngineStateChildActivating     = (1 << 18),                              // The children are being activated
     RKEngineStateChildDeactivating   = (1 << 19),                              // The children are being deactivated
     RKEngineStateChildActive         = (1 << 20),                              // The children are active
-    RKEngineStateChildMask           = 0x001F0000
+    RKEngineStateChildMask           = 0x001F0000                              //
 };
 
 typedef uint32_t RKStatusEnum;
 enum RKStatusEnum {
-    RKStatusEnumUnknown              = -3,
-    RKStatusEnumOld                  = -3,
-    RKStatusEnumInvalid              = -2,
-    RKStatusEnumTooLow               = -2,
-    RKStatusEnumLow                  = -1,
-    RKStatusEnumNormal               =  0,
-    RKStatusEnumActive               =  0,
-    RKStatusEnumHigh                 =  1,
-    RKStatusEnumStandby              =  1,
-    RKStatusEnumInactive             =  1,
-    RKStatusEnumOutOfRange           =  1,
-    RKStatusEnumTooHigh              =  2,
-    RKStatusEnumNotOperational       =  2,
-    RKStatusEnumOff                  =  2,
-    RKStatusEnumFault                =  2,
+    RKStatusEnumUnknown              = -3,                                     //
+    RKStatusEnumOld                  = -3,                                     //
+    RKStatusEnumInvalid              = -2,                                     //
+    RKStatusEnumTooLow               = -2,                                     //
+    RKStatusEnumLow                  = -1,                                     //
+    RKStatusEnumNormal               =  0,                                     //
+    RKStatusEnumActive               =  0,                                     //
+    RKStatusEnumHigh                 =  1,                                     //
+    RKStatusEnumStandby              =  1,                                     //
+    RKStatusEnumInactive             =  1,                                     //
+    RKStatusEnumOutOfRange           =  1,                                     //
+    RKStatusEnumTooHigh              =  2,                                     //
+    RKStatusEnumNotOperational       =  2,                                     //
+    RKStatusEnumOff                  =  2,                                     //
+    RKStatusEnumFault                =  2,                                     //
     RKStatusEnumCritical             =  4                                      // This would the status we may shutdown the radar. Co-incidently, red = 0x4
 };
 
@@ -668,16 +668,16 @@ enum RKHostStatus {
     RKHostStatusReachable
 };
 
-typedef uint32_t RKUserProductStatus;
-enum RKUserProductStatus {
-    RKUserProductStatusVacant                    = 0,                          //
-    RKUserProductStatusSleep0                    = (1 << 0),                   // Sleep stage 0 -
-    RKUserProductStatusSleep1                    = (1 << 1),                   // Sleep stage 1 -
-    RKUserProductStatusSleep2                    = (1 << 2),                   // Sleep stage 2 -
-    RKUserProductStatusSleep3                    = (1 << 3),                   // Sleep stage 3 -
-    RKUserProductStatusSkipped                   = (1 << 5),                   //
-    RKUserProductStatusBusy                      = (1 << 6),                   // Waiting for processing node
-    RKUserProductStatusActive                    = (1 << 7),                   //
+typedef uint32_t RKProductStatus;
+enum RKProductStatus {
+    RKProductStatusVacant                        = 0,                          //
+    RKProductStatusSleep0                        = (1 << 0),                   // Sleep stage 0 -
+    RKProductStatusSleep1                        = (1 << 1),                   // Sleep stage 1 -
+    RKProductStatusSleep2                        = (1 << 2),                   // Sleep stage 2 -
+    RKProductStatusSleep3                        = (1 << 3),                   // Sleep stage 3 -
+    RKProductStatusSkipped                       = (1 << 5),                   //
+    RKProductStatusBusy                          = (1 << 6),                   // Waiting for processing node
+    RKProductStatusActive                        = (1 << 7),                   //
 };
 
 typedef uint8_t RKOverviewFlag;
@@ -707,25 +707,27 @@ enum RKWaveformType {
 // Some may be overriden even when the radar is live.
 //
 typedef struct rk_radar_desc {
-    RKInitFlag       initFlags;
-    uint32_t         pulseCapacity;
-    uint32_t         pulseToRayRatio;
-    uint32_t         healthNodeCount;
-    uint32_t         healthBufferDepth;
-    uint32_t         statusBufferDepth;
-    uint32_t         configBufferDepth;
-    uint32_t         positionBufferDepth;
-    uint32_t         pulseBufferDepth;
-    uint32_t         rayBufferDepth;
-    uint32_t         controlCapacity;
-    uint32_t         waveformCalibrationCapacity;;                             //
-    uint64_t         healthNodeBufferSize;;                                    // Buffer size (B)
-    uint64_t         healthBufferSize;;                                        // Buffer size (B)
-    uint64_t         statusBufferSize;;                                        // Buffer size (B)
-    uint64_t         configBufferSize;                                         // Buffer size (B)
-    uint64_t         positionBufferSize;                                       // Buffer size (B)
-    uint64_t         pulseBufferSize;                                          //
-    uint64_t         rayBufferSize;                                            //
+    RKInitFlag       initFlags;                                                //
+    uint32_t         pulseCapacity;                                            //
+    uint16_t         pulseToRayRatio;                                          //
+    uint8_t          baseProductsPerRay;                                       // Number of base products in each ray
+    uint8_t          doNotUse;                                                 //
+    uint32_t         healthNodeCount;                                          //
+    uint32_t         healthBufferDepth;                                        //
+    uint32_t         statusBufferDepth;                                        //
+    uint32_t         configBufferDepth;                                        //
+    uint32_t         positionBufferDepth;                                      //
+    uint32_t         pulseBufferDepth;                                         //
+    uint32_t         rayBufferDepth;                                           //
+    uint32_t         controlCapacity;                                          // Number of control buttons
+    uint32_t         waveformCalibrationCapacity;                              //
+    size_t           healthNodeBufferSize;                                     // Buffer size (B)
+    size_t           healthBufferSize;                                         // Buffer size (B)
+    size_t           statusBufferSize;                                         // Buffer size (B)
+    size_t           configBufferSize;                                         // Buffer size (B)
+    size_t           positionBufferSize;                                       // Buffer size (B)
+    size_t           pulseBufferSize;                                          //
+    size_t           rayBufferSize;                                            //
     uint32_t         pulseSmoothFactor;                                        // Pulse rate (Hz)
     uint32_t         pulseTicsPerSecond;                                       // Pulse tics per second (normally 10e6)
     uint32_t         positionSmoothFactor;                                     // Position rate (Hz)
@@ -736,8 +738,8 @@ typedef struct rk_radar_desc {
     float            heading;                                                  // Radar heading
     float            radarHeight;                                              // Radar height from ground (m)
     float            wavelength;                                               // Radar wavelength (m)
-    char             name[RKNameLength];                                       // Radar name
-    char             filePrefix[RKNameLength];                                 // Prefix of output files
+    RKName           name;                                                     // Radar name
+    RKName           filePrefix;                                               // Prefix of output files
     char             dataPath[RKMaximumFolderPathLength];                      // Root path for the data files
 } RKRadarDesc;
 
@@ -885,7 +887,7 @@ typedef struct rk_ray_header {
     RKIdentifier     i;                                                        // Ray indentity
     RKIdentifier     n;                                                        // Ray network counter
     RKMarker         marker;                                                   // Volume / sweep / radial marker
-    RKProductList    productList;                                              // 16-bit MSB for products + 16-bit LSB for display
+    RKBaseProductList    productList;                                              // 16-bit MSB for products + 16-bit LSB for display
     uint16_t         configIndex;                                              // Operating configuration index
     uint16_t         configSubIndex;                                           // Operating configuration sub-index
     uint16_t         gateCount;                                                //
@@ -992,14 +994,14 @@ typedef union rk_file_header {
 // Preference entry
 //
 typedef struct rk_preferene_object {
-    char             keyword[RKNameLength];
-    char             valueString[RKMaximumStringLength];
-    bool             isNumeric;
-    bool             isValid;
-    int              numericCount;
-    char             subStrings[4][RKNameLength];
-    double           doubleValues[4];
-    bool             boolValues[4];
+    char             keyword[RKNameLength];                                    //
+    char             valueString[RKMaximumStringLength];                       //
+    bool             isNumeric;                                                //
+    bool             isValid;                                                  //
+    int              numericCount;                                             //
+    char             subStrings[4][RKNameLength];                              //
+    double           doubleValues[4];                                          //
+    bool             boolValues[4];                                            //
 } RKPreferenceObject;
 
 //
@@ -1080,16 +1082,16 @@ typedef union rk_user_product_desc {                                           /
         RKFloat          maximumValue;                                         // Maximum value
     };
     RKByte bytes[1024];
-} RKUserProductDesc;
+} RKProductDesc;
 
 typedef struct rk_user_product {                                               // A description of user product
     RKIdentifier         i;                                                    // Product counter to be synchronized with RKConfig->i
-    RKUserProductId      pid;                                                  // Product identifier from RKUserProductRegister()
-    RKUserProductDesc    desc;                                                 // Description
-    RKUserProductStatus  flag;                                                 // Various state
+    RKProductId          pid;                                                  // Product identifier from RKProductRegister()
+    RKProductDesc        desc;                                                 // Description
+    RKProductStatus      flag;                                                 // Various state
     uint32_t             capacity;                                             // Number of RKFloat elements in *array
     RKFloat              *array;                                               // Flattened array of user product
-} RKUserProduct;
+} RKProduct;
 
 typedef struct rk_waveform {
     int             count;                                                     // Number of groups

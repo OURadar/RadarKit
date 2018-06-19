@@ -52,7 +52,7 @@ struct rk_sweep_engine {
     RKName                           productUnit;
     RKName                           productColormap;
     char                             summary[RKMaximumStringLength];
-    RKUserProduct                    userProducts[RKMaximumUserProductCount];
+    RKProduct                        userProducts[RKMaximumProductCount];
     pthread_mutex_t                  userProductMutex;
 
     // Status / health
@@ -74,16 +74,16 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
-void RKSweepEngineSetUserProductTimeout(RKSweepEngine *, const uint32_t);
+void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const bool expectTgz);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
 
-RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
-int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
-RKFloat *RKSweepEngineGetBufferForUserProduct(RKSweepEngine *, RKSweep *, RKUserProductId);
-int RKSweepEngineReportProduct(RKSweepEngine *, RKSweep *, RKUserProductId);
+RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKProductDesc);
+int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKProductId);
+RKFloat *RKSweepEngineGetBufferForProduct(RKSweepEngine *, RKSweep *, RKProductId);
+int RKSweepEngineReportProduct(RKSweepEngine *, RKSweep *, RKProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
 RKSweep *RKSweepRead(const char *);
