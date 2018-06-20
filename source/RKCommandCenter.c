@@ -965,9 +965,9 @@ int socketStreamHandler(RKOperator *O) {
 
                     gettimeofday(&st2, NULL);
 
-                    RKLog("%s %s delta = %s %s\n", engine->name, O->name,
-                          RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st1, st0)),
-                          RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st2, st0)));
+                    RKLog("%s %s %s   %s\n", engine->name, O->name,
+                          RKVariableInString("Delta 1", RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st1, st0)), RKValueTypeString),
+                          RKVariableInString("Delta 2", RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st2, st0)), RKValueTypeString));
 
                 } // if (baseMomentCount) ...
                 RKSweepFree(sweep);
