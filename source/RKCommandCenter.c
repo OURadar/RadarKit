@@ -925,7 +925,8 @@ int socketStreamHandler(RKOperator *O) {
                     gettimeofday(&st1, NULL);
 
                     // Offset scratch by one to get rid of the very first space character
-                    RKLog("%s %s Sweep w/ configId = %d sent (%s)\n", engine->name, O->name, sweepHeader.config.i, user->scratch + 1);
+                    RKLog("%s %s Sweep @ %s sent (%s)\n", engine->name, O->name,
+                          RKVariableInString("configId", &sweepHeader.config.i, RKValueTypeUInt64) , user->scratch + 1);
                     if (engine->verbose > 1) {
                         RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
                         RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseMomentCount);

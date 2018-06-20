@@ -66,6 +66,8 @@ void RKTestPrettyStrings(void) {
     f = -INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
     f = NAN;       printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
     printf("\n");
+    int32_t i32 = 200;
+    printf("%s\n", RKVariableInString("i32", &i32, RKValueTypeInt32));
 }
 
 void RKTestModuloMath(void) {

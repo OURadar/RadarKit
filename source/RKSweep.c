@@ -144,7 +144,7 @@ static void *sweepWriter(void *in) {
         }
         j += sprintf(summary + j, " %d:0x%04x/%lu/0x%x", i, engine->products[i].pid, (unsigned long)engine->products[i].i, engine->products[i].flag);
     }
-    RKLog("%s Concluding sweep.   allReported = %s   %s", engine->name, allReported ? "true" : "false", summary);
+    RKLog("%s Concluding sweep.   %s   %s", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
