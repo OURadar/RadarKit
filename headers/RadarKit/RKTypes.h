@@ -1045,12 +1045,12 @@ typedef struct rk_status {
 // - File monitor, etc.
 //
 typedef struct rk_simple_engine {
-    RKName               name;
-    uint8_t              verbose;
-    pthread_t            tid;
-    RKEngineState        state;
-    uint32_t             memoryUsage;
-    void                 *userResource;
+    RKName               name;                                                 // Engine name
+    uint8_t              verbose;                                              //
+    pthread_t            tid;                                                  //
+    RKEngineState        state;                                                //
+    uint32_t             memoryUsage;                                          //
+    void                 *userResource;                                        // User defined resource
 } RKSimpleEngine;
 
 //
@@ -1062,20 +1062,20 @@ typedef struct rk_file_monitor {                                               /
     pthread_t            tid;                                                  //
     RKEngineState        state;                                                //
     uint32_t             memoryUsage;                                          //
-    char                 filename[RKMaximumPathLength];                        // User defined variables
+    char                 filename[RKMaximumPathLength];                        // User defined file to monitor
     void                 (*callbackRoutine)(void *);                           // User defined callback function
-    void                 *userResource;
+    void                 *userResource;                                        // User defined resource
 } RKFileMonitor;
 
 //
 // User product from other processing nodes
 //
 
-typedef union rk_user_product_desc {                                           // A 1-KB struct that describes a product
+typedef union rk_product_desc {                                                // A 1-KB struct that describes a product
     struct {                                                                   //
         RKName           name;                                                 // Name of the product
-        RKName           unit;
-        RKName           colormap;                                             // Name of the colormap on the UI
+        RKName           unit;                                                 // Unit of the product
+        RKName           colormap;                                             // Colormap of the product for the UI
         char             symbol[8];                                            // Product symbol
         RKProductType    type;                                                 // RKProductType
         uint32_t         pieceCount;                                           // Count of piece-wise function that maps data to color index
@@ -1087,7 +1087,7 @@ typedef union rk_user_product_desc {                                           /
     RKByte bytes[1024];
 } RKProductDesc;
 
-typedef struct rk_user_product {                                               // A description of user product
+typedef struct rk_product {                                                    // A description of user product
     RKIdentifier         i;                                                    // Product counter to be synchronized with RKConfig->i
     RKProductId          pid;                                                  // Product identifier from RKProductRegister()
     RKProductDesc        desc;                                                 // Description
