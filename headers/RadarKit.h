@@ -11,7 +11,7 @@
 //  █
 //
 //  1.2.10 - 6/30/2018
-//         - Added RKVariableInString() to highlight some log entries
+//         - Added RKVariableInString() for highlighting variables
 //         - Added product registration from PyRadarKit space
 //         - Product identifier from PyRadarKit is ingested
 //         - Product description from PyRadarKit is ingested
