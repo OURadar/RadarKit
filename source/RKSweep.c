@@ -829,7 +829,9 @@ int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductI
         return RKResultFailedToFindProductId;
     }
     if (engine->products[i].pid == productId) {
-        RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->products[i].i, sweep->header.config.i);
+        if (engine->verbose) {
+            RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->products[i].i, sweep->header.config.i);
+        }
         engine->products[i].i = sweep->header.config.i;
     }
     if (engine->products[i].flag & RKProductStatusSleep1) {

@@ -242,30 +242,30 @@ char *RKIntegerToCommaStyleString(const long num) {
     static int ibuf = 0;
     static char stringBuffer[16][32];
 
-    const int r = ibuf;
+    char *string = stringBuffer[ibuf];
 
-    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
 
-    sprintf(stringBuffer[r], "%ld", num);
+    sprintf(string, "%ld", num);
     if (num < 1000) {
-        return stringBuffer[r];
+        return string;
     } else {
-        k = (int)(strlen(stringBuffer[r]) - 1) / 3;
-        i = (int)(strlen(stringBuffer[r]) + k);
+        k = (int)(strlen(string) - 1) / 3;
+        i = (int)(strlen(string) + k);
         j = 1;
-        stringBuffer[r][i] = '\0';
+        string[i] = '\0';
         while (i > 0) {
             i--;
-            stringBuffer[r][i] = stringBuffer[r][i - k];
+            string[i] = string[i - k];
             if (j > 3) {
                 j = 0;
-                stringBuffer[r][i] = ',';
+                string[i] = ',';
                 k--;
             }
             j++;
         }
     }
-    return stringBuffer[r];
+    return string;
 }
 
 ////////////////////////////////////////////////

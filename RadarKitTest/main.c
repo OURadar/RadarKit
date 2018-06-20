@@ -853,7 +853,7 @@ int main(int argc, const char **argv) {
         if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term,
                    rkGlobalParameters.showColor ?
-                   RKRedColor "s" RKOrangeColor "h" RKYellowColor "o" RKLimeGreenColor "w" RKGreenColor "C" RKTealColor "o" RKBlueColor "l" RKPurpleColor "o" RKRedColor "r" RKNoColor :
+                   RKRedColor "s" RKOrangeColor "h" RKYellowColor "o" RKLimeColor "w" RKGreenColor "C" RKTealColor "o" RKBlueColor "l" RKPurpleColor "o" RKRedColor "r" RKNoColor :
                    "noColor");
         }
     } else {

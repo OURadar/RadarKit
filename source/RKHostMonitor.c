@@ -431,7 +431,7 @@ static void *hostWatcher(void *in) {
                 RKLog("%s %s %s%s%s (%d)\n", engine->name,
                       engine->hosts[k],
                       rkGlobalParameters.showColor ? (worker->hostStatus == RKHostStatusReachable ? RKGreenColor :
-                                                      (worker->hostStatus == RKHostStatusReachableUnusual ? RKLimeGreenColor :
+                                                      (worker->hostStatus == RKHostStatusReachableUnusual ? RKLimeColor :
                                                        (worker->hostStatus == RKHostStatusPartiallyReachable ? RKOrangeColor : RKRedColor))) : "",
                       worker->hostStatus == RKHostStatusReachable ? "responded" :
                       (worker->hostStatus == RKHostStatusReachableUnusual ? "responded *" :

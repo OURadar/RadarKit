@@ -191,13 +191,8 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 'u':
                     // Turn this user into an active node with user product return
-                    //RKParseQuotedStrings(commandString + 1, userProductDescription.name, NULL);
-
-                    // Parse the product description
                     RKParseProductDescription(&userProductDescription, commandString + 1);
-
                     RKLog("%s Registering user product '%s' (%s) ...", engine->name, userProductDescription.name, userProductDescription.symbol);
-
                     RKProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
                     if (productId) {
                         user->userProductIds[user->userProductCount++] = productId;
@@ -308,6 +303,7 @@ int socketStreamHandler(RKOperator *O) {
     uint8_t *u8Data = NULL;
     float *f32Data = NULL;
 
+    RKFloat *floatData = NULL;
     RKInt16C *c16DataH = NULL;
     RKInt16C *c16DataV = NULL;
     RKInt16C *userDataH = NULL;
@@ -315,6 +311,8 @@ int socketStreamHandler(RKOperator *O) {
 
     RKIdentifier identifier;
     RKProductId userProductId;
+
+    struct timeval st0, st1, st2;
 
     if (engine->radarCount < 1) {
         return 0;
@@ -864,32 +862,29 @@ int socketStreamHandler(RKOperator *O) {
                     user->scratch[i - 1] = '\0';
                 }
 
-                const uint32_t productCount = __builtin_popcount(sweepHeader.baseMomentList);
+                const uint32_t baseMomentCount = __builtin_popcount(sweepHeader.baseMomentList);
 
-                if (productCount) {
-                    size_t sentSize = 0;
-
-                    //O->delimTx.type = RKNetworkPacketTypeSweep;
-                    //O->delimTx.size = (uint32_t)(sizeof(RKSweepHeader) + sweepHeader.rayCount * (sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(float)));
-                    //sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+                if (baseMomentCount) {
+                    size = 0;
+                    gettimeofday(&st0, NULL);
 
                     O->delimTx.type = RKNetworkPacketTypeSweepHeader;
                     O->delimTx.size = (uint32_t)sizeof(RKSweepHeader);
-                    sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
+                    size += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
 
                     O->delimTx.type = RKNetworkPacketTypeSweepRay;
-                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * sweepHeader.gateCount * sizeof(RKFloat));
+                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + baseMomentCount * sweepHeader.gateCount * sizeof(RKFloat));
 
                     for (k = 0; k < sweepHeader.rayCount; k++) {
                         ray = sweep->rays[k];
                         memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
                         rayHeader.baseMomentList = sweepHeader.baseMomentList;
-                        sentSize += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+                        size += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
                         productList = sweepHeader.baseMomentList;
                         if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
                             RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
                         }
-                        for (j = 0; j < productCount; j++) {
+                        for (j = 0; j < baseMomentCount; j++) {
                             if (productList & RKBaseMomentListProductZ) {
                                 productList ^= RKBaseMomentListProductZ;
                                 f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
@@ -921,20 +916,23 @@ int socketStreamHandler(RKOperator *O) {
                                 f32Data = NULL;
                             }
                             if (f32Data) {
-                                sentSize += RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
+                                size += RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
                                 user->timeLastOut = time;
                             }
                         }
                     }
+
+                    gettimeofday(&st1, NULL);
+
                     // Offset scratch by one to get rid of the very first space character
                     RKLog("%s %s Sweep w/ configId = %d sent (%s)\n", engine->name, O->name, sweepHeader.config.i, user->scratch + 1);
                     if (engine->verbose > 1) {
                         RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
-                        RKLog(">%s %s Sent a sweep of size %s B (%d)\n", engine->name, O->name, RKIntegerToCommaStyleString(sentSize), productCount);
+                        RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseMomentCount);
                     }
 
                     for (k = 0; k < user->userProductCount; k++) {
-                        RKLog("%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
+                        RKLog(">%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
                         size = RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
                         if (size < 0) {
                             RKLog("%s %s Error. Failed receiving user product header ...\n", engine->name, O->name);
@@ -944,21 +942,33 @@ int socketStreamHandler(RKOperator *O) {
                         identifier = RKIdentifierFromString(RKGetValueOfKey(user->string, "configId"));
                         if (user->userProductIds[k] != userProductId) {
                             RKLog("%s %s Warning. Inconsistent userProduct = %d (expected) != %d (reported)\n", engine->name, O->name, user->userProductIds[k], userProductId);
-                        }
-                        if (sweep->header.config.i != identifier) {
+                        } else if (sweep->header.config.i != identifier) {
                             RKLog("%s %s Warning. Inconsistent configId = %lu (expected) != %lu (reported)\n", engine->name, O->name, sweep->header.config.i, identifier);
+                        } else {
+                            floatData = RKSweepEngineGetBufferForProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
                         }
-                        RKFloat *storage = RKSweepEngineGetBufferForProduct(user->radar->sweepEngine, sweep, userProductId);
                         RKLog("%s %s %s (%d) -> %u %zu\n",
                               engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
-                        size = RKServerReceiveUserPayload(O, storage, RKNetworkMessageFormatHeaderDefinedSize);
+                        if (floatData) {
+                            size = RKServerReceiveUserPayload(O, floatData, RKNetworkMessageFormatHeaderDefinedSize);
+                        } else {
+                            RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
+                            size = RKServerReceiveUserPayload(O, user->scratch, RKNetworkMessageFormatHeaderDefinedSize);
+                        }
                         if (size < 0) {
                             RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
                             continue;
                         }
                         RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
                     }
-                } // if (productCount) ...
+
+                    gettimeofday(&st2, NULL);
+
+                    RKLog("%s %s delta = %s %s\n", engine->name, O->name,
+                          RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st1, st0)),
+                          RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st2, st0)));
+
+                } // if (baseMomentCount) ...
                 RKSweepFree(sweep);
             } else if (engine->verbose > 1) {
                 RKLog("%s %s Empty sweep   anchorIndex = %d.\n", engine->name, O->name, user->scratchSpaceIndex);

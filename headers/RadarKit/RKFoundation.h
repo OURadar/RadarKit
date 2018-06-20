@@ -38,6 +38,7 @@ extern const char * const rkResultStrings[];
 
 typedef uint32_t RKValueType;
 enum RKValueType {
+    RKValueTypeBool,
     RKValueTypeInt32,
     RKValueTypeUInt32,
     RKValueTypeInt64,
@@ -66,6 +67,7 @@ void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
+char *RKVariableInString(const char *name, const void *value, RKValueType type);
 
 // Clearing buffer
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);

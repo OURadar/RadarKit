@@ -339,6 +339,81 @@ void RKShowArray(const RKFloat *data, const char *letter, const int width, const
     printf("%s", text);
 }
 
+char *RKVariableInString(const char *name, const void *value, RKValueType type) {
+    static int ibuf = 0;
+    static char stringBuffer[16][32];
+
+    char *string = stringBuffer[ibuf]; string[31] = '\0';
+
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+
+    bool b   = *(bool *)value;
+    float f  = *(float *)value;
+    double d = *(double *)value;
+    char *c  = (char *)value;
+    int32_t  i32 = *(int32_t *)value;
+    uint32_t u32 = *(uint32_t *)value;
+    int64_t  i64 = *(int64_t *)value;
+    uint64_t u64 = *(uint64_t *)value;
+
+    if (rkGlobalParameters.showColor) {
+        switch (type) {
+            case RKValueTypeBool:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
+                break;
+            case RKValueTypeFloat:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, f);
+                break;
+            case RKValueTypeDouble:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, d);
+                break;
+            case RKValueTypeInt32:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i32);
+                break;
+            case RKValueTypeUInt32:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u32);
+                break;
+            case RKValueTypeInt64:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%ld" RKNoColor, name, i64);
+                break;
+            case RKValueTypeUInt64:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%lu" RKNoColor, name, u64);
+                break;
+            default:
+                sprintf(RKOrangeColor "%s" RKNoColor " = " RKSalmonColor "%s" RKNoColor, name, c);
+                break;
+        }
+    } else {
+        switch (type) {
+            case RKValueTypeBool:
+                sprintf("%s = %s", name, (b) ? "True" : "False");
+                break;
+            case RKValueTypeFloat:
+                sprintf("%s = %s", name, f);
+                break;
+            case RKValueTypeDouble:
+                sprintf("%s = %s", name, d);
+                break;
+            case RKValueTypeInt32:
+                sprintf("%s = %s", name, i32);
+                break;
+            case RKValueTypeUInt32:
+                sprintf("%s = %s", name, u32);
+                break;
+            case RKValueTypeInt64:
+                sprintf("%s = %s", name, i64);
+                break;
+            case RKValueTypeUInt64:
+                sprintf("%s = %s", name, u64);
+                break;
+            default:
+                sprintf("%s = %s", name, c);
+                break;
+        }
+    }
+    return string;
+}
+
 #pragma mark - Buffer
 
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity) {

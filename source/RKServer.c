@@ -587,7 +587,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
 
     RKNetDelimiter *delimiter = &O->delimRx;
     
-    RKServer        *M = O->M;
+    RKServer *M = O->M;
 
     const int blockLength = 4;
     
