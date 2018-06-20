@@ -66,8 +66,19 @@ void RKTestPrettyStrings(void) {
     f = -INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
     f = NAN;       printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
     printf("\n");
-    int32_t i32 = 200;
-    printf("%s\n", RKVariableInString("i32", &i32, RKValueTypeInt32));
+    char *c;
+    bool tf = true; printf("%s\n", RKVariableInString("tf", &tf, RKValueTypeBool));
+    int8_t i8 = 100; printf("%s\n", RKVariableInString("i8", &i8, RKValueTypeInt8));
+    uint8_t u8 = 100; printf("%s\n", RKVariableInString("u8", &u8, RKValueTypeUInt8));
+    int16_t i16 = 100; printf("%s\n", RKVariableInString("i16", &i16, RKValueTypeInt16));
+    uint16_t u16 = 100; printf("%s\n", RKVariableInString("u16", &u16, RKValueTypeUInt16));
+    int32_t i32 = 100; printf("%s\n", RKVariableInString("i32", &i32, RKValueTypeInt32));
+    uint64_t i64 = 1234567;
+    c = RKVariableInString("u64", RKIntegerToCommaStyleString(i64), RKValueTypeNumericString);
+    printf("%s (len = %zu)\n", c, strlen(c));
+    char name[] = "RadarKit";
+    c = RKVariableInString("name", name, RKValueTypeString);
+    printf("%s (len = %zu)\n", c, strlen(c));
 }
 
 void RKTestModuloMath(void) {

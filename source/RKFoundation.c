@@ -341,9 +341,9 @@ void RKShowArray(const RKFloat *data, const char *letter, const int width, const
 
 char *RKVariableInString(const char *name, const void *value, RKValueType type) {
     static int ibuf = 0;
-    static char stringBuffer[16][64];
+    static RKName stringBuffer[16];
 
-    char *string = stringBuffer[ibuf]; string[31] = '\0';
+    char *string = stringBuffer[ibuf]; string[RKNameLength - 1] = '\0';
 
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
 
@@ -351,6 +351,10 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     float f  = *((float *)value);
     double d = *((double *)value);
     char *c  = (char *)value;
+    int8_t  i8 = *((int8_t *)value);
+    uint8_t u8 = *((uint8_t *)value);
+    int16_t  i16 = *((int16_t *)value);
+    uint16_t u16 = *((uint16_t *)value);
     int32_t  i32 = *((int32_t *)value);
     uint32_t u32 = *((uint32_t *)value);
     int64_t  i64 = *((int64_t *)value);
@@ -359,55 +363,82 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     if (rkGlobalParameters.showColor) {
         switch (type) {
             case RKValueTypeBool:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
                 break;
-            case RKValueTypeFloat:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, f);
+            case RKValueTypeInt8:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i8);
                 break;
-            case RKValueTypeDouble:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, d);
+            case RKValueTypeInt16:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i16);
                 break;
             case RKValueTypeInt32:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i32);
-                break;
-            case RKValueTypeUInt32:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u32);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i32);
                 break;
             case RKValueTypeInt64:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%lld" RKNoColor, name, i64);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%lld" RKNoColor, name, i64);
+                break;
+            case RKValueTypeUInt8:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u8);
+                break;
+            case RKValueTypeUInt16:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u16);
+                break;
+            case RKValueTypeUInt32:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u32);
                 break;
             case RKValueTypeUInt64:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, u64);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, u64);
+                break;
+            case RKValueTypeFloat:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, f);
+                break;
+            case RKValueTypeDouble:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, d);
+                break;
+            case RKValueTypeNumericString:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
                 break;
             default:
-                snprintf(string, 63, RKOrangeColor "%s" RKNoColor " = " RKSalmonColor "%s" RKNoColor, name, c);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKSalmonColor "%s" RKNoColor, name, c);
                 break;
         }
     } else {
         switch (type) {
             case RKValueTypeBool:
-                snprintf(string, 63, "%s = %s", name, (b) ? "True" : "False");
+                snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
                 break;
-            case RKValueTypeFloat:
-                snprintf(string, 63, "%s = %.3f", name, f);
+            case RKValueTypeInt8:
+                snprintf(string, RKNameLength - 1, "%s = %d", name, i8);
                 break;
-            case RKValueTypeDouble:
-                snprintf(string, 63, "%s = %.3f", name, d);
+            case RKValueTypeInt16:
+                snprintf(string, RKNameLength - 1, "%s = %d", name, i16);
                 break;
             case RKValueTypeInt32:
-                snprintf(string, 63, "%s = %d", name, i32);
-                break;
-            case RKValueTypeUInt32:
-                snprintf(string, 63, "%s = %u", name, u32);
+                snprintf(string, RKNameLength - 1, "%s = %d", name, i32);
                 break;
             case RKValueTypeInt64:
-                snprintf(string, 63, "%s = %lld", name, i64);
+                snprintf(string, RKNameLength - 1, "%s = %lld", name, i64);
+                break;
+            case RKValueTypeUInt8:
+                snprintf(string, RKNameLength - 1, "%s = %u", name, u8);
+                break;
+            case RKValueTypeUInt16:
+                snprintf(string, RKNameLength - 1, "%s = %u", name, u16);
+                break;
+            case RKValueTypeUInt32:
+                snprintf(string, RKNameLength - 1, "%s = %u", name, u32);
                 break;
             case RKValueTypeUInt64:
-                snprintf(string, 63, "%s = %llu", name, u64);
+                snprintf(string, RKNameLength - 1, "%s = %llu", name, u64);
+                break;
+            case RKValueTypeFloat:
+                snprintf(string, RKNameLength - 1, "%s = %.3f", name, f);
+                break;
+            case RKValueTypeDouble:
+                snprintf(string, RKNameLength - 1, "%s = %.3f", name, d);
                 break;
             default:
-                snprintf(string, 63, "%s = %s", name, c);
+                snprintf(string, RKNameLength - 1, "%s = %s", name, c);
                 break;
         }
     }

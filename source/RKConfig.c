@@ -58,11 +58,13 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s   filterCount = %d",
+				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s%s%s   %s",
                         newConfig->sweepElevation,
                         newConfig->sweepAzimuth,
+                        rkGlobalParameters.showColor ? RKSkyBlueColor : "",
                         RKMarkerScanTypeString(newConfig->startMarker),
-                        newConfig->filterCount);
+                        rkGlobalParameters.showColor ? RKNoColor : "",
+                        RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
@@ -258,12 +260,12 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
         }
         for (k = 0; k < RKMaxFilterCount; k++) {
             if (strlen(stringBuffer[k])) {
-                RKLog("%s<ParameterKeeper>%s C%02d %s   Id = %s\n",
+                RKLog("%s<ParameterKeeper>%s C%02d %s   %s\n",
                       rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       *configIndex,
                       stringBuffer[k],
-                      RKIntegerToCommaStyleString(configId));
+                      RKVariableInString("configId", RKIntegerToCommaStyleString(configId), RKValueTypeNumericString));
                 stringBuffer[k][0] = '\0';
             }
         }

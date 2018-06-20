@@ -73,7 +73,7 @@ int socketCommandHandler(RKOperator *O) {
 
     RKStream stream;
     RKProductDesc userProductDescription;
-    
+
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
             *commandStringEnd = '\0';
@@ -312,7 +312,8 @@ int socketStreamHandler(RKOperator *O) {
     RKIdentifier identifier;
     RKProductId userProductId;
 
-    struct timeval st0, st1, st2;
+    struct timeval timevalOrigin, timevalTx, timevalRx;
+    double deltaTx, deltaRx;
 
     if (engine->radarCount < 1) {
         return 0;
@@ -866,7 +867,7 @@ int socketStreamHandler(RKOperator *O) {
 
                 if (baseMomentCount) {
                     size = 0;
-                    gettimeofday(&st0, NULL);
+                    gettimeofday(&timevalOrigin, NULL);
 
                     O->delimTx.type = RKNetworkPacketTypeSweepHeader;
                     O->delimTx.size = (uint32_t)sizeof(RKSweepHeader);
@@ -922,7 +923,7 @@ int socketStreamHandler(RKOperator *O) {
                         }
                     }
 
-                    gettimeofday(&st1, NULL);
+                    gettimeofday(&timevalTx, NULL);
 
                     // Offset scratch by one to get rid of the very first space character
                     RKLog("%s %s Sweep @ %s sent (%s)\n", engine->name, O->name,
@@ -963,11 +964,13 @@ int socketStreamHandler(RKOperator *O) {
                         RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
                     }
 
-                    gettimeofday(&st2, NULL);
+                    gettimeofday(&timevalRx, NULL);
 
-                    RKLog("%s %s %s   %s\n", engine->name, O->name,
-                          RKVariableInString("Delta 1", RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st1, st0)), RKValueTypeString),
-                          RKVariableInString("Delta 2", RKFloatToCommaStyleString(1.0e3 * RKTimevalDiff(st2, st0)), RKValueTypeString));
+                    deltaTx = 1.0e3 * RKTimevalDiff(timevalTx, timevalOrigin);
+                    deltaRx = 1.0e3 * RKTimevalDiff(timevalRx, timevalTx);
+                    RKLog("%s %s %s ms   %s ms\n", engine->name, O->name,
+                          RKVariableInString("Delta 1", &deltaTx, RKValueTypeDouble),
+                          RKVariableInString("Delta 2", &deltaRx, RKValueTypeDouble));
 
                 } // if (baseMomentCount) ...
                 RKSweepFree(sweep);

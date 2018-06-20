@@ -39,13 +39,18 @@ extern const char * const rkResultStrings[];
 typedef uint32_t RKValueType;
 enum RKValueType {
     RKValueTypeBool,
+    RKValueTypeInt8,
+    RKValueTypeInt16,
     RKValueTypeInt32,
-    RKValueTypeUInt32,
     RKValueTypeInt64,
+    RKValueTypeUInt8,
+    RKValueTypeUInt16,
+    RKValueTypeUInt32,
     RKValueTypeUInt64,
     RKValueTypeFloat,
     RKValueTypeDouble,
-    RKValueTypeString
+    RKValueTypeString,
+    RKValueTypeNumericString
 };
 
 #pragma mark - Common Functions
