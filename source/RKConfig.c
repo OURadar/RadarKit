@@ -17,12 +17,12 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
     uint32_t  j, k;
     char      *string;
-    char      stringBuffer[RKMaxFilterCount][RKNameLength];
-    char      format[RKNameLength];
+    char      stringBuffer[RKMaxFilterCount][RKMaximumStringLength];
+    char      format[RKMaximumStringLength];
     int       w0 = 0, w1 = 0, w2 = 0, w3 = 0;
 
     for (k = 0; k < RKMaxFilterCount; k++) {
-        memset(stringBuffer[k], 0, RKNameLength * sizeof(char));
+        memset(stringBuffer[k], 0, RKMaximumStringLength * sizeof(char));
     }
     
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
@@ -34,7 +34,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     RKConfig *newConfig = &configs[*configIndex];
     RKConfig *oldConfig = &configs[RKPreviousModuloS(*configIndex, configBufferDepth)];
 
-    const uint64_t configId = newConfig->i + configBufferDepth;
+    const RKIdentifier configId = newConfig->i + configBufferDepth;
     
     //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 
@@ -58,11 +58,13 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s   filterCount = %d",
+				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s%s%s   %s",
                         newConfig->sweepElevation,
                         newConfig->sweepAzimuth,
+                        rkGlobalParameters.showColor ? RKSkyBlueColor : "",
                         RKMarkerScanTypeString(newConfig->startMarker),
-                        newConfig->filterCount);
+                        rkGlobalParameters.showColor ? RKNoColor : "",
+                        RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));
                 break;
             case RKConfigKeyPRF:
                 newConfig->prf[0] = va_arg(args, uint32_t);
@@ -74,8 +76,16 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 				sprintf(stringBuffer[0], "Dual PRF = %s / %s Hz", RKIntegerToCommaStyleString(newConfig->prf[0]), RKIntegerToCommaStyleString(newConfig->prf[1]));
                 break;
             case RKConfigKeyPulseGateCount:
-                newConfig->gateCount[0] = va_arg(args, uint32_t);
-				sprintf(stringBuffer[0], "PulseGateCount = %s", RKIntegerToCommaStyleString(newConfig->gateCount[0]));
+                newConfig->pulseGateCount = va_arg(args, uint32_t);
+                if (newConfig->pulseGateCount != oldConfig->pulseGateCount) {
+                    sprintf(stringBuffer[0], "PulseGateCount = %s", RKIntegerToCommaStyleString(newConfig->pulseGateCount));
+                }
+                break;
+            case RKConfigKeyPulseGateSize:
+                newConfig->pulseGateSize = (RKFloat)va_arg(args, double);
+                if (newConfig->pulseGateSize != oldConfig->pulseGateSize) {
+                    sprintf(stringBuffer[0], "PulseGateSize = %s m", RKFloatToCommaStyleString(newConfig->pulseGateSize));
+                }
                 break;
             case RKConfigKeyVCPDefinition:
                 string = va_arg(args, char *);
@@ -83,26 +93,34 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     sprintf(stringBuffer[0], "VCP = (NULL)\n");
                 } else {
                     sprintf(stringBuffer[0], "VCP = %s\n", string);
-                    strncpy(newConfig->vcpDefinition, string, RKNameLength - 1);
+                    strncpy(newConfig->vcpDefinition, string, RKMaximumCommandLength - 8);
                 }
                 break;
             case RKConfigKeySystemNoise:
                 newConfig->noise[0] = (RKFloat)va_arg(args, double);
                 newConfig->noise[1] = (RKFloat)va_arg(args, double);
-                sprintf(stringBuffer[0], "SystemNoise = %.2f %.2f ADU^2", newConfig->noise[0], newConfig->noise[1]);
+                if (newConfig->noise[0] != oldConfig->noise[0] || newConfig->noise[1] != oldConfig->noise[1]) {
+                    sprintf(stringBuffer[0], "SystemNoise = %.2f %.2f ADU^2", newConfig->noise[0], newConfig->noise[1]);
+                }
                 break;
             case RKConfigKeySystemZCal:
                 newConfig->systemZCal[0] = (RKFloat)va_arg(args, double);
                 newConfig->systemZCal[1] = (RKFloat)va_arg(args, double);
-                sprintf(stringBuffer[0], "SystemZCal = %.2f %.2f dB", newConfig->systemZCal[0], newConfig->systemZCal[1]);
+                if (newConfig->systemZCal[0] != oldConfig->systemZCal[0] || newConfig->systemZCal[1] != oldConfig->systemZCal[1]) {
+                    sprintf(stringBuffer[0], "SystemZCal = %.2f %.2f dB", newConfig->systemZCal[0], newConfig->systemZCal[1]);
+                }
                 break;
 			case RKConfigKeySystemDCal:
 				newConfig->systemDCal = (RKFloat)va_arg(args, double);
-				sprintf(stringBuffer[0], "SystemDCal = %.2f dB", newConfig->systemDCal);
+                if (newConfig->systemDCal != oldConfig->systemDCal) {
+                    sprintf(stringBuffer[0], "SystemDCal = %.2f dB", newConfig->systemDCal);
+                }
 				break;
             case RKConfigKeySystemPCal:
                 newConfig->systemPCal = (RKFloat)va_arg(args, double);
-                sprintf(stringBuffer[0], "SystemPCal = %.2f rad", newConfig->systemPCal);
+                if (newConfig->systemPCal != oldConfig->systemPCal) {
+                    sprintf(stringBuffer[0], "SystemPCal = %.2f rad", newConfig->systemPCal);
+                }
                 break;
             case RKConfigKeyZCal:
                 newConfig->ZCal[0][0] = (RKFloat)va_arg(args, double);
@@ -242,12 +260,12 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
         }
         for (k = 0; k < RKMaxFilterCount; k++) {
             if (strlen(stringBuffer[k])) {
-                RKLog("%s<ParameterKeeper>%s C%02d %s   Id = %s\n",
+                RKLog("%s<ParameterKeeper>%s C%02d %s   %s\n",
                       rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       *configIndex,
                       stringBuffer[k],
-                      RKIntegerToCommaStyleString(configId));
+                      RKVariableInString("configId", RKIntegerToCommaStyleString(configId), RKValueTypeNumericString));
                 stringBuffer[k][0] = '\0';
             }
         }

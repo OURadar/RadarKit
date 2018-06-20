@@ -252,7 +252,7 @@ void *RKOperatorRoutine(void *in) {
                 // Ready to read (command)
                 gettimeofday(&latestReadTime, NULL);
                 str = O->commands[O->commandIndexWrite];
-                if (fgets(str, RKNameLength - 1, fp) == NULL) {
+                if (fgets(str, RKMaximumCommandLength - 1, fp) == NULL) {
                     // When the socket has been disconnected by the client
                     O->cmd = NULL;
                     RKLog("%s %s Client disconnected.\n", M->name, O->name);
@@ -263,7 +263,7 @@ void *RKOperatorRoutine(void *in) {
                 }
                 RKStripTail(str);
                 O->commandIndexWrite = O->commandIndexWrite == RKServerBufferDepth - 1 ? 0 : O->commandIndexWrite + 1;
-                memset(O->commands[O->commandIndexWrite], 0, RKNameLength);
+                memset(O->commands[O->commandIndexWrite], 0, RKMaximumCommandLength);
             }
         } else if (r < 0) {
             // Errors
@@ -573,12 +573,12 @@ void RKServerStop(RKServer *M) {
 #pragma mark - Miscellaneous functions
 
 ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format) {
-    int k;
+    int k = 0;
     fd_set rfd;
     fd_set efd;
     ssize_t r = -1;
     int readCount;
-    bool readOkay;
+    bool readOkay = false;
 
     FD_ZERO(&rfd);
     FD_ZERO(&efd);
@@ -587,7 +587,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
 
     RKNetDelimiter *delimiter = &O->delimRx;
     
-    RKServer        *M = O->M;
+    RKServer *M = O->M;
 
     const int blockLength = 4;
     
@@ -611,7 +611,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                         usleep(10000);
                     }
                 } else if (errno != EAGAIN) {
-                    RKLog("%s %s Error. RKMessageFormatFixedHeaderVariableBlock:1  r = %d  k = %d  errno = %d (%s)\n",
+                    RKLog("%s %s Error. RKMessageFormatFixedHeaderVariableBlock   r = %d   k = %d   errno = %d (%s)\n",
                               M->name, O->name, r, k, errno, RKErrnoString(errno));
                     break;
                 } else {
@@ -669,6 +669,9 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 }
                 break;
             }
+            if (k > 0 && k < RKMaximumPacketSize) {
+                *((char *)buffer + k) = '\0';
+            }
             readOkay = true;
             break;
             
@@ -703,6 +706,9 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 }
                 break;
             }
+            if (k > 0 && k < RKMaximumPacketSize) {
+                *((char *)buffer + k) = '\0';
+            }
             readOkay = true;
             break;
             
@@ -711,7 +717,10 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
             // Nothing yet
             break;
     }
-    return (ssize_t)r;
+    if (readOkay) {
+        return k;
+    }
+    return -1;
 }
 
 // In counts of 10ms, should be plenty, in-transit buffer should be able to hold it

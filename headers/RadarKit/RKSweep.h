@@ -9,16 +9,25 @@
 #ifndef __RadarKit_Sweep__
 #define __RadarKit_Sweep__
 
-#define RKRayAnchorsDepth 4
+#define RKSweepScratchSpaceDepth 4
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
 #include <netcdf.h>
 
-typedef struct rk_ray_anchors {
+typedef struct rk_sweep_scratch {
+    char                             symbol[8];
+    RKName                           name;
+    RKName                           unit;
+    RKName                           colormap;
+    float                            *array1D;
+    float                            *array2D;
+    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
+    char                             filename[RKMaximumPathLength];
+    char                             summary[RKMaximumStringLength];
     RKRay                            *rays[RKMaximumRaysPerSweep];
-    uint32_t                         count;
-} RKRayAnchors;
+    uint32_t                         rayCount;
+} RKSweepScratchSpace;
 
 typedef struct rk_sweep_engine RKSweepEngine;
 
@@ -41,19 +50,10 @@ struct rk_sweep_engine {
 
     // Program set variables
     pthread_t                        tidRayGatherer;
-    RKRayAnchors                     rayAnchors[RKRayAnchorsDepth];
-	uint8_t                          rayAnchorsIndex;
-    float                            *array1D;
-    float                            *array2D;
-    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
-    char                             filename[RKMaximumPathLength];
-	char                             productSymbol[8];
-    RKName                           productName;
-    RKName                           productUnit;
-    RKName                           productColormap;
-    char                             summary[RKMaximumStringLength];
-    RKUserProduct                    userProducts[RKMaximumUserProductCount];
-    pthread_mutex_t                  userProductMutex;
+    RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
+    uint8_t                          scratchSpaceIndex;
+    RKProduct                        products[RKMaximumProductCount];
+    pthread_mutex_t                  productMutex;
 
     // Status / health
     uint32_t                         processedRayIndex;
@@ -74,15 +74,16 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
-void RKSweepEngineSetUserProductTimeout(RKSweepEngine *, const uint32_t);
+void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const bool expectTgz);
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
 
-RKUserProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKUserProductDesc);
-int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKUserProductId);
-int RKSweepEngineReportProduct(RKSweepEngine *, RKFloat *, RKUserProductId);
+RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKProductDesc);
+int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKProductId);
+RKFloat *RKSweepEngineGetBufferForProduct(RKSweepEngine *, RKSweep *, RKProductId);
+int RKSweepEngineReportProduct(RKSweepEngine *, RKSweep *, RKProductId);
 
 RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
 RKSweep *RKSweepRead(const char *);

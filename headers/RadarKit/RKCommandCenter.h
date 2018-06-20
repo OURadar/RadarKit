@@ -40,7 +40,7 @@ typedef struct rk_user {
     uint32_t                         pingCount;
     uint32_t                         commandCount;
     uint32_t                         controlFirstUID;
-    uint32_t                         rayAnchorsIndex;
+    uint32_t                         scratchSpaceIndex;
     RKTextPreferences                textPreferences;
     uint16_t                         pulseDownSamplingRatio;
     uint16_t                         rayDownSamplingRatio;
@@ -54,8 +54,8 @@ typedef struct rk_user {
     RKOperator                       *serverOperator;
     RKRadar                          *radar;
     uint8_t                          userProductCount;
-    RKUserProductId                  userProductIds[RKMaximumUserProductCount];
-    RKUserProductDesc                userProductDescriptions[RKMaximumUserProductCount];
+    RKProductId                      userProductIds[RKMaximumProductCount];
+    RKProductDesc                    userProductDescriptions[RKMaximumProductCount];
 } RKUser;
 
 typedef struct rk_command_center {

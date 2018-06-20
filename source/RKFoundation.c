@@ -159,7 +159,7 @@ int RKSetProgramName(const char *name) {
 }
 
 int RKSetRootFolder(const char *folder) {
-    if (strlen(folder) > RKNameLength - 64) {
+    if (strlen(folder) > RKMaximumPathLength - 64) {
         fprintf(stderr, "WARNING. Very long root folder.\n");
     }
     sprintf(rkGlobalParameters.rootDataFolder, "%s", folder);
@@ -175,10 +175,10 @@ int RKSetLogfile(const char *filename) {
     if (filename == NULL) {
         rkGlobalParameters.logfile[0] = '\0';
         return 0;
-    } else if (strlen(filename) >= RKNameLength) {
+    } else if (strlen(filename) >= RKMaximumPathLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, RKNameLength, "%s", filename);
+    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s", filename);
     return RKResultSuccess;
 }
 
@@ -235,7 +235,7 @@ void RKShowTypeSizes(void) {
     printf("sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
     printf("sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
     printf("sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
-    printf("sizeof(RKUserProductDesc) = %d\n", (int)sizeof(RKUserProductDesc));
+    printf("sizeof(RKProductDesc) = %d\n", (int)sizeof(RKProductDesc));
     
     printf("\n");
     
@@ -323,7 +323,7 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
     return line;
 }
 
-void RKShowArray(const float *data, const char *letter, const int width, const int height) {
+void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
     int j, k = 0;
     char text[1024];
     k = sprintf(text, "    %s%s%s = [ %s ]\n",
@@ -337,6 +337,112 @@ void RKShowArray(const float *data, const char *letter, const int width, const i
         k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
+}
+
+char *RKVariableInString(const char *name, const void *value, RKValueType type) {
+    static int ibuf = 0;
+    static RKName stringBuffer[16];
+
+    char *string = stringBuffer[ibuf]; string[RKNameLength - 1] = '\0';
+
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+
+    bool b   = *((bool *)value);
+    float f  = *((float *)value);
+    double d = *((double *)value);
+    char *c  = (char *)value;
+    int8_t  i8 = *((int8_t *)value);
+    uint8_t u8 = *((uint8_t *)value);
+    int16_t  i16 = *((int16_t *)value);
+    uint16_t u16 = *((uint16_t *)value);
+    int32_t  i32 = *((int32_t *)value);
+    uint32_t u32 = *((uint32_t *)value);
+    int64_t  i64 = *((int64_t *)value);
+    uint64_t u64 = *((uint64_t *)value);
+
+    if (rkGlobalParameters.showColor) {
+        switch (type) {
+            case RKValueTypeBool:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
+                break;
+            case RKValueTypeInt8:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i8);
+                break;
+            case RKValueTypeInt16:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i16);
+                break;
+            case RKValueTypeInt32:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i32);
+                break;
+            case RKValueTypeInt64:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%lld" RKNoColor, name, i64);
+                break;
+            case RKValueTypeUInt8:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u8);
+                break;
+            case RKValueTypeUInt16:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u16);
+                break;
+            case RKValueTypeUInt32:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u32);
+                break;
+            case RKValueTypeUInt64:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, u64);
+                break;
+            case RKValueTypeFloat:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, f);
+                break;
+            case RKValueTypeDouble:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, d);
+                break;
+            case RKValueTypeNumericString:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
+                break;
+            default:
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKSalmonColor "%s" RKNoColor, name, c);
+                break;
+        }
+    } else {
+        switch (type) {
+            case RKValueTypeBool:
+                snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
+                break;
+            case RKValueTypeInt8:
+                snprintf(string, RKNameLength - 1, "%s = %d", name, i8);
+                break;
+            case RKValueTypeInt16:
+                snprintf(string, RKNameLength - 1, "%s = %d", name, i16);
+                break;
+            case RKValueTypeInt32:
+                snprintf(string, RKNameLength - 1, "%s = %d", name, i32);
+                break;
+            case RKValueTypeInt64:
+                snprintf(string, RKNameLength - 1, "%s = %lld", name, i64);
+                break;
+            case RKValueTypeUInt8:
+                snprintf(string, RKNameLength - 1, "%s = %u", name, u8);
+                break;
+            case RKValueTypeUInt16:
+                snprintf(string, RKNameLength - 1, "%s = %u", name, u16);
+                break;
+            case RKValueTypeUInt32:
+                snprintf(string, RKNameLength - 1, "%s = %u", name, u32);
+                break;
+            case RKValueTypeUInt64:
+                snprintf(string, RKNameLength - 1, "%s = %llu", name, u64);
+                break;
+            case RKValueTypeFloat:
+                snprintf(string, RKNameLength - 1, "%s = %.3f", name, f);
+                break;
+            case RKValueTypeDouble:
+                snprintf(string, RKNameLength - 1, "%s = %.3f", name, d);
+                break;
+            default:
+                snprintf(string, RKNameLength - 1, "%s = %s", name, c);
+                break;
+        }
+    }
+    return string;
 }
 
 #pragma mark - Buffer
@@ -457,8 +563,8 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int8 _t            idata[RKMaximumProductCount][capacity];
-//    float              fdata[RKMaximumProductCount][capacity];
+//    int8 _t            idata[RKBaseMomentCount][capacity];
+//    float              fdata[RKBaseMomentCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
     if (capacity != (capacity / RKSIMDAlignSize) * RKSIMDAlignSize) {
@@ -471,7 +577,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = headerSize + RKMaximumProductCount * capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(raySize));
         return 0;
@@ -502,20 +608,20 @@ void RKRayBufferFree(RKBuffer mem) {
 // Get a ray from a ray buffer
 RKRay *RKGetRay(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
-    size_t raySize = RKRayHeaderPaddedSize + RKMaximumProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = RKRayHeaderPaddedSize + RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
 // Get the data in uint8_t from a ray
-uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKProductIndex m) {
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
     void *d = (void *)ray->data;
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
 // Get the data in float from a ray
-float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
+float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
     void *d = (void *)ray->data;
-    d += RKMaximumProductCount * ray->header.capacity * sizeof(uint8_t);
+    d += RKBaseMomentCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
@@ -525,7 +631,7 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
         ray->header.s = RKRayStatusVacant;
         ray->header.i = -(uint64_t)slots + k;
         ray->header.gateCount = 0;
-        memset(ray->data, 0, RKMaximumProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+        memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultSuccess;
 }
@@ -887,7 +993,7 @@ char *RKStringOfStream(RKStream stream) {
     return string;
 }
 
-int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list) {
+int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *index, RKBaseMomentList *list) {
     if (list == NULL || *list == 0) {
         return RKResultNullInput;
     }
@@ -939,47 +1045,47 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Power",
         "Default"
     };
-    uint32_t products[] = {
-        RKProductListProductZ,
-        RKProductListProductV,
-        RKProductListProductW,
-        RKProductListProductD,
-        RKProductListProductP,
-        RKProductListProductR,
-        RKProductListProductK,
-        RKProductListProductSh,
-        RKProductListProductSv,
+    RKBaseMomentList baseMoments[] = {
+        RKBaseMomentListProductZ,
+        RKBaseMomentListProductV,
+        RKBaseMomentListProductW,
+        RKBaseMomentListProductD,
+        RKBaseMomentListProductP,
+        RKBaseMomentListProductR,
+        RKBaseMomentListProductK,
+        RKBaseMomentListProductSh,
+        RKBaseMomentListProductSv,
         0xFFFF
     };
-    uint32_t productIndices[] = {
-        RKProductIndexZ,
-        RKProductIndexV,
-        RKProductIndexW,
-        RKProductIndexD,
-        RKProductIndexP,
-        RKProductIndexR,
-        RKProductIndexK,
-        RKProductIndexSh,
+    RKBaseMomentIndex baseMomentIndices[] = {
+        RKBaseMomentIndexZ,
+        RKBaseMomentIndexV,
+        RKBaseMomentIndexW,
+        RKBaseMomentIndexD,
+        RKBaseMomentIndexP,
+        RKBaseMomentIndexR,
+        RKBaseMomentIndexK,
+        RKBaseMomentIndexSh,
         0
     };
     int k = -1;
-    if (*list & RKProductListProductZ) {
+    if (*list & RKBaseMomentListProductZ) {
         k = 0;
-    } else if (*list & RKProductListProductV) {
+    } else if (*list & RKBaseMomentListProductV) {
         k = 1;
-    } else if (*list & RKProductListProductW) {
+    } else if (*list & RKBaseMomentListProductW) {
         k = 2;
-    } else if (*list & RKProductListProductD) {
+    } else if (*list & RKBaseMomentListProductD) {
         k = 3;
-    } else if (*list & RKProductListProductP) {
+    } else if (*list & RKBaseMomentListProductP) {
         k = 4;
-    } else if (*list & RKProductListProductR) {
+    } else if (*list & RKBaseMomentListProductR) {
         k = 5;
-    } else if (*list & RKProductListProductK) {
+    } else if (*list & RKBaseMomentListProductK) {
         k = 6;
-    } else if (*list & RKProductListProductSh) {
+    } else if (*list & RKBaseMomentListProductSh) {
         k = 7;
-    } else if (*list & RKProductListProductSv) {
+    } else if (*list & RKBaseMomentListProductSv) {
         k = 8;
     }
     if (k < 0) {
@@ -999,9 +1105,9 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         sprintf(colormap, "%s", colormaps[k]);
     }
     if (index) {
-        *index = productIndices[k];
+        *index = baseMomentIndices[k];
     }
-    *list ^= products[k];
+    *list ^= baseMoments[k];
     return RKResultSuccess;
 }
 
@@ -1248,11 +1354,11 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     return found;
 }
 
-int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputString) {
+int RKParseProductDescription(RKProductDesc *desc, const char *inputString) {
     size_t k;
     char *keyString;
 
-    memset(desc, 0, sizeof(RKUserProductDesc));
+    memset(desc, 0, sizeof(RKProductDesc));
 
     // Product name is mandatory
     keyString = RKGetValueOfKey(inputString, "name");
@@ -1300,6 +1406,14 @@ int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputStri
         return RKResultIncompleteProductDescription;
     }
     // Optional values
+    keyString = RKGetValueOfKey(inputString, "unit");
+    if (keyString) {
+        strncpy(desc->unit, keyString, 5);
+    }
+    keyString = RKGetValueOfKey(inputString, "colormap");
+    if (keyString) {
+        strncpy(desc->colormap, keyString, 9);
+    }
     keyString = RKGetValueOfKey(inputString, "minimumValue");
     if (keyString) {
         desc->mininimumValue = (RKFloat)atof(keyString);
@@ -1309,6 +1423,14 @@ int RKParseUserProductDescription(RKUserProductDesc *desc, const char *inputStri
         desc->mininimumValue = (RKFloat)atof(keyString);
     }
     return RKResultSuccess;
+}
+
+RKProductId RKProductIdFromString(const char *string) {
+    return (RKProductId)strtoul(string, NULL, 10);
+}
+
+RKIdentifier RKIdentifierFromString(const char *string) {
+    return (RKIdentifier)strtouq(string, NULL, 10);
 }
 
 #pragma mark - Simple Engine Free

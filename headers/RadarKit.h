@@ -11,7 +11,11 @@
 //  █
 //
 //  1.2.10 - 6/30/2018
+//         - Added RKVariableInString() to highlight some log entries
+//         - Added product registration from PyRadarKit space
 //         - Product identifier from PyRadarKit is ingested
+//         - Product description from PyRadarKit is ingested
+//         - JSON response now required the key "type"
 //         - Added RKWaveform definition to RKTypes.h
 //         - Added support for multiple user products from a client
 //         - Introduced scan type mask

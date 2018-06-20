@@ -26,7 +26,7 @@
 typedef struct RKGlobalParameterStruct {
     char             program[RKNameLength];                      // Name of the program in log
     char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
-    char             rootDataFolder[RKNameLength];               // Root folder where iq, moment health and log files are stored
+    char             rootDataFolder[RKMaximumPathLength];        // Root folder where iq, moment health and log files are stored
     bool             dailyLog;                                   // Daily mode where log file is /{rootDataFolder}/log/YYYYMMDD.log
     bool             showColor;                                  // Show colors
     pthread_mutex_t  mutex;                                      // Mutual exclusive access
@@ -38,13 +38,19 @@ extern const char * const rkResultStrings[];
 
 typedef uint32_t RKValueType;
 enum RKValueType {
+    RKValueTypeBool,
+    RKValueTypeInt8,
+    RKValueTypeInt16,
     RKValueTypeInt32,
-    RKValueTypeUInt32,
     RKValueTypeInt64,
+    RKValueTypeUInt8,
+    RKValueTypeUInt16,
+    RKValueTypeUInt32,
     RKValueTypeUInt64,
     RKValueTypeFloat,
     RKValueTypeDouble,
-    RKValueTypeString
+    RKValueTypeString,
+    RKValueTypeNumericString
 };
 
 #pragma mark - Common Functions
@@ -65,7 +71,8 @@ int RKSetLogfileToDefault(void);
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
-void RKShowArray(const float *data, const char *letter, const int width, const int height);
+void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
+char *RKVariableInString(const char *name, const void *value, RKValueType type);
 
 // Clearing buffer
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);
@@ -102,7 +109,7 @@ int RKFileMonitorFree(RKFileMonitor *);
 RKStream RKStreamFromString(const char *);
 char *RKStringOfStream(RKStream);
 int RKStringFromStream(char *, RKStream);
-int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, uint32_t *index, uint32_t *list);
+int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *, RKBaseMomentList *);
 
 // Parser, enum, strings
 size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);
@@ -115,7 +122,9 @@ RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);
 bool RKFindCondition(const char *, const RKStatusEnum, const bool, char *firstKey, char *firstValue);
 bool RKAnyCritical(const char *, const bool, char *firstKey, char *firstValue);
-int RKParseUserProductDescription(RKUserProductDesc *, const char *);
+int RKParseProductDescription(RKProductDesc *, const char *);
+RKProductId RKProductIdFromString(const char *);
+RKIdentifier RKIdentifierFromString(const char *);
 
 // Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);
