@@ -177,7 +177,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         w1 + 1,
                         w2 + 1,
                         w3 + 5);
-                sprintf(stringBuffer[0], "Waveform = '%s'", waveform->name);
+                sprintf(stringBuffer[0], "%s", RKVariableInString("Waveform", waveform->name, RKValueTypeString));
                 for (j = 0; j < newConfig->filterCount; j++) {
                     sprintf(stringBuffer[j + 1], format,
                             j, newConfig->filterCount,

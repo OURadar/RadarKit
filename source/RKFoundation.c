@@ -40,10 +40,18 @@ int RKLog(const char *whatever, ...) {
         free(msg);
         return 1;
     }
-    if (whatever[0] == '>') {
-        i += sprintf(msg, "                    ");
+    if (rkGlobalParameters.dailyLog) {
+        if (whatever[0] == '>') {
+            i += sprintf(msg, "         ");
+        } else {
+            i += strftime(msg, 16, "%T ", &tm);
+        }
     } else {
-        i += strftime(msg, 32, "%Y/%m/%d %T ", &tm);
+        if (whatever[0] == '>') {
+            i += sprintf(msg, "                    ");
+        } else {
+            i += strftime(msg, 32, "%Y/%m/%d %T ", &tm);
+        }
     }
     char *okay_str = strcasestr(whatever, "ok");
     char *info_str = strcasestr(whatever, "info");
@@ -57,8 +65,8 @@ int RKLog(const char *whatever, ...) {
     char *anchor = (char *)whatever + (whatever[0] == '>' ? 1 : 0);
 
     if (has_ok || has_info || has_error || has_warning) {
-        char colored_whatever[RKMaximumStringLength];
-        
+        char *colored_whatever = (char *)malloc(RKMaximumPacketSize * sizeof(char));
+
         if (has_ok) {
             len = (size_t)(okay_str - anchor);
         } else if (has_info) {
@@ -77,13 +85,13 @@ int RKLog(const char *whatever, ...) {
         
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
-                len += sprintf(colored_whatever + len, "\033[1;92m");
+                len += sprintf(colored_whatever + len, RKGreenColor);
             } else if (has_info) {
-                len += sprintf(colored_whatever + len, "\033[1;96m");
+                len += sprintf(colored_whatever + len, RKSkyBlueColor);
             } else if (has_error) {
-                len += sprintf(colored_whatever + len, "\033[1;91m");
+                len += sprintf(colored_whatever + len, RKRedColor);
             } else if (has_warning) {
-                len += sprintf(colored_whatever + len, "\033[1;93m");
+                len += sprintf(colored_whatever + len, RKYellowColor);
             }
         }
         strncpy(colored_whatever + len, anchor, RKMaximumStringLength - len);
@@ -91,14 +99,16 @@ int RKLog(const char *whatever, ...) {
         i += vsprintf(msg + i, colored_whatever, args);
         
         if (rkGlobalParameters.showColor) {
-            sprintf(msg + i, "\033[0m");
+            sprintf(msg + i, RKNoColor);
         }
+
+        free(colored_whatever);
     } else {
         vsprintf(msg + i, anchor, args);
     }
     
     if (whatever[strlen(whatever) - 1] != '\n') {
-        strncat(msg, "\n", 2040);
+        strncat(msg, "\n", RKMaximumStringLength - 1);
     }
     va_end(args);
     // Produce the string to the specified stream
@@ -399,7 +409,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
                 break;
             default:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKSalmonColor "%s" RKNoColor, name, c);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
                 break;
         }
     } else {

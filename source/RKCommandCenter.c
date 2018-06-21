@@ -968,9 +968,9 @@ int socketStreamHandler(RKOperator *O) {
 
                     deltaTx = 1.0e3 * RKTimevalDiff(timevalTx, timevalOrigin);
                     deltaRx = 1.0e3 * RKTimevalDiff(timevalRx, timevalTx);
-                    RKLog("%s %s %s ms   %s ms\n", engine->name, O->name,
-                          RKVariableInString("Delta 1", &deltaTx, RKValueTypeDouble),
-                          RKVariableInString("Delta 2", &deltaRx, RKValueTypeDouble));
+                    RKLog("%s %s Round trip finished   %s ms   %s ms\n", engine->name, O->name,
+                          RKVariableInString("tx", &deltaTx, RKValueTypeDouble),
+                          RKVariableInString("rx", &deltaRx, RKValueTypeDouble));
 
                 } // if (baseMomentCount) ...
                 RKSweepFree(sweep);
