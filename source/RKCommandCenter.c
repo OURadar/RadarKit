@@ -949,8 +949,10 @@ int socketStreamHandler(RKOperator *O) {
                         } else {
                             floatData = RKSweepEngineGetBufferForProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
                         }
-                        RKLog("%s %s %s (%d) -> %u %zu\n",
-                              engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
+                        if (user->radar->sweepEngine->verbose > 1) {
+                            RKLog("%s %s %s (%d) -> %u %zu\n",
+                                  engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
+                        }
                         if (floatData) {
                             size = RKServerReceiveUserPayload(O, floatData, RKNetworkMessageFormatHeaderDefinedSize);
                         } else {

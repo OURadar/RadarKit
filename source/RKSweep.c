@@ -819,7 +819,7 @@ int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductI
         return RKResultFailedToFindProductId;
     }
     if (engine->products[i].pid == productId) {
-        if (engine->verbose) {
+        if (engine->verbose > 2) {
             RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->products[i].i, sweep->header.config.i);
         }
         engine->products[i].i = sweep->header.config.i;
