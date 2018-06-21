@@ -401,6 +401,11 @@ static void *sweepWriter(void *in) {
             RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
             RKShowArray(product->array, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
         }
+        sprintf(filename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
+        if (engine->verbose > 1) {
+            RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);
+        }
+        summarySize += sprintf(summary + summarySize, ", %s%s%s", RKYellowColor, product->desc.symbol, RKNoColor);
     }
 
     // We are done with the sweep
