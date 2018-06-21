@@ -61,7 +61,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s%s%s   %s",
                         newConfig->sweepElevation,
                         newConfig->sweepAzimuth,
-                        rkGlobalParameters.showColor ? RKSkyBlueColor : "",
+                        rkGlobalParameters.showColor ? RKDeepPinkColor : "",
                         RKMarkerScanTypeString(newConfig->startMarker),
                         rkGlobalParameters.showColor ? RKNoColor : "",
                         RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));

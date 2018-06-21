@@ -336,15 +336,15 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
     int j, k = 0;
     char text[1024];
-    k = sprintf(text, "    %s%s%s = [ %s ]\n",
+    k = sprintf(text, "         %s%s%s = [ %s ]\n",
                 rkGlobalParameters.showColor ? RKYellowColor : "", letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
-    k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
-    k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
-    k += sprintf(text + k, "        [  ...\n");
+    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
+    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
+    k += sprintf(text + k, "             [     ...\n");
     for (j = height - 3; j < height; j++) {
-        k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
+        k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
 }

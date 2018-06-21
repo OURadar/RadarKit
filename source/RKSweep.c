@@ -164,7 +164,7 @@ static void *sweepWriter(void *in) {
     bool convertRadiansToDegrees;
     
     // Some global attributes
-    time_t startTime = (time_t)sweep->rays[0]->header.startTime.tv_sec;
+    //time_t startTime = (time_t)sweep->rays[0]->header.startTime.tv_sec;
     float va = 0.25f * sweep->header.desc.wavelength * sweep->header.config.prf[0];
 
     // Go through all moments
@@ -173,8 +173,6 @@ static void *sweepWriter(void *in) {
     }
 
     const float radianToDegree = 180.0f / M_PI;
-    const bool sweepIsPPI = (sweep->header.config.startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
-    const bool sweepIsRHI = (sweep->header.config.startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
 
     int summarySize = 0;
     RKBaseMomentIndex momentIndex;
@@ -185,21 +183,8 @@ static void *sweepWriter(void *in) {
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
         RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
+        sprintf(filename, "%s-%s.nc", sweep->header.filename, symbol);
 
-        // Make the filename as ../20170119/PX10k-20170119-012345-E1.0-Z.nc
-        i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
-        i += strftime(filename + i, 10, "%Y%m%d", gmtime(&startTime));
-        i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
-        i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-        if (sweepIsPPI) {
-            i += sprintf(filename + i, "-E%.1f-%s", sweep->header.config.sweepElevation, symbol);
-        } else if (sweepIsRHI) {
-            i += sprintf(filename + i, "-A%.1f-%s", sweep->header.config.sweepAzimuth, symbol);
-        } else {
-            i += sprintf(filename + i, "-N%03d-%s", sweep->header.rayCount, symbol);
-        }
-        sprintf(filename + i, ".nc");
-        
         if (engine->verbose > 1) {
             RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);
         }
@@ -227,9 +212,9 @@ static void *sweepWriter(void *in) {
             return NULL;
         }
 
-        if (sweepIsPPI) {
+        if (sweep->header.isPPI) {
             nc_def_dim(ncid, "Azimuth", sweep->header.rayCount, &dimensionIds[0]);
-        } else if (sweepIsRHI) {
+        } else if (sweep->header.isRHI) {
             nc_def_dim(ncid, "Elevation", sweep->header.rayCount, &dimensionIds[0]);
         } else {
             nc_def_dim(ncid, "Beam", sweep->header.rayCount, &dimensionIds[0]);
@@ -262,9 +247,9 @@ static void *sweepWriter(void *in) {
         // Global attributes - some are WDSS-II required
         nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(name), name);
         nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
-        if (sweepIsPPI) {
+        if (sweep->header.isPPI) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "PPI");
-        } else if (sweepIsRHI) {
+        } else if (sweep->header.isRHI) {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "RHI");
         } else {
             nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "Unknown");
@@ -277,7 +262,7 @@ static void *sweepWriter(void *in) {
         nc_put_att_double(ncid, NC_GLOBAL, "LongitudeDouble", NC_DOUBLE, 1, &engine->radarDescription->longitude);
         nc_put_att_float(ncid, NC_GLOBAL, "Heading", NC_FLOAT, 1, &engine->radarDescription->heading);
         nc_put_att_float(ncid, NC_GLOBAL, "Height", NC_FLOAT, 1, &engine->radarDescription->radarHeight);
-        nc_put_att_long(ncid, NC_GLOBAL, "Time", NC_LONG, 1, &startTime);
+        nc_put_att_long(ncid, NC_GLOBAL, "Time", NC_LONG, 1, &sweep->header.startTime);
         tmpf = (float)sweep->rays[0]->header.startTime.tv_usec * 1.0e-6;
         nc_put_att_float(ncid, NC_GLOBAL, "FractionalTime", NC_FLOAT, 1, &tmpf);
         put_global_text_att(ncid, "attributes", "Nyquist_Vel Unit radarName vcp ColorMap");
@@ -295,14 +280,14 @@ static void *sweepWriter(void *in) {
         put_global_text_att(ncid, "ColorMap-value", colormap);
         
         // Other housekeeping attributes
-        if (sweepIsPPI) {
+        if (sweep->header.isPPI) {
             nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &sweep->header.config.sweepElevation);
         } else {
             tmpf = W2_MISSING_DATA;
             nc_put_att_float(ncid, NC_GLOBAL, "Elevation", NC_FLOAT, 1, &tmpf);
         }
         put_global_text_att(ncid, "ElevationUnits", "Degrees");
-        if (sweepIsRHI) {
+        if (sweep->header.isRHI) {
             nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &sweep->header.config.sweepAzimuth);
         } else {
             tmpf = W2_MISSING_DATA;
@@ -411,8 +396,8 @@ static void *sweepWriter(void *in) {
             continue;
         }
         RKProduct *product = &engine->products[p];
-        if (engine->verbose) {
-            RKLog("%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
+        if (engine->verbose > 1) {
+            RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
             RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
             RKShowArray(product->array, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
         }
@@ -583,13 +568,13 @@ static void *rayGatherer(void *in) {
             // Ready for next collection while the sweepWriter is busy
             engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
             if (engine->verbose > 1) {
-                RKLog("%s RKMarkerSweepEnd   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
+                RKLog("%s Info. RKMarkerSweepEnd   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
             }
             rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
             if (engine->verbose > 1) {
-                RKLog("%s RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
+                RKLog("%s Info. RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
             }
             if (is != j) {
                 // Gather the rays to release
@@ -934,12 +919,27 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     sweep->header.rayCount = n;
     sweep->header.gateCount = S->header.gateCount;
     sweep->header.gateSizeMeters = S->header.gateSizeMeters;
+    sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
+    sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
     sweep->header.baseMomentList = overallMomentList;
+    sweep->header.isPPI = (S->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+    sweep->header.isRHI = (S->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
     sweep->header.external = true;
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
     memcpy(&sweep->header.config, config, sizeof(RKConfig));
     memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
-
+    // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
+    k = sprintf(sweep->header.filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
+    k += strftime(sweep->header.filename + k, 10, "%Y%m%d", gmtime(&sweep->header.startTime));
+    k += sprintf(sweep->header.filename + k, "/%s-", engine->radarDescription->filePrefix);
+    k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
+    if (sweep->header.isPPI) {
+        k += sprintf(sweep->header.filename + k, "-E%.1f", sweep->header.config.sweepElevation);
+    } else if (sweep->header.isRHI) {
+        k += sprintf(sweep->header.filename + k, "-A%.1f", sweep->header.config.sweepAzimuth);
+    } else {
+        k += sprintf(sweep->header.filename + k, "-N%03d", sweep->header.rayCount);
+    }
     return sweep;
 }
 

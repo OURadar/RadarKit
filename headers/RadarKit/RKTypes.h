@@ -101,11 +101,12 @@
 #define RKGreenColor                         "\033[38;5;46m"
 #define RKTealColor                          "\033[38;5;49m"
 #define RKIceBlueColor                       "\033[38;5;51m"
-#define RKSkyBlueColor                       "\033[38;5;39m"
+#define RKSkyBlueColor                       "\033[38;5;45m"
 #define RKBlueColor                          "\033[38;5;27m"
 #define RKPurpleColor                        "\033[38;5;99m"
 #define RKIndigoColor                        "\033[38;5;201m"
 #define RKHotPinkColor                       "\033[38;5;199m"
+#define RKDeepPinkColor                      "\033[38;5;197m"
 #define RKPinkColor                          "\033[38;5;213m"
 #define RKSalmonColor                        "\033[38;5;210m"
 #define RKPythonColor                        "\033[38;5;226;48;5;24m"
@@ -896,7 +897,7 @@ typedef struct rk_ray_header {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKBaseMomentList     baseMomentList;                                          // 16-bit MSB for products + 16-bit LSB for display
+    RKBaseMomentList     baseMomentList;                                       // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            //
@@ -933,11 +934,16 @@ typedef struct rk_ray {
 typedef struct rk_sweep_header {
     uint32_t             rayCount;                                             // Number of rays
     uint32_t             gateCount;                                            // Number of range gates
+    time_t               startTime;                                            // Start time of the sweep
+    time_t               endTime;                                              // End time of the sweep
     RKBaseMomentList     baseMomentList;                                       // List of available products
     float                gateSizeMeters;                                       // Gate size in meters
+    bool                 isPPI;                                                //
+    bool                 isRHI;                                                //
     bool                 external;                                             // Data is external buffer, reference by *rays[]
-    RKRadarDesc          desc;
-    RKConfig             config;
+    RKRadarDesc          desc;                                                 //
+    RKConfig             config;                                               //
+    char                 filename[RKMaximumPathLength];                        // Propose filename without symbol and extension, XX-20180520-112233
 } RKSweepHeader;
 
 //
