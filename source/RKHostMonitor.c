@@ -135,8 +135,10 @@ static void *hostPinger(void *in) {
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
         RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d (%s)\n", engine->name, name, sd, errno, RKErrnoString(errno));
         if (errno == EACCES) {
-            RKLog("%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 0\"' ...\n", engine->name, name);
-            RKLog("%s %s Info. to allow root to use icmp sockets\n", engine->name, name);
+            RKLog(">%s %s Info. Use one of the following:\n", engine->name, name);
+            RKLog(">%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 0\"'\n", engine->name, name);
+            RKLog(">%s %s Info. Add 'net.ipv4.ping_group_range = 0 0' to /etc/sysctl.conf\n", engine->name, name);
+            RKLog(">%s %s Info. to allow root to use ICMP sockets\n", engine->name, name);
         }
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
