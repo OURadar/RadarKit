@@ -79,6 +79,8 @@ struct rk_radar {
     bool                             active;
     size_t                           memoryUsage;
     uint8_t                          processorCount;
+    uint64_t                         tic;
+    pthread_mutex_t                  mutex;
     //
     // Buffers
     //
@@ -127,8 +129,6 @@ struct rk_radar {
     // Internal copies of things
     //
     RKWaveform                       *waveform;
-    //
-    pthread_mutex_t                  mutex;
     //
     // Hardware protocols for controls
     //

@@ -259,9 +259,9 @@ static void handleSignals(int signal) {
     }
     fprintf(stderr, "\n");
     RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
-    RKStop(myRadar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
+    RKStop(myRadar);
 }
 
 #pragma mark - User Parameters
@@ -957,7 +957,7 @@ int main(int argc, const char **argv) {
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
         
-        usleep(200000);
+        usleep(100000);
 
         RKLog("Setting a waveform ...\n");
         RKExecuteCommand(myRadar, "t w ofm", NULL);

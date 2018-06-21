@@ -596,14 +596,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRadarRelayInitialized;
     }
 
-    // Health logger (to be modified)
+    // Health logger
     radar->healthLogger = RKHealthLoggerInit();
     RKHealthLoggerSetInputOutputBuffers(radar->healthLogger, &radar->desc, radar->fileManager,
                                         radar->healths, &radar->healthIndex);
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->state |= RKRadarStateHealthLoggerInitialized;
 
-    // Sweep engine (to be modified)
+    // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
                                       radar->configs, &radar->configIndex,
@@ -624,12 +624,17 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->memoryUsage += radar->hostMonitor->memoryUsage;
     radar->state |= RKRadarStateHostMonitorInitialized;
 
+    // Other resources
+    pthread_mutex_init(&radar->mutex, NULL);
+
     // Total memory usage
     RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           RKIntegerToCommaStyleString(radar->memoryUsage),
           rkGlobalParameters.showColor ? "\033[24m" : "",
           RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
+
+    radar->tic++;
 
     return radar;
 }
@@ -824,6 +829,8 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateWaveformCalibrationsInitialized) {
         free(radar->waveformCalibrations);
     }
+    // Other resources
+    pthread_mutex_destroy(&radar->mutex);
     free(radar);
     RKLog("Done.");
     return RKResultSuccess;
@@ -1435,7 +1442,12 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
 //     Always RKResultSuccess
 //
 int RKGoLive(RKRadar *radar) {
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("RKGoLive()   %s\n", RKVariableInString("radar->tic", &radar->tic, RKValueTypeUInt64));
+    }
+    pthread_mutex_lock(&radar->mutex);
     radar->active = true;
+    radar->tic++;
 
     // Offset the pre-allocated memory
     radar->memoryUsage -= radar->fileManager->memoryUsage;
@@ -1516,15 +1528,18 @@ int RKGoLive(RKRadar *radar) {
     // Health Relay
     if (radar->healthRelayInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Initializing health relay ...");
+            RKLog("Initializing health relay ...\n");
         }
         if (radar->healthRelayFree == NULL || radar->healthRelayExec == NULL) {
-            RKLog("Error. Health relay incomplete.");
+            RKLog("Error. Health relay incomplete.\n");
+            pthread_mutex_unlock(&radar->mutex);
             RKStop(radar);
             return RKResultIncompleteHealthRelay;
         }
         radar->healthRelay = radar->healthRelayInit(radar, radar->healthRelayInitInput);
         if (radar->healthRelay == NULL) {
+            RKLog("Error. Unable to start the health relay.\n");
+            pthread_mutex_unlock(&radar->mutex);
             RKStop(radar);
             return RKResultFailedToStartHealthRelay;
         }
@@ -1534,15 +1549,18 @@ int RKGoLive(RKRadar *radar) {
     // Pedestal
     if (radar->pedestalInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Initializing pedestal ...");
+            RKLog("Initializing pedestal ...\n");
         }
         if (radar->pedestalFree == NULL || radar->pedestalExec == NULL) {
-            RKLog("Error. Pedestal incomplete.");
+            RKLog("Error. Pedestal incomplete\n.");
+            pthread_mutex_unlock(&radar->mutex);
             RKStop(radar);
             return RKResultIncompletePedestal;
         }
         radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
         if (radar->pedestal == NULL) {
+            RKLog("Error. Unable to start the pedestal.\n");
+            pthread_mutex_unlock(&radar->mutex);
             RKStop(radar);
             return RKResultFailedToStartPedestal;
         }
@@ -1552,15 +1570,18 @@ int RKGoLive(RKRadar *radar) {
     // Transceiver
     if (radar->transceiverInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Initializing transceiver ...");
+            RKLog("Initializing transceiver ...\n");
         }
         if (radar->transceiverFree == NULL || radar->transceiverExec == NULL) {
-            RKLog("Error. Transceiver incomplete.");
+            RKLog("Error. Transceiver incomplete.\n");
+            pthread_mutex_unlock(&radar->mutex);
             RKStop(radar);
             return RKResultIncompleteTransceiver;
         }
         radar->transceiver = radar->transceiverInit(radar, radar->transceiverInitInput);
         if (radar->transceiver == NULL) {
+            RKLog("Error. Unable to start the transceiver.\n");
+            pthread_mutex_unlock(&radar->mutex);
             RKStop(radar);
             return RKResultFailedToStartTransceiver;
         }
@@ -1583,6 +1604,8 @@ int RKGoLive(RKRadar *radar) {
     }
 
     radar->state |= RKRadarStateLive;
+    radar->tic++;
+    pthread_mutex_unlock(&radar->mutex);
     return RKResultSuccess;
 }
 
@@ -1722,8 +1745,9 @@ int RKWaitWhileActive(RKRadar *radar) {
             if (!radar->active) {
                 break;
             }
-        }
+        } // if (radar->desc.initFlags & RKInitFlagSignalProcessor) ...
         usleep(100000);
+        radar->tic++;
     }
     return RKResultSuccess;
 }
@@ -1736,13 +1760,27 @@ int RKWaitWhileActive(RKRadar *radar) {
 //     Always RKResultSuccess
 //
 int RKStop(RKRadar *radar) {
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("RKStop()   %s", RKVariableInString("radar->tic", &radar->tic, RKValueTypeUInt64));
+    }
+    int s = 0;
+    float t;
+    do {
+        if (++s % 40 == 0) {
+            t = s * 0.025f;
+            RKLog("Waiting for %s < 2 ... %s s\n",
+                  RKVariableInString("radar->tic", &radar->tic, RKValueTypeUInt64),
+                  RKVariableInString("t", &t, RKValueTypeFloat));
+        }
+        usleep(25000);
+    } while (radar->tic < 2);
     pthread_mutex_lock(&radar->mutex);
     if (radar->active == false) {
+        RKLog("Radar is not active.\n");
         pthread_mutex_unlock(&radar->mutex);
         return RKResultEngineDeactivatedMultipleTimes;
     }
     radar->active = false;
-    pthread_mutex_unlock(&radar->mutex);
     if (radar->systemInspector) {
         RKSimpleEngineFree(radar->systemInspector);
     }
@@ -1823,6 +1861,7 @@ int RKStop(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
         RKLog("Radar state = 0x%x\n", radar->state);
     }
+    pthread_mutex_unlock(&radar->mutex);
     return RKResultSuccess;
 }
 
