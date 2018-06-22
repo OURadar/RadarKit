@@ -107,7 +107,22 @@ static void *sweepManager(void *in) {
         sweep->rays[j]->header.s |= RKRayStatusBeingConsumed;
     }
 
-    // Each registered product will report a product that has the same sweep id
+    RKBaseMomentIndex momentIndex;
+    RKBaseMomentList momentList = sweep->header.baseMomentList;
+    int productCount = __builtin_popcount(momentList & RKBaseMomentListProductZVWDPRKS);
+
+    // Base products
+    for (p = 0; p < productCount; p++) {
+        if (engine->baseMomentProductIds[p]) {
+            RKFloat *data = RKSweepEngineGetBufferForProduct(engine, sweep, engine->baseMomentProductIds[p]);
+            // Fill in the data
+            data[0] = 0.0f;
+            //RKLog("%s Reporting %s\n", engine->name, RKVariableInString("productId", &engine->baseMomentProductIds[p], RKValueTypeProductId));
+            RKSweepEngineReportProduct(engine, sweep, engine->baseMomentProductIds[p]);
+        }
+    }
+
+    // Other clients may report products at the same time here, so we wait
     s = 0;
     bool allReported = true;
     for (i = 0; i < RKMaximumProductCount; i++) {
@@ -190,9 +205,6 @@ static void *sweepManager(void *in) {
     const float radianToDegree = 180.0f / M_PI;
 
     int summarySize = 0;
-    RKBaseMomentIndex momentIndex;
-    RKBaseMomentList momentList = sweep->header.baseMomentList;
-    int productCount = __builtin_popcount(momentList & RKBaseMomentListProductZVWDPRKS);
 
     // Base products
     for (p = 0; p < productCount; p++) {
