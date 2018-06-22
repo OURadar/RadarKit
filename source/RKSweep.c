@@ -53,7 +53,20 @@ static void *rayReleaser(void *in) {
     return NULL;
 }
 
-static void *sweepWriter(void *in) {
+static void ncProductWriter(RKSweepScratchSpace *space, RKProduct *product) {
+    // Localize the scratch space storage
+//    char *name = space->name;
+//    char *unit = space->unit;
+//    char *symbol = space->symbol;
+//    char *colormap = space->colormap;
+//    char *filename = space->filename;
+//    char *filelist = space->filelist;
+//    char *summary = space->summary;
+//    float *array1D = space->array1D;
+//    float *array2D = space->array2D;
+}
+
+static void *sweepManager(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
     int i, j, p, s;
@@ -126,9 +139,9 @@ static void *sweepWriter(void *in) {
     }
 
     // Localize the scratch space storage
-    char *symbol = engine->scratchSpaces[scratchSpaceIndex].symbol;
     char *name = engine->scratchSpaces[scratchSpaceIndex].name;
     char *unit = engine->scratchSpaces[scratchSpaceIndex].unit;
+    char *symbol = engine->scratchSpaces[scratchSpaceIndex].symbol;
     char *colormap = engine->scratchSpaces[scratchSpaceIndex].colormap;
     char *filename = engine->scratchSpaces[scratchSpaceIndex].filename;
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
@@ -149,6 +162,8 @@ static void *sweepWriter(void *in) {
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
 
+    ncProductWriter(&engine->scratchSpaces[scratchSpaceIndex], &engine->products[0]);
+
     int ncid;
     int dimensionIds[2];
     int variableIdAzimuth;
@@ -164,7 +179,6 @@ static void *sweepWriter(void *in) {
     bool convertRadiansToDegrees;
     
     // Some global attributes
-    //time_t startTime = (time_t)sweep->rays[0]->header.startTime.tv_sec;
     float va = 0.25f * sweep->header.desc.wavelength * sweep->header.config.prf[0];
 
     // Go through all moments
@@ -401,6 +415,7 @@ static void *sweepWriter(void *in) {
             RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
             RKShowArray(product->array, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
         }
+        // Full filename with symbol and extension
         sprintf(filename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
         if (engine->verbose > 1) {
             RKLog("%s %s %s ...\n", engine->name, engine->doNotWrite ? "Skipping" : "Creating", filename);
@@ -453,12 +468,12 @@ static void *sweepWriter(void *in) {
 static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
     
-    int j, k, n, s;
+    int j, k, n, p, s;
 
     uint32_t is = 0;   // Start index
     uint64_t tic = 0;  // Local copy of engine tic
 
-    pthread_t tidSweepWriter = (pthread_t)0;
+    pthread_t tidSweepManager = (pthread_t)0;
     pthread_t tidRayReleaser = (pthread_t)0;
 
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
@@ -477,7 +492,7 @@ static void *rayGatherer(void *in) {
                 RKLog("%s Error. Unable to allocate memory (2D).\n", engine->name);
                 exit(EXIT_FAILURE);
             }
-
+            // Update the engine memory usage
             engine->memoryUsage += RKMaximumRaysPerSweep * (ray->header.capacity + 1) * sizeof(float);
         }
     }
@@ -485,6 +500,70 @@ static void *rayGatherer(void *in) {
     // Update the engine state
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
+
+    char *name = engine->scratchSpaces[0].name;
+    char *unit = engine->scratchSpaces[0].unit;
+    char *symbol = engine->scratchSpaces[0].symbol;
+    char *colormap = engine->scratchSpaces[0].colormap;
+
+    RKFloat lhma[4];
+    RKBaseMomentIndex momentIndex = 0;
+    RKBaseMomentList momentList = RKBaseMomentListProductZVWDPRK;
+    int productCount = __builtin_popcount(momentList);
+    for (p = 0; p < productCount; p++) {
+        // Get the symbol, name, unit, colormap, etc. from the product list
+        RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
+        // Build a product description
+        RKProductDesc productDescription;
+        strcpy(productDescription.name, name);
+        strcpy(productDescription.unit, unit);
+        strcpy(productDescription.symbol, symbol);
+        strcpy(productDescription.colormap, colormap);
+        // Special treatment for RhoHV
+        if (momentIndex == RKBaseMomentIndexR) {
+            productDescription.pieceCount = 3;
+            productDescription.w[0] = 1000.0f;
+            productDescription.b[0] = -824.0f;
+            productDescription.l[0] = 0.93f;
+            productDescription.w[1] = 300.0f;
+            productDescription.b[1] = -173.0f;
+            productDescription.l[1] = 0.7f;
+            productDescription.w[2] = 52.8571f;
+            productDescription.b[2] = 0.0f;
+            productDescription.l[2] = 0.0f;
+            productDescription.mininimumValue = 0.0f;
+            productDescription.maximumValue = 1.05f;
+        } else {
+            switch (momentIndex) {
+                case RKBaseMomentIndexZ:
+                    RKZLHMAC
+                    break;
+                case RKBaseMomentIndexV:
+                    RKV2LHMAC
+                    break;
+                case RKBaseMomentIndexW:
+                    RKWLHMAC
+                    break;
+                case RKBaseMomentIndexD:
+                    RKDLHMAC
+                    break;
+                case RKBaseMomentIndexP:
+                    RKPLHMAC
+                    break;
+                case RKBaseMomentIndexK:
+                    RKKLHMAC
+                    break;
+                default:
+                    break;
+            }
+            productDescription.pieceCount = 1;
+            productDescription.mininimumValue = lhma[0];
+            productDescription.maximumValue = lhma[1];
+            productDescription.w[0] = lhma[2];
+            productDescription.b[0] = lhma[3];
+        }
+        engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
+    }
 
     RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
@@ -546,12 +625,12 @@ static void *rayGatherer(void *in) {
                 RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d   n = %d\n", engine->name, is, j, n);
             }
 
-            // If the sweepWriter is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
-            if (tidSweepWriter) {
-                pthread_join(tidSweepWriter, NULL);
+            // If the sweepManager is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
+            if (tidSweepManager) {
+                pthread_join(tidSweepManager, NULL);
             }
             tic = engine->tic;
-            if (pthread_create(&tidSweepWriter, NULL, sweepWriter, engine)) {
+            if (pthread_create(&tidSweepManager, NULL, sweepManager, engine)) {
                 RKLog("%s Error. Unable to launch a sweep writer.\n", engine->name);
             }
             do {
@@ -570,7 +649,7 @@ static void *rayGatherer(void *in) {
                 usleep(50000);
             } while (tic == engine->tic && engine->state & RKEngineStateActive);
 
-            // Ready for next collection while the sweepWriter is busy
+            // Ready for next collection while the sweepManager is busy
             engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
             if (engine->verbose > 1) {
                 RKLog("%s Info. RKMarkerSweepEnd   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
@@ -604,7 +683,7 @@ static void *rayGatherer(void *in) {
                     usleep(50000);
                 } while (tic == engine->tic && engine->state & RKEngineStateActive);
 
-                // Ready for next collection while the sweepWriter is busy
+                // Ready for next collection while the sweepManager is busy
                 engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
                 if (engine->verbose > 1) {
                     RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
@@ -619,8 +698,8 @@ static void *rayGatherer(void *in) {
         // Update k to catch up for the next watch
         j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
     }
-    if (tidSweepWriter) {
-        pthread_join(tidSweepWriter, NULL);
+    if (tidSweepManager) {
+        pthread_join(tidSweepManager, NULL);
     }
     for (k = 0; k < RKSweepScratchSpaceDepth; k++) {
         free(engine->scratchSpaces[k].array1D);
@@ -757,7 +836,12 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
     engine->products[i].flag = RKProductStatusActive;
     engine->products[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
     engine->products[i].array = (RKFloat *)malloc(engine->products[i].capacity * sizeof(RKFloat));
-    RKLog("%s Product 0x%04x '%s' (%s) registered.\n", engine->name, engine->products[i].pid, engine->products[i].desc.name, engine->products[i].desc.symbol);
+    RKLog("%s Product %s%s%s registered   %s   %s\n", engine->name,
+          rkGlobalParameters.showColor ? RKYellowColor : "",
+          engine->products[i].desc.symbol,
+          rkGlobalParameters.showColor ? RKNoColor : "",
+          RKVariableInString("productId", &engine->products[i].pid, RKValueTypeProductId),
+          RKVariableInString("name", engine->products[i].desc.name, RKValueTypeString));
     pthread_mutex_unlock(&engine->productMutex);
     return productId;
 }

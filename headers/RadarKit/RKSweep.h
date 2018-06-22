@@ -16,15 +16,15 @@
 #include <netcdf.h>
 
 typedef struct rk_sweep_scratch {
-    char                             symbol[8];
     RKName                           name;
     RKName                           unit;
+    RKName                           symbol;
     RKName                           colormap;
+    char                             filename[RKMaximumPathLength];
+    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
+    char                             summary[RKMaximumStringLength];
     float                            *array1D;
     float                            *array2D;
-    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
-    char                             filename[RKMaximumPathLength];
-    char                             summary[RKMaximumStringLength];
     RKRay                            *rays[RKMaximumRaysPerSweep];
     uint32_t                         rayCount;
 } RKSweepScratchSpace;
@@ -54,6 +54,7 @@ struct rk_sweep_engine {
     uint8_t                          scratchSpaceIndex;
     RKProduct                        products[RKMaximumProductCount];
     pthread_mutex_t                  productMutex;
+    RKProductId                      baseMomentProductIds[RKBaseMomentIndexCount];
 
     // Status / health
     uint32_t                         processedRayIndex;

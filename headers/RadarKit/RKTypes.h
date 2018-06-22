@@ -483,7 +483,8 @@ enum RKBaseMomentIndex {
     RKBaseMomentIndexSv,
     RKBaseMomentIndexZv,
     RKBaseMomentIndexVv,
-    RKBaseMomentIndexWv
+    RKBaseMomentIndexWv,
+    RKBaseMomentIndexCount
 };
 
 typedef uint32_t RKProductType;
@@ -1095,6 +1096,7 @@ typedef union rk_product_desc {                                                /
         uint32_t         pieceCount;                                           // Count of piece-wise function that maps data to color index
         RKFloat          w[16];                                                // Data to color index weight (piece-wise function)
         RKFloat          b[16];                                                // Data to color index bias (piece-wise function)
+        RKFloat          l[16];                                                // The lower bound of each piece
         RKFloat          mininimumValue;                                       // Minimum value
         RKFloat          maximumValue;                                         // Maximum value
     };
