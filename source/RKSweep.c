@@ -77,6 +77,7 @@ static void *sweepManager(void *in) {
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
+    // Collect rays that belong to a sweep to a scratch space
     RKSweep *sweep = RKSweepCollect(engine, scratchSpaceIndex);
     if (sweep == NULL) {
         if (engine->verbose > 1) {
@@ -561,6 +562,7 @@ static void *rayGatherer(void *in) {
             productDescription.maximumValue = lhma[1];
             productDescription.w[0] = lhma[2];
             productDescription.b[0] = lhma[3];
+            productDescription.l[0] = 0.0f;
         }
         engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
     }

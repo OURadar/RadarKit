@@ -1108,8 +1108,9 @@ typedef struct rk_product {                                                    /
     RKProductId          pid;                                                  // Product identifier from RKProductRegister()
     RKProductDesc        desc;                                                 // Description
     RKProductStatus      flag;                                                 // Various state
+    RKSweepHeader        header;                                               // Sweep header
     uint32_t             depth;                                                // Number of arrays
-    uint32_t             capacity;                                             // Number of RKFloat elements in blcok of array
+    uint32_t             capacity;                                             // Number of RKFloat elements in blocks of array
     RKFloat              *array;                                               // Flattened array of user product
 } RKProduct;
 
