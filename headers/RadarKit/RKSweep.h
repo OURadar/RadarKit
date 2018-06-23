@@ -13,6 +13,7 @@
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
+#include <RadarKit/RKProduct.h>
 #include <netcdf.h>
 
 typedef struct rk_sweep_scratch {
@@ -55,6 +56,7 @@ struct rk_sweep_engine {
     RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
     uint8_t                          scratchSpaceIndex;
     pthread_mutex_t                  productMutex;
+    RKBaseMomentList                 baseMomentList;
     RKProductId                      baseMomentProductIds[RKBaseMomentIndexCount];
 
     // Status / health

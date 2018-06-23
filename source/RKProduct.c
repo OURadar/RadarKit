@@ -12,6 +12,7 @@
 
 int RKProductSetMetaDataFromSweep(RKProduct *product, const RKSweep *sweep) {
     int k;
+    // Sweep header
     memcpy(product->header.name, sweep->header.desc.name, sizeof(RKName));
     product->header.latitude = sweep->header.desc.latitude;
     product->header.longitude = sweep->header.desc.longitude;
@@ -25,6 +26,7 @@ int RKProductSetMetaDataFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.isPPI = sweep->header.isPPI;
     product->header.isRHI = sweep->header.isRHI;
     product->header.filterCount = sweep->header.config.filterCount;
+    // Sweep header config
     for (k = 0; k < product->header.filterCount; k++) {
         memcpy(&product->header.filterAnchors[k], &sweep->header.config.filterAnchors[k], sizeof(RKFilterAnchor));
         product->header.pw[k] = sweep->header.config.pw[k];
@@ -45,6 +47,8 @@ int RKProductSetMetaDataFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.SNRThreshold = sweep->header.config.SNRThreshold;
     memcpy(product->header.waveform, sweep->header.config.waveform, sizeof(RKName));
     memcpy(product->header.vcpDefinition, sweep->header.config.vcpDefinition, sizeof(RKMaximumCommandLength));
+    // Synchronize config id
+    product->i = sweep->header.config.i;
     return RKResultSuccess;
 }
 

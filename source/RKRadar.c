@@ -448,6 +448,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         
         bytes = radar->desc.productBufferDepth * sizeof(RKProduct);
         radar->products = (RKProduct *)malloc(bytes);
+        memset(radar->products, 0, bytes);
         RKLog("Level III buffer occupies %s B  (%s products)\n",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.productBufferDepth));

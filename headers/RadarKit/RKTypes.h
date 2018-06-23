@@ -684,13 +684,13 @@ enum RKHostStatus {
 typedef uint32_t RKProductStatus;
 enum RKProductStatus {
     RKProductStatusVacant                        = 0,                          //
-    RKProductStatusSleep0                        = (1 << 0),                   // Sleep stage 0 -
-    RKProductStatusSleep1                        = (1 << 1),                   // Sleep stage 1 -
-    RKProductStatusSleep2                        = (1 << 2),                   // Sleep stage 2 -
-    RKProductStatusSleep3                        = (1 << 3),                   // Sleep stage 3 -
-    RKProductStatusSkipped                       = (1 << 5),                   //
-    RKProductStatusBusy                          = (1 << 6),                   // Waiting for processing node
-    RKProductStatusActive                        = (1 << 7),                   //
+    RKProductStatusActive                        = (1 << 0),                   //
+    RKProductStatusBusy                          = (1 << 1),                   // Waiting for processing node
+    RKProductStatusSkipped                       = (1 << 2),                   //
+    RKProductStatusSleep0                        = (1 << 4),                   // Sleep stage 0 -
+    RKProductStatusSleep1                        = (1 << 5),                   // Sleep stage 1 -
+    RKProductStatusSleep2                        = (1 << 6),                   // Sleep stage 2 -
+    RKProductStatusSleep3                        = (1 << 7)                    // Sleep stage 3 -
 };
 
 typedef uint8_t RKOverviewFlag;
