@@ -216,6 +216,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.rayBufferDepth == 0) {
         radar->desc.rayBufferDepth = 720;
     }
+    if (radar->desc.productBufferDepth > RKBuffer3SlotCount) {
+        radar->desc.productBufferDepth = RKBuffer3SlotCount;
+        RKLog("Info. Product buffer clamped to %s\n", radar->desc.productBufferDepth);
+    } else if (radar->desc.productBufferDepth == 0) {
+        radar->desc.productBufferDepth = 20;
+    }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
         RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
@@ -278,6 +284,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         sprintf(radar->desc.dataPath, RKDefaultDataPath);
     }
 
+    // -------------------------------------------------- Buffers --------------------------------------------------
+    
     // Status buffer
     if (radar->desc.initFlags & RKInitFlagAllocStatusBuffer) {
         bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
@@ -425,7 +433,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStateRawIQBufferAllocated;
     }
 
-    // Ray (moment) bufer
+    // Ray (moment) and product buffers
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
@@ -437,6 +445,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
         radar->state |= RKRadarStateRayBufferAllocated;
+        
+        bytes = radar->desc.productBufferDepth * sizeof(RKProduct);
+        radar->products = (RKProduct *)malloc(bytes);
+        RKLog("Level III buffer occupies %s B  (%s products)\n",
+              RKIntegerToCommaStyleString(bytes),
+              RKIntegerToCommaStyleString(radar->desc.productBufferDepth));
+        radar->memoryUsage += bytes;
+        radar->desc.productBufferSize = bytes;
+        radar->state |= RKRadarStateProductBufferAllocated;
     }
 
     // Waveform calibrations
@@ -488,6 +505,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += bytes;
         radar->state |= RKRadarStateControlsAllocated;
     }
+    
+    // -------------------------------------------------- Engines --------------------------------------------------
 
     // File manager
     radar->fileManager = RKFileManagerInit();
@@ -808,6 +827,9 @@ int RKFree(RKRadar *radar) {
     }
     if (radar->state & RKRadarStateRayBufferAllocated) {
         free(radar->rays);
+    }
+    if (radar->state & RKRadarStateProductBufferAllocated) {
+        free(radar->products);
     }
     if (radar->state & RKRadarStateControlsAllocated) {
         free(radar->controls);

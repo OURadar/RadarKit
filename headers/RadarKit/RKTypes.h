@@ -59,6 +59,7 @@
 #define RKBufferPSlotCount                   1000                              // Positions
 #define RKBuffer0SlotCount                   20000                             // Raw I/Q
 #define RKBuffer2SlotCount                   36000                             // Ray
+#define RKBuffer3SlotCount                   100                               // Products
 #define RKMaximumControlCount                128                               // Controls
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKGateCount                          262144                            // Must be a multiple of RKSIMDAlignSize
@@ -730,15 +731,17 @@ typedef struct rk_radar_desc {
     uint32_t             positionBufferDepth;                                  //
     uint32_t             pulseBufferDepth;                                     //
     uint32_t             rayBufferDepth;                                       //
+    uint32_t             productBufferDepth;                                   //
     uint32_t             controlCapacity;                                      // Number of control buttons
-    uint32_t             waveformCalibrationCapacity;                          //
+    uint32_t             waveformCalibrationCapacity;                          // Number of waveform specific calibrations
     size_t               healthNodeBufferSize;                                 // Buffer size (B)
     size_t               healthBufferSize;                                     // Buffer size (B)
     size_t               statusBufferSize;                                     // Buffer size (B)
     size_t               configBufferSize;                                     // Buffer size (B)
     size_t               positionBufferSize;                                   // Buffer size (B)
-    size_t               pulseBufferSize;                                      //
-    size_t               rayBufferSize;                                        //
+    size_t               pulseBufferSize;                                      // Buffer size (B)
+    size_t               rayBufferSize;                                        // Buffer size (B)
+    size_t               productBufferSize;                                    // Buffer size (B)
     uint32_t             pulseSmoothFactor;                                    // Pulse rate (Hz)
     uint32_t             pulseTicsPerSecond;                                   // Pulse tics per second (normally 10e6)
     uint32_t             positionSmoothFactor;                                 // Position rate (Hz)
