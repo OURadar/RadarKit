@@ -129,16 +129,16 @@ static void *sweepManager(void *in) {
     s = 0;
     bool allReported = true;
     for (i = 0; i < RKMaximumProductCount; i++) {
-        if (engine->products[i].flag == RKProductStatusVacant) {
+        if (engine->productBuffer[i].flag == RKProductStatusVacant) {
             continue;
         }
         if (engine->verbose > 1) {
-            RKLog("%s userProduct 0x%04x @ %zu != %zu\n", engine->name, engine->products[i].pid, engine->products[i].i, sweep->header.config.i);
+            RKLog("%s userProduct 0x%04x @ %zu != %zu\n", engine->name, engine->productBuffer[i].pid, engine->productBuffer[i].i, sweep->header.config.i);
         }
         pthread_mutex_lock(&engine->productMutex);
-        engine->products[i].flag |= RKProductStatusSleep0;
+        engine->productBuffer[i].flag |= RKProductStatusSleep0;
         pthread_mutex_unlock(&engine->productMutex);
-        while (engine->products[i].i != sweep->header.config.i &&
+        while (engine->productBuffer[i].i != sweep->header.config.i &&
                engine->userProductTimeoutSeconds * 100 > s &&
                engine->state & RKEngineStateActive) {
             usleep(10000);
@@ -147,9 +147,9 @@ static void *sweepManager(void *in) {
             };
         }
         pthread_mutex_lock(&engine->productMutex);
-        engine->products[i].flag ^= RKProductStatusSleep0;
+        engine->productBuffer[i].flag ^= RKProductStatusSleep0;
         pthread_mutex_unlock(&engine->productMutex);
-        if (engine->products[i].i != sweep->header.config.i) {
+        if (engine->productBuffer[i].i != sweep->header.config.i) {
             allReported = false;
         }
     }
@@ -171,17 +171,17 @@ static void *sweepManager(void *in) {
     j = 0;
     summary[0] = '\0';
     for (i = 0; i < RKMaximumProductCount; i++) {
-        if (engine->products[i].flag == RKProductStatusVacant) {
+        if (engine->productBuffer[i].flag == RKProductStatusVacant) {
             continue;
         }
-        j += sprintf(summary + j, " %d:0x%04x/%lu/0x%x", i, engine->products[i].pid, (unsigned long)engine->products[i].i, engine->products[i].flag);
+        j += sprintf(summary + j, " %d:0x%04x/%lu/0x%x", i, engine->productBuffer[i].pid, (unsigned long)engine->productBuffer[i].i, engine->productBuffer[i].flag);
     }
     RKLog("%s Concluding sweep.   %s   %s", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
 
-    ncProductWriter(&engine->scratchSpaces[scratchSpaceIndex], &engine->products[0]);
+    ncProductWriter(&engine->scratchSpaces[scratchSpaceIndex], &engine->productBuffer[0]);
 
     int ncid;
     int dimensionIds[2];
@@ -422,10 +422,10 @@ static void *sweepManager(void *in) {
 
     // User products
     for (p = 0; p < RKMaximumProductCount; p++) {
-        if (engine->products[p].flag == RKProductStatusVacant) {
+        if (engine->productBuffer[p].flag == RKProductStatusVacant) {
             continue;
         }
-        RKProduct *product = &engine->products[p];
+        RKProduct *product = &engine->productBuffer[p];
         if (engine->verbose > 1) {
             RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
             RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
@@ -762,13 +762,16 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
 
 void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
                                        RKConfig *configBuffer, uint32_t *configIndex,
-                                       RKBuffer rayBuffer, uint32_t *rayIndex) {
+                                       RKBuffer rayBuffer, uint32_t *rayIndex,
+                                       RKProduct *productBuffer, uint32_t *productIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
+    engine->productBuffer     = productBuffer;
+    engine->productIndex      = productIndex;
     engine->state |= RKEngineStateProperlyWired;
 }
 
@@ -837,7 +840,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc desc) {
     int i = 0;
     RKProductId productId = 42;
-    while (engine->products[i].pid != 0 && i < RKMaximumProductCount) {
+    while (engine->productBuffer[i].pid != 0 && i < RKMaximumProductCount) {
         productId++;
         i++;
     }
@@ -847,18 +850,18 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
     }
     RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     pthread_mutex_lock(&engine->productMutex);
-    engine->products[i].i = 0;
-    engine->products[i].pid = productId;
-    engine->products[i].desc = desc;
-    engine->products[i].flag = RKProductStatusActive;
-    engine->products[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
-    engine->products[i].array = (RKFloat *)malloc(engine->products[i].capacity * sizeof(RKFloat));
+    engine->productBuffer[i].i = 0;
+    engine->productBuffer[i].pid = productId;
+    engine->productBuffer[i].desc = desc;
+    engine->productBuffer[i].flag = RKProductStatusActive;
+    engine->productBuffer[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
+    engine->productBuffer[i].array = (RKFloat *)malloc(engine->productBuffer[i].capacity * sizeof(RKFloat));
     RKLog("%s Product %s%s%s registered   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
-          engine->products[i].desc.symbol,
+          engine->productBuffer[i].desc.symbol,
           rkGlobalParameters.showColor ? RKNoColor : "",
-          RKVariableInString("productId", &engine->products[i].pid, RKValueTypeProductId),
-          RKVariableInString("name", engine->products[i].desc.name, RKValueTypeString));
+          RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId),
+          RKVariableInString("name", engine->productBuffer[i].desc.name, RKValueTypeString));
     pthread_mutex_unlock(&engine->productMutex);
     return productId;
 }
@@ -866,7 +869,7 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
 int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId) {
     int i = 0;
     while (i < RKMaximumProductCount) {
-        if (engine->products[i].pid == productId) {
+        if (engine->productBuffer[i].pid == productId) {
             break;
         }
         i++;
@@ -875,16 +878,16 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
         RKLog("%s Error. Unable to locate productId = 0x%04x.\n", engine->name, productId);
         return RKResultFailedToFindProductId;
     }
-    if (engine->products[i].flag == RKProductStatusVacant) {
+    if (engine->productBuffer[i].flag == RKProductStatusVacant) {
         RKLog("%s Warning. The productId = 0x%04x is vacant.", engine->name, productId);
     }
     pthread_mutex_lock(&engine->productMutex);
-    engine->products[i].flag = RKProductStatusVacant;
-    engine->products[i].capacity = 0;
-    free(engine->products[i].array);
-    RKLog("%s Product 0x%04x '%s' (%s) unregistered.\n", engine->name, engine->products[i].pid, engine->products[i].desc.name, engine->products[i].desc.symbol);
-    memset(&engine->products[i].desc, 0, sizeof(RKProductDesc));
-    engine->products[i].pid = 0;
+    engine->productBuffer[i].flag = RKProductStatusVacant;
+    engine->productBuffer[i].capacity = 0;
+    free(engine->productBuffer[i].array);
+    RKLog("%s Product 0x%04x '%s' (%s) unregistered.\n", engine->name, engine->productBuffer[i].pid, engine->productBuffer[i].desc.name, engine->productBuffer[i].desc.symbol);
+    memset(&engine->productBuffer[i].desc, 0, sizeof(RKProductDesc));
+    engine->productBuffer[i].pid = 0;
     pthread_mutex_unlock(&engine->productMutex);
     return RKResultSuccess;
 }
@@ -892,7 +895,7 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
 RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
     int i = 0;
     while (i < RKMaximumProductCount) {
-        if (engine->products[i].pid == productId) {
+        if (engine->productBuffer[i].pid == productId) {
             break;
         }
         i++;
@@ -902,15 +905,15 @@ RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *engine, RKSweep *sweep, 
         return NULL;
     }
     pthread_mutex_lock(&engine->productMutex);
-    engine->products[i].flag |= RKProductStatusSleep1;
+    engine->productBuffer[i].flag |= RKProductStatusSleep1;
     pthread_mutex_unlock(&engine->productMutex);
-    return &engine->products[i];
+    return &engine->productBuffer[i];
 }
 
 int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
     int i = 0;
     while (i < RKMaximumProductCount) {
-        if (engine->products[i].pid == productId) {
+        if (engine->productBuffer[i].pid == productId) {
             break;
         }
         i++;
@@ -919,21 +922,21 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
         RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
         return RKResultFailedToFindProductId;
     }
-    if (engine->products[i].pid == productId) {
+    if (engine->productBuffer[i].pid == productId) {
         if (engine->verbose > 2) {
-            RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->products[i].i, sweep->header.config.i);
+            RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->productBuffer[i].i, sweep->header.config.i);
         }
-        engine->products[i].i = sweep->header.config.i;
+        engine->productBuffer[i].i = sweep->header.config.i;
     }
-    if (engine->products[i].flag & RKProductStatusSleep1) {
+    if (engine->productBuffer[i].flag & RKProductStatusSleep1) {
         pthread_mutex_lock(&engine->productMutex);
-        engine->products[i].flag ^= RKProductStatusSleep1;
+        engine->productBuffer[i].flag ^= RKProductStatusSleep1;
         pthread_mutex_unlock(&engine->productMutex);
     } else {
         RKLog("%s That's weird, this buffer has not been requested.\n", engine->name);
     }
     if (engine->verbose > 1) {
-        RKShowArray(engine->products[i].array, engine->products[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
+        RKShowArray(engine->productBuffer[i].array, engine->productBuffer[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
     }
     return RKResultSuccess;
 }

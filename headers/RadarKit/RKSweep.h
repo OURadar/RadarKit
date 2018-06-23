@@ -35,10 +35,12 @@ struct rk_sweep_engine {
     // User set variables
     RKName                           name;
     RKRadarDesc                      *radarDescription;
-    RKConfig                         *configBuffer;
-    uint32_t                         *configIndex;
     RKBuffer                         rayBuffer;
     uint32_t                         *rayIndex;
+    RKConfig                         *configBuffer;
+    uint32_t                         *configIndex;
+    RKProduct                        *productBuffer;
+    uint32_t                         *productIndex;
     uint8_t                          verbose;
     bool                             doNotWrite;
     bool                             hasHandleFilesScript;
@@ -52,7 +54,6 @@ struct rk_sweep_engine {
     pthread_t                        tidRayGatherer;
     RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
     uint8_t                          scratchSpaceIndex;
-    RKProduct                        products[RKMaximumProductCount];
     pthread_mutex_t                  productMutex;
     RKProductId                      baseMomentProductIds[RKBaseMomentIndexCount];
 
@@ -72,8 +73,9 @@ void RKSweepEngineFree(RKSweepEngine *);
 
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
 void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileManager *,
-                                       RKConfig *configBuffer, uint32_t *configIndex,
-                                       RKBuffer rayBuffer,     uint32_t *rayIndex);
+                                       RKConfig *configBuffer,   uint32_t *configIndex,
+                                       RKBuffer rayBuffer,       uint32_t *rayIndex,
+                                       RKProduct *productBuffer, uint32_t *productIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const bool expectTgz);

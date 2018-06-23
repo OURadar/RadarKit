@@ -95,6 +95,7 @@ struct rk_radar {
     uint32_t                         positionIndex;
     uint32_t                         pulseIndex;
     uint32_t                         rayIndex;
+    uint32_t                         productIndex;
     //
     // Secondary Health Buffer
     //
