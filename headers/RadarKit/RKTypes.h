@@ -1103,12 +1103,47 @@ typedef union rk_product_desc {                                                /
     RKByte bytes[1024];
 } RKProductDesc;
 
+typedef union rk_product_header {
+    struct {                                                                   // A 1-KB struct that contains meta data
+        RKName               name;                                             // Radar name
+        double               latitude;                                         // Latitude (degrees)
+        double               longitude;                                        // Longitude (degrees)
+        float                heading;                                          // Radar heading
+        float                radarHeight;                                      // Radar height from ground (m)
+        float                wavelength;                                       // Radar wavelength (m)
+        float                sweepElevation;                                   // Sweep elevation angle (degrees)
+        float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
+        uint32_t             rayCount;                                         // Number of rays
+        uint32_t             gateCount;                                        // Number of range gates
+        float                gateSizeMeters;                                   // Gate size in meters
+        time_t               startTime;                                        // Start time of the sweep
+        time_t               endTime;                                          // End time of the sweep
+        bool                 isPPI;                                            //
+        bool                 isRHI;                                            //
+        uint8_t              filterCount;                                      // Number of filters
+        RKFilterAnchor       filterAnchors[RKMaxFilterCount];                  // Filter anchors
+        uint32_t             pw[RKMaxFilterCount];                             // Pulse width (ns)
+        uint32_t             prf[RKMaxFilterCount];                            // Pulse repetition frequency (Hz)
+        RKFloat              noise[2];                                         // Noise floor (ADU)
+        RKFloat              systemZCal[2];                                    // System-wide Z calibration (dB)
+        RKFloat              systemDCal;                                       // System-wide ZDR calibration (dB)
+        RKFloat              systemPCal;                                       // System-wide phase calibration (rad)
+        RKFloat              ZCal[RKMaxFilterCount][2];                        // Waveform Z calibration (dB)
+        RKFloat              DCal[RKMaxFilterCount];                           // Waveform ZDR calibration (dB)
+        RKFloat              PCal[RKMaxFilterCount];                           // Waveform phase calibration (rad)
+        RKFloat              SNRThreshold;                                     // Censor SNR (dB)
+        RKName               waveform;                                         // Waveform name
+        char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
+    };
+    RKByte bytes[1024];
+} RKProductHeader;
+
 typedef struct rk_product {                                                    // A description of user product
     RKIdentifier         i;                                                    // Product counter to be synchronized with RKConfig->i
     RKProductId          pid;                                                  // Product identifier from RKProductRegister()
     RKProductDesc        desc;                                                 // Description
     RKProductStatus      flag;                                                 // Various state
-    RKSweepHeader        header;                                               // Sweep header
+    RKProductHeader      header;                                               // Product header
     uint32_t             depth;                                                // Number of arrays
     uint32_t             capacity;                                             // Number of RKFloat elements in blocks of array
     RKFloat              *array;                                               // Flattened array of user product

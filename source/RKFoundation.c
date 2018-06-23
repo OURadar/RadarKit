@@ -203,6 +203,19 @@ int RKSetLogfileToDefault(void) {
 
 #pragma mark - Screen Output
 
+//#define SHOW_SIZE(x)         printf("%s\n", RKVariableInString("sizeof(" #x ")", RKIntegerToCommaStyleString(sizeof(x)), RKValueTypeNumericString));
+#define SHOW_SIZE(x)         printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor "\n", \
+RKIntegerToCommaStyleString(sizeof(x)));
+//#define SHOW_SIZE_SIMD(x) \
+//tf = sizeof(x) % RKSIMDAlignSize == 0; \
+//printf("%s   %s\n", \
+//RKVariableInString("sizeof(" #x ")", RKIntegerToCommaStyleString(sizeof(x)), RKValueTypeNumericString), \
+//RKVariableInString("SIMDAlign", &tf, RKValueTypeBool));
+#define SHOW_SIZE_SIMD(x)         printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
+"   " RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "\n", \
+RKIntegerToCommaStyleString(sizeof(x)), \
+sizeof(x) % RKSIMDAlignSize == 0 ? "Tue" : "False");
+
 void RKShowTypeSizes(void) {
     SHOW_FUNCTION_NAME
     RKPulse *pulse = NULL;
@@ -213,40 +226,41 @@ void RKShowTypeSizes(void) {
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
     
-    printf("sizeof(void *) = %d\n", (int)sizeof(void *));
-    printf("sizeof(uint64_t) = %d\n", (int)sizeof(uint64_t));
-    printf("sizeof(unsigned long) = %d\n", (int)sizeof(unsigned long));
-    printf("sizeof(unsigned long long) = %d\n", (int)sizeof(unsigned long long));
-    printf("sizeof(RKByte) = %d\n", (int)sizeof(RKByte));
-    printf("sizeof(RKFloat) = %d\n", (int)sizeof(RKFloat));
-    printf("sizeof(RKInt16C) = %d\n", (int)sizeof(RKInt16C));
-    printf("sizeof(RKComplex) = %d\n", (int)sizeof(RKComplex));
-    printf("sizeof(RKRadarDesc) = %s\n", RKIntegerToCommaStyleString(sizeof(RKRadarDesc)));
-    printf("sizeof(RKConfig) = %s\n", RKIntegerToCommaStyleString(sizeof(RKConfig)));
-    printf("sizeof(RKHealth) = %s\n", RKIntegerToCommaStyleString(sizeof(RKHealth)));
-    printf("sizeof(RKNodalHealth) = %d\n", (int)sizeof(RKNodalHealth));
-    printf("sizeof(RKPosition) = %d\n", (int)sizeof(RKPosition));
-    printf("sizeof(RKPulseHeader) = %d\n", (int)sizeof(RKPulseHeader));
-    printf("sizeof(RKPulseParameters) = %d\n", (int)sizeof(RKPulseParameters));
-    printf("sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    printf("sizeof(RKPulse) = %d\n", (int)sizeof(RKPulse));
-    printf("sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
-    printf("sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    printf("sizeof(RKRay) = %d  (SIMD aligned: %s)\n", (int)sizeof(RKRay), (int)sizeof(RKRay) % RKSIMDAlignSize == 0 ? "true" : "false");
-    printf("sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
-    printf("sizeof(sweep->header) = %s\n", RKIntegerToCommaStyleString(sizeof(sweep->header)));
-    printf("sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));
-    printf("sizeof(RKFileHeader) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileHeader)));
-    printf("sizeof(RKPreferenceObject) = %s\n", RKIntegerToCommaStyleString(sizeof(RKPreferenceObject)));
-    printf("sizeof(RKControl) = %s\n", RKIntegerToCommaStyleString(sizeof(RKControl)));
-    printf("sizeof(RKStatus) = %d\n", (int)sizeof(RKStatus));
-    printf("sizeof(RKFileMonitor) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileMonitor)));
-    printf("sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
-    printf("sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
-    printf("sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
-    printf("sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
-    printf("sizeof(RKProductDesc) = %d\n", (int)sizeof(RKProductDesc));
-    
+    SHOW_SIZE(void *)
+    SHOW_SIZE(uint64_t)
+    SHOW_SIZE(unsigned long)
+    SHOW_SIZE(unsigned long long)
+    SHOW_SIZE(RKByte)
+    SHOW_SIZE(RKFloat)
+    SHOW_SIZE(RKInt16C)
+    SHOW_SIZE(RKComplex)
+    SHOW_SIZE(RKRadarDesc)
+    SHOW_SIZE(RKConfig)
+    SHOW_SIZE(RKHealth)
+    SHOW_SIZE(RKNodalHealth)
+    SHOW_SIZE(RKPosition)
+    SHOW_SIZE(RKPulseHeader)
+    SHOW_SIZE(RKPulseParameters)
+    SHOW_SIZE_SIMD(pulse->headerBytes)
+    SHOW_SIZE_SIMD(RKPulse)
+    SHOW_SIZE(RKRayHeader)
+    SHOW_SIZE_SIMD(ray->headerBytes)
+    SHOW_SIZE(RKSweep)
+    SHOW_SIZE(sweep->header)
+    SHOW_SIZE(RKScratch)
+    SHOW_SIZE(RKFileHeader)
+    SHOW_SIZE(RKPreferenceObject)
+    SHOW_SIZE(RKControl)
+    SHOW_SIZE(RKStatus)
+    SHOW_SIZE(RKFileMonitor)
+    SHOW_SIZE(RKFilterAnchor)
+    SHOW_SIZE(struct sockaddr)
+    SHOW_SIZE(struct sockaddr_in)
+    SHOW_SIZE(RKWaveform)
+    SHOW_SIZE(RKWaveformCalibration)
+    SHOW_SIZE(RKProductDesc)
+    SHOW_SIZE(RKProductHeader)
+
     printf("\n");
     
     RKFilterAnchor anchor = RKFilterAnchorDefault;
