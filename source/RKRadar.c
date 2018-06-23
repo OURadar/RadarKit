@@ -280,7 +280,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Status buffer
     if (radar->desc.initFlags & RKInitFlagAllocStatusBuffer) {
-        radar->state |= RKRadarStateStatusBufferAllocating;
         bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
         if (bytes == 0) {
             RKLog("Error. Zero storage for status buffer?\n");
@@ -300,13 +299,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.statusBufferSize = bytes;
-        radar->state ^= RKRadarStateStatusBufferAllocating;
-        radar->state |= RKRadarStateStatusBufferInitialized;
+        radar->state |= RKRadarStateStatusBufferAllocated;
     }
 
     // Config buffer
     if (radar->desc.initFlags & RKInitFlagAllocConfigBuffer) {
-        radar->state |= RKRadarStateConfigBufferAllocating;
         bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
         if (bytes == 0) {
             RKLog("Error. Zero storage for config buffer?\n");
@@ -326,13 +323,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.configBufferSize = bytes;
-        radar->state ^= RKRadarStateConfigBufferAllocating;
-        radar->state |= RKRadarStateConfigBufferInitialized;
+        radar->state |= RKRadarStateConfigBufferAllocated;
     }
     
     // Health buffer
     if (radar->desc.initFlags & RKInitFlagAllocHealthBuffer) {
-        radar->state |= RKRadarStateHealthBufferAllocating;
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
         if (bytes == 0) {
             RKLog("Error. Zero storage for health buffer?\n");
@@ -352,13 +347,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.healthBufferSize = bytes;
-        radar->state ^= RKRadarStateHealthBufferAllocating;
-        radar->state |= RKRadarStateHealthBufferInitialized;
+        radar->state |= RKRadarStateHealthBufferAllocated;
     }
     
     // Health nodes
     if (radar->desc.initFlags & RKInitFlagAllocHealthNodes) {
-        radar->state |= RKRadarStateHealthNodesAllocating;
         bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
         radar->healthNodes = (RKNodalHealth *)malloc(bytes);
         memset(radar->healthNodes, 0, bytes);
@@ -382,13 +375,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += radar->desc.healthNodeCount * bytes;
         radar->desc.healthNodeBufferSize = radar->desc.healthNodeCount * bytes;
-        radar->state ^= RKRadarStateHealthNodesAllocating;
-        radar->state |= RKRadarStateHealthNodesInitialized;
+        radar->state |= RKRadarStateHealthNodesAllocated;
     }
     
     // Position buffer
     if (radar->desc.initFlags & RKInitFlagAllocPositionBuffer) {
-        radar->state |= RKRadarStatePositionBufferAllocating;
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
         if (bytes == 0) {
             RKLog("Error. Zero storage for position buffer?\n");
@@ -408,13 +399,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.positionBufferSize = bytes;
-        radar->state ^= RKRadarStatePositionBufferAllocating;
-        radar->state |= RKRadarStatePositionBufferInitialized;
+        radar->state |= RKRadarStatePositionBufferAllocated;
     }
 
     // Pulse (IQ) buffer
     if (radar->desc.initFlags & RKInitFlagAllocRawIQBuffer) {
-        radar->state |= RKRadarStateRawIQBufferAllocating;
         bytes = RKPulseBufferAlloc(&radar->pulses, radar->desc.pulseCapacity, radar->desc.pulseBufferDepth);
         if (bytes == 0 || radar->pulses == NULL) {
             RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
@@ -433,13 +422,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.pulseBufferSize = bytes;
-        radar->state ^= RKRadarStateRawIQBufferAllocating;
-        radar->state |= RKRadarStateRawIQBufferInitialized;
+        radar->state |= RKRadarStateRawIQBufferAllocated;
     }
 
     // Ray (moment) bufer
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
-        radar->state |= RKRadarStateRayBufferAllocating;
         k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
         RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
@@ -449,8 +436,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKIntegerToCommaStyleString(k));
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
-        radar->state ^= RKRadarStateRayBufferAllocating;
-        radar->state |= RKRadarStateRayBufferInitialized;
+        radar->state |= RKRadarStateRayBufferAllocated;
     }
 
     // Waveform calibrations
@@ -475,7 +461,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.waveformCalibrationCapacity));
         radar->memoryUsage += bytes;
-        radar->state |= RKRadarStateWaveformCalibrationsInitialized;
+        radar->state |= RKRadarStateWaveformCalibrationsAllocated;
     }
 
     // Controls
@@ -500,7 +486,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.controlCapacity));
         radar->memoryUsage += bytes;
-        radar->state |= RKRadarStateControlsInitialized;
+        radar->state |= RKRadarStateControlsAllocated;
     }
 
     // File manager
@@ -802,31 +788,31 @@ int RKFree(RKRadar *radar) {
     }
     // Buffers
     RKLog("Freeing radar '%s' ...\n", radar->desc.name);
-    if (radar->state & RKRadarStateStatusBufferInitialized) {
+    if (radar->state & RKRadarStateStatusBufferAllocated) {
         free(radar->status);
     }
-    if (radar->state & RKRadarStateConfigBufferInitialized) {
+    if (radar->state & RKRadarStateConfigBufferAllocated) {
         free(radar->configs);
     }
-    if (radar->state & RKRadarStateHealthBufferInitialized) {
+    if (radar->state & RKRadarStateHealthBufferAllocated) {
         free(radar->healths);
     }
-    if (radar->state & RKRadarStateHealthNodesInitialized) {
+    if (radar->state & RKRadarStateHealthNodesAllocated) {
         free(radar->healthNodes);
     }
-    if (radar->state & RKRadarStatePositionBufferInitialized) {
+    if (radar->state & RKRadarStatePositionBufferAllocated) {
         free(radar->positions);
     }
-    if (radar->state & RKRadarStateRawIQBufferInitialized) {
+    if (radar->state & RKRadarStateRawIQBufferAllocated) {
         free(radar->pulses);
     }
-    if (radar->state & RKRadarStateRayBufferInitialized) {
+    if (radar->state & RKRadarStateRayBufferAllocated) {
         free(radar->rays);
     }
-    if (radar->state & RKRadarStateControlsInitialized) {
+    if (radar->state & RKRadarStateControlsAllocated) {
         free(radar->controls);
     }
-    if (radar->state & RKRadarStateWaveformCalibrationsInitialized) {
+    if (radar->state & RKRadarStateWaveformCalibrationsAllocated) {
         free(radar->waveformCalibrations);
     }
     // Other resources

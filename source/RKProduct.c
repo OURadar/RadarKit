@@ -10,6 +10,14 @@
 
 #pragma mark - Helper Functions
 
+//RKProduct *RKProductGetVacantProduct(RKRadar *) {
+//    
+//}
+
+int RKProductTransferMetaDataFromSweep(RKProduct *product, const RKSweep *sweep) {
+    return RKResultSuccess;
+}
+
 #pragma mark - Delegate Workers
 
 #pragma mark - Life Cycle

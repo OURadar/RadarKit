@@ -950,24 +950,25 @@ int socketStreamHandler(RKOperator *O) {
                             RKLog("%s %s Warning. Inconsistent configId = %lu (expected) != %lu (reported)\n", engine->name, O->name, sweep->header.config.i, identifier);
                         } else {
                             product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
-                            floatData = product->array;
-                        }
-                        if (user->radar->sweepEngine->verbose > 1) {
-                            RKLog("%s %s %s (%d) -> %u %zu\n",
-                                  engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
-                        }
-                        if (floatData) {
-                            size = RKServerReceiveUserPayload(O, floatData, RKNetworkMessageFormatHeaderDefinedSize);
-                        } else {
-                            RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
-                            size = RKServerReceiveUserPayload(O, user->scratch, RKNetworkMessageFormatHeaderDefinedSize);
+                            if (product) {
+                                floatData = product->array;
+                                size = RKServerReceiveUserPayload(O, floatData, RKNetworkMessageFormatHeaderDefinedSize);
+                                if (user->radar->sweepEngine->verbose > 1) {
+                                    RKLog("%s %s %s (%d) -> %u %zu\n",
+                                          engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
+                                }
+                                // Transfer important meta data
+                                RKProductTransferMetaDataFromSweep(product, sweep);
+                                //RKSweepEngineSetProduct(user->radar->sweepEngine, product);
+                            } else {
+                                RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
+                                size = RKServerReceiveUserPayload(O, user->scratch, RKNetworkMessageFormatHeaderDefinedSize);
+                            }
                         }
                         if (size < 0) {
                             RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
                             continue;
                         }
-                        // Transfer
-                        //RKSweepEngineSetProduct(user->radar->sweepEngine, product);
                     }
 
                     gettimeofday(&timevalRx, NULL);
