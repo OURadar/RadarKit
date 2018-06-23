@@ -203,19 +203,6 @@ int RKSetLogfileToDefault(void) {
 
 #pragma mark - Screen Output
 
-//#define SHOW_SIZE(x)         printf("%s\n", RKVariableInString("sizeof(" #x ")", RKIntegerToCommaStyleString(sizeof(x)), RKValueTypeNumericString));
-#define SHOW_SIZE(x)         printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor "\n", \
-RKIntegerToCommaStyleString(sizeof(x)));
-//#define SHOW_SIZE_SIMD(x) \
-//tf = sizeof(x) % RKSIMDAlignSize == 0; \
-//printf("%s   %s\n", \
-//RKVariableInString("sizeof(" #x ")", RKIntegerToCommaStyleString(sizeof(x)), RKValueTypeNumericString), \
-//RKVariableInString("SIMDAlign", &tf, RKValueTypeBool));
-#define SHOW_SIZE_SIMD(x)         printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
-"   " RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "\n", \
-RKIntegerToCommaStyleString(sizeof(x)), \
-sizeof(x) % RKSIMDAlignSize == 0 ? "Tue" : "False");
-
 void RKShowTypeSizes(void) {
     SHOW_FUNCTION_NAME
     RKPulse *pulse = NULL;
@@ -265,38 +252,38 @@ void RKShowTypeSizes(void) {
     
     RKFilterAnchor anchor = RKFilterAnchorDefault;
     printf("RKFilterAnchorDefault:\n");
-    printf(".name = %d\n", anchor.name);
-    printf(".origin = %d\n", anchor.origin);
-    printf(".length = %d\n", anchor.length);
-    printf(".inputOrigin = %d\n", anchor.inputOrigin);
-    printf(".outputOrigin = %d\n", anchor.outputOrigin);
-    printf(".maxDataLength = %d\n", anchor.maxDataLength);
-    printf(".subCarrierFrequency = %.2f\n", anchor.subCarrierFrequency);
-    printf(".sensitivityGain = %.2f dB\n", anchor.sensitivityGain);
-    printf(".filterGain = %.2f dB\n", anchor.filterGain);
-    printf(".fullScale = %.2f\n", anchor.fullScale);
+    printf(".%s\n", RKVariableInString("name", &anchor.name, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("origin", &anchor.origin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("length", &anchor.length, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("inputOrigin", &anchor.inputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("outputOrigin", &anchor.outputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("maxDataLength", &anchor.maxDataLength, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("subCarrierFrequency", &anchor.subCarrierFrequency, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("sensitivityGain", &anchor.sensitivityGain, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("filterGain", &anchor.filterGain, RKValueTypeFloat));
+    printf(".%s\n", RKVariableInString("fullScale", &anchor.fullScale, RKValueTypeFloat));
     
     printf("\n");
     
     RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(1000);
     memcpy(&anchor, &anchor2, sizeof(RKFilterAnchor));
     printf("RKFilterAnchorDefaultWithMaxDataLength(1000):\n");
-    printf(".name = %d\n", anchor.name);
-    printf(".origin = %d\n", anchor.origin);
-    printf(".length = %d\n", anchor.length);
-    printf(".inputOrigin = %d\n", anchor.inputOrigin);
-    printf(".outputOrigin = %d\n", anchor.outputOrigin);
-    printf(".maxDataLength = %d\n", anchor.maxDataLength);
-    printf(".subCarrierFrequency = %.2f\n", anchor.subCarrierFrequency);
-    printf(".sensitivityGain = %.2f dB\n", anchor.sensitivityGain);
-    printf(".filterGain = %.2f dB\n", anchor.filterGain);
-    printf(".fullScale = %.2f\n", anchor.fullScale);
+    printf(".%s\n", RKVariableInString("name", &anchor.name, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("origin", &anchor.origin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("length", &anchor.length, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("inputOrigin", &anchor.inputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("outputOrigin", &anchor.outputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("maxDataLength", &anchor.maxDataLength, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("subCarrierFrequency", &anchor.subCarrierFrequency, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("sensitivityGain", &anchor.sensitivityGain, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("filterGain", &anchor.filterGain, RKValueTypeFloat));
+    printf(".%s\n", RKVariableInString("fullScale", &anchor.fullScale, RKValueTypeFloat));
 
     printf("\n");
 
     int k = 0;
     while (k != RKResultCount) {
-        printf("%2d. %s\n", k, rkResultStrings[k]);
+        printf(RKLimeColor "%-50s" RKPurpleColor "%2d" RKNoColor "\n", rkResultStrings[k], k);
         k++;
     }
     // Restoring previous output stream

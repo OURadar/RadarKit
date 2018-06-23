@@ -300,6 +300,8 @@ int socketStreamHandler(RKOperator *O) {
     RKSweep *sweep;
     RKSweepHeader sweepHeader;
     
+    RKProduct *product;
+
     uint8_t *u8Data = NULL;
     float *f32Data = NULL;
 
@@ -947,7 +949,8 @@ int socketStreamHandler(RKOperator *O) {
                         } else if (sweep->header.config.i != identifier) {
                             RKLog("%s %s Warning. Inconsistent configId = %lu (expected) != %lu (reported)\n", engine->name, O->name, sweep->header.config.i, identifier);
                         } else {
-                            floatData = RKSweepEngineGetBufferForProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
+                            product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
+                            floatData = product->array;
                         }
                         if (user->radar->sweepEngine->verbose > 1) {
                             RKLog("%s %s %s (%d) -> %u %zu\n",
@@ -963,7 +966,8 @@ int socketStreamHandler(RKOperator *O) {
                             RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
                             continue;
                         }
-                        RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
+                        // Transfer
+                        //RKSweepEngineSetProduct(user->radar->sweepEngine, product);
                     }
 
                     gettimeofday(&timevalRx, NULL);

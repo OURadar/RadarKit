@@ -70,6 +70,16 @@ memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
 
+#define SHOW_SIZE(x) \
+printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor "\n", \
+RKIntegerToCommaStyleString(sizeof(x)));
+
+#define SHOW_SIZE_SIMD(x) \
+printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
+"   " RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "\n", \
+RKIntegerToCommaStyleString(sizeof(x)), \
+sizeof(x) % RKSIMDAlignSize == 0 ? "Tue" : "False");
+
 #if defined(__APPLE__)
 
 #define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"

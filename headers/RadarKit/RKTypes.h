@@ -1135,7 +1135,7 @@ typedef union rk_product_header {
         RKName               waveform;                                         // Waveform name
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
     };
-    RKByte bytes[1024];
+    RKByte bytes[2048];
 } RKProductHeader;
 
 typedef struct rk_product {                                                    // A description of user product

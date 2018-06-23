@@ -41,6 +41,7 @@ void RKTestTerminalColors(void) {
     for (int k = 0; k < 17; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
+    printf("\n");
     int c;
     for (int i = 0; i < 6; i++) {
         for (int k = 0; k < 6; k++) {

@@ -58,12 +58,17 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
     return grandTotalSentSize;
 }
 
+#define SHOW_PACKET_NUMBER(x) \
+printf(RKSkyBlueColor #x RKNoColor " = " RKLimeColor "%s" RKNoColor "\n", \
+RKIntegerToCommaStyleString(x));
+
 void RKNetworkShowPacketTypeNumbers(void) {
-	printf("RKNetworkPacketTypeProcessorStatus = %d\n", RKNetworkPacketTypeProcessorStatus);
-	printf("RKNetworkPacketTypeRayDisplay = %d\n", RKNetworkPacketTypeRayDisplay);
-	printf("RKNetworkPacketTypeAlertMessage = %d\n", RKNetworkPacketTypeAlertMessage);
-	printf("RKNetworkPacketTypeConfig = %d\n", RKNetworkPacketTypeConfig);
-	printf("RKNetworkPacketTypeSweep = %d\n", RKNetworkPacketTypeSweep);
-	printf("RKNetworkPacketTypeSweepHeader = %d\n", RKNetworkPacketTypeSweepHeader);
-	printf("RKNetworkPacketTypeSweepRay = %d\n", RKNetworkPacketTypeSweepRay);
+    SHOW_FUNCTION_NAME
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeProcessorStatus);
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeRayDisplay);
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeAlertMessage);
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeConfig);
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeSweep);
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeSweepHeader);
+    SHOW_PACKET_NUMBER(RKNetworkPacketTypeSweepRay);
 }

@@ -114,11 +114,14 @@ static void *sweepManager(void *in) {
     // Base products
     for (p = 0; p < productCount; p++) {
         if (engine->baseMomentProductIds[p]) {
-            RKFloat *data = RKSweepEngineGetBufferForProduct(engine, sweep, engine->baseMomentProductIds[p]);
+            RKProduct *product = RKSweepEngineGetVacantProduct(engine, sweep, engine->baseMomentProductIds[p]);
             // Fill in the data
-            data[0] = 0.0f;
+            //
+            //
+            //RKProductTransferMetaDataFromSweep(product, sweep);
+            product->header.isPPI = true;
             //RKLog("%s Reporting %s\n", engine->name, RKVariableInString("productId", &engine->baseMomentProductIds[p], RKValueTypeProductId));
-            RKSweepEngineReportProduct(engine, sweep, engine->baseMomentProductIds[p]);
+            RKSweepEngineSetProductComplete(engine, sweep, engine->baseMomentProductIds[p]);
         }
     }
 
@@ -886,7 +889,7 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     return RKResultSuccess;
 }
 
-RKFloat *RKSweepEngineGetBufferForProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
+RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
     int i = 0;
     while (i < RKMaximumProductCount) {
         if (engine->products[i].pid == productId) {
@@ -901,10 +904,10 @@ RKFloat *RKSweepEngineGetBufferForProduct(RKSweepEngine *engine, RKSweep *sweep,
     pthread_mutex_lock(&engine->productMutex);
     engine->products[i].flag |= RKProductStatusSleep1;
     pthread_mutex_unlock(&engine->productMutex);
-    return engine->products[i].array;
+    return &engine->products[i];
 }
 
-int RKSweepEngineReportProduct(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
+int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
     int i = 0;
     while (i < RKMaximumProductCount) {
         if (engine->products[i].pid == productId) {
