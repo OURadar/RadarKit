@@ -118,7 +118,7 @@ static void *sweepManager(void *in) {
             // Fill in the data
             //
             //
-            //RKProductTransferMetaDataFromSweep(product, sweep);
+            RKProductSetMetaDataFromSweep(product, sweep);
             product->header.isPPI = true;
             //RKLog("%s Reporting %s\n", engine->name, RKVariableInString("productId", &engine->baseMomentProductIds[p], RKValueTypeProductId));
             RKSweepEngineSetProductComplete(engine, sweep, engine->baseMomentProductIds[p]);
@@ -933,7 +933,7 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
         engine->productBuffer[i].flag ^= RKProductStatusSleep1;
         pthread_mutex_unlock(&engine->productMutex);
     } else {
-        RKLog("%s That's weird, this buffer has not been requested.\n", engine->name);
+        RKLog("%s That is weird, this buffer has not been requested.\n", engine->name);
     }
     if (engine->verbose > 1) {
         RKShowArray(engine->productBuffer[i].array, engine->productBuffer[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);

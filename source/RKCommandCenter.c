@@ -305,7 +305,6 @@ int socketStreamHandler(RKOperator *O) {
     uint8_t *u8Data = NULL;
     float *f32Data = NULL;
 
-    RKFloat *floatData = NULL;
     RKInt16C *c16DataH = NULL;
     RKInt16C *c16DataV = NULL;
     RKInt16C *userDataH = NULL;
@@ -951,14 +950,13 @@ int socketStreamHandler(RKOperator *O) {
                         } else {
                             product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
                             if (product) {
-                                floatData = product->array;
-                                size = RKServerReceiveUserPayload(O, floatData, RKNetworkMessageFormatHeaderDefinedSize);
+                                size = RKServerReceiveUserPayload(O, product->array, RKNetworkMessageFormatHeaderDefinedSize);
                                 if (user->radar->sweepEngine->verbose > 1) {
                                     RKLog("%s %s %s (%d) -> %u %zu\n",
                                           engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
                                 }
                                 // Transfer important meta data
-                                RKProductTransferMetaDataFromSweep(product, sweep);
+                                RKProductSetMetaDataFromSweep(product, sweep);
                                 //RKSweepEngineSetProduct(user->radar->sweepEngine, product);
                             } else {
                                 RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
