@@ -162,6 +162,10 @@ struct rk_radar {
     //
     RKControl                        *controls;
     uint32_t                         controlCount;
+    //
+    // Product recorder
+    //
+    void                             (*productRecorder)(const RKProduct *, char *);
 };
 
 //
@@ -202,9 +206,14 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
+// Moment processor
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
 int RKSetMomentProcessorToPulsePairHop(RKRadar *);
+int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
+
+// Moment recorder
+int RKSetProductRecorder(RKRadar *radar, void (*productRecorder)(const RKProduct *, char *));
 
 #pragma mark -
 
@@ -214,8 +223,8 @@ int RKSetVerbosityUsingArray(RKRadar *, const uint8_t *);
 int RKSetDataPath(RKRadar *, const char *);
 int RKSetDataUsageLimit(RKRadar *, const size_t limit);
 int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
-int RKSetDataRecorder(RKRadar *, const bool record);
-int RKToggleDataRecorder(RKRadar *);
+int RKSetRawDataRecorderMode(RKRadar *, const bool record);
+int RKToggleRawDataRecorderMode(RKRadar *);
 
 // Some operating parameters
 int RKSetWaveform(RKRadar *, RKWaveform *);

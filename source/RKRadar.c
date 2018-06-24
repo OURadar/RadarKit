@@ -896,6 +896,72 @@ int RKSetHealthRelay(RKRadar *radar,
     return RKResultSuccess;
 }
 
+#pragma mark - Moment Processor
+
+int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    if (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == lagChoice) {
+        return RKResultSuccess;
+    }
+    radar->momentEngine->processor = &RKMultiLag;
+    radar->momentEngine->processorLagCount = RKLagCount;
+    if (lagChoice < 0 || lagChoice > 4) {
+        RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
+        return RKResultInvalidMomentParameters;
+    }
+    radar->momentEngine->userLagChoice = lagChoice;
+    RKLog("Moment processor set to %sMultilag %d%s",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          lagChoice,
+          rkGlobalParameters.showColor ? "\033[24m" : "");
+    return RKResultSuccess;
+}
+
+int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKPulsePair;
+    radar->momentEngine->processorLagCount = 3;
+    RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
+    return RKResultSuccess;
+}
+
+int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKPulsePairHop;
+    radar->momentEngine->processorLagCount = 2;
+    RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
+    return RKResultSuccess;
+}
+
+int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
+    radar->momentEngine->processorLagCount = 2;
+    RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
+    return RKResultSuccess;
+}
+
+#pragma mark - Moment Recorder
+
+int RKSetProductRecorder(RKRadar *radar, void (*productRecorder)(const RKProduct *, char *)) {
+    radar->productRecorder = productRecorder;
+    return RKResultSuccess;
+}
+
 #pragma mark - Properties
 
 //
@@ -997,12 +1063,12 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     return RKResultSuccess;
 }
 
-int RKSetDataRecorder(RKRadar *radar, const bool record) {
+int RKSetRawDataRecorderMode(RKRadar *radar, const bool record) {
     radar->dataRecorder->doNotWrite = !record;
     return RKResultSuccess;
 }
 
-int RKToggleDataRecorder(RKRadar *radar) {
+int RKToggleRawDataRecorderMode(RKRadar *radar) {
     radar->dataRecorder->doNotWrite = !radar->dataRecorder->doNotWrite;
     return RKResultSuccess;
 }
@@ -1072,63 +1138,6 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     if (radar->state & RKRadarStateLive) {
         RKClockReset(radar->pulseClock);
     }
-    return RKResultSuccess;
-}
-
-int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
-    if (radar->momentEngine == NULL) {
-        return RKResultNoMomentEngine;
-    }
-    if (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == lagChoice) {
-        return RKResultSuccess;
-    }
-    radar->momentEngine->processor = &RKMultiLag;
-    radar->momentEngine->processorLagCount = RKLagCount;
-    if (lagChoice < 0 || lagChoice > 4) {
-        RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
-        return RKResultInvalidMomentParameters;
-    }
-    radar->momentEngine->userLagChoice = lagChoice;
-    RKLog("Moment processor set to %sMultilag %d%s",
-          rkGlobalParameters.showColor ? "\033[4m" : "",
-          lagChoice,
-          rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultSuccess;
-}
-
-int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
-    if (radar->momentEngine == NULL) {
-        return RKResultNoMomentEngine;
-    }
-    radar->momentEngine->processor = &RKPulsePair;
-    radar->momentEngine->processorLagCount = 3;
-    RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s",
-          rkGlobalParameters.showColor ? "\033[4m" : "",
-          rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultSuccess;
-}
-
-int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
-    if (radar->momentEngine == NULL) {
-        return RKResultNoMomentEngine;
-    }
-    radar->momentEngine->processor = &RKPulsePairHop;
-    radar->momentEngine->processorLagCount = 2;
-    RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s",
-          rkGlobalParameters.showColor ? "\033[4m" : "",
-          rkGlobalParameters.showColor ? "\033[24m" : "");
-    return RKResultSuccess;
-}
-
-int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
-    if (radar->momentEngine == NULL) {
-        return RKResultNoMomentEngine;
-    }
-    radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
-    radar->momentEngine->processorLagCount = 2;
-    RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)",
-          rkGlobalParameters.showColor ? "\033[4m" : "",
-          rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultSuccess;
 }
 
