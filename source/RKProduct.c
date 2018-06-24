@@ -8,8 +8,6 @@
 
 #include <RadarKit/RKProduct.h>
 
-#pragma mark - Helper Functions
-
 int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     int k;
     uint32_t requiredCapacity = sweep->header.rayCount * sweep->header.gateCount;
@@ -112,10 +110,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     return RKResultSuccess;
 }
 
-#pragma mark - Delegate Workers
-
-#pragma mark - Life Cycle
-
-#pragma mark - Properties
-
-#pragma mark - Interactions
+RKProduct *RKProductInitFromFile(const char *filename) {
+    RKProduct *product = NULL;
+    return product;
+}

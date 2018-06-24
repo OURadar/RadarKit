@@ -13,4 +13,6 @@
 
 int RKProductInitFromSweep(RKProduct *, const RKSweep *);
 
+RKProduct *RKProductInitFromFile(const char *);
+
 #endif

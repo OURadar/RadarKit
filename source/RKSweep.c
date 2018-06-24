@@ -83,33 +83,26 @@ static void *sweepManager(void *in) {
 
     // Localize the scratch space storage
     char *name = engine->scratchSpaces[scratchSpaceIndex].name;
-    char *unit = engine->scratchSpaces[scratchSpaceIndex].unit;
+//    char *unit = engine->scratchSpaces[scratchSpaceIndex].unit;
     char *symbol = engine->scratchSpaces[scratchSpaceIndex].symbol;
-    char *colormap = engine->scratchSpaces[scratchSpaceIndex].colormap;
+//    char *colormap = engine->scratchSpaces[scratchSpaceIndex].colormap;
     char *filename = engine->scratchSpaces[scratchSpaceIndex].filename;
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
 
-    RKBaseMomentIndex momentIndex;
-    RKBaseMomentList momentList = sweep->header.baseMomentList;
-    int productCount = __builtin_popcount(momentList & engine->baseMomentList);
+    int productCount = __builtin_popcount(sweep->header.baseMomentList & engine->baseMomentList);
 
     // Base products
     for (p = 0; p < productCount; p++) {
-        // Get the symbol, name, unit, colormap, etc. from the product list (this should be identical order like during RKSweepEngineInit)
-        RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
-
-        RKLog("%s %s %s\n", engine->name, RKVariableInString("p", &p, RKValueTypeInt), RKVariableInString("momentIndex", &momentIndex, RKValueTypeUInt32));
-
         if (engine->baseMomentProductIds[p]) {
             RKProduct *product = RKSweepEngineGetVacantProduct(engine, sweep, engine->baseMomentProductIds[p]);
             if (product == NULL) {
-                RKLog("Error. Unable to get a product slot  p = %d  pid = %d.\n", p, engine->baseMomentProductIds[p]);
+                RKLog("Error. Unable to get a product slot   p = %d   pid = %d.\n", p, engine->baseMomentProductIds[p]);
                 continue;
             }
             RKProductInitFromSweep(product, sweep);
             //RKLog("%s Reporting %s\n", engine->name, RKVariableInString("productId", &engine->baseMomentProductIds[p], RKValueTypeProductId));
-            RKSweepEngineSetProductComplete(engine, sweep, engine->baseMomentProductIds[p]);
+            RKSweepEngineSetProductComplete(engine, sweep, product);
         }
     }
 
@@ -175,11 +168,11 @@ static void *sweepManager(void *in) {
         RKProduct *product = &engine->productBuffer[p];
         if (engine->verbose > 1) {
             RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
-            RKLog(">%s %s %s\n",
+            RKLog(">%s %s   %s\n",
                   engine->name,
                   RKVariableInString("unit", product->desc.unit, RKValueTypeString),
                   RKVariableInString("colormap", product->desc.unit, RKValueTypeString));
-            RKLog(">%s %s %s\n",
+            RKLog(">%s %s   %s\n",
                   engine->name,
                   RKVariableInString("rayCount", &product->header.rayCount, RKValueTypeUInt32),
                   RKVariableInString("gateCount", &product->header.gateCount, RKValueTypeUInt32));
@@ -698,33 +691,14 @@ RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *engine, RKSweep *sweep, 
     return &engine->productBuffer[i];
 }
 
-int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKProductId productId) {
-    int i = 0;
-    while (i < RKMaximumProductCount) {
-        if (engine->productBuffer[i].pid == productId) {
-            break;
-        }
-        i++;
-    }
-    if (i == RKMaximumProductCount) {
-        RKLog("%s Error. Unable to locate productId = %d.\n", engine->name, productId);
-        return RKResultFailedToFindProductId;
-    }
-    if (engine->productBuffer[i].pid == productId) {
-        if (engine->verbose > 2) {
-            RKLog("%s ProductId[%d] = %lu -> %lu\n", engine->name, i, engine->productBuffer[i].i, sweep->header.config.i);
-        }
-        engine->productBuffer[i].i = sweep->header.config.i;
-    }
-    if (engine->productBuffer[i].flag & RKProductStatusSleep1) {
+int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKProduct *product) {
+    product->i = sweep->header.config.i;
+    if (product->flag & RKProductStatusSleep1) {
         pthread_mutex_lock(&engine->productMutex);
-        engine->productBuffer[i].flag ^= RKProductStatusSleep1;
+        product->flag ^= RKProductStatusSleep1;
         pthread_mutex_unlock(&engine->productMutex);
     } else {
         RKLog("%s That is weird, this buffer has not been requested.\n", engine->name);
-    }
-    if (engine->verbose > 1) {
-        RKShowArray(engine->productBuffer[i].data, engine->productBuffer[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
     }
     return RKResultSuccess;
 }
