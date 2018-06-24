@@ -463,7 +463,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, "%s = %.3f", name, d);
                 break;
             default:
-                snprintf(string, RKNameLength - 1, "%s = %s", name, c);
+                snprintf(string, RKNameLength - 1, "%s = '%s'", name, c);
                 break;
         }
     }

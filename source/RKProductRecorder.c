@@ -35,6 +35,17 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
     float tmpf;
     float *x;
 
+    // Open a file
+    if ((j = nc_create(product->header.suggestedFilename, NC_MODE, &ncid)) > 0) {
+        return RKResultFailedToOpenFileForProduct;
+    }
+   
+    // Local memory
+    float *array1D = (float *)malloc(MAX(product->header.rayCount, product->header.gateCount));
+
+    // Some global attributes
+    const float zf = 0.0f;
+    const float va = 0.25f * product->header.wavelength * product->header.prf[0];
     const float radianToDegree = 180.0f / M_PI;
     const bool convertRadiansToDegrees = !strcasecmp(product->desc.unit, "radians");
     if (convertRadiansToDegrees) {
@@ -46,15 +57,6 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
         sprintf(product->desc.unit, "Degrees");
     }
     
-    // Some global attributes
-    const float zf = 0.0f;
-    const float va = 0.25f * product->header.wavelength * product->header.prf[0];
-
-    // Open a file
-    if ((j = nc_create(product->header.suggestedFilename, NC_MODE, &ncid)) > 0) {
-        return RKResultFailedToOpenFileForProduct;
-    }
-   
     if (product->header.isPPI) {
         nc_def_dim(ncid, "Azimuth", product->header.rayCount, &dimensionIds[0]);
     } else if (product->header.isRHI) {
@@ -180,7 +182,6 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
     nc_enddef(ncid);
 
     // Data
-    float *array1D = (float *)malloc(MAX(product->header.rayCount, product->header.gateCount));
     nc_put_var_float(ncid, variableIdAzimuth, product->startAzimuth);
     nc_put_var_float(ncid, variableIdElevation, product->startElevation);
     for (j = 0; j < product->header.rayCount; j++) {

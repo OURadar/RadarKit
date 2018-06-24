@@ -70,9 +70,9 @@ static void *sweepManager(void *in) {
               S->header.startAzimuth   , E->header.endAzimuth,
               S->header.marker & 0xFF, E->header.marker & 0xFF,
               RKIntegerToCommaStyleString(sweep->header.gateCount),
-              sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
+              rkGlobalParameters.showColor && sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
               sweep->header.rayCount,
-              RKNoColor,
+              rkGlobalParameters.showColor ? RKNoColor : "",
               1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
@@ -96,12 +96,17 @@ static void *sweepManager(void *in) {
 
     // Base products
     for (p = 0; p < productCount; p++) {
-        RKLog("%s %s\n", engine->name, RKVariableInString("p", &p, RKValueTypeInt));
         // Get the symbol, name, unit, colormap, etc. from the product list (this should be identical order like during RKSweepEngineInit)
         RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
 
+        RKLog("%s %s %s\n", engine->name, RKVariableInString("p", &p, RKValueTypeInt), RKVariableInString("momentIndex", &momentIndex, RKValueTypeUInt32));
+
         if (engine->baseMomentProductIds[p]) {
             RKProduct *product = RKSweepEngineGetVacantProduct(engine, sweep, engine->baseMomentProductIds[p]);
+            if (product == NULL) {
+                RKLog("Error. Unable to get a product slot  p = %d  pid = %d.\n", p, engine->baseMomentProductIds[p]);
+                continue;
+            }
             RKProductInitFromSweep(product, sweep);
             //RKLog("%s Reporting %s\n", engine->name, RKVariableInString("productId", &engine->baseMomentProductIds[p], RKValueTypeProductId));
             RKSweepEngineSetProductComplete(engine, sweep, engine->baseMomentProductIds[p]);
@@ -155,14 +160,14 @@ static void *sweepManager(void *in) {
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
 
-    // Go through all moments
+    // Initiate a system command with handleFileScript
     if (engine->hasHandleFilesScript) {
         strncpy(filelist, engine->handleFilesScript, RKMaximumPathLength);
     }
 
     int summarySize = 0;
 
-    // Products
+    // Product recording
     for (p = 0; p < engine->radarDescription->productBufferDepth; p++) {
         if (engine->productBuffer[p].flag == RKProductStatusVacant) {
             continue;
@@ -170,12 +175,19 @@ static void *sweepManager(void *in) {
         RKProduct *product = &engine->productBuffer[p];
         if (engine->verbose > 1) {
             RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
-            RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
-            RKShowArray(product->data, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
+            RKLog(">%s %s %s\n",
+                  engine->name,
+                  RKVariableInString("unit", product->desc.unit, RKValueTypeString),
+                  RKVariableInString("colormap", product->desc.unit, RKValueTypeString));
+            RKLog(">%s %s %s\n",
+                  engine->name,
+                  RKVariableInString("rayCount", &product->header.rayCount, RKValueTypeUInt32),
+                  RKVariableInString("gateCount", &product->header.gateCount, RKValueTypeUInt32));
+            RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
         }
         // Full filename with symbol and extension
-        sprintf(filename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
-        strncpy(product->header.suggestedFilename, filename, RKMaximumPathLength);
+        sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
+        strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength);
 
         // Keep concatenating the filename into filelist
         if (engine->hasHandleFilesScript) {
@@ -626,14 +638,12 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
         RKLog("%s Error. Unable to add anymore user products.\n", engine->name);
         return 0;
     }
-    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
+//    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].i = 0;
     engine->productBuffer[i].pid = productId;
     engine->productBuffer[i].desc = desc;
     engine->productBuffer[i].flag = RKProductStatusActive;
-    engine->productBuffer[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
-    engine->productBuffer[i].data = (RKFloat *)malloc(engine->productBuffer[i].capacity * sizeof(RKFloat));
     RKLog("%s Product %s%s%s registered   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,

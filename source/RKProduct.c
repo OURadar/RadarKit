@@ -12,6 +12,7 @@
 
 int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     int k;
+    uint32_t requiredCapacity = sweep->header.rayCount * sweep->header.gateCount;
     // Sweep header
     memcpy(product->header.radarName, sweep->header.desc.name, sizeof(RKName));
     product->header.latitude = sweep->header.desc.latitude;
@@ -27,7 +28,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.isRHI = sweep->header.isRHI;
     product->header.filterCount = sweep->header.config.filterCount;
     product->header.rayCount = sweep->header.rayCount;
-    product->header.gateCount = sweep->header.gateSizeMeters;
+    product->header.gateCount = sweep->header.gateCount;
     product->header.gateSizeMeters = sweep->header.gateSizeMeters;
     // Sweep header config
     for (k = 0; k < product->header.filterCount; k++) {
@@ -50,18 +51,20 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.SNRThreshold = sweep->header.config.SNRThreshold;
     memcpy(product->header.waveform, sweep->header.config.waveform, sizeof(RKName));
     memcpy(product->header.vcpDefinition, sweep->header.config.vcpDefinition, sizeof(RKMaximumCommandLength));
-    // Synchronize config id
-    product->i = sweep->header.config.i;
-    if (product->capacity < sweep->header.rayCount * sweep->header.gateCount) {
-        RKLog("Allocating product space    %s   %s\n", RKVariableInString("i", &product->i, RKValueTypeIdentifier), RKVariableInString("capacity", &product->capacity, RKValueTypeUInt32));
-        product->capacity = sweep->header.rayCount * sweep->header.gateCount;
-        void *mem = realloc(product->data, product->capacity * sizeof(RKFloat));
+
+    if (product->capacity < requiredCapacity) {
+        RKFloat *mem = realloc(product->data, product->capacity * sizeof(RKFloat));
         if (mem == NULL) {
             RKLog("Error. Unable to expand space.");
             exit(EXIT_FAILURE);
         }
         if (mem != product->data) {
-            RKLog("Warning. Go read more about realloc().\n");
+            RKLog("Info. Product space reallocated   %p -> %p\n", product->data, mem);
+            if (product->data) {
+                free(product->data);
+            }
+            product->data = mem;
+            product->capacity = requiredCapacity;
         }
     }
     for (k = 0; k < product->header.rayCount; k++) {
@@ -70,23 +73,42 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
         product->startElevation[k] = sweep->rays[k]->header.startElevation;
         product->endElevation[k]   = sweep->rays[k]->header.endElevation;
     }
+    RKBaseMomentIndex momentIndex = RKBaseMomentIndexCount;
     if (!strcmp(product->desc.symbol, "Z")) {
-        RKLog("Copying Z from swepp ...\n");
+        momentIndex = RKBaseMomentIndexZ;
     } else if (!strcmp(product->desc.symbol, "V")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexV;
     } else if (!strcmp(product->desc.symbol, "W")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexW;
     } else if (!strcmp(product->desc.symbol, "D")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexD;
     } else if (!strcmp(product->desc.symbol, "P")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexP;
     } else if (!strcmp(product->desc.symbol, "R")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexR;
     } else if (!strcmp(product->desc.symbol, "K")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexK;
     } else if (!strcmp(product->desc.symbol, "Sh")) {
-        RKLog("Copying %s from swepp ...\n", product->desc.symbol);
+        momentIndex = RKBaseMomentIndexSh;
     }
+    if (momentIndex < RKBaseMomentIndexCount) {
+        RKFloat *x, *y = product->data;
+        for (k = 0; k < product->header.rayCount; k++) {
+            if (sweep->rays[k] == NULL) {
+                RKLog("Error. Null ray.\n");
+                continue;
+            }
+            x = RKGetFloatDataFromRay(sweep->rays[k], momentIndex);
+            if (x == NULL) {
+                continue;
+            }
+            memcpy(y, x, product->header.gateCount * sizeof(RKFloat));
+            y += product->header.gateCount;
+        }
+        // Synchronize config id
+        product->i = sweep->header.config.i;
+    }
+
     return RKResultSuccess;
 }
 

@@ -437,33 +437,39 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
+        radar->memoryUsage += bytes;
+        radar->desc.rayBufferSize = bytes;
         RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
               RKBaseMomentCount,
               RKIntegerToCommaStyleString(k));
-        radar->memoryUsage += bytes;
-        radar->desc.rayBufferSize = bytes;
         radar->state |= RKRadarStateRayBufferAllocated;
         
         bytes = radar->desc.productBufferDepth * sizeof(RKProduct);
         radar->products = (RKProduct *)malloc(bytes);
         memset(radar->products, 0, bytes);
-        RKLog("Level III buffer occupies %s B  (%s products)\n",
-              RKIntegerToCommaStyleString(bytes),
-              RKIntegerToCommaStyleString(radar->desc.productBufferDepth));
-        radar->desc.productBufferSize = bytes;
         radar->memoryUsage += bytes;
+        radar->desc.productBufferSize = bytes;
+        bytes = 360 * sizeof(RKFloat);
         for (i = 0; i < radar->desc.productBufferDepth; i++) {
-            bytes = RKMaximumRaysPerSweep * sizeof(RKFloat);
             radar->products[i].startAzimuth = (RKFloat *)malloc(bytes);
             radar->products[i].startElevation = (RKFloat *)malloc(bytes);
             radar->products[i].endAzimuth = (RKFloat *)malloc(bytes);
             radar->products[i].endElevation = (RKFloat *)malloc(bytes);
-            radar->products[i].data = (RKFloat *)malloc(bytes);
-            radar->products[i].capacity = RKMaximumRaysPerSweep;
-            radar->memoryUsage += 5 * bytes;
+            radar->memoryUsage += 4 * bytes;
+            radar->desc.productBufferSize += 4 * bytes;
         }
+        bytes = 360 * 2000 * sizeof(RKFloat);
+        for (i = 0; i < radar->desc.productBufferDepth; i++) {
+            radar->products[i].data = (RKFloat *)malloc(bytes);
+            radar->products[i].capacity = 360 * 2000;
+            radar->memoryUsage += bytes;
+            radar->desc.productBufferSize += bytes;
+        }
+        RKLog("Level III buffer occupies %s B  (%s products)\n",
+              RKIntegerToCommaStyleString(radar->desc.productBufferSize),
+              RKIntegerToCommaStyleString(radar->desc.productBufferDepth));
         radar->state |= RKRadarStateProductBufferAllocated;
     }
 
