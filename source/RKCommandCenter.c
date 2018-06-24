@@ -804,7 +804,9 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
         if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) {
-            //RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->scratchSpaceIndex, user->radar->sweepEngine->scratchSpaceIndex);
+            if (user->radar->sweepEngine->verbose > 1) {
+                RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->scratchSpaceIndex, user->radar->sweepEngine->scratchSpaceIndex);
+            }
             sweep = RKSweepCollect(user->radar->sweepEngine, user->scratchSpaceIndex);
             if (sweep) {
                 // Make a local copy of the sweepHeader and mutate it for this client while keeping the original intact

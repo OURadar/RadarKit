@@ -108,10 +108,6 @@ static void *sweepManager(void *in) {
         if (engine->productBuffer[i].flag == RKProductStatusVacant) {
             continue;
         }
-        if (engine->verbose > 1) {
-            RKLog("%s %s @ i = %zu ==? %zu\n", engine->name,
-                  RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId), engine->productBuffer[i].i, sweep->header.config.i);
-        }
         pthread_mutex_lock(&engine->productMutex);
         engine->productBuffer[i].flag |= RKProductStatusSleep0;
         pthread_mutex_unlock(&engine->productMutex);
@@ -122,6 +118,10 @@ static void *sweepManager(void *in) {
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
             };
+        }
+        if (engine->verbose > 2) {
+            RKLog("%s %s @ i = %zu ==? %zu\n", engine->name,
+                  RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId), engine->productBuffer[i].i, sweep->header.config.i);
         }
         pthread_mutex_lock(&engine->productMutex);
         engine->productBuffer[i].flag ^= RKProductStatusSleep0;
@@ -167,7 +167,7 @@ static void *sweepManager(void *in) {
             RKLog(">%s %s   %s\n",
                   engine->name,
                   RKVariableInString("unit", product->desc.unit, RKValueTypeString),
-                  RKVariableInString("colormap", product->desc.unit, RKValueTypeString));
+                  RKVariableInString("colormap", product->desc.colormap, RKValueTypeString));
             RKLog(">%s %s   %s\n",
                   engine->name,
                   RKVariableInString("rayCount", &product->header.rayCount, RKValueTypeUInt32),
