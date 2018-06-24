@@ -51,7 +51,7 @@ struct rk_sweep_engine {
     RKFileManager                    *fileManager;
     uint32_t                         userProductTimeoutSeconds;
     char                             productFileExtension[16];
-    int                              (*productRecorder)(const RKProduct *, char *);
+    int                              (*productRecorder)(RKProduct *, char *);
 
     // Program set variables
     pthread_t                        tidRayGatherer;
@@ -83,7 +83,7 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *, const char *script, const bool expectTgz);
-void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(const RKProduct *, char *));
+void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(RKProduct *, char *));
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);

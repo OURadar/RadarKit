@@ -452,8 +452,18 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         RKLog("Level III buffer occupies %s B  (%s products)\n",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.productBufferDepth));
-        radar->memoryUsage += bytes;
         radar->desc.productBufferSize = bytes;
+        radar->memoryUsage += bytes;
+        for (i = 0; i < radar->desc.productBufferDepth; i++) {
+            bytes = RKMaximumRaysPerSweep * sizeof(RKFloat);
+            radar->products[i].startAzimuth = (RKFloat *)malloc(bytes);
+            radar->products[i].startElevation = (RKFloat *)malloc(bytes);
+            radar->products[i].endAzimuth = (RKFloat *)malloc(bytes);
+            radar->products[i].endElevation = (RKFloat *)malloc(bytes);
+            radar->products[i].data = (RKFloat *)malloc(bytes);
+            radar->products[i].capacity = RKMaximumRaysPerSweep;
+            radar->memoryUsage += 5 * bytes;
+        }
         radar->state |= RKRadarStateProductBufferAllocated;
     }
 
@@ -748,6 +758,7 @@ RKRadar *RKInitAsRelay(void) {
 //     RKResultSuccess if no errors
 //
 int RKFree(RKRadar *radar) {
+    int i;
     if (radar->active) {
         RKStop(radar);
     }
@@ -831,6 +842,13 @@ int RKFree(RKRadar *radar) {
         free(radar->rays);
     }
     if (radar->state & RKRadarStateProductBufferAllocated) {
+        for (i = 0; i < radar->desc.productBufferDepth; i++) {
+            free(radar->products[i].startAzimuth);
+            free(radar->products[i].endAzimuth);
+            free(radar->products[i].startElevation);
+            free(radar->products[i].endElevation);
+            free(radar->products[i].data);
+        }
         free(radar->products);
     }
     if (radar->state & RKRadarStateControlsAllocated) {
@@ -957,7 +975,7 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
 
 #pragma mark - Moment Recorder
 
-int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(const RKProduct *, char *)) {
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *)) {
     RKSweepEngineSetProductRecorder(radar->sweepEngine, productRecorder);
     return RKResultSuccess;
 }
@@ -1063,8 +1081,21 @@ int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     return RKResultSuccess;
 }
 
-int RKSetRawDataRecorderMode(RKRadar *radar, const bool record) {
-    radar->rawDataRecorder->doNotWrite = !record;
+int RKSetRecordingLevel(RKRadar *radar, const int level) {
+    RKLog("Raw data recording: %s\n", level > 1 ? "true" : "false");
+    RKLog("Product recording: %s\n", level > 0 ? "true" : "false");
+    switch (level) {
+        case 0:
+            RKHealthLoggerSetDoNotWrite(radar->healthLogger, true);
+            RKSweepEngineSetDoNotWrite(radar->sweepEngine, true);
+            RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, true);
+            break;
+        case 1:
+            RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, true);
+            break;
+        default:
+            break;
+    }
     return RKResultSuccess;
 }
 

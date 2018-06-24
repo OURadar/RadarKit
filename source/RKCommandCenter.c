@@ -950,13 +950,13 @@ int socketStreamHandler(RKOperator *O) {
                         } else {
                             product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
                             if (product) {
-                                size = RKServerReceiveUserPayload(O, product->array, RKNetworkMessageFormatHeaderDefinedSize);
+                                size = RKServerReceiveUserPayload(O, product->data, RKNetworkMessageFormatHeaderDefinedSize);
                                 if (user->radar->sweepEngine->verbose > 1) {
                                     RKLog("%s %s %s (%d) -> %u %zu\n",
                                           engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
                                 }
                                 // Transfer important meta data
-                                RKProductSetMetaDataFromSweep(product, sweep);
+                                RKProductInitFromSweep(product, sweep);
                                 //RKSweepEngineSetProduct(user->radar->sweepEngine, product);
                             } else {
                                 RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");

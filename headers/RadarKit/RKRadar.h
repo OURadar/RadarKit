@@ -209,7 +209,7 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *);
 int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
 
 // Moment recorder
-int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(const RKProduct *, char *));
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
 
 #pragma mark -
 
@@ -218,8 +218,7 @@ int RKSetVerbosity(RKRadar *, const int);
 int RKSetVerbosityUsingArray(RKRadar *, const uint8_t *);
 int RKSetDataPath(RKRadar *, const char *);
 int RKSetDataUsageLimit(RKRadar *, const size_t limit);
-int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
-int RKSetRawDataRecorderMode(RKRadar *, const bool record);
+int RKSetRecordingLevel(RKRadar *, const int);
 int RKToggleRawDataRecorderMode(RKRadar *);
 
 // Some operating parameters

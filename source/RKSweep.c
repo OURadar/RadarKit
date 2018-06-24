@@ -96,15 +96,13 @@ static void *sweepManager(void *in) {
 
     // Base products
     for (p = 0; p < productCount; p++) {
+        RKLog("%s %s\n", engine->name, RKVariableInString("p", &p, RKValueTypeInt));
         // Get the symbol, name, unit, colormap, etc. from the product list (this should be identical order like during RKSweepEngineInit)
         RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
 
         if (engine->baseMomentProductIds[p]) {
             RKProduct *product = RKSweepEngineGetVacantProduct(engine, sweep, engine->baseMomentProductIds[p]);
-            // Fill in the data
-            //
-            //
-            RKProductSetMetaDataFromSweep(product, sweep);
+            RKProductInitFromSweep(product, sweep);
             //RKLog("%s Reporting %s\n", engine->name, RKVariableInString("productId", &engine->baseMomentProductIds[p], RKValueTypeProductId));
             RKSweepEngineSetProductComplete(engine, sweep, engine->baseMomentProductIds[p]);
         }
@@ -142,9 +140,6 @@ static void *sweepManager(void *in) {
         return NULL;
     }
 
-//    float *array1D = engine->scratchSpaces[scratchSpaceIndex].array1D;
-//    float *array2D = engine->scratchSpaces[scratchSpaceIndex].array2D;
-
     j = 0;
     summary[0] = '\0';
     for (i = 0; i < engine->radarDescription->productBufferDepth; i++) {
@@ -167,7 +162,7 @@ static void *sweepManager(void *in) {
 
     int summarySize = 0;
 
-    // User products
+    // Products
     for (p = 0; p < engine->radarDescription->productBufferDepth; p++) {
         if (engine->productBuffer[p].flag == RKProductStatusVacant) {
             continue;
@@ -176,7 +171,7 @@ static void *sweepManager(void *in) {
         if (engine->verbose > 1) {
             RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name,  product->desc.symbol);
             RKLog(">%s Product unit = '%s'   colormap = '%s'\n", engine->name, product->desc.unit, product->desc.colormap);
-            RKShowArray(product->array, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
+            RKShowArray(product->data, product->desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
         }
         // Full filename with symbol and extension
         sprintf(filename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
@@ -193,6 +188,7 @@ static void *sweepManager(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s Creating %s ...\n", engine->name, filename);
             }
+            RKPreparePath(filename);
             i = engine->productRecorder(product, filename);
             if (i != RKResultSuccess) {
                 RKLog("%s Error creating %s\n", engine->name, filename);
@@ -519,7 +515,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->userProductTimeoutSeconds = 3;
     engine->baseMomentList = RKBaseMomentListProductZVWDPRK;
-    engine->productRecorder = &RKProductRecorderNetCDF;
+    engine->productRecorder = &RKProductRecorderNCWriter;
     pthread_mutex_init(&engine->productMutex, NULL);
     return engine;
 }
@@ -567,7 +563,7 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
     }
 }
 
-void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, int (*routine)(const RKProduct *, char *)) {
+void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, int (*routine)(RKProduct *, char *)) {
     engine->productRecorder = routine;
 }
 
@@ -637,7 +633,7 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
     engine->productBuffer[i].desc = desc;
     engine->productBuffer[i].flag = RKProductStatusActive;
     engine->productBuffer[i].capacity = ray->header.capacity * RKMaximumRaysPerSweep;
-    engine->productBuffer[i].array = (RKFloat *)malloc(engine->productBuffer[i].capacity * sizeof(RKFloat));
+    engine->productBuffer[i].data = (RKFloat *)malloc(engine->productBuffer[i].capacity * sizeof(RKFloat));
     RKLog("%s Product %s%s%s registered   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
@@ -666,7 +662,7 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].flag = RKProductStatusVacant;
     engine->productBuffer[i].capacity = 0;
-    free(engine->productBuffer[i].array);
+    free(engine->productBuffer[i].data);
     RKLog("%s Product 0x%04x '%s' (%s) unregistered.\n", engine->name, engine->productBuffer[i].pid, engine->productBuffer[i].desc.name, engine->productBuffer[i].desc.symbol);
     memset(&engine->productBuffer[i].desc, 0, sizeof(RKProductDesc));
     engine->productBuffer[i].pid = 0;
@@ -718,7 +714,7 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
         RKLog("%s That is weird, this buffer has not been requested.\n", engine->name);
     }
     if (engine->verbose > 1) {
-        RKShowArray(engine->productBuffer[i].array, engine->productBuffer[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
+        RKShowArray(engine->productBuffer[i].data, engine->productBuffer[i].desc.symbol, sweep->header.gateCount, sweep->header.rayCount);
     }
     return RKResultSuccess;
 }

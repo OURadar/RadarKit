@@ -685,7 +685,7 @@ enum RKHostStatus {
 typedef uint32_t RKProductStatus;
 enum RKProductStatus {
     RKProductStatusVacant                        = 0,                          //
-    RKProductStatusActive                        = (1 << 0),                   //
+    RKProductStatusActive                        = (1 << 0),                   // This slot has been registered
     RKProductStatusBusy                          = (1 << 1),                   // Waiting for processing node
     RKProductStatusSkipped                       = (1 << 2),                   //
     RKProductStatusSleep0                        = (1 << 4),                   // Sleep stage 0 -
@@ -1109,7 +1109,7 @@ typedef union rk_product_desc {                                                /
 
 typedef union rk_product_header {
     struct {                                                                   // A 1-KB struct that contains meta data
-        RKName               name;                                             // Radar name
+        RKName               radarName;                                        // Radar name
         double               latitude;                                         // Latitude (degrees)
         double               longitude;                                        // Longitude (degrees)
         float                heading;                                          // Radar heading
@@ -1151,7 +1151,11 @@ typedef struct rk_product {                                                    /
     RKProductHeader      header;                                               // Product header
     uint32_t             depth;                                                // Number of arrays
     uint32_t             capacity;                                             // Number of RKFloat elements in blocks of array
-    RKFloat              *array;                                               // Flattened array of user product
+    RKFloat              *startAzimuth;                                        // Start azimuth of each ray
+    RKFloat              *endAzimuth;                                          // End azimuth of each ray
+    RKFloat              *startElevation;                                      // Start elevation of each ray
+    RKFloat              *endElevation;                                        // End elevation of each ray
+    RKFloat              *data;                                                // Flattened array of user product
 } RKProduct;
 
 typedef struct rk_waveform {

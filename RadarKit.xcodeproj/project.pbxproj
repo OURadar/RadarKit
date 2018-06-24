@@ -48,7 +48,6 @@
 		B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */; };
 		B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */; };
 		B5EE832C20DFB9D400681E29 /* RKProductRecorder.c in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832B20DFB9D400681E29 /* RKProductRecorder.c */; };
-		B5EE832E20DFBC4F00681E29 /* RKProductRecorder.h in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832D20DFBC4F00681E29 /* RKProductRecorder.h */; };
 		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
 		B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FAD8D120DE943B00E0A767 /* RKProduct.h */; };
 		B5FAD8D420DE945500E0A767 /* RKProduct.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FAD8D320DE945500E0A767 /* RKProduct.c */; };
@@ -522,7 +521,6 @@
 				B5FFD47F1FB0B5C600319453 /* RKClient.c in Sources */,
 				B565B5451E5A4623000C8503 /* bessi.c in Sources */,
 				B5FFD48F1FB0B5C600319453 /* RKTest.c in Sources */,
-				B5EE832E20DFBC4F00681E29 /* RKProductRecorder.h in Sources */,
 				B5FFD4901FB0B5C600319453 /* RKCommandCenter.c in Sources */,
 				B5FFD4881FB0B5C600319453 /* RKMoment.c in Sources */,
 				B5FFD4961FB0B5C600319453 /* RKClock.c in Sources */,

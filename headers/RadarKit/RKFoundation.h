@@ -87,7 +87,8 @@ enum RKValueType {
     RKValueTypeDouble,
     RKValueTypeString,
     RKValueTypeNumericString,
-    RKValueTypeProductId = RKValueTypeInt8
+    RKValueTypeProductId = RKValueTypeInt8,
+    RKValueTypeIdentifier = RKValueTypeUInt64
 };
 
 #pragma mark - Common Functions

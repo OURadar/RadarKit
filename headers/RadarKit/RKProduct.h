@@ -11,6 +11,6 @@
 
 #include <RadarKit/RKFoundation.h>
 
-int RKProductSetMetaDataFromSweep(RKProduct *, const RKSweep *);
+int RKProductInitFromSweep(RKProduct *, const RKSweep *);
 
 #endif

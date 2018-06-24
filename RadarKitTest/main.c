@@ -28,8 +28,8 @@ typedef struct user_params {
     int                      sprt;                                               // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
     int                      gateCount;                                          // Number of gates (simulate mode)
     int                      sleepInterval;                                      // Intermittent sleep period in transceiver simulator in seconds
+    int                      recordLevel;                                        // Data recording (1 - moment + health logs only, 2 - everything)
     bool                     simulate;                                           // Run with transceiver simulator
-    bool                     recordData;                                         // Data recording (I/Q, moment and health logs)
     double                   systemZCal[2];                                      // System calibration for Z
     double                   systemDCal;                                         // System calibration for D
     double                   systemPCal;                                         // System calibration for P
@@ -392,7 +392,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"tweeta-host"       , required_argument, NULL, 't'},
         {"version"           , no_argument      , NULL, 'u'},
         {"verbose"           , no_argument      , NULL, 'v'},
-        {"do-not-write"      , no_argument      , NULL, 'w'},
+        {"write-data"        , no_argument      , NULL, 'w'},
         {"simulate-sleep"    , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -704,7 +704,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case 'v':
                 break;
             case 'w':
-                user->recordData = true;
+                user->recordLevel++;
                 break;
             case 'z':
                 if (optarg) {
@@ -763,9 +763,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     // Some parameters before the radar is live
     if (!myRadar->active) {
         RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
-        if (!systemPreferences->recordData) {
-            RKSetDoNotWrite(myRadar, true);
-        }
+        RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
     }
@@ -849,7 +847,6 @@ int main(int argc, const char **argv) {
 
     // Screen output based on verbosity level
     if (systemPreferences->verbose) {
-        RKLog("Level II recording: %s\n", systemPreferences->recordData ? "true" : "false");
         if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term,
                    rkGlobalParameters.showColor ?
@@ -979,7 +976,7 @@ int main(int argc, const char **argv) {
     } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, systemPreferences->relayHost);
-        RKSetDoNotWrite(myRadar, true);
+        RKSetRecordingLevel(myRadar, 0);
 
         // Assembly a string that describes streams
         if (strlen(systemPreferences->streams)) {

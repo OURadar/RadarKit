@@ -12,6 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <netcdf.h>
 
-int RKProductRecorderNetCDF(const RKProduct *, char *);
+int RKProductRecorderNCWriter(RKProduct *, char *);
 
 #endif
