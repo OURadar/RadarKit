@@ -290,6 +290,7 @@ N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
 N(RKResultFailedToAddHost) \
 N(RKResultFailedToFindProductId) \
+N(RKResultFailedToOpenFileForProduct) \
 N(RKResultClientNotConnected) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)

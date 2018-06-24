@@ -957,7 +957,7 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
 
 #pragma mark - Moment Recorder
 
-int RKSetProductRecorder(RKRadar *radar, void (*productRecorder)(const RKProduct *, char *)) {
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(const RKProduct *, char *)) {
     RKSweepEngineSetProductRecorder(radar->sweepEngine, productRecorder);
     return RKResultSuccess;
 }

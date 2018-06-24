@@ -209,7 +209,7 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *);
 int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
 
 // Moment recorder
-int RKSetProductRecorder(RKRadar *radar, void (*productRecorder)(const RKProduct *, char *));
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(const RKProduct *, char *));
 
 #pragma mark -
 

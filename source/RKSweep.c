@@ -8,20 +8,7 @@
 
 #include <RadarKit/RKSweep.h>
 
-#define W2_MISSING_DATA       -99900.0
-#define W2_RANGE_FOLDED       -99901.0
-
-#if defined (COMPRESSED_NETCDF)
-#define NC_MODE  NC_NETCDF4
-#else
-#define NC_MODE  NC_CLOBBER
-#endif
-
 #pragma mark - Helper Functions
-
-static int put_global_text_att(const int ncid, const char *att, const char *text) {
-    return nc_put_att_text(ncid, NC_GLOBAL, att, strlen(text), text);
-}
 
 static void *rayReleaser(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
@@ -51,19 +38,6 @@ static void *rayReleaser(void *in) {
     }
 
     return NULL;
-}
-
-static void ncProductWriter(RKSweepScratchSpace *space, RKProduct *product) {
-    // Localize the scratch space storage
-//    char *name = space->name;
-//    char *unit = space->unit;
-//    char *symbol = space->symbol;
-//    char *colormap = space->colormap;
-//    char *filename = space->filename;
-//    char *filelist = space->filelist;
-//    char *summary = space->summary;
-//    float *array1D = space->array1D;
-//    float *array2D = space->array2D;
 }
 
 static void *sweepManager(void *in) {
@@ -219,7 +193,10 @@ static void *sweepManager(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s Creating %s ...\n", engine->name, filename);
             }
-            engine->productRecorder(product, filename);
+            i = engine->productRecorder(product, filename);
+            if (i != RKResultSuccess) {
+                RKLog("%s Error creating %s\n", engine->name, filename);
+            }
             engine->state ^= RKEngineStateWritingFile;
             // Notify file manager of a new addition
             RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
@@ -542,6 +519,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->userProductTimeoutSeconds = 3;
     engine->baseMomentList = RKBaseMomentListProductZVWDPRK;
+    engine->productRecorder = &RKProductRecorderNetCDF;
     pthread_mutex_init(&engine->productMutex, NULL);
     return engine;
 }
@@ -589,7 +567,7 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
     }
 }
 
-void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, void (*routine)(const RKProduct *, char *)) {
+void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, int (*routine)(const RKProduct *, char *)) {
     engine->productRecorder = routine;
 }
 

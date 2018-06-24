@@ -47,7 +47,8 @@
 		B5E6D94C1E1C4A1200DFBBA9 /* RKPosition.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D94B1E1C4A1200DFBBA9 /* RKPosition.h */; };
 		B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */; };
 		B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */; };
-		B5EE832C20DFB9D400681E29 /* RKProductWriterNC.c in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832B20DFB9D400681E29 /* RKProductWriterNC.c */; };
+		B5EE832C20DFB9D400681E29 /* RKProductRecorder.c in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832B20DFB9D400681E29 /* RKProductRecorder.c */; };
+		B5EE832E20DFBC4F00681E29 /* RKProductRecorder.h in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832D20DFBC4F00681E29 /* RKProductRecorder.h */; };
 		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
 		B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FAD8D120DE943B00E0A767 /* RKProduct.h */; };
 		B5FAD8D420DE945500E0A767 /* RKProduct.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FAD8D320DE945500E0A767 /* RKProduct.c */; };
@@ -148,7 +149,8 @@
 		B5E6D94B1E1C4A1200DFBBA9 /* RKPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPosition.h; path = headers/RadarKit/RKPosition.h; sourceTree = "<group>"; };
 		B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPedestalPedzy.h; path = headers/RadarKit/RKPedestalPedzy.h; sourceTree = SOURCE_ROOT; };
 		B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKRadarRelay.h; path = headers/RadarKit/RKRadarRelay.h; sourceTree = "<group>"; };
-		B5EE832B20DFB9D400681E29 /* RKProductWriterNC.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKProductWriterNC.c; path = source/RKProductWriterNC.c; sourceTree = "<group>"; };
+		B5EE832B20DFB9D400681E29 /* RKProductRecorder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKProductRecorder.c; path = source/RKProductRecorder.c; sourceTree = "<group>"; };
+		B5EE832D20DFBC4F00681E29 /* RKProductRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKProductRecorder.h; path = headers/RadarKit/RKProductRecorder.h; sourceTree = "<group>"; };
 		B5F5AE3A1DBF994200CF643F /* RKTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKTest.h; path = headers/RadarKit/RKTest.h; sourceTree = "<group>"; };
 		B5FAD8D120DE943B00E0A767 /* RKProduct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKProduct.h; path = headers/RadarKit/RKProduct.h; sourceTree = "<group>"; };
 		B5FAD8D320DE945500E0A767 /* RKProduct.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKProduct.c; path = source/RKProduct.c; sourceTree = "<group>"; };
@@ -266,6 +268,7 @@
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B55F5F191E2C8F9600FA8B2E /* RKSweep.h */,
 				B5FAD8D120DE943B00E0A767 /* RKProduct.h */,
+				B5EE832D20DFBC4F00681E29 /* RKProductRecorder.h */,
 				B5C1F3631AB9CD34004F88CD /* RKRawDataRecorder.h */,
 				B50276A61E3CF20D002C46B1 /* RKHealth.h */,
 				B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */,
@@ -338,7 +341,7 @@
 				B5FFD46B1FB0B5C400319453 /* RKMoment.c */,
 				B5FFD46E1FB0B5C400319453 /* RKSweep.c */,
 				B5FAD8D320DE945500E0A767 /* RKProduct.c */,
-				B5EE832B20DFB9D400681E29 /* RKProductWriterNC.c */,
+				B5EE832B20DFB9D400681E29 /* RKProductRecorder.c */,
 				B5FFD45E1FB0B5C200319453 /* RKRawDataRecorder.c */,
 				B5FFD46C1FB0B5C400319453 /* RKHealth.c */,
 				B5FFD46F1FB0B5C500319453 /* RKHealthLogger.c */,
@@ -519,8 +522,8 @@
 				B5FFD47F1FB0B5C600319453 /* RKClient.c in Sources */,
 				B565B5451E5A4623000C8503 /* bessi.c in Sources */,
 				B5FFD48F1FB0B5C600319453 /* RKTest.c in Sources */,
+				B5EE832E20DFBC4F00681E29 /* RKProductRecorder.h in Sources */,
 				B5FFD4901FB0B5C600319453 /* RKCommandCenter.c in Sources */,
-				B5EE832C20DFB9D400681E29 /* RKProductWriterNC.c in Sources */,
 				B5FFD4881FB0B5C600319453 /* RKMoment.c in Sources */,
 				B5FFD4961FB0B5C600319453 /* RKClock.c in Sources */,
 				B5FFD4951FB0B5C600319453 /* RKPedestalPedzy.c in Sources */,
@@ -532,6 +535,7 @@
 				B5FFD48D1FB0B5C600319453 /* RKPreference.c in Sources */,
 				B5FFD4921FB0B5C600319453 /* RKWindow.c in Sources */,
 				B5FFD4851FB0B5C600319453 /* RKRadar.c in Sources */,
+				B5EE832C20DFB9D400681E29 /* RKProductRecorder.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
