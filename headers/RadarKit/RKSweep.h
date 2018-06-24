@@ -17,15 +17,9 @@
 #include <RadarKit/RKProductRecorder.h>
 
 typedef struct rk_sweep_scratch {
-    RKName                           name;
-    RKName                           unit;
-    RKName                           symbol;
-    RKName                           colormap;
     char                             filename[RKMaximumPathLength];
     char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
     char                             summary[RKMaximumStringLength];
-    float                            *array1D;
-    float                            *array2D;
     RKRay                            *rays[RKMaximumRaysPerSweep];
     uint32_t                         rayCount;
 } RKSweepScratchSpace;

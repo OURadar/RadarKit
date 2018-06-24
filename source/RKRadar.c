@@ -220,7 +220,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.productBufferDepth = RKBuffer3SlotCount;
         RKLog("Info. Product buffer clamped to %s\n", radar->desc.productBufferDepth);
     } else if (radar->desc.productBufferDepth == 0) {
-        radar->desc.productBufferDepth = 20;
+        radar->desc.productBufferDepth = 10;
     }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
@@ -451,7 +451,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         memset(radar->products, 0, bytes);
         radar->memoryUsage += bytes;
         radar->desc.productBufferSize = bytes;
-        bytes = 360 * sizeof(RKFloat);
+        bytes = RKMaximumRaysPerSweep * sizeof(RKFloat);
         for (i = 0; i < radar->desc.productBufferDepth; i++) {
             radar->products[i].startAzimuth = (RKFloat *)malloc(bytes);
             radar->products[i].startElevation = (RKFloat *)malloc(bytes);
