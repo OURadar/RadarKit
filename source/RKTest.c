@@ -1319,7 +1319,7 @@ void RKTestMomentProcessorSpeed(void) {
 }
 
 void RKTestCacheWrite(void) {
-    RKDataRecorder *fileEngine = RKDataRecorderInit();
+    RKRawDataRecorder *fileEngine = RKRawDataRecorderInit();
     fileEngine->fd = open("._testwrite", O_CREAT | O_WRONLY, 0000644);
     if (fileEngine->fd < 0) {
         RKLog("Error. Unable to open file.\n");
@@ -1328,11 +1328,11 @@ void RKTestCacheWrite(void) {
 
 #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
-    RKDataRecorderSetCacheSize(fileEngine, 4);
-    RKDataRecorderCacheWrite(fileEngine, bytes, 4);
-    RKDataRecorderCacheWrite(fileEngine, &bytes[4], 2);
-    RKDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
-    RKDataRecorderCacheFlush(fileEngine);
+    RKRawDataRecorderSetCacheSize(fileEngine, 4);
+    RKRawDataRecorderCacheWrite(fileEngine, bytes, 4);
+    RKRawDataRecorderCacheWrite(fileEngine, &bytes[4], 2);
+    RKRawDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
+    RKRawDataRecorderCacheFlush(fileEngine);
 
 #endif
 
@@ -1351,12 +1351,12 @@ void RKTestCacheWrite(void) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
         pulse->header.gateCount = 16000;
 
-        len += RKDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
-        len += RKDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-        len += RKDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKRawDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
+        len += RKRawDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKRawDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
 
         if (k % 2000 == 0) {
-            RKDataRecorderCacheFlush(fileEngine);
+            RKRawDataRecorderCacheFlush(fileEngine);
 
             gettimeofday(&time, NULL);
             t0 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
@@ -1378,7 +1378,7 @@ void RKTestCacheWrite(void) {
         RKLog("Error. System call failed.   errno = %d\n", errno);
     }
 
-    RKDataRecorderFree(fileEngine);
+    RKRawDataRecorderFree(fileEngine);
 }
 
 #pragma mark - Transceiver Emulator

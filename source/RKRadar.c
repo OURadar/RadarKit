@@ -80,7 +80,7 @@ static void *engineMonitorRunLoop(void *in) {
             status->rayCoreLags[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].lag);
             status->rayCoreUsage[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].dutyCycle);
         }
-        status->recorderLag = radar->dataRecorder->lag;
+        status->recorderLag = radar->rawDataRecorder->lag;
         RKSetStatusReady(radar, status);
     }
     return NULL;
@@ -619,11 +619,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->state |= RKRadarStateSweepEngineInitialized;
 
     // Raw data recorder
-    radar->dataRecorder = RKDataRecorderInit();
-    RKDataRecorderSetInputOutputBuffers(radar->dataRecorder, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex,
-                                      radar->pulses, &radar->pulseIndex);
-    radar->memoryUsage += radar->dataRecorder->memoryUsage;
+    radar->rawDataRecorder = RKRawDataRecorderInit();
+    RKRawDataRecorderSetInputOutputBuffers(radar->rawDataRecorder, &radar->desc, radar->fileManager,
+                                           radar->configs, &radar->configIndex,
+                                           radar->pulses, &radar->pulseIndex);
+    radar->memoryUsage += radar->rawDataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
     // Host monitor
@@ -788,7 +788,7 @@ int RKFree(RKRadar *radar) {
         RKSweepEngineFree(radar->sweepEngine);
     }
     if (radar->state & RKRadarStateFileRecorderInitialized) {
-        RKDataRecorderFree(radar->dataRecorder);
+        RKRawDataRecorderFree(radar->rawDataRecorder);
     }
     // Transceiver, pedestal & health relay
     if (radar->pedestal) {
@@ -958,7 +958,7 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
 #pragma mark - Moment Recorder
 
 int RKSetProductRecorder(RKRadar *radar, void (*productRecorder)(const RKProduct *, char *)) {
-    radar->productRecorder = productRecorder;
+    RKSweepEngineSetProductRecorder(radar->sweepEngine, productRecorder);
     return RKResultSuccess;
 }
 
@@ -1012,8 +1012,8 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
     if (radar->sweepEngine) {
         RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
     }
-    if (radar->dataRecorder) {
-        RKDataRecorderSetVerbose(radar->dataRecorder, verbose);
+    if (radar->rawDataRecorder) {
+        RKRawDataRecorderSetVerbose(radar->rawDataRecorder, verbose);
     }
     return RKResultSuccess;
 }
@@ -1059,17 +1059,17 @@ int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
 int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
     RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
-    RKDataRecorderSetDoNotWrite(radar->dataRecorder, doNotWrite);
+    RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, doNotWrite);
     return RKResultSuccess;
 }
 
 int RKSetRawDataRecorderMode(RKRadar *radar, const bool record) {
-    radar->dataRecorder->doNotWrite = !record;
+    radar->rawDataRecorder->doNotWrite = !record;
     return RKResultSuccess;
 }
 
 int RKToggleRawDataRecorderMode(RKRadar *radar) {
-    radar->dataRecorder->doNotWrite = !radar->dataRecorder->doNotWrite;
+    radar->rawDataRecorder->doNotWrite = !radar->rawDataRecorder->doNotWrite;
     return RKResultSuccess;
 }
 
@@ -1239,7 +1239,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     k += RADAR_VARIABLE_OFFSET(buffer + k, positionIndex);
     k += RADAR_VARIABLE_OFFSET(buffer + k, pulseIndex);
     k += RADAR_VARIABLE_OFFSET(buffer + k, rayIndex);
-    k += RADAR_VARIABLE_OFFSET(buffer + k, dataRecorder->doNotWrite);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, rawDataRecorder->doNotWrite);
     k += RADAR_VARIABLE_OFFSET(buffer + k, positionEngine);
     k += RADAR_VARIABLE_OFFSET(buffer + k, pulseCompressionEngine->verbose);
     k += RADAR_VARIABLE_OFFSET(buffer + k, momentEngine);
@@ -1480,8 +1480,8 @@ int RKGoLive(RKRadar *radar) {
     } else {
         radar->memoryUsage -= radar->radarRelay->memoryUsage;
     }
+    radar->memoryUsage -= radar->rawDataRecorder->memoryUsage;
     radar->memoryUsage -= radar->healthLogger->memoryUsage;
-    radar->memoryUsage -= radar->dataRecorder->memoryUsage;
     radar->memoryUsage -= radar->sweepEngine->memoryUsage;
 
     // Start the engines
@@ -1514,8 +1514,8 @@ int RKGoLive(RKRadar *radar) {
     } else {
         RKRadarRelayStart(radar->radarRelay);
     }
+    RKRawDataRecorderStart(radar->rawDataRecorder);
     RKHealthLoggerStart(radar->healthLogger);
-    RKDataRecorderStart(radar->dataRecorder);
     RKSweepEngineStart(radar->sweepEngine);
 
     // Get the post-allocated memory
@@ -1531,8 +1531,8 @@ int RKGoLive(RKRadar *radar) {
     } else {
         radar->memoryUsage += radar->radarRelay->memoryUsage;
     }
+    radar->memoryUsage += radar->rawDataRecorder->memoryUsage;
     radar->memoryUsage += radar->healthLogger->memoryUsage;
-    radar->memoryUsage += radar->dataRecorder->memoryUsage;
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
 
     // Add a dummy config to get things started if there hasn't been one from the user
@@ -1734,7 +1734,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
                         healthOkay ? "true" : "false", healthOkay ? healthEnum : RKStatusEnumFault,
                         networkOkay ? "true" : "false", networkEnum,
-                        radar->dataRecorder->doNotWrite ? "false" : "true", radar->dataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
+                        radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         config->noise[0], config->noise[1],
                         FFTPlanUsage
                         );
@@ -1870,7 +1870,7 @@ int RKStop(RKRadar *radar) {
         radar->state ^= RKRadarStateRadarRelayInitialized;
     }
     if (radar->state & RKRadarStateFileRecorderInitialized) {
-        RKDataRecorderStop(radar->dataRecorder);
+        RKRawDataRecorderStop(radar->rawDataRecorder);
         radar->state ^= RKRadarStateFileRecorderInitialized;
     }
     if (radar->state & RKRadarStateSweepEngineInitialized) {
@@ -1900,7 +1900,7 @@ int RKSoftRestart(RKRadar *radar) {
 
     // Stop all data acquisition and DSP-related engines
     RKSweepEngineStop(radar->sweepEngine);
-    RKDataRecorderStop(radar->dataRecorder);
+    RKRawDataRecorderStop(radar->rawDataRecorder);
     RKHealthLoggerStop(radar->healthLogger);
     RKHealthEngineStop(radar->healthEngine);
     RKMomentEngineStop(radar->momentEngine);
@@ -1957,7 +1957,7 @@ int RKSoftRestart(RKRadar *radar) {
     RKMomentEngineStart(radar->momentEngine);
     RKHealthEngineStart(radar->healthEngine);
     RKHealthLoggerStart(radar->healthLogger);
-    RKDataRecorderStart(radar->dataRecorder);
+    RKRawDataRecorderStart(radar->rawDataRecorder);
     RKSweepEngineStart(radar->sweepEngine);
 
     // Start the inspector
@@ -2194,8 +2194,8 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                 break;
 
             case 'r':
-                radar->dataRecorder->doNotWrite = !radar->dataRecorder->doNotWrite;
-                sprintf(string, "ACK. IQ data recorder set to %s." RKEOL, radar->dataRecorder->doNotWrite ? "standby" : "active");
+                radar->rawDataRecorder->doNotWrite = !radar->rawDataRecorder->doNotWrite;
+                sprintf(string, "ACK. IQ data recorder set to %s." RKEOL, radar->rawDataRecorder->doNotWrite ? "standby" : "active");
                 //RKOperatorSendCommandResponse(O, string);
                 break;
                 

@@ -20,7 +20,7 @@
 #include <RadarKit/RKPulseRingFilter.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKHealthLogger.h>
-#include <RadarKit/RKDataRecorder.h>
+#include <RadarKit/RKRawDataRecorder.h>
 #include <RadarKit/RKSweep.h>
 #include <RadarKit/RKProduct.h>
 #include <RadarKit/RKWaveform.h>
@@ -112,9 +112,9 @@ struct rk_radar {
     RKPulseCompressionEngine         *pulseCompressionEngine;
     RKPulseRingFilterEngine          *pulseRingFilterEngine;
     RKMomentEngine                   *momentEngine;
+    RKRawDataRecorder                *rawDataRecorder;
     RKHealthLogger                   *healthLogger;
     RKSweepEngine                    *sweepEngine;
-    RKDataRecorder                   *dataRecorder;
     RKFileManager                    *fileManager;
     RKRadarRelay                     *radarRelay;
     RKHostMonitor                    *hostMonitor;
@@ -162,10 +162,6 @@ struct rk_radar {
     //
     RKControl                        *controls;
     uint32_t                         controlCount;
-    //
-    // Product recorder
-    //
-    void                             (*productRecorder)(const RKProduct *, char *);
 };
 
 //

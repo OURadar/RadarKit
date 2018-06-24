@@ -1121,8 +1121,8 @@ typedef union rk_product_header {
         float                gateSizeMeters;                                   // Gate size in meters
         time_t               startTime;                                        // Start time of the sweep
         time_t               endTime;                                          // End time of the sweep
-        bool                 isPPI;                                            //
-        bool                 isRHI;                                            //
+        bool                 isPPI;                                            // PPI indicator
+        bool                 isRHI;                                            // RHI indicator
         uint8_t              filterCount;                                      // Number of filters
         RKFilterAnchor       filterAnchors[RKMaxFilterCount];                  // Filter anchors
         uint32_t             pw[RKMaxFilterCount];                             // Pulse width (ns)
@@ -1137,6 +1137,7 @@ typedef union rk_product_header {
         RKFloat              SNRThreshold;                                     // Censor SNR (dB)
         RKName               waveform;                                         // Waveform name
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
+        char                 suggestedFilename[RKMaximumPathLength];           // RadarKit suggested fullpath filename
     };
     RKByte bytes[2048];
 } RKProductHeader;

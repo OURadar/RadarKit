@@ -380,7 +380,7 @@ int socketStreamHandler(RKOperator *O) {
                          RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),
                          RKMomentEngineStatusString(user->radar->momentEngine),
-                         RKDataRecorderStatusString(user->radar->dataRecorder));
+                         RKRawDataRecorderStatusString(user->radar->rawDataRecorder));
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -402,8 +402,8 @@ int socketStreamHandler(RKOperator *O) {
                              user->radar->healthIndex,
                              user->radar->sweepEngine->name,
                              user->radar->sweepEngine->state & 0xFFFF,
-                             user->radar->dataRecorder->name,
-                             user->radar->dataRecorder->state & 0xFFFF);
+                             user->radar->rawDataRecorder->name,
+                             user->radar->rawDataRecorder->state & 0xFFFF);
             } else {
                 k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:%04x/%04d  Pul:%04x/%05d  Mom:%04x/%04d  Hea:%04x/%02d  Swe:%04x  Rec:%04x " RKEOL,
                              user->radar->positionEngine->state & 0xFFFF,
@@ -415,7 +415,7 @@ int socketStreamHandler(RKOperator *O) {
                              user->radar->healthEngine->state & 0xFFFF,
                              user->radar->healthIndex,
                              user->radar->sweepEngine->state & 0xFFFF,
-                             user->radar->dataRecorder->state & 0xFFFF);
+                             user->radar->rawDataRecorder->state & 0xFFFF);
             }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
