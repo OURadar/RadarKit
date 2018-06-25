@@ -53,7 +53,7 @@
 
 #pragma mark - Constants
 
-#define RKBufferCSlotCount                   25                                // Config
+#define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   25                                // Health
 #define RKBufferSSlotCount                   90                                // Status strings
 #define RKBufferPSlotCount                   1000                              // Positions

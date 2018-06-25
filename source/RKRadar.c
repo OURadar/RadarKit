@@ -93,6 +93,8 @@ static void *engineMonitorRunLoop(void *in) {
     
     int k, s;
     
+    bool shown = false;
+    
     engine->state |= RKEngineStateActive;
     engine->state ^= RKEngineStateActivating;
 
@@ -126,9 +128,12 @@ static void *engineMonitorRunLoop(void *in) {
         }
         status->recorderLag = radar->rawDataRecorder->lag;
         RKSetStatusReady(radar, status);
-        if (radar->configIndex == 0 && radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        if (radar->configIndex == 0 && shown == false) {
             RKLog("%s %s B\n", engine->name,
                   RKVariableInString("memoryUsage", RKIntegerToCommaStyleString(radar->memoryUsage), RKValueTypeNumericString));
+            shown = true;
+        } else if (radar->configIndex > 0) {
+            shown = false;
         }
     }
     return NULL;
@@ -290,7 +295,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.configBufferDepth = RKBufferCSlotCount;
         RKLog("Info. Config buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
     } else if (radar->desc.configBufferDepth == 0) {
-        radar->desc.configBufferDepth = 25;
+        radar->desc.configBufferDepth = 10;
     }
     if (radar->desc.healthBufferDepth > RKBufferHSlotCount) {
         radar->desc.healthBufferDepth = RKBufferHSlotCount;
