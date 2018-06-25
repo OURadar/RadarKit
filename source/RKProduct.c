@@ -19,7 +19,7 @@ size_t RKProductBufferAlloc(RKProduct **buffer, const int depth) {
     memset(products, 0, depth * sizeof(RKProduct));
     
     size_t size = 0;
-    uint32_t capacity = 360000;
+    uint32_t capacity = 180000;
     uint32_t headSize = RKMaximumRaysPerSweep * sizeof(RKFloat);
     uint32_t dataSize = capacity * sizeof(RKFloat);
     

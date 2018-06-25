@@ -796,10 +796,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     
     // Refresh all system calibration
     RKAddConfig(myRadar,
+                RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeySystemZCal, systemPreferences->systemZCal[0], systemPreferences->systemZCal[1],
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
-                RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeyNull);
 

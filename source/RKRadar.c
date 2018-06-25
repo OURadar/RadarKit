@@ -257,6 +257,30 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Copy over the input flags and constaint the capacity and depth to hard-coded limits
     radar->desc = desc;
+    if (radar->desc.statusBufferDepth > RKBufferSSlotCount) {
+        radar->desc.statusBufferDepth = RKBufferSSlotCount;
+        RKLog("Info. Status buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
+    } else if (radar->desc.statusBufferDepth == 0) {
+        radar->desc.statusBufferDepth = 10;
+    }
+    if (radar->desc.configBufferDepth > RKBufferCSlotCount) {
+        radar->desc.configBufferDepth = RKBufferCSlotCount;
+        RKLog("Info. Config buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
+    } else if (radar->desc.configBufferDepth == 0) {
+        radar->desc.configBufferDepth = 10;
+    }
+    if (radar->desc.healthBufferDepth > RKBufferHSlotCount) {
+        radar->desc.healthBufferDepth = RKBufferHSlotCount;
+        RKLog("Info. Health buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+    } else if (radar->desc.healthBufferDepth == 0) {
+        radar->desc.healthBufferDepth = 25;
+    }
+    if (radar->desc.positionBufferDepth > RKBufferPSlotCount) {
+        radar->desc.positionBufferDepth = RKBufferPSlotCount;
+        RKLog("Info. Position buffer clamped to %s\n", radar->desc.positionBufferDepth);
+    } else if (radar->desc.positionBufferDepth == 0) {
+        radar->desc.positionBufferDepth = 500;
+    }
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
         RKLog("Info. Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
@@ -285,32 +309,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.pulseCapacity != desc.pulseCapacity) {
         RKLog("Info. Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     }
-    if (radar->desc.statusBufferDepth > RKBufferSSlotCount) {
-        radar->desc.statusBufferDepth = RKBufferSSlotCount;
-        RKLog("Info. Status buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
-    } else if (radar->desc.statusBufferDepth == 0) {
-        radar->desc.statusBufferDepth = 90;
-    }
-    if (radar->desc.configBufferDepth > RKBufferCSlotCount) {
-        radar->desc.configBufferDepth = RKBufferCSlotCount;
-        RKLog("Info. Config buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
-    } else if (radar->desc.configBufferDepth == 0) {
-        radar->desc.configBufferDepth = 10;
-    }
-    if (radar->desc.healthBufferDepth > RKBufferHSlotCount) {
-        radar->desc.healthBufferDepth = RKBufferHSlotCount;
-        RKLog("Info. Health buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
-    } else if (radar->desc.healthBufferDepth == 0) {
-        radar->desc.healthBufferDepth = 25;
-    }
     if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
-    }
-    if (radar->desc.positionBufferDepth > RKBufferPSlotCount) {
-        radar->desc.positionBufferDepth = RKBufferPSlotCount;
-        RKLog("Info. Position buffer clamped to %s\n", radar->desc.positionBufferDepth);
-    } else if (radar->desc.positionBufferDepth == 0) {
-        radar->desc.positionBufferDepth = 500;
     }
     if (radar->desc.controlCapacity > RKMaximumControlCount) {
         radar->desc.controlCapacity = RKMaximumControlCount;
@@ -344,8 +344,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
         if (bytes == 0) {
             RKLog("Error. Zero storage for status buffer?\n");
-            radar->desc.statusBufferDepth = 25;
-            bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
+            exit(EXIT_FAILURE);
         }
         radar->status = (RKStatus *)malloc(bytes);
         if (radar->status == NULL) {
@@ -368,8 +367,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
         if (bytes == 0) {
             RKLog("Error. Zero storage for config buffer?\n");
-            radar->desc.configBufferDepth = 25;
-            bytes = radar->desc.configBufferDepth * sizeof(RKConfig);
+            exit(EXIT_FAILURE);
         }
         radar->configs = (RKConfig *)malloc(bytes);
         if (radar->configs == NULL) {
@@ -392,8 +390,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
         if (bytes == 0) {
             RKLog("Error. Zero storage for health buffer?\n");
-            radar->desc.healthBufferDepth = 25;
-            bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+            exit(EXIT_FAILURE);
         }
         radar->healths = (RKHealth *)malloc(bytes);
         if (radar->healths == NULL) {
@@ -414,15 +411,18 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Health nodes
     if (radar->desc.initFlags & RKInitFlagAllocHealthNodes) {
         bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
+        if (bytes == 0) {
+            RKLog("Error. Zero storage for health nodes?\n");
+            exit(EXIT_FAILURE);
+        }
         radar->healthNodes = (RKNodalHealth *)malloc(bytes);
         memset(radar->healthNodes, 0, bytes);
         radar->memoryUsage += bytes;
         radar->desc.healthNodeBufferSize = bytes;
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
         if (bytes == 0) {
-            RKLog("Error. Zero storage for health nodes?\n");
-            radar->desc.healthBufferDepth = 25;
-            bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
+            RKLog("Error. Zero storage for health node buffers?\n");
+            exit(EXIT_FAILURE);
         }
         for (i = 0; i < radar->desc.healthNodeCount; i++) {
             radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
@@ -445,8 +445,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
         if (bytes == 0) {
             RKLog("Error. Zero storage for position buffer?\n");
-            radar->desc.positionBufferDepth = 250;
-            bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
+            exit(EXIT_FAILURE);
         }
         radar->positions = (RKPosition *)malloc(bytes);
         memset(radar->positions, 0, bytes);
@@ -491,6 +490,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
         k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
+        if (bytes == 0 || radar->rays == NULL) {
+            RKLog("Error. Unable to allocate memory for rays.\n");
+            exit(EXIT_FAILURE);
+        }
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
         RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
@@ -507,9 +510,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.productBufferSize = bytes;
-        RKLog("Level III buffer occupies %s B  (%s products)\n",
+        RKLog("Level III buffer occupies %s B  (%s products x %s cells)\n",
               RKIntegerToCommaStyleString(radar->desc.productBufferSize),
-              RKIntegerToCommaStyleString(radar->desc.productBufferDepth));
+              RKIntegerToCommaStyleString(radar->desc.productBufferDepth),
+              RKIntegerToCommaStyleString(radar->products[0].capacity));
         radar->state |= RKRadarStateProductBufferAllocated;
     }
 
@@ -518,8 +522,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         bytes = radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
         if (bytes == 0) {
             RKLog("Error. Zero storage for waveform calibrations?\n");
-            radar->desc.waveformCalibrationCapacity = RKMaximumWaveformCalibrationCount / 4;
-            bytes = radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
+            exit(EXIT_FAILURE);
         }
         radar->waveformCalibrations = (RKWaveformCalibration *)malloc(bytes);
         if (radar->waveformCalibrations == NULL) {
@@ -543,8 +546,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         bytes = radar->desc.controlCapacity * sizeof(RKControl);
         if (bytes == 0) {
             RKLog("Error. Zero storage for controls?\n");
-            radar->desc.controlCapacity = RKMaximumControlCount / 4;
-            bytes = radar->desc.controlCapacity * sizeof(RKControl);
+            exit(EXIT_FAILURE);
         }
         radar->controls = (RKControl *)malloc(bytes);
         if (radar->controls == NULL) {
@@ -1585,9 +1587,11 @@ int RKGoLive(RKRadar *radar) {
     // Add a dummy config to get things started if there hasn't been one from the user
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
+                    RKConfigKeySystemNoise, 0.1, 0.1,
                     RKConfigKeySystemZCal, -27.0, -27.0,
                     RKConfigKeySystemDCal, -0.01,
-                    RKConfigKeySystemNoise, 0.1, 0.1,
+                    RKConfigKeySystemPCal, 0.01,
+                    RKConfigKeySNRThreshold, 0.0,
                     RKConfigKeyNull);
     }
 

@@ -38,13 +38,14 @@
 // Memory Blocks
 // Defines the number of slots and gates of each pulse of the RKRadar structure
 //
+// RKBufferSSlotCount The number of slots for status
 // RKBufferCSlotCount The number of slots for config
 // RKBufferHSlotCount The number of slots for health JSON string
-// RKBufferSSlotCount The number of slots for status string
 // RKBufferPSlotCount The number of slots for position buffer
 // RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
 // RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
-// RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
+// RKBuffer2SlotCount The number of slots for level-2 ray storage in the host memory
+// RKBuffer3SlotCount The number of slots for level-3 product storage in the host memory
 // RKMaximumControlCount The number of controls (buttons)
 // RKMaximumCalibrationCount The number of waveform calibration set
 // RKGateCount The maximum number of gates allocated for each pulse
@@ -53,9 +54,9 @@
 
 #pragma mark - Constants
 
+#define RKBufferSSlotCount                   10                                // Status
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   25                                // Health
-#define RKBufferSSlotCount                   90                                // Status strings
 #define RKBufferPSlotCount                   1000                              // Positions
 #define RKBuffer0SlotCount                   20000                             // Raw I/Q
 #define RKBuffer2SlotCount                   36000                             // Ray
