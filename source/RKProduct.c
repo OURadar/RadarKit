@@ -16,7 +16,8 @@ size_t RKProductBufferAlloc(RKProduct **buffer, const int depth) {
         RKLog("Error. Unable to allocate product buffer.\n");
         return 0;
     }
-
+    memset(products, 0, depth * sizeof(RKProduct));
+    
     size_t size = 0;
     uint32_t capacity = 360000;
     uint32_t headSize = RKMaximumRaysPerSweep * sizeof(RKFloat);
