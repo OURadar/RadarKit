@@ -46,6 +46,48 @@ static uint32_t getUID(UIDType type) {
 
 #pragma mark - Engine Monitor
 
+static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
+    int k;
+    size_t size;
+    size = sizeof(RKRadar);
+    size += radar->desc.statusBufferSize;
+    size += radar->desc.configBufferSize;
+    size += radar->desc.healthBufferSize;
+    size += radar->desc.healthNodeBufferSize;
+    size += radar->desc.positionBufferSize;
+    size += radar->desc.pulseBufferSize;
+    size += radar->desc.rayBufferSize;
+    size += radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
+    size += radar->desc.controlCapacity * sizeof(RKControl);
+    // Product buffer is dynamically allocated and reallocated
+    radar->desc.productBufferSize = 0;
+    for (k = 0; k < radar->desc.productBufferDepth; k++) {
+        radar->desc.productBufferSize += radar->products[k].totalBufferSize;
+    }
+    size += radar->desc.productBufferSize;
+    //
+    size += radar->fileManager->memoryUsage;
+    size += radar->hostMonitor->memoryUsage;
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        size += 2 * sizeof(RKClock);
+        size += radar->pulseCompressionEngine->memoryUsage;
+        size += radar->pulseRingFilterEngine->memoryUsage;
+        size += radar->positionEngine->memoryUsage;
+        size += radar->momentEngine->memoryUsage;
+        size += radar->healthEngine->memoryUsage;
+        if (radar->systemInspector) {
+            size += radar->systemInspector->memoryUsage;
+        }
+    } else {
+        size += radar->radarRelay->memoryUsage;
+    }
+    size += radar->healthLogger->memoryUsage;
+    size += radar->sweepEngine->memoryUsage;
+    size += radar->rawDataRecorder->memoryUsage;
+    size += radar->hostMonitor->memoryUsage;
+    return size;
+}
+
 static void *engineMonitorRunLoop(void *in) {
     RKSimpleEngine *engine = (RKSimpleEngine *)in;
     
@@ -70,6 +112,8 @@ static void *engineMonitorRunLoop(void *in) {
         engine->state ^= RKEngineStateSleep1;
         // Put together a system status
         RKStatus *status = RKGetVacantStatus(radar);
+        radar->memoryUsage = RKGetRadarMemoryUsage(radar);
+        status->memoryUsage = radar->memoryUsage;
         status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
         for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
             status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
@@ -82,6 +126,10 @@ static void *engineMonitorRunLoop(void *in) {
         }
         status->recorderLag = radar->rawDataRecorder->lag;
         RKSetStatusReady(radar, status);
+        if (radar->configIndex == 0 && radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("%s %s B\n", engine->name,
+                  RKVariableInString("memoryUsage", RKIntegerToCommaStyleString(radar->memoryUsage), RKValueTypeNumericString));
+        }
     }
     return NULL;
 }
@@ -220,7 +268,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.productBufferDepth = RKBuffer3SlotCount;
         RKLog("Info. Product buffer clamped to %s\n", radar->desc.productBufferDepth);
     } else if (radar->desc.productBufferDepth == 0) {
-        radar->desc.productBufferDepth = 10;
+        radar->desc.productBufferDepth = 20;
     }
     if (radar->desc.pulseCapacity > RKGateCount) {
         radar->desc.pulseCapacity = RKGateCount;
@@ -364,6 +412,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->healthNodes = (RKNodalHealth *)malloc(bytes);
         memset(radar->healthNodes, 0, bytes);
         radar->memoryUsage += bytes;
+        radar->desc.healthNodeBufferSize = bytes;
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
         if (bytes == 0) {
             RKLog("Error. Zero storage for health nodes?\n");
@@ -382,7 +431,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             }
         }
         radar->memoryUsage += radar->desc.healthNodeCount * bytes;
-        radar->desc.healthNodeBufferSize = radar->desc.healthNodeCount * bytes;
+        radar->desc.healthNodeBufferSize += radar->desc.healthNodeCount * bytes;
         radar->state |= RKRadarStateHealthNodesAllocated;
     }
     
@@ -445,28 +494,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKBaseMomentCount,
               RKIntegerToCommaStyleString(k));
         radar->state |= RKRadarStateRayBufferAllocated;
-        
-        bytes = radar->desc.productBufferDepth * sizeof(RKProduct);
-        radar->products = (RKProduct *)malloc(bytes);
-        memset(radar->products, 0, bytes);
+
+        bytes = RKProductBufferAlloc(&radar->products, radar->desc.productBufferDepth);
+        if (bytes == 0 || radar->products == NULL) {
+            RKLog("Error. Unable to allocate memory for products.\n");
+            exit(EXIT_FAILURE);
+        }
         radar->memoryUsage += bytes;
         radar->desc.productBufferSize = bytes;
-        bytes = RKMaximumRaysPerSweep * sizeof(RKFloat);
-        for (i = 0; i < radar->desc.productBufferDepth; i++) {
-            radar->products[i].startAzimuth = (RKFloat *)malloc(bytes);
-            radar->products[i].startElevation = (RKFloat *)malloc(bytes);
-            radar->products[i].endAzimuth = (RKFloat *)malloc(bytes);
-            radar->products[i].endElevation = (RKFloat *)malloc(bytes);
-            radar->memoryUsage += 4 * bytes;
-            radar->desc.productBufferSize += 4 * bytes;
-        }
-        bytes = 360 * 2000 * sizeof(RKFloat);
-        for (i = 0; i < radar->desc.productBufferDepth; i++) {
-            radar->products[i].data = (RKFloat *)malloc(bytes);
-            radar->products[i].capacity = 360 * 2000;
-            radar->memoryUsage += bytes;
-            radar->desc.productBufferSize += bytes;
-        }
         RKLog("Level III buffer occupies %s B  (%s products)\n",
               RKIntegerToCommaStyleString(radar->desc.productBufferSize),
               RKIntegerToCommaStyleString(radar->desc.productBufferDepth));
@@ -1505,22 +1540,6 @@ int RKGoLive(RKRadar *radar) {
     radar->active = true;
     radar->tic++;
 
-    // Offset the pre-allocated memory
-    radar->memoryUsage -= radar->fileManager->memoryUsage;
-    radar->memoryUsage -= radar->hostMonitor->memoryUsage;
-    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
-        radar->memoryUsage -= radar->pulseCompressionEngine->memoryUsage;
-        radar->memoryUsage -= radar->pulseRingFilterEngine->memoryUsage;
-        radar->memoryUsage -= radar->positionEngine->memoryUsage;
-        radar->memoryUsage -= radar->momentEngine->memoryUsage;
-        radar->memoryUsage -= radar->healthEngine->memoryUsage;
-    } else {
-        radar->memoryUsage -= radar->radarRelay->memoryUsage;
-    }
-    radar->memoryUsage -= radar->rawDataRecorder->memoryUsage;
-    radar->memoryUsage -= radar->healthLogger->memoryUsage;
-    radar->memoryUsage -= radar->sweepEngine->memoryUsage;
-
     // Start the engines
     RKFileManagerStart(radar->fileManager);
     RKHostMonitorStart(radar->hostMonitor);
@@ -1556,21 +1575,7 @@ int RKGoLive(RKRadar *radar) {
     RKSweepEngineStart(radar->sweepEngine);
 
     // Get the post-allocated memory
-    radar->memoryUsage += radar->fileManager->memoryUsage;
-    radar->memoryUsage += radar->hostMonitor->memoryUsage;
-    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
-        radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
-        radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
-        radar->memoryUsage += radar->positionEngine->memoryUsage;
-        radar->memoryUsage += radar->momentEngine->memoryUsage;
-        radar->memoryUsage += radar->healthEngine->memoryUsage;
-        radar->memoryUsage += radar->systemInspector->memoryUsage;
-    } else {
-        radar->memoryUsage += radar->radarRelay->memoryUsage;
-    }
-    radar->memoryUsage += radar->rawDataRecorder->memoryUsage;
-    radar->memoryUsage += radar->healthLogger->memoryUsage;
-    radar->memoryUsage += radar->sweepEngine->memoryUsage;
+    radar->memoryUsage = RKGetRadarMemoryUsage(radar);
 
     // Add a dummy config to get things started if there hasn't been one from the user
     if (radar->configIndex == 0) {

@@ -588,7 +588,7 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int8 _t            idata[RKBaseMomentCount][capacity];
+//    int8_t             idata[RKBaseMomentCount][capacity];
 //    float              fdata[RKBaseMomentCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {

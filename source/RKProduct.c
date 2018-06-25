@@ -8,9 +8,54 @@
 
 #include <RadarKit/RKProduct.h>
 
+size_t RKProductBufferAlloc(RKProduct **buffer, const int depth) {
+    int i;
+    
+    RKProduct *products = (RKProduct *)malloc(depth * sizeof(RKProduct));
+    if (products == NULL) {
+        RKLog("Error. Unable to allocate product buffer.\n");
+        return 0;
+    }
+
+    size_t size = 0;
+    uint32_t capacity = 360000;
+    uint32_t headSize = RKMaximumRaysPerSweep * sizeof(RKFloat);
+    uint32_t dataSize = capacity * sizeof(RKFloat);
+    
+    for (i = 0; i < depth; i++) {
+        RKProduct *product = &products[i];
+        product->startAzimuth = (RKFloat *)malloc(headSize);
+        product->endAzimuth = (RKFloat *)malloc(headSize);
+        product->startElevation = (RKFloat *)malloc(headSize);
+        product->endElevation = (RKFloat *)malloc(headSize);
+        product->data = (RKFloat *)malloc(dataSize);
+        product->capacity = capacity;
+        product->totalBufferSize = (uint32_t)sizeof(RKProduct) + 4 * headSize + dataSize;
+        size += product->totalBufferSize;
+    }
+    *buffer = products;
+    return size;
+}
+
+void RKProductBufferFree(RKProduct *buffer, const int depth) {
+    int i;
+    for (i = 0; i < depth; i++) {
+        RKProduct *product = &buffer[i];
+        free(product->startAzimuth);
+        free(product->endAzimuth);
+        free(product->startElevation);
+        free(product->endElevation);
+        free(product->data);
+    }
+    free(buffer);
+}
+
 int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     int k;
-    uint32_t requiredCapacity = sweep->header.rayCount * sweep->header.gateCount;
+    
+    // Required capacity
+    const uint32_t requiredCapacity = (uint32_t)ceilf(sweep->header.rayCount / 90.0f) * 90 * (uint32_t)ceilf(sweep->header.gateCount / 100.0f) * 100;
+
     // Sweep header
     memcpy(product->header.radarName, sweep->header.desc.name, sizeof(RKName));
     product->header.latitude = sweep->header.desc.latitude;
@@ -28,6 +73,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.rayCount = sweep->header.rayCount;
     product->header.gateCount = sweep->header.gateCount;
     product->header.gateSizeMeters = sweep->header.gateSizeMeters;
+    
     // Sweep header config
     for (k = 0; k < product->header.filterCount; k++) {
         memcpy(&product->header.filterAnchors[k], &sweep->header.config.filterAnchors[k], sizeof(RKFilterAnchor));
@@ -49,21 +95,16 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.SNRThreshold = sweep->header.config.SNRThreshold;
     memcpy(product->header.waveform, sweep->header.config.waveform, sizeof(RKName));
     memcpy(product->header.vcpDefinition, sweep->header.config.vcpDefinition, sizeof(RKMaximumCommandLength));
-
+    
+    // Expand if the current capacity is not sufficient
     if (product->capacity < requiredCapacity) {
-        RKFloat *mem = realloc(product->data, product->capacity * sizeof(RKFloat));
-        if (mem == NULL) {
-            RKLog("Error. Unable to expand space.");
+        product->data = (RKFloat *)realloc(product->data, requiredCapacity * sizeof(RKFloat));
+        if (product->data == NULL) {
+            RKLog("Error. Unable to expand space.\n");
             exit(EXIT_FAILURE);
         }
-        if (mem != product->data) {
-            RKLog("Info. Product space reallocated   %p -> %p\n", product->data, mem);
-            if (product->data) {
-                free(product->data);
-            }
-            product->data = mem;
-            product->capacity = requiredCapacity;
-        }
+        product->capacity = requiredCapacity;
+        product->totalBufferSize = sizeof(RKProduct) + (4 * RKMaximumRaysPerSweep + product->capacity) * sizeof(RKFloat);
     }
     for (k = 0; k < product->header.rayCount; k++) {
         product->startAzimuth[k]   = sweep->rays[k]->header.startAzimuth;
@@ -71,6 +112,8 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
         product->startElevation[k] = sweep->rays[k]->header.startElevation;
         product->endElevation[k]   = sweep->rays[k]->header.endElevation;
     }
+    
+    // Copy over the data if this is one of the base moments
     RKBaseMomentIndex momentIndex = RKBaseMomentIndexCount;
     if (!strcmp(product->desc.symbol, "Z")) {
         momentIndex = RKBaseMomentIndexZ;
@@ -103,8 +146,6 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
             memcpy(y, x, product->header.gateCount * sizeof(RKFloat));
             y += product->header.gateCount;
         }
-        // Synchronize config id
-        product->i = sweep->header.config.i;
     }
 
     return RKResultSuccess;

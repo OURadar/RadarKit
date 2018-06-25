@@ -462,8 +462,6 @@ static void *rayGatherer(void *in) {
             is = j;
         }
 
-        engine->tic++;
-
         // Update k to catch up for the next watch
         j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
     }
@@ -601,7 +599,6 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
         RKLog("%s Error. Unable to add anymore user products.\n", engine->name);
         return 0;
     }
-//    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].i = 0;
     engine->productBuffer[i].pid = productId;

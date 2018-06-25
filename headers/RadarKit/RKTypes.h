@@ -1043,6 +1043,7 @@ typedef struct rk_control {
 typedef struct rk_status {
     RKIdentifier         i;
     RKStatusFlag         flag;
+    size_t               memoryUsage;
     uint8_t              pulseMonitorLag;
     uint8_t              pulseSkipCount;
     uint8_t              pulseCoreLags[RKProcessorStatusPulseCoreCount];
@@ -1149,8 +1150,8 @@ typedef struct rk_product {                                                    /
     RKProductDesc        desc;                                                 // Description
     RKProductStatus      flag;                                                 // Various state
     RKProductHeader      header;                                               // Product header
-    uint32_t             depth;                                                // Number of arrays
     uint32_t             capacity;                                             // Number of RKFloat elements in blocks of array
+    uint32_t             totalBufferSize;                                      // Total buffer size of this struct
     RKFloat              *startAzimuth;                                        // Start azimuth of each ray
     RKFloat              *endAzimuth;                                          // End azimuth of each ray
     RKFloat              *startElevation;                                      // Start elevation of each ray
