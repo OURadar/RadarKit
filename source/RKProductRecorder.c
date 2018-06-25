@@ -48,6 +48,7 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
     const float va = 0.25f * product->header.wavelength * product->header.prf[0];
     const float radianToDegree = 180.0f / M_PI;
     const bool convertRadiansToDegrees = !strcasecmp(product->desc.unit, "radians");
+    const nc_type floatType = sizeof(RKFloat) == sizeof(double) ? NC_DOUBLE : NC_FLOAT;
     if (convertRadiansToDegrees) {
         x =  product->data;
         for (j = 0; j < product->header.gateCount * product->header.rayCount; j++) {
@@ -88,7 +89,7 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
     nc_def_var_deflate(ncid, variableIdData, 1, 1, 3);
 
 #endif
-
+    
     // Global attributes - some are WDSS-II required
     nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(product->desc.name), product->desc.name);
     nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
@@ -160,22 +161,23 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "NoiseH-dB-ADU", NC_FLOAT, 1, &tmpf);
     tmpf = 20.0f * log10f(product->header.noise[1]);
     nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-dB-ADU", NC_FLOAT, 1, &tmpf);
-    nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalH-dB", NC_FLOAT, 1, &product->header.systemZCal[0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalV-dB", NC_FLOAT, 1, &product->header.systemZCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-Degrees", NC_FLOAT, 1, &product->header.systemDCal);
-    nc_put_att_float(ncid, NC_GLOBAL, "SystemPCal-Degrees", NC_FLOAT, 1, &product->header.systemPCal);
-    nc_put_att_float(ncid, NC_GLOBAL, "ZCalH1-dB", NC_FLOAT, 1, &product->header.ZCal[0][0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "ZCalV1-dB", NC_FLOAT, 1, &product->header.ZCal[1][0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "ZCalH2-dB", NC_FLOAT, 1, &product->header.ZCal[0][1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "ZCalV2-dB", NC_FLOAT, 1, &product->header.ZCal[1][1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "DCal1-dB", NC_FLOAT, 1, &product->header.DCal[0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "DCal2-dB", NC_FLOAT, 1, &product->header.DCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "PCal1-Degrees", NC_FLOAT, 1, &product->header.PCal[0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "PCal2-Degrees", NC_FLOAT, 1, &product->header.PCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-dB", NC_FLOAT, 1, &product->header.SNRThreshold);
+    nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalH-dB", floatType, 1, &product->header.systemZCal[0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalV-dB", floatType, 1, &product->header.systemZCal[1]);
+    nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-Degrees", floatType, 1, &product->header.systemDCal);
+    nc_put_att_float(ncid, NC_GLOBAL, "SystemPCal-Degrees", floatType, 1, &product->header.systemPCal);
+    nc_put_att_float(ncid, NC_GLOBAL, "ZCalH1-dB", floatType, 1, &product->header.ZCal[0][0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "ZCalV1-dB", floatType, 1, &product->header.ZCal[1][0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "ZCalH2-dB", floatType, 1, &product->header.ZCal[0][1]);
+    nc_put_att_float(ncid, NC_GLOBAL, "ZCalV2-dB", floatType, 1, &product->header.ZCal[1][1]);
+    nc_put_att_float(ncid, NC_GLOBAL, "DCal1-dB", floatType, 1, &product->header.DCal[0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "DCal2-dB", floatType, 1, &product->header.DCal[1]);
+    nc_put_att_float(ncid, NC_GLOBAL, "PCal1-Degrees", floatType, 1, &product->header.PCal[0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "PCal2-Degrees", floatType, 1, &product->header.PCal[1]);
+    nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-dB", floatType, 1, &product->header.SNRThreshold);
     put_global_text_att(ncid, "RadarKit-VCP-Definition", product->header.vcpDefinition);
     put_global_text_att(ncid, "Waveform", product->header.waveform);
-    put_global_text_att(ncid, "CreatedBy", "RadarKit");
+    put_global_text_att(ncid, "Radar", product->header.radarName);
+    put_global_text_att(ncid, "CreatedBy", "RadarKit v" RKVersionString);
     put_global_text_att(ncid, "ContactInformation", "https://arrc.ou.edu");
 
     // NetCDF definition ends here
