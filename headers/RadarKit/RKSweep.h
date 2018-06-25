@@ -43,7 +43,7 @@ struct rk_sweep_engine {
     bool                             handleFilesScriptProducesZip;
     char                             handleFilesScript[RKMaximumPathLength];
     RKFileManager                    *fileManager;
-    uint32_t                         userProductTimeoutSeconds;
+    uint32_t                         productTimeoutSeconds;
     char                             productFileExtension[16];
     int                              (*productRecorder)(RKProduct *, char *);
 

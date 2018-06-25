@@ -72,7 +72,6 @@ int socketCommandHandler(RKOperator *O) {
     RKStripTail(commandString);
 
     RKStream stream;
-    RKProductDesc userProductDescription;
 
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
@@ -191,13 +190,15 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 'u':
                     // Turn this user into an active node with user product return
-                    RKParseProductDescription(&userProductDescription, commandString + 1);
-                    RKLog("%s Registering user product '%s' (%s) ...", engine->name, userProductDescription.name, userProductDescription.symbol);
-                    RKProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
-                    if (productId) {
-                        user->userProductIds[user->userProductCount++] = productId;
+                    RKParseProductDescription(&user->productDescriptions[user->productCount], commandString + 1);
+                    RKLog("%s Registering external product '%s' (%s) ...", engine->name,
+                          user->productDescriptions[user->productCount].name,
+                          user->productDescriptions[user->productCount].symbol);
+                    user->productIds[user->productCount] = RKSweepEngineRegisterProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
+                    if (user->productIds[user->productCount]) {
                         sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"symbol\":\"%s\", \"pid\":%d}" RKEOL,
-                                userProductDescription.symbol, productId);
+                                user->productDescriptions[user->productCount].symbol, user->productIds[user->productCount]);
+                        user->productCount++;
                     } else {
                         sprintf(user->commandResponse, "NAK. Unable to register product." RKEOL);
                     }
@@ -311,7 +312,7 @@ int socketStreamHandler(RKOperator *O) {
     RKInt16C *userDataV = NULL;
 
     RKIdentifier identifier;
-    RKProductId userProductId;
+    RKProductId productId;
 
     struct timeval timevalOrigin, timevalTx, timevalRx;
     double deltaTx, deltaRx;
@@ -936,40 +937,42 @@ int socketStreamHandler(RKOperator *O) {
                         RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseMomentCount);
                     }
 
-                    for (k = 0; k < user->userProductCount; k++) {
-                        RKLog(">%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
+                    for (k = 0; k < user->productCount; k++) {
+                        RKLog(">%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->productIds[k]);
                         size = RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
                         if (size < 0) {
                             RKLog("%s %s Error. Failed receiving user product header ...\n", engine->name, O->name);
                             continue;
                         }
-                        userProductId = RKProductIdFromString(RKGetValueOfKey(user->string, "productId"));
+                        productId = RKProductIdFromString(RKGetValueOfKey(user->string, "productId"));
                         identifier = RKIdentifierFromString(RKGetValueOfKey(user->string, "configId"));
-                        if (user->userProductIds[k] != userProductId) {
-                            RKLog("%s %s Warning. Inconsistent userProduct = %d (expected) != %d (reported)\n", engine->name, O->name, user->userProductIds[k], userProductId);
+                        if (user->productIds[k] != productId) {
+                            RKLog("%s %s Warning. Inconsistent productId = %d (expected) != %d (reported)\n", engine->name, O->name, user->productIds[k], productId);
                         } else if (sweep->header.config.i != identifier) {
                             RKLog("%s %s Warning. Inconsistent configId = %lu (expected) != %lu (reported)\n", engine->name, O->name, sweep->header.config.i, identifier);
                         } else {
-                            product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
+                            product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, productId);
                             if (product) {
                                 // Transfer important meta data and prepare the necessary buffer size
                                 RKProductInitFromSweep(product, sweep);
                                 size = RKServerReceiveUserPayload(O, product->data, RKNetworkMessageFormatHeaderDefinedSize);
                                 if (user->radar->sweepEngine->verbose > 1) {
                                     RKLog("%s %s %s (%d) -> %u %zu\n",
-                                          engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
+                                          engine->name, O->name, user->string, strlen(user->string), productId, identifier);
                                 }
+                                RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
                                 RKSweepEngineSetProductComplete(user->radar->sweepEngine, sweep, product);
                             } else {
+                                // Still need to consume this packet so we dump it to a scratch space
                                 RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
                                 size = RKServerReceiveUserPayload(O, user->scratch, RKNetworkMessageFormatHeaderDefinedSize);
                             }
-                        }
-                        if (size < 0) {
-                            RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
-                            continue;
-                        }
-                    }
+                            if (size < 0) {
+                                RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
+                                continue;
+                            }
+                        } // else (user->productIds[k] == productId && sweep->header.config.i == identifier)
+                    } // for (k = 0; k < user->productCount; k++) ...
 
                     gettimeofday(&timevalRx, NULL);
 
@@ -1199,10 +1202,10 @@ int socketTerminateHandler(RKOperator *O) {
     int k;
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
-    for (k = 0; k < user->userProductCount; k++) {
-        if (user->userProductIds[k]) {
-            RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->userProductIds[k]);
-            user->userProductIds[k] = 0;
+    for (k = 0; k < user->productCount; k++) {
+        if (user->productIds[k]) {
+            RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->productIds[k]);
+            user->productIds[k] = 0;
         }
     }
     pthread_mutex_destroy(&user->mutex);

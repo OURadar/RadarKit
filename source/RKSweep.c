@@ -112,7 +112,7 @@ static void *sweepManager(void *in) {
         engine->productBuffer[i].flag |= RKProductStatusSleep0;
         pthread_mutex_unlock(&engine->productMutex);
         while (engine->productBuffer[i].i != sweep->header.config.i &&
-               engine->userProductTimeoutSeconds * 100 > s &&
+               engine->productTimeoutSeconds * 100 > s &&
                engine->state & RKEngineStateActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
@@ -275,7 +275,7 @@ static void *rayGatherer(void *in) {
     RKName unit;
     RKName symbol;
     RKName colormap;
-    RKFloat lhma[4];
+    RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     RKBaseMomentIndex momentIndex = 0;
     RKBaseMomentList momentList = engine->baseMomentList;
     int productCount = __builtin_popcount(momentList);
@@ -284,11 +284,12 @@ static void *rayGatherer(void *in) {
         RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
         // Build a product description
         RKProductDesc productDescription;
+        memset(&productDescription, 0, sizeof(RKProductDesc));
         strcpy(productDescription.name, name);
         strcpy(productDescription.unit, unit);
         strcpy(productDescription.symbol, symbol);
         strcpy(productDescription.colormap, colormap);
-        // Special treatment for RhoHV
+        // Special treatment for RhoHV: A three count piece-wise function
         if (momentIndex == RKBaseMomentIndexR) {
             productDescription.pieceCount = 3;
             productDescription.w[0] = 1000.0f;
@@ -487,7 +488,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     sprintf(engine->productFileExtension, "nc");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
-    engine->userProductTimeoutSeconds = 3;
+    engine->productTimeoutSeconds = 5;
     engine->baseMomentList = RKBaseMomentListProductZVWDPRK;
     engine->productRecorder = &RKProductRecorderNCWriter;
     pthread_mutex_init(&engine->productMutex, NULL);
