@@ -632,8 +632,6 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     }
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].flag = RKProductStatusVacant;
-    engine->productBuffer[i].capacity = 0;
-    free(engine->productBuffer[i].data);
     RKLog("%s Product %s%s%s unregistered   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
