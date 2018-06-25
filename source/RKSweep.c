@@ -185,7 +185,6 @@ static void *sweepManager(void *in) {
 
         // Call a product writer only if the engine is set to record and the is a valid product recorder
         if (engine->productRecorder && !engine->doNotWrite) {
-            engine->state |= RKEngineStateWritingFile;
             if (engine->verbose > 1) {
                 RKLog("%s Creating %s ...\n", engine->name, filename);
             }
@@ -194,7 +193,6 @@ static void *sweepManager(void *in) {
             if (i != RKResultSuccess) {
                 RKLog("%s Error creating %s\n", engine->name, filename);
             }
-            engine->state ^= RKEngineStateWritingFile;
             // Notify file manager of a new addition
             RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
         } else {
@@ -212,6 +210,9 @@ static void *sweepManager(void *in) {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
     }
+
+    // Unmark the state
+    engine->state ^= RKEngineStateWritingFile;
 
     // We are done with the sweep
     RKSweepFree(sweep);
@@ -633,7 +634,12 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     engine->productBuffer[i].flag = RKProductStatusVacant;
     engine->productBuffer[i].capacity = 0;
     free(engine->productBuffer[i].data);
-    RKLog("%s Product 0x%04x '%s' (%s) unregistered.\n", engine->name, engine->productBuffer[i].pid, engine->productBuffer[i].desc.name, engine->productBuffer[i].desc.symbol);
+    RKLog("%s Product %s%s%s unregistered   %s   %s\n", engine->name,
+          rkGlobalParameters.showColor ? RKYellowColor : "",
+          engine->productBuffer[i].desc.symbol,
+          rkGlobalParameters.showColor ? RKNoColor : "",
+          RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId),
+          RKVariableInString("name", engine->productBuffer[i].desc.name, RKValueTypeString));
     memset(&engine->productBuffer[i].desc, 0, sizeof(RKProductDesc));
     engine->productBuffer[i].pid = 0;
     pthread_mutex_unlock(&engine->productMutex);

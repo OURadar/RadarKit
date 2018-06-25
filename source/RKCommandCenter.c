@@ -1201,7 +1201,6 @@ int socketTerminateHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     for (k = 0; k < user->userProductCount; k++) {
         if (user->userProductIds[k]) {
-            RKLog(">%s %s Unregistering 0x%04x ...\n", engine->name, O->name, user->userProductIds[k]);
             RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->userProductIds[k]);
             user->userProductIds[k] = 0;
         }

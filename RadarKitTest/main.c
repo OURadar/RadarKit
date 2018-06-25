@@ -969,8 +969,7 @@ int main(int argc, const char **argv) {
         RKLog("Starting a new PPI ...\n");
         RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
         RKWaitWhileActive(myRadar);
-        RKStop(myRadar);
-
+    
         RKFileMonitorFree(preferenceFileMonitor);
 
     } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
@@ -986,7 +985,6 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
-        RKStop(myRadar);
         
     } else {
         
