@@ -482,7 +482,7 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
             }
             fp++;
         }
-        RKShowArray(product->data, symbol, product->header.gateCount, product->header.rayCount);
+        //RKShowArray(product->data, symbol, product->header.gateCount, product->header.rayCount);
     }
 
     nc_close(ncid);
