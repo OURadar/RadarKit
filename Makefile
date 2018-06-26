@@ -24,7 +24,7 @@ OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweep.o RKProduct.o RKProductFile.o RKHealthLogger.o
 OBJS += RKWaveform.o
 
-RKLIB = libRadarKit.a
+RKLIB = libradarkit.a
 
 PROGS = rktest simple-emulator
 
@@ -64,12 +64,12 @@ $(OBJS): %.o: source/%.c
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-#rktest: RadarKitTest/main.c /usr/local/lib/libRadarKit.a
+#rktest: RadarKitTest/main.c /usr/local/lib/libradarkit.a
 #	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
-rktest: RadarKitTest/main.c libRadarKit.a
+rktest: RadarKitTest/main.c libradarkit.a
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
-simple-emulator: SimpleEmulator/main.c libRadarKit.a
+simple-emulator: SimpleEmulator/main.c libradarkit.a
 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 clean:
@@ -79,8 +79,8 @@ clean:
 
 install:
 	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
-	sudo cp -p libRadarKit.a /usr/local/lib/
+	sudo cp -p libradarkit.a /usr/local/lib/
 
 uninstall:
 	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
-	rm -rf /usr/local/lib/libRadarKit.a
+	rm -rf /usr/local/lib/libradarkit.a

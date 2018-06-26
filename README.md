@@ -23,7 +23,7 @@ Follow these steps to get the project
     git clone https://git.arrc.ou.edu/radar/radarkit.git
     ```
 
-2. Get the required packages, which can either be installed through one of the package managers or compiled from source, which I would recommend for the FFTW library since it can take advantage of SSE, SSE2, AVX and AVX-2 accelerations.
+2. Get the required packages, which can either be installed through one of the package managers or compiled from source, which I would recommend for the FFTW library since it can take advantage of SSE, SSE2, AVX and AVX-2 accelerations (see 5).
     - [FFTW]
     - [NetCDF]
 
@@ -59,6 +59,14 @@ Follow these steps to get the project
 
     ```
     net.ipv4.ping_group_range = 0 0
+    ```
+    
+5. (Optional) Compile [FFTW] from source
+
+    ```
+    ./configure --enable-single --enable-sse --enable-sse2 --enable-avx --enable-avx2 --enable-shared
+    make
+    sudo make install 
     ```
     
 [FFTW]: http://www.fftw.org

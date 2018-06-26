@@ -409,10 +409,9 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, (long long unsigned int)u64);
                 break;
             case RKValueTypeFloat:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, f);
-                break;
+                d = f;
             case RKValueTypeDouble:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, d);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, RKFloatToCommaStyleString(d));
                 break;
             case RKValueTypeNumericString:
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
@@ -457,10 +456,9 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, "%s = %llu", name, (long long unsigned int)u64);
                 break;
             case RKValueTypeFloat:
-                snprintf(string, RKNameLength - 1, "%s = %.3f", name, f);
-                break;
+                d = f;
             case RKValueTypeDouble:
-                snprintf(string, RKNameLength - 1, "%s = %.3f", name, d);
+                snprintf(string, RKNameLength - 1, "%s = %sf", name, RKFloatToCommaStyleString(d));
                 break;
             default:
                 snprintf(string, RKNameLength - 1, "%s = '%s'", name, c);

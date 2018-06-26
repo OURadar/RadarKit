@@ -1202,6 +1202,9 @@ int socketTerminateHandler(RKOperator *O) {
     int k;
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
+    user->access = RKStreamNull;
+    user->streams = RKStreamNull;
+    RKLog(">%s %s Stream reset.\n", engine->name, O->name);
     for (k = 0; k < user->productCount; k++) {
         if (user->productIds[k]) {
             RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->productIds[k]);
@@ -1209,9 +1212,6 @@ int socketTerminateHandler(RKOperator *O) {
         }
     }
     pthread_mutex_destroy(&user->mutex);
-    RKLog(">%s %s Stream reset.\n", engine->name, O->name);
-    user->streams = RKStreamNull;
-    user->access = RKStreamNull;
     user->radar = NULL;
     consolidateStreams(engine);
     return RKResultSuccess;

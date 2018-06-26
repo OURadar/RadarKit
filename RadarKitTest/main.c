@@ -138,19 +138,20 @@ static void showHelp() {
            "         11 - Test initializing a radar system - RKRadarInit()\n"
            "         12 - Test converting a temperature reading to status\n"
            "         13 - Test getting a country name from position\n"
-           "         14 - Test reading a netcdf file\n"
-           "         15 - Test showing waveform properties\n"
-           "         16 - Test generating text for buffer overview\n"
+           "         14 - Test generating text for buffer overview\n"
+           "         15 - Test reading a netcdf file using RKSweepRead()\n"
+           "         16 - Test reading a netcdf file using RKProductRead()\n"
            "\n"
            "         20 - SIMD quick test\n"
            "         21 - SIMD test with numbers shown\n"
            "         22 - Show window types\n"
            "         23 - Hilbert transform\n"
-           "         24 - Generate an fft-wisdom file\n"
+           "         24 - Optimize FFT performance and generate an fft-wisdom file\n"
            "\n"
            "         30 - Make a frequency hopping sequence\n"
            "         31 - Make a TFM waveform\n"
            "         32 - Generate a waveform file\n"
+           "         33 - Test showing waveform properties\n"
            "\n"
            "         40 - Pulse compression using simple cases\n"
            "         41 - Calculating one ray using the Pulse Pair method\n"
@@ -503,18 +504,21 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKTestGetCountry();
                         break;
                     case 14:
+                        RKTestBufferOverviewText();
+                        break;
+                    case 15:
                         if (argc == optind) {
                             RKLog("No filename given.\n");
                             exit(EXIT_FAILURE);
                         }
-                        //RKTestReadSweep(argv[optind]);
-                        RKTestReadProduct(argv[optind]);
-                        break;
-                    case 15:
-                        RKTestWaveformProperties();
+                        RKTestSweepRead(argv[optind]);
                         break;
                     case 16:
-                        RKTestBufferOverviewText();
+                        if (argc == optind) {
+                            RKLog("No filename given.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                        RKTestProductRead(argv[optind]);
                         break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
@@ -538,7 +542,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKTestWaveformTFM();
                         break;
                     case 32:
-                        RKTestWriteWaveform();
+                        RKTestWaveformWrite();
+                        break;
+                    case 33:
+                        RKTestWaveformProperties();
                         break;
                     case 40:
                         RKTestPulseCompression((user->verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
