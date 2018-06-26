@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKProduct.h>
 
-size_t RKProductBufferAlloc(RKProduct **buffer, const int depth) {
+size_t RKProductBufferAlloc(RKProduct **buffer, const uint32_t depth, const uint32_t rayCount, const uint32_t gateCount) {
     int i;
     
     RKProduct *products = (RKProduct *)malloc(depth * sizeof(RKProduct));
@@ -19,8 +19,8 @@ size_t RKProductBufferAlloc(RKProduct **buffer, const int depth) {
     memset(products, 0, depth * sizeof(RKProduct));
     
     size_t size = 0;
-    uint32_t capacity = 180000;
-    uint32_t headSize = RKMaximumRaysPerSweep * sizeof(RKFloat);
+    uint32_t capacity = gateCount * rayCount;
+    uint32_t headSize = rayCount * sizeof(RKFloat);
     uint32_t dataSize = capacity * sizeof(RKFloat);
     
     for (i = 0; i < depth; i++) {

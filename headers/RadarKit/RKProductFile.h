@@ -10,6 +10,7 @@
 #define __RadarKit_ProductFile__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKProduct.h>
 #include <netcdf.h>
 
 int RKProductFileWriterNC(RKProduct *, char *);
