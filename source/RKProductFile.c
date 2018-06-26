@@ -278,7 +278,6 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
 
     size_t rayCount = 0;
     size_t gateCount = 0;
-    uint32_t capacity = 0;
 
     RKGetSymbolFromFilename(inputFile, symbol);
 
@@ -300,7 +299,10 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         return NULL;
     }
 
+    // Some constants
     const nc_type floatType = sizeof(RKFloat) == sizeof(double) ? NC_DOUBLE : NC_FLOAT;
+    const RKFloat folded = W2_RANGE_FOLDED;
+    const RKFloat missing = W2_MISSING_DATA;
 
     // Dimensions
     if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
@@ -332,9 +334,6 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
         gateCount = RKGateCount;
     }
-
-    // Derive the RKSIMDAlignSize compliant capacity
-    capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
 
     // Now we allocate a product buffer
     RKProductBufferAlloc(&product, 1, (uint32_t)rayCount, (uint32_t)gateCount);
@@ -427,9 +426,9 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
           RKVariableInString("wavelength", &product->header.wavelength, RKValueTypeFloat),
           RKVariableInString("pulsewidth", &product->header.pw[0], RKValueTypeUInt32));
     RKLog("%s   %s   %s\n",
-          RKVariableInString("rayCount", RKIntegerToCommaStyleString(rayCount), RKValueTypeNumericString),
-          RKVariableInString("gateCount", RKIntegerToCommaStyleString(gateCount), RKValueTypeNumericString),
-          RKVariableInString("capacity", RKIntegerToCommaStyleString(capacity), RKValueTypeNumericString));
+          RKVariableInString("rayCount", RKIntegerToCommaStyleString(product->header.rayCount), RKValueTypeNumericString),
+          RKVariableInString("gateCount", RKIntegerToCommaStyleString(product->header.gateCount), RKValueTypeNumericString),
+          RKVariableInString("capacity", RKIntegerToCommaStyleString(product->capacity), RKValueTypeNumericString));
     RKLog("%s   %s",
           RKVariableInString("noise[0]", &product->header.noise[0], RKValueTypeFloat),
           RKVariableInString("noise[1]", &product->header.noise[1], RKValueTypeFloat));
@@ -475,10 +474,10 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     // Data array
     r = nc_inq_varid(ncid, typeName, &tmpId);
     if (r == NC_NOERR) {
-        nc_get_var_float(ncid, tmpId, product->data);
+        rk_nc_get_var_float(ncid, tmpId, product->data);
         fp = product->data;
-        for (r = 0; r < product->header.rayCount * product->header.gateCount; r++) {
-            if (*fp == W2_MISSING_DATA || *fp == W2_RANGE_FOLDED) {
+        for (r = 0; r < product->capacity; r++) {
+            if (*fp == missing || *fp == folded) {
                 *fp = NAN;
             }
             fp++;

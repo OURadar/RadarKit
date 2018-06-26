@@ -25,6 +25,8 @@ size_t RKProductBufferAlloc(RKProduct **buffer, const uint32_t depth, const uint
     
     for (i = 0; i < depth; i++) {
         RKProduct *product = &products[i];
+        product->header.rayCount = rayCount;
+        product->header.gateCount = gateCount;
         product->startAzimuth = (RKFloat *)malloc(headSize);
         product->endAzimuth = (RKFloat *)malloc(headSize);
         product->startElevation = (RKFloat *)malloc(headSize);
