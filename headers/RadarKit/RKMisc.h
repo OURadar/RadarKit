@@ -135,6 +135,7 @@ long RKCountFilesInPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
+bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 
 char *RKSignalString(const int);
 

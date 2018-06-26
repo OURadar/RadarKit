@@ -17,6 +17,12 @@
 #define NC_MODE  NC_CLOBBER
 #endif
 
+#if RKfloat == float
+#define rk_nc_get_var_float   nc_get_var_float
+#else
+#define rk_nc_get_var_float   nc_get_var_double
+#endif
+
 static void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
     size_t n = 0;
     nc_get_att_text(ncid, NC_GLOBAL, name, dst);
@@ -26,6 +32,13 @@ static void getGlobalTextAttribute(char *dst, const char *name, const int ncid) 
 
 static int put_global_text_att(const int ncid, const char *att, const char *text) {
     return nc_put_att_text(ncid, NC_GLOBAL, att, strlen(text), text);
+}
+
+static int get_global_float_att(const int ncid, const nc_type type, const char *att, void *dest) {
+    if (type == NC_FLOAT) {
+        return nc_get_att_float(ncid, NC_GLOBAL, att, (float *)dest);
+    }
+    return nc_get_att_double(ncid, NC_GLOBAL, att, (double *)dest);
 }
 
 int RKProductFileWriterNC(RKProduct *product, char *filename) {
@@ -55,7 +68,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     const nc_type floatType = sizeof(RKFloat) == sizeof(double) ? NC_DOUBLE : NC_FLOAT;
 
     // Local memory
-    float *array1D = (float *)malloc(MAX(product->header.rayCount, product->header.gateCount) * sizeof(RKFloat));
+    RKFloat *array1D = (float *)malloc(MAX(product->header.rayCount, product->header.gateCount) * sizeof(RKFloat));
 
     // Convert data in radians to degrees if necessary
     if (convertRadiansToDegrees) {
@@ -148,6 +161,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
         nc_put_att_float(ncid, NC_GLOBAL, "Azimuth", NC_FLOAT, 1, &tmpf);
     }
     put_global_text_att(ncid, "AzimuthUnits", "Degrees");
+    nc_put_att_float(ncid, NC_GLOBAL, "GateSize", NC_FLOAT, 1, &product->header.gateSizeMeters);
     tmpf = 0.0f;
     nc_put_att_float(ncid, NC_GLOBAL, "RangeToFirstGate", NC_FLOAT, 1, &tmpf);
     put_global_text_att(ncid, "RangeToFirstGateUnits", "Meters");
@@ -166,10 +180,8 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     tmpf = 1.0e-3f * product->header.gateSizeMeters * product->header.gateCount;
     nc_put_att_float(ncid, NC_GLOBAL, "MaximumRange-value", NC_FLOAT, 1, &tmpf);
     put_global_text_att(ncid, "ProcessParameters", "Noise Calibration Censoring");
-    tmpf = 20.0f * log10f(product->header.noise[0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "NoiseH-dB-ADU", NC_FLOAT, 1, &tmpf);
-    tmpf = 20.0f * log10f(product->header.noise[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-dB-ADU", NC_FLOAT, 1, &tmpf);
+    nc_put_att_float(ncid, NC_GLOBAL, "NoiseH-ADU", floatType, 1, &product->header.noise[0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-ADU", floatType, 1, &product->header.noise[1]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalH-dB", floatType, 1, &product->header.systemZCal[0]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalV-dB", floatType, 1, &product->header.systemZCal[1]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-Degrees", floatType, 1, &product->header.systemDCal);
@@ -192,6 +204,8 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     nc_enddef(ncid);
 
     // Data
+#if RKFloat == float
+
     nc_put_var_float(ncid, variableIdAzimuth, product->startAzimuth);
     nc_put_var_float(ncid, variableIdElevation, product->startElevation);
     for (j = 0; j < product->header.rayCount; j++) {
@@ -211,7 +225,35 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
         x++;
     }
     nc_put_var_float(ncid, variableIdData, product->data);
-    
+
+#elif RKloat == double
+
+    nc_put_var_double(ncid, variableIdAzimuth, product->startAzimuth);
+    nc_put_var_double(ncid, variableIdElevation, product->startElevation);
+    for (j = 0; j < product->header.rayCount; j++) {
+        array1D[j] = RKUMinDiff(product->endAzimuth[j], product->startAzimuth[j]);
+    }
+    nc_put_var_double(ncid, variableIdBeamwidth, array1D);
+    for (j = 0; j < product->header.rayCount; j++) {
+        array1D[j] = product->header.gateSizeMeters;
+    }
+    nc_put_var_double(ncid, variableIdGateWidth, array1D);
+
+    x = product->data;
+    for (j = 0; j < product->header.rayCount * product->header.gateCount; j++) {
+        if (!isfinite(*x)) {
+            *x = W2_MISSING_DATA;
+        }
+        x++;
+    }
+    nc_put_var_float(ncid, variableIdData, product->data);
+
+#else
+
+    RKLog("Error. Unexpected data float type.\n");
+
+#endif
+
     ncclose(ncid);
     
     free(array1D);
@@ -220,37 +262,38 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
 }
 
 RKProduct *RKProductFileReaderNC(const char *inputFile) {
-    int j, k, r;
+    int r;
     int ncid, tmpId;
-    float *fp, fv;
+    float fv, *fp;
     int iv;
-//
+
     MAKE_FUNCTION_NAME(name);
 
     RKProduct *product = NULL;
     
     RKName typeName;
     RKName scanType;
-//
-//    uint32_t firstPartLength = 0;
-//
-//    uint32_t productList = 0;
-//
+    RKName unit;
+    RKName symbol;
+
     size_t rayCount = 0;
     size_t gateCount = 0;
     uint32_t capacity = 0;
-//
-//    // A scratch space for netcdf API
-//    void *scratch = NULL;
-    
-    printf("%s\n", RKVariableInString("filename", inputFile, RKValueTypeString));
+
+    RKGetSymbolFromFilename(inputFile, symbol);
+
+    RKLog("%s   (%s%s%s)\n",
+           RKVariableInString("filename", inputFile, RKValueTypeString),
+           rkGlobalParameters.showColor ? RKYellowColor : "",
+           symbol,
+           rkGlobalParameters.showColor ? RKNoColor : "");
     
     if (!RKFilenameExists(inputFile)) {
         RKLog("Error. File %s does not exist.\n", inputFile);
         return NULL;
     }
 
-    printf("File exists.\n");
+
     // Read the first file
     if ((r = nc_open(inputFile, NC_NOWRITE, &ncid)) > 0) {
         RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
@@ -292,11 +335,6 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
 
     // Derive the RKSIMDAlignSize compliant capacity
     capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
-
-    RKLog("%s   %s   %s\n",
-          RKVariableInString("rayCount", RKIntegerToCommaStyleString(rayCount), RKValueTypeNumericString),
-          RKVariableInString("gateCount", RKIntegerToCommaStyleString(gateCount), RKValueTypeNumericString),
-          RKVariableInString("capacity", RKIntegerToCommaStyleString(capacity), RKValueTypeNumericString));
 
     // Now we allocate a product buffer
     RKProductBufferAlloc(&product, 1, (uint32_t)rayCount, (uint32_t)gateCount);
@@ -340,6 +378,10 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     if (r != NC_NOERR && product->header.isRHI) {
         RKLog("Warning. No sweep azimuth found.\n");
     }
+    r = nc_get_att_float(ncid, NC_GLOBAL, "GateSize", &product->header.gateSizeMeters);
+    if (r != NC_NOERR) {
+        product->header.gateSizeMeters = 0.0f;
+    }
     nc_get_att_long(ncid, NC_GLOBAL, "Time", &product->header.startTime);
     r = nc_get_att_float(ncid, NC_GLOBAL, "Wavelength-unit", &product->header.wavelength);
     if (r != NC_NOERR) {
@@ -357,7 +399,91 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     r = nc_get_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", &fv);
     if (r == NC_NOERR && product->header.wavelength == 0.0f && product->header.prf[0] > 0.0f) {
         product->header.wavelength = 4.0f * fv / (RKFloat)product->header.prf[0];
-        RKLog("%s m", RKVariableInString("wavelength", &product->header.wavelength, RKValueTypeFloat));
+    }
+    nc_get_att_int(ncid, NC_GLOBAL, "PulseWidth-value", &iv);
+    r = nc_get_att_text(ncid, NC_GLOBAL, "PulseWidth-unit", unit);
+    if (r == NC_NOERR && !strcasecmp("microseconds", unit)) {
+        product->header.pw[0] = 1000 * iv;
+    }
+    get_global_float_att(ncid, floatType, "NoiseH-ADU", &product->header.noise[0]);
+    get_global_float_att(ncid, floatType, "NoiseV-ADU", &product->header.noise[1]);
+    get_global_float_att(ncid, floatType, "SystemZCalH-dB", &product->header.systemZCal[0]);
+    get_global_float_att(ncid, floatType, "SystemZCalV-dB", &product->header.systemZCal[1]);
+    get_global_float_att(ncid, floatType, "SystemDCal-Degrees", &product->header.systemDCal);
+    get_global_float_att(ncid, floatType, "SystemPCal-Degrees", &product->header.systemPCal);
+    get_global_float_att(ncid, floatType, "ZCalH1-dB", &product->header.ZCal[0][0]);
+    get_global_float_att(ncid, floatType, "ZCalV1-dB", &product->header.ZCal[1][0]);
+    get_global_float_att(ncid, floatType, "ZCalH2-dB", &product->header.ZCal[0][1]);
+    get_global_float_att(ncid, floatType, "ZCalV2-dB", &product->header.ZCal[1][1]);
+    get_global_float_att(ncid, floatType, "DCal1-dB", &product->header.DCal[0]);
+    get_global_float_att(ncid, floatType, "DCal2-dB", &product->header.DCal[1]);
+    get_global_float_att(ncid, floatType, "PCal1-Degrees", &product->header.PCal[0]);
+    get_global_float_att(ncid, floatType, "PCal2-Degrees", &product->header.PCal[1]);
+    get_global_float_att(ncid, floatType, "CensorThreshold-dB", &product->header.SNRThreshold);
+
+    RKLog("%s\n",
+          RKVariableInString("typeName", typeName, RKValueTypeString));
+    RKLog("%s m   %s us",
+          RKVariableInString("wavelength", &product->header.wavelength, RKValueTypeFloat),
+          RKVariableInString("pulsewidth", &product->header.pw[0], RKValueTypeUInt32));
+    RKLog("%s   %s   %s\n",
+          RKVariableInString("rayCount", RKIntegerToCommaStyleString(rayCount), RKValueTypeNumericString),
+          RKVariableInString("gateCount", RKIntegerToCommaStyleString(gateCount), RKValueTypeNumericString),
+          RKVariableInString("capacity", RKIntegerToCommaStyleString(capacity), RKValueTypeNumericString));
+    RKLog("%s   %s",
+          RKVariableInString("noise[0]", &product->header.noise[0], RKValueTypeFloat),
+          RKVariableInString("noise[1]", &product->header.noise[1], RKValueTypeFloat));
+    RKLog("%s dB   %s dB",
+          RKVariableInString("SystemZCalH", &product->header.systemZCal[0], RKValueTypeFloat),
+          RKVariableInString("SystemZCalV", &product->header.systemZCal[1], RKValueTypeFloat));
+    nc_get_att_text(ncid, NC_GLOBAL, "RadarKit-VCP-Definition", product->header.vcpDefinition);
+    nc_get_att_text(ncid, NC_GLOBAL, "Waveform", product->header.waveform);
+
+    // Elevation array
+    if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
+        r = nc_inq_varid(ncid, "elevation", &tmpId);
+    }
+    if (r == NC_NOERR) {
+        rk_nc_get_var_float(ncid, tmpId, product->startElevation);
+    } else {
+        RKLog("Warning. No elevation array.\n");
+    }
+
+    // Azimuth array
+    if ((r = nc_inq_varid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
+        r = nc_inq_varid(ncid, "azimuth", &tmpId);
+    }
+    if (r == NC_NOERR) {
+        rk_nc_get_var_float(ncid, tmpId, product->startAzimuth);
+    } else {
+        RKLog("Warning. No azimuth array.\n");
+    }
+
+    // Use the first element of gatewidth array as sweep gate size, it really does not change
+    if (product->header.gateSizeMeters == 0.0f) {
+        if ((r = nc_inq_varid(ncid, "GateWidth", &tmpId)) != NC_NOERR) {
+            if ((r = nc_inq_varid(ncid, "Gatewidth", &tmpId)) != NC_NOERR) {
+                r = nc_inq_varid(ncid, "gatewidth", &tmpId);
+            }
+        }
+        if (r == NC_NOERR) {
+            nc_get_var_float(ncid, tmpId, product->data);
+            product->header.gateSizeMeters = product->data[0];
+        }
+    }
+
+    // Data array
+    r = nc_inq_varid(ncid, typeName, &tmpId);
+    if (r == NC_NOERR) {
+        nc_get_var_float(ncid, tmpId, product->data);
+        fp = product->data;
+        for (r = 0; r < product->header.rayCount * product->header.gateCount; r++) {
+            if (*fp == W2_MISSING_DATA || *fp == W2_RANGE_FOLDED) {
+                *fp = NAN;
+            }
+            fp++;
+        }
+        RKShowArray(product->data, symbol, product->header.gateCount, product->header.rayCount);
     }
 
     nc_close(ncid);

@@ -398,10 +398,8 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 u16 = u8;
             case RKValueTypeUInt16:
                 u32 = u16;
-                break;
             case RKValueTypeUInt32:
                 u64 = u32;
-                break;
             case RKValueTypeUInt64:
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, (unsigned long long)u64);
                 break;
