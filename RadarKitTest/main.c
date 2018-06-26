@@ -507,7 +507,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                             RKLog("No filename given.\n");
                             exit(EXIT_FAILURE);
                         }
-                        RKTestReadSweep(argv[optind]);
+                        //RKTestReadSweep(argv[optind]);
+                        RKTestReadProduct(argv[optind]);
                         break;
                     case 15:
                         RKTestWaveformProperties();

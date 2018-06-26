@@ -102,6 +102,7 @@ void RKTestInitializingRadar(void);
 void RKTestTemperatureToStatus(void);
 void RKTestGetCountry(void);
 void RKTestReadSweep(const char *);
+void RKTestReadProduct(const char *);
 void RKTestWaveformProperties(void);
 void RKTestBufferOverviewText(void);
 

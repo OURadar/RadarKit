@@ -383,6 +383,14 @@ void RKTestReadSweep(const char *file) {
     }
 }
 
+void RKTestReadProduct(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKProduct *product = RKProductInitFromFile(file);
+    if (product) {
+        RKProductFree(product);
+    }
+}
+
 void RKTestWaveformProperties(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
