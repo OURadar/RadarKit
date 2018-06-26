@@ -97,7 +97,7 @@
 
 #define RKNoColor                            "\033[0m"
 #define RKRedColor                           "\033[38;5;196m"
-#define RKOrangeColor                        "\033[38;5;214m"
+#define RKOrangeColor                        "\033[38;5;208m"
 #define RKYellowColor                        "\033[38;5;226m"
 #define RKLimeColor                          "\033[38;5;118m"
 #define RKGreenColor                         "\033[38;5;46m"

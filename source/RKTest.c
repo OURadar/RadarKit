@@ -375,58 +375,6 @@ void RKTestGetCountry(void) {
     }
 }
 
-void RKTestReadSweep(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
-    }
-}
-
-void RKTestWaveformProperties(void) {
-    SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-}
-
 void RKTestBufferOverviewText(void) {
     SHOW_FUNCTION_NAME
     RKRadar *radar = RKInitLean();
@@ -435,6 +383,22 @@ void RKTestBufferOverviewText(void) {
     printf("%s\n", text);
     RKFree(radar);
     free(text);
+}
+
+void RKTestSweepRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKSweep *sweep = RKSweepRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
+}
+
+void RKTestProductRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKSweep *sweep = RKSweepRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
 }
 
 #pragma mark -
@@ -932,7 +896,7 @@ void RKTestWaveformTFM(void) {
 }
 
 
-void RKTestWriteWaveform(void) {
+void RKTestWaveformWrite(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(14, 100);
     RKWaveformHops(waveform, 20.0e6, 0.0, 16.0e6);
@@ -955,6 +919,50 @@ void RKTestWriteWaveform(void) {
     } else {
         RKLog("Done.\n");
     }
+}
+
+void RKTestWaveformProperties(void) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
 }
 
 #pragma mark - Radar Signal Processing

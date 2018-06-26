@@ -101,9 +101,9 @@ void RKTestHostMonitor(void);
 void RKTestInitializingRadar(void);
 void RKTestTemperatureToStatus(void);
 void RKTestGetCountry(void);
-void RKTestReadSweep(const char *);
-void RKTestWaveformProperties(void);
 void RKTestBufferOverviewText(void);
+void RKTestSweepRead(const char *);
+void RKTestProductRead(const char *);
 
 #pragma mark - DSP Tests
 
@@ -116,7 +116,8 @@ void RKTestWriteFFTWisdom(void);
 
 void RKTestMakeHops(void);
 void RKTestWaveformTFM(void);
-void RKTestWriteWaveform(void);
+void RKTestWaveformWrite(void);
+void RKTestWaveformProperties(void);
 
 #pragma mark - Radar Signal Processing
 
