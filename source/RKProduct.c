@@ -152,38 +152,6 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     return RKResultSuccess;
 }
 
-RKProduct *RKProductInitFromFile(const char *inputFile) {
-    RKProduct *product = NULL;
-    
-    int j, k, r;
-    int ncid, tmpId;
-    float *fp, fv;
-    int iv;
-    
-    MAKE_FUNCTION_NAME(name);
-    
-    RKName typeName;
-    RKName scanType;
-
-    uint32_t firstPartLength = 0;
-    
-    uint32_t productList = 0;
-
-    size_t rayCount = 0;
-    size_t gateCount = 0;
-    uint32_t capacity = 0;
-    
-    // A scratch space for netcdf API
-    void *scratch = NULL;
-    
-    printf("%s\n", RKVariableInString("filename", inputFile, RKValueTypeString));
-
-    if (RKFilenameExists(inputFile)) {
-        printf("File exists.\n");
-    }
-    return product;
-}
-
 void RKProductFree(RKProduct *product) {
     free(product);
 }

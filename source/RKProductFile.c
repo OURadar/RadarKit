@@ -1,12 +1,12 @@
 //
-//  RKProductRecorder.c
+//  RKProductFile.c
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 6/24/18.
 //  Copyright © Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKProductRecorder.h>
+#include <RadarKit/RKProductFile.h>
 
 #define W2_MISSING_DATA       -99900.0
 #define W2_RANGE_FOLDED       -99901.0
@@ -21,7 +21,7 @@ static int put_global_text_att(const int ncid, const char *att, const char *text
     return nc_put_att_text(ncid, NC_GLOBAL, att, strlen(text), text);
 }
 
-int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
+int RKProductFileWriterNC(RKProduct *product, char *filename) {
     int j;
     int ncid;
     int dimensionIds[2];
@@ -209,4 +209,81 @@ int RKProductRecorderNCWriter(RKProduct *product, char *filename) {
     free(array1D);
 
     return RKResultSuccess;
+}
+
+RKProduct *RKProductFileReaderNC(const char *inputFile) {
+    int j, k, r;
+    int ncid, tmpId;
+//    float *fp, fv;
+//    int iv;
+//
+    MAKE_FUNCTION_NAME(name);
+
+    RKProduct *product = NULL;
+    
+//    RKName typeName;
+//    RKName scanType;
+//
+//    uint32_t firstPartLength = 0;
+//
+//    uint32_t productList = 0;
+//
+    size_t rayCount = 0;
+    size_t gateCount = 0;
+    uint32_t capacity = 0;
+//
+//    // A scratch space for netcdf API
+//    void *scratch = NULL;
+    
+    printf("%s\n", RKVariableInString("filename", inputFile, RKValueTypeString));
+    
+    if (RKFilenameExists(inputFile)) {
+        printf("File exists.\n");
+        // Read the first file
+        if ((r = nc_open(inputFile, NC_NOWRITE, &ncid)) > 0) {
+            RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
+            return NULL;
+        }
+        // Dimensions
+        if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
+            r = nc_inq_dimid(ncid, "azimuth", &tmpId);
+        }
+        if (r != NC_NOERR) {
+            if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
+                r = nc_inq_dimid(ncid, "beam", &tmpId);
+            }
+        }
+        if (r == NC_NOERR) {
+            nc_inq_dimlen(ncid, tmpId, &rayCount);
+        } else {
+            nc_close(ncid);
+            RKLog("Warning. Early return (rayCount)\n");
+            return NULL;
+        }
+        if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
+            r = nc_inq_dimid(ncid, "gate", &tmpId);
+        if (r == NC_NOERR) {
+            nc_inq_dimlen(ncid, tmpId, &gateCount);
+        } else {
+            RKLog("Warning. Early return (gateCount)\n");
+            nc_close(ncid);
+            return NULL;
+        }
+        
+        if (gateCount > RKGateCount) {
+            RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
+            gateCount = RKGateCount;
+        }
+
+        // Derive the RKSIMDAlignSize compliant capacity
+        capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
+        
+        RKLog("%s   %s   %s\n",
+              RKVariableInString("rayCount", RKIntegerToCommaStyleString(rayCount), RKValueTypeNumericString),
+              RKVariableInString("gateCount", RKIntegerToCommaStyleString(gateCount), RKValueTypeNumericString),
+              RKVariableInString("capacity", RKIntegerToCommaStyleString(capacity), RKValueTypeNumericString));
+
+        nc_close(ncid);
+    }
+    return product;
 }

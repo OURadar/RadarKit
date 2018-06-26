@@ -21,7 +21,7 @@ OBJS += RKNetwork.o RKServer.o RKClient.o
 OBJS += RKPulsePair.o RKMultiLag.o
 OBJS += RKPosition.o
 OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
-OBJS += RKRawDataRecorder.o RKSweep.o RKProduct.o RKProductRecorder.o RKHealthLogger.o
+OBJS += RKRawDataRecorder.o RKSweep.o RKProduct.o RKProductFile.o RKHealthLogger.o
 OBJS += RKWaveform.o
 
 RKLIB = libRadarKit.a

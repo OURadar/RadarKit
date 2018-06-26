@@ -14,7 +14,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
 #include <RadarKit/RKProduct.h>
-#include <RadarKit/RKProductRecorder.h>
+#include <RadarKit/RKProductFile.h>
 
 typedef struct rk_sweep_scratch {
     char                             filename[RKMaximumPathLength];

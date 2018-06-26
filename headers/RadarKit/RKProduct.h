@@ -15,7 +15,6 @@ size_t  RKProductBufferAlloc(RKProduct **, const int);
 
 int RKProductInitFromSweep(RKProduct *, const RKSweep *);
 
-RKProduct *RKProductInitFromFile(const char *);
 void RKProductFree(RKProduct *);
 
 #endif
