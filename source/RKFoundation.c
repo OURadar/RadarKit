@@ -358,14 +358,14 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
 
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
 
-    bool b   = *((bool *)value);
-    float f  = *((float *)value);
-    double d = *((double *)value);
-    char *c  = (char *)value;
+    char    *c =   (char *)value;
+    bool     b = *((bool *)value);
+    float    f = *((float *)value);
+    double   d = *((double *)value);
     int      i = *((int *)value);
     unsigned int u = *((unsigned int *)value);
-    int8_t  i8 = *((int8_t *)value);
-    uint8_t u8 = *((uint8_t *)value);
+    int8_t    i8 = *((int8_t *)value);
+    uint8_t   u8 = *((uint8_t *)value);
     int16_t  i16 = *((int16_t *)value);
     uint16_t u16 = *((uint16_t *)value);
     int32_t  i32 = *((int32_t *)value);
@@ -379,34 +379,31 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
                 break;
             case RKValueTypeInt:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, RKIntegerToCommaStyleString(i));
                 break;
             case RKValueTypeInt8:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i8);
-                break;
+                i16 = i8;
             case RKValueTypeInt16:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i16);
-                break;
+                i32 = i16;
             case RKValueTypeInt32:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i32);
-                break;
+                i64 = i32;
             case RKValueTypeInt64:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%lld" RKNoColor, name, (long long int)i64);
+                c = RKIntegerToCommaStyleString(i64);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
                 break;
             case RKValueTypeUInt:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, RKIntegerToCommaStyleString(u));
                 break;
             case RKValueTypeUInt8:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u8);
-                break;
+                u16 = u8;
             case RKValueTypeUInt16:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u16);
+                u32 = u16;
                 break;
             case RKValueTypeUInt32:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u32);
+                u64 = u32;
                 break;
             case RKValueTypeUInt64:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, (long long unsigned int)u64);
+                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, (unsigned long long)u64);
                 break;
             case RKValueTypeFloat:
                 d = f;

@@ -378,7 +378,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
         memset(radar->configs, 0, bytes);
         for (i = 0; i < radar->desc.configBufferDepth; i++) {
-            radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i;
+            radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i + 1000;
         }
         radar->memoryUsage += bytes;
         radar->desc.configBufferSize = bytes;
