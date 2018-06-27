@@ -11,6 +11,7 @@
 //  █
 //
 //  1.2.10 - 6/30/2018
+//         - Added RKProductFileReadNC() for offline reading
 //         - Added RKSweep to RKProduct recording
 //         - Added RKProduct buffer with dynamic allocation
 //         - Added RKVariableInString() for highlighting variables

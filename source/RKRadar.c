@@ -128,11 +128,15 @@ static void *engineMonitorRunLoop(void *in) {
         }
         status->recorderLag = radar->rawDataRecorder->lag;
         RKSetStatusReady(radar, status);
-        if (radar->configIndex == 0 && shown == false) {
-            RKLog("%s %s B\n", engine->name,
-                  RKVariableInString("memoryUsage", RKUIntegerToCommaStyleString(radar->memoryUsage), RKValueTypeNumericString));
-            shown = true;
-        } else if (radar->configIndex > 0) {
+        if (radar->configIndex == 6) {
+            if (!shown) {
+                long mem = RKGetMemoryUsage();
+                RKLog("%s %s B   %s KB\n", engine->name,
+                      RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
+                      RKVariableInString("rusage", &mem, RKValueTypeLong));
+                shown = true;
+            }
+        } else {
             shown = false;
         }
     }

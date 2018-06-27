@@ -54,7 +54,7 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
 // ks = start of a keyword, should begin with quote or space
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     char *ke = NULL;
-    if (*ks == '\0') {
+    if (*ks == '\0' || strlen(ks) < 3) {
         fprintf(stderr, "Empty JSON string.\n");
         return NULL;
     }
@@ -67,6 +67,7 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     }
     if (*ke == '\0') {
         fprintf(stderr, "Expected a close quote for keyword %s\n", ks == NULL ? "(NULL)" : ks);
+        fprintf(stderr, "Original: %s\n", ks);
         if (ke == NULL) {
             return NULL;
         }
@@ -643,6 +644,15 @@ long RKGetCPUIndex(void) {
 	}
 	pthread_mutex_unlock(&mutex);
 	return c++ % count;
+}
+
+long RKGetMemoryUsage(void) {
+    struct rusage usage;
+    if (getrusage(RUSAGE_CHILDREN, &usage)) {
+        fprintf(stderr, "Failed in getrusage().   errno = %d\n", errno);
+        return -1;
+    }
+    return usage.ru_maxrss;
 }
 
 char *RKCountryFromPosition(const double latitude, const double longitude) {

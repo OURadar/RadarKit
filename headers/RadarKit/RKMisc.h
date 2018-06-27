@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <dirent.h>
 #include <pthread.h>
 #include <netdb.h>
@@ -147,6 +148,7 @@ char *RKNextNoneWhite(const char *);
 float RKUMinDiff(const float minuend, const float subtrahend);
 
 long RKGetCPUIndex(void);
+long RKGetMemoryUsage(void);
 
 char *RKCountryFromPosition(const double latitude, const double longitude);
 

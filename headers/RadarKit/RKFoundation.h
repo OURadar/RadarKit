@@ -74,15 +74,19 @@ typedef uint32_t RKValueType;
 enum RKValueType {
     RKValueTypeBool,
     RKValueTypeInt,
+    RKValueTypeLong,
     RKValueTypeInt8,
     RKValueTypeInt16,
     RKValueTypeInt32,
     RKValueTypeInt64,
+    RKValueTypeSSize,
     RKValueTypeUInt,
+    RKValueTypeULong,
     RKValueTypeUInt8,
     RKValueTypeUInt16,
     RKValueTypeUInt32,
     RKValueTypeUInt64,
+    RKValueTypeSize,
     RKValueTypeFloat,
     RKValueTypeDouble,
     RKValueTypeString,
@@ -110,6 +114,7 @@ void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
+char *RKStringFromValue(const void *value, RKValueType type);
 char *RKVariableInString(const char *name, const void *value, RKValueType type);
 
 // Clearing buffer
