@@ -237,16 +237,16 @@ void RKReplaceKeyValue(char *string, const char *key, int value) {
 //
 //  Integer to string with 3-digit grouping
 //
-char *RKIntegerToCommaStyleString(const long long num) {
+char *RKUIntegerToCommaStyleString(const unsigned long long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
-
+    
     char *string = stringBuffer[ibuf];
-
+    
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
-
-    sprintf(string, "%lld", num);
+    
+    sprintf(string, "%llu", num);
     if (num < 1000) {
         return string;
     } else {
@@ -268,16 +268,16 @@ char *RKIntegerToCommaStyleString(const long long num) {
     return string;
 }
 
-char *RKUnsignedIntegerToCommaStyleString(const unsigned long long num) {
+char *RKIntegerToCommaStyleString(const long long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
-    
+
     char *string = stringBuffer[ibuf];
-    
+
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
-    
-    sprintf(string, "%llu", num);
+
+    sprintf(string, "%lld", num);
     if (num < 1000) {
         return string;
     } else {

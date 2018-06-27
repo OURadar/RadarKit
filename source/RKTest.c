@@ -1410,7 +1410,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     gettimeofday(&t0, NULL);
 
-    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
@@ -1987,7 +1987,7 @@ void *RKTestPedestalRunLoop(void *input) {
 
     gettimeofday(&t0, NULL);
 
-    RKLog("%s Started.   mem = %s B\n", pedestal->name, RKIntegerToCommaStyleString(pedestal->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", pedestal->name, RKUIntegerToCommaStyleString(pedestal->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", pedestal->name, RKIntegerToCommaStyleString((long)(1.0 / PEDESTAL_SAMPLING_TIME)));
@@ -2245,7 +2245,7 @@ void *RKTestHealthRelayRunLoop(void *input) {
 
     gettimeofday(&t0, NULL);
     
-    RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKIntegerToCommaStyleString(healthRelay->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKUIntegerToCommaStyleString(healthRelay->memoryUsage));
     
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", healthRelay->name, RKIntegerToCommaStyleString((long)(1.0 / HEALTH_RELAY_SAMPLING_TIME)));

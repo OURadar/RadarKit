@@ -72,12 +72,12 @@ printf("%s\n", _fn_str);
 
 #define SHOW_SIZE(x) \
 printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor "\n", \
-RKIntegerToCommaStyleString(sizeof(x)));
+RKUIntegerToCommaStyleString(sizeof(x)));
 
 #define SHOW_SIZE_SIMD(x) \
 printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
 "   " RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "\n", \
-RKIntegerToCommaStyleString(sizeof(x)), \
+RKUIntegerToCommaStyleString(sizeof(x)), \
 sizeof(x) % RKSIMDAlignSize == 0 ? "Tue" : "False");
 
 #if defined(__APPLE__)
@@ -121,7 +121,7 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);
 void RKReplaceKeyValue(char *string, const char *key, int value);
 
-char *RKUnsignedIntegerToCommaStyleString(const unsigned long long);
+char *RKUIntegerToCommaStyleString(const unsigned long long);
 char *RKIntegerToCommaStyleString(const long long);
 char *RKFloatToCommaStyleString(const double);
 

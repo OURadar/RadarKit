@@ -343,7 +343,7 @@ static void *rayGatherer(void *in) {
         engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
     }
 
-    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
     RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
 
     // Increase the tic once to indicate the engine is ready

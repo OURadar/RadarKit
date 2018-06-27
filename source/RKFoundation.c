@@ -404,7 +404,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
                 break;
             case RKValueTypeUInt:
-                c = RKUnsignedIntegerToCommaStyleString((unsigned long long)u);
+                c = RKUIntegerToCommaStyleString((unsigned long long)u);
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
                 break;
             case RKValueTypeUInt8:
@@ -414,7 +414,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
             case RKValueTypeUInt32:
                 u64 = u32;
             case RKValueTypeUInt64:
-                c = RKUnsignedIntegerToCommaStyleString((unsigned long long)u64);
+                c = RKUIntegerToCommaStyleString((unsigned long long)u64);
                 snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
                 break;
             case RKValueTypeFloat:
@@ -450,7 +450,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
                 snprintf(string, RKNameLength - 1, "%s = %s", name, c);
                 break;
             case RKValueTypeUInt:
-                c = RKUnsignedIntegerToCommaStyleString((unsigned long long)u);
+                c = RKUIntegerToCommaStyleString((unsigned long long)u);
                 snprintf(string, RKNameLength - 1, "%s = %s", name, c);
                 break;
             case RKValueTypeUInt8:
@@ -460,7 +460,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
             case RKValueTypeUInt32:
                 u64 = u32;
             case RKValueTypeUInt64:
-                c = RKUnsignedIntegerToCommaStyleString((unsigned long long)u64);
+                c = RKUIntegerToCommaStyleString((unsigned long long)u64);
                 snprintf(string, RKNameLength - 1, "%s = %s", name, c);
                 break;
             case RKValueTypeFloat:
@@ -522,7 +522,7 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
     size_t channelCount = 2;
     size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     if (pulseSize != (pulseSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(pulseSize));
+        RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(pulseSize));
         return 0;
     }
     size_t bytes = slots * pulseSize;
@@ -611,7 +611,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
     }
     size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(raySize));
+        RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
     }
     size_t bytes = slots * raySize;

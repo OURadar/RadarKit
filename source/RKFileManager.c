@@ -170,7 +170,7 @@ static void refreshFileList(RKFileRemover *me) {
             }
             closedir(did);
         }
-        RKLog("%s Truncated list with total usage = %s B\n", me->parent->name, RKIntegerToCommaStyleString(me->usage));
+        RKLog("%s Truncated list with total usage = %s B\n", me->parent->name, RKUIntegerToCommaStyleString(me->usage));
     }
 }
 
@@ -246,25 +246,25 @@ static void *fileRemover(void *in) {
     strcpy(parentFolder, folders[0]);
 
     RKLog(">%s %s Started.   mem = %s B   capacity = %s\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(me->capacity));
+          engine->name, name, RKUIntegerToCommaStyleString(mem), RKUIntegerToCommaStyleString(me->capacity));
     RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
     if (me->usage > 10 * 1024 * 1024) {
         RKLog(">%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count),
-              RKIntegerToCommaStyleString(me->usage / 1024 / 1024),
-              RKIntegerToCommaStyleString(me->limit / 1024 / 1024),
+              RKUIntegerToCommaStyleString(me->usage / 1024 / 1024),
+              RKUIntegerToCommaStyleString(me->limit / 1024 / 1024),
               100.0f * me->usage / me->limit);
     } else if (me->usage > 10 * 1024) {
         RKLog(">%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count),
-              RKIntegerToCommaStyleString(me->usage / 1024),
-              RKIntegerToCommaStyleString(me->limit / 1024),
+              RKUIntegerToCommaStyleString(me->usage / 1024),
+              RKUIntegerToCommaStyleString(me->limit / 1024),
               100.0f * me->usage / me->limit);
     } else {
         RKLog(">%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, name,
               RKIntegerToCommaStyleString(me->count),
-              RKIntegerToCommaStyleString(me->usage),
-              RKIntegerToCommaStyleString(me->limit),
+              RKUIntegerToCommaStyleString(me->usage),
+              RKUIntegerToCommaStyleString(me->limit),
               100.0f * me->usage / me->limit);
     }
 
@@ -289,14 +289,14 @@ static void *fileRemover(void *in) {
 				} else if (indexedStats[me->index].size > 1.0e3) {
 					RKLog("%s %s Removing %s (%s KB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-3f * indexedStats[me->index].size));
 				} else {
-					RKLog("%s %s Removing %s (%s B)", engine->name, name, path, RKIntegerToCommaStyleString(indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s B)", engine->name, name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
 				}
             }
             remove(path);
             me->usage -= indexedStats[me->index].size;
             me->index++;
 			if (engine->verbose > 1) {
-				RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKIntegerToCommaStyleString(me->usage), RKIntegerToCommaStyleString(me->limit));
+				RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
 			}
 
             // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
@@ -424,7 +424,7 @@ static void *folderWatcher(void *in) {
         snprintf(logPath, RKMaximumPathLength + 15, "%s/" RKLogFolder, engine->dataPath);
     }
     
-    RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->state);
+    RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->state);
 
 	// Increase the tic once to indicate the engine is ready
 	engine->tic++;
@@ -524,7 +524,7 @@ int RKFileManagerStart(RKFileManager *engine) {
         RKLog("%s Usage limit not set, use default %s%s B%s (%s GiB)\n",
               engine->name,
               rkGlobalParameters.showColor ? "\033[4m" : "",
-              RKIntegerToCommaStyleString(engine->usagelimit),
+              RKUIntegerToCommaStyleString(engine->usagelimit),
               rkGlobalParameters.showColor ? "\033[24m" : "",
               RKFloatToCommaStyleString((double)engine->usagelimit / 1073741824));
     }
@@ -633,7 +633,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     me->usage += fileStat.st_size;
     
     if (engine->verbose > 2) {
-        RKLog("%s Added '%s'   %s B  k%d\n", engine->name, filename, RKIntegerToCommaStyleString(indexedStats[k].size), k);
+        RKLog("%s Added '%s'   %s B  k%d\n", engine->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
     }
     
     me->count = RKNextModuloS(me->count, me->capacity);
@@ -641,7 +641,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     pthread_mutex_unlock(&engine->mutex);
 
     //for (k = me->count - 3; k < me->count; k++) {
-    //    printf("%3d -> %3d. %s  %s\n", k, indexedStats[k].index, filenames[indexedStats[k].index], RKIntegerToCommaStyleString(indexedStats[k].size));
+    //    printf("%3d -> %3d. %s  %s\n", k, indexedStats[k].index, filenames[indexedStats[k].index], RKUIntegerToCommaStyleString(indexedStats[k].size));
     //}
     return RKResultSuccess;
 }

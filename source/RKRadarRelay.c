@@ -281,7 +281,7 @@ static void *radarRelay(void *in) {
 	RKClientSetGreetHandler(engine->client, RKRadarRelayGreet);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
 
-	RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), engine->host);
+	RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
 	RKClientStart(engine->client, true);
 

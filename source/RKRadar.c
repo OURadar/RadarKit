@@ -130,7 +130,7 @@ static void *engineMonitorRunLoop(void *in) {
         RKSetStatusReady(radar, status);
         if (radar->configIndex == 0 && shown == false) {
             RKLog("%s %s B\n", engine->name,
-                  RKVariableInString("memoryUsage", RKIntegerToCommaStyleString(radar->memoryUsage), RKValueTypeNumericString));
+                  RKVariableInString("memoryUsage", RKUIntegerToCommaStyleString(radar->memoryUsage), RKValueTypeNumericString));
             shown = true;
         } else if (radar->configIndex > 0) {
             shown = false;
@@ -351,14 +351,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Error. Unable to allocate memory for status buffer");
             exit(EXIT_FAILURE);
         }
+        radar->memoryUsage += bytes;
+        radar->desc.statusBufferSize = bytes;
         RKLog("Status buffer occupies %s B  (%s sets)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
+              RKUIntegerToCommaStyleString(radar->desc.statusBufferSize),
+              RKIntegerToCommaStyleString(radar->desc.statusBufferDepth));
         memset(radar->status, 0, bytes);
         for (i = 0; i < radar->desc.statusBufferDepth; i++) {
             radar->status[i].i = -(uint64_t)radar->desc.statusBufferDepth + i;
         }
-        radar->memoryUsage += bytes;
-        radar->desc.statusBufferSize = bytes;
         radar->state |= RKRadarStateStatusBufferAllocated;
     }
 
@@ -374,14 +375,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Error. Unable to allocate memory for config buffer");
             exit(EXIT_FAILURE);
         }
+        radar->memoryUsage += bytes;
+        radar->desc.configBufferSize = bytes;
         RKLog("Config buffer occupies %s B  (%s sets)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
+              RKUIntegerToCommaStyleString(radar->desc.configBufferSize),
+              RKIntegerToCommaStyleString(radar->desc.configBufferDepth));
         memset(radar->configs, 0, bytes);
         for (i = 0; i < radar->desc.configBufferDepth; i++) {
             radar->configs[i].i = -(uint64_t)radar->desc.configBufferDepth + i + 1000;
         }
-        radar->memoryUsage += bytes;
-        radar->desc.configBufferSize = bytes;
         radar->state |= RKRadarStateConfigBufferAllocated;
     }
     
@@ -397,14 +399,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Error. Unable to allocate memory for health status");
             exit(EXIT_FAILURE);
         }
+        radar->memoryUsage += bytes;
+        radar->desc.healthBufferSize = bytes;
         RKLog("Health buffer occupies %s B  (%s sets)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+              RKUIntegerToCommaStyleString(radar->desc.healthBufferSize),
+              RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
         memset(radar->healths, 0, bytes);
         for (i = 0; i < radar->desc.healthBufferDepth; i++) {
             radar->healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
         }
-        radar->memoryUsage += bytes;
-        radar->desc.healthBufferSize = bytes;
         radar->state |= RKRadarStateHealthBufferAllocated;
     }
     
@@ -428,15 +431,17 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             radar->healthNodes[i].healths = (RKHealth *)malloc(bytes);
             memset(radar->healthNodes[i].healths, 0, bytes);
         }
+        radar->memoryUsage += radar->desc.healthNodeCount * bytes;
+        radar->desc.healthNodeBufferSize += radar->desc.healthNodeCount * bytes;
         RKLog("Nodal-health buffers occupy %s B  (%d nodes x %s sets)\n",
-              RKIntegerToCommaStyleString(radar->desc.healthNodeCount * bytes), radar->desc.healthNodeCount, RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
+              RKUIntegerToCommaStyleString(radar->desc.healthNodeBufferSize),
+              radar->desc.healthNodeCount,
+              RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
         for (k = 0; k < radar->desc.healthNodeCount; k++) {
             for (i = 0; i < radar->desc.healthBufferDepth; i++) {
                 radar->healthNodes[k].healths[i].i = -(uint64_t)radar->desc.healthBufferDepth + i;
             }
         }
-        radar->memoryUsage += radar->desc.healthNodeCount * bytes;
-        radar->desc.healthNodeBufferSize += radar->desc.healthNodeCount * bytes;
         radar->state |= RKRadarStateHealthNodesAllocated;
     }
     
@@ -453,13 +458,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Error. Unable to allocate memory for positions.");
             exit(EXIT_FAILURE);
         }
+        radar->memoryUsage += bytes;
+        radar->desc.positionBufferSize = bytes;
         RKLog("Position buffer occupies %s B  (%s positions)\n",
-              RKIntegerToCommaStyleString(bytes), RKIntegerToCommaStyleString(radar->desc.positionBufferDepth));
+              RKIntegerToCommaStyleString(radar->desc.positionBufferSize),
+              RKIntegerToCommaStyleString(radar->desc.positionBufferDepth));
         for (i = 0; i < radar->desc.positionBufferDepth; i++) {
             radar->positions[i].i = -(uint64_t)radar->desc.positionBufferDepth + i;
         }
-        radar->memoryUsage += bytes;
-        radar->desc.positionBufferSize = bytes;
         radar->state |= RKRadarStatePositionBufferAllocated;
     }
 
@@ -470,8 +476,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
             exit(EXIT_FAILURE);
         }
+        radar->memoryUsage += bytes;
+        radar->desc.pulseBufferSize = bytes;
         RKLog("Level I buffer occupies %s B  (%s pulses x %s gates)\n",
-              RKIntegerToCommaStyleString(bytes),
+              RKUIntegerToCommaStyleString(radar->desc.pulseBufferSize),
               RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth),
               RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
         for (i = 0; i < radar->desc.pulseBufferDepth; i++) {
@@ -481,8 +489,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                 printf("Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderPaddedSize);
             }
         }
-        radar->memoryUsage += bytes;
-        radar->desc.pulseBufferSize = bytes;
         radar->state |= RKRadarStateRawIQBufferAllocated;
     }
 
@@ -497,7 +503,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
         RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
-              RKIntegerToCommaStyleString(bytes),
+              RKUIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
               RKBaseMomentCount,
               RKIntegerToCommaStyleString(k));
@@ -511,7 +517,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += bytes;
         radar->desc.productBufferSize = bytes;
         RKLog("Level III buffer occupies %s B  (%s products x %s cells)\n",
-              RKIntegerToCommaStyleString(radar->desc.productBufferSize),
+              RKUIntegerToCommaStyleString(radar->desc.productBufferSize),
               RKIntegerToCommaStyleString(radar->desc.productBufferDepth),
               RKIntegerToCommaStyleString(radar->products[0].capacity));
         radar->state |= RKRadarStateProductBufferAllocated;
@@ -2018,7 +2024,7 @@ int RKSoftRestart(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
               rkGlobalParameters.showColor ? "\033[4m" : "",
-              RKIntegerToCommaStyleString(radar->memoryUsage),
+              RKUIntegerToCommaStyleString(radar->memoryUsage),
               rkGlobalParameters.showColor ? "\033[24m" : "",
               RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }

@@ -1308,7 +1308,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
 void RKCommandCenterStart(RKCommandCenter *center) {
     RKLog("%s Starting ...\n", center->name);
     RKServerStart(center->server);
-    RKLog("%s Started.   mem = %s B   radarCount = %s\n", center->name, RKIntegerToCommaStyleString(center->memoryUsage), RKIntegerToCommaStyleString(center->radarCount));
+    RKLog("%s Started.   mem = %s B   radarCount = %s\n", center->name, RKUIntegerToCommaStyleString(center->memoryUsage), RKIntegerToCommaStyleString(center->radarCount));
 }
 
 void RKCommandCenterStop(RKCommandCenter *center) {

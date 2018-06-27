@@ -347,7 +347,7 @@ static void *momentCore(void *in) {
     engine->memoryUsage += mem;
     
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
+          engine->name, name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->coreMutex);
 
@@ -668,7 +668,7 @@ static void *pulseGatherer(void *_in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
 
 	// Increase the tic once to indicate the watcher is ready
 	engine->tic = 1;

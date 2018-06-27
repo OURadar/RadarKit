@@ -393,7 +393,7 @@ static void *hostWatcher(void *in) {
     }
     engine->state ^= RKEngineStateSleep0;
 
-    RKLog("%s Started.   mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage));
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;

@@ -263,7 +263,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       *configIndex,
                       stringBuffer[k],
-                      RKVariableInString("configId", RKIntegerToCommaStyleString(configId), RKValueTypeNumericString));
+                      RKVariableInString("configId", &configId, RKValueTypeIdentifier));
                 stringBuffer[k][0] = '\0';
                 n++;
             }
