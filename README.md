@@ -199,7 +199,7 @@ This example is extremely simple. Many optional arguments were set to NULL (exec
 A seprate processing space to generate high-level products is implemented through [PyRadarKit], which is primarily housed at
 
 ```
-https://git.arrc.ou.edu/radar/PyRadarKit.git
+https://git.arrc.ou.edu/radar/PyRadarKit
 ```
 
 and
