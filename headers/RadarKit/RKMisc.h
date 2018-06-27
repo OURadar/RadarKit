@@ -121,7 +121,8 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);
 void RKReplaceKeyValue(char *string, const char *key, int value);
 
-char *RKIntegerToCommaStyleString(const long);
+char *RKUnsignedIntegerToCommaStyleString(const unsigned long long);
+char *RKIntegerToCommaStyleString(const long long);
 char *RKFloatToCommaStyleString(const double);
 
 char *RKNow(void);
