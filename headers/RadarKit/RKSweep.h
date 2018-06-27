@@ -13,6 +13,7 @@
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
+#include <RadarKit/RKSweepFile.h>
 #include <RadarKit/RKProduct.h>
 #include <RadarKit/RKProductFile.h>
 
@@ -88,7 +89,6 @@ RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *, RKSweep *, RKProductId
 int RKSweepEngineSetProductComplete(RKSweepEngine *, RKSweep *, RKProduct *);
 
 RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
-RKSweep *RKSweepRead(const char *);
 int RKSweepFree(RKSweep *);
 
 #endif /* RKSweep_h */

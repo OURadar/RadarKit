@@ -35,6 +35,8 @@
 		B56A750B20BB01C500E8B6E9 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B56AB0AD20A8826A00E73AE9 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = B56AB0AC20A8826A00E73AE9 /* main.c */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; };
+		B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B2058A20E43128007D48E0 /* RKSweepFile.c */; };
 		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; };
 		B5B675581EB0DFAB001BD68D /* RKHealthLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */; };
 		B5C1F3471AB9C118004F88CD /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = B5C1F3461AB9C118004F88CD /* main.c */; };
@@ -134,6 +136,8 @@
 		B56AB0AA20A8826900E73AE9 /* SimpleEmulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SimpleEmulator; sourceTree = BUILT_PRODUCTS_DIR; };
 		B56AB0AC20A8826A00E73AE9 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
+		B5B2058820E43117007D48E0 /* RKSweepFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepFile.h; path = headers/RadarKit/RKSweepFile.h; sourceTree = "<group>"; };
+		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
 		B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHealthLogger.h; path = headers/RadarKit/RKHealthLogger.h; sourceTree = "<group>"; };
 		B5C1F3441AB9C118004F88CD /* RadarKitTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RadarKitTest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -266,6 +270,7 @@
 				B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */,
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B55F5F191E2C8F9600FA8B2E /* RKSweep.h */,
+				B5B2058820E43117007D48E0 /* RKSweepFile.h */,
 				B5FAD8D120DE943B00E0A767 /* RKProduct.h */,
 				B5EE832D20DFBC4F00681E29 /* RKProductFile.h */,
 				B5C1F3631AB9CD34004F88CD /* RKRawDataRecorder.h */,
@@ -339,6 +344,7 @@
 				B5FFD45F1FB0B5C200319453 /* RKMultiLag.c */,
 				B5FFD46B1FB0B5C400319453 /* RKMoment.c */,
 				B5FFD46E1FB0B5C400319453 /* RKSweep.c */,
+				B5B2058A20E43128007D48E0 /* RKSweepFile.c */,
 				B5FAD8D320DE945500E0A767 /* RKProduct.c */,
 				B5EE832B20DFB9D400681E29 /* RKProductFile.c */,
 				B5FFD45E1FB0B5C200319453 /* RKRawDataRecorder.c */,
@@ -394,6 +400,7 @@
 				B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */,
 				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
 				B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */,
+				B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */,
 				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
 				B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */,
 				B565B5351E5A3838000C8503 /* RKPreference.h in Headers */,
@@ -526,6 +533,7 @@
 				B5FFD4961FB0B5C600319453 /* RKClock.c in Sources */,
 				B5FFD4951FB0B5C600319453 /* RKPedestalPedzy.c in Sources */,
 				B5FFD48E1FB0B5C600319453 /* RKSIMD.c in Sources */,
+				B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */,
 				B5FFD4871FB0B5C600319453 /* RKDSP.c in Sources */,
 				B5FFD47C1FB0B5C600319453 /* RKMultiLag.c in Sources */,
 				B5FFD4821FB0B5C600319453 /* RKServer.c in Sources */,

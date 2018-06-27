@@ -8,15 +8,6 @@
 
 #include <RadarKit/RKProductFile.h>
 
-#define W2_MISSING_DATA       -99900.0
-#define W2_RANGE_FOLDED       -99901.0
-
-#if defined (COMPRESSED_NETCDF)
-#define NC_MODE  NC_NETCDF4
-#else
-#define NC_MODE  NC_CLOBBER
-#endif
-
 #if RKfloat == float
 #define rk_nc_get_var_float   nc_get_var_float
 #else
@@ -340,6 +331,9 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         product->header.isRHI = true;
     }
     getGlobalTextAttribute(product->header.radarName, "radarName-value", ncid);
+    getGlobalTextAttribute(product->header.waveform, "Waveform", ncid);
+    getGlobalTextAttribute(product->header.vcpDefinition, "RadarKit-VCP-Definition", ncid);
+
     r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &product->header.latitude);
     if (r != NC_NOERR) {
         r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
@@ -435,8 +429,6 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     RKLog("%s dB   %s dB",
           RKVariableInString("SystemZCalH", &product->header.systemZCal[0], RKValueTypeFloat),
           RKVariableInString("SystemZCalV", &product->header.systemZCal[1], RKValueTypeFloat));
-    nc_get_att_text(ncid, NC_GLOBAL, "RadarKit-VCP-Definition", product->header.vcpDefinition);
-    nc_get_att_text(ncid, NC_GLOBAL, "Waveform", product->header.waveform);
 
     // Elevation array
     if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {

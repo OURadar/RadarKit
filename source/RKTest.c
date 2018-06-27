@@ -387,7 +387,7 @@ void RKTestBufferOverviewText(void) {
 
 void RKTestSweepRead(const char *file) {
     SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepRead(file);
+    RKSweep *sweep = RKSweepFileRead(file);
     if (sweep) {
         RKSweepFree(sweep);
     }

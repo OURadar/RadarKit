@@ -13,6 +13,15 @@
 #include <RadarKit/RKProduct.h>
 #include <netcdf.h>
 
+#define W2_MISSING_DATA       -99900.0
+#define W2_RANGE_FOLDED       -99901.0
+
+#if defined (COMPRESSED_NETCDF)
+#define NC_MODE  NC_NETCDF4
+#else
+#define NC_MODE  NC_CLOBBER
+#endif
+
 int RKProductFileWriterNC(RKProduct *, char *);
 RKProduct *RKProductFileReaderNC(const char *);
 
