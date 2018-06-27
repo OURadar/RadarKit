@@ -395,9 +395,9 @@ void RKTestSweepRead(const char *file) {
 
 void RKTestProductRead(const char *file) {
     SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
+    RKProduct *product = RKProductFileReaderNC(file);
+    if (product) {
+        RKProductFree(product);
     }
 }
 

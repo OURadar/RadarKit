@@ -503,8 +503,22 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     case 13:
                         RKTestGetCountry();
                         break;
-                    case 16:
+                    case 14:
                         RKTestBufferOverviewText();
+                        break;
+                    case 15:
+                        if (argc == optind) {
+                            RKLog("No filename given.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                        RKTestSweepRead(argv[optind]);
+                        break;
+                    case 16:
+                        if (argc == optind) {
+                            RKLog("No filename given.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                        RKTestProductRead(argv[optind]);
                         break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);

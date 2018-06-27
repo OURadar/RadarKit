@@ -11,10 +11,9 @@
 
 #include <RadarKit/RKFoundation.h>
 
-size_t  RKProductBufferAlloc(RKProduct **, const int);
+size_t RKProductBufferAlloc(RKProduct **, const uint32_t depth, const uint32_t rayCount, const uint32_t gateCount);
+void RKProductFree(RKProduct *);
 
 int RKProductInitFromSweep(RKProduct *, const RKSweep *);
-
-RKProduct *RKProductInitFromFile(const char *);
 
 #endif

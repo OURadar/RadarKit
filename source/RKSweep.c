@@ -10,6 +10,13 @@
 
 #pragma mark - Helper Functions
 
+static void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
+    size_t n = 0;
+    nc_get_att_text(ncid, NC_GLOBAL, name, dst);
+    nc_inq_attlen(ncid, NC_GLOBAL, name, &n);
+    dst[n] = 0;
+}
+
 static void *rayReleaser(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
@@ -490,7 +497,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;
     engine->baseMomentList = RKBaseMomentListProductZVWDPRK;
-    engine->productRecorder = &RKProductRecorderNCWriter;
+    engine->productRecorder = &RKProductFileWriterNC;
     pthread_mutex_init(&engine->productMutex, NULL);
     return engine;
 }
@@ -676,13 +683,6 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
 }
 
 #pragma mark - Reader
-
-void getGlobalTextAttribute(char *dst, const char *name, const int ncid) {
-    size_t n = 0;
-    nc_get_att_text(ncid, NC_GLOBAL, name, dst);
-    nc_inq_attlen(ncid, NC_GLOBAL, name, &n);
-    dst[n] = 0;
-}
 
 RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) {
     MAKE_FUNCTION_NAME(name)
@@ -953,13 +953,6 @@ RKSweep *RKSweepRead(const char *inputFile) {
                     sweep->header.desc.longitude = (double)fv;
                 }
             }
-            if (!strcmp(scanType, "PPI")) {
-                sweep->header.config.sweepElevation = ray->header.sweepElevation;
-                sweep->header.config.startMarker |= RKMarkerScanTypePPI;
-            } else if (!strcmp(scanType, "RHI")) {
-                sweep->header.config.sweepAzimuth = ray->header.sweepAzimuth;
-                sweep->header.config.startMarker |= RKMarkerScanTypeRHI;
-            }
             r = nc_get_att_float(ncid, NC_GLOBAL, "Heading", &sweep->header.desc.heading);
             if (r != NC_NOERR) {
                 RKLog("No radar heading found.\n");
@@ -975,6 +968,13 @@ RKSweep *RKSweepRead(const char *inputFile) {
             r = nc_get_att_float(ncid, NC_GLOBAL, "Azimuth", &ray->header.sweepAzimuth);
             if (r != NC_NOERR && sweep->header.config.startMarker & RKMarkerScanTypeRHI) {
                 RKLog("Warning. No sweep azimuth found.\n");
+            }
+            if (!strcmp(scanType, "PPI")) {
+                sweep->header.config.sweepElevation = ray->header.sweepElevation;
+                sweep->header.config.startMarker |= RKMarkerScanTypePPI;
+            } else if (!strcmp(scanType, "RHI")) {
+                sweep->header.config.sweepAzimuth = ray->header.sweepAzimuth;
+                sweep->header.config.startMarker |= RKMarkerScanTypeRHI;
             }
             r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
             if (r == NC_NOERR) {
