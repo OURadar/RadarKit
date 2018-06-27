@@ -271,7 +271,6 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
 
     RKProduct *product = NULL;
     
-    RKName typeName;
     RKName scanType;
     RKName unit;
     RKName symbol;
@@ -337,9 +336,10 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
 
     // Now we allocate a product buffer
     RKProductBufferAlloc(&product, 1, (uint32_t)rayCount, (uint32_t)gateCount);
+    strcpy(product->desc.symbol, symbol);
 
     // Global attributes
-    getGlobalTextAttribute(typeName, "TypeName", ncid);
+    getGlobalTextAttribute(product->desc.name, "TypeName", ncid);
     getGlobalTextAttribute(scanType, "ScanType", ncid);
     if (!strcmp(scanType, "PPI")) {
         product->header.isPPI = true;
@@ -347,6 +347,7 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         product->header.isRHI = true;
     }
     getGlobalTextAttribute(product->header.radarName, "radarName-value", ncid);
+    getGlobalTextAttribute(product->desc.unit, "Unit-value", ncid);
     r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &product->header.latitude);
     if (r != NC_NOERR) {
         r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
@@ -420,8 +421,10 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     get_global_float_att(ncid, floatType, "PCal2-Degrees", &product->header.PCal[1]);
     get_global_float_att(ncid, floatType, "CensorThreshold-dB", &product->header.SNRThreshold);
 
-    RKLog("%s\n",
-          RKVariableInString("typeName", typeName, RKValueTypeString));
+    RKLog("%s   %s   %s\n",
+          RKVariableInString("productName", product->desc.name, RKValueTypeString),
+          RKVariableInString("colormap", product->desc.colormap, RKValueTypeString),
+          RKVariableInString("unit", product->desc.unit, RKValueTypeString));
     RKLog("%s m   %s us",
           RKVariableInString("wavelength", &product->header.wavelength, RKValueTypeFloat),
           RKVariableInString("pulsewidth", &product->header.pw[0], RKValueTypeUInt32));
@@ -472,7 +475,7 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     }
 
     // Data array
-    r = nc_inq_varid(ncid, typeName, &tmpId);
+    r = nc_inq_varid(ncid, product->desc.name, &tmpId);
     if (r == NC_NOERR) {
         rk_nc_get_var_float(ncid, tmpId, product->data);
         fp = product->data;
