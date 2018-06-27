@@ -271,21 +271,12 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
 
     RKProduct *product = NULL;
     
-    RKName scanType;
-    RKName unit;
-    RKName symbol;
+    RKName stringValue;
 
     size_t rayCount = 0;
     size_t gateCount = 0;
 
-    RKGetSymbolFromFilename(inputFile, symbol);
-
-    RKLog("%s   (%s%s%s)\n",
-           RKVariableInString("filename", inputFile, RKValueTypeString),
-           rkGlobalParameters.showColor ? RKYellowColor : "",
-           symbol,
-           rkGlobalParameters.showColor ? RKNoColor : "");
-    
+    // Early return if the file does not exist
     if (!RKFilenameExists(inputFile)) {
         RKLog("Error. File %s does not exist.\n", inputFile);
         return NULL;
@@ -336,18 +327,19 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
 
     // Now we allocate a product buffer
     RKProductBufferAlloc(&product, 1, (uint32_t)rayCount, (uint32_t)gateCount);
-    strcpy(product->desc.symbol, symbol);
+    RKGetSymbolFromFilename(inputFile, product->desc.symbol);
 
     // Global attributes
     getGlobalTextAttribute(product->desc.name, "TypeName", ncid);
-    getGlobalTextAttribute(scanType, "ScanType", ncid);
-    if (!strcmp(scanType, "PPI")) {
+    getGlobalTextAttribute(product->desc.unit, "Unit-value", ncid);
+    getGlobalTextAttribute(product->desc.colormap, "ColorMap-value", ncid);
+    getGlobalTextAttribute(stringValue, "ScanType", ncid);
+    if (!strcmp(stringValue, "PPI")) {
         product->header.isPPI = true;
-    } else if (!strcmp(scanType, "RHI")) {
+    } else if (!strcmp(stringValue, "RHI")) {
         product->header.isRHI = true;
     }
     getGlobalTextAttribute(product->header.radarName, "radarName-value", ncid);
-    getGlobalTextAttribute(product->desc.unit, "Unit-value", ncid);
     r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &product->header.latitude);
     if (r != NC_NOERR) {
         r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
@@ -401,8 +393,8 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         product->header.wavelength = 4.0f * fv / (RKFloat)product->header.prf[0];
     }
     nc_get_att_int(ncid, NC_GLOBAL, "PulseWidth-value", &iv);
-    r = nc_get_att_text(ncid, NC_GLOBAL, "PulseWidth-unit", unit);
-    if (r == NC_NOERR && !strcasecmp("microseconds", unit)) {
+    r = nc_get_att_text(ncid, NC_GLOBAL, "PulseWidth-unit", stringValue);
+    if (r == NC_NOERR && !strcasecmp("microseconds", stringValue)) {
         product->header.pw[0] = 1000 * iv;
     }
     get_global_float_att(ncid, floatType, "NoiseH-ADU", &product->header.noise[0]);
@@ -421,6 +413,11 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     get_global_float_att(ncid, floatType, "PCal2-Degrees", &product->header.PCal[1]);
     get_global_float_att(ncid, floatType, "CensorThreshold-dB", &product->header.SNRThreshold);
 
+    RKLog("%s   (%s%s%s)\n",
+          RKVariableInString("filename", inputFile, RKValueTypeString),
+          rkGlobalParameters.showColor ? RKYellowColor : "",
+          product->desc.symbol,
+          rkGlobalParameters.showColor ? RKNoColor : "");
     RKLog("%s   %s   %s\n",
           RKVariableInString("productName", product->desc.name, RKValueTypeString),
           RKVariableInString("colormap", product->desc.colormap, RKValueTypeString),
@@ -485,7 +482,7 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
             }
             fp++;
         }
-        RKShowArray(product->data, symbol, product->header.gateCount, product->header.rayCount);
+        RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
     }
 
     nc_close(ncid);
