@@ -675,7 +675,7 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
     return RKResultSuccess;
 }
 
-#pragma mark - Reader
+#pragma mark - RKSweep
 
 RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) {
     MAKE_FUNCTION_NAME(name)

@@ -1307,7 +1307,8 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     if (string == NULL || strlen(string) == 0) {
         return false;
     }
-    char *str = (char *)malloc(strlen(string) + 1);
+    size_t L = strlen(string);
+    char *str = (char *)malloc(L + 1);
     char *key = (char *)malloc(RKNameLength);
     char *obj = (char *)malloc(RKNameLength);
     char *subKey = (char *)malloc(RKNameLength);
@@ -1323,6 +1324,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     }
 
     strcpy(str, string);
+    str[L] = '\0';
 
     bool found = false;
 
