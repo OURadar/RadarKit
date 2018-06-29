@@ -72,7 +72,6 @@ int socketCommandHandler(RKOperator *O) {
     RKStripTail(commandString);
 
     RKStream stream;
-    RKProductDesc userProductDescription;
 
     while (commandString != NULL) {
         if ((commandStringEnd = strchr(commandString, ';')) != NULL) {
@@ -191,13 +190,15 @@ int socketCommandHandler(RKOperator *O) {
                     
                 case 'u':
                     // Turn this user into an active node with user product return
-                    RKParseProductDescription(&userProductDescription, commandString + 1);
-                    RKLog("%s Registering user product '%s' (%s) ...", engine->name, userProductDescription.name, userProductDescription.symbol);
-                    RKProductId productId = RKSweepEngineRegisterProduct(user->radar->sweepEngine, userProductDescription);
-                    if (productId) {
-                        user->userProductIds[user->userProductCount++] = productId;
+                    RKParseProductDescription(&user->productDescriptions[user->productCount], commandString + 1);
+                    RKLog("%s Registering external product '%s' (%s) ...", engine->name,
+                          user->productDescriptions[user->productCount].name,
+                          user->productDescriptions[user->productCount].symbol);
+                    user->productIds[user->productCount] = RKSweepEngineRegisterProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
+                    if (user->productIds[user->productCount]) {
                         sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"symbol\":\"%s\", \"pid\":%d}" RKEOL,
-                                userProductDescription.symbol, productId);
+                                user->productDescriptions[user->productCount].symbol, user->productIds[user->productCount]);
+                        user->productCount++;
                     } else {
                         sprintf(user->commandResponse, "NAK. Unable to register product." RKEOL);
                     }
@@ -300,17 +301,18 @@ int socketStreamHandler(RKOperator *O) {
     RKSweep *sweep;
     RKSweepHeader sweepHeader;
     
+    RKProduct *product;
+
     uint8_t *u8Data = NULL;
     float *f32Data = NULL;
 
-    RKFloat *floatData = NULL;
     RKInt16C *c16DataH = NULL;
     RKInt16C *c16DataV = NULL;
     RKInt16C *userDataH = NULL;
     RKInt16C *userDataV = NULL;
 
     RKIdentifier identifier;
-    RKProductId userProductId;
+    RKProductId productId;
 
     struct timeval timevalOrigin, timevalTx, timevalRx;
     double deltaTx, deltaRx;
@@ -379,7 +381,7 @@ int socketStreamHandler(RKOperator *O) {
                          RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),
                          RKMomentEngineStatusString(user->radar->momentEngine),
-                         RKDataRecorderStatusString(user->radar->dataRecorder));
+                         RKRawDataRecorderStatusString(user->radar->rawDataRecorder));
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -401,8 +403,8 @@ int socketStreamHandler(RKOperator *O) {
                              user->radar->healthIndex,
                              user->radar->sweepEngine->name,
                              user->radar->sweepEngine->state & 0xFFFF,
-                             user->radar->dataRecorder->name,
-                             user->radar->dataRecorder->state & 0xFFFF);
+                             user->radar->rawDataRecorder->name,
+                             user->radar->rawDataRecorder->state & 0xFFFF);
             } else {
                 k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:%04x/%04d  Pul:%04x/%05d  Mom:%04x/%04d  Hea:%04x/%02d  Swe:%04x  Rec:%04x " RKEOL,
                              user->radar->positionEngine->state & 0xFFFF,
@@ -414,7 +416,7 @@ int socketStreamHandler(RKOperator *O) {
                              user->radar->healthEngine->state & 0xFFFF,
                              user->radar->healthIndex,
                              user->radar->sweepEngine->state & 0xFFFF,
-                             user->radar->dataRecorder->state & 0xFFFF);
+                             user->radar->rawDataRecorder->state & 0xFFFF);
             }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
@@ -803,7 +805,9 @@ int socketStreamHandler(RKOperator *O) {
     if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
         if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) {
-            //RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->scratchSpaceIndex, user->radar->sweepEngine->scratchSpaceIndex);
+            if (user->radar->sweepEngine->verbose > 1) {
+                RKLog("%s RKSweepCollect()   anchorsIndex = %d / %d\n", engine->name, user->scratchSpaceIndex, user->radar->sweepEngine->scratchSpaceIndex);
+            }
             sweep = RKSweepCollect(user->radar->sweepEngine, user->scratchSpaceIndex);
             if (sweep) {
                 // Make a local copy of the sweepHeader and mutate it for this client while keeping the original intact
@@ -933,44 +937,50 @@ int socketStreamHandler(RKOperator *O) {
                         RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseMomentCount);
                     }
 
-                    for (k = 0; k < user->userProductCount; k++) {
-                        RKLog(">%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->userProductIds[k]);
+                    for (k = 0; k < user->productCount; k++) {
+                        RKLog(">%s %s Expecting return for productId = %d ...\n", engine->name, O->name, user->productIds[k]);
                         size = RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
                         if (size < 0) {
                             RKLog("%s %s Error. Failed receiving user product header ...\n", engine->name, O->name);
                             continue;
                         }
-                        userProductId = RKProductIdFromString(RKGetValueOfKey(user->string, "productId"));
+                        productId = RKProductIdFromString(RKGetValueOfKey(user->string, "productId"));
                         identifier = RKIdentifierFromString(RKGetValueOfKey(user->string, "configId"));
-                        if (user->userProductIds[k] != userProductId) {
-                            RKLog("%s %s Warning. Inconsistent userProduct = %d (expected) != %d (reported)\n", engine->name, O->name, user->userProductIds[k], userProductId);
+                        if (user->productIds[k] != productId) {
+                            RKLog("%s %s Warning. Inconsistent productId = %d (expected) != %d (reported)\n", engine->name, O->name, user->productIds[k], productId);
                         } else if (sweep->header.config.i != identifier) {
                             RKLog("%s %s Warning. Inconsistent configId = %lu (expected) != %lu (reported)\n", engine->name, O->name, sweep->header.config.i, identifier);
                         } else {
-                            floatData = RKSweepEngineGetBufferForProduct(user->radar->sweepEngine, sweep, user->userProductIds[k]);
-                        }
-                        RKLog("%s %s %s (%d) -> %u %zu\n",
-                              engine->name, O->name, user->string, strlen(user->string), userProductId, identifier);
-                        if (floatData) {
-                            size = RKServerReceiveUserPayload(O, floatData, RKNetworkMessageFormatHeaderDefinedSize);
-                        } else {
-                            RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
-                            size = RKServerReceiveUserPayload(O, user->scratch, RKNetworkMessageFormatHeaderDefinedSize);
-                        }
-                        if (size < 0) {
-                            RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
-                            continue;
-                        }
-                        RKSweepEngineReportProduct(user->radar->sweepEngine, sweep, userProductId);
-                    }
+                            product = RKSweepEngineGetVacantProduct(user->radar->sweepEngine, sweep, productId);
+                            if (product) {
+                                // Transfer important meta data and prepare the necessary buffer size
+                                RKProductInitFromSweep(product, sweep);
+                                size = RKServerReceiveUserPayload(O, product->data, RKNetworkMessageFormatHeaderDefinedSize);
+                                if (user->radar->sweepEngine->verbose > 1) {
+                                    RKLog("%s %s %s (%d) -> %u %zu\n",
+                                          engine->name, O->name, user->string, strlen(user->string), productId, identifier);
+                                }
+                                RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
+                                RKSweepEngineSetProductComplete(user->radar->sweepEngine, sweep, product);
+                            } else {
+                                // Still need to consume this packet so we dump it to a scratch space
+                                RKLog("Warning. Unable to retrieve storage for incoming sweep.\n");
+                                size = RKServerReceiveUserPayload(O, user->scratch, RKNetworkMessageFormatHeaderDefinedSize);
+                            }
+                            if (size < 0) {
+                                RKLog("%s %s Error. Failed receiving user product data ...\n", engine->name, O->name);
+                                continue;
+                            }
+                        } // else (user->productIds[k] == productId && sweep->header.config.i == identifier)
+                    } // for (k = 0; k < user->productCount; k++) ...
 
                     gettimeofday(&timevalRx, NULL);
 
                     deltaTx = 1.0e3 * RKTimevalDiff(timevalTx, timevalOrigin);
                     deltaRx = 1.0e3 * RKTimevalDiff(timevalRx, timevalTx);
-                    RKLog("%s %s %s ms   %s ms\n", engine->name, O->name,
-                          RKVariableInString("Delta 1", &deltaTx, RKValueTypeDouble),
-                          RKVariableInString("Delta 2", &deltaRx, RKValueTypeDouble));
+                    RKLog("%s %s Round trip finished   %s ms   %s ms\n", engine->name, O->name,
+                          RKVariableInString("tx", &deltaTx, RKValueTypeDouble),
+                          RKVariableInString("rx", &deltaRx, RKValueTypeDouble));
 
                 } // if (baseMomentCount) ...
                 RKSweepFree(sweep);
@@ -1192,17 +1202,16 @@ int socketTerminateHandler(RKOperator *O) {
     int k;
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
-    for (k = 0; k < user->userProductCount; k++) {
-        if (user->userProductIds[k]) {
-            RKLog(">%s %s Unregistering 0x%04x ...\n", engine->name, O->name, user->userProductIds[k]);
-            RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->userProductIds[k]);
-            user->userProductIds[k] = 0;
+    user->access = RKStreamNull;
+    user->streams = RKStreamNull;
+    RKLog(">%s %s Stream reset.\n", engine->name, O->name);
+    for (k = 0; k < user->productCount; k++) {
+        if (user->productIds[k]) {
+            RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->productIds[k]);
+            user->productIds[k] = 0;
         }
     }
     pthread_mutex_destroy(&user->mutex);
-    RKLog(">%s %s Stream reset.\n", engine->name, O->name);
-    user->streams = RKStreamNull;
-    user->access = RKStreamNull;
     user->radar = NULL;
     consolidateStreams(engine);
     return RKResultSuccess;
@@ -1299,7 +1308,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
 void RKCommandCenterStart(RKCommandCenter *center) {
     RKLog("%s Starting ...\n", center->name);
     RKServerStart(center->server);
-    RKLog("%s Started.   mem = %s B   radarCount = %s\n", center->name, RKIntegerToCommaStyleString(center->memoryUsage), RKIntegerToCommaStyleString(center->radarCount));
+    RKLog("%s Started.   mem = %s B   radarCount = %s\n", center->name, RKUIntegerToCommaStyleString(center->memoryUsage), RKIntegerToCommaStyleString(center->radarCount));
 }
 
 void RKCommandCenterStop(RKCommandCenter *center) {

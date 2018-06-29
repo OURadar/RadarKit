@@ -38,13 +38,14 @@
 // Memory Blocks
 // Defines the number of slots and gates of each pulse of the RKRadar structure
 //
+// RKBufferSSlotCount The number of slots for status
 // RKBufferCSlotCount The number of slots for config
 // RKBufferHSlotCount The number of slots for health JSON string
-// RKBufferSSlotCount The number of slots for status string
 // RKBufferPSlotCount The number of slots for position buffer
 // RKBuffer0SlotCount The number of slots for level-0 pulse storage in the host memory
 // RKBuffer1SlotCount The number of slots for level-1 pulse storage in the host memory
-// RKBuffer2SlotCount The number of slots for level-2 pulse storage in the host memory
+// RKBuffer2SlotCount The number of slots for level-2 ray storage in the host memory
+// RKBuffer3SlotCount The number of slots for level-3 product storage in the host memory
 // RKMaximumControlCount The number of controls (buttons)
 // RKMaximumCalibrationCount The number of waveform calibration set
 // RKGateCount The maximum number of gates allocated for each pulse
@@ -53,12 +54,13 @@
 
 #pragma mark - Constants
 
-#define RKBufferCSlotCount                   25                                // Config
+#define RKBufferSSlotCount                   10                                // Status
+#define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   25                                // Health
-#define RKBufferSSlotCount                   90                                // Status strings
 #define RKBufferPSlotCount                   1000                              // Positions
 #define RKBuffer0SlotCount                   20000                             // Raw I/Q
 #define RKBuffer2SlotCount                   36000                             // Ray
+#define RKBuffer3SlotCount                   100                               // Products
 #define RKMaximumControlCount                128                               // Controls
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKGateCount                          262144                            // Must be a multiple of RKSIMDAlignSize
@@ -95,17 +97,18 @@
 
 #define RKNoColor                            "\033[0m"
 #define RKRedColor                           "\033[38;5;196m"
-#define RKOrangeColor                        "\033[38;5;214m"
+#define RKOrangeColor                        "\033[38;5;208m"
 #define RKYellowColor                        "\033[38;5;226m"
 #define RKLimeColor                          "\033[38;5;118m"
 #define RKGreenColor                         "\033[38;5;46m"
 #define RKTealColor                          "\033[38;5;49m"
 #define RKIceBlueColor                       "\033[38;5;51m"
-#define RKSkyBlueColor                       "\033[38;5;39m"
+#define RKSkyBlueColor                       "\033[38;5;45m"
 #define RKBlueColor                          "\033[38;5;27m"
 #define RKPurpleColor                        "\033[38;5;99m"
 #define RKIndigoColor                        "\033[38;5;201m"
 #define RKHotPinkColor                       "\033[38;5;199m"
+#define RKDeepPinkColor                      "\033[38;5;197m"
 #define RKPinkColor                          "\033[38;5;213m"
 #define RKSalmonColor                        "\033[38;5;210m"
 #define RKPythonColor                        "\033[38;5;226;48;5;24m"
@@ -288,6 +291,7 @@ N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
 N(RKResultFailedToAddHost) \
 N(RKResultFailedToFindProductId) \
+N(RKResultFailedToOpenFileForProduct) \
 N(RKResultClientNotConnected) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)
@@ -482,7 +486,8 @@ enum RKBaseMomentIndex {
     RKBaseMomentIndexSv,
     RKBaseMomentIndexZv,
     RKBaseMomentIndexVv,
-    RKBaseMomentIndexWv
+    RKBaseMomentIndexWv,
+    RKBaseMomentIndexCount
 };
 
 typedef uint32_t RKProductType;
@@ -681,13 +686,13 @@ enum RKHostStatus {
 typedef uint32_t RKProductStatus;
 enum RKProductStatus {
     RKProductStatusVacant                        = 0,                          //
-    RKProductStatusSleep0                        = (1 << 0),                   // Sleep stage 0 -
-    RKProductStatusSleep1                        = (1 << 1),                   // Sleep stage 1 -
-    RKProductStatusSleep2                        = (1 << 2),                   // Sleep stage 2 -
-    RKProductStatusSleep3                        = (1 << 3),                   // Sleep stage 3 -
-    RKProductStatusSkipped                       = (1 << 5),                   //
-    RKProductStatusBusy                          = (1 << 6),                   // Waiting for processing node
-    RKProductStatusActive                        = (1 << 7),                   //
+    RKProductStatusActive                        = (1 << 0),                   // This slot has been registered
+    RKProductStatusBusy                          = (1 << 1),                   // Waiting for processing node
+    RKProductStatusSkipped                       = (1 << 2),                   //
+    RKProductStatusSleep0                        = (1 << 4),                   // Sleep stage 0 -
+    RKProductStatusSleep1                        = (1 << 5),                   // Sleep stage 1 -
+    RKProductStatusSleep2                        = (1 << 6),                   // Sleep stage 2 -
+    RKProductStatusSleep3                        = (1 << 7)                    // Sleep stage 3 -
 };
 
 typedef uint8_t RKOverviewFlag;
@@ -728,15 +733,17 @@ typedef struct rk_radar_desc {
     uint32_t             positionBufferDepth;                                  //
     uint32_t             pulseBufferDepth;                                     //
     uint32_t             rayBufferDepth;                                       //
+    uint32_t             productBufferDepth;                                   //
     uint32_t             controlCapacity;                                      // Number of control buttons
-    uint32_t             waveformCalibrationCapacity;                          //
+    uint32_t             waveformCalibrationCapacity;                          // Number of waveform specific calibrations
     size_t               healthNodeBufferSize;                                 // Buffer size (B)
     size_t               healthBufferSize;                                     // Buffer size (B)
     size_t               statusBufferSize;                                     // Buffer size (B)
     size_t               configBufferSize;                                     // Buffer size (B)
     size_t               positionBufferSize;                                   // Buffer size (B)
-    size_t               pulseBufferSize;                                      //
-    size_t               rayBufferSize;                                        //
+    size_t               pulseBufferSize;                                      // Buffer size (B)
+    size_t               rayBufferSize;                                        // Buffer size (B)
+    size_t               productBufferSize;                                    // Buffer size (B)
     uint32_t             pulseSmoothFactor;                                    // Pulse rate (Hz)
     uint32_t             pulseTicsPerSecond;                                   // Pulse tics per second (normally 10e6)
     uint32_t             positionSmoothFactor;                                 // Position rate (Hz)
@@ -896,7 +903,7 @@ typedef struct rk_ray_header {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKBaseMomentList     baseMomentList;                                          // 16-bit MSB for products + 16-bit LSB for display
+    RKBaseMomentList     baseMomentList;                                       // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            //
@@ -933,11 +940,16 @@ typedef struct rk_ray {
 typedef struct rk_sweep_header {
     uint32_t             rayCount;                                             // Number of rays
     uint32_t             gateCount;                                            // Number of range gates
+    time_t               startTime;                                            // Start time of the sweep
+    time_t               endTime;                                              // End time of the sweep
     RKBaseMomentList     baseMomentList;                                       // List of available products
     float                gateSizeMeters;                                       // Gate size in meters
+    bool                 isPPI;                                                //
+    bool                 isRHI;                                                //
     bool                 external;                                             // Data is external buffer, reference by *rays[]
-    RKRadarDesc          desc;
-    RKConfig             config;
+    RKRadarDesc          desc;                                                 //
+    RKConfig             config;                                               //
+    char                 filename[RKMaximumPathLength];                        // Propose filename without symbol and extension, XX-20180520-112233
 } RKSweepHeader;
 
 //
@@ -1032,6 +1044,7 @@ typedef struct rk_control {
 typedef struct rk_status {
     RKIdentifier         i;
     RKStatusFlag         flag;
+    size_t               memoryUsage;
     uint8_t              pulseMonitorLag;
     uint8_t              pulseSkipCount;
     uint8_t              pulseCoreLags[RKProcessorStatusPulseCoreCount];
@@ -1089,20 +1102,62 @@ typedef union rk_product_desc {                                                /
         uint32_t         pieceCount;                                           // Count of piece-wise function that maps data to color index
         RKFloat          w[16];                                                // Data to color index weight (piece-wise function)
         RKFloat          b[16];                                                // Data to color index bias (piece-wise function)
+        RKFloat          l[16];                                                // The lower bound of each piece
         RKFloat          mininimumValue;                                       // Minimum value
         RKFloat          maximumValue;                                         // Maximum value
     };
     RKByte bytes[1024];
 } RKProductDesc;
 
+typedef union rk_product_header {
+    struct {                                                                   // A 1-KB struct that contains meta data
+        RKName               radarName;                                        // Radar name
+        double               latitude;                                         // Latitude (degrees)
+        double               longitude;                                        // Longitude (degrees)
+        float                heading;                                          // Radar heading
+        float                radarHeight;                                      // Radar height from ground (m)
+        float                wavelength;                                       // Radar wavelength (m)
+        float                sweepElevation;                                   // Sweep elevation angle (degrees)
+        float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
+        uint32_t             rayCount;                                         // Number of rays
+        uint32_t             gateCount;                                        // Number of range gates
+        float                gateSizeMeters;                                   // Gate size in meters
+        time_t               startTime;                                        // Start time of the sweep
+        time_t               endTime;                                          // End time of the sweep
+        bool                 isPPI;                                            // PPI indicator
+        bool                 isRHI;                                            // RHI indicator
+        uint8_t              filterCount;                                      // Number of filters
+        RKFilterAnchor       filterAnchors[RKMaxFilterCount];                  // Filter anchors
+        uint32_t             pw[RKMaxFilterCount];                             // Pulse width (ns)
+        uint32_t             prf[RKMaxFilterCount];                            // Pulse repetition frequency (Hz)
+        RKFloat              noise[2];                                         // Noise floor (ADU)
+        RKFloat              systemZCal[2];                                    // System-wide Z calibration (dB)
+        RKFloat              systemDCal;                                       // System-wide ZDR calibration (dB)
+        RKFloat              systemPCal;                                       // System-wide phase calibration (rad)
+        RKFloat              ZCal[RKMaxFilterCount][2];                        // Waveform Z calibration (dB)
+        RKFloat              DCal[RKMaxFilterCount];                           // Waveform ZDR calibration (dB)
+        RKFloat              PCal[RKMaxFilterCount];                           // Waveform phase calibration (rad)
+        RKFloat              SNRThreshold;                                     // Censor SNR (dB)
+        RKName               waveform;                                         // Waveform name
+        char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
+        char                 suggestedFilename[RKMaximumPathLength];           // RadarKit suggested fullpath filename
+    };
+    RKByte bytes[2048];
+} RKProductHeader;
+
 typedef struct rk_product {                                                    // A description of user product
     RKIdentifier         i;                                                    // Product counter to be synchronized with RKConfig->i
     RKProductId          pid;                                                  // Product identifier from RKProductRegister()
     RKProductDesc        desc;                                                 // Description
     RKProductStatus      flag;                                                 // Various state
-    uint32_t             depth;                                                // Number of arrays
-    uint32_t             capacity;                                             // Number of RKFloat elements in blcok of array
-    RKFloat              *array;                                               // Flattened array of user product
+    RKProductHeader      header;                                               // Product header
+    uint32_t             capacity;                                             // Number of RKFloat elements in blocks of array
+    uint32_t             totalBufferSize;                                      // Total buffer size of this struct
+    RKFloat              *startAzimuth;                                        // Start azimuth of each ray
+    RKFloat              *endAzimuth;                                          // End azimuth of each ray
+    RKFloat              *startElevation;                                      // Start elevation of each ray
+    RKFloat              *endElevation;                                        // End elevation of each ray
+    RKFloat              *data;                                                // Flattened array of user product
 } RKProduct;
 
 typedef struct rk_waveform {

@@ -23,7 +23,6 @@ RKPreference *RKPreferenceInitWithFile(const char *filename) {
     memset(preference, 0, sizeof(RKPreference));
     strcpy(preference->filename, filename);
     preference->memoryUsage = sizeof(RKPreference);
-    //RKLog("%s\n", RKIntegerToCommaStyleString(preference->memoryUsage));
     RKPreferenceUpdate(preference);
     return preference;
 }

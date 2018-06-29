@@ -31,7 +31,7 @@ static void *healthConsolidator(void *_in) {
 	engine->state |= RKEngineStateActive;
 	engine->state ^= RKEngineStateActivating;
 
-    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
+    RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
 
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;

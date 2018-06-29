@@ -11,7 +11,10 @@
 //  █
 //
 //  1.2.10 - 6/30/2018
-//         - Added RKVariableInString() to highlight some log entries
+//         - Added RKProductFileReadNC() for offline reading
+//         - Added RKSweep to RKProduct recording
+//         - Added RKProduct buffer with dynamic allocation
+//         - Added RKVariableInString() for highlighting variables
 //         - Added product registration from PyRadarKit space
 //         - Product identifier from PyRadarKit is ingested
 //         - Product description from PyRadarKit is ingested

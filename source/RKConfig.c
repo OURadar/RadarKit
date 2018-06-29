@@ -15,7 +15,7 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 }
 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
-    uint32_t  j, k;
+    uint32_t  j, k, n;
     char      *string;
     char      stringBuffer[RKMaxFilterCount][RKMaximumStringLength];
     char      format[RKMaximumStringLength];
@@ -27,9 +27,6 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
     pthread_mutex_lock(&rkGlobalParameters.mutex);
-
-//    RKConfig *newConfig = &configs[RKNextModuloS(*configIndex, configBufferDepth)];
-//    RKConfig *oldConfig = &configs[*configIndex];
 
     RKConfig *newConfig = &configs[*configIndex];
     RKConfig *oldConfig = &configs[RKPreviousModuloS(*configIndex, configBufferDepth)];
@@ -46,6 +43,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Copy everything
     memcpy(newConfig, oldConfig, sizeof(RKConfig));
 
+    n = 0;
     uint32_t key = va_arg(args, RKConfigKey);
     // Modify the values based on the supplied keys
     while (key != RKConfigKeyNull) {
@@ -58,10 +56,10 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°  %s%s%s   %s",
+				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°   %s%s%s   %s",
                         newConfig->sweepElevation,
                         newConfig->sweepAzimuth,
-                        rkGlobalParameters.showColor ? RKSkyBlueColor : "",
+                        rkGlobalParameters.showColor ? RKDeepPinkColor : "",
                         RKMarkerScanTypeString(newConfig->startMarker),
                         rkGlobalParameters.showColor ? RKNoColor : "",
                         RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));
@@ -177,7 +175,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         w1 + 1,
                         w2 + 1,
                         w3 + 5);
-                sprintf(stringBuffer[0], "Waveform = '%s'", waveform->name);
+                sprintf(stringBuffer[0], "%s", RKVariableInString("Waveform", waveform->name, RKValueTypeString));
                 for (j = 0; j < newConfig->filterCount; j++) {
                     sprintf(stringBuffer[j + 1], format,
                             j, newConfig->filterCount,
@@ -260,13 +258,14 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
         }
         for (k = 0; k < RKMaxFilterCount; k++) {
             if (strlen(stringBuffer[k])) {
-                RKLog("%s<ParameterKeeper>%s C%02d %s   %s\n",
+                RKLog(n > 0 ? ">%s<ParameterKeeper>%s C%02d %s   %s\n" : "%s<ParameterKeeper>%s C%02d %s   %s\n",
                       rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       *configIndex,
                       stringBuffer[k],
-                      RKVariableInString("configId", RKIntegerToCommaStyleString(configId), RKValueTypeNumericString));
+                      RKVariableInString("configId", &configId, RKValueTypeIdentifier));
                 stringBuffer[k][0] = '\0';
+                n++;
             }
         }
         // Get the next key

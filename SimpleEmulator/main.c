@@ -45,7 +45,7 @@ int main(int argc, const char * argv[]) {
     
     // Set some properties of the radar
     RKSetVerbosity(myRadar, 1);
-    RKSetDoNotWrite(myRadar, true);
+    RKSetRecordingLevel(myRadar, 0);
 
     // Add some control buttons
     RKAddControlAsLabelAndCommand(myRadar, "10us pulse", "t w s10");

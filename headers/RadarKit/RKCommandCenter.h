@@ -53,9 +53,9 @@ typedef struct rk_user {
     RKInt16C                         samples[2][RKGateCount];
     RKOperator                       *serverOperator;
     RKRadar                          *radar;
-    uint8_t                          userProductCount;
-    RKProductId                      userProductIds[RKMaximumProductCount];
-    RKProductDesc                    userProductDescriptions[RKMaximumProductCount];
+    uint8_t                          productCount;
+    RKProductId                      productIds[RKMaximumProductCount];
+    RKProductDesc                    productDescriptions[RKMaximumProductCount];
 } RKUser;
 
 typedef struct rk_command_center {

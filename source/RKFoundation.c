@@ -40,10 +40,18 @@ int RKLog(const char *whatever, ...) {
         free(msg);
         return 1;
     }
-    if (whatever[0] == '>') {
-        i += sprintf(msg, "                    ");
+    if (rkGlobalParameters.dailyLog) {
+        if (whatever[0] == '>') {
+            i += sprintf(msg, "         ");
+        } else {
+            i += strftime(msg, 16, "%T ", &tm);
+        }
     } else {
-        i += strftime(msg, 32, "%Y/%m/%d %T ", &tm);
+        if (whatever[0] == '>') {
+            i += sprintf(msg, "                    ");
+        } else {
+            i += strftime(msg, 32, "%Y/%m/%d %T ", &tm);
+        }
     }
     char *okay_str = strcasestr(whatever, "ok");
     char *info_str = strcasestr(whatever, "info");
@@ -57,8 +65,8 @@ int RKLog(const char *whatever, ...) {
     char *anchor = (char *)whatever + (whatever[0] == '>' ? 1 : 0);
 
     if (has_ok || has_info || has_error || has_warning) {
-        char colored_whatever[RKMaximumStringLength];
-        
+        char *colored_whatever = (char *)malloc(RKMaximumPacketSize * sizeof(char));
+
         if (has_ok) {
             len = (size_t)(okay_str - anchor);
         } else if (has_info) {
@@ -77,13 +85,13 @@ int RKLog(const char *whatever, ...) {
         
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
-                len += sprintf(colored_whatever + len, "\033[1;92m");
+                len += sprintf(colored_whatever + len, RKGreenColor);
             } else if (has_info) {
-                len += sprintf(colored_whatever + len, "\033[1;96m");
+                len += sprintf(colored_whatever + len, RKSkyBlueColor);
             } else if (has_error) {
-                len += sprintf(colored_whatever + len, "\033[1;91m");
+                len += sprintf(colored_whatever + len, RKRedColor);
             } else if (has_warning) {
-                len += sprintf(colored_whatever + len, "\033[1;93m");
+                len += sprintf(colored_whatever + len, RKYellowColor);
             }
         }
         strncpy(colored_whatever + len, anchor, RKMaximumStringLength - len);
@@ -91,14 +99,16 @@ int RKLog(const char *whatever, ...) {
         i += vsprintf(msg + i, colored_whatever, args);
         
         if (rkGlobalParameters.showColor) {
-            sprintf(msg + i, "\033[0m");
+            sprintf(msg + i, RKNoColor);
         }
+
+        free(colored_whatever);
     } else {
         vsprintf(msg + i, anchor, args);
     }
     
     if (whatever[strlen(whatever) - 1] != '\n') {
-        strncat(msg, "\n", 2040);
+        strncat(msg, "\n", RKMaximumStringLength - 1);
     }
     va_end(args);
     // Produce the string to the specified stream
@@ -203,76 +213,88 @@ void RKShowTypeSizes(void) {
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
     
-    printf("sizeof(void *) = %d\n", (int)sizeof(void *));
-    printf("sizeof(uint64_t) = %d\n", (int)sizeof(uint64_t));
-    printf("sizeof(unsigned long) = %d\n", (int)sizeof(unsigned long));
-    printf("sizeof(unsigned long long) = %d\n", (int)sizeof(unsigned long long));
-    printf("sizeof(RKByte) = %d\n", (int)sizeof(RKByte));
-    printf("sizeof(RKFloat) = %d\n", (int)sizeof(RKFloat));
-    printf("sizeof(RKInt16C) = %d\n", (int)sizeof(RKInt16C));
-    printf("sizeof(RKComplex) = %d\n", (int)sizeof(RKComplex));
-    printf("sizeof(RKRadarDesc) = %s\n", RKIntegerToCommaStyleString(sizeof(RKRadarDesc)));
-    printf("sizeof(RKConfig) = %s\n", RKIntegerToCommaStyleString(sizeof(RKConfig)));
-    printf("sizeof(RKHealth) = %s\n", RKIntegerToCommaStyleString(sizeof(RKHealth)));
-    printf("sizeof(RKNodalHealth) = %d\n", (int)sizeof(RKNodalHealth));
-    printf("sizeof(RKPosition) = %d\n", (int)sizeof(RKPosition));
-    printf("sizeof(RKPulseHeader) = %d\n", (int)sizeof(RKPulseHeader));
-    printf("sizeof(RKPulseParameters) = %d\n", (int)sizeof(RKPulseParameters));
-    printf("sizeof(pulse->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(pulse->headerBytes), sizeof(pulse->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    printf("sizeof(RKPulse) = %d\n", (int)sizeof(RKPulse));
-    printf("sizeof(RKRayHeader) = %d\n", (int)sizeof(RKRayHeader));
-    printf("sizeof(ray->headerBytes) = %d  (SIMD aligned: %s)\n", (int)sizeof(ray->headerBytes), sizeof(ray->headerBytes) % RKSIMDAlignSize == 0 ? "true" : "false");
-    printf("sizeof(RKRay) = %d  (SIMD aligned: %s)\n", (int)sizeof(RKRay), (int)sizeof(RKRay) % RKSIMDAlignSize == 0 ? "true" : "false");
-    printf("sizeof(RKSweep) = %s\n", RKIntegerToCommaStyleString(sizeof(RKSweep)));
-    printf("sizeof(sweep->header) = %s\n", RKIntegerToCommaStyleString(sizeof(sweep->header)));
-    printf("sizeof(RKScratch) = %d\n", (int)sizeof(RKScratch));
-    printf("sizeof(RKFileHeader) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileHeader)));
-    printf("sizeof(RKPreferenceObject) = %s\n", RKIntegerToCommaStyleString(sizeof(RKPreferenceObject)));
-    printf("sizeof(RKControl) = %s\n", RKIntegerToCommaStyleString(sizeof(RKControl)));
-    printf("sizeof(RKStatus) = %d\n", (int)sizeof(RKStatus));
-    printf("sizeof(RKFileMonitor) = %s\n", RKIntegerToCommaStyleString(sizeof(RKFileMonitor)));
-    printf("sizeof(RKFilterAnchor) = %d\n", (int)sizeof(RKFilterAnchor));
-    printf("sizeof(struct sockaddr) = %d\n", (int)sizeof(struct sockaddr));
-    printf("sizeof(struct sockaddr_in) = %d\n", (int)sizeof(struct sockaddr_in));
-    printf("sizeof(RKWaveformCalibration) = %d\n", (int)sizeof(RKWaveformCalibration));
-    printf("sizeof(RKProductDesc) = %d\n", (int)sizeof(RKProductDesc));
-    
+    SHOW_SIZE(void *)
+    SHOW_SIZE(int)
+    SHOW_SIZE(unsigned int)
+    SHOW_SIZE(int8_t)
+    SHOW_SIZE(uint8_t)
+    SHOW_SIZE(int16_t)
+    SHOW_SIZE(uint16_t)
+    SHOW_SIZE(int32_t)
+    SHOW_SIZE(uint32_t)
+    SHOW_SIZE(int64_t)
+    SHOW_SIZE(uint64_t)
+    SHOW_SIZE(long)
+    SHOW_SIZE(long long)
+    SHOW_SIZE(unsigned long)
+    SHOW_SIZE(unsigned long long)
+    SHOW_SIZE(RKByte)
+    SHOW_SIZE(RKFloat)
+    SHOW_SIZE(RKInt16C)
+    SHOW_SIZE(RKComplex)
+    SHOW_SIZE(RKRadarDesc)
+    SHOW_SIZE(RKConfig)
+    SHOW_SIZE(RKHealth)
+    SHOW_SIZE(RKNodalHealth)
+    SHOW_SIZE(RKPosition)
+    SHOW_SIZE(RKPulseHeader)
+    SHOW_SIZE(RKPulseParameters)
+    SHOW_SIZE_SIMD(pulse->headerBytes)
+    SHOW_SIZE_SIMD(RKPulse)
+    SHOW_SIZE(RKRayHeader)
+    SHOW_SIZE_SIMD(ray->headerBytes)
+    SHOW_SIZE(RKSweep)
+    SHOW_SIZE(sweep->header)
+    SHOW_SIZE(RKScratch)
+    SHOW_SIZE(RKFileHeader)
+    SHOW_SIZE(RKPreferenceObject)
+    SHOW_SIZE(RKControl)
+    SHOW_SIZE(RKStatus)
+    SHOW_SIZE(RKFileMonitor)
+    SHOW_SIZE(RKFilterAnchor)
+    SHOW_SIZE(struct sockaddr)
+    SHOW_SIZE(struct sockaddr_in)
+    SHOW_SIZE(RKWaveform)
+    SHOW_SIZE(RKWaveformCalibration)
+    SHOW_SIZE(RKProductDesc)
+    SHOW_SIZE(RKProductHeader)
+
     printf("\n");
     
     RKFilterAnchor anchor = RKFilterAnchorDefault;
     printf("RKFilterAnchorDefault:\n");
-    printf(".name = %d\n", anchor.name);
-    printf(".origin = %d\n", anchor.origin);
-    printf(".length = %d\n", anchor.length);
-    printf(".inputOrigin = %d\n", anchor.inputOrigin);
-    printf(".outputOrigin = %d\n", anchor.outputOrigin);
-    printf(".maxDataLength = %d\n", anchor.maxDataLength);
-    printf(".subCarrierFrequency = %.2f\n", anchor.subCarrierFrequency);
-    printf(".sensitivityGain = %.2f dB\n", anchor.sensitivityGain);
-    printf(".filterGain = %.2f dB\n", anchor.filterGain);
-    printf(".fullScale = %.2f\n", anchor.fullScale);
+    printf(".%s\n", RKVariableInString("name", &anchor.name, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("origin", &anchor.origin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("length", &anchor.length, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("inputOrigin", &anchor.inputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("outputOrigin", &anchor.outputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("maxDataLength", &anchor.maxDataLength, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("subCarrierFrequency", &anchor.subCarrierFrequency, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("sensitivityGain", &anchor.sensitivityGain, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("filterGain", &anchor.filterGain, RKValueTypeFloat));
+    printf(".%s\n", RKVariableInString("fullScale", &anchor.fullScale, RKValueTypeFloat));
     
     printf("\n");
     
     RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(1000);
     memcpy(&anchor, &anchor2, sizeof(RKFilterAnchor));
     printf("RKFilterAnchorDefaultWithMaxDataLength(1000):\n");
-    printf(".name = %d\n", anchor.name);
-    printf(".origin = %d\n", anchor.origin);
-    printf(".length = %d\n", anchor.length);
-    printf(".inputOrigin = %d\n", anchor.inputOrigin);
-    printf(".outputOrigin = %d\n", anchor.outputOrigin);
-    printf(".maxDataLength = %d\n", anchor.maxDataLength);
-    printf(".subCarrierFrequency = %.2f\n", anchor.subCarrierFrequency);
-    printf(".sensitivityGain = %.2f dB\n", anchor.sensitivityGain);
-    printf(".filterGain = %.2f dB\n", anchor.filterGain);
-    printf(".fullScale = %.2f\n", anchor.fullScale);
+    printf(".%s\n", RKVariableInString("name", &anchor.name, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("origin", &anchor.origin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("length", &anchor.length, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("inputOrigin", &anchor.inputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("outputOrigin", &anchor.outputOrigin, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("maxDataLength", &anchor.maxDataLength, RKValueTypeUInt32));
+    printf(".%s\n", RKVariableInString("subCarrierFrequency", &anchor.subCarrierFrequency, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("sensitivityGain", &anchor.sensitivityGain, RKValueTypeFloat));
+    printf(".%s dB\n", RKVariableInString("filterGain", &anchor.filterGain, RKValueTypeFloat));
+    printf(".%s\n", RKVariableInString("fullScale", &anchor.fullScale, RKValueTypeFloat));
 
     printf("\n");
 
     int k = 0;
     while (k != RKResultCount) {
-        printf("%2d. %s\n", k, rkResultStrings[k]);
+        printf(RKLimeColor "%-50s" RKPurpleColor "%2d" RKNoColor "\n", rkResultStrings[k], k);
         k++;
     }
     // Restoring previous output stream
@@ -326,17 +348,82 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
     int j, k = 0;
     char text[1024];
-    k = sprintf(text, "    %s%s%s = [ %s ]\n",
+    k = sprintf(text, "         %s%s%s = [ %s ]\n",
                 rkGlobalParameters.showColor ? RKYellowColor : "", letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
-    k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
-    k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
-    k += sprintf(text + k, "        [  ...\n");
+    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
+    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
+    k += sprintf(text + k, "             [     ...\n");
     for (j = height - 3; j < height; j++) {
-        k += sprintf(text + k, "        [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
+        k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
+}
+
+char *RKStringFromValue(const void *value, RKValueType type) {
+    char    *c = (char *)value;
+    float    f = *((float *)value);
+    double   d = *((double *)value);
+    int      i = *((int *)value);
+    long     l = *((long *)value);
+    unsigned int u = *((unsigned int *)value);
+    unsigned long ul = *((unsigned long *)value);
+    int8_t    i8 = *((int8_t *)value);
+    uint8_t   u8 = *((uint8_t *)value);
+    int16_t  i16 = *((int16_t *)value);
+    uint16_t u16 = *((uint16_t *)value);
+    int32_t  i32 = *((int32_t *)value);
+    uint32_t u32 = *((uint32_t *)value);
+    int64_t  i64 = *((int64_t *)value);
+    uint64_t u64 = *((uint64_t *)value);
+    size_t     s = *((size_t *)value);
+    ssize_t   ss = *((ssize_t *)value);
+    switch (type) {
+        case RKValueTypeInt:
+            l = i;
+        case RKValueTypeLong:
+            c = RKIntegerToCommaStyleString(l);
+            break;
+        case RKValueTypeInt8:
+            i16 = i8;
+        case RKValueTypeInt16:
+            i32 = i16;
+        case RKValueTypeInt32:
+            i64 = i32;
+        case RKValueTypeInt64:
+            c = RKIntegerToCommaStyleString(i64);
+            break;
+        case RKValueTypeUInt:
+            ul = u;
+        case RKValueTypeULong:
+            c = RKUIntegerToCommaStyleString((unsigned long long)ul);
+            break;
+        case RKValueTypeUInt8:
+            u16 = u8;
+        case RKValueTypeUInt16:
+            u32 = u16;
+        case RKValueTypeUInt32:
+            u64 = u32;
+        case RKValueTypeUInt64:
+            c = RKUIntegerToCommaStyleString((unsigned long long)u64);
+            break;
+        case RKValueTypeSize:
+            c = RKUIntegerToCommaStyleString((unsigned long long)s);
+            break;
+        case RKValueTypeSSize:
+            c = RKIntegerToCommaStyleString((long long)ss);
+            break;
+        case RKValueTypeFloat:
+            d = f;
+        case RKValueTypeDouble:
+            c = RKFloatToCommaStyleString(d);
+            break;
+        case RKValueTypeNumericString:
+        default:
+            break;
+    }
+    return c;
 }
 
 char *RKVariableInString(const char *name, const void *value, RKValueType type) {
@@ -347,99 +434,24 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
 
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
 
-    bool b   = *((bool *)value);
-    float f  = *((float *)value);
-    double d = *((double *)value);
-    char *c  = (char *)value;
-    int8_t  i8 = *((int8_t *)value);
-    uint8_t u8 = *((uint8_t *)value);
-    int16_t  i16 = *((int16_t *)value);
-    uint16_t u16 = *((uint16_t *)value);
-    int32_t  i32 = *((int32_t *)value);
-    uint32_t u32 = *((uint32_t *)value);
-    int64_t  i64 = *((int64_t *)value);
-    uint64_t u64 = *((uint64_t *)value);
+    char *c = RKStringFromValue(value, type);
+    bool b = *((bool *)value);
 
     if (rkGlobalParameters.showColor) {
-        switch (type) {
-            case RKValueTypeBool:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
-                break;
-            case RKValueTypeInt8:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i8);
-                break;
-            case RKValueTypeInt16:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i16);
-                break;
-            case RKValueTypeInt32:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%d" RKNoColor, name, i32);
-                break;
-            case RKValueTypeInt64:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%lld" RKNoColor, name, i64);
-                break;
-            case RKValueTypeUInt8:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u8);
-                break;
-            case RKValueTypeUInt16:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u16);
-                break;
-            case RKValueTypeUInt32:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%u" RKNoColor, name, u32);
-                break;
-            case RKValueTypeUInt64:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%llu" RKNoColor, name, u64);
-                break;
-            case RKValueTypeFloat:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, f);
-                break;
-            case RKValueTypeDouble:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%.3f" RKNoColor, name, d);
-                break;
-            case RKValueTypeNumericString:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
-                break;
-            default:
-                snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKSalmonColor "%s" RKNoColor, name, c);
-                break;
+        if (type == RKValueTypeBool) {
+            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
+        } else if (type == RKValueTypeString) {
+            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
+        } else {
+            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
         }
     } else {
-        switch (type) {
-            case RKValueTypeBool:
-                snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
-                break;
-            case RKValueTypeInt8:
-                snprintf(string, RKNameLength - 1, "%s = %d", name, i8);
-                break;
-            case RKValueTypeInt16:
-                snprintf(string, RKNameLength - 1, "%s = %d", name, i16);
-                break;
-            case RKValueTypeInt32:
-                snprintf(string, RKNameLength - 1, "%s = %d", name, i32);
-                break;
-            case RKValueTypeInt64:
-                snprintf(string, RKNameLength - 1, "%s = %lld", name, i64);
-                break;
-            case RKValueTypeUInt8:
-                snprintf(string, RKNameLength - 1, "%s = %u", name, u8);
-                break;
-            case RKValueTypeUInt16:
-                snprintf(string, RKNameLength - 1, "%s = %u", name, u16);
-                break;
-            case RKValueTypeUInt32:
-                snprintf(string, RKNameLength - 1, "%s = %u", name, u32);
-                break;
-            case RKValueTypeUInt64:
-                snprintf(string, RKNameLength - 1, "%s = %llu", name, u64);
-                break;
-            case RKValueTypeFloat:
-                snprintf(string, RKNameLength - 1, "%s = %.3f", name, f);
-                break;
-            case RKValueTypeDouble:
-                snprintf(string, RKNameLength - 1, "%s = %.3f", name, d);
-                break;
-            default:
-                snprintf(string, RKNameLength - 1, "%s = %s", name, c);
-                break;
+        if (type == RKValueTypeBool) {
+            snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
+        } else if (type == RKValueTypeString) {
+            snprintf(string, RKNameLength - 1, "%s = '%s'", name, c);
+        } else {
+            snprintf(string, RKNameLength - 1, "%s = %s", name, c);
         }
     }
     return string;
@@ -490,7 +502,7 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
     size_t channelCount = 2;
     size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
     if (pulseSize != (pulseSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(pulseSize));
+        RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(pulseSize));
         return 0;
     }
     size_t bytes = slots * pulseSize;
@@ -563,7 +575,7 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int8 _t            idata[RKBaseMomentCount][capacity];
+//    int8_t             idata[RKBaseMomentCount][capacity];
 //    float              fdata[RKBaseMomentCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
@@ -579,7 +591,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
     }
     size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
-        RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKIntegerToCommaStyleString(raySize));
+        RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
     }
     size_t bytes = slots * raySize;
@@ -1295,20 +1307,26 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     if (string == NULL || strlen(string) == 0) {
         return false;
     }
-    char *str = (char *)malloc(strlen(string) + 1);
+    size_t L = strlen(string);
+    if (*string != '{' || string[L - 1] != '}') {
+        fprintf(stderr, "RKFindCondition() - Expected {} pair around the string.\n");
+        return false;
+    }
+    int v;
+    char *ks;
+    char *sks;
+    uint8_t type;
+    uint8_t subType;
+
+    char *str = (char *)malloc(L + 1);
     char *key = (char *)malloc(RKNameLength);
     char *obj = (char *)malloc(RKNameLength);
     char *subKey = (char *)malloc(RKNameLength);
     char *subObj = (char *)malloc(RKNameLength);
-    uint8_t type;
-    uint8_t subType;
-
-    int v;
-    char *ks;
-    char *sks;
-    if (*string != '{') {
-        fprintf(stderr, "RKFindCondition() - Expected '{'.\n");
-    }
+    *key = '\0';
+    *obj = '\0';
+    *subKey = '\0';
+    *subObj = '\0';
 
     strcpy(str, string);
 
@@ -1323,7 +1341,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
         sks = obj + 1;
         while (*sks != '\0' && *sks != '}') {
             sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (strcmp("Enum", subKey)) {
+            if (strncmp("Enum", subKey, 4)) {
                 continue;
             }
             v = atoi(subObj);

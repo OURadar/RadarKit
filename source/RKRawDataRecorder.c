@@ -1,21 +1,21 @@
 //
-//  RKDataRecorder.c
+//  RKRawDataRecorder.c
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/18/15.
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKDataRecorder.h>
+#include <RadarKit/RKRawDataRecorder.h>
 
 // Internal Functions
 
-static void RKDataRecorderUpdateStatusString(RKDataRecorder *);
+static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *);
 static void *pulseRecorder(void *);
 
 #pragma mark - Helper Functions
 
-static void RKDataRecorderUpdateStatusString(RKDataRecorder *engine) {
+static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     int i;
     char *string;
     
@@ -42,7 +42,7 @@ static void RKDataRecorderUpdateStatusString(RKDataRecorder *engine) {
 #pragma mark - Delegate Workers
 
 static void *pulseRecorder(void *in) {
-    RKDataRecorder *engine = (RKDataRecorder *)in;
+    RKRawDataRecorder *engine = (RKRawDataRecorder *)in;
     
     int i, j, k, n, s;
     
@@ -71,7 +71,7 @@ static void *pulseRecorder(void *in) {
 	engine->state |= RKEngineStateActive;
 	engine->state ^= RKEngineStateActivating;
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
     
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
@@ -139,7 +139,7 @@ static void *pulseRecorder(void *in) {
                 }
             } else {
                 if (engine->fd != 0) {
-                    len += RKDataRecorderCacheFlush(engine);
+                    len += RKRawDataRecorderCacheFlush(engine);
                     close(engine->fd);
                     RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
                           engine->name,
@@ -174,7 +174,7 @@ static void *pulseRecorder(void *in) {
                 RKPreparePath(filename);
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
-                len = RKDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
+                len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
             }
         }
         
@@ -182,9 +182,9 @@ static void *pulseRecorder(void *in) {
         if (engine->doNotWrite) {
             len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
         } else if (engine->fd) {
-            len += RKDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
-            len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-            len += RKDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+            len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
+            len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+            len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
         }
         pulseCount++;
 
@@ -205,7 +205,7 @@ static void *pulseRecorder(void *in) {
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
-            RKDataRecorderUpdateStatusString(engine);
+            RKRawDataRecorderUpdateStatusString(engine);
         }
 
         // Going to wait mode soon
@@ -226,25 +226,25 @@ static void *pulseRecorder(void *in) {
 
 #pragma mark - Life Cycle
 
-RKDataRecorder *RKDataRecorderInit(void) {
-    RKDataRecorder *engine = (RKDataRecorder *)malloc(sizeof(RKDataRecorder));
+RKRawDataRecorder *RKRawDataRecorderInit(void) {
+    RKRawDataRecorder *engine = (RKRawDataRecorder *)malloc(sizeof(RKRawDataRecorder));
     if (engine == NULL) {
-        RKLog("Error. Unable to allocate RKDataRecorder.\r");
+        RKLog("Error. Unable to allocate RKRawDataRecorder.\r");
         exit(EXIT_FAILURE);
     }
-    memset(engine, 0, sizeof(RKDataRecorder));
+    memset(engine, 0, sizeof(RKRawDataRecorder));
     sprintf(engine->name, "%s<RawDataRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorDataRecorder) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-    RKDataRecorderSetCacheSize(engine, RKDataRecorderDefaultCacheSize);
+    RKRawDataRecorderSetCacheSize(engine, RKRawDataRecorderDefaultCacheSize);
     engine->state = RKEngineStateAllocated;
-    engine->maximumRecordDepth = RKDataRecorderDefaultMaximumRecorderDepth;
-    engine->memoryUsage = sizeof(RKDataRecorder) + engine->cacheSize;
+    engine->maximumRecordDepth = RKRawDataRecorderDefaultMaximumRecorderDepth;
+    engine->memoryUsage = sizeof(RKRawDataRecorder) + engine->cacheSize;
     return engine;
 }
 
-void RKDataRecorderFree(RKDataRecorder *engine) {
+void RKRawDataRecorderFree(RKRawDataRecorder *engine) {
     if (engine->state & RKEngineStateActive) {
-        RKDataRecorderStop(engine);
+        RKRawDataRecorderStop(engine);
     }
     free(engine->cache);
     free(engine);
@@ -252,11 +252,11 @@ void RKDataRecorderFree(RKDataRecorder *engine) {
 
 #pragma mark - Properties
 
-void RKDataRecorderSetVerbose(RKDataRecorder *engine, const int verbose) {
+void RKRawDataRecorderSetVerbose(RKRawDataRecorder *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *desc, RKFileManager *fileManager,
+void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDesc *desc, RKFileManager *fileManager,
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
     engine->radarDescription  = desc;
@@ -268,9 +268,9 @@ void RKDataRecorderSetInputOutputBuffers(RKDataRecorder *engine, RKRadarDesc *de
     engine->state |= RKEngineStateProperlyWired;
 }
 
-void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value) {
+void RKRawDataRecorderSetDoNotWrite(RKRawDataRecorder *engine, const bool value) {
     engine->doNotWrite = value;
-//    RKDataRecorderCacheFlush(engine);
+//    RKRawDataRecorderCacheFlush(engine);
 //    close(engine->fd);
 //    if (engine->verbose) {
 //        RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
@@ -279,11 +279,11 @@ void RKDataRecorderSetDoNotWrite(RKDataRecorder *engine, const bool value) {
 //    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
 }
 
-void RKDataRecorderSetMaximumRecordDepth(RKDataRecorder *engine, const uint32_t depth) {
+void RKRawDataRecorderSetMaximumRecordDepth(RKRawDataRecorder *engine, const uint32_t depth) {
     engine->maximumRecordDepth = depth;
 }
 
-void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size) {
+void RKRawDataRecorderSetCacheSize(RKRawDataRecorder *engine, uint32_t size) {
     if (engine->cacheSize == size) {
         return;
     }
@@ -301,7 +301,7 @@ void RKDataRecorderSetCacheSize(RKDataRecorder *engine, uint32_t size) {
 
 #pragma mark - Interactions
 
-int RKDataRecorderStart(RKDataRecorder *engine) {
+int RKRawDataRecorderStart(RKRawDataRecorder *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
         RKLog("%s Error. Not properly wired.\n", engine->name);
         return RKResultEngineNotWired;
@@ -319,7 +319,7 @@ int RKDataRecorderStart(RKDataRecorder *engine) {
     return RKResultSuccess;
 }
 
-int RKDataRecorderStop(RKDataRecorder *engine) {
+int RKRawDataRecorderStop(RKRawDataRecorder *engine) {
     if (engine->state & RKEngineStateDeactivating) {
         if (engine->verbose > 1) {
             RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
@@ -347,7 +347,7 @@ int RKDataRecorderStop(RKDataRecorder *engine) {
     return RKResultSuccess;
 }
 
-size_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, const size_t size) {
+size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payload, const size_t size) {
     if (size == 0) {
         return 0;
     }
@@ -381,7 +381,7 @@ size_t RKDataRecorderCacheWrite(RKDataRecorder *engine, const void *payload, con
     return writtenSize;
 }
 
-size_t RKDataRecorderCacheFlush(RKDataRecorder *engine) {
+size_t RKRawDataRecorderCacheFlush(RKRawDataRecorder *engine) {
     if (engine->cacheWriteIndex == 0) {
         return 0;
     }
@@ -390,6 +390,6 @@ size_t RKDataRecorderCacheFlush(RKDataRecorder *engine) {
     return writtenSize;
 }
 
-char *RKDataRecorderStatusString(RKDataRecorder *engine) {
+char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

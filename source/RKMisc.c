@@ -15,7 +15,7 @@ char *RKGetColorOfIndex(const int i) {
     static int k = 3;
     static char str[4][32];
     k = k == 3 ? 0 : k + 1;
-    snprintf(str[k], 31, "\033[1;38;5;%dm", colors[i % sizeof(colors)]);
+    snprintf(str[k], 31, "\033[38;5;%dm", colors[i % sizeof(colors)]);
     return str[k];
 }
 
@@ -34,7 +34,7 @@ char *RKGetBackgroundColorOfIndex(const int i) {
     static int s = 3;
     static char str[4][32];
     s = s == 3 ? 0 : s + 1;
-    snprintf(str[s], 31, "\033[1;97;48;5;%dm", colors[i % sizeof(colors)]);
+    snprintf(str[s], 31, "\033[97;48;5;%dm", colors[i % sizeof(colors)]);
     return str[s];
 }
 
@@ -45,7 +45,7 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
     static int s = 3;
     static char str[4][32];
     s = s == 3 ? 0 : s + 1;
-    snprintf(str[k], 31, "\033[1;97;48;5;%dm", 16 + i * 36 + j * 6 + k);
+    snprintf(str[k], 31, "\033[97;48;5;%dm", 16 + i * 36 + j * 6 + k);
     return str[k];
 }
 
@@ -54,7 +54,7 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
 // ks = start of a keyword, should begin with quote or space
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     char *ke = NULL;
-    if (*ks == '\0') {
+    if (*ks == '\0' || strlen(ks) < 3) {
         fprintf(stderr, "Empty JSON string.\n");
         return NULL;
     }
@@ -67,6 +67,7 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     }
     if (*ke == '\0') {
         fprintf(stderr, "Expected a close quote for keyword %s\n", ks == NULL ? "(NULL)" : ks);
+        fprintf(stderr, "Original: %s\n", ks);
         if (ke == NULL) {
             return NULL;
         }
@@ -237,7 +238,38 @@ void RKReplaceKeyValue(char *string, const char *key, int value) {
 //
 //  Integer to string with 3-digit grouping
 //
-char *RKIntegerToCommaStyleString(const long num) {
+char *RKUIntegerToCommaStyleString(const unsigned long long num) {
+    int i, j, k;
+    static int ibuf = 0;
+    static char stringBuffer[16][32];
+    
+    char *string = stringBuffer[ibuf];
+    
+    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    
+    sprintf(string, "%llu", num);
+    if (num < 1000) {
+        return string;
+    } else {
+        k = (int)(strlen(string) - 1) / 3;
+        i = (int)(strlen(string) + k);
+        j = 1;
+        string[i] = '\0';
+        while (i > 0) {
+            i--;
+            string[i] = string[i - k];
+            if (j > 3) {
+                j = 0;
+                string[i] = ',';
+                k--;
+            }
+            j++;
+        }
+    }
+    return string;
+}
+
+char *RKIntegerToCommaStyleString(const long long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
@@ -246,7 +278,7 @@ char *RKIntegerToCommaStyleString(const long num) {
 
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
 
-    sprintf(string, "%ld", num);
+    sprintf(string, "%lld", num);
     if (num < 1000) {
         return string;
     } else {
@@ -435,6 +467,32 @@ void RKReplaceFileExtension(char *filename, const char *pattern, const char *rep
     }
 }
 
+bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
+    // Find the last '.'
+    memset(symbol, 0, 8);
+    char *e = NULL;
+    e = strstr(filename, ".");
+    if (e == NULL) {
+        e = (char *)filename + strlen(filename) - 1;
+    }
+    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
+        e = strstr(e + 1, ".");
+    }
+    // Find the previous '-'
+    char *b = e;
+    while (b != filename && *b != '-') {
+        b--;
+    }
+    if (b == filename) {
+        fprintf(stderr, "Unable to find product symbol.\n");
+        *symbol = '-';
+        return false;
+    }
+    b++;
+    strncpy(symbol, b, MIN(8, e - b));
+    return true;
+}
+
 #pragma mark - Enum to String
 
 char *RKSignalString(const int signal) {
@@ -586,6 +644,15 @@ long RKGetCPUIndex(void) {
 	}
 	pthread_mutex_unlock(&mutex);
 	return c++ % count;
+}
+
+long RKGetMemoryUsage(void) {
+    struct rusage usage;
+    if (getrusage(RUSAGE_CHILDREN, &usage)) {
+        fprintf(stderr, "Failed in getrusage().   errno = %d\n", errno);
+        return -1;
+    }
+    return usage.ru_maxrss;
 }
 
 char *RKCountryFromPosition(const double latitude, const double longitude) {

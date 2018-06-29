@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <dirent.h>
 #include <pthread.h>
 #include <netdb.h>
@@ -69,6 +70,16 @@ sprintf(_fn_str + _fn_len, "\n%s\n", __FUNCTION__); \
 memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
 printf("%s\n", _fn_str);
+
+#define SHOW_SIZE(x) \
+printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor "\n", \
+RKUIntegerToCommaStyleString(sizeof(x)));
+
+#define SHOW_SIZE_SIMD(x) \
+printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
+"   " RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "\n", \
+RKUIntegerToCommaStyleString(sizeof(x)), \
+sizeof(x) % RKSIMDAlignSize == 0 ? "Tue" : "False");
 
 #if defined(__APPLE__)
 
@@ -111,7 +122,8 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);
 void RKReplaceKeyValue(char *string, const char *key, int value);
 
-char *RKIntegerToCommaStyleString(const long);
+char *RKUIntegerToCommaStyleString(const unsigned long long);
+char *RKIntegerToCommaStyleString(const long long);
 char *RKFloatToCommaStyleString(const double);
 
 char *RKNow(void);
@@ -125,6 +137,7 @@ long RKCountFilesInPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
+bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 
 char *RKSignalString(const int);
 
@@ -135,6 +148,7 @@ char *RKNextNoneWhite(const char *);
 float RKUMinDiff(const float minuend, const float subtrahend);
 
 long RKGetCPUIndex(void);
+long RKGetMemoryUsage(void);
 
 char *RKCountryFromPosition(const double latitude, const double longitude);
 

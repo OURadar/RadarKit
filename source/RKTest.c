@@ -41,6 +41,7 @@ void RKTestTerminalColors(void) {
     for (int k = 0; k < 17; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
+    printf("\n");
     int c;
     for (int i = 0; i < 6; i++) {
         for (int k = 0; k < 6; k++) {
@@ -374,58 +375,6 @@ void RKTestGetCountry(void) {
     }
 }
 
-void RKTestReadSweep(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
-    }
-}
-
-void RKTestWaveformProperties(void) {
-    SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-}
-
 void RKTestBufferOverviewText(void) {
     SHOW_FUNCTION_NAME
     RKRadar *radar = RKInitLean();
@@ -434,6 +383,22 @@ void RKTestBufferOverviewText(void) {
     printf("%s\n", text);
     RKFree(radar);
     free(text);
+}
+
+void RKTestSweepRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKSweep *sweep = RKSweepFileRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
+}
+
+void RKTestProductRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKProduct *product = RKProductFileReaderNC(file);
+    if (product) {
+        RKProductFree(product);
+    }
 }
 
 #pragma mark -
@@ -931,7 +896,7 @@ void RKTestWaveformTFM(void) {
 }
 
 
-void RKTestWriteWaveform(void) {
+void RKTestWaveformWrite(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(14, 100);
     RKWaveformHops(waveform, 20.0e6, 0.0, 16.0e6);
@@ -954,6 +919,50 @@ void RKTestWriteWaveform(void) {
     } else {
         RKLog("Done.\n");
     }
+}
+
+void RKTestWaveformProperties(void) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    printf("\n");
+
+    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 4.0e-6, 2.0e6);
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
 }
 
 #pragma mark - Radar Signal Processing
@@ -1318,7 +1327,7 @@ void RKTestMomentProcessorSpeed(void) {
 }
 
 void RKTestCacheWrite(void) {
-    RKDataRecorder *fileEngine = RKDataRecorderInit();
+    RKRawDataRecorder *fileEngine = RKRawDataRecorderInit();
     fileEngine->fd = open("._testwrite", O_CREAT | O_WRONLY, 0000644);
     if (fileEngine->fd < 0) {
         RKLog("Error. Unable to open file.\n");
@@ -1327,11 +1336,11 @@ void RKTestCacheWrite(void) {
 
 #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
-    RKDataRecorderSetCacheSize(fileEngine, 4);
-    RKDataRecorderCacheWrite(fileEngine, bytes, 4);
-    RKDataRecorderCacheWrite(fileEngine, &bytes[4], 2);
-    RKDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
-    RKDataRecorderCacheFlush(fileEngine);
+    RKRawDataRecorderSetCacheSize(fileEngine, 4);
+    RKRawDataRecorderCacheWrite(fileEngine, bytes, 4);
+    RKRawDataRecorderCacheWrite(fileEngine, &bytes[4], 2);
+    RKRawDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
+    RKRawDataRecorderCacheFlush(fileEngine);
 
 #endif
 
@@ -1350,12 +1359,12 @@ void RKTestCacheWrite(void) {
         RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
         pulse->header.gateCount = 16000;
 
-        len += RKDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
-        len += RKDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-        len += RKDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKRawDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
+        len += RKRawDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+        len += RKRawDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
 
         if (k % 2000 == 0) {
-            RKDataRecorderCacheFlush(fileEngine);
+            RKRawDataRecorderCacheFlush(fileEngine);
 
             gettimeofday(&time, NULL);
             t0 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
@@ -1377,7 +1386,7 @@ void RKTestCacheWrite(void) {
         RKLog("Error. System call failed.   errno = %d\n", errno);
     }
 
-    RKDataRecorderFree(fileEngine);
+    RKRawDataRecorderFree(fileEngine);
 }
 
 #pragma mark - Transceiver Emulator
@@ -1401,7 +1410,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     gettimeofday(&t0, NULL);
 
-    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKIntegerToCommaStyleString(transceiver->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
@@ -1978,7 +1987,7 @@ void *RKTestPedestalRunLoop(void *input) {
 
     gettimeofday(&t0, NULL);
 
-    RKLog("%s Started.   mem = %s B\n", pedestal->name, RKIntegerToCommaStyleString(pedestal->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", pedestal->name, RKUIntegerToCommaStyleString(pedestal->memoryUsage));
 
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", pedestal->name, RKIntegerToCommaStyleString((long)(1.0 / PEDESTAL_SAMPLING_TIME)));
@@ -2236,7 +2245,7 @@ void *RKTestHealthRelayRunLoop(void *input) {
 
     gettimeofday(&t0, NULL);
     
-    RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKIntegerToCommaStyleString(healthRelay->memoryUsage));
+    RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKUIntegerToCommaStyleString(healthRelay->memoryUsage));
     
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", healthRelay->name, RKIntegerToCommaStyleString((long)(1.0 / HEALTH_RELAY_SAMPLING_TIME)));

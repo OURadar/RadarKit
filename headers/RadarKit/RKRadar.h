@@ -20,8 +20,9 @@
 #include <RadarKit/RKPulseRingFilter.h>
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKHealthLogger.h>
-#include <RadarKit/RKDataRecorder.h>
+#include <RadarKit/RKRawDataRecorder.h>
 #include <RadarKit/RKSweep.h>
+#include <RadarKit/RKProduct.h>
 #include <RadarKit/RKWaveform.h>
 #include <RadarKit/RKPreference.h>
 #include <RadarKit/RKFileManager.h>
@@ -35,22 +36,16 @@ sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld -> %p\n", (unsi
 
 typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
 enum RKRadarState {
-    RKRadarStateRayBufferAllocating                  = (1 << 0),   // Data buffers
-    RKRadarStateRayBufferInitialized                 = (1 << 1),   //
-    RKRadarStateRawIQBufferAllocating                = (1 << 2),   //
-    RKRadarStateRawIQBufferInitialized               = (1 << 3),   //
-    RKRadarStateStatusBufferAllocating               = (1 << 4),   //
-    RKRadarStateStatusBufferInitialized              = (1 << 5),   //
-    RKRadarStateConfigBufferAllocating               = (1 << 6),   //
-    RKRadarStateConfigBufferInitialized              = (1 << 7),   //
-    RKRadarStateHealthBufferAllocating               = (1 << 8),   //
-    RKRadarStateHealthBufferInitialized              = (1 << 9),   //
-    RKRadarStateHealthNodesAllocating                = (1 << 10),  //
-    RKRadarStateHealthNodesInitialized               = (1 << 11),  //
-    RKRadarStatePositionBufferAllocating             = (1 << 12),  //
-    RKRadarStatePositionBufferInitialized            = (1 << 13),  //
-    RKRadarStateControlsInitialized                  = (1 << 14),  //
-    RKRadarStateWaveformCalibrationsInitialized      = (1 << 15),  //
+    RKRadarStateRayBufferAllocated                   = (1 << 0),   // Data buffers
+    RKRadarStateRawIQBufferAllocated                 = (1 << 1),   //
+    RKRadarStateStatusBufferAllocated                = (1 << 2),   //
+    RKRadarStateConfigBufferAllocated                = (1 << 3),   //
+    RKRadarStateHealthBufferAllocated                = (1 << 4),   //
+    RKRadarStateHealthNodesAllocated                 = (1 << 5),   //
+    RKRadarStatePositionBufferAllocated              = (1 << 6),   //
+    RKRadarStateWaveformCalibrationsAllocated        = (1 << 7),   //
+    RKRadarStateControlsAllocated                    = (1 << 8),   //
+    RKRadarStateProductBufferAllocated               = (1 << 9),   //
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
     RKRadarStatePositionEngineInitialized            = (1 << 18),  //
@@ -79,6 +74,8 @@ struct rk_radar {
     bool                             active;
     size_t                           memoryUsage;
     uint8_t                          processorCount;
+    uint64_t                         tic;
+    pthread_mutex_t                  mutex;
     //
     // Buffers
     //
@@ -88,6 +85,7 @@ struct rk_radar {
     RKPosition                       *positions;
     RKBuffer                         pulses;
     RKBuffer                         rays;
+    RKProduct                        *products;
     //
     // Anchor indices of the buffers
     //
@@ -97,6 +95,7 @@ struct rk_radar {
     uint32_t                         positionIndex;
     uint32_t                         pulseIndex;
     uint32_t                         rayIndex;
+    uint32_t                         productIndex;
     //
     // Secondary Health Buffer
     //
@@ -113,9 +112,9 @@ struct rk_radar {
     RKPulseCompressionEngine         *pulseCompressionEngine;
     RKPulseRingFilterEngine          *pulseRingFilterEngine;
     RKMomentEngine                   *momentEngine;
+    RKRawDataRecorder                *rawDataRecorder;
     RKHealthLogger                   *healthLogger;
     RKSweepEngine                    *sweepEngine;
-    RKDataRecorder                   *dataRecorder;
     RKFileManager                    *fileManager;
     RKRadarRelay                     *radarRelay;
     RKHostMonitor                    *hostMonitor;
@@ -127,8 +126,6 @@ struct rk_radar {
     // Internal copies of things
     //
     RKWaveform                       *waveform;
-    //
-    pthread_mutex_t                  mutex;
     //
     // Hardware protocols for controls
     //
@@ -205,9 +202,14 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
+// Moment processor
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
 int RKSetMomentProcessorToPulsePairHop(RKRadar *);
+int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
+
+// Moment recorder
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
 
 #pragma mark -
 
@@ -216,9 +218,8 @@ int RKSetVerbosity(RKRadar *, const int);
 int RKSetVerbosityUsingArray(RKRadar *, const uint8_t *);
 int RKSetDataPath(RKRadar *, const char *);
 int RKSetDataUsageLimit(RKRadar *, const size_t limit);
-int RKSetDoNotWrite(RKRadar *, const bool doNotWrite);
-int RKSetDataRecorder(RKRadar *, const bool record);
-int RKToggleDataRecorder(RKRadar *);
+int RKSetRecordingLevel(RKRadar *, const int);
+int RKToggleRawDataRecorderMode(RKRadar *);
 
 // Some operating parameters
 int RKSetWaveform(RKRadar *, RKWaveform *);

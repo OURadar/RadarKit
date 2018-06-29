@@ -103,7 +103,7 @@ static void *pulseTagger(void *_in) {
 
 	// If multiple workers are needed, here will be the time to launch them.
 
-    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;

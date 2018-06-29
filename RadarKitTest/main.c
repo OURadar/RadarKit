@@ -28,8 +28,8 @@ typedef struct user_params {
     int                      sprt;                                               // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
     int                      gateCount;                                          // Number of gates (simulate mode)
     int                      sleepInterval;                                      // Intermittent sleep period in transceiver simulator in seconds
+    int                      recordLevel;                                        // Data recording (1 - moment + health logs only, 2 - everything)
     bool                     simulate;                                           // Run with transceiver simulator
-    bool                     recordData;                                         // Data recording (I/Q, moment and health logs)
     double                   systemZCal[2];                                      // System calibration for Z
     double                   systemDCal;                                         // System calibration for D
     double                   systemPCal;                                         // System calibration for P
@@ -138,19 +138,20 @@ static void showHelp() {
            "         11 - Test initializing a radar system - RKRadarInit()\n"
            "         12 - Test converting a temperature reading to status\n"
            "         13 - Test getting a country name from position\n"
-           "         14 - Test reading a netcdf file\n"
-           "         15 - Test showing waveform properties\n"
-           "         16 - Test generating text for buffer overview\n"
+           "         14 - Test generating text for buffer overview\n"
+           "         15 - Test reading a netcdf file using RKSweepRead()\n"
+           "         16 - Test reading a netcdf file using RKProductRead()\n"
            "\n"
            "         20 - SIMD quick test\n"
            "         21 - SIMD test with numbers shown\n"
            "         22 - Show window types\n"
            "         23 - Hilbert transform\n"
-           "         24 - Generate an fft-wisdom file\n"
+           "         24 - Optimize FFT performance and generate an fft-wisdom file\n"
            "\n"
            "         30 - Make a frequency hopping sequence\n"
            "         31 - Make a TFM waveform\n"
            "         32 - Generate a waveform file\n"
+           "         33 - Test showing waveform properties\n"
            "\n"
            "         40 - Pulse compression using simple cases\n"
            "         41 - Calculating one ray using the Pulse Pair method\n"
@@ -259,9 +260,9 @@ static void handleSignals(int signal) {
     }
     fprintf(stderr, "\n");
     RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
-    RKStop(myRadar);
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
+    RKStop(myRadar);
 }
 
 #pragma mark - User Parameters
@@ -392,7 +393,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"tweeta-host"       , required_argument, NULL, 't'},
         {"version"           , no_argument      , NULL, 'u'},
         {"verbose"           , no_argument      , NULL, 'v'},
-        {"do-not-write"      , no_argument      , NULL, 'w'},
+        {"write-data"        , no_argument      , NULL, 'w'},
         {"simulate-sleep"    , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
@@ -503,17 +504,21 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKTestGetCountry();
                         break;
                     case 14:
+                        RKTestBufferOverviewText();
+                        break;
+                    case 15:
                         if (argc == optind) {
                             RKLog("No filename given.\n");
                             exit(EXIT_FAILURE);
                         }
-                        RKTestReadSweep(argv[optind]);
-                        break;
-                    case 15:
-                        RKTestWaveformProperties();
+                        RKTestSweepRead(argv[optind]);
                         break;
                     case 16:
-                        RKTestBufferOverviewText();
+                        if (argc == optind) {
+                            RKLog("No filename given.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                        RKTestProductRead(argv[optind]);
                         break;
                     case 20:
                         RKTestSIMD(RKTestSIMDFlagNull);
@@ -537,7 +542,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                         RKTestWaveformTFM();
                         break;
                     case 32:
-                        RKTestWriteWaveform();
+                        RKTestWaveformWrite();
+                        break;
+                    case 33:
+                        RKTestWaveformProperties();
                         break;
                     case 40:
                         RKTestPulseCompression((user->verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
@@ -704,7 +712,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case 'v':
                 break;
             case 'w':
-                user->recordData = true;
+                user->recordLevel++;
                 break;
             case 'z':
                 if (optarg) {
@@ -763,9 +771,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     // Some parameters before the radar is live
     if (!myRadar->active) {
         RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
-        if (!systemPreferences->recordData) {
-            RKSetDoNotWrite(myRadar, true);
-        }
+        RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
     }
@@ -798,10 +804,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     
     // Refresh all system calibration
     RKAddConfig(myRadar,
+                RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeySystemZCal, systemPreferences->systemZCal[0], systemPreferences->systemZCal[1],
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
-                RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeyNull);
 
@@ -849,7 +855,6 @@ int main(int argc, const char **argv) {
 
     // Screen output based on verbosity level
     if (systemPreferences->verbose) {
-        RKLog("Level II recording: %s\n", systemPreferences->recordData ? "true" : "false");
         if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term,
                    rkGlobalParameters.showColor ?
@@ -957,7 +962,7 @@ int main(int argc, const char **argv) {
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
         
-        usleep(200000);
+        usleep(100000);
 
         RKLog("Setting a waveform ...\n");
         RKExecuteCommand(myRadar, "t w ofm", NULL);
@@ -972,14 +977,13 @@ int main(int argc, const char **argv) {
         RKLog("Starting a new PPI ...\n");
         RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
         RKWaitWhileActive(myRadar);
-        RKStop(myRadar);
-
+    
         RKFileMonitorFree(preferenceFileMonitor);
 
     } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, systemPreferences->relayHost);
-        RKSetDoNotWrite(myRadar, true);
+        RKSetRecordingLevel(myRadar, 0);
 
         // Assembly a string that describes streams
         if (strlen(systemPreferences->streams)) {
@@ -989,7 +993,6 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
-        RKStop(myRadar);
         
     } else {
         
