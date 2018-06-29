@@ -1308,23 +1308,27 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
         return false;
     }
     size_t L = strlen(string);
+    if (*string != '{' || string[L - 1] != '}') {
+        fprintf(stderr, "RKFindCondition() - Expected {} pair around the string.\n");
+        return false;
+    }
+    int v;
+    char *ks;
+    char *sks;
+    uint8_t type;
+    uint8_t subType;
+
     char *str = (char *)malloc(L + 1);
     char *key = (char *)malloc(RKNameLength);
     char *obj = (char *)malloc(RKNameLength);
     char *subKey = (char *)malloc(RKNameLength);
     char *subObj = (char *)malloc(RKNameLength);
-    uint8_t type;
-    uint8_t subType;
-
-    int v;
-    char *ks;
-    char *sks;
-    if (*string != '{') {
-        fprintf(stderr, "RKFindCondition() - Expected '{'.\n");
-    }
+    *key = '\0';
+    *obj = '\0';
+    *subKey = '\0';
+    *subObj = '\0';
 
     strcpy(str, string);
-    str[L] = '\0';
 
     bool found = false;
 
@@ -1337,7 +1341,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
         sks = obj + 1;
         while (*sks != '\0' && *sks != '}') {
             sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (strcmp("Enum", subKey)) {
+            if (strncmp("Enum", subKey, 4)) {
                 continue;
             }
             v = atoi(subObj);
