@@ -1199,6 +1199,13 @@ typedef struct rk_waveform_cal {
     RKFloat              PCal[RKMaxFilterCount];                                // Calibration factor for individual tone
 } RKWaveformCalibration;
 
+typedef struct rk_waveform_response {
+    uint32_t             count;                                                 // Number of combinations (at most 3 for now)
+    uint32_t             length;                                                // Length of each filter
+    RKFloat              **amplitudeResponse;                                   // An array of amplitudes of [count][length] (dB)
+    RKFloat              **phaseResponse;                                       // An array of phases of [count][length] (radians)
+} RKWaveformResponse;
+
 typedef struct rk_task {
     RKCommand            command;                                               // A ocmmand string for RKRadarExecute()
     double               timeout;                                               // Maximum time for completion
