@@ -552,18 +552,26 @@ enum RKHealthNode {
 // Typical progression:
 //
 // EngineInit         RKEngineStateAllocated
-// EngineSetXYZ       RKEngineStateProperlyWired
-// EngineStart        RKEngineStateActivating
-//                    RKEngineStateWantActive
+//
+// EngineSetX
+// EngineSetY
+// EngineSetZ         RKEngineStateProperlyWired
+//
+// EngineStart        RKEngineStateWantActive
+//                    RKEngineStateActivating
+//                    RKEngineStateSleep0
+//                    RKEngineStateSleep0 -
+//                    RKEngineStateActive
 //                    RKEngineStateChildAllocated
 //                    RKEngineStateChildProperlyWired
 //                    RKEngineStateChildActivating
 //                    RKEngineStateChildActive
 //
-// EngineStop         RKEngineStateDeactivating
+// EngineStop         RKEngineStateWantActive -
+//                    RKEngineStateDeactivating
 //                    RKEngineStateChildDeactivating
 //                    RKEngineStateChildActive -
-//                    RKEngineStateWantActive -
+//                    RKEngineStateActive -
 //                    (RKEngineStateChildAllocated | RKEngineStateChildProperlyWired | RKEngineStateAllocated | RKEngineStateProperlyWired)
 //
 typedef uint32_t RKEngineState;
@@ -583,9 +591,9 @@ enum RKEngineState {
     RKEngineStateProperlyWired                   = (1 << 9),                   // All required pointers are properly wired up
     RKEngineStateActivating                      = (1 << 10),                  // The main run loop is being activated
     RKEngineStateDeactivating                    = (1 << 11),                  // The main run loop is being deactivated
-    RKEngineStateActive                          = (1 << 12),                  // The engine is active
+    RKEngineStateActive                          = (1 << 13),                  // The engine is active
     RKEngineStateWantActive                      = (1 << 15),                  // The engine is set to want active
-    RKEngineStateMainMask                        = 0x0000fF00,                 //
+    RKEngineStateMainMask                        = 0x0000FF00,                 //
     RKEngineStateChildAllocated                  = (1 << 16),                  // The child resources have been allocated
     RKEngineStateChildProperlyWired              = (1 << 17),                  // Probably not used
     RKEngineStateChildActivating                 = (1 << 18),                  // The children are being activated
@@ -714,6 +722,13 @@ enum RKWaveformType {
     RKWaveformTypeTimeFrequencyMultiplexing      = (1 << 4),                   //
     RKWaveformTypeFromFile                       = (1 << 5),                   //
     RKWaveformTypeFlatAnchors                    = (1 << 6)                    // Frequency hopping has multiple waveforms but the anchors are identical
+};
+
+typedef uint32_t RKEventType;
+enum RKEventType {
+    RKEventTypeNull,
+    RKEventTypeRaySweepBegin,
+    RKEventTypeRaySweepEnd
 };
 
 #pragma mark - Structure Definitions
@@ -1183,6 +1198,12 @@ typedef struct rk_waveform_cal {
     RKFloat              DCal[RKMaxFilterCount];                                // Calibration factor for individual tone
     RKFloat              PCal[RKMaxFilterCount];                                // Calibration factor for individual tone
 } RKWaveformCalibration;
+
+typedef struct rk_task {
+    RKCommand            command;                                               // A ocmmand string for RKRadarExecute()
+    double               timeout;                                               // Maximum time for completion
+    RKEventType          endingEvent;                                           // Ending event that indicates completion of the task
+} RKTask;
 
 #pragma pack(pop)
 
