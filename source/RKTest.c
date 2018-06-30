@@ -1408,6 +1408,10 @@ void *RKTestTransceiverRunLoop(void *input) {
     
     const int chunkSize = MAX(1, (int)floor(0.2 / transceiver->prt));
     
+    // Update the engine state
+    transceiver->state |= RKEngineStateWantActive;
+    transceiver->state &= ~RKEngineStateActivating;
+    
     gettimeofday(&t0, NULL);
 
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
@@ -1436,8 +1440,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
     
     transceiver->state |= RKEngineStateActive;
-    transceiver->state &= ~RKEngineStateActivating;
-    
+
     const double periodEven = transceiver->prt;
     const double periodOdd =
     transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
@@ -1488,11 +1491,11 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKWaveform *waveform = transceiver->waveformCache[0];
     unsigned int cacheIndex = 0;
 
-    while (transceiver->state & RKEngineStateActive) {
+    while (transceiver->state & RKEngineStateWantActive) {
 
         periodTotal = 0.0;
 
-        for (j = 0; j < chunkSize && transceiver->state & RKEngineStateActive; j++) {
+        for (j = 0; j < chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
@@ -1630,6 +1633,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     free(ra);
     free(rn);
 
+    transceiver->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -1732,7 +1736,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
         RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
     }
-    while (!(transceiver->state & RKEngineStateActive)) {
+    while (!(transceiver->state & RKEngineStateWantActive)) {
         usleep(10000);
     }
 
@@ -1769,7 +1773,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     RKLog("%s Disconnecting ...", transceiver->name);
                 }
                 transceiver->state |= RKEngineStateDeactivating;
-                transceiver->state ^= RKEngineStateActive;
+                transceiver->state ^= RKEngineStateWantActive;
                 pthread_join(transceiver->tidRunLoop, NULL);
                 if (response != NULL) {
                     sprintf(response, "ACK. Transceiver stopped." RKEOL);
@@ -1985,6 +1989,9 @@ void *RKTestPedestalRunLoop(void *input) {
     bool scanEndRHI = true;
     bool elTransition = false;
 
+    pedestal->state |= RKEngineStateWantActive;
+    pedestal->state &= ~RKEngineStateActivating;
+
     gettimeofday(&t0, NULL);
 
     RKLog("%s Started.   mem = %s B\n", pedestal->name, RKUIntegerToCommaStyleString(pedestal->memoryUsage));
@@ -1997,11 +2004,10 @@ void *RKTestPedestalRunLoop(void *input) {
     RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
     
     pedestal->state |= RKEngineStateActive;
-    pedestal->state &= ~RKEngineStateActivating;
-    
+
     int commandCount = pedestal->commandCount;
     
-    while (pedestal->state & RKEngineStateActive) {
+    while (pedestal->state & RKEngineStateWantActive) {
         if (commandCount != pedestal->commandCount) {
             commandCount = pedestal->commandCount;
             elevation = pedestal->scanElevation;
@@ -2115,6 +2121,7 @@ void *RKTestPedestalRunLoop(void *input) {
         t0 = t1;
     }
     
+    pedestal->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -2139,7 +2146,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         RKLog("%s. Unable to create pedestal run loop.\n", pedestal->name);
     }
     //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
-    while (!(pedestal->state & RKEngineStateActive)) {
+    while (!(pedestal->state & RKEngineStateWantActive)) {
         usleep(10000);
     }
 
@@ -2158,7 +2165,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             RKLog("%s Disconnecting ...", pedestal->name);
         }
         pedestal->state |= RKEngineStateDeactivating;
-        pedestal->state ^= RKEngineStateActive;
+        pedestal->state ^= RKEngineStateWantActive;
         pthread_join(pedestal->tidRunLoop, NULL);
         if (response != NULL) {
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
@@ -2240,8 +2247,12 @@ void *RKTestHealthRelayRunLoop(void *input) {
     
     int n;
     float powerH, powerV;
+    double latitude, longitude, heading;
     double dt = 0.0;
     struct timeval t0, t1;
+
+    healthRelay->state |= RKEngineStateWantActive;
+    healthRelay->state &= ~RKEngineStateActivating;
 
     gettimeofday(&t0, NULL);
     
@@ -2252,13 +2263,15 @@ void *RKTestHealthRelayRunLoop(void *input) {
     }
 
     healthRelay->state |= RKEngineStateActive;
-    healthRelay->state &= ~RKEngineStateActivating;
-    
-    while (healthRelay->state & RKEngineStateActive) {
+
+    while (healthRelay->state & RKEngineStateWantActive) {
         powerH = (float)rand() / RAND_MAX - 0.5f;
         powerV = (float)rand() / RAND_MAX - 0.5f;
+        latitude = (double)rand() * 8.0e-6f / RAND_MAX + 35.5f;
+        longitude = (double)rand() * 8.0e-6f / RAND_MAX - 95.5f;
+        heading = (double)rand() * 0.2 / RAND_MAX + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
-        sprintf(health->string, "{"
+        snprintf(health->string, RKMaximumStringLength - 1, "{"
                 "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
                 "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
@@ -2269,9 +2282,9 @@ void *RKTestHealthRelayRunLoop(void *input) {
                 "}",
                 RKStatusEnumNormal,
                 RKStatusEnumNormal,
-                (double)rand() * 8.0e-6 / RAND_MAX + 35.5,
-                (double)rand() * 8.0e-6 / RAND_MAX - 95.5,
-                (double)rand() * 0.2 / RAND_MAX + 45,
+                latitude,
+                longitude,
+                heading,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
@@ -2287,6 +2300,7 @@ void *RKTestHealthRelayRunLoop(void *input) {
         t0 = t1;
     }
 
+    healthRelay->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -2311,7 +2325,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         RKLog("%s. Unable to create pedestal run loop.\n", healthRelay->name);
     }
     //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
-    while (!(healthRelay->state & RKEngineStateActive)) {
+    while (!(healthRelay->state & RKEngineStateWantActive)) {
         usleep(10000);
     }
     
@@ -2327,7 +2341,7 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
             RKLog("%s Disconnecting ...", healthRelay->name);
         }
         healthRelay->state |= RKEngineStateDeactivating;
-        healthRelay->state ^= RKEngineStateActive;
+        healthRelay->state ^= RKEngineStateWantActive;
         pthread_join(healthRelay->tidRunLoop, NULL);
         if (response != NULL) {
             sprintf(response, "ACK. Health Relay stopped." RKEOL);
@@ -2362,6 +2376,28 @@ void RKTestSingleCommand(void) {
     printf("string = %s\n", string);
     RKReplaceKeyValue(string, "Enum", RKStatusEnumOld);
     printf("string = %s\n", string);
+}
+
+void RKTestExperiment(void) {
+    SHOW_FUNCTION_NAME
+    RKEngineState state = RKEngineStateWantActive;
+    int j, k;
+    struct timeval tic, toc;
+    double delta = INFINITY;
+    double x = 0;
+    
+    for (j = 0; j < 3; j++) {
+        gettimeofday(&tic, NULL);
+        k = 0;
+        while (state & RKEngineStateWantActive && k < 1000000000) {
+            x = 0.0f;
+            k++;
+        }
+        gettimeofday(&toc, NULL);
+        delta = MIN(delta, RKTimevalDiff(toc, tic));
+        printf("delta = %.3f us\n", 1.0e6 * delta);
+    }
+    printf("Best delta = %.3f us\n", 1.0e6 * delta);
 }
 
 #pragma mark -

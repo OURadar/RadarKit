@@ -28,7 +28,7 @@ static void *healthConsolidator(void *_in) {
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
     
 	// Update the engine state
-	engine->state |= RKEngineStateActive;
+	engine->state |= RKEngineStateWantActive;
 	engine->state ^= RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
@@ -36,10 +36,12 @@ static void *healthConsolidator(void *_in) {
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
+    engine->state |= RKEngineStateActive;
+
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     k = 0;   // health index
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // Evaluate the nodal-health buffers every once in a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) < 0.1) {
@@ -56,7 +58,7 @@ static void *healthConsolidator(void *_in) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
         allTrue = true;
-        while (allTrue && engine->state & RKEngineStateActive) {
+        while (allTrue && engine->state & RKEngineStateWantActive) {
             for (j = 0; j < desc->healthNodeCount; j++) {
                 if (indices[j] != engine->healthNodes[j].index) {
                     indices[j] = engine->healthNodes[j].index;
@@ -79,7 +81,7 @@ static void *healthConsolidator(void *_in) {
         engine->state |= RKEngineStateSleep2;
         // Wait until all the flags are ready (wait when any flag is still vacant)
         s = 0;
-        while (engine->state & RKEngineStateActive) {
+        while (engine->state & RKEngineStateWantActive) {
             allTrue = true;
             for (j = 0; j < desc->healthNodeCount; j++) {
                 if (engine->healthNodes[j].active) {
@@ -122,7 +124,7 @@ static void *healthConsolidator(void *_in) {
         }
         engine->state ^= RKEngineStateSleep2;
         
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
 
@@ -173,6 +175,7 @@ static void *healthConsolidator(void *_in) {
 
     free(indices);
     
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -236,13 +239,13 @@ int RKHealthEngineStop(RKHealthEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	if (!(engine->state & RKEngineStateActive)) {
+	if (!(engine->state & RKEngineStateWantActive)) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
 	if (engine->tidHealthConsolidator) {
 		pthread_join(engine->tidHealthConsolidator, NULL);
 		engine->tidHealthConsolidator = (pthread_t)0;

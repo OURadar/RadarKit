@@ -770,7 +770,7 @@ static void *fileMonitorRunLoop(void *in) {
     int s;
     struct stat fileStat;
     
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     stat(engine->filename, &fileStat);
@@ -778,10 +778,11 @@ static void *fileMonitorRunLoop(void *in) {
 
     RKLog("%s Started.   file = %s\n", engine->name, engine->filename);
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
+        engine->state |= RKEngineStateActive;
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (s++ < 10 && engine->state & RKEngineStateActive) {
+        while (s++ < 10 && engine->state & RKEngineStateWantActive) {
             if (engine->verbose > 2) {
                 RKLog("%s", engine->name);
             }
@@ -797,6 +798,7 @@ static void *fileMonitorRunLoop(void *in) {
             }
         }
     }
+    engine->state &= ~RKEngineStateActive;
     return NULL;
 }
 
@@ -821,7 +823,7 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *), 
         free(engine);
         return NULL;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+    while (!(engine->state & RKEngineStateWantActive)) {
         usleep(100000);
     }
     return engine;
@@ -1460,9 +1462,13 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (!(engine->state & RKEngineStateWantActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     if (engine->tid) {
         pthread_join(engine->tid, NULL);
     }

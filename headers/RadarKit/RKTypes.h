@@ -32,7 +32,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define RKVersionString "1.2.10"
+#define RKVersionString "2.0b"
 
 //
 // Memory Blocks
@@ -554,7 +554,7 @@ enum RKHealthNode {
 // EngineInit         RKEngineStateAllocated
 // EngineSetXYZ       RKEngineStateProperlyWired
 // EngineStart        RKEngineStateActivating
-//                    RKEngineStateActive
+//                    RKEngineStateWantActive
 //                    RKEngineStateChildAllocated
 //                    RKEngineStateChildProperlyWired
 //                    RKEngineStateChildActivating
@@ -563,12 +563,12 @@ enum RKHealthNode {
 // EngineStop         RKEngineStateDeactivating
 //                    RKEngineStateChildDeactivating
 //                    RKEngineStateChildActive -
-//                    RKEngineStateActive -
+//                    RKEngineStateWantActive -
 //                    (RKEngineStateChildAllocated | RKEngineStateChildProperlyWired | RKEngineStateAllocated | RKEngineStateProperlyWired)
 //
 typedef uint32_t RKEngineState;
 enum RKEngineState {
-    RKEngineStateNull                            = 0,                          //
+    RKEngineStateNull                            = 0,                          // Nothing
     RKEngineStateSleep0                          = 1,                          // Usually for a wait just outside of the main while loop
     RKEngineStateSleep1                          = (1 << 1),                   // Stage 1 wait - usually waiting for pulse
     RKEngineStateSleep2                          = (1 << 2),                   // Stage 2 wait
@@ -578,12 +578,14 @@ enum RKEngineState {
     RKEngineStateMemoryChange                    = (1 << 5),                   // Some required pointers are being changed
     RKEngineStateSuspended                       = (1 << 6),                   // All indices stop increasing
     RKEngineStateBusyMask                        = 0x000000F0,                 //
+    RKEngineStateReserved                        = (1 << 7),                   //
     RKEngineStateAllocated                       = (1 << 8),                   // Resources have been allocated
     RKEngineStateProperlyWired                   = (1 << 9),                   // All required pointers are properly wired up
     RKEngineStateActivating                      = (1 << 10),                  // The main run loop is being activated
     RKEngineStateDeactivating                    = (1 << 11),                  // The main run loop is being deactivated
     RKEngineStateActive                          = (1 << 12),                  // The engine is active
-    RKEngineStateMainMask                        = 0x00001F00,                 //
+    RKEngineStateWantActive                      = (1 << 15),                  // The engine is set to want active
+    RKEngineStateMainMask                        = 0x0000fF00,                 //
     RKEngineStateChildAllocated                  = (1 << 16),                  // The child resources have been allocated
     RKEngineStateChildProperlyWired              = (1 << 17),                  // Probably not used
     RKEngineStateChildActivating                 = (1 << 18),                  // The children are being activated

@@ -26,7 +26,7 @@ static void *rayReleaser(void *in) {
     s = 0;
     do {
         usleep(100000);
-    } while (++s < 50 && engine->state & RKEngineStateActive);
+    } while (++s < 50 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
         RKLog("%s rayReleaser()  scratchSpaceIndex = %d\n", engine->name, scratchSpaceIndex);
@@ -113,7 +113,7 @@ static void *sweepManager(void *in) {
         pthread_mutex_unlock(&engine->productMutex);
         while (engine->productBuffer[i].i != sweep->header.config.i &&
                engine->productTimeoutSeconds * 100 > s &&
-               engine->state & RKEngineStateActive) {
+               engine->state & RKEngineStateWantActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
@@ -130,7 +130,7 @@ static void *sweepManager(void *in) {
             allReported = false;
         }
     }
-    if (!(engine->state & RKEngineStateActive)) {
+    if (!(engine->state & RKEngineStateWantActive)) {
         return NULL;
     }
 
@@ -268,7 +268,7 @@ static void *rayGatherer(void *in) {
     RKRay **rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
 
     // Update the engine state
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     RKName name;
@@ -342,15 +342,18 @@ static void *rayGatherer(void *in) {
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
 
+    // Update the engine state
+    engine->state |= RKEngineStateActive;
+
     j = 0;   // ray index
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // The ray
         ray = RKGetRay(engine->rayBuffer, j);
         
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (j == *engine->rayIndex && engine->state & RKEngineStateActive) {
+        while (j == *engine->rayIndex && engine->state & RKEngineStateWantActive) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
@@ -361,7 +364,7 @@ static void *rayGatherer(void *in) {
         engine->state |= RKEngineStateSleep2;
         // Wait until the ray is ready. This can never happen right? Because rayIndex only advances after the ray is ready
         s = 0;
-        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive) {
+        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive) {
             RKLog("%s I can happen.   j = %d   is = %d\n", engine->name, j, is);
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
@@ -371,7 +374,7 @@ static void *rayGatherer(void *in) {
         }
         engine->state ^= RKEngineStateSleep2;
 
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
         
@@ -406,7 +409,7 @@ static void *rayGatherer(void *in) {
             }
             do {
                 usleep(50000);
-            } while (tic == engine->tic && engine->state & RKEngineStateActive);
+            } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
 
             // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
             if (tidRayReleaser) {
@@ -418,7 +421,7 @@ static void *rayGatherer(void *in) {
             }
             do {
                 usleep(50000);
-            } while (tic == engine->tic && engine->state & RKEngineStateActive);
+            } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
 
             // Ready for next collection while the sweepManager is busy
             engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
@@ -452,7 +455,7 @@ static void *rayGatherer(void *in) {
                 }
                 do {
                     usleep(50000);
-                } while (tic == engine->tic && engine->state & RKEngineStateActive);
+                } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
 
                 // Ready for next collection while the sweepManager is busy
                 engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
@@ -469,7 +472,9 @@ static void *rayGatherer(void *in) {
     }
     if (tidSweepManager) {
         pthread_join(tidSweepManager, NULL);
+        tidSweepManager = (pthread_t)0;
     }
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -496,7 +501,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
 }
 
 void RKSweepEngineFree(RKSweepEngine *engine) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKSweepEngineStop(engine);
     }
     pthread_mutex_destroy(&engine->productMutex);
@@ -569,13 +574,13 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (!(engine->state & RKEngineStateActive)) {
+    if (!(engine->state & RKEngineStateWantActive)) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     if (engine->tidRayGatherer) {
         pthread_join(engine->tidRayGatherer, NULL);
         engine->tidRayGatherer = (pthread_t)0;

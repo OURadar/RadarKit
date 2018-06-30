@@ -151,5 +151,6 @@ int RKTestHealthRelayFree(RKHealthRelay);
 #pragma mark -
 
 void RKTestSingleCommand(void);
+void RKTestExperiment(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

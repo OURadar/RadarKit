@@ -98,7 +98,7 @@ static void *pulseTagger(void *_in) {
     bool hasSweepEnd;
 
 	// Update the engine state
-	engine->state |= RKEngineStateActive;
+	engine->state |= RKEngineStateWantActive;
 	engine->state ^= RKEngineStateActivating;
 
 	// If multiple workers are needed, here will be the time to launch them.
@@ -113,7 +113,7 @@ static void *pulseTagger(void *_in) {
     // Wait until there is something ingested
     s = 0;
     engine->state |= RKEngineStateSleep0;
-    while (*engine->positionIndex < 2 && engine->state & RKEngineStateActive) {
+    while (*engine->positionIndex < 2 && engine->state & RKEngineStateWantActive) {
         usleep(1000);
         if (++s % 200 == 0 && engine->verbose > 1) {
             RKLog("%s sleep 0/%.1f s\n",
@@ -121,6 +121,7 @@ static void *pulseTagger(void *_in) {
         }
     }
     engine->state ^= RKEngineStateSleep0;
+    engine->state |= RKEngineStateActive;
 
     c0 = *engine->configIndex;
     c1 = RKPreviousModuloS(c0, engine->radarDescription->configBufferDepth);
@@ -128,14 +129,14 @@ static void *pulseTagger(void *_in) {
     // Set the pulse to have position
     j = 0;   // position index
     k = 0;   // pulse index;
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // Get the latest pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         
         // Wait until a thread check out this pulse.
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state & RKEngineStateWantActive) {
             usleep(1000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -146,7 +147,7 @@ static void *pulseTagger(void *_in) {
         engine->state ^= RKEngineStateSleep2;
         // Wait until the pulse has data & processed. Otherwise, the time stamp is no good and there is a horse raise with the pulse compression engine (setting flag).
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusRingProcessed) && engine->state & RKEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusRingProcessed) && engine->state & RKEngineStateWantActive) {
             usleep(1000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -158,7 +159,7 @@ static void *pulseTagger(void *_in) {
         // Wait until we have a position newer than pulse time.
         s = 0;
         i = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-        while ((!(engine->positionBuffer[i].flag & RKPositionFlagReady) || engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble) && engine->state & RKEngineStateActive) {
+        while ((!(engine->positionBuffer[i].flag & RKPositionFlagReady) || engine->positionBuffer[i].timeDouble <= pulse->header.timeDouble) && engine->state & RKEngineStateWantActive) {
             usleep(1000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 3/%.1f s   k = %d   positionTime = %s %s %s = pulseTime\n",
@@ -174,7 +175,7 @@ static void *pulseTagger(void *_in) {
         // Record down the latest time
         timeLatest = engine->positionBuffer[i].timeDouble;
         
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
         
@@ -184,7 +185,7 @@ static void *pulseTagger(void *_in) {
         // Search until the time just after the pulse was acquired.
         i = 0;
         hasSweepEnd = false;
-        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->radarDescription->pulseBufferDepth && engine->state & RKEngineStateActive) {
+        while (engine->positionBuffer[j].timeDouble <= pulse->header.timeDouble && i < engine->radarDescription->pulseBufferDepth && engine->state & RKEngineStateWantActive) {
             hasSweepEnd |= engine->positionBuffer[j].flag & (RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete);
             j = RKNextModuloS(j, engine->radarDescription->positionBufferDepth);
             i++;
@@ -323,6 +324,7 @@ static void *pulseTagger(void *_in) {
 		// Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -393,13 +395,13 @@ int RKPositionEngineStop(RKPositionEngine *engine) {
 		}
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
-	if (!(engine->state & RKEngineStateActive)) {
+	if (!(engine->state & RKEngineStateWantActive)) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
 	if (engine->threadId) {
 		pthread_join(engine->threadId, NULL);
 		engine->threadId = (pthread_t)0;

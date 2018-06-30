@@ -95,17 +95,19 @@ static void *engineMonitorRunLoop(void *in) {
     
     bool shown = false;
     
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     RKRadar *radar = (RKRadar *)engine->userResource;
 
     RKLog("%s Started.   radar = %s\n", engine->name, radar->desc.name);
     
-    while (engine->state & RKEngineStateActive) {
+    engine->state ^= RKEngineStateActive;
+
+    while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (s++ < 10 && engine->state & RKEngineStateActive) {
+        while (s++ < 10 && engine->state & RKEngineStateWantActive) {
             if (engine->verbose > 2) {
                 RKLog("%s", engine->name);
             }
@@ -140,6 +142,7 @@ static void *engineMonitorRunLoop(void *in) {
             shown = false;
         }
     }
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -163,7 +166,7 @@ RKSimpleEngine *RKSystemInspector(RKRadar *radar) {
         free(engine);
         return NULL;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+    while (!(engine->state & RKEngineStateWantActive)) {
         usleep(100000);
     }
     return engine;

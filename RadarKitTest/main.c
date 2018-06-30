@@ -577,6 +577,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     case 53:
                         RKTestCacheWrite();
                         break;
+                    case 60:
+                        RKTestExperiment();
+                        break;
                     default:
                         RKLog("Test %d is invalid.\n", k);
                         break;

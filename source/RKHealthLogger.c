@@ -96,7 +96,7 @@ static void *healthLogger(void *in) {
 	int min = -1;
 
 	// Update the engine state
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B   healthIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->healthIndex);
@@ -104,19 +104,21 @@ static void *healthLogger(void *in) {
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
+    engine->state |= RKEngineStateActive;
+
     gettimeofday(&t0, NULL);
 
 	// Here comes the busy loop
 	// i  anonymous
     k = 0;   // health index
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // Get the latest health
         health = &engine->healthBuffer[k];
 
         // Wait until the engine index advances
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (k == *engine->healthIndex && engine->state & RKEngineStateActive) {
+        while (k == *engine->healthIndex && engine->state & RKEngineStateWantActive) {
             usleep(100000);
             if (++s % 10 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   healthIndex = %d   flag = 0x%02x\n",
@@ -127,7 +129,7 @@ static void *healthLogger(void *in) {
         engine->state |= RKEngineStateSleep2;
         // Wait until the payload is properly filled
         s = 0;
-        while (!(health->flag & RKHealthFlagReady) && engine->state & RKEngineStateActive) {
+        while (!(health->flag & RKHealthFlagReady) && engine->state & RKEngineStateWantActive) {
             usleep(100000);
             if (++s % 10 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   healthIndex = %d   flag = 0x%02x\n",
@@ -136,7 +138,7 @@ static void *healthLogger(void *in) {
         }
         engine->state ^= RKEngineStateSleep2;
 
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
 
@@ -262,6 +264,7 @@ static void *healthLogger(void *in) {
         engine->fid = NULL;
     }
     
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -279,7 +282,7 @@ RKHealthLogger *RKHealthLoggerInit() {
 }
 
 void RKHealthLoggerFree(RKHealthLogger *engine) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKHealthLoggerStop(engine);
     }
     free(engine);
@@ -331,13 +334,13 @@ int RKHealthLoggerStop(RKHealthLogger *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (!(engine->state & RKEngineStateActive)) {
+    if (!(engine->state & RKEngineStateWantActive)) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     pthread_join(engine->tidBackground, NULL);
     engine->state ^= RKEngineStateDeactivating;
     RKLog("%s Stopped.\n", engine->name);

@@ -178,10 +178,10 @@ static void *hostPinger(void *in) {
     me->sequenceNumber = 1;
     me->identifier = rand() & 0xffff;
     gettimeofday(&me->latestTime, NULL);
-
+    
     uint32_t unreachCount = 0;
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
 
         // Reset buffer
         memset(buff, 0, RKHostMonitorPacketSize);
@@ -205,7 +205,7 @@ static void *hostPinger(void *in) {
             // Now we wait a little
             pthread_mutex_unlock(&engine->mutex);
             k = 0;
-            while (k++ < 10 && engine->state & RKEngineStateActive) {
+            while (k++ < 10 && engine->state & RKEngineStateWantActive) {
                 usleep(100000);
             }
             // Delay reporting since other threads may still be waiting for recvfrom()
@@ -239,7 +239,7 @@ static void *hostPinger(void *in) {
         k = 0;
         offset = (size_t)-1;
         returnAddress.sin_addr.s_addr = 0x0100007F;
-        while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount + 1 && engine->state & RKEngineStateActive) {
+        while (returnAddress.sin_addr.s_addr != targetAddress.sin_addr.s_addr && k++ < engine->workerCount + 1 && engine->state & RKEngineStateWantActive) {
             if ((r = recvfrom(sd, buff, RKHostMonitorPacketSize, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
                 if (engine->verbose > 1 && engine->tic != 2) {
                     RKLog("%s %s recvfrom()   sd = %d   r = %d  / %d   %d.%d.%d.%d   returnLength = %d\n",
@@ -325,7 +325,7 @@ static void *hostPinger(void *in) {
             
             // Wait less if this round failed.
             k = 0;
-            while (k++ < 10 && engine->state & RKEngineStateActive) {
+            while (k++ < 10 && engine->state & RKEngineStateWantActive) {
                 usleep(100000);
             }
             continue;
@@ -335,7 +335,7 @@ static void *hostPinger(void *in) {
 
         // Now we wait
         k = 0;
-        while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateActive) {
+        while (k++ < me->pingIntervalInSeconds * 10 && engine->state & RKEngineStateWantActive) {
             usleep(100000);
         }
     }
@@ -356,7 +356,7 @@ static void *hostWatcher(void *in) {
     int k;
     bool anyTrue, allKnown, allReachable, anyReachable;
     
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     if (engine->workers != NULL) {
@@ -387,12 +387,13 @@ static void *hostWatcher(void *in) {
 
     engine->state |= RKEngineStateSleep0;
     for (k = 0; k < engine->workerCount; k++) {
-        while (engine->workers[k].tic == 0 && engine->state & RKEngineStateActive) {
+        while (engine->workers[k].tic == 0 && engine->state & RKEngineStateWantActive) {
             usleep(10000);
         }
     }
     engine->state ^= RKEngineStateSleep0;
-
+    engine->state |= RKEngineStateActive;
+    
     RKLog("%s Started.   mem = %s B\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage));
 
     // Increase the tic once to indicate the engine is ready
@@ -406,7 +407,7 @@ static void *hostWatcher(void *in) {
             anyTrue |= worker->tic == engine->tic;
         }
         usleep(10000);
-    } while (anyTrue && engine->state & RKEngineStateActive);
+    } while (anyTrue && engine->state & RKEngineStateWantActive);
 
     // Increase one more now that the children are going
     engine->tic = 2;
@@ -419,7 +420,7 @@ static void *hostWatcher(void *in) {
     }
     
     // Wait here while the engine should stay active
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // Consolidate all the state from all unit watcher
         allKnown = true;
         allReachable = true;
@@ -457,7 +458,7 @@ static void *hostWatcher(void *in) {
             if (engine->verbose > 2) {
                 RKLog("Info. %d %d %d vs %d\n", engine->workers[0].tic, engine->workers[1].tic, engine->workers[2].tic, engine->tic);
             }
-        } while (anyTrue && engine->state & RKEngineStateActive);
+        } while (anyTrue && engine->state & RKEngineStateWantActive);
         engine->state ^= RKEngineStateSleep1;
 
         engine->tic++;
@@ -468,6 +469,7 @@ static void *hostWatcher(void *in) {
     }
     free(engine->workers);
 
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -491,7 +493,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
 }
 
 void RKHostMonitorFree(RKHostMonitor *engine) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKHostMonitorStop(engine);
     }
     pthread_mutex_destroy(&engine->mutex);
@@ -505,7 +507,7 @@ void RKHostMonitorSetVerbose(RKHostMonitor *engine, const int verbose) {
 }
 
 void RKHostMonitorAddHost(RKHostMonitor *engine, const char *address) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKLog("%s Cannot add host after the engine has started.\n", engine->name);
         return;
     }
@@ -540,13 +542,13 @@ int RKHostMonitorStop(RKHostMonitor *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (!(engine->state & RKEngineStateActive)) {
+    if (!(engine->state & RKEngineStateWantActive)) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     if (engine->tidHostWatcher) {
         pthread_join(engine->tidHostWatcher, NULL);
         engine->tidHostWatcher = (pthread_t)0;
