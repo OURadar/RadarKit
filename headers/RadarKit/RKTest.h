@@ -86,6 +86,12 @@ typedef struct rk_test_health_relay {
     size_t         memoryUsage;
 } RKTestHealthRelay;
 
+
+#pragma mark - Test By Number
+
+char *RKTestByNumberDescription(void);
+void RKTestByNumber(const int, const void *);
+
 #pragma mark - Basic Tests
 
 void RKTestTerminalColors(void);

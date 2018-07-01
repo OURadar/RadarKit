@@ -36,6 +36,181 @@ static void RKTestCallback(void *in) {
 
 #pragma mark - Fundamental Functions
 
+char *RKTestByNumberDescription(void) {
+    return
+    "          0 - Show types\n"
+    "          1 - Show colors\n"
+    "          2 - Test pretty strings\n"
+    "          3 - Test modulo math macros\n"
+    "          4 - Test parsing comma delimited values\n"
+    "          5 - Test parsing values in a JSON string\n"
+    "          6 - Test initializing a file maanger - RKFileManagerInit()\n"
+    "          7 - Test reading a preference file - RKPreferenceInit()\n"
+    "          8 - Test counting files using RKCountFilesInPath()\n"
+    "          9 - Test the file monitor module - RKFileMonitor()\n"
+    "         10 - Test the internet monitor module - RKHostMonitorInit()\n"
+    "         11 - Test initializing a radar system - RKRadarInit()\n"
+    "         12 - Test converting a temperature reading to status\n"
+    "         13 - Test getting a country name from position\n"
+    "         14 - Test generating text for buffer overview\n"
+    "         15 - Test reading a netcdf file using RKSweepRead()\n"
+    "         16 - Test reading a netcdf file using RKProductRead()\n"
+    "\n"
+    "         20 - SIMD quick test\n"
+    "         21 - SIMD test with numbers shown\n"
+    "         22 - Show window types\n"
+    "         23 - Hilbert transform\n"
+    "         24 - Optimize FFT performance and generate an fft-wisdom file\n"
+    "\n"
+    "         30 - Make a frequency hopping sequence\n"
+    "         31 - Make a TFM waveform\n"
+    "         32 - Generate a waveform file\n"
+    "         33 - Test showing waveform properties\n"
+    "\n"
+    "         40 - Pulse compression using simple cases\n"
+    "         41 - Calculating one ray using the Pulse Pair method\n"
+    "         42 - Calculating one ray using the Pulse Pair Hop method\n"
+    "         43 - Calculating one ray using the Multi-Lag method with L = 2\n"
+    "         44 - Calculating one ray using the Multt-Lag method with L = 3\n"
+    "         45 - Calculating one ray using the Multi-Lag method with L = 4\n"
+    "\n"
+    "         50 - Measure the speed of SIMD calculations\n"
+    "         51 - Measure the speed of pulse compression\n"
+    "         52 - Measure the speed of various moment methods\n"
+    "         53 - Measure the speed of cached write\n"
+    "\n";
+}
+
+void RKTestByNumber(const int number, const void *arg) {
+    RKSetWantScreenOutput(true);
+    switch (number) {
+        case 0:
+            RKShowTypeSizes();
+            printf("\n");
+            RKNetworkShowPacketTypeNumbers();
+            break;
+        case 1:
+            RKTestTerminalColors();
+            break;
+        case 2:
+            RKTestPrettyStrings();
+            break;
+        case 3:
+            RKTestModuloMath();
+            break;
+        case 4:
+            RKTestParseCommaDelimitedValues();
+            break;
+        case 5:
+            RKTestParseJSONString();
+            break;
+        case 6:
+            RKTestFileManager();
+            break;
+        case 7:
+            RKTestPreferenceReading();
+            break;
+        case 8:
+            RKTestCountFiles();
+            break;
+        case 9:
+            RKTestFileMonitor();
+            break;
+        case 10:
+            RKTestHostMonitor();
+            break;
+        case 11:
+            RKTestInitializingRadar();
+            break;
+        case 12:
+            RKTestTemperatureToStatus();
+            break;
+        case 13:
+            RKTestGetCountry();
+            break;
+        case 14:
+            RKTestBufferOverviewText();
+            break;
+        case 15:
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKTestSweepRead((char *)arg);
+            break;
+        case 16:
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKTestProductRead((char *)arg);
+            break;
+        case 20:
+            RKTestSIMD(RKTestSIMDFlagNull);
+            break;
+        case 21:
+            RKTestSIMD(RKTestSIMDFlagShowNumbers);
+            break;
+        case 22:
+            RKTestWindow();
+            break;
+        case 23:
+            RKTestHilbertTransform();
+            break;
+        case 24:
+            RKTestWriteFFTWisdom();
+            break;
+        case 30:
+            RKTestMakeHops();
+            break;
+        case 31:
+            RKTestWaveformTFM();
+            break;
+        case 32:
+            RKTestWaveformWrite();
+            break;
+        case 33:
+            RKTestWaveformProperties();
+            break;
+        case 40:
+            RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
+            break;
+        case 41:
+            RKTestOneRay(RKPulsePair, 0);
+            break;
+        case 42:
+            RKTestOneRay(RKPulsePairHop, 0);
+            break;
+        case 43:
+            RKTestOneRay(RKMultiLag, 2);
+            break;
+        case 44:
+            RKTestOneRay(RKMultiLag, 3);
+            break;
+        case 45:
+            RKTestOneRay(RKMultiLag, 4);
+            break;
+        case 50:
+            RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
+            break;
+        case 51:
+            RKTestPulseCompressionSpeed();
+            break;
+        case 52:
+            RKTestMomentProcessorSpeed();
+            break;
+        case 53:
+            RKTestCacheWrite();
+            break;
+        case 60:
+            RKTestExperiment();
+            break;
+        default:
+            RKLog("Test %d is invalid.\n", number);
+            break;
+    }
+}
+
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
     for (int k = 0; k < 17; k++) {

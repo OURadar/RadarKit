@@ -14,10 +14,10 @@
 
 // More function definitions
 
-typedef struct rk_task {
+typedef struct rk_radar_command {
     RKRadar *radar;
     RKCommand command;
-} RKTaskInput;
+} RKRadarCommand;
 
 #pragma mark - Static Functions
 
@@ -197,9 +197,9 @@ void *radarCoPilot(void *in) {
 }
 
 void *masterControllerExecuteInBackground(void *in) {
-    RKTaskInput *task = (RKTaskInput *)in;
-    if (task->radar->masterController) {
-        task->radar->masterControllerExec(task->radar->masterController, task->command, NULL);
+    RKRadarCommand *radarCommand = (RKRadarCommand *)in;
+    if (radarCommand->radar->masterController) {
+        radarCommand->radar->masterControllerExec(radarCommand->radar->masterController, radarCommand->command, NULL);
     }
     return NULL;
 }
@@ -2296,7 +2296,7 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
         RKLog("Master controller is not set.\n");
         return;
     }
-    RKTaskInput taskInput;
+    RKRadarCommand taskInput;
     taskInput.radar = radar;
     strncpy(taskInput.command, command, RKMaximumCommandLength - 1);
     pthread_t tid;
