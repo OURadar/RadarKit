@@ -77,8 +77,7 @@ char *RKTestByNumberDescription(void) {
     "         50 - Measure the speed of SIMD calculations\n"
     "         51 - Measure the speed of pulse compression\n"
     "         52 - Measure the speed of various moment methods\n"
-    "         53 - Measure the speed of cached write\n"
-    "\n";
+    "         53 - Measure the speed of cached write\n";
 }
 
 void RKTestByNumber(const int number, const void *arg) {
@@ -1349,7 +1348,7 @@ void RKTestPulseCompressionSpeed(void) {
     fftwf_complex *f, *in, *out;
     RKInt16C *X;
     RKComplex *Y;
-    const int testCount = 2000;
+    const int testCount = 5000;
     struct timeval tic, toc;
     double mint, t;
 
