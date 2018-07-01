@@ -2380,24 +2380,31 @@ void RKTestSingleCommand(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    RKEngineState state = RKEngineStateWantActive;
-    int j, k;
-    struct timeval tic, toc;
-    double delta = INFINITY;
-    double x = 0;
+    // For Bird bath ZCal
+    // o  A pedestal command to scan 360-deg at 90-deg EL
+    // o  Wait for a sweep to complete
+    // o  Stop the pedestal
+    // o  Get the sweep, derive average ZDR
+    // o  Derive ZCal
     
-    for (j = 0; j < 3; j++) {
-        gettimeofday(&tic, NULL);
-        k = 0;
-        while (state & RKEngineStateWantActive && k < 1000000000) {
-            x = 0.0f;
-            k++;
-        }
-        gettimeofday(&toc, NULL);
-        delta = MIN(delta, RKTimevalDiff(toc, tic));
-        printf("delta = %.3f us\n", 1.0e6 * delta);
-    }
-    printf("Best delta = %.3f us\n", 1.0e6 * delta);
+    // For SunCal
+    // o  Get time of day --> elevation of the Sun
+    // o  Pedestal command to scan 360-deg at Sun's EL
+    // o  Wait for a sweep to complete
+    // o  Find the peak of Sh + Sv
+    // o  Derive heading
+    
+    // RadarKit should not know what is the pedestal command
+    // One option: Have user fill in the task variables:
+    // - Pedestal command for RKPedestalExec()
+    // - Transceiver command for RKTransceiverExec()
+    // - HealthRelay command for RKHealthRelayExec()
+    // - Sweep end flag is defined here so waiting for a sweep complete is ok
+    //   - Have the task sub-routine detect if the sweep is progressing as expected
+    // - Stop command for RKPedestalExec()
+    // - Stop command for RKTransceiverExec()
+    // - Stop command for RKHealthRelayExec()
+    // - Task function to modify pref.conf or user definied config file
 }
 
 #pragma mark -
