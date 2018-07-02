@@ -555,18 +555,21 @@ int RKStripTail(char *string) {
     return k;
 }
 
-int RKIndentCopy(char *dst, char *src) {
+int RKIndentCopy(char *dst, char *src, const int width) {
     int k = 0;
     char *e, *s = src;
+    char indent[width + 1];
+    memset(indent, ' ', width - 1);
+    indent[width] = '\0';
     do {
         e = strchr(s, '\n');
         if (e) {
             *e = '\0';
-            k += sprintf(dst + k, "    %s\n", s);
+            k += sprintf(dst + k, "%s%s\n", indent, s);
             s = e + 1;
         }
     } while (e != NULL);
-    k += sprintf(dst + k, "    %s", s);
+    k += sprintf(dst + k, "%s%s", indent, s);
     return k;
 }
 

@@ -2183,7 +2183,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                     if (radar->transceiver) {
                         radar->transceiverExec(radar->transceiver, "help", sval1);
                         RKStripTail(sval1);
-                        k += RKIndentCopy(string + k, sval1);
+                        k += RKIndentCopy(string + k, sval1, 5);
                         k += sprintf(string + k, "\n\n");
                     } else {
                         k += sprintf(string + k, "    INFO: Transceiver not set.\n");
@@ -2195,7 +2195,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                     if (radar->pedestal) {
                         radar->pedestalExec(radar->pedestal, "help", sval1);
                         RKStripTail(sval1);
-                        k += RKIndentCopy(string + k, sval1);
+                        k += RKIndentCopy(string + k, sval1, 5);
                         k += sprintf(string + k, "\n\n");
                     } else {
                         k += sprintf(string + k, "    INFO: Pedestal not set.\n");
@@ -2207,7 +2207,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                     if (radar->healthRelay) {
                         radar->healthRelayExec(radar->healthRelay, "help", sval1);
                         RKStripTail(sval1);
-                        k += RKIndentCopy(string + k, sval1);
+                        k += RKIndentCopy(string + k, sval1, 5);
                         k += sprintf(string + k, "\n\n");
                     } else {
                         k += sprintf(string + k, "    INFO: Health Relay not set.\n");

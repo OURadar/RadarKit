@@ -142,7 +142,7 @@ static void showHelp() {
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
            "rktest (RadarKit " RKVersionString ")\n\n",
-           RKTestByNumberDescription());
+           RKTestByNumberDescription(8));
 }
 
 static void setSystemLevel(UserParams *user, const int level) {

@@ -89,7 +89,7 @@ typedef struct rk_test_health_relay {
 
 #pragma mark - Test By Number
 
-char *RKTestByNumberDescription(void);
+char *RKTestByNumberDescription(const int);
 void RKTestByNumber(const int, const void *);
 
 #pragma mark - Basic Tests
