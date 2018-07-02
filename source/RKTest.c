@@ -34,7 +34,7 @@ static void RKTestCallback(void *in) {
     RKLog("%s I am a callback function.\n", engine->name);
 }
 
-#pragma mark - Fundamental Functions
+#pragma mark - Test Wrapper and Help Text
 
 char *RKTestByNumberDescription(void) {
     return
@@ -209,6 +209,8 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
     }
 }
+
+#pragma mark - Fundamental Functions
 
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
@@ -530,22 +532,36 @@ void RKTestTemperatureToStatus(void) {
 
 void RKTestGetCountry(void) {
     SHOW_FUNCTION_NAME
+    int k;
     double latitude;
     double longitude;
     char *country;
+    bool correct;
 
     double coords[][2] = {
-        { 35.222567, -97.439478},
-        { 36.391592, 127.031428},
-        {-11.024860, -75.279694},
-        { 34.756300, 135.615895}
+        { 35.222567, -97.439478},  // United States
+        { 36.391592, 127.031428},  // South Korea
+        {-11.024860, -75.279694},  // Peru
+        { 34.756300, 135.615895}   // Japan
+    };
+    
+    RKName answers[] = {
+        "United States",
+        "South Korea",
+        "Peru",
+        "Japan"
     };
 
-    for (int k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
+    for (k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
         latitude = coords[k][0];
         longitude = coords[k][1];
         country = RKCountryFromPosition(latitude, longitude);
-        printf("%d. (%10.6f, %10.6f) --> %s\n", k, latitude, longitude, country);
+        correct = !strcmp(answers[k], country);
+        printf("%d. (%10.6f, %10.6f) --> %s (%s%s%s)\n", k, latitude, longitude, country,
+               correct ? (rkGlobalParameters.showColor ? RKGreenColor : "") : (rkGlobalParameters.showColor ? RKRedColor : ""),
+               correct ? "Correct" : "Incorrect",
+               rkGlobalParameters.showColor ? RKNoColor : ""
+               );
     }
 }
 
