@@ -559,7 +559,7 @@ int RKIndentCopy(char *dst, char *src, const int width) {
     int k = 0;
     char *e, *s = src;
     char indent[width + 1];
-    memset(indent, ' ', width - 1);
+    memset(indent, ' ', width);
     indent[width] = '\0';
     do {
         e = strchr(s, '\n');
