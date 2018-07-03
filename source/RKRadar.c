@@ -2322,12 +2322,17 @@ void RKMeasureNoise(RKRadar *radar) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
-    // Avoid data before this offset to exclude the transcient effect right after transmit pulse
+    // Avoid data before this offset to exclude the transient effects right after transmit pulse
     int origin = 0;
     for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
         origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
     }
-    origin *= 2;
+    // Add another tail (fill pulse width)
+    if (k > 0) {
+        origin += 2 * radar->pulseCompressionEngine->filterAnchors[0][k - 1].length;
+    }
+    // Account for down-sampling stride in PulseCompressionEngine
+    origin /= MAX(1, radar->desc.pulseToRayRatio);
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);

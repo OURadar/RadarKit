@@ -360,15 +360,17 @@ static void *pulseCompressionCore(void *_in) {
 
         // Down-sampling regardless if the pulse was compressed or skipped
         int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
-        for (p = 0; p < 2; p++) {
-            RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-            for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
-                Z.i[i] = Z.i[j];
-                Z.q[i] = Z.q[j];
+        if (stride > 1) {
+            for (p = 0; p < 2; p++) {
+                RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
+                    Z.i[i] = Z.i[j];
+                    Z.q[i] = Z.q[j];
+                }
             }
+            pulse->header.gateCount /= stride;
+            pulse->header.gateSizeMeters *= (float)stride;
         }
-        pulse->header.gateCount /= stride;
-        pulse->header.gateSizeMeters *= (float)stride;
         pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
 
         // Record down the latest processed pulse index

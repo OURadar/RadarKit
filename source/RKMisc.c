@@ -558,6 +558,10 @@ int RKStripTail(char *string) {
 int RKIndentCopy(char *dst, char *src, const int width) {
     int k = 0;
     char *e, *s = src;
+    if (width == 0) {
+        k = sprintf(dst, "%s", src);
+        return k;
+    }
     char indent[width + 1];
     memset(indent, ' ', width);
     indent[width] = '\0';
