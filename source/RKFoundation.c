@@ -16,7 +16,7 @@ int RKLog(const char *whatever, ...) {
     }
     int i = 0;
     size_t len;
-    time_t utc;
+    struct timeval utc;
     va_list args;
     struct tm tm;
     char *msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
@@ -29,8 +29,8 @@ int RKLog(const char *whatever, ...) {
     }
 
     // Get the time
-    time(&utc);
-    memcpy(&tm, localtime(&utc), sizeof(struct tm));
+    gettimeofday(&utc, NULL);
+    memcpy(&tm, gmtime(&utc.tv_sec), sizeof(struct tm));
 
     // Construct the string
     va_start(args, whatever);
@@ -42,9 +42,10 @@ int RKLog(const char *whatever, ...) {
     }
     if (rkGlobalParameters.dailyLog) {
         if (whatever[0] == '>') {
-            i += sprintf(msg, "         ");
+            i += sprintf(msg, "             ");
         } else {
-            i += strftime(msg, 16, "%T ", &tm);
+            i += strftime(msg, 16, "%T", &tm);
+            i += sprintf(msg + i, ".%03d ", (int)utc.tv_usec / 1000);
         }
     } else {
         if (whatever[0] == '>') {

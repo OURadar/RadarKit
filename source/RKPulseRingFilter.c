@@ -184,20 +184,20 @@ static void *ringFilterCore(void *_in) {
 
         pulse = RKGetPulse(engine->pulseBuffer, i0);
 		if (!(pulse->header.s & RKPulseStatusRingInspected)) {
-			fprintf(stderr, "This should not happen.\n");
+			fprintf(stderr, "This should not happen.   i0 = %d\n", i0);
 		}
 
         // Now we do the work
         // Should only focus on the tasked range bins
         //
 		if (engine->workerTaskDone[i0 * engine->coreCount + c] != false) {
-			fprintf(stderr, "Already done?\n");
+			fprintf(stderr, "Already done?   i0 = %d\n", i0);
 		}
 
         RKComplex *X = RKGetComplexDataFromPulse(pulse, 0);
         
         if (c == 0) {
-            RKLog("%s %s  %.2f %.2f\n", engine->name, name, X->i, X->q);
+            RKLog("%s %s  %d -> %.2f %.2f\n", engine->name, name, i0, X->i, X->q);
         }
         
         
@@ -402,7 +402,7 @@ static void *pulseRingWatcher(void *_in) {
 		#endif
 
         //
-        RKLog("%s pulseIndex = %u\n", engine->name, *engine->pulseIndex);
+        RKLog("%s k = %d   pulseIndex = %u\n", engine->name, k, *engine->pulseIndex);
         
 		// Now we set this pulse to be "not done" and post
 		workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
@@ -444,7 +444,7 @@ static void *pulseRingWatcher(void *_in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
-        
+
     // Wait for workers to return
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];

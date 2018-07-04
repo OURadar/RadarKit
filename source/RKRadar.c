@@ -107,11 +107,11 @@ static void *engineMonitorRunLoop(void *in) {
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (s++ < 10 && engine->state & RKEngineStateWantActive) {
+        while (s++ < 50 && engine->state & RKEngineStateWantActive) {
             if (engine->verbose > 2) {
                 RKLog("%s", engine->name);
             }
-            usleep(100000);
+            usleep(20000);
         }
         engine->state ^= RKEngineStateSleep1;
         // Put together a system status

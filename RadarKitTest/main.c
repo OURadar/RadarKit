@@ -153,8 +153,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 60;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
-            user->desc.pulseBufferDepth = 20;
-            user->desc.rayBufferDepth = 20;
+            user->desc.pulseBufferDepth = 50;
+            user->desc.rayBufferDepth = 50;
             user->desc.pulseToRayRatio = 2;
             user->prf = 10;
             break;
