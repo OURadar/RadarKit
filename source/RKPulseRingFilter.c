@@ -400,10 +400,8 @@ static void *pulseRingWatcher(void *_in) {
 		}
 		printf("===\n");
 		#endif
-
-        //
         RKLog("%s k = %d   pulseIndex = %u\n", engine->name, k, *engine->pulseIndex);
-        
+
 		// Now we set this pulse to be "not done" and post
 		workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
 		for (c = 0; c < engine->coreCount; c++) {

@@ -1684,6 +1684,11 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKWaveform *waveform = transceiver->waveformCache[0];
     unsigned int cacheIndex = 0;
 
+    int16_t seq[] = {-3, -2 , -1, 0, 1, 2, 3, 2, 1, 0, -2};
+    int len = sizeof(seq) / sizeof(int16_t);
+    int ir = 0;
+    int iq = 3;
+    
     while (transceiver->state & RKEngineStateWantActive) {
 
         periodTotal = 0.0;
@@ -1704,12 +1709,19 @@ void *RKTestTransceiverRunLoop(void *input) {
                 waveform = transceiver->waveformCache[transceiver->waveformCacheIndex];
                 w = 0;
             }
+            RKLog("%s ir = %d  -> %d\n", transceiver->name, ir, seq[ir]);
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 // Some random pattern for testing
                 k = rand() % transceiver->gateCount;
                 RKInt16C *S = waveform->iSamples[w];
-                for (g = 0; g < waveform->depth; g++) {
+                
+                // Special case for gate 0
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X++;
+                
+                for (g = 1; g < waveform->depth; g++) {
                     noise = rn[k];
                     X->i = S->i + noise;
                     X->q = S->q + noise;
@@ -1745,7 +1757,9 @@ void *RKTestTransceiverRunLoop(void *input) {
                     X++;
                 }
             }
-            
+            ir = RKNextModuloS(ir, len);
+            iq = RKNextModuloS(iq, len);
+
             RKSetPulseHasData(radar, pulse);
 
             if (even) {
