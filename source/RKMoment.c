@@ -518,7 +518,8 @@ static void *momentCore(void *in) {
             // Zero out the ray
             zeroOutRay(ray);
             if (engine->verbose > 1) {
-                RKLog("%s %s Skipped a ray with %d sampples deltaAz = %.2f deltaEl = %.2f.\n", engine->name, name, path.length, deltaAzimuth, deltaElevation);
+                RKLog("%s %s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", engine->name, name,
+                      path.length, path.length > 1 ? "s": "", deltaAzimuth, deltaElevation);
             }
             ray->header.s |= RKRayStatusSkipped;
         }
