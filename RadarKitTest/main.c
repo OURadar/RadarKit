@@ -802,10 +802,10 @@ int main(int argc, const char **argv) {
         usleep(100000);
 
         RKLog("Setting a waveform ...\n");
-        RKExecuteCommand(myRadar, "t w ofm", NULL);
+//        RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
-        //RKExecuteCommand(myRadar, "t w s01", NULL);
+        RKExecuteCommand(myRadar, "t w s01", NULL);
         //RKExecuteCommand(myRadar, "t w barker03", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);

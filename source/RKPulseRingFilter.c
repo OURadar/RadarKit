@@ -194,6 +194,12 @@ static void *ringFilterCore(void *_in) {
 			fprintf(stderr, "Already done?\n");
 		}
 
+        RKComplex *X = RKGetComplexDataFromPulse(pulse, 0);
+        
+        if (c == 0) {
+            RKLog("%s %s  %.2f %.2f\n", engine->name, name, X->i, X->q);
+        }
+        
         
         // The task for this core is now done at this point
         engine->workerTaskDone[i0 * engine->coreCount + c] = true;
