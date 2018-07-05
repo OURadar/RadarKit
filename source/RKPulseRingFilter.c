@@ -249,11 +249,10 @@ static void *ringFilterCore(void *_in) {
 		}
 
         RKComplex *X = RKGetComplexDataFromPulse(pulse, 0);
+        X += me->linePath.origin;
         
-        if (c == 0) {
-            RKLog("%s %s  %d -> %.2f %.2f\n", engine->name, name, i0, X->i, X->q);
-        }
-        
+        RKLog("%s %s  %d -> [%02u] = %.2f %.2f   %.2f %.2f  %.2f %.2f ...\n", engine->name, name, i0, me->linePath.origin,
+              X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q);
         
         // The task for this core is now done at this point
         engine->workerTaskDone[i0 * engine->coreCount + c] = true;

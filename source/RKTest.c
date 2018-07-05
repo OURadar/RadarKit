@@ -1727,11 +1727,6 @@ void *RKTestTransceiverRunLoop(void *input) {
                 k = rand() % transceiver->gateCount;
                 RKInt16C *S = waveform->iSamples[w];
                 
-                // Special case for gate 0
-                X->i = seq[ir];
-                X->q = seq[iq];
-                X++;
-                
                 for (g = 1; g < waveform->depth; g++) {
                     noise = rn[k];
                     X->i = S->i + noise;
@@ -1767,6 +1762,23 @@ void *RKTestTransceiverRunLoop(void *input) {
                     k = RKNextModuloS(k, transceiver->gateCount);
                     X++;
                 }
+
+                X = RKGetInt16CDataFromPulse(pulse, p);
+
+                // Override certain range gates
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X++;
+                X->i = seq[ir];
+                X->q = seq[iq];
+                
+                X += 63;
+
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X++;
+                X->i = seq[ir];
+                X->q = seq[iq];
             }
             ir = RKNextModuloS(ir, len);
             iq = RKNextModuloS(iq, len);
@@ -1844,7 +1856,7 @@ void *RKTestTransceiverRunLoop(void *input) {
             if (s % 10000 == 0) {
                 printf("Sleeping ... n = %d ...\n", s);
             }
-        } while (radar->active && transceiver->state & RKEngineStateWantActive && dt < periodTotal);
+        } while (transceiver->state & RKEngineStateWantActive && dt < periodTotal);
         t0 = t1;
     }
 
