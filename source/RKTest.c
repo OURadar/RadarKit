@@ -1706,7 +1706,6 @@ void *RKTestTransceiverRunLoop(void *input) {
         periodTotal = 0.0;
 
         for (j = 0; j < chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
-            RKLog("%s ir = %d / %u  -> %d\n", transceiver->name, ir, radar->pulseIndex, seq[ir]);
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
