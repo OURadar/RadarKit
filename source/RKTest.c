@@ -1592,7 +1592,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
 
-    int j, k, p, g, n, w;
+    int j, k, p, g, s, w;
     double t = 0.0;
     double dt = 0.0;
     long tic = 0;
@@ -1605,10 +1605,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
     
-    gettimeofday(&t0, NULL);
-
-    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
-
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
@@ -1632,8 +1628,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
     
-    transceiver->state |= RKEngineStateActive;
-
+    double periodTotal;
     const double periodEven = transceiver->prt;
     const double periodOdd =
     transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
@@ -1641,8 +1636,7 @@ void *RKTestTransceiverRunLoop(void *input) {
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
     const long ticEven = (long)(periodEven * 1.0e6);
     const long ticOdd = (long)(periodOdd * 1.0e6);
-    
-    double periodTotal;
+
     float a;
     float r;
     float phi;
@@ -1679,21 +1673,40 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
 
-    w = 0;
-    
     RKWaveform *waveform = transceiver->waveformCache[0];
-    unsigned int cacheIndex = 0;
+    unsigned int waveformCacheIndex = 0;
 
     int16_t seq[] = {-3, -2 , -1, 0, 1, 2, 3, 2, 1, 0, -2};
     int len = sizeof(seq) / sizeof(int16_t);
     int ir = 0;
     int iq = 3;
     
+    // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
+    s = 0;
+    transceiver->state |= RKEngineStateSleep0;
+    while (!(radar->state & RKRadarStateLive)) {
+        usleep(10000);
+        if (++s % 10 == 0 && transceiver->verbose > 1) {
+            RKLog("%s sleep 0/%.1f s\n", transceiver->name, (float)s * 0.01f);
+        }
+    }
+    transceiver->state ^= RKEngineStateSleep0;
+    transceiver->state |= RKEngineStateActive;
+
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
+
+    gettimeofday(&t0, NULL);
+
+    // g gate index
+    // j sample index
+    // k pseudo-random sequence to choose the pre-defined random numbers
+    w = 0;   // waveform index
     while (transceiver->state & RKEngineStateWantActive) {
 
         periodTotal = 0.0;
 
         for (j = 0; j < chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
+            RKLog("%s ir = %d / %u  -> %d\n", transceiver->name, ir, radar->pulseIndex, seq[ir]);
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
@@ -1704,12 +1717,11 @@ void *RKTestTransceiverRunLoop(void *input) {
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
 
             // Fill in the data...
-            if (cacheIndex != transceiver->waveformCacheIndex) {
-                cacheIndex = transceiver->waveformCacheIndex;
+            if (waveformCacheIndex != transceiver->waveformCacheIndex) {
+                waveformCacheIndex = transceiver->waveformCacheIndex;
                 waveform = transceiver->waveformCache[transceiver->waveformCacheIndex];
                 w = 0;
             }
-            RKLog("%s ir = %d  -> %d\n", transceiver->name, ir, seq[ir]);
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 // Some random pattern for testing
@@ -1824,16 +1836,16 @@ void *RKTestTransceiverRunLoop(void *input) {
         RKSetHealthReady(radar, health);
 
         // Wait to simulate the PRF
-        n = 0;
+        s = 0;
         do {
             gettimeofday(&t1, NULL);
             dt = RKTimevalDiff(t1, t0);
             usleep(100);
-            n++;
-            if (n % 10000 == 0) {
-                printf("Sleeping ... n = %d ...\n", n);
+            s++;
+            if (s % 10000 == 0) {
+                printf("Sleeping ... n = %d ...\n", s);
             }
-        } while (radar->active && dt < periodTotal);
+        } while (radar->active && transceiver->state & RKEngineStateWantActive && dt < periodTotal);
         t0 = t1;
     }
 
