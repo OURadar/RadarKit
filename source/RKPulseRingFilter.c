@@ -121,7 +121,7 @@ static void *ringFilterCore(void *_in) {
     RKIQZ b;
     RKIQZ a;
     const int depth = 8;
-    size_t bytes = depth * me->dataPath.length * sizeof(RKFloat);
+    size_t bytes = depth * 2 * me->dataPath.length * sizeof(RKFloat);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.i, RKSIMDAlignSize, bytes));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.q, RKSIMDAlignSize, bytes));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.i, RKSIMDAlignSize, bytes));
@@ -130,7 +130,6 @@ static void *ringFilterCore(void *_in) {
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.q, RKSIMDAlignSize, bytes));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.i, RKSIMDAlignSize, bytes));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.q, RKSIMDAlignSize, bytes));
-    mem += 8 * bytes;
     memset(x.i, 0, bytes);
     memset(x.q, 0, bytes);
     memset(y.i, 0, bytes);
@@ -139,7 +138,8 @@ static void *ringFilterCore(void *_in) {
     memset(b.q, 0, bytes);
     memset(a.i, 0, bytes);
     memset(a.q, 0, bytes);
-    
+    mem += 8 * bytes;
+
     // Duplicate the filter coefficients to vectors
     i = 0;
     for (k = 0; k < engine->filter.bLength; k++) {
@@ -251,21 +251,20 @@ static void *ringFilterCore(void *_in) {
 			fprintf(stderr, "Already done?   i0 = %d\n", i0);
 		}
 
-        if (c == 0) {
-            for (p = 0; p < 1; p++) {
-                // Store x[n] at index k
-                RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, 0);
-                memcpy(x.i, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
-                memcpy(x.q, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
-                RKLog("%s %s  %d -> [%02u] = %.2f %.2f   %.2f %.2f  %.2f %.2f ... (%d)\n", engine->name, name, i0, me->dataPath.origin,
-                      x.i[0], x.q[0], x.i[1], x.q[1], x.i[2], x.q[2], me->dataPath.length);
-//                RKShowArray(Z.i, "Zi", 8, 1);
-//                RKShowArray(Z.q, "Zq", 8, 1);
-//                RKLog("%s %s  %d -> [%02u] = %.1f %.1f   %.1f %.1f   %.1f %.1f ... (%d)\n", engine->name, name, i0, me->linePath.origin,
-//                      Z.i[0], Z.q[0],
-//                      Z.i[1], Z.q[1],
-//                      Z.i[2], Z.q[2], me->linePath.length);
-            }
+        for (p = 0; p < 2; p++) {
+            // Store x[n] at index k
+            RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+            RKFloat *xi = x.i + k * p * me->dataPath.length;
+            RKFloat *xq = x.q + k * p * me->dataPath.length;
+            memcpy(xi, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+            memcpy(xq, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+            pthread_mutex_lock(&engine->mutex);
+            RKLog(">%s %s %s   %s\n", engine->name, name,
+                  RKVariableInString("p", &p, RKValueTypeInt),
+                  RKVariableInString("k", &k, RKValueTypeInt));
+            RKShowArray(xi, "xi", 8, 1);
+            RKShowArray(xq, "xq", 8, 1);
+            pthread_mutex_unlock(&engine->mutex);
         }
         k = RKNextModuloS(k, depth);
         
