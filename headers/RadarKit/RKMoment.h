@@ -50,9 +50,9 @@ struct rk_moment_engine {
     RKModuloPath                     *momentSource;
     RKMomentWorker                   *workers;
     pthread_t                        tidPulseGatherer;
-    pthread_mutex_t                  coreMutex;
-    uint8_t                          processorLagCount;
-    uint8_t                          userLagChoice;
+    pthread_mutex_t                  mutex;
+    uint8_t                          processorLagCount;                        // Number of lags to calculate R[n]'s
+    uint8_t                          userLagChoice;                            // Lag parameter for multilag method
     
     // Status / health
     uint32_t                         processedPulseIndex;

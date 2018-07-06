@@ -110,9 +110,9 @@ static void *pulseCompressionCore(void *_in) {
     // Initiate a variable to store my name
     RKName name;
     if (rkGlobalParameters.showColor) {
-        pthread_mutex_lock(&engine->coreMutex);
+        pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
-        pthread_mutex_unlock(&engine->coreMutex);
+        pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
@@ -186,13 +186,13 @@ static void *pulseCompressionCore(void *_in) {
     int planSize = -1, planIndex;
 
     // Log my initial state
-    pthread_mutex_lock(&engine->coreMutex);
+    pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
           engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
 
-    pthread_mutex_unlock(&engine->coreMutex);
+    pthread_mutex_unlock(&engine->mutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
@@ -347,7 +347,7 @@ static void *pulseCompressionCore(void *_in) {
                     
 #ifdef DEBUG_PULSE_COMPRESSION
                     
-                    pthread_mutex_lock(&engine->coreMutex);
+                    pthread_mutex_lock(&engine->mutex);
                     Y = RKGetComplexDataFromPulse(pulse, p);
                     printf("Y [i0 = %d   p = %d   j = %d] =\n", i0, p, j);
                     RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
@@ -355,7 +355,7 @@ static void *pulseCompressionCore(void *_in) {
                     Z = RKGetSplitComplexDataFromPulse(pulse, p);
                     RKShowArray(Z.i, "Zi", 8, 1);
                     RKShowArray(Z.q, "Zq", 8, 1);
-                    pthread_mutex_unlock(&engine->coreMutex);
+                    pthread_mutex_unlock(&engine->mutex);
 
 #endif
 
@@ -734,7 +734,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->memoryUsage = sizeof(RKPulseCompressionEngine);
-    pthread_mutex_init(&engine->coreMutex, NULL);
+    pthread_mutex_init(&engine->mutex, NULL);
     return engine;
 }
 
@@ -749,7 +749,7 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
             }
         }
     }
-    pthread_mutex_destroy(&engine->coreMutex);
+    pthread_mutex_destroy(&engine->mutex);
     free(engine->filterGid);
     free(engine->planIndices);
     free(engine);

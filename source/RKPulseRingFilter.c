@@ -110,42 +110,44 @@ static void *ringFilterCore(void *_in) {
     RKPulse *pulse;
     size_t mem = 0;
     
-    if (me->linePath.origin % RKSIMDAlignSize > 0 || me->linePath.length % RKSIMDAlignSize > 0) {
+    if (me->dataPath.origin % RKSIMDAlignSize > 0 || me->dataPath.length % RKSIMDAlignSize > 0) {
         RKLog("%s %s Error. Each filter line path must align to SIMD requirements.\n", engine->name, name);
         return NULL;
     }
     // Allocate local resources, use k to keep track of the total allocation
+    // Each block is depth x pols (2) x gates (me->dataPath.length)
     RKIQZ x;
     RKIQZ y;
     RKIQZ b;
     RKIQZ a;
     const int depth = 8;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.i, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.q, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.i, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.q, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.i, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.q, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.i, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.q, RKSIMDAlignSize, depth * me->linePath.length * sizeof(RKFloat)));
-    mem += 8 * depth * me->linePath.length * sizeof(RKFloat);
-    memset(x.i, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(x.q, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(y.i, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(y.q, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(b.i, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(b.q, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(a.i, 0, depth * me->linePath.length * sizeof(RKFloat));
-    memset(a.q, 0, depth * me->linePath.length * sizeof(RKFloat));
+    size_t bytes = depth * me->dataPath.length * sizeof(RKFloat);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.i, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.q, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.i, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.q, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.i, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.q, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.i, RKSIMDAlignSize, bytes));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.q, RKSIMDAlignSize, bytes));
+    mem += 8 * bytes;
+    memset(x.i, 0, bytes);
+    memset(x.q, 0, bytes);
+    memset(y.i, 0, bytes);
+    memset(y.q, 0, bytes);
+    memset(b.i, 0, bytes);
+    memset(b.q, 0, bytes);
+    memset(a.i, 0, bytes);
+    memset(a.q, 0, bytes);
     
     // Duplicate the filter coefficients to vectors
     i = 0;
     for (k = 0; k < engine->filter.bLength; k++) {
-        RKFloat *bi = &b.i[k * me->linePath.length];
-        RKFloat *bq = &b.q[k * me->linePath.length];
-        RKFloat *ai = &a.i[k * me->linePath.length];
-        RKFloat *aq = &a.q[k * me->linePath.length];
-        for (g = 0; g < me->linePath.length; g++) {
+        RKFloat *bi = &b.i[k * me->dataPath.length];
+        RKFloat *bq = &b.q[k * me->dataPath.length];
+        RKFloat *ai = &a.i[k * me->dataPath.length];
+        RKFloat *aq = &a.q[k * me->dataPath.length];
+        for (g = 0; g < me->dataPath.length; g++) {
             *bi++ = engine->filter.B[k].i;
             *bq++ = engine->filter.B[k].q;
             *ai++ = engine->filter.A[k].i;
@@ -182,18 +184,18 @@ static void *ringFilterCore(void *_in) {
     RKLog(">%s %s Started.   mem = %s B   origin = %s   length = %s   ci = %d\n",
           engine->name, name,
           RKUIntegerToCommaStyleString(mem),
-          RKIntegerToCommaStyleString(me->linePath.origin),
-          RKIntegerToCommaStyleString(me->linePath.length),
+          RKIntegerToCommaStyleString(me->dataPath.origin),
+          RKIntegerToCommaStyleString(me->dataPath.length),
           ci);
     
     if (engine->verbose > 2) {
-        RKShowArray(b.i, "Bi", me->linePath.length, depth);
+        RKShowArray(b.i, "Bi", me->dataPath.length, depth);
         printf("\n");
-        RKShowArray(b.q, "Bq", me->linePath.length, depth);
+        RKShowArray(b.q, "Bq", me->dataPath.length, depth);
         printf("\n");
-        RKShowArray(a.i, "Ai", me->linePath.length, depth);
+        RKShowArray(a.i, "Ai", me->dataPath.length, depth);
         printf("\n");
-        RKShowArray(a.q, "Aq", me->linePath.length, depth);
+        RKShowArray(a.q, "Aq", me->dataPath.length, depth);
         printf("\n");
     }
 
@@ -251,23 +253,18 @@ static void *ringFilterCore(void *_in) {
 
         if (c == 0) {
             for (p = 0; p < 1; p++) {
-                RKComplex *X = RKGetComplexDataFromPulse(pulse, 0);
-                X += me->linePath.origin;
-                RKLog("%s %s  %d -> [%02u] = %.1f %.1f   %.1f %.1f   %.1f %.1f   %.1f %.1f   %.1f %.1f ...\n", engine->name, name, i0, me->linePath.origin,
-                      X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q, X[3].i, X[3].q, X[4].i, X[4].q);
-
                 // Store x[n] at index k
                 RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, 0);
-//                memcpy(x.i, Z.i + me->linePath.origin, me->linePath.length * sizeof(RKFloat));
-//                memcpy(x.q, Z.q + me->linePath.origin, me->linePath.length * sizeof(RKFloat));
-//                RKLog("%s %s  %d -> [%02u] = %.2f %.2f   %.2f %.2f  %.2f %.2f ... (%d)\n", engine->name, name, i0, me->linePath.origin,
-//                      x.i[0], x.q[0], x.i[1], x.q[1], x.i[2], x.q[2], me->linePath.length);
+                memcpy(x.i, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+                memcpy(x.q, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+                RKLog("%s %s  %d -> [%02u] = %.2f %.2f   %.2f %.2f  %.2f %.2f ... (%d)\n", engine->name, name, i0, me->dataPath.origin,
+                      x.i[0], x.q[0], x.i[1], x.q[1], x.i[2], x.q[2], me->dataPath.length);
 //                RKShowArray(Z.i, "Zi", 8, 1);
 //                RKShowArray(Z.q, "Zq", 8, 1);
-                RKLog("%s %s  %d -> [%02u] = %.1f %.1f   %.1f %.1f   %.1f %.1f ... (%d)\n", engine->name, name, i0, me->linePath.origin,
-                      Z.i[0], Z.q[0],
-                      Z.i[1], Z.q[1],
-                      Z.i[2], Z.q[2], me->linePath.length);
+//                RKLog("%s %s  %d -> [%02u] = %.1f %.1f   %.1f %.1f   %.1f %.1f ... (%d)\n", engine->name, name, i0, me->linePath.origin,
+//                      Z.i[0], Z.q[0],
+//                      Z.i[1], Z.q[1],
+//                      Z.i[2], Z.q[2], me->linePath.length);
             }
         }
         k = RKNextModuloS(k, depth);
@@ -378,11 +375,11 @@ static void *pulseRingWatcher(void *_in) {
         worker->id = c;
         worker->sem = sem[c];
         worker->parentEngine = engine;
-        worker->linePath.origin = origin;
+        worker->dataPath.origin = origin;
         if (c == engine->coreCount - 1) {
-            worker->linePath.length = paddedGateCount - origin;
+            worker->dataPath.length = paddedGateCount - origin;
         } else {
-            worker->linePath.length = length;
+            worker->dataPath.length = length;
         }
         origin += length;
         if (engine->verbose > 1) {
