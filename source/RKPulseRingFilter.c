@@ -63,7 +63,7 @@ static void *ringFilterCore(void *_in) {
     RKPulseRingFilterWorker *me = (RKPulseRingFilterWorker *)_in;
     RKPulseRingFilterEngine *engine = me->parentEngine;
 
-    int g, i, k, p;
+    int g, i, j, k, p;
     struct timeval t0, t1, t2;
 
     const int c = me->id;
@@ -251,20 +251,59 @@ static void *ringFilterCore(void *_in) {
 			fprintf(stderr, "Already done?   i0 = %d\n", i0);
 		}
 
-        for (p = 0; p < 2; p++) {
+        RKIQZ xk, yk, bk, ak;
+        int kOffset, iOffset;
+        
+        for (p = 0; p < 1; p++) {
             // Store x[n] at index k
+            kOffset = k * p * me->dataPath.length;
             RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-            RKFloat *xi = x.i + k * p * me->dataPath.length;
-            RKFloat *xq = x.q + k * p * me->dataPath.length;
-            memcpy(xi, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
-            memcpy(xq, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
-            pthread_mutex_lock(&engine->mutex);
-            RKLog(">%s %s %s   %s\n", engine->name, name,
-                  RKVariableInString("p", &p, RKValueTypeInt),
-                  RKVariableInString("k", &k, RKValueTypeInt));
-            RKShowArray(xi, "xi", 8, 1);
-            RKShowArray(xq, "xq", 8, 1);
-            pthread_mutex_unlock(&engine->mutex);
+            memcpy(x.i + kOffset, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+            memcpy(x.q + kOffset, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+            
+            // y[n] = B[0] * x[n] + B[1] * x[n - 1] + ...
+            i = k;
+            memset(y.i + kOffset, 0, me->dataPath.length * sizeof(RKFloat));
+            memset(y.q + kOffset, 0, me->dataPath.length * sizeof(RKFloat));
+
+            if (c == 0) {
+                pthread_mutex_lock(&engine->mutex);
+                RKLog(">%s %s %s   %s   %s   %s\n", engine->name, name,
+                      RKVariableInString("p", &p, RKValueTypeInt),
+                      RKVariableInString("k", &k, RKValueTypeInt),
+                      RKVariableInString("bLength", &engine->filter.bLength, RKValueTypeUInt32),
+                      RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32));
+            }
+            for (j = 0; j < engine->filter.bLength; j++) {
+                iOffset = i * p * me->dataPath.length;
+                xk.i = x.i + iOffset;
+                xk.q = x.q + iOffset;
+                yk.i = y.i + iOffset;
+                yk.q = y.q + iOffset;
+                bk.i = b.i + iOffset;
+                bk.q = b.q + iOffset;
+                ak.i = a.i + iOffset;
+                ak.q = a.q + iOffset;
+                //RKSIMD_zmul(&bk, &xk, &yk, me->dataPath.length, true);
+                RKSIMD_zcma(&bk, &xk, &yk, me->dataPath.length, true);
+                if (c == 0) {
+                    RKLog(">%s %s %s   %s\n", engine->name, name,
+                          RKVariableInString("j", &j, RKValueTypeInt),
+                          RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
+                    RKShowArray(xk.i, "xi", 8, 1);
+                    RKShowArray(xk.q, "xq", 8, 1);
+                    RKShowArray(b.i, "bi", 8, 1);
+                    RKShowArray(b.q, "bq", 8, 1);
+                    RKShowArray(yk.i, "yi", 8, 1);
+                    RKShowArray(yk.q, "yq", 8, 1);
+                }
+                i = RKPreviousModuloS(i, depth);
+            }
+            
+            if (c == 0) {
+                pthread_mutex_unlock(&engine->mutex);
+            }
+            
         }
         k = RKNextModuloS(k, depth);
         
