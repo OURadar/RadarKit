@@ -1768,15 +1768,34 @@ void *RKTestTransceiverRunLoop(void *input) {
                 // Override certain range gates
                 X->i = seq[ir];
                 X->q = seq[iq];
-                X++;
+                X += 2;
                 X->i = seq[ir];
                 X->q = seq[iq];
-                
-                X += 63;
+                X += 2;
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X += 2;
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X += 2;
+                X->i = seq[ir];
+                X->q = seq[iq];
+
+                X = RKGetInt16CDataFromPulse(pulse, p);
+                X += 64;
 
                 X->i = seq[ir];
                 X->q = seq[iq];
-                X++;
+                X += 2;
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X += 2;
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X += 2;
+                X->i = seq[ir];
+                X->q = seq[iq];
+                X += 2;
                 X->i = seq[ir];
                 X->q = seq[iq];
             }

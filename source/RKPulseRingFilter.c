@@ -63,7 +63,7 @@ static void *ringFilterCore(void *_in) {
     RKPulseRingFilterWorker *me = (RKPulseRingFilterWorker *)_in;
     RKPulseRingFilterEngine *engine = me->parentEngine;
 
-    int g, i, k;
+    int g, i, k, p;
     struct timeval t0, t1, t2;
 
     const int c = me->id;
@@ -152,18 +152,6 @@ static void *ringFilterCore(void *_in) {
             *aq++ = engine->filter.A[k].q;
         }
     }
-    if (engine->verbose > 2) {
-        pthread_mutex_lock(&engine->mutex);
-        RKShowArray(b.i, "Bi", me->linePath.length, depth);
-        printf("\n");
-        RKShowArray(b.q, "Bq", me->linePath.length, depth);
-        printf("\n");
-        RKShowArray(a.i, "Ai", me->linePath.length, depth);
-        printf("\n");
-        RKShowArray(a.q, "Aq", me->linePath.length, depth);
-        printf("\n");
-        pthread_mutex_unlock(&engine->mutex);
-    }
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -198,6 +186,17 @@ static void *ringFilterCore(void *_in) {
           RKIntegerToCommaStyleString(me->linePath.length),
           ci);
     
+    if (engine->verbose > 2) {
+        RKShowArray(b.i, "Bi", me->linePath.length, depth);
+        printf("\n");
+        RKShowArray(b.q, "Bq", me->linePath.length, depth);
+        printf("\n");
+        RKShowArray(a.i, "Ai", me->linePath.length, depth);
+        printf("\n");
+        RKShowArray(a.q, "Aq", me->linePath.length, depth);
+        printf("\n");
+    }
+
     pthread_mutex_unlock(&engine->mutex);
 
     // Increase the tic once to indicate this processing core is created.
@@ -212,6 +211,8 @@ static void *ringFilterCore(void *_in) {
     //
     uint64_t tic = me->tic;
 
+    k = 0;    // pulse index
+    
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
@@ -248,11 +249,28 @@ static void *ringFilterCore(void *_in) {
 			fprintf(stderr, "Already done?   i0 = %d\n", i0);
 		}
 
-        RKComplex *X = RKGetComplexDataFromPulse(pulse, 0);
-        X += me->linePath.origin;
-        
-        RKLog("%s %s  %d -> [%02u] = %.2f %.2f   %.2f %.2f  %.2f %.2f ...\n", engine->name, name, i0, me->linePath.origin,
-              X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q);
+        if (c == 0) {
+            for (p = 0; p < 1; p++) {
+                RKComplex *X = RKGetComplexDataFromPulse(pulse, 0);
+                X += me->linePath.origin;
+                RKLog("%s %s  %d -> [%02u] = %.1f %.1f   %.1f %.1f   %.1f %.1f   %.1f %.1f   %.1f %.1f ...\n", engine->name, name, i0, me->linePath.origin,
+                      X[0].i, X[0].q, X[1].i, X[1].q, X[2].i, X[2].q, X[3].i, X[3].q, X[4].i, X[4].q);
+
+                // Store x[n] at index k
+                RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, 0);
+//                memcpy(x.i, Z.i + me->linePath.origin, me->linePath.length * sizeof(RKFloat));
+//                memcpy(x.q, Z.q + me->linePath.origin, me->linePath.length * sizeof(RKFloat));
+//                RKLog("%s %s  %d -> [%02u] = %.2f %.2f   %.2f %.2f  %.2f %.2f ... (%d)\n", engine->name, name, i0, me->linePath.origin,
+//                      x.i[0], x.q[0], x.i[1], x.q[1], x.i[2], x.q[2], me->linePath.length);
+//                RKShowArray(Z.i, "Zi", 8, 1);
+//                RKShowArray(Z.q, "Zq", 8, 1);
+                RKLog("%s %s  %d -> [%02u] = %.1f %.1f   %.1f %.1f   %.1f %.1f ... (%d)\n", engine->name, name, i0, me->linePath.origin,
+                      Z.i[0], Z.q[0],
+                      Z.i[1], Z.q[1],
+                      Z.i[2], Z.q[2], me->linePath.length);
+            }
+        }
+        k = RKNextModuloS(k, depth);
         
         // The task for this core is now done at this point
         engine->workerTaskDone[i0 * engine->coreCount + c] = true;

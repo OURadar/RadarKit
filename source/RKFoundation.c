@@ -356,10 +356,16 @@ void RKShowArray(const RKFloat *data, const char *letter, const int width, const
                 rkGlobalParameters.showColor ? RKYellowColor : "", letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
-    k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + width, width));
-    k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + 2 * width, width));
-    k += sprintf(text + k, "              %s  [     ...\n", pad);
-    for (j = height - 3; j < height; j++) {
+    if (height > 1) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + width, width));
+    }
+    if (height > 2) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + 2 * width, width));
+    }
+    if (height > 6) {
+        k += sprintf(text + k, "              %s  [     ...\n", pad);
+    }
+    for (j = MAX(3, height - 3); j < height; j++) {
         k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);

@@ -344,9 +344,20 @@ static void *pulseCompressionCore(void *_in) {
                         *Z.q++ = (*o)[1];
                         o++;
                     }
+                    
+#ifdef DEBUG_PULSE_COMPRESSION
+                    
+                    pthread_mutex_lock(&engine->coreMutex);
+                    Y = RKGetComplexDataFromPulse(pulse, p);
+                    printf("Y [i0 = %d   p = %d   j = %d] =\n", i0, p, j);
+                    RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
+                    
+                    Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                    RKShowArray(Z.i, "Zi", 8, 1);
+                    RKShowArray(Z.q, "Zq", 8, 1);
+                    pthread_mutex_unlock(&engine->coreMutex);
 
-                    //Y = RKGetComplexDataFromPulse(pulse, p);
-                    //printf("Y real =\n"); RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
+#endif
 
                     // Copy over the parameters used
                     pulse->parameters.planIndices[p][j] = planIndex;
@@ -362,8 +373,11 @@ static void *pulseCompressionCore(void *_in) {
         int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
         if (stride > 1) {
             for (p = 0; p < 2; p++) {
+                RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                 RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
                 for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
+                    Y[i].i = Y[j].i;
+                    Y[i].q = Y[j].q;
                     Z.i[i] = Z.i[j];
                     Z.q[i] = Z.q[j];
                 }
