@@ -150,7 +150,7 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 0:
             // Debug
             user->fs = 5000000;
-            user->gateCount = 60;
+            user->gateCount = 150;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
             user->desc.pulseBufferDepth = 50;

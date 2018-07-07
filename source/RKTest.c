@@ -1782,7 +1782,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                 X->q = seq[iq];
 
                 X = RKGetInt16CDataFromPulse(pulse, p);
-                X += 64;
+                X += 128;
 
                 X->i = seq[ir];
                 X->q = seq[iq];
