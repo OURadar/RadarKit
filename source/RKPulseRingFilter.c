@@ -117,28 +117,28 @@ static void *ringFilterCore(void *_in) {
     // Allocate local resources, use k to keep track of the total allocation
     // Each block is depth x pols (2) x gates (me->dataPath.length)
     RKIQZ x;
-    RKIQZ y;
+    //RKIQZ y;
     RKIQZ b;
     RKIQZ a;
     const int depth = 8;
     size_t filterSize = depth * me->dataPath.length * sizeof(RKFloat);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.i, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&x.q, RKSIMDAlignSize, 2 * filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.i, RKSIMDAlignSize, 2 * filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.q, RKSIMDAlignSize, 2 * filterSize));
+    //POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.i, RKSIMDAlignSize, 2 * filterSize));
+    //POSIX_MEMALIGN_CHECK(posix_memalign((void **)&y.q, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.i, RKSIMDAlignSize, filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&b.q, RKSIMDAlignSize, filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.i, RKSIMDAlignSize, filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&a.q, RKSIMDAlignSize, filterSize));
     memset(x.i, 0, 2 * filterSize);
     memset(x.q, 0, 2 * filterSize);
-    memset(y.i, 0, 2 * filterSize);
-    memset(y.q, 0, 2 * filterSize);
+    //memset(y.i, 0, 2 * filterSize);
+    //memset(y.q, 0, 2 * filterSize);
     memset(b.i, 0, filterSize);
     memset(b.q, 0, filterSize);
     memset(a.i, 0, filterSize);
     memset(a.q, 0, filterSize);
-    mem += 12 * filterSize;
+    mem += 8 * filterSize;
 
     // Duplicate the filter coefficients to vectors. Negate the A coefficients so we can use cummulative add later.
     i = 0;
@@ -213,8 +213,10 @@ static void *ringFilterCore(void *_in) {
     //
     uint64_t tic = me->tic;
 
-    k = 0;    // pulse index
+    RKIQZ Z, xi, yi, yk;
+    int kOffset, iOffset;
     
+    k = 0;    // pulse index
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
@@ -251,13 +253,10 @@ static void *ringFilterCore(void *_in) {
 			fprintf(stderr, "Already done?   i0 = %d\n", i0);
 		}
 
-        RKIQZ xi, yi, yk;
-        int kOffset, iOffset;
-        
-        for (p = 0; p < 1; p++) {
+        for (p = 0; p < 2; p++) {
             // Store x[n] at index k
             kOffset = (k * 2 + p) * me->dataPath.length;
-            RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+            Z = RKGetSplitComplexDataFromPulse(pulse, p);
             memcpy(x.i + kOffset, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
             memcpy(x.q + kOffset, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
             
@@ -265,19 +264,23 @@ static void *ringFilterCore(void *_in) {
             
             if (c == 0) {
                 pthread_mutex_lock(&engine->mutex);
-                RKLog(">%s %s %s   %s   %s   %s\n", engine->name, name,
+                RKLog(">%s %s %s   %s   %s   %s   %s\n", engine->name, name,
                       RKVariableInString("p", &p, RKValueTypeInt),
                       RKVariableInString("k", &k, RKValueTypeInt),
                       RKVariableInString("bLength", &engine->filter.bLength, RKValueTypeUInt32),
-                      RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32));
+                      RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32),
+                      RKVariableInString("data.pathLength", &me->dataPath.length, RKValueTypeUInt32));
             }
             
 #endif
 
             // y[n] = B[0] * x[n] + B[1] * x[n - 1] + ...
+
             // Store y[n] at local buffer y at offset k
-            yk.i = y.i + kOffset;
-            yk.q = y.q + kOffset;
+            //yk.i = y.i + kOffset;
+            //yk.q = y.q + kOffset;
+            yk.i = Z.i + me->dataPath.origin;
+            yk.q = Z.q + me->dataPath.origin;
             memset(yk.i, 0, me->dataPath.length * sizeof(RKFloat));
             memset(yk.q, 0, me->dataPath.length * sizeof(RKFloat));
             
@@ -292,7 +295,8 @@ static void *ringFilterCore(void *_in) {
 #if defined(DEBUG_IIR)
 
                 if (c == 0) {
-                    RKLog(">%s %s B portion   %s   %s   %s\n", engine->name, name,
+                    RKLog(">%s %s B portion   %s   %s   %s   %s\n", engine->name, name,
+                          RKVariableInString("k", &k, RKValueTypeInt),
                           RKVariableInString("j", &j, RKValueTypeInt),
                           RKVariableInString("i", &i, RKValueTypeInt),
                           RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
@@ -310,11 +314,17 @@ static void *ringFilterCore(void *_in) {
             }
 
             // A's
-            i = RKPreviousModuloS(k, depth);
+            //i = RKPreviousModuloS(k, depth);
+            i = RKPreviousModuloS(i0, engine->radarDescription->pulseBufferDepth);
             for (j = 1; j < engine->filter.aLength; j++) {
-                iOffset = (i * 2 + p) * me->dataPath.length;
-                yi.i = y.i + iOffset;
-                yi.q = y.q + iOffset;
+                //iOffset = (i * 2 + p) * me->dataPath.length;
+                //yi.i = y.i + iOffset;
+                //yi.q = y.q + iOffset;
+                
+                //Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                Z = RKGetSplitComplexDataFromPulse(RKGetPulse(engine->pulseBuffer, i), p);
+                yi.i = Z.i + me->dataPath.origin;
+                yi.q = Z.q + me->dataPath.origin;
                 RKSIMD_zcma(&a, &yi, &yk, me->dataPath.length, true);
 
 #if defined(DEBUG_IIR)
@@ -334,14 +344,23 @@ static void *ringFilterCore(void *_in) {
 
 #endif
 
-                i = RKPreviousModuloS(i, depth);
+                //i = RKPreviousModuloS(i, depth);
+                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
             }
             
+#if defined(DEBUG_IIR)
+
             if (c == 0) {
                 pthread_mutex_unlock(&engine->mutex);
             }
+
+#endif
             
-        }
+            // Override pulse data with y[k]
+            //memcpy(Z.i + me->dataPath.origin, yk.i + kOffset, me->dataPath.length * sizeof(RKFloat));
+            //memcpy(Z.q + me->dataPath.origin, yk.q + kOffset, me->dataPath.length * sizeof(RKFloat));
+
+        } // for (p = 0; ...
         k = RKNextModuloS(k, depth);
         
         // The task for this core is now done at this point
@@ -378,8 +397,8 @@ static void *ringFilterCore(void *_in) {
     
     free(x.i);
     free(x.q);
-    free(y.i);
-    free(y.q);
+    //free(y.i);
+    //free(y.q);
     free(b.i);
     free(b.q);
     free(a.i);
@@ -411,7 +430,7 @@ static void *pulseRingWatcher(void *_in) {
         return NULL;
     }
     
-    RKPulse *pulse;
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
     RKPulse *pulseToSkip;
 
 	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
@@ -422,9 +441,10 @@ static void *pulseRingWatcher(void *_in) {
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
+    
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
-    uint32_t paddedGateCount = ((int)ceilf((float)engine->gateCount / RKSIMDAlignSize) * RKSIMDAlignSize);
+    uint32_t paddedGateCount = ((int)ceilf((float)MIN(engine->gateCount, pulse->header.capacity) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
     for (c = 0; c < engine->coreCount; c++) {
@@ -645,7 +665,7 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     engine->filter.A[0].i = 1.0f;
     engine->filter.A[1].i = 0.2f;
     engine->filter.A[2].i = 0.1f;
-    engine->gateCount = 100;
+    engine->gateCount = 400;
     engine->memoryUsage = sizeof(RKPulseRingFilterEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
