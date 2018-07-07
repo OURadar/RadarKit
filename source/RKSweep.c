@@ -494,7 +494,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;
-    engine->baseMomentList = RKBaseMomentListProductZVWDPRK;
+    engine->baseMomentList = RKBaseMomentListProductZVWDPR;
     engine->productRecorder = &RKProductFileWriterNC;
     pthread_mutex_init(&engine->productMutex, NULL);
     return engine;
