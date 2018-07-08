@@ -44,15 +44,16 @@ struct rk_pulse_ring_filter_engine {
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
-    uint32_t                         gateCount;                          // Number of range gates to aplly filter
-    RKIIRFilter                      filter;                             // The FIR/IIR filter to use
-    bool                             *workerTaskDone;                    // Task status [coreCount x pulseBufferDepth]
-    
+    bool                             useFilter;                          // Use FIR/IIR filter
+    RKIIRFilter                      filter;                             // The FIR/IIR filter coefficients
+    uint32_t                         gateCount;                          // Number of range gates to apply filter
+
     // Program set variables
     RKPulseRingFilterWorker          *workers;
+    bool                             *workerTaskDone;                    // Task status [coreCount x pulseBufferDepth]
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  mutex;
-    
+
     // Status / health
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
