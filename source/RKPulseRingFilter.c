@@ -295,7 +295,9 @@ static void *ringFilterCore(void *_in) {
                     iOffset = (i * 2 + p) * me->dataPath.length;
                     xi.i = xx.i + iOffset;
                     xi.q = xx.q + iOffset;
-                    RKSIMD_zcma(&bb, &xi, &yk, me->dataPath.length, true);
+                    // RKSIMD_zcma(&bb, &xi, &yk, me->dataPath.length, false);
+                    RKSIMD_szcma(bb.i, &xi, &yk, me->dataPath.length);
+                    
                     
 #if defined(DEBUG_IIR)
                     
@@ -322,7 +324,8 @@ static void *ringFilterCore(void *_in) {
                     iOffset = (i * 2 + p) * me->dataPath.length;
                     yi.i = yy.i + iOffset;
                     yi.q = yy.q + iOffset;
-                    RKSIMD_zcma(&aa, &yi, &yk, me->dataPath.length, true);
+                    //RKSIMD_zcma(&aa, &yi, &yk, me->dataPath.length, false);
+                    RKSIMD_szcma(aa.i, &yi, &yk, me->dataPath.length);
                     
 #if defined(DEBUG_IIR)
                     
@@ -653,6 +656,7 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
+//    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->gateCount = 400;

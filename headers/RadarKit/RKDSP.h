@@ -40,7 +40,8 @@ enum RKFilterType {
     RKFilterTypeElliptical1,
     RKFilterTypeElliptical2,
     RKFilterTypeElliptical3,
-    RKFilterTypeElliptical4
+    RKFilterTypeElliptical4,
+    RKFilterTypeTest1
 };
 
 void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type);
