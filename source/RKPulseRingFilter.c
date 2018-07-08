@@ -286,7 +286,7 @@ static void *ringFilterCore(void *_in) {
                     iOffset = (i * 2 + p) * me->dataPath.length;
                     yi.i = yy.i + iOffset;
                     yi.q = yy.q + iOffset;
-                    RKSIMD_csz(engine->filter.A[j].i, &yi, &yk, me->dataPath.length);
+                    RKSIMD_csz(-engine->filter.A[j].i, &yi, &yk, me->dataPath.length);
                     
 #if defined(DEBUG_IIR)
                     
@@ -306,8 +306,10 @@ static void *ringFilterCore(void *_in) {
                 }
                 
                 // Override pulse data with y[k] up to gateCount only
-                memcpy(Z.i + me->dataPath.origin, yk.i + kOffset, outputLength * sizeof(RKFloat));
-                memcpy(Z.q + me->dataPath.origin, yk.q + kOffset, outputLength * sizeof(RKFloat));
+                if (c == 1) {
+                    memcpy(Z.i + me->dataPath.origin, yk.i, outputLength * sizeof(RKFloat));
+                    memcpy(Z.q + me->dataPath.origin, yk.q, outputLength * sizeof(RKFloat));
+                }
                 
 #if defined(DEBUG_IIR)
                 
@@ -319,10 +321,9 @@ static void *ringFilterCore(void *_in) {
 #endif
                 
             } // for (p = 0; ...
+            // Move to the next index of local buffer
+            k = RKNextModuloS(k, depth);
         } // if (engine->useFilter) ...
-        
-        // Move to the next index of local buffer
-        k = RKNextModuloS(k, depth);
         
         // The task for this core is now done at this point
         engine->workerTaskDone[i0 * engine->coreCount + c] = true;
@@ -614,6 +615,7 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
 //    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
+//    RKGetFilterCoefficients(&engine->filter, RKFilterTypeImpulse);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->gateCount = 400;

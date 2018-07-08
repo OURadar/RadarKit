@@ -284,8 +284,8 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
             memset(a, 0, filter->aLength * sizeof(RKComplex));
-            b++->i = +0.852417f; b++->i = -4.259192f; b++->i = +8.515492f; b++->i = -8.515492f; b++->i = +4.259192f; b++->i = -0.852417f;
-            a++->i = +1.000000f; a++->i = -4.624806f; a++->i = +8.563920f; a++->i = -7.934279f; a++->i = +3.676572f; a++->i = -0.681368f;
+            b++->i = +0.852417f; b++->i = -4.259192f; b++->i = +8.515492f; b++->i = -8.515492f; b++->i = +4.259192f; b->i = -0.852417f;
+            a++->i = +1.000000f; a++->i = -4.624806f; a++->i = +8.563920f; a++->i = -7.934279f; a++->i = +3.676572f; a->i = -0.681368f;
             break;
         case RKFilterTypeElliptical2:
             //  0.2 radians / sample
@@ -293,8 +293,8 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
             memset(a, 0, filter->aLength * sizeof(RKComplex));
-            b++->i = +0.708621f; b++->i = -3.533447f; b++->i = +7.057262f; b++->i = -7.057262f; b++->i = +3.533447f; b++->i = -0.708621f;
-            a++->i = +1.000000f; a++->i = -4.256763f; a++->i = +7.289072f; a++->i = -6.260851f; a++->i = +2.690193f; a++->i = -0.460609f;
+            b++->i = +0.708621f; b++->i = -3.533447f; b++->i = +7.057262f; b++->i = -7.057262f; b++->i = +3.533447f; b->i = -0.708621f;
+            a++->i = +1.000000f; a++->i = -4.256763f; a++->i = +7.289072f; a++->i = -6.260851f; a++->i = +2.690193f; a->i = -0.460609f;
             break;
         case RKFilterTypeElliptical3:
             //  0.3 radians / sample
@@ -302,8 +302,8 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
             memset(a, 0, filter->aLength * sizeof(RKComplex));
-            b++->i = +0.590096f; b++->i = -2.932276f; b++->i = +5.846463f; b++->i = -5.846463f; b++->i = +2.932276f; b++->i = -0.590096f;
-            a++->i = +1.000000f; a++->i = -3.889502f; a++->i = +6.151535f; a++->i = -4.904427f; a++->i = +1.954838f; a++->i = -0.305741f;
+            b++->i = +0.590096f; b++->i = -2.932276f; b++->i = +5.846463f; b++->i = -5.846463f; b++->i = +2.932276f; b->i = -0.590096f;
+            a++->i = +1.000000f; a++->i = -3.889502f; a++->i = +6.151535f; a++->i = -4.904427f; a++->i = +1.954838f; a->i = -0.305741f;
             break;
         case RKFilterTypeElliptical4:
             //  0.4 radians / sample
@@ -311,15 +311,23 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
             memset(a, 0, filter->aLength * sizeof(RKComplex));
-            b++->i = +0.491560f; b++->i = -2.430619f; b++->i = +4.834367f; b++->i = -4.834367f; b++->i = +2.430619f; b++->i = -0.491560f;
-            a++->i = +1.000000f; a++->i = -3.520292f; a++->i = +5.139254f; a++->i = -3.808225f; a++->i = +1.409268f; a++->i = -0.195916f;
+            b++->i = +0.491560f; b++->i = -2.430619f; b++->i = +4.834367f; b++->i = -4.834367f; b++->i = +2.430619f; b->i = -0.491560f;
+            a++->i = +1.000000f; a++->i = -3.520292f; a++->i = +5.139254f; a++->i = -3.808225f; a++->i = +1.409268f; a->i = -0.195916f;
+        case RKFilterTypeImpulse:
+            filter->bLength = 1;
+            filter->aLength = 1;
+            memset(b, 0, 8 * sizeof(RKComplex));
+            memset(a, 0, 8 * sizeof(RKComplex));
+            b->i = 1.0f;
+            a->i = 1.0f;
+            break;
         case RKFilterTypeTest1:
             filter->bLength = 2;
             filter->aLength = 3;
             memset(b, 0, 8 * sizeof(RKComplex));
             memset(a, 0, 8 * sizeof(RKComplex));
-            b++->i = 0.5f; b++->i = 1.0f;
-            a++->i = 1.0f; a++->i = 0.2f; a++->i = 0.1f;
+            b++->i = 0.5f; b->i = 1.0f;
+            a++->i = 1.0f; a++->i = 0.2f; a->i = 0.1f;
             break;
         default:
             break;

@@ -41,6 +41,7 @@ enum RKFilterType {
     RKFilterTypeElliptical2,
     RKFilterTypeElliptical3,
     RKFilterTypeElliptical4,
+    RKFilterTypeImpulse,
     RKFilterTypeTest1
 };
 
