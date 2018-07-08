@@ -63,7 +63,7 @@ static void *ringFilterCore(void *_in) {
     RKPulseRingFilterWorker *me = (RKPulseRingFilterWorker *)_in;
     RKPulseRingFilterEngine *engine = me->parentEngine;
 
-    int g, i, j, k, p;
+    int i, j, k, p;
     struct timeval t0, t1, t2;
 
     const int c = me->id;
@@ -118,42 +118,17 @@ static void *ringFilterCore(void *_in) {
     // Each block is depth x pols (2) x gates (me->dataPath.length)
     RKIQZ xx;
     RKIQZ yy;
-    RKIQZ bb;
-    RKIQZ aa;
     const int depth = 8;
     size_t filterSize = depth * me->dataPath.length * sizeof(RKFloat);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.i, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.q, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.i, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.q, RKSIMDAlignSize, 2 * filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&bb.i, RKSIMDAlignSize, filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&bb.q, RKSIMDAlignSize, filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&aa.i, RKSIMDAlignSize, filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&aa.q, RKSIMDAlignSize, filterSize));
     memset(xx.i, 0, 2 * filterSize);
     memset(xx.q, 0, 2 * filterSize);
     memset(yy.i, 0, 2 * filterSize);
     memset(yy.q, 0, 2 * filterSize);
-    memset(bb.i, 0, filterSize);
-    memset(bb.q, 0, filterSize);
-    memset(aa.i, 0, filterSize);
-    memset(aa.q, 0, filterSize);
-    mem += 12 * filterSize;
-
-    // Duplicate the filter coefficients to vectors. Negate the A coefficients so we can use cummulative add later.
-    i = 0;
-    for (k = 0; k < engine->filter.bLength; k++) {
-        RKFloat *bi = &bb.i[k * me->dataPath.length];
-        RKFloat *bq = &bb.q[k * me->dataPath.length];
-        RKFloat *ai = &aa.i[k * me->dataPath.length];
-        RKFloat *aq = &aa.q[k * me->dataPath.length];
-        for (g = 0; g < me->dataPath.length; g++) {
-            *bi++ = engine->filter.B[k].i;
-            *bq++ = engine->filter.B[k].q;
-            *ai++ = -engine->filter.A[k].i;
-            *aq++ = -engine->filter.A[k].q;
-        }
-    }
+    mem += 8 * filterSize;
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -188,17 +163,6 @@ static void *ringFilterCore(void *_in) {
           RKIntegerToCommaStyleString(me->dataPath.origin),
           RKIntegerToCommaStyleString(me->dataPath.length),
           ci);
-    
-    if (engine->verbose > 2) {
-        RKShowArray(bb.i, "Bi", me->dataPath.length, depth);
-        printf("\n");
-        RKShowArray(bb.q, "Bq", me->dataPath.length, depth);
-        printf("\n");
-        RKShowArray(aa.i, "Ai", me->dataPath.length, depth);
-        printf("\n");
-        RKShowArray(aa.q, "Aq", me->dataPath.length, depth);
-        printf("\n");
-    }
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -295,8 +259,7 @@ static void *ringFilterCore(void *_in) {
                     iOffset = (i * 2 + p) * me->dataPath.length;
                     xi.i = xx.i + iOffset;
                     xi.q = xx.q + iOffset;
-                    // RKSIMD_zcma(&bb, &xi, &yk, me->dataPath.length, false);
-                    RKSIMD_szcma(bb.i, &xi, &yk, me->dataPath.length);
+                    RKSIMD_csz(engine->filter.B[j].i, &xi, &yk, me->dataPath.length);
                     
                     
 #if defined(DEBUG_IIR)
@@ -308,8 +271,7 @@ static void *ringFilterCore(void *_in) {
                           RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
                     RKShowArray(xi.i, "xi.i", 8, 1);
                     RKShowArray(xi.q, "xi.q", 8, 1);
-                    RKShowArray(bb.i, "bb.i", 8, 1);
-                    RKShowArray(bb.q, "bb.q", 8, 1);
+                    RKLog(">%s\n", RKVariableInString("b", &engine->filter.B[j].i, RKValueTypeFloat));
                     RKShowArray(yk.i, "yk.i", 8, 1);
                     RKShowArray(yk.q, "yk.q", 8, 1);
                     
@@ -317,15 +279,14 @@ static void *ringFilterCore(void *_in) {
                     
                     i = RKPreviousModuloS(i, depth);
                 }
-                
+
                 // A's
                 i = RKPreviousModuloS(k, depth);
                 for (j = 1; j < engine->filter.aLength; j++) {
                     iOffset = (i * 2 + p) * me->dataPath.length;
                     yi.i = yy.i + iOffset;
                     yi.q = yy.q + iOffset;
-                    //RKSIMD_zcma(&aa, &yi, &yk, me->dataPath.length, false);
-                    RKSIMD_szcma(aa.i, &yi, &yk, me->dataPath.length);
+                    RKSIMD_csz(engine->filter.A[j].i, &yi, &yk, me->dataPath.length);
                     
 #if defined(DEBUG_IIR)
                     
@@ -335,8 +296,7 @@ static void *ringFilterCore(void *_in) {
                           RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
                     RKShowArray(yi.i, "yi.i", 8, 1);
                     RKShowArray(yi.q, "yi.q", 8, 1);
-                    RKShowArray(aa.i, "aa.i", 8, 1);
-                    RKShowArray(aa.q, "aa.q", 8, 1);
+                    RKLog(">%s\n", RKVariableInString("a", &engine->filter.A[j].i, RKValueTypeFloat));
                     RKShowArray(yk.i, "yk.i", 8, 1);
                     RKShowArray(yk.q, "yk.q", 8, 1);
                     
@@ -400,10 +360,6 @@ static void *ringFilterCore(void *_in) {
     free(xx.q);
     free(yy.i);
     free(yy.q);
-    free(bb.i);
-    free(bb.q);
-    free(aa.i);
-    free(aa.q);
     free(busyPeriods);
     free(fullPeriods);
 
@@ -475,6 +431,7 @@ static void *pulseRingWatcher(void *_in) {
         worker->parentEngine = engine;
         worker->dataPath.origin = origin;
         worker->dataPath.length = length;
+        worker->filterNeedsUpdate = true;
         origin += length;
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
@@ -655,8 +612,8 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     sprintf(engine->name, "%s<PulseRingFilter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
-//    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
+    //RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
+    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->gateCount = 400;

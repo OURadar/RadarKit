@@ -264,6 +264,20 @@ void RKSIMD_szcma(RKFloat *s1, RKIQZ *s2, RKIQZ *dst, const int n) {
     return;
 }
 
+void RKSIMD_csz(RKFloat s, RKIQZ *src, RKIQZ *dst, const int n) {
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    const RKVec fv = _rk_mm_set1_pf(s);
+    RKVec *si = (RKVec *)src->i;
+    RKVec *sq = (RKVec *)src->q;
+    RKVec *di = (RKVec *)dst->i;
+    RKVec *dq = (RKVec *)dst->q;
+    for (k = 0; k < K; k++) {
+        *di = _rk_mm_add_pf(*di, _rk_mm_mul_pf(fv, *si++)); // I += I1 * I2
+        *dq = _rk_mm_add_pf(*dq, _rk_mm_mul_pf(fv, *sq++)); // Q += I1 * Q2
+        di++; dq++;
+    }
+}
+
 // Multiply by a scale
 void RKSIMD_zscl(RKIQZ *src, const float f, RKIQZ *dst, const int n) {
     int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);

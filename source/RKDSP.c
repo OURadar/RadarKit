@@ -318,7 +318,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             filter->aLength = 3;
             memset(b, 0, 8 * sizeof(RKComplex));
             memset(a, 0, 8 * sizeof(RKComplex));
-            b++->i = 0.5f; b++->i = 0.5f;
+            b++->i = 0.5f; b++->i = 1.0f;
             a++->i = 1.0f; a++->i = 0.2f; a++->i = 0.1f;
             break;
         default:

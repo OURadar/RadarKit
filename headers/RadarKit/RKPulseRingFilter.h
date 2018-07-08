@@ -30,6 +30,7 @@ struct rk_pulse_ring_filter_worker {
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
     sem_t                      *sem;
+    bool                       filterNeedsUpdate;                        // For local filter storage to be updated
 };
 
 struct rk_pulse_ring_filter_engine {
