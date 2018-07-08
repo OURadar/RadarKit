@@ -612,8 +612,8 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     sprintf(engine->name, "%s<PulseRingFilter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    //RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
-    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
+    RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
+//    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->gateCount = 400;
