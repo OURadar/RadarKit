@@ -306,10 +306,8 @@ static void *ringFilterCore(void *_in) {
                 }
                 
                 // Override pulse data with y[k] up to gateCount only
-                if (c == 1) {
-                    memcpy(Z.i + me->dataPath.origin, yk.i, outputLength * sizeof(RKFloat));
-                    memcpy(Z.q + me->dataPath.origin, yk.q, outputLength * sizeof(RKFloat));
-                }
+                memcpy(Z.i + me->dataPath.origin, yk.i, outputLength * sizeof(RKFloat));
+                memcpy(Z.q + me->dataPath.origin, yk.q, outputLength * sizeof(RKFloat));
                 
 #if defined(DEBUG_IIR)
                 
@@ -618,7 +616,7 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
 //    RKGetFilterCoefficients(&engine->filter, RKFilterTypeImpulse);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->gateCount = 400;
+    engine->gateCount = 1000;
     engine->useFilter = true;
     engine->memoryUsage = sizeof(RKPulseRingFilterEngine);
     pthread_mutex_init(&engine->mutex, NULL);
