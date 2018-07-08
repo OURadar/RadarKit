@@ -63,7 +63,7 @@ static void *ringFilterCore(void *_in) {
     RKPulseRingFilterWorker *me = (RKPulseRingFilterWorker *)_in;
     RKPulseRingFilterEngine *engine = me->parentEngine;
 
-    int k;
+    int i, j, k, p;
     struct timeval t0, t1, t2;
 
     const int c = me->id;
@@ -79,9 +79,9 @@ static void *ringFilterCore(void *_in) {
     // Initiate a variable to store my name
     RKName name;
     if (rkGlobalParameters.showColor) {
-        pthread_mutex_lock(&engine->coreMutex);
+        pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
-        pthread_mutex_unlock(&engine->coreMutex);
+        pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
@@ -110,10 +110,25 @@ static void *ringFilterCore(void *_in) {
     RKPulse *pulse;
     size_t mem = 0;
     
+    if (me->dataPath.origin % RKSIMDAlignSize > 0 || me->dataPath.length % RKSIMDAlignSize > 0) {
+        RKLog("%s %s Error. Each filter line path must align to SIMD requirements.\n", engine->name, name);
+        return NULL;
+    }
     // Allocate local resources, use k to keep track of the total allocation
-    // RKComplex *y[ACount]
-    // RKComplex *x[Bcount]
-    // NOTE: Align them to RKSIMDAlignSize for SIMD
+    // Each block is depth x pols (2) x gates (me->dataPath.length)
+    RKIQZ xx;
+    RKIQZ yy;
+    const int depth = 8;
+    size_t filterSize = depth * me->dataPath.length * sizeof(RKFloat);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.i, RKSIMDAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.q, RKSIMDAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.i, RKSIMDAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.q, RKSIMDAlignSize, 2 * filterSize));
+    memset(xx.i, 0, 2 * filterSize);
+    memset(xx.q, 0, 2 * filterSize);
+    memset(yy.i, 0, 2 * filterSize);
+    memset(yy.q, 0, 2 * filterSize);
+    mem += 8 * filterSize;
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -138,13 +153,18 @@ static void *ringFilterCore(void *_in) {
     int d0 = 0;
 
     // Log my initial state
-    pthread_mutex_lock(&engine->coreMutex);
+    pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B   ci = %d\n",
-          engine->name, name, RKUIntegerToCommaStyleString(mem), ci);
-    
-    pthread_mutex_unlock(&engine->coreMutex);
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   dataPath = %s, %s   ci = %d\n",
+          engine->name, name,
+          RKUIntegerToCommaStyleString(mem),
+          RKIntegerToCommaStyleString(i0),
+          RKIntegerToCommaStyleString(me->dataPath.origin),
+          RKIntegerToCommaStyleString(me->dataPath.length),
+          ci);
+
+    pthread_mutex_unlock(&engine->mutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
@@ -158,6 +178,11 @@ static void *ringFilterCore(void *_in) {
     //
     uint64_t tic = me->tic;
 
+    RKIQZ Z, xi, yi, yk;
+    int kOffset, iOffset;
+    uint32_t outputLength = MIN(engine->gateCount - me->dataPath.origin, me->dataPath.length);
+    
+    k = 0;    // pulse index
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
@@ -184,16 +209,119 @@ static void *ringFilterCore(void *_in) {
 
         pulse = RKGetPulse(engine->pulseBuffer, i0);
 		if (!(pulse->header.s & RKPulseStatusRingInspected)) {
-			fprintf(stderr, "This should not happen.\n");
+			fprintf(stderr, "This should not happen.   i0 = %d\n", i0);
 		}
 
         // Now we do the work
         // Should only focus on the tasked range bins
         //
-		if (engine->workerTaskDone[i0 * engine->coreCount + c] != false) {
-			fprintf(stderr, "Already done?\n");
-		}
+        if (engine->workerTaskDone[i0 * engine->coreCount + c] == true) {
+            fprintf(stderr, "Already done?   i0 = %d\n", i0);
+            j = RKPreviousModuloS(i0, engine->radarDescription->pulseBufferDepth);
+            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+        }
+        if (engine->useFilter) {
+            // Now we perform the difference equation on each polarization
+            // y[n] = B[0] * x[n] + B[1] * x[n - 1] + ...
+            //
+            for (p = 0; p < 2; p++) {
+                // Store x[n] at index k
+                kOffset = (k * 2 + p) * me->dataPath.length;
+                Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                memcpy(xx.i + kOffset, Z.i + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+                memcpy(xx.q + kOffset, Z.q + me->dataPath.origin, me->dataPath.length * sizeof(RKFloat));
+                
+#if defined(DEBUG_IIR)
+                
+                pthread_mutex_lock(&engine->mutex);
+                RKLog(">%s %s %s   %s   %s   %s   %s\n", engine->name, name,
+                      RKVariableInString("p", &p, RKValueTypeInt),
+                      RKVariableInString("k", &k, RKValueTypeInt),
+                      RKVariableInString("bLength", &engine->filter.bLength, RKValueTypeUInt32),
+                      RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32),
+                      RKVariableInString("data.pathLength", &me->dataPath.length, RKValueTypeUInt32));
+                
+#endif
+                
+                // Store y[n] at local buffer y at offset k
+                yk.i = yy.i + kOffset;
+                yk.q = yy.q + kOffset;
+                memset(yk.i, 0, me->dataPath.length * sizeof(RKFloat));
+                memset(yk.q, 0, me->dataPath.length * sizeof(RKFloat));
+                
+                // B's
+                i = k;
+                for (j = 0; j < engine->filter.bLength; j++) {
+                    iOffset = (i * 2 + p) * me->dataPath.length;
+                    xi.i = xx.i + iOffset;
+                    xi.q = xx.q + iOffset;
+                    RKSIMD_csz(engine->filter.B[j].i, &xi, &yk, me->dataPath.length);
+                    
+                    
+#if defined(DEBUG_IIR)
+                    
+                    RKLog(">%s %s B portion   %s   %s   %s   %s\n", engine->name, name,
+                          RKVariableInString("k", &k, RKValueTypeInt),
+                          RKVariableInString("j", &j, RKValueTypeInt),
+                          RKVariableInString("i", &i, RKValueTypeInt),
+                          RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
+                    RKShowArray(xi.i, "xi.i", 8, 1);
+                    RKShowArray(xi.q, "xi.q", 8, 1);
+                    RKLog(">%s\n", RKVariableInString("b", &engine->filter.B[j].i, RKValueTypeFloat));
+                    RKShowArray(yk.i, "yk.i", 8, 1);
+                    RKShowArray(yk.q, "yk.q", 8, 1);
+                    
+#endif
+                    
+                    i = RKPreviousModuloS(i, depth);
+                }
 
+                // A's
+                i = RKPreviousModuloS(k, depth);
+                for (j = 1; j < engine->filter.aLength; j++) {
+                    iOffset = (i * 2 + p) * me->dataPath.length;
+                    yi.i = yy.i + iOffset;
+                    yi.q = yy.q + iOffset;
+                    RKSIMD_csz(-engine->filter.A[j].i, &yi, &yk, me->dataPath.length);
+                    
+#if defined(DEBUG_IIR)
+                    
+                    RKLog(">%s %s A portion   %s   %s   %s\n", engine->name, name,
+                          RKVariableInString("j", &j, RKValueTypeInt),
+                          RKVariableInString("i", &i, RKValueTypeInt),
+                          RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
+                    RKShowArray(yi.i, "yi.i", 8, 1);
+                    RKShowArray(yi.q, "yi.q", 8, 1);
+                    RKLog(">%s\n", RKVariableInString("a", &engine->filter.A[j].i, RKValueTypeFloat));
+                    RKShowArray(yk.i, "yk.i", 8, 1);
+                    RKShowArray(yk.q, "yk.q", 8, 1);
+                    
+#endif
+                    
+                    i = RKPreviousModuloS(i, depth);
+                }
+                
+                // Override pulse data with y[k] up to gateCount only
+                memcpy(Z.i + me->dataPath.origin, yk.i, outputLength * sizeof(RKFloat));
+                memcpy(Z.q + me->dataPath.origin, yk.q, outputLength * sizeof(RKFloat));
+                
+#if defined(DEBUG_IIR)
+                
+                RKLog("%s %s Output copied with dataPath = (%s, %s)", engine->name, name,
+                      RKIntegerToCommaStyleString(me->dataPath.origin),
+                      RKIntegerToCommaStyleString(outputLength));
+                pthread_mutex_unlock(&engine->mutex);
+                
+#endif
+                
+            } // for (p = 0; ...
+            // Move to the next index of local buffer
+            k = RKNextModuloS(k, depth);
+        } // if (engine->useFilter) ...
         
         // The task for this core is now done at this point
         engine->workerTaskDone[i0 * engine->coreCount + c] = true;
@@ -226,6 +354,13 @@ static void *ringFilterCore(void *_in) {
     if (engine->verbose > 1) {
         RKLog("%s %s Freeing reources ...\n", engine->name, name);
     }
+    
+    free(xx.i);
+    free(xx.q);
+    free(yy.i);
+    free(yy.q);
+    free(busyPeriods);
+    free(fullPeriods);
 
     RKLog(">%s %s Stopped.\n", engine->name, name);
 
@@ -251,7 +386,7 @@ static void *pulseRingWatcher(void *_in) {
         return NULL;
     }
     
-    RKPulse *pulse;
+    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
     RKPulse *pulseToSkip;
 
 	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
@@ -264,6 +399,12 @@ static void *pulseRingWatcher(void *_in) {
 
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
+    uint32_t paddedGateCount = ((int)ceilf((float)MIN(engine->gateCount, pulse->header.capacity) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
+    uint32_t length = paddedGateCount / engine->coreCount;
+    uint32_t origin = 0;
+    RKLog("%s %s   %s\n", engine->name,
+          RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32),
+          RKVariableInString("dataPath.length", &length, RKValueTypeUInt32));
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];
         snprintf(worker->semaphoreName, 32, "rk-cf-%03d", c);
@@ -287,12 +428,16 @@ static void *pulseRingWatcher(void *_in) {
         worker->id = c;
         worker->sem = sem[c];
         worker->parentEngine = engine;
+        worker->dataPath.origin = origin;
+        worker->dataPath.length = length;
+        worker->filterNeedsUpdate = true;
+        origin += length;
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
         }
         if (pthread_create(&worker->tid, NULL, ringFilterCore, worker) != 0) {
-            RKLog(">%s Error. Failed to start a compression core.\n", engine->name);
-            return (void *)RKResultFailedToStartCompressionCore;
+            RKLog(">%s Error. Failed to start a ring core.\n", engine->name);
+            return (void *)RKResultFailedToStartRingCore;
         }
     }
 
@@ -393,6 +538,7 @@ static void *pulseRingWatcher(void *_in) {
 			printf("\n");
 		}
 		printf("===\n");
+        RKLog("%s k = %d   pulseIndex = %u / %zu\n", engine->name, k, *engine->pulseIndex, pulse->header.i);
 		#endif
 
 		// Now we set this pulse to be "not done" and post
@@ -408,7 +554,7 @@ static void *pulseRingWatcher(void *_in) {
 			}
 		}
 
-		// Now we check how many pulses are done
+		// Now we check on and catch up with the pulses that are done
         allDone = true;
         while (j != k && allDone) {
             // Decide whether the pulse has been processed by FIR/IIR filter
@@ -435,7 +581,7 @@ static void *pulseRingWatcher(void *_in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
-        
+
     // Wait for workers to return
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];
@@ -465,10 +611,15 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     sprintf(engine->name, "%s<PulseRingFilter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
+    RKGetFilterCoefficients(&engine->filter, RKFilterTypeElliptical1);
+//    RKGetFilterCoefficients(&engine->filter, RKFilterTypeTest1);
+//    RKGetFilterCoefficients(&engine->filter, RKFilterTypeImpulse);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
+    engine->gateCount = 1000;
+    engine->useFilter = true;
     engine->memoryUsage = sizeof(RKPulseRingFilterEngine);
-    pthread_mutex_init(&engine->coreMutex, NULL);
+    pthread_mutex_init(&engine->mutex, NULL);
     return engine;
 }
 
@@ -476,7 +627,7 @@ void RKPulseRingFilterEngineFree(RKPulseRingFilterEngine *engine) {
     if (engine->state & RKEngineStateWantActive) {
         RKPulseRingFilterEngineStop(engine);
     }
-    pthread_mutex_destroy(&engine->coreMutex);
+    pthread_mutex_destroy(&engine->mutex);
     free(engine);
 }
 
@@ -514,7 +665,9 @@ void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *engine, const
     engine->coreOrigin = origin;
 }
 
-int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilter *filter) {
+int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilter *filter, const uint32_t gateCount) {
+    memcpy(&engine->filter, filter, sizeof(RKIIRFilter));
+    engine->gateCount = gateCount;
     return RKResultSuccess;
 }
 
@@ -531,6 +684,17 @@ int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     }
     if (engine->workers != NULL) {
         RKLog("%s Error. workers should be NULL here.\n", engine->name);
+    }
+    if (engine->gateCount > engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio) {
+        RKLog("%s Info. Filter gateCount %s -> %s (pulseCapacity %s / pulseToRayRatio %d)\n", engine->name,
+              RKIntegerToCommaStyleString(engine->gateCount),
+              RKIntegerToCommaStyleString(engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio),
+              RKIntegerToCommaStyleString(engine->radarDescription->pulseCapacity),
+              engine->radarDescription->pulseToRayRatio);
+        engine->gateCount = engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio;
+    }
+    if (engine->gateCount <= RKSIMDAlignSize) {
+        engine->coreCount = 1;
     }
     engine->workers = (RKPulseRingFilterWorker *)malloc(engine->coreCount * sizeof(RKPulseRingFilterWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseRingFilterWorker);

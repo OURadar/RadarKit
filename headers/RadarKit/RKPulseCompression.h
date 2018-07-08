@@ -64,7 +64,7 @@ struct rk_pulse_compression_engine {
     RKPulseCompressionPlanIndex      *planIndices;
     RKPulseCompressionWorker         *workers;
     pthread_t                        tidPulseWatcher;
-    pthread_mutex_t                  coreMutex;
+    pthread_mutex_t                  mutex;
 
     // Status / health
     char                             statusBuffer[RKBufferSSlotCount][RKNameLength];

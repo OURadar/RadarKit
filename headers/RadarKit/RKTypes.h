@@ -217,8 +217,8 @@ typedef struct rk_iir_filter {
     uint32_t      name;
     uint32_t      bLength;
     uint32_t      aLength;
-    RKComplex     *B;
-    RKComplex     *A;
+    RKComplex     B[8];
+    RKComplex     A[8];
 } RKIIRFilter;
 
 typedef struct rk_modulo_path {
@@ -251,8 +251,10 @@ N(RKResultSDToFDError) \
 N(RKResultNoPulseBuffer) \
 N(RKResultNoRayBuffer) \
 N(RKResultNoPulseCompressionEngine) \
+N(RKResultNoPulseRingEngine) \
 N(RKResultNoMomentEngine) \
 N(RKResultFailedToStartCompressionCore) \
+N(RKResultFailedToStartRingCore) \
 N(RKResultFailedToStartPulseWatcher) \
 N(RKResultFailedToStartRingPulseWatcher) \
 N(RKResultFailedToInitiateSemaphore) \

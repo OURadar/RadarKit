@@ -263,9 +263,9 @@ static void *momentCore(void *in) {
     // Initiate a variable to store my name
     RKName name;
     if (rkGlobalParameters.showColor) {
-        pthread_mutex_lock(&engine->coreMutex);
+        pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
-        pthread_mutex_unlock(&engine->coreMutex);
+        pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
@@ -343,13 +343,13 @@ static void *momentCore(void *in) {
     int d0 = 0;
 
     // Log my initial state
-    pthread_mutex_lock(&engine->coreMutex);
+    pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
           engine->name, name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
 
-    pthread_mutex_unlock(&engine->coreMutex);
+    pthread_mutex_unlock(&engine->mutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
@@ -518,7 +518,8 @@ static void *momentCore(void *in) {
             // Zero out the ray
             zeroOutRay(ray);
             if (engine->verbose > 1) {
-                RKLog("%s %s Skipped a ray with %d sampples deltaAz = %.2f deltaEl = %.2f.\n", engine->name, name, path.length, deltaAzimuth, deltaElevation);
+                RKLog("%s %s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", engine->name, name,
+                      path.length, path.length > 1 ? "s": "", deltaAzimuth, deltaElevation);
             }
             ray->header.s |= RKRayStatusSkipped;
         }
@@ -833,7 +834,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->processor = &RKPulsePairHop;
     engine->processorLagCount = RKLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
-    pthread_mutex_init(&engine->coreMutex, NULL);
+    pthread_mutex_init(&engine->mutex, NULL);
     return engine;
 }
 

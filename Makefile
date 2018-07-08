@@ -8,6 +8,8 @@ CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-prag
 #CFLAGS =      -std=gnu99 -Os -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 CFLAGS += -fms-extensions -Wno-microsoft
 
+#CFLAGS += -DDEBUG_IIR
+
 LDFLAGS = -L /usr/local/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o

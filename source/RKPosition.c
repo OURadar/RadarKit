@@ -116,8 +116,7 @@ static void *pulseTagger(void *_in) {
     while (*engine->positionIndex < 2 && engine->state & RKEngineStateWantActive) {
         usleep(1000);
         if (++s % 200 == 0 && engine->verbose > 1) {
-            RKLog("%s sleep 0/%.1f s\n",
-                  engine->name, (float)s * 0.001f);
+            RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.001f);
         }
     }
     engine->state ^= RKEngineStateSleep0;

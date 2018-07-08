@@ -16,7 +16,7 @@ int RKLog(const char *whatever, ...) {
     }
     int i = 0;
     size_t len;
-    time_t utc;
+    struct timeval utc;
     va_list args;
     struct tm tm;
     char *msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
@@ -29,8 +29,8 @@ int RKLog(const char *whatever, ...) {
     }
 
     // Get the time
-    time(&utc);
-    memcpy(&tm, localtime(&utc), sizeof(struct tm));
+    gettimeofday(&utc, NULL);
+    memcpy(&tm, gmtime(&utc.tv_sec), sizeof(struct tm));
 
     // Construct the string
     va_start(args, whatever);
@@ -42,9 +42,10 @@ int RKLog(const char *whatever, ...) {
     }
     if (rkGlobalParameters.dailyLog) {
         if (whatever[0] == '>') {
-            i += sprintf(msg, "         ");
+            i += sprintf(msg, "             ");
         } else {
-            i += strftime(msg, 16, "%T ", &tm);
+            i += strftime(msg, 16, "%T", &tm);
+            i += sprintf(msg + i, ".%03d ", (int)utc.tv_usec / 1000);
         }
     } else {
         if (whatever[0] == '>') {
@@ -346,17 +347,26 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
 }
 
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
-    int j, k = 0;
+    int j, k = 0, n = (int)strlen(letter);
     char text[1024];
-    k = sprintf(text, "         %s%s%s = [ %s ]\n",
+    char pad[n + 1];
+    memset(pad, ' ', n);
+    pad[n] = '\0';
+    k = sprintf(text, "             %s%s%s = [ %s ]\n",
                 rkGlobalParameters.showColor ? RKYellowColor : "", letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
-    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
-    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
-    k += sprintf(text + k, "             [     ...\n");
-    for (j = height - 3; j < height; j++) {
-        k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
+    if (height > 1) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + width, width));
+    }
+    if (height > 2) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + 2 * width, width));
+    }
+    if (height > 6) {
+        k += sprintf(text + k, "              %s  [     ...\n", pad);
+    }
+    for (j = MAX(3, height - 3); j < height; j++) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
 }
