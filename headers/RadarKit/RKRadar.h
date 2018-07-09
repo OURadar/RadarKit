@@ -181,6 +181,8 @@ int RKFree(RKRadar *radar);
 // Properties
 //
 
+#pragma mark - Hardware Hooks
+
 // Set the transceiver. Pass in function pointers: init, exec and free
 int RKSetTransceiver(RKRadar *,
                      void *initInput,
@@ -202,16 +204,14 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
-// Moment processor
-int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
-int RKSetMomentProcessorToPulsePair(RKRadar *);
-int RKSetMomentProcessorToPulsePairHop(RKRadar *);
-int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
+#pragma mark - Before-Live Properties
 
-// Moment recorder
-int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
+// These can only be set before the radar goes live
+int RKSetProcessingCoreCounts(RKRadar *,
+                              const unsigned int pulseCompressionCoreCount,
+                              const unsigned int momentProcessorCoreCount);
 
-#pragma mark -
+#pragma mark - Properties
 
 // Some states of the radar
 int RKSetVerbosity(RKRadar *, const int);
@@ -225,16 +225,24 @@ int RKToggleRawDataRecorderMode(RKRadar *);
 int RKSetWaveform(RKRadar *, RKWaveform *);
 int RKSetWaveformByFilename(RKRadar *, const char *);
 int RKSetWaveformToImpulse(RKRadar *);
-int RKSetWaveformTo121(RKRadar *);
-int RKSetProcessingCoreCounts(RKRadar *,
-                              const unsigned int pulseCompressionCoreCount,
-                              const unsigned int momentProcessorCoreCount);
-int RKSetPRF(RKRadar *, const uint32_t prf);
+int RKSetPRF(RKRadar *, const uint32_t);
 uint32_t RKGetPulseCapacity(RKRadar *);
 
 // If there is a tic count from firmware, use it as clean reference for time derivation
 void RKSetPulseTicsPerSeconds(RKRadar *, const double);
 void RKSetPositionTicsPerSeconds(RKRadar *, const double);
+
+// Moment processor
+int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
+int RKSetMomentProcessorToPulsePair(RKRadar *);
+int RKSetMomentProcessorToPulsePairHop(RKRadar *);
+int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
+
+// Moment recorder (RadarKit uses netcdf by default)
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
+
+// Pulse ring filter (FIR / IIR ground clutter filter)
+int RKSetPulseRingFilter(RKRadar *, RKFilterType);
 
 //
 // Interactions
@@ -298,6 +306,8 @@ void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char
 void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
 void RKClearControls(RKRadar *);
 void RKConcludeControls(RKRadar *);
+
+#pragma mark - Developer Access
 
 // Absolute address value query
 void RKGetRegisterValue(RKRadar *, void *value, const unsigned long registerOffset, size_t size);

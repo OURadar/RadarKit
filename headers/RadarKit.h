@@ -12,6 +12,7 @@
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive
+//         - FIR/IIR ground clutter filters
 //
 //         - To do:
 //         - Task, event, sequence of tasks

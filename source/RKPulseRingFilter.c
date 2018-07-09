@@ -119,7 +119,8 @@ static void *ringFilterCore(void *_in) {
     RKIQZ xx;
     RKIQZ yy;
     const int depth = 8;
-    size_t filterSize = depth * me->dataPath.length * sizeof(RKFloat);
+    //size_t filterSize = depth * me->dataPath.length * sizeof(RKFloat);
+    size_t filterSize = depth * RKGateCount / engine->coreCount * sizeof(RKFloat);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.i, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.q, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.i, RKSIMDAlignSize, 2 * filterSize));
