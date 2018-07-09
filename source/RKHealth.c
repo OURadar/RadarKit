@@ -23,6 +23,12 @@ static void *healthConsolidator(void *_in) {
 
 	bool allTrue;
 	char *string;
+    double latitude;
+    double longitude;
+    float heading;
+    char *stringValue, *stringEnum, *stringObject;
+    int headingChangeCount = 0;
+    int locationChangeCount = 0;
 
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
@@ -156,6 +162,70 @@ static void *healthConsolidator(void *_in) {
                 i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
             }
         }
+
+        // Tag on GPS override if there is no GPS device anywhere
+        heading = NAN;
+        latitude = NAN;
+        longitude = NAN;
+        if ((stringObject = RKGetValueOfKey(string, "heading")) != NULL) {
+            stringValue = RKGetValueOfKey(stringObject, "value");
+            stringEnum = RKGetValueOfKey(stringObject, "enum");
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+                heading = (float)atof(stringValue);
+            }
+        }
+        if ((stringObject = RKGetValueOfKey(string, "latitude")) != NULL) {
+            stringValue = RKGetValueOfKey(stringObject, "value");
+            stringEnum = RKGetValueOfKey(stringObject, "enum");
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+                latitude = atof(stringValue);
+            }
+        }
+        if ((stringObject = RKGetValueOfKey(string, "longitude")) != NULL) {
+            stringValue = RKGetValueOfKey(stringObject, "value");
+            stringEnum = RKGetValueOfKey(stringObject, "enum");
+            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
+                longitude = atof(stringValue);
+            }
+        }
+        if (isfinite(latitude) && isfinite(longitude) && isfinite(heading)) {
+            if (engine->verbose > 1) {
+                RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
+            }
+            // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half of that.
+            if ((fabs(desc->latitude - latitude) > 3.5e-5 || fabs(desc->longitude - longitude) > 3.5e-5)) {
+                if (locationChangeCount++ > 3) {
+                    desc->latitude = latitude;
+                    desc->longitude = longitude;
+                    RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, desc->latitude, desc->longitude);
+                    locationChangeCount = 0;
+                }
+            } else {
+                locationChangeCount = 0;
+            }
+            if (fabsf(desc->heading - heading) > 1.0f) {
+                if (headingChangeCount++ > 3) {
+                    desc->heading = heading;
+                    RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
+                    headingChangeCount = 0;
+                }
+            } else {
+                headingChangeCount = 0;
+            }
+        } else {
+            // Concatenate with latitude, longitude and heading values if GPS values are not reported
+            i += sprintf(string + i, ", "
+                    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
+                    "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
+                    "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
+                    "\"LocationFromDescriptor\":true}",
+                    desc->latitude,
+                    desc->longitude,
+                    desc->heading);
+        }
+        
         sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
         health->flag = RKHealthFlagReady;
 

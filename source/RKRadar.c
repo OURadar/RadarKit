@@ -1528,14 +1528,20 @@ int RKWaitWhileActive(RKRadar *radar) {
                 }
 
                 // Position active / standby
-                positionT0 = RKGetLatestPosition(radar);
-                if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
-                    RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
-                    pedestalEnum = RKStatusEnumActive;
-                } else {
+                health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
                     pedestalEnum = RKStatusEnumStandby;
+                } else {
+                    positionT0 = RKGetLatestPosition(radar);
+                    if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
+                        RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
+                        pedestalEnum = RKStatusEnumActive;
+                    } else {
+                        pedestalEnum = RKStatusEnumStandby;
+                    }
+                    positionT1 = positionT0;
                 }
-                positionT1 = positionT0;
 
                 // Tweeta health
                 health = RKGetLatestHealthOfNode(radar, RKHealthNodeTweeta);

@@ -1335,6 +1335,26 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *obj = (char *)malloc(RKNameLength);
     char *subKey = (char *)malloc(RKNameLength);
     char *subObj = (char *)malloc(RKNameLength);
+    if (str == NULL) {
+        RKLog("Error allocating memory for str.\n");
+        return false;
+    }
+    if (key == NULL) {
+        RKLog("Error allocating memory for key.\n");
+        return false;
+    }
+    if (obj == NULL) {
+        RKLog("Error allocating memory for obj.\n");
+        return false;
+    }
+    if (subKey == NULL) {
+        RKLog("Error allocating memory for subKey.\n");
+        return false;
+    }
+    if (subObj == NULL) {
+        RKLog("Error allocating memory for subObj.\n");
+        return false;
+    }
     *key = '\0';
     *obj = '\0';
     *subKey = '\0';

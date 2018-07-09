@@ -10,71 +10,6 @@
 
 #pragma mark - Helper Functions
 
-static void RKProcessHealthKeywords(RKHealthLogger *engine, const char *string) {
-
-    char *str = (char *)malloc(strlen(string) + 1);
-    char *key = (char *)malloc(RKNameLength);
-    char *obj = (char *)malloc(RKMaximumPathLength);
-    char *subKey = (char *)malloc(RKNameLength);
-    char *subObj = (char *)malloc(RKMaximumPathLength);
-    uint8_t type;
-    uint8_t subType;
-    RKStatusEnum componentStatus;
-
-    if (str == NULL) {
-        RKLog("%s Error allocating memory for str.\n", engine->name);
-        return;
-    }
-    if (key == NULL) {
-        RKLog("%s Error allocating memory for key.\n", engine->name);
-        return;
-    }
-    if (obj == NULL) {
-        RKLog("%s Error allocating memory for obj.\n", engine->name);
-        return;
-    }
-    if (subKey == NULL) {
-        RKLog("%s Error allocating memory for subKey.\n", engine->name);
-        return;
-    }
-    if (subObj == NULL) {
-        RKLog("%s Error allocating memory for subObj.\n", engine->name);
-        return;
-    }
-
-    strcpy(str, string);
-
-    char *ks;
-    char *sks;
-    if (*str != '{') {
-        fprintf(stderr, "RKProcessHealthKeywords() - Expected '{'.\n");
-    }
-
-    ks = str + 1;
-    while (*ks != '\0' && *ks != '}') {
-        ks = RKExtractJSON(ks, &type, key, obj);
-        if (type != RKJSONObjectTypeObject) {
-            continue;
-        }
-        sks = obj + 1;
-        while (*sks != '\0' && *sks != '}') {
-            sks = RKExtractJSON(sks, &subType, subKey, subObj);
-            if (strcmp("Enum", subKey)) {
-                continue;
-            }
-            if ((componentStatus = atoi(subKey)) == RKStatusEnumCritical) {
-                RKLog("%s Warning. '%s' registered critical.\n", engine->name, key);
-            }
-        }
-    }
-
-    free(str);
-    free(key);
-    free(obj);
-    free(subKey);
-    free(subObj);
-}
-
 #pragma mark - Delegate Workers
 
 static void *healthLogger(void *in) {
@@ -85,9 +20,9 @@ static void *healthLogger(void *in) {
 	struct timeval t0;
 
     RKHealth *health;
-    char *stringValue, *stringEnum, *stringObject;
-    int headingChangeCount = 0;
-    int locationChangeCount = 0;
+//    char *stringValue, *stringEnum, *stringObject;
+//    int headingChangeCount = 0;
+//    int locationChangeCount = 0;
 
     char filename[RKMaximumPathLength] = "";
 
@@ -183,70 +118,7 @@ static void *healthLogger(void *in) {
             fprintf(engine->fid, "%s\n", health->string);
         }
 
-        // Look for certain keywords with {"Value":x,"Enum":y} pairs, extract some information
-        double latitude = NAN, longitude = NAN;
-        float heading = NAN;
-        
-        if ((stringObject = RKGetValueOfKey(health->string, "latitude")) != NULL) {
-            stringValue = RKGetValueOfKey(stringObject, "value");
-            stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                latitude = atof(stringValue);
-            }
-        }
-        if ((stringObject = RKGetValueOfKey(health->string, "longitude")) != NULL) {
-            stringValue = RKGetValueOfKey(stringObject, "value");
-            stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                longitude = atof(stringValue);
-            }
-        }
-        if ((stringObject = RKGetValueOfKey(health->string, "heading")) != NULL) {
-            stringValue = RKGetValueOfKey(stringObject, "value");
-            stringEnum = RKGetValueOfKey(stringObject, "enum");
-            if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                heading = (float)atof(stringValue);
-            }
-        }
-        if (isfinite(latitude) && isfinite(longitude) && isfinite(heading)) {
-            if (engine->verbose > 1) {
-                RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
-            }
-            // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half of that.
-            if ((fabs(desc->latitude - latitude) > 3.5e-5 || fabs(desc->longitude - longitude) > 3.5e-5)) {
-                if (locationChangeCount++ > 3) {
-                    desc->latitude = latitude;
-                    desc->longitude = longitude;
-                    RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, desc->latitude, desc->longitude);
-                    locationChangeCount = 0;
-                }
-            } else {
-                locationChangeCount = 0;
-            }
-            if (fabsf(desc->heading - heading) > 1.0f) {
-                if (headingChangeCount++ > 3) {
-                    desc->heading = heading;
-                    RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
-                    headingChangeCount = 0;
-                }
-            } else {
-                headingChangeCount = 0;
-            }
-        } else {
-            // Concatenate with latitude, longitude and heading values if GPS values are not reported
-            sprintf(health->string + strlen(health->string) - 1, ", "
-                    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
-                    "\"GPS from File\":{\"Value\":true,\"Enum\":0}, "
-                    "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                    "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                    "\"GPS Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
-                    "\"LocationFromDescriptor\":true}",
-                    desc->latitude,
-                    desc->longitude,
-                    desc->heading);
-        }
-        
-        RKProcessHealthKeywords(engine, health->string);
+//        RKProcessHealthKeywords(engine, health->string);
 
 		engine->tic++;
 

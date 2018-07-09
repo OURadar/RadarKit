@@ -2536,6 +2536,16 @@ void *RKTestHealthRelayRunLoop(void *input) {
                 heading,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
+//        snprintf(health->string, RKMaximumStringLength - 1, "{"
+//                 "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+//                 "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+//                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+//                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
+//                 "}",
+//                 RKStatusEnumNormal,
+//                 RKStatusEnumNormal,
+//                 powerH, RKStatusEnumNormal,
+//                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
 
         // Wait to simulate sampling time
