@@ -1305,7 +1305,14 @@ int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, cha
     return RKResultSuccess;
 }
 
-int RKSetPulseRingFilter(RKRadar *radar, RKFilterType type) {
+int RKSetPulseRingFilter(RKRadar *radar, RKFilterType type, const uint32_t gateCount) {
+    RKIIRFilter filter;
+    RKGetFilterCoefficients(&filter, type);
+    RKConfig *config = RKGetLatestConfig(radar);
+    if (config->pulseRingFilterGateCount != gateCount) {
+        RKAddConfig(radar, RKConfigKeyPulseRingFilterGateCount, gateCount, RKConfigKeyNull);
+    }
+    RKPulseRingFilterEngineSetFilter(radar->pulseRingFilterEngine, &filter);
     return RKResultSuccess;
 }
 
@@ -1372,6 +1379,7 @@ int RKGoLive(RKRadar *radar) {
                     RKConfigKeySystemDCal, -0.01,
                     RKConfigKeySystemPCal, 0.01,
                     RKConfigKeySNRThreshold, 0.0,
+                    RKConfigKeyPulseRingFilterGateCount, 1000,
                     RKConfigKeyNull);
     }
 
@@ -2070,7 +2078,7 @@ void RKPerformMasterTaskInBackground(RKRadar *radar, const char *command) {
     pthread_create(&tid, NULL, &masterControllerExecuteInBackground, &taskInput);
 }
 
-#pragma mark - General
+// General
 
 //
 // Measure noise from the latest 200 pulses

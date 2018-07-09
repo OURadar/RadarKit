@@ -178,9 +178,8 @@ RKRadar *RKInitAsRelay(void);
 int RKFree(RKRadar *radar);
 
 //
-// Properties
+// Hardware Hooks
 //
-
 #pragma mark - Hardware Hooks
 
 // Set the transceiver. Pass in function pointers: init, exec and free
@@ -204,6 +203,9 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
+//
+// Properties
+//
 #pragma mark - Before-Live Properties
 
 // These can only be set before the radar goes live
@@ -242,11 +244,12 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
 int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
 
 // Pulse ring filter (FIR / IIR ground clutter filter)
-int RKSetPulseRingFilter(RKRadar *, RKFilterType);
+int RKSetPulseRingFilter(RKRadar *, RKFilterType, const uint32_t);
 
 //
 // Interactions
 //
+#pragma mark - Interaction / State Change
 
 // State
 int RKGoLive(RKRadar *);
@@ -258,7 +261,7 @@ int RKResetClocks(RKRadar *);
 int RKExecuteCommand(RKRadar *, const char *, char *);
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);
 
-// Tasks
+// General
 void RKMeasureNoise(RKRadar *);
 void RKSetSNRThreshold(RKRadar *, const RKFloat);
 

@@ -25,12 +25,14 @@ struct rk_pulse_ring_filter_worker {
     pthread_t                  tid;                                      // Thread ID
     uint64_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    RKModuloPath               dataPath;                                 // The origin and length of the pulse data to process
+    //RKModuloPath               dataPath;                                 // The origin and length of the pulse data to process
+    uint32_t                   processOrigin;                            // The origin of the pulse data to process
+    uint32_t                   processLength;                            // The length of the pulse data to process
+    uint32_t                   outputLength;                             // For last worker, outputLength <= dataPath.length
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
     sem_t                      *sem;
-    bool                       filterNeedsUpdate;                        // For local filter storage to be updated
 };
 
 struct rk_pulse_ring_filter_engine {
@@ -47,7 +49,6 @@ struct rk_pulse_ring_filter_engine {
     bool                             useSemaphore;
     bool                             useFilter;                          // Use FIR/IIR filter
     RKIIRFilter                      filter;                             // The FIR/IIR filter coefficients
-    uint32_t                         gateCount;                          // Number of range gates to apply filter
 
     // Program set variables
     RKPulseRingFilterWorker          *workers;
@@ -75,7 +76,7 @@ void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *, con
 void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_t);
 void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
 
-int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *, const uint32_t);
+int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);

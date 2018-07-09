@@ -161,7 +161,7 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 1:
             // Minimum: 5-MHz
             user->fs = 5000000;
-            user->gateCount = 4000;
+            user->gateCount = 2000;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
             user->desc.pulseToRayRatio = 2;
@@ -646,6 +646,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
+                RKConfigKeyPulseRingFilterGateCount, 1000,
                 RKConfigKeyNull);
 
     // Force waveform reload to propagate the new waveform calibration values

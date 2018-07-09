@@ -529,6 +529,7 @@ enum RKConfigKey {
     RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
+    RKConfigKeyPulseRingFilterGateCount,
     RKConfigKeyTotalNumberOfKeys
 };
 
@@ -785,13 +786,14 @@ typedef struct rk_config {
     RKIdentifier         i;                                                    // Identity counter
     float                sweepElevation;                                       // Sweep elevation angle (degrees)
     float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
-    RKMarker             startMarker;                                          // Marker of the start ray
+    RKMarker             startMarker;                                          // Marker of the latest start ray
     uint8_t              filterCount;                                          // Number of filters
     RKFilterAnchor       filterAnchors[RKMaxFilterCount];                      // Filter anchors
     uint32_t             pw[RKMaxFilterCount];                                 // Pulse width (ns)
     uint32_t             prf[RKMaxFilterCount];                                // Pulse repetition frequency (Hz)
     uint32_t             pulseGateCount;                                       // Number of range gates
     RKFloat              pulseGateSize;                                        // Size of range gate (m)
+    uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
     uint32_t             waveformId[RKMaxFilterCount];                         // Transmit waveform
     RKFloat              noise[2];                                             // Noise floor (ADU)
     RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
