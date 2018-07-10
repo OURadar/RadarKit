@@ -275,6 +275,7 @@ void RKFastSineCosine(float x, float *sin, float *cos) {
 }
 
 void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
+    filter->type = type;
     RKComplex *b = filter->B;
     RKComplex *a = filter->A;
     memset(b, 0, RKMaximumIIRFilterTaps * sizeof(RKComplex));
@@ -332,6 +333,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             a++->i = 1.0f; a++->i = 0.2f; a->i = 0.1f;
             break;
         default:
+            filter->type = RKFilterTypeUserDefined;
             break;
     }
 }

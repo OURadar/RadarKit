@@ -1054,7 +1054,7 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
     return RKResultSuccess;
 }
 
-int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
+int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
     int k;
     for (k = 'a'; k < 'z'; k++) {
         if (array[k] == 0) {
@@ -1062,16 +1062,19 @@ int RKSetVerbosityUsingArray(RKRadar *myRadar, const uint8_t *array) {
         }
         switch (k) {
             case 'a':
-                RKPositionEngineSetVerbose(myRadar->positionEngine, array[k]);
+                RKPositionEngineSetVerbose(radar->positionEngine, array[k]);
                 break;
             case 'm':
-                RKMomentEngineSetVerbose(myRadar->momentEngine, array[k]);
+                RKMomentEngineSetVerbose(radar->momentEngine, array[k]);
                 break;
             case 'p':
-                RKPulseCompressionEngineSetVerbose(myRadar->pulseCompressionEngine, array[k]);
+                RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, array[k]);
+                break;
+            case 'r':
+                RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, array[k]);
                 break;
             case 's':
-                RKSweepEngineSetVerbose(myRadar->sweepEngine, array[k]);
+                RKSweepEngineSetVerbose(radar->sweepEngine, array[k]);
                 break;
             default:
                 break;
@@ -1349,7 +1352,7 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
     if (gateCount) {
         RKConfig *config = RKGetLatestConfig(radar);
         if (config->pulseRingFilterGateCount != gateCount) {
-            RKLog("pulseRingFilterGateCount (%d) %d -> %d\n", config->i, config->pulseRingFilterGateCount, gateCount);
+            //RKLog("pulseRingFilterGateCount (%d) %d -> %d\n", config->i, config->pulseRingFilterGateCount, gateCount);
             RKAddConfig(radar, RKConfigKeyPulseRingFilterGateCount, gateCount, RKConfigKeyNull);
         }
     }
