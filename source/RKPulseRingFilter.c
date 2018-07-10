@@ -644,8 +644,7 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     RKGetFilterCoefficients(&engine->filter, RKFilterTypeImpulse);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-//    engine->gateCount = 1000;
-//    engine->useFilter = true;
+    engine->useFilter = true;
     engine->memoryUsage = sizeof(RKPulseRingFilterEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
