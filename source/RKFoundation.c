@@ -1050,7 +1050,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "MetersPerSecond",
         "MetersPerSecond",
         "dB",
-        "Degrees",
+        "Radians",
         "Unitless",
         "DegreesPerMeter",
         "dBm",
