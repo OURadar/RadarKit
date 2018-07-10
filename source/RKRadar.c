@@ -727,7 +727,7 @@ RKRadar *RKInitQuiet(void) {
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverythingQuiet | RKInitFlagSignalProcessor;
     desc.pulseCapacity = 4096;
-    desc.pulseToRayRatio = 1;
+    desc.pulseToRayRatio = 2;
     desc.configBufferDepth = RKBufferCSlotCount;
     desc.healthBufferDepth = RKBufferHSlotCount;
     desc.positionBufferDepth = RKBufferPSlotCount;
@@ -741,11 +741,11 @@ RKRadar *RKInitLean(void) {
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
     desc.pulseCapacity = 2048;
-    desc.pulseToRayRatio = 1;
+    desc.pulseToRayRatio = 2;
     desc.configBufferDepth = RKBufferCSlotCount;
     desc.healthBufferDepth = RKBufferHSlotCount;
     desc.positionBufferDepth = RKBufferPSlotCount;
-    desc.pulseBufferDepth = 10000;
+    desc.pulseBufferDepth = 5000;
     desc.rayBufferDepth = 1080;
     return RKInitWithDesc(desc);
 }

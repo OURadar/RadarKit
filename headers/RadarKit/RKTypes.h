@@ -735,6 +735,7 @@ enum RKFilterType {
     RKFilterTypeElliptical3,
     RKFilterTypeElliptical4,
     RKFilterTypeImpulse,
+    RKFilterTypeCount,
     RKFilterTypeUserDefined,
     RKFilterTypeTest1
 };

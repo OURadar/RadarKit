@@ -67,6 +67,7 @@ char *RKTestByNumberDescription(const int indent) {
     "31 - Make a TFM waveform\n"
     "32 - Generate a waveform file\n"
     "33 - Test showing waveform properties\n"
+    "34 - Test showing filter coefficients\n"
     "\n"
     "40 - Pulse compression using simple cases\n"
     "41 - Calculating one ray using the Pulse Pair method\n"
@@ -173,6 +174,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 33:
             RKTestWaveformProperties();
+            break;
+        case 34:
+            RKTestShowFilters();
             break;
         case 40:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
@@ -2636,6 +2640,35 @@ void RKTestSingleCommand(void) {
     printf("string = %s\n", string);
     RKReplaceKeyValue(string, "Enum", RKStatusEnumOld);
     printf("string = %s\n", string);
+}
+
+void RKTestShowFilters(void) {
+    int i, k;
+    RKFilterType type;
+    RKIIRFilter *filter = (RKIIRFilter *)malloc(sizeof(RKIIRFilter));
+    char *string = (char *)malloc(1024);
+    if (filter == NULL || string == NULL) {
+        fprintf(stderr, "Error allocation memory.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (type = RKFilterTypeNull; type < RKFilterTypeCount; type++) {
+        RKGetFilterCoefficients(filter, type);
+        RKLog("%s:\n", filter->name);
+        i = sprintf(string, "b = [");
+        for (k = 0; k < filter->bLength; k++) {
+            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->B[k].i);
+        }
+        sprintf(string + i, "]");
+        RKLog(">%s", string);
+        i = sprintf(string, "a = [");
+        for (k = 0; k < filter->aLength; k++) {
+            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->A[k].i);
+        }
+        sprintf(string + i, "]");
+        RKLog(">%s", string);
+    }
+    free(string);
+    free(filter);
 }
 
 void RKTestExperiment(void) {

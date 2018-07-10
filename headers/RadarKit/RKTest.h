@@ -124,6 +124,7 @@ void RKTestMakeHops(void);
 void RKTestWaveformTFM(void);
 void RKTestWaveformWrite(void);
 void RKTestWaveformProperties(void);
+void RKTestShowFilters(void);
 
 #pragma mark - Radar Signal Processing
 
