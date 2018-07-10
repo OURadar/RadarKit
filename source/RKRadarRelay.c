@@ -274,26 +274,29 @@ static void *radarRelay(void *in) {
     engine->memoryUsage += sizeof(RKClient) + RKMaximumPacketSize;
 
 	// Update the engine state
-	engine->state |= RKEngineStateActive;
+	engine->state |= RKEngineStateWantActive;
 	engine->state ^= RKEngineStateActivating;
 
 	RKClientSetUserResource(engine->client, engine);
 	RKClientSetGreetHandler(engine->client, RKRadarRelayGreet);
     RKClientSetReceiveHandler(engine->client, &RKRadarRelayRead);
 
-	RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->host);
+    engine->state |= RKEngineStateActive;
+
+    RKLog("%s Started.   mem = %s B   host = %s\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->host);
 
 	RKClientStart(engine->client, true);
 
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
 		usleep(100000);
     }
 
     RKClientStop(engine->client);
 
+    engine->state ^= RKEngineStateActive;
     return (void *)NULL;
 }
 
@@ -386,7 +389,7 @@ int RKRadarRelayStop(RKRadarRelay *engine) {
     }
     RKClientStop(engine->client);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     pthread_join(engine->tidBackground, NULL);
     engine->state ^= RKEngineStateDeactivating;
     if (engine->verbose) {
@@ -399,7 +402,7 @@ int RKRadarRelayStop(RKRadarRelay *engine) {
 }
 
 int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) {
-	if (!(engine->state & RKEngineStateActive)) {
+	if (!(engine->state & RKEngineStateWantActive)) {
 		return RKResultEngineNotActive;
 	}
     RKClient *client = engine->client;

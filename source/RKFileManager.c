@@ -272,8 +272,10 @@ static void *fileRemover(void *in) {
     
     pthread_mutex_unlock(&engine->mutex);
 
+    engine->state |= RKEngineStateActive;
+
     me->index = 0;
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
 
         pthread_mutex_lock(&engine->mutex);
 
@@ -334,7 +336,7 @@ static void *fileRemover(void *in) {
 
         // Now we wait
         k = 0;
-        while ((k++ < 10 || RKTimevalDiff(time, me->latestTime) < 0.2) && engine->state & RKEngineStateActive) {
+        while ((k++ < 10 || RKTimevalDiff(time, me->latestTime) < 0.2) && engine->state & RKEngineStateWantActive) {
             gettimeofday(&time, NULL);
             usleep(100000);
         }
@@ -345,6 +347,7 @@ static void *fileRemover(void *in) {
     
     RKLog(">%s %s Stopped.\n", engine->name, name);
 
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -356,7 +359,7 @@ static void *folderWatcher(void *in) {
     struct dirent *dir;
     struct stat fileStat;
     
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
     
     // Three major data folders that have structure A
@@ -410,7 +413,7 @@ static void *folderWatcher(void *in) {
             return (void *)RKResultFailedToStartFileRemover;
         }
         
-        while (worker->tic == 0 && engine->state & RKEngineStateActive) {
+        while (worker->tic == 0 && engine->state & RKEngineStateWantActive) {
             usleep(10000);
         }
     }
@@ -432,7 +435,7 @@ static void *folderWatcher(void *in) {
     // Wait here while the engine should stay active
     time_t now;
     time_t longTime = engine->maximumLogAgeInDays * 86400;
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // Take care of super slow changing files, like the daily logs
         time(&now);
         if ((did = opendir(logPath)) != NULL) {
@@ -456,7 +459,7 @@ static void *folderWatcher(void *in) {
         }
         // Wait one minute, do it with multiples of 0.1s for a responsive exit
         k = 0;
-        while (k++ < 600 && engine->state & RKEngineStateActive) {
+        while (k++ < 600 && engine->state & RKEngineStateWantActive) {
             usleep(100000);
         }
     }
@@ -489,7 +492,7 @@ RKFileManager *RKFileManagerInit() {
 }
 
 void RKFileManagerFree(RKFileManager *engine) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKFileManagerStop(engine);
     }
     pthread_mutex_destroy(&engine->mutex);
@@ -551,7 +554,7 @@ int RKFileManagerStop(RKFileManager *engine) {
     }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     pthread_join(engine->tidFileWatcher, NULL);
     engine->state ^= RKEngineStateDeactivating;
     RKLog("%s Stopped.\n", engine->name);

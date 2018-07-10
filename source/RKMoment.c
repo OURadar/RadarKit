@@ -263,9 +263,9 @@ static void *momentCore(void *in) {
     // Initiate a variable to store my name
     RKName name;
     if (rkGlobalParameters.showColor) {
-        pthread_mutex_lock(&engine->coreMutex);
+        pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
-        pthread_mutex_unlock(&engine->coreMutex);
+        pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
@@ -343,13 +343,13 @@ static void *momentCore(void *in) {
     int d0 = 0;
 
     // Log my initial state
-    pthread_mutex_lock(&engine->coreMutex);
+    pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
           engine->name, name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
 
-    pthread_mutex_unlock(&engine->coreMutex);
+    pthread_mutex_unlock(&engine->mutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
@@ -377,18 +377,18 @@ static void *momentCore(void *in) {
         sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             if (sem_wait(sem)) {
                 RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
             }
         } else {
-            while (tic == me->tic && engine->state & RKEngineStateActive) {
+            while (tic == me->tic && engine->state & RKEngineStateWantActive) {
                 usleep(1000);
             }
             tic = me->tic;
         }
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
 
@@ -518,7 +518,8 @@ static void *momentCore(void *in) {
             // Zero out the ray
             zeroOutRay(ray);
             if (engine->verbose > 1) {
-                RKLog("%s %s Skipped a ray with %d sampples deltaAz = %.2f deltaEl = %.2f.\n", engine->name, name, path.length, deltaAzimuth, deltaElevation);
+                RKLog("%s %s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", engine->name, name,
+                      path.length, path.length > 1 ? "s": "", deltaAzimuth, deltaElevation);
             }
             ray->header.s |= RKRayStatusSkipped;
         }
@@ -620,7 +621,7 @@ static void *pulseGatherer(void *_in) {
     }
 
 	// Update the engine state
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     // Spin off N workers to process I/Q pulses
@@ -667,6 +668,7 @@ static void *pulseGatherer(void *_in) {
         }
     }
     engine->state ^= RKEngineStateSleep0;
+    engine->state |= RKEngineStateActive;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
 
@@ -679,14 +681,14 @@ static void *pulseGatherer(void *_in) {
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
         
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state & RKEngineStateWantActive) {
             usleep(1000);
             // Timeout and say "nothing" on the screen
             if (++s % 1000 == 0 && engine->verbose > 1) {
@@ -701,7 +703,7 @@ static void *pulseGatherer(void *_in) {
         // A separate thread waits until it has data and time, then give it a position (RKPulseStatusHasPosition);
         // A separate thread applies matched filter to the data (RKPulseStatusProcessed).
         s = 0;
-        while ((pulse->header.s & RKPulseStatusReadyForMoments) != RKPulseStatusReadyForMoments && engine->state & RKEngineStateActive) {
+        while ((pulse->header.s & RKPulseStatusReadyForMoments) != RKPulseStatusReadyForMoments && engine->state & RKEngineStateWantActive) {
             usleep(1000);
             if (++s % 200 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -710,7 +712,7 @@ static void *pulseGatherer(void *_in) {
         }
         engine->state ^= RKEngineStateSleep2;
         
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
 
@@ -733,7 +735,7 @@ static void *pulseGatherer(void *_in) {
                 i = RKPreviousModuloS(i, engine->radarDescription->rayBufferDepth);
                 engine->momentSource[i].length = 0;
                 ray = RKGetRay(engine->rayBuffer, i);
-            } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateActive);
+            } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive);
         } else if (skipCounter > 0) {
             // Skip processing if we are in skipping mode
             if (--skipCounter == 0 && engine->verbose) {
@@ -782,7 +784,7 @@ static void *pulseGatherer(void *_in) {
         
         // Check finished rays
         ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
-        while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateActive) {
+        while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
             ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
         }
@@ -811,6 +813,7 @@ static void *pulseGatherer(void *_in) {
         sem_unlink(worker->semaphoreName);
     }
 
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -831,12 +834,12 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->processor = &RKPulsePairHop;
     engine->processorLagCount = RKLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
-    pthread_mutex_init(&engine->coreMutex, NULL);
+    pthread_mutex_init(&engine->mutex, NULL);
     return engine;
 }
 
 void RKMomentEngineFree(RKMomentEngine *engine) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKMomentEngineStop(engine);
     }
     free(engine->momentSource);
@@ -876,7 +879,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const uint8_t count) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKLog("Error. Core count cannot be changed when the engine is active.\n");
         return;
     }
@@ -884,7 +887,7 @@ void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const uint8_t count) {
 }
 
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *engine, const uint8_t origin) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKLog("Error. Core origin cannot be changed when the engine is active.\n");
         return;
     }
@@ -926,13 +929,13 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	if (!(engine->state & RKEngineStateActive)) {
+	if (!(engine->state & RKEngineStateWantActive)) {
 		RKLog("%s Not active.\n", engine->name);
 		return RKResultEngineDeactivatedMultipleTimes;
 	}
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     if (engine->tidPulseGatherer) {
         pthread_join(engine->tidPulseGatherer, NULL);
 		engine->tidPulseGatherer = (pthread_t)0;

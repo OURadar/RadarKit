@@ -18,6 +18,7 @@ typedef struct user_params {
     RKName                   pedzyHost;
     RKName                   tweetaHost;
     RKName                   relayHost;
+    RKName                   ringFilter;
     RKName                   momentMethod;
     RKName                   streams;
     uint8_t                  verbose;                                            // Verbosity
@@ -30,6 +31,7 @@ typedef struct user_params {
     int                      sleepInterval;                                      // Intermittent sleep period in transceiver simulator in seconds
     int                      recordLevel;                                        // Data recording (1 - moment + health logs only, 2 - everything)
     bool                     simulate;                                           // Run with transceiver simulator
+    uint32_t                 ringFilterGateCount;                                // Number of range gates to apply ring filter
     double                   systemZCal[2];                                      // System calibration for Z
     double                   systemDCal;                                         // System calibration for D
     double                   systemPCal;                                         // System calibration for P
@@ -124,47 +126,7 @@ static void showHelp() {
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
-           "          0 - Show types\n"
-           "          1 - Show colors\n"
-           "          2 - Test pretty strings\n"
-           "          3 - Test modulo math macros\n"
-           "          4 - Test parsing comma delimited values\n"
-           "          5 - Test parsing values in a JSON string\n"
-           "          6 - Test initializing a file maanger - RKFileManagerInit()\n"
-           "          7 - Test reading a preference file - RKPreferenceInit()\n"
-           "          8 - Test counting files using RKCountFilesInPath()\n"
-           "          9 - Test the file monitor module - RKFileMonitor()\n"
-           "         10 - Test the internet monitor module - RKHostMonitorInit()\n"
-           "         11 - Test initializing a radar system - RKRadarInit()\n"
-           "         12 - Test converting a temperature reading to status\n"
-           "         13 - Test getting a country name from position\n"
-           "         14 - Test generating text for buffer overview\n"
-           "         15 - Test reading a netcdf file using RKSweepRead()\n"
-           "         16 - Test reading a netcdf file using RKProductRead()\n"
-           "\n"
-           "         20 - SIMD quick test\n"
-           "         21 - SIMD test with numbers shown\n"
-           "         22 - Show window types\n"
-           "         23 - Hilbert transform\n"
-           "         24 - Optimize FFT performance and generate an fft-wisdom file\n"
-           "\n"
-           "         30 - Make a frequency hopping sequence\n"
-           "         31 - Make a TFM waveform\n"
-           "         32 - Generate a waveform file\n"
-           "         33 - Test showing waveform properties\n"
-           "\n"
-           "         40 - Pulse compression using simple cases\n"
-           "         41 - Calculating one ray using the Pulse Pair method\n"
-           "         42 - Calculating one ray using the Pulse Pair Hop method\n"
-           "         43 - Calculating one ray using the Multi-Lag method with L = 2\n"
-           "         44 - Calculating one ray using the Multt-Lag method with L = 3\n"
-           "         45 - Calculating one ray using the Multi-Lag method with L = 4\n"
-           "\n"
-           "         50 - Measure the speed of SIMD calculations\n"
-           "         51 - Measure the speed of pulse compression\n"
-           "         52 - Measure the speed of various moment methods\n"
-           "         53 - Measure the speed of cached write\n"
-           "\n"
+           "%s"
            "\n"
            "EXAMPLES:\n"
            "    Here are some examples of typical configurations.\n"
@@ -181,8 +143,8 @@ static void showHelp() {
            "    -T 50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
-           "rktest (RadarKit " RKVersionString ")\n\n"
-           );
+           "rktest (RadarKit " RKVersionString ")\n\n",
+           RKTestByNumberDescription(10));
 }
 
 static void setSystemLevel(UserParams *user, const int level) {
@@ -190,18 +152,18 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 0:
             // Debug
             user->fs = 5000000;
-            user->gateCount = 60;
+            user->gateCount = 150;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
-            user->desc.pulseBufferDepth = 20;
-            user->desc.rayBufferDepth = 20;
+            user->desc.pulseBufferDepth = 50;
+            user->desc.rayBufferDepth = 50;
             user->desc.pulseToRayRatio = 2;
             user->prf = 10;
             break;
         case 1:
             // Minimum: 5-MHz
             user->fs = 5000000;
-            user->gateCount = 4000;
+            user->gateCount = 2000;
             user->coresForPulseCompression = 2;
             user->coresForProductGenerator = 2;
             user->desc.pulseToRayRatio = 2;
@@ -318,6 +280,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod", user->momentMethod,    RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",   user->ringFilter,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeDouble, 1);
@@ -456,131 +419,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'T':
                 // A bunch of different tests
-                RKSetWantScreenOutput(true);
                 k = atoi(optarg);
-                switch (k) {
-                    case 0:
-                        RKShowTypeSizes();
-                        printf("\n");
-                        RKNetworkShowPacketTypeNumbers();
-                        break;
-                    case 1:
-                        RKTestTerminalColors();
-                        break;
-                    case 2:
-                        RKTestPrettyStrings();
-                        break;
-                    case 3:
-                        RKTestModuloMath();
-                        break;
-                    case 4:
-                        RKTestParseCommaDelimitedValues();
-                        break;
-                    case 5:
-                        RKTestParseJSONString();
-                        break;
-                    case 6:
-                        RKTestFileManager();
-                        break;
-                    case 7:
-                        RKTestPreferenceReading();
-                        break;
-                    case 8:
-                        RKTestCountFiles();
-                        break;
-                    case 9:
-                        RKTestFileMonitor();
-                        break;
-                    case 10:
-                        RKTestHostMonitor();
-                        break;
-                    case 11:
-                        RKTestInitializingRadar();
-                        break;
-                    case 12:
-                        RKTestTemperatureToStatus();
-                        break;
-                    case 13:
-                        RKTestGetCountry();
-                        break;
-                    case 14:
-                        RKTestBufferOverviewText();
-                        break;
-                    case 15:
-                        if (argc == optind) {
-                            RKLog("No filename given.\n");
-                            exit(EXIT_FAILURE);
-                        }
-                        RKTestSweepRead(argv[optind]);
-                        break;
-                    case 16:
-                        if (argc == optind) {
-                            RKLog("No filename given.\n");
-                            exit(EXIT_FAILURE);
-                        }
-                        RKTestProductRead(argv[optind]);
-                        break;
-                    case 20:
-                        RKTestSIMD(RKTestSIMDFlagNull);
-                        break;
-                    case 21:
-                        RKTestSIMD(RKTestSIMDFlagShowNumbers);
-                        break;
-                    case 22:
-                        RKTestWindow();
-                        break;
-                    case 23:
-                        RKTestHilbertTransform();
-                        break;
-                    case 24:
-                        RKTestWriteFFTWisdom();
-                        break;
-                    case 30:
-                        RKTestMakeHops();
-                        break;
-                    case 31:
-                        RKTestWaveformTFM();
-                        break;
-                    case 32:
-                        RKTestWaveformWrite();
-                        break;
-                    case 33:
-                        RKTestWaveformProperties();
-                        break;
-                    case 40:
-                        RKTestPulseCompression((user->verbose ? RKTestFlagVerbose : 0) | RKTestFlagShowResults);
-                        break;
-                    case 41:
-                        RKTestOneRay(RKPulsePair, 0);
-                        break;
-                    case 42:
-                        RKTestOneRay(RKPulsePairHop, 0);
-                        break;
-                    case 43:
-                        RKTestOneRay(RKMultiLag, 2);
-                        break;
-                    case 44:
-                        RKTestOneRay(RKMultiLag, 3);
-                        break;
-                    case 45:
-                        RKTestOneRay(RKMultiLag, 4);
-                        break;
-                    case 50:
-                        RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
-                        break;
-                    case 51:
-                        RKTestPulseCompressionSpeed();
-                        break;
-                    case 52:
-                        RKTestMomentProcessorSpeed();
-                        break;
-                    case 53:
-                        RKTestCacheWrite();
-                        break;
-                    default:
-                        RKLog("Test %d is invalid.\n", k);
-                        break;
-                }
+                RKTestByNumber(k, argc == optind ? NULL : argv[optind]);
                 exit(EXIT_SUCCESS);
                 break;
             case 'V':
@@ -801,6 +641,17 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         k++;
     }
     RKConcludeWaveformCalibrations(myRadar);
+
+    // Pulse ring filter
+    if (!strcasecmp(systemPreferences->ringFilter, "e1") || !strcasecmp(systemPreferences->ringFilter, "elliptical1")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical1, 0);
+    } else if (!strcasecmp(systemPreferences->ringFilter, "e2") || !strcasecmp(systemPreferences->ringFilter, "elliptical2")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical2, 0);
+    } else if (!strcasecmp(systemPreferences->ringFilter, "e3") || !strcasecmp(systemPreferences->ringFilter, "elliptical3")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical3, 0);
+    } else if (!strcasecmp(systemPreferences->ringFilter, "e4") || !strcasecmp(systemPreferences->ringFilter, "elliptical4")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical4, 0);
+    }
     
     // Refresh all system calibration
     RKAddConfig(myRadar,
@@ -809,6 +660,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
+                RKConfigKeyPulseRingFilterGateCount, 1000,
                 RKConfigKeyNull);
 
     // Force waveform reload to propagate the new waveform calibration values
@@ -965,7 +817,7 @@ int main(int argc, const char **argv) {
         usleep(100000);
 
         RKLog("Setting a waveform ...\n");
-        RKExecuteCommand(myRadar, "t w ofm", NULL);
+//        RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
         //RKExecuteCommand(myRadar, "t w s01", NULL);

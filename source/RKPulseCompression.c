@@ -110,9 +110,9 @@ static void *pulseCompressionCore(void *_in) {
     // Initiate a variable to store my name
     RKName name;
     if (rkGlobalParameters.showColor) {
-        pthread_mutex_lock(&engine->coreMutex);
+        pthread_mutex_lock(&engine->mutex);
         k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
-        pthread_mutex_unlock(&engine->coreMutex);
+        pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
@@ -186,13 +186,13 @@ static void *pulseCompressionCore(void *_in) {
     int planSize = -1, planIndex;
 
     // Log my initial state
-    pthread_mutex_lock(&engine->coreMutex);
+    pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
           engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
 
-    pthread_mutex_unlock(&engine->coreMutex);
+    pthread_mutex_unlock(&engine->mutex);
 
     // Increase the tic once to indicate this processing core is created.
     me->tic++;
@@ -206,7 +206,7 @@ static void *pulseCompressionCore(void *_in) {
     //
     uint64_t tic = me->tic;
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
             RKLog(">%s sem_wait()\n", coreName);
@@ -215,12 +215,12 @@ static void *pulseCompressionCore(void *_in) {
                 RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, name, errno);
             }
         } else {
-            while (tic == me->tic && engine->state & RKEngineStateActive) {
+            while (tic == me->tic && engine->state & RKEngineStateWantActive) {
                 usleep(1000);
             }
             tic = me->tic;
         }
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
 
@@ -344,9 +344,20 @@ static void *pulseCompressionCore(void *_in) {
                         *Z.q++ = (*o)[1];
                         o++;
                     }
+                    
+#ifdef DEBUG_PULSE_COMPRESSION
+                    
+                    pthread_mutex_lock(&engine->mutex);
+                    Y = RKGetComplexDataFromPulse(pulse, p);
+                    printf("Y [i0 = %d   p = %d   j = %d] =\n", i0, p, j);
+                    RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
+                    
+                    Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                    RKShowArray(Z.i, "Zi", 8, 1);
+                    RKShowArray(Z.q, "Zq", 8, 1);
+                    pthread_mutex_unlock(&engine->mutex);
 
-                    //Y = RKGetComplexDataFromPulse(pulse, p);
-                    //printf("Y real =\n"); RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
+#endif
 
                     // Copy over the parameters used
                     pulse->parameters.planIndices[p][j] = planIndex;
@@ -360,15 +371,20 @@ static void *pulseCompressionCore(void *_in) {
 
         // Down-sampling regardless if the pulse was compressed or skipped
         int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
-        for (p = 0; p < 2; p++) {
-            RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-            for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
-                Z.i[i] = Z.i[j];
-                Z.q[i] = Z.q[j];
+        if (stride > 1) {
+            for (p = 0; p < 2; p++) {
+                RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
+                RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
+                    Y[i].i = Y[j].i;
+                    Y[i].q = Y[j].q;
+                    Z.i[i] = Z.i[j];
+                    Z.q[i] = Z.q[j];
+                }
             }
+            pulse->header.gateCount /= stride;
+            pulse->header.gateSizeMeters *= (float)stride;
         }
-        pulse->header.gateCount /= stride;
-        pulse->header.gateSizeMeters *= (float)stride;
         pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
 
         // Record down the latest processed pulse index
@@ -480,7 +496,7 @@ static void *pulseWatcher(void *_in) {
     }
 
     // Update the engine state
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
     
     // Spin off N workers to process I/Q pulses
@@ -527,6 +543,7 @@ static void *pulseWatcher(void *_in) {
         }
     }
     engine->state ^= RKEngineStateSleep0;
+    engine->state |= RKEngineStateActive;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
@@ -540,14 +557,14 @@ static void *pulseWatcher(void *_in) {
     // j  filter index
     k = 0;   // pulse index
     c = 0;   // core index
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         // The pulse
         pulse = RKGetPulse(engine->pulseBuffer, k);
 
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (k == *engine->pulseIndex && engine->state & RKEngineStateActive) {
+        while (k == *engine->pulseIndex && engine->state & RKEngineStateWantActive) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -558,7 +575,7 @@ static void *pulseWatcher(void *_in) {
         engine->state |= RKEngineStateSleep2;
         // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateActive) {
+        while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateWantActive) {
             usleep(200);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -567,7 +584,7 @@ static void *pulseWatcher(void *_in) {
         }
         engine->state ^= RKEngineStateSleep2;
 
-        if (!(engine->state & RKEngineStateActive)) {
+        if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
 
@@ -698,6 +715,7 @@ static void *pulseWatcher(void *_in) {
     free(in);
     free(out);
 
+    engine->state ^= RKEngineStateActive;
     return NULL;
 }
 
@@ -716,12 +734,12 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->memoryUsage = sizeof(RKPulseCompressionEngine);
-    pthread_mutex_init(&engine->coreMutex, NULL);
+    pthread_mutex_init(&engine->mutex, NULL);
     return engine;
 }
 
 void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKPulseCompressionEngineStop(engine);
     }
     for (int i = 0; i < engine->filterGroupCount; i++) {
@@ -731,7 +749,7 @@ void RKPulseCompressionEngineFree(RKPulseCompressionEngine *engine) {
             }
         }
     }
-    pthread_mutex_destroy(&engine->coreMutex);
+    pthread_mutex_destroy(&engine->mutex);
     free(engine->filterGid);
     free(engine->planIndices);
     free(engine);
@@ -798,7 +816,7 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
 }
 
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const uint8_t count) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKLog("%s Error. Core count cannot change when the engine is active.\n", engine->name);
         return;
     }
@@ -806,7 +824,7 @@ void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, cons
 }
 
 void RKPulseCompressionEngineSetCoreOrigin(RKPulseCompressionEngine *engine, const uint8_t origin) {
-    if (engine->state & RKEngineStateActive) {
+    if (engine->state & RKEngineStateWantActive) {
         RKLog("%s Error. Core origin cannot change when the engine is active.\n", engine->name);
         return;
     }
@@ -995,13 +1013,13 @@ int RKPulseCompressionEngineStop(RKPulseCompressionEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    if (!(engine->state & RKEngineStateActive)) {
+    if (!(engine->state & RKEngineStateWantActive)) {
         RKLog("%s Not active.\n", engine->name);
         return RKResultEngineDeactivatedMultipleTimes;
     }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     if (engine->tidPulseWatcher) {
         pthread_join(engine->tidPulseWatcher, NULL);
         engine->tidPulseWatcher = (pthread_t)0;

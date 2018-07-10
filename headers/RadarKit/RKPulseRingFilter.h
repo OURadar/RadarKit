@@ -25,6 +25,9 @@ struct rk_pulse_ring_filter_worker {
     pthread_t                  tid;                                      // Thread ID
     uint64_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
+    uint32_t                   processOrigin;                            // The origin of the pulse data to process
+    uint32_t                   processLength;                            // The length in the local storage for SIMD alignment
+    uint32_t                   outputLength;                             // The length of the pulse data to produce
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
@@ -43,15 +46,16 @@ struct rk_pulse_ring_filter_engine {
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
-    RKComplex                        *filters[2];                        // Coefficients b & a
-    RKModuloPath                     *filterLinePath;                    // The origin and length for each worker
-    bool                             *workerTaskDone;                    // Task status [coreCount x pulseBufferDepth]
-    
+    bool                             useFilter;                          // Use FIR/IIR filter
+    RKIIRFilter                      filter;                             // The FIR/IIR filter coefficients
+    RKIdentifier                     filterId;                           // A counter for filter change
+
     // Program set variables
     RKPulseRingFilterWorker          *workers;
+    bool                             *workerTaskDone;                    // Task status [coreCount x pulseBufferDepth]
     pthread_t                        tidPulseWatcher;
-    pthread_mutex_t                  coreMutex;
-    
+    pthread_mutex_t                  mutex;
+
     // Status / health
     char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
     uint32_t                         statusBufferIndex;
@@ -72,11 +76,14 @@ void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *, con
 void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_t);
 void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
 
+void RKPulseRingFilterEngineEnableFilter(RKPulseRingFilterEngine *);
+void RKPulseRingFilterEngineDisableFilter(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);
 
+void RKPulseRingFilterEngineShowFilterSummary(RKPulseRingFilterEngine *);
 char *RKPulseRingFilterEngineStatusString(RKPulseRingFilterEngine *);
 
 #endif

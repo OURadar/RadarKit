@@ -32,7 +32,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define RKVersionString "1.2.10"
+#define RKVersionString "2.0b"
 
 //
 // Memory Blocks
@@ -86,6 +86,7 @@
 #define RKProcessorStatusRayCoreCount        16                                //
 #define RKHostMonitorPingInterval            5                                 //
 #define RKMaximumProductCount                64                                //
+#define RKMaximumIIRFilterTaps               8                                 //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -213,14 +214,6 @@ typedef union rk_filter_anchor {
     char bytes[64];
 } RKFilterAnchor;
 
-typedef struct rk_iir_filter {
-    uint32_t      name;
-    uint32_t      bLength;
-    uint32_t      aLength;
-    RKComplex     *B;
-    RKComplex     *A;
-} RKIIRFilter;
-
 typedef struct rk_modulo_path {
     uint32_t      origin;
     uint32_t      length;
@@ -251,8 +244,10 @@ N(RKResultSDToFDError) \
 N(RKResultNoPulseBuffer) \
 N(RKResultNoRayBuffer) \
 N(RKResultNoPulseCompressionEngine) \
+N(RKResultNoPulseRingEngine) \
 N(RKResultNoMomentEngine) \
 N(RKResultFailedToStartCompressionCore) \
+N(RKResultFailedToStartRingCore) \
 N(RKResultFailedToStartPulseWatcher) \
 N(RKResultFailedToStartRingPulseWatcher) \
 N(RKResultFailedToInitiateSemaphore) \
@@ -527,6 +522,7 @@ enum RKConfigKey {
     RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
+    RKConfigKeyPulseRingFilterGateCount,
     RKConfigKeyTotalNumberOfKeys
 };
 
@@ -552,15 +548,23 @@ enum RKHealthNode {
 // Typical progression:
 //
 // EngineInit         RKEngineStateAllocated
-// EngineSetXYZ       RKEngineStateProperlyWired
-// EngineStart        RKEngineStateActivating
+//
+// EngineSetX
+// EngineSetY
+// EngineSetZ         RKEngineStateProperlyWired
+//
+// EngineStart        RKEngineStateWantActive
+//                    RKEngineStateActivating
+//                    RKEngineStateSleep0
+//                    RKEngineStateSleep0 -
 //                    RKEngineStateActive
 //                    RKEngineStateChildAllocated
 //                    RKEngineStateChildProperlyWired
 //                    RKEngineStateChildActivating
 //                    RKEngineStateChildActive
 //
-// EngineStop         RKEngineStateDeactivating
+// EngineStop         RKEngineStateWantActive -
+//                    RKEngineStateDeactivating
 //                    RKEngineStateChildDeactivating
 //                    RKEngineStateChildActive -
 //                    RKEngineStateActive -
@@ -568,7 +572,7 @@ enum RKHealthNode {
 //
 typedef uint32_t RKEngineState;
 enum RKEngineState {
-    RKEngineStateNull                            = 0,                          //
+    RKEngineStateNull                            = 0,                          // Nothing
     RKEngineStateSleep0                          = 1,                          // Usually for a wait just outside of the main while loop
     RKEngineStateSleep1                          = (1 << 1),                   // Stage 1 wait - usually waiting for pulse
     RKEngineStateSleep2                          = (1 << 2),                   // Stage 2 wait
@@ -578,12 +582,14 @@ enum RKEngineState {
     RKEngineStateMemoryChange                    = (1 << 5),                   // Some required pointers are being changed
     RKEngineStateSuspended                       = (1 << 6),                   // All indices stop increasing
     RKEngineStateBusyMask                        = 0x000000F0,                 //
+    RKEngineStateReserved                        = (1 << 7),                   //
     RKEngineStateAllocated                       = (1 << 8),                   // Resources have been allocated
     RKEngineStateProperlyWired                   = (1 << 9),                   // All required pointers are properly wired up
     RKEngineStateActivating                      = (1 << 10),                  // The main run loop is being activated
     RKEngineStateDeactivating                    = (1 << 11),                  // The main run loop is being deactivated
-    RKEngineStateActive                          = (1 << 12),                  // The engine is active
-    RKEngineStateMainMask                        = 0x00001F00,                 //
+    RKEngineStateActive                          = (1 << 13),                  // The engine is active
+    RKEngineStateWantActive                      = (1 << 15),                  // The engine is set to want active
+    RKEngineStateMainMask                        = 0x0000FF00,                 //
     RKEngineStateChildAllocated                  = (1 << 16),                  // The child resources have been allocated
     RKEngineStateChildProperlyWired              = (1 << 17),                  // Probably not used
     RKEngineStateChildActivating                 = (1 << 18),                  // The children are being activated
@@ -714,6 +720,26 @@ enum RKWaveformType {
     RKWaveformTypeFlatAnchors                    = (1 << 6)                    // Frequency hopping has multiple waveforms but the anchors are identical
 };
 
+typedef uint32_t RKEventType;
+enum RKEventType {
+    RKEventTypeNull,
+    RKEventTypeRaySweepBegin,
+    RKEventTypeRaySweepEnd
+};
+
+typedef uint8_t RKFilterType;
+enum RKFilterType {
+    RKFilterTypeNull,
+    RKFilterTypeElliptical1,
+    RKFilterTypeElliptical2,
+    RKFilterTypeElliptical3,
+    RKFilterTypeElliptical4,
+    RKFilterTypeImpulse,
+    RKFilterTypeCount,
+    RKFilterTypeUserDefined,
+    RKFilterTypeTest1
+};
+
 #pragma mark - Structure Definitions
 
 //
@@ -766,13 +792,14 @@ typedef struct rk_config {
     RKIdentifier         i;                                                    // Identity counter
     float                sweepElevation;                                       // Sweep elevation angle (degrees)
     float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
-    RKMarker             startMarker;                                          // Marker of the start ray
+    RKMarker             startMarker;                                          // Marker of the latest start ray
     uint8_t              filterCount;                                          // Number of filters
-    RKFilterAnchor       filterAnchors[RKMaxFilterCount];                      // Filter anchors
+    RKFilterAnchor       filterAnchors[RKMaxFilterCount];                      // Filter anchors at ray level
     uint32_t             pw[RKMaxFilterCount];                                 // Pulse width (ns)
     uint32_t             prf[RKMaxFilterCount];                                // Pulse repetition frequency (Hz)
     uint32_t             pulseGateCount;                                       // Number of range gates
     RKFloat              pulseGateSize;                                        // Size of range gate (m)
+    uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
     uint32_t             waveformId[RKMaxFilterCount];                         // Transmit waveform
     RKFloat              noise[2];                                             // Noise floor (ADU)
     RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
@@ -1181,6 +1208,28 @@ typedef struct rk_waveform_cal {
     RKFloat              DCal[RKMaxFilterCount];                                // Calibration factor for individual tone
     RKFloat              PCal[RKMaxFilterCount];                                // Calibration factor for individual tone
 } RKWaveformCalibration;
+
+typedef struct rk_waveform_response {
+    uint32_t             count;                                                 // Number of combinations (at most 3 for now)
+    uint32_t             length;                                                // Length of each filter
+    RKFloat              **amplitudeResponse;                                   // An array of amplitudes of [count][length] (dB)
+    RKFloat              **phaseResponse;                                       // An array of phases of [count][length] (radians)
+} RKWaveformResponse;
+
+typedef struct rk_iir_filter {
+    RKName               name;                                                  // String description of the filter
+    RKFilterType         type;                                                  // Built-in type
+    uint32_t             bLength;                                               // Length of b's
+    uint32_t             aLength;                                               // Length of a's
+    RKComplex            B[RKMaximumIIRFilterTaps];                             // Coefficient b's
+    RKComplex            A[RKMaximumIIRFilterTaps];                             // Coefficient a's
+} RKIIRFilter;
+
+typedef struct rk_task {
+    RKCommand            command;                                               // A ocmmand string for RKRadarExecute()
+    double               timeout;                                               // Maximum time for completion
+    RKEventType          endingEvent;                                           // Ending event that indicates completion of the task
+} RKTask;
 
 #pragma pack(pop)
 

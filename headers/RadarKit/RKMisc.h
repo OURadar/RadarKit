@@ -142,7 +142,7 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 char *RKSignalString(const int);
 
 int RKStripTail(char *);
-int RKIndentCopy(char *dst, char *src);
+int RKIndentCopy(char *dst, char *src, const int width);
 char *RKNextNoneWhite(const char *);
 
 float RKUMinDiff(const float minuend, const float subtrahend);

@@ -16,7 +16,7 @@ int RKLog(const char *whatever, ...) {
     }
     int i = 0;
     size_t len;
-    time_t utc;
+    struct timeval utc;
     va_list args;
     struct tm tm;
     char *msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
@@ -29,8 +29,8 @@ int RKLog(const char *whatever, ...) {
     }
 
     // Get the time
-    time(&utc);
-    memcpy(&tm, localtime(&utc), sizeof(struct tm));
+    gettimeofday(&utc, NULL);
+    memcpy(&tm, gmtime(&utc.tv_sec), sizeof(struct tm));
 
     // Construct the string
     va_start(args, whatever);
@@ -42,9 +42,10 @@ int RKLog(const char *whatever, ...) {
     }
     if (rkGlobalParameters.dailyLog) {
         if (whatever[0] == '>') {
-            i += sprintf(msg, "         ");
+            i += sprintf(msg, "             ");
         } else {
-            i += strftime(msg, 16, "%T ", &tm);
+            i += strftime(msg, 16, "%T", &tm);
+            i += sprintf(msg + i, ".%03d ", (int)utc.tv_usec / 1000);
         }
     } else {
         if (whatever[0] == '>') {
@@ -346,17 +347,26 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
 }
 
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
-    int j, k = 0;
+    int j, k = 0, n = (int)strlen(letter);
     char text[1024];
-    k = sprintf(text, "         %s%s%s = [ %s ]\n",
+    char pad[n + 1];
+    memset(pad, ' ', n);
+    pad[n] = '\0';
+    k = sprintf(text, "             %s%s%s = [ %s ]\n",
                 rkGlobalParameters.showColor ? RKYellowColor : "", letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
-    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + width, width));
-    k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + 2 * width, width));
-    k += sprintf(text + k, "             [     ...\n");
-    for (j = height - 3; j < height; j++) {
-        k += sprintf(text + k, "             [ %s ]\n", arrayHeadTailElementsInString(data + j * width, width));
+    if (height > 1) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + width, width));
+    }
+    if (height > 2) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + 2 * width, width));
+    }
+    if (height > 6) {
+        k += sprintf(text + k, "              %s  [     ...\n", pad);
+    }
+    for (j = MAX(3, height - 3); j < height; j++) {
+        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
 }
@@ -770,7 +780,7 @@ static void *fileMonitorRunLoop(void *in) {
     int s;
     struct stat fileStat;
     
-    engine->state |= RKEngineStateActive;
+    engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     stat(engine->filename, &fileStat);
@@ -778,10 +788,11 @@ static void *fileMonitorRunLoop(void *in) {
 
     RKLog("%s Started.   file = %s\n", engine->name, engine->filename);
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
+        engine->state |= RKEngineStateActive;
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (s++ < 10 && engine->state & RKEngineStateActive) {
+        while (s++ < 10 && engine->state & RKEngineStateWantActive) {
             if (engine->verbose > 2) {
                 RKLog("%s", engine->name);
             }
@@ -797,6 +808,7 @@ static void *fileMonitorRunLoop(void *in) {
             }
         }
     }
+    engine->state &= ~RKEngineStateActive;
     return NULL;
 }
 
@@ -821,7 +833,7 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *), 
         free(engine);
         return NULL;
     }
-    while (!(engine->state & RKEngineStateActive)) {
+    while (!(engine->state & RKEngineStateWantActive)) {
         usleep(100000);
     }
     return engine;
@@ -1038,7 +1050,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "MetersPerSecond",
         "MetersPerSecond",
         "dB",
-        "Degrees",
+        "Radians",
         "Unitless",
         "DegreesPerMeter",
         "dBm",
@@ -1309,7 +1321,8 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     }
     size_t L = strlen(string);
     if (*string != '{' || string[L - 1] != '}') {
-        fprintf(stderr, "RKFindCondition() - Expected {} pair around the string.\n");
+        fprintf(stderr, "RKFindCondition() - Expects a {} pair around the string.\n");
+        fprintf(stderr, "string =\n%s\n", string);
         return false;
     }
     int v;
@@ -1323,6 +1336,26 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *obj = (char *)malloc(RKNameLength);
     char *subKey = (char *)malloc(RKNameLength);
     char *subObj = (char *)malloc(RKNameLength);
+    if (str == NULL) {
+        RKLog("Error allocating memory for str.\n");
+        return false;
+    }
+    if (key == NULL) {
+        RKLog("Error allocating memory for key.\n");
+        return false;
+    }
+    if (obj == NULL) {
+        RKLog("Error allocating memory for obj.\n");
+        return false;
+    }
+    if (subKey == NULL) {
+        RKLog("Error allocating memory for subKey.\n");
+        return false;
+    }
+    if (subObj == NULL) {
+        RKLog("Error allocating memory for subObj.\n");
+        return false;
+    }
     *key = '\0';
     *obj = '\0';
     *subKey = '\0';
@@ -1460,9 +1493,13 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    if (!(engine->state & RKEngineStateWantActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
-    engine->state ^= RKEngineStateActive;
+    engine->state ^= RKEngineStateWantActive;
     if (engine->tid) {
         pthread_join(engine->tid, NULL);
     }

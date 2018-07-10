@@ -54,7 +54,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     // Some global attributes
     const float zf = 0.0f;
     const float va = 0.25f * product->header.wavelength * product->header.prf[0];
-    const float radianToDegree = 180.0f / M_PI;
+    const float radiansToDegrees = 180.0f / M_PI;
     const bool convertRadiansToDegrees = !strcasecmp(product->desc.unit, "radians");
     const nc_type floatType = sizeof(RKFloat) == sizeof(double) ? NC_DOUBLE : NC_FLOAT;
 
@@ -65,7 +65,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     if (convertRadiansToDegrees) {
         x =  product->data;
         for (j = 0; j < product->header.gateCount * product->header.rayCount; j++) {
-            *x = *x * radianToDegree;
+            *x = *x * radiansToDegrees;
             x++;
         }
         sprintf(product->desc.unit, "Degrees");
@@ -175,7 +175,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-ADU", floatType, 1, &product->header.noise[1]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalH-dB", floatType, 1, &product->header.systemZCal[0]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalV-dB", floatType, 1, &product->header.systemZCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-Degrees", floatType, 1, &product->header.systemDCal);
+    nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-dB", floatType, 1, &product->header.systemDCal);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemPCal-Degrees", floatType, 1, &product->header.systemPCal);
     nc_put_att_float(ncid, NC_GLOBAL, "ZCalH1-dB", floatType, 1, &product->header.ZCal[0][0]);
     nc_put_att_float(ncid, NC_GLOBAL, "ZCalV1-dB", floatType, 1, &product->header.ZCal[1][0]);

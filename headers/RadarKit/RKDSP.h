@@ -35,6 +35,8 @@ void RKFastSineCosine(float x, float *sin, float *cos);
 // FIR + IIR Filters
 //
 
+void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type);
+
 // xcorr() ?
 // ambiguity function
 //

@@ -10,6 +10,16 @@
 //
 //  █
 //
+//  2.0    - 7/30/2018
+//         - RKEngineStateActive and RKEngineStateWantActive
+//         - FIR/IIR ground clutter filters
+//
+//         - To do:
+//         - Task, event, sequence of tasks
+//         - LFM frequency hopping
+//         - Buffer overview text for deep buffer
+//         - Mapping coefficients to product files
+//
 //  1.2.10 - 6/30/2018
 //         - Added RKProductFileReadNC() for offline reading
 //         - Added RKSweep to RKProduct recording
