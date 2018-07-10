@@ -1277,7 +1277,7 @@ int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
     }
     radar->momentEngine->processor = &RKPulsePair;
     radar->momentEngine->processorLagCount = 3;
-    RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s",
+    RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultSuccess;
@@ -1289,7 +1289,7 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
     }
     radar->momentEngine->processor = &RKPulsePairHop;
     radar->momentEngine->processorLagCount = 2;
-    RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s",
+    RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultSuccess;
@@ -1301,7 +1301,7 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
     }
     radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
     radar->momentEngine->processorLagCount = 2;
-    RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)",
+    RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultSuccess;
@@ -1313,12 +1313,18 @@ int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, cha
 }
 
 int RKSetPulseRingFilterByType(RKRadar *radar, RKFilterType type, const uint32_t gateCount) {
-    RKIIRFilter filter;
-    RKGetFilterCoefficients(&filter, type);
-    RKSetPulseRingFilter(radar, &filter, gateCount);
+    RKIIRFilter *filter = (RKIIRFilter *)malloc(sizeof(RKIIRFilter));
+    if (filter == NULL) {
+        RKLog("Error. Unable to allocate a filter.\n");
+        return RKResultFailedToSetFilter;
+    }
+    RKGetFilterCoefficients(filter, type);
+    RKSetPulseRingFilter(radar, filter, gateCount);
+    free(filter);
     return RKResultSuccess;
 }
 
+// gateCount = 0 means no change from existing setting
 int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gateCount) {
     if (filter == NULL) {
         return RKResultFailedToSetFilter;
@@ -1339,12 +1345,19 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
         }
         free(oldFilter);
     }
-    RKConfig *config = RKGetLatestConfig(radar);
-    if (config->pulseRingFilterGateCount != gateCount) {
-        RKAddConfig(radar, RKConfigKeyPulseRingFilterGateCount, gateCount, RKConfigKeyNull);
+    if (gateCount) {
+        RKConfig *config = RKGetLatestConfig(radar);
+        if (config->pulseRingFilterGateCount != gateCount) {
+            RKLog("pulseRingFilterGateCount (%d) %d -> %d\n", config->i, config->pulseRingFilterGateCount, gateCount);
+            RKAddConfig(radar, RKConfigKeyPulseRingFilterGateCount, gateCount, RKConfigKeyNull);
+        }
     }
     RKPulseRingFilterEngineSetFilter(radar->pulseRingFilterEngine, filter);
     RKPulseRingFilterEngineEnableFilter(radar->pulseRingFilterEngine);
+    RKLog("Pulse ring filter set to %s%s%s\n",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          filter->name,
+          rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultSuccess;
 }
 
@@ -1603,6 +1616,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                         "\"Noise\":[%.3f,%.3f], "
                         "\"FFTPlanUsage\":%s"
@@ -1612,6 +1626,7 @@ int RKWaitWhileActive(RKRadar *radar) {
                         healthOkay ? "true" : "false", healthOkay ? healthEnum : RKStatusEnumFault,
                         networkOkay ? "true" : "false", networkEnum,
                         radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
+                        radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
                         config->noise[0], config->noise[1],
                         FFTPlanUsage
                         );
@@ -1868,6 +1883,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
     memset(sval2, 0, sizeof(sval2));
     double fval1 = 0.0;
     double fval2 = 0.0;
+    RKFilterType filterType;
+    uint32_t u32;
+    int ival;
 
     RKConfig *config = RKGetLatestConfig(radar);
 
@@ -1889,10 +1907,28 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                         RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
                         RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
                         sprintf(string, "ACK. Buffers cleared." RKEOL);
-                        //RKOperatorSendCommandResponse(O, string);
                         break;
                     case 'f':
                         // 'df' - DSP filter
+                        k = sscanf(&commandString[2], "%d %u", &ival, &u32);
+                        if (k == 2) {
+                            filterType = ival;
+                            RKLog("type = %u   u32 = %u\n", filterType, u32);
+                            RKSetPulseRingFilterByType(radar, filterType, u32);
+                            sprintf(string, "ACK. Ring filter %u gateCount %s." RKEOL, filterType, RKIntegerToCommaStyleString(u32));
+                        } else if (k == 1) {
+                            filterType = ival;
+                            if ((RKFilterType)filterType == RKFilterTypeNull) {
+                                RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
+                                sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                            } else {
+                                RKSetPulseRingFilterByType(radar, filterType, 0);
+                                sprintf(string, "ACK. Ring filter %u." RKEOL, filterType);
+                            }
+                        } else {
+                            RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
+                            sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                        }
                         break;
                     case 'n':
                         // 'dn' - DSP noise override
@@ -2226,7 +2262,7 @@ void RKAddConfig(RKRadar *radar, ...) {
 }
 
 RKConfig *RKGetLatestConfig(RKRadar *radar) {
-    return &radar->configs[radar->configIndex];
+    return &radar->configs[RKPreviousModuloS(radar->configIndex, radar->desc.configBufferDepth)];
 }
 
 #pragma mark - Healths

@@ -93,11 +93,12 @@ int socketCommandHandler(RKOperator *O) {
                 }
             }
             user->commandCount++;
-            RKLog("%s %s Received command '%s%s%s'\n",
+            RKLog("%s %s Received command '%s%s%s' (%p)\n",
                   engine->name, O->name,
                   rkGlobalParameters.showColor ? RKGreenColor : "",
                   commandString,
-                  rkGlobalParameters.showColor ? RKNoColor : "");
+                  rkGlobalParameters.showColor ? RKNoColor : "",
+                  commandStringEnd);
             // Process the command
             switch (commandString[0]) {
                 case 'a':
@@ -155,6 +156,7 @@ int socketCommandHandler(RKOperator *O) {
                             }
                             break;
                         default:
+                            RKLog("commandString = %s\n", commandString);
                             RKExecuteCommand(user->radar, commandString, user->commandResponse);
                             break;
                     }
@@ -261,9 +263,10 @@ int socketCommandHandler(RKOperator *O) {
         }
         // Get to the next command
         if (commandStringEnd != NULL) {
+            RKLog("Next command ...\n");
             commandString = commandStringEnd + 1;
             // Strip out some space after ';'
-            while (*commandString == '\r' || *commandString == '\n' || *commandString == ' ') {
+            while ((*commandString == '\r' || *commandString == '\n' || *commandString == ' ') && commandString < O->cmd + strlen(O->cmd) - 1) {
                 commandString++;
             }
             if (*commandString == '\0') {

@@ -365,7 +365,7 @@ static void *rayGatherer(void *in) {
         // Wait until the ray is ready. This can never happen right? Because rayIndex only advances after the ray is ready
         s = 0;
         while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive) {
-            RKLog("%s I can happen.   j = %d   is = %d\n", engine->name, j, is);
+            //RKLog("%s I can happen.   j = %d   is = %d\n", engine->name, j, is);
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",

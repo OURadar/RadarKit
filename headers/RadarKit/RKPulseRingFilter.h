@@ -76,6 +76,7 @@ void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_
 void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
 
 void RKPulseRingFilterEngineEnableFilter(RKPulseRingFilterEngine *);
+void RKPulseRingFilterEngineDisableFilter(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);

@@ -605,6 +605,15 @@ static void *pulseRingWatcher(void *_in) {
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
             RKPulseRingFilterUpdateStatusString(engine);
+            if (engine->verbose > 2) {
+                RKLog("%s %s\n", engine->name, RKVariableInString("useFilter", &engine->useFilter, RKValueTypeBool));
+                for (c = 0; c < engine->coreCount; c++) {
+                    RKLog("%s %d %s   %s   %s\n", engine->name, c,
+                          RKVariableInString("origin", &engine->workers[c].processOrigin, RKValueTypeUInt32),
+                          RKVariableInString("length", &engine->workers[c].processLength, RKValueTypeUInt32),
+                          RKVariableInString("output", &engine->workers[c].outputLength, RKValueTypeUInt32));
+                }
+            }
         }
 
 		engine->tic++;
@@ -693,6 +702,18 @@ void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *engine, const
 
 void RKPulseRingFilterEngineEnableFilter(RKPulseRingFilterEngine *engine) {
     engine->useFilter = true;
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s %s   %s\n", engine->name,
+              RKVariableInString("filter", engine->filter.name, RKValueTypeString),
+              RKVariableInString("useFilter", &engine->useFilter, RKValueTypeBool));
+    }
+}
+
+void RKPulseRingFilterEngineDisableFilter(RKPulseRingFilterEngine *engine) {
+    engine->useFilter = false;
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s %s\n", engine->name, RKVariableInString("useFilter", &engine->useFilter, RKValueTypeBool));
+    }
 }
 
 int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilter *filter) {

@@ -19,6 +19,7 @@ typedef struct user_params {
     RKName                   tweetaHost;
     RKName                   relayHost;
     RKName                   momentMethod;
+    RKName                   ringFilter;
     RKName                   streams;
     uint8_t                  verbose;                                            // Verbosity
     int                      coresForPulseCompression;                           // Number of cores for pulse compression
@@ -278,6 +279,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod", user->momentMethod,    RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",   user->ringFilter,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeDouble, 1);
@@ -638,6 +640,17 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         k++;
     }
     RKConcludeWaveformCalibrations(myRadar);
+
+    // Pulse ring filter
+    if (!strcasecmp(systemPreferences->ringFilter, "e1") || !strcasecmp(systemPreferences->ringFilter, "elliptical1")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical1, 0);
+    } else if (!strcasecmp(systemPreferences->ringFilter, "e2") || !strcasecmp(systemPreferences->ringFilter, "elliptical2")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical2, 0);
+    } else if (!strcasecmp(systemPreferences->ringFilter, "e3") || !strcasecmp(systemPreferences->ringFilter, "elliptical3")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical3, 0);
+    } else if (!strcasecmp(systemPreferences->ringFilter, "e4") || !strcasecmp(systemPreferences->ringFilter, "elliptical4")) {
+        RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical4, 0);
+    }
     
     // Refresh all system calibration
     RKAddConfig(myRadar,
@@ -651,8 +664,6 @@ static void updateRadarParameters(UserParams *systemPreferences) {
 
     // Force waveform reload to propagate the new waveform calibration values
     RKSetWaveform(myRadar, myRadar->waveform);
-    
-    RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical1, 1000);
 }
 
 static void handlePreferenceFileUpdate(void *in) {

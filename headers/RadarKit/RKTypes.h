@@ -729,6 +729,7 @@ enum RKEventType {
 
 typedef uint8_t RKFilterType;
 enum RKFilterType {
+    RKFilterTypeNull,
     RKFilterTypeElliptical1,
     RKFilterTypeElliptical2,
     RKFilterTypeElliptical3,
