@@ -214,13 +214,13 @@ static void *healthConsolidator(void *_in) {
             }
         } else {
             // Concatenate with latitude, longitude and heading values if GPS values are not reported
-            i += sprintf(string + i, ", "
+            i += sprintf(string + i,
                     "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
                     "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
                     "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"GPS Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
-                    "\"LocationFromDescriptor\":true}",
+                    "\"LocationFromDescriptor\":true}, ",
                     desc->latitude,
                     desc->longitude,
                     desc->heading);
