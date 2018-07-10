@@ -25,10 +25,8 @@ struct rk_pulse_ring_filter_worker {
     pthread_t                  tid;                                      // Thread ID
     uint64_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    //RKModuloPath               dataPath;                                 // The origin and length of the pulse data to process
     uint32_t                   processOrigin;                            // The origin of the pulse data to process
-    uint32_t                   processLength;                            // The length of the pulse data to process
-    uint32_t                   outputLength;                             // For last worker, outputLength <= dataPath.length
+    uint32_t                   processLength;                            // The length of the pulse data to process and <= data length
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine

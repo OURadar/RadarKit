@@ -110,8 +110,8 @@ static void *ringFilterCore(void *_in) {
     RKPulse *pulse;
     size_t mem = 0;
     
-    if (me->processOrigin % RKSIMDAlignSize > 0 || me->processLength % RKSIMDAlignSize > 0) {
-        RKLog("%s %s Error. Each filter line path must align to SIMD requirements.\n", engine->name, name);
+    if (me->processOrigin % RKSIMDAlignSize > 0) {
+        RKLog("%s %s Error. Each filter origin must align to the SIMD requirements.\n", engine->name, name);
         return NULL;
     }
     // Allocate local resources, use k to keep track of the total allocation
@@ -156,13 +156,12 @@ static void *ringFilterCore(void *_in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   process @ (%s, %s, %s)   ci = %d\n",
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   process @ (%s, %s)   ci = %d\n",
           engine->name, name,
           RKUIntegerToCommaStyleString(mem),
           RKIntegerToCommaStyleString(i0),
           RKIntegerToCommaStyleString(me->processOrigin),
           RKIntegerToCommaStyleString(me->processLength),
-          RKIntegerToCommaStyleString(me->outputLength),
           ci);
 
     pthread_mutex_unlock(&engine->mutex);
@@ -307,8 +306,8 @@ static void *ringFilterCore(void *_in) {
                 }
                 
                 // Override pulse data with y[k] up to gateCount only
-                memcpy(Z.i + me->processOrigin, yk.i, me->outputLength * sizeof(RKFloat));
-                memcpy(Z.q + me->processOrigin, yk.q, me->outputLength * sizeof(RKFloat));
+                memcpy(Z.i + me->processOrigin, yk.i, me->processLength * sizeof(RKFloat));
+                memcpy(Z.q + me->processOrigin, yk.q, me->processLength * sizeof(RKFloat));
                 
 #if defined(DEBUG_IIR)
                 
@@ -408,9 +407,11 @@ static void *pulseRingWatcher(void *_in) {
     uint32_t paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
-    RKLog("%s %s   %s\n", engine->name,
-          RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32),
-          RKVariableInString("dataPath.length", &length, RKValueTypeUInt32));
+    if (engine->verbose > 1) {
+        RKLog("%s %s   %s\n", engine->name,
+              RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32),
+              RKVariableInString("length", &length, RKValueTypeUInt32));
+    }
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];
         snprintf(worker->semaphoreName, 32, "rk-cf-%03d", c);
@@ -435,7 +436,7 @@ static void *pulseRingWatcher(void *_in) {
         worker->sem = sem[c];
         worker->parentEngine = engine;
         worker->processOrigin = origin;
-        worker->processLength = MIN(MIN(gateCount, pulse->header.gateCount / engine->radarDescription->pulseToRayRatio) - origin, length);
+        worker->processLength = MIN(gateCount - origin, length);
         origin += length;
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
@@ -528,11 +529,14 @@ static void *pulseRingWatcher(void *_in) {
             }
         }
         
-        // The config of the pulse
-        config = &engine->configBuffer[pulse->header.configIndex];
+        // The config to get PulseRingFilterGateCount
+        config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
 
         // Update processing region if necessary
-        if (gateCount != config->pulseRingFilterGateCount && pulse->header.s & RKPulseStatusDownSampled) {
+        if (gateCount != config->pulseRingFilterGateCount && pulse->header.s & RKPulseStatusProcessed) {
+            RKLog("%s %s   %s\n", engine->name,
+                  RKVariableInString("configIndex", &pulse->header.configIndex, RKValueTypeUInt16),
+                  RKVariableInString("configIndex", engine->configIndex, RKValueTypeUInt32));
             gateCount = config->pulseRingFilterGateCount;
             paddedGateCount = ((int)ceilf((float)MIN(gateCount, pulse->header.gateCount) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
             length = paddedGateCount / engine->coreCount;
@@ -540,7 +544,7 @@ static void *pulseRingWatcher(void *_in) {
             for (c = 0; c < engine->coreCount; c++) {
                 RKPulseRingFilterWorker *worker = &engine->workers[c];
                 worker->processOrigin = origin;
-                worker->processLength = MIN(MIN(config->pulseRingFilterGateCount, pulse->header.gateCount) - origin, length);
+                worker->processLength = MIN(MIN(gateCount, pulse->header.gateCount) - origin, length);
                 origin += length;
                 RKLog("%s %d %s    %s    %s  %d\n", engine->name, c,
                       RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),

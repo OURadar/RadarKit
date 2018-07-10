@@ -1625,9 +1625,6 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
-    // Use a counter that mimics microsecond increments
-    RKSetPulseTicsPerSeconds(radar, 1.0e6);
-    
     double periodTotal;
     const double periodEven = transceiver->prt;
     const double periodOdd =
@@ -1671,8 +1668,6 @@ void *RKTestTransceiverRunLoop(void *input) {
         RKLog("Error. Value of dphi = %.4f out of range!\n", dphi);
     }
 
-    RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
-
     RKWaveform *waveform = transceiver->waveformCache[0];
     unsigned int waveformCacheIndex = 0;
 
@@ -1681,6 +1676,13 @@ void *RKTestTransceiverRunLoop(void *input) {
     int ir = 0;
     int iq = 3;
     
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
+
+    // Use a counter that mimics microsecond increments
+    RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    
+    transceiver->state |= RKEngineStateActive;
+
     // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
     s = 0;
     transceiver->state |= RKEngineStateSleep0;
@@ -1691,10 +1693,9 @@ void *RKTestTransceiverRunLoop(void *input) {
         }
     }
     transceiver->state ^= RKEngineStateSleep0;
-    transceiver->state |= RKEngineStateActive;
 
-    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
-
+    RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+    
     gettimeofday(&t0, NULL);
 
     // g gate index
@@ -1985,7 +1986,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
         RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
     }
-    while (!(transceiver->state & RKEngineStateWantActive)) {
+    while (!(transceiver->state & RKEngineStateActive)) {
         usleep(10000);
     }
 
@@ -2395,7 +2396,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         RKLog("%s. Unable to create pedestal run loop.\n", pedestal->name);
     }
     //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
-    while (!(pedestal->state & RKEngineStateWantActive)) {
+    while (!(pedestal->state & RKEngineStateActive)) {
         usleep(10000);
     }
 
@@ -2584,7 +2585,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         RKLog("%s. Unable to create pedestal run loop.\n", healthRelay->name);
     }
     //RKLog("Pedestal input = '%s'\n", input == NULL ? "(NULL)" : input);
-    while (!(healthRelay->state & RKEngineStateWantActive)) {
+    while (!(healthRelay->state & RKEngineStateActive)) {
         usleep(10000);
     }
     
