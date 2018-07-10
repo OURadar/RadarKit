@@ -651,6 +651,8 @@ static void updateRadarParameters(UserParams *systemPreferences) {
 
     // Force waveform reload to propagate the new waveform calibration values
     RKSetWaveform(myRadar, myRadar->waveform);
+    
+    RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical1, 1000);
 }
 
 static void handlePreferenceFileUpdate(void *in) {

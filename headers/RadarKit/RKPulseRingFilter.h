@@ -26,7 +26,8 @@ struct rk_pulse_ring_filter_worker {
     uint64_t                   tic;                                      // Tic count
     uint32_t                   pid;                                      // Latest processed index of pulses buffer
     uint32_t                   processOrigin;                            // The origin of the pulse data to process
-    uint32_t                   processLength;                            // The length of the pulse data to process and <= data length
+    uint32_t                   processLength;                            // The length in the local storage for SIMD alignment
+    uint32_t                   outputLength;                             // The length of the pulse data to produce
     double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                     dutyCycle;                                // Latest duty cycle estimate
     float                      lag;                                      // Lag relative to the latest index of engine
@@ -74,6 +75,7 @@ void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *, con
 void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_t);
 void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
 
+void RKPulseRingFilterEngineEnableFilter(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);

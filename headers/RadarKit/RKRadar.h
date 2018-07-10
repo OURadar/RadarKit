@@ -126,6 +126,7 @@ struct rk_radar {
     // Internal copies of things
     //
     RKWaveform                       *waveform;
+    RKIIRFilter                      *filter;
     //
     // Hardware protocols for controls
     //
@@ -244,7 +245,8 @@ int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
 int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
 
 // Pulse ring filter (FIR / IIR ground clutter filter)
-int RKSetPulseRingFilter(RKRadar *, RKFilterType, const uint32_t);
+int RKSetPulseRingFilterByType(RKRadar *, RKFilterType, const uint32_t);
+int RKSetPulseRingFilter(RKRadar *, RKIIRFilter *, const uint32_t);
 
 //
 // Interactions

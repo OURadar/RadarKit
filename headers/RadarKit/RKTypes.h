@@ -86,6 +86,7 @@
 #define RKProcessorStatusRayCoreCount        16                                //
 #define RKHostMonitorPingInterval            5                                 //
 #define RKMaximumProductCount                64                                //
+#define RKMaximumIIRFilterTaps               8                                 //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -212,14 +213,6 @@ typedef union rk_filter_anchor {
     };
     char bytes[64];
 } RKFilterAnchor;
-
-typedef struct rk_iir_filter {
-    uint32_t      name;
-    uint32_t      bLength;
-    uint32_t      aLength;
-    RKComplex     B[8];
-    RKComplex     A[8];
-} RKIIRFilter;
 
 typedef struct rk_modulo_path {
     uint32_t      origin;
@@ -734,6 +727,17 @@ enum RKEventType {
     RKEventTypeRaySweepEnd
 };
 
+typedef uint8_t RKFilterType;
+enum RKFilterType {
+    RKFilterTypeElliptical1,
+    RKFilterTypeElliptical2,
+    RKFilterTypeElliptical3,
+    RKFilterTypeElliptical4,
+    RKFilterTypeImpulse,
+    RKFilterTypeUserDefined,
+    RKFilterTypeTest1
+};
+
 #pragma mark - Structure Definitions
 
 //
@@ -1209,6 +1213,15 @@ typedef struct rk_waveform_response {
     RKFloat              **amplitudeResponse;                                   // An array of amplitudes of [count][length] (dB)
     RKFloat              **phaseResponse;                                       // An array of phases of [count][length] (radians)
 } RKWaveformResponse;
+
+typedef struct rk_iir_filter {
+    RKName               name;                                                  // String description of the filter
+    RKFilterType         type;                                                  // Built-in type
+    uint32_t             bLength;                                               // Length of b's
+    uint32_t             aLength;                                               // Length of a's
+    RKComplex            B[RKMaximumIIRFilterTaps];                             // Coefficient b's
+    RKComplex            A[RKMaximumIIRFilterTaps];                             // Coefficient a's
+} RKIIRFilter;
 
 typedef struct rk_task {
     RKCommand            command;                                               // A ocmmand string for RKRadarExecute()

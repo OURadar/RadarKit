@@ -280,6 +280,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
     switch (type) {
         case RKFilterTypeElliptical1:
             //  0.1 radians / sample
+            sprintf(filter->name, "Elliptical-0.1");
             filter->bLength = 6;
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
@@ -289,6 +290,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
         case RKFilterTypeElliptical2:
             //  0.2 radians / sample
+            sprintf(filter->name, "Elliptical-0.2");
             filter->bLength = 6;
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
@@ -298,6 +300,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
         case RKFilterTypeElliptical3:
             //  0.3 radians / sample
+            sprintf(filter->name, "Elliptical-0.3");
             filter->bLength = 6;
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
@@ -307,6 +310,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
         case RKFilterTypeElliptical4:
             //  0.4 radians / sample
+            sprintf(filter->name, "Elliptical-0.4");
             filter->bLength = 6;
             filter->aLength = 6;
             memset(b, 0, filter->bLength * sizeof(RKComplex));
@@ -314,6 +318,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             b++->i = +0.491560f; b++->i = -2.430619f; b++->i = +4.834367f; b++->i = -4.834367f; b++->i = +2.430619f; b->i = -0.491560f;
             a++->i = +1.000000f; a++->i = -3.520292f; a++->i = +5.139254f; a++->i = -3.808225f; a++->i = +1.409268f; a->i = -0.195916f;
         case RKFilterTypeImpulse:
+            sprintf(filter->name, "Impulse");
             filter->bLength = 1;
             filter->aLength = 1;
             memset(b, 0, 8 * sizeof(RKComplex));
@@ -322,6 +327,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             a->i = 1.0f;
             break;
         case RKFilterTypeTest1:
+            sprintf(filter->name, "Test1");
             filter->bLength = 2;
             filter->aLength = 3;
             memset(b, 0, 8 * sizeof(RKComplex));

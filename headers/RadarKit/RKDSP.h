@@ -35,16 +35,6 @@ void RKFastSineCosine(float x, float *sin, float *cos);
 // FIR + IIR Filters
 //
 
-typedef uint8_t RKFilterType;
-enum RKFilterType {
-    RKFilterTypeElliptical1,
-    RKFilterTypeElliptical2,
-    RKFilterTypeElliptical3,
-    RKFilterTypeElliptical4,
-    RKFilterTypeImpulse,
-    RKFilterTypeTest1
-};
-
 void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type);
 
 // xcorr() ?

@@ -875,9 +875,16 @@ int RKFree(RKRadar *radar) {
     // Internal copies of things
     if (radar->waveform) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Freeing waveform '%s' with %d group%s.\n", radar->waveform->name, radar->waveform->count, radar->waveform->count > 1 ? "s" : "");
+            RKLog("Freeing waveform '%s' with %d group%s ...\n",
+                  radar->waveform->name, radar->waveform->count, radar->waveform->count > 1 ? "s" : "");
         }
         RKWaveformFree(radar->waveform);
+    }
+    if (radar->filter) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Freeing filter ...\n", radar->waveform->name);
+        }
+        free(radar->filter);
     }
     // Buffers
     RKLog("Freeing radar '%s' ...\n", radar->desc.name);
@@ -1122,11 +1129,11 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         return RKResultNoPulseCompressionEngine;
     }
     if (waveform == NULL) {
-        return RKResultFailedToSetFilter;
+        return RKResultFailedToSetWaveform;
     }
     if (waveform->count > 1 && waveform->filterCounts[0] != waveform->filterCounts[1]) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
-        return RKResultFailedToSetFilter;
+        return RKResultFailedToSetWaveform;
     }
     RKWaveform *oldWaveform = radar->waveform;
     radar->waveform = RKWaveformCopy(waveform);
@@ -1144,7 +1151,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
                                             k,
                                             j);
             if (r != RKResultSuccess) {
-                return RKResultFailedToSetFilter;
+                return RKResultFailedToSetWaveform;
             }
         }
     }
@@ -1305,14 +1312,39 @@ int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, cha
     return RKResultSuccess;
 }
 
-int RKSetPulseRingFilter(RKRadar *radar, RKFilterType type, const uint32_t gateCount) {
+int RKSetPulseRingFilterByType(RKRadar *radar, RKFilterType type, const uint32_t gateCount) {
     RKIIRFilter filter;
     RKGetFilterCoefficients(&filter, type);
+    RKSetPulseRingFilter(radar, &filter, gateCount);
+    return RKResultSuccess;
+}
+
+int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gateCount) {
+    if (filter == NULL) {
+        return RKResultFailedToSetFilter;
+    }
+    RKIIRFilter *oldFilter = radar->filter;
+    radar->filter = (RKIIRFilter *)malloc(sizeof(RKIIRFilter));
+    if (radar->filter == NULL) {
+        RKLog("Error. Unable to allocate filter.\n");
+        return RKResultFailedToSetFilter;
+    }
+    memcpy(radar->filter, filter, sizeof(RKIIRFilter));
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Filter '%s' cached.\n", filter->name);
+    }
+    if (oldFilter != NULL) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Freeing RKIIRFilter cache ...\n");
+        }
+        free(oldFilter);
+    }
     RKConfig *config = RKGetLatestConfig(radar);
     if (config->pulseRingFilterGateCount != gateCount) {
         RKAddConfig(radar, RKConfigKeyPulseRingFilterGateCount, gateCount, RKConfigKeyNull);
     }
-    RKPulseRingFilterEngineSetFilter(radar->pulseRingFilterEngine, &filter);
+    RKPulseRingFilterEngineSetFilter(radar->pulseRingFilterEngine, filter);
+    RKPulseRingFilterEngineEnableFilter(radar->pulseRingFilterEngine);
     return RKResultSuccess;
 }
 

@@ -254,7 +254,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPulseRingFilterGateCount:
                 newConfig->pulseRingFilterGateCount = va_arg(args, uint32_t);
-                sprintf(stringBuffer[0], "PulseRingFilterGateCount = %u", newConfig->pulseRingFilterGateCount);
+                sprintf(stringBuffer[0], "PulseRingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->pulseRingFilterGateCount));
                 break;
             default:
                 sprintf(stringBuffer[0], "Key %d not understood.", key);

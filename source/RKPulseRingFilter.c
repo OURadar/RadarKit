@@ -115,11 +115,11 @@ static void *ringFilterCore(void *_in) {
         return NULL;
     }
     // Allocate local resources, use k to keep track of the total allocation
-    // Each block is depth x pols (2) x gates (me->dataPath.length)
+    // Each block is depth x pols (2) x gates (me->processLength)
     RKIQZ xx;
     RKIQZ yy;
-    const int depth = 8;
-    size_t filterSize = depth * RKGateCount / engine->coreCount * sizeof(RKFloat);
+    const int depth = RKMaximumIIRFilterTaps;
+    size_t filterSize = depth * engine->radarDescription->pulseCapacity / engine->coreCount * sizeof(RKFloat);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.i, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.q, RKSIMDAlignSize, 2 * filterSize));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.i, RKSIMDAlignSize, 2 * filterSize));
@@ -156,12 +156,13 @@ static void *ringFilterCore(void *_in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   process @ (%s, %s)   ci = %d\n",
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   filter @ (%s, %s, %s)   ci = %d\n",
           engine->name, name,
           RKUIntegerToCommaStyleString(mem),
           RKIntegerToCommaStyleString(i0),
           RKIntegerToCommaStyleString(me->processOrigin),
           RKIntegerToCommaStyleString(me->processLength),
+          RKIntegerToCommaStyleString(me->outputLength),
           ci);
 
     pthread_mutex_unlock(&engine->mutex);
@@ -180,7 +181,6 @@ static void *ringFilterCore(void *_in) {
 
     RKIQZ Z, xi, yi, yk;
     int kOffset, iOffset;
-    //uint32_t outputLength = MIN(engine->gateCount - me->dataPath.origin, me->dataPath.length);
     
     k = 0;    // pulse index
     while (engine->state & RKEngineStateWantActive) {
@@ -243,7 +243,7 @@ static void *ringFilterCore(void *_in) {
                       RKVariableInString("k", &k, RKValueTypeInt),
                       RKVariableInString("bLength", &engine->filter.bLength, RKValueTypeUInt32),
                       RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32),
-                      RKVariableInString("data.pathLength", &me->dataPath.length, RKValueTypeUInt32));
+                      RKVariableInString("outpuLength", &me->outputLength, RKValueTypeUInt32));
                 
 #endif
                 
@@ -306,14 +306,14 @@ static void *ringFilterCore(void *_in) {
                 }
                 
                 // Override pulse data with y[k] up to gateCount only
-                memcpy(Z.i + me->processOrigin, yk.i, me->processLength * sizeof(RKFloat));
-                memcpy(Z.q + me->processOrigin, yk.q, me->processLength * sizeof(RKFloat));
+                memcpy(Z.i + me->processOrigin, yk.i, me->outputLength * sizeof(RKFloat));
+                memcpy(Z.q + me->processOrigin, yk.q, me->outputLength * sizeof(RKFloat));
                 
 #if defined(DEBUG_IIR)
                 
-                RKLog("%s %s Output copied with dataPath = (%s, %s)", engine->name, name,
-                      RKIntegerToCommaStyleString(me->dataPath.origin),
-                      RKIntegerToCommaStyleString(outputLength));
+                RKLog("%s %s Output copied with path @ (%s, %s)", engine->name, name,
+                      RKIntegerToCommaStyleString(me->processOrigin),
+                      RKIntegerToCommaStyleString(me->outputLength));
                 pthread_mutex_unlock(&engine->mutex);
                 
 #endif
@@ -403,7 +403,6 @@ static void *pulseRingWatcher(void *_in) {
 
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
-    //uint32_t paddedGateCount = ((int)ceilf((float)MIN(engine->gateCount, pulse->header.capacity) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
     uint32_t paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
@@ -436,7 +435,8 @@ static void *pulseRingWatcher(void *_in) {
         worker->sem = sem[c];
         worker->parentEngine = engine;
         worker->processOrigin = origin;
-        worker->processLength = MIN(gateCount - origin, length);
+        worker->processLength = length;
+        worker->outputLength = MIN(gateCount - origin, length);
         origin += length;
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
@@ -533,18 +533,19 @@ static void *pulseRingWatcher(void *_in) {
         config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
 
         // Update processing region if necessary
-        if (gateCount != config->pulseRingFilterGateCount && pulse->header.s & RKPulseStatusProcessed) {
+        if (gateCount != MIN(pulse->header.gateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
+            gateCount = MIN(pulse->header.gateCount, config->pulseRingFilterGateCount);
             RKLog("%s %s   %s\n", engine->name,
                   RKVariableInString("configIndex", &pulse->header.configIndex, RKValueTypeUInt16),
                   RKVariableInString("configIndex", engine->configIndex, RKValueTypeUInt32));
-            gateCount = config->pulseRingFilterGateCount;
-            paddedGateCount = ((int)ceilf((float)MIN(gateCount, pulse->header.gateCount) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
+            paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
             length = paddedGateCount / engine->coreCount;
             origin = 0;
             for (c = 0; c < engine->coreCount; c++) {
                 RKPulseRingFilterWorker *worker = &engine->workers[c];
                 worker->processOrigin = origin;
-                worker->processLength = MIN(MIN(gateCount, pulse->header.gateCount) - origin, length);
+                worker->processLength = length;
+                worker->outputLength = MIN(gateCount - origin, length);
                 origin += length;
                 RKLog("%s %d %s    %s    %s  %d\n", engine->name, c,
                       RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
@@ -641,10 +642,8 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     sprintf(engine->name, "%s<PulseRingFilter>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    RKGetFilterCoefficients(&engine->filter, RKFilterTypeImpulse);
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->useFilter = true;
     engine->memoryUsage = sizeof(RKPulseRingFilterEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
@@ -692,10 +691,15 @@ void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *engine, const
     engine->coreOrigin = origin;
 }
 
+void RKPulseRingFilterEngineEnableFilter(RKPulseRingFilterEngine *engine) {
+    engine->useFilter = true;
+}
+
 int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilter *filter) {
     memcpy(&engine->filter, filter, sizeof(RKIIRFilter));
     return RKResultSuccess;
 }
+
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
@@ -711,17 +715,6 @@ int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     if (engine->workers != NULL) {
         RKLog("%s Error. workers should be NULL here.\n", engine->name);
     }
-//    if (engine->gateCount > engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio) {
-//        RKLog("%s Info. Filter gateCount %s -> %s (pulseCapacity %s / pulseToRayRatio %d)\n", engine->name,
-//              RKIntegerToCommaStyleString(engine->gateCount),
-//              RKIntegerToCommaStyleString(engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio),
-//              RKIntegerToCommaStyleString(engine->radarDescription->pulseCapacity),
-//              engine->radarDescription->pulseToRayRatio);
-//        engine->gateCount = engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio;
-//    }
-//    if (engine->gateCount <= 100 * RKSIMDAlignSize) {
-//        engine->coreCount = 1;
-//    }
     engine->workers = (RKPulseRingFilterWorker *)malloc(engine->coreCount * sizeof(RKPulseRingFilterWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseRingFilterWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseRingFilterWorker));
