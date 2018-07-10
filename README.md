@@ -285,11 +285,16 @@ int RKSetHealthRelay(RKRadar *,
                      int execRoutine(RKHealthRelay, const char *, char *),
                      int freeRoutine(RKHealthRelay));
 
+// These can only be set before the radar goes live
+int RKSetProcessingCoreCounts(RKRadar *, const unsigned int pulseCores, const unsigned int rayCores);
+
 // Some states of the radar
-int RKSetVerbosity(RKRadar *radar, const int verbose);
-int RKSetProcessingCoreCounts(RKRadar *radar,
-                              const unsigned int pulseCompressionCoreCount,
-                              const unsigned int momentProcessorCoreCount);
+int RKSetVerbosity(RKRadar *, const int);
+int RKSetVerbosityUsingArray(RKRadar *, const uint8_t *);
+int RKSetDataPath(RKRadar *, const char *);
+int RKSetDataUsageLimit(RKRadar *, const size_t limit);
+int RKSetRecordingLevel(RKRadar *, const int);
+int RKToggleRawDataRecorderMode(RKRadar *);
 
 // Waveform routines
 RKWaveform *RKWaveformInitAsImpulse(void);
@@ -307,9 +312,28 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *);
 void RKWaveformSummary(RKWaveform *);
 
 // Some operating parameters
-int RKSetWaveform(RKRadar *radar, RKWaveform *waveform, const int group);
-int RKSetWaveformToImpulse(RKRadar *radar);
-uint32_t RKGetPulseCapacity(RKRadar *radar);
+int RKSetWaveform(RKRadar *, RKWaveform *);
+int RKSetWaveformByFilename(RKRadar *, const char *);
+int RKSetWaveformToImpulse(RKRadar *);
+int RKSetPRF(RKRadar *, const uint32_t);
+uint32_t RKGetPulseCapacity(RKRadar *);
+
+// If there is a tic count from firmware, use it as clean reference for time derivation
+void RKSetPulseTicsPerSeconds(RKRadar *, const double);
+void RKSetPositionTicsPerSeconds(RKRadar *, const double);
+
+// Moment processor
+int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
+int RKSetMomentProcessorToPulsePair(RKRadar *);
+int RKSetMomentProcessorToPulsePairHop(RKRadar *);
+int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
+
+// Moment recorder (RadarKit uses netcdf by default)
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
+
+// Pulse ring filter (FIR / IIR ground clutter filter)
+int RKSetPulseRingFilterByType(RKRadar *, RKFilterType, const uint32_t);
+int RKSetPulseRingFilter(RKRadar *, RKIIRFilter *, const uint32_t);
 ```
 
 ### Interactions
