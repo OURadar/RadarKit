@@ -48,6 +48,7 @@ struct rk_pulse_ring_filter_engine {
     bool                             useSemaphore;
     bool                             useFilter;                          // Use FIR/IIR filter
     RKIIRFilter                      filter;                             // The FIR/IIR filter coefficients
+    RKIdentifier                     filterId;                           // A counter for filter change
 
     // Program set variables
     RKPulseRingFilterWorker          *workers;
@@ -82,6 +83,7 @@ int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *, RKIIRFilter *);
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *);
 int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *);
 
+void RKPulseRingFilterEngineShowFilterSummary(RKPulseRingFilterEngine *);
 char *RKPulseRingFilterEngineStatusString(RKPulseRingFilterEngine *);
 
 #endif

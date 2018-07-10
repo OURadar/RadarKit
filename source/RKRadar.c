@@ -1358,10 +1358,14 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
     }
     RKPulseRingFilterEngineSetFilter(radar->pulseRingFilterEngine, filter);
     RKPulseRingFilterEngineEnableFilter(radar->pulseRingFilterEngine);
-    RKLog("Pulse ring filter set to %s%s%s\n",
-          rkGlobalParameters.showColor ? "\033[4m" : "",
-          filter->name,
-          rkGlobalParameters.showColor ? "\033[24m" : "");
+    if (radar->state & RKRadarStateLive) {
+        RKPulseRingFilterEngineShowFilterSummary(radar->pulseRingFilterEngine);
+    } else {
+        RKLog("Initial Pulse ring filter set to %s%s%s\n",
+              rkGlobalParameters.showColor ? "\033[4m" : "",
+              filter->name,
+              rkGlobalParameters.showColor ? "\033[24m" : "");
+    }
     return RKResultSuccess;
 }
 

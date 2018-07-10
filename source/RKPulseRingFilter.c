@@ -260,8 +260,7 @@ static void *ringFilterCore(void *_in) {
                     xi.i = xx.i + iOffset;
                     xi.q = xx.q + iOffset;
                     RKSIMD_csz(engine->filter.B[j].i, &xi, &yk, me->processLength);
-                    
-                    
+
 #if defined(DEBUG_IIR)
                     
                     RKLog(">%s %s B portion   %s   %s   %s   %s\n", engine->name, name,
@@ -401,15 +400,16 @@ static void *pulseRingWatcher(void *_in) {
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
+    // Show filter summary
+    RKPulseRingFilterEngineShowFilterSummary(engine);
+    
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
     uint32_t paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
-    if (engine->verbose > 1) {
-        RKLog("%s %s   %s\n", engine->name,
-              RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32),
-              RKVariableInString("length", &length, RKValueTypeUInt32));
+    if (engine->verbose > 2) {
+        RKLog("%s Initial paddedGateCount = %s   length = %s\n", engine->name, RKUIntegerToCommaStyleString(paddedGateCount), RKUIntegerToCommaStyleString(length));
     }
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseRingFilterWorker *worker = &engine->workers[c];
@@ -718,6 +718,7 @@ void RKPulseRingFilterEngineDisableFilter(RKPulseRingFilterEngine *engine) {
 
 int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilter *filter) {
     memcpy(&engine->filter, filter, sizeof(RKIIRFilter));
+    engine->filterId++;
     return RKResultSuccess;
 }
 
@@ -784,6 +785,24 @@ int RKPulseRingFilterEngineStop(RKPulseRingFilterEngine *engine) {
 
 char *RKPulseRingFilterEngineStatusString(RKPulseRingFilterEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
+}
+
+void RKPulseRingFilterEngineShowFilterSummary(RKPulseRingFilterEngine *engine) {
+    int i, k;
+    char *string = (char *)malloc(1024);
+    i = sprintf(string, "b = [");
+    for (k = 0; k < engine->filter.bLength; k++) {
+        i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", engine->filter.B[k].i);
+    }
+    sprintf(string + i, "]");
+    RKLog(">%s %s", engine->name, string);
+    i = sprintf(string, "a = [");
+    for (k = 0; k < engine->filter.aLength; k++) {
+        i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", engine->filter.A[k].i);
+    }
+    sprintf(string + i, "]");
+    RKLog(">%s %s", engine->name, string);
+    free(string);
 }
 
 #pragma mark - Interactions
