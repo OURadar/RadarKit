@@ -156,7 +156,6 @@ int socketCommandHandler(RKOperator *O) {
                             }
                             break;
                         default:
-                            RKLog("commandString = %s\n", commandString);
                             RKExecuteCommand(user->radar, commandString, user->commandResponse);
                             break;
                     }

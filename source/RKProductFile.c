@@ -175,7 +175,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "NoiseV-ADU", floatType, 1, &product->header.noise[1]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalH-dB", floatType, 1, &product->header.systemZCal[0]);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemZCalV-dB", floatType, 1, &product->header.systemZCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-Degrees", floatType, 1, &product->header.systemDCal);
+    nc_put_att_float(ncid, NC_GLOBAL, "SystemDCal-dB", floatType, 1, &product->header.systemDCal);
     nc_put_att_float(ncid, NC_GLOBAL, "SystemPCal-Degrees", floatType, 1, &product->header.systemPCal);
     nc_put_att_float(ncid, NC_GLOBAL, "ZCalH1-dB", floatType, 1, &product->header.ZCal[0][0]);
     nc_put_att_float(ncid, NC_GLOBAL, "ZCalV1-dB", floatType, 1, &product->header.ZCal[1][0]);
