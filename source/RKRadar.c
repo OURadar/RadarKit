@@ -136,6 +136,11 @@ static void *engineMonitorRunLoop(void *in) {
                 RKLog("%s %s B   %s KB\n", engine->name,
                       RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
                       RKVariableInString("rusage", &mem, RKValueTypeLong));
+                double dxduPulse = 1.0 / radar->pulseClock->dx;
+                double dxduPosition = 1.0 / radar->positionClock->dx;
+                RKLog("%s %s   %s", engine->name,
+                      RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble),
+                      RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble));
                 shown = true;
             }
         } else {
