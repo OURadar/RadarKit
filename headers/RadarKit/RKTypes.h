@@ -793,7 +793,7 @@ typedef struct rk_config {
     float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
     RKMarker             startMarker;                                          // Marker of the latest start ray
     uint8_t              filterCount;                                          // Number of filters
-    RKFilterAnchor       filterAnchors[RKMaxFilterCount];                      // Filter anchors
+    RKFilterAnchor       filterAnchors[RKMaxFilterCount];                      // Filter anchors at ray level
     uint32_t             pw[RKMaxFilterCount];                                 // Pulse width (ns)
     uint32_t             prf[RKMaxFilterCount];                                // Pulse repetition frequency (Hz)
     uint32_t             pulseGateCount;                                       // Number of range gates

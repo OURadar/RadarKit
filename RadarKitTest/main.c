@@ -18,8 +18,8 @@ typedef struct user_params {
     RKName                   pedzyHost;
     RKName                   tweetaHost;
     RKName                   relayHost;
-    RKName                   momentMethod;
     RKName                   ringFilter;
+    RKName                   momentMethod;
     RKName                   streams;
     uint8_t                  verbose;                                            // Verbosity
     int                      coresForPulseCompression;                           // Number of cores for pulse compression
@@ -31,6 +31,7 @@ typedef struct user_params {
     int                      sleepInterval;                                      // Intermittent sleep period in transceiver simulator in seconds
     int                      recordLevel;                                        // Data recording (1 - moment + health logs only, 2 - everything)
     bool                     simulate;                                           // Run with transceiver simulator
+    uint32_t                 ringFilterGateCount;                                // Number of range gates to apply ring filter
     double                   systemZCal[2];                                      // System calibration for Z
     double                   systemDCal;                                         // System calibration for D
     double                   systemPCal;                                         // System calibration for P

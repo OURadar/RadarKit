@@ -1163,14 +1163,15 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
             break;
         }
     }
-    // Pulse compression engine already made a copy, we can mutate waveform here for the config buffer. But, senstivity gain should not change!
-    RKWaveformDecimate(waveform, radar->desc.pulseToRayRatio);
+    // Make a copy for the config buffer. Senstivity gain should not change!
     if (waveform->filterCounts[0] > 0 && waveform->filterCounts[0] <= 4) {
+        RKWaveform *waveformDecimate = RKWaveformCopy(waveform);
+        RKWaveformDecimate(waveformDecimate, radar->desc.pulseToRayRatio);
         RKAddConfig(radar,
-                    RKConfigKeyWaveform, waveform,
+                    RKConfigKeyWaveform, waveformDecimate,
                     RKConfigKeyWaveformCalibration, waveformCalibration,
                     RKConfigKeyNull);
-
+        RKWaveformFree(waveformDecimate);
     } else {
         RKLog("Error. Multiplexing = %d filters has not been implemented. Reverting to impulse filter.\n", waveform->filterCounts[0]);
         RKSetWaveformToImpulse(radar);
