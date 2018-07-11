@@ -39,6 +39,7 @@ struct rk_sweep_engine {
     uint32_t                         *productIndex;
     uint8_t                          verbose;
     bool                             doNotWrite;
+    bool                             convertToDegrees;
     bool                             hasHandleFilesScript;
     bool                             handleFilesScriptProducesTgz;
     bool                             handleFilesScriptProducesZip;

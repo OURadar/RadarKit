@@ -55,7 +55,7 @@
 
 #define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 
-#define RKSingleWrapTo2PI(x)   ((x) < -M_PI ? x + 2.0f * M_PI : ((x) >= M_PI ? (x) - 2.0f * M_PI : (x)))
+#define RKSingleWrapTo2PI(x)   ((x) < -M_PI ? ((x) + 2.0f * M_PI) : ((x) >= M_PI ? ((x) - 2.0f * M_PI) : (x)))
 
 typedef struct RKGlobalParameterStruct {
     char             program[RKNameLength];                      // Name of the program in log
