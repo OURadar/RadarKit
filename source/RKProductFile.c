@@ -54,24 +54,12 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     // Some global attributes
     const float zf = 0.0f;
     const float va = 0.25f * product->header.wavelength * product->header.prf[0];
-    const bool convertRadiansToDegrees = !strcasecmp(product->desc.unit, "radians");
     const nc_type floatType = sizeof(RKFloat) == sizeof(double) ? NC_DOUBLE : NC_FLOAT;
-    const RKFloat radiansToDegrees = 180.0f / M_PI;
 
     // Local memory
     RKFloat *array1D = (RKFloat *)malloc(MAX(product->header.rayCount, product->header.gateCount) * sizeof(RKFloat));
 
-    // Convert data in radians to degrees if necessary
-    // if (convertRadiansToDegrees) {
-    // 	//RKLog("convertRadiansToDegrees = %.2f for product '%s'", radiansToDegrees, product->desc.name);
-    //     x =  product->data;
-    //     for (j = 0; j < product->header.gateCount * product->header.rayCount; j++) {
-    //         *x = *x * radiansToDegrees;
-    //         x++;
-    //     }
-    //     sprintf(product->desc.unit, "Degrees");
-    // }
-    
+    // Scan type
     if (product->header.isPPI) {
         nc_def_dim(ncid, "Azimuth", product->header.rayCount, &dimensionIds[0]);
     } else if (product->header.isRHI) {
