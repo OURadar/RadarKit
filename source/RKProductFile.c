@@ -62,15 +62,15 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     RKFloat *array1D = (RKFloat *)malloc(MAX(product->header.rayCount, product->header.gateCount) * sizeof(RKFloat));
 
     // Convert data in radians to degrees if necessary
-    if (convertRadiansToDegrees) {
-    	//RKLog("convertRadiansToDegrees = %.2f for product '%s'", radiansToDegrees, product->desc.name);
-        x =  product->data;
-        for (j = 0; j < product->header.gateCount * product->header.rayCount; j++) {
-            *x = *x * radiansToDegrees;
-            x++;
-        }
-        sprintf(product->desc.unit, "Degrees");
-    }
+    // if (convertRadiansToDegrees) {
+    // 	//RKLog("convertRadiansToDegrees = %.2f for product '%s'", radiansToDegrees, product->desc.name);
+    //     x =  product->data;
+    //     for (j = 0; j < product->header.gateCount * product->header.rayCount; j++) {
+    //         *x = *x * radiansToDegrees;
+    //         x++;
+    //     }
+    //     sprintf(product->desc.unit, "Degrees");
+    // }
     
     if (product->header.isPPI) {
         nc_def_dim(ncid, "Azimuth", product->header.rayCount, &dimensionIds[0]);
