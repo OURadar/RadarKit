@@ -55,13 +55,19 @@ Follow these steps to get the project
     sudo make install
     ```
     
-4. (Some Linux) Add the following line to /etc/sysctl.conf
+4. Try the test program to simulate a Level-1 system.
+
+    ```shell
+    rktest -vs1
+    ```
+    
+5. (Some Linux) Add the following line to /etc/sysctl.conf
 
     ```
     net.ipv4.ping_group_range = 0 0
     ```
     
-5. (Optional) Compile [FFTW] from source
+6. (Optional) Compile [FFTW] from source
 
     ```
     ./configure --enable-single --enable-sse --enable-sse2 --enable-avx --enable-avx2 --enable-shared
