@@ -183,4 +183,9 @@ fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [str
 ww2 = kron(ww, [1; 1]);
 
 % Find the sequence anchor
-
+ccf = zeros(1, 2 * hopCount);
+% mag = 
+for k = 1:14
+    tx = pulses(1:depth, k:k+2*hopCount);
+    ccf(k) = sum(conj(tx(:)) .* ww2(:));    
+end
