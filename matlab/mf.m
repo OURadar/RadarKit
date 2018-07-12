@@ -173,10 +173,14 @@ else
     delta = bandwidth / (hopCount - 1);
 end
 
-for k = 1:hopCount
-    f = delta * stride(k) - 0.5 * bandwidth;
-    omega = 2.0 * pi * f / fs;
-    fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample\n', stride(k), 1.0e-6 * f, omega);
-end
+f = delta * stride - 0.5 * bandwidth;
+omega = 2.0 * pi * f / fs;
+on = omega(:) * (0:depth - 1);
+ww = exp(1j * on) / sqrt(depth);
+gain = 10 * log10(sum(abs(ww) .^ 2, 2)).';
+fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [stride; 1.0e-6 * f; omega; gain]);
 
+ww2 = kron(ww, [1; 1]);
+
+% Find the sequence anchor
 
