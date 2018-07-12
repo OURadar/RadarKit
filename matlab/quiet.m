@@ -1,0 +1,2 @@
+showAnimation = false;
+generatePNG = false;
