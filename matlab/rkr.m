@@ -1,4 +1,6 @@
 filename = blib('choosefile', '~/Downloads', '*.rkr');
+if ~exist('showAnimation', 'var'), showAnimation = false; end
+if ~exist('generatePNG', 'var'), generatePNG = false; end
 
 dat = iqread(filename);
 
@@ -61,22 +63,24 @@ set(gcf, 'Menubar', 'None');
 set(FIG.ht, 'HorizontalAlignment', 'Right');
 lp = linkprop(FIG.ax, {'XLim'});
 
-return
-
-%%
-jj = 1;
-while (jj < size(pulses, 2))
-    for ii = 1 : M * N
-        k = ii + jj;
-        if k > size(pulses, 2), break; end
-        set(FIG.pl(ii, 1), 'YData', real(pulses(1:ng, k, 2)));
-        set(FIG.pl(ii, 2), 'YData', imag(pulses(1:ng, k, 2)));
-        set(FIG.pl(ii, 3), 'YData', abs(pulses(1:ng, k, 2)));
-        set(FIG.ht(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
-            dat.pulses(k).n, floor(rem(double(dat.pulses(k).n), M) / 2) - 5, ...
-            dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
+if (showAnimation)
+    %%
+    jj = 1;
+    while (jj < size(pulses, 2))
+        for ii = 1 : M * N
+            k = ii + jj;
+            if k > size(pulses, 2), break; end
+            set(FIG.pl(ii, 1), 'YData', real(pulses(1:ng, k, 2)));
+            set(FIG.pl(ii, 2), 'YData', imag(pulses(1:ng, k, 2)));
+            set(FIG.pl(ii, 3), 'YData', abs(pulses(1:ng, k, 2)));
+            set(FIG.ht(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
+                dat.pulses(k).n, floor(rem(double(dat.pulses(k).n), M) / 2) - 5, ...
+                dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
+        end
+        drawnow
+        if (generatePNG)
+            bfig png
+        end
+        jj = jj + M * N;
     end
-    drawnow
-    % bfig png
-    jj = jj + M * N;
 end

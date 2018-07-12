@@ -242,7 +242,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 				/ (powf(space->aR[0][1][k] * space->aR[1][1][k], 27.0f / 86.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 39.0 / 172.0f) * powf(space->aR[0][3][k] * space->aR[1][3][k], 7.0f / 86.0f));
 				break;
 		}
-        space->PhiDP[k] = -atan2(Cq[k], Ci[k]) + space->pcal[k];
+        space->PhiDP[k] = atan2(Cq[k], Ci[k]) + space->pcal[k];
         space->PhiDP[k] = RKSingleWrapTo2PI(space->PhiDP[k]);
 		if (k > 1) {
 			space->KDP[k] = space->PhiDP[k] - space->PhiDP[k - 1];

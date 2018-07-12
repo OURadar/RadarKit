@@ -1675,11 +1675,15 @@ void *RKTestTransceiverRunLoop(void *input) {
     RKWaveform *waveform = transceiver->waveformCache[0];
     unsigned int waveformCacheIndex = 0;
 
+#if defined(DEBUG_IIR)
+
     int16_t seq[] = {-3, -2 , -1, 0, 1, 2, 3, 2, 1, 0, -2};
     int len = sizeof(seq) / sizeof(int16_t);
     int ir = 0;
     int iq = 3;
-    
+
+#endif
+
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
 
     // Use a counter that mimics microsecond increments
@@ -1768,6 +1772,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                     X++;
                 }
 
+#if defined(DEBUG_IIR)
+
                 X = RKGetInt16CDataFromPulse(pulse, p);
 
                 // Override certain range gates
@@ -1803,9 +1809,17 @@ void *RKTestTransceiverRunLoop(void *input) {
                 X += 2;
                 X->i = seq[ir];
                 X->q = seq[iq];
+
+#endif
+
             }
+
+#if defined(DEBUG_IIR)
+
             ir = RKNextModuloS(ir, len);
             iq = RKNextModuloS(iq, len);
+
+#endif
 
             RKSetPulseHasData(radar, pulse);
 
