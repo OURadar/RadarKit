@@ -1,4 +1,6 @@
 filename = blib('choosefile', '~/Downloads', '*.rkr');
+if ~exist('showAnimation', 'var'), showAnimation = true; end
+if ~exist('generatePNG', 'var'), generatePNG = true; end
 
 dat = iqread(filename);
 
@@ -20,7 +22,7 @@ pulses = single(pulses);
 
 %%
 N = 6;
-ng = min(size(pulses, 1), 75);
+ng = min(size(pulses, 1), 30);
 ns = min(size(pulses, 2), 500);
 
 t_fast = (1:ng) / 50;
@@ -37,7 +39,7 @@ xlim([0 100])
 %%
 figure(2)
 clf
-M = 18;
+M = 10;
 FIG.ax = zeros(M * N, 1);
 FIG.pl = zeros(M * N, 3);
 FIG.ht = zeros(M * N, 1);
@@ -54,29 +56,31 @@ for ii = 1 : M * N
     if iy == 0, xlabel('Time (us)'); else, set(gca, 'XTickLabel', []); end
     if ix == 0, ylabel('Amplitude'); else, set(gca, 'YTickLabel', []); end
     FIG.ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
-    ylim(11500 * [-1 1])
+    ylim(35000 * [-1 1])
 end
 blib('bsizewin', gcf, [2500 1080])
 set(gcf, 'Menubar', 'None');
 set(FIG.ht, 'HorizontalAlignment', 'Right');
-lp = linkprop(FIG.ax, {'XLim'});
+lp = linkprop(FIG.ax, {'XLim', 'YLim'});
 
-return
-
-%%
-jj = 1;
-while (jj < size(pulses, 2))
-    for ii = 1 : M * N
-        k = ii + jj;
-        if k > size(pulses, 2), break; end
-        set(FIG.pl(ii, 1), 'YData', real(pulses(1:ng, k, 2)));
-        set(FIG.pl(ii, 2), 'YData', imag(pulses(1:ng, k, 2)));
-        set(FIG.pl(ii, 3), 'YData', abs(pulses(1:ng, k, 2)));
-        set(FIG.ht(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
-            dat.pulses(k).n, floor(rem(double(dat.pulses(k).n), M) / 2) - 5, ...
-            dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
+if (showAnimation) 
+    %%
+    jj = 1; 
+    while (jj < size(pulses, 2))
+        for ii = 1 : M * N
+            k = ii + jj;
+            if k > size(pulses, 2), break; end
+            set(FIG.pl(ii, 1), 'YData', real(pulses(1:ng, k, 2)));
+            set(FIG.pl(ii, 2), 'YData', imag(pulses(1:ng, k, 2)));
+            set(FIG.pl(ii, 3), 'YData', abs(pulses(1:ng, k, 2)));
+            set(FIG.ht(ii), 'String', sprintf('%d (%d) / %d (%d)', ...
+                dat.pulses(k).n, floor(rem(double(dat.pulses(k).n), M) / 2) - 5, ...
+                dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
+        end
+        drawnow
+        if (generatePNG)
+            bfig png
+        end
+        jj = jj + M * N;
     end
-    drawnow
-    % bfig png
-    jj = jj + M * N;
 end

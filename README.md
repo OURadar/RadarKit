@@ -55,13 +55,19 @@ Follow these steps to get the project
     sudo make install
     ```
     
-4. (Some Linux) Add the following line to /etc/sysctl.conf
+4. Try the test program to simulate a Level-1 system.
+
+    ```shell
+    rktest -vs1
+    ```
+    
+5. (Some Linux) Add the following line to /etc/sysctl.conf
 
     ```
     net.ipv4.ping_group_range = 0 0
     ```
     
-5. (Optional) Compile [FFTW] from source
+6. (Optional) Compile [FFTW] from source
 
     ```
     ./configure --enable-single --enable-sse --enable-sse2 --enable-avx --enable-avx2 --enable-shared
@@ -94,6 +100,19 @@ Follow these steps to get the project
 2. Set up a _transceiver_ initialization and run-loop routines. The initialization routine returns a user-defined pointer, and a run-loop routine receives I/Q data. The initialization routine must return immediately, and the run-loop routine should be created as a separate thread.
 
     ```c
+    typedef struct user_transceiver_struct {
+        // Your variables
+        int x;
+        int y;
+        int z;
+        
+        // Recommend keeping a reference to the supplied radar
+        RKRadar *radar;
+
+        // For this example, we will keep the thread reference here
+        pthread tid;
+    } UserTransceiverStruct;
+    
     RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
         UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
@@ -108,6 +127,9 @@ Follow these steps to get the project
     }
     
     int transceiverExec(RKTransceiver yourTransceiver, const char *command, char *feedback) {
+        // Type cast the first input as your transceiver
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)yourTransceiver;
+        
         // Execute commands stored in const char *command
         
         // Provide text feedback to char *feedback
@@ -149,6 +171,19 @@ Follow these steps to get the project
 3. Set up a set of _pedestal_ initialization and run-loop routines. The initialization routine returns a user-defined pointer, and a run-loop routine receives position data. The initialization routine must return immediately, and the run-loop routine should be created as a separate thread.
  
     ```c
+    typedef struct user_pedestal_struct {
+        // Your variables
+        int x;
+        int y;
+        int z;
+        
+        // Recommend keeping a reference to the supplied radar
+        RKRadar *radar;
+
+        // For this example, we will keep the thread reference here
+        pthread tid;
+    } UserPedestalStruct;
+
     RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
         // Allocate your own resources, define your structure somewhere else
         UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
@@ -163,6 +198,9 @@ Follow these steps to get the project
     }
 
     int pedestalExec(RKPedestal yourPedestal, const char *command, char *feedback) {
+        // Type cast the first input as your pedestal
+        UserPedestalStruct *resource = (UserPedestalStruct *)yourPedestal;
+
         // Execute commands stored in const char *command
         
         // Provide text feedback to char *feedback
@@ -195,7 +233,7 @@ Follow these steps to get the project
 5. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
     ```shell
-    gcc -o program program.c -lRadarKit -lfftw3f -lnetcdf
+    gcc -o program program.c -lradarkit -lfftw3f -lnetcdf
     ```
 
 

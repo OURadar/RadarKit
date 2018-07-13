@@ -13,6 +13,7 @@
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive
 //         - FIR/IIR ground clutter filters
+//         - Four Elliptical filters are included
 //
 //         - To do:
 //         - Task, event, sequence of tasks

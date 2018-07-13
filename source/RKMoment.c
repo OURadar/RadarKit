@@ -462,7 +462,7 @@ static void *momentCore(void *in) {
                         space->rcor[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - config->filterAnchors[k].sensitivityGain - f;
                     }
                     space->dcal[i] = config->systemDCal + config->DCal[k];
-                    space->pcal[i] = config->systemPCal + config->PCal[k];
+                    space->pcal[i] = RKSingleWrapTo2PI(config->systemPCal + config->PCal[k]);
                 }
                 if (engine->verbose > 1) {
                     for (p = 0; p < 2; p++) {

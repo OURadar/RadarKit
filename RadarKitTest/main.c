@@ -125,6 +125,14 @@ static void showHelp() {
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
            "\n"
+           "  -V (--engine-verbose) " UNDERLINE("value") "\n"
+           "         Increases verbosity level of specific engines.\n"
+           "          a - Aim pedestal\n"
+           "          m - Moment engine\n"
+           "          p - Pulse compression engine\n"
+           "          r - Pulse ring filter engine\n"
+           "          s - Sweep engine\n"
+           "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
            "%s"
            "\n"
@@ -136,6 +144,10 @@ static void showHelp() {
            "\n"
            "    -vs2\n"
            "         Runs the program in verbose mode, and to simulate a level-2 system.\n"
+           "\n"
+           "    -s1 -Vss\n"
+           "         Runs the program in verbose level = 2 for sweep engine, and to simulate\n"
+           "         a level-1 system.\n"
            "\n"
            "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
@@ -332,6 +344,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     int k, s;
     char *c;
     char str[1024];
+    bool anyEngineVerbose;
 
     // Command line options
     struct option long_options[] = {
@@ -570,6 +583,15 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 }
                 exit(EXIT_FAILURE);
                 break;
+        }
+    }
+    if (user->verbose == 0) {
+        anyEngineVerbose = false;
+        for (k = 'a'; k < 'z'; k++) {
+            anyEngineVerbose |= user->engineVerbose[k];
+        }
+        if (anyEngineVerbose) {
+            user->verbose++;
         }
     }
     if (user->simulate == true) {
@@ -823,6 +845,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w s01", NULL);
         //RKExecuteCommand(myRadar, "t w barker03", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
+        RKExecuteCommand(myRadar, "t w h2005", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 

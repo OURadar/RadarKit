@@ -11,6 +11,8 @@
 
 #include <RadarKit/RKRadar.h>
 
+#define RKTestWaveformCacheCount 2
+
 typedef int RKTestFlag;
 enum RKTestFlag {
     RKTestFlagNone         = 0,
@@ -45,7 +47,7 @@ typedef struct rk_test_transceiver {
     double         fs;
     double         prt;
     RKByte         sprt;
-    RKWaveform     *waveformCache[2];
+    RKWaveform     *waveformCache[RKTestWaveformCacheCount];
     unsigned int   waveformCacheIndex;
 	RKName         defaultWaveform;
 	RKName         defaultPedestalMode;

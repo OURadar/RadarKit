@@ -183,6 +183,18 @@ static void *sweepManager(void *in) {
             sprintf(filelist + strlen(filelist), " %s", filename);
         }
 
+        // Convert data in radians to degrees if necessary
+         if (engine->convertToDegrees && !strcasecmp(product->desc.unit, "radians")) {
+             const RKFloat radiansToDegrees = 180.0f / M_PI;
+             RKLog("%s Converting '%s' to degrees ...", engine->name, product->desc.name);
+             RKFloat *x =  product->data;
+             for (j = 0; j < product->header.gateCount * product->header.rayCount; j++) {
+                 *x = *x * radiansToDegrees;
+                 x++;
+             }
+             sprintf(product->desc.unit, "Degrees");
+         }
+
         // Call a product writer only if the engine is set to record and the is a valid product recorder
         if (engine->productRecorder && !engine->doNotWrite) {
             if (engine->verbose > 1) {
@@ -349,7 +361,7 @@ static void *rayGatherer(void *in) {
     while (engine->state & RKEngineStateWantActive) {
         // The ray
         ray = RKGetRay(engine->rayBuffer, j);
-        
+
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
