@@ -2167,7 +2167,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 return RKResultFailedToSetWaveform;
             }
             // Next cache index
-            j = RKNextModuloS(transceiver->waveformCacheIndex, 2);
+            j = RKNextModuloS(transceiver->waveformCacheIndex, RKTestWaveformCacheCount);
             if (transceiver->waveformCache[j]) {
                 RKLog("%s Freeing cache %d ...\n", transceiver->name, j);
                 RKWaveformFree(transceiver->waveformCache[j]);
