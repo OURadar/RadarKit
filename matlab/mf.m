@@ -1,3 +1,6 @@
+% Run the script quiet.m to suppress all the debuggning and plot routines
+eval('quiet.m')
+
 if ~exist('dat', 'var')
     filename = blib('choosefile', '~/Downloads', '*.rkr');
 
@@ -9,15 +12,22 @@ if ~exist('dat', 'var')
     disp(dat.pulses(1))
 
     % Original data in I/Q, gate, channel, pulse count
-    pulses = cat(4, dat.pulses(:).iq);
+    raw_pulses = cat(4, dat.pulses(:).iq);
 
     % Marry I and Q into a complex number
-    pulses = complex(pulses(1, :, :, :), pulses(2, :, :, :));
+    raw_pulses = complex(raw_pulses(1, :, :, :), raw_pulses(2, :, :, :));
 
     % Reorder the indices to gate, pulse count, channel
-    pulses = permute(pulses, [2 4 3 1]);
+    raw_pulses = permute(raw_pulses, [2 4 3 1]);
 
-    pulses = single(pulses);
+    raw_pulses = single(raw_pulses);
+
+    % Basic dimentions
+    [gateCount, pulseCount, channelCount] = size(raw_pulses);
+end
+
+if ~exist('debug', 'var')
+    debug = true;
 end
 
 fs = 20.0e6;
@@ -182,19 +192,8 @@ w = exp(1i * (omega_n - psi)) / sqrt(pulseWidthSampleCount);
 gain = 10 * log10(sum(abs(w) .^ 2, 2)) .';
 fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [n; 1.0e-6 * f; omega; gain]);
 
-% Make ww same convention as the pulses
+% Make ww same convention as the raw_pulses
 ww = kron(w, [1; 1]).';
-
-%%
-clf
-M = 2 * hopCount;
-N = 2;
-FIG.ax = zeros(M * N, 1);
-FIG.pl = zeros(M * N, 3);
-FIG.ht = zeros(M * N, 1);
-t = 0:(pulseWidthSampleCount - 1);
-
-cplot = @(x, y) plot(x, real(y), x, imag(y));
 
 %% Find the sequence anchor
 ww_t = ww(1:pulseWidthSampleCount - 1, :);
@@ -202,7 +201,7 @@ ccf = zeros(1, 2 * hopCount);
 ww_mag = sqrt(sum(abs(ww_t(:)) .^ 2));
 for k = 1:2 * hopCount
     l = k + 2 * hopCount - 1;
-    tx = pulses(1:pulseWidthSampleCount - 1, k:l, 1);
+    tx = raw_pulses(1:pulseWidthSampleCount - 1, k:l, 1);
     tx_mag = sqrt(sum(abs(tx(:)) .^ 2));
     ccf(k) = sum((tx(:)) .* conj(ww_t(:))) / ww_mag / tx_mag;
 end
@@ -210,28 +209,85 @@ end
 [~, lag] = max(abs(ccf));
 fprintf('Best anchor @ lag = %d\n', lag);
 
-a = 1.0 / 32.0e3 / sqrt(pulseWidthSampleCount);
 
-for ii = 1 : M * N
-    k = ii;
-    ix = rem(ii - 1, M);
-    iy = N - 1 - floor((ii - 1) / M);
-    FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);
-    
-    if iy == 0
-        cplot(t, ww(1 : pulseWidthSampleCount, 1 + ix))
-    else
-        cplot(t, a * pulses(1 : pulseWidthSampleCount, lag + ix, 1))
+showPreview = false;
+
+if (showPreview)
+    figure(1)
+    clf
+    M = 2 * hopCount;
+    N = 2;
+    FIG.ax = zeros(M * N, 1);
+    FIG.pl = zeros(M * N, 3);
+    FIG.ht = zeros(M * N, 1);
+    t = 0:(pulseWidthSampleCount - 1);
+
+    cplot = @(x, y) plot(x, real(y), x, imag(y));
+
+
+    a = 1.0 / 32.0e3 / sqrt(pulseWidthSampleCount);
+
+    for ii = 1 : M * N
+        k = ii;
+        ix = rem(ii - 1, M);
+        iy = N - 1 - floor((ii - 1) / M);
+        FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);
+        
+        if iy == 0
+            cplot(t, ww(1 : pulseWidthSampleCount, 1 + ix))
+        else
+            cplot(t, a * raw_pulses(1 : pulseWidthSampleCount, lag + ix, 1))
+        end
+        grid on
+        
+        if (ix > 0)
+            set(FIG.ax(ii), 'YTickLabel', [])
+        end
+        if (iy > 0)
+            set(FIG.ax(ii), 'XTickLabel', [])
+        end
     end
-    grid on
-    
-    if (ix > 0)
-        set(FIG.ax(ii), 'YTickLabel', [])
-    end
-    if (iy > 0)
-        set(FIG.ax(ii), 'XTickLabel', [])
+    FIG.lp = linkprop(FIG.ax, {'XLim', 'YLim'});
+    set(FIG.ax, 'XLim', [0 1.1 * pulseWidthSampleCount])
+end
+
+nfft = pow2(ceil(log2(size(raw_pulses, 1))));
+wf = fft(ww, nfft, 1);
+xf = fft(raw_pulses, nfft, 1);
+
+% Repeat wf for V channel
+wf = repmat(wf, [1, 1, channelCount]);
+
+
+if (debug)
+    pulseCount = min(pulseCount, 20);
+    figure(2)
+    t = 0:(pulseWidthSampleCount - 1);
+end
+
+% Pulses through matched filter should have the same dimensions as raw_pulses
+pulses = zeros(size(raw_pulses));
+
+% Match filtering
+for k = 1:pulseCount
+    % The correct index of the matched filter to use
+    j = rem(k + 2 * hopCount - lag, 2 * hopCount) + 1;
+    % Match filter using freq. domain
+    yf = conj(wf(:, j, :)) .* xf(:, k, :);
+    yn = ifft(yf, nfft, 1);
+    pulses(:, k, :) = yn(1:gateCount, :, :);
+    % Show the I/O
+    if (debug)
+        fprintf('k = %d   j = %d\n', k, j);
+        subplot(3, 1, 1)
+        cplot(t, ww(1:pulseWidthSampleCount, j));
+        title('Filter')
+        subplot(3, 1, 2)
+        cplot(t, raw_pulses(1:pulseWidthSampleCount, k, 1));
+        title('Data')
+        subplot(3, 1, 3)
+        cplot(t, pulses(1:pulseWidthSampleCount, k, 1));
+        title('Output')
+        pause
     end
 end
-FIG.lp = linkprop(FIG.ax, {'XLim', 'YLim'});
-set(FIG.ax, 'XLim', [0 1.1 * pulseWidthSampleCount])
-
