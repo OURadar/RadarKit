@@ -20,9 +20,8 @@ if ~exist('dat', 'var')
     pulses = single(pulses);
 end
 
-depth = 25;
 fs = 20.0e6;
-waveform = 'h2005';
+waveform = 'h2007.5';
 
 % Waveform from name
 if waveform(1) == 'h'
@@ -34,6 +33,7 @@ if waveform(1) == 'h'
         pulsewidth = 0.5e-6;
     end
 end
+pulseWidthSampleCount = pulsewidth * fs;
 
 % These are results from RadarKit:
 % ==============
@@ -165,7 +165,7 @@ strideCollection = { ...
     [0, 3, 6, 9, 12, 2, 5, 8, 11, 1, 4, 7, 10], ... hopeCount = 13
     };
     
-stride = strideCollection{hopCount};
+n = strideCollection{hopCount};
 
 if hopCount <= 2
     fprintf('Unable to continue.\n')
@@ -174,28 +174,29 @@ else
     delta = bandwidth / (hopCount - 1);
 end
 
-%         f = delta * (double)n - 0.5 * bandwidth + fc;
-%         omega = 2.0 * M_PI * f / fs;
-%         psi = omega * (double)(waveform->depth / 2);
-
-f = delta * stride - 0.5 * bandwidth;
+f = delta * n - 0.5 * bandwidth;
 omega = 2.0 * pi * f / fs;
-omega_n = 0.5 * omega(:) * (0:depth - 1);
-psi = 0.5 * omega(:) * ones(1, depth);
-% w = exp(1i * (omega_n - psi_n)) / sqrt(depth);
-w = cos(omega_n - psi) + 1i * sin(omega_n - psi);
+omega_n = omega(:) * (0:pulseWidthSampleCount - 1);
+psi = 0.5 * omega(:) * ones(1, pulseWidthSampleCount);
+w = exp(1i * (omega_n - psi)) / sqrt(pulseWidthSampleCount);
 gain = 10 * log10(sum(abs(w) .^ 2, 2)) .';
-fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [stride; 1.0e-6 * f; omega; gain]);
+fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [n; 1.0e-6 * f; omega; gain]);
 
 ww = kron(w, [1; 1]);
 
 %%
 clf
-M = 10;
+M = 2 * hopCount;
 N = 2;
 FIG.ax = zeros(M * N, 1);
 FIG.pl = zeros(M * N, 3);
 FIG.ht = zeros(M * N, 1);
+t = 0:(pulseWidthSampleCount - 1);
+
+cplot = @(x, y) plot(x, real(y), x, imag(y));
+
+lag = 4;
+a = 1.0 / 32.0e3 / sqrt(pulseWidthSampleCount);
 
 for ii = 1 : M * N
     k = ii;
@@ -204,11 +205,11 @@ for ii = 1 : M * N
     FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);
     
     if iy == 0
-        cplot(ww(ix + 1, :))
+        cplot(t, ww(ix + 1, :))
     else
-        cplot(1.0e-4 * pulses(1 : depth, ix + 2, 1))
+        cplot(t, a * pulses(1 : pulseWidthSampleCount, ix + 1 + lag, 2))
     end
-    set(FIG.ax(ii), 'XLim', [0 25])
+    grid on
     
     if (ix > 0)
         set(FIG.ax(ii), 'YTickLabel', [])
@@ -217,14 +218,15 @@ for ii = 1 : M * N
         set(FIG.ax(ii), 'XTickLabel', [])
     end
 end
-
+FIG.lp = linkprop(FIG.ax, {'XLim', 'YLim'});
+set(FIG.ax, 'XLim', [0 1.1 * pulseWidthSampleCount])
 
 %% Find the sequence anchor
 ccf = zeros(1, 2 * hopCount);
 ww_mag = sqrt(sum(abs(ww(:)) .^ 2));
-for k = 1:14
+for k = 1:2 * hopCount
     l = k + 2 * hopCount - 1;
-    tx = pulses(1:depth, k:l, 1);
+    tx = pulses(1:pulseWidthSampleCount, k:l, 1);
     tx_mag = sqrt(sum(abs(tx(:)) .^ 2));
-    ccf(k) = sum(conj(tx(:)) .* ww(:)) / ww_mag / tx_mag;
+    ccf(k) = sum((tx(:)) .* ww(:)) / ww_mag / tx_mag;
 end
