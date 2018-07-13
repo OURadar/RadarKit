@@ -30,6 +30,11 @@ if ~exist('debug', 'var')
     debug = true;
 end
 
+if ~exist('showPreview', 'var')
+    showPreview = true;
+end
+
+% Seems like the waveform name was not recorded, need to override this manually
 fs = 20.0e6;
 waveform = 'h2007.5';
 
@@ -162,19 +167,18 @@ pulseWidthSampleCount = pulsewidth * fs;
 strideCollection = { ...
     [], ... % hopCount = 1
     [], ... % hopCount = 2
-    [0, 1, 2], ... hopeCount = 3
-    [0, 1, 2, 3], ... hopeCount = 4
-    [0, 1, 2, 3, 4], ... hopeCount = 5
-    [0, 1, 2, 3, 4, 5], ... hopeCount = 6
-    [0, 2, 4, 6, 1, 3, 5], ... hopeCount = 7
-    [0, 2, 4, 6, 0, 2, 4, 6], ... hopeCount = 8
-    [0, 2, 4, 6, 8, 1, 3, 5, 7], ... hopeCount = 9
-    [0, 2, 4, 6, 8, 0, 2, 4, 6, 8], ... hopeCount = 10
-    [0, 3, 6, 9, 1, 4, 7, 10, 2, 5, 8], ... hopeCount = 11
-    [0, 3, 6, 9, 0, 3, 6, 9, 0, 3, 6, 9], ... hopeCount = 12
-    [0, 3, 6, 9, 12, 2, 5, 8, 11, 1, 4, 7, 10], ... hopeCount = 13
+    [0, 1, 2], ... % hopeCount = 3
+    [0, 1, 2, 3], ... % hopeCount = 4
+    [0, 1, 2, 3, 4], ... % hopeCount = 5
+    [0, 1, 2, 3, 4, 5], ... % hopeCount = 6
+    [0, 2, 4, 6, 1, 3, 5], ... % hopeCount = 7
+    [0, 2, 4, 6, 0, 2, 4, 6], ... % hopeCount = 8
+    [0, 2, 4, 6, 8, 1, 3, 5, 7], ... % hopeCount = 9
+    [0, 2, 4, 6, 8, 0, 2, 4, 6, 8], ... % hopeCount = 10
+    [0, 3, 6, 9, 1, 4, 7, 10, 2, 5, 8], ... % hopeCount = 11
+    [0, 3, 6, 9, 0, 3, 6, 9, 0, 3, 6, 9], ... % hopeCount = 12
+    [0, 3, 6, 9, 12, 2, 5, 8, 11, 1, 4, 7, 10], ... % hopeCount = 13
     };
-    
 n = strideCollection{hopCount};
 
 if hopCount <= 2
@@ -184,6 +188,7 @@ else
     delta = bandwidth / (hopCount - 1);
 end
 
+% Generate the match filters
 f = delta * n - 0.5 * bandwidth;
 omega = 2.0 * pi * f / fs;
 omega_n = omega(:) * (0:pulseWidthSampleCount - 1);
@@ -205,13 +210,10 @@ for k = 1:2 * hopCount
     tx_mag = sqrt(sum(abs(tx(:)) .^ 2));
     ccf(k) = sum((tx(:)) .* conj(ww_t(:))) / ww_mag / tx_mag;
 end
-
 [~, lag] = max(abs(ccf));
 fprintf('Best anchor @ lag = %d\n', lag);
 
-
-showPreview = false;
-
+% Show some I/Q data
 if (showPreview)
     figure(1)
     clf
@@ -223,7 +225,6 @@ if (showPreview)
     t = 0:(pulseWidthSampleCount - 1);
 
     cplot = @(x, y) plot(x, real(y), x, imag(y));
-
 
     a = 1.0 / 32.0e3 / sqrt(pulseWidthSampleCount);
 
@@ -251,6 +252,7 @@ if (showPreview)
     set(FIG.ax, 'XLim', [0 1.1 * pulseWidthSampleCount])
 end
 
+% Fourier representation of the data and matched filter
 nfft = pow2(ceil(log2(size(raw_pulses, 1))));
 wf = fft(ww, nfft, 1);
 xf = fft(raw_pulses, nfft, 1);
@@ -258,7 +260,7 @@ xf = fft(raw_pulses, nfft, 1);
 % Repeat wf for V channel
 wf = repmat(wf, [1, 1, channelCount]);
 
-
+% Debugging mode
 if (debug)
     pulseCount = min(pulseCount, 20);
     figure(2)
@@ -276,7 +278,7 @@ for k = 1:pulseCount
     yf = conj(wf(:, j, :)) .* xf(:, k, :);
     yn = ifft(yf, nfft, 1);
     pulses(:, k, :) = yn(1:gateCount, :, :);
-    % Show the I/O
+    % Show the I/O during debugging mode
     if (debug)
         fprintf('k = %d   j = %d\n', k, j);
         subplot(3, 1, 1)
