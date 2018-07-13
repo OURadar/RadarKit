@@ -1,27 +1,28 @@
-% filename = blib('choosefile', '~/Downloads', '*.rkr');
-% 
-% dat = iqread(filename);
-% 
-% fprintf('Rearranging data ...\n');
-% 
-% %%
-% disp(dat.pulses(1))
-% 
-% % Original data in I/Q, gate, channel, pulse count
-% pulses = cat(4, dat.pulses(:).iq);
-% 
-% % Marry I and Q into a complex number
-% pulses = complex(pulses(1, :, :, :), pulses(2, :, :, :));
-% 
-% % Reorder the indices to gate, pulse count, channel
-% pulses = permute(pulses, [2 4 3 1]);
-% 
-% pulses = single(pulses);
-% 
+if ~exist('dat', 'var')
+    filename = blib('choosefile', '~/Downloads', '*.rkr');
 
-depth = 50;
+    dat = iqread(filename);
+
+    fprintf('Rearranging data ...\n');
+
+    % 
+    disp(dat.pulses(1))
+
+    % Original data in I/Q, gate, channel, pulse count
+    pulses = cat(4, dat.pulses(:).iq);
+
+    % Marry I and Q into a complex number
+    pulses = complex(pulses(1, :, :, :), pulses(2, :, :, :));
+
+    % Reorder the indices to gate, pulse count, channel
+    pulses = permute(pulses, [2 4 3 1]);
+
+    pulses = single(pulses);
+end
+
+depth = 25;
 fs = 20.0e6;
-waveform = 'h2007';
+waveform = 'h2005';
 
 % Waveform from name
 if waveform(1) == 'h'
@@ -161,7 +162,7 @@ strideCollection = { ...
     [0, 2, 4, 6, 8, 0, 2, 4, 6, 8], ... hopeCount = 10
     [0, 3, 6, 9, 1, 4, 7, 10, 2, 5, 8], ... hopeCount = 11
     [0, 3, 6, 9, 0, 3, 6, 9, 0, 3, 6, 9], ... hopeCount = 12
-    [0, 3, 6, 9, 12, 2, 5, 8, 11, 1, 4, 7, 10], ... hopeCount = 13   
+    [0, 3, 6, 9, 12, 2, 5, 8, 11, 1, 4, 7, 10], ... hopeCount = 13
     };
     
 stride = strideCollection{hopCount};
@@ -173,19 +174,57 @@ else
     delta = bandwidth / (hopCount - 1);
 end
 
+%         f = delta * (double)n - 0.5 * bandwidth + fc;
+%         omega = 2.0 * M_PI * f / fs;
+%         psi = omega * (double)(waveform->depth / 2);
+
 f = delta * stride - 0.5 * bandwidth;
 omega = 2.0 * pi * f / fs;
-on = omega(:) * (0:depth - 1);
-ww = exp(1j * on) / sqrt(depth);
-gain = 10 * log10(sum(abs(ww) .^ 2, 2)).';
+omega_n = 0.5 * omega(:) * (0:depth - 1);
+psi = 0.5 * omega(:) * ones(1, depth);
+% w = exp(1i * (omega_n - psi_n)) / sqrt(depth);
+w = cos(omega_n - psi) + 1i * sin(omega_n - psi);
+gain = 10 * log10(sum(abs(w) .^ 2, 2)) .';
 fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [stride; 1.0e-6 * f; omega; gain]);
 
-ww2 = kron(ww, [1; 1]);
+ww = kron(w, [1; 1]);
 
-% Find the sequence anchor
+%%
+clf
+M = 10;
+N = 2;
+FIG.ax = zeros(M * N, 1);
+FIG.pl = zeros(M * N, 3);
+FIG.ht = zeros(M * N, 1);
+
+for ii = 1 : M * N
+    k = ii;
+    ix = rem(ii - 1, M);
+    iy = N - 1 - floor((ii - 1) / M);
+    FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);
+    
+    if iy == 0
+        cplot(ww(ix + 1, :))
+    else
+        cplot(1.0e-4 * pulses(1 : depth, ix + 2, 1))
+    end
+    set(FIG.ax(ii), 'XLim', [0 25])
+    
+    if (ix > 0)
+        set(FIG.ax(ii), 'YTickLabel', [])
+    end
+    if (iy > 0)
+        set(FIG.ax(ii), 'XTickLabel', [])
+    end
+end
+
+
+%% Find the sequence anchor
 ccf = zeros(1, 2 * hopCount);
-% mag = 
+ww_mag = sqrt(sum(abs(ww(:)) .^ 2));
 for k = 1:14
-    tx = pulses(1:depth, k:k+2*hopCount);
-    ccf(k) = sum(conj(tx(:)) .* ww2(:));    
+    l = k + 2 * hopCount - 1;
+    tx = pulses(1:depth, k:l, 1);
+    tx_mag = sqrt(sum(abs(tx(:)) .^ 2));
+    ccf(k) = sum(conj(tx(:)) .* ww(:)) / ww_mag / tx_mag;
 end
