@@ -177,12 +177,13 @@ end
 f = delta * n - 0.5 * bandwidth;
 omega = 2.0 * pi * f / fs;
 omega_n = omega(:) * (0:pulseWidthSampleCount - 1);
-psi = 0.5 * omega(:) * ones(1, pulseWidthSampleCount);
+psi = repmat(0.5 * omega(:) * pulseWidthSampleCount, [1, pulseWidthSampleCount]);
 w = exp(1i * (omega_n - psi)) / sqrt(pulseWidthSampleCount);
 gain = 10 * log10(sum(abs(w) .^ 2, 2)) .';
 fprintf('%d   f = %7.3f MHz --> %7.3f rad/sample   noise gain = %.2f dB\n', [n; 1.0e-6 * f; omega; gain]);
 
-ww = kron(w, [1; 1]);
+% Make ww same convention as the pulses
+ww = kron(w, [1; 1]).';
 
 %%
 clf
@@ -195,7 +196,20 @@ t = 0:(pulseWidthSampleCount - 1);
 
 cplot = @(x, y) plot(x, real(y), x, imag(y));
 
-lag = 4;
+%% Find the sequence anchor
+ww_t = ww(1:pulseWidthSampleCount - 1, :);
+ccf = zeros(1, 2 * hopCount);
+ww_mag = sqrt(sum(abs(ww_t(:)) .^ 2));
+for k = 1:2 * hopCount
+    l = k + 2 * hopCount - 1;
+    tx = pulses(1:pulseWidthSampleCount - 1, k:l, 1);
+    tx_mag = sqrt(sum(abs(tx(:)) .^ 2));
+    ccf(k) = sum((tx(:)) .* conj(ww_t(:))) / ww_mag / tx_mag;
+end
+
+[~, lag] = max(abs(ccf));
+fprintf('Best anchor @ lag = %d\n', lag);
+
 a = 1.0 / 32.0e3 / sqrt(pulseWidthSampleCount);
 
 for ii = 1 : M * N
@@ -205,9 +219,9 @@ for ii = 1 : M * N
     FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);
     
     if iy == 0
-        cplot(t, ww(ix + 1, :))
+        cplot(t, ww(1 : pulseWidthSampleCount, 1 + ix))
     else
-        cplot(t, a * pulses(1 : pulseWidthSampleCount, ix + 1 + lag, 2))
+        cplot(t, a * pulses(1 : pulseWidthSampleCount, lag + ix, 1))
     end
     grid on
     
@@ -221,12 +235,3 @@ end
 FIG.lp = linkprop(FIG.ax, {'XLim', 'YLim'});
 set(FIG.ax, 'XLim', [0 1.1 * pulseWidthSampleCount])
 
-%% Find the sequence anchor
-ccf = zeros(1, 2 * hopCount);
-ww_mag = sqrt(sum(abs(ww(:)) .^ 2));
-for k = 1:2 * hopCount
-    l = k + 2 * hopCount - 1;
-    tx = pulses(1:pulseWidthSampleCount, k:l, 1);
-    tx_mag = sqrt(sum(abs(tx(:)) .^ 2));
-    ccf(k) = sum((tx(:)) .* ww(:)) / ww_mag / tx_mag;
-end
