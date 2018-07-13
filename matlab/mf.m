@@ -1,5 +1,5 @@
 % Run the script quiet.m to suppress all the debuggning and plot routines
-eval('quiet.m')
+eval('quiet')
 
 if ~exist('dat', 'var')
     filename = blib('choosefile', '~/Downloads', '*.rkr');
