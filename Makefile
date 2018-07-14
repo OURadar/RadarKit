@@ -3,14 +3,15 @@ UNAME_M := $(shell uname -m)
 
 $(info $$UNAME_M = [${UNAME_M}])
 
-#CFLAGS =      -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC -msse -msse2 -msse3 -mavx
 CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 #CFLAGS =      -std=gnu99 -Os -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
 CFLAGS += -fms-extensions -Wno-microsoft
 
+# Some heavy debuggning flags
 #CFLAGS += -DDEBUG_IIR
+#CFLAGS += -DDEBUG_IQ
 
-LDFLAGS = -L /usr/local/lib
+LDFLAGS = -L ./ -L /usr/local/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o
@@ -30,11 +31,6 @@ RKLIB = libradarkit.a
 
 PROGS = rktest simple-emulator
 
-#CFLAGS += -DDEBUG_IQ
-#CFLAGS += -mavx2 -mavx512cd -mavx512er -mavx512f -mavx512pf
-#CFLAGS += -mavx2 -mavx512f
-#CFLAGS += -mavx -mavx2
-
 ifeq ($(UNAME), Darwin)
 # Mac OS X
 CC = clang
@@ -50,7 +46,8 @@ LDFLAGS += -L /usr/lib64
 endif
 endif
 
-LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm
+#LDFLAGS += -Wl,-Bstatic -lradarkit -lfftw3f -lnetcdf -Wl,-Bdynamic -lpthread -lz -lm
+LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
 
 ifeq ($(UNAME), Darwin)
 else
@@ -66,13 +63,15 @@ $(OBJS): %.o: source/%.c
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-#rktest: RadarKitTest/main.c /usr/local/lib/libradarkit.a
-#	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
-rktest: RadarKitTest/main.c libradarkit.a
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
+rktest: RadarKitTest/main.c /usr/local/lib/libradarkit.a
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+# rktest: RadarKitTest/main.c libradarkit.a
+# 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 simple-emulator: SimpleEmulator/main.c libradarkit.a
-	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+# simple-emulator: SimpleEmulator/main.c libradarkit.a
+# 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 clean:
 	rm -f $(PROGS)
