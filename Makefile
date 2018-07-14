@@ -46,7 +46,8 @@ LDFLAGS += -L /usr/lib64
 endif
 endif
 
-LDFLAGS += -Wl,-Bstatic -lradarkit -lfftw3f -lnetcdf -Wl,-Bdynamic -lpthread -lz -lm
+#LDFLAGS += -Wl,-Bstatic -lradarkit -lfftw3f -lnetcdf -Wl,-Bdynamic -lpthread -lz -lm
+LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
 
 ifeq ($(UNAME), Darwin)
 else
@@ -57,30 +58,30 @@ endif
 all: $(RKLIB) $(PROGS)
 
 $(OBJS): %.o: source/%.c
-$(CC) $(CFLAGS) -I headers/ -c $< -o $@
+	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
 $(RKLIB): $(OBJS)
-ar rvcs $@ $(OBJS)
+	ar rvcs $@ $(OBJS)
 
 rktest: RadarKitTest/main.c /usr/local/lib/libradarkit.a
-$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 # rktest: RadarKitTest/main.c libradarkit.a
 # 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 simple-emulator: SimpleEmulator/main.c libradarkit.a
-$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
+	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 # simple-emulator: SimpleEmulator/main.c libradarkit.a
 # 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
 
 clean:
-rm -f $(PROGS)
-rm -f $(RKLIB)
-rm $(OBJS)
+	rm -f $(PROGS)
+	rm -f $(RKLIB)
+	rm $(OBJS)
 
 install:
-sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
-sudo cp -p libradarkit.a /usr/local/lib/
+	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
+	sudo cp -p libradarkit.a /usr/local/lib/
 
 uninstall:
-rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
-rm -rf /usr/local/lib/libradarkit.a
+	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
+	rm -rf /usr/local/lib/libradarkit.a
