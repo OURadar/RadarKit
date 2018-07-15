@@ -237,7 +237,7 @@ Follow these steps to get the project
     ```
 
 
-This example is extremely simple. Many optional arguments were set to NULL (execution and free routines were omitted). The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
+This example is extremely simple. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
 
 ## Basic Usage on Signal Processing Space
@@ -451,6 +451,14 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
 uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t productIndex);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t productIndex);
 ```
+
+### Provide Your Custom Moment Recorder
+
+A radar developer can supply a custom moment recorder via
+```c
+RKSetProductRecorder(RKRadar *, int (*)(RKProduct *, char *));
+````
+A struct of `RKProduct`, which contains a complete sweep of a product, is supplied to the routine and RadarKit expects it to populate the supplied string with filenames. This filename is used in the subsequent events such as archiving multiple product files into a single tgz file and queueing the tgz file to the LDM (local data manager). Upon a successful completion, the routine should return `RKSuccess`.
 
 # Hardware Routines
 
