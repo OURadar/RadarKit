@@ -10,6 +10,7 @@ CFLAGS += -fms-extensions -Wno-microsoft
 # Some heavy debuggning flags
 #CFLAGS += -DDEBUG_IIR
 #CFLAGS += -DDEBUG_IQ
+#CFLAGS += -DDEBUG_FILE_MANAGER
 
 LDFLAGS = -L ./ -L /usr/local/lib
 

@@ -58,7 +58,6 @@
 #define RKFileManagerMomentDataRatio       1000
 #define RKFileManagerHealthDataRatio       10
 #define RKFileManagerLogDataRatio          1
-#define RKFileManagerTotalRatio            (RKFileManagerRawDataRatio + RKFileManagerMomentDataRatio + RKFileManagerHealthDataRatio + RKFileManagerLogDataRatio)
 #define RKFileManagerDefaultLogAgeInDays   30
 
 typedef struct rk_file_remover RKFileRemover;

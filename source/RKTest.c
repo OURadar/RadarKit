@@ -441,15 +441,67 @@ void RKTestParseJSONString(void) {
 
 void RKTestFileManager(void) {
     SHOW_FUNCTION_NAME
-    RKFileManager *o = RKFileManagerInit();
-    if (o == NULL) {
-        fprintf(stderr, "Unable to allocate a File Manager.\n");
-        return;
+    int e, j, k, s;
+    RKName filename;
+    struct timeval tm;
+    gettimeofday(&tm, NULL);
+    time_t startTime = tm.tv_sec;
+    float es[] = {2.0f, 4.0f, 6.0f, 8.0f};
+    const int ne = sizeof(es) / sizeof(float);
+    RKName ss[] = {"Z", "V", "D", "R"};
+    const int ns = sizeof(ss) / sizeof(RKName);
+    FILE *fid;
+    size_t filesize = 1024 * 1024;
+    char *payload = (char *)malloc(filesize);
+    if (payload == NULL) {
+        fprintf(stderr, "Unable to allocate payload.\n");
+        exit(EXIT_FAILURE);
     }
-    RKFileManagerSetPathToMonitor(o, "data");
-    RKFileManagerSetVerbose(o, 1);
-    RKFileManagerStart(o);
-    RKFileManagerFree(o);
+    
+    const char dataPath[] = "data";
+    RKFileManager *fileManager = RKFileManagerInit();
+    RKFileManagerSetPathToMonitor(fileManager, dataPath);
+    RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
+    RKFileManagerSetVerbose(fileManager, 3);
+    
+    RKLog("Warning. All data will be erased!\n");
+    printf("Press Enter to continue ... or Ctrl-C to terminate.\n");
+    
+    system("rm -rf data/moment");
+    
+    getchar();
+    
+    RKFileManagerStart(fileManager);
+    
+    e = 0;
+    for (j = 0; j < 50; j++) {
+        startTime += 3000;
+        k = sprintf(filename, "%s/%s/", dataPath, RKDataFolderMoment);
+        k += strftime(filename + k, 9, "%Y%m%d", gmtime(&startTime));
+        k += sprintf(filename + k, "/RK-");
+        k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+        k += sprintf(filename + k, "-E%.1f", es[e]);
+        
+        for (s = 0; s < ns; s++) {
+            sprintf(filename + k, "-%s.nc", ss[s]);
+            
+            RKPreparePath(filename);
+            
+            fid = fopen(filename, "w");
+            if (fid == NULL) {
+                fprintf(stderr, "Unable to create file.\n");
+                exit(EXIT_FAILURE);
+            }
+            fwrite(payload, filesize, 1, fid);
+            fclose(fid);
+            
+            RKFileManagerAddFile(fileManager, filename, RKFileTypeMoment);
+        }
+        e = RKNextModuloS(e, ne);
+        usleep(500000);
+    }
+    
+    RKFileManagerFree(fileManager);
 }
 
 void RKTestPreferenceReading(void) {
@@ -2724,58 +2776,6 @@ void RKTestExperiment(void) {
 
 void RKTestGenerateFakeFiles(void) {
     SHOW_FUNCTION_NAME
-    int e, j, k, s;
-    RKName filename;
-    struct timeval tm;
-    gettimeofday(&tm, NULL);
-    time_t startTime = tm.tv_sec;
-    float es[] = {2.0f, 4.0f, 6.0f, 8.0f};
-    const int ne = sizeof(es) / sizeof(float);
-    RKName ss[] = {"Z", "V", "D", "R"};
-    const int ns = sizeof(ss) / sizeof(RKName);
-    FILE *fid;
-    size_t filesize = 1024 * 1024;
-    char *payload = (char *)malloc(filesize);
-    if (payload == NULL) {
-        fprintf(stderr, "Unable to allocate payload.\n");
-        exit(EXIT_FAILURE);
-    }
-    e = 0;
-    for (j = 0; j < 20; j++) {
-        startTime += 30;
-        k = sprintf(filename, "data/%s/", RKDataFolderMoment);
-        k += strftime(filename + k, 9, "%Y%m%d", gmtime(&startTime));
-        k += sprintf(filename + k, "/RK-");
-        k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-        k += sprintf(filename + k, "-E%.1f", es[e]);
-
-        for (s = 0; s < ns; s++) {
-            sprintf(filename + k, "-%s.nc", ss[s]);
-            printf("%s\n", filename);
-
-            RKPreparePath(filename);
-            
-            fid = fopen(filename, "w");
-            if (fid == NULL) {
-                fprintf(stderr, "Unable to create file.\n");
-                exit(EXIT_FAILURE);
-            }
-            fwrite(payload, filesize, 1, fid);
-            fclose(fid);
-        }
-        e = RKNextModuloS(e, ne);
-    }
-    
-    RKFileManager *fileManager = RKFileManagerInit();
-    RKFileManagerSetVerbose(fileManager, 3);
-    RKFileManagerSetDiskUsageLimit(fileManager, 10 * 1024 * 1024);
-    RKFileManagerStart(fileManager);
-    
-    for (j = 0; j < 20; j++) {
-        usleep(10000);
-    }
-    
-    RKFileManagerFree(fileManager);
 }
 
 #pragma mark -
