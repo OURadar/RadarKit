@@ -112,7 +112,8 @@ void RKFileManagerFree(RKFileManager *);
 void RKFileManagerSetVerbose(RKFileManager *, const int);
 void RKFileManagerSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
 void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
-void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age);
+void RKFileManagerSetDiskUsageLimit(RKFileManager *, const size_t );
+void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *, const int age);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);

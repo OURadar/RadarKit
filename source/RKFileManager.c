@@ -118,10 +118,10 @@ static void refreshFileList(RKFileRemover *me) {
 
     // Go through all folders
     int folderCount = listFoldersInFolder(folders, RKFileManagerFolderListCapacity, me->path);
-
     if (folderCount <= 0) {
         return;
     }
+
     // Sort the folders by name (should be in time numbers)
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
 
@@ -148,6 +148,14 @@ static void refreshFileList(RKFileRemover *me) {
     // Sort the files by time
     qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
 
+#if defined(DEBUG_FILE_MANAGER)
+
+    for (k = 0; k < me->count; k++) {
+        printf("%s/%s/%s\n", me->path, folders[indexedStats[k].folderId], filenames[indexedStats[k].index]);
+    }
+    
+#endif
+    
     // We can operate in a circular buffer fashion if all the files are accounted
     if (me->count < me->capacity) {
         me->reusable = true;
@@ -369,6 +377,24 @@ static void *folderWatcher(void *in) {
         RKDataFolderHealth,
         ""
     };
+
+#if defined(DEBUG_FILE_MANAGER)
+
+    const int capacities[] = {
+        12,
+        12,
+        12,
+        0
+    };
+    const size_t limits[] = {
+        1,
+        1,
+        1,
+        0
+    };
+
+#else
+
     const int capacities[] = {
         24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
         24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
@@ -381,7 +407,9 @@ static void *folderWatcher(void *in) {
         RKFileManagerHealthDataRatio,
         0
     };
-    
+
+#endif
+
     engine->workerCount = 3;
     
     engine->workers = (RKFileRemover *)malloc(engine->workerCount * sizeof(RKFileRemover));
@@ -513,6 +541,10 @@ void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
     strncpy(engine->dataPath, path, RKMaximumFolderPathLength - 1);
 }
 
+void RKFileManagerSetDiskUsageLimit(RKFileManager *engine, const size_t limit) {
+    engine->usagelimit = limit;
+}
+
 void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age) {
     engine->maximumLogAgeInDays = age;
 }
@@ -524,12 +556,13 @@ int RKFileManagerStart(RKFileManager *engine) {
     engine->state |= RKEngineStateProperlyWired;
     if (engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
-        RKLog("%s Usage limit not set, use default %s%s B%s (%s GiB)\n",
+        RKLog("%s Usage limit not set, use default %s%s B%s (%s %s)\n",
               engine->name,
               rkGlobalParameters.showColor ? "\033[4m" : "",
               RKUIntegerToCommaStyleString(engine->usagelimit),
               rkGlobalParameters.showColor ? "\033[24m" : "",
-              RKFloatToCommaStyleString((double)engine->usagelimit / 1073741824));
+              RKFloatToCommaStyleString((double)engine->usagelimit / (engine->usagelimit > 1073741824 ? 1099511627776 : 1073741824)),
+              engine->usagelimit > 1073741824 ? "TiB" : "GiB");
     }
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;

@@ -63,7 +63,7 @@ $(OBJS): %.o: source/%.c
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-rktest: RadarKitTest/main.c /usr/local/lib/libradarkit.a
+rktest: RadarKitTest/main.c libradarkit.a /usr/local/lib/libradarkit.a
 	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 # rktest: RadarKitTest/main.c libradarkit.a
 # 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
