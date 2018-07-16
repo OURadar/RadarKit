@@ -41,6 +41,28 @@ static int string_cmp_by_pseudo_time(const void *a, const void *b) {
     return strncmp((char *)a, (char *)b, 8);
 }
 
+static time_t timeFromFilename(const char *filename) {
+    char *yyyymmdd, *hhmmss;
+    yyyymmdd = strchr(filename, '-');
+    if (yyyymmdd == NULL) {
+        return 0;
+    }
+    yyyymmdd++;
+    hhmmss = strchr(yyyymmdd, '-');
+    if (hhmmss == NULL) {
+        return 0;
+    }
+    hhmmss++;
+    if (hhmmss - yyyymmdd > 9) {
+        // Filename may have changed
+        RKLog("Warning. Unexpected file pattern.\n");
+        return 0;
+    }
+    struct tm tm;
+    strptime(yyyymmdd, "%Y%m%d-%H%M%S", &tm);
+    return mktime(&tm);
+}
+
 static int listElementsInFolder(RKPathname *list, const int maximumCapacity, const char *path, uint8_t type) {
     int k = 0;
     struct dirent *dir;
@@ -101,8 +123,6 @@ static bool isFolderEmpty(const char *path) {
     return true;
 }
 
-#pragma mark - Delegate Workers
-
 static void refreshFileList(RKFileRemover *me) {
     int j, k;
     struct stat fileStat;
@@ -118,12 +138,20 @@ static void refreshFileList(RKFileRemover *me) {
 
     // Go through all folders
     int folderCount = listFoldersInFolder(folders, RKFileManagerFolderListCapacity, me->path);
-
     if (folderCount <= 0) {
+        me->reusable = true;
         return;
     }
+
     // Sort the folders by name (should be in time numbers)
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
+
+    if (me->parent->verbose > 2) {
+        RKLog("%s Folders:\n", me->parent->name);
+        for (k = 0; k < folderCount; k++) {
+            RKLog(">%s %s/%s\n", me->parent->name, me->path, folders[k]);
+        }
+    }
 
     // Go through all files in the folders
     for (j = 0, k = 0; k < folderCount && me->count < me->capacity; k++) {
@@ -139,7 +167,8 @@ static void refreshFileList(RKFileRemover *me) {
             stat(string, &fileStat);
             indexedStats[j].index = j;
             indexedStats[j].folderId = k;
-            indexedStats[j].time = fileStat.st_ctime;
+            indexedStats[j].time = timeFromFilename(filenames[j]);
+            //indexedStats[j].time = fileStat.st_ctime;
             indexedStats[j].size = fileStat.st_size;
             me->usage += fileStat.st_size;
         }
@@ -148,11 +177,24 @@ static void refreshFileList(RKFileRemover *me) {
     // Sort the files by time
     qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
 
+    if (me->parent->verbose > 2) {
+        RKLog("%s Files (%s):\n", me->parent->name, RKIntegerToCommaStyleString(me->count));
+        for (k = 0; k < me->count; k++) {
+            RKLog(">%s %5s. %s/%s/%s  %zu %d %d\n", me->parent->name,
+                  RKIntegerToCommaStyleString(k),
+                  me->parent->dataPath, folders[indexedStats[k].folderId], filenames[indexedStats[k].index],
+                  indexedStats[k].time, indexedStats[k].folderId, indexedStats[k].index);
+        }
+    }
+    
     // We can operate in a circular buffer fashion if all the files are accounted
     if (me->count < me->capacity) {
         me->reusable = true;
     } else {
-        RKLog("%s Info. Experimental mode for '%s'.\n", me->parent->name, me->path);
+        if (folderCount == 1) {
+            RKLog("%s Warning. Too many files in '%s'.\n", me->parent->name, me->path);
+            RKLog("%s Warning. Unexpected erasures may occur.\n", me->parent->name);
+        }
         // Re-calculate the usage
         me->usage = 0;
         for (k = 0; k < folderCount; k++) {
@@ -160,7 +202,7 @@ static void refreshFileList(RKFileRemover *me) {
             sprintf(string, "%s/%s/%s", me->path, folders[k], filenames[j]);
             DIR *did = opendir(string);
             if (did == NULL) {
-                fprintf(stderr, "Unable to list folder '%s'\n", folders[k]);
+                fprintf(stderr, "Unable to list folder '%s'\n", string);
                 continue;
             }
             while ((dir = readdir(did)) != NULL) {
@@ -173,6 +215,8 @@ static void refreshFileList(RKFileRemover *me) {
         RKLog("%s Truncated list with total usage = %s B\n", me->parent->name, RKUIntegerToCommaStyleString(me->usage));
     }
 }
+
+#pragma mark - Delegate Workers
 
 static void *fileRemover(void *in) {
     RKFileRemover *me = (RKFileRemover *)in;
@@ -279,6 +323,10 @@ static void *fileRemover(void *in) {
 
         pthread_mutex_lock(&engine->mutex);
 
+        if (engine->verbose > 2) {
+            RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
+        }
+
         // Removing files
         while (me->usage > me->limit) {
             // Build the complete path from various components
@@ -293,6 +341,10 @@ static void *fileRemover(void *in) {
 				} else {
 					RKLog("%s %s Removing %s (%s B)", engine->name, name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
 				}
+            }
+            if (!strlen(parentFolder)) {
+                strcpy(parentFolder, folders[indexedStats[me->index].folderId]);
+                RKLog("%s %s Set parentFolder to %s\n", engine->name, name, parentFolder);
             }
             remove(path);
             me->usage -= indexedStats[me->index].size;
@@ -369,6 +421,24 @@ static void *folderWatcher(void *in) {
         RKDataFolderHealth,
         ""
     };
+
+#if defined(DEBUG_FILE_MANAGER)
+
+    const int capacities[] = {
+        100,
+        100,
+        100,
+        0
+    };
+    const size_t limits[] = {
+        1,
+        1,
+        1,
+        0
+    };
+
+#else
+
     const int capacities[] = {
         24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
         24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
@@ -381,7 +451,11 @@ static void *folderWatcher(void *in) {
         RKFileManagerHealthDataRatio,
         0
     };
+
+#endif
     
+    const size_t sumOfLimits = limits[0] + limits[1] + limits[2];
+
     engine->workerCount = 3;
     
     engine->workers = (RKFileRemover *)malloc(engine->workerCount * sizeof(RKFileRemover));
@@ -405,7 +479,8 @@ static void *folderWatcher(void *in) {
         } else {
             snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s", folders[k]);
         }
-        worker->limit = engine->usagelimit * limits[k] / RKFileManagerTotalRatio;
+        
+        worker->limit = engine->usagelimit * limits[k] / sumOfLimits;
 
         // Workers that actually remove the files (and folders)
         if (pthread_create(&worker->tid, NULL, fileRemover, worker) != 0) {
@@ -430,7 +505,7 @@ static void *folderWatcher(void *in) {
     RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->state);
 
 	// Increase the tic once to indicate the engine is ready
-	engine->tic++;
+	engine->tic = 1;
 
     // Wait here while the engine should stay active
     time_t now;
@@ -513,6 +588,10 @@ void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
     strncpy(engine->dataPath, path, RKMaximumFolderPathLength - 1);
 }
 
+void RKFileManagerSetDiskUsageLimit(RKFileManager *engine, const size_t limit) {
+    engine->usagelimit = limit;
+}
+
 void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age) {
     engine->maximumLogAgeInDays = age;
 }
@@ -524,12 +603,13 @@ int RKFileManagerStart(RKFileManager *engine) {
     engine->state |= RKEngineStateProperlyWired;
     if (engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
-        RKLog("%s Usage limit not set, use default %s%s B%s (%s GiB)\n",
+        RKLog("%s Usage limit not set, use default %s%s B%s (%s %s)\n",
               engine->name,
               rkGlobalParameters.showColor ? "\033[4m" : "",
               RKUIntegerToCommaStyleString(engine->usagelimit),
               rkGlobalParameters.showColor ? "\033[24m" : "",
-              RKFloatToCommaStyleString((double)engine->usagelimit / 1073741824));
+              RKFloatToCommaStyleString((double)engine->usagelimit / (engine->usagelimit > 1073741824 ? 1099511627776 : 1073741824)),
+              engine->usagelimit > 1073741824 ? "TiB" : "GiB");
     }
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
@@ -599,7 +679,8 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     }
     
     if (strncmp(me->path, filename, strlen(me->path))) {
-        RKLog("%s File %s does not belong here.\n", engine->name, filename);
+        RKLog("%s File %s does not belong here (%s).\n", engine->name, filename, me->path);
+        return RKResultFileManagerInconsistentFolder;
     }
     
     // [me->path]/YYYYMMDD/RK-YYYYMMDD-...
@@ -608,7 +689,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     char *folder = engine->scratch;
     strcpy(folder, filename + strlen(me->path) + 1);
     char *e = strrchr(folder, '/');
-    *e = '\0';   
+    *e = '\0';
     if (strlen(folder) > RKFileManagerFilenameLength - 1) {
         RKLog("%s Warning. Folder name is too long.\n", engine->name);
     }
@@ -630,11 +711,13 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
 
     indexedStats[k].index = k;
     indexedStats[k].folderId = folderId;
-    indexedStats[k].time = fileStat.st_ctime;
+    //indexedStats[k].time = fileStat.st_ctime;
+    indexedStats[k].time = timeFromFilename(filenames[k]);
     indexedStats[k].size = fileStat.st_size;
     
     me->usage += fileStat.st_size;
     
+
     if (engine->verbose > 2) {
         RKLog("%s Added '%s'   %s B  k%d\n", engine->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
     }

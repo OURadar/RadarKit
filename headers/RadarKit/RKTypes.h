@@ -292,6 +292,7 @@ N(RKResultFailedToAddHost) \
 N(RKResultFailedToFindProductId) \
 N(RKResultFailedToOpenFileForProduct) \
 N(RKResultClientNotConnected) \
+N(RKResultFileManagerInconsistentFolder) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)
 

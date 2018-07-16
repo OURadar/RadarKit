@@ -161,5 +161,6 @@ int RKTestHealthRelayFree(RKHealthRelay);
 
 void RKTestSingleCommand(void);
 void RKTestExperiment(void);
+void RKTestGenerateFakeFiles(void);
 
 #endif /* defined(__RadarKit_RKFile__) */

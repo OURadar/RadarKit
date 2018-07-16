@@ -58,7 +58,6 @@
 #define RKFileManagerMomentDataRatio       1000
 #define RKFileManagerHealthDataRatio       10
 #define RKFileManagerLogDataRatio          1
-#define RKFileManagerTotalRatio            (RKFileManagerRawDataRatio + RKFileManagerMomentDataRatio + RKFileManagerHealthDataRatio + RKFileManagerLogDataRatio)
 #define RKFileManagerDefaultLogAgeInDays   30
 
 typedef struct rk_file_remover RKFileRemover;
@@ -112,7 +111,8 @@ void RKFileManagerFree(RKFileManager *);
 void RKFileManagerSetVerbose(RKFileManager *, const int);
 void RKFileManagerSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
 void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
-void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age);
+void RKFileManagerSetDiskUsageLimit(RKFileManager *, const size_t );
+void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *, const int age);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);
