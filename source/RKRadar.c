@@ -514,7 +514,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
-        RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
+        RKLog("Level II buffer occupies %s B  (%s rays x %d moments of %s gates)\n",
               RKUIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
               RKBaseMomentCount,
