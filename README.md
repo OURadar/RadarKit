@@ -460,7 +460,8 @@ RKSetProductRecorder(RKRadar *, int (*)(RKProduct *, char *));
 ````
 A struct of `RKProduct`, which contains a complete sweep of a product, is supplied to the routine and RadarKit expects it to populate the supplied string with filenames. This filename is used in the subsequent events such as archiving multiple product files into a single tgz file and queueing the tgz file to the LDM (local data manager). Upon a successful completion, the routine should return `RKSuccess`.
 
-# Hardware Routines
+Hardware Routines
+===
 
 As mentioend previously, the initialization, execution and deallocation routines of the _transceiver_, _pedestal_, and _health relay_ must have a strict form, as follows. The intialization of the hardware must be in the form of
 
@@ -509,14 +510,13 @@ int execRoutine(RKTransceiver userTransceiver, const char *command, char *respon
 
 ```
 
-Reserved Keywords for Commands
-===
+### Reserved Keywords for Commands
 
-### `disconnect`
+##### `disconnect`
 
 This is a command the master controller issues when everything should stop.
 
-### `state`
+##### `state`
 
 This is a command the master controller issues for checking if the component wants to report opereate (1) or standby (0)
 
