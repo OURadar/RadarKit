@@ -290,7 +290,7 @@ static void *rayGatherer(void *in) {
     RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     RKBaseMomentIndex momentIndex = 0;
     RKBaseMomentList momentList = engine->baseMomentList;
-    int productCount = __builtin_popcount(momentList);
+    const int productCount = __builtin_popcount(momentList);
     for (p = 0; p < productCount; p++) {
         // Get the symbol, name, unit, colormap, etc. from the product list
         RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
@@ -348,8 +348,10 @@ static void *rayGatherer(void *in) {
         engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
     }
 
+    if (strlen(engine->handleFilesScript)) {
+        RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
+    }
     RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
-    RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
@@ -486,6 +488,9 @@ static void *rayGatherer(void *in) {
         pthread_join(tidSweepManager, NULL);
         tidSweepManager = (pthread_t)0;
     }
+    for (p = 0; p < productCount; p++) {
+        RKSweepEngineUnregisterProduct(engine, engine->baseMomentProductIds[p]);
+    }
     engine->state ^= RKEngineStateActive;
     return NULL;
 }
@@ -610,7 +615,7 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
 RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc desc) {
     int i = 0;
     RKProductId productId = 42;
-    while (engine->productBuffer[i].pid != 0 && i < RKMaximumProductCount) {
+    while (engine->productBuffer[i].flag & RKProductStatusActive && i < RKMaximumProductCount) {
         productId++;
         i++;
     }
@@ -623,7 +628,7 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
     engine->productBuffer[i].pid = productId;
     engine->productBuffer[i].desc = desc;
     engine->productBuffer[i].flag = RKProductStatusActive;
-    RKLog("%s Product %s%s%s registered   %s   %s\n", engine->name,
+    RKLog(">%s Product %s%s%s registered   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
           rkGlobalParameters.showColor ? RKNoColor : "",
@@ -650,7 +655,7 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     }
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].flag = RKProductStatusVacant;
-    RKLog("%s Product %s%s%s unregistered   %s   %s\n", engine->name,
+    RKLog(">%s Product %s%s%s unregistered   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
           rkGlobalParameters.showColor ? RKNoColor : "",
