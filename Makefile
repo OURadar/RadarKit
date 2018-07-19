@@ -4,8 +4,10 @@ UNAME_M := $(shell uname -m)
 $(info $$UNAME_M = [${UNAME_M}])
 
 CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
-#CFLAGS =      -std=gnu99 -Os -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+
+ifeq ($(UNAME), Darwin)
 CFLAGS += -fms-extensions -Wno-microsoft
+endif
 
 # Some heavy debuggning flags
 #CFLAGS += -DDEBUG_IIR
@@ -64,7 +66,7 @@ $(OBJS): %.o: source/%.c
 $(RKLIB): $(OBJS)
 	ar rvcs $@ $(OBJS)
 
-rktest: RadarKitTest/main.c libradarkit.a /usr/local/lib/libradarkit.a
+rktest: RadarKitTest/main.c libradarkit.a
 	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
 # rktest: RadarKitTest/main.c libradarkit.a
 # 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)

@@ -467,7 +467,9 @@ void RKTestFileManager(void) {
     RKLog("Warning. All data will be erased!\n");
     printf("Press Enter to continue ... or Ctrl-C to terminate.\n");
     
-    system("rm -rf data/moment");
+    if (system("rm -rf data/moment") == -1) {
+        RKLog("Error. Failed during system().\n");
+    }
     
     getchar();
     
@@ -1153,8 +1155,8 @@ void RKTestWaveformWrite(void) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(14, 100);
     RKWaveformHops(waveform, 20.0e6, 0.0, 16.0e6);
 
-    char filename[64];
-    sprintf(filename, "waveforms/%s.rkwav", waveform->name);
+    char filename[160];
+    snprintf(filename, 159, "waveforms/%s.rkwav", waveform->name);
     RKLog("Creating waveform file '%s' ...\n", filename);
     RKWaveformWrite(waveform, filename);
 

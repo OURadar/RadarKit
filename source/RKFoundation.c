@@ -165,7 +165,7 @@ int RKSetProgramName(const char *name) {
     if (strlen(name) >= RKNameLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.program, RKNameLength, "%s", name);
+    snprintf(rkGlobalParameters.program, 32, "%s", name);
     return RKResultSuccess;
 }
 
@@ -189,7 +189,7 @@ int RKSetLogfile(const char *filename) {
     } else if (strlen(filename) >= RKMaximumPathLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s", filename);
+    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength - 1, "%s", filename);
     return RKResultSuccess;
 }
 

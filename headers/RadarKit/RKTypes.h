@@ -981,7 +981,7 @@ typedef struct rk_sweep_header {
     bool                 external;                                             // Data is external buffer, reference by *rays[]
     RKRadarDesc          desc;                                                 //
     RKConfig             config;                                               //
-    char                 filename[RKMaximumPathLength];                        // Propose filename without symbol and extension, XX-20180520-112233
+    char                 filename[RKMaximumPathLength - 80];                   // Propose filename without symbol and extension, XX-20180520-112233
 } RKSweepHeader;
 
 //

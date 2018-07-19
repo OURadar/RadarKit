@@ -176,7 +176,7 @@ static void *sweepManager(void *in) {
         }
         // Full filename with symbol and extension
         sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
-        strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength);
+        strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength - 80);
 
         // Keep concatenating the filename into filelist
         if (engine->hasHandleFilesScript) {
