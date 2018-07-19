@@ -97,7 +97,7 @@ Follow these steps to get the project
     }
     ```
 
-2. Set up a _transceiver_ initialization and run-loop routines. The initialization routine returns a user-defined pointer, and a run-loop routine receives I/Q data. The initialization routine must return immediately, and the run-loop routine should be created as a separate thread.
+2. Set up a _transceiver_ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer immediately. The run-loop routine receives I/Q data, actively request a vacant slot through `RKGetVacantPulse()`, fills in the pulse with proper data and then declare the pulse to have data using `RKSetPulseHasData()`.
 
     ```c
     typedef struct user_transceiver_struct {
