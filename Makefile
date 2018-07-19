@@ -1,9 +1,17 @@
 UNAME := $(shell uname)
 UNAME_M := $(shell uname -m)
+GIT_BRANCH := $(shell git branch | head -n 1 | awk '{print $2}')
 
 $(info $$UNAME_M = [${UNAME_M}])
+$(info $$GIT_BRANCH = [${GIT_BRANCH}])
 
-CFLAGS = -ggdb -std=gnu99 -O2 -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas -I headers -I /usr/local/include -I /usr/include -fPIC
+CFLAGS = -std=gnu99 -O2
+ifeq ($(GIT_BRANCH), * beta)
+CFLAGS += -ggdb
+endif
+
+CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
+CFLAGS += -I headers -I /usr/local/include -I /usr/include -fPIC
 
 ifeq ($(UNAME), Darwin)
 CFLAGS += -fms-extensions -Wno-microsoft
