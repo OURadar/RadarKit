@@ -66,11 +66,12 @@ yy = squeeze(mean(abs(yy) .^ 2, 2));
 
 % mean(mean(yy(floor(30/.06):floor(50/.06), 1:250, 1)))
 noise = permute([127.9690, 29.5491].', [3, 2, 1]);
-yy = max(yy - noise, 0);
+noise = 0.8 * noise;
+s = max(yy - noise, 0);
 
-%% Reflectivity
+% Reflectivity
 rr = (1:gateCount).' * .03;
-z = 10 * log10(rr .^ 2 .* yy) - 26;
+z = 10 * log10(rr .^ 2 .* s) - 26;
 
 %% Plot
 cmap = blib('zmap');
