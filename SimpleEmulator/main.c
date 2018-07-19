@@ -22,7 +22,6 @@ static void handleSignals(int signal) {
 
 int main(int argc, const char * argv[]) {
 
-    RKSetProgramName("rktest");
     RKSetWantScreenOutput(true);
 
     myRadar = RKInit();
@@ -46,7 +45,8 @@ int main(int argc, const char * argv[]) {
     // Set some properties of the radar
     RKSetVerbosity(myRadar, 1);
     RKSetRecordingLevel(myRadar, 0);
-
+    RKSetProcessingCoreCounts(myRadar, 2, 2);
+    
     // Add some control buttons
     RKAddControlAsLabelAndCommand(myRadar, "10us pulse", "t w s10");
     RKAddControlAsLabelAndCommand(myRadar, "20us pulse", "t w s20");
@@ -77,7 +77,6 @@ int main(int argc, const char * argv[]) {
     RKLog("Starting a new PPI ...\n");
     RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
     RKWaitWhileActive(myRadar);
-    RKStop(myRadar);
 
     RKFree(myRadar);
 
