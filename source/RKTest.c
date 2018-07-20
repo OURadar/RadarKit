@@ -1761,7 +1761,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
     
-    gettimeofday(&t0, NULL);
+    gettimeofday(&t1, NULL);
 
     // g gate index
     // j sample index
@@ -1944,15 +1944,14 @@ void *RKTestTransceiverRunLoop(void *input) {
         // Wait to simulate the PRF
         s = 0;
         do {
-            gettimeofday(&t1, NULL);
-            dt = RKTimevalDiff(t1, t0);
-            usleep(100);
-            s++;
-            if (s % 10000 == 0) {
+            gettimeofday(&t0, NULL);
+            dt = RKTimevalDiff(t0, t1);
+            usleep(1000);
+            if (++s % 1000 == 0) {
                 printf("Sleeping ... n = %d ...\n", s);
             }
         } while (transceiver->state & RKEngineStateWantActive && dt < periodTotal);
-        t0 = t1;
+        t1 = t0;
     }
 
     free(ra);
@@ -2303,7 +2302,6 @@ void *RKTestPedestalRunLoop(void *input) {
     RKTestPedestal *pedestal = (RKTestPedestal *)input;
     RKRadar *radar = pedestal->radar;
     
-    int n;
     float azimuth = 0.0f;
     float elevation = 3.0f;
     double dt = 0.0;
@@ -2317,7 +2315,7 @@ void *RKTestPedestalRunLoop(void *input) {
     pedestal->state |= RKEngineStateWantActive;
     pedestal->state &= ~RKEngineStateActivating;
 
-    gettimeofday(&t0, NULL);
+    gettimeofday(&t1, NULL);
 
     RKLog("%s Started.   mem = %s B\n", pedestal->name, RKUIntegerToCommaStyleString(pedestal->memoryUsage));
 
@@ -2436,14 +2434,12 @@ void *RKTestPedestalRunLoop(void *input) {
         }
         
         // Wait to simulate sampling time
-        n = 0;
         do {
-            gettimeofday(&t1, NULL);
-            dt = RKTimevalDiff(t1, t0);
+            gettimeofday(&t0, NULL);
+            dt = RKTimevalDiff(t0, t1);
             usleep(1000);
-            n++;
-        } while (radar->active && dt < PEDESTAL_SAMPLING_TIME);
-        t0 = t1;
+        } while (pedestal->state & RKEngineStateWantActive && dt < PEDESTAL_SAMPLING_TIME);
+        t1 = t0;
     }
     
     pedestal->state ^= RKEngineStateActive;
@@ -2574,12 +2570,12 @@ void *RKTestHealthRelayRunLoop(void *input) {
     float powerH, powerV;
     double latitude, longitude, heading;
     double dt = 0.0;
-    struct timeval t0, t1;
+    struct timeval t1, t0;
 
     healthRelay->state |= RKEngineStateWantActive;
     healthRelay->state &= ~RKEngineStateActivating;
 
-    gettimeofday(&t0, NULL);
+    gettimeofday(&t1, NULL);
     
     RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKUIntegerToCommaStyleString(healthRelay->memoryUsage));
     
@@ -2627,12 +2623,12 @@ void *RKTestHealthRelayRunLoop(void *input) {
         // Wait to simulate sampling time
         n = 0;
         do {
-            gettimeofday(&t1, NULL);
-            dt = RKTimevalDiff(t1, t0);
+            gettimeofday(&t0, NULL);
+            dt = RKTimevalDiff(t0, t1);
             usleep(10000);
             n++;
-        } while (radar->active && dt < HEALTH_RELAY_SAMPLING_TIME);
-        t0 = t1;
+        } while (healthRelay->state & RKEngineStateWantActive && dt < HEALTH_RELAY_SAMPLING_TIME);
+        t1 = t0;
     }
 
     healthRelay->state ^= RKEngineStateActive;

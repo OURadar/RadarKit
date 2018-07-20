@@ -117,20 +117,18 @@ static void *systemInspectorRunLoop(void *in) {
     uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
 
     struct timeval t0, t1;
+    struct timeval positionTimevalT1, pulseTimevalT1, rayTimevalT1;
     double dt;
 
-    bool transceiverOkay;
-    bool pedestalOkay;
-    bool healthOkay;
-    bool networkOkay;
-    bool anyCritical;
+    bool transceiverOkay, pedestalOkay, healthOkay, networkOkay, anyCritical;
     RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
-    RKName FFTPlanUsage;
-    RKName criticalKey;
-    RKName criticalValue;
+    RKName FFTPlanUsage, criticalKey, criticalValue;
     int criticalCount = 0;
 
     gettimeofday(&t1, NULL);
+    positionTimevalT1 = t1;
+    pulseTimevalT1 = t1;
+    rayTimevalT1 = t1;
 
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
@@ -182,13 +180,29 @@ static void *systemInspectorRunLoop(void *in) {
             shown = false;
         }
         // Derive the acquisition rate of position, pulse and ray
+        // Note, each acquisition rate is computed with its own timeval since they come in bursts, we may get no update in an iteration
         positionT0 = RKGetLatestPosition(radar);
         pulse = RKGetLatestPulse(radar);
         ray = RKGetLatestRay(radar);
-        dt = RKTimevalDiff(t0, t1);
-        positionRate = 0.95 * positionRate + 0.05 * (double)(positionT0->i - positionId) / dt;
-        pulseRate = 0.95 * pulseRate + 0.05 * (double)(pulse->header.i - pulseId) / dt;
-        rayRate = 0.95 * rayRate + 0.05 * (double)(ray->header.i - rayId) / dt;
+        //printf("position->i = %llu %llu -> %.3f\n", (unsigned long long)positionT0->i, (unsigned long long)positionId, positionRate);
+        if (positionT0->i >= positionId) {
+            dt = RKTimevalDiff(t0, positionTimevalT1);
+            positionRate = 0.95 * positionRate + 0.05 * (double)(positionT0->i - positionId) / dt;
+            positionId = positionT0->i;
+            positionTimevalT1 = t0;
+        }
+        if (pulse->header.i >= pulseId) {
+            dt = RKTimevalDiff(t0, pulseTimevalT1);
+            pulseRate = 0.95 * pulseRate + 0.05 * (double)(pulse->header.i - pulseId) / dt;
+            pulseId = pulse->header.i;
+            pulseTimevalT1 = t0;
+        }
+        if (ray->header.i >= rayId) {
+            dt = RKTimevalDiff(t0, rayTimevalT1);
+            rayRate = 0.95 * rayRate + 0.05 * (double)(ray->header.i - rayId) / dt;
+            rayId = ray->header.i;
+            rayTimevalT1 = t0;
+        }
 
         // Only do this if the radar is a signal processor
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
@@ -217,7 +231,6 @@ static void *systemInspectorRunLoop(void *in) {
                 RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
                 pedestalEnum = RKStatusEnumStandby;
             } else {
-                positionT0 = RKGetLatestPosition(radar);
                 if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
                     RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
                     pedestalEnum = RKStatusEnumActive;
@@ -259,6 +272,8 @@ static void *systemInspectorRunLoop(void *in) {
                     "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                     "\"PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
                     "\"Noise\":[%.3f,%.3f], "
+                    "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
+                    "\"rayRate\":%.3f, "
                     "\"FFTPlanUsage\":%s"
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
@@ -269,6 +284,7 @@ static void *systemInspectorRunLoop(void *in) {
                     radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
                     RKIntegerToCommaStyleString((long)pulseRate), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
                     config->noise[0], config->noise[1],
+                    RKIntegerToCommaStyleString((long)positionRate), rayRate,
                     FFTPlanUsage
                     );
             RKSetHealthReady(radar, health);
@@ -286,14 +302,10 @@ static void *systemInspectorRunLoop(void *in) {
             } else {
                 criticalCount = 0;
             }
-
-            // Update the indices and time
-            positionId = positionT0->i;
-            pulseId = pulse->header.i;
-            rayId = ray->header.i;
-            tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
-            t1 = t0;
         } // if (radar->desc.initFlags & RKInitFlagSignalProcessor) ...
+        // Update the indices and time
+        tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
+        t1 = t0;
     }
     engine->state ^= RKEngineStateActive;
     return NULL;
@@ -2412,7 +2424,13 @@ void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
 
 RKPosition *RKGetLatestPosition(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
-    return &radar->positions[index];
+    RKPosition *position = &radar->positions[index];
+    int k = 0;
+    while (!(position->flag & RKPositionFlagReady) && k++ < radar->desc.positionBufferDepth) {
+        index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
+        position = &radar->positions[index];
+    }
+    return position;
 }
 
 float RKGetPositionUpdateRate(RKRadar *radar) {
