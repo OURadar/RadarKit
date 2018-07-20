@@ -91,7 +91,7 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
 static void *systemInspectorRunLoop(void *in) {
     RKSimpleEngine *engine = (RKSimpleEngine *)in;
     
-    int k, s;
+    int j, k, s;
     
     bool shown = false;
     
@@ -104,25 +104,42 @@ static void *systemInspectorRunLoop(void *in) {
     
     engine->state ^= RKEngineStateActive;
 
-    RKPosition *position;
+    RKConfig *config;
+    RKHealth *health;
+    RKPosition *positionT0, *positionT1;
     RKPulse *pulse;
     RKRay *ray;
     RKIdentifier positionId = 0, pulseId = 0, rayId = 0;
-    double positionRate, pulseRate, rayRate;
+    double positionRate = 100.0, pulseRate = 1000.0, rayRate = 50.0;
+
+    positionT1 = RKGetLatestPosition(radar);
+
+    uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
 
     struct timeval t0, t1;
     double dt;
+
+    bool transceiverOkay;
+    bool pedestalOkay;
+    bool healthOkay;
+    bool networkOkay;
+    bool anyCritical;
+    RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
+    RKName FFTPlanUsage;
+    RKName criticalKey;
+    RKName criticalValue;
+    int criticalCount = 0;
 
     gettimeofday(&t1, NULL);
 
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (s++ < 50 && engine->state & RKEngineStateWantActive) {
+        while (s++ < 10 && engine->state & RKEngineStateWantActive) {
             if (engine->verbose > 2) {
                 RKLog("%s", engine->name);
             }
-            usleep(20000);
+            usleep(50000);
         }
         engine->state ^= RKEngineStateSleep1;
         // Put together a system status
@@ -142,6 +159,7 @@ static void *systemInspectorRunLoop(void *in) {
         }
         status->recorderLag = radar->rawDataRecorder->lag;
         RKSetStatusReady(radar, status);
+        // Show something on the screen when we rotate back to configIndex 6
         if (radar->configIndex == 6) {
             if (!shown) {
                 long mem = RKGetMemoryUsage();
@@ -164,17 +182,118 @@ static void *systemInspectorRunLoop(void *in) {
             shown = false;
         }
         // Derive the acquisition rate of position, pulse and ray
-        position = RKGetLatestPosition(radar);
+        positionT0 = RKGetLatestPosition(radar);
         pulse = RKGetLatestPulse(radar);
         ray = RKGetLatestRay(radar);
         dt = RKTimevalDiff(t0, t1);
-        positionRate = (double)(position->i - positionId) / dt;
-        pulseRate = (double)(pulse->header.i - pulseId) / dt;
-        rayRate = (double)(ray->header.i - rayId) / dt;
-        positionId = position->i;
-        pulseId = pulse->header.i;
-        rayId = ray->header.i;
-        t1 = t0;
+        positionRate = 0.95 * positionRate + 0.05 * (double)(positionT0->i - positionId) / dt;
+        pulseRate = 0.95 * pulseRate + 0.05 * (double)(pulse->header.i - pulseId) / dt;
+        rayRate = 0.95 * rayRate + 0.05 * (double)(ray->header.i - rayId) / dt;
+
+        // Only do this if the radar is a signal processor
+        if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+            // General Health
+            transceiverOkay = pulseRate == 0.0f ? false : true;
+            pedestalOkay = positionRate == 0.0f ? false : true;
+            healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+            networkOkay = radar->hostMonitor->allReachable ? true : false;
+            networkEnum =
+            radar->hostMonitor->allReachable ? RKStatusEnumNormal :
+            (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
+             (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
+
+            // Transceiver health
+            health = RKGetLatestHealthOfNode(radar, RKHealthNodeTransceiver);
+            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                transceiverEnum = RKStatusEnumStandby;
+            } else {
+                transceiverEnum = RKStatusEnumNormal;
+            }
+
+            // Position active / standby
+            health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                pedestalEnum = RKStatusEnumStandby;
+            } else {
+                positionT0 = RKGetLatestPosition(radar);
+                if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
+                    RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
+                    pedestalEnum = RKStatusEnumActive;
+                } else {
+                    pedestalEnum = RKStatusEnumStandby;
+                }
+                positionT1 = positionT0;
+            }
+
+            // Tweeta health
+            health = RKGetLatestHealthOfNode(radar, RKHealthNodeTweeta);
+            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                healthEnum = RKStatusEnumStandby;
+            } else {
+                healthEnum = RKStatusEnumNormal;
+            }
+
+            // Report a health status
+            health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
+            k = sprintf(FFTPlanUsage, "{");
+            for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
+                k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
+                             radar->pulseCompressionEngine->planSizes[j],
+                             radar->pulseCompressionEngine->planUseCount[j]);
+            }
+            k += sprintf(FFTPlanUsage + k, "}");
+            if (k > RKNameLength * 3 / 4) {
+                RKLog("Warning. Too little head room in FFTPlanUsage.\n");
+            }
+            config = RKGetLatestConfig(radar);
+            sprintf(health->string, "{"
+                    "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Processors\":{\"Value\":true,\"Enum\":0}, "
+                    "\"PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
+                    "\"Noise\":[%.3f,%.3f], "
+                    "\"FFTPlanUsage\":%s"
+                    "}",
+                    transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
+                    pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
+                    healthOkay ? "true" : "false", healthOkay ? healthEnum : RKStatusEnumFault,
+                    networkOkay ? "true" : "false", networkEnum,
+                    radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
+                    radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    RKIntegerToCommaStyleString((long)pulseRate), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    config->noise[0], config->noise[1],
+                    FFTPlanUsage
+                    );
+            RKSetHealthReady(radar, health);
+
+            // Get the latest consolidated health
+            health = RKGetLatestHealth(radar);
+            anyCritical = RKAnyCritical(health->string, false, criticalKey, criticalValue);
+            if (anyCritical) {
+                RKLog("Warning. %s is in critical condition (value = %s, count = %d).\n", criticalKey, criticalValue, criticalCount);
+                if (criticalCount++ >= 2) {
+                    criticalCount = 0;
+                    RKLog("Warning. Suspending radar due to critical %s ...\n", criticalKey);
+                    radar->masterControllerExec(radar->masterController, "z", NULL);
+                }
+            } else {
+                criticalCount = 0;
+            }
+
+            // Update the indices and time
+            positionId = positionT0->i;
+            pulseId = pulse->header.i;
+            rayId = ray->header.i;
+            tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
+            t1 = t0;
+        } // if (radar->desc.initFlags & RKInitFlagSignalProcessor) ...
     }
     engine->state ^= RKEngineStateActive;
     return NULL;
@@ -1568,137 +1687,7 @@ int RKStart(RKRadar *radar) {
 //     None
 //
 int RKWaitWhileActive(RKRadar *radar) {
-    int j, k;
-    int s = 0;
-    uint32_t pulseIndex = radar->pulseIndex;
-    uint32_t positionIndex = radar->positionIndex;
-    uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
-    bool transceiverOkay;
-    bool pedestalOkay;
-    bool healthOkay;
-    bool networkOkay;
-    bool anyCritical;
-
-    RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
-    char FFTPlanUsage[RKNameLength];
-    char criticalKey[RKNameLength];
-    char criticalValue[RKNameLength];
-    int criticalCount = 0;
-    
-    RKConfig *config;
-    RKHealth *health;
-    RKPosition *positionT0, *positionT1;
-
-    positionT1 = RKGetLatestPosition(radar);
-
     while (radar->active) {
-        if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
-            if (s++ == 3) {
-                s = 0;
-                // General Health
-                transceiverOkay = pulseIndex == radar->pulseIndex ? false : true;
-                pedestalOkay = positionIndex == radar->positionIndex ? false : true;
-                healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
-                networkOkay = radar->hostMonitor->allReachable ? true : false;
-                networkEnum =
-                radar->hostMonitor->allReachable ? RKStatusEnumNormal :
-                (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
-                 (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
-
-                // Transceiver health
-                health = RKGetLatestHealthOfNode(radar, RKHealthNodeTransceiver);
-                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                    transceiverEnum = RKStatusEnumStandby;
-                } else {
-                    transceiverEnum = RKStatusEnumNormal;
-                }
-
-                // Position active / standby
-                health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
-                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                    pedestalEnum = RKStatusEnumStandby;
-                } else {
-                    positionT0 = RKGetLatestPosition(radar);
-                    if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
-                        RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
-                        pedestalEnum = RKStatusEnumActive;
-                    } else {
-                        pedestalEnum = RKStatusEnumStandby;
-                    }
-                    positionT1 = positionT0;
-                }
-
-                // Tweeta health
-                health = RKGetLatestHealthOfNode(radar, RKHealthNodeTweeta);
-                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                    healthEnum = RKStatusEnumStandby;
-                } else {
-                    healthEnum = RKStatusEnumNormal;
-                }
-
-                // Report a health status
-                health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
-                k = sprintf(FFTPlanUsage, "{");
-                for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
-                    k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
-                                 radar->pulseCompressionEngine->planSizes[j],
-                                 radar->pulseCompressionEngine->planUseCount[j]);
-                }
-                k += sprintf(FFTPlanUsage + k, "}");
-                if (k > RKNameLength * 3 / 4) {
-                    RKLog("Warning. Too little head room in FFTPlanUsage.\n");
-                }
-                config = RKGetLatestConfig(radar);
-                sprintf(health->string, "{"
-                        "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Processors\":{\"Value\":true,\"Enum\":0}, "
-                        "\"Noise\":[%.3f,%.3f], "
-                        "\"FFTPlanUsage\":%s"
-                        "}",
-                        transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
-                        pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
-                        healthOkay ? "true" : "false", healthOkay ? healthEnum : RKStatusEnumFault,
-                        networkOkay ? "true" : "false", networkEnum,
-                        radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
-                        radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        config->noise[0], config->noise[1],
-                        FFTPlanUsage
-                        );
-                RKSetHealthReady(radar, health);
-
-                //printf("radarkitnode %d\n", radar->healthNodes[RKHealthNodeRadarKit].index);
-                
-                // Get the latest consolidated health
-                health = RKGetLatestHealth(radar);
-                anyCritical = RKAnyCritical(health->string, false, criticalKey, criticalValue);
-                if (anyCritical) {
-                    RKLog("Warning. %s is in critical condition (value = %s, count = %d).\n", criticalKey, criticalValue, criticalCount);
-                    if (criticalCount++ >= 2) {
-                        criticalCount = 0;
-                        RKLog("Info. Suspending ...\n");
-                        radar->masterControllerExec(radar->masterController, "z", NULL);
-                    }
-                } else {
-                    criticalCount = 0;
-                }
-                
-                pulseIndex = radar->pulseIndex;
-                positionIndex = radar->positionIndex;
-                tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
-            }
-            // Check to make sure if the raddar hasn't been suspended from the critical condition evaluation
-            if (!radar->active) {
-                break;
-            }
-        } // if (radar->desc.initFlags & RKInitFlagSignalProcessor) ...
         usleep(100000);
         radar->tic++;
     }
@@ -2500,7 +2489,6 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
     RKPulse *pulse = RKGetPulse(radar->pulses, index);
     int k = 0;
     while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
-        RKLog("Warning. RKGetLatestPulse() reversed once.\n");
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
@@ -2545,6 +2533,11 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
 RKRay *RKGetLatestRay(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
     RKRay *ray = RKGetRay(radar->rays, index);
+    int k = 0;
+    while (!(ray->header.s & RKRayStatusReady) && k++ < radar->desc.rayBufferDepth) {
+        index = RKPreviousModuloS(index, radar->desc.rayBufferDepth);
+        ray = RKGetRay(radar->rays, index);
+    }
     return ray;
 }
 
