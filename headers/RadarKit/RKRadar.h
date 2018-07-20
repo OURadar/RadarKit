@@ -296,6 +296,7 @@ RKPulse *RKGetLatestPulse(RKRadar *);
 // Rays
 RKRay *RKGetVacantRay(RKRadar *);
 void RKSetRayReady(RKRadar *, RKRay *);
+RKRay *RKGetLatestRay(RKRadar *);
 
 // Waveform Calibrations
 void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);

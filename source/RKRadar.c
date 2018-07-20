@@ -88,7 +88,7 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
     return size;
 }
 
-static void *engineMonitorRunLoop(void *in) {
+static void *systemInspectorRunLoop(void *in) {
     RKSimpleEngine *engine = (RKSimpleEngine *)in;
     
     int k, s;
@@ -104,6 +104,17 @@ static void *engineMonitorRunLoop(void *in) {
     
     engine->state ^= RKEngineStateActive;
 
+    RKPosition *position;
+    RKPulse *pulse;
+    RKRay *ray;
+    RKIdentifier positionId = 0, pulseId = 0, rayId = 0;
+    double positionRate, pulseRate, rayRate;
+
+    struct timeval t0, t1;
+    double dt;
+
+    gettimeofday(&t1, NULL);
+
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
@@ -115,6 +126,7 @@ static void *engineMonitorRunLoop(void *in) {
         }
         engine->state ^= RKEngineStateSleep1;
         // Put together a system status
+        gettimeofday(&t0, NULL);
         RKStatus *status = RKGetVacantStatus(radar);
         radar->memoryUsage = RKGetRadarMemoryUsage(radar);
         status->memoryUsage = radar->memoryUsage;
@@ -141,11 +153,28 @@ static void *engineMonitorRunLoop(void *in) {
                 RKLog("%s %s   %s", engine->name,
                       RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble),
                       RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble));
+                RKLog("%s %s Hz   %s Hz   %s Hz\n",
+                      engine->name,
+                      RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
+                      RKVariableInString("pulseRate", &pulseRate, RKValueTypeDouble),
+                      RKVariableInString("rayRate", &rayRate, RKValueTypeDouble));
                 shown = true;
             }
         } else {
             shown = false;
         }
+        // Derive the acquisition rate of position, pulse and ray
+        position = RKGetLatestPosition(radar);
+        pulse = RKGetLatestPulse(radar);
+        ray = RKGetLatestRay(radar);
+        dt = RKTimevalDiff(t0, t1);
+        positionRate = (double)(position->i - positionId) / dt;
+        pulseRate = (double)(pulse->header.i - pulseId) / dt;
+        rayRate = (double)(ray->header.i - rayId) / dt;
+        positionId = position->i;
+        pulseId = pulse->header.i;
+        rayId = ray->header.i;
+        t1 = t0;
     }
     engine->state ^= RKEngineStateActive;
     return NULL;
@@ -166,7 +195,7 @@ RKSimpleEngine *RKSystemInspector(RKRadar *radar) {
     engine->memoryUsage = sizeof(RKSimpleEngine);
     engine->userResource = radar;
     RKLog("%s Starting ...\n", engine->name);
-    if (pthread_create(&engine->tid, NULL, engineMonitorRunLoop, engine)) {
+    if (pthread_create(&engine->tid, NULL, systemInspectorRunLoop, engine)) {
         RKLog("%s Error creating engine monitor.\n", engine->name);
         free(engine);
         return NULL;
@@ -2471,6 +2500,7 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
     RKPulse *pulse = RKGetPulse(radar->pulses, index);
     int k = 0;
     while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
+        RKLog("Warning. RKGetLatestPulse() reversed once.\n");
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulse(radar->pulses, index);
     }
@@ -2510,6 +2540,12 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
     if (radar->state & RKRadarStateLive) {
         ray->header.s |= RKRayStatusReady;
     }
+}
+
+RKRay *RKGetLatestRay(RKRadar *radar) {
+    uint32_t index = RKPreviousModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    RKRay *ray = RKGetRay(radar->rays, index);
+    return ray;
 }
 
 #pragma mark - Waveform Calibrations
