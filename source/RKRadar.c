@@ -2707,7 +2707,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         n += 5;
         
         // Check the terminal width
-        struct winsize terminalSize;
+        struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
         switch (flag & RKOverviewFlagWindowSizeMask) {
             case RKOverviewFlagWindowSize80x25:
                 terminalSize.ws_col = 78;

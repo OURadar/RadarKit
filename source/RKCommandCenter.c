@@ -1211,8 +1211,11 @@ int socketInitialHandler(RKOperator *O) {
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
-    RKLog("%s %s Pul x %d   Ray x %d ...\n", engine->name, O->name, user->pulseDownSamplingRatio, user->rayDownSamplingRatio);
-
+    struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+    ioctl(O->sid, TIOCGWINSZ, &terminalSize);
+    RKLog(">%s %s Pul x %d   Ray x %d   Text %d x %d ...\n", engine->name, O->name,
+          user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row);
+    user->textPreferences |= RKTextPreferencesWindowSize120x80;
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
 
