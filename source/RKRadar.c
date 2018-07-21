@@ -2672,8 +2672,8 @@ void RKShowOffsets(RKRadar *radar, char *text) {
 }
 
 int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
+    static int slice, pulseStride = 1, rayStride = 1;
     int i, j, k, m = 0, n = 0;
-    int slice;
     char *c;
     size_t s;
     RKRay *ray;
@@ -2686,12 +2686,12 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     const char m3 = 'o';  const char c3[] = RKBlueColor;
     const char m4 = '-';  const char c4[] = RKBlueColor;
     
-    int w = (int)log10(radar->desc.pulseBufferDepth) + 1;
-    
+    int w = (int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1;
+
     if (flag & RKOverviewFlagDrawBackground) {
         // General address format goes like this: [color reset] [new line] %04d-%04d
         char format[64];
-        sprintf(format, "\n%%0%dd-%%0%dd ", (int)log10(radar->desc.pulseBufferDepth) + 1, (int)log10(radar->desc.rayBufferDepth) + 1);
+        sprintf(format, "\n%%0%dd-%%0%dd ", w, w);
         
         // Pulse buffer
         c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
@@ -2706,11 +2706,47 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         *(text + m++) = '\n';
         n += 5;
         
-        k = 0;
-        slice = 100;
-        for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
-            m += sprintf(text + m, format, k, MIN(radar->desc.pulseBufferDepth, k + slice));
-            k += slice;
+        // Check the terminal width
+        struct winsize terminalSize;
+        switch (flag & RKOverviewFlagWindowSizeMask) {
+            case RKOverviewFlagWindowSize80x25:
+                terminalSize.ws_col = 78;
+                terminalSize.ws_row = 25;
+                break;
+            case RKOverviewFlagWindowSize80x40:
+                terminalSize.ws_col = 78;
+                terminalSize.ws_row = 40;
+                break;
+            case RKOverviewFlagWindowSize80x50:
+                terminalSize.ws_col = 78;
+                terminalSize.ws_row = 50;
+                break;
+            case RKOverviewFlagWindowSize120x80:
+                terminalSize.ws_col = 110;
+                terminalSize.ws_row = 80;
+                break;
+            default:
+                ioctl(0, TIOCGWINSZ, &terminalSize);
+                if (terminalSize.ws_col == 0) {
+                    terminalSize.ws_col = 110;
+                } else {
+                    if (terminalSize.ws_col >= 120) {
+                        terminalSize.ws_col -= 10;
+                    }
+                }
+                if (terminalSize.ws_row == 0) {
+                    terminalSize.ws_row = 80;
+                }
+                break;
+        }
+        
+        // Background of pulse buffer: digits occupy int(log(depth)) + 1 (2x), minus '-', some ' '(front), some ' '(back), then pick the optimal 10.
+        slice = (terminalSize.ws_col - 2 * ((int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1) - 3 + 9) / 10 * 10;
+        k = slice * terminalSize.ws_row * 2 / 5;
+        pulseStride = MAX(1, (radar->desc.pulseBufferDepth + k - 1) / k);
+        for (j = 0, k = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
+            m += sprintf(text + m, format, k, MIN(k + pulseStride * slice, radar->desc.pulseBufferDepth));
+            k += pulseStride * slice;
             n++;
         }
         
@@ -2741,10 +2777,12 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         *(text + m++) = '\n';
         n += 4;
         
-        k = 0;
-        for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
-            m += sprintf(text + m, format, k, MIN(k + slice, radar->desc.rayBufferDepth));
-            k += slice;
+        // Background of ray buffer
+        k = slice * terminalSize.ws_row * 2 / 5;
+        rayStride = MAX(1, (radar->desc.rayBufferDepth + k - 1) / k);
+        for (j = 0, k = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
+            m += sprintf(text + m, format, k, MIN(k + rayStride * slice, radar->desc.rayBufferDepth));
+            k += rayStride * slice;
             n++;
         }
         n++;
@@ -2765,6 +2803,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
                          "    %c Algorithms\n",
                          n, m0, m1, m2, m3);
         }
+        //printf("%d x %d   slice = %d   pulseStride = %d   rayStride = %d\n", terminalSize.ws_col, terminalSize.ws_row, slice, pulseStride, rayStride);
     }
     
     // Use w for two address end points plus the other characters
@@ -2772,13 +2811,12 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     
     n = 4;
     k = 0;
-    slice = 100;
     uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
-        for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++) {
+        for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++, k += pulseStride) {
             pulse = RKGetPulse(radar->pulses, k);
             s0 = pulse->header.s;
             if (flag & RKOverviewFlagShowColor) {
@@ -2817,7 +2855,6 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
             } else {
                 *(text + m++) = s0 & RKPulseStatusUsedForMoments ? m3 : (s0 & RKPulseStatusRingProcessed ? m2 : (s0 & RKPulseStatusHasIQData ? m1 : m0));
             }
-            k++;
         }
         n++;
     }
@@ -2827,7 +2864,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     for (j = 0; j < 50 && k < radar->desc.rayBufferDepth; j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
-        for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++) {
+        for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++, k += rayStride) {
             ray = RKGetRay(radar->rays, k);
             s0 = ray->header.s;
             if (flag & RKOverviewFlagShowColor) {
@@ -2860,7 +2897,6 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
                 *(text + m++) = s0 & RKRayStatusBeingConsumed ? m3 : (s0 & RKRayStatusStreamed ? m2 : (s0 & RKRayStatusReady ? m1 : m0));
             }
             s1 = s0;
-            k++;
         }
         n++;
     }

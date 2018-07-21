@@ -316,6 +316,8 @@ int socketStreamHandler(RKOperator *O) {
     RKIdentifier identifier;
     RKProductId productId;
 
+    RKOverviewFlag overviewFlag;
+    
     struct timeval timevalOrigin, timevalTx, timevalRx;
     double deltaTx, deltaRx;
 
@@ -425,12 +427,29 @@ int socketStreamHandler(RKOperator *O) {
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
         } else if (k == RKStreamStatusBuffers) {
-            if ((user->streamsInProgress & RKStreamStatusMask) != k) {
-                user->streamsInProgress |= k;
-                k = RKBufferOverview(user->radar, user->string,
-                                     RKOverviewFlagDrawBackground | (user->textPreferences & RKTextPreferencesShowColor ? RKOverviewFlagShowColor : RKOverviewFlagNone));
+            overviewFlag = RKOverviewFlagNone;
+            if (user->textPreferences & RKTextPreferencesShowColor) {
+                overviewFlag |= RKOverviewFlagShowColor;
+            }
+            switch (user->textPreferences & RKTextPreferencesWindowSizeMask) {
+                case RKTextPreferencesWindowSize80x40:
+                    overviewFlag |= RKOverviewFlagWindowSize80x40;
+                    break;
+                case RKTextPreferencesWindowSize80x50:
+                    overviewFlag |= RKOverviewFlagWindowSize80x50;
+                    break;
+                case RKTextPreferencesWindowSize120x80:
+                    overviewFlag |= RKOverviewFlagWindowSize120x80;
+                    break;
+                default:
+                    break;
+            }
+            if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamStatusBuffers) {
+                user->streamsInProgress |= RKStreamStatusBuffers;
+                overviewFlag |= RKOverviewFlagDrawBackground;
+                k = RKBufferOverview(user->radar, user->string, overviewFlag);
             } else {
-                k = RKBufferOverview(user->radar, user->string, user->textPreferences & RKTextPreferencesShowColor ? RKOverviewFlagShowColor : RKOverviewFlagNone);
+                k = RKBufferOverview(user->radar, user->string, overviewFlag);
             }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;

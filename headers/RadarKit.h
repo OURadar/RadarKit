@@ -14,11 +14,12 @@
 //         - RKEngineStateActive and RKEngineStateWantActive
 //         - FIR/IIR ground clutter filters
 //         - Four Elliptical filters are included
+//         - RKSweepEngine product unregistration
+//         - Buffer overview text stride for deep buffers
 //
 //         - To do:
 //         - Task, event, sequence of tasks
 //         - LFM frequency hopping
-//         - Buffer overview text for deep buffer
 //         - Mapping coefficients to product files
 //
 //  1.2.10 - 6/30/2018

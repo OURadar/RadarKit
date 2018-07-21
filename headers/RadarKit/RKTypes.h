@@ -710,7 +710,12 @@ typedef uint8_t RKOverviewFlag;
 enum RKOverviewFlag {
     RKOverviewFlagNone                           = 0,                          //
     RKOverviewFlagShowColor                      = 1,                          // Use escape sequence for colors
-    RKOverviewFlagDrawBackground                 = (1 << 1)                    // Repaint the background
+    RKOverviewFlagDrawBackground                 = (1 << 1),                   // Repaint the background
+    RKOverviewFlagWindowSizeMask                 = (7 << 2),                   // Forced windwow size
+    RKOverviewFlagWindowSize80x25                = (1 << 2),                   //
+    RKOverviewFlagWindowSize80x40                = (2 << 2),                   //
+    RKOverviewFlagWindowSize80x50                = (3 << 2),                   //
+    RKOverviewFlagWindowSize120x80               = (4 << 2)                    //
 };
 
 typedef uint32_t RKWaveformType;
