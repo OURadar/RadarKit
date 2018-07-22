@@ -509,6 +509,10 @@ void RKTestFileManager(void) {
 void RKTestPreferenceReading(void) {
     SHOW_FUNCTION_NAME
     int k;
+    RKName name;
+    double numbers[4];
+    RKControl control;
+    RKWaveformCalibration cali;
     RKPreference *preference = RKPreferenceInit();;
     RKPreferenceObject *object = NULL;
     object = RKPreferenceFindKeyword(preference, "PedzyHost");
@@ -519,22 +523,18 @@ void RKTestPreferenceReading(void) {
     if (object) {
         printf("tweeta host = %s\n", object->valueString);
     }
-    RKName name;
     RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
-    double numbers[4];
     RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
     k = 0;
-    RKControl control;
     while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
         k++;
     }
     RKLog(">Preference.Shortcut count = %d\n", k);
     k = 0;
-    RKWaveformCalibration cali;
     while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
         k++;
     }
@@ -2770,10 +2770,6 @@ void RKTestExperiment(void) {
     for (int i = 0; i < 8; i++) {
         printf("%d %.6f %.6f\n", i, filter.B[i].i, filter.B[i].q);
     }
-}
-
-void RKTestGenerateFakeFiles(void) {
-    SHOW_FUNCTION_NAME
 }
 
 #pragma mark -
