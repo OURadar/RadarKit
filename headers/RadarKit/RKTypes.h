@@ -890,6 +890,7 @@ typedef struct rk_pulse_header {
     RKPulseStatus       s;                                                    // Status flag
     uint32_t            capacity;                                             // Allocated capacity
     uint32_t            gateCount;                                            // Number of range gates
+    uint32_t            downSampledGateCount;                                 // Number of range gates after down-sampling
     RKMarker            marker;                                               // Position Marker
     uint32_t            pulseWidthSampleCount;                                // Pulsewidth
     struct timeval      time;                                                 // UNIX time in seconds since 1970/1/1 12:00am

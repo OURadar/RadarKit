@@ -26,7 +26,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     // Get the start pulse to know the capacity
     RKPulse *pulse = input[0];
     const uint32_t capacity = pulse->header.capacity;
-    const uint32_t gateCount = pulse->header.gateCount;
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
 	const int lagCount = space->userLagChoice == 0 ? MIN(pulseCount, space->lagCount) : MIN(space->userLagChoice + 1, space->lagCount);
 
 	if (lagCount > pulseCount) {
@@ -53,13 +53,13 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
         do {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(input[n], p);
             
-            RKSIMD_izadd(&Xn, &space->mX[p], pulse->header.gateCount);                   // mX += X
+            RKSIMD_izadd(&Xn, &space->mX[p], gateCount);                                 // mX += X
             // Go through each lag
             for (k = 0; k < lagCount; k++) {
                 //RKLog(">Lag %d\n", k);
                 if (n >= k) {
                     RKIQZ Xk = RKGetSplitComplexDataFromPulse(input[n - k], p);
-                    RKSIMD_zcma(&Xn, &Xk, &R[k], pulse->header.gateCount, 1);            // R[k] += X[n] * X[n - k]'
+                    RKSIMD_zcma(&Xn, &Xk, &R[k], gateCount, 1);                          // R[k] += X[n] * X[n - k]'
                 }
             }
             n++;

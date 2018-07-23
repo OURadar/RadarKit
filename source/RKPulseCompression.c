@@ -382,8 +382,7 @@ static void *pulseCompressionCore(void *_in) {
                     Z.q[i] = Z.q[j];
                 }
             }
-            pulse->header.gateCount /= stride;
-            pulse->header.gateSizeMeters *= (float)stride;
+            pulse->header.downSampledGateCount = pulse->header.gateCount / stride;
         }
         pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
 

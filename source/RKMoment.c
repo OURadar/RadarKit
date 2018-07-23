@@ -433,8 +433,8 @@ static void *momentCore(void *in) {
         ray->header.endAzimuth      = E->header.azimuthDegrees;
         ray->header.endElevation    = E->header.elevationDegrees;
         ray->header.configIndex     = E->header.configIndex;
-        ray->header.gateCount       = S->header.gateCount;
-        ray->header.gateSizeMeters  = S->header.gateSizeMeters;
+        ray->header.gateCount       = S->header.downSampledGateCount;
+        ray->header.gateSizeMeters  = S->header.gateSizeMeters * engine->radarDescription->pulseToRayRatio;
 
         config = &engine->configBuffer[E->header.configIndex];
 

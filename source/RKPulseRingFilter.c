@@ -533,8 +533,8 @@ static void *pulseRingWatcher(void *_in) {
         config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
 
         // Update processing region if necessary
-        if (gateCount != MIN(pulse->header.gateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
-            gateCount = MIN(pulse->header.gateCount, config->pulseRingFilterGateCount);
+        if (gateCount != MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
+            gateCount = MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount);
             RKLog("%s %s   %s\n", engine->name,
                   RKVariableInString("configIndex", &pulse->header.configIndex, RKValueTypeUInt16),
                   RKVariableInString("configIndex", engine->configIndex, RKValueTypeUInt32));

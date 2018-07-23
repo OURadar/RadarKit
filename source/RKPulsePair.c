@@ -196,7 +196,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     // Get the start pulse to know the capacity
     RKPulse *pulse = pulses[0];
     const uint32_t capacity = pulse->header.capacity;
-    const uint32_t gateCount = pulse->header.gateCount;
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
     //
@@ -262,7 +262,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         for (; n < count; n += 2) {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
             RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 1], p);
-            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], pulse->header.gateCount, 1);          // R[k] += X[n] * X[n - k]'
+            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], gateCount, 1);                        // R[k] += X[n] * X[n - k]'
             j++;
         }
         RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                     // R[1] /= j   (unbiased)

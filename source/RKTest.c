@@ -211,9 +211,6 @@ void RKTestByNumber(const int number, const void *arg) {
         case 60:
             RKTestExperiment();
             break;
-        case 61:
-            RKTestGenerateFakeFiles();
-            break;
         default:
             RKLog("Test %d is invalid.\n", number);
             break;
