@@ -655,12 +655,10 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     }
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].flag = RKProductStatusVacant;
-    RKLog(">%s Product %s%s%s unregistered   %s   %s\n", engine->name,
+    RKLog(">%s Product %s%s%s unregistered\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
-          rkGlobalParameters.showColor ? RKNoColor : "",
-          RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId),
-          RKVariableInString("name", engine->productBuffer[i].desc.name, RKValueTypeString));
+          rkGlobalParameters.showColor ? RKNoColor : "");
     memset(&engine->productBuffer[i].desc, 0, sizeof(RKProductDesc));
     engine->productBuffer[i].pid = 0;
     pthread_mutex_unlock(&engine->productMutex);

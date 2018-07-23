@@ -130,10 +130,6 @@
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
 
-//#define RKFilterAnchorDefault                           {{0, 0, 1, 0, 0, RKGateCount, 0.0f, 0.0f, 1.0f, 0.0f}}
-//#define RKFilterAnchorDefaultWithMaxDataLength(x)       {{0, 0, 1, 0, 0, (x), 0.0f, 0.0f, 1.0f, 0.0f}}
-//#define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{0, 0, (x), 0, 0, (y), 0.0f, 0.0f, 1.0f, 0.0f}}
-
 #define RKFilterAnchorDefault                           {{.length = 1, .maxDataLength = RKGateCount, .filterGain = 1.0f}}
 #define RKFilterAnchorDefaultWithMaxDataLength(x)       {{.length = 1, .maxDataLength = (x), .filterGain = 1.0f}}
 #define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{.length = (x), .maxDataLength = (y), .filterGain = 1.0f}}
