@@ -2759,17 +2759,12 @@ void RKTestExperiment(void) {
     // - Pedestal command for RKPedestalExec()
     // - Transceiver command for RKTransceiverExec()
     // - HealthRelay command for RKHealthRelayExec()
-    // - Sweep end flag is defined here so waiting for a sweep complete is ok
+    // - Sweep end flag is defined here so waiting for a sweep complete is okay
     //   - Have the task sub-routine detect if the sweep is progressing as expected
     // - Stop command for RKPedestalExec()
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
-    RKIIRFilter filter;
-    RKGetFilterCoefficients(&filter, RKFilterTypeElliptical1);
-    for (int i = 0; i < 8; i++) {
-        printf("%d %.6f %.6f\n", i, filter.B[i].i, filter.B[i].q);
-    }
 }
 
 #pragma mark -
