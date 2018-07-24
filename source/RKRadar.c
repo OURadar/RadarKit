@@ -104,20 +104,18 @@ static void *systemInspectorRunLoop(void *in) {
     
     engine->state ^= RKEngineStateActive;
 
+    uint32_t index;
+
     RKConfig *config;
     RKHealth *health;
-    RKPosition *positionT0, *positionT1;
-    RKPulse *pulse;
-    RKRay *ray;
-    RKIdentifier positionId = 0, pulseId = 0, rayId = 0;
-    double positionRate = 100.0, pulseRate = 1000.0, rayRate = 50.0;
-
-    positionT1 = RKGetLatestPosition(radar);
+    RKPosition *position0, *position1;
+    RKPulse *pulse0, *pulse1;
+    RKRay *ray0, *ray1;
+    double positionRate = 0.0, pulseRate = 0.0, rayRate = 0.0;
 
     uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
 
     struct timeval t0, t1;
-    struct timeval positionTimevalT1, pulseTimevalT1, rayTimevalT1;
     double dt;
 
     bool transceiverOkay, pedestalOkay, healthOkay, networkOkay, anyCritical;
@@ -126,9 +124,6 @@ static void *systemInspectorRunLoop(void *in) {
     int criticalCount = 0;
 
     gettimeofday(&t1, NULL);
-    positionTimevalT1 = t1;
-    pulseTimevalT1 = t1;
-    rayTimevalT1 = t1;
 
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
@@ -179,29 +174,44 @@ static void *systemInspectorRunLoop(void *in) {
         } else {
             shown = false;
         }
+
         // Derive the acquisition rate of position, pulse and ray
         // Note, each acquisition rate is computed with its own timeval since they come in bursts, we may get no update in an iteration
-        positionT0 = RKGetLatestPosition(radar);
-        pulse = RKGetLatestPulse(radar);
-        ray = RKGetLatestRay(radar);
-        //printf("position->i = %llu %llu -> %.3f\n", (unsigned long long)positionT0->i, (unsigned long long)positionId, positionRate);
-        if (positionT0->i >= positionId) {
-            dt = RKTimevalDiff(t0, positionTimevalT1);
-            positionRate = 0.95 * positionRate + 0.05 * (double)(positionT0->i - positionId) / dt;
-            positionId = positionT0->i;
-            positionTimevalT1 = t0;
+        // Basic idea:
+        //  - Get the index that is about 1/8 buffer depth behind the current index
+        //  - Get the position / pulse / ray of that index
+        //  - Get another index that is about another 1/8 buffer depth behind the previous index
+        //  - Get the position / pulse / ray of that index
+        //  - Compute the number of samples (buffer depth / 8) over the period (delta t)
+
+        // Position
+        index = RKPreviousNModuloS(radar->positionIndex, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth);
+        position0 = &radar->positions[index];
+        index = RKPreviousNModuloS(index, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth);
+        position1 = &radar->positions[index];
+        dt = position0->timeDouble - position1->timeDouble;
+        if (dt) {
+            positionRate = (double)(radar->desc.positionBufferDepth / 8) / dt;
         }
-        if (pulse->header.i >= pulseId) {
-            dt = RKTimevalDiff(t0, pulseTimevalT1);
-            pulseRate = 0.95 * pulseRate + 0.05 * (double)(pulse->header.i - pulseId) / dt;
-            pulseId = pulse->header.i;
-            pulseTimevalT1 = t0;
+
+        // Pulse
+        index = RKPreviousNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
+        pulse0 = RKGetPulse(radar->pulses, index);
+        index = RKPreviousNModuloS(index, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
+        pulse1 = RKGetPulse(radar->pulses, index);
+        dt = pulse0->header.timeDouble - pulse1->header.timeDouble;
+        if (dt) {
+            pulseRate = (double)(radar->desc.pulseBufferDepth / 8) / dt;
         }
-        if (ray->header.i >= rayId) {
-            dt = RKTimevalDiff(t0, rayTimevalT1);
-            rayRate = 0.95 * rayRate + 0.05 * (double)(ray->header.i - rayId) / dt;
-            rayId = ray->header.i;
-            rayTimevalT1 = t0;
+
+        // Ray
+        index = RKPreviousNModuloS(radar->rayIndex, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
+        ray0 = RKGetRay(radar->rays, index);
+        index = RKPreviousNModuloS(index, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
+        ray1 = RKGetRay(radar->rays, index);
+        dt = ray0->header.startTimeDouble - ray1->header.startTimeDouble;
+        if (dt) {
+            rayRate = (double)(radar->desc.rayBufferDepth / 8) / dt;
         }
 
         // Only do this if the radar is a signal processor
@@ -231,13 +241,12 @@ static void *systemInspectorRunLoop(void *in) {
                 RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
                 pedestalEnum = RKStatusEnumStandby;
             } else {
-                if (RKGetMinorSectorInDegrees(positionT0->azimuthDegrees, positionT1->azimuthDegrees) > 0.1f ||
-                    RKGetMinorSectorInDegrees(positionT0->elevationDegrees, positionT1->elevationDegrees) > 0.1f) {
+                if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
+                    RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
                     pedestalEnum = RKStatusEnumActive;
                 } else {
                     pedestalEnum = RKStatusEnumStandby;
                 }
-                positionT1 = positionT0;
             }
 
             // Tweeta health
