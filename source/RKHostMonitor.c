@@ -14,11 +14,15 @@
 // The following structures are obtained from an example from Apple:
 // https://developer.apple.com/library/content/samplecode/SimplePing/
 //
-// They also work on CentOS 7.3.
 // NOTE: To allow root to use icmp sockets, run:
+//
+// For CentOS 7.3
 //
 //     sysctl -w net.ipv4.ping_group_range="0 0"
 //
+// For CentOS 6.7.
+//
+//     sysctl -w net.ipv4.ping_group_range="0 2147483647"
 
 enum {
     RKICMPv4EchoRequest = 8,
@@ -136,8 +140,8 @@ static void *hostPinger(void *in) {
         RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d (%s)\n", engine->name, name, sd, errno, RKErrnoString(errno));
         if (errno == EACCES) {
             RKLog(">%s %s Info. Use one of the following:\n", engine->name, name);
-            RKLog(">%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 0\"'\n", engine->name, name);
-            RKLog(">%s %s Info. Add 'net.ipv4.ping_group_range = 0 0' to /etc/sysctl.conf\n", engine->name, name);
+            RKLog(">%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 2147483647\"'\n", engine->name, name);
+            RKLog(">%s %s Info. Add 'net.ipv4.ping_group_range = 0 2147483647' to /etc/sysctl.conf\n", engine->name, name);
             RKLog(">%s %s Info. to allow root to use ICMP sockets\n", engine->name, name);
         }
         me->hostStatus = RKHostStatusUnknown;
