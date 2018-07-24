@@ -48,6 +48,14 @@ Follow these steps to get the project
     brew install fftw homebrew/science/netcdf
     ```
     
+    ##### Special Notes About NetCDF shared library #####
+    
+    Some operating systems require the following line in your shell profile for the netcdf shared library to be found.
+    
+    ```
+    export LD_LIBRARY_PATH=/usr/local/lib
+    ```
+
 3. Compile and install the framework.
 
     ```shell
@@ -63,10 +71,19 @@ Follow these steps to get the project
     
 5. (Some Linux) Add the following line to /etc/sysctl.conf
 
+    (CentOS 7)
     ```
     net.ipv4.ping_group_range = 0 0
     ```
+
+    or
     
+    (CentOS 6 / Ubuntu 18)
+    ```
+     net.ipv4.ping_group_range = 0 2147483647
+     ```
+
+
 6. (Optional) Compile [FFTW] from source
 
     ```
