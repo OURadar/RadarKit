@@ -616,6 +616,7 @@ enum RKStatusEnum {
     RKStatusEnumNotOperational                   =  2,                         //
     RKStatusEnumOff                              =  2,                         //
     RKStatusEnumFault                            =  2,                         //
+    RKStatusEnumNotWired                         =  3,                         //
     RKStatusEnumCritical                         =  4                          // This would the status we may shutdown the radar. Co-incidently, red = 0x4
 };
 

@@ -124,12 +124,13 @@ static void *systemInspectorRunLoop(void *in) {
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
-        while (s++ < 10 && engine->state & RKEngineStateWantActive) {
+        do {
             if (engine->verbose > 2) {
-                RKLog("%s", engine->name);
+                RKLog("%s Sleeping %.1f s\n", engine->name, s * 0.05f);
             }
             usleep(50000);
-        }
+            //RKLog("Warning. radar->status[0].flag = %d   .i = %d\n", radar->status[0].flag, (int)radar->status[0].i);
+        } while (++s < 10 && engine->state & RKEngineStateWantActive);
         engine->state ^= RKEngineStateSleep1;
         // Put together a system status
         RKStatus *status = RKGetVacantStatus(radar);
@@ -214,7 +215,7 @@ static void *systemInspectorRunLoop(void *in) {
             // General Health
             transceiverOkay = pulseRate == 0.0f ? false : true;
             pedestalOkay = positionRate == 0.0f ? false : true;
-            healthOkay = tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true;
+            healthOkay = radar->healthRelay ? (tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true) : false;
             networkOkay = radar->hostMonitor->allReachable ? true : false;
             networkEnum =
             radar->hostMonitor->allReachable ? RKStatusEnumNormal :
@@ -282,7 +283,7 @@ static void *systemInspectorRunLoop(void *in) {
                     "}",
                     transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
                     pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
-                    healthOkay ? "true" : "false", healthOkay ? healthEnum : RKStatusEnumFault,
+                    healthOkay ? "true" : "false", radar->healthRelay ? (healthOkay ? healthEnum : RKStatusEnumFault) : RKStatusEnumNotWired,
                     networkOkay ? "true" : "false", networkEnum,
                     radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                     radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
@@ -1552,7 +1553,6 @@ int RKGoLive(RKRadar *radar) {
         RKLog("RKGoLive()   %s\n", RKVariableInString("radar->tic", &radar->tic, RKValueTypeUInt64));
     }
     pthread_mutex_lock(&radar->mutex);
-    radar->active = true;
     radar->tic++;
 
     // Start the engines
@@ -1672,7 +1672,7 @@ int RKGoLive(RKRadar *radar) {
         radar->masterController = radar->transceiver;
         radar->masterControllerExec = radar->transceiverExec;
     }
-    
+
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
@@ -1682,7 +1682,9 @@ int RKGoLive(RKRadar *radar) {
               RKFloatToCommaStyleString((double)radar->memoryUsage / 1073741824.0));
     }
 
+    // Now we declare the radar active
     radar->state |= RKRadarStateLive;
+    radar->active = true;
     radar->tic++;
     pthread_mutex_unlock(&radar->mutex);
     return RKResultSuccess;
@@ -2265,7 +2267,6 @@ RKStatus *RKGetVacantStatus(RKRadar *radar) {
     RKStatus *status = &radar->status[radar->statusIndex];
     if (status->flag != RKStatusFlagVacant) {
         RKLog("Warning. radar->status[%d] should be vacant.\n", radar->statusIndex);
-        status->flag = RKStatusFlagVacant;
     }
     if (radar->state & RKRadarStateLive) {
         status->i += radar->desc.statusBufferDepth;
@@ -2276,7 +2277,9 @@ RKStatus *RKGetVacantStatus(RKRadar *radar) {
 }
 
 void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
-    status->flag |= RKStatusFlagReady;
+    if (radar->state & RKRadarStateLive) {
+        status->flag |= RKStatusFlagReady;
+    }
 }
 
 #pragma mark - Configs
