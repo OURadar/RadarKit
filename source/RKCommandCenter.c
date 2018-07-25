@@ -1135,8 +1135,7 @@ int socketStreamHandler(RKOperator *O) {
 
                 default:
                     // Raw input data
-                    // Note that at this point, the gateCount in header is describing the RKComplex data (compressed), not the RKIQZ raw data.
-                    pulseHeader.gateCount = MIN(pulseHeader.gateCount * user->radar->desc.pulseToRayRatio / k, 2000);
+                    pulseHeader.gateCount = MIN(pulseHeader.gateCount / k, 2000);
                     pulseHeader.gateSizeMeters *= (float)k / user->radar->desc.pulseToRayRatio;
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
