@@ -275,7 +275,7 @@ static void *systemInspectorRunLoop(void *in) {
                     "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Processors\":{\"Value\":true,\"Enum\":0}, "
-                    "\"PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
+                    "\"Measured PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
                     "\"Noise\":[%.3f,%.3f], "
                     "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
                     "\"rayRate\":%.3f, "
@@ -287,9 +287,9 @@ static void *systemInspectorRunLoop(void *in) {
                     networkOkay ? "true" : "false", networkEnum,
                     radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                     radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    RKIntegerToCommaStyleString((long)pulseRate), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
                     config->noise[0], config->noise[1],
-                    RKIntegerToCommaStyleString((long)positionRate), rayRate,
+                    RKIntegerToCommaStyleString((long)round(positionRate)), rayRate,
                     FFTPlanUsage
                     );
             RKSetHealthReady(radar, health);
