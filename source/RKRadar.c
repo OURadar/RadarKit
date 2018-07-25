@@ -104,6 +104,7 @@ static void *systemInspectorRunLoop(void *in) {
     
     engine->state ^= RKEngineStateActive;
 
+    double dt;
     uint32_t index;
 
     RKConfig *config;
@@ -115,15 +116,10 @@ static void *systemInspectorRunLoop(void *in) {
 
     uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
 
-    struct timeval t0, t1;
-    double dt;
-
     bool transceiverOkay, pedestalOkay, healthOkay, networkOkay, anyCritical;
     RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
     RKName FFTPlanUsage, criticalKey, criticalValue;
     int criticalCount = 0;
-
-    gettimeofday(&t1, NULL);
 
     while (engine->state & RKEngineStateWantActive) {
         engine->state |= RKEngineStateSleep1;
@@ -136,7 +132,6 @@ static void *systemInspectorRunLoop(void *in) {
         }
         engine->state ^= RKEngineStateSleep1;
         // Put together a system status
-        gettimeofday(&t0, NULL);
         RKStatus *status = RKGetVacantStatus(radar);
         radar->memoryUsage = RKGetRadarMemoryUsage(radar);
         status->memoryUsage = radar->memoryUsage;
@@ -314,7 +309,6 @@ static void *systemInspectorRunLoop(void *in) {
         } // if (radar->desc.initFlags & RKInitFlagSignalProcessor) ...
         // Update the indices and time
         tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;
-        t1 = t0;
     }
     engine->state ^= RKEngineStateActive;
     return NULL;
