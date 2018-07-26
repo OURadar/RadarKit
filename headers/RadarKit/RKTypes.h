@@ -87,6 +87,7 @@
 #define RKHostMonitorPingInterval            5                                 //
 #define RKMaximumProductCount                64                                //
 #define RKMaximumIIRFilterTaps               8                                 //
+#define RKMaximumPrefixLength                8                                 //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -788,7 +789,7 @@ typedef struct rk_radar_desc {
     float                radarHeight;                                          // Radar height from ground (m)
     float                wavelength;                                           // Radar wavelength (m)
     RKName               name;                                                 // Radar name
-    RKName               filePrefix;                                           // Prefix of output files
+    char                 filePrefix[RKMaximumPrefixLength];                    // Prefix of output files
     char                 dataPath[RKMaximumFolderPathLength];                  // Root path for the data files
 } RKRadarDesc;
 
