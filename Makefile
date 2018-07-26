@@ -60,7 +60,6 @@ LDFLAGS += -L /usr/lib64
 endif
 endif
 
-#LDFLAGS += -Wl,-Bstatic -lradarkit -lfftw3f -lnetcdf -Wl,-Bdynamic -lpthread -lz -lm
 LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
 
 ifeq ($(UNAME), Darwin)
@@ -85,14 +84,13 @@ $(PROGS): %: %.c libradarkit.a
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -f $(PROGS)
-	rm -f $(RKLIB)
-	rm objects/*.o
+	rm -f $(PROGS) $(RKLIB) *.dSYM *.log
+	rm $(OBJS_PATH)/*.o
 
 install:
 	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
-	sudo cp -p libradarkit.a /usr/local/lib/
+	sudo cp -p $(RKLIB) /usr/local/lib/
 
 uninstall:
 	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
-	rm -rf /usr/local/lib/libradarkit.a
+	rm -rf /usr/local/lib/$(RKLIB)
