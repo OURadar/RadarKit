@@ -535,9 +535,6 @@ static void *pulseRingWatcher(void *_in) {
         // Update processing region if necessary
         if (gateCount != MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
             gateCount = MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount);
-            RKLog("%s %s   %s\n", engine->name,
-                  RKVariableInString("configIndex", &pulse->header.configIndex, RKValueTypeUInt16),
-                  RKVariableInString("configIndex", engine->configIndex, RKValueTypeUInt32));
             paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
             length = paddedGateCount / engine->coreCount;
             origin = 0;
@@ -547,10 +544,13 @@ static void *pulseRingWatcher(void *_in) {
                 worker->processLength = length;
                 worker->outputLength = MIN(gateCount - origin, length);
                 origin += length;
-                RKLog("%s %d %s    %s    %s  %d\n", engine->name, c,
-                      RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
-                      RKVariableInString("origin", &worker->processOrigin, RKValueTypeUInt32),
-                      RKVariableInString("length", &worker->processLength, RKValueTypeUInt32), pulse->header.configIndex);
+                if (engine->verbose > 1) {
+                    RKLog("%s C%d %s    %s    %s  %s\n", engine->name, c,
+                          RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
+                          RKVariableInString("origin", &worker->processOrigin, RKValueTypeUInt32),
+                          RKVariableInString("length", &worker->processLength, RKValueTypeUInt32),
+                          RKVariableInString("outpuLength", &worker->processLength, RKValueTypeUInt32));
+                }
             }
         }
         
