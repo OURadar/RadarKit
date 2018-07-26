@@ -232,7 +232,7 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
         }
     }
     if (verb) {
-        RKLog(">%s  (k = %d / %d)\n", string, k, RKMaximumStringLength);
+        RKLog(">%s  (k = %d / %d / %d)\n", string, k, count, RKMaximumStringLength);
     }
     return RKResultSuccess;
 }
