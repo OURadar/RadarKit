@@ -45,7 +45,10 @@ end
 %% Pulse Compression
 fprintf('Performing pulse compression ...\n')
 nfft = pow2(ceil(log2(size(raw_pulses, 1))));
-xf = fft(raw_pulses, nfft, 1);
+pulses_copy = raw_pulses;
+pulses_copy(1:360, :, :) = 0;
+% xf = fft(raw_pulses, nfft, 1);
+xf = fft(pulses_copy, nfft, 1);
 wf = fft(wav, nfft);
 yf = conj(wf) .* xf;
 y = ifft(yf, [], 1);
@@ -61,7 +64,7 @@ fprintf('Calculating reflectivity ...\n')
 m = 100;
 [g, p, c] = size(y);
 nblock = floor(p / m);
-yy = reshape(y(1:gateCount, 1 : nblock * m, :), [gateCount, m, nblock, c]);
+yy = reshape(y(1 : gateCount, 1 : nblock * m, :), [gateCount, m, nblock, c]);
 yy = squeeze(mean(abs(yy) .^ 2, 2));
 
 % mean(mean(yy(floor(30/.06):floor(50/.06), 1:250, 1)))
@@ -96,3 +99,16 @@ title('Quick B-Scope of Reflectivity (V)', 'FontSize', 14)
 lp = linkprop(ha, {'XLim', 'YLim', 'CLim'});
 caxis([0, 80])
 colormap(cmap)
+
+%% Spectrum
+yf2 = reshape(yf(1:nfft, 1 : nblock * m, :), [nfft, m, nblock, c]);
+yf2 = 10 * log10(squeeze(mean(abs(yf2) .^ 2, 2)));
+yf2 = fftshift(yf2, 1);
+
+%%
+figure(2)
+clf
+f = (-nfft/2:nfft/2 -1) / nfft * 5;
+n = 1:nblock;
+hline = plot(yf2(:, 1:10:300, 1), 'r');
+htit = title(sprintf('BScope (block %d)', 1), 'FontSize', 14);
