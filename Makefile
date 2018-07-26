@@ -84,8 +84,9 @@ $(PROGS): %: %.c libradarkit.a
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -f $(PROGS) $(RKLIB) *.dSYM *.log
-	rm $(OBJS_PATH)/*.o
+	rm -f $(PROGS) $(RKLIB) *.log
+	rm -f $(OBJS_PATH)/*.o
+	rm -rf *.dSYM
 
 install:
 	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
