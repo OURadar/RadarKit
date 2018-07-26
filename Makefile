@@ -1,12 +1,12 @@
 UNAME := $(shell uname)
 UNAME_M := $(shell uname -m)
-GIT_BRANCH := $(shell git branch | head -n 1 | awk '{print $2}')
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-$(info $$UNAME_M = [${UNAME_M}])
-$(info $$GIT_BRANCH = [${GIT_BRANCH}])
+$(info UNAME_M = [$(shell echo -e "\033[38;5;220m")${UNAME_M}$(shell echo -e "\033[0m")])
+$(info GIT_BRANCH = [$(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m")])
 
 CFLAGS = -std=gnu99 -O2
-ifeq ($(GIT_BRANCH), * beta)
+ifeq ($(GIT_BRANCH), beta)
 CFLAGS += -ggdb
 endif
 
