@@ -729,17 +729,27 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
 
     // Consolidate some other information and check consistencies
+    uint8_t gateCountWarningCount = 0;
+    uint8_t gateSizeWarningCount = 0;
     for (k = 0; k < n; k++) {
         overallMomentList |= rays[k]->header.baseMomentList;
         if (rays[k]->header.gateCount != S->header.gateCount) {
-            RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
-                  engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
-                  RKIntegerToCommaStyleString(S->header.gateCount));
+            if (++gateCountWarningCount < 5) {
+                RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
+                      engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
+                      RKIntegerToCommaStyleString(S->header.gateCount));
+            } else if (gateCountWarningCount == 5) {
+                RKLog("%s Warning. Inconsistent gateCount more than 5 rays / sweep.\n", engine->name);
+            }
         }
         if (rays[k]->header.gateSizeMeters != S->header.gateSizeMeters) {
-            RKLog("%s Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
-                  engine->name, RKIntegerToCommaStyleString(k), RKFloatToCommaStyleString(rays[k]->header.gateSizeMeters),
-                  RKFloatToCommaStyleString(S->header.gateSizeMeters));
+            if (++gateSizeWarningCount < 5) {
+                RKLog("%s Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
+                      engine->name, RKIntegerToCommaStyleString(k), RKFloatToCommaStyleString(rays[k]->header.gateSizeMeters),
+                      RKFloatToCommaStyleString(S->header.gateSizeMeters));
+            } else if (gateSizeWarningCount == 5) {
+                RKLog("%s Warning. Inconsistent gateSize more than 5 rays / sweep.\n", engine->name);
+            }
         }
     }
 
