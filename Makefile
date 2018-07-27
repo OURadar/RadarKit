@@ -2,25 +2,26 @@ UNAME := $(shell uname)
 UNAME_M := $(shell uname -m)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
+$(info UNAME = $(shell echo -e "\033[38;5;15m")${UNAME}$(shell echo -e "\033[0m"))
 $(info UNAME_M = $(shell echo -e "\033[38;5;220m")${UNAME_M}$(shell echo -e "\033[0m"))
 $(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
 
 CFLAGS = -std=gnu99 -O2
 ifeq ($(GIT_BRANCH), beta)
-CFLAGS += -ggdb
+	CFLAGS += -ggdb -DBETA_BRANCH
 endif
+
+# Some other heavy debuggning flags
+#CFLAGS += -DDEBUG_IIR
+#CFLAGS += -DDEBUG_IQ
+#CFLAGS += -DDEBUG_FILE_MANAGER
 
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I /usr/local/include -I /usr/include -fPIC
 
 ifeq ($(UNAME), Darwin)
-CFLAGS += -fms-extensions -Wno-microsoft
+	CFLAGS += -fms-extensions -Wno-microsoft
 endif
-
-# Some heavy debuggning flags
-#CFLAGS += -DDEBUG_IIR
-#CFLAGS += -DDEBUG_IQ
-#CFLAGS += -DDEBUG_FILE_MANAGER
 
 LDFLAGS = -L ./ -L /usr/local/lib
 
@@ -46,18 +47,18 @@ RKLIB = libradarkit.a
 PROGS = rktest simple-emulator
 
 ifeq ($(UNAME), Darwin)
-# Mac OS X
-CC = clang
-CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -mmacosx-version-min=10.9
+	# Mac OS X
+	CC = clang
+	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -mmacosx-version-min=10.9
 else
-# Old Debian
-ifeq ($(UNAME_M), i686)
-CFLAGS += -D_GNU_SOURCE -D_EXPLICIT_INTRINSIC -msse -msse2 -msse3 -msse4 -msse4.1
-LDFLAGS += -L /usr/lib64
-else
-CFLAGS += -D_GNU_SOURCE
-LDFLAGS += -L /usr/lib64
-endif
+	# Old Debian
+	ifeq ($(UNAME_M), i686)
+		CFLAGS += -D_GNU_SOURCE -D_EXPLICIT_INTRINSIC -msse -msse2 -msse3 -msse4 -msse4.1
+		LDFLAGS += -L /usr/lib64
+	else
+		CFLAGS += -D_GNU_SOURCE
+		LDFLAGS += -L /usr/lib64
+	endif
 endif
 
 LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm

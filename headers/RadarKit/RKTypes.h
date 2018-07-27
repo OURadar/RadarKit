@@ -32,7 +32,13 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define RKVersionString "2.0b"
+#ifdef BETA_BRANCH
+#define RKVersionBranch "b"
+#else
+#define RKVersionBranch ""
+#endif
+
+#define RKVersionString "2.0b" RKVersionBranch
 
 //
 // Memory Blocks
