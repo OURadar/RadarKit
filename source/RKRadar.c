@@ -152,14 +152,15 @@ static void *systemInspectorRunLoop(void *in) {
         if (radar->configIndex == 6) {
             if (!shown) {
                 long mem = RKGetMemoryUsage();
-                RKLog("%s %s B   %s KB\n", engine->name,
+                mem *= 1024;
+                RKLog("%s %s B   %s B\n", engine->name,
                       RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
                       RKVariableInString("rusage", &mem, RKValueTypeLong));
-                double dxduPulse = 1.0 / radar->pulseClock->dx;
                 double dxduPosition = 1.0 / radar->positionClock->dx;
+                double dxduPulse = 1.0 / radar->pulseClock->dx;
                 RKLog("%s %s   %s", engine->name,
-                      RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble),
-                      RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble));
+                      RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
+                      RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
                 RKLog("%s %s Hz   %s Hz   %s Hz\n",
                       engine->name,
                       RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
