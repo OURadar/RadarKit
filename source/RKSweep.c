@@ -349,7 +349,12 @@ static void *rayGatherer(void *in) {
     }
 
     if (strlen(engine->handleFilesScript)) {
-        RKLog(">%s Handle files using '%s'   expectTgz = %s\n", engine->name, engine->handleFilesScript, engine->handleFilesScriptProducesTgz ? "true" : "false");
+        RKLog(">%s Handle files using '%s%s%s'   %s   %s\n", engine->name,
+              rkGlobalParameters.showColor ? "\033[3;4m" : "",
+              engine->handleFilesScript,
+              rkGlobalParameters.showColor ? "\033[23;24m" : "",
+              engine->handleFilesScriptProducesTgz ? "expectTgz = true" : "",
+              engine->handleFilesScriptProducesZip ? "expectZip = true" : "");
     }
     RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
 

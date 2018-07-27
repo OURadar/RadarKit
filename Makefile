@@ -2,8 +2,8 @@ UNAME := $(shell uname)
 UNAME_M := $(shell uname -m)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-$(info UNAME_M = [$(shell echo -e "\033[38;5;220m")${UNAME_M}$(shell echo -e "\033[0m")])
-$(info GIT_BRANCH = [$(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m")])
+$(info UNAME_M = $(shell echo -e "\033[38;5;220m")${UNAME_M}$(shell echo -e "\033[0m"))
+$(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
 
 CFLAGS = -std=gnu99 -O2
 ifeq ($(GIT_BRANCH), beta)
@@ -38,6 +38,9 @@ OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweep.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
 OBJS += RKWaveform.o
 
+OBJS_PATH = objects
+OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
+
 RKLIB = libradarkit.a
 
 PROGS = rktest simple-emulator
@@ -57,7 +60,6 @@ LDFLAGS += -L /usr/lib64
 endif
 endif
 
-#LDFLAGS += -Wl,-Bstatic -lradarkit -lfftw3f -lnetcdf -Wl,-Bdynamic -lpthread -lz -lm
 LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
 
 ifeq ($(UNAME), Darwin)
@@ -68,31 +70,28 @@ endif
 #all: $(RKLIB) install rktest
 all: $(RKLIB) $(PROGS)
 
-$(OBJS): %.o: source/%.c
+$(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
-$(RKLIB): $(OBJS)
-	ar rvcs $@ $(OBJS)
+$(OBJS_PATH):
+	mkdir -p $@
 
-rktest: RadarKitTest/main.c libradarkit.a
-	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
-# rktest: RadarKitTest/main.c libradarkit.a
-# 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
+$(RKLIB): $(OBJS_WITH_PATH)
+	ar rvcs $@ $(OBJS_WITH_PATH)
 
-simple-emulator: SimpleEmulator/main.c libradarkit.a
-	$(CC) -o $@ $(CFLAGS) $< $(LDFLAGS)
-# simple-emulator: SimpleEmulator/main.c libradarkit.a
-# 	$(CC) -o $@ $(CFLAGS) $< $(OBJS) $(LDFLAGS)
+$(PROGS): %: %.c libradarkit.a
+	@echo -e "\033[38;5;203m$@\033[0m"
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -f $(PROGS)
-	rm -f $(RKLIB)
-	rm $(OBJS)
+	rm -f $(PROGS) $(RKLIB) *.log
+	rm -f $(OBJS_PATH)/*.o
+	rm -rf *.dSYM
 
 install:
 	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
-	sudo cp -p libradarkit.a /usr/local/lib/
+	sudo cp -p $(RKLIB) /usr/local/lib/
 
 uninstall:
 	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
-	rm -rf /usr/local/lib/libradarkit.a
+	rm -rf /usr/local/lib/$(RKLIB)
