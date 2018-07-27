@@ -433,7 +433,7 @@ enum RKInitFlag {
     RKInitFlagVeryVeryVerbose        = 0x0004,
     RKInitFlagShowClockOffset        = 0x0008,
     RKInitFlagManuallyAssignCPU      = 0x0010,
-    RKInitFlagReserved2              = 0x0020,
+    RKInitFlagIgnoreGPS              = 0x0020,
     RKInitFlagReserved3              = 0x0040,
     RKInitFlagReserved4              = 0x0080,
     RKInitFlagAllocStatusBuffer      = 0x0100,                                 // 1 << 8

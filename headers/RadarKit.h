@@ -22,6 +22,7 @@
 //         - Four Elliptical filters are included
 //         - RKSweepEngine product unregistration
 //         - Buffer overview text stride for deep buffers
+//         - Added ability to ignore GPS device
 //
 //  1.2.10 - 6/30/2018
 //         - Added RKProductFileReadNC() for offline reading
