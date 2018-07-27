@@ -1212,7 +1212,7 @@ int socketInitialHandler(RKOperator *O) {
     pthread_mutex_init(&user->mutex, NULL);
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
-    RKLog(">%s %s Pul x %d   Ray x %d   Text %d x %d ...\n", engine->name, O->name,
+    RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d ...\n", engine->name, O->name,
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row);
     user->textPreferences |= RKTextPreferencesWindowSize120x80;
     snprintf(user->login, 63, "radarop");
@@ -1227,7 +1227,7 @@ int socketTerminateHandler(RKOperator *O) {
     RKUser *user = &engine->users[O->iid];
     user->access = RKStreamNull;
     user->streams = RKStreamNull;
-    RKLog(">%s %s Stream reset.\n", engine->name, O->name);
+    RKLog(">%s %s Disconnected.\n", engine->name, O->name);
     for (k = 0; k < user->productCount; k++) {
         if (user->productIds[k]) {
             RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->productIds[k]);
