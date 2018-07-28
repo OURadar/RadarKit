@@ -829,7 +829,7 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
+        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", "tar.xz");
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
