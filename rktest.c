@@ -635,7 +635,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
+        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
     }
 
     // Moment methods
@@ -829,7 +829,7 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", true);
+        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
 
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);

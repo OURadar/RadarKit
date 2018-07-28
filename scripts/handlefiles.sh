@@ -14,7 +14,7 @@ if [ -f ${HOME}/blib-sh/blib.sh ]; then
 fi
 
 # Use the first file as template for the archive filename
-afile="${1%%-[ZVWDPR].nc}.tgz"
+afile="${1%%-[ZVWDPR].nc}.tar.xz"
 folder=${1%/*}
 cd $folder
 
@@ -26,11 +26,11 @@ for file in $@; do
 done
 
 # The command to compress the files into a tgz archive
-cmd="tar -czf $afile $files"
+cmd="tar -cJf $afile $files"
 #slog $cmd
 eval $cmd
 # Remove the original .nc files
-#rm -f $files
+rm -f $files
 
 # Go back to the previous folder
 cd - > /dev/null

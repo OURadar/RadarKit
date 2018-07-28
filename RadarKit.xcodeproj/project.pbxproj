@@ -151,6 +151,7 @@
 		B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPedestalPedzy.h; path = headers/RadarKit/RKPedestalPedzy.h; sourceTree = SOURCE_ROOT; };
 		B5E7CB11210A4AD100D381ED /* rktest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rktest.c; sourceTree = SOURCE_ROOT; };
 		B5E7CB13210A4AD800D381ED /* simple-emulator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "simple-emulator.c"; sourceTree = SOURCE_ROOT; };
+		B5E7CB15210D155B00D381ED /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKRadarRelay.h; path = headers/RadarKit/RKRadarRelay.h; sourceTree = "<group>"; };
 		B5EE832B20DFB9D400681E29 /* RKProductFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKProductFile.c; path = source/RKProductFile.c; sourceTree = "<group>"; };
 		B5EE832D20DFBC4F00681E29 /* RKProductFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKProductFile.h; path = headers/RadarKit/RKProductFile.h; sourceTree = "<group>"; };
@@ -232,6 +233,7 @@
 				B565B5431E5A4605000C8503 /* Imported */,
 				B5C1F3451AB9C118004F88CD /* RadarKitTest */,
 				B56AB0AB20A8826900E73AE9 /* SimpleEmulator */,
+				B5E7CB15210D155B00D381ED /* scripts */,
 				B5324D501AB8A5A000C00517 /* Products */,
 				B508EA711FB3FC6500A6A83C /* Frameworks */,
 			);

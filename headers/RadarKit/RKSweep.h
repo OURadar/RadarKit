@@ -41,8 +41,7 @@ struct rk_sweep_engine {
     bool                             doNotWrite;
     bool                             convertToDegrees;
     bool                             hasHandleFilesScript;
-    bool                             handleFilesScriptProducesTgz;
-    bool                             handleFilesScriptProducesZip;
+    char                             handleFilesScriptArchivedFileExtension[8];
     char                             handleFilesScript[RKMaximumPathLength];
     RKFileManager                    *fileManager;
     uint32_t                         productTimeoutSeconds;
@@ -78,7 +77,7 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKProduct *productBuffer, uint32_t *productIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
-void RKSweepEngineSetHandleFilesScript(RKSweepEngine *, const char *script, const bool expectTgz);
+void RKSweepEngineSetHandleFilesScript(RKSweepEngine *, const char *script, const char *archivedFileExtension);
 void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(RKProduct *, char *));
 
 int RKSweepEngineStart(RKSweepEngine *);
