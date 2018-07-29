@@ -2,16 +2,6 @@ KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-# ifeq ($(KERNEL), Darwin)
-# $(info KERNEL = $(shell echo "\033[38;5;15m")${KERNEL}$(shell echo "\033[0m"))
-# $(info MACHINE = $(shell echo "\033[38;5;220m")${MACHINE}$(shell echo "\033[0m"))
-# $(info GIT_BRANCH = $(shell echo "\033[38;5;46m")${GIT_BRANCH}$(shell echo "\033[0m"))
-# else
-# $(info KERNEL = $(shell echo -e "\033[38;5;15m")${KERNEL}$(shell echo -e "\033[0m"))
-# $(info MACHINE = $(shell echo -e "\033[38;5;220m")${MACHINE}$(shell echo -e "\033[0m"))
-# $(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
-# endif
-
 CFLAGS = -std=gnu99 -O2
 ifeq ($(GIT_BRANCH), beta)
 	CFLAGS += -ggdb -DBETA_BRANCH
@@ -79,13 +69,13 @@ all: showinfo $(RKLIB) $(PROGS)
 
 showinfo:
 ifeq ($(KERNEL), Darwin)
-	$(info KERNEL = $(shell echo "\033[38;5;15m")${KERNEL}$(shell echo "\033[0m"))
-	$(info MACHINE = $(shell echo "\033[38;5;220m")${MACHINE}$(shell echo "\033[0m"))
-	$(info GIT_BRANCH = $(shell echo "\033[38;5;46m")${GIT_BRANCH}$(shell echo "\033[0m"))
+	@echo "KERNEL = \033[38;5;15m${KERNEL}\033[0m"
+	@echo "MACHINE = \033[38;5;220m${MACHINE}\033[0m"
+	@echo "GIT_BRANCH = \033[38;5;46m${GIT_BRANCH}\033[0m"
 else
-	$(info KERNEL = $(shell echo -e "\033[38;5;15m")${KERNEL}$(shell echo -e "\033[0m"))
-	$(info MACHINE = $(shell echo -e "\033[38;5;220m")${MACHINE}$(shell echo -e "\033[0m"))
-	$(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
+	@echo -e "KERNEL = \033[38;5;15m${KERNEL}\033[0m"
+	@echo -e "MACHINE = \033[38;5;220m${MACHINE}\033[0m"
+	@echo -e "GIT_BRANCH = \033[38;5;46m${GIT_BRANCH}\033[0m"
 endif
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
@@ -98,7 +88,11 @@ $(RKLIB): $(OBJS_WITH_PATH)
 	ar rvcs $@ $(OBJS_WITH_PATH)
 
 $(PROGS): %: %.c libradarkit.a
+ifeq ($(KERNEL), Darwin)
+	@echo "\033[38;5;203m$@\033[0m"
+else
 	@echo -e "\033[38;5;203m$@\033[0m"
+endif
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
