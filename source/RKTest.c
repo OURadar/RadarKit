@@ -2261,13 +2261,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             transceiver->transmitting = true;
             break;
         case 'z':
-            // Everything stops
-            radar->pedestalExec(radar->pedestal, "stop", radar->pedestalResponse);
-            if (response != NULL) {
-                sprintf(response, "ACK. Everything stops." RKEOL);
-            }
             transceiver->transmitting = false;
-            //RKStop(radar);
             break;
         default:
             if (response != NULL) {
