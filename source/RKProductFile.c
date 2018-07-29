@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKProductFile.h>
 
-#if RKfloat == float
+#if RKFloat == float
 #define rk_nc_get_var_float   nc_get_var_float
 #else
 #define rk_nc_get_var_float   nc_get_var_double
@@ -84,6 +84,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
 
 #if defined (COMPRESSED_NETCDF)
 
+    RKLog("Warning. Using NetCDF compression.\n");
     nc_def_var_deflate(ncid, variableIdAzimuth, 1, 1, 3);
     nc_def_var_deflate(ncid, variableIdElevation, 1, 1, 3);
     nc_def_var_deflate(ncid, variableIdBeamwidth, 1, 1, 3);

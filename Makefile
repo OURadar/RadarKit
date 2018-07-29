@@ -1,10 +1,16 @@
-UNAME := $(shell uname)
-UNAME_M := $(shell uname -m)
+KERNEL := $(shell uname)
+MACHINE := $(shell uname -m)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-$(info UNAME = $(shell echo -e "\033[38;5;15m")${UNAME}$(shell echo -e "\033[0m"))
-$(info UNAME_M = $(shell echo -e "\033[38;5;220m")${UNAME_M}$(shell echo -e "\033[0m"))
-$(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
+# ifeq ($(KERNEL), Darwin)
+# $(info KERNEL = $(shell echo "\033[38;5;15m")${KERNEL}$(shell echo "\033[0m"))
+# $(info MACHINE = $(shell echo "\033[38;5;220m")${MACHINE}$(shell echo "\033[0m"))
+# $(info GIT_BRANCH = $(shell echo "\033[38;5;46m")${GIT_BRANCH}$(shell echo "\033[0m"))
+# else
+# $(info KERNEL = $(shell echo -e "\033[38;5;15m")${KERNEL}$(shell echo -e "\033[0m"))
+# $(info MACHINE = $(shell echo -e "\033[38;5;220m")${MACHINE}$(shell echo -e "\033[0m"))
+# $(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
+# endif
 
 CFLAGS = -std=gnu99 -O2
 ifeq ($(GIT_BRANCH), beta)
@@ -19,7 +25,7 @@ endif
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I /usr/local/include -I /usr/include -fPIC
 
-ifeq ($(UNAME), Darwin)
+ifeq ($(KERNEL), Darwin)
 	CFLAGS += -fms-extensions -Wno-microsoft
 endif
 
@@ -46,13 +52,13 @@ RKLIB = libradarkit.a
 
 PROGS = rktest simple-emulator
 
-ifeq ($(UNAME), Darwin)
+ifeq ($(KERNEL), Darwin)
 	# Mac OS X
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -mmacosx-version-min=10.9
 else
 	# Old Debian
-	ifeq ($(UNAME_M), i686)
+	ifeq ($(MACHINE), i686)
 		CFLAGS += -D_GNU_SOURCE -D_EXPLICIT_INTRINSIC -msse -msse2 -msse3 -msse4 -msse4.1
 		LDFLAGS += -L /usr/lib64
 	else
@@ -63,13 +69,24 @@ endif
 
 LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
 
-ifeq ($(UNAME), Darwin)
+ifeq ($(KERNEL), Darwin)
 else
 LDFLAGS += -lrt
 endif
 
 #all: $(RKLIB) install rktest
-all: $(RKLIB) $(PROGS)
+all: showinfo $(RKLIB) $(PROGS)
+
+showinfo:
+ifeq ($(KERNEL), Darwin)
+	$(info KERNEL = $(shell echo "\033[38;5;15m")${KERNEL}$(shell echo "\033[0m"))
+	$(info MACHINE = $(shell echo "\033[38;5;220m")${MACHINE}$(shell echo "\033[0m"))
+	$(info GIT_BRANCH = $(shell echo "\033[38;5;46m")${GIT_BRANCH}$(shell echo "\033[0m"))
+else
+	$(info KERNEL = $(shell echo -e "\033[38;5;15m")${KERNEL}$(shell echo -e "\033[0m"))
+	$(info MACHINE = $(shell echo -e "\033[38;5;220m")${MACHINE}$(shell echo -e "\033[0m"))
+	$(info GIT_BRANCH = $(shell echo -e "\033[38;5;46m")${GIT_BRANCH}$(shell echo -e "\033[0m"))
+endif
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
