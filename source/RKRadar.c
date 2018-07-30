@@ -2162,14 +2162,19 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                 break;
                 
             case 'b':  // Button event
-            case 'y':  // Start everything
-            case 'z':  // Stop everything
                 // Passed to the master controller
                 if (radar->masterController == NULL) {
                     sprintf(string, "NAK. Not ready." RKEOL);
                 } else {
                     radar->masterControllerExec(radar->masterController, commandString, string);
                 }
+                
+            case 'y':  // Start everything
+                //radar->pedestalExec(radar->);
+                break;
+                
+            case 'z':  // Stop everything
+                break;
                 
             default:
                 snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);

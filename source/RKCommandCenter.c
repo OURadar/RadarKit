@@ -68,6 +68,7 @@ int socketCommandHandler(RKOperator *O) {
     
     char *commandString = O->cmd;
     char *commandStringEnd = NULL;
+    const size_t commandStringLength = strlen(commandString);
 
     RKStripTail(commandString);
 
@@ -262,10 +263,13 @@ int socketCommandHandler(RKOperator *O) {
         }
         // Get to the next command
         if (commandStringEnd != NULL) {
-            RKLog("Next command ...\n");
             commandString = commandStringEnd + 1;
+            if (engine->verbose > 2) {
+                RKLog("Next command ... '%s'  %d %d\n", commandString, *commandString == ' ', commandString < O->cmd + commandStringLength - 1);
+            }
             // Strip out some space after ';'
-            while ((*commandString == '\r' || *commandString == '\n' || *commandString == ' ') && commandString < O->cmd + strlen(O->cmd) - 1) {
+            while ((*commandString == ' ' || *commandString == '\r' || *commandString == '\n' || *commandString == '\t')
+                   && commandString < O->cmd + commandStringLength - 1) {
                 commandString++;
             }
             if (*commandString == '\0') {
@@ -477,11 +481,7 @@ int socketStreamHandler(RKOperator *O) {
             }
             // Should only send the controls if the user has been authenticated
             RKMakeJSONStringFromControls(user->scratch, user->radar->controls, user->radar->controlCount);
-            j += sprintf(user->string + j, "\"Controls\": ["
-                        "{\"Label\": \"Go\", \"Command\": \"y\"}, "
-                        "{\"Label\": \"Stop\", \"Command\": \"z\"}, "
-                        "%s"
-                        "]}" RKEOL, user->scratch);
+            j += sprintf(user->string + j, "\"Controls\": [%s]}" RKEOL, user->scratch);
             O->delimTx.type = RKNetworkPacketTypeControls;
             O->delimTx.size = j;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);

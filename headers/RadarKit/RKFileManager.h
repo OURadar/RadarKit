@@ -64,16 +64,18 @@ typedef struct rk_file_remover RKFileRemover;
 typedef struct rk_file_manager RKFileManager;
 
 struct rk_file_remover {
+    RKName                           name;
     int                              id;
     uint64_t                         tic;
     pthread_t                        tid;
+    RKFileManager                    *parent;
+
     int                              index;                               // Index to get sorted index for removal
     int                              count;                               // Dual use index: count and index to add (reusable buffer)
     int                              capacity;                            // Capcity of *folders, *filenames and *indexedStats
     size_t                           usage;
     size_t                           limit;
     char                             path[RKMaximumFolderPathLength + 32];
-    RKFileManager                    *parent;
 
     void                             *folders;
     void                             *filenames;

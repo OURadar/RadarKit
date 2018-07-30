@@ -13,11 +13,12 @@
 
 // The way RadarKit names the files should be relatively short:
 // Folder: YYYYMMDD
-// IQData: XXXXXX-YYYYMMDD-HHMMSS-EX.X.rkr  (31 chars)
-// Moment: XXXXXX-YYYYMMDD-HHMMSS-EX.X-Z.nc (32 chars)
-// Health: XXXXXX-YYYYMMDD-HHMMSS.json      (27 chars)
-// Log   : XXXXXX-YYYYMMDD.log              (19 chars)
-#define RKFileManagerFilenameLength          36
+// IQData: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.rkr     (33 chars)
+// Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X-Z.nc    (34 chars)
+// Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.tar.xx  (36 chars)
+// Health: XXXXXX-YYYYMMDD-HHMMSS.json           (27 chars)
+// Log   : XXXXXX-YYYYMMDD.log                   (19 chars)
+#define RKFileManagerFilenameLength               38
 
 typedef char RKPathname[RKFileManagerFilenameLength];
 typedef struct _rk_indexed_stat {
@@ -178,7 +179,7 @@ static void refreshFileList(RKFileRemover *me) {
     qsort(indexedStats, me->count, sizeof(RKIndexedStat), struct_cmp_by_time);
 
     if (me->parent->verbose > 2) {
-        RKLog("%s Files (%s):\n", me->parent->name, RKIntegerToCommaStyleString(me->count));
+        RKLog("%s %s Files (%s):\n", me->parent->name, me->name, RKIntegerToCommaStyleString(me->count));
         for (k = 0; k < me->count; k++) {
             RKLog(">%s %5s. %s/%s/%s  %zu %d %d\n", me->parent->name,
                   RKIntegerToCommaStyleString(k),
@@ -192,8 +193,8 @@ static void refreshFileList(RKFileRemover *me) {
         me->reusable = true;
     } else {
         if (folderCount == 1) {
-            RKLog("%s Warning. Too many files in '%s'.\n", me->parent->name, me->path);
-            RKLog("%s Warning. Unexpected erasures may occur.\n", me->parent->name);
+            RKLog("%s %s Warning. Too many files in '%s'.\n", me->parent->name, me->name, me->path);
+            RKLog("%s %s Warning. Unexpected erasures may occur.\n", me->parent->name, me->name);
         }
         // Re-calculate the usage
         me->usage = 0;
@@ -212,7 +213,7 @@ static void refreshFileList(RKFileRemover *me) {
             }
             closedir(did);
         }
-        RKLog("%s Truncated list with total usage = %s B\n", me->parent->name, RKUIntegerToCommaStyleString(me->usage));
+        RKLog("%s %s Truncated list with total usage = %s B\n", me->parent->name, me->name, RKUIntegerToCommaStyleString(me->usage));
     }
 }
 
@@ -231,22 +232,21 @@ static void *fileRemover(void *in) {
     char parentFolder[RKFileManagerFilenameLength] = "";
     struct timeval time = {0, 0};
 
-	// Initiate a variable to store my name
-	RKName name;
+	// Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->workerCount > 9) {
-        k += sprintf(name + k, "F%02d", c);
+        k += sprintf(me->name + k, "F%02d", c);
     } else {
-        k += sprintf(name + k, "F%d", c);
+        k += sprintf(me->name + k, "F%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        sprintf(me->name + k, RKNoColor);
     }
     
     size_t bytes;
@@ -255,7 +255,7 @@ static void *fileRemover(void *in) {
     bytes = RKFileManagerFolderListCapacity * sizeof(RKPathname);
     RKPathname *folders = (RKPathname *)malloc(bytes);
     if (folders == NULL) {
-        RKLog("%s %s Error. Unable to allocate space for folder list.\n", engine->name, name);
+        RKLog("%s %s Error. Unable to allocate space for folder list.\n", engine->name, me->name);
     }
     memset(folders, 0, bytes);
     mem += bytes;
@@ -263,7 +263,7 @@ static void *fileRemover(void *in) {
     bytes = me->capacity * sizeof(RKPathname);
     RKPathname *filenames = (RKPathname *)malloc(bytes);
     if (filenames == NULL) {
-        RKLog("%s %s Error. Unable to allocate space for file list.\n", engine->name, name);
+        RKLog("%s %s Error. Unable to allocate space for file list.\n", engine->name, me->name);
     }
     memset(filenames, 0, bytes);
     mem += bytes;
@@ -271,7 +271,7 @@ static void *fileRemover(void *in) {
     bytes = me->capacity * sizeof(RKIndexedStat);
     RKIndexedStat *indexedStats = (RKIndexedStat *)malloc(bytes);
     if (indexedStats == NULL) {
-        RKLog("%s %s Error. Unable to allocate space for indexed stats.\n", engine->name, name);
+        RKLog("%s %s Error. Unable to allocate space for indexed stats.\n", engine->name, me->name);
     }
     memset(indexedStats, 0, bytes);
     mem += bytes;
@@ -290,22 +290,22 @@ static void *fileRemover(void *in) {
     strcpy(parentFolder, folders[0]);
 
     RKLog(">%s %s Started.   mem = %s B   capacity = %s\n",
-          engine->name, name, RKUIntegerToCommaStyleString(mem), RKUIntegerToCommaStyleString(me->capacity));
-    RKLog(">%s %s Path = %s\n", engine->name, name, me->path);
+          engine->name, me->name, RKUIntegerToCommaStyleString(mem), RKUIntegerToCommaStyleString(me->capacity));
+    RKLog(">%s %s Path = %s\n", engine->name, me->name, me->path);
     if (me->usage > 10 * 1024 * 1024) {
-        RKLog(">%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, name,
+        RKLog(">%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, me->name,
               RKIntegerToCommaStyleString(me->count),
               RKUIntegerToCommaStyleString(me->usage / 1024 / 1024),
               RKUIntegerToCommaStyleString(me->limit / 1024 / 1024),
               100.0f * me->usage / me->limit);
     } else if (me->usage > 10 * 1024) {
-        RKLog(">%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, name,
+        RKLog(">%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, me->name,
               RKIntegerToCommaStyleString(me->count),
               RKUIntegerToCommaStyleString(me->usage / 1024),
               RKUIntegerToCommaStyleString(me->limit / 1024),
               100.0f * me->usage / me->limit);
     } else {
-        RKLog(">%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, name,
+        RKLog(">%s %s Listed.  count = %s   usage = %s / %s B (%.2f %%)\n", engine->name, me->name,
               RKIntegerToCommaStyleString(me->count),
               RKUIntegerToCommaStyleString(me->usage),
               RKUIntegerToCommaStyleString(me->limit),
@@ -324,7 +324,7 @@ static void *fileRemover(void *in) {
         pthread_mutex_lock(&engine->mutex);
 
         if (engine->verbose > 2) {
-            RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
+            RKLog("%s %s Usage -> %s B / %s B\n", engine->name, me->name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
         }
 
         // Removing files
@@ -333,38 +333,38 @@ static void *fileRemover(void *in) {
             sprintf(path, "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
             if (engine->verbose) {
 				if (indexedStats[me->index].size > 1.0e9) {
-					RKLog("%s %s Removing %s (%s GB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-9f * indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s GB)", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-9f * indexedStats[me->index].size));
 				} else if (indexedStats[me->index].size > 1.0e6) {
-					RKLog("%s %s Removing %s (%s MB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-6f * indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s MB)", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-6f * indexedStats[me->index].size));
 				} else if (indexedStats[me->index].size > 1.0e3) {
-					RKLog("%s %s Removing %s (%s KB)", engine->name, name, path, RKFloatToCommaStyleString(1.0e-3f * indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s KB)", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-3f * indexedStats[me->index].size));
 				} else {
-					RKLog("%s %s Removing %s (%s B)", engine->name, name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s B)", engine->name, me->name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
 				}
             }
             if (!strlen(parentFolder)) {
                 strcpy(parentFolder, folders[indexedStats[me->index].folderId]);
-                RKLog("%s %s Set parentFolder to %s\n", engine->name, name, parentFolder);
+                RKLog("%s %s Set parentFolder to %s\n", engine->name, me->name, parentFolder);
             }
             remove(path);
             me->usage -= indexedStats[me->index].size;
             me->index++;
 			if (engine->verbose > 1) {
-				RKLog("%s %s Usage -> %s B / %s B\n", engine->name, name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
+				RKLog("%s %s Usage -> %s B / %s B\n", engine->name, me->name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
 			}
 
             // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
             if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {
                 sprintf(path, "%s/%s", me->path, parentFolder);
                 if (isFolderEmpty(path)) {
-                    RKLog("%s %s Removing folder %s that is empty.\n", engine->name, name, path);
+                    RKLog("%s %s Removing folder %s that is empty.\n", engine->name, me->name, path);
                     sprintf(command, "rm -rf %s", path);
                     k = system(command);
                     if (k) {
                         RKLog("Error. system(%s) -> %d   errno = %d\n", command, k, errno);
                     }
                 }
-                RKLog("%s %s New parentFolder = %s -> %s\n", engine->name, name, parentFolder, folders[indexedStats[me->index].folderId]);
+                RKLog("%s %s New parentFolder = %s -> %s\n", engine->name, me->name, parentFolder, folders[indexedStats[me->index].folderId]);
                 strcpy(parentFolder, folders[indexedStats[me->index].folderId]);
             }
 
@@ -373,11 +373,11 @@ static void *fileRemover(void *in) {
                 me->index = 0;
                 if (me->reusable) {
                     if (engine->verbose) {
-                        RKLog("%s %s Reusable file list rotated to 0.\n", engine->name, name);
+                        RKLog("%s %s Reusable file list rotated to 0.\n", engine->name, me->name);
                     }
                 } else {
                     if (engine->verbose) {
-                        RKLog("%s %s Refreshing file list.\n", engine->name, name);
+                        RKLog("%s %s Refreshing file list.\n", engine->name, me->name);
                     }
                     refreshFileList(me);
                 }
@@ -397,7 +397,7 @@ static void *fileRemover(void *in) {
     free(filenames);
     free(indexedStats);
     
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, me->name);
 
     engine->state ^= RKEngineStateActive;
     return NULL;

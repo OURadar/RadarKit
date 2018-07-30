@@ -49,8 +49,6 @@ typedef struct rk_test_transceiver {
     RKByte         sprt;
     RKWaveform     *waveformCache[RKTestWaveformCacheCount];
     unsigned int   waveformCacheIndex;
-	RKName         defaultWaveform;
-	RKName         defaultPedestalMode;
 	RKCommand      customCommand;
     pthread_t      tidRunLoop;
     RKEngineState  state;

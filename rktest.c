@@ -20,6 +20,8 @@ typedef struct user_params {
     RKName                   relayHost;
     RKName                   ringFilter;
     RKName                   momentMethod;
+    RKName                   goCommand;
+    RKName                   stopCommand;
     RKName                   streams;
     uint8_t                  verbose;                                            // Verbosity
     int                      coresForPulseCompression;                           // Number of cores for pulse compression
@@ -301,7 +303,9 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",        user->noise,           RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold", &user->SNRThreshold,   RKParameterTypeDouble, 1);
-    
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",    &user->goCommand,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",  &user->stopCommand,    RKParameterTypeString, RKNameLength);
+
     // Shortcuts
     k = 0;
     memset(user->controls, 0, RKMaximumControlCount * sizeof(RKControl));

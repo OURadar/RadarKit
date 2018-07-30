@@ -18,13 +18,15 @@ typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
 struct rk_moment_worker {
-    RKMomentEngine                   *parentEngine;
-    char                             semaphoreName[32];
+    RKName                           name;
     int                              id;
-    pthread_t                        tid;
-    uint64_t                         tic;
-    uint32_t                         pid;
-    double                           dutyBuff[RKWorkerDutyCycleBufferDepth];
+    pthread_t                        tid;                                      // Thread ID
+    RKMomentEngine                   *parent;                                  // Parent engine reference
+
+    char                             semaphoreName[32];
+    uint64_t                         tic;                                      // Tic count
+    uint32_t                         pid;                                      // Latest processed index of pulses buffer
+    double                           dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                           dutyCycle;                                // Latest duty cycle estimate
     float                            lag;                                      // Relative lag from the latest index
     sem_t                            *sem;

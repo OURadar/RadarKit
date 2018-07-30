@@ -19,40 +19,42 @@ typedef struct rk_pulse_ring_filter_worker RKPulseRingFilterWorker;
 typedef struct rk_pulse_ring_filter_engine RKPulseRingFilterEngine;
 
 struct rk_pulse_ring_filter_worker {
-    RKPulseRingFilterEngine    *parentEngine;
-    char                       semaphoreName[32];
-    int                        id;
-    pthread_t                  tid;                                      // Thread ID
-    uint64_t                   tic;                                      // Tic count
-    uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    uint32_t                   processOrigin;                            // The origin of the pulse data to process
-    uint32_t                   processLength;                            // The length in the local storage for SIMD alignment
-    uint32_t                   outputLength;                             // The length of the pulse data to produce
-    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
-    double                     dutyCycle;                                // Latest duty cycle estimate
-    float                      lag;                                      // Lag relative to the latest index of engine
-    sem_t                      *sem;
+    RKName                           name;
+    int                              id;
+    pthread_t                        tid;                                      // Thread ID
+    RKPulseRingFilterEngine          *parent;                                  // Parent engine reference
+
+    char                             semaphoreName[32];
+    uint64_t                         tic;                                      // Tic count
+    uint32_t                         pid;                                      // Latest processed index of pulses buffer
+    uint32_t                         processOrigin;                            // The origin of the pulse data to process
+    uint32_t                         processLength;                            // The length in the local storage for SIMD alignment
+    uint32_t                         outputLength;                             // The length of the pulse data to produce
+    double                           dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
+    double                           dutyCycle;                                // Latest duty cycle estimate
+    float                            lag;                                      // Lag relative to the latest index of engine
+    sem_t                            *sem;
 };
 
 struct rk_pulse_ring_filter_engine {
     // User set variables
     RKName                           name;
     RKRadarDesc                      *radarDescription;
-    RKBuffer                         pulseBuffer;                        // Buffer of raw pulses
-    uint32_t                         *pulseIndex;                        // The refence index to watch for
+    RKBuffer                         pulseBuffer;                              // Buffer of raw pulses
+    uint32_t                         *pulseIndex;                              // The refence index to watch for
     RKConfig                         *configBuffer;
     uint32_t                         *configIndex;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
-    bool                             useFilter;                          // Use FIR/IIR filter
-    RKIIRFilter                      filter;                             // The FIR/IIR filter coefficients
-    RKIdentifier                     filterId;                           // A counter for filter change
+    bool                             useFilter;                                // Use FIR/IIR filter
+    RKIIRFilter                      filter;                                   // The FIR/IIR filter coefficients
+    RKIdentifier                     filterId;                                 // A counter for filter change
 
     // Program set variables
     RKPulseRingFilterWorker          *workers;
-    bool                             *workerTaskDone;                    // Task status [coreCount x pulseBufferDepth]
+    bool                             *workerTaskDone;                          // Task status [coreCount x pulseBufferDepth]
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  mutex;
 

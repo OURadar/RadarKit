@@ -88,7 +88,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
 
 static void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
-    RKPulseCompressionEngine *engine = me->parentEngine;
+    RKPulseCompressionEngine *engine = me->parent;
 
     int bound;
     int i, j, k, p;
@@ -107,22 +107,21 @@ static void *pulseCompressionCore(void *_in) {
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
 
-    // Initiate a variable to store my name
-    RKName name;
+    // Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "P%02d", c);
+        k += sprintf(me->name + k, "P%02d", c);
     } else {
-        k += sprintf(name + k, "P%d", c);
+        k += sprintf(me->name + k, "P%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        sprintf(me->name + k, RKNoColor);
     }
 
 #if defined(_GNU_SOURCE)
@@ -190,7 +189,7 @@ static void *pulseCompressionCore(void *_in) {
     engine->memoryUsage += mem;
 
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
-          engine->name, name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
+          engine->name, me->name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -212,7 +211,7 @@ static void *pulseCompressionCore(void *_in) {
             RKLog(">%s sem_wait()\n", coreName);
             #endif
             if (sem_wait(sem)) {
-                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, name, errno);
+                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, me->name, errno);
             }
         } else {
             while (tic == me->tic && engine->state & RKEngineStateWantActive) {
@@ -408,7 +407,7 @@ static void *pulseCompressionCore(void *_in) {
 
     // Clean up
     if (engine->verbose > 1) {
-        RKLog("%s %s Freeing reources ...\n", engine->name, name);
+        RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
     }
 
     free(zi);
@@ -418,7 +417,7 @@ static void *pulseCompressionCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, me->name);
     
     return NULL;
 }
@@ -522,7 +521,7 @@ static void *pulseWatcher(void *_in) {
         }
         worker->id = c;
         worker->sem = sem[c];
-        worker->parentEngine = engine;
+        worker->parent = engine;
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
         }
