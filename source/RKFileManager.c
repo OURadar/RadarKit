@@ -670,10 +670,13 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     // Extract out the date portion
     char *lastPart = strrchr(filename, '/');
     if (lastPart) {
+        if (strlen(lastPart) > RKFileManagerFilenameLength - 1) {
+            RKLog("%s %s Error. I could crash here.\n", engine->name, me->name);
+        }
         strncpy(filenames[k], lastPart + 1, RKFileManagerFilenameLength - 1);
     } else {
         if (strlen(filename) > RKFileManagerFilenameLength - 1) {
-            RKLog("%s Warning. Filename is too long.\n", engine->name);
+            RKLog("%s %s Warning. Filename is too long.\n", engine->name,  me->name);
         }
         strncpy(filenames[k], filename, RKFileManagerFilenameLength - 1);
     }
@@ -717,7 +720,6 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     
     me->usage += fileStat.st_size;
     
-
     if (engine->verbose > 2) {
         RKLog("%s Added '%s'   %s B  k%d\n", engine->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
     }
