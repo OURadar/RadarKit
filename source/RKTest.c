@@ -1657,8 +1657,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     struct timeval t0, t1;
     bool even = true;
     
-    const int chunkSize = MAX(1, (int)floor(0.2 / transceiver->prt));
-    
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
@@ -1679,18 +1677,11 @@ void *RKTestTransceiverRunLoop(void *input) {
               transceiver->name,
               RKIntegerToCommaStyleString(transceiver->gateCount),
               transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3,
-              RKIntegerToCommaStyleString(chunkSize),
+              RKIntegerToCommaStyleString(transceiver->chunkSize),
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
     double periodTotal;
-    const double periodEven = transceiver->prt;
-    const double periodOdd =
-    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
-    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
-     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
-    const long ticEven = (long)(periodEven * 1.0e6);
-    const long ticOdd = (long)(periodOdd * 1.0e6);
 
     float a;
     float r;
@@ -1768,7 +1759,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
         periodTotal = 0.0;
 
-        for (j = 0; j < chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
+        for (j = 0; j < transceiver->chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
@@ -1878,9 +1869,9 @@ void *RKTestTransceiverRunLoop(void *input) {
             RKSetPulseHasData(radar, pulse);
 
             if (even) {
-                tic += ticEven;
+                tic += transceiver->ticEven;
             } else {
-                tic += ticOdd;
+                tic += transceiver->ticOdd;
             }
 
             w = RKNextModuloS(w, waveform->count);
@@ -1898,11 +1889,11 @@ void *RKTestTransceiverRunLoop(void *input) {
                 sleep(2);
             }
             if (even) {
-                periodTotal += periodEven;
-                t += periodEven;
+                periodTotal += transceiver->periodEven;
+                t += transceiver->periodEven;
             } else {
-                periodTotal += periodOdd;
-                t += periodOdd;
+                periodTotal += transceiver->periodOdd;
+                t += transceiver->periodOdd;
             }
             even = !even;
         }
@@ -1981,6 +1972,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
     transceiver->prt = 0.001;
     transceiver->sprt = 1;
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd = transceiver->prt;
+    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+    transceiver->chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
     sprintf(transceiver->waveformCache[0]->name, "s01");
 
@@ -2128,6 +2124,14 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 } else if (response != NULL) {
                     sprintf(response, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
                 }
+                transceiver->periodEven = transceiver->prt;
+                transceiver->periodOdd =
+                transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+                (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+                 (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+                transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+                transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+                transceiver->chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
                 value = 1.5e8 * transceiver->prt;
                 transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
                 RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
