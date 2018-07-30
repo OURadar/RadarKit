@@ -13,11 +13,12 @@
 
 // The way RadarKit names the files should be relatively short:
 // Folder: YYYYMMDD
-// IQData: XXXXXX-YYYYMMDD-HHMMSS-EX.X.rkr  (31 chars)
-// Moment: XXXXXX-YYYYMMDD-HHMMSS-EX.X-Z.nc (32 chars)
-// Health: XXXXXX-YYYYMMDD-HHMMSS.json      (27 chars)
-// Log   : XXXXXX-YYYYMMDD.log              (19 chars)
-#define RKFileManagerFilenameLength          36
+// IQData: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.rkr     (33 chars)
+// Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X-Z.nc    (34 chars)
+// Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.tar.xx  (36 chars)
+// Health: XXXXXX-YYYYMMDD-HHMMSS.json           (27 chars)
+// Log   : XXXXXX-YYYYMMDD.log                   (19 chars)
+#define RKFileManagerFilenameLength               38
 
 typedef char RKPathname[RKFileManagerFilenameLength];
 typedef struct _rk_indexed_stat {
