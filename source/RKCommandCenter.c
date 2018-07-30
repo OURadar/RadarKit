@@ -691,8 +691,10 @@ int socketStreamHandler(RKOperator *O) {
             }
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No product ray / deactivated.  streamsInProgress = 0x%08x\n",
-                      engine->name, O->name, user->streamsInProgress);
+                if (engine->verbose > 1) {
+                    RKLog("%s %s No product ray / deactivated.  streamsInProgress = 0x%08x\n",
+                          engine->name, O->name, user->streamsInProgress);
+                }
             }
         }
     } else if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
@@ -816,8 +818,10 @@ int socketStreamHandler(RKOperator *O) {
             } // while (user->rayIndex != endIndex) ...
         } else {
             if ((int)ray->header.i > 0) {
-                RKLog("%s %s No display ray / deactivated.  user->rayIndex = %d   endIndex = %d  %lld\n",
-                      engine->name, O->name, user->rayIndex, endIndex, ray->header.i);
+                if (engine->verbose > 1) {
+                    RKLog("%s %s No display ray / deactivated.  user->rayIndex = %d   endIndex = %d  %lld\n",
+                          engine->name, O->name, user->rayIndex, endIndex, ray->header.i);
+                }
             }
         } // if (ray->header.s & RKRayStatusReady && engine->server->state == RKServerStateActive) ...
     } // else if if (user->streams & user->access & RKStreamDisplayZVWDPRKS) ...
