@@ -41,6 +41,7 @@ typedef struct rk_test_transceiver {
     RKName         name;
     int            verbose;
     int            sleepInterval;
+    int            gateCapacity;
     int            gateCount;
     float          gateSizeMeters;
     long           counter;

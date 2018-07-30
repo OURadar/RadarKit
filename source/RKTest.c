@@ -1973,12 +1973,13 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->state = RKEngineStateAllocated;
     transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
-    transceiver->gateCount = RKGetPulseCapacity(radar);
+    transceiver->gateCapacity = RKGetPulseCapacity(radar);
+    transceiver->gateCount = transceiver->gateCapacity;
     transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
                      (transceiver->gateCount >= 8000 ? 25.0e6 :
                      (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
-    transceiver->gateCount /= 10;
-    transceiver->prt = 0.0003;
+    transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
+    transceiver->prt = 0.001;
     transceiver->sprt = 1;
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
     sprintf(transceiver->waveformCache[0]->name, "s01");
@@ -2072,6 +2073,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     char *c;
     double bandwidth;
     double pulsewidth;
+    double value;
     unsigned int pulsewidthSampleCount;
 
     RKWaveform *waveform = NULL;
@@ -2117,12 +2119,22 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             break;
         case 'p':
             if (!strncmp(command, "prt", 3)) {
-                transceiver->prt = atof(command + 3);
-                if (response != NULL) {
-                    sprintf(response, "ACK. PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                k = sscanf(command, "%s %lf", string, &value);
+                if (k == 2) {
+                    transceiver->prt = value;
+                    if (response != NULL) {
+                        sprintf(response, "ACK. New PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                    }
+                } else if (response != NULL) {
+                    sprintf(response, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
                 }
+                value = 1.5e8 * transceiver->prt;
+                transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
+                RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
                 if (radar->desc.initFlags & RKInitFlagVerbose) {
-                    RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
+                    RKLog("%s PRT = %s ms   gateCount = %s\n", transceiver->name,
+                          RKFloatToCommaStyleString(1.0e3 * transceiver->prt),
+                          RKIntegerToCommaStyleString(transceiver->gateCount));
                 }
             }
             break;
