@@ -632,6 +632,7 @@ int RKFileManagerStop(RKFileManager *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
+    pthread_mutex_lock(&engine->mutex);
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
@@ -641,11 +642,18 @@ int RKFileManagerStop(RKFileManager *engine) {
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
+    pthread_mutex_unlock(&engine->mutex);
     return RKResultSuccess;
 }
 
 int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType type) {
     RKFileRemover *me = &engine->workers[type];
+
+    if (!(engine->state & RKEngineStateWantActive)) {
+        return RKResultEngineNotActive;
+    }
+
+    pthread_mutex_lock(&engine->mutex);
 
     struct stat fileStat;
     stat(filename, &fileStat);
@@ -654,7 +662,6 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
 
     // For non-reusable type, just add the size
     if (me->reusable == false) {
-        pthread_mutex_lock(&engine->mutex);
         me->usage += fileStat.st_size;
         pthread_mutex_unlock(&engine->mutex);
         return RKResultFileManagerBufferNotResuable;
@@ -672,6 +679,11 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     if (lastPart) {
         if (strlen(lastPart) > RKFileManagerFilenameLength - 1) {
             RKLog("%s %s Error. I could crash here.\n", engine->name, me->name);
+        }
+        if ((void *)&filenames[k] > ((void *)filenames) + me->capacity * sizeof(RKPathname) - RKFileManagerFilenameLength) {
+            RKLog("%s %s Error. I could crash here.   %p vs %p   k = %d / %d\n", engine->name, me->name,
+                  (void *)&filenames[k], ((void *)filenames) + me->capacity * sizeof(RKPathname) - RKFileManagerFilenameLength,
+                  k, me->capacity);
         }
         strncpy(filenames[k], lastPart + 1, RKFileManagerFilenameLength - 1);
     } else {
@@ -709,8 +721,6 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
         }
     }
     //printf("%s --> %s / %s (%d)\n", filename, folder, filenames[k], folderId);
-
-    pthread_mutex_lock(&engine->mutex);
 
     indexedStats[k].index = k;
     indexedStats[k].folderId = folderId;

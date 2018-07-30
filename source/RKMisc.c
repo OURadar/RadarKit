@@ -594,6 +594,22 @@ char *RKNextNoneWhite(const char *string) {
     return c;
 }
 
+char *RKLastLine(const char *lines) {
+    char *l = (char *)lines;
+    char *l2 = l;
+    char *r = l;
+    while (r != NULL) {
+        r = strchr(l, '\n');
+        if (r) {
+            l = r + 1;
+            if (strlen(l) > 1) {
+                l2 = l;
+            }
+        }
+    }
+    return l2;
+}
+
 #pragma mark - Math
 
 float RKUMinDiff(const float m, const float s) {

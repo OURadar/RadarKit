@@ -2145,7 +2145,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
             case 't':
                 // Pass everything to transceiver
                 if (strlen(commandString) < 2) {
-                    sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                    sprintf(string, "NAK. Empty command to transceiver." RKEOL);
                     break;
                 }
                 k = 0;
@@ -2162,18 +2162,14 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
                 break;
                 
             case 'b':  // Button event
+            case 'y':  // Start everything
+            case 'z':  // Stop everything
                 // Passed to the master controller
                 if (radar->masterController == NULL) {
                     sprintf(string, "NAK. Not ready." RKEOL);
                 } else {
                     radar->masterControllerExec(radar->masterController, commandString, string);
                 }
-                
-            case 'y':  // Start everything
-                //radar->pedestalExec(radar->);
-                break;
-                
-            case 'z':  // Stop everything
                 break;
                 
             default:
