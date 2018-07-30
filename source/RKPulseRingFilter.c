@@ -61,7 +61,7 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
 
 static void *ringFilterCore(void *_in) {
     RKPulseRingFilterWorker *me = (RKPulseRingFilterWorker *)_in;
-    RKPulseRingFilterEngine *engine = me->parentEngine;
+    RKPulseRingFilterEngine *engine = me->parent;
 
     int i, j, k, p;
     struct timeval t0, t1, t2;
@@ -76,22 +76,21 @@ static void *ringFilterCore(void *_in) {
         return (void *)RKResultFailedToRetrieveSemaphore;
     };
 
-    // Initiate a variable to store my name
-    RKName name;
+    // Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "C%02d", c);
+        k += sprintf(me->name + k, "C%02d", c);
     } else {
-        k += sprintf(name + k, "C%d", c);
+        k += sprintf(me->name + k, "C%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        sprintf(me->name + k, RKNoColor);
     }
 
 #if defined(_GNU_SOURCE)
@@ -111,7 +110,7 @@ static void *ringFilterCore(void *_in) {
     size_t mem = 0;
     
     if (me->processOrigin % RKSIMDAlignSize > 0) {
-        RKLog("%s %s Error. Each filter origin must align to the SIMD requirements.\n", engine->name, name);
+        RKLog("%s %s Error. Each filter origin must align to the SIMD requirements.\n", engine->name, me->name);
         return NULL;
     }
     // Allocate local resources, use k to keep track of the total allocation
@@ -157,7 +156,7 @@ static void *ringFilterCore(void *_in) {
     engine->memoryUsage += mem;
     
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   filter @ (%s, %s, %s)   ci = %d\n",
-          engine->name, name,
+          engine->name, me->name,
           RKUIntegerToCommaStyleString(mem),
           RKIntegerToCommaStyleString(i0),
           RKIntegerToCommaStyleString(me->processOrigin),
@@ -189,7 +188,7 @@ static void *ringFilterCore(void *_in) {
             RKLog(">%s sem_wait()\n", coreName);
             #endif
             if (sem_wait(sem)) {
-                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, name, errno);
+                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, me->name, errno);
             }
         } else {
             while (tic == me->tic && engine->state & RKEngineStateWantActive) {
@@ -351,7 +350,7 @@ static void *ringFilterCore(void *_in) {
 
     // Clean up
     if (engine->verbose > 1) {
-        RKLog("%s %s Freeing reources ...\n", engine->name, name);
+        RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
     }
     
     free(xx.i);
@@ -361,7 +360,7 @@ static void *ringFilterCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, me->name);
 
     return NULL;
 }
@@ -433,7 +432,7 @@ static void *pulseRingWatcher(void *_in) {
         }
         worker->id = c;
         worker->sem = sem[c];
-        worker->parentEngine = engine;
+        worker->parent = engine;
         worker->processOrigin = origin;
         worker->processLength = length;
         worker->outputLength = MIN(gateCount - origin, length);

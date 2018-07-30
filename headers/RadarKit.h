@@ -23,6 +23,7 @@
 //         - RKSweepEngine product unregistration
 //         - Buffer overview text stride for deep buffers
 //         - Added ability to ignore GPS device
+//         - Worker name is now part of the struct
 //
 //  1.2.10 - 6/30/2018
 //         - Added RKProductFileReadNC() for offline reading

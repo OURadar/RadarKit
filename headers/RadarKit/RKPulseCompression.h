@@ -24,24 +24,26 @@ typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
 struct rk_pulse_compression_worker {
-    RKPulseCompressionEngine   *parentEngine;
-    char                       semaphoreName[32];
-    int                        id;
-    pthread_t                  tid;                                      // Thread ID
-    uint64_t                   tic;                                      // Tic count
-    uint32_t                   pid;                                      // Latest processed index of pulses buffer
-    double                     dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
-    double                     dutyCycle;                                // Latest duty cycle estimate
-    float                      lag;                                      // Lag relative to the latest index of engine
-    sem_t                      *sem;
+    RKName                           name;
+    int                              id;
+    pthread_t                        tid;                                      // Thread ID
+    RKPulseCompressionEngine         *parent;                                  // Parent engine reference
+
+    char                             semaphoreName[32];
+    uint64_t                         tic;                                      // Tic count
+    uint32_t                         pid;                                      // Latest processed index of pulses buffer
+    double                           dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
+    double                           dutyCycle;                                // Latest duty cycle estimate
+    float                            lag;                                      // Relative lag from the latest index
+    sem_t                            *sem;
 };
 
 struct rk_pulse_compression_engine {
     // User set variables
     RKName                           name;
     RKRadarDesc                      *radarDescription;
-    RKBuffer                         pulseBuffer;                        // Buffer of raw pulses
-    uint32_t                         *pulseIndex;                        // The refence index to watch for
+    RKBuffer                         pulseBuffer;                              // Buffer of raw pulses
+    uint32_t                         *pulseIndex;                              // The refence index to watch for
     RKConfig                         *configBuffer;
     uint32_t                         *configIndex;
     uint8_t                          verbose;

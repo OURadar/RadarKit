@@ -103,22 +103,21 @@ static void *hostPinger(void *in) {
     double period;
     struct timeval time;
 
-    // Initiate a variable to store my name
-    RKName name;
+    // Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->workerCount > 9) {
-        k += sprintf(name + k, "H%02d", c);
+        k += sprintf(me->name + k, "H%02d", c);
     } else {
-        k += sprintf(name + k, "H%d", c);
+        k += sprintf(me->name + k, "H%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        sprintf(me->name + k, RKNoColor);
     }
 
     // Resolve my host
@@ -126,7 +125,7 @@ static void *hostPinger(void *in) {
     struct hostent *hostname = gethostbyname(engine->hosts[c]);
     pthread_mutex_unlock(&engine->mutex);
     if (hostname == NULL) {
-        RKLog("%s %s Error. Unable to resolve %s.", engine->name, name, engine->hosts[c]);
+        RKLog("%s %s Error. Unable to resolve %s.", engine->name, me->name, engine->hosts[c]);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
         return NULL;
@@ -137,12 +136,12 @@ static void *hostPinger(void *in) {
 
     // Open a socket, set some properties for ICMP
     if ((sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto)) < 0) {
-        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d (%s)\n", engine->name, name, sd, errno, RKErrnoString(errno));
+        RKLog("%s %s Error. Unable to open a socket.  sd = %d   errno = %d (%s)\n", engine->name, me->name, sd, errno, RKErrnoString(errno));
         if (errno == EACCES) {
-            RKLog(">%s %s Info. Use one of the following:\n", engine->name, name);
-            RKLog(">%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 2147483647\"'\n", engine->name, name);
-            RKLog(">%s %s Info. Add 'net.ipv4.ping_group_range = 0 2147483647' to /etc/sysctl.conf\n", engine->name, name);
-            RKLog(">%s %s Info. to allow root to use ICMP sockets\n", engine->name, name);
+            RKLog(">%s %s Info. Use one of the following:\n", engine->name, me->name);
+            RKLog(">%s %s Info. Run 'sysctl -w net.ipv4.ping_group_range=\"0 2147483647\"'\n", engine->name, me->name);
+            RKLog(">%s %s Info. Add 'net.ipv4.ping_group_range = 0 2147483647' to /etc/sysctl.conf\n", engine->name, me->name);
+            RKLog(">%s %s Info. to allow root to use ICMP sockets\n", engine->name, me->name);
         }
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
@@ -150,19 +149,19 @@ static void *hostPinger(void *in) {
     }
     int hold = 1;
     if (setsockopt(sd, IPPROTO_IP, IP_RECVTTL, &hold, sizeof(hold))) {
-        RKLog("%s %s Error. Failed in setsockopt() IP_RECVTTL.\n", engine->name, name);
+        RKLog("%s %s Error. Failed in setsockopt() IP_RECVTTL.\n", engine->name, me->name);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
         return NULL;
     }
     if (setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value))) {
-        RKLog("%s %s Error. Failed in setsockopt().\n", engine->name, name);
+        RKLog("%s %s Error. Failed in setsockopt().\n", engine->name, me->name);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
         return NULL;
     }
     if (fcntl(sd, F_SETFL, O_NONBLOCK)) {
-        RKLog("%s %s Error. Failed in fcntl().\n", engine->name, name);
+        RKLog("%s %s Error. Failed in fcntl().\n", engine->name, me->name);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
         return NULL;
@@ -170,7 +169,7 @@ static void *hostPinger(void *in) {
     
     RKLog(">%s %s Started.   host = %s (%d.%d.%d.%d)   sd = %d\n",
           engine->name,
-          name,
+          me->name,
           engine->hosts[c],
           (targetAddress.sin_addr.s_addr & 0xff),
           (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
@@ -204,7 +203,7 @@ static void *hostPinger(void *in) {
         // Ping
         if ((r = sendto(sd, buff, txSize, 0, (struct sockaddr *)&targetAddress, sizeof(struct sockaddr))) == -1) {
             if (engine->verbose > 1) {
-                RKLog("%s %s Error. Command sendto() -> %d   errno = %d / %s.", engine->name, name, r, errno, RKErrnoString(errno));
+                RKLog("%s %s Error. Command sendto() -> %d   errno = %d / %s.", engine->name, me->name, r, errno, RKErrnoString(errno));
             }
             // Now we wait a little
             pthread_mutex_unlock(&engine->mutex);
@@ -217,7 +216,7 @@ static void *hostPinger(void *in) {
             me->tic++;
             if (unreachCount++ > 3) {
                 unreachCount = 0;
-                RKLog("%s %s Reinitiating socket descriptor ...\n", engine->name, name);
+                RKLog("%s %s Reinitiating socket descriptor ...\n", engine->name, me->name);
                 close(sd);
                 sd = socket(AF_INET, SOCK_DGRAM, protocol->p_proto);
                 setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value));
@@ -226,7 +225,7 @@ static void *hostPinger(void *in) {
             continue;
         } else if (engine->verbose > 1) {
             RKLog(">%s %s Ping %s (%d.%d.%d.%d)   seq = %d   size = %d bytes\n",
-                  engine->name, name,
+                  engine->name, me->name,
                   engine->hosts[c],
                   (targetAddress.sin_addr.s_addr & 0xff),
                   (targetAddress.sin_addr.s_addr & 0x0000ff00) >> 8,
@@ -247,7 +246,7 @@ static void *hostPinger(void *in) {
             if ((r = recvfrom(sd, buff, RKHostMonitorPacketSize, 0, (struct sockaddr *)&returnAddress, &returnLength)) > 0) {
                 if (engine->verbose > 1 && engine->tic != 2) {
                     RKLog("%s %s recvfrom()   sd = %d   r = %d  / %d   %d.%d.%d.%d   returnLength = %d\n",
-                          engine->name, name,
+                          engine->name, me->name,
                           sd,
                           r,
                           (int)(sizeof(RKIPV4Header) + sizeof(RKICMPHeader)),
@@ -264,12 +263,12 @@ static void *hostPinger(void *in) {
                     if (r >= ipHeaderLength + sizeof(RKICMPHeader)) {
                         offset = ipHeaderLength;
                     } else {
-                        RKLog("%s %s Error. Unexpected packet size.\n", engine->name, name);
+                        RKLog("%s %s Error. Unexpected packet size.\n", engine->name, me->name);
                         break;
                     }
                 }
             } else if (engine->verbose > 2) {
-                RKLog("%s %s recvfrom() -> %d\n", engine->name, name, r);
+                RKLog("%s %s recvfrom() -> %d\n", engine->name, me->name, r);
             }
         }
         if (offset != (size_t)-1 && returnAddress.sin_addr.s_addr == targetAddress.sin_addr.s_addr) {
@@ -279,7 +278,7 @@ static void *hostPinger(void *in) {
             calculatedChecksum = rk_host_monitor_checksum(buff + offset, r - offset);
             if (engine->verbose > 1) {
                 RKLog("%s %s r = %u   sd = %d   returnAddress = %d.%d.%d.%d   returnLength = %d\n",
-                      engine->name, name,
+                      engine->name, me->name,
                       r,
                       sd,
                       (returnAddress.sin_addr.s_addr & 0xff),
@@ -287,9 +286,9 @@ static void *hostPinger(void *in) {
                       (returnAddress.sin_addr.s_addr & 0x00ff0000) >> 16,
                       (returnAddress.sin_addr.s_addr & 0xff000000) >> 24,
                       returnLength);
-                RKLog(">%s %s checksum       = %   6d   %   6d\n", engine->name, name, receivedChecksum, calculatedChecksum);
-                RKLog(">%s %s identifier     = 0x%04x   0x%04x\n", engine->name, name, icmpHeader->identifier, me->identifier);
-                RKLog(">%s %s sequenceNumber = %   6d   %   6d\n", engine->name, name, icmpHeader->sequenceNumber, me->sequenceNumber);
+                RKLog(">%s %s checksum       = %   6d   %   6d\n", engine->name, me->name, receivedChecksum, calculatedChecksum);
+                RKLog(">%s %s identifier     = 0x%04x   0x%04x\n", engine->name, me->name, icmpHeader->identifier, me->identifier);
+                RKLog(">%s %s sequenceNumber = %   6d   %   6d\n", engine->name, me->name, icmpHeader->sequenceNumber, me->sequenceNumber);
             }
             // Ignore identifier for this since it can be different for UDP implementations
             if (receivedChecksum == calculatedChecksum &&
@@ -309,7 +308,7 @@ static void *hostPinger(void *in) {
             period = RKTimevalDiff(time, me->latestTime);
             if (engine->verbose > 1) {
                 RKLog(">%s %s r = %d   delta: %.3e   %d.%d.%d.%d  %d %d",
-                      engine->name, name,
+                      engine->name, me->name,
                       r,
                       RKTimevalDiff(time, me->latestTime),
                       (targetAddress.sin_addr.s_addr & 0xff),
@@ -349,7 +348,7 @@ static void *hostPinger(void *in) {
     }
     free(buff);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, me->name);
     
     return NULL;
 }

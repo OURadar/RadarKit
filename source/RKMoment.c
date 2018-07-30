@@ -245,7 +245,7 @@ static void zeroOutRay(RKRay *ray) {
 
 static void *momentCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
-    RKMomentEngine *engine = me->parentEngine;
+    RKMomentEngine *engine = me->parent;
 
     int i, k, p;
     struct timeval t0, t1, t2;
@@ -260,22 +260,21 @@ static void *momentCore(void *in) {
     // Grab the semaphore
     sem_t *sem = me->sem;
 
-    // Initiate a variable to store my name
-    RKName name;
+    // Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "M%02d", c);
+        k += sprintf(me->name + k, "M%02d", c);
     } else {
-        k += sprintf(name + k, "M%d", c);
+        k += sprintf(me->name + k, "M%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        sprintf(me->name + k, RKNoColor);
     }
     
 #if defined(_GNU_SOURCE)
@@ -347,7 +346,7 @@ static void *momentCore(void *in) {
     engine->memoryUsage += mem;
     
     RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
-          engine->name, name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
+          engine->name, me->name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -445,7 +444,7 @@ static void *momentCore(void *in) {
             gateSizeMeters = E->header.gateSizeMeters;
             if (engine->verbose > 1) {
                 RKLog("%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
-                      engine->name, name,
+                      engine->name, me->name,
                       config->filterCount,
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
@@ -467,7 +466,7 @@ static void *momentCore(void *in) {
                 if (engine->verbose > 1) {
                     for (p = 0; p < 2; p++) {
                         RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
-                              engine->name, name, k,
+                              engine->name, me->name, k,
                               p == 0 ? "H" : (p == 1 ? "V" : "-"),
                               config->systemZCal[p],
                               config->ZCal[k][p],
@@ -500,12 +499,12 @@ static void *momentCore(void *in) {
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             if (ie != i) {
-                RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, name, ie, i);
+                RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, me->name, ie, i);
             }
             // Call the processor
             k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
-                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, name, k, path.length);
+                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, me->name, k, path.length);
             }
             // Fill in the ray
             makeRayFromScratch(space, ray, ray->header.gateCount);
@@ -518,7 +517,7 @@ static void *momentCore(void *in) {
             // Zero out the ray
             zeroOutRay(ray);
             if (engine->verbose > 1) {
-                RKLog("%s %s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", engine->name, name,
+                RKLog("%s %s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", engine->name, me->name,
                       path.length, path.length > 1 ? "s": "", deltaAzimuth, deltaElevation);
             }
             ray->header.s |= RKRayStatusSkipped;
@@ -542,7 +541,7 @@ static void *momentCore(void *in) {
         // Summary of this ray
         snprintf(string + RKStatusBarWidth, RKNameLength - RKStatusBarWidth,
                  " %05u | %s  %05u...%05u (%3d)  [C%2d/E%5.2f/A%5.2f]   E%5.2f-%5.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s%s",
-                 (unsigned int)io, name, (unsigned int)is, (unsigned int)ie, path.length,
+                 (unsigned int)io, me->name, (unsigned int)is, (unsigned int)ie, path.length,
                  ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,
                  S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
                  S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
@@ -575,14 +574,14 @@ static void *momentCore(void *in) {
     }
 
     if (engine->verbose > 1) {
-        RKLog("%s %s Freeing reources ...\n", engine->name, name);
+        RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
     }
     
     RKScratchFree(space);
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, name);
+    RKLog(">%s %s Stopped.\n", engine->name, me->name);
 
     return NULL;
 }
@@ -648,7 +647,7 @@ static void *pulseGatherer(void *_in) {
         }
         worker->id = c;
         worker->sem = sem[c];
-        worker->parentEngine = engine;
+        worker->parent = engine;
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
         }
