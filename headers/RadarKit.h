@@ -15,6 +15,8 @@
 //         - LFM frequency hopping
 //         - Mapping coefficients to product files
 //
+//  2.0.1  - 8/xx/2018
+//         - RKBufferOverview upgraded to show health buffers
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive

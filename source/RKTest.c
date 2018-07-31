@@ -1657,8 +1657,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     struct timeval t0, t1;
     bool even = true;
     
-    const int chunkSize = MAX(1, (int)floor(0.2 / transceiver->prt));
-    
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
@@ -1679,18 +1677,11 @@ void *RKTestTransceiverRunLoop(void *input) {
               transceiver->name,
               RKIntegerToCommaStyleString(transceiver->gateCount),
               transceiver->gateCount * transceiver->gateSizeMeters * 1.0e-3,
-              RKIntegerToCommaStyleString(chunkSize),
+              RKIntegerToCommaStyleString(transceiver->chunkSize),
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
     
     double periodTotal;
-    const double periodEven = transceiver->prt;
-    const double periodOdd =
-    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
-    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
-     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
-    const long ticEven = (long)(periodEven * 1.0e6);
-    const long ticOdd = (long)(periodOdd * 1.0e6);
 
     float a;
     float r;
@@ -1768,7 +1759,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
         periodTotal = 0.0;
 
-        for (j = 0; j < chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
+        for (j = 0; j < transceiver->chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
@@ -1878,9 +1869,9 @@ void *RKTestTransceiverRunLoop(void *input) {
             RKSetPulseHasData(radar, pulse);
 
             if (even) {
-                tic += ticEven;
+                tic += transceiver->ticEven;
             } else {
-                tic += ticOdd;
+                tic += transceiver->ticOdd;
             }
 
             w = RKNextModuloS(w, waveform->count);
@@ -1898,11 +1889,11 @@ void *RKTestTransceiverRunLoop(void *input) {
                 sleep(2);
             }
             if (even) {
-                periodTotal += periodEven;
-                t += periodEven;
+                periodTotal += transceiver->periodEven;
+                t += transceiver->periodEven;
             } else {
-                periodTotal += periodOdd;
-                t += periodOdd;
+                periodTotal += transceiver->periodOdd;
+                t += transceiver->periodOdd;
             }
             even = !even;
         }
@@ -1973,13 +1964,19 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->state = RKEngineStateAllocated;
     transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
-    transceiver->gateCount = RKGetPulseCapacity(radar);
+    transceiver->gateCapacity = RKGetPulseCapacity(radar);
+    transceiver->gateCount = transceiver->gateCapacity;
     transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
                      (transceiver->gateCount >= 8000 ? 25.0e6 :
                      (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
-    transceiver->gateCount /= 10;
-    transceiver->prt = 0.0003;
+    transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
+    transceiver->prt = 0.001;
     transceiver->sprt = 1;
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd = transceiver->prt;
+    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+    transceiver->chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
     sprintf(transceiver->waveformCache[0]->name, "s01");
 
@@ -2072,6 +2069,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     char *c;
     double bandwidth;
     double pulsewidth;
+    double value;
     unsigned int pulsewidthSampleCount;
 
     RKWaveform *waveform = NULL;
@@ -2117,12 +2115,30 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             break;
         case 'p':
             if (!strncmp(command, "prt", 3)) {
-                transceiver->prt = atof(command + 3);
-                if (response != NULL) {
-                    sprintf(response, "ACK. PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                k = sscanf(command, "%s %lf", string, &value);
+                if (k == 2) {
+                    transceiver->prt = value;
+                    if (response != NULL) {
+                        sprintf(response, "ACK. New PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                    }
+                } else if (response != NULL) {
+                    sprintf(response, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
                 }
+                transceiver->periodEven = transceiver->prt;
+                transceiver->periodOdd =
+                transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+                (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+                 (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+                transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+                transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+                transceiver->chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
+                value = 1.5e8 * transceiver->prt;
+                transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
+                RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
                 if (radar->desc.initFlags & RKInitFlagVerbose) {
-                    RKLog("%s PRT = %s\n", transceiver->name, RKFloatToCommaStyleString(transceiver->prt));
+                    RKLog("%s PRT = %s ms   gateCount = %s\n", transceiver->name,
+                          RKFloatToCommaStyleString(1.0e3 * transceiver->prt),
+                          RKIntegerToCommaStyleString(transceiver->gateCount));
                 }
             }
             break;
@@ -2299,6 +2315,7 @@ void *RKTestPedestalRunLoop(void *input) {
 
     // Use a counter that mimics microsecond increments
     RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    int healthTicCount = (int)(0.1 / PEDESTAL_SAMPLING_TIME);
     
     pedestal->state |= RKEngineStateActive;
 
@@ -2345,7 +2362,7 @@ void *RKTestPedestalRunLoop(void *input) {
         RKSetPositionReady(radar, position);
         
         // Report health
-        if (true) {
+        if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
                     "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
@@ -2582,16 +2599,6 @@ void *RKTestHealthRelayRunLoop(void *input) {
                 heading,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
-//        snprintf(health->string, RKMaximumStringLength - 1, "{"
-//                 "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-//                 "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-//                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-//                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
-//                 "}",
-//                 RKStatusEnumNormal,
-//                 RKStatusEnumNormal,
-//                 powerH, RKStatusEnumNormal,
-//                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
 
         // Wait to simulate sampling time
