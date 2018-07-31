@@ -1976,7 +1976,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->periodOdd = transceiver->prt;
     transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
     transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-    transceiver->chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
+    transceiver->chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
     sprintf(transceiver->waveformCache[0]->name, "s01");
 
@@ -2315,6 +2315,7 @@ void *RKTestPedestalRunLoop(void *input) {
 
     // Use a counter that mimics microsecond increments
     RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
+    int healthTicCount = (int)(0.1 / PEDESTAL_SAMPLING_TIME);
     
     pedestal->state |= RKEngineStateActive;
 
@@ -2361,7 +2362,7 @@ void *RKTestPedestalRunLoop(void *input) {
         RKSetPositionReady(radar, position);
         
         // Report health
-        if (true) {
+        if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             sprintf(health->string, "{"
                     "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
@@ -2598,16 +2599,6 @@ void *RKTestHealthRelayRunLoop(void *input) {
                 heading,
                 powerH, RKStatusEnumNormal,
                 powerV, RKStatusEnumNormal);
-//        snprintf(health->string, RKMaximumStringLength - 1, "{"
-//                 "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-//                 "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-//                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-//                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
-//                 "}",
-//                 RKStatusEnumNormal,
-//                 RKStatusEnumNormal,
-//                 powerH, RKStatusEnumNormal,
-//                 powerV, RKStatusEnumNormal);
         RKSetHealthReady(radar, health);
 
         // Wait to simulate sampling time

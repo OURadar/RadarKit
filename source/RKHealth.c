@@ -160,6 +160,7 @@ static void *healthConsolidator(void *_in) {
                 i -= RKStripTail(string);                                                                  // Strip away white spaces
                 i--;                                                                                       // Ignore the last "}"
                 i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
+                engine->healthNodes[j].healths[n].flag |= RKHealthFlagUsed;
             }
         }
 

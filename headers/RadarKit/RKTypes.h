@@ -361,7 +361,8 @@ enum RKStatusFlag {
 typedef uint32_t RKHealthFlag;
 enum RKHealthFlag {
     RKHealthFlagVacant               = 0,
-    RKHealthFlagReady                = 1
+    RKHealthFlagReady                = 1,
+    RKHealthFlagUsed                 = (1 << 1)
 };
 
 typedef uint32_t RKMarker;
