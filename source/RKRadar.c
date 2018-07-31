@@ -2679,7 +2679,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
 }
 
 int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
-    static int slice, pulseStride = 1, rayStride = 1;
+    static int slice, pulseStride = 1, rayStride = 1, healthStride = 1;
     int i, j, k, m = 0, n = 0;
     char *c;
     size_t s;
@@ -2782,7 +2782,9 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         memset(text + m, '-', s);
         m += s;
         *(text + m++) = '\n';
-        n += 4;
+        n += 5;
+
+        printf("%s\n", RKVariableInString("slice", &slice, RKValueTypeInt));
         
         // Background of ray buffer
         k = slice * terminalSize.ws_row * 2 / 5;
@@ -2792,7 +2794,44 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
             k += rayStride * slice;
             n++;
         }
+
+        // Health buffers
+        c = RKIntegerToCommaStyleString(radar->desc.healthNodeBufferSize);
+        if (flag & RKOverviewFlagShowColor) {
+            m += sprintf(text + m,
+                         "\033[%d;1H       "
+                         "    %s%c" RKNoColor " Vacant"
+                         "    %s%c" RKNoColor " Has Data"
+                         "    %s%c" RKNoColor " Shared"
+                         "    %s%c" RKNoColor " Used\n\n\n"
+                         "Health Buffers (%s B)\n"
+                         "------------------", n, c0, m0, c1, m1, c2, m2, c3, m3, c);
+        } else {
+            m += sprintf(text + m,
+                         "\033[%d;1H       "
+                         "    %c Vacant"
+                         "    %c Has Data"
+                         "    %c Shared"
+                         "    %c Used\n\n\n"
+                         "Health Buffers (%s B)\n"
+                         "------------------", n, m0, m1, m2, m3, c);
+        }
+        //printf("%d x %d   slice = %d   pulseStride = %d   rayStride = %d\n", terminalSize.ws_col, terminalSize.ws_row, slice, pulseStride, rayStride);
+
+        s = strlen(c);
+        memset(text + m, '-', s);
+        m += s;
+        *(text + m++) = '\n';
+        n += 5;
+
+        // Background of health buffers
+        healthStride = MAX(1, (radar->desc.healthBufferDepth + k - 1) / k);
+        for (k = 0; k < RKHealthNodeCount; k++) {
+            m += sprintf(text + m, "%d / %d\n", k, radar->desc.healthBufferDepth);
+            n++;
+        }
         n++;
+
         if (flag & RKOverviewFlagShowColor) {
             m += sprintf(text + m,
                          "\033[%d;1H\n\n       "
@@ -2810,7 +2849,6 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
                          "    %c Algorithms\n",
                          n, m0, m1, m2, m3);
         }
-        //printf("%d x %d   slice = %d   pulseStride = %d   rayStride = %d\n", terminalSize.ws_col, terminalSize.ws_row, slice, pulseStride, rayStride);
     }
     
     // Use w for two address end points plus the other characters
@@ -2821,6 +2859,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
     for (j = 0; j < 50 && k < radar->desc.pulseBufferDepth; j++) {
+        // Move the cursor
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++, k += pulseStride) {
@@ -2907,6 +2946,36 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         }
         n++;
     }
+
+    n += 7;
+    for (j = 0; j < RKHealthNodeCount; j++) {
+        m += sprintf(text + m, "\033[%d;%dH", n, w);
+        s1 = (uint32_t)-1;
+        for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
+            RKHealth *health = &radar->healthNodes[j].healths[k];
+            s0 = health->flag;
+            if (flag & RKOverviewFlagShowColor) {
+                if (s0 & RKHealthFlagReady) {
+                    if (s0 == s1) {
+                        *(text + m++) = m3;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c3, m3);
+                    }
+                } else {
+                    if (s0 == s1) {
+                        *(text + m++) = m0;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c0, m0);
+                    }
+                }
+            } else {
+                *(text + m++) = s0 & RKHealthFlagReady ? m3 : m0;
+            }
+            s1 = s0;
+        }
+        n++;
+    }
+
     n += 4;
     m += sprintf(text + m, "\033[0m\033[%d;1H== (%s) ==" RKEOL, n, RKIntegerToCommaStyleString(m));
     *(text + m) = '\0';
