@@ -2826,7 +2826,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
 
         // Background of health buffers
         healthStride = MAX(1, (radar->desc.healthBufferDepth + k - 1) / k);
-        for (k = 0; k < MIN(16, RKHealthNodeCount); k++) {
+        for (k = 0; k < MIN(8, RKHealthNodeCount); k++) {
             m += sprintf(text + m, "\n%3s: 0-%d",
                          k == RKHealthNodeRadarKit ? "RKI" :
                          (k == RKHealthNodeTransceiver ? "TRX" :
@@ -2952,7 +2952,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     }
 
     n += 7;
-    for (j = 0; j < MIN(16, RKHealthNodeCount); j++) {
+    for (j = 0; j < MIN(8, RKHealthNodeCount); j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
