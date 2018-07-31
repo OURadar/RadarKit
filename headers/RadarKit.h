@@ -17,6 +17,7 @@
 //
 //  2.0.1  - 8/xx/2018
 //         - RKBufferOverview upgraded to show health buffers
+//         - Replaced !isfinite() with isnan() since isfinite(0.0) = 0
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive
