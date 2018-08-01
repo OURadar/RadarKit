@@ -300,10 +300,12 @@ static void *systemInspectorRunLoop(void *in) {
             anyCritical = RKAnyCritical(health->string, false, criticalKey, criticalValue);
             if (anyCritical) {
                 RKLog("Warning. %s is in critical condition (value = %s, count = %d).\n", criticalKey, criticalValue, criticalCount);
-                if (criticalCount++ >= 2) {
+                if (criticalCount++ >= 20) {
                     criticalCount = 0;
-                    RKLog("Warning. Suspending radar due to critical %s ...\n", criticalKey);
-                    radar->masterControllerExec(radar->masterController, "z", NULL);
+                    if (pedestalEnum == RKStatusEnumActive) {
+                        RKLog("Warning. Suspending radar due to critical %s ...\n", criticalKey);
+                        radar->masterControllerExec(radar->masterController, "z", NULL);
+                    }
                 }
             } else {
                 criticalCount = 0;
