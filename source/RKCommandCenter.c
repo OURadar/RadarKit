@@ -319,8 +319,6 @@ int socketStreamHandler(RKOperator *O) {
 
     RKIdentifier identifier;
     RKProductId productId;
-
-    RKOverviewFlag overviewFlag;
     
     struct timeval timevalOrigin, timevalTx, timevalRx;
     double deltaTx, deltaRx;
@@ -431,29 +429,11 @@ int socketStreamHandler(RKOperator *O) {
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
         } else if (k == RKStreamStatusBuffers) {
-            overviewFlag = RKOverviewFlagNone;
-            if (user->textPreferences & RKTextPreferencesShowColor) {
-                overviewFlag |= RKOverviewFlagShowColor;
-            }
-            switch (user->textPreferences & RKTextPreferencesWindowSizeMask) {
-                case RKTextPreferencesWindowSize80x40:
-                    overviewFlag |= RKOverviewFlagWindowSize80x40;
-                    break;
-                case RKTextPreferencesWindowSize80x50:
-                    overviewFlag |= RKOverviewFlagWindowSize80x50;
-                    break;
-                case RKTextPreferencesWindowSize120x80:
-                    overviewFlag |= RKOverviewFlagWindowSize120x80;
-                    break;
-                default:
-                    break;
-            }
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamStatusBuffers) {
                 user->streamsInProgress |= RKStreamStatusBuffers;
-                overviewFlag |= RKOverviewFlagDrawBackground;
-                k = RKBufferOverview(user->radar, user->string, overviewFlag);
+                k = RKBufferOverview(user->radar, user->string, user->textPreferences | RKTextPreferencesDrawBackground);
             } else {
-                k = RKBufferOverview(user->radar, user->string, overviewFlag);
+                k = RKBufferOverview(user->radar, user->string, user->textPreferences);
             }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
@@ -1204,7 +1184,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamProductZVWDPRKS;
     user->access |= RKStreamSweepZVWDPRKS;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
-    user->textPreferences = RKTextPreferencesShowColor;
+    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x50;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000, 1);
@@ -1218,7 +1198,6 @@ int socketInitialHandler(RKOperator *O) {
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
     RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d ...\n", engine->name, O->name,
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row);
-    user->textPreferences |= RKTextPreferencesWindowSize120x80;
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
 

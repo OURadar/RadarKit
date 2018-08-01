@@ -192,11 +192,10 @@ static void *healthConsolidator(void *_in) {
         if (isnan(latitude) || isnan(longitude) || isnan(heading) || (desc->initFlags & RKInitFlagIgnoreGPS)) {
             // Concatenate with latitude, longitude and heading values if GPS values are not reported
             i += sprintf(string + i,
-                         "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
                          "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
-                         "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                         "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                         "\"GPS Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
+                         "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                         "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                         "\"Sys Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
                          "\"LocationFromDescriptor\":true, ",
                          desc->latitude,
                          desc->longitude,

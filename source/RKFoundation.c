@@ -1244,7 +1244,7 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
     int i, j = 0;
     RKControl *control = controls;
     for (i = 0; i < count; i++) {
-        if (control->label[0] == 0) {
+        if (control->label[0] == '\0') {
             break;
         }
         j += sprintf(string + j, "{\"Label\": \"%s\", \"Command\": \"%s\"}, ", control->label, control->command);

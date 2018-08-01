@@ -300,10 +300,12 @@ static void *systemInspectorRunLoop(void *in) {
             anyCritical = RKAnyCritical(health->string, false, criticalKey, criticalValue);
             if (anyCritical) {
                 RKLog("Warning. %s is in critical condition (value = %s, count = %d).\n", criticalKey, criticalValue, criticalCount);
-                if (criticalCount++ >= 2) {
+                if (criticalCount++ >= 20) {
                     criticalCount = 0;
-                    RKLog("Warning. Suspending radar due to critical %s ...\n", criticalKey);
-                    radar->masterControllerExec(radar->masterController, "z", NULL);
+                    if (pedestalEnum == RKStatusEnumActive) {
+                        RKLog("Warning. Suspending radar due to critical %s ...\n", criticalKey);
+                        radar->masterControllerExec(radar->masterController, "z", NULL);
+                    }
                 }
             } else {
                 criticalCount = 0;
@@ -2617,7 +2619,7 @@ void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, label, RKNameLength - 1);
-    strncpy(target->command, command, RKMaximumStringLength - 1);
+    strncpy(target->command, command, RKMaximumCommandLength - 1);
 }
 
 void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *control) {
@@ -2627,11 +2629,17 @@ void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *contr
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, control->label, RKNameLength - 1);
-    strncpy(target->command, control->command, RKMaximumStringLength - 1);
+    strncpy(target->command, control->command, RKMaximumCommandLength - 1);
 }
 
 void RKClearControls(RKRadar *radar) {
+    int k;
     radar->controlCount = 0;
+    for (k = 0; k < radar->desc.controlCapacity; k++) {
+        RKControl *control = &radar->controls[k];
+        memset(control->label, 0, RKNameLength);
+        memset(control->command, 0, RKMaximumCommandLength);
+    }
 }
 
 void RKConcludeControls(RKRadar *radar) {
@@ -2678,7 +2686,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     free(buffer);
 }
 
-int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
+int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
     static int slice, pulseStride = 1, rayStride = 1, healthStride = 1;
     int i, j, k, m = 0, n = 0;
     char *c;
@@ -2695,27 +2703,32 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     
     int w = (int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1;
 
-    if (flag & RKOverviewFlagDrawBackground) {
+    static struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+    
+    if (flag & RKTextPreferencesDrawBackground) {
         // General address format goes like this: [color reset] [new line] %04d-%04d
         char format[64];
-        sprintf(format, "\n%%0%dd-%%0%dd ", w, w);
+        sprintf(format, "%%0%dd-%%0%dd\n", w, w);
         
         // Check the terminal width
-        struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
-        switch (flag & RKOverviewFlagWindowSizeMask) {
-            case RKOverviewFlagWindowSize80x25:
+        switch (flag & RKTextPreferencesWindowSizeMask) {
+            case RKTextPreferencesWindowSize80x25:
                 terminalSize.ws_col = 78;
                 terminalSize.ws_row = 25;
                 break;
-            case RKOverviewFlagWindowSize80x40:
+            case RKTextPreferencesWindowSize80x40:
                 terminalSize.ws_col = 78;
                 terminalSize.ws_row = 40;
                 break;
-            case RKOverviewFlagWindowSize80x50:
+            case RKTextPreferencesWindowSize80x50:
                 terminalSize.ws_col = 78;
                 terminalSize.ws_row = 50;
                 break;
-            case RKOverviewFlagWindowSize120x80:
+            case RKTextPreferencesWindowSize120x50:
+                terminalSize.ws_col = 110;
+                terminalSize.ws_row = 50;
+                break;
+            case RKTextPreferencesWindowSize120x80:
                 terminalSize.ws_col = 110;
                 terminalSize.ws_row = 80;
                 break;
@@ -2745,11 +2758,11 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         memset(text + m, '-', s);
         m += s;
         *(text + m++) = '\n';
-        n += 5;
+        n += 4;
 
         // Background of pulse buffer: digits occupy int(log(depth)) + 1 (2x), minus '-', some ' '(front), some ' '(back), then pick the optimal 10.
         slice = (terminalSize.ws_col - 2 * ((int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1) - 3 + 9) / 10 * 10;
-        k = slice * terminalSize.ws_row * 2 / 5;
+        k = slice * (terminalSize.ws_row - 16) / 2;
         pulseStride = MAX(1, (radar->desc.pulseBufferDepth + k - 1) / k);
         for (j = 0, k = 0; j < 30 && k < radar->desc.pulseBufferDepth; j++) {
             m += sprintf(text + m, format, k, MIN(k + pulseStride * slice, radar->desc.pulseBufferDepth));
@@ -2759,35 +2772,21 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
 
         // Ray buffer
         c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
-        if (flag & RKOverviewFlagShowColor) {
-            m += sprintf(text + m,
-                         "\033[%d;1H       "
-                         "    %s%c" RKNoColor " Vacant"
-                         "    %s%c" RKNoColor " Has Data"
-                         "    %s%c" RKNoColor " Processed"
-                         "    %s%c" RKNoColor " Used\n\n\n"
-                         "Ray Buffer (%s B)\n"
-                         "---------------", n, c0, m0, c1, m1, c2, m2, c3, m3, c);
-        } else {
-            m += sprintf(text + m,
-                         "\033[%d;1H       "
-                         "    %c Vacant"
-                         "    %c Has Data"
-                         "    %c Processed"
-                         "    %c Used\n\n\n"
-                         "Ray Buffer (%s B)\n"
-                         "---------------", n, m0, m1, m2, m3, c);
-        }
+        m += sprintf(text + m,
+                     "\033[%d;1H"
+                     "Ray Buffer (%s B)\n"
+                     "---------------", n, c);
         s = strlen(c);
         memset(text + m, '-', s);
         m += s;
         *(text + m++) = '\n';
-        n += 7;
+        n += 3;
 
         //printf("%s\n", RKVariableInString("slice", &slice, RKValueTypeInt));
 
         // Background of ray buffer
-        k = slice * terminalSize.ws_row * 2 / 5;
+        //k = slice * terminalSize.ws_row * 2 / 5;
+        k = slice * (terminalSize.ws_row - 16) / 2;
         rayStride = MAX(1, (radar->desc.rayBufferDepth + k - 1) / k);
         for (j = 0, k = 0; j < 30 && k < radar->desc.rayBufferDepth; j++) {
             m += sprintf(text + m, format, k, MIN(k + rayStride * slice, radar->desc.rayBufferDepth));
@@ -2797,37 +2796,22 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
 
         // Health buffers
         c = RKIntegerToCommaStyleString(radar->desc.healthNodeBufferSize);
-        if (flag & RKOverviewFlagShowColor) {
-            m += sprintf(text + m,
-                         "\033[%d;1H       "
-                         "    %s%c" RKNoColor " Vacant"
-                         "    %s%c" RKNoColor " Has Data"
-                         "    %s%c" RKNoColor " Shared"
-                         "    %s%c" RKNoColor " Algorithms\n\n\n"
-                         "Health Buffers (%s B)\n"
-                         "-------------------", n, c0, m0, c1, m1, c2, m2, c3, m3, c);
-        } else {
-            m += sprintf(text + m,
-                         "\033[%d;1H       "
-                         "    %c Vacant"
-                         "    %c Has Data"
-                         "    %c Shared"
-                         "    %c Algorithms\n\n\n"
-                         "Health Buffers (%s B)\n"
-                         "-------------------", n, m0, m1, m2, m3, c);
-        }
+        m += sprintf(text + m,
+                     "\033[%d;1H"
+                     "Health Buffers (%s B)\n"
+                     "-------------------", n, c);
         //printf("%d x %d   slice = %d   pulseStride = %d   rayStride = %d\n", terminalSize.ws_col, terminalSize.ws_row, slice, pulseStride, rayStride);
 
         s = strlen(c);
         memset(text + m, '-', s);
         m += s;
         *(text + m++) = '\n';
-        n += 7;
+        n += 3;
 
         // Background of health buffers
         healthStride = MAX(1, (radar->desc.healthBufferDepth + k - 1) / k);
-        for (k = 0; k < MIN(8, RKHealthNodeCount); k++) {
-            m += sprintf(text + m, "\n%3s: 0-%d",
+        for (k = 0; k < MIN(4, RKHealthNodeCount); k++) {
+            m += sprintf(text + m, "%3s: 0-%d\n",
                          k == RKHealthNodeRadarKit ? "RKI" :
                          (k == RKHealthNodeTransceiver ? "TRX" :
                           (k == RKHealthNodePedestal ? "PED" :
@@ -2835,10 +2819,22 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
                          radar->desc.healthBufferDepth);
             n++;
         }
-
-        if (flag & RKOverviewFlagShowColor) {
+        n = n - k - 1;
+        for (; k < MIN(8, RKHealthNodeCount); k++) {
+            m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col / 2);
+            m += sprintf(text + m, "%3s: 0-%d",
+                         k == RKHealthNodeRadarKit ? "RKI" :
+                         (k == RKHealthNodeTransceiver ? "TRX" :
+                          (k == RKHealthNodePedestal ? "PED" :
+                           (k == RKHealthNodeTweeta ? "TWT" : RKIntegerToCommaStyleString(k)))),
+                         radar->desc.healthBufferDepth);
+            n++;
+        }
+        n++;
+        
+        if (flag & RKTextPreferencesShowColor) {
             m += sprintf(text + m,
-                         "\033[%d;1H       "
+                         "\033[%d;1H         "
                          "    %s%c" RKNoColor " Vacant"
                          "    %s%c" RKNoColor " Has Data"
                          "    %s%c" RKNoColor " Shared"
@@ -2846,7 +2842,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
                          n, c0, m0, c1, m1, c2, m2, c3, m3);
         } else {
             m += sprintf(text + m,
-                         "\033[%d;1H       "
+                         "\033[%d;1H          "
                          "    %c Vacant"
                          "    %c Has Data"
                          "    %c Shared"
@@ -2858,7 +2854,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
     // Use w for two address end points plus the other characters
     w = 2 * w + 3;
     
-    n = 4;
+    n = 3;
     k = 0;
     uint32_t s0 = RKPulseStatusVacant;
     uint32_t s1 = RKPulseStatusVacant;
@@ -2869,7 +2865,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++, k += pulseStride) {
             pulse = RKGetPulse(radar->pulses, k);
             s0 = pulse->header.s;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKPulseStatusRecorded) {
                     if (s0 == s1) {
                         *(text + m++) = m4;
@@ -2909,7 +2905,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         n++;
     }
     
-    n += 7;
+    n += 3;
     k = 0;
     for (j = 0; j < 30 && k < radar->desc.rayBufferDepth; j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
@@ -2917,7 +2913,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++, k += rayStride) {
             ray = RKGetRay(radar->rays, k);
             s0 = ray->header.s;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKRayStatusBeingConsumed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
@@ -2951,14 +2947,48 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         n++;
     }
 
-    n += 7;
-    for (j = 0; j < MIN(8, RKHealthNodeCount); j++) {
+    n += 3;
+    for (j = 0; j < MIN(4, RKHealthNodeCount); j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
             RKHealth *health = &radar->healthNodes[j].healths[k];
             s0 = health->flag;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
+                if (s0 & RKHealthFlagUsed) {
+                    if (s0 == s1) {
+                        *(text + m++) = m3;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c3, m3);
+                    }
+                } else if (s0 & RKHealthFlagReady) {
+                    if (s0 == s1) {
+                        *(text + m++) = m1;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c1, m1);
+                    }
+                } else {
+                    if (s0 == s1) {
+                        *(text + m++) = m0;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c0, m0);
+                    }
+                }
+            } else {
+                *(text + m++) = s0 & RKHealthFlagReady ? m1 : m0;
+            }
+            s1 = s0;
+        }
+        n++;
+    }
+    n -= j;
+    for (; j < MIN(8, RKHealthNodeCount); j++) {
+        m += sprintf(text + m, "\033[%d;%dH", n, w + terminalSize.ws_col / 2);
+        s1 = (uint32_t)-1;
+        for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
+            RKHealth *health = &radar->healthNodes[j].healths[k];
+            s0 = health->flag;
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKHealthFlagUsed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
@@ -2986,7 +3016,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         n++;
     }
 
-    n += 3;
+    n += 2;
     m += sprintf(text + m, "\033[0m\033[%d;1H== (%s) ==" RKEOL, n, RKIntegerToCommaStyleString(m));
     *(text + m) = '\0';
     return m;
