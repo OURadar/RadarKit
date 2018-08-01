@@ -14,19 +14,6 @@
 #define RKCommandCenterMaxConnections 32
 #define RKCommandCenterMaxRadars       4
 
-typedef uint32_t RKTextPreferences;
-enum RKTextPreferences {
-    RKTextPreferencesNone             = 0,
-    RKTextPreferencesShowColor        = 1,
-    RKTextPreferencesStandardWidth    = (1 << 1),
-    RKTextPreferencesWindowSizeMask   = (7 << 2),
-    RKTextPreferencesWindowSize80x25  = (1 << 2),
-    RKTextPreferencesWindowSize80x40  = (2 << 2),
-    RKTextPreferencesWindowSize80x50  = (3 << 2),
-    RKTextPreferencesWindowSize120x50 = (4 << 2),
-    RKTextPreferencesWindowSize120x80 = (5 << 2)
-};
-
 typedef struct rk_user {
     char                             login[64];
     RKStream                         access;             // Authorized access priviledge

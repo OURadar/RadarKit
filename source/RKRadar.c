@@ -2678,7 +2678,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     free(buffer);
 }
 
-int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
+int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
     static int slice, pulseStride = 1, rayStride = 1, healthStride = 1;
     int i, j, k, m = 0, n = 0;
     char *c;
@@ -2697,30 +2697,30 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
 
     static struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
     
-    if (flag & RKOverviewFlagDrawBackground) {
+    if (flag & RKTextPreferencesDrawBackground) {
         // General address format goes like this: [color reset] [new line] %04d-%04d
         char format[64];
         sprintf(format, "%%0%dd-%%0%dd\n", w, w);
         
         // Check the terminal width
-        switch (flag & RKOverviewFlagWindowSizeMask) {
-            case RKOverviewFlagWindowSize80x25:
+        switch (flag & RKTextPreferencesWindowSizeMask) {
+            case RKTextPreferencesWindowSize80x25:
                 terminalSize.ws_col = 78;
                 terminalSize.ws_row = 25;
                 break;
-            case RKOverviewFlagWindowSize80x40:
+            case RKTextPreferencesWindowSize80x40:
                 terminalSize.ws_col = 78;
                 terminalSize.ws_row = 40;
                 break;
-            case RKOverviewFlagWindowSize80x50:
+            case RKTextPreferencesWindowSize80x50:
                 terminalSize.ws_col = 78;
                 terminalSize.ws_row = 50;
                 break;
-            case RKOverviewFlagWindowSize120x50:
+            case RKTextPreferencesWindowSize120x50:
                 terminalSize.ws_col = 110;
                 terminalSize.ws_row = 50;
                 break;
-            case RKOverviewFlagWindowSize120x80:
+            case RKTextPreferencesWindowSize120x80:
                 terminalSize.ws_col = 110;
                 terminalSize.ws_row = 80;
                 break;
@@ -2824,7 +2824,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         }
         n++;
         
-        if (flag & RKOverviewFlagShowColor) {
+        if (flag & RKTextPreferencesShowColor) {
             m += sprintf(text + m,
                          "\033[%d;1H         "
                          "    %s%c" RKNoColor " Vacant"
@@ -2857,7 +2857,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++, k += pulseStride) {
             pulse = RKGetPulse(radar->pulses, k);
             s0 = pulse->header.s;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKPulseStatusRecorded) {
                     if (s0 == s1) {
                         *(text + m++) = m4;
@@ -2905,7 +2905,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++, k += rayStride) {
             ray = RKGetRay(radar->rays, k);
             s0 = ray->header.s;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKRayStatusBeingConsumed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
@@ -2946,7 +2946,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
             RKHealth *health = &radar->healthNodes[j].healths[k];
             s0 = health->flag;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKHealthFlagUsed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
@@ -2980,7 +2980,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKOverviewFlag flag) {
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
             RKHealth *health = &radar->healthNodes[j].healths[k];
             s0 = health->flag;
-            if (flag & RKOverviewFlagShowColor) {
+            if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKHealthFlagUsed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;

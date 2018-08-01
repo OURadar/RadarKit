@@ -711,17 +711,17 @@ enum RKProductStatus {
     RKProductStatusSleep3                        = (1 << 7)                    // Sleep stage 3 -
 };
 
-typedef uint8_t RKOverviewFlag;
-enum RKOverviewFlag {
-    RKOverviewFlagNone                           = 0,                          //
-    RKOverviewFlagShowColor                      = 1,                          // Use escape sequence for colors
-    RKOverviewFlagDrawBackground                 = (1 << 1),                   // Repaint the background
-    RKOverviewFlagWindowSizeMask                 = (7 << 2),                   // Forced windwow size
-    RKOverviewFlagWindowSize80x25                = (1 << 2),                   //
-    RKOverviewFlagWindowSize80x40                = (2 << 2),                   //
-    RKOverviewFlagWindowSize80x50                = (3 << 2),                   //
-    RKOverviewFlagWindowSize120x50               = (4 << 2),                   //
-    RKOverviewFlagWindowSize120x80               = (5 << 2)                    //
+typedef uint32_t RKTextPreferences;
+enum RKTextPreferences {
+    RKTextPreferencesNone                        = 0,                          //
+    RKTextPreferencesShowColor                   = 1,                          // Use escape sequence for colors
+    RKTextPreferencesDrawBackground              = (1 << 1),                   // Repaint the background
+    RKTextPreferencesWindowSizeMask              = (7 << 2),                   // Forced windwow size
+    RKTextPreferencesWindowSize80x25             = (1 << 2),                   //
+    RKTextPreferencesWindowSize80x40             = (2 << 2),                   //
+    RKTextPreferencesWindowSize80x50             = (3 << 2),                   //
+    RKTextPreferencesWindowSize120x50            = (4 << 2),                   //
+    RKTextPreferencesWindowSize120x80            = (5 << 2)                    //
 };
 
 typedef uint32_t RKWaveformType;
