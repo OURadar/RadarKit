@@ -2619,7 +2619,7 @@ void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, label, RKNameLength - 1);
-    strncpy(target->command, command, RKMaximumStringLength - 1);
+    strncpy(target->command, command, RKMaximumCommandLength - 1);
 }
 
 void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *control) {
@@ -2629,11 +2629,17 @@ void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *contr
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, control->label, RKNameLength - 1);
-    strncpy(target->command, control->command, RKMaximumStringLength - 1);
+    strncpy(target->command, control->command, RKMaximumCommandLength - 1);
 }
 
 void RKClearControls(RKRadar *radar) {
+    int k;
     radar->controlCount = 0;
+    for (k = 0; k < radar->desc.controlCapacity; k++) {
+        RKControl *control = &radar->controls[k];
+        memset(control->label, 0, RKNameLength);
+        memset(control->command, 0, RKMaximumCommandLength);
+    }
 }
 
 void RKConcludeControls(RKRadar *radar) {

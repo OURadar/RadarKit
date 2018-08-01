@@ -1077,7 +1077,7 @@ typedef struct rk_control {
     uint8_t              state;                                                // Some internal state for house keeping
     uint8_t              level;                                                // Root level controls are for top interface
     char                 label[RKNameLength];                                  // Label up to RKNameLength
-    char                 command[RKMaximumStringLength];                       // Control command
+    char                 command[RKMaximumCommandLength];                      // Control command
 } RKControl;
 
 //
