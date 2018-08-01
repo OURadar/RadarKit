@@ -442,6 +442,9 @@ int socketStreamHandler(RKOperator *O) {
                 case RKTextPreferencesWindowSize80x50:
                     overviewFlag |= RKOverviewFlagWindowSize80x50;
                     break;
+                case RKTextPreferencesWindowSize120x50:
+                    overviewFlag |= RKOverviewFlagWindowSize120x50;
+                    break;
                 case RKTextPreferencesWindowSize120x80:
                     overviewFlag |= RKOverviewFlagWindowSize120x80;
                     break;
@@ -1204,7 +1207,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamProductZVWDPRKS;
     user->access |= RKStreamSweepZVWDPRKS;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
-    user->textPreferences = RKTextPreferencesShowColor;
+    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x50;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000, 1);
@@ -1218,7 +1221,6 @@ int socketInitialHandler(RKOperator *O) {
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
     RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d ...\n", engine->name, O->name,
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row);
-    user->textPreferences |= RKTextPreferencesWindowSize120x80;
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
 

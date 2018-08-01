@@ -720,7 +720,8 @@ enum RKOverviewFlag {
     RKOverviewFlagWindowSize80x25                = (1 << 2),                   //
     RKOverviewFlagWindowSize80x40                = (2 << 2),                   //
     RKOverviewFlagWindowSize80x50                = (3 << 2),                   //
-    RKOverviewFlagWindowSize120x80               = (4 << 2)                    //
+    RKOverviewFlagWindowSize120x50               = (4 << 2),                   //
+    RKOverviewFlagWindowSize120x80               = (5 << 2)                    //
 };
 
 typedef uint32_t RKWaveformType;
