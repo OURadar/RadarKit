@@ -33,6 +33,7 @@ typedef struct user_params {
     int                      sleepInterval;                                      // Intermittent sleep period in transceiver simulator in seconds
     int                      recordLevel;                                        // Data recording (1 - moment + health logs only, 2 - everything)
     bool                     simulate;                                           // Run with transceiver simulator
+    bool                     ignoreGPS;                                          // Ignore GPS from health relay
     uint32_t                 ringFilterGateCount;                                // Number of range gates to apply ring filter
     double                   systemZCal[2];                                      // System calibration for Z
     double                   systemDCal;                                         // System calibration for D
@@ -305,6 +306,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold", &user->SNRThreshold,   RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",    &user->goCommand,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",  &user->stopCommand,    RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",    &user->ignoreGPS,      RKParameterTypeBool, 1);
 
     // Shortcuts
     k = 0;
@@ -640,6 +642,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
+    }
+
+    if (systemPreferences->ignoreGPS) {
+        myRadar->desc.initFlags |= RKInitFlagIgnoreGPS;
     }
 
     // Moment methods
