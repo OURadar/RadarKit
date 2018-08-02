@@ -2579,13 +2579,14 @@ void *RKTestHealthRelayRunLoop(void *input) {
     while (healthRelay->state & RKEngineStateWantActive) {
         powerH = (float)rand() / RAND_MAX - 0.5f;
         powerV = (float)rand() / RAND_MAX - 0.5f;
-        latitude = (double)rand() * 8.0e-6f / RAND_MAX + 35.5f;
-        longitude = (double)rand() * 8.0e-6f / RAND_MAX - 95.5f;
+        latitude = (double)rand() * 8.0e-6f / RAND_MAX + 35.181251;
+        longitude = (double)rand() * 8.0e-6f / RAND_MAX - 97.4349928;
         heading = (double)rand() * 0.2 / RAND_MAX + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
-        snprintf(health->string, RKMaximumStringLength - 1, "{"
+        sprintf(health->string, "{"
                 "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
                 "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+                "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
