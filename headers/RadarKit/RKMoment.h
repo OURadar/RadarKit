@@ -18,7 +18,7 @@ typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
 struct rk_moment_worker {
-    RKName                           name;
+    char                             name[8];
     int                              id;
     pthread_t                        tid;                                      // Thread ID
     RKMomentEngine                   *parent;                                  // Parent engine reference
