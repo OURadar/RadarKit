@@ -18,7 +18,7 @@ typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
 
 struct rk_moment_worker {
-    RKName                           name;
+    RKShortName                      name;
     int                              id;
     pthread_t                        tid;                                      // Thread ID
     RKMomentEngine                   *parent;                                  // Parent engine reference
@@ -58,8 +58,8 @@ struct rk_moment_engine {
     
     // Status / health
     uint32_t                         processedPulseIndex;
-    char                             statusBuffer[RKBufferSSlotCount][RKNameLength];
-    char                             rayStatusBuffer[RKBufferSSlotCount][RKNameLength];
+    char                             statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
+    char                             rayStatusBuffer[RKBufferSSlotCount][RKStatusStringLength];
     uint32_t                         statusBufferIndex;
     uint32_t                         rayStatusBufferIndex;
     RKEngineState                    state;

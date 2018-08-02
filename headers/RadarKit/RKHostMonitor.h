@@ -17,7 +17,7 @@ typedef struct rk_host_monitor RKHostMonitor;
 //typedef char RKHostAddress[RKNameLength];
 
 struct rk_unit_monitor {
-    RKName                           name;
+    RKShortName                      name;
     int                              id;
     pthread_t                        tid;                                      // Thread ID
     RKHostMonitor                    *parent;                                  // Parent engine reference

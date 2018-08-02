@@ -126,8 +126,10 @@
 #define RKMaximumFolderPathLength            768
 #define RKMaximumCommandLength               512
 #define RKNameLength                         128
+#define RKStatusStringLength                 256
 #define RKPulseHeaderPaddedSize              256                               // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
+#define RKShortNameLength                    20
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[91m" : (x > RKDutyCyleOrangeThreshold ? "\033[93m" : "\033[92m"))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[91m" : (x > RKLagOrangeThreshold      ? "\033[93m" : "\033[92m"))
@@ -162,6 +164,7 @@ typedef void *        RKPedestal;                                              /
 typedef void *        RKHealthRelay;                                           //
 typedef void *        RKMasterController;                                      //
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
+typedef char          RKShortName[RKShortNameLength];                          // RKShortname x = char x[RKShortNameLength]
 typedef char          RKCommand[RKMaximumCommandLength];                       // RKCommand x = char x[RKCommandLength]
 typedef uint8_t       RKProductId;                                             // Product identifier
 typedef uint64_t      RKIdentifier;                                            // Pulse identifier, ray identifier, config identifier, etc.

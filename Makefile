@@ -1,9 +1,10 @@
 KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
+KERNEL_VER := $(shell expr "$(shell uname -v)" : ".*-\([A-Za-z]*\)\ .*")
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 CFLAGS = -std=gnu99 -O2
-ifeq ($(GIT_BRANCH), beta)
+ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -ggdb -DBETA_BRANCH
 endif
 
@@ -42,6 +43,14 @@ RKLIB = libradarkit.a
 
 PROGS = rktest simple-emulator
 
+ECHO_FLAG = -e
+ifeq ($(KERNEL), Darwin)
+	ECHO_FLAG =
+endif
+ifeq ($(KERNEL_VER), Ubuntu)
+	ECHO_FLAG =
+endif
+
 ifeq ($(KERNEL), Darwin)
 	# Mac OS X
 	CC = clang
@@ -68,15 +77,10 @@ endif
 all: showinfo $(RKLIB) $(PROGS)
 
 showinfo:
-ifeq ($(KERNEL), Darwin)
-	@echo "KERNEL = \033[38;5;15m${KERNEL}\033[0m"
-	@echo "MACHINE = \033[38;5;220m${MACHINE}\033[0m"
-	@echo "GIT_BRANCH = \033[38;5;46m${GIT_BRANCH}\033[0m"
-else
-	@echo -e "KERNEL = \033[38;5;15m${KERNEL}\033[0m"
-	@echo -e "MACHINE = \033[38;5;220m${MACHINE}\033[0m"
-	@echo -e "GIT_BRANCH = \033[38;5;46m${GIT_BRANCH}\033[0m"
-endif
+	@echo $(ECHO_FLAG) "KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[0m"
+	@echo $(ECHO_FLAG) "KERNEL = \033[38;5;15m$(KERNEL)\033[0m"
+	@echo $(ECHO_FLAG) "MACHINE = \033[38;5;220m$(MACHINE)\033[0m"
+	@echo $(ECHO_FLAG) "GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[0m"
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
