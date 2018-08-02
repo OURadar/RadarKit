@@ -644,8 +644,14 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
     }
 
+    // GPS override
     if (systemPreferences->ignoreGPS) {
         myRadar->desc.initFlags |= RKInitFlagIgnoreGPS;
+        myRadar->desc.latitude = systemPreferences->desc.latitude;
+        myRadar->desc.longitude = systemPreferences->desc.longitude;
+        myRadar->desc.heading = systemPreferences->desc.heading;
+    } else {
+        myRadar->desc.initFlags &= ~RKInitFlagIgnoreGPS;
     }
 
     // Moment methods
