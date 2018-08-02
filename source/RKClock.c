@@ -147,6 +147,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     y = x;
     // Reset the references when clock count = 0 or it has been a while
     if (x - clock->latestTime > RKClockAWhile) {
+        RKLog("%s Warning. Self reset  %f - %f = %f\n", clock->name, x, clock->latestTime, x - clock->latestTime);
         clock->count = 0;
         clock->index = 0;
     }
@@ -169,7 +170,6 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     }
     // We are done with the indices; update them for the next call
     clock->index = RKNextModuloS(k, clock->size);
-    clock->count++;
     // Derive time only if the clock has been called at least once. Otherwise (1.0 / clock->count) would be undefined
     if (clock->count > 1) {
         // Quick check on the previous time to make sure we are still continuous
@@ -189,6 +189,9 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
             j = RKPreviousNModuloS(k, clock->stride, clock->size);
         } else {
             j = 0;
+            if (k == 0) {
+                RKLog("%s Warning. This should not happen.  k = %d   j = %d\n", clock->name, k, j);
+            }
         }
         // Compute the gradient using a big stride
         dx = clock->xBuffer[k] - clock->xBuffer[j];
@@ -235,14 +238,17 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
             y = 0.0;
         }
     }
+    clock->count++;
 
 #ifdef DEBUG_CLOCK
     
-    printf("%s k = %d/%lu  j = %d   u = %.1f -> %.1f -> %.1f   x = %.2f -> %.1f -> %.3f   t = %.3f %s\n",
+    printf("%s k = %d/%lu  j = %d   u = %.1f -> %.1f -> %.1f   x = %.2f -> %.1f -> %.3f   dxdu = %.3f / %.3f -> %.3f   y = %.3f   t = %.3f s %s %d %d\n",
            clock->name, k, (unsigned long)clock->count, j,
            u, clock->sum_u0, clock->u0,
            x, clock->sum_x0, clock->x0,
-           y, clock->count > clock->stride ? "-" : "*");
+           dx, du, clock->dx,
+           y,
+           y + clock->offsetSeconds, clock->count > clock->stride ? "-" : "*", clock->stride, clock->size);
 
 #endif
 
