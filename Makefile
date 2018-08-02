@@ -44,11 +44,12 @@ RKLIB = libradarkit.a
 
 PROGS = rktest simple-emulator
 
+# The command echo from macOS and Ubuntu needs no -e
 ECHO_FLAG = -e
 ifneq (, $(findstring Darwin, $(KERNEL_VER)))
 	ECHO_FLAG =
 endif
-ifeq ($(KERNEL_VER), Ubuntu)
+ifneq (, $(findstring Ubuntu, $(KERNEL_VER)))
 	ECHO_FLAG =
 endif
 
