@@ -263,7 +263,7 @@ static void *momentCore(void *in) {
     // Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(me->name, RKNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKShortNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
@@ -370,7 +370,7 @@ static void *momentCore(void *in) {
     float deltaAzimuth, deltaElevation;
     char *string;
 
-    char sweepBeginMarker[RKNameLength] = "S", sweepEndMarker[RKNameLength] = "E";
+    char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
     if (rkGlobalParameters.showColor) {
         sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
         sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
@@ -539,7 +539,7 @@ static void *momentCore(void *in) {
         string[i] = '#';
 
         // Summary of this ray
-        snprintf(string + RKStatusBarWidth, RKNameLength - RKStatusBarWidth,
+        snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
                  " %05u | %s  %05u...%05u (%3d)  [C%2d/E%5.2f/A%5.2f]   E%5.2f-%5.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s%s",
                  (unsigned int)io, me->name, (unsigned int)is, (unsigned int)ie, path.length,
                  ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,

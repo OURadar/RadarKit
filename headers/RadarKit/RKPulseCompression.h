@@ -24,7 +24,7 @@ typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
 struct rk_pulse_compression_worker {
-    RKName                           name;
+    RKShortName                      name;
     int                              id;
     pthread_t                        tid;                                      // Thread ID
     RKPulseCompressionEngine         *parent;                                  // Parent engine reference
