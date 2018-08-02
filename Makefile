@@ -1,6 +1,7 @@
 KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
-KERNEL_VER := $(shell expr "$(shell uname -v)" : ".*-\([A-Za-z]*\)\ .*")
+#KERNEL_VER := $(shell expr "$(shell uname -v)" : ".*-\([A-Za-z]*\)\ .*")
+KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 CFLAGS = -std=gnu99 -O2
@@ -44,7 +45,7 @@ RKLIB = libradarkit.a
 PROGS = rktest simple-emulator
 
 ECHO_FLAG = -e
-ifeq ($(KERNEL), Darwin)
+ifneq (, $(findstring Darwin, $(KERNEL_VER)))
 	ECHO_FLAG =
 endif
 ifeq ($(KERNEL_VER), Ubuntu)
