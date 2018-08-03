@@ -1763,8 +1763,6 @@ void *RKTestTransceiverRunLoop(void *input) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             
             // Fill in the header
-            pulse->header.n = transceiver->counter;
-            pulse->header.i = transceiver->counter++;
             pulse->header.t = (uint64_t)(1.0e6 * t);
             pulse->header.gateCount = transceiver->gateCount;
             pulse->header.gateSizeMeters = transceiver->gateSizeMeters;
