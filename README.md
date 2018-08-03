@@ -166,8 +166,11 @@ Follow these steps to get the project
         // Here is the busy run loop
         while (radar->active) {
             RKPulse *pulse = RKGetVacantPulse(radar);
-            pulse->header.gateCount = 1000;
-            
+            pulse->header.t;                         // Required. Some kind of clean reference directly proportional to time
+            pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
+            pulse->header.gateCount = 500;           // Required.
+            pulse->header.gateSizeMeters = 30.0f;    // Required.
+   
             // Go through both polarizations
             for (int p = 0; p < 2; p++) {
                 // Get a data pointer to the 16-bit data
@@ -234,13 +237,22 @@ Follow these steps to get the project
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
         
+        // Some internal variables
+        uint64_t tic = 0;
+        
         // Here is the busy run loop
         while (radar->active) {
             RKPosition *position = RKGetVacantPosition(radar);
             
             // Copy the position from hardware interface
-            position->az = 1.0;
-            position->el = 0.5;
+            position->t = tic++;                                  // Required. A clean reference that is directional proportional to sampling time
+            position->azimuthDegrees = 1.0;                       // Required. 
+            position->elevationDegrees = 0.5;                     // Required.
+            position->azimuthVelocityDegreesPerSecond = 25.0f;    // Optional.
+            position->elevationVelocityDegreesPerSecond = 0.0f;   // Optional.
+            position->flag = RKPositionFlagScanActive 
+                           | RKPositionFlagAzimuthEnabled
+                           | RKPositionFlagElevationEnabled;      // Required.
             RKSetPositionReady(radar, position);
         }
     }
@@ -287,7 +299,7 @@ The __health relay__ is the hardware that is also low speed, typically on the or
 
 Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
 
-Starting version 2.0, the RadarKit framework supports product injection from PyRadarKit.
+Starting version 2.0, the RadarKit framework supports product injection from [PyRadarKit].
 
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
