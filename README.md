@@ -147,14 +147,28 @@ Follow these steps to get the project
         // Type cast the first input as your transceiver
         UserTransceiverStruct *resource = (UserTransceiverStruct *)yourTransceiver;
         
-        // Execute commands stored in const char *command
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
         
-        // Provide text feedback to char *feedback
+        // Execute commands stored in const char *command
+        if (!strcmp(command, "a") {
+            // Perform task "a"
+            print("Hello World.\n");
+            // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
+            sprintf(feedback, "ACK. Command executed." RKEOL);
+        } else {
+            // Return something even if you cannot do something
+            sprintf(feedback, "NAK. Command not understood." RKEOL);
+            return 1;
+        }
+        return 0;
     }
     
     int transceiverFree(RKTransceiver yourTransceiver) {
         // Free up resources
-    }
+        free(yourTransceiver);
+        return RKResultSuccess;
+}
     
     void *transceiverRunLoop(void *in) {
         // Type cast the input to something you defined earlier
@@ -185,6 +199,7 @@ Follow these steps to get the project
             }
             RKSetPulseHasData(radar, pulse);
         }
+        return 0;
     }
     ```
     
@@ -221,13 +236,27 @@ Follow these steps to get the project
         // Type cast the first input as your pedestal
         UserPedestalStruct *resource = (UserPedestalStruct *)yourPedestal;
 
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
+
         // Execute commands stored in const char *command
-        
-        // Provide text feedback to char *feedback
+        if (!strcmp(command, "a") {
+            // Perform task "a"
+            print("Hello World.\n");
+            // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
+            sprintf(feedback, "ACK. Command executed." RKEOL);
+        } else {
+            // Return something even if you cannot do something
+            sprintf(feedback, "NAK. Command not understood." RKEOL);
+            return 2;
+        }
+        return 0;
     }
     
     int transceiverFree(RKPedestal yourPedestal) {
         // Free up resources
+        free(yourPedestal);
+        return 0;
     }
 
     int pedestalRunLoop(void *in) {
@@ -237,7 +266,7 @@ Follow these steps to get the project
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
         
-        // Some internal variables
+        // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
         uint64_t tic = 0;
         
         // Here is the busy run loop
@@ -255,6 +284,7 @@ Follow these steps to get the project
                            | RKPositionFlagElevationEnabled;      // Required.
             RKSetPositionReady(radar, position);
         }
+        return 0;
     }
     ```
 4. Set up _health relay_ initialization and run-loop routines just like the previous two examples.

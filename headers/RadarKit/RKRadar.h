@@ -34,7 +34,7 @@
 #define RADAR_VARIABLE_OFFSET(STRING, NAME) \
 sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
-typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
+typedef uint32_t RKRadarState;
 enum RKRadarState {
     RKRadarStateRayBufferAllocated                   = (1 << 0),   // Data buffers
     RKRadarStateRawIQBufferAllocated                 = (1 << 1),   //
@@ -46,6 +46,12 @@ enum RKRadarState {
     RKRadarStateWaveformCalibrationsAllocated        = (1 << 7),   //
     RKRadarStateControlsAllocated                    = (1 << 8),   //
     RKRadarStateProductBufferAllocated               = (1 << 9),   //
+    RKRadarStateRserverd1                            = (1 << 10),  //
+    RKRadarStateRserverd2                            = (1 << 11),  //
+    RKRadarStateRserverd3                            = (1 << 12),  //
+    RKRadarStateRserverd4                            = (1 << 13),  //
+    RKRadarStateRserverd5                            = (1 << 14),  //
+    RKRadarStateRserverd6                            = (1 << 15),  //
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
     RKRadarStatePositionEngineInitialized            = (1 << 18),  //
@@ -53,14 +59,15 @@ enum RKRadarState {
     RKRadarStateMomentEngineInitialized              = (1 << 20),  //
     RKRadarStateSweepEngineInitialized               = (1 << 21),  //
     RKRadarStateFileRecorderInitialized              = (1 << 22),  //
-    RKRadarStateHealthLoggerInitialized              = (1 << 23),  // Recorders
-    RKRadarStateFileManagerInitialized               = (1 << 24),
-    RKRadarStateHealthRelayInitialized               = (1 << 25),
-    RKRadarStateTransceiverInitialized               = (1 << 26),
-    RKRadarStatePedestalInitialized                  = (1 << 27),
-    RKRadarStateHostMonitorInitialized               = (1 << 28),
-    RKRadarStateRadarRelayInitialized                = (1 << 30),
-    RKRadarStateLive                                 = (1 << 31)
+    RKRadarStateHealthLoggerInitialized              = (1 << 23),  //
+    RKRadarStateFileManagerInitialized               = (1 << 24),  //
+    RKRadarStateHealthRelayInitialized               = (1 << 25),  //
+    RKRadarStateTransceiverInitialized               = (1 << 26),  //
+    RKRadarStatePedestalInitialized                  = (1 << 27),  //
+    RKRadarStateHostMonitorInitialized               = (1 << 28),  //
+    RKRadarStateReserved7                            = (1 << 29),  //
+    RKRadarStateRadarRelayInitialized                = (1 << 30),  //
+    RKRadarStateLive                                 = (1 << 31)   //
 };
 
 typedef struct rk_radar RKRadar;
