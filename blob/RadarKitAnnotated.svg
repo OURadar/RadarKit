@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 21.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 787.5 126" style="enable-background:new 0 0 787.5 126;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#919191;}
+	.st1{fill:#FFFFFF;}
+	.st2{font-family:'HelveticaNeue';}
+	.st3{font-size:16px;}
+	.st4{fill:#663399;}
+	.st5{fill:#FF6633;}
+	.st6{fill:#99CC33;}
+	.st7{opacity:0.38;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st8{fill:#557AE9;}
+	.st9{font-family:'SFMono-Regular';}
+	.st10{font-size:9px;}
+	.st11{fill:#009900;}
+</style>
+<path class="st0" d="M185.5,4.5h-173c-4.4,0-8,3.6-8,8v101c0,4.4,3.6,8,8,8h173c4.4,0,8-3.6,8-8v-101C193.5,8.1,189.9,4.5,185.5,4.5
+	z"/>
+<text transform="matrix(1 0 0 1 62.2046 66.478)" class="st1 st2 st3">RKRadar</text>
+<circle class="st1" cx="175.5" cy="103.5" r="9"/>
+<circle class="st1" cx="175.5" cy="63" r="9"/>
+<circle class="st1" cx="175.5" cy="22.5" r="9"/>
+<circle class="st4" cx="175.5" cy="22.5" r="4.5"/>
+<circle class="st5" cx="175.5" cy="63" r="4.5"/>
+<circle class="st6" cx="175.5" cy="103.5" r="4.5"/>
+<ellipse class="st7" cx="207" cy="103.5" rx="31.5" ry="0"/>
+<ellipse class="st7" cx="207" cy="63" rx="31.5" ry="0"/>
+<ellipse class="st7" cx="207" cy="22.5" rx="31.5" ry="0"/>
+<g>
+	<path class="st6" d="M401.5,85.5h-155c-4.4,0-8,3.6-8,8v20c0,4.4,3.6,8,8,8h155c4.4,0,8-3.6,8-8v-20
+		C409.5,89.1,405.9,85.5,401.5,85.5z"/>
+	<text transform="matrix(1 0 0 1 278.8164 109)" class="st1 st2 st3">Health Relay</text>
+</g>
+<g>
+	<path class="st4" d="M401.5,4.5h-155c-4.4,0-8,3.6-8,8v20c0,4.4,3.6,8,8,8h155c4.4,0,8-3.6,8-8v-20C409.5,8.1,405.9,4.5,401.5,4.5z
+		"/>
+	<text transform="matrix(1 0 0 1 282.6729 28)" class="st1 st2 st3">Transceiver</text>
+</g>
+<g>
+	<path class="st5" d="M401.5,45h-155c-4.4,0-8,3.6-8,8v20c0,4.4,3.6,8,8,8h155c4.4,0,8-3.6,8-8V53C409.5,48.6,405.9,45,401.5,45z"/>
+	<text transform="matrix(1 0 0 1 292.8887 68.5)" class="st1 st2 st3">Pedestal</text>
+</g>
+<g>
+	<text transform="matrix(1 0 0 1 427.5 13.5)"><tspan x="0" y="0" class="st8 st9 st10">RKGetVacantPulse()                        </tspan><tspan x="233.7" y="0" class="st11 st9 st10">// Get a vacant slot</tspan><tspan x="0" y="12" class="st8 st9 st10">RKGetInt16CDataFromPulse()                </tspan><tspan x="233.7" y="12" class="st11 st9 st10">// Get the storage</tspan><tspan x="0" y="24" class="st8 st9 st10">RKSetPulseHasData() / RKSetPulseReady()   </tspan><tspan x="233.7" y="24" class="st11 st9 st10">// Declare ready</tspan></text>
+</g>
+<g>
+	<text transform="matrix(1 0 0 1 427.5 58.5)"><tspan x="0" y="0" class="st8 st9 st10">RKGetVacantPosition()                     </tspan><tspan x="233.7" y="0" class="st11 st9 st10">// Get a vacant slot</tspan><tspan x="0" y="12" class="st8 st9 st10">RKSetPositionReady()                      </tspan><tspan x="233.7" y="12" class="st11 st9 st10">// Declare ready</tspan></text>
+</g>
+<g>
+	<text transform="matrix(1 0 0 1 427.5 99)"><tspan x="0" y="0" class="st8 st9 st10">RKGetVacantHealth()                       </tspan><tspan x="233.7" y="0" class="st11 st9 st10">// Get a vacant slot</tspan><tspan x="0" y="12" class="st8 st9 st10">RKSetHealthReady()                        </tspan><tspan x="233.7" y="12" class="st11 st9 st10">// Declare ready</tspan></text>
+</g>
+</svg>
