@@ -181,10 +181,13 @@ Follow these steps to get the project
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
         
+        // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
+        uint64_t tic = 0;
+        
         // Here is the busy run loop
         while (radar->active) {
             RKPulse *pulse = RKGetVacantPulse(radar);
-            pulse->header.t;                         // Required. Some kind of clean reference directly proportional to time
+            pulse->header.t = tic++;                 // Required. Some kind of clean reference directly proportional to time
             pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
             pulse->header.gateCount = 500;           // Required.
             pulse->header.gateSizeMeters = 30.0f;    // Required.
@@ -257,7 +260,7 @@ Follow these steps to get the project
         return 0;
     }
     
-    int transceiverFree(RKPedestal yourPedestal) {
+    int pedestalFree(RKPedestal yourPedestal) {
         // Free up resources
         free(yourPedestal);
         return 0;
