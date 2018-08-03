@@ -299,7 +299,7 @@ The __health relay__ is the hardware that is also low speed, typically on the or
 
 Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
 
-Starting version 2.0, the RadarKit framework supports product injection from PyRadarKit.
+Starting version 2.0, the RadarKit framework supports product injection from [PyRadarKit].
 
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
