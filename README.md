@@ -114,7 +114,11 @@ Follow these steps to get the project
     }
     ```
 
-2. Set up __digital transceiver__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives I/Q data, actively request a vacant slot through `RKGetVacantPulse()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPulseHasData()`.
+2. Most hardware related routines interact with the RadarKit through functions provided in `<RadarKit/RKRadar.h>`. The functions listed under this header are about the only functions you should be concerned with. The design is intended to abstract other low-level house-keeping tasks. While the framework is open source, beginners are recommended to use only functions in this header.
+
+    ![Figure](blob/RadarKitAnnotated.png)
+
+3. Set up __digital transceiver__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives I/Q data, actively request a vacant slot through `RKGetVacantPulse()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPulseHasData()`.
 
     ```c
     typedef struct user_transceiver_struct {
@@ -168,7 +172,7 @@ Follow these steps to get the project
         // Free up resources
         free(yourTransceiver);
         return RKResultSuccess;
-}
+    }
     
     void *transceiverRunLoop(void *in) {
         // Type cast the input to something you defined earlier
@@ -203,7 +207,7 @@ Follow these steps to get the project
     }
     ```
     
-2. Set up __pedestal__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives position data, actively request a vacant slot through `RKGetVacantPosition()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPositionReady()`.
+4. Set up __pedestal__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives position data, actively request a vacant slot through `RKGetVacantPosition()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPositionReady()`.
  
     ```c
     typedef struct user_pedestal_struct {
@@ -287,9 +291,9 @@ Follow these steps to get the project
         return 0;
     }
     ```
-4. Set up _health relay_ initialization and run-loop routines just like the previous two examples.
+5. (Optional) Set up _health relay_ initialization and run-loop routines just like the previous two examples.
 
-5. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
+6. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
     ```shell
     gcc -o program program.c -lradarkit -lfftw3f -lnetcdf
