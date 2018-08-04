@@ -12,7 +12,7 @@
 //
 //
 
-// More function definitions
+// More struct / function definitions
 
 typedef struct rk_radar_command {
     RKRadar *radar;
@@ -43,6 +43,9 @@ static uint32_t getUID(UIDType type) {
     }
     return 0;
 }
+
+void RKUpdateWaveformCalibration(RKRadar *, const uint8_t, const RKWaveformCalibration *);
+void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
 
 #pragma mark - Engine Monitor
 
@@ -2380,13 +2383,13 @@ RKHealth *RKGetLatestHealthOfNode(RKRadar *radar, const RKHealthNode node) {
     return &radar->healthNodes[node].healths[index];
 }
 
-int RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
+RKStatusEnum RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
     RKHealth *health = RKGetLatestHealth(radar);
     char *stringObject = RKGetValueOfKey(health->string, keyword);
     if (stringObject) {
         char *stringEnum = RKGetValueOfKey(stringObject, "enum");
         if (stringEnum) {
-            return atoi(stringEnum);
+            return (RKStatusEnum)atoi(stringEnum);
         }
     }
     return RKStatusEnumInvalid;
@@ -2570,15 +2573,6 @@ RKRay *RKGetLatestRay(RKRadar *radar) {
 
 #pragma mark - Waveform Calibrations
 
-void RKAddWaveformCalibration(RKRadar *radar, const RKWaveformCalibration *calibration) {
-    uint8_t index = radar->waveformCalibrationCount++;
-    if (index >= radar->desc.waveformCalibrationCapacity) {
-        RKLog("Error. Cannot add anymore waveform calibration.\n");
-        return;
-    }
-    RKUpdateWaveformCalibration(radar, index, calibration);
-}
-
 void RKUpdateWaveformCalibration(RKRadar *radar, const uint8_t index, const RKWaveformCalibration *calibration) {
     if (index >= radar->desc.waveformCalibrationCapacity) {
         RKLog("Error. Unable to update waveform calibration.\n");
@@ -2586,6 +2580,15 @@ void RKUpdateWaveformCalibration(RKRadar *radar, const uint8_t index, const RKWa
     }
     RKWaveformCalibration *target = &radar->waveformCalibrations[index];
     memcpy(target, calibration, sizeof(RKWaveformCalibration));
+}
+
+void RKAddWaveformCalibration(RKRadar *radar, const RKWaveformCalibration *calibration) {
+    uint8_t index = radar->waveformCalibrationCount++;
+    if (index >= radar->desc.waveformCalibrationCapacity) {
+        RKLog("Error. Cannot add anymore waveform calibration.\n");
+        return;
+    }
+    RKUpdateWaveformCalibration(radar, index, calibration);
 }
 
 void RKClearWaveformCalibrations(RKRadar *radar) {
@@ -2601,6 +2604,16 @@ void RKConcludeWaveformCalibrations(RKRadar *radar) {
 }
 
 #pragma mark - Controls
+
+void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *control) {
+    if (index >= radar->desc.controlCapacity) {
+        RKLog("Error. Control index is out of bound.\n");
+        return;
+    }
+    RKControl *target = &radar->controls[index];
+    strncpy(target->label, control->label, RKNameLength - 1);
+    strncpy(target->command, control->command, RKMaximumCommandLength - 1);
+}
 
 void RKAddControl(RKRadar *radar, const RKControl *control) {
     uint8_t index = radar->controlCount++;
@@ -2620,16 +2633,6 @@ void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char
     RKControl *target = &radar->controls[index];
     strncpy(target->label, label, RKNameLength - 1);
     strncpy(target->command, command, RKMaximumCommandLength - 1);
-}
-
-void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *control) {
-    if (index >= radar->desc.controlCapacity) {
-        RKLog("Error. Control index is out of bound.\n");
-        return;
-    }
-    RKControl *target = &radar->controls[index];
-    strncpy(target->label, control->label, RKNameLength - 1);
-    strncpy(target->command, control->command, RKMaximumCommandLength - 1);
 }
 
 void RKClearControls(RKRadar *radar) {

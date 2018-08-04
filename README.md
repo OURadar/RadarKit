@@ -114,7 +114,11 @@ Follow these steps to get the project
     }
     ```
 
-2. Set up __digital transceiver__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives I/Q data, actively request a vacant slot through `RKGetVacantPulse()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPulseHasData()`.
+2. Most hardware related routines interact with the RadarKit through functions provided in `<RadarKit/RKRadar.h>`. The functions listed under this header are about the only functions you should be concerned with. The design is intended to abstract other low-level house-keeping tasks. While the framework is open source, beginners are recommended to use only functions in this header.
+
+    ![Figure](blob/RadarKitAnnotated.png)
+
+3. Set up __digital transceiver__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives I/Q data, actively request a vacant slot through `RKGetVacantPulse()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPulseHasData()`.
 
     ```c
     typedef struct user_transceiver_struct {
@@ -147,13 +151,27 @@ Follow these steps to get the project
         // Type cast the first input as your transceiver
         UserTransceiverStruct *resource = (UserTransceiverStruct *)yourTransceiver;
         
-        // Execute commands stored in const char *command
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
         
-        // Provide text feedback to char *feedback
+        // Execute commands stored in const char *command
+        if (!strcmp(command, "a") {
+            // Perform task "a"
+            print("Hello World.\n");
+            // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
+            sprintf(feedback, "ACK. Command executed." RKEOL);
+        } else {
+            // Return something even if you cannot do something
+            sprintf(feedback, "NAK. Command not understood." RKEOL);
+            return 1;
+        }
+        return 0;
     }
     
     int transceiverFree(RKTransceiver yourTransceiver) {
         // Free up resources
+        free(yourTransceiver);
+        return RKResultSuccess;
     }
     
     void *transceiverRunLoop(void *in) {
@@ -163,10 +181,13 @@ Follow these steps to get the project
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
         
+        // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
+        uint64_t tic = 0;
+        
         // Here is the busy run loop
         while (radar->active) {
             RKPulse *pulse = RKGetVacantPulse(radar);
-            pulse->header.t;                         // Required. Some kind of clean reference directly proportional to time
+            pulse->header.t = tic++;                 // Required. Some kind of clean reference directly proportional to time
             pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
             pulse->header.gateCount = 500;           // Required.
             pulse->header.gateSizeMeters = 30.0f;    // Required.
@@ -185,10 +206,11 @@ Follow these steps to get the project
             }
             RKSetPulseHasData(radar, pulse);
         }
+        return 0;
     }
     ```
     
-2. Set up __pedestal__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives position data, actively request a vacant slot through `RKGetVacantPosition()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPositionReady()`.
+4. Set up __pedestal__ _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives position data, actively request a vacant slot through `RKGetVacantPosition()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPositionReady()`.
  
     ```c
     typedef struct user_pedestal_struct {
@@ -221,13 +243,27 @@ Follow these steps to get the project
         // Type cast the first input as your pedestal
         UserPedestalStruct *resource = (UserPedestalStruct *)yourPedestal;
 
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
+
         // Execute commands stored in const char *command
-        
-        // Provide text feedback to char *feedback
+        if (!strcmp(command, "a") {
+            // Perform task "a"
+            print("Hello World.\n");
+            // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
+            sprintf(feedback, "ACK. Command executed." RKEOL);
+        } else {
+            // Return something even if you cannot do something
+            sprintf(feedback, "NAK. Command not understood." RKEOL);
+            return 2;
+        }
+        return 0;
     }
     
-    int transceiverFree(RKPedestal yourPedestal) {
+    int pedestalFree(RKPedestal yourPedestal) {
         // Free up resources
+        free(yourPedestal);
+        return 0;
     }
 
     int pedestalRunLoop(void *in) {
@@ -237,7 +273,7 @@ Follow these steps to get the project
         // Now you can recover the radar reference you provided in init routine.
         RKRadar *radar = resource->radar;
         
-        // Some internal variables
+        // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
         uint64_t tic = 0;
         
         // Here is the busy run loop
@@ -255,11 +291,12 @@ Follow these steps to get the project
                            | RKPositionFlagElevationEnabled;      // Required.
             RKSetPositionReady(radar, position);
         }
+        return 0;
     }
     ```
-4. Set up _health relay_ initialization and run-loop routines just like the previous two examples.
+5. (Optional) Set up _health relay_ initialization and run-loop routines just like the previous two examples.
 
-5. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
+6. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
     ```shell
     gcc -o program program.c -lradarkit -lfftw3f -lnetcdf

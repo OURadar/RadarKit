@@ -34,7 +34,7 @@
 #define RADAR_VARIABLE_OFFSET(STRING, NAME) \
 sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
-typedef uint32_t RKRadarState;                                     // Everything allocated and live: 0x81ff0555
+typedef uint32_t RKRadarState;
 enum RKRadarState {
     RKRadarStateRayBufferAllocated                   = (1 << 0),   // Data buffers
     RKRadarStateRawIQBufferAllocated                 = (1 << 1),   //
@@ -46,6 +46,12 @@ enum RKRadarState {
     RKRadarStateWaveformCalibrationsAllocated        = (1 << 7),   //
     RKRadarStateControlsAllocated                    = (1 << 8),   //
     RKRadarStateProductBufferAllocated               = (1 << 9),   //
+    RKRadarStateRserverd1                            = (1 << 10),  //
+    RKRadarStateRserverd2                            = (1 << 11),  //
+    RKRadarStateRserverd3                            = (1 << 12),  //
+    RKRadarStateRserverd4                            = (1 << 13),  //
+    RKRadarStateRserverd5                            = (1 << 14),  //
+    RKRadarStateRserverd6                            = (1 << 15),  //
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
     RKRadarStatePositionEngineInitialized            = (1 << 18),  //
@@ -53,14 +59,15 @@ enum RKRadarState {
     RKRadarStateMomentEngineInitialized              = (1 << 20),  //
     RKRadarStateSweepEngineInitialized               = (1 << 21),  //
     RKRadarStateFileRecorderInitialized              = (1 << 22),  //
-    RKRadarStateHealthLoggerInitialized              = (1 << 23),  // Recorders
-    RKRadarStateFileManagerInitialized               = (1 << 24),
-    RKRadarStateHealthRelayInitialized               = (1 << 25),
-    RKRadarStateTransceiverInitialized               = (1 << 26),
-    RKRadarStatePedestalInitialized                  = (1 << 27),
-    RKRadarStateHostMonitorInitialized               = (1 << 28),
-    RKRadarStateRadarRelayInitialized                = (1 << 30),
-    RKRadarStateLive                                 = (1 << 31)
+    RKRadarStateHealthLoggerInitialized              = (1 << 23),  //
+    RKRadarStateFileManagerInitialized               = (1 << 24),  //
+    RKRadarStateHealthRelayInitialized               = (1 << 25),  //
+    RKRadarStateTransceiverInitialized               = (1 << 26),  //
+    RKRadarStatePedestalInitialized                  = (1 << 27),  //
+    RKRadarStateHostMonitorInitialized               = (1 << 28),  //
+    RKRadarStateReserved7                            = (1 << 29),  //
+    RKRadarStateRadarRelayInitialized                = (1 << 30),  //
+    RKRadarStateLive                                 = (1 << 31)   //
 };
 
 typedef struct rk_radar RKRadar;
@@ -252,71 +259,71 @@ int RKSetPulseRingFilter(RKRadar *, RKIIRFilter *, const uint32_t);
 #pragma mark - Interaction / State Change
 
 // State
-int RKGoLive(RKRadar *);
-int RKWaitWhileActive(RKRadar *);
-int RKStart(RKRadar *);
-int RKStop(RKRadar *);
-int RKSoftRestart(RKRadar *);
-int RKResetClocks(RKRadar *);
-int RKExecuteCommand(RKRadar *, const char *, char *);
-void RKPerformMasterTaskInBackground(RKRadar *, const char *);
+int RKGoLive(RKRadar *);                                                                           // Go live
+int RKWaitWhileActive(RKRadar *);                                                                  // Wait
+int RKStart(RKRadar *);                                                                            // Start the radar (RKGoLive and RKWaitWhileActive)
+int RKStop(RKRadar *);                                                                             // Stop the radar
+int RKSoftRestart(RKRadar *);                                                                      // Restart the DSP related engines (pulse compression, moment calculation, sweep gathering, etc.)
+int RKResetClocks(RKRadar *);                                                                      // Reset the internal clock tracking mechanism
+int RKExecuteCommand(RKRadar *, const char *, char *);                                             // Execute a command and wait for feedback (blocking)
+void RKPerformMasterTaskInBackground(RKRadar *, const char *);                                     // Send a command to the master controller in the background (non-blocking)
 
 // General
-void RKMeasureNoise(RKRadar *);
-void RKSetSNRThreshold(RKRadar *, const RKFloat);
+void RKMeasureNoise(RKRadar *);                                                                    // Ask RadarKit to measure noise from the latest pulses
+void RKSetSNRThreshold(RKRadar *, const RKFloat);                                                  // Set the censoring SNR threshold
 
 // Status
-RKStatus *RKGetVacantStatus(RKRadar *);
-void RKSetStatusReady(RKRadar *, RKStatus *);
+RKStatus *RKGetVacantStatus(RKRadar *);                                                            // Don't worry about this. This is managed by systemInspector
+void RKSetStatusReady(RKRadar *, RKStatus *);                                                      // Don't worry about this. This is managed by systemInspector
 
 // Configs
-void RKAddConfig(RKRadar *radar, ...);
-RKConfig *RKGetLatestConfig(RKRadar *radar);
+void RKAddConfig(RKRadar *radar, ...);                                                             // Inform RadarKit about certain slow-changing parameters, e.g., PRF, waveform, etc.
+RKConfig *RKGetLatestConfig(RKRadar *radar);                                                       // Get the latest configuration from the radar
 
 // Healths
 RKHealthNode RKRequestHealthNode(RKRadar *);
-RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);
-void RKSetHealthReady(RKRadar *, RKHealth *);
-RKHealth *RKGetLatestHealth(RKRadar *);
-RKHealth *RKGetLatestHealthOfNode(RKRadar *, const RKHealthNode);
-int RKGetEnumFromLatestHealth(RKRadar *, const char *);
+RKHealth *RKGetVacantHealth(RKRadar *, const RKHealthNode);                                        // Get a vacant slot for storing position data
+void RKSetHealthReady(RKRadar *, RKHealth *);                                                      // Declare the health is ready
+RKHealth *RKGetLatestHealth(RKRadar *);                                                            // Get the latest consolidated health from the radar
+RKHealth *RKGetLatestHealthOfNode(RKRadar *, const RKHealthNode);                                  // Get the latest health of a node from the radar
+RKStatusEnum RKGetEnumFromLatestHealth(RKRadar *, const char *);                                   // Get the RKStatusEnum of a specific keyword from the latest consolidated health
 
 // Positions
-RKPosition *RKGetVacantPosition(RKRadar *);
-void RKSetPositionReady(RKRadar *, RKPosition *);
-RKPosition *RKGetLatestPosition(RKRadar *);
-float RKGetPositionUpdateRate(RKRadar *);
+RKPosition *RKGetVacantPosition(RKRadar *);                                                        // Get a vacant slot for storing position data
+void RKSetPositionReady(RKRadar *, RKPosition *);                                                  // Declare the position is ready
+RKPosition *RKGetLatestPosition(RKRadar *);                                                        // Get the latest position from the radar
+float RKGetPositionUpdateRate(RKRadar *);                                                          // Get the position report rate
 
 // Pulses
-RKPulse *RKGetVacantPulse(RKRadar *);
-void RKSetPulseHasData(RKRadar *, RKPulse *);
-void RKSetPulseReady(RKRadar *, RKPulse *);
-RKPulse *RKGetLatestPulse(RKRadar *);
+RKPulse *RKGetVacantPulse(RKRadar *);                                                              // Get a vacant slot for storing pulse data
+void RKSetPulseHasData(RKRadar *, RKPulse *);                                                      // Declare the pulse has 16-bit I/Q data. Let RadarKit tag the position
+void RKSetPulseReady(RKRadar *, RKPulse *);                                                        // Declare the pulse has 16-bit I/Q data and position, the pulse is ready for moment processing
+RKPulse *RKGetLatestPulse(RKRadar *);                                                              // Get the latest pulse from the radar
 
 // Rays
-RKRay *RKGetVacantRay(RKRadar *);
-void RKSetRayReady(RKRadar *, RKRay *);
-RKRay *RKGetLatestRay(RKRadar *);
+RKRay *RKGetVacantRay(RKRadar *);                                                                  // Get a vacant slot for storing ray data
+void RKSetRayReady(RKRadar *, RKRay *);                                                            // Declare the ray is ready
+RKRay *RKGetLatestRay(RKRadar *);                                                                  // Get the latest ray from the radar
 
 // Waveform Calibrations
-void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);
-void RKUpdateWaveformCalibration(RKRadar *, const uint8_t, const RKWaveformCalibration *);
-void RKClearWaveformCalibrations(RKRadar *);
-void RKConcludeWaveformCalibrations(RKRadar *);
+void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);                           // Add a waveform specific calibration
+void RKClearWaveformCalibrations(RKRadar *);                                                       // Clear all waveform calibrations
+void RKConcludeWaveformCalibrations(RKRadar *);                                                    // Declare waveform calibration setup complete
 
 // Controls
-void RKAddControl(RKRadar *, const RKControl *);
-void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char *command);
-void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
-void RKClearControls(RKRadar *);
-void RKConcludeControls(RKRadar *);
+void RKAddControl(RKRadar *, const RKControl *);                                                   // Add control through an RKControl struct
+void RKAddControlAsLabelAndCommand(RKRadar *, const char *label, const char *command);             // Add control through specifying a label and command string
+void RKClearControls(RKRadar *);                                                                   // Clear all controls
+void RKConcludeControls(RKRadar *);                                                                // Declare control setup complete
 
 #pragma mark - Developer Access
 
 // Absolute address value query
-void RKGetRegisterValue(RKRadar *, void *value, const unsigned long registerOffset, size_t size);
-void RKSetRegisterValue(RKRadar *, void *value, const unsigned long registerOffset, size_t size);
-void RKShowOffsets(RKRadar *, char *);
-int RKBufferOverview(RKRadar *, char *, const RKTextPreferences);
+void RKGetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);           // Does not work like the way I expected just yet
+void RKSetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);           // Does not work like the way I expected just yet
+void RKShowOffsets(RKRadar *, char *);                                                              // Does not work like the way I expected just yet
+
+// Buffer overview ASCII art
+int RKBufferOverview(RKRadar *, char *, const RKTextPreferences);                                   // Do you ASCII? :)
 
 #endif /* defined(__RadarKit_RKRadar__) */
