@@ -146,8 +146,8 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     }
     y = x;
     // Reset the references when clock count = 0 or it has been a while
-    if (x - clock->latestTime > RKClockAWhile) {
-        RKLog("%s Warning. Self reset  %f - %f = %f\n", clock->name, x, clock->latestTime, x - clock->latestTime);
+    if (x - clock->latestTime > RKClockAWhile && clock->count > 0) {
+        RKLog("%s Warning. Self reset  %f - %f = %f   count = %u\n", clock->name, x, clock->latestTime, x - clock->latestTime, clock->count);
         clock->count = 0;
         clock->index = 0;
     }
