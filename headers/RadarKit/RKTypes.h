@@ -352,6 +352,7 @@ enum RKPositionFlag {
     RKPositionFlagScanMode           = (RKPositionFlagAzimuthMode | RKPositionFlagElevationMode),
     RKPositionFlagVCPActive          = (1 << 29),
     RKPositionFlagHardwareMask       = 0x3FFFFFFF,
+    RKPositionFlagUsed               = (1 << 30),
     RKPositionFlagReady              = (1 << 31)
 };
 

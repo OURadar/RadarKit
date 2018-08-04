@@ -2410,10 +2410,16 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
         return NULL;
     }
     RKPosition *position = &radar->positions[radar->positionIndex];
-    position->flag = RKPositionFlagVacant;
+    if (position->flag != RKPositionFlagVacant) {
+        position->flag = RKPositionFlagVacant;
+        if (radar->state & RKRadarStateLive) {
+            RKLog("Warning. Unexpected position flag.\n");
+        }
+    }
     if (radar->state & RKRadarStateLive) {
         position->i += radar->desc.positionBufferDepth;
     }
+    radar->positions[RKNextNModuloS(radar->positionIndex, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth)].flag = RKPositionFlagVacant;
     return position;
 }
 
@@ -2892,11 +2898,17 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
             position = &radar->positions[k];
             s0 = position->flag;
             if (flag & RKTextPreferencesShowColor) {
-                if (s0 & RKPositionFlagReady) {
+                if (s0 & RKPositionFlagUsed) {
                     if (s0 == s1) {
-                        *(text + m++) = m4;
+                        *(text + m++) = m3;
                     } else {
-                        m += sprintf(text + m, "%s%c", c4, m4);
+                        m += sprintf(text + m, "%s%c", c3, m3);
+                    }
+                } else if (s0 & RKPositionFlagReady) {
+                    if (s0 == s1) {
+                        *(text + m++) = m1;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c1, m1);
                     }
                 } else {
                     if (s0 == s1) {
@@ -2907,7 +2919,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
                 }
                 s1 = s0;
             } else {
-                *(text + m++) = s0 & RKPositionFlagReady ? m4 : m0;
+                *(text + m++) = s0 & RKPositionFlagUsed ? m3 : (s0 & RKPositionFlagReady ? m1 : m0);
             }
         }
         n++;
