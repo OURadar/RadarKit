@@ -17,7 +17,10 @@
 //
 //  2.0.1  - 8/xx/2018
 //         - RKBufferOverview upgraded to show health buffers
+//         - RKBufferOverview upgraded to show position buffers
 //         - Replaced !isfinite() with isnan() since isfinite(0.0) = 0
+//         - RKClock self reset onlyl when count > 0
+//         - Added more comments to functions declared in RKRadar.h
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive

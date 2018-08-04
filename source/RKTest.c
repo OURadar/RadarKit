@@ -630,7 +630,8 @@ void RKTestBufferOverviewText(void) {
     SHOW_FUNCTION_NAME
     RKRadar *radar = RKInitLean();
     char *text = (char *)malloc((radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10) * sizeof(char));
-    RKBufferOverview(radar, text, 0xFF);
+    //RKBufferOverview(radar, text, RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize80x25);
+    RKBufferOverview(radar, text, RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize120x80);
     printf("%s\n", text);
     RKFree(radar);
     free(text);
