@@ -1667,7 +1667,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     double t = 0.0;
     double dt = 0.0;
     long tic = 0;
-    struct timeval t0, t1;
+    struct timeval t0, t1, t2;
     bool even = true;
     
     // Update the engine state
@@ -1742,6 +1742,12 @@ void *RKTestTransceiverRunLoop(void *input) {
 
 #endif
 
+    int nn;
+    float temp;
+    float volt;
+    float room;
+    RKHealth *health;
+    
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
 
     // Use a counter that mimics microsecond increments
@@ -1761,8 +1767,11 @@ void *RKTestTransceiverRunLoop(void *input) {
     transceiver->state ^= RKEngineStateSleep0;
 
     RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+
+    RKLog("prt = %.4f s\n", transceiver->prt);
     
     gettimeofday(&t1, NULL);
+    gettimeofday(&t2, NULL);
 
     // g gate index
     // j sample index
@@ -1910,35 +1919,40 @@ void *RKTestTransceiverRunLoop(void *input) {
         }
 
         // Report health
-        int nn = rand();
-        float temp = 1.0f * nn / RAND_MAX + 79.5f;
-        float volt = 1.0f * nn / RAND_MAX + 11.5f;
-        float room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
-        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
-        sprintf(health->string,
-                "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
-                "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-                "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
-                "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
-                "\"TransceiverCounter\": %ld}",
-                RKStatusEnumActive,
-                RKStatusEnumNormal,
-                RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
-                temp, RKStatusFromTemperatureForCE(temp),
-                volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                room, RKStatusFromTemperatureForComputers(room),
-                transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
-                transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
-                transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
-                transceiver->counter);
-        RKSetHealthReady(radar, health);
+        gettimeofday(&t0, NULL);
+        dt = RKTimevalDiff(t0, t2);
+        if (dt > 0.2) {
+            t2 = t0;
+            nn = rand();
+            temp = 1.0f * nn / RAND_MAX + 79.5f;
+            volt = 1.0f * nn / RAND_MAX + 11.5f;
+            room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
+            health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
+            sprintf(health->string,
+                    "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
+                    "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                    "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
+                    "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                    "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                    "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                    "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
+                    "\"TransceiverCounter\": %ld}",
+                    RKStatusEnumActive,
+                    RKStatusEnumNormal,
+                    RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+                    temp, RKStatusFromTemperatureForCE(temp),
+                    volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                    room, RKStatusFromTemperatureForComputers(room),
+                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
+                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                    transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
+                    transceiver->counter);
+            RKSetHealthReady(radar, health);
+        }
 
         // Wait to simulate the PRF
         s = 0;
@@ -1983,10 +1997,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
     transceiver->prt = 0.001;
     transceiver->sprt = 1;
-    transceiver->periodEven = transceiver->prt;
-    transceiver->periodOdd = transceiver->prt;
-    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
-    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
     transceiver->chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
     sprintf(transceiver->waveformCache[0]->name, "s01");
@@ -2057,9 +2067,18 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             }
         }
     }
-
+    
     // Derive some calculated parameters
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd =
+    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.5 / transceiver->prt));
     transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
+    transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
 
     transceiver->state |= RKEngineStateActivating;
     if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {

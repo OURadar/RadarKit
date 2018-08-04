@@ -866,7 +866,7 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ...\n");
-        RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
+        RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
         RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);
