@@ -724,7 +724,8 @@ enum RKTextPreferences {
     RKTextPreferencesWindowSize80x40             = (2 << 2),                   //
     RKTextPreferencesWindowSize80x50             = (3 << 2),                   //
     RKTextPreferencesWindowSize120x50            = (4 << 2),                   //
-    RKTextPreferencesWindowSize120x80            = (5 << 2)                    //
+    RKTextPreferencesWindowSize120x80            = (5 << 2),                   //
+    RKTextPreferencesShowDebuggingMessage        = (1 << 7)                    //
 };
 
 typedef uint32_t RKWaveformType;

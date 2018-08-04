@@ -132,7 +132,7 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestGetCountry();
             break;
         case 14:
-            RKTestBufferOverviewText();
+            RKTestBufferOverviewText((char *)arg);
             break;
         case 15:
             if (arg == NULL) {
@@ -626,12 +626,24 @@ void RKTestGetCountry(void) {
     }
 }
 
-void RKTestBufferOverviewText(void) {
+void RKTestBufferOverviewText(const char *options) {
     SHOW_FUNCTION_NAME
     RKRadar *radar = RKInitLean();
-    char *text = (char *)malloc((radar->desc.pulseBufferDepth  * 15 / 10 + radar->desc.rayBufferDepth * 15 / 10) * sizeof(char));
-    //RKBufferOverview(radar, text, RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize80x25);
-    RKBufferOverview(radar, text, RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize120x80);
+    char *text = (char *)malloc(8192);
+    RKTextPreferences textPreferences = RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize120x80;
+    if (options) {
+        textPreferences = (RKTextPreferences)strtol(options, NULL, 16);
+        RKLog("%s options = %s -> 0x%02x\n", __FUNCTION__, options, textPreferences);
+        RKLog(">%s %s %s\n",
+              textPreferences & RKTextPreferencesShowColor ? "RKTextPreferencesShowColor" : "",
+              textPreferences & RKTextPreferencesDrawBackground ? "RKTextPreferencesDrawBackground" : "",
+              ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize120x80 ? "RKTextPreferencesWindowSize120x80" :
+               ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize120x50 ? "RKTextPreferencesWindowSize120x50" :
+                ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x50 ? "RKTextPreferencesWindowSize80x50" :
+                 ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x40 ? "RKTextPreferencesWindowSize80x50" :
+                  ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x25 ? "RKTextPreferencesWindowSize80x25" : ""))))));
+    }
+    RKBufferOverview(radar, text, textPreferences);
     printf("%s\n", text);
     RKFree(radar);
     free(text);
