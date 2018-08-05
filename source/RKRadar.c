@@ -2410,10 +2410,16 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
         return NULL;
     }
     RKPosition *position = &radar->positions[radar->positionIndex];
-    position->flag = RKPositionFlagVacant;
+    if (position->flag != RKPositionFlagVacant) {
+        position->flag = RKPositionFlagVacant;
+        if (radar->state & RKRadarStateLive) {
+            RKLog("Warning. Unexpected position flag.\n");
+        }
+    }
     if (radar->state & RKRadarStateLive) {
         position->i += radar->desc.positionBufferDepth;
     }
+    radar->positions[RKNextNModuloS(radar->positionIndex, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth)].flag = RKPositionFlagVacant;
     return position;
 }
 
@@ -2690,12 +2696,13 @@ void RKShowOffsets(RKRadar *radar, char *text) {
 }
 
 int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
-    static int slice, pulseStride = 1, rayStride = 1, healthStride = 1;
+    static int slice, positionStride = 1, pulseStride = 1, rayStride = 1, healthStride = 1;
     int i, j, k, m = 0, n = 0;
     char *c;
     size_t s;
     RKRay *ray;
     RKPulse *pulse;
+    RKPosition *position;
     
     // Symbols and corresponding colors
     const char m0 = '.';  const char c0[] = RKRedColor;
@@ -2716,15 +2723,15 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         // Check the terminal width
         switch (flag & RKTextPreferencesWindowSizeMask) {
             case RKTextPreferencesWindowSize80x25:
-                terminalSize.ws_col = 78;
+                terminalSize.ws_col = 80;
                 terminalSize.ws_row = 25;
                 break;
             case RKTextPreferencesWindowSize80x40:
-                terminalSize.ws_col = 78;
+                terminalSize.ws_col = 80;
                 terminalSize.ws_row = 40;
                 break;
             case RKTextPreferencesWindowSize80x50:
-                terminalSize.ws_col = 78;
+                terminalSize.ws_col = 80;
                 terminalSize.ws_row = 50;
                 break;
             case RKTextPreferencesWindowSize120x50:
@@ -2747,24 +2754,55 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
                 if (terminalSize.ws_row == 0) {
                     terminalSize.ws_row = 80;
                 }
+                RKLog("Using window size %d x %d\n", terminalSize.ws_col, terminalSize.ws_row);
                 break;
         }
         
+        // Background of buffers: digits occupy 2 numbers (2 x w), '-', some ' '(front), some ' '(back), then pick the optimal 5.
+        slice = (terminalSize.ws_col - 2 * w - 3 + 4) / 5 * 5;
+
+        if (flag & RKTextPreferencesShowDebuggingMessage) {
+            RKLog("%s   %s", RKVariableInString("slice", &slice, RKValueTypeInt), RKVariableInString("w", &w, RKValueTypeInt));
+        }
+
+        // Clear screen, go to the origin
+        m = sprintf(text, "\033[1;1H\033[2J");
+        
+        // Position
+        c = RKIntegerToCommaStyleString(radar->desc.positionBufferSize);
+        s = strlen(c);
+        if (terminalSize.ws_row > 25) {
+            m += sprintf(text + m, "Position Buffer (%s B)\n", c);
+            memset(text + m, '-', s + 20);
+            m += s + 20;
+            *(text + m++) = '\n';
+            n += 4;
+        } else {
+            m += sprintf(text + m, "\033[4mPosition Buffer (%s B)\033[24m\n", c);
+            n += 3;
+        }
+        k = slice * MAX(1, (terminalSize.ws_row - 16) / 8);
+        positionStride = MAX(1, (radar->desc.positionBufferDepth + k - 1) / k);
+        //RKLog("%s", RKVariableInString("positionStride", &positionStride, RKValueTypeInt));
+        for (j = 0, k = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
+            m += sprintf(text + m, format, k, MIN(k + positionStride * slice, radar->desc.positionBufferDepth));
+            k += positionStride * slice;
+            n++;
+        }
+
         // Pulse buffer
         c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
-        m = sprintf(text,
-                    "\033[1;1H\033[2J\033[0m"
-                    "Pulse Buffer (%s B)\n"
-                    "-----------------",
-                    c);
         s = strlen(c);
-        memset(text + m, '-', s);
-        m += s;
-        *(text + m++) = '\n';
-        n += 4;
-
-        // Background of pulse buffer: digits occupy int(log(depth)) + 1 (2x), minus '-', some ' '(front), some ' '(back), then pick the optimal 10.
-        slice = (terminalSize.ws_col - 2 * ((int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1) - 3 + 9) / 10 * 10;
+        if (terminalSize.ws_row > 25) {
+            m += sprintf(text + m, "\033[%d;1HPulse Buffer (%s B)\n", n, c);
+            memset(text + m, '-', s + 17);
+            m += s + 17;
+            *(text + m++) = '\n';
+            n += 3;
+        } else {
+            m += sprintf(text + m, "\033[%d;1H\033[4mPulse Buffer (%s B)\033[24m\n", n, c);
+            n += 2;
+        }
         k = slice * (terminalSize.ws_row - 16) / 2;
         pulseStride = MAX(1, (radar->desc.pulseBufferDepth + k - 1) / k);
         for (j = 0, k = 0; j < 30 && k < radar->desc.pulseBufferDepth; j++) {
@@ -2775,20 +2813,17 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
 
         // Ray buffer
         c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
-        m += sprintf(text + m,
-                     "\033[%d;1H"
-                     "Ray Buffer (%s B)\n"
-                     "---------------", n, c);
         s = strlen(c);
-        memset(text + m, '-', s);
-        m += s;
-        *(text + m++) = '\n';
-        n += 3;
-
-        //printf("%s\n", RKVariableInString("slice", &slice, RKValueTypeInt));
-
-        // Background of ray buffer
-        //k = slice * terminalSize.ws_row * 2 / 5;
+        if (terminalSize.ws_row > 25) {
+            m += sprintf(text + m, "\033[%d;1HRay Buffer (%s B)\n", n, c);
+            memset(text + m, '-', s + 15);
+            m += s + 15;
+            *(text + m++) = '\n';
+            n += 3;
+        } else {
+            m += sprintf(text + m, "\033[%d;1H\033[4mRay Buffer (%s B)\033[24m\n", n, c);
+            n += 2;
+        }
         k = slice * (terminalSize.ws_row - 16) / 2;
         rayStride = MAX(1, (radar->desc.rayBufferDepth + k - 1) / k);
         for (j = 0, k = 0; j < 30 && k < radar->desc.rayBufferDepth; j++) {
@@ -2799,19 +2834,18 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
 
         // Health buffers
         c = RKIntegerToCommaStyleString(radar->desc.healthNodeBufferSize);
-        m += sprintf(text + m,
-                     "\033[%d;1H"
-                     "Health Buffers (%s B)\n"
-                     "-------------------", n, c);
-        //printf("%d x %d   slice = %d   pulseStride = %d   rayStride = %d\n", terminalSize.ws_col, terminalSize.ws_row, slice, pulseStride, rayStride);
-
         s = strlen(c);
-        memset(text + m, '-', s);
-        m += s;
-        *(text + m++) = '\n';
-        n += 3;
-
-        // Background of health buffers
+        if (terminalSize.ws_row > 25) {
+            m += sprintf(text + m, "\033[%d;1HHealth Buffers (%s B)\n", n, c);
+            memset(text + m, '-', s + 19);
+            m += s + 19;
+            *(text + m++) = '\n';
+            n += 3;
+        } else {
+            m += sprintf(text + m, "\033[%d;1H\033[4mHealth Buffers (%s B)\033[24m\n", n, c);
+            n += 2;
+        }
+        k = slice;
         healthStride = MAX(1, (radar->desc.healthBufferDepth + k - 1) / k);
         for (k = 0; k < MIN(4, RKHealthNodeCount); k++) {
             m += sprintf(text + m, "%3s: 0-%d\n",
@@ -2824,7 +2858,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         }
         n = n - k - 1;
         for (; k < MIN(8, RKHealthNodeCount); k++) {
-            m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col / 2);
+            m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col - 2 * w - 2 - radar->desc.healthBufferDepth / healthStride);
             m += sprintf(text + m, "%3s: 0-%d",
                          k == RKHealthNodeRadarKit ? "RKI" :
                          (k == RKHealthNodeTransceiver ? "TRX" :
@@ -2837,30 +2871,65 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         
         if (flag & RKTextPreferencesShowColor) {
             m += sprintf(text + m,
-                         "\033[%d;1H         "
-                         "    %s%c" RKNoColor " Vacant"
-                         "    %s%c" RKNoColor " Has Data"
-                         "    %s%c" RKNoColor " Shared"
-                         "    %s%c" RKNoColor " Used\n",
-                         n, c0, m0, c1, m1, c2, m2, c3, m3);
+                         "\033[%d;%dH"
+                         "%s%c" RKNoColor " Vacant    %s%c" RKNoColor " Has Data    %s%c" RKNoColor " Shared    %s%c" RKNoColor " Used\n",
+                         n, 2 * w + 3 + MAX(0, (terminalSize.ws_col - 80) / 2), c0, m0, c1, m1, c2, m2, c3, m3);
         } else {
             m += sprintf(text + m,
-                         "\033[%d;1H          "
-                         "    %c Vacant"
-                         "    %c Has Data"
-                         "    %c Shared"
-                         "    %c Used\n",
-                         n, m0, m1, m2, m3);
+                         "\033[%d;%dH%c Vacant    %c Has Data    %c Shared    %c Used\n",
+                         n, 2 * w + 3 + MAX(0, (terminalSize.ws_col - 80) / 2), m0, m1, m2, m3);
         }
     }
 
     // Use w for two address end points plus the other characters
     w = 2 * w + 3;
-    
-    n = 3;
+
+    uint32_t s0, s1;
+    n = 2;
+    if (terminalSize.ws_row > 25) {
+        n++;
+    }
     k = 0;
-    uint32_t s0 = RKPulseStatusVacant;
-    uint32_t s1 = RKPulseStatusVacant;
+    for (j = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
+        // Move the cursor
+        m += sprintf(text + m, "\033[%d;%dH", n, w);
+        s1 = (uint32_t)-1;
+        for (i = 0; i < slice && k < radar->desc.positionBufferDepth; i++, k += positionStride) {
+            position = &radar->positions[k];
+            s0 = position->flag;
+            if (flag & RKTextPreferencesShowColor) {
+                if (s0 & RKPositionFlagUsed) {
+                    if (s0 == s1) {
+                        *(text + m++) = m3;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c3, m3);
+                    }
+                } else if (s0 & RKPositionFlagReady) {
+                    if (s0 == s1) {
+                        *(text + m++) = m1;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c1, m1);
+                    }
+                } else {
+                    if (s0 == s1) {
+                        *(text + m++) = m0;
+                    } else {
+                        m += sprintf(text + m, "%s%c", c0, m0);
+                    }
+                }
+                s1 = s0;
+            } else {
+                *(text + m++) = s0 & RKPositionFlagUsed ? m3 : (s0 & RKPositionFlagReady ? m1 : m0);
+            }
+        }
+        n++;
+    }
+
+    n += 2;
+    if (terminalSize.ws_row > 25) {
+        n++;
+    }
+    k = 0;
     for (j = 0; j < 30 && k < radar->desc.pulseBufferDepth; j++) {
         // Move the cursor
         m += sprintf(text + m, "\033[%d;%dH", n, w);
@@ -2908,7 +2977,10 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         n++;
     }
     
-    n += 3;
+    n += 2;
+    if (terminalSize.ws_row > 25) {
+        n++;
+    }
     k = 0;
     for (j = 0; j < 30 && k < radar->desc.rayBufferDepth; j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
@@ -2950,7 +3022,10 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         n++;
     }
 
-    n += 3;
+    n += 2;
+    if (terminalSize.ws_row > 25) {
+        n++;
+    }
     for (j = 0; j < MIN(4, RKHealthNodeCount); j++) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
@@ -2986,7 +3061,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
     }
     n -= j;
     for (; j < MIN(8, RKHealthNodeCount); j++) {
-        m += sprintf(text + m, "\033[%d;%dH", n, w + terminalSize.ws_col / 2);
+        m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col - radar->desc.healthBufferDepth / healthStride + 1);
         s1 = (uint32_t)-1;
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
             RKHealth *health = &radar->healthNodes[j].healths[k];
@@ -3019,8 +3094,10 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         n++;
     }
 
-    n += 2;
-    m += sprintf(text + m, "\033[0m\033[%d;1H== (%s) ==" RKEOL, n, RKIntegerToCommaStyleString(m));
+    n++;
+    c = RKIntegerToCommaStyleString(m);
+    s = strlen(c);
+    m += sprintf(text + m, "\033[0m\033[%d;%dH== (%s) ==" RKEOL, n, (int)(terminalSize.ws_col - s - 7), c);
     *(text + m) = '\0';
     return m;
 }
