@@ -2,7 +2,7 @@
 //  RKMisc.h
 //  RadarKit
 //
-//  Technically these functions are not part of RadarKit. They can be
+//  Technically these functions are not part of the RadarKit framework. They can be
 //  used independently outside of radar kit.
 //
 //  Created by Boon Leng Cheong on 11/4/15.

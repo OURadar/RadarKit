@@ -417,7 +417,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     RKSetUseDailyLog(true);
     RKSetRootFolder(desc.dataPath);
     
-    RKLog("Initializing ... 0x%08x", desc.initFlags);
+    RKLog("Initializing ... 0x%08x %s", desc.initFlags, desc.dataPath);
 
     // Allocate self
     bytes = sizeof(RKRadar);

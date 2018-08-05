@@ -9,7 +9,6 @@
 #include <RadarKit.h>
 #include <getopt.h>
 
-#define ROOT_PATH                   "data"
 #define PREFERENCE_FILE             "pref.conf"
 
 // User parameters in a struct
@@ -262,7 +261,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.radarHeight = 2.5f;
     user->desc.wavelength = 0.03f;
     user->desc.pulseToRayRatio = 1;
-    strcpy(user->desc.dataPath, ROOT_PATH);
+    strcpy(user->desc.dataPath, RKDefaultDataPath);
     
     return user;
 }
@@ -290,7 +289,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
         RKLog("Reading user preferences ...\n");
     }
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",         user->desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKMaximumPrefixLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",     user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
@@ -307,7 +306,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",    &user->goCommand,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",  &user->stopCommand,    RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",    &user->ignoreGPS,      RKParameterTypeBool, 1);
-
+    
     // Shortcuts
     k = 0;
     memset(user->controls, 0, RKMaximumControlCount * sizeof(RKControl));
@@ -450,6 +449,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'X':
                 user->verbose = 2;
+                RKSetWantScreenOutput(true);
                 updateSystemPreferencesFromControlFile(user);
                 exit(EXIT_SUCCESS);
                 break;
@@ -728,7 +728,6 @@ int main(int argc, const char **argv) {
     RKCommand cmd = "";
 
     RKSetProgramName("rktest");
-    RKSetWantScreenOutput(true);
 
     char *term = getenv("TERM");
     if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
@@ -745,6 +744,7 @@ int main(int argc, const char **argv) {
 
     // Screen output based on verbosity level
     if (systemPreferences->verbose) {
+        RKSetWantScreenOutput(true);
         if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term,
                    rkGlobalParameters.showColor ?
@@ -754,6 +754,7 @@ int main(int argc, const char **argv) {
     } else {
         RKSetWantScreenOutput(false);
     }
+    printf("rootDataFolder = %s\n", rkGlobalParameters.rootDataFolder);
 
     // Initialize a radar object
     myRadar = RKInitWithDesc(systemPreferences->desc);

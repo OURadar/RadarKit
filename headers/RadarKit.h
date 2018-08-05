@@ -151,7 +151,6 @@
  processing such as auto-correlation calculations, pulse compressions, FIR (finite
  impulse response) and IIR (infinite impulse response) filtering, window functions,
  data transportation across network, etc.
- @frameworkuid RK001
  
  */
 

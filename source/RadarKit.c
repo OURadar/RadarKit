@@ -8,7 +8,15 @@
 #include <RadarKit.h>
 
 // Global variables
-RKGlobalParamters rkGlobalParameters = {{"radar"}, {RKDefaultLogfile}, {""}, false, true, PTHREAD_MUTEX_INITIALIZER, NULL};
+RKGlobalParamters rkGlobalParameters = {
+    .program = {"radar"},
+    .logfile = {RKDefaultLogfile},
+    .rootDataFolder = RKDefaultDataPath,
+    .dailyLog = false,
+    .showColor = true,
+    .mutex = PTHREAD_MUTEX_INITIALIZER,
+    .stream = NULL
+};
 
 #define N(x) #x,
 const char * const rkResultStrings[] = { RKResultNames };
