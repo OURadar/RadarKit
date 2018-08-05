@@ -114,7 +114,7 @@ Follow these steps to get the project
     }
     ```
 
-2. Most hardware related routines interact with the RadarKit through functions provided in `<RadarKit/RKRadar.h>`. The functions listed under this header are about the only functions you should be concerned with. The design is intended to abstract other low-level house-keeping tasks. While the framework is open source, beginners are recommended to use only functions in this header.
+2. By design, the data acquired through hardware, e.g., I/Q samples, is delivered to the RadarKit framework through functions provided in `<RadarKit/RKRadar.h>`, and a small number of functions in `<RadarKit/RKFoundation.h>` and `<RadarKit/RKMisc.h>`. The functions listed under these headers are about the only functions you should be concerned with. The design is intended to abstract the majority of common signal processing and low-level house-keeping tasks. As you accumulate more experiences, feel free to explore other parts of the framework. Feedback and suggestions for improvements are always welcome.
 
     ![Figure](blob/RadarKitAnnotated.png)
 
