@@ -95,7 +95,7 @@
 #define RKMaximumIIRFilterTaps               8                                 //
 #define RKMaximumPrefixLength                8                                 // String length includes the terminating character!
 #define RKMaximumSymbolLength                8                                 // String length includes the terminating character!
-#define RKMaximumSymbolLength         8                                 // String length includes the terminating character!
+#define RKMaximumFileExtensionLength         8                                 // String length includes the terminating character!
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
