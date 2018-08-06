@@ -18,9 +18,12 @@
 //  2.0.1  - 8/xx/2018
 //         - RKBufferOverview upgraded to show health buffers
 //         - RKBufferOverview upgraded to show position buffers
+//         - RKBufferOverview now supports 80 x 25 terminal size
 //         - Replaced !isfinite() with isnan() since isfinite(0.0) = 0
 //         - RKClock self reset onlyl when count > 0
 //         - Added more comments to functions declared in RKRadar.h
+//         - Radar name and file prefix can now be changed on the fly
+//         - Fixed a bug in statusString overrun
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive
@@ -130,12 +133,34 @@
 //         - Incorporated NetCDF-4
 //         - General bug fixes
 //
-//  1.1    - Optmized sequence for frequency hop
+//  1.1    - 3/31/2017 (esimated)
+//         - Optmized sequence for frequency hop
 //         - Raw data I/Q recording
 //         - Health logger
 //         - Reduced memory footprint
 //
-//  1.0    - First working version
+//  1.0    - 2/28/2017 (estimated)
+//         - First working version
+//         - Added sweepWriter
+//         - Added RKCommandCenter
+//
+//  0.9    - 1/31/2017 (estimated)
+//         - Networking, RKClient and RKServer
+//         - Health reporting
+//         - Transceiver hook
+//         - Pedestal hook
+//         - Health relay hook
+//
+//  0.5    - 11/30/2016 (esimated)
+//         - Moment calculation
+//
+//  0.2    - 9/3/2016 (esimated)
+//         - Multi-core pulse compression engine
+//         - Position tagging
+//         - Pulse gathering for moment calculation
+//
+//  0.1    - 3/17/2015
+//         - Initial scaffold
 //
 
 #ifndef __RadarKit__

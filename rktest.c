@@ -660,7 +660,6 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         myRadar->desc.latitude = systemPreferences->desc.latitude;
         myRadar->desc.longitude = systemPreferences->desc.longitude;
         myRadar->desc.heading = systemPreferences->desc.heading;
-        printf("heading= %.2f\n", myRadar->desc.heading);
     } else {
         myRadar->desc.initFlags &= ~RKInitFlagIgnoreGPS;
     }
