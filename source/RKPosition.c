@@ -33,8 +33,8 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string = engine->statusBuffer[engine->statusBufferIndex];
     
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
 
     // Use b characters to draw a bar
     i = engine->processedPulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -42,7 +42,7 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[i] = 'P';
 
     // Engine lag
-    snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
              99.49f * engine->lag,
              rkGlobalParameters.showColor ? RKNoColor : "");
@@ -51,8 +51,8 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string = engine->positionStringBuffer[engine->statusBufferIndex];
 
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
 
     // Same as previous status, use b characters to draw a bar
     i = *engine->positionIndex * RKStatusBarWidth / engine->radarDescription->positionBufferDepth;
@@ -60,7 +60,7 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i,RKMaximumStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
+    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
              (unsigned long)position->i,
              rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
              rkGlobalParameters.showColor ? RKNoColor : "",

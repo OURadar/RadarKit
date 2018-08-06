@@ -139,15 +139,19 @@ static void *systemInspectorRunLoop(void *in) {
         RKStatus *status = RKGetVacantStatus(radar);
         radar->memoryUsage = RKGetRadarMemoryUsage(radar);
         status->memoryUsage = radar->memoryUsage;
-        status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
-        for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-            status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
-            status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].dutyCycle);
+        if (radar->pulseCompressionEngine->state & RKEngineStateActive) {
+            status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
+            for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
+                status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
+                status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].dutyCycle);
+            }
         }
-        status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
-        for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
-            status->rayCoreLags[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].lag);
-            status->rayCoreUsage[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].dutyCycle);
+        if (radar->momentEngine->state & RKEngineStateActive) {
+            status->rayMonitorLag = radar->momentEngine->lag * 100 / radar->desc.rayBufferDepth;
+            for (k = 0; k < MIN(RKProcessorStatusRayCoreCount, radar->momentEngine->coreCount); k++) {
+                status->rayCoreLags[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].lag);
+                status->rayCoreUsage[k] = (uint8_t)(99.49f * radar->momentEngine->workers[k].dutyCycle);
+            }
         }
         status->recorderLag = radar->rawDataRecorder->lag;
         RKSetStatusReady(radar, status);
@@ -313,6 +317,16 @@ static void *systemInspectorRunLoop(void *in) {
             } else {
                 criticalCount = 0;
             }
+
+            for (int i = 0; i < radar->desc.rayBufferDepth; i++) {
+                if (radar->momentEngine->momentSource[i].origin > radar->desc.pulseBufferDepth ||
+                    radar->momentEngine->momentSource[i].length > radar->desc.pulseBufferDepth ||
+                    radar->momentEngine->momentSource[i].modulo > radar->desc.pulseBufferDepth) {
+                    printf("--> momentSource[%d] = %d / %d / %d (%d)\n", i,
+                           radar->momentEngine->momentSource[i].origin, radar->momentEngine->momentSource[i].length, radar->momentEngine->momentSource[i].modulo, radar->desc.pulseBufferDepth);
+                }
+            }
+
         } // if (radar->desc.initFlags & RKInitFlagSignalProcessor) ...
         // Update the indices and time
         tweetaIndex = radar->healthNodes[RKHealthNodeTweeta].index;

@@ -2089,7 +2089,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
     transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
     transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.2 / transceiver->prt));
+    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.02 / transceiver->prt));
     transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
     transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
 

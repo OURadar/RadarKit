@@ -29,8 +29,8 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     char *string = engine->statusBuffer[engine->statusBufferIndex];
 
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
 
     // Use b characters to draw a bar
     i = engine->processedPulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -38,7 +38,7 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     string[i] = 'M';
 
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
                                     rkGlobalParameters.showColor ? RKNoColor : "");
@@ -48,25 +48,25 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
+        i += snprintf(string + i, RKStatusStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
                       99.49f * worker->lag,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Put a separator
-    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    i += snprintf(string + i, RKStatusStringLength - i, " |");
     // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 20; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
+        i += snprintf(string + i, RKStatusStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
                       99.49f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKStatusStringLength - RKStatusBarWidth - 20) {
+        memset(string + i, '#', RKStatusStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -324,7 +324,7 @@ static void *momentCore(void *in) {
 
     // Output index for current ray
     uint32_t io = engine->radarDescription->rayBufferDepth - engine->coreCount + c;
-    
+
     // Update index of the status for current ray
     uint32_t iu = RKBufferSSlotCount - engine->coreCount + c;
 
@@ -400,7 +400,7 @@ static void *momentCore(void *in) {
         // The index path of the source of this ray
         path = engine->momentSource[io];
         if (path.origin > engine->radarDescription->pulseBufferDepth || path.length > engine->radarDescription->pulseBufferDepth) {
-            RKLog("%s Warning. Unexpcted path->origin = %d   path->length = %d\n", engine->name, path.origin, path.length);
+            RKLog("%s Warning. Unexpected path->origin = %d   path->length = %d   io = %d\n", engine->name, path.origin, path.length, io);
             path.origin = 0;
             path.length = 1;
         }
@@ -715,7 +715,7 @@ static void *pulseGatherer(void *_in) {
             }
         }
         engine->state ^= RKEngineStateSleep2;
-        
+
         if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
@@ -763,6 +763,7 @@ static void *pulseGatherer(void *_in) {
                 if (count > 0) {
                     // Number of samples in this ray
                     engine->momentSource[j].length = count;
+                    //printf("%s k = %d --> momentSource[%d] = %d / %d / %d\n", engine->name, k, j, engine->momentSource[j].origin, engine->momentSource[j].length, engine->momentSource[j].modulo);
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
