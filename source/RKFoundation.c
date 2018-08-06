@@ -202,6 +202,34 @@ int RKSetLogfileToDefault(void) {
     return RKResultSuccess;
 }
 
+#pragma mark - Filename / String
+
+bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
+    // Find the last '.'
+    memset(symbol, 0, RKMaximumSymbolLength);
+    char *e = NULL;
+    e = strstr(filename, ".");
+    if (e == NULL) {
+        e = (char *)filename + strlen(filename) - 1;
+    }
+    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
+        e = strstr(e + 1, ".");
+    }
+    // Find the previous '-'
+    char *b = e;
+    while (b != filename && *b != '-') {
+        b--;
+    }
+    if (b == filename) {
+        fprintf(stderr, "Unable to find product symbol.\n");
+        *symbol = '-';
+        return false;
+    }
+    b++;
+    strncpy(symbol, b, MIN(RKMaximumSymbolLength - 1, e - b));
+    return true;
+}
+
 #pragma mark - Screen Output
 
 void RKShowTypeSizes(void) {

@@ -18,7 +18,9 @@
 // Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.tar.xx  (36 chars)
 // Health: XXXXXX-YYYYMMDD-HHMMSS.json           (27 chars)
 // Log   : XXXXXX-YYYYMMDD.log                   (19 chars)
-#define RKFileManagerFilenameLength               38
+//#define RKFileManagerFilenameLength               38
+
+#define RKFileManagerFilenameLength                 (RKMaximumSymbolLength + 25 + RKMaximumFileExtensionLength)
 
 typedef char RKPathname[RKFileManagerFilenameLength];
 typedef struct _rk_indexed_stat {

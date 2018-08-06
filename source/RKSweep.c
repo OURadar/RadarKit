@@ -503,7 +503,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     sprintf(engine->name, "%s<ProductRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSweepEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    sprintf(engine->productFileExtension, "nc");
+    snprintf(engine->productFileExtension, RKMaximumFileExtensionLength - 1, "nc");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;
@@ -547,6 +547,10 @@ void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
 }
 
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const char *archivedFileExtension) {
+    if (strlen(archivedFileExtension) > RKMaximumFileExtensionLength - 1) {
+        RKLog("Error. Archived file extension %s is too long. Maximum = %d. Recompile.\n", RKMaximumFileExtensionLength, archivedFileExtension);
+        exit(EXIT_FAILURE);
+    }
     if (RKFilenameExists(script)) {
         engine->hasHandleFilesScript = true;
         strcpy(engine->handleFilesScript, script);

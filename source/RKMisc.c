@@ -467,32 +467,6 @@ void RKReplaceFileExtension(char *filename, const char *pattern, const char *rep
     }
 }
 
-bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
-    // Find the last '.'
-    memset(symbol, 0, 8);
-    char *e = NULL;
-    e = strstr(filename, ".");
-    if (e == NULL) {
-        e = (char *)filename + strlen(filename) - 1;
-    }
-    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
-        e = strstr(e + 1, ".");
-    }
-    // Find the previous '-'
-    char *b = e;
-    while (b != filename && *b != '-') {
-        b--;
-    }
-    if (b == filename) {
-        fprintf(stderr, "Unable to find product symbol.\n");
-        *symbol = '-';
-        return false;
-    }
-    b++;
-    strncpy(symbol, b, MIN(8, e - b));
-    return true;
-}
-
 #pragma mark - Enum to String
 
 char *RKSignalString(const int signal) {

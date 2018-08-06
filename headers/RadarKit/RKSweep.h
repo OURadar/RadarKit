@@ -41,11 +41,11 @@ struct rk_sweep_engine {
     bool                             doNotWrite;
     bool                             convertToDegrees;
     bool                             hasHandleFilesScript;
-    char                             handleFilesScriptArchivedFileExtension[8];
+    char                             handleFilesScriptArchivedFileExtension[RKMaximumFileExtensionLength];
     char                             handleFilesScript[RKMaximumPathLength];
     RKFileManager                    *fileManager;
     uint32_t                         productTimeoutSeconds;
-    char                             productFileExtension[16];
+    char                             productFileExtension[RKMaximumFileExtensionLength];
     int                              (*productRecorder)(RKProduct *, char *);
 
     // Program set variables

@@ -109,6 +109,9 @@ int RKSetRootFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
 
+// Filename / string
+bool RKGetSymbolFromFilename(const char *filename, char *symbol);
+
 // Common numeric output
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);

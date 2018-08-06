@@ -195,7 +195,7 @@ static void *healthConsolidator(void *_in) {
                          "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
                          "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                          "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                         "\"Sys Heading\":{\"Value\":\"%.2f\",\"Enum\":0}, "
+                         "\"Sys Heading\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
                          "\"LocationFromDescriptor\":true, ",
                          desc->latitude,
                          desc->longitude,
