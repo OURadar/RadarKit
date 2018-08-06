@@ -23,8 +23,8 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     string = engine->statusBuffer[engine->statusBufferIndex];
     
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -32,7 +32,7 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     string[i] = 'F';
     
     // Engine lag
-    snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
              99.9f * engine->lag,
              rkGlobalParameters.showColor ? RKNoColor : "");

@@ -40,7 +40,7 @@ struct rk_data_recorder {
     pthread_t                        tidPulseRecorder;
 
     // Status / health
-    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                             statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
     uint32_t                         statusBufferIndex;
     RKEngineState                    state;
     uint64_t                         tic;

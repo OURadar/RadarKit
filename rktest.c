@@ -847,7 +847,7 @@ int main(int argc, const char **argv) {
         }
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", "tar.xz");
-
+        
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
 
@@ -867,7 +867,8 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ...\n");
-        RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
+        //RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
+        RKExecuteCommand(myRadar, "p ppi 4 26", NULL);
         RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);

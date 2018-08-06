@@ -24,8 +24,8 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     char *string = engine->statusBuffer[engine->statusBufferIndex];
     
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -33,7 +33,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     string[i] = 'C';
     
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
                                     rkGlobalParameters.showColor ? RKNoColor : "");
@@ -43,25 +43,25 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
+        i += snprintf(string + i, RKStatusStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
                       99.49f * worker->lag,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Put a separator
-    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    i += snprintf(string + i, RKStatusStringLength - i, " |");
     // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 10; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
+        i += snprintf(string + i, RKStatusStringLength - i, " %s%02.0f%s",
                       rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
                       99.49f * worker->dutyCycle,
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKStatusStringLength - RKStatusBarWidth - 10) {
+        memset(string + i, '#', RKStatusStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 
