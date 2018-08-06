@@ -111,7 +111,7 @@ static void *healthConsolidator(void *_in) {
                             // Copy over the previous health to current health, set all enums to old
                             h0->i += desc->healthBufferDepth;
                             strcpy(h0->string, h1->string);
-                            RKReplaceKeyValue(h0->string, "Enum", RKStatusEnumOld);
+                            RKReplaceAllValuesOfKey(h0->string, "Enum", RKStatusEnumOld);
                             h0->flag = RKHealthFlagReady;
                         }
                     }
@@ -190,6 +190,11 @@ static void *healthConsolidator(void *_in) {
             }
         }
         if (isnan(latitude) || isnan(longitude) || isnan(heading) || (desc->initFlags & RKInitFlagIgnoreGPS)) {
+            // If there is also supplied GPS, replace the enum of the GPS readings to not wired
+            RKReplaceEnumOfKey(string, "heading", RKStatusEnumNotWired);
+            RKReplaceEnumOfKey(string, "latitude", RKStatusEnumNotWired);
+            RKReplaceEnumOfKey(string, "longitude", RKStatusEnumNotWired);
+
             // Concatenate with latitude, longitude and heading values if GPS values are not reported
             i += sprintf(string + i,
                          "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "

@@ -120,7 +120,8 @@ char *RKGetBackgroundColorOfCubeIndex(const int);
 
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);
-void RKReplaceKeyValue(char *string, const char *key, int value);
+void RKReplaceAllValuesOfKey(char *string, const char *key, int value);
+void RKReplaceEnumOfKey(char *string, const char *key, int value);
 
 char *RKUIntegerToCommaStyleString(const unsigned long long);
 char *RKIntegerToCommaStyleString(const long long);

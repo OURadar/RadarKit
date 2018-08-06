@@ -207,29 +207,81 @@ char *RKGetValueOfKey(const char *string, const char *key) {
     return NULL;
 }
 
-void RKReplaceKeyValue(char *string, const char *key, int value) {
+void RKReplaceAllValuesOfKey(char *string, const char *key, int value) {
     int k;
     char *s = strstr(string, key);
     char *e;
+    size_t l;
     char valueString[32];
     while (s != NULL) {
         s += strlen(key);
         while (*s != '\0' && (*s == '"' || *s == ' ' || *s == ':')) {
             s++;
         }
+        if (s == '\0') {
+            break;
+        }
         e = s;
         while (*e != '\0' && (*e != '}' && *e != ',' && *e != ']')) {
             e++;
+        }
+        if (*e == '\0') {
+            fprintf(stderr, "RKReplaceEnumOfKey() encountered an incomplete JSON string.\n");
+            return;
         }
         // Now value should be in between s & e
         k = sprintf(valueString, "%d", value);
         if (e - s < k) {
             // Need to add another character
-            memmove(e + k - 1, e, strlen(e));
+            l = strlen(e);
+            memmove(e + k - 1, e, l);
+            *(e + k + -1 + l) = '\0';
         }
         strncpy(s, valueString, k);
         s = strstr(e, key);
     }
+}
+
+void RKReplaceEnumOfKey(char *string, const char *key, int value) {
+    int k;
+    char *s = strcasestr(string, key);
+    char *e;
+    size_t l;
+    char valueString[32];
+    if (s == NULL) {
+        return;
+    }
+    s = strstr(s, "Enum");
+    if (s == NULL) {
+        return;
+    }
+    s += 6;
+    //printf("Enum of %s found.  %s\n", key, s);
+    while (*s != '\0' && (*s == '"' || *s == ' ' || *s == ':')) {
+        s++;
+    }
+    if (*s == '\0') {
+        return;
+    }
+    e = s;
+    while (*e != '\0' && (*e != '}' && *e != ',' && *e != ']')) {
+        e++;
+    }
+    if (*e == '\0') {
+        fprintf(stderr, "RKReplaceEnumOfKey() encountered an incomplete JSON string.\n");
+        return;
+    }
+    // Now value should be in between s & e
+    k = sprintf(valueString, "%d", value);
+    //printf("s = %p   e = %p   valueString = %s   k = %d ==? %d\n", s, e, valueString, (int)(e - s), k);
+    if (e - s < k) {
+        // Need to add another character
+        l = strlen(e);
+        memmove(e + k - 1, e, l);
+        *(e + k + -1 + l) = '\0';
+    }
+    strncpy(s, valueString, k);
+    s = strstr(e, key);
 }
 
 #pragma mark -

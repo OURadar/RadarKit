@@ -307,7 +307,7 @@ void RKTestParseCommaDelimitedValues(void) {
 
 void RKTestParseJSONString(void) {
     SHOW_FUNCTION_NAME
-    char str[] = "{"
+    char string[] = "{"
     "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
     "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
     "\"Health Relay\":{\"Value\":true,\"Enum\":0}, "
@@ -353,13 +353,13 @@ void RKTestParseJSONString(void) {
     "\"I2C Chip\":{\"Value\":\"30.50 degC\",\"Enum\":0}, "
     "\"Event\":\"none\", \"Log Time\":1493410480"
     "}";
-    printf("%s (%d characters)\n\n", str, (int)strlen(str));
+    printf("%s (%d characters)\n\n", string, (int)strlen(string));
 
     // Test getting a specific key
     printf("Getting specific key:\n");
     printf("---------------------\n");
     char *stringObject, *stringValue, *stringEnum;
-    if ((stringObject = RKGetValueOfKey(str, "latitude")) != NULL) {
+    if ((stringObject = RKGetValueOfKey(string, "latitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
         stringEnum = RKGetValueOfKey(stringObject, "enum");
@@ -368,7 +368,7 @@ void RKTestParseJSONString(void) {
         }
     }
     printf("\n");
-    if ((stringObject = RKGetValueOfKey(str, "longitude")) != NULL) {
+    if ((stringObject = RKGetValueOfKey(string, "longitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
         stringEnum = RKGetValueOfKey(stringObject, "enum");
@@ -382,7 +382,7 @@ void RKTestParseJSONString(void) {
     printf("-----------------\n");
     char criticalKey[RKNameLength];
     char criticalValue[RKNameLength];
-    bool anyCritical = RKAnyCritical(str, true, criticalKey, criticalValue);
+    bool anyCritical = RKAnyCritical(string, true, criticalKey, criticalValue);
     printf("anyCritical = %s%s%s%s%s\n",
            rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
            anyCritical ? "True" : "False",
@@ -409,15 +409,15 @@ void RKTestParseJSONString(void) {
     size_t s;
     const int N = 8;
     float *nums = (float *)malloc(N * sizeof(float));
-    sprintf(str, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
-    printf("%s (%d characters)\n\n", str, (int)strlen(str));
+    sprintf(string, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
+    printf("%s (%d characters)\n\n", string, (int)strlen(string));
 
-    stringObject = RKGetValueOfKey(str, "name");
+    stringObject = RKGetValueOfKey(string, "name");
     printf("name = %s\n", stringObject);
-    stringObject = RKGetValueOfKey(str, "PieceCount");
+    stringObject = RKGetValueOfKey(string, "PieceCount");
     printf("Piece Count = %s\n", stringObject);
 
-    stringObject = RKGetValueOfKey(str, "b");
+    stringObject = RKGetValueOfKey(string, "b");
     printf("b = %s -->", stringObject);
     s = RKParseNumericArray(nums, RKValueTypeFloat, N, stringObject);
     for (k = 0; k < s; k++) {
@@ -425,7 +425,7 @@ void RKTestParseJSONString(void) {
     }
     printf(" (count = %zu)\n", s);
 
-    stringObject = RKGetValueOfKey(str, "w");
+    stringObject = RKGetValueOfKey(string, "w");
     printf("w = %s --> ", stringObject);
     s = RKParseNumericArray(nums, RKValueTypeFloat, N, stringObject);
     for (k = 0; k < s; k++) {
@@ -434,6 +434,20 @@ void RKTestParseJSONString(void) {
     printf(" (count = %zu)\n", s);
 
     free(nums);
+
+    printf("\n===\n\n");
+
+    sprintf(string, "{\""
+            "Health\":{\"Value\":true,\"Enum\":1}, "
+            "\"Transceiver\":{\"Value\":true,\"Enum\":1}, "
+            "\"GPS Latitude\":{\"Value\":\"+35.0 deg\",\"Enum\":1}, "
+            "\"GPS Longitude\":{\"Value\":\"-97.0 deg\",\"Enum\":1}, "
+            "}");
+    printf("string = %s\n", string);
+    RKReplaceEnumOfKey(string, "Health", RKStatusEnumOld);
+    printf("string = %s\n", string);
+    RKReplaceAllValuesOfKey(string, "Enum", RKStatusEnumOld);
+    printf("string = %s\n", string);
 }
 
 void RKTestFileManager(void) {
@@ -2715,10 +2729,6 @@ int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
 
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
-    char string[256] = "{\"Health\":{\"Value\":true,\"Enum\":1}, \"Transceiver\":{\"Value\":true,\"Enum\":1}}\"";
-    printf("string = %s\n", string);
-    RKReplaceKeyValue(string, "Enum", RKStatusEnumOld);
-    printf("string = %s\n", string);
 }
 
 void RKTestShowFilters(void) {
