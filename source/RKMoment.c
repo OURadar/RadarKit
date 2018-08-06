@@ -399,6 +399,11 @@ static void *momentCore(void *in) {
 
         // The index path of the source of this ray
         path = engine->momentSource[io];
+        if (path.origin > engine->radarDescription->pulseBufferDepth || path.length > engine->radarDescription->pulseBufferDepth) {
+            RKLog("%s Warning. Unexpcted path->origin = %d   path->length = %d\n", engine->name, path.origin, path.length);
+            path.origin = 0;
+            path.length = 1;
+        }
 
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;

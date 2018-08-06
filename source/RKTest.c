@@ -1782,7 +1782,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
 
-    RKLog("prt = %.4f s\n", transceiver->prt);
+    //RKLog("prt = %.4f s\n", transceiver->prt);
     
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
@@ -1935,7 +1935,7 @@ void *RKTestTransceiverRunLoop(void *input) {
         // Report health
         gettimeofday(&t0, NULL);
         dt = RKTimevalDiff(t0, t2);
-        if (dt > 0.2) {
+        if (dt > 0.1) {
             t2 = t0;
             nn = rand();
             temp = 1.0f * nn / RAND_MAX + 79.5f;
@@ -2011,7 +2011,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
     transceiver->prt = 0.001;
     transceiver->sprt = 1;
-    transceiver->chunkSize = MAX(1, (int)floor(0.25 / transceiver->prt));
     transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
     sprintf(transceiver->waveformCache[0]->name, "s01");
 
@@ -2090,7 +2089,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
     transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
     transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.5 / transceiver->prt));
+    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.2 / transceiver->prt));
     transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
     transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
 
