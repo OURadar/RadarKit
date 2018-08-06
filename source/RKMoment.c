@@ -324,7 +324,7 @@ static void *momentCore(void *in) {
 
     // Output index for current ray
     uint32_t io = engine->radarDescription->rayBufferDepth - engine->coreCount + c;
-    
+
     // Update index of the status for current ray
     uint32_t iu = RKBufferSSlotCount - engine->coreCount + c;
 
@@ -400,7 +400,7 @@ static void *momentCore(void *in) {
         // The index path of the source of this ray
         path = engine->momentSource[io];
         if (path.origin > engine->radarDescription->pulseBufferDepth || path.length > engine->radarDescription->pulseBufferDepth) {
-            RKLog("%s Warning. Unexpcted path->origin = %d   path->length = %d\n", engine->name, path.origin, path.length);
+            RKLog("%s Warning. Unexpected path->origin = %d   path->length = %d   io = %d\n", engine->name, path.origin, path.length, io);
             path.origin = 0;
             path.length = 1;
         }
@@ -763,6 +763,7 @@ static void *pulseGatherer(void *_in) {
                 if (count > 0) {
                     // Number of samples in this ray
                     engine->momentSource[j].length = count;
+                    printf("%s k = %d --> momentSource[%d] = %d / %d / %d\n", engine->name, k, j, engine->momentSource[j].origin, engine->momentSource[j].length, engine->momentSource[j].modulo);
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
@@ -775,6 +776,7 @@ static void *pulseGatherer(void *_in) {
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
+                    printf("%s k = %d\n", engine->name, k);
                     ray = RKGetRay(engine->rayBuffer, j);
                     ray->header.s = RKRayStatusVacant;
                     count = 0;
