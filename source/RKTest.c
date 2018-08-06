@@ -2632,7 +2632,7 @@ void *RKTestHealthRelayRunLoop(void *input) {
                 "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
                 "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                 "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.1f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
                 "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
                 "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
                 "}",

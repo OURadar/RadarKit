@@ -297,7 +297,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",   user->ringFilter,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeFloat, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",   user->systemZCal,      RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",   &user->systemDCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
@@ -644,12 +644,23 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
     }
 
+    // General attributes
+    if (strcmp(myRadar->desc.name, systemPreferences->desc.name)) {
+        strcpy(myRadar->desc.name, systemPreferences->desc.name);
+        RKLog("Radar name changed to '%s'\n", myRadar->desc.name);
+    }
+    if (strcmp(myRadar->desc.filePrefix, systemPreferences->desc.filePrefix)) {
+        strcpy(myRadar->desc.filePrefix, systemPreferences->desc.filePrefix);
+        RKLog("Product file prefix changed to '%s'\n", myRadar->desc.filePrefix);
+    }
+    
     // GPS override
     if (systemPreferences->ignoreGPS) {
         myRadar->desc.initFlags |= RKInitFlagIgnoreGPS;
         myRadar->desc.latitude = systemPreferences->desc.latitude;
         myRadar->desc.longitude = systemPreferences->desc.longitude;
         myRadar->desc.heading = systemPreferences->desc.heading;
+        printf("heading= %.2f\n", myRadar->desc.heading);
     } else {
         myRadar->desc.initFlags &= ~RKInitFlagIgnoreGPS;
     }
