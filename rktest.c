@@ -606,7 +606,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         }
     } else {
         if (!(user->desc.initFlags == RKInitFlagRelay)) {
-            RKLog("No options specified. Don't want to do anything?\n");
+            fprintf(stderr, "No options specified. Don't want to do anything?\n");
             exit(EXIT_FAILURE);
         }
         if (user->prf) {
@@ -899,6 +899,7 @@ int main(int argc, const char **argv) {
         
     } else {
         
+        RKSetWantScreenOutput(true);
         RKLog("Error. This should not happen.");
         
     }
