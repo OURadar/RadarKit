@@ -1718,8 +1718,12 @@ void *RKTestTransceiverRunLoop(void *input) {
     int16_t noise;
 
     float *ra = (float *)malloc(transceiver->gateCount * sizeof(float));
-    memset(ra, 0, transceiver->gateCount * sizeof(float));
     int16_t *rn = (int16_t *)malloc(transceiver->gateCount * sizeof(int16_t));
+    if (ra == NULL || rn == NULL) {
+        RKLog("Error. Unable to allocate memory in RKTransceiverRunLoop.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(ra, 0, transceiver->gateCount * sizeof(float));
     memset(rn, 0, transceiver->gateCount * sizeof(int16_t));
     for (g = 0; g < transceiver->gateCount; g++) {
         r = (float)g * transceiver->gateSizeMeters * 0.1f;
@@ -2174,7 +2178,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                  (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
                 transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
                 transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-                transceiver->chunkSize = MAX(1, (int)floor(0.5 / transceiver->prt));
+                transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.02 / transceiver->prt));
                 value = 1.5e8 * transceiver->prt;
                 transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
                 RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);

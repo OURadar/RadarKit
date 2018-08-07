@@ -281,7 +281,6 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value) {
         *(e + k + -1 + l) = '\0';
     }
     strncpy(s, valueString, k);
-    s = strstr(e, key);
 }
 
 #pragma mark -

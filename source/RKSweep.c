@@ -267,7 +267,7 @@ static void *rayGatherer(void *in) {
     pthread_t tidSweepManager = (pthread_t)0;
     pthread_t tidRayReleaser = (pthread_t)0;
 
-    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
+    RKRay *ray;
     RKRay **rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
 
     // Update the engine state
@@ -772,11 +772,14 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     S = rays[k];
     T = rays[k + 1];
     E = rays[k + n - 1];
+    if (S->header.configIndex != T->header.configIndex) {
+        RKLog("%s Warning. Inconsistent configIndex S has %d vs T has %d\n", engine->name, S->header.configIndex, T->header.configIndex);
+    }
 
     // Allocate the return object
     sweep = (RKSweep *)malloc(sizeof(RKSweep));
     if (sweep == NULL) {
-        RKLog("Error. Unable to allocate memory.\n");
+        RKLog("%s Error. Unable to allocate memory.\n", engine->name);
         return NULL;
     }
     memset(sweep, 0, sizeof(RKSweep));
@@ -805,6 +808,9 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
         k += sprintf(sweep->header.filename + k, "-A%.1f", sweep->header.config.sweepAzimuth);
     } else {
         k += sprintf(sweep->header.filename + k, "-N%03d", sweep->header.rayCount);
+    }
+    if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
+        RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
     }
     return sweep;
 }

@@ -259,7 +259,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.latitude = 35.181251;
     user->desc.longitude = -97.436752;
     user->desc.radarHeight = 2.5f;
-    user->desc.wavelength = 0.03f;
+    user->desc.wavelength = 0.0314f;
     user->desc.pulseToRayRatio = 1;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
     

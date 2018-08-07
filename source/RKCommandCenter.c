@@ -58,8 +58,8 @@ int socketCommandHandler(RKOperator *O) {
 
     //int ival;
     //float fval1, fval2;
-    char sval1[RKMaximumStringLength];
-    char sval2[RKMaximumStringLength];
+    char sval1[RKMaximumCommandLength];
+    char sval2[RKMaximumCommandLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     

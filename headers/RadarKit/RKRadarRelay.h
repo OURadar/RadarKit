@@ -42,7 +42,7 @@ typedef struct rk_radar_relay {
     RKClient                         *client;
     uint32_t                         responseIndex;
     char                             responses[RKRadarRelayFeedbackDepth][RKRadarRelayFeedbackCapacity];
-    char                             latestCommand[RKMaximumStringLength];
+    char                             latestCommand[RKMaximumCommandLength];
     pthread_t                        tidBackground;
     RKStream                         streams;
 

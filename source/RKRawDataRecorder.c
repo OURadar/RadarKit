@@ -60,12 +60,12 @@ static void *pulseRecorder(void *in) {
     uint64_t cacheFlushCount = 0;
 
     RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
-    memset(fileHeader, 0, 4096);
+    memset(fileHeader, 0, sizeof(RKFileHeader));
     sprintf(fileHeader->preface, "RadarKit/RawIQ");
     fileHeader->buildNo = 1;
-    fileHeader->bytes[4093] = 'E';
-    fileHeader->bytes[4094] = 'O';
-    fileHeader->bytes[4095] = 'L';
+    fileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
+    fileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
+    fileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
     
 	// Update the engine state
 	engine->state |= RKEngineStateWantActive;

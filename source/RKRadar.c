@@ -469,7 +469,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.healthBufferDepth = RKBufferHSlotCount;
         RKLog("Info. Health buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.healthBufferDepth));
     } else if (radar->desc.healthBufferDepth == 0) {
-        radar->desc.healthBufferDepth = 25;
+        radar->desc.healthBufferDepth = 40;
     }
     if (radar->desc.positionBufferDepth > RKBufferPSlotCount) {
         radar->desc.positionBufferDepth = RKBufferPSlotCount;
@@ -1945,8 +1945,8 @@ int RKResetClocks(RKRadar *radar) {
 
 int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
     int k;
-    char sval1[RKMaximumStringLength];
-    char sval2[RKMaximumStringLength];
+    char sval1[RKMaximumCommandLength];
+    char sval2[RKMaximumCommandLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     double fval1 = 0.0;
@@ -2859,25 +2859,29 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
             m += sprintf(text + m, "\033[%d;1H\033[4mHealth Buffers (%s B)\033[24m\n", n, c);
             n += 2;
         }
-        k = slice;
+        k = (terminalSize.ws_col / 2 - 2 * w - 6 + 4) / 5 * 5;
         healthStride = MAX(1, (radar->desc.healthBufferDepth + k - 1) / k);
         for (k = 0; k < MIN(4, RKHealthNodeCount); k++) {
             m += sprintf(text + m, "%3s: 0-%d\n",
                          k == RKHealthNodeRadarKit ? "RKI" :
                          (k == RKHealthNodeTransceiver ? "TRX" :
                           (k == RKHealthNodePedestal ? "PED" :
-                           (k == RKHealthNodeTweeta ? "TWT" : RKIntegerToCommaStyleString(k)))),
+                           (k == RKHealthNodeTweeta ? "TWT" :
+                            (k == RKHealthNodeUser1 ? "US1" :
+                             (k == RKHealthNodeUser2 ? "US2" :
+                              (k == RKHealthNodeUser3 ? "US3" :
+                               (k == RKHealthNodeUser1 ? "US4" : "UNK"))))))),
                          radar->desc.healthBufferDepth);
             n++;
         }
         n = n - k - 1;
         for (; k < MIN(8, RKHealthNodeCount); k++) {
             m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col - 2 * w - 2 - radar->desc.healthBufferDepth / healthStride);
-            m += sprintf(text + m, "%3s: 0-%d",
-                         k == RKHealthNodeRadarKit ? "RKI" :
-                         (k == RKHealthNodeTransceiver ? "TRX" :
-                          (k == RKHealthNodePedestal ? "PED" :
-                           (k == RKHealthNodeTweeta ? "TWT" : RKIntegerToCommaStyleString(k)))),
+            m += sprintf(text + m, "%3s: 0-%d\n",
+                            k == RKHealthNodeUser1 ? "US1" :
+                             (k == RKHealthNodeUser2 ? "US2" :
+                              (k == RKHealthNodeUser3 ? "US3" :
+                               (k == RKHealthNodeUser1 ? "US4" : "UNK"))),
                          radar->desc.healthBufferDepth);
             n++;
         }

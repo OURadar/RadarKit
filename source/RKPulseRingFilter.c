@@ -217,11 +217,11 @@ static void *ringFilterCore(void *_in) {
         if (engine->workerTaskDone[i0 * engine->coreCount + c] == true) {
             fprintf(stderr, "Already done?   i0 = %d\n", i0);
             j = RKPreviousModuloS(i0, engine->radarDescription->pulseBufferDepth);
-            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
             j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
             j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
         }
         if (engine->useFilter) {
             // Now we perform the difference equation on each polarization
@@ -384,11 +384,10 @@ static void *pulseRingWatcher(void *_in) {
         return NULL;
     }
     
-    
     RKConfig *config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
     uint32_t gateCount = config->pulseRingFilterGateCount;
     
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
+    RKPulse *pulse;
     RKPulse *pulseToSkip;
 
 	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
@@ -535,7 +534,7 @@ static void *pulseRingWatcher(void *_in) {
         if (gateCount != MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
             gateCount = MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount);
             paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
-            length = paddedGateCount / engine->coreCount;
+            length = engine->coreCount < 2 ? paddedGateCount : paddedGateCount / engine->coreCount;
             origin = 0;
             for (c = 0; c < engine->coreCount; c++) {
                 RKPulseRingFilterWorker *worker = &engine->workers[c];

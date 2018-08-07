@@ -17,12 +17,12 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
     uint32_t  j, k, n;
     char      *string;
-    char      stringBuffer[RKMaxFilterCount][RKMaximumStringLength];
-    char      format[RKMaximumStringLength];
+    char      stringBuffer[RKMaxFilterCount][RKStatusStringLength];
+    char      format[RKStatusStringLength];
     int       w0 = 0, w1 = 0, w2 = 0, w3 = 0;
 
     for (k = 0; k < RKMaxFilterCount; k++) {
-        memset(stringBuffer[k], 0, RKMaximumStringLength * sizeof(char));
+        memset(stringBuffer[k], 0, RKStatusStringLength * sizeof(char));
     }
     
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
