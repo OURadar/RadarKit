@@ -545,14 +545,17 @@ static void *momentCore(void *in) {
 
         // Summary of this ray
         snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
-                 " %05u | %s  %05u...%05u (%3d)  [C%2d/E%5.2f/A%5.2f]   E%5.2f-%5.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s%s",
+                 " %05u %s | %05u - %05u (%3d)  [C%02d %s E%.2f A%.2f]   %s%6.2f-%6.2f (%4.2f)  G%s  M%05x %s%s",
                  (unsigned int)io, me->name, (unsigned int)is, (unsigned int)ie, path.length,
-                 ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,
-                 S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
-                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
+                 ray->header.configIndex,
+                 RKMarkerScanTypeShortString(ray->header.marker),
+                 engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
                  RKIntegerToCommaStyleString(ray->header.gateCount),
                  ray->header.marker,
-                 RKMarkerScanTypeShortString(ray->header.marker),
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
 
