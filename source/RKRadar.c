@@ -499,7 +499,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.pulseCapacity = RKGateCount;
         RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     } else if (radar->desc.pulseCapacity == 0) {
-        radar->desc.pulseCapacity = 512;
+        radar->desc.pulseCapacity = 1024;
     }
     radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + RKSIMDAlignSize - 1) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     if (radar->desc.pulseCapacity != desc.pulseCapacity) {
@@ -512,13 +512,13 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.controlCapacity = RKMaximumControlCount;
         RKLog("Info. Control count limited to %s\n", radar->desc.controlCapacity);
     } else if (radar->desc.controlCapacity == 0) {
-        radar->desc.controlCapacity = RKMaximumControlCount;
+        radar->desc.controlCapacity = 64;
     }
     if (radar->desc.waveformCalibrationCapacity > RKMaximumWaveformCalibrationCount) {
         radar->desc.waveformCalibrationCapacity = RKMaximumWaveformCalibrationCount;
         RKLog("Info. Waveform calibration count limited to %s\n", radar->desc.controlCapacity);
     } else if (radar->desc.waveformCalibrationCapacity == 0) {
-        radar->desc.waveformCalibrationCapacity = RKMaximumWaveformCalibrationCount;
+        radar->desc.waveformCalibrationCapacity = 64;
     }
 
     // Read in preference file here, override some values
@@ -926,11 +926,11 @@ RKRadar *RKInitLean(void) {
     desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
     desc.pulseCapacity = 2048;
     desc.pulseToRayRatio = 2;
-    desc.configBufferDepth = RKBufferCSlotCount;
-    desc.healthBufferDepth = RKBufferHSlotCount;
-    desc.positionBufferDepth = RKBufferPSlotCount;
+    desc.configBufferDepth = 10;
+    desc.healthBufferDepth = 10;
+    desc.positionBufferDepth = 500;
     desc.pulseBufferDepth = 5000;
-    desc.rayBufferDepth = 1080;
+    desc.rayBufferDepth = 1500;
     return RKInitWithDesc(desc);
 }
 

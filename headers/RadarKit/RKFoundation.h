@@ -17,7 +17,7 @@
 
 // Compute the next/previous N-stride location with size S
 #define RKNextNModuloS(i, N, S)          ((i) >= (S) - (N) ? (i) + (N) - (S) : (i) + (N))
-#define RKPreviousNModuloS(i, N, S)      ((i) < (N) ? (S) - (N) + (i) : (i) - (N))
+#define RKPreviousNModuloS(i, N, S)      ((i) < (N) ? (S) + (i) - (N) : (i) - (N))
 
 // Compute the next/previous location with size S
 #define RKNextModuloS(i, S)              ((i) == (S) - 1 ? 0 : (i) + 1)
@@ -69,31 +69,6 @@ typedef struct RKGlobalParameterStruct {
 
 extern RKGlobalParamters rkGlobalParameters;
 extern const char * const rkResultStrings[];
-
-typedef uint32_t RKValueType;
-enum RKValueType {
-    RKValueTypeBool,
-    RKValueTypeInt,
-    RKValueTypeLong,
-    RKValueTypeInt8,
-    RKValueTypeInt16,
-    RKValueTypeInt32,
-    RKValueTypeInt64,
-    RKValueTypeSSize,
-    RKValueTypeUInt,
-    RKValueTypeULong,
-    RKValueTypeUInt8,
-    RKValueTypeUInt16,
-    RKValueTypeUInt32,
-    RKValueTypeUInt64,
-    RKValueTypeSize,
-    RKValueTypeFloat,
-    RKValueTypeDouble,
-    RKValueTypeString,
-    RKValueTypeNumericString,
-    RKValueTypeProductId = RKValueTypeInt8,
-    RKValueTypeIdentifier = RKValueTypeUInt64
-};
 
 #pragma mark - Common Functions
 

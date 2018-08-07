@@ -386,7 +386,7 @@ int socketStreamHandler(RKOperator *O) {
             }
         } else if (k == RKStreamStatusIngest) {
             // Stream "3" - Overall status
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s | %s |" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s | %s" RKEOL,
                          RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                          RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),

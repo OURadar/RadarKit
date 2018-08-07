@@ -2093,7 +2093,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
     transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
     transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.02 / transceiver->prt));
+    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
     transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
     transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
 
@@ -2170,23 +2170,35 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     }
                 } else if (response != NULL) {
                     sprintf(response, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                    break;
                 }
-                transceiver->periodEven = transceiver->prt;
-                transceiver->periodOdd =
-                transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
-                (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
-                 (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
-                transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
-                transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-                transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.02 / transceiver->prt));
-                value = 1.5e8 * transceiver->prt;
-                transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
-                RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
-                if (radar->desc.initFlags & RKInitFlagVerbose) {
-                    RKLog("%s PRT = %s ms   gateCount = %s\n", transceiver->name,
-                          RKFloatToCommaStyleString(1.0e3 * transceiver->prt),
-                          RKIntegerToCommaStyleString(transceiver->gateCount));
+            } else if (!strncmp(command, "prf", 3)) {
+                k = sscanf(command, "%s %lf", string, &value);
+                if (k == 2) {
+                    transceiver->prt = 1.0 / value;
+                    if (response != NULL) {
+                        sprintf(response, "ACK. New PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
+                    }
+                } else if (response != NULL) {
+                    sprintf(response, "ACK. Current PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
+                    break;
                 }
+            }
+            transceiver->periodEven = transceiver->prt;
+            transceiver->periodOdd =
+            transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+            (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+             (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+            transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+            transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+            transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.1 / transceiver->prt));
+            value = 1.5e8 * transceiver->prt;
+            transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
+            RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+            if (radar->desc.initFlags & RKInitFlagVerbose) {
+                RKLog("%s PRT = %s ms   gateCount = %s\n", transceiver->name,
+                      RKFloatToCommaStyleString(1.0e3 * transceiver->prt),
+                      RKIntegerToCommaStyleString(transceiver->gateCount));
             }
             break;
         case 's':

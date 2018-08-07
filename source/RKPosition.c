@@ -42,7 +42,7 @@ static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
     string[i] = 'P';
 
     // Engine lag
-    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
              99.49f * engine->lag,
              rkGlobalParameters.showColor ? RKNoColor : "");

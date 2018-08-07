@@ -24,7 +24,7 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
     string[i] = 'R';
 
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
                                     rkGlobalParameters.showColor ? RKNoColor : "");
@@ -40,7 +40,7 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Put a separator
-    i += snprintf(string + i, RKStatusStringLength - i, " |");
+    i += snprintf(string + i, RKStatusStringLength - i, " ");
     // Duty cycle of each core
     for (c = 0; c < engine->coreCount && i < RKStatusStringLength - 10; c++) {
         worker = &engine->workers[c];
@@ -50,7 +50,7 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
                       rkGlobalParameters.showColor ? RKNoColor : "");
     }
     // Almost full count
-    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
     if (i > RKStatusStringLength - 10) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }

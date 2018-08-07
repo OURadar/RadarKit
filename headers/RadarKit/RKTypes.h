@@ -85,7 +85,7 @@
 #define RKLagOrangeThreshold                 0.7                               //
 #define RKDutyCyleRedThreshold               0.95                              //
 #define RKDutyCyleOrangeThreshold            0.90                              //
-#define RKStatusBarWidth                     10                                //
+#define RKStatusBarWidth                     8                                 //
 #define RKPulseCountForNoiseMeasurement      200                               //
 #define RKProcessorStatusPulseCoreCount      16                                //
 #define RKProcessorStatusRingCoreCount       16                                //
@@ -133,8 +133,8 @@
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
 #define RKShortNameLength                    20
 
-#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? "\033[91m" : (x > RKDutyCyleOrangeThreshold ? "\033[93m" : "\033[92m"))
-#define RKColorLag(x)        (x > RKLagRedThreshold      ? "\033[91m" : (x > RKLagOrangeThreshold      ? "\033[93m" : "\033[92m"))
+#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKRedColor : (x > RKDutyCyleOrangeThreshold ? RKOrangeColor : RKGreenColor))
+#define RKColorLag(x)        (x > RKLagRedThreshold      ? RKRedColor : (x > RKLagOrangeThreshold      ? RKOrangeColor : RKGreenColor))
 
 #define ITALIC(x)            "\033[3m" x "\033[23m"
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
@@ -331,6 +331,31 @@ enum RKEngineColor {
     RKEngineColorMisc = 16,
     RKEngineColorEngineMonitor = 15,
     RKEngineColorConfig = 6
+};
+
+typedef uint32_t RKValueType;
+enum RKValueType {
+    RKValueTypeBool,
+    RKValueTypeInt,
+    RKValueTypeLong,
+    RKValueTypeInt8,
+    RKValueTypeInt16,
+    RKValueTypeInt32,
+    RKValueTypeInt64,
+    RKValueTypeSSize,
+    RKValueTypeUInt,
+    RKValueTypeULong,
+    RKValueTypeUInt8,
+    RKValueTypeUInt16,
+    RKValueTypeUInt32,
+    RKValueTypeUInt64,
+    RKValueTypeSize,
+    RKValueTypeFloat,
+    RKValueTypeDouble,
+    RKValueTypeString,
+    RKValueTypeNumericString,
+    RKValueTypeProductId = RKValueTypeInt8,
+    RKValueTypeIdentifier = RKValueTypeUInt64
 };
 
 typedef uint32_t RKPositionFlag;

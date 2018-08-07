@@ -32,7 +32,7 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     string[i] = 'F';
     
     // Engine lag
-    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
              99.9f * engine->lag,
              rkGlobalParameters.showColor ? RKNoColor : "");
