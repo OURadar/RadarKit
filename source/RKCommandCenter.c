@@ -117,6 +117,10 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 'c':
                     user->textPreferences ^= RKTextPreferencesShowColor;
+                    if (!(user->streamsInProgress & RKStreamStatusMask)) {
+                        sprintf(user->commandResponse, "ACK. Buffer overview in %s." RKEOL, user->textPreferences & RKTextPreferencesShowColor ? "Color" : "Gray");
+                        RKOperatorSendCommandResponse(O, user->commandResponse);
+                    }
                     user->streamsInProgress &= ~RKStreamStatusMask;
                     break;
                     
