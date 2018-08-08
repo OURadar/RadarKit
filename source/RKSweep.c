@@ -62,7 +62,7 @@ static void *sweepManager(void *in) {
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-        RKLog("%s C%02d E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
+        RKLog("%s C%02d E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
               engine->name,
               S->header.configIndex,
               sweep->header.config.sweepElevation,

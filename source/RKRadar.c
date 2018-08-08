@@ -116,6 +116,7 @@ static void *systemInspectorRunLoop(void *in) {
     RKPulse *pulse0, *pulse1;
     RKRay *ray0, *ray1;
     double positionRate = 0.0, pulseRate = 0.0, rayRate = 0.0;
+    double dxduPosition, dxduPulse;
 
     uint32_t tweetaIndex = radar->desc.initFlags & RKInitFlagSignalProcessor ? radar->healthNodes[RKHealthNodeTweeta].index : 0;
 
@@ -163,12 +164,12 @@ static void *systemInspectorRunLoop(void *in) {
                 RKLog("%s %s B   %s B\n", engine->name,
                       RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
                       RKVariableInString("rusage", &mem, RKValueTypeLong));
-                double dxduPosition = 1.0 / radar->positionClock->dx;
-                double dxduPulse = 1.0 / radar->pulseClock->dx;
-                RKLog("%s %s   %s", engine->name,
+                dxduPosition = 1.0 / radar->positionClock->dx;
+                dxduPulse = 1.0 / radar->pulseClock->dx;
+                RKLog(">%s %s   %s", engine->name,
                       RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
                       RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
-                RKLog("%s %s Hz   %s Hz   %s Hz\n",
+                RKLog(">%s %s Hz   %s Hz   %s Hz\n",
                       engine->name,
                       RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
                       RKVariableInString("pulseRate", &pulseRate, RKValueTypeDouble),

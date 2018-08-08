@@ -866,21 +866,19 @@ int main(int argc, const char **argv) {
         usleep(100000);
 
         RKLog("Setting a waveform ...\n");
-//        RKExecuteCommand(myRadar, "t w ofm", NULL);
+        RKExecuteCommand(myRadar, "t w s01", NULL);
+        //RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
-        //RKExecuteCommand(myRadar, "t w s01", NULL);
         //RKExecuteCommand(myRadar, "t w barker03", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
-        usleep(400000);
-        
         RKLog("Starting a new PPI ...\n");
         //RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
-        RKExecuteCommand(myRadar, "p ppi 4 26", NULL);
+        RKExecuteCommand(myRadar, "p ppi 3 45", NULL);
         RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);
