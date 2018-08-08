@@ -1944,7 +1944,7 @@ int RKResetClocks(RKRadar *radar) {
     return RKResultSuccess;
 }
 
-int RKExecuteCommand(RKRadar *radar, const char *commandString, char *string) {
+int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable string) {
     int k;
     char sval1[RKMaximumCommandLength];
     char sval2[RKMaximumCommandLength];

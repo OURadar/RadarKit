@@ -261,6 +261,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.radarHeight = 2.5f;
     user->desc.wavelength = 0.0314f;
     user->desc.pulseToRayRatio = 1;
+    user->desc.positionLatency = 0.00001;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
     
     return user;
@@ -870,7 +871,6 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
-        //RKExecuteCommand(myRadar, "t w barker03", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
@@ -879,6 +879,7 @@ int main(int argc, const char **argv) {
         RKLog("Starting a new PPI ...\n");
         //RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
         RKExecuteCommand(myRadar, "p ppi 3 45", NULL);
+
         RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);

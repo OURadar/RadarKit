@@ -172,6 +172,10 @@ typedef uint8_t       RKProductId;                                             /
 typedef uint64_t      RKIdentifier;                                            // Pulse identifier, ray identifier, config identifier, etc.
 typedef const float   RKConst;
 
+#if !defined(_Nullable)
+#define _Nullable
+#endif
+
 #pragma pack(push, 1)
 
 //
