@@ -24,6 +24,7 @@
 //         - Added more comments to functions declared in RKRadar.h
 //         - Radar name and file prefix can now be changed on the fly
 //         - Fixed a bug in statusString overrun
+//         - Nomenclature: Max -> Maximum
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive

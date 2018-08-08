@@ -682,7 +682,7 @@ enum RKFileType {
 typedef uint64_t RKStream;
 enum RKStream {
     RKStreamNull                                 = 0,                          //
-    RKStreamStatusMask                           = 0x07,                       // Values 0-8 in the lowest 4 bits (exclusive mode)
+    RKStreamStatusMask                           = 0x07,                       // Values 0-7 in the lowest 4 bits (exclusive mode)
     RKStreamStatusPositions                      = 1,                          //
     RKStreamStatusPulses                         = 2,                          //
     RKStreamStatusRays                           = 3,                          //
@@ -729,7 +729,8 @@ enum RKStream {
     RKStreamSweepSh                              = (1ULL << 55),               //
     RKStreamSweepSv                              = (1ULL << 56),               //
     RKStreamSweepZVWDPRKS                        = 0x01FF000000000000ULL,      //
-    RKStreamEverything                           = 0x01FF01FF01FFFFFFULL       // (Don't use this)
+    RKStreamEverything                           = 0x01FF01FF01FFFFFFULL,      // (Don't use this)
+    RKStreamStatusTerminalChange                 = 0x0300000000000000ULL       // Change terminal size
 };
 
 typedef uint8_t RKHostStatus;
@@ -759,11 +760,11 @@ enum RKTextPreferences {
     RKTextPreferencesShowColor                   = 1,                          // Use escape sequence for colors
     RKTextPreferencesDrawBackground              = (1 << 1),                   // Repaint the background
     RKTextPreferencesWindowSizeMask              = (7 << 2),                   // Forced windwow size
-    RKTextPreferencesWindowSize80x25             = (1 << 2),                   //
-    RKTextPreferencesWindowSize80x40             = (2 << 2),                   //
-    RKTextPreferencesWindowSize80x50             = (3 << 2),                   //
-    RKTextPreferencesWindowSize120x50            = (4 << 2),                   //
-    RKTextPreferencesWindowSize120x80            = (5 << 2),                   //
+    RKTextPreferencesWindowSize80x25             = (0 << 2),                   //
+    RKTextPreferencesWindowSize80x40             = (1 << 2),                   //
+    RKTextPreferencesWindowSize80x50             = (2 << 2),                   //
+    RKTextPreferencesWindowSize120x50            = (3 << 2),                   //
+    RKTextPreferencesWindowSize120x80            = (4 << 2),                   //
     RKTextPreferencesShowDebuggingMessage        = (1 << 7)                    //
 };
 

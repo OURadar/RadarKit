@@ -181,11 +181,18 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 's':
                     // Stream varrious data
+                    user->streamsToRestore = user->streamsInProgress;
                     stream = RKStreamFromString(commandString + 1);
-                    k = user->rayIndex;
+                    if (stream & RKStreamStatusTerminalChange) {
+                        stream = user->streamsToRestore;
+                        int p = (user->textPreferences & RKTextPreferencesWindowSizeMask) >> 2;
+                        p = RKNextModuloS(p, 5) << 2;
+                        user->textPreferences = (user->textPreferences & ~RKTextPreferencesWindowSizeMask) | p;
+                    }
                     pthread_mutex_lock(&user->mutex);
-                    user->streamsInProgress = RKStreamNull;
+                    k = user->rayIndex;
                     user->streams = stream;
+                    user->streamsInProgress = RKStreamNull;
                     user->rayStatusIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
                     user->scratchSpaceIndex = user->radar->sweepEngine->scratchSpaceIndex;
                     pthread_mutex_unlock(&user->mutex);

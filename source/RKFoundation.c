@@ -897,6 +897,9 @@ RKStream RKStreamFromString(const char * string) {
             case '5':
                 flag = (flag & !RKStreamStatusMask) | RKStreamStatusBuffers;
                 break;
+            case 'x':
+                flag |= RKStreamStatusTerminalChange;
+                break;
             case '!':
                 flag |= RKStreamStatusProcessorStatus;
                 break;
