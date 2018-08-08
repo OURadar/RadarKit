@@ -254,9 +254,9 @@ int RWaveformCalibrationFromPreferenceObject(RKWaveformCalibration *calibration,
         RKLog("Error. Unable to parse waveform calibration.");
         return RKResultIncompleteWaveformCalibration;
     }
-    if (calibration->count > RKMaxFilterCount) {
-        RKLog("Warning. Filter count exceeds the limit.  %d > %d\n", calibration->count, RKMaxFilterCount);
-        calibration->count = RKMaxFilterCount;
+    if (calibration->count > RKMaximumFilterCount) {
+        RKLog("Warning. Filter count exceeds the limit.  %d > %d\n", calibration->count, RKMaximumFilterCount);
+        calibration->count = RKMaximumFilterCount;
     }
     // Find the first calibration value (Zh0)
     c = RKNextNoneWhite(object->valueString);

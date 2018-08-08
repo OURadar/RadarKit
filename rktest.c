@@ -329,7 +329,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
         RWaveformCalibrationFromPreferenceObject(&user->calibrations[k], object);
         if (verb) {
             s = snprintf(string, RKNameLength, "'%s' (%d)", user->calibrations[k].name, user->calibrations[k].count);
-            for (int i = 0; i < MIN(RKMaxFilterCount, user->calibrations[k].count); i++) {
+            for (int i = 0; i < MIN(RKMaximumFilterCount, user->calibrations[k].count); i++) {
                 s += snprintf(string + s, RKNameLength - s, "   %d:(%.2f %.2f %.2f %.2f)", i,
                               user->calibrations[k].ZCal[i][0],
                               user->calibrations[k].ZCal[i][1],

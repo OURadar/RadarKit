@@ -17,11 +17,11 @@ void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t 
 void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, va_list args) {
     uint32_t  j, k, n;
     char      *string;
-    char      stringBuffer[RKMaxFilterCount][RKStatusStringLength];
+    char      stringBuffer[RKMaximumFilterCount][RKStatusStringLength];
     char      format[RKStatusStringLength];
     int       w0 = 0, w1 = 0, w2 = 0, w3 = 0;
 
-    for (k = 0; k < RKMaxFilterCount; k++) {
+    for (k = 0; k < RKMaximumFilterCount; k++) {
         memset(stringBuffer[k], 0, RKStatusStringLength * sizeof(char));
     }
     
@@ -264,7 +264,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 sprintf(stringBuffer[0], "Key %d not understood.", key);
                 break;
         }
-        for (k = 0; k < RKMaxFilterCount; k++) {
+        for (k = 0; k < RKMaximumFilterCount; k++) {
             if (strlen(stringBuffer[k])) {
                 RKLog(n > 0 ? ">%s<ParameterKeeper>%s C%02d %s   %s\n" : "%s<ParameterKeeper>%s C%02d %s   %s\n",
                       rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",

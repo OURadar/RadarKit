@@ -67,8 +67,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
     memset(waveform, 0, sizeof(RKWaveform));
     waveform->count = count;
     waveform->depth = depth;
-    if (count > RKMaxFilterGroups) {
-        waveform->count = RKMaxFilterGroups;
+    if (count > RKMaximumFilterGroups) {
+        waveform->count = RKMaximumFilterGroups;
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
@@ -126,7 +126,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
             RKLog("Error. Unable to read filter anchors from %s\n", filename);
         }
         // Output data from the first filter is allowed up to the maximum
-        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             if (waveform->filterAnchors[k][j].length > waveform->depth) {
                 RKLog("Error. This waveform is invalid.  length = %s > depth %s\n",
@@ -136,26 +136,26 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 fclose(fid);
                 return NULL;
             }
-            if (waveform->filterAnchors[k][j].origin > RKGateCount) {
-                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKGateCount)\n",
+            if (waveform->filterAnchors[k][j].origin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKMaximumGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].origin),
-                      RKIntegerToCommaStyleString(RKGateCount));
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
                 RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
-            if (waveform->filterAnchors[k][j].inputOrigin > RKGateCount) {
-                RKLog("Error. This waveform is invalid.  inputOrigin = %s > %s (RKGateCount)\n",
+            if (waveform->filterAnchors[k][j].inputOrigin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  inputOrigin = %s > %s (RKMaximumGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
-                      RKIntegerToCommaStyleString(RKGateCount));
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
                 RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
-            if (waveform->filterAnchors[k][j].outputOrigin > RKGateCount) {
-                RKLog("Error. This waveform is invalid.  outputOrigin = %s > %s (RKGateCount)\n",
+            if (waveform->filterAnchors[k][j].outputOrigin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  outputOrigin = %s > %s (RKMaximumGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
-                      RKIntegerToCommaStyleString(RKGateCount));
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
                 RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
@@ -222,7 +222,7 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
     waveform->filterAnchors[0][0].length = 1;
     waveform->filterAnchors[0][0].inputOrigin = 0;
     waveform->filterAnchors[0][0].outputOrigin = 0;
-    waveform->filterAnchors[0][0].maxDataLength = RKGateCount;
+    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount;
     waveform->filterAnchors[0][0].subCarrierFrequency = 0.0f;
     
     // Only a one. No need to set components that are 0's
@@ -253,7 +253,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     waveform->filterAnchors[0][0].length = longPulseWidth;
     waveform->filterAnchors[0][0].inputOrigin = 0;
     waveform->filterAnchors[0][0].outputOrigin = longPulseWidth + shortPulseWidth + transitionWidth;
-    waveform->filterAnchors[0][0].maxDataLength = RKGateCount - longPulseWidth - shortPulseWidth - transitionWidth;
+    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount - longPulseWidth - shortPulseWidth - transitionWidth;
     waveform->filterAnchors[0][0].subCarrierFrequency = 0.15f;
     
     // Short pulse
@@ -365,7 +365,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
         waveform->filterAnchors[k][0].name = n;
         waveform->filterAnchors[k][0].origin = 0;
         waveform->filterAnchors[k][0].length = waveform->depth;
-        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;   // Can be replaced with actual depth later
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;   // Can be replaced with actual depth later
         waveform->filterAnchors[k][0].subCarrierFrequency = omega;
         //RKLog(">f[%d] = %+5.1f MHz   omega = %.3f   n = %d", k, 1.0e-6 * f, omega, n);
         x = waveform->samples[k];
@@ -415,7 +415,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     waveform->filterAnchors[0][0].length = waveform->depth;
     waveform->filterAnchors[0][0].inputOrigin = 0;
     waveform->filterAnchors[0][0].outputOrigin = 0;
-    waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
+    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount - waveform->depth;
     waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
 
     RKInt16C *w = waveform->iSamples[0];

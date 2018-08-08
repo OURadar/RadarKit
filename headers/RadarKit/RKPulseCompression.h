@@ -51,9 +51,9 @@ struct rk_pulse_compression_engine {
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
-    uint32_t                         filterCounts[RKMaxFilterGroups];
-    RKFilterAnchor                   filterAnchors[RKMaxFilterGroups][RKMaxFilterCount];
-    RKComplex                        *filters[RKMaxFilterGroups][RKMaxFilterCount];
+    uint32_t                         filterCounts[RKMaximumFilterGroups];
+    RKFilterAnchor                   filterAnchors[RKMaximumFilterGroups][RKMaximumFilterCount];
+    RKComplex                        *filters[RKMaximumFilterGroups][RKMaximumFilterCount];
 
     // Program set variables
     unsigned int                     planCount;

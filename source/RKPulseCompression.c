@@ -138,7 +138,7 @@ static void *pulseCompressionCore(void *_in) {
 #endif
 
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
@@ -448,7 +448,7 @@ static void *pulseWatcher(void *_in) {
     
     // Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
     pulse = RKGetPulse(engine->pulseBuffer, 0);
-    planSize = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    planSize = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
     bool exportWisdom = false;
     const char wisdomFile[] = RKFFTWisdomFile;
 
@@ -804,8 +804,8 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     size_t filterLength = 1 << (int)ceilf(log2f((float)engine->radarDescription->pulseCapacity));
     bytes = filterLength * sizeof(RKComplex);
     engine->state |= RKEngineStateMemoryChange;
-    for (int g = 0; g < RKMaxFilterGroups; g++) {
-        for (int i = 0; i < RKMaxFilterCount; i++) {
+    for (int g = 0; g < RKMaximumFilterGroups; g++) {
+        for (int i = 0; i < RKMaximumFilterCount; i++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[g][i], RKSIMDAlignSize, bytes))
             engine->memoryUsage += bytes;
         }
@@ -834,7 +834,7 @@ int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
     // If engine->filterGroupCount is set to 0, gid may be undefined segmentation fault
     engine->filterGroupCount = 1;
     engine->filterCounts[0] = 1;
-    for (int k = 1; k < RKMaxFilterCount; k++) {
+    for (int k = 1; k < RKMaximumFilterCount; k++) {
         engine->filterCounts[k] = 0;
     }
     return RKResultSuccess;
@@ -868,11 +868,11 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         RKLog("Warning. Pulse buffer has not been set.\n");
         return RKResultNoPulseBuffer;
     }
-    if (group >= RKMaxFilterGroups) {
+    if (group >= RKMaximumFilterGroups) {
         RKLog("Error. Filter group %d is invalid.\n", group);
         return RKResultFailedToSetFilter;
     }
-    if (index >= RKMaxFilterCount) {
+    if (index >= RKMaximumFilterCount) {
         RKLog("Error. Filter index %d is invalid.\n", index);
         return RKResultFailedToSetFilter;
     }
@@ -895,7 +895,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         return RKResultFailedToSetFilter;
     }
     // Check if this filter works with my capacity & nfft
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
     if (anchor.length > nfft) {
         RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),

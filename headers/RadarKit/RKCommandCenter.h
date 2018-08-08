@@ -43,7 +43,7 @@ typedef struct rk_user {
     char                             string[RKMaximumPacketSize];
     char                             scratch[RKMaximumPacketSize];
     char                             commandResponse[RKMaximumPacketSize];
-    RKInt16C                         samples[2][RKGateCount];
+    RKInt16C                         samples[2][RKMaximumGateCount];
     RKOperator                       *serverOperator;
     RKRadar                          *radar;
     uint8_t                          productCount;

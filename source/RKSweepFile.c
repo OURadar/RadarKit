@@ -137,9 +137,9 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 return NULL;
             }
 
-            if (gateCount > RKGateCount) {
-                RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
-                gateCount = RKGateCount;
+            if (gateCount > RKMaximumGateCount) {
+                RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKMaximumGateCount);
+                gateCount = RKMaximumGateCount;
             }
 
             // Derive the RKSIMDAlignSize compliant capacity

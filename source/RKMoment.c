@@ -847,7 +847,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;
-    engine->processorLagCount = RKLagCount;
+    engine->processorLagCount = RKMaximumLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;

@@ -703,15 +703,15 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKComplex *cd;
     RKComplex *cc;
 
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
 
     const RKFloat tiny = 1.0e-3f;
     bool good;
@@ -946,7 +946,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 
     if (flag & RKTestSIMDFlagPerformanceTestAll) {
         printf("\n==== Performance Test ====\n\n");
-        printf("Using %s gates\n", RKIntegerToCommaStyleString(RKGateCount));
+        printf("Using %s gates\n", RKIntegerToCommaStyleString(RKMaximumGateCount));
 
         int k;
         const int m = 20000;
@@ -955,14 +955,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_zmul(src, src, dst, RKGateCount, false);
+                RKSIMD_zmul(src, src, dst, RKMaximumGateCount, false);
             }
             gettimeofday(&t2, NULL);
             printf("Regular SIMD multiplication time for %dK loops = %.3f s\n", m / 1000, RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_izmul(src, dst, RKGateCount, false);
+                RKSIMD_izmul(src, dst, RKMaximumGateCount, false);
             }
             gettimeofday(&t2, NULL);
             printf("In-place SIMD multiplication time for %dK loops = %.3f s\n", m / 1000, RKTimevalDiff(t2, t1));
@@ -970,30 +970,30 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
             printf("Vectorized Complex Multiplication (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_iymul_reg(cs, cd, RKGateCount);
+                RKSIMD_iymul_reg(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
             printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_iymul(cs, cd, RKGateCount);
+                RKSIMD_iymul(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
             printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
+                RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKMaximumGateCount, false);
             }
             gettimeofday(&t2, NULL);
             printf("            izmul: " RKSIMD_TEST_TIME_FORMAT " ms (Deinterleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_Complex2IQZ(cc, src, RKGateCount);
-                RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKGateCount, false);
-                RKSIMD_IQZ2Complex(dst, cc, RKGateCount);
+                RKSIMD_Complex2IQZ(cc, src, RKMaximumGateCount);
+                RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKMaximumGateCount, false);
+                RKSIMD_IQZ2Complex(dst, cc, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
             printf("    E + izmul + D: " RKSIMD_TEST_TIME_FORMAT " ms (D, Multiply, I)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
@@ -1003,15 +1003,15 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
             printf("Copy (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                memcpy(src->i, dst->i, RKGateCount * sizeof(RKFloat));
-                memcpy(src->q, dst->q, RKGateCount * sizeof(RKFloat));
+                memcpy(src->i, dst->i, RKMaximumGateCount * sizeof(RKFloat));
+                memcpy(src->q, dst->q, RKMaximumGateCount * sizeof(RKFloat));
             }
             gettimeofday(&t2, NULL);
             printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_zcpy(src, dst, RKGateCount);
+                RKSIMD_zcpy(src, dst, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
             printf("             zcpy: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
@@ -1019,14 +1019,14 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
             printf("Conversions (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_Int2Complex_reg(is, cd, RKGateCount);
+                RKSIMD_Int2Complex_reg(is, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
             printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
-                RKSIMD_Int2Complex(is, cd, RKGateCount);
+                RKSIMD_Int2Complex(is, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
             printf("      cvtepi32_ps: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
@@ -1138,7 +1138,7 @@ void RKTestWriteFFTWisdom(void) {
     SHOW_FUNCTION_NAME
     fftwf_plan plan;
     fftwf_complex *in;
-    int nfft = 1 << (int)ceilf(log2f((float)RKGateCount));
+    int nfft = 1 << (int)ceilf(log2f((float)RKMaximumGateCount));
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
     RKLog("Generating FFT wisdom ...\n");
     while (nfft > 2) {
@@ -1346,7 +1346,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     RKLog("Allocating buffers ...\n");
 
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    RKScratchAlloc(&space, pulseCapacity, RKLagCount, true);
+    RKScratchAlloc(&space, pulseCapacity, RKMaximumLagCount, true);
     RKPulse *pulses[pulseCount];
 
     for (k = 0; k < pulseCount; k++) {

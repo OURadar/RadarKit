@@ -694,7 +694,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
               RKIntegerToCommaStyleString(RKSIMDAlignSize / sizeof(RKFloat)));
         return 0;
     }
-    if (lagCount > RKLagCount) {
+    if (lagCount > RKMaximumLagCount) {
         RKLog("Error. Lag count must not exceed the hard-coded limit %d\n", lagCount);
         return 0;
     }

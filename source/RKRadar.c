@@ -399,28 +399,7 @@ void *masterControllerExecuteInBackground(void *in) {
 //
 // Initialize a radar object
 // Input:
-//     RKRadarDesc desc - a description of the properties,
-//     which are:
-//         desc.initFlags - can be ORed togher from RKInitFlag enums
-//         desc.pulseCapacity - the maximum number of samples for each pulse
-//         desc.pulseToRayRatio - the down-sampling factor going from pulse to ray
-//         desc.healthNodeCount - the number of user health node count
-//         desc.healthBufferDepth - the depth of the cosolidated health buffer
-//         desc.configBufferDepth - the depth of the operational configuration parameters
-//         desc.positionBufferDepth - the depth of position readings
-//         desc.pulseBufferDepth - the depth of pulse buffer
-//         desc.rayBufferDepth - the depth of ray buffer
-//         desc.controlCapacity - the maximum number of control
-//         desc.expectedPulseRate - typical number of pulses per second (from the Transceiver)
-//         desc.expectedPositionRate - typical number of positions per second (from the Pedestal)
-//         desc.latitude - latitude in degrees
-//         desc.longitude - longitude in degrees
-//         desc.heading - heading in degrees
-//         desc.radarHeight - radar height from the ground
-//         desc.wavelength - radar wavelength in meters
-//         desc.name - radar name
-//         desc.filePrefix[RKNameLength] - file prefix user would like to use
-//         desc.dataPath[RKMaximumPathLength] - the root path where data are stored
+//     RKRadarDesc desc - a description of the properties. See its definition in RKTypes.h
 // output:
 //     RKRadar *radar - an "object" radar. This is a reference of a radar system.
 //
@@ -496,8 +475,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.productBufferDepth == 0) {
         radar->desc.productBufferDepth = 20;
     }
-    if (radar->desc.pulseCapacity > RKGateCount) {
-        radar->desc.pulseCapacity = RKGateCount;
+    if (radar->desc.pulseCapacity > RKMaximumGateCount) {
+        radar->desc.pulseCapacity = RKMaximumGateCount;
         RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     } else if (radar->desc.pulseCapacity == 0) {
         radar->desc.pulseCapacity = 1024;
@@ -960,7 +939,7 @@ RKRadar *RKInitFull(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
-    desc.pulseCapacity = RKGateCount;
+    desc.pulseCapacity = RKMaximumGateCount;
     desc.pulseToRayRatio = 8;
     desc.configBufferDepth = RKBufferCSlotCount;
     desc.healthBufferDepth = RKBufferHSlotCount;
@@ -992,7 +971,7 @@ RKRadar *RKInitAsRelay(void) {
     RKRadarDesc desc;
     memset(&desc, 0, sizeof(RKRadarDesc));
     desc.initFlags = RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer;
-    desc.pulseCapacity = RKGateCount;
+    desc.pulseCapacity = RKMaximumGateCount;
     desc.pulseToRayRatio = 8;
     desc.configBufferDepth = RKBufferCSlotCount;
     desc.healthBufferDepth = RKBufferHSlotCount;
@@ -1452,7 +1431,7 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
         return RKResultSuccess;
     }
     radar->momentEngine->processor = &RKMultiLag;
-    radar->momentEngine->processorLagCount = RKLagCount;
+    radar->momentEngine->processorLagCount = RKMaximumLagCount;
     if (lagChoice < 0 || lagChoice > 4) {
         RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
         return RKResultInvalidMomentParameters;
