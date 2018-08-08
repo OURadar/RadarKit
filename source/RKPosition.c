@@ -262,7 +262,7 @@ static void *pulseTagger(void *_in) {
 			marker0 |= RKMarkerSweepBegin;
 		}
 
-        if (marker0 & RKMarkerSweepBegin) {
+        if (marker0 & RKMarkerSweepBegin || (marker0 & RKMarkerScanTypeMask) != (marker1 & RKMarkerScanTypeMask)) {
             if (engine->verbose) {
                 RKLog("%s C%02d New sweep   EL %.2f°   AZ %.2f°\n", engine->name,
                       *engine->configIndex, positionAfter->sweepElevationDegrees, positionAfter->sweepAzimuthDegrees);
