@@ -703,7 +703,7 @@ static void *pulseWatcher(void *_in) {
 
     // Destroy all the DFT plans
     for (k = 0; k < engine->planCount; k++) {
-        RKLog(">%s De-allocating FFTW resources for plan[%d] @ nfft = %d ...\n", engine->name, k, engine->planSizes[k]);
+        RKLog(">%s De-allocating FFTW resources for plan[%d] @ nfft = %s ...\n", engine->name, k, RKIntegerToCommaStyleString(engine->planSizes[k]));
         fftwf_destroy_plan(engine->planForwardInPlace[k]);
         fftwf_destroy_plan(engine->planForwardOutPlace[k]);
         fftwf_destroy_plan(engine->planBackwardInPlace[k]);
