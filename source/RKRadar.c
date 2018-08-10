@@ -1230,6 +1230,12 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
             continue;
         }
         switch (k) {
+            case '0':
+                RKClockSetVerbose(radar->positionClock, array[k]);
+                break;
+            case '1':
+                RKClockSetVerbose(radar->pulseClock, array[k]);
+                break;
             case 'a':
                 RKPositionEngineSetVerbose(radar->positionEngine, array[k]);
                 break;

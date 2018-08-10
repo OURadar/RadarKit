@@ -129,6 +129,8 @@ static void showHelp() {
            "\n"
            "  -V (--engine-verbose) " UNDERLINE("value") "\n"
            "         Increases verbosity level of specific engines.\n"
+           "          0 - Clock of position\n"
+           "          1 - Clock of transceiver\n"
            "          a - Aim pedestal\n"
            "          m - Moment engine\n"
            "          p - Pulse compression engine\n"
