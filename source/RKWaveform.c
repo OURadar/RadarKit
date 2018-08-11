@@ -304,6 +304,16 @@ RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, cons
     return waveform;
 }
 
+RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, const RKWaveform *waveform2) {
+    uint32_t depth = waveform1->depth + waveform2->depth;
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, depth);
+    
+    // Two filters for demultiplexing
+    waveform->filterCounts[0] = 2;
+    
+    return waveform;
+}
+
 #pragma mark - Waveforms
 
 void RKWaveformOnes(RKWaveform *waveform) {
