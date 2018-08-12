@@ -82,7 +82,7 @@ RKWaveform *RKWaveformInitAsImpulse(void);
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
 RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count);
-RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, const RKWaveform *waveform2);
+RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, const RKWaveform *waveform2, const uint32_t transitionSamples);
 
 void RKWaveformOnes(RKWaveform *);
 void RKWaveformHops(RKWaveform *, const double fs, const double fc, const double bandwidth);

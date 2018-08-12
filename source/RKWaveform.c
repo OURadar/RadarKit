@@ -304,13 +304,30 @@ RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, cons
     return waveform;
 }
 
-RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, const RKWaveform *waveform2) {
+RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, const RKWaveform *waveform2, const uint32_t transitionSamples) {
+    
+    if (waveform1->fs != waveform2->fs) {
+        RKLog("Error. Both waveforms must have same fs to concatenate.\n");
+        return NULL;
+    }
+    if (waveform1->fc != waveform2->fc) {
+        RKLog("Error. Both waveforms must have same fc to concatenate.\n");
+        return NULL;
+    }
+
     uint32_t depth = waveform1->depth + waveform2->depth;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, depth);
-    
+
     // Two filters for demultiplexing
     waveform->filterCounts[0] = 2;
     
+    waveform->fs = waveform1->fs;
+    waveform->fc = waveform1->fc;
+    waveform->type = waveform1->type;
+    
+    waveform->filterAnchors[0][0].name = 0;
+    waveform->filterAnchors[0][0].origin = 0;
+
     return waveform;
 }
 
