@@ -325,9 +325,30 @@ RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, 
     waveform->fc = waveform1->fc;
     waveform->type = waveform1->type;
     
+    // Assume some kind of multiplexing, we can process waveform #1 starting from length of waveform #2
     waveform->filterAnchors[0][0].name = 0;
     waveform->filterAnchors[0][0].origin = 0;
+    waveform->filterAnchors[0][0].length = waveform1->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][0].inputOrigin = 0;
+    waveform->filterAnchors[0][0].outputOrigin = waveform1->filterAnchors[0][0].length + waveform2->filterAnchors[0][0].length + transitionSamples;
+    waveform->filterAnchors[0][0].maxDataLength = waveform1->filterAnchors[0][0].maxDataLength;
+    waveform->filterAnchors[0][0].subCarrierFrequency = waveform1->filterAnchors[0][0].subCarrierFrequency;
 
+    waveform->filterAnchors[0][1].name = 1;
+    waveform->filterAnchors[0][1].origin = waveform1->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][1].length = waveform2->filterAnchors[0][1].length;
+    waveform->filterAnchors[0][1].inputOrigin = waveform1->filterAnchors[0][1].length;
+    waveform->filterAnchors[0][1].outputOrigin = 0;
+    waveform->filterAnchors[0][1].maxDataLength = waveform1->filterAnchors[0][1].length + waveform2->filterAnchors[0][1].length + transitionSamples;
+    waveform->filterAnchors[0][1].subCarrierFrequency = waveform2->filterAnchors[0][1].subCarrierFrequency;
+    
+    memcpy(waveform->iSamples[0], waveform1->iSamples[0], waveform1->depth * sizeof(RKInt16C));
+    memcpy(waveform->samples[0], waveform1->samples[0], waveform1->depth * sizeof(RKComplex));
+    memcpy(waveform->iSamples[0] + waveform1->depth, waveform2->iSamples[0], waveform2->depth * sizeof(RKInt16C));
+    memcpy(waveform->samples[0] + waveform1->depth, waveform2->samples[0], waveform2->depth * sizeof(RKComplex));
+
+    //RKWaveformNormalizeNoiseGain(waveform);
+    //RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
