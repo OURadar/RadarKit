@@ -72,8 +72,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKComplex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKInt16C)));
+        waveform->samples[k] = (RKComplex *)malloc(waveform->depth * sizeof(RKComplex));
+        waveform->iSamples[k] = (RKInt16C *)malloc(waveform->depth * sizeof(RKInt16C));
         if (waveform->samples[k] == NULL || waveform->iSamples[k] == NULL) {
             RKLog("Error. Unable to allocate memory.\n");
             exit(EXIT_FAILURE);
@@ -304,52 +304,60 @@ RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, cons
     return waveform;
 }
 
-RKWaveform *RKWaveformInitByConcatenatingWaveforms(const RKWaveform *waveform1, const RKWaveform *waveform2, const uint32_t transitionSamples) {
+RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *appendix, const uint32_t transitionSamples) {
     
-    if (waveform1->fs != waveform2->fs) {
+    if (waveform->fs != appendix->fs) {
         RKLog("Error. Both waveforms must have same fs to concatenate.\n");
-        return NULL;
+        return RKResultFailedToExpandWaveform;
     }
-    if (waveform1->fc != waveform2->fc) {
+    if (waveform->fc != appendix->fc) {
         RKLog("Error. Both waveforms must have same fc to concatenate.\n");
-        return NULL;
+        return RKResultFailedToExpandWaveform;
+    }
+    if (waveform->count > 1) {
+        RKLog("Error. This function is not built for waveform group count > 1.\n");
+        return RKResultFailedToExpandWaveform;
+    }
+    if (waveform->filterCounts[0] > 1) {
+        RKLog("Error. This function is not built for waveform filter count > 1.\n");
+        return RKResultFailedToExpandWaveform;
     }
 
-    uint32_t depth = waveform1->depth + waveform2->depth;
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, depth);
+    // New depth after expansion
+    uint32_t depth = waveform->depth + appendix->depth;
+    waveform->samples[0] = realloc(waveform->samples[0], depth * sizeof(RKComplex));
+    waveform->iSamples[0] = realloc(waveform->iSamples[0], depth * sizeof(RKInt16C));
 
+    if (waveform->samples[0] == NULL || waveform->iSamples[0] == NULL) {
+        RKLog("Error. Unable to allocate memory.\n");
+        exit(EXIT_FAILURE);
+    }
     // Two filters for demultiplexing
-    waveform->filterCounts[0] = 2;
+    waveform->filterCounts[0]++;
     
-    waveform->fs = waveform1->fs;
-    waveform->fc = waveform1->fc;
-    waveform->type = waveform1->type;
+    waveform->type |= RKWaveformTypeTimeFrequencyMultiplexing;
     
     // Assume some kind of multiplexing, we can process waveform #1 starting from length of waveform #2
-    waveform->filterAnchors[0][0].name = 0;
-    waveform->filterAnchors[0][0].origin = 0;
-    waveform->filterAnchors[0][0].length = waveform1->filterAnchors[0][0].length;
-    waveform->filterAnchors[0][0].inputOrigin = 0;
-    waveform->filterAnchors[0][0].outputOrigin = waveform1->filterAnchors[0][0].length + waveform2->filterAnchors[0][0].length + transitionSamples;
-    waveform->filterAnchors[0][0].maxDataLength = waveform1->filterAnchors[0][0].maxDataLength;
-    waveform->filterAnchors[0][0].subCarrierFrequency = waveform1->filterAnchors[0][0].subCarrierFrequency;
+    waveform->filterAnchors[0][0].inputOrigin = appendix->filterAnchors[0][0].length + transitionSamples;
+    waveform->filterAnchors[0][0].outputOrigin = appendix->filterAnchors[0][0].length + transitionSamples;
 
-    waveform->filterAnchors[0][1].name = 1;
-    waveform->filterAnchors[0][1].origin = waveform1->filterAnchors[0][0].length;
-    waveform->filterAnchors[0][1].length = waveform2->filterAnchors[0][1].length;
-    waveform->filterAnchors[0][1].inputOrigin = waveform1->filterAnchors[0][1].length;
+    waveform->filterAnchors[0][1].name = waveform->filterAnchors[0][0].name + 1;
+    waveform->filterAnchors[0][1].origin = waveform->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][1].length = appendix->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][1].inputOrigin = waveform->filterAnchors[0][0].length;
     waveform->filterAnchors[0][1].outputOrigin = 0;
-    waveform->filterAnchors[0][1].maxDataLength = waveform1->filterAnchors[0][1].length + waveform2->filterAnchors[0][1].length + transitionSamples;
-    waveform->filterAnchors[0][1].subCarrierFrequency = waveform2->filterAnchors[0][1].subCarrierFrequency;
+    waveform->filterAnchors[0][1].maxDataLength = waveform->filterAnchors[0][0].length + transitionSamples;
+    waveform->filterAnchors[0][1].subCarrierFrequency = appendix->filterAnchors[0][0].subCarrierFrequency;
     
-    memcpy(waveform->iSamples[0], waveform1->iSamples[0], waveform1->depth * sizeof(RKInt16C));
-    memcpy(waveform->samples[0], waveform1->samples[0], waveform1->depth * sizeof(RKComplex));
-    memcpy(waveform->iSamples[0] + waveform1->depth, waveform2->iSamples[0], waveform2->depth * sizeof(RKInt16C));
-    memcpy(waveform->samples[0] + waveform1->depth, waveform2->samples[0], waveform2->depth * sizeof(RKComplex));
+    memcpy(waveform->iSamples[0] + waveform->depth, appendix->iSamples[0], appendix->depth * sizeof(RKInt16C));
+    memcpy(waveform->samples[0] + waveform->depth, appendix->samples[0], appendix->depth * sizeof(RKComplex));
+
+    // Update the new depth
+    waveform->depth = depth;
 
     //RKWaveformNormalizeNoiseGain(waveform);
     //RKWaveformCalculateGain(waveform, RKWaveformGainAll);
-    return waveform;
+    return RKResultSuccess;
 }
 
 #pragma mark - Waveforms
