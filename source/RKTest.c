@@ -1167,12 +1167,11 @@ void RKTestMakeHops(void) {
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/test-tfm.rkwav";
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+    RKWaveform *waveform = RKWaveformInitAsFakeTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
     RKWaveformSummary(waveform);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
-
 
 void RKTestWaveformWrite(void) {
     SHOW_FUNCTION_NAME
@@ -2802,6 +2801,13 @@ void RKTestExperiment(void) {
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
+
+    //RKWaveformInitAsTimeFrequencyMultiplexing(5.0e6, 4.0e6);
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6);
+    RKWaveformSummary(waveform);
+
+    RKWaveformDecimate(waveform, 32);
+    RKWaveformSummary(waveform);
 }
 
 #pragma mark -

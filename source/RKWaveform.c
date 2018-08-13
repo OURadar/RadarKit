@@ -233,20 +233,36 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
+RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
+    return waveform;
+}
+
+RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
+    uint32_t depth = (uint32_t)round(pulsewidth * fs);
+    if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
+        RKLog("Info. Waveform depth %.2f us --> %.2f us due to fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
+    }
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
+    RKWaveformHops(waveform, fs, fc, bandwidth);
+    return waveform;
+}
+
+RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
     int i, j;
     const uint32_t longPulseWidth = 300;
     const uint32_t shortPulseWidth = 10;
     const uint32_t transitionWidth = 30;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
-    
+
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeTimeFrequencyMultiplexing;
     sprintf(waveform->name, "tfm-fake");
-    
+
     // Two filters per waveform
     waveform->filterCounts[0] = 2;
-    
+
     // Long pulse
     waveform->filterAnchors[0][0].name = 0;
     waveform->filterAnchors[0][0].origin = 0;
@@ -255,7 +271,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     waveform->filterAnchors[0][0].outputOrigin = longPulseWidth + shortPulseWidth + transitionWidth;
     waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount - longPulseWidth - shortPulseWidth - transitionWidth;
     waveform->filterAnchors[0][0].subCarrierFrequency = 0.15f;
-    
+
     // Short pulse
     waveform->filterAnchors[0][1].name = 1;
     waveform->filterAnchors[0][1].origin = longPulseWidth;
@@ -264,7 +280,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     waveform->filterAnchors[0][1].outputOrigin = 0;
     waveform->filterAnchors[0][1].maxDataLength = longPulseWidth + shortPulseWidth + transitionWidth;
     waveform->filterAnchors[0][1].subCarrierFrequency = 0.0f;
-    
+
     RKFloat a;
     RKInt16C *w;
     RKComplex *x;
@@ -282,25 +298,27 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
             w++;
         }
     }
-    
+
     RKWaveformNormalizeNoiseGain(waveform);
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
-    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
-    return waveform;
-}
+RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth) {
+    // Going from 0 to 2 MHz
+    RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, 67.0e-6, 0.5 * bandwidth);
+    RKWaveformSummary(waveform);
+    // Going atmost from -2 to 0 MHz
+    RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
+    RKWaveformSummary(fill);
 
-RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
-    uint32_t depth = (uint32_t)round(pulsewidth * fs);
-    if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
-        RKLog("Info. Waveform depth %.2f us --> %.2f us due to fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
-    }
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
-    RKWaveformHops(waveform, fs, fc, bandwidth);
+    // Expand waveform by the fill pulse
+    RKWaveformAppendWaveform(waveform, fill, 10);
+    sprintf(waveform->name, "tfm");
+    waveform->fc = fc;
+
+    RKWaveformFree(fill);
+
     return waveform;
 }
 
@@ -308,10 +326,6 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
     
     if (waveform->fs != appendix->fs) {
         RKLog("Error. Both waveforms must have same fs to concatenate.\n");
-        return RKResultFailedToExpandWaveform;
-    }
-    if (waveform->fc != appendix->fc) {
-        RKLog("Error. Both waveforms must have same fc to concatenate.\n");
         return RKResultFailedToExpandWaveform;
     }
     if (waveform->count > 1) {
@@ -337,9 +351,9 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
     
     waveform->type |= RKWaveformTypeTimeFrequencyMultiplexing;
     
-    // Assume some kind of multiplexing, we can process waveform #1 starting from length of waveform #2
-    waveform->filterAnchors[0][0].inputOrigin = appendix->filterAnchors[0][0].length + transitionSamples;
-    waveform->filterAnchors[0][0].outputOrigin = appendix->filterAnchors[0][0].length + transitionSamples;
+    // Assume some kind of multiplexing, we can process waveform #1 starting from length of waveform #1
+    waveform->filterAnchors[0][0].inputOrigin = waveform->filterAnchors[0][0].length + transitionSamples;
+    waveform->filterAnchors[0][0].outputOrigin = waveform->filterAnchors[0][0].length + transitionSamples;
 
     waveform->filterAnchors[0][1].name = waveform->filterAnchors[0][0].name + 1;
     waveform->filterAnchors[0][1].origin = waveform->filterAnchors[0][0].length;
@@ -527,6 +541,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
                 waveform->filterAnchors[l][k].maxDataLength++;
             }
             waveform->filterAnchors[l][k].maxDataLength /= stride;
+            waveform->filterAnchors[l][k].subCarrierFrequency *= stride;
         }
         x = waveform->samples[l];
         w = waveform->iSamples[l];
