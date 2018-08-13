@@ -11,9 +11,13 @@
 // Updates
 //
 //         - To do:
-//         - Task, event, sequence of tasks
-//         - LFM frequency hopping
-//         - Mapping coefficients to product files
+//         - Major:
+//           - Cloud communication (reverse relay)
+//           - Task, event, sequence of tasks
+//         - Minor:
+//           - LFM frequency hopping
+//           - Mapping coefficients to product files
+//
 //
 //  2.0.1  - 8/xx/2018
 //         - RKBufferOverview upgraded to show health buffers

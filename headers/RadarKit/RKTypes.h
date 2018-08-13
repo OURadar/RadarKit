@@ -83,8 +83,8 @@
 #define RKNetworkReconnectSeconds            3                                 //
 #define RKLagRedThreshold                    0.5                               //
 #define RKLagOrangeThreshold                 0.7                               //
-#define RKDutyCyleRedThreshold               0.95                              //
-#define RKDutyCyleOrangeThreshold            0.90                              //
+#define RKDutyCyleRedThreshold               0.9                               //
+#define RKDutyCyleOrangeThreshold            0.8                               //
 #define RKStatusBarWidth                     6                                 //
 #define RKPulseCountForNoiseMeasurement      200                               //
 #define RKProcessorStatusPulseCoreCount      16                                //
@@ -131,7 +131,7 @@
 #define RKStatusStringLength                 256
 #define RKPulseHeaderPaddedSize              256                               // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
-#define RKShortNameLength                    20
+#define RKShortNameLength                    20                                // Short names, e.g., C1, M2, P0, etc. (including color)
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKRedColor : (x > RKDutyCyleOrangeThreshold ? RKOrangeColor : RKGreenColor))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? RKRedColor : (x > RKLagOrangeThreshold      ? RKOrangeColor : RKGreenColor))
