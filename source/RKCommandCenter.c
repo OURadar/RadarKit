@@ -1272,6 +1272,10 @@ void RKCommandCenterSetVerbose(RKCommandCenter *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
+void RKCommandCenterSetPort(RKCommandCenter *engine, const int port) {
+    RKServerSetPort(engine->server, port);
+}
+
 void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
     if (engine->radarCount >= 4) {
         RKLog("%s unable to add another radar.\n", engine->name);

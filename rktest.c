@@ -23,6 +23,7 @@ typedef struct user_params {
     RKName                   stopCommand;
     RKName                   streams;
     uint8_t                  verbose;                                            // Verbosity
+    int                      port;                                               // Server port other than the default 10000
     int                      coresForPulseCompression;                           // Number of cores for pulse compression
     int                      coresForProductGenerator;                           // Number of cores for moment calculations
     float                    fs;                                                 // Raw gate sampling bandwidth
@@ -264,6 +265,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.wavelength = 0.0314f;
     user->desc.pulseToRayRatio = 1;
     user->desc.positionLatency = 0.00001;
+    user->port = 10000;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
     
     return user;
@@ -358,6 +360,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     struct option long_options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
+        {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
         {"engine-verbose"    , required_argument, NULL, 'V'},
@@ -433,6 +436,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'C':
                 user->desc.initFlags |= RKInitFlagShowClockOffset;
+                break;
+            case 'P':
+                user->port = atoi(optarg);
                 break;
             case 'S':
                 k = atoi(optarg);
@@ -791,6 +797,7 @@ int main(int argc, const char **argv) {
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, systemPreferences->verbose);
+    RKCommandCenterSetPort(center, systemPreferences->port);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
