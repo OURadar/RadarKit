@@ -139,6 +139,38 @@ void trapezoid(double *w, const int n, const double gamma) {
     }
 }
 
+void tukey(double *w, const int n, const double r) {
+    int i, nl, nh;
+    double p, t, dt;
+    if (r <= 0.0) {
+        for (i = 0; i < n; i++) {
+            w[i] = 1.0;
+        }
+    } else if (r >= 1.0) {
+        hann(w, n);
+    } else {
+        // Period of the taper portion is 0.5 * p
+        p = 0.5 * r;
+        nl = floor(p * (n - 1)) + 1;
+        nh = n - nl;
+        dt = 1.0 / (n - 1);
+        t = 0.0;
+        //printf("nl = %d   nh = %d  dt = %.3f\n", nl, nh, dt);
+        for (i = 0; i < nl; i++) {
+            w[i] = 0.5 * (1.0 + cos(M_PI / p * (t - p)));
+            t += dt;
+        }
+        for (; i < nh; i++) {
+            w[i] = 1.0;
+            t += dt;
+        }
+        for (; i < n; i++) {
+            w[i] = 0.5 * (1.0 + cos(M_PI / p * (t + p)));
+            t += dt;
+        }
+    }
+}
+
 #pragma mark - Methods
 
 //
@@ -178,7 +210,12 @@ void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
             param = va_arg(args, double);
             trapezoid(window, length, param);
             break;
-            
+
+        case RKWindowTypeTukey:
+            param = va_arg(args, double);
+            tukey(window, length, param);
+            break;
+
         case RKWindowTypeBoxCar:
         default:
             for (k = 0; k < length; k++) {

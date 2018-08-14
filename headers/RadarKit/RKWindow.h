@@ -15,7 +15,7 @@
 //extern "C" {
 //#endif
 
-typedef uint8_t RKWindowType;
+typedef int RKWindowType;
 enum RKWindowType{
     RKWindowTypeBoxCar,
     RKWindowTypeHann,

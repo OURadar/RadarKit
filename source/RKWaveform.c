@@ -314,6 +314,7 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth) {
     // Say bandwidth = 4 MHz. Going from 0 to 2 MHz
     RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, 67.0e-6, 0.5 * bandwidth);
+    RKWaveformApplyWindow(waveform, RKWindowTypeTukey, 0.1);
     // Say bandwidth = 4 MHz. Going atmost from -2 to 0 MHz, fc @ -1 MHz
     RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
     // Expand waveform by the fill pulse
@@ -373,6 +374,55 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
 
     // Update the new depth
     waveform->depth = depth;
+
+    return RKResultSuccess;
+}
+
+RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...) {
+    int k;
+    va_list args;
+    RKFloat *w;
+    RKInt16C *x;
+    RKComplex *y;
+    double parameter = 0.0, g;
+
+    RKFloat *window = (RKFloat *)malloc(waveform->depth * sizeof(RKFloat));
+    if (window == NULL) {
+        RKLog("Error. Unable to allocate memory in RKWaveformApplyWindow().\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(window, 0, waveform->depth * sizeof(RKFloat));
+
+    va_start(args, type);
+    parameter = va_arg(args, double);
+    va_end(args);
+
+    RKWindowMake(window, type, waveform->depth, parameter);
+
+    g = 0.0;
+    w = window;
+    for (k = 0; k < waveform->depth; k++) {
+        g += (*w * *w);
+        w++;
+    }
+    g = sqrt(waveform->depth / g);
+
+    w = window;
+    x = waveform->iSamples[0];
+    y = waveform->samples[0];
+    for (k = 0; k < waveform->depth; k++) {
+        x->i = (int16_t)((RKFloat)x->i * *w);
+        x->q = (int16_t)((RKFloat)x->q * *w);
+        y->i *= (*w * g);
+        y->q *= (*w * g);
+        w++;
+        x++;
+        y++;
+    }
+
+    free(window);
+
+    //RKWaveformNormalizeNoiseGain(waveform);
 
     return RKResultSuccess;
 }

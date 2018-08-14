@@ -1078,6 +1078,14 @@ void RKTestWindow(void) {
     }
     printf("\n");
 
+    param = 0.5;
+    printf("Tukey @ %.4f:\n", param);
+    RKWindowMake(window, RKWindowTypeTukey, n, param);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+    printf("\n");
+
     free(window);
 }
 

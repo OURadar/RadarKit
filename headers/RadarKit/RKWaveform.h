@@ -87,6 +87,7 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth);
 
 RKResult RKWaveformAppendWaveform(RKWaveform *, const RKWaveform *appendix, const uint32_t transitionSamples);
+RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...);
 
 void RKWaveformOnes(RKWaveform *);
 void RKWaveformSingleTone(RKWaveform *, const double fs, const double fc);
