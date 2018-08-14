@@ -1078,6 +1078,14 @@ void RKTestWindow(void) {
     }
     printf("\n");
 
+    param = 0.5;
+    printf("Tukey @ %.4f:\n", param);
+    RKWindowMake(window, RKWindowTypeTukey, n, param);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+    printf("\n");
+
     free(window);
 }
 
@@ -1167,17 +1175,16 @@ void RKTestMakeHops(void) {
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/test-tfm.rkwav";
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+    RKWaveform *waveform = RKWaveformInitAsFakeTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
     RKWaveformSummary(waveform);
     RKWaveformWrite(waveform, filename);
     RKWaveformFree(waveform);
 }
 
-
 void RKTestWaveformWrite(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(14, 100);
-    RKWaveformHops(waveform, 20.0e6, 0.0, 16.0e6);
+    RKWaveformFrequencyHops(waveform, 20.0e6, 0.0, 16.0e6);
 
     char filename[160];
     snprintf(filename, 159, "waveforms/%s.rkwav", waveform->name);
@@ -2227,7 +2234,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             } else {
                 c++;
             }
-            if (*c == 's' || *c == 't' || *c == 'q') {
+            if ((*c == 's' || *c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
+                // Something like s01, t02, q05, etc.
                 strcpy(string, c);
                 RKStripTail(string);
                 pulsewidth = 1.0e-6 * atof(c + 1);
@@ -2236,17 +2244,18 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
                 if (*c == 's') {
                     // Rectangular single tone
-                    RKWaveformHops(waveform, transceiver->fs, 0.0, 0.0);
+                    RKWaveformSingleTone(waveform, transceiver->fs, 0.0);
                 } else if (*c == 't') {
                     // Rectangular single tone at 0.1 MHz
-                    RKWaveformHops(waveform, transceiver->fs, 0.1e6, 0.0);
+                    RKWaveformSingleTone(waveform, transceiver->fs, 0.1e6);
                 } else if (*c == 'q') {
                     // LFM at half of the bandwidth capacity
                     RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
                 }
                 // Override the waveform name
                 strncpy(waveform->name, c, RKNameLength);
-            } else if (*c == 'h') {
+            } else if (*c == 'h' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
+                // Something like h1005, h2007, etc.
                 string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
                 bandwidth = 1.0e6 * atof(string);
                 string[0] = c[3]; string[1] = c[4];
@@ -2262,6 +2271,9 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 }
                 // Frequency hop at the specified pulsewidth, bandwith and hop count
                 waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
+            } else if (*c == 'x') {
+                // Experimental waveform
+                waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6);
             } else {
                 // Load from a file
                 sprintf(string, "%s/%s.rkwav", RKWaveformFolder, c);
@@ -2802,6 +2814,13 @@ void RKTestExperiment(void) {
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
+
+    //RKWaveformInitAsTimeFrequencyMultiplexing(5.0e6, 4.0e6);
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6);
+    RKWaveformSummary(waveform);
+
+    RKWaveformDecimate(waveform, 32);
+    RKWaveformSummary(waveform);
 }
 
 #pragma mark -

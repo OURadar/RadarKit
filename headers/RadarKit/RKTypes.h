@@ -312,6 +312,7 @@ N(RKResultFailedToFindProductId) \
 N(RKResultFailedToOpenFileForProduct) \
 N(RKResultClientNotConnected) \
 N(RKResultFileManagerInconsistentFolder) \
+N(RKResultFailedToExpandWaveform) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)
 
