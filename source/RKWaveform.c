@@ -305,20 +305,16 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const
 }
 
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth) {
-    // Going from 0 to 2 MHz
+    // Say bandwidth = 4 MHz. Going from 0 to 2 MHz
     RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, 67.0e-6, 0.5 * bandwidth);
-    RKWaveformSummary(waveform);
-    // Going atmost from -2 to 0 MHz
+    // Say bandwidth = 4 MHz. Going atmost from -2 to 0 MHz, fc @ -1 MHz
     RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
-    RKWaveformSummary(fill);
-
     // Expand waveform by the fill pulse
     RKWaveformAppendWaveform(waveform, fill, 10);
+    RKWaveformFree(fill);
+    // Modify the name and properties
     sprintf(waveform->name, "tfm");
     waveform->fc = fc;
-
-    RKWaveformFree(fill);
-
     return waveform;
 }
 
@@ -332,7 +328,7 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
         RKLog("Error. This function is not built for waveform group count > 1.\n");
         return RKResultFailedToExpandWaveform;
     }
-    if (waveform->filterCounts[0] > 1) {
+    if (waveform->filterCounts[0] > 1 || appendix->filterCounts[0] > 1) {
         RKLog("Error. This function is not built for waveform filter count > 1.\n");
         return RKResultFailedToExpandWaveform;
     }
@@ -362,6 +358,8 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
     waveform->filterAnchors[0][1].outputOrigin = 0;
     waveform->filterAnchors[0][1].maxDataLength = waveform->filterAnchors[0][0].length + transitionSamples;
     waveform->filterAnchors[0][1].subCarrierFrequency = appendix->filterAnchors[0][0].subCarrierFrequency;
+    waveform->filterAnchors[0][1].sensitivityGain = appendix->filterAnchors[0][0].sensitivityGain;
+    waveform->filterAnchors[0][1].filterGain = appendix->filterAnchors[0][0].filterGain;
     
     memcpy(waveform->iSamples[0] + waveform->depth, appendix->iSamples[0], appendix->depth * sizeof(RKInt16C));
     memcpy(waveform->samples[0] + waveform->depth, appendix->samples[0], appendix->depth * sizeof(RKComplex));
@@ -369,8 +367,6 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
     // Update the new depth
     waveform->depth = depth;
 
-    //RKWaveformNormalizeNoiseGain(waveform);
-    //RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return RKResultSuccess;
 }
 
