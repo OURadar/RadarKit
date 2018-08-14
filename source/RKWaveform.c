@@ -314,9 +314,10 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth) {
     // Say bandwidth = 4 MHz. Going from 0 to 2 MHz
     RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, 67.0e-6, 0.5 * bandwidth);
-    RKWaveformApplyWindow(waveform, RKWindowTypeTukey, 0.1);
+    RKWaveformApplyWindow(waveform, RKWindowTypeTukey, 0.05);
     // Say bandwidth = 4 MHz. Going atmost from -2 to 0 MHz, fc @ -1 MHz
     RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
+    RKWaveformApplyWindow(fill, RKWindowTypeHamming);
     // Expand waveform by the fill pulse
     RKWaveformAppendWaveform(waveform, fill, 10);
     RKWaveformFree(fill);
