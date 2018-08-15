@@ -8,7 +8,35 @@
 
 #include <RadarKit/RKSweep.h>
 
+// Internal Functions
+
+static void RKSweepEngineUpdateStatusString(RKSweepEngine *);
+
 #pragma mark - Helper Functions
+
+static void RKSweepEngineUpdateStatusString(RKSweepEngine *engine) {
+    int i;
+    char *string;
+
+    // Status string
+    string = engine->statusBuffer[engine->statusBufferIndex];
+
+    // Always terminate the end of string buffer
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
+
+    // Use RKStatusBarWidth characters to draw a bar
+    i = *engine->rayIndex * RKStatusBarWidth / engine->radarDescription->rayBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = 'S';
+
+    // Engine lag
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
+             rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+             99.49f * engine->lag,
+             rkGlobalParameters.showColor ? RKNoColor : "");
+    engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
+}
 
 static void *rayReleaser(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
@@ -261,6 +289,8 @@ static void *rayGatherer(void *in) {
     
     int j, n, p, s;
 
+    struct timeval t0, t1;
+
     uint32_t is = 0;   // Start index
     uint64_t tic = 0;  // Local copy of engine tic
 
@@ -354,6 +384,8 @@ static void *rayGatherer(void *in) {
 
     // Update the engine state
     engine->state |= RKEngineStateActive;
+
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     j = 0;   // ray index
     while (engine->state & RKEngineStateWantActive) {
@@ -476,6 +508,15 @@ static void *rayGatherer(void *in) {
             }
             is = j;
         }
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKSweepEngineUpdateStatusString(engine);
+        }
+
+        engine->tic++;
 
         // Update k to catch up for the next watch
         j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
@@ -610,6 +651,10 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
+}
+
+char *RKSweepEngineStatusString(RKSweepEngine *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
 
 RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc desc) {

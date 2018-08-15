@@ -34,7 +34,7 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     // Engine lag
     snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-             99.9f * engine->lag,
+             99.49f * engine->lag,
              rkGlobalParameters.showColor ? RKNoColor : "");
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -350,6 +350,10 @@ int RKRawDataRecorderStop(RKRawDataRecorder *engine) {
     return RKResultSuccess;
 }
 
+char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
+}
+
 size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payload, const size_t size) {
     if (size == 0) {
         return 0;
@@ -391,8 +395,4 @@ size_t RKRawDataRecorderCacheFlush(RKRawDataRecorder *engine) {
     size_t writtenSize = write(engine->fd, engine->cache, engine->cacheWriteIndex);
     engine->cacheWriteIndex = 0;
     return writtenSize;
-}
-
-char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

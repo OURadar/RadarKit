@@ -58,7 +58,7 @@ struct rk_sweep_engine {
 
     // Status / health
     uint32_t                         processedRayIndex;
-    char                             statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                             statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
     uint32_t                         statusBufferIndex;
     RKEngineState                    state;
     uint64_t                         tic;
@@ -82,6 +82,7 @@ void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(RKProduct *, char 
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
+char *RKSweepEngineStatusString(RKSweepEngine *);
 
 RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKProductDesc);
 int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKProductId);

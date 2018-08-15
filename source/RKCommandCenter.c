@@ -393,12 +393,13 @@ int socketStreamHandler(RKOperator *O) {
             }
         } else if (k == RKStreamStatusIngest) {
             // Stream "3" - Overall status
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s | %s" RKEOL,
+            k = snprintf(user->string, RKMaximumStringLength - 1, "%s | %s | %s | %s | %s | %s" RKEOL,
                          RKPulseCompressionEngineStatusString(user->radar->pulseCompressionEngine),
                          RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),
                          RKMomentEngineStatusString(user->radar->momentEngine),
-                         RKRawDataRecorderStatusString(user->radar->rawDataRecorder));
+                         RKRawDataRecorderStatusString(user->radar->rawDataRecorder),
+                         RKSweepEngineStatusString(user->radar->sweepEngine));
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
