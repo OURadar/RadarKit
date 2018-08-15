@@ -637,17 +637,31 @@ char *RKLastLine(const char *lines) {
 
 #pragma mark - Math
 
-float RKUMinDiff(const float m, const float s) {
+float RKMinDiff(const float m, const float s) {
     float d = m - s;
     if (d < -180.0f) {
         d += 360.0f;
     } else if (d >= 180.0f) {
         d -= 360.0f;
     }
+    return d;
+}
+
+float RKUMinDiff(const float m, const float s) {
+    float d = RKMinDiff(m, s);
     if (d < 0.0f) {
         d = -d;
     }
     return d;
+}
+
+bool RKAngularCrossOver(const float a1, const float a2, const float crossover) {
+    float d1 = RKMinDiff(a1, crossover);
+    float d2 = RKMinDiff(a2, crossover);
+    if (d1 * d2 < 0.0) {
+        return true;
+    }
+    return false;
 }
 
 #pragma mark - CPU / Performance

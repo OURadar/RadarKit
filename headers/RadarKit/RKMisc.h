@@ -146,7 +146,9 @@ int RKIndentCopy(char *dst, char *src, const int width);
 char *RKNextNoneWhite(const char *);
 char *RKLastLine(const char *);
 
+float RKMinDiff(const float minuend, const float subtrahend);
 float RKUMinDiff(const float minuend, const float subtrahend);
+bool RKAngularCrossOver(const float a1, const float a2, const float crossover);
 
 long RKGetCPUIndex(void);
 long RKGetMemoryUsage(void);
