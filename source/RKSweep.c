@@ -50,11 +50,11 @@ static void *rayReleaser(void *in) {
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
-    // Wait for a few seconds
+    // Wait for a moment
     s = 0;
     do {
-        usleep(100000);
-    } while (++s < 50 && engine->state & RKEngineStateWantActive);
+        usleep(10000);
+    } while (++s < 10 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
         RKLog("%s rayReleaser()  scratchSpaceIndex = %d\n", engine->name, scratchSpaceIndex);
