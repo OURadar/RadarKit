@@ -366,8 +366,7 @@ static void *momentCore(void *in) {
 
     RKModuloPath path;
     RKPulse *S, *E, *pulses[RKMaximumPulsesPerRay];
-    RKMarker marker0 = RKMarkerNull;
-//    RKMarker marker1 = RKMarkerNull;
+    RKMarker marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
 
@@ -492,22 +491,16 @@ static void *momentCore(void *in) {
         }
 
         // Consolidate the pulse marker into ray marker
-        marker0 = RKMarkerNull;
+        marker = RKMarkerNull;
         i = is;
         k = 0;
         do {
             pulse = RKGetPulse(engine->pulseBuffer, i);
-            marker0 |= pulse->header.marker;
+            marker |= pulse->header.marker;
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
         } while (k < path.length);
         
-        // Declare a new sweep if the scan type has changed from previous ray
-//        if ((marker0 & RKMarkerScanTypeMask) != (marker1 & RKMarkerScanTypeMask)) {
-//            marker0 |= RKMarkerSweepBegin;
-//        }
-//        marker1 = marker0;
-
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             if (ie != i) {
@@ -539,7 +532,7 @@ static void *momentCore(void *in) {
         ray->header.sweepElevation = config->sweepElevation;
         ray->header.sweepAzimuth = config->sweepAzimuth;
         ray->header.pulseCount = path.length;
-        ray->header.marker = marker0;
+        ray->header.marker = marker;
         ray->header.s ^= RKRayStatusProcessing;
         ray->header.s |= RKRayStatusReady;
 
