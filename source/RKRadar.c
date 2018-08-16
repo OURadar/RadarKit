@@ -1679,6 +1679,9 @@ int RKGoLive(RKRadar *radar) {
         radar->masterControllerExec = radar->transceiverExec;
     }
 
+    // Now we declare the radar is live
+    radar->state |= RKRadarStateLive;
+
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("Radar live. All data buffers occupy %s%s B%s (%s GiB)\n",
@@ -1689,7 +1692,6 @@ int RKGoLive(RKRadar *radar) {
     }
 
     // Now we declare the radar active
-    radar->state |= RKRadarStateLive;
     radar->active = true;
     radar->tic++;
     pthread_mutex_unlock(&radar->mutex);
@@ -1740,8 +1742,8 @@ int RKStop(RKRadar *radar) {
         usleep(25000);
     } while (radar->tic < 2);
     pthread_mutex_lock(&radar->mutex);
-    if (radar->active == false) {
-        RKLog("Radar is not active.\n");
+    if (!(radar->state & RKRadarStateLive)) {
+        RKLog("Radar is not live.\n");
         pthread_mutex_unlock(&radar->mutex);
         return RKResultEngineDeactivatedMultipleTimes;
     }

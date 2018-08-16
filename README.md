@@ -185,7 +185,7 @@ Follow these steps to get the project
         uint64_t tic = 0;
         
         // Here is the busy run loop
-        while (radar->active) {
+        while (radar->state & RKRadarStateLive) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             pulse->header.t = tic++;                 // Required. Some kind of clean reference directly proportional to time
             pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
@@ -277,7 +277,7 @@ Follow these steps to get the project
         uint64_t tic = 0;
         
         // Here is the busy run loop
-        while (radar->active) {
+        while (radar->state & RKRadarStateLive) {
             RKPosition *position = RKGetVacantPosition(radar);
             
             // Copy the position from hardware interface
