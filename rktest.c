@@ -271,7 +271,7 @@ UserParams *systemPreferencesInit(void) {
     return user;
 }
 
-void userParametersFree(UserParams *user) {
+void systemPreferencesFree(UserParams *user) {
     free(user);
 }
 
@@ -921,7 +921,7 @@ int main(int argc, const char **argv) {
     
     RKFree(myRadar);
 
-    userParametersFree(systemPreferences);
+    systemPreferencesFree(systemPreferences);
 
     return 0;
 }
