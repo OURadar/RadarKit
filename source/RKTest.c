@@ -385,7 +385,7 @@ void RKTestParseJSONString(void) {
     bool anyCritical = RKAnyCritical(string, true, criticalKey, criticalValue);
     printf("anyCritical = %s%s%s%s%s\n",
            rkGlobalParameters.showColor ? "\033[38;5;207m" : "",
-           anyCritical ? "True" : "False",
+           anyCritical ? "true" : "false",
            rkGlobalParameters.showColor ? RKNoColor : "",
            anyCritical ? " --> " : "",
            anyCritical ? criticalKey : ""
@@ -437,8 +437,8 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
 
-    sprintf(string, "{\""
-            "Health\":{\"Value\":true,\"Enum\":1}, "
+    sprintf(string, "{"
+            "\"Health\":{\"Value\":true,\"Enum\":1}, "
             "\"Transceiver\":{\"Value\":true,\"Enum\":1}, "
             "\"GPS Latitude\":{\"Value\":\"+35.0 deg\",\"Enum\":1}, "
             "\"GPS Longitude\":{\"Value\":\"-97.0 deg\",\"Enum\":1}, "
@@ -447,6 +447,15 @@ void RKTestParseJSONString(void) {
     RKReplaceEnumOfKey(string, "Health", RKStatusEnumOld);
     printf("string = %s\n", string);
     RKReplaceAllValuesOfKey(string, "Enum", RKStatusEnumOld);
+    printf("string = %s\n", string);
+
+    printf("\n===\n\n");
+    sprintf(string, "{"
+            "\"Health\":{\"Value\":\"true\",\"Enum\":1}, "
+            "\"Transceiver\":{\"Value\":\"False\",\"Enum\":1}, "
+            "}");
+    printf("string = %s\n", string);
+    RKReviseLogicalValues(string);
     printf("string = %s\n", string);
 }
 

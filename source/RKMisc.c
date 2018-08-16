@@ -283,6 +283,24 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value) {
     strncpy(s, valueString, k);
 }
 
+void RKReviseLogicalValues(char *string) {
+    char *token;
+    token = strcasestr(string, "\"true\"");
+    while (token) {
+        sprintf(token, "true");
+        memmove(token + 4, token + 6, strlen(token + 6));
+        memset(token + 4 + strlen(token + 6), '\0', 2 * sizeof(char));
+        token = strcasestr(string, "\"true\"");
+    }
+    token = strcasestr(string, "\"false\"");
+    while (token) {
+        sprintf(token, "false");
+        memmove(token + 5, token + 7, strlen(token + 7));
+        memset(token + 5 + strlen(token + 7), '\0', 2 * sizeof(char));
+        token = strcasestr(string, "\"false\"");
+    }
+}
+
 #pragma mark -
 
 ////////////////////////////////////////////////

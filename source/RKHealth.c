@@ -232,6 +232,10 @@ static void *healthConsolidator(void *_in) {
         }
         
         sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
+
+        // Replace some quoted logical values, e.g., true -> "True"
+        RKReviseLogicalValues(string);
+
         health->flag = RKHealthFlagReady;
 
         if (engine->verbose > 2) {

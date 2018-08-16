@@ -210,7 +210,7 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
                     break;
                 case RKParameterTypeBool:
                     ((bool *)target)[i] =  object->boolValues[i];
-                    k += snprintf(string + k, RKMaximumStringLength - k, " %s", ((bool *)target)[i] ? "True" : "False");
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %s", ((bool *)target)[i] ? "true" : "false");
                     break;
                 case RKParameterTypeFloat:
                     ((float *)target)[i] =  MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
