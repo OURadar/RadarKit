@@ -1745,7 +1745,7 @@ int RKStop(RKRadar *radar) {
         pthread_mutex_unlock(&radar->mutex);
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    radar->active = false;
+    radar->state &= ~RKRadarStateLive;
     if (radar->systemInspector) {
         RKSimpleEngineFree(radar->systemInspector);
     }
@@ -1826,6 +1826,7 @@ int RKStop(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
         RKLog("Radar state = 0x%x\n", radar->state);
     }
+    radar->active = false;
     pthread_mutex_unlock(&radar->mutex);
     return RKResultSuccess;
 }
@@ -2375,11 +2376,17 @@ void RKSetHealthReady(RKRadar *radar, RKHealth *health) {
 
 RKHealth *RKGetLatestHealth(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+    if (!(radar->healths[index].flag & RKHealthFlagReady)) {
+        index = RKPreviousModuloS(index, radar->desc.healthBufferDepth);
+    }
     return &radar->healths[index];
 }
 
 RKHealth *RKGetLatestHealthOfNode(RKRadar *radar, const RKHealthNode node) {
     uint32_t index = RKPreviousModuloS(radar->healthNodes[node].index, radar->desc.healthBufferDepth);
+    if (!(radar->healthNodes[node].healths[index].flag & RKHealthFlagReady)) {
+        index = RKPreviousModuloS(index, radar->desc.healthBufferDepth);
+    }
     return &radar->healthNodes[node].healths[index];
 }
 

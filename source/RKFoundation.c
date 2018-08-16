@@ -1352,7 +1352,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     }
     size_t L = strlen(string);
     if (*string != '{' || string[L - 1] != '}') {
-        fprintf(stderr, "RKFindCondition() - Expects a {} pair around the string.\n");
+        fprintf(stderr, "RKFindCondition() - Expects a {} pair around the string (L = %zu).\n", L);
         fprintf(stderr, "string =\n%s(EOL)\n", string);
         return false;
     }
