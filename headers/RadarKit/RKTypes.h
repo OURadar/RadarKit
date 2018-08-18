@@ -1084,6 +1084,7 @@ typedef struct rk_scratch {
     RKFloat              *Z[2];                                                // Reflectivity in dB
     RKFloat              *V[2];                                                // Velocity in same units as aliasing velocity
     RKFloat              *W[2];                                                // Spectrum width in same units as aliasing velocity
+    RKFloat              *Q[2];                                                // Signal quality index SQI
     RKFloat              *SNR[2];                                              // Signal-to-noise ratio
     RKFloat              *ZDR;                                                 // Differential reflectivity ZDR
     RKFloat              *PhiDP;                                               // Differential phase PhiDP
