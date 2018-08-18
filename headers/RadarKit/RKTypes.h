@@ -64,15 +64,16 @@
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   50                                // Health
 #define RKBufferPSlotCount                   1000                              // Positions
-#define RKBuffer0SlotCount                   20000                             // Raw I/Q
-#define RKBuffer2SlotCount                   36000                             // Ray
-#define RKBuffer3SlotCount                   100                               // Products
+#define RKBuffer0SlotCount                   20000                             // Pulse - Level I- - Raw I/Q
+#define RKBuffer2SlotCount                   36000                             // Ray - Level II - Moment data
+#define RKBuffer3SlotCount                   100                               // Products - Level III - Ready for archive
 #define RKMaximumControlCount                128                               // Controls
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKSIMDAlignSize
+#define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
+
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKBaseMomentCount                    10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
-#define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaximumFilterGroups                22                                // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth         1000                              //
