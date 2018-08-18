@@ -568,7 +568,7 @@ int socketStreamHandler(RKOperator *O) {
     }
 
     // Product or display streams - no skipping
-    if (user->streams & user->access & RKStreamProductZVWDPRKS) {
+    if (user->streams & user->access & RKStreamProductAll) {
         // Product streams - assume no display as display data can be derived later
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
@@ -577,8 +577,8 @@ int socketStreamHandler(RKOperator *O) {
         }
         ray = RKGetRay(user->radar->rays, endIndex);
 
-        if (!(user->streamsInProgress & RKStreamProductZVWDPRKS)) {
-            user->streamsInProgress |= (user->streams & RKStreamProductZVWDPRKS);
+        if (!(user->streamsInProgress & RKStreamProductAll)) {
+            user->streamsInProgress |= (user->streams & RKStreamProductAll);
             user->rayIndex = endIndex;
             s = 0;
             while (!(ray->header.s & RKRayStatusReady) && engine->server->state == RKServerStateActive && s++ < 20) {
@@ -754,7 +754,7 @@ int socketStreamHandler(RKOperator *O) {
                 if (user->streams & RKStreamDisplaySv) {
                     rayHeader.baseMomentList |= RKBaseMomentListDisplaySv;
                 }
-                uint32_t displayList = rayHeader.baseMomentList & RKBaseMomentListDisplayZVWDPRKS;
+                uint32_t displayList = rayHeader.baseMomentList & RKBaseMomentListDisplayAll;
                 uint32_t displayCount = __builtin_popcount(displayList);
                 //RKLog("displayCount = %d / %x\n", productCount, productList);
 
@@ -1191,8 +1191,8 @@ int socketInitialHandler(RKOperator *O) {
     
     memset(user, 0, sizeof(RKUser));
     user->access = RKStreamStatusAll;
-    user->access |= RKStreamDisplayZVWDPRKS;
-    user->access |= RKStreamProductZVWDPRKS;
+    user->access |= RKStreamDisplayAll;
+    user->access |= RKStreamProductAll;
     user->access |= RKStreamSweepZVWDPRKS;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
     user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x80;
