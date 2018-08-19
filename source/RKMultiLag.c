@@ -145,6 +145,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 		for (k = 0; k < gateCount; k++) {
             // Derive some criteria for censoring and lag selection
 			space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
+            space->Q[p][k] = space->aR[p][1][k] / space->aR[p][0][k];
 			if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
 				space->mask[k] = RKMomentMaskCensored;
 			} else {

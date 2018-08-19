@@ -65,15 +65,15 @@
 #define RKBufferHSlotCount                   50                                // Health
 #define RKBufferPSlotCount                   1000                              // Positions
 #define RKBuffer0SlotCount                   20000                             // Pulse - Level I- - Raw I/Q
-#define RKBuffer2SlotCount                   36000                             // Ray - Level II - Moment data
+#define RKBuffer2SlotCount                   3600                              // Ray - Level II - Moment data
 #define RKBuffer3SlotCount                   100                               // Products - Level III - Ready for archive
 #define RKMaximumControlCount                128                               // Controls
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKSIMDAlignSize
 #define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
 
-#define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0
 #define RKBaseMomentCount                    10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
+#define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaximumFilterGroups                22                                // Maximum filter group count
 #define RKWorkerDutyCycleBufferDepth         1000                              //
@@ -497,16 +497,21 @@ enum RKInitFlag {
 typedef uint32_t RKBaseMomentList;
 enum RKBaseMomentList {
     RKBaseMomentListNone                = 0,                                  // None
-    RKBaseMomentListDisplayZ            = (1),                                // Display Z - Reflectivity dBZ
+    RKBaseMomentListDisplayZ            = 1,                                  // Display Z - Reflectivity dBZ
     RKBaseMomentListDisplayV            = (1 << 1),                           // Display V - Velocity
     RKBaseMomentListDisplayW            = (1 << 2),                           // Display W - Width
     RKBaseMomentListDisplayD            = (1 << 3),                           // Display D - Differential Reflectivity
     RKBaseMomentListDisplayP            = (1 << 4),                           // Display P - PhiDP
     RKBaseMomentListDisplayR            = (1 << 5),                           // Display R - RhoHV
     RKBaseMomentListDisplayK            = (1 << 6),                           // Display K - KDP
-    RKBaseMomentListDisplaySh           = (1 << 7),                           // Display Sh - Signal
-    RKBaseMomentListDisplaySv           = (1 << 8),                           // Display Sv - Signal
-    RKBaseMomentListDisplayZVWDPRKS     = 0x000000FF,                         // Display All
+    RKBaseMomentListDisplaySh           = (1 << 7),                           // Display Sh - Signal from H channel
+    RKBaseMomentListDisplaySv           = (1 << 8),                           // Display Sv - Signal from V channel
+    RKBaseMomentListDisplayQ            = (1 << 9),                           // Display SQI - Signal Quality Index
+    RKBaseMomentListDisplayZVWDPR       = 0x0000003F,                         // Display All without K, Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRK      = 0x0000007F,                         // Display All without Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRKS     = 0x000001FF,                         // Display All without Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRKSQ    = 0x000003FF,                         // Display All
+    RKBaseMomentListDisplayAll          = 0x000003FF,                         // Display All (same as above)
     RKBaseMomentListProductZ            = (1 << 16),                          // Data of Z
     RKBaseMomentListProductV            = (1 << 17),                          // Data of V
     RKBaseMomentListProductW            = (1 << 18),                          // Data of W
@@ -516,9 +521,12 @@ enum RKBaseMomentList {
     RKBaseMomentListProductK            = (1 << 22),                          // Data of K
     RKBaseMomentListProductSh           = (1 << 23),                          // Data of Sh
     RKBaseMomentListProductSv           = (1 << 24),                          // Data of Sv
-    RKBaseMomentListProductZVWDPR       = 0x003F0000,                         // Base data, i.e., without K, and S
-    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                         // Base data + K
-    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000                          // All data
+    RKBaseMomentListProductQ            = (1 << 25),                          // Data of Q
+    RKBaseMomentListProductZVWDPR       = 0x003F0000,                         // Base moment data without K, Sh, Sv and Q
+    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                         // Base moment data without Sh, Sv and Q
+    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000,                         // All data without Q
+    RKBaseMomentListProductZVWDPRKSQ    = 0x03FF0000,                         // All data
+    RKBaseMomentListProductAll          = 0x03FF0000                          // All data (same as above)
 };
 
 typedef uint32_t RKBaseMomentIndex;
@@ -532,9 +540,10 @@ enum RKBaseMomentIndex {
     RKBaseMomentIndexK,
     RKBaseMomentIndexSh,
     RKBaseMomentIndexSv,
-    RKBaseMomentIndexZv,
-    RKBaseMomentIndexVv,
-    RKBaseMomentIndexWv,
+    RKBaseMomentIndexQ,
+    RKBaseMomentIndexZv,                                                       // No longer used
+    RKBaseMomentIndexVv,                                                       // No longer used
+    RKBaseMomentIndexWv,                                                       // No longer used
     RKBaseMomentIndexCount
 };
 
@@ -563,15 +572,6 @@ enum RKConfigKey {
     RKConfigKeySystemZCal,
     RKConfigKeySystemDCal,
     RKConfigKeySystemPCal,
-    RKConfigKeyZCal,                                                           // deprecating
-    RKConfigKeyDCal,                                                           // deprecating
-    RKConfigKeyPCal,                                                           // deprecating
-    RKConfigKeyZCal2,                                                          // deprecating
-    RKConfigKeyDCal2,                                                          // deprecating
-    RKConfigKeyPCal2,                                                          // deprecating
-    RKConfigKeyZCals,                                                          // deprecating
-    RKConfigKeyDCals,                                                          // deprecating
-    RKConfigKeyPCals,                                                          // deprecating
     RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
     RKConfigKeyVCPDefinition,
@@ -710,7 +710,9 @@ enum RKStream {
     RKStreamDisplayK                             = (1 << 22),                  //
     RKStreamDisplaySh                            = (1 << 23),                  //
     RKStreamDisplaySv                            = (1 << 24),                  //
+    RKStreamDisplayQ                             = (1 << 25),                  //
     RKStreamDisplayZVWDPRKS                      = 0x0000000001FF0000ULL,      //
+    RKStreamDisplayAll                           = 0x0000000003FF0000ULL,      //
     RKStreamProductZ                             = (1ULL << 32),               // Products by ray
     RKStreamProductV                             = (1ULL << 33),               //
     RKStreamProductW                             = (1ULL << 34),               //
@@ -720,7 +722,9 @@ enum RKStream {
     RKStreamProductK                             = (1ULL << 38),               //
     RKStreamProductSh                            = (1ULL << 39),               //
     RKStreamProductSv                            = (1ULL << 40),               //
+    RKStreamProductQ                             = (1ULL << 41),               //
     RKStreamProductZVWDPRKS                      = 0x000001FF00000000ULL,      //
+    RKStreamProductAll                           = 0x000003FF00000000ULL,      //
     RKStreamSweepZ                               = (1ULL << 48),               // Products by sweep
     RKStreamSweepV                               = (1ULL << 49),               //
     RKStreamSweepW                               = (1ULL << 50),               //
@@ -1080,6 +1084,7 @@ typedef struct rk_scratch {
     RKFloat              *Z[2];                                                // Reflectivity in dB
     RKFloat              *V[2];                                                // Velocity in same units as aliasing velocity
     RKFloat              *W[2];                                                // Spectrum width in same units as aliasing velocity
+    RKFloat              *Q[2];                                                // Signal quality index SQI
     RKFloat              *SNR[2];                                              // Signal-to-noise ratio
     RKFloat              *ZDR;                                                 // Differential reflectivity ZDR
     RKFloat              *PhiDP;                                               // Differential phase PhiDP
