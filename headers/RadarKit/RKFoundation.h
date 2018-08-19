@@ -24,13 +24,14 @@
 #define RKPreviousModuloS(i, S)          ((i) == 0 ? (S) - 1 : (i) - 1)
 
 //
-// Z in [-32.0    ... 95.5]           Zi = (Z) x 2 + 64
-// V in [-16.0    ... 15.875]         Vi = (V) x 8 + 128
-// W in [ -0.05   ...  5.0]           Wi = (W) x 20 + 0
-// D in [-10.0    ... 15.5]           Di = (D) x 10 + 100
-// P in [  -PI    ... PI*(N-1)/N]     Pi = (P) x 128/M_PI + 128
+// Z in [-32.0    ... 95.5]             Zi = (Z) x 2 + 64
+// V in [-16.0    ... 15.875]           Vi = (V) x 8 + 128
+// W in [ -0.05   ...  5.0]             Wi = (W) x 20 + 0
+// D in [-10.0    ... 15.5]             Di = (D) x 10 + 100
+// P in [  -PI    ... PI*(N-1)/N]       Pi = (P) x 128/M_PI + 128
 // R in [  0.0    ... 1.079]
-// K in [ -0.1*PI ... 0.1*PI*(N-1)/N] Ki = (K) x 1280/M_PI + 128
+// K in [ -0.1*PI ... 0.1*PI*(N-1)/N]   Ki = (K) x 1280/M_PI + 128
+// Q in [  0.0    ... 1.0]              Ri = (Q) * 250
 //
 //
 // Z  in [CLR  -31.50  ... 95.5]            Zi = (Z) * 2 + 64
@@ -40,6 +41,7 @@
 // P  in [CLR    -PI   ... +PI]             Pi = (P) * 255/(2*M_PI) + 128.5
 // R  in [CLR   0.033  ... 1.079]
 // K  in [CLR -0.1*PI  ... +0.1*PI]         Ki = (K) * 255/(20*M_PI) + 128.5
+// Q  in [CLR    0.00  ... 1.0]             Qi = (Q) * 250
 // VE in [CLR   -63.5  ... 63.5]            Vi = (V) * 2 + 128
 //
 
@@ -52,6 +54,8 @@
 #define RKRLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.079f;      lhma[2] = 1.0f;      lhma[3] =   0.0f; }  //
 #define RKV2LHMAC { lhma[0] = -32.0f;     lhma[1] = 31.75f;      lhma[2] = 4.0f;      lhma[3] = 128.0f; }  //
 #define RKV3LHMAC { lhma[0] = -64.0f;     lhma[1] = 63.5f;       lhma[2] = 2.0f;      lhma[3] = 128.0f; }  //
+#define RKQLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.0f;        lhma[2] = 250.0f;    lhma[3] =   0.0f; }  //
+#define RKSLHMAC  { lhma[0] = -120.0f;    lhma[1] = 0.0f;        lhma[2] = 250.0f;    lhma[3] = -96.3f; }  // Asuumed 16-bit, 96 dB, peak @ 0 dBm
 
 #define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 

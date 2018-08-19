@@ -304,7 +304,8 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                                                       // C += Xh[] * Xv[]'
         j++;
     }
-    RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0], space->aR[1][0], 1.0f / (float)(j), gateCount);   // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
+    RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
+                  space->aR[1][0], 1.0f / (float)(j), gateCount);                                                // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
 
     //
     //  ACF & CCF to S Z V W D P R K
@@ -319,7 +320,11 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         
         // Go through both polarizations
         for (p = 0; p < 2; p++) {
-            printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"), p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
+            printf((
+                rkGlobalParameters.showColor ?
+                UNDERLINE("Channel %d (%s pol):") "\n" :
+                "Channel %d (%s pol):\n"),
+                p, p == 0 ? "H" : (p == 1 ? "V" : "X"));
             for (n = 0; n < count; n++) {
                 X[n] = RKGetSplitComplexDataFromPulse(pulses[n], p);
             }
