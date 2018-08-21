@@ -168,12 +168,15 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     //  ACF
     //
 
+    RKIQZ Xl = {NULL, NULL};
     RKIQZ Xm = {NULL, NULL};
     RKIQZ Xn = {NULL, NULL};
     RKVec *s0i = NULL;
     RKVec *s0q = NULL;
     RKVec *s1i = NULL;
     RKVec *s1q = NULL;
+    RKVec *s2i = NULL;
+    RKVec *s2q = NULL;
     RKVec *mi = NULL;
     RKVec *mq = NULL;
     RKVec *r0i = NULL;
@@ -201,9 +204,9 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         mq = (RKVec *)space->mX[p].q;
         r0i = (RKVec *)space->R[p][0].i;
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                   // mX += X
-            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                   // mX += X
-            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                      // mX += X
+            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                      // mX += X
+            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));     // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
             s0i++;
             s0q++;
             mi++;
@@ -224,13 +227,15 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         r1i = (RKVec *)space->R[p][1].i;
         r1q = (RKVec *)space->R[p][1].q;
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                   // mX += X
-            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                   // mX += X
-            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
-            *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q)));       // R[0] += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
-            *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q)));       // R[0] += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                      // mX += X
+            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                      // mX += X
+            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));     // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q)));     // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+            *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q)));     // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
             s0i++;
             s0q++;
+            s1i++;
+            s1q++;
             mi++;
             mq++;
             r0i++;
@@ -238,8 +243,46 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             r1q++;
         }
 
+        // The third samples
+        Xl = Xm;
+        Xm = Xn;
+        Xn = RKGetSplitComplexDataFromPulse(pulses[2], p);
+        s0i = (RKVec *)Xn.i;
+        s0q = (RKVec *)Xn.q;
+        s1i = (RKVec *)Xm.i;
+        s1q = (RKVec *)Xm.q;
+        s2i = (RKVec *)Xl.i;
+        s2q = (RKVec *)Xl.q;
+        mi = (RKVec *)space->mX[p].i;
+        mq = (RKVec *)space->mX[p].q;
+        r0i = (RKVec *)space->R[p][0].i;
+        r1i = (RKVec *)space->R[p][1].i;
+        r1q = (RKVec *)space->R[p][1].q;
+        for (k = 0; k < K; k++) {
+            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                      // mX += X
+            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                      // mX += X
+            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));     // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q)));     // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+            *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q)));     // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+            *r2i = _rk_mm_add_pf(*r2i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s2i), _rk_mm_mul_pf(*s0q, *s2q)));     // R[2].i += X[n] * X[n-2]'  (I += I1 * I2 + Q1 * Q2)
+            *r2q = _rk_mm_add_pf(*r2q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s2i), _rk_mm_mul_pf(*s0i, *s2q)));     // R[2].q += X[n] * X[n-2]'  (Q += Q1 * I2 - I1 * Q2)
+            s0i++;
+            s0q++;
+            s1i++;
+            s1q++;
+            s2i++;
+            s2q++;
+            mi++;
+            mq++;
+            r0i++;
+            r1i++;
+            r1q++;
+            r2i++;
+            r2q++;
+        }
+
         // Go through the even pulses for mX and R(0)
-        for (n = 2; n < count; n++) {
+        for (n = 3; n < count; n++) {
             Xm = Xn;
             Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
             s0i = (RKVec *)Xn.i;
@@ -251,64 +294,64 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             r0i = (RKVec *)space->R[p][0].i;
             r1i = (RKVec *)space->R[p][1].i;
             r1q = (RKVec *)space->R[p][1].q;
+            r2i = (RKVec *)space->R[p][2].i;
+            r2q = (RKVec *)space->R[p][2].q;
             for (k = 0; k < K; k++) {
-                *mi = _rk_mm_add_pf(*mi, *s0i);                                                                   // mX += X
-                *mq = _rk_mm_add_pf(*mq, *s0q);                                                                   // mX += X
-                *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
-                *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q)));       // R[0] += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
-                *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q)));       // R[0] += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+                *mi = _rk_mm_add_pf(*mi, *s0i);                                                                  // mX += X
+                *mq = _rk_mm_add_pf(*mq, *s0q);                                                                  // mX += X
+                *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q))); // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+                *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q))); // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+                *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q))); // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+                *r2i = _rk_mm_add_pf(*r2i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s2i), _rk_mm_mul_pf(*s0q, *s2q))); // R[2].i += X[n] * X[n-2]'  (I += I1 * I2 + Q1 * Q2)
+                *r2q = _rk_mm_add_pf(*r2q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s2i), _rk_mm_mul_pf(*s0i, *s2q))); // R[2].q += X[n] * X[n-2]'  (Q += Q1 * I2 - I1 * Q2)
                 s0i++;
                 s0q++;
+                s1i++;
+                s1q++;
+                s2i++;
+                s2q++;
                 mi++;
                 mq++;
                 r0i++;
                 r1i++;
                 r1q++;
+                r2i++;
+                r2q++;
             }
         }
         // Divide by n for the average
-        RKVec nn = _rk_mm_set1_pf(1.0f / (float)count);
-        RKVec nn1 = _rk_mm_set1_pf(1.0f / (float)(count - 1));
+        RKVec n0 = _rk_mm_set1_pf(1.0f / (float)count);
+        RKVec n1 = _rk_mm_set1_pf(1.0f / (float)(count - 1));
+        RKVec n2 = _rk_mm_set1_pf(1.0f / (float)(count - 2));
         mi = (RKVec *)space->mX[p].i;
         mq = (RKVec *)space->mX[p].q;
-        //s0i = (RKVec *)space->R[p][0].i;
-        //r0 = (RKVec *)space->aR[p][0];
         r0i = (RKVec *)space->R[p][0].i;
-        r0i = (RKVec *)space->aR[p][0];
+        r0a = (RKVec *)space->aR[p][0];
         r1i = (RKVec *)space->R[p][1].i;
         r1q = (RKVec *)space->R[p][1].q;
-        // ar1 = ;
+        r1a = (RKVec *)space->aR[p][1];
+        r2i = (RKVec *)space->R[p][2].i;
+        r2q = (RKVec *)space->R[p][2].q;
+        r2a = (RKVec *)space->aR[p][2];
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_mul_pf(*mi, nn);                                                                        // mX /= j
-            *mq = _rk_mm_mul_pf(*mq, nn);                                                                        // mX /= j
-            *r0i = _rk_mm_mul_pf(*r0i, nn);                                                                        // R[0] /= j
-            *r0i = *r0i;
-            //*r0++ = *s0i++;                                                                                       // aR[0] = abs(R[0]) = real(R[0])
-            r0i++;
-            r0i++;
+            *mi = _rk_mm_mul_pf(*mi, n0);                                                                        // mX /= n
+            *mq = _rk_mm_mul_pf(*mq, n0);                                                                        // mX /= n
+            *r0i = _rk_mm_mul_pf(*r0i, n0);                                                                      // R[0] /= n
+            *r0a = *r0i;                                                                                         // aR[0] = abs(R[0]) = real(R[0])
+            *r1i = _rk_mm_mul_pf(*r1i, n1);                                                                      // R[1].i /= (n - 1)
+            *r1q = _rk_mm_mul_pf(*r1q, n1);                                                                      // R[1].q /= (n - 1)
+            *r1a = _rk_mm_sqrt_pf(_rk_mm_add_pf(_rk_mm_mul_pf(*r1i, *r1i), _rk_mm_mul_pf(*r1q, *r1q)));          // aR[1] = sqrt(R[1].i ^ 2 + R[1].q ^ 2)
+            *r2i = _rk_mm_mul_pf(*r1i, n2);                                                                      // R[1].i /= (n - 2)
+            *r2q = _rk_mm_mul_pf(*r1q, n2);                                                                      // R[1].q /= (n - 2)
+            *r2a = _rk_mm_sqrt_pf(_rk_mm_add_pf(_rk_mm_mul_pf(*r2i, *r2i), _rk_mm_mul_pf(*r2q, *r2q)));          // aR[2] = sqrt(R[2].i ^ 2 + R[2].q ^ 2)
             mi++;
             mq++;
+            r0i++;
+            r0a++;
+            r1i++;
+            r1q++;
+            r1a++;
         }
-
-//        // Now we get the odd pulses for R(1)
-//        n = 1;
-//        if (pulse->header.i % 2) {
-//            // Ignore the first pulse if it is an odd-pulse
-//            n = 2;
-//        }
-//        j = 0;
-//        for (; n < count; n += 2) {
-//            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
-//            RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 1], p);
-//            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], gateCount, 1);                                                // R[k] += X[n] * X[n - k]'
-//            j++;
-//        }
-//        RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                                             // R[1] /= j   (unbiased)
-//        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                                                // aR[1] = abs(R[1])
-//
-//        // Mean and variance (2nd moment)
-//        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                                                // E{Xh} * E{Xh}' --> var  (step 1)
-//        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                                                 // Rh[] - var     --> var  (step 2)
     }
 
     // Cross-channel
@@ -323,10 +366,10 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     for (n = 0; n < count; n++) {
         Xh = RKGetSplitComplexDataFromPulse(pulses[n], 0);
         Xv = RKGetSplitComplexDataFromPulse(pulses[n], 1);
-        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                                                         // C += Xh[] * Xv[]'
+        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                                                       // C += Xh[] * Xv[]'
     }
     RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
-                  space->aR[1][0], 1.0f / (float)(count), gateCount);                                                // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
+                  space->aR[1][0], 1.0f / (float)(count), gateCount);                                            // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
 
     //usleep(20 * 1000);
     RKLog("Warning. I am not implemented yet\n");
