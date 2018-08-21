@@ -141,7 +141,116 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
 }
 
 int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
-    usleep(20 * 1000);
+
+    //
+    // Pulse-pair processing
+    //
+    //  o o o o o o
+    //  | | | | | |
+    //  +-+-+-+-+-+--
+    //   t t t t t
+    //   1 1 1 1 1
+    //
+    // Properties:
+    //   - Reflectvity from all pulses
+    //   - Velocity folding due to PRT1
+    //
+
+    int n, j, k, p;
+
+    // Get the start pulse to know the capacity
+    RKPulse *pulse = pulses[0];
+    const uint32_t capacity = pulse->header.capacity;
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
+    const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+
+    //
+    //  ACF
+    //
+
+    // Go through each polarization
+    for (p = 0; p < 2; p++) {
+
+        // Initializes the storage
+        RKZeroOutIQZ(&space->mX[p], capacity);
+        RKZeroOutIQZ(&space->R[p][0], capacity);
+        RKZeroOutIQZ(&space->R[p][1], capacity);
+
+        // Go through the even pulses for mX and R(0)
+        j = 0;
+        for (n = 0; n < count; n++) {
+            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
+            RKVec *si = (RKVec *)Xn.i;
+            RKVec *sq = (RKVec *)Xn.q;
+            RKVec *mi = (RKVec *)space->mX[p].i;
+            RKVec *mq = (RKVec *)space->mX[p].q;
+            RKVec *r0 = (RKVec *)space->R[p][0].i;
+            for (k = 0; k < K; k++) {
+                *mi = _rk_mm_add_pf(*mi, *si);                                                                   // mX += X
+                *mq = _rk_mm_add_pf(*mq, *sq);                                                                   // mX += X
+                *r0 = _rk_mm_add_pf(*r0, _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+                si++;
+                sq++;
+                mi++;
+                mq++;
+                r0++;
+            }
+            j++;
+        }
+        // Divide by n for the average
+        RKVec ss = _rk_mm_set1_pf(1.0f / (float)j);
+        RKVec *mi = (RKVec *)space->mX[p].i;
+        RKVec *mq = (RKVec *)space->mX[p].q;
+        RKVec *si = (RKVec *)space->R[p][0].i;
+        RKVec *r0 = (RKVec *)space->aR[p][0];
+        for (k = 0; k < K; k++) {
+            *mi = _rk_mm_mul_pf(*mi, ss);                                                                        // mX /= j
+            *mq = _rk_mm_mul_pf(*mq, ss);                                                                        // mX /= j
+            *si = _rk_mm_mul_pf(*si, ss);                                                                        // R[0] /= j
+            *r0++ = *si++;                                                                                       // aR[0] = abs(R[0]) = real(R[0])
+            mi++;
+            mq++;
+        }
+
+//        // Now we get the odd pulses for R(1)
+//        n = 1;
+//        if (pulse->header.i % 2) {
+//            // Ignore the first pulse if it is an odd-pulse
+//            n = 2;
+//        }
+//        j = 0;
+//        for (; n < count; n += 2) {
+//            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
+//            RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 1], p);
+//            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], gateCount, 1);                                                // R[k] += X[n] * X[n - k]'
+//            j++;
+//        }
+//        RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                                             // R[1] /= j   (unbiased)
+//        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                                                // aR[1] = abs(R[1])
+//
+//        // Mean and variance (2nd moment)
+//        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                                                // E{Xh} * E{Xh}' --> var  (step 1)
+//        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                                                 // Rh[] - var     --> var  (step 2)
+    }
+
+    // Cross-channel
+    RKZeroOutIQZ(&space->C[0], capacity);
+
+    //
+    //  CCF
+    //
+
+    RKIQZ Xh, Xv;
+
+    for (n = 0; n < count; n++) {
+        Xh = RKGetSplitComplexDataFromPulse(pulses[n], 0);
+        Xv = RKGetSplitComplexDataFromPulse(pulses[n], 1);
+        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                                                         // C += Xh[] * Xv[]'
+    }
+    RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
+                  space->aR[1][0], 1.0f / (float)(count), gateCount);                                                // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
+
+    //usleep(20 * 1000);
     RKLog("Warning. I am not implemented yet\n");
     return 0;
 
