@@ -168,6 +168,23 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     //  ACF
     //
 
+    RKIQZ Xm = {NULL, NULL};
+    RKIQZ Xn = {NULL, NULL};
+    RKVec *s0i = NULL;
+    RKVec *s0q = NULL;
+    RKVec *s1i = NULL;
+    RKVec *s1q = NULL;
+    RKVec *mi = NULL;
+    RKVec *mq = NULL;
+    RKVec *r0i = NULL;
+    RKVec *r0a = NULL;
+    RKVec *r1i = NULL;
+    RKVec *r1q = NULL;
+    RKVec *r1a = NULL;
+    RKVec *r2i = NULL;
+    RKVec *r2q = NULL;
+    RKVec *r2a = NULL;
+
     // Go through each polarization
     for (p = 0; p < 2; p++) {
 
@@ -176,38 +193,99 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         RKZeroOutIQZ(&space->R[p][0], capacity);
         RKZeroOutIQZ(&space->R[p][1], capacity);
 
+        // The first samples
+        Xn = RKGetSplitComplexDataFromPulse(pulses[0], p);
+        s0i = (RKVec *)Xn.i;
+        s0q = (RKVec *)Xn.q;
+        mi = (RKVec *)space->mX[p].i;
+        mq = (RKVec *)space->mX[p].q;
+        r0i = (RKVec *)space->R[p][0].i;
+        for (k = 0; k < K; k++) {
+            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                   // mX += X
+            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                   // mX += X
+            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            s0i++;
+            s0q++;
+            mi++;
+            mq++;
+            r0i++;
+        }
+
+        // The second samples
+        Xm = Xn;
+        Xn = RKGetSplitComplexDataFromPulse(pulses[1], p);
+        s0i = (RKVec *)Xn.i;
+        s0q = (RKVec *)Xn.q;
+        s1i = (RKVec *)Xm.i;
+        s1q = (RKVec *)Xm.q;
+        mi = (RKVec *)space->mX[p].i;
+        mq = (RKVec *)space->mX[p].q;
+        r0i = (RKVec *)space->R[p][0].i;
+        r1i = (RKVec *)space->R[p][1].i;
+        r1q = (RKVec *)space->R[p][1].q;
+        for (k = 0; k < K; k++) {
+            *mi = _rk_mm_add_pf(*mi, *s0i);                                                                   // mX += X
+            *mq = _rk_mm_add_pf(*mq, *s0q);                                                                   // mX += X
+            *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q)));       // R[0] += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+            *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q)));       // R[0] += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+            s0i++;
+            s0q++;
+            mi++;
+            mq++;
+            r0i++;
+            r1i++;
+            r1q++;
+        }
+
         // Go through the even pulses for mX and R(0)
-        j = 0;
-        for (n = 0; n < count; n++) {
-            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
-            RKVec *si = (RKVec *)Xn.i;
-            RKVec *sq = (RKVec *)Xn.q;
-            RKVec *mi = (RKVec *)space->mX[p].i;
-            RKVec *mq = (RKVec *)space->mX[p].q;
-            RKVec *r0 = (RKVec *)space->R[p][0].i;
+        for (n = 2; n < count; n++) {
+            Xm = Xn;
+            Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
+            s0i = (RKVec *)Xn.i;
+            s0q = (RKVec *)Xn.q;
+            s1i = (RKVec *)Xm.i;
+            s1q = (RKVec *)Xm.q;
+            mi = (RKVec *)space->mX[p].i;
+            mq = (RKVec *)space->mX[p].q;
+            r0i = (RKVec *)space->R[p][0].i;
+            r1i = (RKVec *)space->R[p][1].i;
+            r1q = (RKVec *)space->R[p][1].q;
             for (k = 0; k < K; k++) {
-                *mi = _rk_mm_add_pf(*mi, *si);                                                                   // mX += X
-                *mq = _rk_mm_add_pf(*mq, *sq);                                                                   // mX += X
-                *r0 = _rk_mm_add_pf(*r0, _rk_mm_add_pf(_rk_mm_mul_pf(*si, *si), _rk_mm_mul_pf(*sq, *sq)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
-                si++;
-                sq++;
+                *mi = _rk_mm_add_pf(*mi, *s0i);                                                                   // mX += X
+                *mq = _rk_mm_add_pf(*mq, *s0q);                                                                   // mX += X
+                *r0i = _rk_mm_add_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s0i), _rk_mm_mul_pf(*s0q, *s0q)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+                *r1i = _rk_mm_add_pf(*r1i, _rk_mm_add_pf(_rk_mm_mul_pf(*s0i, *s1i), _rk_mm_mul_pf(*s0q, *s1q)));       // R[0] += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+                *r1q = _rk_mm_add_pf(*r1q, _rk_mm_sub_pf(_rk_mm_mul_pf(*s0q, *s1i), _rk_mm_mul_pf(*s0i, *s1q)));       // R[0] += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+                s0i++;
+                s0q++;
                 mi++;
                 mq++;
-                r0++;
+                r0i++;
+                r1i++;
+                r1q++;
             }
-            j++;
         }
         // Divide by n for the average
-        RKVec ss = _rk_mm_set1_pf(1.0f / (float)j);
-        RKVec *mi = (RKVec *)space->mX[p].i;
-        RKVec *mq = (RKVec *)space->mX[p].q;
-        RKVec *si = (RKVec *)space->R[p][0].i;
-        RKVec *r0 = (RKVec *)space->aR[p][0];
+        RKVec nn = _rk_mm_set1_pf(1.0f / (float)count);
+        RKVec nn1 = _rk_mm_set1_pf(1.0f / (float)(count - 1));
+        mi = (RKVec *)space->mX[p].i;
+        mq = (RKVec *)space->mX[p].q;
+        //s0i = (RKVec *)space->R[p][0].i;
+        //r0 = (RKVec *)space->aR[p][0];
+        r0i = (RKVec *)space->R[p][0].i;
+        r0i = (RKVec *)space->aR[p][0];
+        r1i = (RKVec *)space->R[p][1].i;
+        r1q = (RKVec *)space->R[p][1].q;
+        // ar1 = ;
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_mul_pf(*mi, ss);                                                                        // mX /= j
-            *mq = _rk_mm_mul_pf(*mq, ss);                                                                        // mX /= j
-            *si = _rk_mm_mul_pf(*si, ss);                                                                        // R[0] /= j
-            *r0++ = *si++;                                                                                       // aR[0] = abs(R[0]) = real(R[0])
+            *mi = _rk_mm_mul_pf(*mi, nn);                                                                        // mX /= j
+            *mq = _rk_mm_mul_pf(*mq, nn);                                                                        // mX /= j
+            *r0i = _rk_mm_mul_pf(*r0i, nn);                                                                        // R[0] /= j
+            *r0i = *r0i;
+            //*r0++ = *s0i++;                                                                                       // aR[0] = abs(R[0]) = real(R[0])
+            r0i++;
+            r0i++;
             mi++;
             mq++;
         }
