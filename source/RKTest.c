@@ -1370,6 +1370,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         pulse->header.t = k;
         pulse->header.i = (uint64_t)(-1) - pulseCount + k;
         pulse->header.gateCount = gateCount;
+        pulse->header.downSampledGateCount = gateCount;
         // Fill in the data...
         for (p = 0; p < 2; p++) {
             RKIQZ X = RKGetSplitComplexDataFromPulse(pulse, p);
@@ -1389,7 +1390,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         pulses[k] = pulse;
     }
 
-    printf("pcal[0] = %.2f\n", space->pcal[0]);
+    //printf("pcal[0] = %.2f\n", space->pcal[0]);
 
     if (method == RKPulsePairHop) {
         RKLog("Info. Pulse Pair for Frequency Hopping.\n");
