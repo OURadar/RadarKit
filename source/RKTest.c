@@ -1427,11 +1427,12 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         };
 
         RKFloat P[3][6] = {
-            {-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
-            {-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248},
-            {-0.4856, 0.4533, 0.4636, 0.5404, 0.4298, 0.5248}
+            { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
+            { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
+            { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248}
         };
 
+        err = 0.0;
         for (k = 0; k < gateCount; k++) {
             err += D[lag - 2][k] - space->ZDR[k];
         }
@@ -1439,6 +1440,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         sprintf(str, "Delta ZDR = %.4e", err);
         TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
 
+        err = 0.0;
         for (k = 0; k < gateCount; k++) {
             err += P[lag - 2][k] - space->PhiDP[k];
         }
@@ -1446,6 +1448,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         sprintf(str, "Delta PhiDP = %.4e", err);
         TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
 
+        err = 0.0;
         for (k = 0; k < gateCount; k++) {
             err += R[lag - 2][k] - space->RhoHV[k];
         }

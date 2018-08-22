@@ -435,6 +435,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
              R1v = mean(Xv(:, 2:end) .* conj(Xv(:, 1:end-1)), 2).'
              R2v = mean(Xv(:, 3:end) .* conj(Xv(:, 1:end-2)), 2).'
              vXh = R0h - mXh .* conj(mXh)
+             vXv = R0v - mXv .* conj(mXv)
              for g = 1:6, C(g) = xcorr(Xh(g, :), Xv(g, :), 0, 'unbiased'); end; disp(C)
 
              */
