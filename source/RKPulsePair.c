@@ -195,6 +195,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 
         // Initializes the storage
         RKZeroOutIQZ(&space->mX[p], capacity);
+        RKZeroOutIQZ(&space->vX[p], capacity);
         RKZeroOutIQZ(&space->R[p][0], capacity);
         RKZeroOutIQZ(&space->R[p][1], capacity);
         RKZeroOutIQZ(&space->R[p][2], capacity);
@@ -369,14 +370,14 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         mq = (RKVec *)space->mX[p].q;
         vi = (RKVec *)space->vX[p].i;
         vq = (RKVec *)space->vX[p].q;
-        r0i = (RKVec *)space->R[p][0].i;
+        r0a = (RKVec *)space->aR[p][0];
         for (k = 0; k < K; k++) {
-            *vi = _rk_mm_sub_pf(*r0i, _rk_mm_add_pf(_rk_mm_mul_pf(*mi, *mi), _rk_mm_mul_pf(*mq, *mq)));
+            *vi = _rk_mm_sub_pf(*r0a, _rk_mm_add_pf(_rk_mm_mul_pf(*mi, *mi), _rk_mm_mul_pf(*mq, *mq)));
             mi++;
             mq++;
             vi++;
             vq++;
-            r0i++;
+            r0a++;
         }
     }
 
@@ -477,6 +478,12 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
         RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                                      // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
+        RKShowVecFloat("   ZDR = ", space->ZDR, gateShown);
+        RKShowVecFloat(" PhiDP = ", space->PhiDP, gateShown);
+        RKShowVecFloat(" RhoHV = ", space->RhoHV, gateShown);
+
+        printf(RKEOL);
+        fflush(stdout);
 
         free(X);
     }

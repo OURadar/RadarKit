@@ -1408,28 +1408,53 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     method(space, pulses, pulseCount);
 
     // Some known results
-    RKFloat err = 0.0f;
-
+    RKFloat err;
     RKName str;
 
-    if (method == RKMultiLag && lag >= 2 && lag <= 4) {
+    if (method == RKPulsePair) {
+        // Results for pulse pair
+        RKFloat D[6] = {+1.7216, -2.5106, -1.9448, -1.3558, -0.2018, -0.9616};
+        RKFloat P[6] = {+0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248};
+        RKFloat R[6] = {+0.9024, +0.7063, +0.8050, +0.7045, +0.8717, +0.7079};
+
+        err = 0.0;
+        for (k = 0; k < gateCount; k++) {
+            err += D[k] - space->ZDR[k];
+        }
+        sprintf(str, "Delta ZDR = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+
+        err = 0.0;
+        for (k = 0; k < gateCount; k++) {
+            err += P[k] - space->PhiDP[k];
+        }
+        err /= (RKFloat)gateCount;
+        sprintf(str, "Delta PhiDP = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+
+        err = 0.0;
+        for (k = 0; k < gateCount; k++) {
+            err += R[k] - space->RhoHV[k];
+        }
+        err /= (RKFloat)gateCount;
+        sprintf(str, "Delta RhoHV = %.4e", err);
+        TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+    } else if (method == RKMultiLag && lag >= 2 && lag <= 4) {
         // Results for lags 2, 3, and 4
         RKFloat D[3][6] = {
             {4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
             {2.7106, -8.4965, -7.8061, -9.1933, -0.7019, -8.4546},
             {3.7372, -4.2926, -4.1635, -6.0751, -0.7788, -5.9091}
         };
-
-        RKFloat R[3][6] = {
-            {1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
-            {1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
-            {1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
-        };
-
         RKFloat P[3][6] = {
             { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
             { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
             { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248}
+        };
+        RKFloat R[3][6] = {
+            {1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
+            {1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
+            {1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
         };
 
         err = 0.0;
