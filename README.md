@@ -62,13 +62,13 @@ Follow these steps to get the project
     make
     sudo make install
     ```
-    
+   
 4. Try the test program to simulate a Level-1 system.
 
     ```shell
     rktest -vs1
     ```
-    
+   
 5. (Some Linux) Add the following line to /etc/sysctl.conf
 
     (CentOS 7)
@@ -91,7 +91,7 @@ Follow these steps to get the project
     make
     sudo make install 
     ```
-    
+
 [FFTW]: http://www.fftw.org
 [NetCDF]: http://www.unidata.ucar.edu/software/netcdf
 [Homebrew]: http://brew.sh
@@ -126,6 +126,7 @@ Follow these steps to get the project
         int x;
         int y;
         int z;
+        bool active;
         
         // Recommend keeping a reference to the supplied radar
         RKRadar *radar;
@@ -139,7 +140,8 @@ Follow these steps to get the project
         UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
         
         // Be sure to save a reference to the radar
-        resource->radar = radar
+        resource->radar = radar;
+        resource->active = true;
         
         // Create your run loop as a separate thread so you can return immediately
         pthread_create(&resource->tid, NULL, transceiverRunLoop, resource);
@@ -155,7 +157,12 @@ Follow these steps to get the project
         RKRadar *radar = resource->radar;
         
         // Execute commands stored in const char *command
-        if (!strcmp(command, "a") {
+        if (!strcmp(command, "disconnect")) {
+            // The exec function should response to 'disconnect' and stop the run loop
+            resource->active = false;
+            pthread_join(resource->tidRunLoop, NULL);
+            sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
+        } else if (!strcmp(command, "a") {
             // Perform task "a"
             print("Hello World.\n");
             // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
@@ -218,6 +225,7 @@ Follow these steps to get the project
         int x;
         int y;
         int z;
+        bool active;
         
         // Recommend keeping a reference to the supplied radar
         RKRadar *radar;
@@ -231,7 +239,8 @@ Follow these steps to get the project
         UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
         
         // Be sure to save a reference to the radar
-        resource->radar = radar
+        resource->radar = radar;
+        resource->active = true;
         
         // Create your run loop as a separate thread so you can return immediately
         pthread_create(&resource->tid, NULL, pedestalRunLoop, resource);
@@ -247,7 +256,12 @@ Follow these steps to get the project
         RKRadar *radar = resource->radar;
 
         // Execute commands stored in const char *command
-        if (!strcmp(command, "a") {
+        if (!strcmp(command, "disconnect")) {
+            // The exec function should response to 'disconnect' and stop the run loop
+            resource->active = false;
+            pthread_join(resource->tidRunLoop, NULL);
+            sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
+        } else if (!strcmp(command, "a") {
             // Perform task "a"
             print("Hello World.\n");
             // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
@@ -277,7 +291,7 @@ Follow these steps to get the project
         uint64_t tic = 0;
         
         // Here is the busy run loop
-        while (radar->state & RKRadarStateLive) {
+        while (resource->active) {
             RKPosition *position = RKGetVacantPosition(radar);
             
             // Copy the position from hardware interface
