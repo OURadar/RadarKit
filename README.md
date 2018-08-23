@@ -126,6 +126,7 @@ Follow these steps to get the project
         int x;
         int y;
         int z;
+        bool active;
         
         // Recommend keeping a reference to the supplied radar
         RKRadar *radar;
@@ -139,7 +140,8 @@ Follow these steps to get the project
         UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
         
         // Be sure to save a reference to the radar
-        resource->radar = radar
+        resource->radar = radar;
+        resource->active = true;
         
         // Create your run loop as a separate thread so you can return immediately
         pthread_create(&resource->tid, NULL, transceiverRunLoop, resource);
@@ -155,7 +157,13 @@ Follow these steps to get the project
         RKRadar *radar = resource->radar;
         
         // Execute commands stored in const char *command
-        if (!strcmp(command, "a") {
+        if (!strcmp(command, "disconnect")) {
+            // The exec function should response to 'disconnect' and stop the run loop
+            resource->active = false;
+            pthread_join(resource->tidRunLoop, NULL);
+            pedestal->state ^= RKEngineStateDeactivating;
+            sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
+        } else if (!strcmp(command, "a") {
             // Perform task "a"
             print("Hello World.\n");
             // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
@@ -218,6 +226,7 @@ Follow these steps to get the project
         int x;
         int y;
         int z;
+        bool active;
         
         // Recommend keeping a reference to the supplied radar
         RKRadar *radar;
@@ -231,7 +240,8 @@ Follow these steps to get the project
         UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
         
         // Be sure to save a reference to the radar
-        resource->radar = radar
+        resource->radar = radar;
+        resource->active = true;
         
         // Create your run loop as a separate thread so you can return immediately
         pthread_create(&resource->tid, NULL, pedestalRunLoop, resource);
@@ -248,24 +258,11 @@ Follow these steps to get the project
 
         // Execute commands stored in const char *command
         if (!strcmp(command, "disconnect")) {
-            // The exe function should response to 'disconnect' and stop the run loop
-            if (pedestal->state & RKEngineStateWantActive) {
-                pedestal->state ^= RKEngineStateWantActive;
-                if (radar->desc.initFlags & RKInitFlagVerbose) {
-                    RKLog("%s Disconnecting ...", pedestal->name);
-                }
-            } else {
-                if (radar->desc.initFlags & RKInitFlagVerbose) {
-                    RKLog("%s In the middle of de-activating ...", pedestal->name);
-                    return RKResultEngineDeactivatedMultipleTimes;
-                }
-            }
-            pedestal->state |= RKEngineStateDeactivating;
-            pthread_join(pedestal->tidRunLoop, NULL);
+            // The exec function should response to 'disconnect' and stop the run loop
+            resource->active = false;
+            pthread_join(resource->tidRunLoop, NULL);
             pedestal->state ^= RKEngineStateDeactivating;
-            if (response != NULL) {
-                sprintf(response, "ACK. Pedestal stopped." RKEOL);
-            }
+            sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
         } else if (!strcmp(command, "a") {
             // Perform task "a"
             print("Hello World.\n");
@@ -296,7 +293,7 @@ Follow these steps to get the project
         uint64_t tic = 0;
         
         // Here is the busy run loop
-        while (radar->active) {
+        while (resource->active) {
             RKPosition *position = RKGetVacantPosition(radar);
             
             // Copy the position from hardware interface
