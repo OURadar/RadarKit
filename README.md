@@ -247,7 +247,26 @@ Follow these steps to get the project
         RKRadar *radar = resource->radar;
 
         // Execute commands stored in const char *command
-        if (!strcmp(command, "a") {
+        if (!strcmp(command, "disconnect")) {
+            // The exe function should response to 'disconnect' and stop the run loop
+            if (pedestal->state & RKEngineStateWantActive) {
+                pedestal->state ^= RKEngineStateWantActive;
+                if (radar->desc.initFlags & RKInitFlagVerbose) {
+                    RKLog("%s Disconnecting ...", pedestal->name);
+                }
+            } else {
+                if (radar->desc.initFlags & RKInitFlagVerbose) {
+                    RKLog("%s In the middle of de-activating ...", pedestal->name);
+                    return RKResultEngineDeactivatedMultipleTimes;
+                }
+            }
+            pedestal->state |= RKEngineStateDeactivating;
+            pthread_join(pedestal->tidRunLoop, NULL);
+            pedestal->state ^= RKEngineStateDeactivating;
+            if (response != NULL) {
+                sprintf(response, "ACK. Pedestal stopped." RKEOL);
+            }
+        } else if (!strcmp(command, "a") {
             // Perform task "a"
             print("Hello World.\n");
             // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
