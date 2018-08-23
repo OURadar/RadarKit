@@ -161,7 +161,6 @@ Follow these steps to get the project
             // The exec function should response to 'disconnect' and stop the run loop
             resource->active = false;
             pthread_join(resource->tidRunLoop, NULL);
-            pedestal->state ^= RKEngineStateDeactivating;
             sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
         } else if (!strcmp(command, "a") {
             // Perform task "a"
@@ -261,7 +260,6 @@ Follow these steps to get the project
             // The exec function should response to 'disconnect' and stop the run loop
             resource->active = false;
             pthread_join(resource->tidRunLoop, NULL);
-            pedestal->state ^= RKEngineStateDeactivating;
             sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
         } else if (!strcmp(command, "a") {
             // Perform task "a"
