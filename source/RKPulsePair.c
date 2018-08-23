@@ -729,6 +729,12 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
         RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                                      // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
+        RKShowVecFloat("   ZDR = ", space->ZDR, gateShown);
+        RKShowVecFloat(" PhiDP = ", space->PhiDP, gateShown);
+        RKShowVecFloat(" RhoHV = ", space->RhoHV, gateShown);
+
+        printf(RKEOL);
+        fflush(stdout);
 
         free(X);
     }
