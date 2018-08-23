@@ -29,6 +29,8 @@
 //         - Radar name and file prefix can now be changed on the fly
 //         - Fixed a bug in statusString overrun
 //         - Nomenclature: Max -> Maximum
+//         - Finally added the conventional pulse-pair processor
+//         - Added validation tests for pulse-pair and pulse-pair for hops
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive
