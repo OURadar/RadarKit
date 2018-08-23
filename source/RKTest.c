@@ -2169,19 +2169,26 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     switch (command[0]) {
         case 'd':
             if (!strcmp(command, "disconnect")) {
-                if (radar->desc.initFlags & RKInitFlagVerbose) {
-                    RKLog("%s Disconnecting ...", transceiver->name);
+                if (transceiver->state & RKEngineStateWantActive) {
+                    transceiver->state ^= RKEngineStateWantActive;
+                    if (radar->desc.initFlags & RKInitFlagVerbose) {
+                        RKLog("%s Disconnecting ...", transceiver->name);
+                    }
+                } else {
+                    if (radar->desc.initFlags & RKInitFlagVerbose) {
+                        RKLog("%s Deactivate multiple times\n", transceiver->name);
+                    }
+                    return RKResultEngineDeactivatedMultipleTimes;
                 }
                 transceiver->state |= RKEngineStateDeactivating;
-                transceiver->state ^= RKEngineStateWantActive;
                 pthread_join(transceiver->tidRunLoop, NULL);
+                transceiver->state ^= RKEngineStateDeactivating;
                 if (response != NULL) {
                     sprintf(response, "ACK. Transceiver stopped." RKEOL);
                 }
                 if (radar->desc.initFlags & RKInitFlagVerbose) {
                     RKLog("%s Stopped.\n", transceiver->name);
                 }
-                transceiver->state = RKEngineStateAllocated;
             }
             break;
         case 'h':
@@ -2571,19 +2578,26 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     char sval[4][64];
     
     if (!strcmp(command, "disconnect")) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("%s Disconnecting ...", pedestal->name);
+        if (pedestal->state & RKEngineStateWantActive) {
+            pedestal->state ^= RKEngineStateWantActive;
+            if (radar->desc.initFlags & RKInitFlagVerbose) {
+                RKLog("%s Disconnecting ...", pedestal->name);
+            }
+        } else {
+            if (radar->desc.initFlags & RKInitFlagVerbose) {
+                RKLog("%s Deactivate multiple times\n", pedestal->name);
+            }
+            return RKResultEngineDeactivatedMultipleTimes;
         }
         pedestal->state |= RKEngineStateDeactivating;
-        pedestal->state ^= RKEngineStateWantActive;
         pthread_join(pedestal->tidRunLoop, NULL);
+        pedestal->state ^= RKEngineStateDeactivating;
         if (response != NULL) {
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", pedestal->name);
         }
-        pedestal->state = RKEngineStateAllocated;
     } else if (!strncmp(command, "state", 5)) {
         if (fabsf(pedestal->speedAzimuth) > 0.1f || fabsf(pedestal->speedElevation) > 0.1f) {
             sprintf(response, "1" RKEOL);
@@ -2748,19 +2762,26 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
     RKRadar *radar = healthRelay->radar;
 
     if (!strcmp(command, "disconnect")) {
-        if (radar->desc.initFlags & RKInitFlagVerbose) {
-            RKLog("%s Disconnecting ...", healthRelay->name);
+        if (healthRelay->state & RKEngineStateWantActive) {
+            healthRelay->state ^= RKEngineStateWantActive;
+            if (radar->desc.initFlags & RKInitFlagVerbose) {
+                RKLog("%s Disconnecting ...", healthRelay->name);
+            }
+        } else {
+            if (radar->desc.initFlags & RKInitFlagVerbose) {
+                RKLog("%s Deactivate multiple times\n", healthRelay->name);
+            }
+            return RKResultEngineDeactivatedMultipleTimes;
         }
         healthRelay->state |= RKEngineStateDeactivating;
-        healthRelay->state ^= RKEngineStateWantActive;
         pthread_join(healthRelay->tidRunLoop, NULL);
+        healthRelay->state ^= RKEngineStateDeactivating;
         if (response != NULL) {
-            sprintf(response, "ACK. Health Relay stopped." RKEOL);
+            sprintf(response, "ACK. Transceiver stopped." RKEOL);
         }
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", healthRelay->name);
         }
-        healthRelay->state = RKEngineStateAllocated;
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
