@@ -28,9 +28,15 @@
 //         - Added more comments to functions declared in RKRadar.h
 //         - Radar name and file prefix can now be changed on the fly
 //         - Fixed a bug in statusString overrun
+//         - Added ability to use custom TCP/IP port
 //         - Nomenclature: Max -> Maximum
+//         - Added waveform windowing
+//         - Radar live vs. active
 //         - Finally added the conventional pulse-pair processor
 //         - Added validation tests for pulse-pair and pulse-pair for hops
+//         - Corrected expected error in validation tests for all processors
+//         - Added SQI as part of the base moment collection
+//         - Deprecated RKConfigZCal, RKConfigZCals, etc.
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive

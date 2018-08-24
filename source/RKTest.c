@@ -1721,7 +1721,8 @@ void *RKTestTransceiverRunLoop(void *input) {
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
-    
+
+    // Show some info
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
               transceiver->name,
