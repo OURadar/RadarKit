@@ -107,6 +107,7 @@
 #define RKFFTWisdomFile                      "radarkit-fft-wisdom"
 
 #define RKNoColor                            "\033[0m"
+#define RKBaseGreenColor                     "\033[92m"
 #define RKRedColor                           "\033[38;5;196m"
 #define RKOrangeColor                        "\033[38;5;208m"
 #define RKYellowColor                        "\033[38;5;226m"
@@ -134,8 +135,8 @@
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
 #define RKShortNameLength                    20                                // Short names, e.g., C1, M2, P0, etc. (including color)
 
-#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKRedColor : (x > RKDutyCyleOrangeThreshold ? RKOrangeColor : RKGreenColor))
-#define RKColorLag(x)        (x > RKLagRedThreshold      ? RKRedColor : (x > RKLagOrangeThreshold      ? RKOrangeColor : RKGreenColor))
+#define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKRedColor : (x > RKDutyCyleOrangeThreshold ? RKOrangeColor : RKBaseGreenColor))
+#define RKColorLag(x)        (x > RKLagRedThreshold      ? RKRedColor : (x > RKLagOrangeThreshold      ? RKOrangeColor : RKBaseGreenColor))
 
 #define ITALIC(x)            "\033[3m" x "\033[23m"
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
