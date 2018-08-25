@@ -60,7 +60,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     }
     // Almost full count
     //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKStatusStringLength - RKStatusBarWidth - 10) {
+    if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
