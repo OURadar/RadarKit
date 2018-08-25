@@ -205,7 +205,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             // High: 50-MHz
             user->fs = 50000000;
             user->gateCount = 50000;
-            user->coresForPulseCompression = 4;
+            user->coresForPulseCompression = 6;
             user->coresForProductGenerator = 4;
             user->desc.pulseToRayRatio = 16;
             break;
@@ -213,7 +213,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             // Full: 100-MHz
             user->fs = 100000000;
             user->gateCount = 100000;
-            user->coresForPulseCompression = 8;
+            user->coresForPulseCompression = 10;
             user->coresForProductGenerator = 4;
             user->desc.pulseToRayRatio = 32;
             break;
@@ -221,7 +221,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             // Secret: 200-MHz
             user->fs = 200000000;
             user->gateCount = 200000;
-            user->coresForPulseCompression = 10;
+            user->coresForPulseCompression = 16;
             user->coresForProductGenerator = 4;
             user->desc.pulseToRayRatio = 64;
             break;
