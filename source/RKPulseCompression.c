@@ -40,24 +40,38 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     
     RKPulseCompressionWorker *worker;
     
+    // State: 0 - green, 1 - yellow, 2 - red
+    int s1 = -1, s0 = 0;
+    
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKStatusStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
-                      99.49f * worker->lag,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->lag > RKLagRedThreshold ? 2 : (worker->lag > RKLagOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
     }
+    
     // Put a separator
     i += snprintf(string + i, RKStatusStringLength - i, " ");
     // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 10; c++) {
+    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 5; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKStatusStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.49f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->dutyCycle > RKDutyCyleRedThreshold ? 2 : (worker->dutyCycle > RKDutyCyleOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
     }
+    if (rkGlobalParameters.showColor) {
+        i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
+    }
+
     // Almost full count
     //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
     if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
