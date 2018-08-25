@@ -56,8 +56,10 @@ int socketCommandHandler(RKOperator *O) {
         j += snprintf(user->commandResponse + j, RKMaximumPacketSize - j - 1, " %s", radar->desc.name);
     }
 
-    //int ival;
-    //float fval1, fval2;
+    struct timeval t0;
+    gettimeofday(&t0, NULL);
+    user->timeLastIn = (double)t0.tv_sec + 1.0e-6 * (double)t0.tv_usec;
+    
     char sval1[RKMaximumCommandLength];
     char sval2[RKMaximumCommandLength];
     memset(sval1, 0, sizeof(sval1));
