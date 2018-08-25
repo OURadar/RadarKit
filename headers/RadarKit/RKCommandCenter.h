@@ -16,39 +16,39 @@
 
 typedef struct rk_user {
     char                             login[64];
-    RKStream                         access;             // Authorized access priviledge
-    RKStream                         streams;
-    RKStream                         streamsToRestore;
-    RKStream                         streamsInProgress;
-    uint64_t                         tic;
-    double                           timeLastOut;
-    double                           timeLastHealthOut;
-    double                           timeLastDisplayIQOut;
-    double                           timeLastIn;
-    uint32_t                         statusIndex;
-    uint32_t                         healthIndex;
-    uint32_t                         rayStatusIndex;
-    uint32_t                         pulseIndex;
-    uint32_t                         rayIndex;
-    uint32_t                         pingCount;
-    uint32_t                         commandCount;
-    uint32_t                         controlFirstUID;
-    uint32_t                         scratchSpaceIndex;
-    RKTextPreferences                textPreferences;
-    uint16_t                         pulseDownSamplingRatio;
-    uint16_t                         rayDownSamplingRatio;
-    uint16_t                         ascopeMode;
-    uint16_t                         reserved;
-    pthread_mutex_t                  mutex;
-    char                             string[RKMaximumPacketSize];
-    char                             scratch[RKMaximumPacketSize];
-    char                             commandResponse[RKMaximumPacketSize];
-    RKInt16C                         samples[2][RKMaximumGateCount];
-    RKOperator                       *serverOperator;
-    RKRadar                          *radar;
-    uint8_t                          productCount;
-    RKProductId                      productIds[RKMaximumProductCount];
-    RKProductDesc                    productDescriptions[RKMaximumProductCount];
+    RKStream                         access;                                                       // Authorized access priviledge
+    RKStream                         streams;                                                      // Current streams
+    RKStream                         streamsToRestore;                                             // Streams to restore after reset
+    RKStream                         streamsInProgress;                                            // Streams in progress
+    uint64_t                         tic;                                                          // Counter of socketStreamHandler() calls
+    double                           timeLastOut;                                                  // Time since the last basic stream was sent
+    double                           timeLastHealthOut;                                            // Time since the last health stream was sent
+    double                           timeLastDisplayIQOut;                                         // Time since the last display I/Q was sent
+    double                           timeLastIn;                                                   // Time since the last command was received
+    uint32_t                         statusIndex;                                                  // The index to radar status
+    uint32_t                         healthIndex;                                                  // The index to health
+    uint32_t                         rayStatusIndex;                                               // The index to RKMomentEngine->raySatusBuffer
+    uint32_t                         pulseIndex;                                                   // The index to the latest pulse
+    uint32_t                         rayIndex;                                                     // The index to the latest ray
+    uint32_t                         pingCount;                                                    // Counter of ping
+    uint32_t                         commandCount;                                                 // Counter of command
+    uint32_t                         controlFirstUID;                                              // UUID of the first control
+    uint32_t                         scratchSpaceIndex;                                            // The index to the scratch space to use
+    RKTextPreferences                textPreferences;                                              // Text preference for terminal output
+    uint16_t                         pulseDownSamplingRatio;                                       // Additional down-sampling ratio for pulse live stream
+    uint16_t                         rayDownSamplingRatio;                                         // Additional down-sampling ratio for ray live stream
+    uint16_t                         ascopeMode;                                                   // The ASCope mode: 1-4
+    uint16_t                         reserved;                                                     //
+    pthread_mutex_t                  mutex;                                                        //
+    char                             string[RKMaximumPacketSize];                                  // A local storage to buffer a packet
+    char                             scratch[RKMaximumPacketSize];                                 // A local storage as scratch space
+    char                             commandResponse[RKMaximumPacketSize];                         // A local storage as feedback
+    RKInt16C                         samples[2][RKMaximumGateCount];                               // A local storage for raw I/Q for AScope
+    RKOperator                       *serverOperator;                                              // The reference to the socket server operator
+    RKRadar                          *radar;                                                       // The reference to the radar object
+    uint8_t                          productCount;                                                 // Product count from PyRadarKit
+    RKProductId                      productIds[RKMaximumProductCount];                            // Product identifiers for active algorithms of PyRadarKit
+    RKProductDesc                    productDescriptions[RKMaximumProductCount];                   // Product descriptions for active algorithms of PyRadarKit
 } RKUser;
 
 typedef struct rk_command_center {
@@ -63,6 +63,9 @@ typedef struct rk_command_center {
     RKServer                         *server;
     int                              radarCount;
     RKUser                           users[RKCommandCenterMaxConnections];
+    pthread_mutex_t                  mutex;
+    
+    // Status / health
     size_t                           memoryUsage;
 } RKCommandCenter;
 
