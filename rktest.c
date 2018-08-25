@@ -213,7 +213,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             // Full: 100-MHz
             user->fs = 100000000;
             user->gateCount = 100000;
-            user->coresForPulseCompression = 10;
+            user->coresForPulseCompression = 9;
             user->coresForProductGenerator = 4;
             user->desc.pulseToRayRatio = 32;
             break;
