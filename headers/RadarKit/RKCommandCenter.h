@@ -63,6 +63,9 @@ typedef struct rk_command_center {
     RKServer                         *server;
     int                              radarCount;
     RKUser                           users[RKCommandCenterMaxConnections];
+    pthread_mutex_t                  mutex;
+    
+    // Status / health
     size_t                           memoryUsage;
 } RKCommandCenter;
 

@@ -734,8 +734,10 @@ enum RKStream {
     RKStreamSweepK                               = (1ULL << 54),               //
     RKStreamSweepSh                              = (1ULL << 55),               //
     RKStreamSweepSv                              = (1ULL << 56),               //
+    RKStreamSweepQ                               = (1ULL << 57),               //
     RKStreamSweepZVWDPRKS                        = 0x01FF000000000000ULL,      //
-    RKStreamEverything                           = 0x01FF01FF01FFFFFFULL,      // (Don't use this)
+    RKStreamSweepAll                             = 0x03FF000000000000ULL,      //
+    RKStreamAlmostEverything                     = 0x03FF03FF03FFF000ULL,      // Don't use this.
     RKStreamStatusTerminalChange                 = 0x0300000000000000ULL       // Change terminal size
 };
 

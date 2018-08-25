@@ -1182,18 +1182,23 @@ int socketStreamHandler(RKOperator *O) {
 
 int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
-    RKUser *user = &engine->users[O->iid];
     
     if (engine->radarCount == 0) {
         RKLog("%s No radar yet.\n", engine->name);
         return RKResultNoRadar;
     }
+
+    pthread_mutex_lock(&engine->mutex);
     
+    RKUser *user = &engine->users[O->iid];
+    if (user->streams != RKStreamNull) {
+        RKLog("%s %s Warning. Unexpected user state.   user->streams = %x", engine->name, O->name, user->streams);
+    }
     memset(user, 0, sizeof(RKUser));
     user->access = RKStreamStatusAll;
     user->access |= RKStreamDisplayAll;
     user->access |= RKStreamProductAll;
-    user->access |= RKStreamSweepZVWDPRKS;
+    user->access |= RKStreamSweepAll;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
     user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x80;
     user->radar = engine->radars[0];
@@ -1207,11 +1212,13 @@ int socketInitialHandler(RKOperator *O) {
     pthread_mutex_init(&user->mutex, NULL);
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
-    RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d ...\n", engine->name, O->name,
-          user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row);
+    RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d   Iid = %d...\n", engine->name, O->name,
+          user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row, O->iid);
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
-
+    
+    pthread_mutex_unlock(&engine->mutex);
+    
     return RKResultSuccess;
 }
 
@@ -1249,6 +1256,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
     engine->verbose = 3;
     engine->memoryUsage = sizeof(RKCommandCenter);
     engine->server = RKServerInit();
+    pthread_mutex_init(&engine->mutex, NULL);
     RKServerSetName(engine->server, engine->name);
     RKServerSetWelcomeHandler(engine->server, &socketInitialHandler);
     RKServerSetCommandHandler(engine->server, &socketCommandHandler);
@@ -1259,6 +1267,7 @@ RKCommandCenter *RKCommandCenterInit(void) {
 }
 
 void RKCommandCenterFree(RKCommandCenter *engine) {
+    pthread_mutex_destroy(&engine->mutex);
     RKServerFree(engine->server);
     free(engine);
     return;
