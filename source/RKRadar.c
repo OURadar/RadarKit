@@ -68,7 +68,7 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
         radar->desc.productBufferSize += radar->products[k].totalBufferSize;
     }
     size += radar->desc.productBufferSize;
-    //
+    // Memory usage of various internal engines
     size += radar->fileManager->memoryUsage;
     size += radar->hostMonitor->memoryUsage;
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
