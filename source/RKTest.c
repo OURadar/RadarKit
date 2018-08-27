@@ -1826,6 +1826,8 @@ void *RKTestTransceiverRunLoop(void *input) {
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
 
+    RKLog("%s %s\n", transceiver->name, RKVariableInString("gateCount", &transceiver->gateCount, RKValueTypeInt));
+
     // g gate index
     // j sample index
     // k pseudo-random sequence to choose the pre-defined random numbers
@@ -1848,6 +1850,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                 waveform = transceiver->waveformCache[transceiver->waveformCacheIndex];
                 w = 0;
             }
+
+            // Go through both polarizations
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
                 // Some random pattern for testing
@@ -1864,7 +1868,8 @@ void *RKTestTransceiverRunLoop(void *input) {
                 }
                 // Phase as a function of time (tic) wrapped into [-PI, PI]
                 phi = fmod((double)(tic & 0xFFFF) / 655.36 * M_PI + M_PI, 2.0 * M_PI) - M_PI;
-                for (; g < transceiver->gateCount; g++) {
+                //for (; g < transceiver->gateCount; g++) {
+                for (; g < MIN(50000, transceiver->gateCount); g++) {
                     // sinf() and cosf() run faster with angle within 0 and 2 PI
                     phi += dphi;
                     if (phi < -3.14159265f) {
@@ -1886,6 +1891,13 @@ void *RKTestTransceiverRunLoop(void *input) {
                     X->i = (int16_t)(ra[g] * cosv + noise);
                     X->q = (int16_t)(ra[g] * sinv + noise);
 
+                    k = RKNextModuloS(k, transceiver->gateCount);
+                    X++;
+                }
+                for (; g < transceiver->gateCount; g++) {
+                    noise = rn[k];
+                    X->i = noise;
+                    X->q = noise;
                     k = RKNextModuloS(k, transceiver->gateCount);
                     X++;
                 }
