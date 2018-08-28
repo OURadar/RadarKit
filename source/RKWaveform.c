@@ -485,7 +485,7 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
     pw = 1.0e6 * waveform->depth / waveform->fs;
     if (pw < 1.0) {
         sprintf(waveform->name + k, ".%.0f", round(10.0 * pw));
-    } else if (pw >= 1.05) {
+    } else if (pw >= 1.0) {
         sprintf(waveform->name + k, "%02.0f", pw);
     }
 
