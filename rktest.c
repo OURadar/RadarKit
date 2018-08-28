@@ -215,7 +215,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 100000;
             user->coresForPulseCompression = 12;
             user->coresForProductGenerator = 4;
-            user->desc.pulseToRayRatio = 32;
+            user->desc.pulseToRayRatio = 16;
             break;
         case 6:
             // Secret: 200-MHz
@@ -223,7 +223,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->gateCount = 200000;
             user->coresForPulseCompression = 22;
             user->coresForProductGenerator = 4;
-            user->desc.pulseToRayRatio = 32;
+            user->desc.pulseToRayRatio = 16;
             user->prf = 500;
             break;
         default:
@@ -877,8 +877,8 @@ int main(int argc, const char **argv) {
         usleep(100000);
 
         RKLog("Setting a waveform ...\n");
-        RKExecuteCommand(myRadar, "t w x", NULL);
-        //RKExecuteCommand(myRadar, "t w s01", NULL);
+        //RKExecuteCommand(myRadar, "t w x", NULL);
+        RKExecuteCommand(myRadar, "t w s01", NULL);
         //RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);

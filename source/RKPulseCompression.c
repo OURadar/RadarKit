@@ -33,10 +33,11 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     string[i] = 'C';
     
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "");
+                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    engine->coreCount > 8 ? " " : "");
     
     RKPulseCompressionWorker *worker;
     
@@ -52,7 +53,11 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
         }
-        i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
+        if (engine->coreCount > 8) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->lag);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
+        }
     }
     
     // Put a separator
@@ -66,14 +71,18 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
         }
-        i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
+        if (engine->coreCount > 8) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->dutyCycle);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
+        }
     }
     if (rkGlobalParameters.showColor) {
         i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
     }
 
     // Almost full count
-    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
     if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }
