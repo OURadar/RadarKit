@@ -217,7 +217,7 @@ int RKSetHealthRelay(RKRadar *,
 #pragma mark - Before-Live Properties
 
 // These can only be set before the radar goes live
-int RKSetProcessingCoreCounts(RKRadar *, const unsigned int, const unsigned int);
+int RKSetProcessingCoreCounts(RKRadar *, const uint8_t, const uint8_t, const uint8_t);
 
 #pragma mark - Properties
 

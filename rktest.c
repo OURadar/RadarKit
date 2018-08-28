@@ -25,7 +25,8 @@ typedef struct user_params {
     uint8_t                  verbose;                                            // Verbosity
     int                      port;                                               // Server port other than the default 10000
     int                      coresForPulseCompression;                           // Number of cores for pulse compression
-    int                      coresForProductGenerator;                           // Number of cores for moment calculations
+    int                      coresForPulseRingFilter;                            // Number of cores for pulse ring filter
+    int                      coresForMomentProcessor;                            // Number of cores for moment calculations
     float                    fs;                                                 // Raw gate sampling bandwidth
     float                    prf;                                                // Base PRF (Hz)
     int                      sprt;                                               // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
@@ -171,7 +172,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 5000000;
             user->gateCount = 150;
             user->coresForPulseCompression = 2;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 1;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseBufferDepth = 50;
             user->desc.rayBufferDepth = 50;
             user->desc.pulseToRayRatio = 2;
@@ -182,7 +184,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 5000000;
             user->gateCount = 2000;
             user->coresForPulseCompression = 2;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 2;
             break;
         case 2:
@@ -190,7 +193,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 10000000;
             user->gateCount = 10000;
             user->coresForPulseCompression = 2;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 4;
             break;
         case 3:
@@ -198,7 +202,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 20000000;
             user->gateCount = 20000;
             user->coresForPulseCompression = 4;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 8;
             break;
         case 4:
@@ -206,7 +211,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 50000000;
             user->gateCount = 50000;
             user->coresForPulseCompression = 6;
-            user->coresForProductGenerator = 4;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 4;
             user->desc.pulseToRayRatio = 16;
             break;
         case 5:
@@ -214,7 +220,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 100000000;
             user->gateCount = 100000;
             user->coresForPulseCompression = 12;
-            user->coresForProductGenerator = 4;
+            user->coresForPulseRingFilter = 3;
+            user->coresForMomentProcessor = 4;
             user->desc.pulseToRayRatio = 16;
             break;
         case 6:
@@ -222,7 +229,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 200000000;
             user->gateCount = 200000;
             user->coresForPulseCompression = 22;
-            user->coresForProductGenerator = 4;
+            user->coresForPulseRingFilter = 3;
+            user->coresForMomentProcessor = 4;
             user->desc.pulseToRayRatio = 16;
             user->prf = 500;
             break;
@@ -467,7 +475,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->fs = roundf(atof(optarg));
                 break;
             case 'c':
-                sscanf(optarg, "%d,%d", &user->coresForPulseCompression, &user->coresForProductGenerator);
+                sscanf(optarg, "%d,%d,%d",
+                       &user->coresForPulseCompression,
+                       &user->coresForPulseRingFilter,
+                       &user->coresForMomentProcessor);
                 break;
             case 'd':
                 user->desc.pulseToRayRatio = atoi(optarg);
@@ -648,7 +659,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     
     // Some parameters before the radar is live
     if (!myRadar->active) {
-        RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
+        RKSetProcessingCoreCounts(myRadar,
+                                  systemPreferences->coresForPulseCompression,
+                                  systemPreferences->coresForPulseRingFilter,
+                                  systemPreferences->coresForMomentProcessor);
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");

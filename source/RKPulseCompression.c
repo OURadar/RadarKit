@@ -22,25 +22,26 @@ static void *pulseWatcher(void *);
 static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
-    
+    const bool useCompact = engine->coreCount >= 4;
+
     // Always terminate the end of string buffer
     string[RKStatusStringLength - 1] = '\0';
     string[RKStatusStringLength - 2] = '#';
-    
+
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'C';
-    
+
     // Engine lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
                                     rkGlobalParameters.showColor ? RKNoColor : "",
-                                    engine->coreCount > 8 ? " " : "");
+                                    useCompact ? " " : "");
     
     RKPulseCompressionWorker *worker;
-    
+
     // State: 0 - green, 1 - yellow, 2 - red
     int s1 = -1, s0 = 0;
     
@@ -53,13 +54,13 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
         }
-        if (engine->coreCount > 8) {
+        if (useCompact) {
             i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->lag);
         } else {
             i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
         }
     }
-    
+
     // Put a separator
     i += snprintf(string + i, RKStatusStringLength - i, " ");
     // Duty cycle of each core
@@ -71,7 +72,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
         }
-        if (engine->coreCount > 8) {
+        if (useCompact) {
             i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->dutyCycle);
         } else {
             i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);

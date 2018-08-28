@@ -1154,8 +1154,9 @@ int RKSetHealthRelay(RKRadar *radar,
 #pragma mark - Before-Live Properties
 
 int RKSetProcessingCoreCounts(RKRadar *radar,
-                              const unsigned int pulseCompressionCoreCount,
-                              const unsigned int momentProcessorCoreCount) {
+                              const uint8_t pulseCompressionCoreCount,
+                              const uint8_t pulseRingFilterCoreCount,
+                              const uint8_t momentProcessorCoreCount) {
     if (radar->pulseCompressionEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
@@ -1163,6 +1164,7 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
         return RKResultUnableToChangeCoreCounts;
     }
     RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
+    RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, pulseRingFilterCoreCount);
     RKMomentEngineSetCoreCount(radar->momentEngine, momentProcessorCoreCount);
     return RKResultSuccess;
 }
