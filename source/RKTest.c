@@ -1271,7 +1271,7 @@ void RKTestPulseCompression(RKTestFlag flag) {
     RKIQZ Z;
 
     RKRadar *radar = RKInitLean();
-    RKSetProcessingCoreCounts(radar, 2, 1);
+    RKSetProcessingCoreCounts(radar, 2, 1, 1);
 
     // Increases verbosity if set
     if (flag & RKTestFlagVerbose) {
