@@ -232,7 +232,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForPulseRingFilter = 3;
             user->coresForMomentProcessor = 4;
             user->desc.pulseToRayRatio = 16;
-            user->prf = 500;
+            user->prf = 600;
             break;
         default:
             // Default
