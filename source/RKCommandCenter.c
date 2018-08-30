@@ -366,6 +366,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
+            user->ticForStatusStream++;
         } else if (k == RKStreamStatusPulses) {
             // Stream "1" - Pulses
             k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
@@ -374,6 +375,7 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
+            user->ticForStatusStream++;
         } else if (k == RKStreamStatusRays) {
             // Stream "2" - Rays (no skipping)
             j = 0;
@@ -392,6 +394,7 @@ int socketStreamHandler(RKOperator *O) {
                 O->delimTx.size = k + 1;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
                 user->timeLastOut = time;
+                user->ticForStatusStream++;
             }
         } else if (k == RKStreamStatusIngest) {
             // Stream "3" - Overall status
@@ -405,42 +408,41 @@ int socketStreamHandler(RKOperator *O) {
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
+            user->ticForStatusStream++;
         } else if (k == RKStreamStatusEngines) {
-            if (user->textPreferences & RKTextPreferencesShowColor) {
-                k = snprintf(user->string, RKMaximumStringLength - 1, "%s%04x/%04d  %s%04x/%05d  %s%04x/%04d  %s%04x/%02d  %s%04x  %s%04x " RKEOL,
+            if (user->ticForStatusStream % 20 == 0) {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%9s  %9s  %9s  %9s  %9s  %9s\n",
                              user->radar->positionEngine->name,
-                             user->radar->positionEngine->state & 0xFFFF,
-                             user->radar->positionIndex,
                              user->radar->pulseCompressionEngine->name,
-                             user->radar->pulseCompressionEngine->state & 0xFFFF,
-                             user->radar->pulseIndex,
                              user->radar->momentEngine->name,
-                             user->radar->momentEngine->state & 0xFFFF,
-                             user->radar->rayIndex,
                              user->radar->healthEngine->name,
-                             user->radar->healthEngine->state & 0xFFFF,
-                             user->radar->healthIndex,
                              user->radar->sweepEngine->name,
-                             user->radar->sweepEngine->state & 0xFFFF,
-                             user->radar->rawDataRecorder->name,
-                             user->radar->rawDataRecorder->state & 0xFFFF);
+                             user->radar->rawDataRecorder->name);
             } else {
-                k = snprintf(user->string, RKMaximumStringLength - 1, "Pos:%04x/%04d  Pul:%04x/%05d  Mom:%04x/%04d  Hea:%04x/%02d  Swe:%04x  Rec:%04x " RKEOL,
-                             user->radar->positionEngine->state & 0xFFFF,
-                             user->radar->positionIndex,
-                             user->radar->pulseCompressionEngine->state & 0xFFFF,
-                             user->radar->pulseIndex,
-                             user->radar->momentEngine->state & 0xFFFF,
-                             user->radar->rayIndex,
-                             user->radar->healthEngine->state & 0xFFFF,
-                             user->radar->healthIndex,
-                             user->radar->sweepEngine->state & 0xFFFF,
-                             user->radar->rawDataRecorder->state & 0xFFFF);
+                k = 0;
             }
+            k += snprintf(user->string + k, RKMaximumStringLength - k - 1, 
+                "%08x / %04d    "
+                "%08x / %05d   "
+                "%08x / %04d    "
+                "%08x / %02d      "
+                "%08x           "
+                "%08x           " RKEOL,
+                         user->radar->positionEngine->state & 0xFFFFFFFF,
+                         user->radar->positionIndex,
+                         user->radar->pulseCompressionEngine->state & 0xFFFFFFFF,
+                         user->radar->pulseIndex,
+                         user->radar->momentEngine->state & 0xFFFFFFFF,
+                         user->radar->rayIndex,
+                         user->radar->healthEngine->state & 0xFFFFFFFF,
+                         user->radar->healthIndex,
+                         user->radar->sweepEngine->state & 0xFFFFFFFF,
+                         user->radar->rawDataRecorder->state & 0xFFFFFFFF);
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
+            user->ticForStatusStream++;
         } else if (k == RKStreamStatusBuffers) {
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamStatusBuffers) {
                 user->streamsInProgress |= RKStreamStatusBuffers;
@@ -456,6 +458,7 @@ int socketStreamHandler(RKOperator *O) {
             }
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
             user->timeLastOut = time;
+            user->ticForStatusStream++;
         }
 
         // Send another set of controls if the radar controls have changed.
@@ -1394,3 +1397,4 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         }
     }
 }
+

@@ -21,6 +21,7 @@ typedef struct rk_user {
     RKStream                         streamsToRestore;                                             // Streams to restore after reset
     RKStream                         streamsInProgress;                                            // Streams in progress
     uint64_t                         tic;                                                          // Counter of socketStreamHandler() calls
+    uint64_t                         ticForStatusStream;                                           // Counter of socketStreamHandler() for status streams
     double                           timeLastOut;                                                  // Time since the last basic stream was sent
     double                           timeLastHealthOut;                                            // Time since the last health stream was sent
     double                           timeLastDisplayIQOut;                                         // Time since the last display I/Q was sent
