@@ -409,7 +409,7 @@ static void *pulseRingWatcher(void *_in) {
     }
     
     RKConfig *config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
-    uint32_t gateCount = config->pulseRingFilterGateCount;
+    uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->pulseRingFilterGateCount);
     
     RKPulse *pulse;
     RKPulse *pulseToSkip;
@@ -427,7 +427,7 @@ static void *pulseRingWatcher(void *_in) {
     
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
-    uint32_t paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
+    uint32_t paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize / sizeof(RKFloat));
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
     if (engine->verbose > 2) {
@@ -747,6 +747,7 @@ int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilte
     return RKResultSuccess;
 }
 
+#pragma mark - Interactions
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

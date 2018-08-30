@@ -671,7 +671,9 @@ static void *pulseGatherer(void *_in) {
         if (engine->processor == &RKMultiLag) {
             RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
         } else if (engine->processor == &RKPulsePairHop) {
-            RKLog(">%s Method = RKPulsePairHop()\n", engine->name);
+            RKLog(">%s Method = RKPulsePairHop\n", engine->name);
+        } else if (engine->processor == &RKPulsePair) {
+            RKLog(">%s Method = RKPulsePair\n", engine->name);
         } else if (engine->processor == &nullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
@@ -874,6 +876,7 @@ static void *pulseGatherer(void *_in) {
     }
 
     engine->state ^= RKEngineStateActive;
+    RKLog("%s pulseGatherer returning ...\n", engine->name);
     return NULL;
 }
 
@@ -968,6 +971,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
         RKLog("Error. RKMomentEngine->workers should be NULL here.\n");
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
+    engine->memoryUsage += engine->coreCount * sizeof(RKMomentWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
@@ -997,8 +1001,10 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
     if (engine->tidPulseGatherer) {
+        RKLog("%s Waiting ...\n", engine->name);
         pthread_join(engine->tidPulseGatherer, NULL);
 		engine->tidPulseGatherer = (pthread_t)0;
+        RKLog("%s Pulse gatherer joined.\n", engine->name);
         free(engine->workers);
         engine->workers = NULL;
 	} else {
