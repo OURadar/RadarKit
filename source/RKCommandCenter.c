@@ -411,12 +411,16 @@ int socketStreamHandler(RKOperator *O) {
             user->ticForStatusStream++;
         } else if (k == RKStreamStatusEngines) {
             if (user->ticForStatusStream % 20 == 0) {
-                k = snprintf(user->string, RKMaximumStringLength - 1, "%9s  %9s  %9s  %9s  %9s  %9s\n",
-                             user->radar->positionEngine->name,
-                             user->radar->pulseCompressionEngine->name,
-                             user->radar->momentEngine->name,
-                             user->radar->healthEngine->name,
-                             user->radar->sweepEngine->name,
+                char spacer[64];
+                sprintf(spacer, "%s  %s",
+                        rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(15) : "",
+                        rkGlobalParameters.showColor ? RKNoColor : "");
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%9s%s%9s%s%9s%s%9s%s%9s%s%9s\n",
+                             user->radar->positionEngine->name, spacer,
+                             user->radar->pulseCompressionEngine->name, spacer,
+                             user->radar->momentEngine->name, spacer,
+                             user->radar->healthEngine->name, spacer,
+                             user->radar->sweepEngine->name, spacer,
                              user->radar->rawDataRecorder->name);
             } else {
                 k = 0;
