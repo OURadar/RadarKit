@@ -914,8 +914,7 @@ int main(int argc, const char **argv) {
             RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
         }
 
-        //RKWaitWhileActive(myRadar);
-        sleep(2);
+        RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);
 

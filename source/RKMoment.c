@@ -151,7 +151,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
     float SNR;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     // Masking based on SNR
-    for (k = 0; k < gateCount; k++) {
+    for (k = 0; k < MIN(space->capacity, gateCount); k++) {
         SNR = *Si / space->noise[0];
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
         *To++ = 10.0f * log10f(*Ti++);
@@ -347,6 +347,8 @@ static void *momentCore(void *in) {
     RKConfig *config;
     RKScratch *space;
 
+    RKLog("%s %s lagCount = %d\n", engine->name, me->name, engine->processorLagCount);
+    
     // Allocate local resources and keep track of the total allocation
     pulse = RKGetPulse(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
@@ -611,7 +613,7 @@ static void *momentCore(void *in) {
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
 
-       // Update processed index
+        // Update processed index
         me->pid = ie;
         me->lag = fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
@@ -864,7 +866,7 @@ static void *pulseGatherer(void *_in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
-
+    
     // Wait for workers to return
     for (c = 0; c < engine->coreCount; c++) {
         RKMomentWorker *worker = &engine->workers[c];
@@ -876,7 +878,6 @@ static void *pulseGatherer(void *_in) {
     }
 
     engine->state ^= RKEngineStateActive;
-    RKLog("%s pulseGatherer returning ...\n", engine->name);
     return NULL;
 }
 
@@ -1001,10 +1002,8 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
     if (engine->tidPulseGatherer) {
-        RKLog("%s Waiting ...\n", engine->name);
         pthread_join(engine->tidPulseGatherer, NULL);
 		engine->tidPulseGatherer = (pthread_t)0;
-        RKLog("%s Pulse gatherer joined.\n", engine->name);
         free(engine->workers);
         engine->workers = NULL;
 	} else {

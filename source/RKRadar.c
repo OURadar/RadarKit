@@ -670,7 +670,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Ray (moment) and product buffers
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
-        k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
+        k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) * sizeof(RKFloat) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
         if (bytes == 0 || radar->rays == NULL) {
             RKLog("Error. Unable to allocate memory for rays.\n");
@@ -1457,10 +1457,10 @@ int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
         return RKResultNoMomentEngine;
     }
     radar->momentEngine->processor = &RKPulsePair;
+    radar->momentEngine->processorLagCount = 3;
     RKLog("Moment processor set to %sPulse Pair%s",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
-    radar->momentEngine->processorLagCount = 3;
     return RKResultSuccess;
 }
 

@@ -160,7 +160,6 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 
     // Get the start pulse to know the capacity
     RKPulse *pulse = pulses[0];
-    const uint32_t capacity = pulse->header.capacity;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
@@ -194,11 +193,11 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     for (p = 0; p < 2; p++) {
 
         // Initializes the storage
-        RKZeroOutIQZ(&space->mX[p], capacity);
-        RKZeroOutIQZ(&space->vX[p], capacity);
-        RKZeroOutIQZ(&space->R[p][0], capacity);
-        RKZeroOutIQZ(&space->R[p][1], capacity);
-        RKZeroOutIQZ(&space->R[p][2], capacity);
+        RKZeroOutIQZ(&space->mX[p], space->capacity);
+        RKZeroOutIQZ(&space->vX[p], space->capacity);
+        RKZeroOutIQZ(&space->R[p][0], space->capacity);
+        RKZeroOutIQZ(&space->R[p][1], space->capacity);
+        RKZeroOutIQZ(&space->R[p][2], space->capacity);
 
         // The first samples
         Xn = RKGetSplitComplexDataFromPulse(pulses[0], p);
@@ -380,9 +379,9 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             r0a++;
         }
     }
-
+    
     // Cross-channel
-    RKZeroOutIQZ(&space->C[0], capacity);
+    RKZeroOutIQZ(&space->C[0], space->capacity);
 
     //
     //  CCF
@@ -489,7 +488,6 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     }
 
     return count;
-
 }
 
 int RKPulsePairStaggeredPRT(RKScratch *space, RKPulse **pulses, const uint16_t count) {
@@ -740,5 +738,4 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     }
 
     return count;
-
 }
