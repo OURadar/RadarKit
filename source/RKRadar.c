@@ -2722,7 +2722,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
     const char m3 = 'o';  const char c3[] = RKBlueColor;
     const char m4 = '-';  const char c4[] = RKBlueColor;
     
-    int w = (int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1;
+    int w = MAX(4, (int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1);
 
     static struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
     

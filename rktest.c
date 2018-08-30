@@ -174,8 +174,9 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForPulseCompression = 2;
             user->coresForPulseRingFilter = 1;
             user->coresForMomentProcessor = 2;
-            user->desc.pulseBufferDepth = 50;
-            user->desc.rayBufferDepth = 50;
+            user->desc.positionBufferDepth = 100;
+            user->desc.pulseBufferDepth = 100;
+            user->desc.rayBufferDepth = 400;
             user->desc.pulseToRayRatio = 1;
             user->prf = 10;
             sprintf(user->momentMethod, "PulsePair");
