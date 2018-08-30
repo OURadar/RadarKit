@@ -406,6 +406,8 @@ static void *pulseCompressionCore(void *_in) {
                 }
             }
             pulse->header.downSampledGateCount = pulse->header.gateCount / stride;
+        } else {
+            pulse->header.downSampledGateCount = pulse->header.gateCount;
         }
         pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
 

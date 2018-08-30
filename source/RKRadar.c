@@ -320,10 +320,10 @@ static void *systemInspectorRunLoop(void *in) {
             }
 
             for (int i = 0; i < radar->desc.rayBufferDepth; i++) {
-                if (radar->momentEngine->momentSource[i].origin > radar->desc.pulseBufferDepth ||
+                if (radar->momentEngine->momentSource[i].origin >= radar->desc.pulseBufferDepth ||
                     radar->momentEngine->momentSource[i].length > radar->desc.pulseBufferDepth ||
                     radar->momentEngine->momentSource[i].modulo > radar->desc.pulseBufferDepth) {
-                    printf("--> momentSource[%d] = %d / %d / %d (%d)\n", i,
+                    printf("Overflow: --> momentSource[%d] = %d / %d / %d (%d)\n", i,
                            radar->momentEngine->momentSource[i].origin, radar->momentEngine->momentSource[i].length, radar->momentEngine->momentSource[i].modulo, radar->desc.pulseBufferDepth);
                 }
             }
@@ -1457,10 +1457,10 @@ int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
         return RKResultNoMomentEngine;
     }
     radar->momentEngine->processor = &RKPulsePair;
-    radar->momentEngine->processorLagCount = 3;
-    RKLog("Warning. Moment processor set to %sPulse Pair (Not Implemented)%s\n",
+    RKLog("Moment processor set to %sPulse Pair%s",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
+    radar->momentEngine->processorLagCount = 3;
     return RKResultSuccess;
 }
 

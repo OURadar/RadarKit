@@ -169,15 +169,16 @@ static void setSystemLevel(UserParams *user, const int level) {
     switch (level) {
         case 0:
             // Debug
-            user->fs = 5000000;
+            user->fs = 2000000;
             user->gateCount = 150;
             user->coresForPulseCompression = 2;
             user->coresForPulseRingFilter = 1;
             user->coresForMomentProcessor = 2;
             user->desc.pulseBufferDepth = 50;
             user->desc.rayBufferDepth = 50;
-            user->desc.pulseToRayRatio = 2;
+            user->desc.pulseToRayRatio = 1;
             user->prf = 10;
+            sprintf(user->momentMethod, "PulsePair");
             break;
         case 1:
             // Minimum: 5-MHz
@@ -692,8 +693,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
         int lagChoice = atoi(systemPreferences->momentMethod + 8);
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
-    } else {
+    } else if (!strncasecmp(systemPreferences->momentMethod, "pulsepairhop", 12)) {
         RKSetMomentProcessorToPulsePairHop(myRadar);
+    } else {
+        RKSetMomentProcessorToPulsePair(myRadar);
     }
 
     // Always refresh the controls
@@ -902,8 +905,13 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ...\n");
-        //RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
-        RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
+        if (systemPreferences->prf <= 20.0f) {
+            RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
+        } else if (systemPreferences->prf <= 100.0f) {
+            RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
+        } else {
+            RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
+        }
 
         RKWaitWhileActive(myRadar);
     
