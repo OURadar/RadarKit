@@ -887,14 +887,8 @@ int main(int argc, const char **argv) {
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", "tar.xz");
         
-        // Radar going live, then wait indefinitely until something happens
+        // Radar going live
         RKGoLive(myRadar);
-
-        usleep(10000);
-
-        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
-
-        usleep(10000);
 
         RKLog("Setting a waveform ...\n");
         //RKExecuteCommand(myRadar, "t w x", NULL);
@@ -916,6 +910,9 @@ int main(int argc, const char **argv) {
             RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
         }
 
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
+
+        // Wait indefinitely until something happens through a user command through the command center
         RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);

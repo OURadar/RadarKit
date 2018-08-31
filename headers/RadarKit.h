@@ -19,7 +19,7 @@
 //           - Mapping coefficients to product files
 //
 //
-//  2.0.1  - 8/xx/2018
+//  2.0.1  - 8/31/2018
 //         - RKBufferOverview upgraded to show health buffers
 //         - RKBufferOverview upgraded to show position buffers
 //         - RKBufferOverview now supports 80 x 25 terminal size
@@ -37,6 +37,7 @@
 //         - Corrected expected error in validation tests for all processors
 //         - Added SQI as part of the base moment collection
 //         - Deprecated RKConfigZCal, RKConfigZCals, etc.
+//         - Many general improvements and bug fixes
 //
 //  2.0    - 7/30/2018
 //         - RKEngineStateActive and RKEngineStateWantActive
