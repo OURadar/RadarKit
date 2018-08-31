@@ -1154,17 +1154,23 @@ void RKTestHilbertTransform(void) {
 void RKTestWriteFFTWisdom(void) {
     SHOW_FUNCTION_NAME
     fftwf_plan plan;
-    fftwf_complex *in;
+    fftwf_complex *in, *out;
     int nfft = 1 << (int)ceilf(log2f((float)RKMaximumGateCount));
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
+    out = fftwf_malloc(nfft * sizeof(fftwf_complex));
     RKLog("Generating FFT wisdom ...\n");
     while (nfft > 2) {
         RKLog("NFFT %s\n", RKIntegerToCommaStyleString(nfft));
         plan = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
         fftwf_destroy_plan(plan);
+        plan = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
+        fftwf_destroy_plan(plan);
+        plan = fftwf_plan_dft_1d(nfft, out, out, FFTW_BACKWARD, FFTW_MEASURE);
+        fftwf_destroy_plan(plan);
         nfft >>= 1;
     }
     fftwf_free(in);
+    fftwf_free(out);
     RKLog("Exporting FFT wisdom ...\n");
     fftwf_export_wisdom_to_filename(RKFFTWisdomFile);
     RKLog("Done.\n");
