@@ -890,9 +890,11 @@ int main(int argc, const char **argv) {
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
 
+        usleep(10000);
+
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
-        
-        usleep(100000);
+
+        usleep(10000);
 
         RKLog("Setting a waveform ...\n");
         //RKExecuteCommand(myRadar, "t w x", NULL);

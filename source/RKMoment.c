@@ -346,8 +346,6 @@ static void *momentCore(void *in) {
     RKPulse *pulse;
     RKConfig *config;
     RKScratch *space;
-
-    RKLog("%s %s lagCount = %d\n", engine->name, me->name, engine->processorLagCount);
     
     // Allocate local resources and keep track of the total allocation
     pulse = RKGetPulse(engine->pulseBuffer, 0);
@@ -399,8 +397,8 @@ static void *momentCore(void *in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
-          engine->name, me->name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
+    RKLog(">%s %s Started.   mem = %s B   lagCount = %d   i0 = %s   ci = %d\n",
+          engine->name, me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 

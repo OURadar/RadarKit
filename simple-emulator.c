@@ -78,6 +78,8 @@ int main(int argc, const char * argv[]) {
     RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
     RKWaitWhileActive(myRadar);
 
+    RKCommandCenterFree(center);
+
     RKFree(myRadar);
 
     return EXIT_SUCCESS;

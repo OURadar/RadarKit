@@ -1821,12 +1821,9 @@ void *RKTestTransceiverRunLoop(void *input) {
 
     RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
 
-    //RKLog("prt = %.4f s\n", transceiver->prt);
-    
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
 
-    RKLog("%s %s\n", transceiver->name, RKVariableInString("gateCount", &transceiver->gateCount, RKValueTypeInt));
 
     // g gate index
     // j sample index
