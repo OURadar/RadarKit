@@ -158,7 +158,7 @@ static void showHelp() {
            "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
            "\n"
-           "    -T 50\n"
+           "    -T50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
            "rktest (RadarKit " RKVersionString ")\n\n",
