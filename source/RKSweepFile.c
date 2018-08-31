@@ -66,9 +66,9 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
 
     b++;
     firstPartLength = (uint32_t)(b - inputFile);
-    char symbol[8];
-    memset(symbol, 0, 8);
-    strncpy(symbol, b, MIN(8, e - b));
+    char symbol[RKMaximumSymbolLength];
+    memset(symbol, 0, RKMaximumSymbolLength);
+    strncpy(symbol, b, MIN(RKMaximumSymbolLength, e - b));
     // Substitute symbol with the ones I know
     char symbols[][RKNameLength] = {"Z", "V", "W", "D", "P", "R", "K"};
     RKName productNames[] = {
@@ -137,9 +137,9 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 return NULL;
             }
 
-            if (gateCount > RKGateCount) {
-                RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKGateCount);
-                gateCount = RKGateCount;
+            if (gateCount > RKMaximumGateCount) {
+                RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKMaximumGateCount);
+                gateCount = RKMaximumGateCount;
             }
 
             // Derive the RKSIMDAlignSize compliant capacity

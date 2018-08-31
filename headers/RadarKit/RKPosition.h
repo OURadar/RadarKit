@@ -74,8 +74,8 @@ struct rk_position_engine {
 
     // Status / health
     uint32_t               processedPulseIndex;
-    char                   statusBuffer[RKBufferSSlotCount][RKMaximumStringLength];
-    char                   positionStringBuffer[RKBufferSSlotCount][RKMaximumStringLength];
+    char                   statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
+    char                   positionStringBuffer[RKBufferSSlotCount][RKStatusStringLength];
     uint32_t               statusBufferIndex;
     RKEngineState          state;
     uint64_t               tic;

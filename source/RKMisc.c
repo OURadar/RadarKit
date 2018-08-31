@@ -207,28 +207,97 @@ char *RKGetValueOfKey(const char *string, const char *key) {
     return NULL;
 }
 
-void RKReplaceKeyValue(char *string, const char *key, int value) {
+void RKReplaceAllValuesOfKey(char *string, const char *key, int value) {
     int k;
     char *s = strstr(string, key);
     char *e;
+    size_t l;
     char valueString[32];
     while (s != NULL) {
         s += strlen(key);
         while (*s != '\0' && (*s == '"' || *s == ' ' || *s == ':')) {
             s++;
         }
+        if (s == '\0') {
+            break;
+        }
         e = s;
         while (*e != '\0' && (*e != '}' && *e != ',' && *e != ']')) {
             e++;
+        }
+        if (*e == '\0') {
+            fprintf(stderr, "RKReplaceEnumOfKey() encountered an incomplete JSON string.\n");
+            return;
         }
         // Now value should be in between s & e
         k = sprintf(valueString, "%d", value);
         if (e - s < k) {
             // Need to add another character
-            memmove(e + k - 1, e, strlen(e));
+            l = strlen(e);
+            memmove(e + k - 1, e, l);
+            *(e + k + -1 + l) = '\0';
         }
         strncpy(s, valueString, k);
         s = strstr(e, key);
+    }
+}
+
+void RKReplaceEnumOfKey(char *string, const char *key, int value) {
+    int k;
+    char *s = strcasestr(string, key);
+    char *e;
+    size_t l;
+    char valueString[32];
+    if (s == NULL) {
+        return;
+    }
+    s = strstr(s, "Enum");
+    if (s == NULL) {
+        return;
+    }
+    s += 6;
+    //printf("Enum of %s found.  %s\n", key, s);
+    while (*s != '\0' && (*s == '"' || *s == ' ' || *s == ':')) {
+        s++;
+    }
+    if (*s == '\0') {
+        return;
+    }
+    e = s;
+    while (*e != '\0' && (*e != '}' && *e != ',' && *e != ']')) {
+        e++;
+    }
+    if (*e == '\0') {
+        fprintf(stderr, "RKReplaceEnumOfKey() encountered an incomplete JSON string.\n");
+        return;
+    }
+    // Now value should be in between s & e
+    k = sprintf(valueString, "%d", value);
+    //printf("s = %p   e = %p   valueString = %s   k = %d ==? %d\n", s, e, valueString, (int)(e - s), k);
+    if (e - s < k) {
+        // Need to add another character
+        l = strlen(e);
+        memmove(e + k - 1, e, l);
+        *(e + k + -1 + l) = '\0';
+    }
+    strncpy(s, valueString, k);
+}
+
+void RKReviseLogicalValues(char *string) {
+    char *token;
+    token = strcasestr(string, "\"true\"");
+    while (token) {
+        sprintf(token, "true");
+        memmove(token + 4, token + 6, strlen(token + 6));
+        memset(token + 4 + strlen(token + 6), '\0', 2 * sizeof(char));
+        token = strcasestr(string, "\"true\"");
+    }
+    token = strcasestr(string, "\"false\"");
+    while (token) {
+        sprintf(token, "false");
+        memmove(token + 5, token + 7, strlen(token + 7));
+        memset(token + 5 + strlen(token + 7), '\0', 2 * sizeof(char));
+        token = strcasestr(string, "\"false\"");
     }
 }
 
@@ -467,32 +536,6 @@ void RKReplaceFileExtension(char *filename, const char *pattern, const char *rep
     }
 }
 
-bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
-    // Find the last '.'
-    memset(symbol, 0, 8);
-    char *e = NULL;
-    e = strstr(filename, ".");
-    if (e == NULL) {
-        e = (char *)filename + strlen(filename) - 1;
-    }
-    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
-        e = strstr(e + 1, ".");
-    }
-    // Find the previous '-'
-    char *b = e;
-    while (b != filename && *b != '-') {
-        b--;
-    }
-    if (b == filename) {
-        fprintf(stderr, "Unable to find product symbol.\n");
-        *symbol = '-';
-        return false;
-    }
-    b++;
-    strncpy(symbol, b, MIN(8, e - b));
-    return true;
-}
-
 #pragma mark - Enum to String
 
 char *RKSignalString(const int signal) {
@@ -612,17 +655,31 @@ char *RKLastLine(const char *lines) {
 
 #pragma mark - Math
 
-float RKUMinDiff(const float m, const float s) {
+float RKMinDiff(const float m, const float s) {
     float d = m - s;
     if (d < -180.0f) {
         d += 360.0f;
     } else if (d >= 180.0f) {
         d -= 360.0f;
     }
+    return d;
+}
+
+float RKUMinDiff(const float m, const float s) {
+    float d = RKMinDiff(m, s);
     if (d < 0.0f) {
         d = -d;
     }
     return d;
+}
+
+bool RKAngularCrossOver(const float a1, const float a2, const float crossover) {
+    float d1 = RKMinDiff(a1, crossover);
+    float d2 = RKMinDiff(a2, crossover);
+    if (d1 * d2 < 0.0 && fabsf(d1) < 10.0f) {
+        return true;
+    }
+    return false;
 }
 
 #pragma mark - CPU / Performance

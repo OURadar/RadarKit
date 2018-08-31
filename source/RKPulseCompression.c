@@ -22,46 +22,70 @@ static void *pulseWatcher(void *);
 static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
-    
+    const bool useCompact = engine->coreCount >= 4;
+
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
-    
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
+
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'C';
-    
+
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "");
+                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    useCompact ? " " : "");
     
     RKPulseCompressionWorker *worker;
+
+    // State: 0 - green, 1 - yellow, 2 - red
+    int s1 = -1, s0 = 0;
     
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
-                      99.49f * worker->lag,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->lag > RKLagRedThreshold ? 2 : (worker->lag > RKLagOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        if (useCompact) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->lag);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
+        }
     }
+
     // Put a separator
-    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    i += snprintf(string + i, RKStatusStringLength - i, " ");
     // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 5; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.49f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->dutyCycle > RKDutyCyleRedThreshold ? 2 : (worker->dutyCycle > RKDutyCyleOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        if (useCompact) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->dutyCycle);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
+        }
     }
+    if (rkGlobalParameters.showColor) {
+        i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
+    }
+
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
+        memset(string + i, '#', RKStatusStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 
@@ -74,7 +98,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
 
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, c);
     RKConfig *config = &engine->configBuffer[pulse->header.configIndex];
-    snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth,
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
              " %05u | C%2d/E%5.2f/A%6.2f   E%5.2f   A%6.2f   G%s   M%04x",
              (unsigned int)c,
              pulse->header.configIndex, config->sweepElevation, config->sweepAzimuth,
@@ -138,7 +162,7 @@ static void *pulseCompressionCore(void *_in) {
 #endif
 
     RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
@@ -382,6 +406,8 @@ static void *pulseCompressionCore(void *_in) {
                 }
             }
             pulse->header.downSampledGateCount = pulse->header.gateCount / stride;
+        } else {
+            pulse->header.downSampledGateCount = pulse->header.gateCount;
         }
         pulse->header.s |= RKPulseStatusDownSampled | RKPulseStatusProcessed;
 
@@ -448,7 +474,7 @@ static void *pulseWatcher(void *_in) {
     
     // Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
     pulse = RKGetPulse(engine->pulseBuffer, 0);
-    planSize = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    planSize = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
     bool exportWisdom = false;
     const char wisdomFile[] = RKFFTWisdomFile;
 
@@ -703,7 +729,7 @@ static void *pulseWatcher(void *_in) {
 
     // Destroy all the DFT plans
     for (k = 0; k < engine->planCount; k++) {
-        RKLog(">%s De-allocating FFTW resources for plan[%d] @ nfft = %d ...\n", engine->name, k, engine->planSizes[k]);
+        RKLog(">%s De-allocating FFTW resources for plan[%d] @ nfft = %s ...\n", engine->name, k, RKIntegerToCommaStyleString(engine->planSizes[k]));
         fftwf_destroy_plan(engine->planForwardInPlace[k]);
         fftwf_destroy_plan(engine->planForwardOutPlace[k]);
         fftwf_destroy_plan(engine->planBackwardInPlace[k]);
@@ -804,8 +830,8 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
     size_t filterLength = 1 << (int)ceilf(log2f((float)engine->radarDescription->pulseCapacity));
     bytes = filterLength * sizeof(RKComplex);
     engine->state |= RKEngineStateMemoryChange;
-    for (int g = 0; g < RKMaxFilterGroups; g++) {
-        for (int i = 0; i < RKMaxFilterCount; i++) {
+    for (int g = 0; g < RKMaximumFilterGroups; g++) {
+        for (int i = 0; i < RKMaximumFilterCount; i++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[g][i], RKSIMDAlignSize, bytes))
             engine->memoryUsage += bytes;
         }
@@ -834,7 +860,7 @@ int RKPulseCompressionResetFilters(RKPulseCompressionEngine *engine) {
     // If engine->filterGroupCount is set to 0, gid may be undefined segmentation fault
     engine->filterGroupCount = 1;
     engine->filterCounts[0] = 1;
-    for (int k = 1; k < RKMaxFilterCount; k++) {
+    for (int k = 1; k < RKMaximumFilterCount; k++) {
         engine->filterCounts[k] = 0;
     }
     return RKResultSuccess;
@@ -868,11 +894,11 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         RKLog("Warning. Pulse buffer has not been set.\n");
         return RKResultNoPulseBuffer;
     }
-    if (group >= RKMaxFilterGroups) {
+    if (group >= RKMaximumFilterGroups) {
         RKLog("Error. Filter group %d is invalid.\n", group);
         return RKResultFailedToSetFilter;
     }
-    if (index >= RKMaxFilterCount) {
+    if (index >= RKMaximumFilterCount) {
         RKLog("Error. Filter index %d is invalid.\n", index);
         return RKResultFailedToSetFilter;
     }
@@ -895,7 +921,7 @@ int RKPulseCompressionSetFilter(RKPulseCompressionEngine *engine, const RKComple
         return RKResultFailedToSetFilter;
     }
     // Check if this filter works with my capacity & nfft
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKGateCount, pulse->header.capacity)));
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
     if (anchor.length > nfft) {
         RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),

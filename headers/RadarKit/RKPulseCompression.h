@@ -51,9 +51,9 @@ struct rk_pulse_compression_engine {
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
-    uint32_t                         filterCounts[RKMaxFilterGroups];
-    RKFilterAnchor                   filterAnchors[RKMaxFilterGroups][RKMaxFilterCount];
-    RKComplex                        *filters[RKMaxFilterGroups][RKMaxFilterCount];
+    uint32_t                         filterCounts[RKMaximumFilterGroups];
+    RKFilterAnchor                   filterAnchors[RKMaximumFilterGroups][RKMaximumFilterCount];
+    RKComplex                        *filters[RKMaximumFilterGroups][RKMaximumFilterCount];
 
     // Program set variables
     unsigned int                     planCount;
@@ -69,8 +69,8 @@ struct rk_pulse_compression_engine {
     pthread_mutex_t                  mutex;
 
     // Status / health
-    char                             statusBuffer[RKBufferSSlotCount][RKNameLength];
-    char                             pulseStatusBuffer[RKBufferSSlotCount][RKNameLength];
+    char                             statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
+    char                             pulseStatusBuffer[RKBufferSSlotCount][RKStatusStringLength];
     uint32_t                         statusBufferIndex;
     uint32_t                         pulseStatusBufferIndex;
     RKEngineState                    state;

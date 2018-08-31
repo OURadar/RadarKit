@@ -9,7 +9,6 @@
 #include <RadarKit.h>
 #include <getopt.h>
 
-#define ROOT_PATH                   "data"
 #define PREFERENCE_FILE             "pref.conf"
 
 // User parameters in a struct
@@ -24,8 +23,10 @@ typedef struct user_params {
     RKName                   stopCommand;
     RKName                   streams;
     uint8_t                  verbose;                                            // Verbosity
+    int                      port;                                               // Server port other than the default 10000
     int                      coresForPulseCompression;                           // Number of cores for pulse compression
-    int                      coresForProductGenerator;                           // Number of cores for moment calculations
+    int                      coresForPulseRingFilter;                            // Number of cores for pulse ring filter
+    int                      coresForMomentProcessor;                            // Number of cores for moment calculations
     float                    fs;                                                 // Raw gate sampling bandwidth
     float                    prf;                                                // Base PRF (Hz)
     int                      sprt;                                               // Staggered PRT option (2 for 2:3, 3 for 3:4, etc.)
@@ -130,6 +131,8 @@ static void showHelp() {
            "\n"
            "  -V (--engine-verbose) " UNDERLINE("value") "\n"
            "         Increases verbosity level of specific engines.\n"
+           "          0 - Clock of position\n"
+           "          1 - Clock of transceiver\n"
            "          a - Aim pedestal\n"
            "          m - Moment engine\n"
            "          p - Pulse compression engine\n"
@@ -166,21 +169,25 @@ static void setSystemLevel(UserParams *user, const int level) {
     switch (level) {
         case 0:
             // Debug
-            user->fs = 5000000;
+            user->fs = 2000000;
             user->gateCount = 150;
             user->coresForPulseCompression = 2;
-            user->coresForProductGenerator = 2;
-            user->desc.pulseBufferDepth = 50;
-            user->desc.rayBufferDepth = 50;
-            user->desc.pulseToRayRatio = 2;
+            user->coresForPulseRingFilter = 1;
+            user->coresForMomentProcessor = 2;
+            user->desc.positionBufferDepth = 100;
+            user->desc.pulseBufferDepth = 100;
+            user->desc.rayBufferDepth = 400;
+            user->desc.pulseToRayRatio = 1;
             user->prf = 10;
+            sprintf(user->momentMethod, "PulsePair");
             break;
         case 1:
             // Minimum: 5-MHz
             user->fs = 5000000;
             user->gateCount = 2000;
             user->coresForPulseCompression = 2;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 2;
             break;
         case 2:
@@ -188,7 +195,8 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 10000000;
             user->gateCount = 10000;
             user->coresForPulseCompression = 2;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 4;
             break;
         case 3:
@@ -196,32 +204,37 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->fs = 20000000;
             user->gateCount = 20000;
             user->coresForPulseCompression = 4;
-            user->coresForProductGenerator = 2;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 8;
             break;
         case 4:
             // High: 50-MHz
             user->fs = 50000000;
             user->gateCount = 50000;
-            user->coresForPulseCompression = 4;
-            user->coresForProductGenerator = 4;
+            user->coresForPulseCompression = 6;
+            user->coresForPulseRingFilter = 2;
+            user->coresForMomentProcessor = 4;
             user->desc.pulseToRayRatio = 16;
             break;
         case 5:
             // Full: 100-MHz
             user->fs = 100000000;
             user->gateCount = 100000;
-            user->coresForPulseCompression = 8;
-            user->coresForProductGenerator = 4;
-            user->desc.pulseToRayRatio = 32;
+            user->coresForPulseCompression = 12;
+            user->coresForPulseRingFilter = 3;
+            user->coresForMomentProcessor = 4;
+            user->desc.pulseToRayRatio = 16;
             break;
         case 6:
             // Secret: 200-MHz
             user->fs = 200000000;
             user->gateCount = 200000;
-            user->coresForPulseCompression = 10;
-            user->coresForProductGenerator = 4;
-            user->desc.pulseToRayRatio = 64;
+            user->coresForPulseCompression = 22;
+            user->coresForPulseRingFilter = 3;
+            user->coresForMomentProcessor = 4;
+            user->desc.pulseToRayRatio = 16;
+            user->prf = 600;
             break;
         default:
             // Default
@@ -260,14 +273,16 @@ UserParams *systemPreferencesInit(void) {
     user->desc.latitude = 35.181251;
     user->desc.longitude = -97.436752;
     user->desc.radarHeight = 2.5f;
-    user->desc.wavelength = 0.03f;
+    user->desc.wavelength = 0.0314f;
     user->desc.pulseToRayRatio = 1;
-    strcpy(user->desc.dataPath, ROOT_PATH);
+    user->desc.positionLatency = 0.00001;
+    user->port = 10000;
+    strcpy(user->desc.dataPath, RKDefaultDataPath);
     
     return user;
 }
 
-void userParametersFree(UserParams *user) {
+void systemPreferencesFree(UserParams *user) {
     free(user);
 }
 
@@ -290,7 +305,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
         RKLog("Reading user preferences ...\n");
     }
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",         user->desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKMaximumPrefixLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",     user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
@@ -298,7 +313,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",   user->ringFilter,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeFloat, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",   user->systemZCal,      RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",   &user->systemDCal,     RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
@@ -307,7 +322,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",    &user->goCommand,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",  &user->stopCommand,    RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",    &user->ignoreGPS,      RKParameterTypeBool, 1);
-
+    
     // Shortcuts
     k = 0;
     memset(user->controls, 0, RKMaximumControlCount * sizeof(RKControl));
@@ -329,7 +344,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
         RWaveformCalibrationFromPreferenceObject(&user->calibrations[k], object);
         if (verb) {
             s = snprintf(string, RKNameLength, "'%s' (%d)", user->calibrations[k].name, user->calibrations[k].count);
-            for (int i = 0; i < MIN(RKMaxFilterCount, user->calibrations[k].count); i++) {
+            for (int i = 0; i < MIN(RKMaximumFilterCount, user->calibrations[k].count); i++) {
                 s += snprintf(string + s, RKNameLength - s, "   %d:(%.2f %.2f %.2f %.2f)", i,
                               user->calibrations[k].ZCal[i][0],
                               user->calibrations[k].ZCal[i][1],
@@ -356,6 +371,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     struct option long_options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
+        {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
         {"engine-verbose"    , required_argument, NULL, 'V'},
@@ -432,6 +448,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case 'C':
                 user->desc.initFlags |= RKInitFlagShowClockOffset;
                 break;
+            case 'P':
+                user->port = atoi(optarg);
+                break;
             case 'S':
                 k = atoi(optarg);
                 setSystemLevel(user, k);
@@ -450,6 +469,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'X':
                 user->verbose = 2;
+                RKSetWantScreenOutput(true);
                 updateSystemPreferencesFromControlFile(user);
                 exit(EXIT_SUCCESS);
                 break;
@@ -457,7 +477,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->fs = roundf(atof(optarg));
                 break;
             case 'c':
-                sscanf(optarg, "%d,%d", &user->coresForPulseCompression, &user->coresForProductGenerator);
+                sscanf(optarg, "%d,%d,%d",
+                       &user->coresForPulseCompression,
+                       &user->coresForPulseRingFilter,
+                       &user->coresForMomentProcessor);
                 break;
             case 'd':
                 user->desc.pulseToRayRatio = atoi(optarg);
@@ -606,7 +629,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         }
     } else {
         if (!(user->desc.initFlags == RKInitFlagRelay)) {
-            RKLog("No options specified. Don't want to do anything?\n");
+            fprintf(stderr, "No options specified. Don't want to do anything?\n");
             exit(EXIT_FAILURE);
         }
         if (user->prf) {
@@ -638,12 +661,25 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     
     // Some parameters before the radar is live
     if (!myRadar->active) {
-        RKSetProcessingCoreCounts(myRadar, systemPreferences->coresForPulseCompression, systemPreferences->coresForProductGenerator);
+        RKSetProcessingCoreCounts(myRadar,
+                                  systemPreferences->coresForPulseCompression,
+                                  systemPreferences->coresForPulseRingFilter,
+                                  systemPreferences->coresForMomentProcessor);
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
         //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
     }
 
+    // General attributes
+    if (strcmp(myRadar->desc.name, systemPreferences->desc.name)) {
+        strcpy(myRadar->desc.name, systemPreferences->desc.name);
+        RKLog("Radar name changed to '%s'\n", myRadar->desc.name);
+    }
+    if (strcmp(myRadar->desc.filePrefix, systemPreferences->desc.filePrefix)) {
+        strcpy(myRadar->desc.filePrefix, systemPreferences->desc.filePrefix);
+        RKLog("Product file prefix changed to '%s'\n", myRadar->desc.filePrefix);
+    }
+    
     // GPS override
     if (systemPreferences->ignoreGPS) {
         myRadar->desc.initFlags |= RKInitFlagIgnoreGPS;
@@ -658,8 +694,10 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
         int lagChoice = atoi(systemPreferences->momentMethod + 8);
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
-    } else {
+    } else if (!strncasecmp(systemPreferences->momentMethod, "pulsepairhop", 12)) {
         RKSetMomentProcessorToPulsePairHop(myRadar);
+    } else {
+        RKSetMomentProcessorToPulsePair(myRadar);
     }
 
     // Always refresh the controls
@@ -728,7 +766,6 @@ int main(int argc, const char **argv) {
     RKCommand cmd = "";
 
     RKSetProgramName("rktest");
-    RKSetWantScreenOutput(true);
 
     char *term = getenv("TERM");
     if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
@@ -745,6 +782,7 @@ int main(int argc, const char **argv) {
 
     // Screen output based on verbosity level
     if (systemPreferences->verbose) {
+        RKSetWantScreenOutput(true);
         if (systemPreferences->verbose > 1) {
             printf("TERM = %s --> %s\n", term,
                    rkGlobalParameters.showColor ?
@@ -754,6 +792,7 @@ int main(int argc, const char **argv) {
     } else {
         RKSetWantScreenOutput(false);
     }
+    printf("rootDataFolder = %s\n", rkGlobalParameters.rootDataFolder);
 
     // Initialize a radar object
     myRadar = RKInitWithDesc(systemPreferences->desc);
@@ -777,6 +816,7 @@ int main(int argc, const char **argv) {
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, systemPreferences->verbose);
+    RKCommandCenterSetPort(center, systemPreferences->port);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
@@ -846,27 +886,33 @@ int main(int argc, const char **argv) {
         }
 
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", "tar.xz");
-
-        // Radar going live, then wait indefinitely until something happens
+        
+        // Radar going live
         RKGoLive(myRadar);
 
-        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
-        
-        usleep(100000);
-
         RKLog("Setting a waveform ...\n");
-//        RKExecuteCommand(myRadar, "t w ofm", NULL);
+        //RKExecuteCommand(myRadar, "t w x", NULL);
+        RKExecuteCommand(myRadar, "t w s01", NULL);
+        //RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
-        //RKExecuteCommand(myRadar, "t w s01", NULL);
-        //RKExecuteCommand(myRadar, "t w barker03", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ...\n");
-        RKExecuteCommand(myRadar, "p ppi 4 25", NULL);
+        if (systemPreferences->prf <= 20.0f) {
+            RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
+        } else if (systemPreferences->prf <= 100.0f) {
+            RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
+        } else {
+            RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
+        }
+
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
+
+        // Wait indefinitely until something happens through a user command through the command center
         RKWaitWhileActive(myRadar);
     
         RKFileMonitorFree(preferenceFileMonitor);
@@ -887,6 +933,7 @@ int main(int argc, const char **argv) {
         
     } else {
         
+        RKSetWantScreenOutput(true);
         RKLog("Error. This should not happen.");
         
     }
@@ -897,7 +944,7 @@ int main(int argc, const char **argv) {
     
     RKFree(myRadar);
 
-    userParametersFree(systemPreferences);
+    systemPreferencesFree(systemPreferences);
 
     return 0;
 }

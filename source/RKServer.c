@@ -506,6 +506,10 @@ void RKServerSetName(RKServer *M, const char *name) {
     strcpy(M->name, name);
 }
 
+void RKServerSetPort(RKServer *M, const int port) {
+    M->port = port;
+}
+
 void RKServerSetWelcomeHandler(RKServer *M, int (*function)(RKOperator *)) {
     M->w = function;
 }

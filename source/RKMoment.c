@@ -27,10 +27,11 @@ int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
 static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
+    bool useCompact = engine->coreCount >= 4;
 
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
 
     // Use b characters to draw a bar
     i = engine->processedPulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -38,35 +39,58 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     string[i] = 'M';
 
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "");
+                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    useCompact ? " " : "");
 
     RKMomentWorker *worker;
+
+    // State: 0 - green, 1 - yellow, 2 - red
+    int s1 = -1, s0 = 0;
 
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
-                      99.49f * worker->lag,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->lag > RKLagRedThreshold ? 2 : (worker->lag > RKLagOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        if (useCompact) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->lag);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
+        }
     }
+
     // Put a separator
-    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    i += snprintf(string + i, RKStatusStringLength - i, " ");
     // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 20; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.49f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->dutyCycle > RKDutyCyleRedThreshold ? 2 : (worker->dutyCycle > RKDutyCyleOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        if (useCompact) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->dutyCycle);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
+        }
     }
+    if (rkGlobalParameters.showColor) {
+        i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
+    }
+
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKStatusStringLength - RKStatusBarWidth - 20) {
+        memset(string + i, '#', RKStatusStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -109,13 +133,17 @@ int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
     return pulse->header.gateCount;
 }
 
+// This function converts the float data calculated from a chosen processor to uint8_t type, which also represent
+// the display data for the front end
 int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
     int k;
     // Grab the data from scratch space.
-    float *Si = space->S[0];
+    float *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSh);
+    float *Ti = space->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSv);
     float *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
     float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexV);
     float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexW);
+    float *Qi = space->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
     float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseMomentIndexD);
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseMomentIndexP);
     float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
@@ -123,8 +151,11 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
     float SNR;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     // Masking based on SNR
-    for (k = 0; k < gateCount; k++) {
+    for (k = 0; k < MIN(space->capacity, gateCount); k++) {
         SNR = *Si / space->noise[0];
+        *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
+        *To++ = 10.0f * log10f(*Ti++);
+        *Qo++ = *Qi;
         if (SNR > SNRThreshold) {
             *Zo++ = *Zi;
             *Vo++ = *Vi;
@@ -142,10 +173,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
             *Ko++ = NAN;
             *Ro++ = NAN;
         }
-        Si++;
         Zi++;
         Vi++;
         Wi++;
+        Qi++;
         Di++;
         Pi++;
         Ki++;
@@ -156,42 +187,56 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
     // Convert float to color representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKFloat lhma[4];
     int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKSLHMAC   RKVec sl = _rk_mm_set1_pf(lhma[0]);  RKVec sh = _rk_mm_set1_pf(lhma[1]);  RKVec sm = _rk_mm_set1_pf(lhma[2]);  RKVec sa = _rk_mm_set1_pf(lhma[3]);
     RKZLHMAC   RKVec zl = _rk_mm_set1_pf(lhma[0]);  RKVec zh = _rk_mm_set1_pf(lhma[1]);  RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
     RKV2LHMAC  RKVec vl = _rk_mm_set1_pf(lhma[0]);  RKVec vh = _rk_mm_set1_pf(lhma[1]);  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
     RKWLHMAC   RKVec wl = _rk_mm_set1_pf(lhma[0]);  RKVec wh = _rk_mm_set1_pf(lhma[1]);  RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
+    RKQLHMAC   RKVec ql = _rk_mm_set1_pf(lhma[0]);  RKVec qh = _rk_mm_set1_pf(lhma[1]);  RKVec qm = _rk_mm_set1_pf(lhma[2]);  RKVec qa = _rk_mm_set1_pf(lhma[3]);
     RKDLHMAC   RKVec dl = _rk_mm_set1_pf(lhma[0]);  RKVec dh = _rk_mm_set1_pf(lhma[1]);  RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
     RKPLHMAC   RKVec pl = _rk_mm_set1_pf(lhma[0]);  RKVec ph = _rk_mm_set1_pf(lhma[1]);  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
     RKKLHMAC   RKVec kl = _rk_mm_set1_pf(lhma[0]);  RKVec kh = _rk_mm_set1_pf(lhma[1]);  RKVec km = _rk_mm_set1_pf(lhma[2]);  RKVec ka = _rk_mm_set1_pf(lhma[3]);
     RKRLHMAC   RKVec rl = _rk_mm_set1_pf(lhma[0]);  RKVec rh = _rk_mm_set1_pf(lhma[1]);
+    RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);  RKVec *So_pf = (RKVec *)space->S[0];
+    RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);  RKVec *To_pf = (RKVec *)space->S[1];
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
     RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
+    RKVec *Qi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);  RKVec *Qo_pf = (RKVec *)space->Q[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
     RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);  RKVec *Ko_pf = (RKVec *)space->KDP;
     RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     for (k = 0; k < K; k++) {
+        *So_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Si_pf++, sl), sh), sm), sa);
+        *To_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Ti_pf++, sl), sh), sm), sa);
         *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Zi_pf++, zl), zh), zm), za);
         *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Vi_pf++, vl), vh), vm), va);
         *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Wi_pf++, wl), wh), wm), wa);
+        *Qo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Qi_pf++, ql), qh), qm), qa);
         *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Di_pf++, dl), dh), dm), da);
         *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Pi_pf++, pl), ph), pm), pa);
         *Ko_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Ki_pf++, kl), kh), km), ka);
         *Ro_pf++ = _rk_mm_min_pf(_rk_mm_max_pf(*Ri_pf++, rl), rh);
     }
     // Convert to uint8 type
+    Si = space->S[0];  uint8_t *su = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexSh);
+    Ti = space->S[1];  uint8_t *tu = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexSv);
     Zi = space->Z[0];  uint8_t *zu = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
     Vi = space->V[0];  uint8_t *vu = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexV);
     Wi = space->W[0];  uint8_t *wu = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexW);
+    Qi = space->Q[0];  uint8_t *qu = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexQ);
     Di = space->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexD);
     Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexP);
     Ki = space->KDP;   uint8_t *ku = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexK);
     Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexR);
     for (k = 0; k < ray->header.gateCount; k++) {
+        *su++ = *Si++;
+        *tu++ = *Ti++;
         if (isfinite(*Zi)) {
             *zu++ = (uint8_t)*Zi;
             *vu++ = (uint8_t)*Vi;
             *wu++ = (uint8_t)*Wi;
+            *qu++ = (uint8_t)*Qi;
             *du++ = (uint8_t)*Di;
             *pu++ = (uint8_t)*Pi;
             *ku++ = (uint8_t)*Ki;
@@ -201,6 +246,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
             *zu++ = 0;
             *vu++ = 0;
             *wu++ = 0;
+            *qu++ = 0;
             *du++ = 0;
             *pu++ = 0;
             *ku++ = 0;
@@ -209,6 +255,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
         Zi++;
         Vi++;
         Wi++;
+        Qi++;
         Di++;
         Pi++;
         Ki++;
@@ -216,13 +263,18 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
     }
     // If the space has been used for the same gateCount calculations, it should remain zero
     if (*Zi != 0.0 || *zu != 0) {
+        memset(su, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(tu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(zu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(vu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(wu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(qu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(du, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(pu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(ku, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(ru, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(Si, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Ti, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Zi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Vi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Wi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
@@ -232,7 +284,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
         memset(Ri, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         ray->header.marker |= RKMarkerMemoryManagement;
     }
-    ray->header.baseMomentList = RKBaseMomentListProductZVWDPRK;
+    ray->header.baseMomentList = RKBaseMomentListProductZVWDPRKSQ | RKBaseMomentListDisplayZVWDPRKSQ;
     return k;
 }
 
@@ -294,7 +346,7 @@ static void *momentCore(void *in) {
     RKPulse *pulse;
     RKConfig *config;
     RKScratch *space;
-
+    
     // Allocate local resources and keep track of the total allocation
     pulse = RKGetPulse(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
@@ -324,7 +376,7 @@ static void *momentCore(void *in) {
 
     // Output index for current ray
     uint32_t io = engine->radarDescription->rayBufferDepth - engine->coreCount + c;
-    
+
     // Update index of the status for current ray
     uint32_t iu = RKBufferSSlotCount - engine->coreCount + c;
 
@@ -345,8 +397,8 @@ static void *momentCore(void *in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
-          engine->name, me->name, RKUIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(io), ci);
+    RKLog(">%s %s Started.   mem = %s B   lagCount = %d   i0 = %s   ci = %d\n",
+          engine->name, me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -366,7 +418,7 @@ static void *momentCore(void *in) {
 
     RKModuloPath path;
     RKPulse *S, *E, *pulses[RKMaximumPulsesPerRay];
-    uint32_t marker = RKMarkerNull;
+    RKMarker marker = RKMarkerNull;
     float deltaAzimuth, deltaElevation;
     char *string;
 
@@ -399,6 +451,11 @@ static void *momentCore(void *in) {
 
         // The index path of the source of this ray
         path = engine->momentSource[io];
+        if (path.origin > engine->radarDescription->pulseBufferDepth || path.length > engine->radarDescription->pulseBufferDepth) {
+            RKLog("%s Warning. Unexpected path->origin = %d   path->length = %d   io = %d\n", engine->name, path.origin, path.length, io);
+            path.origin = 0;
+            path.length = 1;
+        }
 
         // Call the assigned moment processor if we are to process, is = indexStart, ie = indexEnd
         is = path.origin;
@@ -495,7 +552,7 @@ static void *momentCore(void *in) {
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
         } while (k < path.length);
-
+        
         // Duplicate a linear array for processor if we are to process; otherwise just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             if (ie != i) {
@@ -506,7 +563,7 @@ static void *momentCore(void *in) {
             if (k != path.length) {
                 RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, me->name, k, path.length);
             }
-            // Fill in the ray
+            // Fill in the ray SNR censoring and display data
             makeRayFromScratch(space, ray, ray->header.gateCount);
             for (k = 0; k < path.length; k++) {
                 pulse = pulses[k];
@@ -540,18 +597,21 @@ static void *momentCore(void *in) {
 
         // Summary of this ray
         snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
-                 " %05u | %s  %05u...%05u (%3d)  [C%2d/E%5.2f/A%5.2f]   E%5.2f-%5.2f (%4.2f)   A%6.2f-%6.2f (%4.2f)   G%s   M%05x %s%s%s",
+                 " %05u %s | %05u - %05u (%3d)  [C%02d %s E%.2f A%.2f]   %s%6.2f-%6.2f (%4.2f)  G%s  M%05x %s%s",
                  (unsigned int)io, me->name, (unsigned int)is, (unsigned int)ie, path.length,
-                 ray->header.configIndex, engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,
-                 S->header.elevationDegrees, E->header.elevationDegrees, deltaElevation,
-                 S->header.azimuthDegrees,   E->header.azimuthDegrees,   deltaAzimuth,
+                 ray->header.configIndex,
+                 RKMarkerScanTypeShortString(ray->header.marker),
+                 engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                 (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
                  RKIntegerToCommaStyleString(ray->header.gateCount),
                  ray->header.marker,
-                 RKMarkerScanTypeShortString(ray->header.marker),
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
 
-       // Update processed index
+        // Update processed index
         me->pid = ie;
         me->lag = fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
@@ -611,7 +671,9 @@ static void *pulseGatherer(void *_in) {
         if (engine->processor == &RKMultiLag) {
             RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
         } else if (engine->processor == &RKPulsePairHop) {
-            RKLog(">%s Method = RKPulsePairHop()\n", engine->name);
+            RKLog(">%s Method = RKPulsePairHop\n", engine->name);
+        } else if (engine->processor == &RKPulsePair) {
+            RKLog(">%s Method = RKPulsePair\n", engine->name);
         } else if (engine->processor == &nullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
@@ -710,7 +772,7 @@ static void *pulseGatherer(void *_in) {
             }
         }
         engine->state ^= RKEngineStateSleep2;
-        
+
         if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
@@ -758,6 +820,7 @@ static void *pulseGatherer(void *_in) {
                 if (count > 0) {
                     // Number of samples in this ray
                     engine->momentSource[j].length = count;
+                    //printf("%s k = %d --> momentSource[%d] = %d / %d / %d\n", engine->name, k, j, engine->momentSource[j].origin, engine->momentSource[j].length, engine->momentSource[j].modulo);
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
@@ -801,7 +864,7 @@ static void *pulseGatherer(void *_in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
-
+    
     // Wait for workers to return
     for (c = 0; c < engine->coreCount; c++) {
         RKMomentWorker *worker = &engine->workers[c];
@@ -831,7 +894,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;
-    engine->processorLagCount = RKLagCount;
+    engine->processorLagCount = RKMaximumLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
@@ -907,6 +970,7 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
         RKLog("Error. RKMomentEngine->workers should be NULL here.\n");
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
+    engine->memoryUsage += engine->coreCount * sizeof(RKMomentWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKMomentWorker));
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;

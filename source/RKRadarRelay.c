@@ -420,7 +420,7 @@ int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) 
         }
         int s = 0;
         uint32_t responseIndex = engine->responseIndex;
-        uint32_t size = snprintf(engine->latestCommand, RKMaximumStringLength - 1, "%s" RKEOL, command);
+        uint32_t size = snprintf(engine->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
         RKNetworkSendPackets(client->sd, engine->latestCommand, size, NULL);
         while (responseIndex == engine->responseIndex) {
             usleep(10000);

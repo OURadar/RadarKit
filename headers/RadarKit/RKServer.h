@@ -115,6 +115,7 @@ RKServer *RKServerInit(void);
 void RKServerFree(RKServer *);
 
 void RKServerSetName(RKServer *, const char *);
+void RKServerSetPort(RKServer *, const int);
 void RKServerSetWelcomeHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetCommandHandler(RKServer *, int (*)(RKOperator *));
 void RKServerSetTerminateHandler(RKServer *, int (*)(RKOperator *));

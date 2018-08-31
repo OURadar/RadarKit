@@ -67,13 +67,13 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
     memset(waveform, 0, sizeof(RKWaveform));
     waveform->count = count;
     waveform->depth = depth;
-    if (count > RKMaxFilterGroups) {
-        waveform->count = RKMaxFilterGroups;
+    if (count > RKMaximumFilterGroups) {
+        waveform->count = RKMaximumFilterGroups;
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKComplex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKInt16C)));
+        waveform->samples[k] = (RKComplex *)malloc(waveform->depth * sizeof(RKComplex));
+        waveform->iSamples[k] = (RKInt16C *)malloc(waveform->depth * sizeof(RKInt16C));
         if (waveform->samples[k] == NULL || waveform->iSamples[k] == NULL) {
             RKLog("Error. Unable to allocate memory.\n");
             exit(EXIT_FAILURE);
@@ -126,7 +126,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
             RKLog("Error. Unable to read filter anchors from %s\n", filename);
         }
         // Output data from the first filter is allowed up to the maximum
-        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             if (waveform->filterAnchors[k][j].length > waveform->depth) {
                 RKLog("Error. This waveform is invalid.  length = %s > depth %s\n",
@@ -136,26 +136,26 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
                 fclose(fid);
                 return NULL;
             }
-            if (waveform->filterAnchors[k][j].origin > RKGateCount) {
-                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKGateCount)\n",
+            if (waveform->filterAnchors[k][j].origin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKMaximumGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].origin),
-                      RKIntegerToCommaStyleString(RKGateCount));
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
                 RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
-            if (waveform->filterAnchors[k][j].inputOrigin > RKGateCount) {
-                RKLog("Error. This waveform is invalid.  inputOrigin = %s > %s (RKGateCount)\n",
+            if (waveform->filterAnchors[k][j].inputOrigin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  inputOrigin = %s > %s (RKMaximumGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
-                      RKIntegerToCommaStyleString(RKGateCount));
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
                 RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
             }
-            if (waveform->filterAnchors[k][j].outputOrigin > RKGateCount) {
-                RKLog("Error. This waveform is invalid.  outputOrigin = %s > %s (RKGateCount)\n",
+            if (waveform->filterAnchors[k][j].outputOrigin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  outputOrigin = %s > %s (RKMaximumGateCount)\n",
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
-                      RKIntegerToCommaStyleString(RKGateCount));
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
                 RKWaveformFree(waveform);
                 fclose(fid);
                 return NULL;
@@ -211,7 +211,7 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, 1);
     waveform->fs = 1.0;
     waveform->type = RKWaveformTypeSingleTone;
-    sprintf(waveform->name, "P01");
+    sprintf(waveform->name, "p01");
     
     // Single filter
     waveform->filterCounts[0] = 1;
@@ -222,7 +222,7 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
     waveform->filterAnchors[0][0].length = 1;
     waveform->filterAnchors[0][0].inputOrigin = 0;
     waveform->filterAnchors[0][0].outputOrigin = 0;
-    waveform->filterAnchors[0][0].maxDataLength = RKGateCount;
+    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount;
     waveform->filterAnchors[0][0].subCarrierFrequency = 0.0f;
     
     // Only a one. No need to set components that are 0's
@@ -233,29 +233,52 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
+RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth) {
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
+    RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
+    sprintf(waveform->name, "s%02.0f", 1.0e-6 * fs);
+    return waveform;
+}
+
+RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
+    return waveform;
+}
+
+RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
+    uint32_t depth = (uint32_t)round(pulsewidth * fs);
+    if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
+        RKLog("Info. Waveform depth %.2f us --> %.2f us due to rounding @ fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
+    }
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
+    RKWaveformFrequencyHops(waveform, fs, fc, bandwidth);
+    return waveform;
+}
+
+RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
     int i, j;
     const uint32_t longPulseWidth = 300;
     const uint32_t shortPulseWidth = 10;
     const uint32_t transitionWidth = 30;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
-    
+
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeTimeFrequencyMultiplexing;
     sprintf(waveform->name, "tfm-fake");
-    
+
     // Two filters per waveform
     waveform->filterCounts[0] = 2;
-    
+
     // Long pulse
     waveform->filterAnchors[0][0].name = 0;
     waveform->filterAnchors[0][0].origin = 0;
     waveform->filterAnchors[0][0].length = longPulseWidth;
     waveform->filterAnchors[0][0].inputOrigin = 0;
     waveform->filterAnchors[0][0].outputOrigin = longPulseWidth + shortPulseWidth + transitionWidth;
-    waveform->filterAnchors[0][0].maxDataLength = RKGateCount - longPulseWidth - shortPulseWidth - transitionWidth;
+    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount - longPulseWidth - shortPulseWidth - transitionWidth;
     waveform->filterAnchors[0][0].subCarrierFrequency = 0.15f;
-    
+
     // Short pulse
     waveform->filterAnchors[0][1].name = 1;
     waveform->filterAnchors[0][1].origin = longPulseWidth;
@@ -264,7 +287,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     waveform->filterAnchors[0][1].outputOrigin = 0;
     waveform->filterAnchors[0][1].maxDataLength = longPulseWidth + shortPulseWidth + transitionWidth;
     waveform->filterAnchors[0][1].subCarrierFrequency = 0.0f;
-    
+
     RKFloat a;
     RKInt16C *w;
     RKComplex *x;
@@ -282,26 +305,127 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
             w++;
         }
     }
-    
+
     RKWaveformNormalizeNoiseGain(waveform);
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
-    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
+RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth) {
+    // Say bandwidth = 4 MHz. Going from 0 to 2 MHz
+    RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, 67.0e-6, 0.5 * bandwidth);
+    RKWaveformApplyWindow(waveform, RKWindowTypeTukey, 0.05);
+    // Say bandwidth = 4 MHz. Going atmost from -2 to 0 MHz, fc @ -1 MHz
+    RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
+    RKWaveformApplyWindow(fill, RKWindowTypeHamming);
+    // Expand waveform by the fill pulse
+    RKWaveformAppendWaveform(waveform, fill, 10);
+    RKWaveformFree(fill);
+    // Modify the name and properties
+    sprintf(waveform->name, "tfm");
+    waveform->fc = fc;
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
-    uint32_t depth = (uint32_t)round(pulsewidth * fs);
-    if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
-        RKLog("Info. Waveform depth %.2f us --> %.2f us due to fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
+RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *appendix, const uint32_t transitionSamples) {
+    
+    if (waveform->fs != appendix->fs) {
+        RKLog("Error. Both waveforms must have same fs to concatenate.\n");
+        return RKResultFailedToExpandWaveform;
     }
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
-    RKWaveformHops(waveform, fs, fc, bandwidth);
-    return waveform;
+    if (waveform->count > 1) {
+        RKLog("Error. This function is not built for waveform group count > 1.\n");
+        return RKResultFailedToExpandWaveform;
+    }
+    if (waveform->filterCounts[0] > 1 || appendix->filterCounts[0] > 1) {
+        RKLog("Error. This function is not built for waveform filter count > 1.\n");
+        return RKResultFailedToExpandWaveform;
+    }
+
+    // New depth after expansion
+    uint32_t depth = waveform->depth + appendix->depth;
+    waveform->samples[0] = realloc(waveform->samples[0], depth * sizeof(RKComplex));
+    waveform->iSamples[0] = realloc(waveform->iSamples[0], depth * sizeof(RKInt16C));
+
+    if (waveform->samples[0] == NULL || waveform->iSamples[0] == NULL) {
+        RKLog("Error. Unable to allocate memory.\n");
+        exit(EXIT_FAILURE);
+    }
+    // Two filters for demultiplexing
+    waveform->filterCounts[0]++;
+    
+    waveform->type |= RKWaveformTypeTimeFrequencyMultiplexing;
+    
+    // Assume some kind of multiplexing, we can process waveform #1 starting from length of waveform #1
+    waveform->filterAnchors[0][0].inputOrigin = waveform->filterAnchors[0][0].length + transitionSamples;
+    waveform->filterAnchors[0][0].outputOrigin = waveform->filterAnchors[0][0].length + transitionSamples;
+
+    waveform->filterAnchors[0][1].name = waveform->filterAnchors[0][0].name + 1;
+    waveform->filterAnchors[0][1].origin = waveform->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][1].length = appendix->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][1].inputOrigin = waveform->filterAnchors[0][0].length;
+    waveform->filterAnchors[0][1].outputOrigin = 0;
+    waveform->filterAnchors[0][1].maxDataLength = waveform->filterAnchors[0][0].length + transitionSamples;
+    waveform->filterAnchors[0][1].subCarrierFrequency = appendix->filterAnchors[0][0].subCarrierFrequency;
+    waveform->filterAnchors[0][1].sensitivityGain = appendix->filterAnchors[0][0].sensitivityGain;
+    waveform->filterAnchors[0][1].filterGain = appendix->filterAnchors[0][0].filterGain;
+    
+    memcpy(waveform->iSamples[0] + waveform->depth, appendix->iSamples[0], appendix->depth * sizeof(RKInt16C));
+    memcpy(waveform->samples[0] + waveform->depth, appendix->samples[0], appendix->depth * sizeof(RKComplex));
+
+    // Update the new depth
+    waveform->depth = depth;
+
+    return RKResultSuccess;
+}
+
+RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...) {
+    int k;
+    va_list args;
+    RKFloat *w;
+    RKInt16C *x;
+    RKComplex *y;
+    double parameter = 0.0, g;
+
+    RKFloat *window = (RKFloat *)malloc(waveform->depth * sizeof(RKFloat));
+    if (window == NULL) {
+        RKLog("Error. Unable to allocate memory in RKWaveformApplyWindow().\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(window, 0, waveform->depth * sizeof(RKFloat));
+
+    va_start(args, type);
+    parameter = va_arg(args, double);
+    va_end(args);
+
+    RKWindowMake(window, type, waveform->depth, parameter);
+
+    g = 0.0;
+    w = window;
+    for (k = 0; k < waveform->depth; k++) {
+        g += (*w * *w);
+        w++;
+    }
+    g = sqrt(waveform->depth / g);
+
+    w = window;
+    x = waveform->iSamples[0];
+    y = waveform->samples[0];
+    for (k = 0; k < waveform->depth; k++) {
+        x->i = (int16_t)((RKFloat)x->i * *w);
+        x->q = (int16_t)((RKFloat)x->q * *w);
+        y->i *= (*w * g);
+        y->q *= (*w * g);
+        w++;
+        x++;
+        y++;
+    }
+
+    free(window);
+
+    //RKWaveformNormalizeNoiseGain(waveform);
+
+    return RKResultSuccess;
 }
 
 #pragma mark - Waveforms
@@ -330,10 +454,14 @@ void RKWaveformOnes(RKWaveform *waveform) {
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
+void RKWaveformSingleTone(RKWaveform *waveform, const double fs, const double fc) {
+    RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
+}
+
 //
 // This is actually hop pairs: f0, f0, f1, f1, f2, f2, ... around fc
 //
-void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
+void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
     int i, k, n;
     double f, omega, psi, pw;
     RKComplex *x;
@@ -342,13 +470,23 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
     const bool sequential = false;
 
     waveform->fs = fs;
-    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHopping;
-    k = sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, waveform->count == 1 ? 1 : waveform->count / 2);
+    waveform->type = RKWaveformTypeIsComplex;
+    if (bandwidth > 0.0) {
+        waveform->type |= RKWaveformTypeFrequencyHopping;
+        k = sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, waveform->count == 1 ? 1 : waveform->count / 2);
+    } else {
+        waveform->type |= RKWaveformTypeSingleTone;
+        if (fc > 0.0) {
+            k = sprintf(waveform->name, "t%02.0f", 1.0e-6 * fc);
+        } else {
+            k = sprintf(waveform->name, "s");
+        }
+    }
     pw = 1.0e6 * waveform->depth / waveform->fs;
     if (pw < 1.0) {
         sprintf(waveform->name + k, ".%.0f", round(10.0 * pw));
-    } else if (pw > 1.000001) {
-        sprintf(waveform->name + k, "%.0f", pw);
+    } else if (pw >= 1.0) {
+        sprintf(waveform->name + k, "%02.0f", pw);
     }
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
@@ -365,7 +503,7 @@ void RKWaveformHops(RKWaveform *waveform, const double fs, const double fc, cons
         waveform->filterAnchors[k][0].name = n;
         waveform->filterAnchors[k][0].origin = 0;
         waveform->filterAnchors[k][0].length = waveform->depth;
-        waveform->filterAnchors[k][0].maxDataLength = RKGateCount;   // Can be replaced with actual depth later
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;   // Can be replaced with actual depth later
         waveform->filterAnchors[k][0].subCarrierFrequency = omega;
         //RKLog(">f[%d] = %+5.1f MHz   omega = %.3f   n = %d", k, 1.0e-6 * f, omega, n);
         x = waveform->samples[k];
@@ -415,7 +553,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     waveform->filterAnchors[0][0].length = waveform->depth;
     waveform->filterAnchors[0][0].inputOrigin = 0;
     waveform->filterAnchors[0][0].outputOrigin = 0;
-    waveform->filterAnchors[0][0].maxDataLength = RKGateCount - waveform->depth;
+    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount - waveform->depth;
     waveform->filterAnchors[0][0].subCarrierFrequency = 2.0f * M_PI * (fc + 0.5 * bandwidth) / fs;
 
     RKInt16C *w = waveform->iSamples[0];
@@ -471,6 +609,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
                 waveform->filterAnchors[l][k].maxDataLength++;
             }
             waveform->filterAnchors[l][k].maxDataLength /= stride;
+            waveform->filterAnchors[l][k].subCarrierFrequency *= stride;
         }
         x = waveform->samples[l];
         w = waveform->iSamples[l];

@@ -62,13 +62,13 @@ Follow these steps to get the project
     make
     sudo make install
     ```
-    
+   
 4. Try the test program to simulate a Level-1 system.
 
     ```shell
     rktest -vs1
     ```
-    
+   
 5. (Some Linux) Add the following line to /etc/sysctl.conf
 
     (CentOS 7)
@@ -91,7 +91,7 @@ Follow these steps to get the project
     make
     sudo make install 
     ```
-    
+
 [FFTW]: http://www.fftw.org
 [NetCDF]: http://www.unidata.ucar.edu/software/netcdf
 [Homebrew]: http://brew.sh
@@ -192,7 +192,7 @@ Follow these steps to get the project
         uint64_t tic = 0;
         
         // Here is the busy run loop
-        while (radar->active) {
+        while (radar->state & RKRadarStateLive) {
             RKPulse *pulse = RKGetVacantPulse(radar);
             pulse->header.t = tic++;                 // Required. Some kind of clean reference directly proportional to time
             pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)

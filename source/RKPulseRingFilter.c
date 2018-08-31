@@ -13,10 +13,11 @@
 static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine) {
     int i, c;
     char *string = engine->statusBuffer[engine->statusBufferIndex];
+    const bool useCompact = engine->coreCount >= 3;
 
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -24,35 +25,58 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
     string[i] = 'R';
 
     // Engine lag
-    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s |",
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "");
+                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    useCompact ? " " : "");
     
     RKPulseRingFilterWorker *worker;
+
+    // State: 0 - green, 1 - yellow, 2 - red
+    int s1 = -1, s0 = 0;
 
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorLag(worker->lag) : "",
-                      99.49f * worker->lag,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->lag > RKLagRedThreshold ? 2 : (worker->lag > RKLagOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        if (useCompact) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->lag);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->lag);
+        }
     }
+
     // Put a separator
-    i += snprintf(string + i, RKMaximumStringLength - i, " |");
+    i += snprintf(string + i, RKStatusStringLength - i, " ");
     // Duty cycle of each core
-    for (c = 0; c < engine->coreCount && i < RKMaximumStringLength - 13; c++) {
+    for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 5; c++) {
         worker = &engine->workers[c];
-        i += snprintf(string + i, RKMaximumStringLength - i, " %s%02.0f%s",
-                      rkGlobalParameters.showColor ? RKColorDutyCycle(worker->dutyCycle) : "",
-                      99.49f * worker->dutyCycle,
-                      rkGlobalParameters.showColor ? RKNoColor : "");
+        s0 = (worker->dutyCycle > RKDutyCyleRedThreshold ? 2 : (worker->dutyCycle > RKDutyCyleOrangeThreshold ? 1 : 0));
+        if (s1 != s0 && rkGlobalParameters.showColor) {
+            s1 = s0;
+            i += snprintf(string + i, RKStatusStringLength - i, "%s",
+                          s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
+        }
+        if (useCompact) {
+            i += snprintf(string + i, RKStatusStringLength - i, "%01.0f", 9.49f * worker->dutyCycle);
+        } else {
+            i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
+        }
     }
+    if (rkGlobalParameters.showColor) {
+        i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
+    }
+
     // Almost full count
-    i += snprintf(string + i, RKMaximumStringLength - i, " [%d]", engine->almostFull);
-    if (i > RKMaximumStringLength - 13) {
-        memset(string + i, '#', RKMaximumStringLength - i - 1);
+    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
+        memset(string + i, '#', RKStatusStringLength - i - 1);
     }
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -217,11 +241,11 @@ static void *ringFilterCore(void *_in) {
         if (engine->workerTaskDone[i0 * engine->coreCount + c] == true) {
             fprintf(stderr, "Already done?   i0 = %d\n", i0);
             j = RKPreviousModuloS(i0, engine->radarDescription->pulseBufferDepth);
-            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
             j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
             j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-            fprintf(stderr, "j = %d  --> %d\n", k, engine->workerTaskDone[i0 * engine->coreCount + c]);
+            fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
         }
         if (engine->useFilter) {
             // Now we perform the difference equation on each polarization
@@ -384,11 +408,10 @@ static void *pulseRingWatcher(void *_in) {
         return NULL;
     }
     
-    
     RKConfig *config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
-    uint32_t gateCount = config->pulseRingFilterGateCount;
+    uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->pulseRingFilterGateCount);
     
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
+    RKPulse *pulse;
     RKPulse *pulseToSkip;
 
 	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
@@ -404,7 +427,7 @@ static void *pulseRingWatcher(void *_in) {
     
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
-    uint32_t paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
+    uint32_t paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize / sizeof(RKFloat));
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
     if (engine->verbose > 2) {
@@ -534,8 +557,11 @@ static void *pulseRingWatcher(void *_in) {
         // Update processing region if necessary
         if (gateCount != MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
             gateCount = MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount);
-            paddedGateCount = ((int)ceilf((float)gateCount / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize);
-            length = paddedGateCount / engine->coreCount;
+            paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize / sizeof(RKFloat));
+            RKLog("%s %s   %s", engine->name,
+                  RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
+                  RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32));
+            length = engine->coreCount < 2 ? paddedGateCount : paddedGateCount / engine->coreCount;
             origin = 0;
             for (c = 0; c < engine->coreCount; c++) {
                 RKPulseRingFilterWorker *worker = &engine->workers[c];
@@ -543,7 +569,7 @@ static void *pulseRingWatcher(void *_in) {
                 worker->processLength = length;
                 worker->outputLength = MIN(gateCount - origin, length);
                 origin += length;
-                if (engine->verbose > 1) {
+                if (engine->verbose) {
                     RKLog("%s C%d %s    %s    %s  %s\n", engine->name, c,
                           RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
                           RKVariableInString("origin", &worker->processOrigin, RKValueTypeUInt32),
@@ -721,6 +747,7 @@ int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilte
     return RKResultSuccess;
 }
 
+#pragma mark - Interactions
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

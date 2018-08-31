@@ -23,8 +23,8 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     string = engine->statusBuffer[engine->statusBufferIndex];
     
     // Always terminate the end of string buffer
-    string[RKMaximumStringLength - 1] = '\0';
-    string[RKMaximumStringLength - 2] = '#';
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
     
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
@@ -32,9 +32,9 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     string[i] = 'F';
     
     // Engine lag
-    snprintf(string + RKStatusBarWidth, RKMaximumStringLength - RKStatusBarWidth, " | %s%02.0f%s",
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
-             99.9f * engine->lag,
+             99.49f * engine->lag,
              rkGlobalParameters.showColor ? RKNoColor : "");
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -60,12 +60,12 @@ static void *pulseRecorder(void *in) {
     uint64_t cacheFlushCount = 0;
 
     RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
-    memset(fileHeader, 0, 4096);
+    memset(fileHeader, 0, sizeof(RKFileHeader));
     sprintf(fileHeader->preface, "RadarKit/RawIQ");
     fileHeader->buildNo = 1;
-    fileHeader->bytes[4093] = 'E';
-    fileHeader->bytes[4094] = 'O';
-    fileHeader->bytes[4095] = 'L';
+    fileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
+    fileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
+    fileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
     
 	// Update the engine state
 	engine->state |= RKEngineStateWantActive;
@@ -350,6 +350,10 @@ int RKRawDataRecorderStop(RKRawDataRecorder *engine) {
     return RKResultSuccess;
 }
 
+char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
+}
+
 size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payload, const size_t size) {
     if (size == 0) {
         return 0;
@@ -391,8 +395,4 @@ size_t RKRawDataRecorderCacheFlush(RKRawDataRecorder *engine) {
     size_t writtenSize = write(engine->fd, engine->cache, engine->cacheWriteIndex);
     engine->cacheWriteIndex = 0;
     return writtenSize;
-}
-
-char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

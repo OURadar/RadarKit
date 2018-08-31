@@ -45,7 +45,7 @@ int main(int argc, const char * argv[]) {
     // Set some properties of the radar
     RKSetVerbosity(myRadar, 1);
     RKSetRecordingLevel(myRadar, 0);
-    RKSetProcessingCoreCounts(myRadar, 2, 2);
+    RKSetProcessingCoreCounts(myRadar, 2, 2, 2);
     
     // Add some control buttons
     RKAddControlAsLabelAndCommand(myRadar, "10us pulse", "t w s10");
@@ -77,6 +77,8 @@ int main(int argc, const char * argv[]) {
     RKLog("Starting a new PPI ...\n");
     RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
     RKWaitWhileActive(myRadar);
+
+    RKCommandCenterFree(center);
 
     RKFree(myRadar);
 

@@ -208,7 +208,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
                 du = clock->uBuffer[k] - clock->uBuffer[j];
             }
             if (clock->count == clock->stride) {
-                RKLog("%s b = %.2e   du/dx = %s   offset = %.3f ms", clock->name, clock->b, RKFloatToCommaStyleString(1.0 / clock->dx), 1.0e3 * clock->offsetSeconds);
+                RKLog("%s b = %.2e   du/dx = %s   offset = %.3f us", clock->name, clock->b, RKFloatToCommaStyleString(1.0 / clock->dx), 1.0e6 * clock->offsetSeconds);
             }
         }
         if (clock->count > clock->stride) {

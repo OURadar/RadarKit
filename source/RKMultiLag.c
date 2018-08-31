@@ -25,7 +25,6 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     
     // Get the start pulse to know the capacity
     RKPulse *pulse = input[0];
-    const uint32_t capacity = pulse->header.capacity;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
 	const int lagCount = space->userLagChoice == 0 ? MIN(pulseCount, space->lagCount) : MIN(space->userLagChoice + 1, space->lagCount);
 
@@ -41,9 +40,9 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     for (p = 0; p < 2; p++) {
         
         // Initializes the storage
-        RKZeroOutIQZ(&space->mX[p], capacity);
+        RKZeroOutIQZ(&space->mX[p], space->capacity);
         for (k = 0; k < lagCount; k++) {
-            RKZeroOutIQZ(&space->R[p][k], capacity);
+            RKZeroOutIQZ(&space->R[p][k], space->capacity);
         }
         
         RKIQZ *R = &space->R[p][0];
@@ -90,7 +89,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
     //  CCF
     //
     
-    RKZeroOutFloat(space->gC, capacity);
+    RKZeroOutFloat(space->gC, space->capacity);
     
     const RKFloat N = (RKFloat)lagCount - 1;                                            // N = Number of lags minus one since 0 counts
     RKFloat w = 0.0f;
@@ -145,6 +144,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 		for (k = 0; k < gateCount; k++) {
             // Derive some criteria for censoring and lag selection
 			space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
+            space->Q[p][k] = space->aR[p][1][k] / space->aR[p][0][k];
 			if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
 				space->mask[k] = RKMomentMaskCensored;
 			} else {

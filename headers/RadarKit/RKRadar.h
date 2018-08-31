@@ -217,7 +217,7 @@ int RKSetHealthRelay(RKRadar *,
 #pragma mark - Before-Live Properties
 
 // These can only be set before the radar goes live
-int RKSetProcessingCoreCounts(RKRadar *, const unsigned int, const unsigned int);
+int RKSetProcessingCoreCounts(RKRadar *, const uint8_t, const uint8_t, const uint8_t);
 
 #pragma mark - Properties
 
@@ -265,7 +265,7 @@ int RKStart(RKRadar *);                                                         
 int RKStop(RKRadar *);                                                                             // Stop the radar
 int RKSoftRestart(RKRadar *);                                                                      // Restart the DSP related engines (pulse compression, moment calculation, sweep gathering, etc.)
 int RKResetClocks(RKRadar *);                                                                      // Reset the internal clock tracking mechanism
-int RKExecuteCommand(RKRadar *, const char *, char *);                                             // Execute a command and wait for feedback (blocking)
+int RKExecuteCommand(RKRadar *, const char *, char * _Nullable);                                   // Execute a command and wait for feedback (blocking)
 void RKPerformMasterTaskInBackground(RKRadar *, const char *);                                     // Send a command to the master controller in the background (non-blocking)
 
 // General

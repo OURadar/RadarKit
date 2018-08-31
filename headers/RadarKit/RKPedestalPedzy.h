@@ -21,7 +21,7 @@ typedef struct rk_pedzy {
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
-    char                   latestCommand[RKMaximumStringLength];
+    char                   latestCommand[RKMaximumCommandLength];
     RKRadar                *radar;
 
     // Program set variables

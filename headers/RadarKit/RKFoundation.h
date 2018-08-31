@@ -17,20 +17,21 @@
 
 // Compute the next/previous N-stride location with size S
 #define RKNextNModuloS(i, N, S)          ((i) >= (S) - (N) ? (i) + (N) - (S) : (i) + (N))
-#define RKPreviousNModuloS(i, N, S)      ((i) < (N) ? (S) - (N) + (i) : (i) - (N))
+#define RKPreviousNModuloS(i, N, S)      ((i) < (N) ? (S) + (i) - (N) : (i) - (N))
 
 // Compute the next/previous location with size S
 #define RKNextModuloS(i, S)              ((i) == (S) - 1 ? 0 : (i) + 1)
 #define RKPreviousModuloS(i, S)          ((i) == 0 ? (S) - 1 : (i) - 1)
 
 //
-// Z in [-32.0    ... 95.5]           Zi = (Z) x 2 + 64
-// V in [-16.0    ... 15.875]         Vi = (V) x 8 + 128
-// W in [ -0.05   ...  5.0]           Wi = (W) x 20 + 0
-// D in [-10.0    ... 15.5]           Di = (D) x 10 + 100
-// P in [  -PI    ... PI*(N-1)/N]     Pi = (P) x 128/M_PI + 128
+// Z in [-32.0    ... 95.5]             Zi = (Z) x 2 + 64
+// V in [-16.0    ... 15.875]           Vi = (V) x 8 + 128
+// W in [ -0.05   ...  5.0]             Wi = (W) x 20 + 0
+// D in [-10.0    ... 15.5]             Di = (D) x 10 + 100
+// P in [  -PI    ... PI*(N-1)/N]       Pi = (P) x 128/M_PI + 128
 // R in [  0.0    ... 1.079]
-// K in [ -0.1*PI ... 0.1*PI*(N-1)/N] Ki = (K) x 1280/M_PI + 128
+// K in [ -0.1*PI ... 0.1*PI*(N-1)/N]   Ki = (K) x 1280/M_PI + 128
+// Q in [  0.0    ... 1.0]              Ri = (Q) * 250
 //
 //
 // Z  in [CLR  -31.50  ... 95.5]            Zi = (Z) * 2 + 64
@@ -40,6 +41,7 @@
 // P  in [CLR    -PI   ... +PI]             Pi = (P) * 255/(2*M_PI) + 128.5
 // R  in [CLR   0.033  ... 1.079]
 // K  in [CLR -0.1*PI  ... +0.1*PI]         Ki = (K) * 255/(20*M_PI) + 128.5
+// Q  in [CLR    0.00  ... 1.0]             Qi = (Q) * 250
 // VE in [CLR   -63.5  ... 63.5]            Vi = (V) * 2 + 128
 //
 
@@ -52,6 +54,8 @@
 #define RKRLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.079f;      lhma[2] = 1.0f;      lhma[3] =   0.0f; }  //
 #define RKV2LHMAC { lhma[0] = -32.0f;     lhma[1] = 31.75f;      lhma[2] = 4.0f;      lhma[3] = 128.0f; }  //
 #define RKV3LHMAC { lhma[0] = -64.0f;     lhma[1] = 63.5f;       lhma[2] = 2.0f;      lhma[3] = 128.0f; }  //
+#define RKQLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.0f;        lhma[2] = 250.0f;    lhma[3] =   0.0f; }  //
+#define RKSLHMAC  { lhma[0] = -120.0f;    lhma[1] = 0.0f;        lhma[2] = 250.0f;    lhma[3] = -96.3f; }  // Asuumed 16-bit, 96 dB, peak @ 0 dBm
 
 #define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 
@@ -70,31 +74,6 @@ typedef struct RKGlobalParameterStruct {
 extern RKGlobalParamters rkGlobalParameters;
 extern const char * const rkResultStrings[];
 
-typedef uint32_t RKValueType;
-enum RKValueType {
-    RKValueTypeBool,
-    RKValueTypeInt,
-    RKValueTypeLong,
-    RKValueTypeInt8,
-    RKValueTypeInt16,
-    RKValueTypeInt32,
-    RKValueTypeInt64,
-    RKValueTypeSSize,
-    RKValueTypeUInt,
-    RKValueTypeULong,
-    RKValueTypeUInt8,
-    RKValueTypeUInt16,
-    RKValueTypeUInt32,
-    RKValueTypeUInt64,
-    RKValueTypeSize,
-    RKValueTypeFloat,
-    RKValueTypeDouble,
-    RKValueTypeString,
-    RKValueTypeNumericString,
-    RKValueTypeProductId = RKValueTypeInt8,
-    RKValueTypeIdentifier = RKValueTypeUInt64
-};
-
 #pragma mark - Common Functions
 
 // Log
@@ -108,6 +87,9 @@ int RKSetProgramName(const char *);
 int RKSetRootFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
+
+// Filename / string
+bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 
 // Common numeric output
 void RKShowTypeSizes(void);

@@ -8,7 +8,35 @@
 
 #include <RadarKit/RKSweep.h>
 
+// Internal Functions
+
+static void RKSweepEngineUpdateStatusString(RKSweepEngine *);
+
 #pragma mark - Helper Functions
+
+static void RKSweepEngineUpdateStatusString(RKSweepEngine *engine) {
+    int i;
+    char *string;
+
+    // Status string
+    string = engine->statusBuffer[engine->statusBufferIndex];
+
+    // Always terminate the end of string buffer
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
+
+    // Use RKStatusBarWidth characters to draw a bar
+    i = *engine->rayIndex * RKStatusBarWidth / engine->radarDescription->rayBufferDepth;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = 'S';
+
+    // Engine lag
+    snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
+             rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+             99.49f * engine->lag,
+             rkGlobalParameters.showColor ? RKNoColor : "");
+    engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
+}
 
 static void *rayReleaser(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
@@ -22,11 +50,11 @@ static void *rayReleaser(void *in) {
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
-    // Wait for a few seconds
+    // Wait for a moment
     s = 0;
     do {
-        usleep(100000);
-    } while (++s < 50 && engine->state & RKEngineStateWantActive);
+        usleep(10000);
+    } while (++s < 10 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
         RKLog("%s rayReleaser()  scratchSpaceIndex = %d\n", engine->name, scratchSpaceIndex);
@@ -62,7 +90,7 @@ static void *sweepManager(void *in) {
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-        RKLog("%s C%02d E%5.2f/%5.2f-%5.2f   A%6.2f-%6.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
+        RKLog("%s C%02d E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
               engine->name,
               S->header.configIndex,
               sweep->header.config.sweepElevation,
@@ -261,13 +289,15 @@ static void *rayGatherer(void *in) {
     
     int j, n, p, s;
 
+    struct timeval t0, t1;
+
     uint32_t is = 0;   // Start index
     uint64_t tic = 0;  // Local copy of engine tic
 
     pthread_t tidSweepManager = (pthread_t)0;
     pthread_t tidRayReleaser = (pthread_t)0;
 
-    RKRay *ray = RKGetRay(engine->rayBuffer, 0);
+    RKRay *ray;
     RKRay **rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
 
     // Update the engine state
@@ -354,6 +384,8 @@ static void *rayGatherer(void *in) {
 
     // Update the engine state
     engine->state |= RKEngineStateActive;
+
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     j = 0;   // ray index
     while (engine->state & RKEngineStateWantActive) {
@@ -477,6 +509,15 @@ static void *rayGatherer(void *in) {
             is = j;
         }
 
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKSweepEngineUpdateStatusString(engine);
+        }
+
+        engine->tic++;
+
         // Update k to catch up for the next watch
         j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
     }
@@ -503,7 +544,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     sprintf(engine->name, "%s<ProductRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSweepEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    sprintf(engine->productFileExtension, "nc");
+    snprintf(engine->productFileExtension, RKMaximumFileExtensionLength - 1, "nc");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;
@@ -547,6 +588,10 @@ void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
 }
 
 void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script, const char *archivedFileExtension) {
+    if (strlen(archivedFileExtension) > RKMaximumFileExtensionLength - 1) {
+        RKLog("Error. Archived file extension %s is too long. Maximum = %d. Recompile.\n", RKMaximumFileExtensionLength, archivedFileExtension);
+        exit(EXIT_FAILURE);
+    }
     if (RKFilenameExists(script)) {
         engine->hasHandleFilesScript = true;
         strcpy(engine->handleFilesScript, script);
@@ -606,6 +651,10 @@ int RKSweepEngineStop(RKSweepEngine *engine) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
+}
+
+char *RKSweepEngineStatusString(RKSweepEngine *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
 
 RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc desc) {
@@ -754,25 +803,45 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     }
 
     k = 0;
-    if (n > 360) {
-        if (S->header.marker & RKMarkerSweepBegin) {
-            // 361 beams and start at 0, we discard the extra last beam
-            n = 360;
-            k = 0;
-        } else if (T->header.marker & RKMarkerSweepBegin) {
+    if (n > 360 && n < 380) {
+        //RKLog("%s n = %d  %d  %d\n", engine->name, n, S->header.marker & RKMarkerSweepBegin, T->header.marker & RKMarkerSweepBegin);
+        if (T->header.marker & RKMarkerSweepBegin) {
             // 361 beams but start at 1, we discard the extra first beam
             n = 360;
             k = 1;
+        } else if (n > 361) {
+            // From park to a first sweep, we may end up with more than 361 rays
+            if (E->header.marker & RKMarkerSweepEnd) {
+                // The end sweep is also a start of the next sweep. In this case, we have >361 rays but only need 360
+                k = n - 361;
+                n = 360;
+                if (engine->verbose > 1) {
+                    RKLog("%s SweepCollect() n = %d --> %d  k = %d\n", engine->name, k + 361, n, k);
+                }
+            } else {
+                // Otherwise, we have exactly 361 rays. Again, only need to latest 360 rays
+                k = n - 360;
+                n = 360;
+                if (engine->verbose > 1) {
+                    RKLog("%s SweepCollect() n = %d --> %d  k = %d\n", engine->name, k + 360, n, k);
+                }
+            }
+        } else if (S->header.marker & RKMarkerSweepBegin) {
+            // First beam is both start and end
+            n = 360;
         }
     }
     S = rays[k];
     T = rays[k + 1];
     E = rays[k + n - 1];
+    if (S->header.configIndex != T->header.configIndex) {
+        RKLog("%s Info. Inconsistent configIndex S -> %d vs T -> %d\n", engine->name, S->header.configIndex, T->header.configIndex);
+    }
 
     // Allocate the return object
     sweep = (RKSweep *)malloc(sizeof(RKSweep));
     if (sweep == NULL) {
-        RKLog("Error. Unable to allocate memory.\n");
+        RKLog("%s Error. Unable to allocate memory.\n", engine->name);
         return NULL;
     }
     memset(sweep, 0, sizeof(RKSweep));
@@ -784,8 +853,16 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
     sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
     sweep->header.baseMomentList = overallMomentList;
-    sweep->header.isPPI = (S->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
-    sweep->header.isRHI = (S->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
+    sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+    sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+    if (!sweep->header.isPPI && !sweep->header.isRHI) {
+        config = &engine->configBuffer[T->header.configIndex];
+        sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+        sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI;
+        RKLog("%s Using %s   %s\n", engine->name,
+              RKVariableInString("configId", &config->i, RKValueTypeIdentifier),
+              RKMarkerScanTypeString(config->startMarker));
+    }
     sweep->header.external = true;
     memcpy(&sweep->header.desc, engine->radarDescription, sizeof(RKRadarDesc));
     memcpy(&sweep->header.config, config, sizeof(RKConfig));
@@ -801,6 +878,9 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
         k += sprintf(sweep->header.filename + k, "-A%.1f", sweep->header.config.sweepAzimuth);
     } else {
         k += sprintf(sweep->header.filename + k, "-N%03d", sweep->header.rayCount);
+    }
+    if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
+        RKLog("%s Error. Suggested filename %s is longer than expected.\n", engine->name, sweep->header.filename);
     }
     return sweep;
 }

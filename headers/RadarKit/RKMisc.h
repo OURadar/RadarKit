@@ -2,7 +2,7 @@
 //  RKMisc.h
 //  RadarKit
 //
-//  Technically these functions are not part of RadarKit. They can be
+//  Technically these functions are not part of the RadarKit framework. They can be
 //  used independently outside of radar kit.
 //
 //  Created by Boon Leng Cheong on 11/4/15.
@@ -120,7 +120,9 @@ char *RKGetBackgroundColorOfCubeIndex(const int);
 
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
 char *RKGetValueOfKey(const char *string, const char *key);
-void RKReplaceKeyValue(char *string, const char *key, int value);
+void RKReplaceAllValuesOfKey(char *string, const char *key, int value);
+void RKReplaceEnumOfKey(char *string, const char *key, int value);
+void RKReviseLogicalValues(char *);
 
 char *RKUIntegerToCommaStyleString(const unsigned long long);
 char *RKIntegerToCommaStyleString(const long long);
@@ -137,7 +139,6 @@ long RKCountFilesInPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
-bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 
 char *RKSignalString(const int);
 
@@ -146,7 +147,9 @@ int RKIndentCopy(char *dst, char *src, const int width);
 char *RKNextNoneWhite(const char *);
 char *RKLastLine(const char *);
 
+float RKMinDiff(const float minuend, const float subtrahend);
 float RKUMinDiff(const float minuend, const float subtrahend);
+bool RKAngularCrossOver(const float a1, const float a2, const float crossover);
 
 long RKGetCPUIndex(void);
 long RKGetMemoryUsage(void);
