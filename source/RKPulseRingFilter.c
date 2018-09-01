@@ -133,7 +133,7 @@ static void *ringFilterCore(void *_in) {
     RKPulse *pulse;
     size_t mem = 0;
     
-    if (me->processOrigin % RKSIMDAlignSize > 0) {
+    if (me->processOrigin * sizeof(RKFloat) % RKSIMDAlignSize > 0) {
         RKLog("%s %s Error. Each filter origin must align to the SIMD requirements.\n", engine->name, me->name);
         return NULL;
     }

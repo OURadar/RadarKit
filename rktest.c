@@ -170,14 +170,14 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 0:
             // Debug
             user->fs = 2000000;
-            user->gateCount = 150;
+            user->gateCount = 120;
             user->coresForPulseCompression = 2;
-            user->coresForPulseRingFilter = 1;
+            user->coresForPulseRingFilter = 2;
             user->coresForMomentProcessor = 2;
             user->desc.positionBufferDepth = 100;
             user->desc.pulseBufferDepth = 100;
             user->desc.rayBufferDepth = 400;
-            user->desc.pulseToRayRatio = 1;
+            user->desc.pulseToRayRatio = 2;
             user->prf = 10;
             sprintf(user->momentMethod, "PulsePair");
             break;

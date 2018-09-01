@@ -630,7 +630,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
         return 0;
     }
     size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float));
-    if (raySize != (raySize / RKSIMDAlignSize) * RKSIMDAlignSize) {
+    if (raySize != (raySize / alignment) * alignment) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
     }

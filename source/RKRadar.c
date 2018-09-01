@@ -481,9 +481,13 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.pulseCapacity == 0) {
         radar->desc.pulseCapacity = 1024;
     }
-    radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + RKSIMDAlignSize - 1) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
-    if (radar->desc.pulseCapacity != desc.pulseCapacity) {
-        RKLog("Info. Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+    uint32_t stride = radar->desc.pulseToRayRatio * RKSIMDAlignSize;
+    radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + stride - 1) / stride) * stride / sizeof(RKFloat);
+    if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Info. Pulse capacity changed from %s to %s (stride = %d)\n",
+              RKIntegerToCommaStyleString(desc.pulseCapacity),
+              RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
+              stride);
     }
     if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
