@@ -170,7 +170,7 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 0:
             // Debug
             user->fs = 2000000;
-            user->gateCount = 120;
+            user->gateCount = 32;
             user->coresForPulseCompression = 2;
             user->coresForPulseRingFilter = 2;
             user->coresForMomentProcessor = 2;
@@ -650,7 +650,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
               RKFloatToCommaStyleString(1.0e-3 * user->prf), RKFloatToCommaStyleString(1.0e-6 * user->fs));
         user->gateCount = k;
     }
-    user->desc.pulseCapacity = 10 * ceil(0.1 * user->gateCount);
+    user->desc.pulseCapacity = user->gateCount;
 }
 
 #pragma mark - Radar Parameters
