@@ -691,9 +691,10 @@ enum RKStream {
     RKStreamStatusPositions                      = 1,                          //
     RKStreamStatusPulses                         = 2,                          //
     RKStreamStatusRays                           = 3,                          //
-    RKStreamStatusIngest                         = 4,                          // Ingest up keep
+    RKStreamStatusIngest                         = 4,                          // Ingest and processing lag
     RKStreamStatusEngines                        = 5,                          // State of Engines
     RKStreamStatusBuffers                        = 6,                          // Buffer overview
+    RKStreamStatusASCIIArt                       = 7,                          // Are you ascii me?
     RKStreamControl                              = (1 << 3),                   // Controls
     RKStreamStatusAll                            = 0xF7,                       //
     RKStreamHealthInJSON                         = (1 << 5),                   // Health in JSON

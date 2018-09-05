@@ -304,6 +304,7 @@ RKPulse *RKGetLatestPulse(RKRadar *);                                           
 RKRay *RKGetVacantRay(RKRadar *);                                                                  // Get a vacant slot for storing ray data
 void RKSetRayReady(RKRadar *, RKRay *);                                                            // Declare the ray is ready
 RKRay *RKGetLatestRay(RKRadar *);                                                                  // Get the latest ray from the radar
+RKRay *RKGetLatestRayIndex(RKRadar *, uint32_t *);                                                 // Get the latest ray index from the radar
 
 // Waveform Calibrations
 void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);                           // Add a waveform specific calibration

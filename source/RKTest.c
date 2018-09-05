@@ -1366,7 +1366,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     RKPulse *pulses[pulseCount];
 
     for (k = 0; k < pulseCount; k++) {
-        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.i = (uint64_t)(-1) - pulseCount + k;
         pulse->header.gateCount = gateCount;
@@ -1572,7 +1572,7 @@ void RKTestMomentProcessorSpeed(void) {
     RKPulse *pulses[pulseCount];
     RKComplex *X;
     for (k = 0; k < pulseCount; k++) {
-        RKPulse *pulse = RKGetPulse(pulseBuffer, k);
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
         X = RKGetComplexDataFromPulse(pulse, 0);
@@ -1592,7 +1592,7 @@ void RKTestMomentProcessorSpeed(void) {
     struct timeval tic, toc;
     int (*method)(RKScratch *, RKPulse **, const uint16_t);
 
-    RKRay *ray = RKGetRay(rayBuffer, 0);
+    RKRay *ray = RKGetRayFromBuffer(rayBuffer, 0);
 
     for (j = 0; j < 5; j++) {
         switch (j) {
@@ -1672,7 +1672,7 @@ void RKTestCacheWrite(void) {
     int j, k;
     uint32_t len = 0;
     for (k = 1, j = 1; k < 50000; k++) {
-        RKPulse *pulse = RKGetPulse(pulseBuffer, k % 100);
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k % 100);
         pulse->header.gateCount = 16000;
 
         len += RKRawDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));

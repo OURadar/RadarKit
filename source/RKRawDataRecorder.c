@@ -85,7 +85,7 @@ static void *pulseRecorder(void *in) {
     n = 0;   // pulse sample count
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
-        pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
@@ -196,7 +196,7 @@ static void *pulseRecorder(void *in) {
             while (pulseCount > 0) {
                 pulseCount--;
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
-                pulse = RKGetPulse(engine->pulseBuffer, i);
+                pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i);
                 if (pulse->header.s != RKPulseStatusVacant) {
                     pulse->header.s |= RKPulseStatusRecorded;
                 }
