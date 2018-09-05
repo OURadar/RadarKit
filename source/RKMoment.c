@@ -88,7 +88,9 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     }
 
     // Almost full count
-    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    
+    // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 20) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }
@@ -348,7 +350,7 @@ static void *momentCore(void *in) {
     RKScratch *space;
     
     // Allocate local resources and keep track of the total allocation
-    pulse = RKGetPulse(engine->pulseBuffer, 0);
+    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->verbose > 3);
     if (space == NULL) {
@@ -465,15 +467,15 @@ static void *momentCore(void *in) {
         engine->rayStatusBufferIndex = iu;
 
         // Start and end pulses to calculate this ray
-        S = RKGetPulse(engine->pulseBuffer, is);
-        E = RKGetPulse(engine->pulseBuffer, ie);
+        S = RKGetPulseFromBuffer(engine->pulseBuffer, is);
+        E = RKGetPulseFromBuffer(engine->pulseBuffer, ie);
 
         // Beamwidth
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
 
         // My ray
-        ray = RKGetRay(engine->rayBuffer, io);
+        ray = RKGetRayFromBuffer(engine->rayBuffer, io);
 
         // Mark being processed so that the other thread will not override the length
         ray->header.s = RKRayStatusProcessing;
@@ -547,7 +549,7 @@ static void *momentCore(void *in) {
         i = is;
         k = 0;
         do {
-            pulse = RKGetPulse(engine->pulseBuffer, i);
+            pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i);
             marker |= pulse->header.marker;
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
@@ -744,7 +746,7 @@ static void *pulseGatherer(void *_in) {
     c = 0;   // core index
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
-        pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
         
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
@@ -795,7 +797,7 @@ static void *pulseGatherer(void *_in) {
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->rayBufferDepth);
                 engine->momentSource[i].length = 0;
-                ray = RKGetRay(engine->rayBuffer, i);
+                ray = RKGetRayFromBuffer(engine->rayBuffer, i);
             } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive);
         } else if (skipCounter > 0) {
             // Skip processing if we are in skipping mode
@@ -833,7 +835,7 @@ static void *pulseGatherer(void *_in) {
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
-                    ray = RKGetRay(engine->rayBuffer, j);
+                    ray = RKGetRayFromBuffer(engine->rayBuffer, j);
                     ray->header.s = RKRayStatusVacant;
                     count = 0;
                 } else {
@@ -845,10 +847,10 @@ static void *pulseGatherer(void *_in) {
         }
         
         // Check finished rays
-        ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+        ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
         while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
-            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
         }
 
         // Log a message if it has been a while

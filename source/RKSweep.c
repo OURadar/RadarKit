@@ -390,7 +390,7 @@ static void *rayGatherer(void *in) {
     j = 0;   // ray index
     while (engine->state & RKEngineStateWantActive) {
         // The ray
-        ray = RKGetRay(engine->rayBuffer, j);
+        ray = RKGetRayFromBuffer(engine->rayBuffer, j);
 
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
@@ -428,12 +428,12 @@ static void *rayGatherer(void *in) {
             // Gather the rays
             n = 0;
             do {
-                ray = RKGetRay(engine->rayBuffer, is);
+                ray = RKGetRayFromBuffer(engine->rayBuffer, is);
                 ray->header.n = is;
                 rays[n++] = ray;
                 is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
             } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
-            ray = RKGetRay(engine->rayBuffer, is);
+            ray = RKGetRayFromBuffer(engine->rayBuffer, is);
             ray->header.n = is;
             rays[n++] = ray;
             engine->scratchSpaces[engine->scratchSpaceIndex].rayCount = n;
@@ -480,7 +480,7 @@ static void *rayGatherer(void *in) {
                 // Gather the rays to release
                 n = 0;
                 do {
-                    ray = RKGetRay(engine->rayBuffer, is);
+                    ray = RKGetRayFromBuffer(engine->rayBuffer, is);
                     ray->header.n = is;
                     rays[n++] = ray;
                     is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
@@ -509,6 +509,9 @@ static void *rayGatherer(void *in) {
             is = j;
         }
 
+        // Record down the ray that is just processed
+        engine->processedRayIndex = j;
+        
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {

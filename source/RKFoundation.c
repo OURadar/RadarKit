@@ -568,7 +568,7 @@ void RKPulseBufferFree(RKBuffer mem) {
 }
 
 // Get a pulse from a pulse buffer
-RKPulse *RKGetPulse(RKBuffer buffer, const uint32_t k) {
+RKPulse *RKGetPulseFromBuffer(RKBuffer buffer, const uint32_t k) {
     RKPulse *pulse = (RKPulse *)buffer;
     size_t headerSize = sizeof(pulse->headerBytes);
     size_t pulseSize = headerSize + 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
@@ -599,7 +599,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 
 int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
-        RKPulse *pulse = RKGetPulse(buffer, k);
+        RKPulse *pulse = RKGetPulseFromBuffer(buffer, k);
         pulse->header.s = RKPulseStatusVacant;
         pulse->header.i = -(uint64_t)slots + k;
         pulse->header.gateCount = 0;
@@ -658,7 +658,7 @@ void RKRayBufferFree(RKBuffer mem) {
 }
 
 // Get a ray from a ray buffer
-RKRay *RKGetRay(RKBuffer buffer, const uint32_t k) {
+RKRay *RKGetRayFromBuffer(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
     size_t raySize = RKRayHeaderPaddedSize + RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
@@ -679,7 +679,7 @@ float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
 
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
-        RKRay *ray = RKGetRay(buffer, k);
+        RKRay *ray = RKGetRayFromBuffer(buffer, k);
         ray->header.s = RKRayStatusVacant;
         ray->header.i = -(uint64_t)slots + k;
         ray->header.gateCount = 0;
@@ -883,6 +883,7 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
 
 #pragma mark - Moment Stuff
 
+// Convert string description from command string to a number of uint64_t type
 RKStream RKStreamFromString(const char * string) {
     int j = 0;
     char *c = (char *)string;
@@ -906,6 +907,9 @@ RKStream RKStreamFromString(const char * string) {
                 break;
             case '5':
                 flag = (flag & !RKStreamStatusMask) | RKStreamStatusBuffers;
+                break;
+            case '6':
+                flag = (flag & !RKStreamStatusMask) | RKStreamStatusASCIIArt;
                 break;
             case 'x':
                 flag |= RKStreamStatusTerminalChange;
@@ -1018,6 +1022,8 @@ int RKStringFromStream(char *string, RKStream stream) {
         j += sprintf(string + j, "4");
     } else if (stream & RKStreamStatusBuffers) {
         j += sprintf(string + j, "5");
+    } else if (stream & RKStreamStatusASCIIArt) {
+        j += sprintf(string + j, "6");
     }
     if (stream & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
     if (stream & RKStreamHealthInJSON)          { j += sprintf(string + j, "h"); }

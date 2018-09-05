@@ -83,7 +83,9 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     }
 
     // Almost full count
-    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    
+    // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }
@@ -96,7 +98,7 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     memset(string, '.', RKStatusBarWidth);
     string[i] = '#';
 
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, c);
+    RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, c);
     RKConfig *config = &engine->configBuffer[pulse->header.configIndex];
     snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
              " %05u | C%2d/E%5.2f/A%6.2f   E%5.2f   A%6.2f   G%s   M%04x",
@@ -161,7 +163,7 @@ static void *pulseCompressionCore(void *_in) {
     
 #endif
 
-    RKPulse *pulse = RKGetPulse(engine->pulseBuffer, 0);
+    RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
 
     // Allocate local resources, use k to keep track of the total allocation
@@ -253,7 +255,7 @@ static void *pulseCompressionCore(void *_in) {
         // Start of getting busy
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->radarDescription->pulseBufferDepth);
 
-        RKPulse *pulse = RKGetPulse(engine->pulseBuffer, i0);
+        RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i0);
 
         #ifdef DEBUG_IQ
         RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
@@ -473,7 +475,7 @@ static void *pulseWatcher(void *_in) {
     RKPulse *pulseToSkip;
     
     // Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
-    pulse = RKGetPulse(engine->pulseBuffer, 0);
+    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     planSize = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
     bool exportWisdom = false;
     const char wisdomFile[] = RKFFTWisdomFile;
@@ -583,7 +585,7 @@ static void *pulseWatcher(void *_in) {
     c = 0;   // core index
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
-        pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
 
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
         engine->state |= RKEngineStateSleep1;
@@ -628,7 +630,7 @@ static void *pulseWatcher(void *_in) {
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 engine->filterGid[i] = -1;
-                pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
+                pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
             } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
         } else if (skipCounter > 0) {
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
