@@ -38,8 +38,8 @@ typedef struct rk_user {
     RKTextPreferences                textPreferences;                                              // Text preference for terminal output
     uint16_t                         pulseDownSamplingRatio;                                       // Additional down-sampling ratio for pulse live stream
     uint16_t                         rayDownSamplingRatio;                                         // Additional down-sampling ratio for ray live stream
+    uint16_t                         asciiArtStride;                                               // Gate stride for ASCII art
     uint16_t                         ascopeMode;                                                   // The ASCope mode: 1-4
-    uint16_t                         reserved;                                                     //
     pthread_mutex_t                  mutex;                                                        //
     char                             string[RKMaximumPacketSize];                                  // A local storage to buffer a packet
     char                             scratch[RKMaximumPacketSize];                                 // A local storage as scratch space

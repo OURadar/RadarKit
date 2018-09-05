@@ -495,6 +495,7 @@ int socketStreamHandler(RKOperator *O) {
             ray = RKGetLatestRayIndex(user->radar, &endIndex);
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamStatusASCIIArt) {
                 user->streamsInProgress = RKStreamStatusASCIIArt;
+                user->asciiArtStride = ray->header.gateCount / 100;
                 user->rayIndex = endIndex;
                 if (engine->verbose) {
                     RKLog("%s %s Streaming RKRay ASCII art -> %d (0x%02x %s).\n", engine->name, O->name, endIndex,
@@ -505,31 +506,58 @@ int socketStreamHandler(RKOperator *O) {
                 k = 0;
                 while (user->rayIndex != endIndex && k < RKMaximumPacketSize - 200) {
                     ray = RKGetRayFromBuffer(user->radar->rays, user->rayIndex);
-                    k += sprintf(user->string + k, "%06llu %.2f %6.2f ", ray->header.i, ray->header.startElevation, ray->header.startAzimuth);
+                    k += sprintf(user->string + k, "%04llu %5.2f %6.2f ", ray->header.i % 1000, ray->header.startElevation, ray->header.startAzimuth);
                     // Now we paint the ASCII art
                     u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
                     j = -1;
-                    for (s = 0; s < MIN(ray->header.gateCount / 4, 100); s++) {
+                    for (s = 0; s < MIN(ray->header.gateCount / user->asciiArtStride, 100); s++) {
                         // 20.0 dBZ --> (20.0) * 2 + 64 = 104 --> ((104) - 54) / 10 = 5.0 = 5
                         // 24.5 dBZ --> (24.5) * 2 + 64 = 113 --> ((113) - 54) / 10 = 5.9 = 5
                         // 25.0 dBZ --> (25.0) * 2 + 64 = 114 --> ((114) - 54) / 10 = 6.0 = 6
-                        i = MAX(*u8Data - 54, 0) / 10;
-                        u8Data += 4;
-                        if (i == j) {
-                            *(user->string + k++) = ' ';
-                        } else {
-                            k += sprintf(user->string + k, "%s ", colormap[i]);
+                        i = MIN(MAX(*u8Data - 54, 0) / 10, 15);
+                        u8Data += user->asciiArtStride;
+                        if (j != i) {
                             j = i;
+                            k += sprintf(user->string + k, "%s ", colormap[i]);
+                            //k += sprintf(user->string + k, "%s%x", colormap[i], i);
+                        } else {
+                            *(user->string + k++) = ' ';
+                            //k += sprintf(user->string + k, "%x", i);
                         }
                     }
-                    k += sprintf(user->string + k, "%s\n", RKNoColor);
+                    k += sprintf(user->string + k, "%s" RKEOL, RKNoColor);
                     user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
                 }
                 O->delimTx.type = RKNetworkPacketTypePlainText;
                 O->delimTx.size = k + 1;
+                if (engine->verbose > 2) {
+                    RKLog("%s %s delimTx = %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+                          engine->name, O->name,
+                          O->delimTx.bytes[0],
+                          O->delimTx.bytes[1],
+                          O->delimTx.bytes[2],
+                          O->delimTx.bytes[3],
+                          O->delimTx.bytes[4],
+                          O->delimTx.bytes[5],
+                          O->delimTx.bytes[6],
+                          O->delimTx.bytes[7],
+                          O->delimTx.bytes[8],
+                          O->delimTx.bytes[9],
+                          O->delimTx.bytes[10],
+                          O->delimTx.bytes[11],
+                          O->delimTx.bytes[12],
+                          O->delimTx.bytes[13],
+                          O->delimTx.bytes[14],
+                          O->delimTx.bytes[15]
+                          );
+                }
                 // Special case to avoid character 007, which is a beep.
                 if ((O->delimTx.size & 0xFF) == 0x07) {
                     O->delimTx.size++;
+                }
+                if ((O->delimTx.size & 0xFF00) == 0x0700) {
+                    memset(user->string + O->delimTx.size, 0, 256);
+                    O->delimTx.size += 256;
                 }
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
                 user->timeLastOut = time;
@@ -1288,6 +1316,7 @@ int socketInitialHandler(RKOperator *O) {
         user->rayDownSamplingRatio = 1;
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
+    user->asciiArtStride = 4;
     user->ascopeMode = 2;
     pthread_mutex_init(&user->mutex, NULL);
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
