@@ -20,6 +20,7 @@
 //
 //  2.0.2  - 9/XX/2018
 //         - Added RKPulsePair to RKTestMomentProcessorSpeed
+//         - Added ASCII art to show reflectivity in Terminal
 //         - Stability improvements
 //
 //  2.0.1  - 8/31/2018
