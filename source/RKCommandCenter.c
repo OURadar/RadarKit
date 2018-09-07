@@ -187,9 +187,45 @@ int socketCommandHandler(RKOperator *O) {
                     stream = RKStreamFromString(commandString + 1);
                     if (stream & RKStreamStatusTerminalChange) {
                         stream = user->streamsToRestore;
-                        int p = (user->textPreferences & RKTextPreferencesWindowSizeMask) >> 2;
-                        p = RKNextModuloS(p, 5) << 2;
-                        user->textPreferences = (user->textPreferences & ~RKTextPreferencesWindowSizeMask) | p;
+                        k = RKNextModuloS((user->textPreferences & RKTextPreferencesWindowSizeMask) >> 2, 5) << 2;
+                        user->textPreferences = (user->textPreferences & ~RKTextPreferencesWindowSizeMask) | k;
+                        // Check the terminal width
+                        switch (k & RKTextPreferencesWindowSizeMask) {
+                            case RKTextPreferencesWindowSize80x25:
+                                user->terminalSize.ws_col = 80;
+                                user->terminalSize.ws_row = 25;
+                                break;
+                            case RKTextPreferencesWindowSize80x40:
+                                user->terminalSize.ws_col = 80;
+                                user->terminalSize.ws_row = 40;
+                                break;
+                            case RKTextPreferencesWindowSize80x50:
+                                user->terminalSize.ws_col = 80;
+                                user->terminalSize.ws_row = 50;
+                                break;
+                            case RKTextPreferencesWindowSize120x50:
+                                user->terminalSize.ws_col = 110;
+                                user->terminalSize.ws_row = 50;
+                                break;
+                            case RKTextPreferencesWindowSize120x80:
+                                user->terminalSize.ws_col = 110;
+                                user->terminalSize.ws_row = 80;
+                                break;
+                            default:
+                                ioctl(0, TIOCGWINSZ, &user->terminalSize);
+                                if (user->terminalSize.ws_col == 0) {
+                                    user->terminalSize.ws_col = 110;
+                                } else {
+                                    if (user->terminalSize.ws_col >= 120) {
+                                        user->terminalSize.ws_col -= 10;
+                                    }
+                                }
+                                if (user->terminalSize.ws_row == 0) {
+                                    user->terminalSize.ws_row = 80;
+                                }
+                                RKLog("%s %s Using window size %d x %d\n", engine->name, O->name, user->terminalSize.ws_col, user->terminalSize.ws_row);
+                                break;
+                        }
                     }
                     pthread_mutex_lock(&user->mutex);
                     k = user->rayIndex;
@@ -1309,6 +1345,8 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamSweepAll;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
     user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x80;
+    user->terminalSize.ws_col = 120;
+    user->terminalSize.ws_row = 80;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000, 1);
