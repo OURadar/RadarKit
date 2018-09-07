@@ -36,6 +36,7 @@ typedef struct rk_user {
     uint32_t                         controlFirstUID;                                              // UUID of the first control
     uint32_t                         scratchSpaceIndex;                                            // The index to the scratch space to use
     RKTextPreferences                textPreferences;                                              // Text preference for terminal output
+    struct winsize                   terminalSize;                                                 // Terminal window size of the user
     uint16_t                         pulseDownSamplingRatio;                                       // Additional down-sampling ratio for pulse live stream
     uint16_t                         rayDownSamplingRatio;                                         // Additional down-sampling ratio for ray live stream
     uint16_t                         asciiArtStride;                                               // Gate stride for ASCII art
