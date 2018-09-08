@@ -208,24 +208,12 @@ int socketCommandHandler(RKOperator *O) {
                                 user->terminalSize.ws_row = 50;
                                 break;
                             case RKTextPreferencesWindowSize120x80:
+                            default:
                                 user->terminalSize.ws_col = 110;
                                 user->terminalSize.ws_row = 80;
                                 break;
-                            default:
-                                ioctl(0, TIOCGWINSZ, &user->terminalSize);
-                                if (user->terminalSize.ws_col == 0) {
-                                    user->terminalSize.ws_col = 110;
-                                } else {
-                                    if (user->terminalSize.ws_col >= 120) {
-                                        user->terminalSize.ws_col -= 10;
-                                    }
-                                }
-                                if (user->terminalSize.ws_row == 0) {
-                                    user->terminalSize.ws_row = 80;
-                                }
-                                RKLog("%s %s Using window size %d x %d\n", engine->name, O->name, user->terminalSize.ws_col, user->terminalSize.ws_row);
-                                break;
                         }
+                        RKLog("%s %s Using window size %d x %d\n", engine->name, O->name, user->terminalSize.ws_col, user->terminalSize.ws_row);
                     }
                     pthread_mutex_lock(&user->mutex);
                     k = user->rayIndex;
