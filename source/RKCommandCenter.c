@@ -204,12 +204,12 @@ int socketCommandHandler(RKOperator *O) {
                                 user->terminalSize.ws_row = 50;
                                 break;
                             case RKTextPreferencesWindowSize120x50:
-                                user->terminalSize.ws_col = 110;
+                                user->terminalSize.ws_col = 120;
                                 user->terminalSize.ws_row = 50;
                                 break;
                             case RKTextPreferencesWindowSize120x80:
                             default:
-                                user->terminalSize.ws_col = 110;
+                                user->terminalSize.ws_col = 120;
                                 user->terminalSize.ws_row = 80;
                                 break;
                         }
@@ -519,7 +519,7 @@ int socketStreamHandler(RKOperator *O) {
             ray = RKGetLatestRayIndex(user->radar, &endIndex);
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamStatusASCIIArt) {
                 user->streamsInProgress = RKStreamStatusASCIIArt;
-                user->asciiArtStride = ray->header.gateCount / 100;
+                user->asciiArtStride = ray->header.gateCount / (user->terminalSize.ws_col - 20);
                 user->rayIndex = endIndex;
                 if (engine->verbose) {
                     RKLog("%s %s Streaming RKRay ASCII art -> %d (0x%02x %s).\n", engine->name, O->name, endIndex,
@@ -534,7 +534,7 @@ int socketStreamHandler(RKOperator *O) {
                     // Now we paint the ASCII art
                     u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
                     j = -1;
-                    for (s = 0; s < MIN(ray->header.gateCount / user->asciiArtStride, 100); s++) {
+                    for (s = 0; s < MIN(ray->header.gateCount / user->asciiArtStride, (user->terminalSize.ws_col - 20)); s++) {
                         // 20.0 dBZ --> (20.0) * 2 + 64 = 104 --> ((104) - 54) / 10 = 5.0 = 5
                         // 24.5 dBZ --> (24.5) * 2 + 64 = 113 --> ((113) - 54) / 10 = 5.9 = 5
                         // 25.0 dBZ --> (25.0) * 2 + 64 = 114 --> ((114) - 54) / 10 = 6.0 = 6
