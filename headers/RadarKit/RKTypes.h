@@ -1067,8 +1067,11 @@ typedef struct rk_sweep {
 typedef struct rk_scratch {
     uint32_t             capacity;                                             // Capacity
     bool                 showNumbers;                                          // A flag for showing numbers
-    uint8_t              lagCount;                                             // Number of lags of R & C
     uint8_t              userLagChoice;                                        // Number of lags in multi-lag estimator from user
+    uint8_t              lagCount;                                             // Number of lags of R & C
+    uint16_t             gateCount;                                            // Gate count of the rays
+    RKFloat              gateSizeMeters;                                       // Gate size in meters for range correction
+    RKFloat              samplingAdjustment;                                   // Sampling adjustment going from pulse to ray conversion
     RKIQZ                mX[2];                                                // Mean of X, 2 for dual-pol
     RKIQZ                vX[2];                                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
     RKIQZ                R[2][RKMaximumLagCount];                              // ACF up to RKMaximumLagCount - 1 for each polarization
