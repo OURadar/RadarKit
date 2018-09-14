@@ -1403,8 +1403,10 @@ RKCommandCenter *RKCommandCenterInit(void) {
 
 void RKCommandCenterFree(RKCommandCenter *engine) {
     pthread_mutex_destroy(&engine->mutex);
+    RKLog("====>\n");
     RKServerFree(engine->server);
     free(engine);
+    RKLog("===>\n");
     return;
 }
 
