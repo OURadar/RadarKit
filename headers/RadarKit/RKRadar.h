@@ -241,6 +241,7 @@ void RKSetPulseTicsPerSeconds(RKRadar *, const double);
 void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
 // Moment processor
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *));
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
 int RKSetMomentProcessorToPulsePairHop(RKRadar *);

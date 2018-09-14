@@ -1435,6 +1435,14 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
 }
 
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *)) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->calibrator = calibrator;
+    return RKResultSuccess;
+}
+
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
