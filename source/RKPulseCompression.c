@@ -112,14 +112,119 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
 
 #pragma mark - Delegate Workers
 
+static void builtInCompressor(RKCompressionScratch *scratch) {
+
+    RKPulse *pulse = scratch->pulse;
+    RKComplex *filter = scratch->filter;
+    RKFilterAnchor *filterAnchor = scratch->filterAnchor;
+    fftwf_complex *in = scratch->inBuffer;
+    fftwf_complex *out = scratch->outBuffer;
+
+    int i, p;
+    int bound;
+
+    bound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->maxDataLength + filterAnchor->length);
+
+    for (p = 0; p < 2; p++) {
+        // Copy and convert the samples
+        RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+        X += filterAnchor->inputOrigin;
+        if (filterAnchor->inputOrigin % RKSIMDAlignSize == 0) {
+            RKSIMD_Int2Complex(X, (RKComplex *)in, bound);
+        } else {
+            RKSIMD_Int2Complex_reg(X, (RKComplex *)in, bound);
+        }
+
+        // Zero pad the input; a filter is always zero-padded in the setter function.
+        if (scratch->planSize > bound) {
+            memset(in[bound], 0, (scratch->planSize - bound) * sizeof(fftwf_complex));
+        }
+
+        fftwf_execute_dft(scratch->planForwardInPlace, in, in);
+
+        //printf("dft(in) =\n"); RKPulseCompressionShowBuffer(in, 8);
+
+        fftwf_execute_dft(scratch->planForwardOutPlace, (fftwf_complex *)filter, out);
+
+        //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
+
+#if RKPulseCompressionMultiplyMethod == 1
+
+        // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
+        RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, scratch->planSize);
+
+#elif RKPulseCompressionMultiplyMethod == 2
+
+        // In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
+        RKSIMD_yconj((RKComplex *)out, planSize);
+        RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
+
+#elif RKPulseCompressionMultiplyMethod == 3
+
+        // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
+        RKSIMD_Complex2IQZ((RKComplex *)in, scratch->zi, planSize);
+        RKSIMD_Complex2IQZ((RKComplex *)out, scratch->zo, planSize);
+        RKSIMD_izmul(zi, zo, planSize, true);
+        RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
+
+#else
+
+        // Regular multiplication and let compiler optimize with either -O1 -O2 or -Os
+        RKSIMD_yconj((RKComplex *)in, planSize);
+        RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
+
+#endif
+
+        //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
+
+        fftwf_execute_dft(scratch->planBackwardInPlace, out, out);
+
+        //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
+
+        // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
+        RKSIMD_iyscl((RKComplex *)out, 1.0f / scratch->planSize, scratch->planSize);
+
+        //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
+
+        bound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
+
+        RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
+        RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+        Y += filterAnchor->outputOrigin;
+        Z.i += filterAnchor->outputOrigin;
+        Z.q += filterAnchor->outputOrigin;
+        fftwf_complex *o = out;
+        for (i = 0; i < bound; i++) {
+            Y->i = (*o)[0];
+            Y++->q = (*o)[1];
+            *Z.i++ = (*o)[0];
+            *Z.q++ = (*o)[1];
+            o++;
+        }
+
+#ifdef DEBUG_PULSE_COMPRESSION
+
+        pthread_mutex_lock(&engine->mutex);
+        Y = RKGetComplexDataFromPulse(pulse, p);
+        printf("Y [i0 = %d   p = %d   j = %d] =\n", i0, p, j);
+        RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
+
+        Z = RKGetSplitComplexDataFromPulse(pulse, p);
+        RKShowArray(Z.i, "Zi", 8, 1);
+        RKShowArray(Z.q, "Zq", 8, 1);
+        pthread_mutex_unlock(&engine->mutex);
+
+#endif
+
+    } // for (p = 0; ...
+}
+
 static void *pulseCompressionCore(void *_in) {
     RKPulseCompressionWorker *me = (RKPulseCompressionWorker *)_in;
     RKPulseCompressionEngine *engine = me->parent;
 
-    int bound;
     int i, j, k, p;
     struct timeval t0, t1, t2;
-    fftwf_complex *o;
 
     const int c = me->id;
     const int ci = engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU ? engine->coreOrigin + c : -1;
@@ -168,18 +273,21 @@ static void *pulseCompressionCore(void *_in) {
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
-    fftwf_complex *in, *out;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
-    if (in == NULL || out == NULL) {
+    RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
+    if (scratch == NULL) {
+        RKLog("%s Error. Unable to allocate a scratch space.\n", engine->name);
+        return (void *)RKResultFailedToAllocateFFTSpace;
+    }
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     size_t mem = 2 * nfft * sizeof(fftwf_complex);
-    RKIQZ *zi, *zo;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&zi, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&zo, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
-    if (zi == NULL || zo == NULL) {
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    if (scratch->zi == NULL || scratch->zo == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
@@ -282,114 +390,32 @@ static void *pulseCompressionCore(void *_in) {
             // Their product is stored in *out using in-place multiplication: out[i] = conj(out[i]) * in[i]
             // Then, the inverse DFT is performed to get out back to time domain, which is the compressed pulse
 
-            // Process each polarization separately and indepently
-            for (p = 0; p < 2; p++) {
-                // Go through all the filters in this filter group
-                blindGateCount = 0;
-                for (j = 0; j < engine->filterCounts[gid]; j++) {
-                    // Get the plan index and size from parent engine
-                    planIndex = engine->planIndices[i0][j];
-                    planSize = engine->planSizes[planIndex];
-                    blindGateCount += engine->filterAnchors[gid][j].length;
-                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                                engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length);
+            // Go through all the filters in this filter group
+            blindGateCount = 0;
+            for (j = 0; j < engine->filterCounts[gid]; j++) {
+                // Get the plan index and size from parent engine
+                planIndex = engine->planIndices[i0][j];
+                planSize = engine->planSizes[planIndex];
+                blindGateCount += engine->filterAnchors[gid][j].length;
 
-                    // Copy and convert the samples
-                    RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-                    X += engine->filterAnchors[gid][j].inputOrigin;
-                    if (engine->filterAnchors[gid][j].inputOrigin % RKSIMDAlignSize == 0) {
-                        RKSIMD_Int2Complex(X, (RKComplex *)in, bound);
-                    } else {
-                        RKSIMD_Int2Complex_reg(X, (RKComplex *)in, bound);
-                    }
+                // Compression
+                scratch->pulse = pulse;
+                scratch->filter = engine->filters[gid][j];
+                scratch->filterAnchor = &engine->filterAnchors[gid][j];
+                scratch->planForwardInPlace = engine->planForwardInPlace[planIndex];
+                scratch->planForwardOutPlace = engine->planForwardOutPlace[planIndex];
+                scratch->planBackwardInPlace = engine->planBackwardInPlace[planIndex];
+                scratch->planSize = engine->planSizes[planIndex];
+                engine->compressor(scratch);
 
-                    // Zero pad the input; a filter is always zero-padded in the setter function.
-                    if (planSize > bound) {
-                        memset(in[bound], 0, (planSize - bound) * sizeof(fftwf_complex));
-                    }
-
-                    fftwf_execute_dft(engine->planForwardInPlace[planIndex], in, in);
-
-                    //printf("dft(in) =\n"); RKPulseCompressionShowBuffer(in, 8);
-
-                    fftwf_execute_dft(engine->planForwardOutPlace[planIndex], (fftwf_complex *)engine->filters[gid][j], out);
-
-                    //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseCompressionShowBuffer(out, 8);
-
-#if RKPulseCompressionMultiplyMethod == 1
-                    
-                    // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
-                    RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, planSize);
-
-#elif RKPulseCompressionMultiplyMethod == 2
-
-                    // In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
-                    RKSIMD_yconj((RKComplex *)out, planSize);
-                    RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
-
-#elif RKPulseCompressionMultiplyMethod == 3
-
-                    // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
-                    RKSIMD_Complex2IQZ((RKComplex *)in, zi, planSize);
-                    RKSIMD_Complex2IQZ((RKComplex *)out, zo, planSize);
-                    RKSIMD_izmul(zi, zo, planSize, true);
-                    RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
-
-#else
-
-                    // Regular multiplication and let compiler optimize with either -O1 -O2 or -Os
-                    RKSIMD_yconj((RKComplex *)in, planSize);
-                    RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
-
-#endif
-
-                    //printf("in * out =\n"); RKPulseCompressionShowBuffer(out, 8);
-
-                    fftwf_execute_dft(engine->planBackwardInPlace[planIndex], out, out);
-
-                    //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
-
-                    // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
-                    RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
-
-                    //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
-
-                    bound = MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].outputOrigin, engine->filterAnchors[gid][j].maxDataLength);
-
-                    RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
-                    RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
-                    Y += engine->filterAnchors[gid][j].outputOrigin;
-                    Z.i += engine->filterAnchors[gid][j].outputOrigin;
-                    Z.q += engine->filterAnchors[gid][j].outputOrigin;
-                    o = out;
-                    for (i = 0; i < bound; i++) {
-                        Y->i = (*o)[0];
-                        Y++->q = (*o)[1];
-                        *Z.i++ = (*o)[0];
-                        *Z.q++ = (*o)[1];
-                        o++;
-                    }
-                    
-#ifdef DEBUG_PULSE_COMPRESSION
-                    
-                    pthread_mutex_lock(&engine->mutex);
-                    Y = RKGetComplexDataFromPulse(pulse, p);
-                    printf("Y [i0 = %d   p = %d   j = %d] =\n", i0, p, j);
-                    RKPulseCompressionShowBuffer((fftwf_complex *)Y, 8);
-                    
-                    Z = RKGetSplitComplexDataFromPulse(pulse, p);
-                    RKShowArray(Z.i, "Zi", 8, 1);
-                    RKShowArray(Z.q, "Zq", 8, 1);
-                    pthread_mutex_unlock(&engine->mutex);
-
-#endif
-
-                    // Copy over the parameters used
+                // Copy over the parameters used
+                for (p = 0; p < 2; p++) {
                     pulse->parameters.planIndices[p][j] = planIndex;
                     pulse->parameters.planSizes[p][j] = planSize;
-                } // filterCount
-                pulse->parameters.filterCounts[p] = j;
-            } // p - polarization
+                }
+            } // filterCount
+            pulse->parameters.filterCounts[0] = j;
+            pulse->parameters.filterCounts[1] = j;
             pulse->header.pulseWidthSampleCount = blindGateCount;
             pulse->header.s |= RKPulseStatusCompressed;
         }
@@ -438,10 +464,11 @@ static void *pulseCompressionCore(void *_in) {
         RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
     }
 
-    free(zi);
-    free(zo);
-    free(in);
-    free(out);
+    free(scratch->zi);
+    free(scratch->zo);
+    free(scratch->inBuffer);
+    free(scratch->outBuffer);
+    free(scratch);
     free(busyPeriods);
     free(fullPeriods);
 
@@ -760,6 +787,7 @@ RKPulseCompressionEngine *RKPulseCompressionEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
+    engine->compressor = &builtInCompressor;
     engine->memoryUsage = sizeof(RKPulseCompressionEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
