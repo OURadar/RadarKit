@@ -530,7 +530,7 @@ int socketStreamHandler(RKOperator *O) {
                 k = 0;
                 while (user->rayIndex != endIndex && k < RKMaximumPacketSize - 200) {
                     ray = RKGetRayFromBuffer(user->radar->rays, user->rayIndex);
-                    k += sprintf(user->string + k, "%04llu %5.2f %6.2f ", ray->header.i % 1000, ray->header.startElevation, ray->header.startAzimuth);
+                    k += sprintf(user->string + k, "%04d %5.2f %6.2f ", (int)(ray->header.i % 1000), ray->header.startElevation, ray->header.startAzimuth);
                     // Now we paint the ASCII art
                     u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
                     j = -1;
