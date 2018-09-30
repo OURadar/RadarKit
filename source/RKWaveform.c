@@ -72,8 +72,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
-        waveform->samples[k] = (RKComplex *)malloc(waveform->depth * sizeof(RKComplex));
-        waveform->iSamples[k] = (RKInt16C *)malloc(waveform->depth * sizeof(RKInt16C));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKComplex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKInt16C)));
         if (waveform->samples[k] == NULL || waveform->iSamples[k] == NULL) {
             RKLog("Error. Unable to allocate memory.\n");
             exit(EXIT_FAILURE);

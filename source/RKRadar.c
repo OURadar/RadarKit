@@ -409,8 +409,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     int i, k;
 
     RKSetUseDailyLog(true);
-    RKSetRootFolder(desc.dataPath);
-    
+    if (strlen(desc.dataPath)) {
+        RKSetRootFolder(desc.dataPath);
+    } else {
+        RKSetRootFolder(RKDefaultDataPath);
+    }
+
     RKLog("Initializing ... 0x%08x %s", desc.initFlags, desc.dataPath);
 
     // Allocate self
@@ -1440,6 +1444,14 @@ int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConf
         return RKResultNoMomentEngine;
     }
     radar->momentEngine->calibrator = calibrator;
+    return RKResultSuccess;
+}
+
+int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
+    if (radar->pulseCompressionEngine == NULL) {
+        return RKResultNoPulseCompressionEngine;
+    }
+    radar->pulseCompressionEngine->compressor = compressor;
     return RKResultSuccess;
 }
 

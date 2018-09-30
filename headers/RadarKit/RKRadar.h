@@ -240,8 +240,13 @@ uint32_t RKGetPulseCapacity(RKRadar *);
 void RKSetPulseTicsPerSeconds(RKRadar *, const double);
 void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
-// Moment processor
+// Pulse compressor
+int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *));
+
+// Moment calibrator
 int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *));
+
+// Moment processor
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
 int RKSetMomentProcessorToPulsePairHop(RKRadar *);
