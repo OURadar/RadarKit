@@ -2070,6 +2070,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "        4 - Various engine states\n"
                                 "        5 - Buffer overview\n"
                                 "            (Modes 0 - 7 are exclusive, i.e., one at a time).\n"
+                                "        6 - Range time plot of reflectivity\n"
                                 "        z - Display stream of Z reflectivity\n"
                                 "        v - Display stream of V velocity\n"
                                 "        w - Display stream of W width\n"
