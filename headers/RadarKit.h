@@ -18,9 +18,6 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
-//  2.0.3  - 10/xx/2018
-//         -
-//
 //  2.0.2  - 10/01/2018
 //         - Added RKPulsePair to RKTestMomentProcessorSpeed
 //         - Added ASCII art to show reflectivity in Terminal
