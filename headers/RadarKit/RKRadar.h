@@ -240,6 +240,12 @@ uint32_t RKGetPulseCapacity(RKRadar *);
 void RKSetPulseTicsPerSeconds(RKRadar *, const double);
 void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
+// Pulse compressor
+int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *));
+
+// Moment calibrator
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *));
+
 // Moment processor
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
@@ -304,6 +310,7 @@ RKPulse *RKGetLatestPulse(RKRadar *);                                           
 RKRay *RKGetVacantRay(RKRadar *);                                                                  // Get a vacant slot for storing ray data
 void RKSetRayReady(RKRadar *, RKRay *);                                                            // Declare the ray is ready
 RKRay *RKGetLatestRay(RKRadar *);                                                                  // Get the latest ray from the radar
+RKRay *RKGetLatestRayIndex(RKRadar *, uint32_t *);                                                 // Get the latest ray index from the radar
 
 // Waveform Calibrations
 void RKAddWaveformCalibration(RKRadar *, const RKWaveformCalibration *);                           // Add a waveform specific calibration

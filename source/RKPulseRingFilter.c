@@ -74,7 +74,9 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
     }
 
     // Almost full count
-    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    
+    // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }
@@ -230,7 +232,7 @@ static void *ringFilterCore(void *_in) {
         // Start of getting busy
         i0 = RKNextModuloS(i0, engine->radarDescription->pulseBufferDepth);
 
-        pulse = RKGetPulse(engine->pulseBuffer, i0);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i0);
 		if (!(pulse->header.s & RKPulseStatusRingInspected)) {
 			fprintf(stderr, "This should not happen.   i0 = %d\n", i0);
 		}
@@ -493,7 +495,7 @@ static void *pulseRingWatcher(void *_in) {
     k = 0;   // pulse index
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
-        pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
 
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
         engine->state |= RKEngineStateSleep1;
@@ -538,7 +540,7 @@ static void *pulseRingWatcher(void *_in) {
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 // Have some way to skip processing
-                pulseToSkip = RKGetPulse(engine->pulseBuffer, i);
+                pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
             } while (!(pulseToSkip->header.s & RKPulseStatusRingFiltered));
         } else if (skipCounter > 0) {
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
@@ -619,7 +621,7 @@ static void *pulseRingWatcher(void *_in) {
                 allDone &= *workerTaskDone++;
             }
             if (allDone) {
-                pulse = RKGetPulse(engine->pulseBuffer, j);
+                pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
                 pulse->header.s |= RKPulseStatusRingFiltered | RKPulseStatusRingProcessed;
                 j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
             }

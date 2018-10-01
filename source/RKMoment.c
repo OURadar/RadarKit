@@ -88,7 +88,9 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     }
 
     // Almost full count
-    i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
+    
+    // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 20) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
     }
@@ -292,6 +294,21 @@ static void zeroOutRay(RKRay *ray) {
     memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
 }
 
+static void buildInCalibrator(RKScratch *space, RKConfig *config) {
+    int i, k, p;
+    RKFloat r = 0.0f;
+    for (k = 0; k < config->filterCount; k++) {
+        for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, space->gateCount); i++) {
+            r = (RKFloat)i * space->gateSizeMeters;
+            for (p = 0; p < 2; p++) {
+                space->rcor[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - config->filterAnchors[k].sensitivityGain - space->samplingAdjustment;
+            }
+            space->dcal[i] = config->systemDCal + config->DCal[k];
+            space->pcal[i] = RKSingleWrapTo2PI(config->systemPCal + config->PCal[k]);
+        }
+    }
+}
+
 #pragma mark -
 #pragma mark Delegate Workers
 
@@ -348,7 +365,7 @@ static void *momentCore(void *in) {
     RKScratch *space;
     
     // Allocate local resources and keep track of the total allocation
-    pulse = RKGetPulse(engine->pulseBuffer, 0);
+    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
     size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->verbose > 3);
     if (space == NULL) {
@@ -388,7 +405,7 @@ static void *momentCore(void *in) {
     uint32_t ic = 0;
 
     // Gate size in meters for range correction
-    RKFloat gateSizeMeters = 0.0f;
+    //RKFloat gateSizeMeters = 0.0f;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -465,15 +482,15 @@ static void *momentCore(void *in) {
         engine->rayStatusBufferIndex = iu;
 
         // Start and end pulses to calculate this ray
-        S = RKGetPulse(engine->pulseBuffer, is);
-        E = RKGetPulse(engine->pulseBuffer, ie);
+        S = RKGetPulseFromBuffer(engine->pulseBuffer, is);
+        E = RKGetPulseFromBuffer(engine->pulseBuffer, ie);
 
         // Beamwidth
         deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
         deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
 
         // My ray
-        ray = RKGetRay(engine->rayBuffer, io);
+        ray = RKGetRayFromBuffer(engine->rayBuffer, io);
 
         // Mark being processed so that the other thread will not override the length
         ray->header.s = RKRayStatusProcessing;
@@ -497,8 +514,13 @@ static void *momentCore(void *in) {
         // Compute the range correction factor if needed.
         if (ic != E->header.configIndex) {
             ic = E->header.configIndex;
-            // At this point, gateSizeMeters is no longer the spacing of raw pulse, it has been down-sampled according to pulseToRayRatio
-            gateSizeMeters = E->header.gateSizeMeters;
+            // At this point, gateCount and gateSizeMeters is no longer of the raw pulses, they has been resampled according to pulseToRayRatio
+            space->gateCount = E->header.gateCount;
+            space->gateSizeMeters = E->header.gateSizeMeters;
+            // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
+            // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
+            // The number 60 is for conversion of range from meters to kilometers in the range correction term.
+            space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
             if (engine->verbose > 1) {
                 RKLog("%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
                       engine->name, me->name,
@@ -506,40 +528,28 @@ static void *momentCore(void *in) {
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
             }
-            // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
-            // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
-            // The number 60 is for conversion of range from meters to kilometers in the range correction term.
-            RKFloat f = 10.0f * log10f(gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
-            RKFloat r = 0.0f;
-            for (k = 0; k < config->filterCount; k++) {
-                for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, ray->header.gateCount); i++) {
-                    r = (RKFloat)i * gateSizeMeters;
-                    for (p = 0; p < 2; p++) {
-                        space->rcor[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - config->filterAnchors[k].sensitivityGain - f;
-                    }
-                    space->dcal[i] = config->systemDCal + config->DCal[k];
-                    space->pcal[i] = RKSingleWrapTo2PI(config->systemPCal + config->PCal[k]);
-                }
-                if (engine->verbose > 1) {
-                    for (p = 0; p < 2; p++) {
-                        RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
-                              engine->name, me->name, k,
-                              p == 0 ? "H" : (p == 1 ? "V" : "-"),
-                              config->systemZCal[p],
-                              config->ZCal[k][p],
-                              config->filterAnchors[k].sensitivityGain,
-                              f,
-                              config->ZCal[k][p] + config->systemZCal[p] - config->filterAnchors[k].sensitivityGain - f,
-                              config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
-                    }
-                }
-            }
+            // Call the calibrator to derive range calibration, ZCal and DCal
+            engine->calibrator(space, config);
+            // The rest of the constants
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
             space->SNRThreshold = config->SNRThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
             space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
+            if (engine->verbose > 1) {
+                for (p = 0; p < 2; p++) {
+                    RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
+                          engine->name, me->name, k,
+                          p == 0 ? "H" : (p == 1 ? "V" : "-"),
+                          config->systemZCal[p],
+                          config->ZCal[k][p],
+                          config->filterAnchors[k].sensitivityGain,
+                          space->samplingAdjustment,
+                          config->ZCal[k][p] + config->systemZCal[p] - config->filterAnchors[k].sensitivityGain - space->samplingAdjustment,
+                          config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+                }
+            }
         }
 
         // Consolidate the pulse marker into ray marker
@@ -547,7 +557,7 @@ static void *momentCore(void *in) {
         i = is;
         k = 0;
         do {
-            pulse = RKGetPulse(engine->pulseBuffer, i);
+            pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i);
             marker |= pulse->header.marker;
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
@@ -744,7 +754,7 @@ static void *pulseGatherer(void *_in) {
     c = 0;   // core index
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
-        pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
         
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
@@ -795,7 +805,7 @@ static void *pulseGatherer(void *_in) {
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->rayBufferDepth);
                 engine->momentSource[i].length = 0;
-                ray = RKGetRay(engine->rayBuffer, i);
+                ray = RKGetRayFromBuffer(engine->rayBuffer, i);
             } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive);
         } else if (skipCounter > 0) {
             // Skip processing if we are in skipping mode
@@ -833,7 +843,7 @@ static void *pulseGatherer(void *_in) {
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
                     engine->momentSource[j].origin = k;
-                    ray = RKGetRay(engine->rayBuffer, j);
+                    ray = RKGetRayFromBuffer(engine->rayBuffer, j);
                     ray->header.s = RKRayStatusVacant;
                     count = 0;
                 } else {
@@ -845,10 +855,10 @@ static void *pulseGatherer(void *_in) {
         }
         
         // Check finished rays
-        ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+        ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
         while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
-            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
         }
 
         // Log a message if it has been a while
@@ -894,6 +904,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;
+    engine->calibrator = &buildInCalibrator;
     engine->processorLagCount = RKMaximumLagCount;
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->mutex, NULL);

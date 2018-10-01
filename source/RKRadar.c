@@ -201,9 +201,9 @@ static void *systemInspectorRunLoop(void *in) {
 
         // Pulse
         index = RKPreviousNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
-        pulse0 = RKGetPulse(radar->pulses, index);
+        pulse0 = RKGetPulseFromBuffer(radar->pulses, index);
         index = RKPreviousNModuloS(index, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
-        pulse1 = RKGetPulse(radar->pulses, index);
+        pulse1 = RKGetPulseFromBuffer(radar->pulses, index);
         dt = pulse0->header.timeDouble - pulse1->header.timeDouble;
         if (dt) {
             pulseRate = (double)(radar->desc.pulseBufferDepth / 8) / dt;
@@ -211,9 +211,9 @@ static void *systemInspectorRunLoop(void *in) {
 
         // Ray
         index = RKPreviousNModuloS(radar->rayIndex, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
-        ray0 = RKGetRay(radar->rays, index);
+        ray0 = RKGetRayFromBuffer(radar->rays, index);
         index = RKPreviousNModuloS(index, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
-        ray1 = RKGetRay(radar->rays, index);
+        ray1 = RKGetRayFromBuffer(radar->rays, index);
         dt = ray0->header.startTimeDouble - ray1->header.startTimeDouble;
         if (dt) {
             rayRate = (double)(radar->desc.rayBufferDepth / 8) / dt;
@@ -409,8 +409,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     int i, k;
 
     RKSetUseDailyLog(true);
-    RKSetRootFolder(desc.dataPath);
-    
+    if (strlen(desc.dataPath)) {
+        RKSetRootFolder(desc.dataPath);
+    } else {
+        RKSetRootFolder(RKDefaultDataPath);
+    }
+
     RKLog("Initializing ... 0x%08x %s", desc.initFlags, desc.dataPath);
 
     // Allocate self
@@ -479,11 +483,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.pulseCapacity = RKMaximumGateCount;
         RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     } else if (radar->desc.pulseCapacity == 0) {
-        radar->desc.pulseCapacity = 1024;
+        radar->desc.pulseCapacity = 1;
     }
-    radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + RKSIMDAlignSize - 1) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
-    if (radar->desc.pulseCapacity != desc.pulseCapacity) {
-        RKLog("Info. Pulse capacity changed from %s to %s\n", RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+    uint32_t stride = radar->desc.pulseToRayRatio * RKSIMDAlignSize;
+    radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + stride - 1) / stride) * stride / sizeof(RKFloat);
+    if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Info. Pulse capacity changed from %s to %s (stride = %d RKFloats, %d B)\n",
+              RKIntegerToCommaStyleString(desc.pulseCapacity),
+              RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
+              stride / sizeof(RKFloat), stride);
     }
     if (radar->desc.healthNodeCount == 0 || radar->desc.healthNodeCount > RKHealthNodeCount) {
         radar->desc.healthNodeCount = RKHealthNodeCount;
@@ -659,7 +667,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth),
               RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
         for (i = 0; i < radar->desc.pulseBufferDepth; i++) {
-            RKPulse *pulse = RKGetPulse(radar->pulses, i);
+            RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, i);
             size_t offset = (size_t)pulse->data - (size_t)pulse;
             if (offset != RKPulseHeaderPaddedSize) {
                 printf("Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderPaddedSize);
@@ -1419,7 +1427,7 @@ uint32_t RKGetPulseCapacity(RKRadar *radar) {
     if (radar->pulses == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    RKPulse *pulse = RKGetPulse(radar->pulses, 0);
+    RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, 0);
     return pulse->header.capacity;
 }
 
@@ -1429,6 +1437,22 @@ void RKSetPulseTicsPerSeconds(RKRadar *radar, const double delta) {
 
 void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
+}
+
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *)) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->calibrator = calibrator;
+    return RKResultSuccess;
+}
+
+int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
+    if (radar->pulseCompressionEngine == NULL) {
+        return RKResultNoPulseCompressionEngine;
+    }
+    radar->pulseCompressionEngine->compressor = compressor;
+    return RKResultSuccess;
 }
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
@@ -2040,6 +2064,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "            - 2 - Ground clutter filter Elliptical @ +/- 0.2 rad/sample\n"
                                 "            - 3 - Ground clutter filter Elliptical @ +/- 0.3 rad/sample\n"
                                 "            - 4 - Ground clutter filter Elliptical @ +/- 0.4 rad/sample\n"
+                                "            NOTE: Depending on the PRT, the actual filter velocity can be obtained\n"
+                                "                  by scaling the discrete filter frequency (omega) in rad/sample to\n"
+                                "                  filter velocity in m/s as:\n"
+                                "                  velocity = omega / (2 * PI) * va\n"
                                 "        r - restart internal engines\n"
                                 "        t - treshold to censor using VALUE in dB\n"
                                 "\n"
@@ -2058,6 +2086,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "        4 - Various engine states\n"
                                 "        5 - Buffer overview\n"
                                 "            (Modes 0 - 7 are exclusive, i.e., one at a time).\n"
+                                "        6 - Range time plot of reflectivity\n"
                                 "        z - Display stream of Z reflectivity\n"
                                 "        v - Display stream of V velocity\n"
                                 "        w - Display stream of W width\n"
@@ -2226,10 +2255,10 @@ void RKMeasureNoise(RKRadar *radar) {
     RKFloat noise[2];
     RKFloat noiseAverage[2] = {0.0f, 0.0f};
     uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
-    RKPulse *pulse = RKGetPulse(radar->pulses, index);
+    RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, index);
     while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
-        pulse = RKGetPulse(radar->pulses, index);
+        pulse = RKGetPulseFromBuffer(radar->pulses, index);
     }
     // Avoid data before this offset to exclude the transient effects right after transmit pulse
     int origin = 0;
@@ -2244,7 +2273,7 @@ void RKMeasureNoise(RKRadar *radar) {
     origin /= MAX(1, radar->desc.pulseToRayRatio);
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
-        pulse = RKGetPulse(radar->pulses, index);
+        pulse = RKGetPulseFromBuffer(radar->pulses, index);
         RKMeasureNoiseFromPulse(noise, pulse, origin);
         noiseAverage[0] += noise[0];
         noiseAverage[1] += noise[1];
@@ -2484,10 +2513,10 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
         exit(EXIT_FAILURE);
     }
     // Set the 1/8-old pulse vacant
-    RKPulse *pulse = RKGetPulse(radar->pulses, RKNextNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth >> 3, radar->desc.pulseBufferDepth));
+    RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, RKNextNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth >> 3, radar->desc.pulseBufferDepth));
     pulse->header.s = RKPulseStatusVacant;
     // Current pulse
-    pulse = RKGetPulse(radar->pulses, radar->pulseIndex);
+    pulse = RKGetPulseFromBuffer(radar->pulses, radar->pulseIndex);
     pulse->header.s = RKPulseStatusVacant;
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
@@ -2533,11 +2562,11 @@ void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
 
 RKPulse *RKGetLatestPulse(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
-    RKPulse *pulse = RKGetPulse(radar->pulses, index);
+    RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, index);
     int k = 0;
     while (!(pulse->header.s & RKPulseStatusCompressed) && k++ < radar->desc.pulseBufferDepth) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
-        pulse = RKGetPulse(radar->pulses, index);
+        pulse = RKGetPulseFromBuffer(radar->pulses, index);
     }
     return pulse;
 }
@@ -2558,7 +2587,7 @@ RKRay *RKGetVacantRay(RKRadar *radar) {
         RKLog("Error. Buffer for rays has not been allocated.\n");
         exit(EXIT_FAILURE);
     }
-    RKRay *ray = RKGetRay(radar->rays, radar->rayIndex);
+    RKRay *ray = RKGetRayFromBuffer(radar->rays, radar->rayIndex);
     ray->header.s = RKRayStatusVacant;
     ray->header.startTime.tv_sec = 0;
     ray->header.startTime.tv_usec = 0;
@@ -2579,11 +2608,25 @@ void RKSetRayReady(RKRadar *radar, RKRay *ray) {
 
 RKRay *RKGetLatestRay(RKRadar *radar) {
     uint32_t index = RKPreviousModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
-    RKRay *ray = RKGetRay(radar->rays, index);
+    RKRay *ray = RKGetRayFromBuffer(radar->rays, index);
     int k = 0;
     while (!(ray->header.s & RKRayStatusReady) && k++ < radar->desc.rayBufferDepth) {
         index = RKPreviousModuloS(index, radar->desc.rayBufferDepth);
-        ray = RKGetRay(radar->rays, index);
+        ray = RKGetRayFromBuffer(radar->rays, index);
+    }
+    return ray;
+}
+
+RKRay *RKGetLatestRayIndex(RKRadar *radar, uint32_t *index) {
+    *index = RKPreviousModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    RKRay *ray = RKGetRayFromBuffer(radar->rays, *index);
+    int k = 0;
+    while (!(ray->header.s & RKRayStatusReady) && k++ < radar->desc.rayBufferDepth) {
+        *index = RKPreviousModuloS(*index, radar->desc.rayBufferDepth);
+        ray = RKGetRayFromBuffer(radar->rays, *index);
+    }
+    if (k == radar->desc.rayBufferDepth) {
+        ray = NULL;
     }
     return ray;
 }
@@ -2950,7 +2993,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++, k += pulseStride) {
-            pulse = RKGetPulse(radar->pulses, k);
+            pulse = RKGetPulseFromBuffer(radar->pulses, k);
             s0 = pulse->header.s;
             if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKPulseStatusRecorded) {
@@ -3001,7 +3044,7 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         m += sprintf(text + m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++, k += rayStride) {
-            ray = RKGetRay(radar->rays, k);
+            ray = RKGetRayFromBuffer(radar->rays, k);
             s0 = ray->header.s;
             if (flag & RKTextPreferencesShowColor) {
                 if (s0 & RKRayStatusBeingConsumed) {

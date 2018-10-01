@@ -160,7 +160,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
             memset(sweep, 0, sizeof(RKSweep));
             RKRayBufferAlloc(&sweep->rayBuffer, (uint32_t)capacity, (uint32_t)rayCount);
             for (j = 0; j < rayCount; j++) {
-                sweep->rays[j] = RKGetRay(sweep->rayBuffer, j);
+                sweep->rays[j] = RKGetRayFromBuffer(sweep->rayBuffer, j);
             }
             ray = (RKRay *)sweep->rayBuffer;
 
@@ -228,7 +228,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 nc_get_var_float(ncid, tmpId, scratch);
                 fp = (float *)scratch;
                 for (j = 0; j < rayCount; j++) {
-                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
                     ray->header.startElevation = *fp++;
                     ray->header.endElevation = ray->header.startElevation;
                 }
@@ -244,7 +244,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 nc_get_var_float(ncid, tmpId, scratch);
                 fp = (float *)scratch;
                 for (j = 0; j < rayCount; j++) {
-                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
                     ray->header.startAzimuth = *fp++;
                 }
             } else {
@@ -261,7 +261,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 nc_get_var_float(ncid, tmpId, scratch);
                 fp = (float *)scratch;
                 for (j = 0; j < rayCount; j++) {
-                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
                     ray->header.gateCount = gateCount;
                     ray->header.gateSizeMeters = *fp++;
                 }
@@ -279,7 +279,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 nc_get_var_float(ncid, tmpId, scratch);
                 fp = (float *)scratch;
                 for (j = 0; j < rayCount; j++) {
-                    ray = RKGetRay(sweep->rayBuffer, j);
+                    ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
                     ray->header.endAzimuth = ray->header.startAzimuth + *fp;
                     ray->header.endElevation = ray->header.endElevation + *fp++;
                 }
@@ -336,7 +336,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
             fp++;
         }
         for (j = 0; j < rayCount; j++) {
-            ray = RKGetRay(sweep->rayBuffer, j);
+            ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
             fp = RKGetFloatDataFromRay(ray, productIndices[k]);
             memcpy(fp, scratch + j * gateCount * sizeof(float), gateCount * sizeof(float));
         }
@@ -352,7 +352,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
         return NULL;
     }
 
-    ray = RKGetRay(sweep->rayBuffer, 0);
+    ray = RKGetRayFromBuffer(sweep->rayBuffer, 0);
 
     sweep->header.rayCount = (uint32_t)rayCount;
     sweep->header.gateCount = (uint32_t)gateCount;
@@ -360,7 +360,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
     sweep->header.baseMomentList = productList;
 
     for (j = 0; j < rayCount; j++) {
-        ray = RKGetRay(sweep->rayBuffer, j);
+        ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
         ray->header.i += sweep->header.rayCount;
         ray->header.s = RKRayStatusReady;
         ray->header.baseMomentList = productList;
