@@ -158,7 +158,7 @@ static void showHelp() {
            "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
            "\n"
-           "    -T 50\n"
+           "    -T50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
            "rktest (RadarKit " RKVersionString ")\n\n",
@@ -170,21 +170,21 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 0:
             // Debug
             user->fs = 2000000;
-            user->gateCount = 150;
+            user->gateCount = 32;
             user->coresForPulseCompression = 2;
-            user->coresForPulseRingFilter = 1;
+            user->coresForPulseRingFilter = 2;
             user->coresForMomentProcessor = 2;
             user->desc.positionBufferDepth = 100;
             user->desc.pulseBufferDepth = 100;
             user->desc.rayBufferDepth = 400;
-            user->desc.pulseToRayRatio = 1;
+            user->desc.pulseToRayRatio = 2;
             user->prf = 10;
             sprintf(user->momentMethod, "PulsePair");
             break;
         case 1:
             // Minimum: 5-MHz
             user->fs = 5000000;
-            user->gateCount = 2000;
+            user->gateCount = 2048;
             user->coresForPulseCompression = 2;
             user->coresForPulseRingFilter = 2;
             user->coresForMomentProcessor = 2;
@@ -650,7 +650,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
               RKFloatToCommaStyleString(1.0e-3 * user->prf), RKFloatToCommaStyleString(1.0e-6 * user->fs));
         user->gateCount = k;
     }
-    user->desc.pulseCapacity = 10 * ceil(0.1 * user->gateCount);
+    user->desc.pulseCapacity = user->gateCount;
 }
 
 #pragma mark - Radar Parameters

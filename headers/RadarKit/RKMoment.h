@@ -47,6 +47,7 @@ struct rk_moment_engine {
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
     int                              (*processor)(RKScratch *, RKPulse **, const uint16_t);
+    void                             (*calibrator)(RKScratch *, RKConfig *);
 
     // Program set variables
     RKModuloPath                     *momentSource;

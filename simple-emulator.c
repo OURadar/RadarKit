@@ -24,6 +24,11 @@ int main(int argc, const char * argv[]) {
 
     RKSetWantScreenOutput(true);
 
+    char *term = getenv("TERM");
+    if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
+        RKSetWantColor(false);
+    }
+
     myRadar = RKInit();
     
     if (myRadar == NULL) {
@@ -76,8 +81,11 @@ int main(int argc, const char * argv[]) {
     usleep(1000000);
     RKLog("Starting a new PPI ...\n");
     RKExecuteCommand(myRadar, "p ppi 4 45", NULL);
+
     RKWaitWhileActive(myRadar);
 
+    RKCommandCenterRemoveRadar(center, myRadar);
+    RKCommandCenterStop(center);
     RKCommandCenterFree(center);
 
     RKFree(myRadar);

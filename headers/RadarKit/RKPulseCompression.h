@@ -23,6 +23,23 @@ typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 
 typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
 
+//
+// A scratch space for pulse compression
+//
+typedef struct rk_compression_scratch {
+    RKPulse             *pulse;
+    RKComplex           *filter;
+    RKFilterAnchor      *filterAnchor;
+    fftwf_plan          planForwardInPlace;
+    fftwf_plan          planForwardOutPlace;
+    fftwf_plan          planBackwardInPlace;
+    fftwf_complex       *inBuffer;
+    fftwf_complex       *outBuffer;
+    RKIQZ               *zi;
+    RKIQZ               *zo;
+    int                 planSize;
+} RKCompressionScratch;
+
 struct rk_pulse_compression_worker {
     RKShortName                      name;
     int                              id;
@@ -54,6 +71,7 @@ struct rk_pulse_compression_engine {
     uint32_t                         filterCounts[RKMaximumFilterGroups];
     RKFilterAnchor                   filterAnchors[RKMaximumFilterGroups][RKMaximumFilterCount];
     RKComplex                        *filters[RKMaximumFilterGroups][RKMaximumFilterCount];
+    void                             (*compressor)(RKCompressionScratch *);
 
     // Program set variables
     unsigned int                     planCount;

@@ -130,7 +130,7 @@ static void *pulseTagger(void *_in) {
     k = 0;   // pulse index;
     while (engine->state & RKEngineStateWantActive) {
         // Get the latest pulse
-        pulse = RKGetPulse(engine->pulseBuffer, k);
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
         
         // Wait until a thread check out this pulse.
         engine->state |= RKEngineStateSleep1;

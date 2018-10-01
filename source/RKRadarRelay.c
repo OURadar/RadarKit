@@ -122,7 +122,7 @@ static int RKRadarRelayRead(RKClient *client) {
             pulse->header.s = RKPulseStatusVacant;
 
             // Now we get a slot to fill it in
-            pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
+            pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *engine->pulseIndex);
             memcpy(&pulse->header, client->userPayload, sizeof(RKPulseHeader));
 
             pulseSize = pulse->header.gateCount * sizeof(RKInt16C);
@@ -137,7 +137,7 @@ static int RKRadarRelayRead(RKClient *client) {
             pulse->header.s = pulseStatus;
 
             *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth);
-            pulse = RKGetPulse(engine->pulseBuffer, *engine->pulseIndex);
+            pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *engine->pulseIndex);
             pulse->header.s = RKPulseStatusVacant;
             break;
 
@@ -155,7 +155,7 @@ static int RKRadarRelayRead(RKClient *client) {
             ray->header.s = RKRayStatusProcessing;
 
             // Now we get a slot to fill it in
-            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
             memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
 
             productList = ray->header.baseMomentList;
@@ -199,7 +199,7 @@ static int RKRadarRelayRead(RKClient *client) {
             ray->header.s = RKRayStatusProcessed | RKRayStatusReady;
 
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
-            ray = RKGetRay(engine->rayBuffer, *engine->rayIndex);
+            ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
             ray->header.s = RKRayStatusVacant;
             break;
             

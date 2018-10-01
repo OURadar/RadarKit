@@ -38,7 +38,7 @@
 #define RKVersionBranch ""
 #endif
 
-#define RKVersionString "2.0.1" RKVersionBranch
+#define RKVersionString "2.0.2" RKVersionBranch
 
 //
 // Memory Blocks
@@ -691,9 +691,10 @@ enum RKStream {
     RKStreamStatusPositions                      = 1,                          //
     RKStreamStatusPulses                         = 2,                          //
     RKStreamStatusRays                           = 3,                          //
-    RKStreamStatusIngest                         = 4,                          // Ingest up keep
+    RKStreamStatusIngest                         = 4,                          // Ingest and processing lag
     RKStreamStatusEngines                        = 5,                          // State of Engines
     RKStreamStatusBuffers                        = 6,                          // Buffer overview
+    RKStreamStatusASCIIArt                       = 7,                          // Are you ascii me?
     RKStreamControl                              = (1 << 3),                   // Controls
     RKStreamStatusAll                            = 0xF7,                       //
     RKStreamHealthInJSON                         = (1 << 5),                   // Health in JSON
@@ -1066,8 +1067,11 @@ typedef struct rk_sweep {
 typedef struct rk_scratch {
     uint32_t             capacity;                                             // Capacity
     bool                 showNumbers;                                          // A flag for showing numbers
-    uint8_t              lagCount;                                             // Number of lags of R & C
     uint8_t              userLagChoice;                                        // Number of lags in multi-lag estimator from user
+    uint8_t              lagCount;                                             // Number of lags of R & C
+    uint16_t             gateCount;                                            // Gate count of the rays
+    RKFloat              gateSizeMeters;                                       // Gate size in meters for range correction
+    RKFloat              samplingAdjustment;                                   // Sampling adjustment going from pulse to ray conversion
     RKIQZ                mX[2];                                                // Mean of X, 2 for dual-pol
     RKIQZ                vX[2];                                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
     RKIQZ                R[2][RKMaximumLagCount];                              // ACF up to RKMaximumLagCount - 1 for each polarization
