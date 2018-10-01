@@ -43,6 +43,7 @@
 //         - Corrected expected error in validation tests for all processors
 //         - Added SQI as part of the base moment collection
 //         - Deprecated RKConfigZCal, RKConfigZCals, etc.
+//         - FFT wisdom generation (T24) now includes backward transform
 //         - Many general improvements and bug fixes
 //
 //  2.0    - 7/30/2018
