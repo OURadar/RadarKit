@@ -432,6 +432,22 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeInt64:
             c = RKIntegerToCommaStyleString(i64);
             break;
+
+        case RKValueTypeIntInHex:
+            l = i;
+        case RKValueTypeLongInHex:
+            c = RKIntegerToHexStyleString(l);
+            break;
+        case RKValueTypeInt8InHex:
+            i16 = i8;
+        case RKValueTypeInt16InHex:
+            i32 = i16;
+        case RKValueTypeInt32InHex:
+            i64 = i32;
+        case RKValueTypeInt64InHex:
+            c = RKIntegerToHexStyleString(i64);
+            break;
+            
         case RKValueTypeUInt:
             ul = u;
         case RKValueTypeULong:
@@ -446,6 +462,22 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeUInt64:
             c = RKUIntegerToCommaStyleString((unsigned long long)u64);
             break;
+
+        case RKValueTypeUIntInHex:
+            ul = u;
+        case RKValueTypeULongInHex:
+            c = RKIntegerToHexStyleString((unsigned long long)ul);
+            break;
+        case RKValueTypeUInt8InHex:
+            u16 = u8;
+        case RKValueTypeUInt16InHex:
+            u32 = u16;
+        case RKValueTypeUInt32InHex:
+            u64 = u32;
+        case RKValueTypeUInt64InHex:
+            c = RKIntegerToHexStyleString((unsigned long long)u64);
+            break;
+            
         case RKValueTypeSize:
             c = RKUIntegerToCommaStyleString((unsigned long long)s);
             break;

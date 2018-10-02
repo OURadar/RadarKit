@@ -263,6 +263,9 @@ void RKTestPrettyStrings(void) {
     char name[] = "RadarKit";
     c = RKVariableInString("name", name, RKValueTypeString);
     printf("%s (len = %zu)\n", c, strlen(c));
+    i32 = 0x303f;
+    c = RKVariableInString("mask", &i32, RKValueTypeInt32InHex);
+    printf("%s (len = %zu)\n", c, strlen(c));
 }
 
 void RKTestModuloMath(void) {

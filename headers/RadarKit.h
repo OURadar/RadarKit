@@ -26,6 +26,7 @@
 //         - Added ASCII art to show reflectivity in Terminal
 //         - Added hooks for custom moment calibrator
 //         - Added hooks for custom pulse compressor
+//         - Added RKIntegerToHexStyleString() and *InHex types
 //         - Stability improvements
 //
 //  2.0.1  - 8/31/2018

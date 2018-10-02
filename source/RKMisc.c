@@ -369,6 +369,19 @@ char *RKIntegerToCommaStyleString(const long long num) {
     return string;
 }
 
+char *RKIntegerToHexStyleString(const long long num) {
+    static int ibuf = 0;
+    static char stringBuffer[16][32];
+    
+    char *string = stringBuffer[ibuf];
+    
+    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    
+    sprintf(string, "%llx", num);
+
+    return string;
+}
+
 ////////////////////////////////////////////////
 //
 //  Float to string with 3-digit grouping
