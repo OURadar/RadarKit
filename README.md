@@ -47,6 +47,11 @@ Follow these steps to get the project
     ```shell
     brew install fftw homebrew/science/netcdf
     ```
+    or
+    
+    ```shell    
+    brew install netcdf
+    ```
     
     ##### Special Notes About NetCDF shared library #####
     
