@@ -56,7 +56,7 @@ endif
 ifeq ($(KERNEL), Darwin)
 	# Mac OS X
 	CC = clang
-	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -mmacosx-version-min=10.9
+	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)

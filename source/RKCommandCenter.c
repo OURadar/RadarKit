@@ -1332,9 +1332,9 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamProductAll;
     user->access |= RKStreamSweepAll;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
-    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x80;
+    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x50;
     user->terminalSize.ws_col = 120;
-    user->terminalSize.ws_row = 80;
+    user->terminalSize.ws_row = 50;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
         user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000, 1);

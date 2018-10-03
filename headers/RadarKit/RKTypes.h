@@ -788,8 +788,9 @@ enum RKTextPreferences {
     RKTextPreferencesWindowSize80x25             = (0 << 2),                   //
     RKTextPreferencesWindowSize80x40             = (1 << 2),                   //
     RKTextPreferencesWindowSize80x50             = (2 << 2),                   //
-    RKTextPreferencesWindowSize120x50            = (3 << 2),                   //
-    RKTextPreferencesWindowSize120x80            = (4 << 2),                   //
+    RKTextPreferencesWindowSize120x40            = (3 << 2),                   //
+    RKTextPreferencesWindowSize120x50            = (4 << 2),                   //
+    RKTextPreferencesWindowSize120x80            = (5 << 2),                   //
     RKTextPreferencesShowDebuggingMessage        = (1 << 7)                    //
 };
 

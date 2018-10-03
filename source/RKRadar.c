@@ -2788,6 +2788,10 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
                 terminalSize.ws_col = 80;
                 terminalSize.ws_row = 50;
                 break;
+            case RKTextPreferencesWindowSize120x40:
+                terminalSize.ws_col = 110;
+                terminalSize.ws_row = 40;
+                break;
             case RKTextPreferencesWindowSize120x50:
                 terminalSize.ws_col = 110;
                 terminalSize.ws_row = 50;
