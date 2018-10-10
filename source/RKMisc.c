@@ -377,7 +377,7 @@ char *RKIntegerToHexStyleString(const long long num) {
     
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
     
-    sprintf(string, "%llx", num);
+    sprintf(string, "0x%04llx", num);
 
     return string;
 }
