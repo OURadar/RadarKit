@@ -487,7 +487,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
     uint32_t stride = radar->desc.pulseToRayRatio * RKSIMDAlignSize;
     radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + stride - 1) / stride) * stride / sizeof(RKFloat);
-    if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVerbose) {
+    if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Info. Pulse capacity changed from %s to %s (stride = %d RKFloats, %d B)\n",
               RKIntegerToCommaStyleString(desc.pulseCapacity),
               RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
