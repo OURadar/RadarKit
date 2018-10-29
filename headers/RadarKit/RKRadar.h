@@ -114,6 +114,7 @@ struct rk_radar {
     //
     RKClock                          *pulseClock;
     RKClock                          *positionClock;
+    RKFFTModule                      *fftModule;
     RKHealthEngine                   *healthEngine;
     RKPositionEngine                 *positionEngine;
     RKPulseCompressionEngine         *pulseCompressionEngine;
@@ -250,7 +251,8 @@ int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConf
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
 int RKSetMomentProcessorToPulsePairHop(RKRadar *);
-int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *);
+int RKSetMomentProcessorToPulsePairStaggeredPRT(RKRadar *);
+int RKSetMomentProcessorToSpectralMoment(RKRadar *);
 
 // Moment recorder (RadarKit uses netcdf by default)
 int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));

@@ -250,6 +250,7 @@ int RKMultiLag(RKScratch *space, RKPulse **input, const uint16_t pulseCount) {
 			space->KDP[k] = space->KDPFactor * space->KDP[k];
 		}
     }
+    //RKShowArray(space->S[0], "Sh", space->gateCount, 1);
 
 	// Show and tell
 	if (space->showNumbers && gateCount <= 16 && pulseCount <= 32) {

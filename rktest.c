@@ -696,6 +696,8 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
     } else if (!strncasecmp(systemPreferences->momentMethod, "pulsepairhop", 12)) {
         RKSetMomentProcessorToPulsePairHop(myRadar);
+    } else if (!strncasecmp(systemPreferences->momentMethod, "SpectralMoment", 14)) {
+        RKSetMomentProcessorToSpectralMoment(myRadar);
     } else {
         RKSetMomentProcessorToPulsePair(myRadar);
     }

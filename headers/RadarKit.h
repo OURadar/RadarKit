@@ -18,11 +18,15 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.0.3  - 10/xx/2018
+//         -
+//
 //  2.0.2  - 10/01/2018
 //         - Added RKPulsePair to RKTestMomentProcessorSpeed
 //         - Added ASCII art to show reflectivity in Terminal
 //         - Added hooks for custom moment calibrator
 //         - Added hooks for custom pulse compressor
+//         - Added RKIntegerToHexStyleString() and *InHex types
 //         - Stability improvements
 //
 //  2.0.1  - 8/31/2018

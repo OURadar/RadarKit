@@ -274,7 +274,6 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE_SIMD(ray->headerBytes)
     SHOW_SIZE(RKSweep)
     SHOW_SIZE(sweep->header)
-    SHOW_SIZE(RKScratch)
     SHOW_SIZE(RKFileHeader)
     SHOW_SIZE(RKPreferenceObject)
     SHOW_SIZE(RKControl)
@@ -361,6 +360,25 @@ void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     free(str);
 }
 
+void RKShowVecComplex(const char *name, const RKComplex *p, const int n) {
+    int i = 0;
+    int k = 0;
+    char *str = (char *)malloc(RKMaximumStringLength);
+    if (str == NULL) {
+        fprintf(stderr, "Error allocating string buffer.\n");
+        return;
+    }
+    k = sprintf(str, "%s[", name);
+    while (i < n && k < RKMaximumStringLength - 20) {
+        k += sprintf(str + k, "%+9.4f%+9.4fi ", p[i].i, p[i].q);
+        i++;
+    }
+    sprintf(str + k, "]");
+    printf("%s\n", str);
+    fflush(stdout);
+    free(str);
+}
+
 static char *arrayHeadTailElementsInString(const float *d, const int length) {
     int c, k = 0;
     static char line[1024];
@@ -432,6 +450,22 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeInt64:
             c = RKIntegerToCommaStyleString(i64);
             break;
+
+        case RKValueTypeIntInHex:
+            l = i;
+        case RKValueTypeLongInHex:
+            c = RKIntegerToHexStyleString(l);
+            break;
+        case RKValueTypeInt8InHex:
+            i16 = i8;
+        case RKValueTypeInt16InHex:
+            i32 = i16;
+        case RKValueTypeInt32InHex:
+            i64 = i32;
+        case RKValueTypeInt64InHex:
+            c = RKIntegerToHexStyleString(i64);
+            break;
+            
         case RKValueTypeUInt:
             ul = u;
         case RKValueTypeULong:
@@ -446,6 +480,22 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeUInt64:
             c = RKUIntegerToCommaStyleString((unsigned long long)u64);
             break;
+
+        case RKValueTypeUIntInHex:
+            ul = u;
+        case RKValueTypeULongInHex:
+            c = RKIntegerToHexStyleString((unsigned long long)ul);
+            break;
+        case RKValueTypeUInt8InHex:
+            u16 = u8;
+        case RKValueTypeUInt16InHex:
+            u32 = u16;
+        case RKValueTypeUInt32InHex:
+            u64 = u32;
+        case RKValueTypeUInt64InHex:
+            c = RKIntegerToHexStyleString((unsigned long long)u64);
+            break;
+            
         case RKValueTypeSize:
             c = RKUIntegerToCommaStyleString((unsigned long long)s);
             break;
@@ -686,128 +736,6 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
         memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultSuccess;
-}
-
-#pragma mark - Scratch Space
-
-size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount, const bool showNumbers) {
-    if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat) != 0) {
-        RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
-              RKIntegerToCommaStyleString(RKSIMDAlignSize / sizeof(RKFloat)));
-        return 0;
-    }
-    if (lagCount > RKMaximumLagCount) {
-        RKLog("Error. Lag count must not exceed the hard-coded limit %d\n", lagCount);
-        return 0;
-    }
-    *buffer = malloc(sizeof(RKScratch));
-    if (*buffer == NULL) {
-        RKLog("Error. Unable to allocate a momment scratch space.\n");
-        return 0;
-    }
-    memset(*buffer, 0, sizeof(RKScratch));
-
-    RKScratch *space = *buffer;
-    space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
-    space->lagCount = lagCount;
-    space->showNumbers = showNumbers;
-    
-    if (showNumbers) {
-        RKLog("Info. %s <-- %s",
-              RKVariableInString("space->capacity", &space->capacity, RKValueTypeUInt32),
-              RKVariableInString("capacity", &capacity, RKValueTypeUInt32));
-    }
-    
-    int j, k;
-    size_t bytes = 0;
-    for (k = 0; k < 2; k++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Z[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->V[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->W[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Q[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->SNR[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->rcor[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        memset(space->rcor[k], 0, space->capacity * sizeof(RKFloat));
-        bytes += 11;
-        for (j = 0; j < space->lagCount; j++) {
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-            bytes += 3;
-        }
-    }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ZDR, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->PhiDP, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->RhoHV, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->KDP, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->dcal, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->pcal, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    memset(space->dcal, 0, space->capacity * sizeof(RKFloat));
-    memset(space->pcal, 0, space->capacity * sizeof(RKFloat));
-
-    bytes += 10;
-    for (j = 0; j < 2 * space->lagCount - 1; j++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        bytes += 3 ;
-    }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    bytes++;
-    bytes *= space->capacity * sizeof(RKFloat);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, space->capacity * sizeof(int8_t)));
-    bytes += space->capacity * sizeof(int8_t);
-    bytes += sizeof(RKScratch);
-    return bytes;
-}
-
-void RKScratchFree(RKScratch *space) {
-    int j, k;
-    for (k = 0; k < 2; k++) {
-        free(space->mX[k].i);
-        free(space->mX[k].q);
-        free(space->vX[k].i);
-        free(space->vX[k].q);
-        free(space->S[k]);
-        free(space->Z[k]);
-        free(space->V[k]);
-        free(space->W[k]);
-        free(space->Q[k]);
-        free(space->SNR[k]);
-        free(space->rcor[k]);
-        for (j = 0; j < space->lagCount; j++) {
-            free(space->R[k][j].i);
-            free(space->R[k][j].q);
-            free(space->aR[k][j]);
-        }
-    }
-    free(space->sC.i);
-    free(space->sC.q);
-    free(space->ts.i);
-    free(space->ts.q);
-    free(space->ZDR);
-    free(space->PhiDP);
-    free(space->RhoHV);
-    free(space->KDP);
-    free(space->dcal);
-    free(space->pcal);
-    for (j = 0; j < 2 * space->lagCount - 1; j++) {
-        free(space->C[j].i);
-        free(space->C[j].q);
-        free(space->aC[j]);
-    }
-    free(space->gC);
-    free(space->mask);
-    free(space);
 }
 
 #pragma mark - File Monitor

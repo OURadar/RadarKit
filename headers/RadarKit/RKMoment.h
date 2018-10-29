@@ -13,6 +13,9 @@
 #include <RadarKit/RKDSP.h>
 #include <RadarKit/RKPulsePair.h>
 #include <RadarKit/RKMultiLag.h>
+#include <RadarKit/RKSpectralMoment.h>
+
+#define RKMomentDFTPlanCount    16
 
 typedef struct rk_moment_worker RKMomentWorker;
 typedef struct rk_moment_engine RKMomentEngine;
@@ -42,6 +45,7 @@ struct rk_moment_engine {
     uint32_t                         *pulseIndex;
     RKBuffer                         rayBuffer;
     uint32_t                         *rayIndex;
+    RKFFTModule                      *fftModule;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
@@ -55,8 +59,9 @@ struct rk_moment_engine {
     pthread_t                        tidPulseGatherer;
     pthread_mutex_t                  mutex;
     uint8_t                          processorLagCount;                        // Number of lags to calculate R[n]'s
+    uint8_t                          processorFFTOrder;                        // Maximum number of FFT order (1 << order)
     uint8_t                          userLagChoice;                            // Lag parameter for multilag method
-    
+
     // Status / health
     uint32_t                         processedPulseIndex;
     char                             statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
@@ -78,6 +83,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          RKConfig *configBuffer, uint32_t *configIndex,
                                          RKBuffer pulseBuffer, uint32_t *pulseIndex,
                                          RKBuffer rayBuffer,   uint32_t *rayIndex);
+void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 

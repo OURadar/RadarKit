@@ -122,7 +122,8 @@ static void *systemInspectorRunLoop(void *in) {
 
     bool transceiverOkay, pedestalOkay, healthOkay, networkOkay, anyCritical;
     RKStatusEnum networkEnum, transceiverEnum, pedestalEnum, healthEnum;
-    RKName FFTPlanUsage, criticalKey, criticalValue;
+    char FFTPlanUsage[RKStatusStringLength];
+    RKName criticalKey, criticalValue;
     int criticalCount = 0;
 
     while (engine->state & RKEngineStateWantActive) {
@@ -266,14 +267,14 @@ static void *systemInspectorRunLoop(void *in) {
             // Report a health status
             health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
             k = sprintf(FFTPlanUsage, "{");
-            for (j = 0; j < radar->pulseCompressionEngine->planCount; j++) {
+            for (j = 0; j < radar->fftModule->count; j++) {
                 k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
-                             radar->pulseCompressionEngine->planSizes[j],
-                             radar->pulseCompressionEngine->planUseCount[j]);
+                             radar->fftModule->plans[j].size,
+                             radar->fftModule->plans[j].count);
             }
             k += sprintf(FFTPlanUsage + k, "}");
-            if (k > RKNameLength * 3 / 4) {
-                RKLog("Warning. Too little head room in FFTPlanUsage.\n");
+            if (k > RKStatusStringLength * 3 / 4) {
+                RKLog("Warning. Too little head room in FFTPlanUsage (%d / %d).\n", k, RKStatusStringLength);
             }
             config = RKGetLatestConfig(radar);
             sprintf(health->string, "{"
@@ -487,7 +488,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
     uint32_t stride = radar->desc.pulseToRayRatio * RKSIMDAlignSize;
     radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + stride - 1) / stride) * stride / sizeof(RKFloat);
-    if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVerbose) {
+    if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Info. Pulse capacity changed from %s to %s (stride = %d RKFloats, %d B)\n",
               RKIntegerToCommaStyleString(desc.pulseCapacity),
               RKIntegerToCommaStyleString(radar->desc.pulseCapacity),
@@ -796,11 +797,16 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         RKLog("Position latency = %.3e s\n", radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);
         
+        // FFT module
+        radar->fftModule = RKFFTModuleInit(radar->desc.pulseCapacity, radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0);
+        radar->memoryUsage += sizeof(RKFFTModule);
+        
         // Pulse compression engine
         radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
         RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, &radar->desc,
                                                       radar->configs, &radar->configIndex,
                                                       radar->pulses, &radar->pulseIndex);
+        RKPulseCompressionEngineSetFFTModule(radar->pulseCompressionEngine, radar->fftModule);
         radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
         radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
@@ -827,6 +833,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                             radar->configs, &radar->configIndex,
                                             radar->pulses, &radar->pulseIndex,
                                             radar->rays, &radar->rayIndex);
+        RKMomentEngineSetFFTModule(radar->momentEngine, radar->fftModule);
         radar->memoryUsage += radar->momentEngine->memoryUsage;
         radar->state |= RKRadarStateMomentEngineInitialized;
 
@@ -1012,42 +1019,58 @@ int RKFree(RKRadar *radar) {
         RKClockFree(radar->positionClock);
         radar->positionClock = NULL;
     }
+    if (radar->fftModule) {
+        RKFFTModuleFree(radar->fftModule);
+        radar->fftModule = NULL;
+    }
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
+        radar->pulseCompressionEngine = NULL;
     }
     if (radar->state & RKRadarStatePulseRingFilterEngineInitialized) {
         RKPulseRingFilterEngineFree(radar->pulseRingFilterEngine);
+        radar->pulseRingFilterEngine = NULL;
     }
     if (radar->state & RKRadarStatePositionEngineInitialized) {
         RKPositionEngineFree(radar->positionEngine);
+        radar->positionEngine = NULL;
     }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineFree(radar->momentEngine);
+        radar->momentEngine = NULL;
     }
     if (radar->state & RKRadarStateHealthEngineInitialized) {
         RKHealthEngineFree(radar->healthEngine);
+        radar->healthEngine = NULL;
     }
     if (radar->state & RKRadarStateRadarRelayInitialized) {
         RKRadarRelayFree(radar->radarRelay);
+        radar->radarRelay = NULL;
     }
     if (radar->state & RKRadarStateHealthLoggerInitialized) {
         RKHealthLoggerFree(radar->healthLogger);
+        radar->healthLogger = NULL;
     }
     if (radar->state & RKRadarStateSweepEngineInitialized) {
         RKSweepEngineFree(radar->sweepEngine);
+        radar->sweepEngine = NULL;
     }
     if (radar->state & RKRadarStateFileRecorderInitialized) {
         RKRawDataRecorderFree(radar->rawDataRecorder);
+        radar->rawDataRecorder = NULL;
     }
     // Transceiver, pedestal & health relay
     if (radar->pedestal) {
         radar->pedestalFree(radar->pedestal);
+        radar->pedestal = NULL;
     }
     if (radar->transceiver) {
         radar->transceiverFree(radar->transceiver);
+        radar->transceiver = NULL;
     }
     if (radar->healthRelay) {
         radar->healthRelayFree(radar->healthRelay);
+        radar->healthRelay = NULL;
     }
     // Internal copies of things
     if (radar->waveform) {
@@ -1056,12 +1079,14 @@ int RKFree(RKRadar *radar) {
                   radar->waveform->name, radar->waveform->count, radar->waveform->count > 1 ? "s" : "");
         }
         RKWaveformFree(radar->waveform);
+        radar->waveform = NULL;
     }
     if (radar->filter) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
             RKLog("Freeing filter ...\n", radar->waveform->name);
         }
         free(radar->filter);
+        radar->filter = NULL;
     }
     // Buffers
     RKLog("Freeing radar '%s' ...\n", radar->desc.name);
@@ -1500,13 +1525,24 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
     return RKResultSuccess;
 }
 
-int RKSetMomentProcessorRKPulsePairStaggeredPRT(RKRadar *radar) {
+int RKSetMomentProcessorToPulsePairStaggeredPRT(RKRadar *radar) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
     radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
     radar->momentEngine->processorLagCount = 2;
     RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)\n",
+          rkGlobalParameters.showColor ? "\033[4m" : "",
+          rkGlobalParameters.showColor ? "\033[24m" : "");
+    return RKResultSuccess;
+}
+
+int RKSetMomentProcessorToSpectralMoment(RKRadar *radar) {
+    if (radar->momentEngine == NULL) {
+        return RKResultNoMomentEngine;
+    }
+    radar->momentEngine->processor = &RKSpectralMoment;
+    RKLog("Moment processor set to %sSpectral Moment%s\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
     return RKResultSuccess;
@@ -2013,6 +2049,46 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             sprintf(string, "ACK. Ring filter disabled." RKEOL);
                         }
                         break;
+                    case 'm':
+                        // 'dm' - DSP moment method
+                        k = sscanf(&commandString[2], "%d", &ival);
+                        if (k == 1) {
+                            switch (ival) {
+                                case 1:
+                                    RKSetMomentProcessorToPulsePairHop(radar);
+                                    sprintf(string, "ACK. Moment processor set to PulsePairHop." RKEOL);
+                                    break;
+                                case 2:
+                                    RKSetMomentProcessorToMultiLag(radar, 2);
+                                    sprintf(string, "ACK. Moment processor set to MultiLag-2." RKEOL);
+                                    break;
+                                case 3:
+                                    RKSetMomentProcessorToMultiLag(radar, 3);
+                                    sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                    break;
+                                case 4:
+                                    RKSetMomentProcessorToMultiLag(radar, 4);
+                                    sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                    break;
+                                case 5:
+                                    RKSetMomentProcessorToSpectralMoment(radar);
+                                    sprintf(string, "ACK. Moment processor set to SpectralMoment." RKEOL);
+                                    break;
+                                default:
+                                    RKSetMomentProcessorToPulsePair(radar);
+                                    sprintf(string, "ACK. Moment processor set to PulsePair." RKEOL);
+                                    break;
+                            }
+                        } else {
+                            sprintf(string, "ACK. Current moment processor is %s" RKEOL,
+                                    radar->momentEngine->processor == &RKPulsePair ? "PulsePair" :
+                                    (radar->momentEngine->processor == &RKPulsePairHop ? "PulsePairHop" :
+                                     (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == 2 ? "MultiLag-2" :
+                                      (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == 3 ? "MultiLag-3" :
+                                       (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == 4 ? "MultiLag-4" :
+                                        (radar->momentEngine->processor == &RKSpectralMoment ? "SpectralMoment" : "Unknown"))))));
+                        }
+                        break;
                     case 'n':
                         // 'dn' - DSP noise override
                         k = sscanf(&commandString[2], "%lf %lf", &fval1, &fval2);
@@ -2069,16 +2145,16 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "                  filter velocity in m/s as:\n"
                                 "                  velocity = omega / (2 * PI) * va\n"
                                 "        r - restart internal engines\n"
-                                "        t - treshold to censor using VALUE in dB\n"
+                                "        t - threshold to censor using VALUE in dB\n"
                                 "\n"
                                 "    e.g.,\n"
-                                "        dr - restars internal engines\n"
+                                "        dr - restarts internal engines\n"
                                 "        dn 0.1 - overrides the noise with 0.1 ADU\n"
                                 "        dt 0 - sets the threshold to censor at 0 dB\n"
-                                "        df 1 - sets the ground clutter filter to  Elliptical @ +/- 0.1 rad/sample\n"
+                                "        df 1 - sets the ground clutter filter to Elliptical @ +/- 0.1 rad/sample\n"
                                 "\n"
                                 HIGHLIGHT("s") " [VALUE] - Get various data streams\n"
-                                "    where [VALUE] can be one of a combinations of:\n"
+                                "    where [VALUE] can be one of the combinations of:\n"
                                 "        0 - Position update (the latest)\n"
                                 "        1 - Pulse updates (the latest)\n"
                                 "        2 - Product generation (ray by ray update)\n"
@@ -2107,7 +2183,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "    e.g.,\n"
                                 "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
                                 "\n"
-                                HIGHLIGHT("b") " - Simulate a push button event from a piece of hardware\n"
+                                HIGHLIGHT("b") " - Simulate a push event from a physical hardware button\n"
                                 "\n"
                                 HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                                 "\n"
@@ -2787,6 +2863,10 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
             case RKTextPreferencesWindowSize80x50:
                 terminalSize.ws_col = 80;
                 terminalSize.ws_row = 50;
+                break;
+            case RKTextPreferencesWindowSize120x40:
+                terminalSize.ws_col = 110;
+                terminalSize.ws_row = 40;
                 break;
             case RKTextPreferencesWindowSize120x50:
                 terminalSize.ws_col = 110;

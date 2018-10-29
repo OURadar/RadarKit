@@ -126,6 +126,7 @@ void RKReviseLogicalValues(char *);
 
 char *RKUIntegerToCommaStyleString(const unsigned long long);
 char *RKIntegerToCommaStyleString(const long long);
+char *RKIntegerToHexStyleString(const long long);
 char *RKFloatToCommaStyleString(const double);
 
 char *RKNow(void);
