@@ -18,6 +18,9 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.0.4  - 11/30/2018
+//         - RKSpectralMoment
+//
 //  2.0.3  - 10/29/2018
 //         - Moment method can be switched on the fly
 //         - Common FFT engine, always measured optimum performance
