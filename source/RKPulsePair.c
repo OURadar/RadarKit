@@ -410,8 +410,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 
         // Go through both polarizations
         for (p = 0; p < 2; p++) {
-            printf((
-                    rkGlobalParameters.showColor ?
+            printf((rkGlobalParameters.showColor ?
                     UNDERLINE("Channel %d (%s pol):") "\n" :
                     "Channel %d (%s pol):\n"),
                    p, p == 0 ? "H" : (p == 1 ? "V" : "X"));

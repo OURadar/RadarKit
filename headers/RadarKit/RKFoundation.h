@@ -95,6 +95,7 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
+void RKShowVecComplex(const char *name, const RKComplex *p, const int n);
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
 char *RKStringFromValue(const void *value, RKValueType type);
 char *RKVariableInString(const char *name, const void *value, RKValueType type);
@@ -121,10 +122,6 @@ RKRay *RKGetRayFromBuffer(RKBuffer, const uint32_t rayIndex);
 uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t baseMomentIndex);
 float *RKGetFloatDataFromRay(RKRay *, const uint32_t baseMomentIndex);
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t rayCount);
-
-// Scratch space for moment processors
-size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const bool);
-void RKScratchFree(RKScratch *);
 
 // Standalone file monitor (one file per thread)
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *), void *);

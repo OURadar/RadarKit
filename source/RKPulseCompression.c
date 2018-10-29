@@ -110,6 +110,17 @@ static void RKPulseCompressionUpdateStatusString(RKPulseCompressionEngine *engin
     engine->pulseStatusBufferIndex = RKNextModuloS(engine->pulseStatusBufferIndex, RKBufferSSlotCount);
 }
 
+static void RKPulseCompressionEngineCheckingWiring(RKPulseCompressionEngine *engine) {
+    if (engine->radarDescription == NULL ||
+        engine->configBuffer == NULL || engine->configIndex == NULL ||
+        engine->pulseBuffer == NULL || engine->pulseIndex == NULL ||
+        engine->fftModule == NULL) {
+        engine->state &= ~RKEngineStateProperlyWired;
+        return;
+    }
+    engine->state |= RKEngineStateProperlyWired;
+}
+
 #pragma mark - Delegate Workers
 
 static void builtInCompressor(RKCompressionScratch *scratch) {
@@ -315,8 +326,8 @@ static void *pulseCompressionCore(void *_in) {
     // The latest index in the dutyCycle buffer
     int d0 = 0;
 
-    // DFT plan size and plan index in the parent engine
-    int planSize = -1, planIndex;
+    // DFT plan index of the FFT module
+    int planIndex;
 
     // Log my initial state
     pthread_mutex_lock(&engine->mutex);
@@ -395,23 +406,25 @@ static void *pulseCompressionCore(void *_in) {
             for (j = 0; j < engine->filterCounts[gid]; j++) {
                 // Get the plan index and size from parent engine
                 planIndex = engine->planIndices[i0][j];
-                planSize = engine->planSizes[planIndex];
                 blindGateCount += engine->filterAnchors[gid][j].length;
 
                 // Compression
                 scratch->pulse = pulse;
                 scratch->filter = engine->filters[gid][j];
                 scratch->filterAnchor = &engine->filterAnchors[gid][j];
-                scratch->planForwardInPlace = engine->planForwardInPlace[planIndex];
-                scratch->planForwardOutPlace = engine->planForwardOutPlace[planIndex];
-                scratch->planBackwardInPlace = engine->planBackwardInPlace[planIndex];
-                scratch->planSize = engine->planSizes[planIndex];
+                scratch->planForwardInPlace = engine->fftModule->plans[planIndex].forwardInPlace;
+                scratch->planForwardOutPlace = engine->fftModule->plans[planIndex].forwardOutPlace;
+                scratch->planBackwardInPlace = engine->fftModule->plans[planIndex].backwardInPlace;
+                scratch->planBackwardOutPlace = engine->fftModule->plans[planIndex].backwardOutPlace;
+                scratch->planSize = engine->fftModule->plans[planIndex].size;
+                
+                // Now we actually compress
                 engine->compressor(scratch);
-
+                
                 // Copy over the parameters used
                 for (p = 0; p < 2; p++) {
                     pulse->parameters.planIndices[p][j] = planIndex;
-                    pulse->parameters.planSizes[p][j] = planSize;
+                    pulse->parameters.planSizes[p][j] = engine->fftModule->plans[planIndex].size;
                 }
             } // filterCount
             pulse->parameters.filterCounts[0] = j;
@@ -486,12 +499,9 @@ static void *pulseWatcher(void *_in) {
 
     sem_t *sem[engine->coreCount];
 
-    unsigned int skipCounter = 0;
-
-    bool found;
     unsigned int gid;
-    unsigned int planSize;
     unsigned int planIndex = 0;
+    unsigned int skipCounter = 0;
 
     if (engine->coreCount == 0) {
         RKLog("Error. No processing core?\n");
@@ -501,53 +511,6 @@ static void *pulseWatcher(void *_in) {
     RKPulse *pulse;
     RKPulse *pulseToSkip;
     
-    // Maximum plan size: the beginning of the buffer is a pulse, it has the capacity info
-    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
-    planSize = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
-    bool exportWisdom = false;
-    const char wisdomFile[] = RKFFTWisdomFile;
-
-    // FFTW's memory allocation and plan initialization are not thread safe but others are.
-    fftwf_complex *in, *out;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
-    engine->memoryUsage += 2 * pulse->header.capacity * sizeof(fftwf_complex);
-
-    if (RKFilenameExists(wisdomFile)) {
-        if (engine->verbose) {
-            RKLog(">%s Loading DFT wisdom ...\n", engine->name);
-        }
-        fftwf_import_wisdom_from_filename(wisdomFile);
-    } else {
-        if (engine->verbose) {
-            RKLog(">%s DFT wisdom file not found.\n", engine->name);
-        }
-        exportWisdom = true;
-    }
-
-    // Go through the maximum plan size and divide it by two a few times
-    while (planSize >= MAX(pulse->header.capacity / 64, 32) && planIndex < RKPulseCompressionDFTPlanCount) {
-        RKLog(">%s Pre-allocate FFTW resources for plan[%d] @ nfft = %s\n", engine->name, planIndex, RKIntegerToCommaStyleString(planSize));
-        gettimeofday(&t1, NULL);
-        engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-        engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
-        engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-        gettimeofday(&t0, NULL);
-        if (RKTimevalDiff(t0, t1) > 1.0) {
-            exportWisdom = true;
-        }
-        if (engine->verbose > 2) {
-            fftwf_print_plan(engine->planForwardInPlace[planIndex]);
-        }
-        engine->planSizes[planIndex++] = planSize;
-        engine->planCount++;
-        planSize /= 2;
-    }
-    if (planIndex == 0) {
-        RKLog("%s No plan was made.\n", engine->name);
-        exit(EXIT_FAILURE);
-    }
-
     // Update the engine state
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
@@ -673,39 +636,11 @@ static void *pulseWatcher(void *_in) {
 
             // Find the right plan; create it if it does not exist
             for (j = 0; j < engine->filterCounts[gid]; j++) {
-                planSize = 1 << (int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
-                                                            engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
-                found = false;
-                i = engine->planCount;
-                while (i > 0) {
-                    i--;
-                    if (planSize == engine->planSizes[i]) {
-                        planIndex = i;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    if (engine->verbose) {
-                        RKLog("%s preparing a new FFT plan of size %d ...  gid = %d   planCount = %d\n", engine->name, planSize, gid, engine->planCount);
-                    }
-                    if (engine->planCount >= RKPulseCompressionDFTPlanCount) {
-                        RKLog("%s Error. Unable to create another DFT plan.  engine->planCount = %d\n", engine->name, engine->planCount);
-                        exit(EXIT_FAILURE);
-                    }
-                    planIndex = engine->planCount;
-                    engine->planForwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-                    engine->planForwardOutPlace[planIndex] = fftwf_plan_dft_1d(planSize, in, out, FFTW_FORWARD, FFTW_MEASURE);
-                    engine->planBackwardInPlace[planIndex] = fftwf_plan_dft_1d(planSize, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-                    engine->planSizes[planIndex] = planSize;
-                    engine->planCount++;
-                    if (engine->verbose) {
-                        RKLog(">%s k = %d   j = %d  planIndex = %d\n", engine->name, k, j, planIndex);
-                    }
-                    exportWisdom = true;
-                }
+                planIndex = (unsigned int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+                                                                 engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 engine->planIndices[k][j] = planIndex;
-                engine->planUseCount[planIndex]++;
+                engine->fftModule->plans[planIndex].count++;
+                
             }
         }
 
@@ -747,27 +682,6 @@ static void *pulseWatcher(void *_in) {
         pthread_join(worker->tid, NULL);
         sem_unlink(worker->semaphoreName);
     }
-
-    // Export wisdom
-    if (exportWisdom) {
-        if (engine->verbose) {
-            RKLog("%s Saving DFT wisdom ...\n", engine->name);
-        }
-        fftwf_export_wisdom_to_filename(wisdomFile);
-    }
-
-    // Destroy all the DFT plans
-    for (k = 0; k < engine->planCount; k++) {
-        RKLog(">%s De-allocating FFTW resources for plan[%d] @ nfft = %s ...\n", engine->name, k, RKIntegerToCommaStyleString(engine->planSizes[k]));
-        fftwf_destroy_plan(engine->planForwardInPlace[k]);
-        fftwf_destroy_plan(engine->planForwardOutPlace[k]);
-        fftwf_destroy_plan(engine->planBackwardInPlace[k]);
-        engine->planForwardInPlace[k] = NULL;
-        engine->planForwardOutPlace[k] = NULL;
-        engine->planBackwardInPlace[k] = NULL;
-    }
-    free(in);
-    free(out);
 
     engine->state ^= RKEngineStateActive;
     return NULL;
@@ -840,23 +754,23 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
         free(engine->filterGid);
     }
     bytes = engine->radarDescription->pulseBufferDepth * sizeof(int);
-    engine->memoryUsage += bytes;
     engine->filterGid = (int *)malloc(bytes);
     if (engine->filterGid == NULL) {
-        RKLog("%s Error. Unable to allocate filterGid.\n", engine->name);
+        RKLog("%s Error. Unable to allocate RKPulseCompressionEngine->filterGid.\n", engine->name);
         exit(EXIT_FAILURE);
     }
+    engine->memoryUsage += bytes;
 
     if (engine->planIndices != NULL) {
         free(engine->planIndices);
     }
     bytes = engine->radarDescription->pulseBufferDepth * sizeof(RKPulseCompressionPlanIndex);
     engine->planIndices = (RKPulseCompressionPlanIndex *)malloc(bytes);
-    engine->memoryUsage += bytes;
     if (engine->planIndices == NULL) {
-        RKLog("%s Error. Unable to allocate planIndices.\n", engine->name);
+        RKLog("%s Error. Unable to allocate RKPulseCompressionEngine->planIndices.\n", engine->name);
         exit(EXIT_FAILURE);
     }
+    engine->memoryUsage += bytes;
     size_t filterLength = 1 << (int)ceilf(log2f((float)engine->radarDescription->pulseCapacity));
     bytes = filterLength * sizeof(RKComplex);
     engine->state |= RKEngineStateMemoryChange;
@@ -867,7 +781,12 @@ void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *eng
         }
     }
     engine->state ^= RKEngineStateMemoryChange;
-    engine->state |= RKEngineStateProperlyWired;
+    RKPulseCompressionEngineCheckingWiring(engine);
+}
+
+void RKPulseCompressionEngineSetFFTModule(RKPulseCompressionEngine *engine, RKFFTModule *module) {
+    engine->fftModule = module;
+    RKPulseCompressionEngineCheckingWiring(engine);
 }
 
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *engine, const uint8_t count) {
@@ -1048,7 +967,6 @@ int RKPulseCompressionEngineStart(RKPulseCompressionEngine *engine) {
     engine->memoryUsage += engine->coreCount * sizeof(RKPulseCompressionWorker);
     memset(engine->workers, 0, engine->coreCount * sizeof(RKPulseCompressionWorker));
     RKLog("%s Starting ...\n", engine->name);
-    engine->planCount = 0;
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
     if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {

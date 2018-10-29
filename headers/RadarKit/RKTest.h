@@ -93,7 +93,6 @@ typedef struct rk_test_health_relay {
     size_t         memoryUsage;
 } RKTestHealthRelay;
 
-
 #pragma mark - Test By Number
 
 char *RKTestByNumberDescription(const int);
@@ -124,14 +123,15 @@ void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestWindow(void);
 void RKTestHilbertTransform(void);
 void RKTestWriteFFTWisdom(void);
+void RKTestRingFilterShowCoefficients(void);
 
 #pragma mark - Waveform Tests
 
 void RKTestMakeHops(void);
 void RKTestWaveformTFM(void);
 void RKTestWaveformWrite(void);
-void RKTestWaveformProperties(void);
-void RKTestShowFilters(void);
+void RKTestWaveformDownsampling(void);
+void RKTestWaveformShowProperties(void);
 
 #pragma mark - Radar Signal Processing
 

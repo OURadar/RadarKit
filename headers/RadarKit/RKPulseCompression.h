@@ -12,8 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
 
-#define RKPulseCompressionDFTPlanCount   16
-
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
@@ -21,24 +19,7 @@
 typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
 typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
 
-typedef int RKPulseCompressionPlanIndex[RKPulseCompressionDFTPlanCount];
-
-//
-// A scratch space for pulse compression
-//
-typedef struct rk_compression_scratch {
-    RKPulse             *pulse;
-    RKComplex           *filter;
-    RKFilterAnchor      *filterAnchor;
-    fftwf_plan          planForwardInPlace;
-    fftwf_plan          planForwardOutPlace;
-    fftwf_plan          planBackwardInPlace;
-    fftwf_complex       *inBuffer;
-    fftwf_complex       *outBuffer;
-    RKIQZ               *zi;
-    RKIQZ               *zo;
-    int                 planSize;
-} RKCompressionScratch;
+typedef int RKPulseCompressionPlanIndex[RKMaximumFilterCount];
 
 struct rk_pulse_compression_worker {
     RKShortName                      name;
@@ -59,10 +40,11 @@ struct rk_pulse_compression_engine {
     // User set variables
     RKName                           name;
     RKRadarDesc                      *radarDescription;
-    RKBuffer                         pulseBuffer;                              // Buffer of raw pulses
-    uint32_t                         *pulseIndex;                              // The refence index to watch for
     RKConfig                         *configBuffer;
     uint32_t                         *configIndex;
+    RKBuffer                         pulseBuffer;                              // Buffer of raw pulses
+    uint32_t                         *pulseIndex;                              // The refence index to watch for
+    RKFFTModule                      *fftModule;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
@@ -74,12 +56,6 @@ struct rk_pulse_compression_engine {
     void                             (*compressor)(RKCompressionScratch *);
 
     // Program set variables
-    unsigned int                     planCount;
-    unsigned int                     planSizes[RKPulseCompressionDFTPlanCount];
-    unsigned int                     planUseCount[RKPulseCompressionDFTPlanCount];
-    fftwf_plan                       planForwardInPlace[RKPulseCompressionDFTPlanCount];
-    fftwf_plan                       planForwardOutPlace[RKPulseCompressionDFTPlanCount];
-    fftwf_plan                       planBackwardInPlace[RKPulseCompressionDFTPlanCount];
     int                              *filterGid;
     RKPulseCompressionPlanIndex      *planIndices;
     RKPulseCompressionWorker         *workers;
@@ -105,6 +81,7 @@ void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
 void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *, const RKRadarDesc *,
                                                    RKConfig *configBuffer, uint32_t *configIndex,
                                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex);
+void RKPulseCompressionEngineSetFFTModule(RKPulseCompressionEngine *, RKFFTModule *);
 void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *, const uint8_t);
 void RKPulseCompressionEngineSetCoreOrigin(RKPulseCompressionEngine *, const uint8_t);
 

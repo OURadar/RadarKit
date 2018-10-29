@@ -19,7 +19,8 @@ static void *pulseGatherer(void *);
 
 int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count);
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride);
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
+int prepareScratch(RKScratch *);
+int makeRayFromScratch(RKScratch *, RKRay *);
 
 #pragma mark -
 #pragma mark Helper Functions
@@ -97,6 +98,18 @@ static void RKMomentUpdateStatusString(RKMomentEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
+static void RKMomentEngineCheckWiring(RKMomentEngine *engine) {
+    if (engine->radarDescription == NULL ||
+        engine->configBuffer == NULL || engine->configIndex == NULL ||
+        engine->pulseBuffer == NULL || engine->pulseIndex == NULL ||
+        engine->rayBuffer == NULL || engine->rayIndex == NULL ||
+        engine->fftModule == NULL) {
+        engine->state &= ~RKEngineStateProperlyWired;
+        return;
+    }
+    engine->state |= RKEngineStateProperlyWired;
+}
+
 int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     return 0;
 }
@@ -135,9 +148,14 @@ int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
     return pulse->header.gateCount;
 }
 
+int prepareScratch(RKScratch *space) {
+    space->fftOrder = -1;
+    return 0;
+}
+
 // This function converts the float data calculated from a chosen processor to uint8_t type, which also represent
 // the display data for the front end
-int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
+int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     int k;
     // Grab the data from scratch space.
     float *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSh);
@@ -153,7 +171,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
     float SNR;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     // Masking based on SNR
-    for (k = 0; k < MIN(space->capacity, gateCount); k++) {
+    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         SNR = *Si / space->noise[0];
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
         *To++ = 10.0f * log10f(*Ti++);
@@ -287,6 +305,9 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray, const int gateCount) {
         ray->header.marker |= RKMarkerMemoryManagement;
     }
     ray->header.baseMomentList = RKBaseMomentListProductZVWDPRKSQ | RKBaseMomentListDisplayZVWDPRKSQ;
+    if (space->fftOrder > 0) {
+        ray->header.fftOrder = (uint8_t)space->fftOrder;
+    }
     return k;
 }
 
@@ -307,6 +328,148 @@ static void buildInCalibrator(RKScratch *space, RKConfig *config) {
             space->pcal[i] = RKSingleWrapTo2PI(config->systemPCal + config->PCal[k]);
         }
     }
+}
+
+#pragma mark - Scratch Space
+
+// Allocate a scratch space for moment processors
+size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool showNumbers) {
+    if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat) != 0) {
+        RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
+              RKIntegerToCommaStyleString(RKSIMDAlignSize / sizeof(RKFloat)));
+        return 0;
+    }
+    if (lagCount > RKMaximumLagCount) {
+        RKLog("Error. Lag count must not exceed the hard-coded limit %d\n", lagCount);
+        return 0;
+    }
+    if ((1 << fftOrder) > RKMaximumGateCount) {
+        RKLog("Error. FFT order must not exceed the hard-coded limit %.0f\n", log2f((float)RKMaximumGateCount));
+        return 0;
+    }
+    *buffer = malloc(sizeof(RKScratch));
+    if (*buffer == NULL) {
+        RKLog("Error. Unable to allocate a momment scratch space.\n");
+        return 0;
+    }
+    memset(*buffer, 0, sizeof(RKScratch));
+    
+    RKScratch *space = *buffer;
+    space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
+    space->lagCount = lagCount;
+    space->showNumbers = showNumbers;
+
+    if (showNumbers) {
+        RKLog("Info. %s <-- %s",
+              RKVariableInString("space->capacity", &space->capacity, RKValueTypeUInt32),
+              RKVariableInString("capacity", &capacity, RKValueTypeUInt32));
+    }
+    
+    int j, k;
+    size_t bytes = sizeof(RKScratch);
+    for (k = 0; k < 2; k++) {
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Z[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->V[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->W[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Q[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->SNR[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->rcor[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        memset(space->rcor[k], 0, space->capacity * sizeof(RKFloat));
+        bytes += 11;
+        for (j = 0; j < space->lagCount; j++) {
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+            bytes += 3;
+        }
+    }
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ZDR, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->PhiDP, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->RhoHV, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->KDP, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->dcal, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->pcal, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    memset(space->dcal, 0, space->capacity * sizeof(RKFloat));
+    memset(space->pcal, 0, space->capacity * sizeof(RKFloat));
+    
+    bytes += 10;
+    for (j = 0; j < 2 * space->lagCount - 1; j++) {
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        bytes += 3 ;
+    }
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    bytes++;
+    bytes *= space->capacity * sizeof(RKFloat);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, space->capacity * sizeof(int8_t)));
+    bytes += space->capacity * sizeof(int8_t);
+    space->inBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
+    space->outBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
+    bytes += 2 * space->capacity * sizeof(fftwf_complex *);
+    for (j = 0; j < space->capacity; j++) {
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->inBuffer[j], RKSIMDAlignSize, (1 << fftOrder) * sizeof(fftwf_complex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->outBuffer[j], RKSIMDAlignSize, (1 << fftOrder) * sizeof(fftwf_complex)));
+    }
+    //POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->inBuffer, RKSIMDAlignSize, space->capacity * sizeof(fftwf_complex)));
+    //POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->outBuffer, RKSIMDAlignSize, space->capacity * sizeof(fftwf_complex)));
+    bytes += space->capacity * 2 * (1 << fftOrder) * sizeof(fftwf_complex);
+    return bytes;
+}
+
+void RKScratchFree(RKScratch *space) {
+    int j, k;
+    for (k = 0; k < 2; k++) {
+        free(space->mX[k].i);
+        free(space->mX[k].q);
+        free(space->vX[k].i);
+        free(space->vX[k].q);
+        free(space->S[k]);
+        free(space->Z[k]);
+        free(space->V[k]);
+        free(space->W[k]);
+        free(space->Q[k]);
+        free(space->SNR[k]);
+        free(space->rcor[k]);
+        for (j = 0; j < space->lagCount; j++) {
+            free(space->R[k][j].i);
+            free(space->R[k][j].q);
+            free(space->aR[k][j]);
+        }
+    }
+    free(space->sC.i);
+    free(space->sC.q);
+    free(space->ts.i);
+    free(space->ts.q);
+    free(space->ZDR);
+    free(space->PhiDP);
+    free(space->RhoHV);
+    free(space->KDP);
+    free(space->dcal);
+    free(space->pcal);
+    for (j = 0; j < 2 * space->lagCount - 1; j++) {
+        free(space->C[j].i);
+        free(space->C[j].q);
+        free(space->aC[j]);
+    }
+    free(space->gC);
+    free(space->mask);
+    for (k = 0; k < space->capacity; k++) {
+        free(space->inBuffer[k]);
+        free(space->outBuffer[k]);
+    }
+    free(space->inBuffer);
+    free(space->outBuffer);
+    free(space);
 }
 
 #pragma mark -
@@ -367,19 +530,20 @@ static void *momentCore(void *in) {
     // Allocate local resources and keep track of the total allocation
     pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
-    size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->verbose > 3);
+    size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->processorFFTOrder, engine->verbose > 3);
     if (space == NULL) {
-        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        RKLog("%s %s Error. Unable to allocate resources for duty cycle calculation\n", engine->name, me->name);
         exit(EXIT_FAILURE);
     }
 	if (engine->userLagChoice != 0) {
 		space->userLagChoice = engine->userLagChoice;
 	}
+    space->fftModule = engine->fftModule;
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
-        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        RKLog("%s %s Error. Unable to allocate resources for duty cycle calculation\n", engine->name, me->name);
         exit(EXIT_FAILURE);
     }
     mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
@@ -414,8 +578,8 @@ static void *momentCore(void *in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
     
-    RKLog(">%s %s Started.   mem = %s B   lagCount = %d   i0 = %s   ci = %d\n",
-          engine->name, me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, RKIntegerToCommaStyleString(io), ci);
+    RKLog(">%s %s Started.   mem = %s B   lagCount = %d   fftOrder = %d   i0 = %s   ci = %d\n",
+          engine->name, me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, engine->processorFFTOrder, RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -514,9 +678,9 @@ static void *momentCore(void *in) {
         // Compute the range correction factor if needed.
         if (ic != E->header.configIndex) {
             ic = E->header.configIndex;
-            // At this point, gateCount and gateSizeMeters is no longer of the raw pulses, they has been resampled according to pulseToRayRatio
-            space->gateCount = E->header.gateCount;
-            space->gateSizeMeters = E->header.gateSizeMeters;
+            // At this point, gateCount and gateSizeMeters is no longer of the raw pulses, they have been adjusted according to pulseToRayRatio
+            space->gateCount = ray->header.gateCount;
+            space->gateSizeMeters = ray->header.gateSizeMeters;
             // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
             // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
             // The number 60 is for conversion of range from meters to kilometers in the range correction term.
@@ -563,18 +727,20 @@ static void *momentCore(void *in) {
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
         } while (k < path.length);
         
-        // Duplicate a linear array for processor if we are to process; otherwise just skip this group
+        // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             if (ie != i) {
                 RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, me->name, ie, i);
             }
+            // Initialize the scratch space
+            prepareScratch(space);
             // Call the processor
             k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
                 RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, me->name, k, path.length);
             }
             // Fill in the ray SNR censoring and display data
-            makeRayFromScratch(space, ray, ray->header.gateCount);
+            makeRayFromScratch(space, ray);
             for (k = 0; k < path.length; k++) {
                 pulse = pulses[k];
                 pulse->header.s |= RKPulseStatusUsedForMoments;
@@ -607,7 +773,7 @@ static void *momentCore(void *in) {
 
         // Summary of this ray
         snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
-                 " %05u %s | %05u - %05u (%3d)  [C%02d %s E%.2f A%.2f]   %s%6.2f-%6.2f (%4.2f)  G%s  M%05x %s%s",
+                 " %05u %s | %05u - %05u (%3d)  [C%02d %s E%.2f A%.2f]   %s%6.2f-%6.2f (%4.2f)  G%s  M%05x  %s  %s%s",
                  (unsigned int)io, me->name, (unsigned int)is, (unsigned int)ie, path.length,
                  ray->header.configIndex,
                  RKMarkerScanTypeShortString(ray->header.marker),
@@ -618,6 +784,7 @@ static void *momentCore(void *in) {
                  (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
                  RKIntegerToCommaStyleString(ray->header.gateCount),
                  ray->header.marker,
+                 RKIntegerToCommaStyleString(ray->header.fftOrder),
                  ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
                  ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
 
@@ -684,6 +851,8 @@ static void *pulseGatherer(void *_in) {
             RKLog(">%s Method = RKPulsePairHop\n", engine->name);
         } else if (engine->processor == &RKPulsePair) {
             RKLog(">%s Method = RKPulsePair\n", engine->name);
+        } else if (engine->processor == &RKSpectralMoment) {
+            RKLog(">%s Method = RKSpectralMoment\n", engine->name);
         } else if (engine->processor == &nullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
@@ -828,9 +997,12 @@ static void *pulseGatherer(void *_in) {
             if (i1 != i0 || count == RKMaximumPulsesPerRay) {
                 i1 = i0;
                 if (count > 0) {
-                    // Number of samples in this ray
+                    // Number of samples in this ray and the correct plan index
                     engine->momentSource[j].length = count;
+                    engine->momentSource[j].planIndex = (uint32_t)ceilf(log2f((float)count));
+
                     //printf("%s k = %d --> momentSource[%d] = %d / %d / %d\n", engine->name, k, j, engine->momentSource[j].origin, engine->momentSource[j].length, engine->momentSource[j].modulo);
+
                     if (engine->useSemaphore) {
                         if (sem_post(sem[c])) {
                             RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
@@ -906,6 +1078,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->processor = &RKPulsePairHop;
     engine->calibrator = &buildInCalibrator;
     engine->processorLagCount = RKMaximumLagCount;
+    engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
     engine->memoryUsage = sizeof(RKMomentEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
@@ -937,8 +1110,21 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
     
-    size_t bytes = engine->radarDescription->rayBufferDepth * sizeof(RKModuloPath);
+    size_t bytes;
+    
+//    if (engine->planIndices != NULL) {
+//        free(engine->planIndices);
+//    }
+//    bytes = engine->radarDescription->rayBufferDepth * sizeof(int);
+//    engine->planIndices = (int *)malloc(bytes);
+//    if (engine->planIndices == NULL) {
+//        RKLog("%s Error. Unable to allocate RKMomentEngine->planIndices.\n", engine->name);
+//        exit(EXIT_FAILURE);
+//    }
+//    engine->memoryUsage += bytes;
 
+    engine->state |= RKEngineStateMemoryChange;
+    bytes = engine->radarDescription->rayBufferDepth * sizeof(RKModuloPath);
     engine->momentSource = (RKModuloPath *)malloc(bytes);
     if (engine->momentSource == NULL) {
         RKLog("Error. Unable to allocate momentSource.\n");
@@ -948,7 +1134,13 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
     for (int i = 0; i < engine->radarDescription->rayBufferDepth; i++) {
         engine->momentSource[i].modulo = engine->radarDescription->pulseBufferDepth;
     }
-    engine->state |= RKEngineStateProperlyWired;
+    engine->state ^= RKEngineStateMemoryChange;
+    RKMomentEngineCheckWiring(engine);
+}
+
+void RKMomentEngineSetFFTModule(RKMomentEngine *engine, RKFFTModule *module) {
+    engine->fftModule = module;
+    RKMomentEngineCheckWiring(engine);
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const uint8_t count) {

@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <fftw3.h>
 
 #ifdef BETA_BRANCH
 #define RKVersionBranch "b"
@@ -213,6 +214,7 @@ typedef struct rk_modulo_path {
     uint32_t      origin;
     uint32_t      length;
     uint32_t      modulo;
+    uint32_t      planIndex;
 } RKModuloPath;
 
 //
@@ -346,7 +348,8 @@ enum RKEngineColor {
     RKEngineColorClock = 15,
     RKEngineColorMisc = 16,
     RKEngineColorEngineMonitor = 15,
-    RKEngineColorConfig = 6
+    RKEngineColorConfig = 6,
+    RKEngineColorFFTModule = 15
 };
 
 typedef uint32_t RKValueType;
@@ -1020,7 +1023,7 @@ typedef struct rk_ray_header {
     RKBaseMomentList     baseMomentList;                                       // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
-    uint16_t             gateCount;                                            //
+    uint16_t             gateCount;                                            // Gate count of the ray
     uint16_t             pulseCount;                                           //
     float                gateSizeMeters;                                       // Size of range gates
     float                sweepElevation;                                       // Sweep elevation for PPI
@@ -1033,6 +1036,10 @@ typedef struct rk_ray_header {
     double               endTimeDouble;                                        //
     float                endAzimuth;                                           //
     float                endElevation;                                         //
+    uint8_t              fftOrder;                                             // The order of FFT (2^N) = plan index of FFTModule
+    uint8_t              reserved1;                                            //
+    uint8_t              reserved2;                                            //
+    uint8_t              reserved3;                                            //
 } RKRayHeader;
 
 //
@@ -1074,47 +1081,6 @@ typedef struct rk_sweep {
     RKBuffer             rayBuffer;
     RKRay                *rays[RKMaximumRaysPerSweep];
 } RKSweep;
-
-//
-// A scratch space for moment processor
-//
-typedef struct rk_scratch {
-    uint32_t             capacity;                                             // Capacity
-    bool                 showNumbers;                                          // A flag for showing numbers
-    uint8_t              userLagChoice;                                        // Number of lags in multi-lag estimator from user
-    uint8_t              lagCount;                                             // Number of lags of R & C
-    uint16_t             gateCount;                                            // Gate count of the rays
-    RKFloat              gateSizeMeters;                                       // Gate size in meters for range correction
-    RKFloat              samplingAdjustment;                                   // Sampling adjustment going from pulse to ray conversion
-    RKIQZ                mX[2];                                                // Mean of X, 2 for dual-pol
-    RKIQZ                vX[2];                                                // Variance of X, i.e., E{X' * X} - E{X}' * E{X}
-    RKIQZ                R[2][RKMaximumLagCount];                              // ACF up to RKMaximumLagCount - 1 for each polarization
-    RKIQZ                C[2 * RKMaximumLagCount - 1];                         // CCF in [ -RKMaximumLagCount + 1, ..., -1, 0, 1, ..., RKMaximumLagCount - 1 ]
-    RKIQZ                sC;                                                   // Summation of Xh * Xv'
-    RKIQZ                ts;                                                   // Temporary scratch space
-    RKFloat              *aR[2][RKMaximumLagCount];                            // abs(ACF)
-    RKFloat              *aC[2 * RKMaximumLagCount - 1];                       // abs(CCF)
-    RKFloat              *gC;                                                  // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
-    RKFloat              noise[2];                                             // Noise floor of each channel
-    RKFloat              velocityFactor;                                       // Velocity factor to multiply by atan2(R(1))
-    RKFloat              widthFactor;                                          // Width factor to multiply by the ln(S/|R(1)|) : 
-    RKFloat              KDPFactor;                                            // Normalization factor of 1.0 / gateWidth in kilometers
-    RKFloat              *dcal;                                                // Calibration offset to D
-    RKFloat              *pcal;                                                // Calibration offset to P (radians)
-    RKFloat              SNRThreshold;                                         // SNR threshold for masking
-    RKFloat              *rcor[2];                                             // Reflectivity range correction factor
-    RKFloat              *S[2];                                                // Signal
-    RKFloat              *Z[2];                                                // Reflectivity in dB
-    RKFloat              *V[2];                                                // Velocity in same units as aliasing velocity
-    RKFloat              *W[2];                                                // Spectrum width in same units as aliasing velocity
-    RKFloat              *Q[2];                                                // Signal quality index SQI
-    RKFloat              *SNR[2];                                              // Signal-to-noise ratio
-    RKFloat              *ZDR;                                                 // Differential reflectivity ZDR
-    RKFloat              *PhiDP;                                               // Differential phase PhiDP
-    RKFloat              *RhoHV;                                               // Cross-correlation coefficient RhoHV
-    RKFloat              *KDP;                                                 // Specific phase KDP
-    int8_t               *mask;                                                // Mask for censoring
-} RKScratch;
 
 //
 // File header of raw I/Q data

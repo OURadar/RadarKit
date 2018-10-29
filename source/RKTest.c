@@ -25,7 +25,10 @@ printf("%s %s\n", str, res ? "okay" : "too high");
 
 // Make some private functions available
 
-int makeRayFromScratch(RKScratch *, RKRay *, const int gateCount);
+int prepareScratch(RKScratch *);
+int makeRayFromScratch(RKScratch *, RKRay *);
+size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool);
+void RKScratchFree(RKScratch *);
 
 #pragma mark - Static Functions
 
@@ -62,12 +65,13 @@ char *RKTestByNumberDescription(const int indent) {
     "22 - Show window types\n"
     "23 - Hilbert transform\n"
     "24 - Optimize FFT performance and generate an fft-wisdom file\n"
+    "25 - Show ring filter coefficients\n"
     "\n"
     "30 - Make a frequency hopping sequence\n"
     "31 - Make a TFM waveform\n"
     "32 - Generate a waveform file\n"
-    "33 - Test showing waveform properties\n"
-    "34 - Test showing filter coefficients\n"
+    "33 - Test waveform down-sampling\n"
+    "34 - Test showing waveform properties\n"
     "\n"
     "40 - Pulse compression using simple cases\n"
     "41 - Calculating one ray using the Pulse Pair method\n"
@@ -75,6 +79,7 @@ char *RKTestByNumberDescription(const int indent) {
     "43 - Calculating one ray using the Multi-Lag method with L = 2\n"
     "44 - Calculating one ray using the Multt-Lag method with L = 3\n"
     "45 - Calculating one ray using the Multi-Lag method with L = 4\n"
+    "46 - Calculating one ray using the Spectral Moment method\n"
     "\n"
     "50 - Measure the speed of SIMD calculations\n"
     "51 - Measure the speed of pulse compression\n"
@@ -163,6 +168,9 @@ void RKTestByNumber(const int number, const void *arg) {
         case 24:
             RKTestWriteFFTWisdom();
             break;
+        case 25:
+            RKTestRingFilterShowCoefficients();
+            break;
         case 30:
             RKTestMakeHops();
             break;
@@ -173,10 +181,10 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestWaveformWrite();
             break;
         case 33:
-            RKTestWaveformProperties();
+            RKTestWaveformDownsampling();
             break;
         case 34:
-            RKTestShowFilters();
+            RKTestWaveformShowProperties();
             break;
         case 40:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
@@ -195,6 +203,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 45:
             RKTestOneRay(RKMultiLag, 4);
+            break;
+        case 46:
+            RKTestOneRay(RKSpectralMoment, 0);
             break;
         case 50:
             RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
@@ -1170,6 +1181,8 @@ void RKTestWriteFFTWisdom(void) {
         fftwf_destroy_plan(plan);
         plan = fftwf_plan_dft_1d(nfft, out, out, FFTW_BACKWARD, FFTW_MEASURE);
         fftwf_destroy_plan(plan);
+        plan = fftwf_plan_dft_1d(nfft, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+        fftwf_destroy_plan(plan);
         nfft >>= 1;
     }
     fftwf_free(in);
@@ -1177,6 +1190,35 @@ void RKTestWriteFFTWisdom(void) {
     RKLog("Exporting FFT wisdom ...\n");
     fftwf_export_wisdom_to_filename(RKFFTWisdomFile);
     RKLog("Done.\n");
+}
+
+void RKTestRingFilterShowCoefficients(void) {
+    int i, k;
+    RKFilterType type;
+    RKIIRFilter *filter = (RKIIRFilter *)malloc(sizeof(RKIIRFilter));
+    char *string = (char *)malloc(1024);
+    if (filter == NULL || string == NULL) {
+        fprintf(stderr, "Error allocation memory.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (type = RKFilterTypeNull; type < RKFilterTypeCount; type++) {
+        RKGetFilterCoefficients(filter, type);
+        RKLog("%s:\n", filter->name);
+        i = sprintf(string, "b = [");
+        for (k = 0; k < filter->bLength; k++) {
+            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->B[k].i);
+        }
+        sprintf(string + i, "]");
+        RKLog(">%s", string);
+        i = sprintf(string, "a = [");
+        for (k = 0; k < filter->aLength; k++) {
+            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->A[k].i);
+        }
+        sprintf(string + i, "]");
+        RKLog(">%s", string);
+    }
+    free(string);
+    free(filter);
 }
 
 #pragma mark - Waveform Tests
@@ -1224,7 +1266,7 @@ void RKTestWaveformWrite(void) {
     }
 }
 
-void RKTestWaveformProperties(void) {
+void RKTestWaveformShowProperties(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
     RKWaveformSummary(waveform);
@@ -1266,6 +1308,15 @@ void RKTestWaveformProperties(void) {
     RKWaveformDownConvert(waveform);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
+}
+
+void RKTestWaveformDownsampling(void) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6);
+    RKWaveformSummary(waveform);
+    
+    RKWaveformDecimate(waveform, 32);
+    RKWaveformSummary(waveform);
 }
 
 #pragma mark - Radar Signal Processing
@@ -1363,6 +1414,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     SHOW_FUNCTION_NAME
     int k, p, n, g;
     RKScratch *space;
+    RKFFTModule *fftModule;
     RKBuffer pulseBuffer;
     const int gateCount = 6;
     const int pulseCount = 10;
@@ -1370,10 +1422,15 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 
     RKLog("Allocating buffers ...\n");
 
-    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
-    RKScratchAlloc(&space, pulseCapacity, RKMaximumLagCount, true);
-    RKPulse *pulses[pulseCount];
+    RKScratchAlloc(&space, pulseCapacity, RKMaximumLagCount, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    fftModule = RKFFTModuleInit(pulseCapacity, 0);
+    space->fftModule = fftModule;
+    space->gateCount = gateCount;
+    space->gateSizeMeters = 30.0f;
 
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    RKPulse *pulses[pulseCount];
+    
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
@@ -1383,6 +1440,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         // Fill in the data...
         for (p = 0; p < 2; p++) {
             RKIQZ X = RKGetSplitComplexDataFromPulse(pulse, p);
+            RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
 
             // Some seemingly random pattern for testing
             n = pulse->header.i % 3 * (pulse->header.i % 2 ? 1 : -1) + p;
@@ -1394,6 +1452,8 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
                     X.i[g] = (int16_t)(-g * (n - 1));
                     X.q[g] = (int16_t)((g * p) + n);
                 }
+                Y[g].i = X.i[g];
+                Y[g].q = X.q[g];
             }
         }
         pulses[k] = pulse;
@@ -1410,6 +1470,8 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         space->velocityFactor = 1.0f;
         space->widthFactor = 1.0f;
         RKLog("Info. Multilag (N = %d).\n", space->userLagChoice);
+    } else if (method == RKSpectralMoment) {
+        RKLog("Info. Spectral Moment.\n");
     } else {
         RKLog("Warning. Unknown method.\n");
         method = RKPulsePair;
@@ -1419,24 +1481,23 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     // Some known results
     RKFloat err;
     RKName str;
-    int row = 0;
 
     // Results for pulse-pair, pulse-pair for hops, multilag for lags 2, 3, and 4
-    RKFloat D[5][6] = {
+    RKFloat D[5][7] = {
         { 1.7216, -2.5106, -1.9448,  -1.3558, -0.2018,  -0.9616},
         { 2.2780,  2.6324,  2.7621,   2.3824,  3.1231,   2.3561},
         { 4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
         { 2.7106, -8.4965, -7.8061,  -9.1933, -0.7019,  -8.4546},
         { 3.7372, -4.2926, -4.1635,  -6.0751, -0.7788,  -5.9091}
     };
-    RKFloat P[5][6] = {
+    RKFloat P[5][7] = {
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
         { 0.4155, -0.8567, -0.7188, -0.7400, -0.4405, -0.6962},
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248}
     };
-    RKFloat R[5][6] = {
+    RKFloat R[5][7] = {
         {0.9024, 0.7063, 0.8050, 0.7045, 0.8717, 0.7079},
         {0.9858, 0.8144, 0.8593, 0.9104, 0.9476, 0.9236},
         {1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
@@ -1445,9 +1506,8 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     };
 
     // Select the row for the correct answer
-    if (method == RKPulsePair) {
-        row = 0;
-    } else if (method == RKPulsePairHop) {
+    int row = 0;
+    if (method == RKPulsePairHop) {
         row = 1;
     } else if (method == RKMultiLag && lag >=2 && lag <= 4) {
         row = lag;
@@ -1483,6 +1543,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     RKLog("Deallocating buffers ...\n");
 
     RKScratchFree(space);
+    RKFFTModuleFree(fftModule);
     RKPulseBufferFree(pulseBuffer);
 }
 
@@ -1566,33 +1627,44 @@ void RKTestPulseCompressionSpeed(void) {
 void RKTestMomentProcessorSpeed(void) {
     SHOW_FUNCTION_NAME
     int i, j, k;
+    RKFFTModule *fftModule;
     RKScratch *space;
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
-    const int testCount = 100;
+    const int testCount = 500;
     const int pulseCount = 100;
     const int pulseCapacity = 1 << 12;
 
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
 
-    RKScratchAlloc(&space, pulseCapacity, 5, true);
+    RKScratchAlloc(&space, pulseCapacity, 5, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    fftModule = RKFFTModuleInit(pulseCapacity, 0);
+    space->fftModule = fftModule;
+    space->gateCount = pulseCapacity;
 
     RKPulse *pulses[pulseCount];
     RKComplex *X;
+    RKIQZ Y;
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
         X = RKGetComplexDataFromPulse(pulse, 0);
+        Y = RKGetSplitComplexDataFromPulse(pulse, 0);
         for (j = 0; j < pulseCapacity; j++) {
             X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
             X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+            Y.i[j] = X[j].i;
+            Y.q[j] = X[j].q;
         }
         X = RKGetComplexDataFromPulse(pulse, 1);
+        Y = RKGetSplitComplexDataFromPulse(pulse, 1);
         for (j = 0; j < pulseCapacity; j++) {
             X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
             X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+            Y.i[j] = X[j].i;
+            Y.q[j] = X[j].q;
         }
         pulses[k] = pulse;
     }
@@ -1603,7 +1675,7 @@ void RKTestMomentProcessorSpeed(void) {
 
     RKRay *ray = RKGetRayFromBuffer(rayBuffer, 0);
 
-    for (j = 0; j < 5; j++) {
+    for (j = 0; j < 6; j++) {
         switch (j) {
             default:
                 method = RKPulsePair;
@@ -1628,13 +1700,18 @@ void RKTestMomentProcessorSpeed(void) {
                 space->userLagChoice = 4;
                 RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
                 break;
+            case 5:
+                method = RKSpectralMoment;
+                space->fftOrder = (uint8_t)ceilf(log2f((float)pulseCount));
+                RKLog(UNDERLINE("SpectralMoment:") "\n");
+                break;
         }
         mint = INFINITY;
         for (i = 0; i < 3; i++) {
             gettimeofday(&tic, NULL);
             for (k = 0; k < testCount; k++) {
                 method(space, pulses, pulseCount);
-                makeRayFromScratch(space, ray, pulseCapacity);
+                makeRayFromScratch(space, ray);
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
@@ -1646,6 +1723,7 @@ void RKTestMomentProcessorSpeed(void) {
         RKLog(">Speed: %.2f rays / sec / core\n", testCount / mint);
     }
 
+    RKFFTModuleFree(fftModule);
     RKScratchFree(space);
     free(pulseBuffer);
     free(rayBuffer);
@@ -2832,35 +2910,6 @@ void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
 }
 
-void RKTestShowFilters(void) {
-    int i, k;
-    RKFilterType type;
-    RKIIRFilter *filter = (RKIIRFilter *)malloc(sizeof(RKIIRFilter));
-    char *string = (char *)malloc(1024);
-    if (filter == NULL || string == NULL) {
-        fprintf(stderr, "Error allocation memory.\n");
-        exit(EXIT_FAILURE);
-    }
-    for (type = RKFilterTypeNull; type < RKFilterTypeCount; type++) {
-        RKGetFilterCoefficients(filter, type);
-        RKLog("%s:\n", filter->name);
-        i = sprintf(string, "b = [");
-        for (k = 0; k < filter->bLength; k++) {
-            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->B[k].i);
-        }
-        sprintf(string + i, "]");
-        RKLog(">%s", string);
-        i = sprintf(string, "a = [");
-        for (k = 0; k < filter->aLength; k++) {
-            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->A[k].i);
-        }
-        sprintf(string + i, "]");
-        RKLog(">%s", string);
-    }
-    free(string);
-    free(filter);
-}
-
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
     // For Bird bath ZCal
@@ -2888,13 +2937,19 @@ void RKTestExperiment(void) {
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
+    
+    fftwf_complex *in, *out;
+    uint32_t planSize = 1 << 8;
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
 
-    //RKWaveformInitAsTimeFrequencyMultiplexing(5.0e6, 4.0e6);
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6);
-    RKWaveformSummary(waveform);
-
-    RKWaveformDecimate(waveform, 32);
-    RKWaveformSummary(waveform);
+    
+    fftwf_plan fwd = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+    
+    fftwf_plan plan = fwd;
+    
+    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
+    printf("%p == %p\n", fwd, plan);
 }
 
 #pragma mark -

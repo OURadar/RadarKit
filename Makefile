@@ -1,6 +1,5 @@
 KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
-#KERNEL_VER := $(shell expr "$(shell uname -v)" : ".*-\([A-Za-z]*\)\ .*")
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
@@ -31,7 +30,7 @@ OBJS += RKConfig.o RKHealth.o
 OBJS += RKPulseCompression.o RKPulseRingFilter.o RKMoment.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o
-OBJS += RKPulsePair.o RKMultiLag.o
+OBJS += RKPulsePair.o RKMultiLag.o RKSpectralMoment.o
 OBJS += RKPosition.o
 OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweep.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
