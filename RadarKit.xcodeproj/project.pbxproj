@@ -25,6 +25,8 @@
 		B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = B5377DC52041C18C00972E41 /* RKHostMonitor.h */; };
 		B5377DC82041C1B900972E41 /* RKHostMonitor.c in Sources */ = {isa = PBXBuildFile; fileRef = B5377DC72041C1B900972E41 /* RKHostMonitor.c */; };
 		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B548350F216B9E280066FA0D /* RKSpectralMoment.h */; };
+		B5483512216B9E8F0066FA0D /* RKSpectralMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */; };
 		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
 		B55F5F1A1E2C8F9600FA8B2E /* RKSweep.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweep.h */; };
 		B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F261E2D206300FA8B2E /* RKConfig.h */; };
@@ -124,6 +126,8 @@
 		B5377DC52041C18C00972E41 /* RKHostMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHostMonitor.h; path = headers/RadarKit/RKHostMonitor.h; sourceTree = "<group>"; };
 		B5377DC72041C1B900972E41 /* RKHostMonitor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKHostMonitor.c; path = source/RKHostMonitor.c; sourceTree = "<group>"; };
 		B53AE7EC1D88824400364467 /* RKMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMisc.h; path = headers/RadarKit/RKMisc.h; sourceTree = "<group>"; };
+		B548350F216B9E280066FA0D /* RKSpectralMoment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSpectralMoment.h; path = headers/RadarKit/RKSpectralMoment.h; sourceTree = "<group>"; };
+		B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSpectralMoment.c; path = source/RKSpectralMoment.c; sourceTree = "<group>"; };
 		B55E437C1DB66682003C40CF /* RKSIMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKSIMD.h; path = headers/RadarKit/RKSIMD.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B55F5F191E2C8F9600FA8B2E /* RKSweep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweep.h; path = headers/RadarKit/RKSweep.h; sourceTree = "<group>"; };
 		B55F5F261E2D206300FA8B2E /* RKConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKConfig.h; path = headers/RadarKit/RKConfig.h; sourceTree = "<group>"; };
@@ -270,6 +274,7 @@
 				B508EA751FB7AAB900A6A83C /* RKPulseRingFilter.h */,
 				B5B5196B1DCA87BD00470924 /* RKPulsePair.h */,
 				B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */,
+				B548350F216B9E280066FA0D /* RKSpectralMoment.h */,
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B55F5F191E2C8F9600FA8B2E /* RKSweep.h */,
 				B5B2058820E43117007D48E0 /* RKSweepFile.h */,
@@ -344,6 +349,7 @@
 				B508EA771FB7AAD500A6A83C /* RKPulseRingFilter.c */,
 				B5FFD4671FB0B5C300319453 /* RKPulsePair.c */,
 				B5FFD45F1FB0B5C200319453 /* RKMultiLag.c */,
+				B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */,
 				B5FFD46B1FB0B5C400319453 /* RKMoment.c */,
 				B5FFD46E1FB0B5C400319453 /* RKSweep.c */,
 				B5B2058A20E43128007D48E0 /* RKSweepFile.c */,
@@ -398,6 +404,7 @@
 				B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */,
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
 				B508EA761FB7AABA00A6A83C /* RKPulseRingFilter.h in Headers */,
+				B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */,
 				B5B675581EB0DFAB001BD68D /* RKHealthLogger.h in Headers */,
 				B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */,
 				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
@@ -485,7 +492,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "__radarkit" */;
+			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -544,6 +551,7 @@
 				B5FFD4921FB0B5C600319453 /* RKWindow.c in Sources */,
 				B5FFD4851FB0B5C600319453 /* RKRadar.c in Sources */,
 				B5EE832C20DFB9D400681E29 /* RKProductFile.c in Sources */,
+				B5483512216B9E8F0066FA0D /* RKSpectralMoment.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -918,7 +926,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "__radarkit" */ = {
+		B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B50A81441AB89B6200E12E1F /* Debug */,

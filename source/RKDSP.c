@@ -337,3 +337,127 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
     }
 }
+
+#pragma mark - Common DFT
+
+RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
+    int k;
+    RKFFTModule *module = (RKFFTModule *)malloc(sizeof(RKFFTModule));
+    if (module == NULL) {
+        fprintf(stderr, "Error. Unable to allocate RKFFTModule.\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(module, 0, sizeof(RKFFTModule));
+    sprintf(module->name, "%s<CommonFFTModule>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFFTModule) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
+    module->verbose = verbose;
+    
+    // DFT Wisdom
+    sprintf(module->wisdomFile, RKFFTWisdomFile);
+    if (RKFilenameExists(module->wisdomFile)) {
+        RKLog("%s Loading DFT wisdom ...\n", module->name);
+        fftwf_import_wisdom_from_filename(module->wisdomFile);
+    } else {
+        RKLog("%s DFT wisdom file not found.\n", module->name);
+        module->exportWisdom = true;
+    }
+
+    // Temporary buffers
+    fftwf_complex *in, *out;
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, capacity * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, capacity * sizeof(fftwf_complex)))
+
+    // Compute the maximum plan size
+    uint32_t planCount = (int)ceilf(log2f((float)MIN(RKMaximumGateCount, capacity))) + 1;
+    if (planCount >= RKCommonFFTPlanCount) {
+        RKLog("%s Error. Unexpected planCount = %s.\n", module->name, RKIntegerToCommaStyleString(planCount));
+        exit(EXIT_FAILURE);
+    }
+
+    // Create FFT plans
+    if (module->verbose) {
+        RKLog("%s Allocating FFT resources ...\n", module->name);
+    }
+    for (k = 0; k < planCount; k++) {
+        module->plans[k].size = 1 << k;
+        if (module->verbose) {
+            RKLog(">%s Setting up plan[%d] @ nfft = %s\n", module->name, k, RKIntegerToCommaStyleString(module->plans[k].size));
+        }
+        module->plans[k].forwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, in, in, FFTW_FORWARD, FFTW_MEASURE);
+        module->plans[k].forwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, in, out, FFTW_FORWARD, FFTW_MEASURE);
+        module->plans[k].backwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, out, out, FFTW_BACKWARD, FFTW_MEASURE);
+        module->plans[k].backwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+        module->count++;
+    }
+    
+    free(in);
+    free(out);
+    return module;
+}
+
+void RKFFTModuleFree(RKFFTModule *module) {
+    int k;
+    if (module->count == 0) {
+        fprintf(stderr, "FFT module has no plans.\n");
+        return;
+    }
+    // Export wisdom
+    if (module->exportWisdom) {
+        if (module->verbose) {
+            RKLog("%s Saving DFT wisdom ...\n", module->name);
+        }
+        fftwf_export_wisdom_to_filename(module->wisdomFile);
+    }
+    // Destroy DFT plans
+    if (module->verbose) {
+        RKLog("%s De-allocating FFT resources ...\n", module->name);
+    }
+    for (k = module->count - 1; k >= 0; k--) {
+        if (module->verbose) {
+            RKLog(">%s Destroying plan[%d] @ nfft = %s   useCount = %s\n", module->name, k,
+                  RKIntegerToCommaStyleString(module->plans[k].size),
+                  RKIntegerToCommaStyleString(module->plans[k].count));
+        }
+        fftwf_destroy_plan(module->plans[k].forwardInPlace);
+        fftwf_destroy_plan(module->plans[k].forwardOutPlace);
+        fftwf_destroy_plan(module->plans[k].backwardInPlace);
+        fftwf_destroy_plan(module->plans[k].backwardOutPlace);
+        module->plans[k].forwardInPlace = NULL;
+        module->plans[k].forwardOutPlace = NULL;
+        module->plans[k].backwardInPlace = NULL;
+        module->plans[k].backwardOutPlace = NULL;
+    }
+    module->count = 0;
+    free(module);
+}
+
+#pragma mark - SGFit
+
+// Always assume the x-axis is in [0, 2 * M_PI) across count points
+RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
+    int k;
+    RKFloat q, s, phi;
+    RKComplex omega;
+    const int halfCount = count / 2;
+    const RKFloat twoPi = 1.0f / (RKFloat)count * 2.0f * M_PI;
+    RKGaussian gauss = {.A = 0.0f, .mu = 0.0f, .sigma = 0.0f};
+    
+    s = 0.0f;
+    RKComplex *yy = y;
+    for (k = 0; k < count; k++) {
+        q = yy->i * yy->i + yy->q * yy->q;
+        s += q;
+        if (k >= halfCount) {
+            phi = (RKFloat)(k - count) * twoPi;
+        } else {
+            phi = (RKFloat)k * twoPi;
+        }
+        gauss.A = sqrtf(q);
+        omega.i += gauss.A * cosf(phi);
+        omega.q += gauss.A * sinf(phi);
+        y++;
+    }
+
+    return gauss;
+}
