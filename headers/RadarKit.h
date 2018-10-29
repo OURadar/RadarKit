@@ -18,8 +18,12 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
-//  2.0.3  - 10/xx/2018
-//         -
+//  2.0.3  - 10/29/2018
+//         - Moment method can be switched on the fly
+//         - Common FFT engine, always measured optimum performance
+//         - Removed some hardcoded DFT constants
+//         - Added more tests to RKTestOneRay
+//         - General bug fixes and improvements
 //
 //  2.0.2  - 10/01/2018
 //         - Added RKPulsePair to RKTestMomentProcessorSpeed
