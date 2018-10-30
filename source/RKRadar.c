@@ -1996,8 +1996,8 @@ int RKResetClocks(RKRadar *radar) {
 
 int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable string) {
     int k;
-    char sval1[RKMaximumCommandLength];
-    char sval2[RKMaximumCommandLength];
+    char sval1[RKMaximumStringLength];
+    char sval2[RKMaximumStringLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     double fval1 = 0.0;
@@ -2201,7 +2201,8 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     } else {
                         k += sprintf(string + k, "    INFO: Transceiver not set.\n");
                     }
-                    
+                    printf("%s\n", sval1);
+
                     k += sprintf(string + k,
                                  HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with 'p' goes to the pedestal module\n"
                                  "    in a concatenated form, e.g., 'p help' -> 'help' to the pedestal.\n\n");
