@@ -415,6 +415,15 @@ enum RKPositionFlag {
     RKPositionFlagReady              = (1 << 31)
 };
 
+typedef uint32_t RKHeadingType;
+enum RKHeadingType {
+    RKHeadingTypeNormal,
+    RKHeadingTypeAdd90,
+    RKHeadingTypeAdd180,
+    RKHeadingTypeAdd270
+};
+
+
 typedef uint32_t RKStatusFlag;
 enum RKStatusFlag {
     RKStatusFlagVacant               = 0,
