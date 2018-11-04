@@ -14,5 +14,6 @@
 #include <RadarKit/RKPulsePair.h>
 
 int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount);
+int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount);
 
 #endif /* defined(__RadarKit_RSpectralMoment__) */

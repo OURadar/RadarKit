@@ -291,3 +291,61 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
 
     return pulseCount;
 }
+
+int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+    
+    int n, k, p;
+    
+    // Get the start pulse to know the capacity
+    RKPulse *pulse = pulses[0];
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
+    const int lagCount = 2;
+    
+    //
+    //  ACF
+    //
+    
+    // Go through each polarization
+    for (p = 0; p < 2; p++) {
+        
+        // Initializes the storage
+        RKZeroOutIQZ(&space->mX[p], space->capacity);
+        for (k = 0; k < lagCount; k++) {
+            RKZeroOutIQZ(&space->R[p][k], space->capacity);
+        }
+        
+        RKIQZ *R = &space->R[p][0];
+        
+        // Go through all pulses
+        n = 0;
+        do {
+            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
+            
+            RKSIMD_izadd(&Xn, &space->mX[p], gateCount);                                 // mX += X
+            // Go through each lag
+            for (k = 0; k < lagCount; k++) {
+                //RKLog(">Lag %d\n", k);
+                if (n >= k) {
+                    RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - k], p);
+                    RKSIMD_zcma(&Xn, &Xk, &R[k], gateCount, 1);                          // R[k] += X[n] * X[n - k]'
+                }
+            }
+            n++;
+        } while (n != pulseCount);
+        
+        // Divide by n for the average
+        RKSIMD_izscl(&space->mX[p], 1.0f / (float)n, gateCount);                         // mX /= n
+        
+        // ACF
+        for (k = 0; k < lagCount; k++) {
+            RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)   (unbiased)
+            RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                              // aR[k] = abs(R[k])
+        }
+        
+        // Mean and variance (2nd moment)
+        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                        // E{Xh} * E{Xh}' --> var  (step 1)
+        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                         // Rh[] - var     --> var  (step 2)
+    }
+    
+    return pulseCount;
+}
