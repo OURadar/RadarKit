@@ -18,8 +18,6 @@ enum RKMomentMask {
 };
 
 int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
-//    struct timeval tic, toc;
-//    gettimeofday(&tic, NULL);
     
     int n, j, k, p;
     
@@ -341,9 +339,6 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 		free(line);
 		free(X);
 	}
-
-//    gettimeofday(&toc, NULL);
-//    RKLog("Diff time = %.4f ms", 1.0e3 * RKTimevalDiff(toc, tic));
     
     return pulseCount;
     
