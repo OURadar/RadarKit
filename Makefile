@@ -71,7 +71,7 @@ LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
 
 ifeq ($(KERNEL), Darwin)
 else
-LDFLAGS += -lrt
+	LDFLAGS += -lrt
 endif
 
 #all: $(RKLIB) install rktest
