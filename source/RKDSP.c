@@ -363,10 +363,6 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         module->exportWisdom = true;
     }
 
-    // Temporary buffers
-    fftwf_complex *in, *out;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, capacity * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, capacity * sizeof(fftwf_complex)))
 
     // Compute the maximum plan size
     uint32_t planCount = (int)ceilf(log2f((float)MIN(RKMaximumGateCount, capacity))) + 1;
@@ -375,9 +371,15 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         exit(EXIT_FAILURE);
     }
 
+    // Temporary buffers
+    fftwf_complex *in, *out;
+    uint32_t internalCapacity = 1 << (planCount - 1);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, internalCapacity * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, internalCapacity * sizeof(fftwf_complex)))
+
     // Create FFT plans
     if (module->verbose) {
-        RKLog("%s Allocating FFT resources ...\n", module->name);
+        RKLog("%s Allocating FFT resources with capacity %s ...\n", module->name, RKIntegerToCommaStyleString(internalCapacity));
     }
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
