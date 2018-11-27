@@ -117,20 +117,18 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
             n = RKNextNModuloS(n, i, hopCount);
         }
         //score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
-        score = a * (a * (m1 == 2) + b * (m1 >= 3) + c * (m1 == 1))
-              + b * (a * (m2 == 2) + b * (m2 >= 3) + c * (m2 == 1))
-              + c * (a * (m3 == 2) + b * (m3 >= 3) + c * (m3 == 1))
+        score = a * (a * (m1 >= 2) + c * (m1 >= 3) + c * (m1 == 1))
+              + b * (a * (m2 >= 2) + c * (m2 >= 3) + c * (m2 == 1))
+              + c * (a * (m3 >= 2) + c * (m3 >= 3) + c * (m3 == 1))
               - 3.0f * ((m1 == 0) + (m2 == 0) + (m3 == 0))
               - 3.0f * (u == false);
         if (showNumbers) {
-            if (hopCount > 10) {
-                printf("stride = %2d   m = %d %d %d   u = %d   score = %.3f   %.3f %.3f %.3f\n", i, m1, m2, m3, u, score,
-                       (a * (m1 == 2) + b * (m1 >= 3) + c * (m1 == 1)),
-                       (a * (m2 == 2) + b * (m2 >= 3) + c * (m2 == 1)),
-                       (a * (m3 == 2) + b * (m3 >= 3) + c * (m3 == 1)));
-            } else {
-                printf("stride = %d   m = %d %d %d   u = %d   score = %.2f\n", i, m1, m2, m3, u, score);
-            }
+            printf("stride = %2d   m = %d %d %d   u = %5s   score = %.2f + %.2f + %.2f + ... = %+5.2f\n", i, m1, m2, m3,
+                   u ? "true" : "false" ,
+                   a * (a * (m1 >= 2) + c * (m1 >= 3) + c * (m1 == 1)),
+                   b * (a * (m2 >= 2) + c * (m2 >= 3) + c * (m2 == 1)),
+                   c * (a * (m3 >= 2) + c * (m3 >= 3) + c * (m3 == 1)),
+                   score);
         }
         if (maxScore < score) {
             maxScore = score;

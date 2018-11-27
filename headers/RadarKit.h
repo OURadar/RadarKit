@@ -12,7 +12,7 @@
 //
 //         - To do:
 //         - Major:
-//           - Cloud communication (reverse relay)
+//           - v3.0 - Cloud communication (reverse relay)
 //           - Task, event, sequence of tasks
 //         - Minor:
 //           - LFM frequency hopping
