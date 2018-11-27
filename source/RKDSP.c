@@ -78,12 +78,25 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
     float score, maxScore = 0.0f;
     int stride = 1;
     const float a = 1.00f, b = 0.50f, c = 0.25f;
+    bool used[hopCount];
+    int u;
     for (i = 1; i < hopCount; i++) {
         n = 0;
         score = 0.0f;
         m1 = hopCount;
         m2 = hopCount;
         m3 = hopCount;
+        memset(used, false, hopCount * sizeof(bool));
+        n = 0;
+        for (k = 0; k < hopCount; k++) {
+            used[n] = true;
+            n = RKNextNModuloS(n, i, hopCount);
+        }
+        u = true;
+        for (k = 0; k < hopCount; k++) {
+            u &= used[k];
+        }
+        n = 0;
         for (k = 0; k < hopCount; k++) {
             n1 = (n + 1 * i) % hopCount;
             n2 = (n + 2 * i) % hopCount;
@@ -104,15 +117,19 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
             n = RKNextNModuloS(n, i, hopCount);
         }
         //score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
-        score = a * m1 + a * (m1 > 1) + b * (m1 > 0)
-              + b * m2 + b * (m2 > 1) + c * (m2 > 0)
-              + c * m3 + c * (m3 > 1) + c * (m3 > 0)
-              - a * ((m1 == 0) + (m2 == 0) + (m3 == 0));
+        score = a * (a * (m1 == 2) + b * (m1 >= 3) + c * (m1 == 1))
+              + b * (a * (m2 == 2) + b * (m2 >= 3) + c * (m2 == 1))
+              + c * (a * (m3 == 2) + b * (m3 >= 3) + c * (m3 == 1))
+              - 3.0f * ((m1 == 0) + (m2 == 0) + (m3 == 0))
+              - 3.0f * (u == false);
         if (showNumbers) {
             if (hopCount > 10) {
-                printf("stride = %2d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
+                printf("stride = %2d   m = %d %d %d   u = %d   score = %.3f   %.3f %.3f %.3f\n", i, m1, m2, m3, u, score,
+                       (a * (m1 == 2) + b * (m1 >= 3) + c * (m1 == 1)),
+                       (a * (m2 == 2) + b * (m2 >= 3) + c * (m2 == 1)),
+                       (a * (m3 == 2) + b * (m3 >= 3) + c * (m3 == 1)));
             } else {
-                printf("stride = %d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
+                printf("stride = %d   m = %d %d %d   u = %d   score = %.2f\n", i, m1, m2, m3, u, score);
             }
         }
         if (maxScore < score) {
