@@ -1445,7 +1445,8 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
     if (engine->radarCount >= 4) {
         RKLog("%s unable to add another radar.\n", engine->name);
     }
-    engine->radars[engine->radarCount++] = radar;
+    engine->radars[engine->radarCount] = radar;
+    engine->radarCount++;
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
