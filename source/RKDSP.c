@@ -77,7 +77,7 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
     int m1, m2, m3;
     float score, maxScore = 0.0f;
     int stride = 1;
-    const float a = 1.00f, b = 0.75, c = 0.50f;
+    const float a = 1.00f, b = 0.50f, c = 0.25f;
     for (i = 1; i < hopCount; i++) {
         n = 0;
         score = 0.0f;
@@ -100,10 +100,14 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
             if (m3 > s3) {
                 m3 = s3;
             }
-            score += a * s1 + b * s2 + c * s3;
+            //score += a * s1 + b * s2 + c * s3;
             n = RKNextNModuloS(n, i, hopCount);
         }
-        score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
+        //score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
+        score = a * m1 + a * (m1 > 1) + b * (m1 > 0)
+              + b * m2 + b * (m2 > 1) + c * (m2 > 0)
+              + c * m3 + c * (m3 > 1) + c * (m3 > 0)
+              - a * ((m1 == 0) + (m2 == 0) + (m3 == 0));
         if (showNumbers) {
             if (hopCount > 10) {
                 printf("stride = %2d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
