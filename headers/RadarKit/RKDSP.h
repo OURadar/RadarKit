@@ -47,7 +47,7 @@ typedef struct rk_gaussian {
 // A scratch space for pulse compression
 //
 typedef struct rk_compression_scratch {
-    RKPulse                          *pulse;                                   //
+    RKBuffer                         pulse;                                    //
     RKComplex                        *filter;                                  //
     RKFilterAnchor                   *filterAnchor;                            //
     fftwf_plan                       planForwardInPlace;                       //
