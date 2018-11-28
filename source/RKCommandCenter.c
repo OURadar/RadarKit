@@ -247,6 +247,10 @@ int socketCommandHandler(RKOperator *O) {
 
                 case 'x':
                     user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
+                    RKLog("%s %s AScope mode %d : %s\n", engine->name, O->name, user->ascopeMode,
+                          user->ascopeMode == 3 ? "Raw I/Q + Filter + Output" :
+                          (user->ascopeMode == 2 ? "Down-sampled twice from RKComplex buffer" :
+                           (user->ascopeMode == 1 ? "Down-sampled twice from RKIntC buffer" : "Down-sampled once from RKIntC buffer")));
                     sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -397,6 +401,7 @@ int socketStreamHandler(RKOperator *O) {
     };
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor && time - user->timeLastOut >= 0.05) {
         // Signal processor only - showing the latest summary text view
+        #pragma mark Summary Text
         k = user->streams & user->access & RKStreamStatusMask;
         if (k == RKStreamStatusPositions) {
             // Stream "0" - Positions
@@ -633,6 +638,7 @@ int socketStreamHandler(RKOperator *O) {
     //    again in the next iteraction.
 
     // Processor Status
+    #pragma mark Processor Status
     if (user->streams & user->access & RKStreamStatusProcessorStatus) {
         endIndex = RKPreviousModuloS(user->radar->statusIndex, user->radar->desc.statusBufferDepth);
         if (!(user->streamsInProgress & RKStreamStatusProcessorStatus)) {
@@ -664,6 +670,7 @@ int socketStreamHandler(RKOperator *O) {
     }
     
     // Health Status
+    #pragma mark Health Status
     if (user->streams & user->access & RKStreamHealthInJSON) {
         endIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
         if (!(user->streamsInProgress & RKStreamHealthInJSON)) {
@@ -705,6 +712,7 @@ int socketStreamHandler(RKOperator *O) {
 
     // Product or display streams - no skipping
     if (user->streams & user->access & RKStreamProductAll) {
+        #pragma mark Product Streams
         // Product streams - assume no display as display data can be derived later
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
@@ -823,6 +831,7 @@ int socketStreamHandler(RKOperator *O) {
             }
         }
     } else if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
+        #pragma mark Display Streams
         // Display streams - no skipping
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
@@ -950,6 +959,7 @@ int socketStreamHandler(RKOperator *O) {
     } // else if if (user->streams & user->access & RKStreamDisplayZVWDPRKS) ...
 
     // Sweep
+    #pragma mark Sweep
     if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
         // Sweep streams - no skipping
         if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) {
@@ -1141,6 +1151,7 @@ int socketStreamHandler(RKOperator *O) {
     } // if (user->streams & user->access & RKStreamSweepZVWDPRKS) ...
 
     // IQ
+    #pragma mark IQ
     if (user->streams & user->access & RKStreamProductIQ) {
         // If I/Q data is sent, there is no need to send another subset of it.
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
@@ -1187,7 +1198,7 @@ int socketStreamHandler(RKOperator *O) {
             switch (user->ascopeMode) {
                 case 3:
                     // Show the waveform that was used through the forward sampling path
-                    pulseHeader.gateCount = 2000;
+                    pulseHeader.gateCount = MIN(RKMaximumGateCount, pulseHeader.gateCount);
                     if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
                         break;
                     }
@@ -1228,6 +1239,10 @@ int socketStreamHandler(RKOperator *O) {
                     // The third part of is the processed data
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
+                    if (pulse->header.gateCount != pulse->header.downSampledGateCount) {
+                        yH += pulse->header.downSampledGateCount;
+                        yV += pulse->header.downSampledGateCount;
+                    }
                     for (; i < pulseHeader.gateCount; i++) {
                         userDataH->i   = (int16_t)(scale * yH->i);
                         userDataH++->q = (int16_t)(scale * yH++->q);
@@ -1237,33 +1252,31 @@ int socketStreamHandler(RKOperator *O) {
                     break;
 
                 case 2:
-                    // Down-sampled output data
+                    // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from RKComplex samples
                     k = user->pulseDownSamplingRatio;
-
-                    pulseHeader.gateCount /= k;
-                    pulseHeader.gateSizeMeters *= (float)k;
+                
+                    pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
 
                     scale = 1.0f;
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
-                    for (i = 0; i < pulseHeader.gateCount; i++) {
+                    for (i = 0; i < pulseHeader.downSampledGateCount; i++) {
                         userDataH->i   = (int16_t)(scale * yH->i);
-                        userDataH++->q = (int16_t)(scale * yH->q);
-                        yH += k;
+                        userDataH++->q = (int16_t)(scale * yH++->q);
                         userDataV->i   = (int16_t)(scale * yV->i);
-                        userDataV++->q = (int16_t)(scale * yV->q);
-                        yV += k;
+                        userDataV++->q = (int16_t)(scale * yV++->q);
                     }
                     break;
-
+                
                 case 1:
-                    // Down-sampled raw input data
+                    // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from Int16C samples
                     k = user->pulseDownSamplingRatio;
-
+                
                 default:
-                    // Raw input data
-                    pulseHeader.gateCount = MIN(pulseHeader.gateCount / k, 2000);
-                    pulseHeader.gateSizeMeters *= (float)k / user->radar->desc.pulseToRayRatio;
+                    // Down-sampled once (k = 1) I/Q data from Int16C samples
+                    pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
                         *userDataV++ = *c16DataV;
@@ -1272,7 +1285,15 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     break;
             }
-            
+            #if defined(DEBUG_ASCOPE_IQ)
+            if (user->tic % 100 == 0) {
+                RKLog("%s m   %s  --> %s km\n",
+                      RKVariableInString("pulseSizeMeter", &pulseHeader.gateSizeMeters, RKValueTypeFloat),
+                      RKVariableInString("gateCount", &pulseHeader.gateCount, RKValueTypeUInt32),
+                      RKFloatToCommaStyleString(1.0e-3f * pulseHeader.gateCount * pulseHeader.gateSizeMeters));
+            }
+            #endif
+
             size = pulseHeader.gateCount * sizeof(RKInt16C);
             
             O->delimTx.type = RKNetworkPacketTypePulseData;
@@ -1424,7 +1445,8 @@ void RKCommandCenterAddRadar(RKCommandCenter *engine, RKRadar *radar) {
     if (engine->radarCount >= 4) {
         RKLog("%s unable to add another radar.\n", engine->name);
     }
-    engine->radars[engine->radarCount++] = radar;
+    engine->radars[engine->radarCount] = radar;
+    engine->radarCount++;
 }
 
 void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {

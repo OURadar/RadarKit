@@ -39,7 +39,7 @@
 #define RKVersionBranch ""
 #endif
 
-#define RKVersionString "2.0.3" RKVersionBranch
+#define RKVersionString "2.0.4" RKVersionBranch
 
 //
 // Memory Blocks
@@ -414,6 +414,15 @@ enum RKPositionFlag {
     RKPositionFlagUsed               = (1 << 30),
     RKPositionFlagReady              = (1 << 31)
 };
+
+typedef uint32_t RKHeadingType;
+enum RKHeadingType {
+    RKHeadingTypeNormal,
+    RKHeadingTypeAdd90,
+    RKHeadingTypeAdd180,
+    RKHeadingTypeAdd270
+};
+
 
 typedef uint32_t RKStatusFlag;
 enum RKStatusFlag {

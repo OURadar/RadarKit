@@ -279,8 +279,12 @@ static void *pulseCompressionCore(void *_in) {
     
 #endif
 
-    RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
+    RKBuffer localPulseBuffer;
+    RKPulseBufferAlloc(&localPulseBuffer, engine->radarDescription->pulseCapacity, 1);
+    
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, engine->radarDescription->pulseCapacity)));
+    
+    RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
     // Allocate local resources, use k to keep track of the total allocation
     // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
@@ -436,17 +440,21 @@ static void *pulseCompressionCore(void *_in) {
         // Down-sampling regardless if the pulse was compressed or skipped
         int stride = MAX(1, engine->radarDescription->pulseToRayRatio);
         if (stride > 1) {
+            pulse->header.downSampledGateCount = (pulse->header.gateCount + stride - 1) / stride;
+            // The tail part can be emptied but we are going to use it to store the compressed response prior to down-sampling for AScope viewing
             for (p = 0; p < 2; p++) {
+                RKComplex *YCopy = RKGetComplexDataFromPulse(pulseCopy, p);
                 RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                 RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
+                memcpy(YCopy, Y, (pulse->header.gateCount - pulse->header.downSampledGateCount) * sizeof(RKComplex));
                 for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
                     Y[i].i = Y[j].i;
                     Y[i].q = Y[j].q;
                     Z.i[i] = Z.i[j];
                     Z.q[i] = Z.q[j];
                 }
+                memcpy(&Y[i], YCopy, (pulse->header.gateCount - pulse->header.downSampledGateCount) * sizeof(RKComplex));
             }
-            pulse->header.downSampledGateCount = pulse->header.gateCount / stride;
         } else {
             pulse->header.downSampledGateCount = pulse->header.gateCount;
         }
@@ -484,6 +492,7 @@ static void *pulseCompressionCore(void *_in) {
     free(scratch);
     free(busyPeriods);
     free(fullPeriods);
+    RKPulseBufferFree(localPulseBuffer);
 
     RKLog(">%s %s Stopped.\n", engine->name, me->name);
     
