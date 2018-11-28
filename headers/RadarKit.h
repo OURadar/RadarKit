@@ -19,7 +19,11 @@
 //           - Mapping coefficients to product files
 //
 //  2.0.4  - 11/30/2018
-//         - RKSpectralMoment
+//         - Added new frequency hop sequence generator
+//         - Implemented scaffold of spectral processing
+//         - Separated out FFT engine so that multiple processors can share
+//         - Fixed the I/Q stream of AScope
+//         - Performance improvement on I/Q processor
 //
 //  2.0.3  - 10/29/2018
 //         - Moment method can be switched on the fly
