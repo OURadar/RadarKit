@@ -47,7 +47,7 @@ typedef struct rk_gaussian {
 // A scratch space for pulse compression
 //
 typedef struct rk_compression_scratch {
-    RKPulse                          *pulse;                                   //
+    RKBuffer                         pulse;                                    //
     RKComplex                        *filter;                                  //
     RKFilterAnchor                   *filterAnchor;                            //
     fftwf_plan                       planForwardInPlace;                       //
@@ -112,6 +112,7 @@ float RKInterpolatePositiveAngles(const float angleBefore, const float angleAfte
 float RKInterpolateAngles(const float angleLeft, const float angleRight, const float alpha);
 
 int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin);
+int RKBestStrideOfHopsV1(const int hopCount, const bool showNumbers);
 int RKBestStrideOfHops(const int hopCount, const bool showNumbers);
 
 void RKHilbertTransform(RKFloat *x, RKComplex *y, const int n);

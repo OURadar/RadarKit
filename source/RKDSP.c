@@ -70,20 +70,33 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin) {
     return RKResultSuccess;
 }
 
-int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
+int RKBestStrideOfHopsV1(const int hopCount, const bool showNumbers) {
     int i, k, n;
     int n1, n2, n3;
     int s1, s2, s3;
     int m1, m2, m3;
     float score, maxScore = 0.0f;
     int stride = 1;
-    const float a = 1.00f, b = 0.75, c = 0.50f;
+    const float a = 1.00f, b = 0.50f, c = 0.25f;
+    bool used[hopCount];
+    int u;
     for (i = 1; i < hopCount; i++) {
         n = 0;
         score = 0.0f;
         m1 = hopCount;
         m2 = hopCount;
         m3 = hopCount;
+        memset(used, false, hopCount * sizeof(bool));
+        n = 0;
+        for (k = 0; k < hopCount; k++) {
+            used[n] = true;
+            n = RKNextNModuloS(n, i, hopCount);
+        }
+        u = true;
+        for (k = 0; k < hopCount; k++) {
+            u &= used[k];
+        }
+        n = 0;
         for (k = 0; k < hopCount; k++) {
             n1 = (n + 1 * i) % hopCount;
             n2 = (n + 2 * i) % hopCount;
@@ -100,16 +113,22 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
             if (m3 > s3) {
                 m3 = s3;
             }
-            score += a * s1 + b * s2 + c * s3;
+            //score += a * s1 + b * s2 + c * s3;
             n = RKNextNModuloS(n, i, hopCount);
         }
-        score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
+        //score += hopCount * ((a * m1 + b * m2 + c * m3) - 1.00f * ((m1 == 0) + (m2 == 0) + (m3 == 0)));
+        score = a * (a * (m1 >= 2) + c * (m1 >= 3) + c * (m1 == 1))
+              + b * (a * (m2 >= 2) + c * (m2 >= 3) + c * (m2 == 1))
+              + c * (a * (m3 >= 2) + c * (m3 >= 3) + c * (m3 == 1))
+              - 3.0f * ((m1 == 0) + (m2 == 0) + (m3 == 0))
+              - 3.0f * (u == false);
         if (showNumbers) {
-            if (hopCount > 10) {
-                printf("stride = %2d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
-            } else {
-                printf("stride = %d   m = %d %d %d   score = %.2f\n", i, m1, m2, m3, score);
-            }
+            printf("stride = %2d   m = %d %d %d   u = %5s   score = %.2f + %.2f + %.2f + ... = %+5.2f\n", i, m1, m2, m3,
+                   u ? "true" : "false" ,
+                   a * (a * (m1 >= 2) + c * (m1 >= 3) + c * (m1 == 1)),
+                   b * (a * (m2 >= 2) + c * (m2 >= 3) + c * (m2 == 1)),
+                   c * (a * (m3 >= 2) + c * (m3 >= 3) + c * (m3 == 1)),
+                   score);
         }
         if (maxScore < score) {
             maxScore = score;
@@ -128,6 +147,116 @@ int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
         printf("    Best stride = %d  ==> %s\n", stride, sequence);
     }
     return stride;
+}
+
+// Calculate the best stride to produce an optimal hop sequence
+// If bestStride is supplied, this function will do the calculation and show the intermediate parameters / values
+// Otherwise, calculation is done quietly
+static int _RKBestStrideOfHops(const int hopCount, const int bestStride) {
+    int i, j, k, n;
+    int h[hopCount], s[hopCount], m[hopCount];
+    int count = 3;
+    int stride = 1;
+    
+    float score, maxScore = 0.0f;
+    const float a = 1.00f, b = 0.25f;
+    bool used[hopCount];
+    int u;
+    for (i = 1; i < hopCount; i++) {
+        // Figure out how many steps until the hop sequence is complete, i.e., return to the origin
+        n = 0;
+        count = 0;
+        memset(used, false, hopCount * sizeof(bool));
+        do {
+            n = RKNextNModuloS(n, i, hopCount);
+            used[n] = true;
+            u = true;
+            for (k = 0; k < hopCount; k++) {
+                u &= used[k];
+            }
+            count++;
+        } while (n != 0 && count < hopCount && !u);
+        // Evaluate the initial position (n) to the next position (n + i * j) modulo hopCount
+        memset(used, false, hopCount * sizeof(bool));
+        for (j = 0; j < count; j++) {
+            m[j] = hopCount;
+        }
+        n = 0;
+        for (k = 0; k < hopCount; k++) {
+            used[n] = true;
+            for (j = 1; j < count; j++) {
+                h[j] = (n + i * j) % hopCount;
+                s[j] = abs(h[j] - n);
+                m[j] = MIN(m[j], s[j]);
+            }
+            n = RKNextNModuloS(n, i, hopCount);
+        }
+        u = true;
+        for (k = 0; k < hopCount; k++) {
+            u &= used[k];
+        }
+        score = 0.0f;
+        for (j = 1; j < count; j++) {
+            score += (2.0 / (RKFloat)(1 << j)) * (a * (m[j] >= 2) + b * (m[j] >= 3) + b * (m[j] == 1));
+            score -= count * (m[j] == 0);
+        }
+        score -= count * (u == false);
+        if (bestStride > 0) {
+            printf("%2d: m[%d] =", i, count);
+            for (j = 1; j < MIN(9, count); j++) {
+                printf(" %d", m[j]);
+            }
+            if (j < count) {
+                printf(" ...");
+            }
+            printf(" %s   score = %.2f", u ? "Y" : "N", (a * (m[j] >= 2) + b * (m[j] >= 3) + b * (m[j] == 1)));
+            bool hasNegative = false;
+            for (j = 1; j < MIN(9, count); j++) {
+                printf(" + %.2f", (2.0 / (RKFloat)(1 << j)) * (a * (m[j] >= 2) + b * (m[j] >= 3) + b * (m[j] == 1)));
+                if (m[j] == 0) {
+                    hasNegative = true;
+                }
+            }
+            if (hasNegative) {
+                printf(" - ...");
+            }
+            if (j < hopCount) {
+                printf(" + ...");
+            }
+            if (i == bestStride) {
+                printf(" = %s%+.2f%s *\n",
+                       rkGlobalParameters.showColor ? RKGreenColor : "",
+                       score,
+                       rkGlobalParameters.showColor ? RKNoColor : "");
+            } else {
+                printf(" = %+.2f\n", score);
+            }
+        }
+        if (maxScore < score) {
+            maxScore = score;
+            stride = i;
+        }
+    }
+    if (bestStride) {
+        n = 0;
+        char sequence[1024];
+        sequence[1023] = '\0';
+        i = 0;
+        for (k = 0; k < hopCount; k++) {
+            i += snprintf(sequence + i, 1023 - i, " %d", n);
+            n = RKNextNModuloS(n, stride, hopCount);
+        }
+        printf("    Best stride = %d  ==> %s\n", stride, sequence);
+    }
+    return stride;
+}
+
+int RKBestStrideOfHops(const int hopCount, const bool showNumbers) {
+    int bestStride = _RKBestStrideOfHops(hopCount, 0);
+    if (showNumbers) {
+        _RKBestStrideOfHops(hopCount, bestStride);
+    }
+    return bestStride;
 }
 
 // Technically, this is a function that generates X = Xi + j Xq from Xi
@@ -363,11 +492,6 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         module->exportWisdom = true;
     }
 
-    // Temporary buffers
-    fftwf_complex *in, *out;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, capacity * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, capacity * sizeof(fftwf_complex)))
-
     // Compute the maximum plan size
     uint32_t planCount = (int)ceilf(log2f((float)MIN(RKMaximumGateCount, capacity))) + 1;
     if (planCount >= RKCommonFFTPlanCount) {
@@ -375,10 +499,18 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         exit(EXIT_FAILURE);
     }
 
+    // Temporary buffers
+    fftwf_complex *in, *out;
+    uint32_t internalCapacity = 1 << (planCount - 1);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, internalCapacity * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, internalCapacity * sizeof(fftwf_complex)))
+
     // Create FFT plans
     if (module->verbose) {
-        RKLog("%s Allocating FFT resources ...\n", module->name);
+        RKLog("%s Allocating FFT resources with capacity %s ...\n", module->name, RKIntegerToCommaStyleString(internalCapacity));
     }
+    struct timeval toc, tic;
+    gettimeofday(&tic, NULL);
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
         if (module->verbose) {
@@ -390,7 +522,11 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         module->plans[k].backwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, out, in, FFTW_BACKWARD, FFTW_MEASURE);
         module->count++;
     }
-    
+    gettimeofday(&toc, NULL);
+    if (RKTimevalDiff(toc, tic) > 0.5) {
+        module->exportWisdom = true;
+    }
+
     free(in);
     free(out);
     return module;

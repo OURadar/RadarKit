@@ -1307,10 +1307,10 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     uint8_t subType;
 
     char *str = (char *)malloc(L + 1);
-    char *key = (char *)malloc(RKNameLength);
-    char *obj = (char *)malloc(RKNameLength);
-    char *subKey = (char *)malloc(RKNameLength);
-    char *subObj = (char *)malloc(RKNameLength);
+    char *key = (char *)malloc(RKMaximumStringLength);
+    char *obj = (char *)malloc(RKMaximumStringLength);
+    char *subKey = (char *)malloc(RKMaximumStringLength);
+    char *subObj = (char *)malloc(RKMaximumStringLength);
     if (str == NULL) {
         RKLog("Error allocating memory for str.\n");
         return false;

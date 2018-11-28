@@ -1225,7 +1225,7 @@ void RKTestRingFilterShowCoefficients(void) {
 
 void RKTestMakeHops(void) {
     SHOW_FUNCTION_NAME
-    for (int k = 3; k < 15; k++) {
+    for (int k = 3; k < 13; k++) {
         printf(UNDERLINE("%d Hops:\n"), k);
         RKBestStrideOfHops(k, true);
         printf("\n");
