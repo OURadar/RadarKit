@@ -509,8 +509,8 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     if (module->verbose) {
         RKLog("%s Allocating FFT resources with capacity %s ...\n", module->name, RKIntegerToCommaStyleString(internalCapacity));
     }
-    struct timeval t0, t1;
-    gettimeofday(&t1, NULL);
+    struct timeval toc, tic;
+    gettimeofday(&tic, NULL);
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
         if (module->verbose) {
@@ -522,8 +522,8 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         module->plans[k].backwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, out, in, FFTW_BACKWARD, FFTW_MEASURE);
         module->count++;
     }
-    gettimeofday(&t0, NULL);
-    if (RKTimevalDiff(t0, t1) > 0.5) {
+    gettimeofday(&toc, NULL);
+    if (RKTimevalDiff(toc, tic) > 0.5) {
         module->exportWisdom = true;
     }
 
