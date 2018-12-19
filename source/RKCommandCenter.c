@@ -250,11 +250,7 @@ int socketCommandHandler(RKOperator *O) {
                     RKLog("%s %s AScope mode %d : %s\n", engine->name, O->name, user->ascopeMode,
                           user->ascopeMode == 3 ? "Raw I/Q + Filter + Output" :
                           (user->ascopeMode == 2 ? "Down-sampled twice from RKComplex buffer" :
-<<<<<<< HEAD
                            (user->ascopeMode == 1 ? "Down-sampled twice from RKInt16C buffer" : "Down-sampled once from RKInt16C buffer")));
-=======
-                           (user->ascopeMode == 1 ? "Down-sampled twice from RKIntC buffer" : "Down-sampled once from RKIntC buffer")));
->>>>>>> master
                     sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
