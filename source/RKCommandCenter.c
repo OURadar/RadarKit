@@ -1258,7 +1258,8 @@ int socketStreamHandler(RKOperator *O) {
                     pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
                     pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
 
-                    scale = 1.0f;
+                    gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
+                    scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[0][0].length);
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
                     for (i = 0; i < pulseHeader.downSampledGateCount; i++) {

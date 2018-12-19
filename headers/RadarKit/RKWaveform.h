@@ -13,7 +13,7 @@
 #include <RadarKit/RKDSP.h>
 
 #define RKWaveformDefaultDepth       1024
-#define RKWaveformDigitalAmplitude   32767.0
+#define RKWaveformDigitalAmplitude   32000.0
 
 // ----
 //  File header
