@@ -563,8 +563,8 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     for (i = 0; i < waveform->depth; i++) {
         x->i = cosf(omega_c * i + 0.5 * k * i * i);
         x->q = sinf(omega_c * i + 0.5 * k * i * i);
-        w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
-        w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
+        w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
+        w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
         x++;
         w++;
     }
