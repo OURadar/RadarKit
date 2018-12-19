@@ -1276,8 +1276,8 @@ int socketStreamHandler(RKOperator *O) {
                 
                 default:
                     // Down-sampled once (k = 1) I/Q data from Int16C samples
-                    pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
-                    pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
+                    pulseHeader.gateCount = MIN(pulseHeader.gateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateSizeMeters *= (float)k;
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
                         *userDataV++ = *c16DataV;
