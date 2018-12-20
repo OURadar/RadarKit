@@ -45,7 +45,7 @@ Follow these steps to get the project
     I use [Homebrew] as my package manager for macOS. I highly recommend it.
     
     ```shell
-    brew install fftw homebrew/science/netcdf
+    brew install fftw netcdf
     ```
     or
     
