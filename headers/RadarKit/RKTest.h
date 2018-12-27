@@ -137,6 +137,7 @@ void RKTestWaveformShowProperties(void);
 
 void RKTestPulseCompression(RKTestFlag);
 void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int);
+void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), const int lag);
 
 #pragma mark - Performance Tests
 
