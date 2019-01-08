@@ -1312,7 +1312,7 @@ void RKTestWaveformShowProperties(void) {
 
 void RKTestWaveformDownsampling(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6);
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
     RKWaveformSummary(waveform);
     
     RKWaveformDecimate(waveform, 32);
@@ -2408,7 +2408,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
             } else if (*c == 'x') {
                 // Experimental waveform
-                waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6);
+                waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6, 50.0e-6);
             } else {
                 // Load from a file
                 sprintf(string, "%s/%s.rkwav", RKWaveformFolder, c);
