@@ -100,7 +100,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
+    RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
 
     waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
@@ -167,7 +167,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         }
         r = fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
         if (r == 0) {
-            RKLog("Error. Frailed reading int16 samples from %s.\n", filename);
+            RKLog("Error. Failed reading int16 samples from %s.\n", filename);
         }
     }
     fclose(fid);

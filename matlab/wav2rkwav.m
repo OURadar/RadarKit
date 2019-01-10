@@ -28,9 +28,10 @@ fid = fopen(filename, 'w');
 if (fid < 0)
     error('Unable to open file')
 end
+depth = n;
 b = fwrite(fid, name, 'char');
 b = b + fwrite(fid, 1, 'uint8');
-b = b + 4 * fwrite(fid, 1, 'uint32');
+b = b + 4 * fwrite(fid, depth, 'uint32');
 b = b + 8 * fwrite(fid, fc, 'double');
 b = b + 8 * fwrite(fid, fs, 'double');
 b = b + fwrite(fid, zeros(1, 512 - b, 'uint8'), 'uint8');
@@ -72,7 +73,13 @@ for g = 1:1
     fprintf('Filter anchor %d with %d bytes\n', g, b);
     % fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
     % fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
-    fwrite(fid, wav, 'float');
-    fwrite(fid, samples, 'float');
+    b = fwrite(fid, wav, 'float');
+    if (b ~= 2 * n)
+        fprintf('Unexpected return from float write.  b = %d\n', b);
+    end
+    b = fwrite(fid, samples, 'int16');
+    if (b ~= 2 * n)
+        fprintf('Unexpected return from float write.  b = %d\n', b);
+    end
 end
 fclose(fid);
