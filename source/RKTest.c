@@ -57,7 +57,7 @@ char *RKTestByNumberDescription(const int indent) {
     "12 - Test converting a temperature reading to status\n"
     "13 - Test getting a country name from position\n"
     "14 - Test generating text for buffer overview\n"
-    "15 - Test reading a netcdf file using RKSweepRead()\n"
+    "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILE\n"
     "16 - Test reading a netcdf file using RKProductRead()\n"
     "\n"
     "20 - SIMD quick test\n"
@@ -71,7 +71,8 @@ char *RKTestByNumberDescription(const int indent) {
     "31 - Make a TFM waveform\n"
     "32 - Generate a waveform file\n"
     "33 - Test waveform down-sampling\n"
-    "34 - Test showing waveform properties\n"
+    "34 - Test showing built-in waveform properties\n"
+    "35 - Test showing waveform properties; -T35 WAVEFORM_FILE\n"
     "\n"
     "40 - Pulse compression using simple cases\n"
     "41 - Calculating one ray using the Pulse Pair method\n"
@@ -185,6 +186,13 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 34:
             RKTestWaveformShowProperties();
+            break;
+        case 35:
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKTestWaveformShowUserWaveformProperties((char *)arg);
             break;
         case 40:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
@@ -1310,9 +1318,16 @@ void RKTestWaveformShowProperties(void) {
     RKWaveformFree(waveform);
 }
 
+void RKTestWaveformShowUserWaveformProperties(const char *filename) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitFromFile(filename);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+}
+
 void RKTestWaveformDownsampling(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6);
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
     RKWaveformSummary(waveform);
     
     RKWaveformDecimate(waveform, 32);
@@ -2408,7 +2423,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
             } else if (*c == 'x') {
                 // Experimental waveform
-                waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6);
+                waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6, 50.0e-6);
             } else {
                 // Load from a file
                 sprintf(string, "%s/%s.rkwav", RKWaveformFolder, c);

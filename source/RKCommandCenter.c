@@ -250,7 +250,7 @@ int socketCommandHandler(RKOperator *O) {
                     RKLog("%s %s AScope mode %d : %s\n", engine->name, O->name, user->ascopeMode,
                           user->ascopeMode == 3 ? "Raw I/Q + Filter + Output" :
                           (user->ascopeMode == 2 ? "Down-sampled twice from RKComplex buffer" :
-                           (user->ascopeMode == 1 ? "Down-sampled twice from RKIntC buffer" : "Down-sampled once from RKIntC buffer")));
+                           (user->ascopeMode == 1 ? "Down-sampled twice from RKInt16C buffer" : "Down-sampled once from RKInt16C buffer")));
                     sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -1276,8 +1276,8 @@ int socketStreamHandler(RKOperator *O) {
                 
                 default:
                     // Down-sampled once (k = 1) I/Q data from Int16C samples
-                    pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
-                    pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
+                    pulseHeader.gateCount = MIN(pulseHeader.gateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateSizeMeters *= (float)k;
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
                         *userDataV++ = *c16DataV;

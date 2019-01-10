@@ -100,7 +100,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
+    RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
 
     waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
@@ -167,7 +167,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         }
         r = fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
         if (r == 0) {
-            RKLog("Error. Frailed reading int16 samples from %s.\n", filename);
+            RKLog("Error. Failed reading int16 samples from %s.\n", filename);
         }
     }
     fclose(fid);
@@ -311,9 +311,9 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth) {
+RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth, const double pulsewidth) {
     // Say bandwidth = 4 MHz. Going from 0 to 2 MHz
-    RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, 67.0e-6, 0.5 * bandwidth);
+    RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, pulsewidth, 0.5 * bandwidth);
     RKWaveformApplyWindow(waveform, RKWindowTypeTukey, 0.05);
     // Say bandwidth = 4 MHz. Going atmost from -2 to 0 MHz, fc @ -1 MHz
     RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
@@ -343,14 +343,19 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
     }
 
     // New depth after expansion
-    uint32_t depth = waveform->depth + appendix->depth;
-    waveform->samples[0] = realloc(waveform->samples[0], depth * sizeof(RKComplex));
-    waveform->iSamples[0] = realloc(waveform->iSamples[0], depth * sizeof(RKInt16C));
+    const uint32_t depth = waveform->depth + appendix->depth;
+    RKLog("RKWaveformAppendWaveform() %u -> %u\n", waveform->depth, depth);
+    //waveform->samples[0] = realloc(waveform->samples[0], depth * sizeof(RKComplex));
+    //waveform->iSamples[0] = realloc(waveform->iSamples[0], depth * sizeof(RKInt16C));
+    RKComplex *samples = waveform->samples[0];
+    RKInt16C *iSamples = waveform->iSamples[0];
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[0], RKSIMDAlignSize, depth * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[0], RKSIMDAlignSize, depth * sizeof(RKInt16C)));
+    memcpy(waveform->samples[0], samples, waveform->depth * sizeof(RKComplex));
+    memcpy(waveform->iSamples[0], iSamples, waveform->depth * sizeof(RKInt16C));
+    free(samples);
+    free(iSamples);
 
-    if (waveform->samples[0] == NULL || waveform->iSamples[0] == NULL) {
-        RKLog("Error. Unable to allocate memory.\n");
-        exit(EXIT_FAILURE);
-    }
     // Two filters for demultiplexing
     waveform->filterCounts[0]++;
     

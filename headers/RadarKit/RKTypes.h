@@ -239,10 +239,10 @@ typedef union rk_filter_anchor {
         uint32_t      inputOrigin;                                             // Origin of input
         uint32_t      outputOrigin;                                            // Origin of output
         uint32_t      maxDataLength;                                           // Maximum data to decode
-        RKFloat       subCarrierFrequency;                                     // For house keeping only, use the waveform->fc for DDC
-        RKFloat       sensitivityGain;                                         // Sensitivity gain due to longer/efficient waveforms (dB)
-        RKFloat       filterGain;                                              // Filter gain from the filter coefficients, should be 0.0 (dB)
-        RKFloat       fullScale;                                               // Scaling factor to get to full scale
+        float         subCarrierFrequency;                                     // For house keeping only, use the waveform->fc for DDC
+        float         sensitivityGain;                                         // Sensitivity gain due to longer/efficient waveforms (dB)
+        float         filterGain;                                              // Filter gain from the filter coefficients, should be 0.0 (dB)
+        float         fullScale;                                               // Scaling factor to get to full scale
     };
     char bytes[64];
 } RKFilterAnchor;

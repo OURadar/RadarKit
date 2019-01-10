@@ -132,6 +132,7 @@ void RKTestWaveformTFM(void);
 void RKTestWaveformWrite(void);
 void RKTestWaveformDownsampling(void);
 void RKTestWaveformShowProperties(void);
+void RKTestWaveformShowUserWaveformProperties(const char *filename);
 
 #pragma mark - Radar Signal Processing
 
