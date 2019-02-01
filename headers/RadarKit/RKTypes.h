@@ -39,7 +39,7 @@
 #define RKVersionBranch ""
 #endif
 
-#define RKVersionString "2.0.4" RKVersionBranch
+#define RKVersionString "2.0.5" RKVersionBranch
 
 //
 // Memory Blocks
