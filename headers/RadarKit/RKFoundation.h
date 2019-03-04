@@ -90,6 +90,7 @@ int RKSetLogfileToDefault(void);
 
 // Filename / string
 bool RKGetSymbolFromFilename(const char *filename, char *symbol);
+bool RKGetPrefixFromFilename(const char *filename, char *prefix);
 
 // Common numeric output
 void RKShowTypeSizes(void);

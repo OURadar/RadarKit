@@ -230,6 +230,26 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
     return true;
 }
 
+bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
+    char *e = NULL;
+    e = strstr(filename, ".nc");
+    if (e == NULL) {
+        e = (char *)filename + strlen(filename) - 1;
+    }
+    do {
+        e--;
+    } while (*e != '-' && e > filename);
+    if (e == filename) {
+        fprintf(stderr, "Unable to find filename prefix.\n");
+        *prefix = '\0';
+        return false;
+    }
+    size_t len = (size_t)(e - filename);
+    strncpy(prefix, filename, len);
+    prefix[len] = '\0';
+    return true;
+}
+
 #pragma mark - Screen Output
 
 void RKShowTypeSizes(void) {
