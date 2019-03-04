@@ -251,6 +251,7 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
 }
 
 int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]) {
+    int j = 0, k = 0;
     bool r;
     char *path;
     char prefix[1024];
@@ -261,29 +262,60 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     path = RKFolderOfFilename(filename);
     if ((dir = opendir(path)) == NULL) {
         fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
-        return;
+        return 0;
     }
     // Use prefix to match the file pattern
     r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
     if (r == false) {
         fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
-        return;
+        return 0;
     }
     char *ext = RKFileExtension(filename);
-    printf("prefix = %s   ext = %s\n", prefix, ext);
     // Now we list
-    int k = 0;
     while ((ent = readdir(dir)) != NULL && k < 16) {
         //printf("%s %d (%d %d)\n", ent->d_name, ent->d_type, DT_REG, DT_LNK);
         if (ent->d_type != DT_LNK && ent->d_type != DT_REG) {
             continue;
         }
         if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
-            printf("-> %s/%s\n", path, ent->d_name);
+            //printf("-> %s/%s\n", path, ent->d_name);
             sprintf(list[k++], "%s/%s", path, ent->d_name);
         }
     }
-    return k;
+    int count = k;
+    char desiredSymbol[7][RKMaximumSymbolLength], symbol[RKMaximumSymbolLength];
+    // Attempt to sort to Z, V, W, D, P, R, K, ...
+    k = 0;
+    strcpy(desiredSymbol[k++], "Z");
+    strcpy(desiredSymbol[k++], "V");
+    strcpy(desiredSymbol[k++], "W");
+    strcpy(desiredSymbol[k++], "D");
+    strcpy(desiredSymbol[k++], "P");
+    strcpy(desiredSymbol[k++], "R");
+    strcpy(desiredSymbol[k++], "K");
+    for (k = 0; k < count; k++) {
+        RKGetSymbolFromFilename(list[k], symbol);
+        //printf("k = %d   symbol = %s\n", k, symbol);
+        if (!strcmp(symbol, desiredSymbol[k])) {
+            continue;
+        }
+        for (j = k + 1; j < count; j++) {
+            RKGetSymbolFromFilename(list[j], symbol);
+            //printf("  j = %d   symbol = %s / %s\n", j, symbol, desiredSymbol[k]);
+            if (!strcmp(desiredSymbol[k], symbol)) {
+                // Swap k & j
+                //printf("    Swap %d <-> %d\n", j, k);
+                strcpy(prefix, list[k]);
+                strcpy(list[k], list[j]);
+                strcpy(list[j], prefix);
+                break;
+            }
+        }
+    }
+    //for (k = 0; k < count; k++) {
+    //    printf("-> %s\n", list[k]);
+    //}
+    return count;
 }
 
 #pragma mark - Screen Output

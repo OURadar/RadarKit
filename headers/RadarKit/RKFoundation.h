@@ -91,7 +91,7 @@ int RKSetLogfileToDefault(void);
 // Filename / string
 bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 bool RKGetPrefixFromFilename(const char *filename, char *prefix);
-void RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]);
+int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]);
 
 // Common numeric output
 void RKShowTypeSizes(void);

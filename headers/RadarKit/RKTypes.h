@@ -1253,6 +1253,11 @@ typedef struct rk_product {                                                    /
     RKFloat              *data;                                                // Flattened array of user product
 } RKProduct;
 
+typedef struct rk_product_collection {
+    uint32_t             count;                                                // Number of products
+    RKProduct            *products;                                            // Products
+} RKProductCollection;
+
 typedef struct rk_waveform {
     int                  count;                                                // Number of groups
     int                  depth;                                                // Maximum number of samples

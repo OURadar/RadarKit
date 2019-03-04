@@ -8,7 +8,9 @@ int main(int argc, const char **argv) {
 
     RKSetWantScreenOutput(true);
     
-    RKProduct *product = RKProductFileReaderNC(argv[1]);
-    RKProductFree(product);
+    RKProductCollection *collection = RKProductCollectionInitWithFilename(argv[1]);
+
+    RKProductCollectionFree(collection);
+    
     return EXIT_SUCCESS;
 }

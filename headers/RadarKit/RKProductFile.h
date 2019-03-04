@@ -22,7 +22,13 @@
 #define NC_MODE  NC_CLOBBER
 #endif
 
+void RKProductDimensionsFromFile(const char *, uint32_t *rayCount, uint32_t *gateCount);
+
 int RKProductFileWriterNC(RKProduct *, char *);
-RKProduct *RKProductFileReaderNC(const char *);
+RKProduct *RKProductFileReaderNC(const char *, const bool);
+void RKProductReadFileIntoBuffer(RKProduct *buffer, const char *, const bool);
+
+RKProductCollection *RKProductCollectionInitWithFilename(const char *);
+void RKProductCollectionFree(RKProductCollection *);
 
 #endif
