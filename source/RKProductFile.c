@@ -248,6 +248,8 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
     float fv, *fp;
     int iv;
 
+    char list[16][RKMaximumPathLength];
+
     MAKE_FUNCTION_NAME(name);
 
     RKProduct *product = NULL;
@@ -263,10 +265,8 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         return NULL;
     }
 
-    // Get the file prefix and symbols
-    char prefix[RKMaximumPathLength];
-    RKGetPrefixFromFilename(inputFile, prefix);
-    RKLog("Prefix = %s\n", prefix);
+    // Collect a list of product files
+    int count = RKListFilesWithSamePrefix(inputFile, list);
     
     // Read the first file
     if ((r = nc_open(inputFile, NC_NOWRITE, &ncid)) > 0) {

@@ -221,7 +221,7 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
         b--;
     }
     if (b == filename) {
-        fprintf(stderr, "Unable to find product symbol.\n");
+        fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
         return false;
     }
@@ -240,7 +240,7 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
         e--;
     } while (*e != '-' && e > filename);
     if (e == filename) {
-        fprintf(stderr, "Unable to find filename prefix.\n");
+        fprintf(stderr, "RKGetPrefixFromFilename() Unable to find filename prefix.\n");
         *prefix = '\0';
         return false;
     }
@@ -248,6 +248,42 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
     strncpy(prefix, filename, len);
     prefix[len] = '\0';
     return true;
+}
+
+int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]) {
+    bool r;
+    char *path;
+    char prefix[1024];
+    DIR *dir;
+    struct dirent *ent;
+
+    // Figure out the path of the filename
+    path = RKFolderOfFilename(filename);
+    if ((dir = opendir(path)) == NULL) {
+        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        return;
+    }
+    // Use prefix to match the file pattern
+    r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
+    if (r == false) {
+        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        return;
+    }
+    char *ext = RKFileExtension(filename);
+    printf("prefix = %s   ext = %s\n", prefix, ext);
+    // Now we list
+    int k = 0;
+    while ((ent = readdir(dir)) != NULL && k < 16) {
+        //printf("%s %d (%d %d)\n", ent->d_name, ent->d_type, DT_REG, DT_LNK);
+        if (ent->d_type != DT_LNK && ent->d_type != DT_REG) {
+            continue;
+        }
+        if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
+            printf("-> %s/%s\n", path, ent->d_name);
+            sprintf(list[k++], "%s/%s", path, ent->d_name);
+        }
+    }
+    return k;
 }
 
 #pragma mark - Screen Output

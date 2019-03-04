@@ -7,7 +7,7 @@ int main(int argc, const char **argv) {
     }
 
     RKSetWantScreenOutput(true);
-
+    
     RKProduct *product = RKProductFileReaderNC(argv[1]);
     RKProductFree(product);
     return EXIT_SUCCESS;
