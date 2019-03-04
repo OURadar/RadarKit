@@ -263,7 +263,6 @@ RKProduct *RKProductFileReaderNC(const char *inputFile) {
         return NULL;
     }
 
-
     // Read the first file
     if ((r = nc_open(inputFile, NC_NOWRITE, &ncid)) > 0) {
         RKLog("%s Error opening file %s (%s)\n", name, inputFile, nc_strerror(r));
