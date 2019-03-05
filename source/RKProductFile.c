@@ -325,7 +325,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     const RKFloat folded = W2_RANGE_FOLDED;
     const RKFloat missing = W2_MISSING_DATA;
     
-    // Dimensions (double check)
+    // Dimensions (for double check later)
     if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
         r = nc_inq_dimid(ncid, "azimuth", &tmpId);
     }
@@ -354,9 +354,8 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
         RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKMaximumGateCount);
         gateCount = RKMaximumGateCount;
     }
-    
-    // Now we allocate a product buffer
-    //RKProductBufferAlloc(&product, 1, (uint32_t)rayCount, (uint32_t)gateCount);
+
+    // Double check the dimensions
     if (product->header.rayCount != (uint32_t)rayCount || product->header.gateCount != (uint32_t)gateCount) {
         RKLog("Warning. Inconsistent dimentions: %u x %u  vs  %u x %u\n",
               (uint32_t)rayCount, (uint32_t)gateCount, product->header.rayCount, product->header.gateCount);
