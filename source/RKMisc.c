@@ -503,7 +503,9 @@ long RKCountFilesInPath(const char *path) {
     long offset = telldir(did);
     printf("offset = %ld\n", offset);
     seekdir(did, offset + 3);
-    return telldir(did);
+    long count = telldir(did);
+    closedir(did);
+    return count;
 }
 
 char *RKLastPartOfPath(const char *path) {
@@ -550,11 +552,10 @@ char *RKFileExtension(const char *filename) {
     static char ext[16];
     char *e = strrchr((char *)filename, '.');
     if (e == NULL) {
-        *ext = '\0';
+        ext[0] = '\0';
+        return ext;
     }
-    size_t len = (size_t)(e - filename);
-    strncat(ext, e, len);
-    e[len] = '\0';
+    strcpy(ext, e);
     return ext;
 }
 

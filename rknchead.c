@@ -8,9 +8,19 @@ int main(int argc, const char **argv) {
 
     RKSetWantScreenOutput(true);
     
-    RKProductCollection *collection = RKProductCollectionInitWithFilename(argv[1]);
+    char filename[1024];
+    strcpy(filename, argv[1]);
+    
+    for (int i = 0; i < 10; i++) {
+    
+        printf("Filename = %s\n", filename);
+        
+        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename);
 
-    RKProductCollectionFree(collection);
+        RKProductCollectionFree(collection);
+    
+        sleep(1);
+    }
     
     return EXIT_SUCCESS;
 }

@@ -260,6 +260,7 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
+    //printf("path -> %s\n", path);
     if ((dir = opendir(path)) == NULL) {
         fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         return 0;
@@ -273,15 +274,17 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     char *ext = RKFileExtension(filename);
     // Now we list
     while ((ent = readdir(dir)) != NULL && k < 16) {
-        //printf("%s %d (%d %d)\n", ent->d_name, ent->d_type, DT_REG, DT_LNK);
+        //if (ent->d_name[0] == 'P')
+        //   printf("%s %d (%d %d)\n", ent->d_name, ent->d_type, DT_REG, DT_LNK);
         if (ent->d_type != DT_LNK && ent->d_type != DT_REG) {
             continue;
         }
         if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
-            //printf("-> %s/%s\n", path, ent->d_name);
+            //printf("  -> %s/%s\n", path, ent->d_name);
             sprintf(list[k++], "%s/%s", path, ent->d_name);
         }
     }
+    closedir(dir);
     int count = k;
     char desiredSymbol[7][RKMaximumSymbolLength], symbol[RKMaximumSymbolLength];
     // Attempt to sort to Z, V, W, D, P, R, K, ...
