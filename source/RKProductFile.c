@@ -568,6 +568,6 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
 }
 
 void RKProductCollectionFree(RKProductCollection *collection) {
-    RKProductFree(collection->products);
+    RKProductBufferFree(collection->products, collection->count);
     free(collection);
 }
