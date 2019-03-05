@@ -1020,8 +1020,22 @@ RKStream RKStreamFromString(const char * string) {
             case 'J':
                 flag |= RKStreamSweepK;
                 break;
+            case 'H':
+                flag |= RKStreamSweepQ;
+                break;
+            case 'A':
+                flag |= RKStreamSweepSh;
+                break;
+            case 'B':
+                flag |= RKStreamSweepSv;
+                break;
             default:
                 break;
+                //    abcdefghijklmnopqrstuvwxyz
+                //    ABCDEFGHIJKLMNOPQRSTUVWXYZ
+                //
+                //    abc efg  j lmno q  tu   y
+                //        EFG    LMN     T
         }
         c++;
     }
@@ -1073,6 +1087,8 @@ int RKStringFromStream(char *string, RKStream stream) {
     if (stream & RKStreamSweepP)                { j += sprintf(string + j, "O"); }
     if (stream & RKStreamSweepR)                { j += sprintf(string + j, "Q"); }
     if (stream & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
+    if (stream & RKStreamSweepQ)                { j += sprintf(string + j, "H"); }
+    if (stream & RKStreamSweepSh)               { j += sprintf(string + j, "A"); }
     string[j] = '\0';
     return j;
 }
