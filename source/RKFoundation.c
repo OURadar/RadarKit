@@ -1502,6 +1502,13 @@ int RKParseProductDescription(RKProductDesc *desc, const char *inputString) {
 
     memset(desc, 0, sizeof(RKProductDesc));
 
+    // Product routine key is mandatory
+    keyString = RKGetValueOfKey(inputString, "key");
+    if (keyString) {
+        desc->key = (uint32_t)atoi(keyString);
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
     // Product name is mandatory
     keyString = RKGetValueOfKey(inputString, "name");
     if (keyString) {

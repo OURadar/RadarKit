@@ -1187,6 +1187,7 @@ typedef struct rk_file_monitor {                                               /
 
 typedef union rk_product_desc {                                                // A 1-KB struct that describes a product
     struct {                                                                   //
+        uint32_t         key;                                                  // A unique key to identify the product routine
         RKName           name;                                                 // Name of the product
         RKName           unit;                                                 // Unit of the product
         RKName           colormap;                                             // Colormap of the product for the UI

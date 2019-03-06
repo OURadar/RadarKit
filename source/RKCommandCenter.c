@@ -232,13 +232,16 @@ int socketCommandHandler(RKOperator *O) {
                 case 'u':
                     // Turn this user into an active node with user product return
                     RKParseProductDescription(&user->productDescriptions[user->productCount], commandString + 1);
-                    RKLog("%s Registering external product '%s' (%s) ...", engine->name,
+                    RKLog("%s Registering external product %d: '%s' (%s) ...", engine->name,
+                          user->productDescriptions[user->productCount].key,
                           user->productDescriptions[user->productCount].name,
                           user->productDescriptions[user->productCount].symbol);
                     user->productIds[user->productCount] = RKSweepEngineRegisterProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
                     if (user->productIds[user->productCount]) {
-                        sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"symbol\":\"%s\", \"pid\":%d}" RKEOL,
-                                user->productDescriptions[user->productCount].symbol, user->productIds[user->productCount]);
+                        sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
+                                user->productDescriptions[user->productCount].key,
+                                user->productDescriptions[user->productCount].symbol,
+                                user->productIds[user->productCount]);
                         user->productCount++;
                     } else {
                         sprintf(user->commandResponse, "NAK. Unable to register product." RKEOL);
