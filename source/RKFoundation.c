@@ -1089,6 +1089,7 @@ int RKStringFromStream(char *string, RKStream stream) {
     if (stream & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
     if (stream & RKStreamSweepQ)                { j += sprintf(string + j, "H"); }
     if (stream & RKStreamSweepSh)               { j += sprintf(string + j, "A"); }
+    if (stream & RKStreamSweepSv)               { j += sprintf(string + j, "B"); }
     string[j] = '\0';
     return j;
 }

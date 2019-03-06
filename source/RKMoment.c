@@ -298,6 +298,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
         memset(Zi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Vi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Wi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(Qi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Di, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Pi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Ki, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));

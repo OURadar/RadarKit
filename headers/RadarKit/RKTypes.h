@@ -767,7 +767,7 @@ enum RKStream {
     RKStreamSweepZVWDPRKS                        = 0x01FF000000000000ULL,      //
     RKStreamSweepAll                             = 0x03FF000000000000ULL,      //
     RKStreamAlmostEverything                     = 0x03FF03FF03FFF000ULL,      // Don't use this.
-    RKStreamStatusTerminalChange                 = 0x0300000000000000ULL       // Change terminal size
+    RKStreamStatusTerminalChange                 = 0x0400000000000000ULL       // Change terminal size
 };
 
 typedef uint8_t RKHostStatus;

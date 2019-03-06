@@ -185,6 +185,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Stream varrious data
                     user->streamsToRestore = user->streamsInProgress;
                     stream = RKStreamFromString(commandString + 1);
+                    RKLog("stream = %x / %x\n", stream, RKStreamSweepQ);
                     if (stream & RKStreamStatusTerminalChange) {
                         stream = user->streamsToRestore;
                         k = RKNextModuloS((user->textPreferences & RKTextPreferencesWindowSizeMask) >> 2, 5) << 2;
@@ -972,7 +973,7 @@ int socketStreamHandler(RKOperator *O) {
 
     // Sweep
     #pragma mark Sweep
-    if (user->streams & user->access & RKStreamSweepZVWDPRKS) {
+    if (user->streams & user->access & RKStreamSweepAll) {
         // Sweep streams - no skipping
         if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) {
             if (user->radar->sweepEngine->verbose > 1) {
@@ -1042,6 +1043,7 @@ int socketStreamHandler(RKOperator *O) {
                 }
 
                 const uint32_t baseMomentCount = __builtin_popcount(sweepHeader.baseMomentList);
+                RKLog("=== baseMomentCount = %d\n", baseMomentCount);
 
                 if (baseMomentCount) {
                     size = 0;
