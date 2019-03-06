@@ -1113,6 +1113,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "K",
         "Sh",
         "Sv",
+        "Q",
         "U"
     };
     RKName names[] = {
@@ -1125,6 +1126,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "KDP",
         "Signal_Power_H",
         "Signal_Power_V",
+        "SQI",
         "Uknown"
     };
     RKName units[] = {
@@ -1137,6 +1139,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "DegreesPerMeter",
         "dBm",
         "dBm",
+        "Unitless",
         "Undefined"
     };
     RKName colormaps[] = {
@@ -1149,6 +1152,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "KDP",
         "Power",
         "Power",
+        "SQI",
         "Default"
     };
     RKBaseMomentList baseMoments[] = {
@@ -1161,6 +1165,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         RKBaseMomentListProductK,
         RKBaseMomentListProductSh,
         RKBaseMomentListProductSv,
+        RKBaseMomentListProductQ,
         0xFFFF
     };
     RKBaseMomentIndex baseMomentIndices[] = {
@@ -1172,6 +1177,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         RKBaseMomentIndexR,
         RKBaseMomentIndexK,
         RKBaseMomentIndexSh,
+        RKBaseMomentIndexQ,
         0
     };
     int k = -1;
@@ -1193,6 +1199,8 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         k = 7;
     } else if (*list & RKBaseMomentListProductSv) {
         k = 8;
+    } else if (*list & RKBaseMomentListProductQ) {
+        k = 9;
     }
     if (k < 0) {
         RKLog("Unable to get description for k = %d\n", k);

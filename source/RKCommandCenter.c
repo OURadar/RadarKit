@@ -1085,30 +1085,33 @@ int socketStreamHandler(RKOperator *O) {
                             } else if (productList & RKBaseMomentListProductK) {
                                 productList ^= RKBaseMomentListProductK;
                                 f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
-                            } else if (productList & RKBaseMomentListProductQ) {
-                                productList ^= RKBaseMomentListProductQ;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
                             } else if (productList & RKBaseMomentListProductSh) {
                                 productList ^= RKBaseMomentListProductSh;
                                 f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSh);
                             } else if (productList & RKBaseMomentListProductSv) {
                                 productList ^= RKBaseMomentListProductSv;
                                 f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSv);
+                            } else if (productList & RKBaseMomentListProductQ) {
+                                productList ^= RKBaseMomentListProductQ;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
                             } else {
                                 f32Data = NULL;
                             }
                             if (f32Data) {
                                 size += RKOperatorSendPackets(O, f32Data, sweep->header.gateCount * sizeof(float), NULL);
                                 user->timeLastOut = time;
+                            } else if (k == 0) {
+                                RKLog("No data found %04Xh", productList);
                             }
-                        }
-                    }
+                        } // for (j = 0; ...
+                    } // for (k = 0; ...
 
                     gettimeofday(&timevalTx, NULL);
 
+                    RKLog("%s %s sent.\n", engine->name, O->name);
                     // Offset scratch by one to get rid of the very first space character
                     RKLog("%s %s Sweep @ %s sent (%s)\n", engine->name, O->name,
-                          RKVariableInString("configId", &sweepHeader.config.i, RKValueTypeUInt64) , user->scratch + 1);
+                          RKVariableInString("configId", &sweepHeader.config.i, RKValueTypeIdentifier), user->scratch + 1);
                     if (engine->verbose > 1) {
                         RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
                         RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseMomentCount);
