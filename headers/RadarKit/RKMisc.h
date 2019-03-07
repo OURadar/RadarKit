@@ -135,8 +135,11 @@ double RKTimespecDiff(const struct timespec minuend, const struct timespec subtr
 void RKUTCTime(struct timespec *);
 
 bool RKFilenameExists(const char *);
-void RKPreparePath(const char *filename);
+void RKPreparePath(const char *);
 long RKCountFilesInPath(const char *);
+char *RKFolderOfFilename(const char *);
+char *RKFileExtension(const char *);
+char *RKLastPartOfPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);

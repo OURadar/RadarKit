@@ -26,23 +26,23 @@
 //
 // Z in [-32.0    ... 95.5]             Zi = (Z) x 2 + 64
 // V in [-16.0    ... 15.875]           Vi = (V) x 8 + 128
-// W in [ -0.05   ...  5.0]             Wi = (W) x 20 + 0
+// W in [ -0.05   ... 12.7]             Wi = (W) x 20 + 1
 // D in [-10.0    ... 15.5]             Di = (D) x 10 + 100
-// P in [  -PI    ... PI*(N-1)/N]       Pi = (P) x 128/M_PI + 128
+// P in [  -PI    ... PI*(N-1)/N]       Pi = (P) x 128 / M_PI + 129
 // R in [  0.0    ... 1.079]
-// K in [ -0.1*PI ... 0.1*PI*(N-1)/N]   Ki = (K) x 1280/M_PI + 128
+// K in [ -0.1*PI ... 0.1*PI*(N-1)/N]   Ki = (K) x 1280 / M_PI + 128
 // Q in [  0.0    ... 1.0]              Ri = (Q) * 250
 //
 //
-// Z  in [CLR  -31.50  ... 95.5]            Zi = (Z) * 2 + 64
-// V  in [CLR  -15.875 ... 15.875]          Vi = (V) * 8 + 128
-// W  in [CLR    0.00  ... 12.70]           Wi = (W) * 20 + 1
-// D  in [CLR   -9.90  ... 15.5]            Di = (D) * 10 + 100
-// P  in [CLR    -PI   ... +PI]             Pi = (P) * 255/(2*M_PI) + 128.5
-// R  in [CLR   0.033  ... 1.079]
-// K  in [CLR -0.1*PI  ... +0.1*PI]         Ki = (K) * 255/(20*M_PI) + 128.5
-// Q  in [CLR    0.00  ... 1.0]             Qi = (Q) * 250
-// VE in [CLR   -63.5  ... 63.5]            Vi = (V) * 2 + 128
+// Z  in [CLR  -31.50   -31.00  ... 95.5]            Z = (Zi) * 0.5 - 32.0
+// V  in [CLR  -15.875  -15.750 ... 15.875]          V = (Vi) * 0.125 - 16.0
+// W  in [CLR    0.00     0.05  ... 12.70]           W = (Wi) * 0.05 - 0.05
+// D  in [CLR   -9.90    -9.80  ... 15.50]           D = (Di) * 0.10 - 10.0
+// P  in [CLR    -PI+    -PI++  ... +PI]             P = (Pi) * M_PI / 128.0 - M_PI
+// R  in [CLR   0.019    0.038  ... 1.079]
+// K  in [CLR    0.00   -0.1*PI ... +0.1*PI]         K = (Ki) * 0.1 * M_PI - 0.1 * M_PI
+// Q  in [CLR    0.004   0.008  ... 1.0]             Q = (Qi) / 250
+// VE in [CLR   -63.5   -63.0  ... 63.5]             V = (Vi) * 0.5 + 64.0
 //
 
 #define RKZLHMAC  { lhma[0] = -32.0f;     lhma[1] = 95.5f;       lhma[2] = 2.0f;      lhma[3] =  64.0f; }  //
@@ -57,7 +57,8 @@
 #define RKQLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.0f;        lhma[2] = 250.0f;    lhma[3] =   0.0f; }  //
 #define RKSLHMAC  { lhma[0] = -120.0f;    lhma[1] = 0.0f;        lhma[2] = 250.0f;    lhma[3] = -96.3f; }  // Asuumed 16-bit, 96 dB, peak @ 0 dBm
 
-#define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
+//#define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
+#define RKRho2Uint8(r)    roundf(r > 0.93f ? r * 1000.0f - 824.0f : (r > 0.7f ? r * 300.0f - 173.0f : r * 52.8571f))
 
 #define RKSingleWrapTo2PI(x)   ((x) < -M_PI ? ((x) + 2.0f * M_PI) : ((x) >= M_PI ? ((x) - 2.0f * M_PI) : (x)))
 
@@ -87,9 +88,12 @@ int RKSetProgramName(const char *);
 int RKSetRootFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
+char *RKVersionString(void);
 
 // Filename / string
 bool RKGetSymbolFromFilename(const char *filename, char *symbol);
+bool RKGetPrefixFromFilename(const char *filename, char *prefix);
+int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]);
 
 // Common numeric output
 void RKShowTypeSizes(void);

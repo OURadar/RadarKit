@@ -202,6 +202,12 @@ int RKSetLogfileToDefault(void) {
     return RKResultSuccess;
 }
 
+char *RKVersionString(void) {
+    static char versionString[16];
+    sprintf(versionString, "%s", _RKVersionString);
+    return versionString;
+}
+
 #pragma mark - Filename / String
 
 bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
@@ -221,13 +227,104 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
         b--;
     }
     if (b == filename) {
-        fprintf(stderr, "Unable to find product symbol.\n");
+        fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
         return false;
     }
     b++;
     strncpy(symbol, b, MIN(RKMaximumSymbolLength - 1, e - b));
     return true;
+}
+
+bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
+    char *e = NULL;
+    e = strstr(filename, ".nc");
+    if (e == NULL) {
+        e = (char *)filename + strlen(filename) - 1;
+    }
+    do {
+        e--;
+    } while (*e != '-' && e > filename);
+    if (e == filename) {
+        fprintf(stderr, "RKGetPrefixFromFilename() Unable to find filename prefix.\n");
+        *prefix = '\0';
+        return false;
+    }
+    size_t len = (size_t)(e - filename);
+    strncpy(prefix, filename, len);
+    prefix[len] = '\0';
+    return true;
+}
+
+int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]) {
+    int j = 0, k = 0;
+    bool r;
+    char *path;
+    char prefix[1024];
+    DIR *dir;
+    struct dirent *ent;
+
+    // Figure out the path of the filename
+    path = RKFolderOfFilename(filename);
+    //printf("path -> %s\n", path);
+    if ((dir = opendir(path)) == NULL) {
+        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        return 0;
+    }
+    // Use prefix to match the file pattern
+    r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
+    if (r == false) {
+        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        return 0;
+    }
+    char *ext = RKFileExtension(filename);
+    // Now we list
+    while ((ent = readdir(dir)) != NULL && k < 16) {
+        //if (ent->d_name[0] == 'P')
+        //   printf("%s %d (%d %d)\n", ent->d_name, ent->d_type, DT_REG, DT_LNK);
+        if (ent->d_type != DT_LNK && ent->d_type != DT_REG) {
+            continue;
+        }
+        if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
+            //printf("  -> %s/%s\n", path, ent->d_name);
+            sprintf(list[k++], "%s/%s", path, ent->d_name);
+        }
+    }
+    closedir(dir);
+    int count = k;
+    char desiredSymbol[7][RKMaximumSymbolLength], symbol[RKMaximumSymbolLength];
+    // Attempt to sort to Z, V, W, D, P, R, K, ...
+    k = 0;
+    strcpy(desiredSymbol[k++], "Z");
+    strcpy(desiredSymbol[k++], "V");
+    strcpy(desiredSymbol[k++], "W");
+    strcpy(desiredSymbol[k++], "D");
+    strcpy(desiredSymbol[k++], "P");
+    strcpy(desiredSymbol[k++], "R");
+    strcpy(desiredSymbol[k++], "K");
+    for (k = 0; k < count; k++) {
+        RKGetSymbolFromFilename(list[k], symbol);
+        //printf("k = %d   symbol = %s\n", k, symbol);
+        if (!strcmp(symbol, desiredSymbol[k])) {
+            continue;
+        }
+        for (j = k + 1; j < count; j++) {
+            RKGetSymbolFromFilename(list[j], symbol);
+            //printf("  j = %d   symbol = %s / %s\n", j, symbol, desiredSymbol[k]);
+            if (!strcmp(desiredSymbol[k], symbol)) {
+                // Swap k & j
+                //printf("    Swap %d <-> %d\n", j, k);
+                strcpy(prefix, list[k]);
+                strcpy(list[k], list[j]);
+                strcpy(list[j], prefix);
+                break;
+            }
+        }
+    }
+    //for (k = 0; k < count; k++) {
+    //    printf("-> %s\n", list[k]);
+    //}
+    return count;
 }
 
 #pragma mark - Screen Output
@@ -929,8 +1026,22 @@ RKStream RKStreamFromString(const char * string) {
             case 'J':
                 flag |= RKStreamSweepK;
                 break;
+            case 'H':
+                flag |= RKStreamSweepQ;
+                break;
+            case 'A':
+                flag |= RKStreamSweepSh;
+                break;
+            case 'B':
+                flag |= RKStreamSweepSv;
+                break;
             default:
                 break;
+                //    abcdefghijklmnopqrstuvwxyz
+                //    ABCDEFGHIJKLMNOPQRSTUVWXYZ
+                //
+                //    abc efg  j lmno q  tu   y
+                //        EFG    LMN     T
         }
         c++;
     }
@@ -982,6 +1093,9 @@ int RKStringFromStream(char *string, RKStream stream) {
     if (stream & RKStreamSweepP)                { j += sprintf(string + j, "O"); }
     if (stream & RKStreamSweepR)                { j += sprintf(string + j, "Q"); }
     if (stream & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
+    if (stream & RKStreamSweepQ)                { j += sprintf(string + j, "H"); }
+    if (stream & RKStreamSweepSh)               { j += sprintf(string + j, "A"); }
+    if (stream & RKStreamSweepSv)               { j += sprintf(string + j, "B"); }
     string[j] = '\0';
     return j;
 }
@@ -1006,6 +1120,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "K",
         "Sh",
         "Sv",
+        "Q",
         "U"
     };
     RKName names[] = {
@@ -1018,6 +1133,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "KDP",
         "Signal_Power_H",
         "Signal_Power_V",
+        "SQI",
         "Uknown"
     };
     RKName units[] = {
@@ -1030,6 +1146,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "DegreesPerMeter",
         "dBm",
         "dBm",
+        "Unitless",
         "Undefined"
     };
     RKName colormaps[] = {
@@ -1042,6 +1159,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "KDP",
         "Power",
         "Power",
+        "SQI",
         "Default"
     };
     RKBaseMomentList baseMoments[] = {
@@ -1054,6 +1172,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         RKBaseMomentListProductK,
         RKBaseMomentListProductSh,
         RKBaseMomentListProductSv,
+        RKBaseMomentListProductQ,
         0xFFFF
     };
     RKBaseMomentIndex baseMomentIndices[] = {
@@ -1065,6 +1184,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         RKBaseMomentIndexR,
         RKBaseMomentIndexK,
         RKBaseMomentIndexSh,
+        RKBaseMomentIndexQ,
         0
     };
     int k = -1;
@@ -1086,6 +1206,8 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         k = 7;
     } else if (*list & RKBaseMomentListProductSv) {
         k = 8;
+    } else if (*list & RKBaseMomentListProductQ) {
+        k = 9;
     }
     if (k < 0) {
         RKLog("Unable to get description for k = %d\n", k);
@@ -1386,6 +1508,13 @@ int RKParseProductDescription(RKProductDesc *desc, const char *inputString) {
 
     memset(desc, 0, sizeof(RKProductDesc));
 
+    // Product routine key is mandatory
+    keyString = RKGetValueOfKey(inputString, "key");
+    if (keyString) {
+        desc->key = (uint32_t)atoi(keyString);
+    } else {
+        return RKResultIncompleteProductDescription;
+    }
     // Product name is mandatory
     keyString = RKGetValueOfKey(inputString, "name");
     if (keyString) {

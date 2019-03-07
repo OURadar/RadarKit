@@ -59,6 +59,7 @@ char *RKTestByNumberDescription(const int indent) {
     "14 - Test generating text for buffer overview\n"
     "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILE\n"
     "16 - Test reading a netcdf file using RKProductRead()\n"
+    "17 - Test reading using RKProductCollectionInitWithFilename()\n"
     "\n"
     "20 - SIMD quick test\n"
     "21 - SIMD test with numbers shown\n"
@@ -153,6 +154,13 @@ void RKTestByNumber(const int number, const void *arg) {
                 exit(EXIT_FAILURE);
             }
             RKTestProductRead((char *)arg);
+            break;
+        case 17:
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKProductCollectionInitWithFilename((char *)arg);
             break;
         case 20:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -704,7 +712,7 @@ void RKTestSweepRead(const char *file) {
 
 void RKTestProductRead(const char *file) {
     SHOW_FUNCTION_NAME
-    RKProduct *product = RKProductFileReaderNC(file);
+    RKProduct *product = RKProductFileReaderNC(file, true);
     if (product) {
         RKProductFree(product);
     }
