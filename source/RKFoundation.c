@@ -202,6 +202,12 @@ int RKSetLogfileToDefault(void) {
     return RKResultSuccess;
 }
 
+char *RKVersionString(void) {
+    static char versionString[16];
+    sprintf(versionString, "%s", _RKVersionString);
+    return versionString;
+}
+
 #pragma mark - Filename / String
 
 bool RKGetSymbolFromFilename(const char *filename, char *symbol) {

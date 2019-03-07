@@ -33,13 +33,14 @@
 #include <errno.h>
 #include <fftw3.h>
 
+// These are meant to be defined during compile time, do not use these outside of RadarKit, see char *RKVersionString()
 #ifdef BETA_BRANCH
-#define RKVersionBranch "b"
+#define _RKVersionBranch "b"
 #else
-#define RKVersionBranch ""
+#define _RKVersionBranch ""
 #endif
 
-#define RKVersionString "2.0.6" RKVersionBranch
+#define _RKVersionString "2.1" _RKVersionBranch
 
 //
 // Memory Blocks
