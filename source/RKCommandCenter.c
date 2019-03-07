@@ -1123,7 +1123,8 @@ int socketStreamHandler(RKOperator *O) {
                     }
 
                     for (k = 0; k < user->productCount; k++) {
-                        RKLog(">%s %s Expecting return for productId = %d from algorithm key = %d ...\n", engine->name, O->name, user->productIds[k], user->productDescriptions[k].key);
+                        RKLog(">%s %s Expecting return from algorithm key = %d for productId = %d ...\n",
+                              engine->name, O->name, user->productDescriptions[k].key, user->productIds[k]);
                         size = RKServerReceiveUserPayload(O, user->string, RKNetworkMessageFormatHeaderDefinedSize);
                         if (size < 0) {
                             RKLog("%s %s Error. Failed receiving user product header ...\n", engine->name, O->name);
