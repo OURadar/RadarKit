@@ -18,6 +18,21 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.1    - 3/7/2019
+//         - Added blib-sh search in the file handling script
+//         - Added Sh, Sv and SQI transmission to PyRadarKit
+//         - Added RKProductCollectionInitWithFilename() and dependents
+//           - Added RKListFilesWithSamePrefix()
+//           - Added RKGetPrefixFromFilename()
+//         - Added test 17 for product collection test
+//         - Updated comments on value mapping in RKFoundation
+//         - Improved efficiency of RhoHV to index mapping
+//         - Fixed moment product index in hex table
+//
+//  2.0.5  - 1/31/2019
+//         - Added a Matlab waveform writer
+//         - General improvements and bug fixes
+//
 //  2.0.4  - 11/30/2018
 //         - Added new frequency hop sequence generator
 //         - Implemented scaffold of spectral processing
