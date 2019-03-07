@@ -33,13 +33,14 @@
 #include <errno.h>
 #include <fftw3.h>
 
+// These are meant to be defined during compile time, do not use these outside of RadarKit, see char *RKVersionString()
 #ifdef BETA_BRANCH
-#define RKVersionBranch "b"
+#define _RKVersionBranch "b"
 #else
-#define RKVersionBranch ""
+#define _RKVersionBranch ""
 #endif
 
-#define RKVersionString "2.0.5" RKVersionBranch
+#define _RKVersionString "2.1" _RKVersionBranch
 
 //
 // Memory Blocks
@@ -767,7 +768,7 @@ enum RKStream {
     RKStreamSweepZVWDPRKS                        = 0x01FF000000000000ULL,      //
     RKStreamSweepAll                             = 0x03FF000000000000ULL,      //
     RKStreamAlmostEverything                     = 0x03FF03FF03FFF000ULL,      // Don't use this.
-    RKStreamStatusTerminalChange                 = 0x0300000000000000ULL       // Change terminal size
+    RKStreamStatusTerminalChange                 = 0x0400000000000000ULL       // Change terminal size
 };
 
 typedef uint8_t RKHostStatus;
@@ -1187,6 +1188,7 @@ typedef struct rk_file_monitor {                                               /
 
 typedef union rk_product_desc {                                                // A 1-KB struct that describes a product
     struct {                                                                   //
+        uint32_t         key;                                                  // A unique key to identify the product routine
         RKName           name;                                                 // Name of the product
         RKName           unit;                                                 // Unit of the product
         RKName           colormap;                                             // Colormap of the product for the UI
@@ -1252,6 +1254,11 @@ typedef struct rk_product {                                                    /
     RKFloat              *endElevation;                                        // End elevation of each ray
     RKFloat              *data;                                                // Flattened array of user product
 } RKProduct;
+
+typedef struct rk_product_collection {
+    uint32_t             count;                                                // Number of products
+    RKProduct            *products;                                            // Products
+} RKProductCollection;
 
 typedef struct rk_waveform {
     int                  count;                                                // Number of groups

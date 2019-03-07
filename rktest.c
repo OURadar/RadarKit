@@ -161,8 +161,9 @@ static void showHelp() {
            "    -T50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
-           "rktest (RadarKit " RKVersionString ")\n\n",
-           RKTestByNumberDescription(10));
+           "rktest (RadarKit %s)\n\n",
+           RKTestByNumberDescription(10),
+           RKVersionString());
 }
 
 static void setSystemLevel(UserParams *user, const int level) {
@@ -588,7 +589,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 strncpy(user->tweetaHost, optarg, sizeof(user->tweetaHost));
                 break;
             case 'u':
-                printf("Version " RKVersionString "\n");
+                printf("Version %s\n", RKVersionString());
                 exit(EXIT_SUCCESS);
                 break;
             case 'v':
