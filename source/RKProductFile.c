@@ -178,7 +178,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-dB", floatType, 1, &product->header.SNRThreshold);
     put_global_text_att(ncid, "RadarKit-VCP-Definition", product->header.vcpDefinition);
     put_global_text_att(ncid, "Waveform", product->header.waveform);
-    put_global_text_att(ncid, "CreatedBy", "RadarKit v" RKVersionString);
+    put_global_text_att(ncid, "CreatedBy", "RadarKit v" _RKVersionString);
     put_global_text_att(ncid, "ContactInformation", "https://arrc.ou.edu");
 
     // NetCDF definition ends here
