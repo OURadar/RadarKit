@@ -1046,7 +1046,6 @@ int socketStreamHandler(RKOperator *O) {
                 }
 
                 const uint32_t baseMomentCount = __builtin_popcount(sweepHeader.baseMomentList);
-                RKLog("=== baseMomentCount = %d\n", baseMomentCount);
 
                 if (baseMomentCount) {
                     size = 0;
