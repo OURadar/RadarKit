@@ -618,7 +618,7 @@ rktest --help
 Some performance tests are implemented to get an idea of the number of workers to use. Here's an example output from the RaXPol main host:
 
 ```
-marina:~/radarkit root$ rktest -T 51
+marina:~/radarkit root$ rktest -T51
 ===========================
 RKTestPulseCompressionSpeed
 ===========================
@@ -628,7 +628,7 @@ RKTestPulseCompressionSpeed
                     Test 2 -> 0.220 ms / pulse
                     Time for each pulse (8,192 gates) = 0.220 ms / pulse (Best of 3)
                     Speed: 4541.07 pulses / sec
-marina:~/radarkit root$ rktest -T 52
+marina:~/radarkit root$ rktest -T52
 ==========================
 RKTestMomentProcessorSpeed
 ==========================
