@@ -666,6 +666,18 @@ int RKIndentCopy(char *dst, char *src, const int width) {
     return k;
 }
 
+int RKStringCenterized(char *dst, const char *src, const int width) {
+    dst[width] = '\0';
+    int c = (int)strlen(src);
+    if (c > width - 1) {
+        c = width - 1;
+    }
+    int l = (width - c) / 2;
+    memset(dst, ' ', width);
+    memcpy(dst + l, src, c);
+    return width;
+}
+
 char *RKNextNoneWhite(const char *string) {
     char *c = (char *)string;
     // The current character should be non-white but skip it if it is

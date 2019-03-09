@@ -329,6 +329,30 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 
 #pragma mark - Screen Output
 
+void RKShowBanner(const char *title, const char *color) {
+    int k;
+    struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+    ioctl(0, TIOCGWINSZ, &terminalSize);
+    char message[terminalSize.ws_col + 32];
+    char padding[terminalSize.ws_col + 32];
+    
+    k = sprintf(padding, "%s", color);
+    k += RKStringCenterized(padding + k, "", terminalSize.ws_col);
+    k += sprintf(padding + k, RKNoColor);
+    
+    k = sprintf(message, "%s", color);
+    k += RKStringCenterized(message + k, title, terminalSize.ws_col);
+    k += sprintf(message + k, RKNoColor);
+    
+    printf("%s\n", padding);
+    printf("%s\n", message);
+    printf("%s\n", padding);
+}
+
+void RKShowName(void) {
+    RKShowBanner("RadarKit " _RKVersionString, RKRadarKitColor);
+}
+
 void RKShowTypeSizes(void) {
     SHOW_FUNCTION_NAME
     RKPulse *pulse = NULL;

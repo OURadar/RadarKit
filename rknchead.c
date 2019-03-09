@@ -1,6 +1,7 @@
 #include <RadarKit.h>
 
 int main(int argc, const char **argv) {
+
     if (argc < 2) {
         fprintf(stderr, "Please supply a filename.\n");
         return EXIT_FAILURE;

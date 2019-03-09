@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
@@ -148,6 +149,7 @@ char *RKSignalString(const int);
 
 int RKStripTail(char *);
 int RKIndentCopy(char *dst, char *src, const int width);
+int RKStringCenterized(char *dst, const char *src, const int width);
 char *RKNextNoneWhite(const char *);
 char *RKLastLine(const char *);
 
