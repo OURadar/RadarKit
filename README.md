@@ -57,7 +57,7 @@ Follow these steps to get the project
     
     Some operating systems require the following line in your shell profile for the netcdf shared library to be found.
     
-    ```
+    ```shell
     export LD_LIBRARY_PATH=/usr/local/lib
     ```
 
@@ -85,13 +85,13 @@ Follow these steps to get the project
     
     (CentOS 6 / Ubuntu 18)
     ```
-     net.ipv4.ping_group_range = 0 2147483647
-     ```
+    net.ipv4.ping_group_range = 0 2147483647
+    ```
 
 
 6. (Optional) Compile [FFTW] from source
 
-    ```
+    ```shell
     ./configure --enable-single --enable-sse --enable-sse2 --enable-avx --enable-avx2 --enable-shared
     make
     sudo make install 
@@ -203,7 +203,7 @@ Follow these steps to get the project
             pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
             pulse->header.gateCount = 500;           // Required.
             pulse->header.gateSizeMeters = 30.0f;    // Required.
-   
+
             // Go through both polarizations
             for (int p = 0; p < 2; p++) {
                 // Get a data pointer to the 16-bit data
@@ -284,7 +284,7 @@ Follow these steps to get the project
         free(yourPedestal);
         return 0;
     }
-
+    
     int pedestalRunLoop(void *in) {
         // Type cast the input to something you defined earlier
         UserPedestalStruct *resource = (UserPedestalStruct *)in;
