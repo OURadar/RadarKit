@@ -40,15 +40,15 @@ static void RKTestCallback(void *in) {
 #pragma mark - Test Wrapper and Help Text
 
 char *RKTestByNumberDescription(const int indent) {
-    static char text[2048];
+    static char text[4096];
     char helpText[] =
     " 0 - Show types\n"
     " 1 - Show colors\n"
     " 2 - Test pretty strings\n"
-    " 3 - Test modulo math macros\n"
+    " 3 - Test modulo-math macros\n"
     " 4 - Test parsing comma delimited values\n"
     " 5 - Test parsing values in a JSON string\n"
-    " 6 - Test initializing a file maanger - RKFileManagerInit()\n"
+    " 6 - Test initializing a file manager - RKFileManagerInit()\n"
     " 7 - Test reading a preference file - RKPreferenceInit()\n"
     " 8 - Test counting files using RKCountFilesInPath()\n"
     " 9 - Test the file monitor module - RKFileMonitor()\n"
@@ -57,8 +57,8 @@ char *RKTestByNumberDescription(const int indent) {
     "12 - Test converting a temperature reading to status\n"
     "13 - Test getting a country name from position\n"
     "14 - Test generating text for buffer overview\n"
-    "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILE\n"
-    "16 - Test reading a netcdf file using RKProductRead()\n"
+    "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILENAME\n"
+    "16 - Test reading a netcdf file using RKProductRead(); -T16 FILENAME\n"
     "17 - Test reading using RKProductCollectionInitWithFilename()\n"
     "\n"
     "20 - SIMD quick test\n"
@@ -88,6 +88,9 @@ char *RKTestByNumberDescription(const int indent) {
     "52 - Measure the speed of various moment methods\n"
     "53 - Measure the speed of cached write\n";
     RKIndentCopy(text, helpText, indent);
+    if (strlen(text) > 3000) {
+        fprintf(stderr, "Warning. Approaching limit. (%lu)\n", strlen(text));
+    }
     return text;
 }
 
