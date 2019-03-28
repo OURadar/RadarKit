@@ -661,7 +661,6 @@ static void *momentCore(void *in) {
         ray->header.s = RKRayStatusProcessing;
         ray->header.i = tag;
 
-        printf("%s S->header.downSampledGateCount = %d\n", me->name, S->header.downSampledGateCount);
         // Set the ray headers
         ray->header.startTime       = S->header.time;
         ray->header.startTimeDouble = S->header.timeDouble;
@@ -672,8 +671,8 @@ static void *momentCore(void *in) {
         ray->header.endAzimuth      = E->header.azimuthDegrees;
         ray->header.endElevation    = E->header.elevationDegrees;
         ray->header.configIndex     = E->header.configIndex;
-        ray->header.gateCount       = S->header.downSampledGateCount;
-        ray->header.gateSizeMeters  = S->header.gateSizeMeters * engine->radarDescription->pulseToRayRatio;
+        ray->header.gateCount       = E->header.downSampledGateCount;
+        ray->header.gateSizeMeters  = E->header.gateSizeMeters * engine->radarDescription->pulseToRayRatio;
 
         config = &engine->configBuffer[E->header.configIndex];
 
@@ -736,16 +735,13 @@ static void *momentCore(void *in) {
             }
             // Initialize the scratch space
             prepareScratch(space);
-            printf("%s ray->header.gateCount = %d / %d\n", me->name, ray->header.gateCount, space->capacity);
             // Call the processor
             k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
                 RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, me->name, k, path.length);
             }
-            printf("%s ray->header.gateCount = %d / %d\n", me->name, ray->header.gateCount, space->capacity);
             // Fill in the ray SNR censoring and display data
             makeRayFromScratch(space, ray);
-            printf("%s ray->header.gateCount = %d\n", me->name, ray->header.gateCount);
             for (k = 0; k < path.length; k++) {
                 pulse = pulses[k];
                 pulse->header.s |= RKPulseStatusUsedForMoments;
