@@ -2964,18 +2964,24 @@ void RKTestExperiment(void) {
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
     
-    fftwf_complex *in, *out;
-    uint32_t planSize = 1 << 8;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
+//    fftwf_complex *in, *out;
+//    uint32_t planSize = 1 << 8;
+//    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
+//    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
+//
+//    fftwf_plan fwd = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+//
+//    fftwf_plan plan = fwd;
+//
+//    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
+//    printf("%p == %p\n", fwd, plan);
 
+    char filename[] = "../data/PX-20170220-050706-E2.4-Z.nc";
+    char symbol[8];
+    RKGetSymbolFromFilename(filename, symbol);
     
-    fftwf_plan fwd = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
+    printf("symbol = %s\n", symbol);
     
-    fftwf_plan plan = fwd;
-    
-    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
-    printf("%p == %p\n", fwd, plan);
 }
 
 #pragma mark -

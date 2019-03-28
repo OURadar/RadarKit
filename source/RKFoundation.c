@@ -214,18 +214,21 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
     // Find the last '.'
     memset(symbol, 0, RKMaximumSymbolLength);
     char *e = NULL;
-    e = strstr(filename, ".");
+    e = strrchr(filename, '.');
     if (e == NULL) {
         e = (char *)filename + strlen(filename) - 1;
     }
-    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
-        e = strstr(e + 1, ".");
-    }
+    #ifdef DEBUG_FINDSYMBOL
+    printf("- %s\n", e);
+    #endif
     // Find the previous '-'
     char *b = e;
     while (b != filename && *b != '-') {
         b--;
     }
+    #ifdef DEBUG_FINDSYMBOL
+    printf("- %s\n", b);
+    #endif
     if (b == filename) {
         fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
