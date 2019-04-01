@@ -23,8 +23,8 @@
 //           - Added RKShowBanner()
 //           - Added RKStringCenterized()
 //         - Added product symbol color
-//         - Improved product symbol from filename
-//         - Fixed a bug in gate count retrieval for scratch space
+//         - Improved product symbol extraction from filename
+//         - Fixed a bug in gate count retrieval for scratch space processing
 //
 //  2.1    - 3/7/2019
 //         - Added blib-sh search in the file handling script
