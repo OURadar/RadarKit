@@ -538,12 +538,15 @@ char *RKLastTwoPartsOfPath(const char *path) {
 
 char *RKFolderOfFilename(const char *filename) {
     static char folder[1024];
+    size_t len;
     char *s = strrchr((char *)filename, '/');
     if (s == NULL) {
+        len = 1;
         strcpy(folder, ".");
+    } else {
+        len = (size_t)(s - filename);
+        strncpy(folder, filename, len);
     }
-    size_t len = (size_t)(s - filename);
-    strncpy(folder, filename, len);
     folder[len] = '\0';
     return folder;
 }
