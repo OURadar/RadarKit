@@ -533,7 +533,18 @@ char *RKLastTwoPartsOfPath(const char *path) {
             } while (a2 != NULL);
         }
     }
-    return a0;
+    return a0 + 1;
+}
+
+char *RKLastNPartsOfPath(const char *path, const int n) {
+    char *a = (char *)path + strlen(path);
+    int k = 0;
+    do {
+        if (*--a == '/') {
+            k++;
+        }
+    } while (a > path && k < n);
+    return a + 1;
 }
 
 char *RKFolderOfFilename(const char *filename) {

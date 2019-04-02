@@ -142,6 +142,7 @@ char *RKFolderOfFilename(const char *);
 char *RKFileExtension(const char *);
 char *RKLastPartOfPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
+char *RKLastNPartsOfPath(const char *, const int n);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
 

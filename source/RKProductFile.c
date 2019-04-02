@@ -560,7 +560,11 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
 
     RKProductBufferAlloc(&productCollection->products, productCollection->count, rayCount, gateCount);
     for (k = 0; k < productCollection->count; k++) {
-        RKLog("RKProductCollectionInitWithFilename() %s\n", list[k]);
+        if (strlen(list[k]) > 40) {
+            RKLog("RKProductCollectionInitWithFilename() ...%s\n", RKLastNPartsOfPath(list[k], 3));
+        } else {
+            RKLog("RKProductCollectionInitWithFilename() %s\n", list[k]);
+        }
         RKProductReadFileIntoBuffer(&productCollection->products[k], list[k], false);
     }
     
