@@ -106,8 +106,8 @@ clean:
 	rm -rf *.dSYM
 
 install:
-	sudo cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
-	sudo cp -p $(RKLIB) /usr/local/lib/
+	cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
+	cp -p $(RKLIB) /usr/local/lib/
 
 uninstall:
 	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
