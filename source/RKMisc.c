@@ -533,17 +533,31 @@ char *RKLastTwoPartsOfPath(const char *path) {
             } while (a2 != NULL);
         }
     }
-    return a0;
+    return a0 + 1;
+}
+
+char *RKLastNPartsOfPath(const char *path, const int n) {
+    char *a = (char *)path + strlen(path);
+    int k = 0;
+    do {
+        if (*--a == '/') {
+            k++;
+        }
+    } while (a > path && k < n);
+    return a + 1;
 }
 
 char *RKFolderOfFilename(const char *filename) {
     static char folder[1024];
+    size_t len;
     char *s = strrchr((char *)filename, '/');
     if (s == NULL) {
+        len = 1;
         strcpy(folder, ".");
+    } else {
+        len = (size_t)(s - filename);
+        strncpy(folder, filename, len);
     }
-    size_t len = (size_t)(s - filename);
-    strncpy(folder, filename, len);
     folder[len] = '\0';
     return folder;
 }
@@ -664,6 +678,18 @@ int RKIndentCopy(char *dst, char *src, const int width) {
     } while (e != NULL);
     k += sprintf(dst + k, "%s%s", indent, s);
     return k;
+}
+
+int RKStringCenterized(char *dst, const char *src, const int width) {
+    dst[width] = '\0';
+    int c = (int)strlen(src);
+    if (c > width - 1) {
+        c = width - 1;
+    }
+    int l = (width - c) / 2;
+    memset(dst, ' ', width);
+    memcpy(dst + l, src, c);
+    return width;
 }
 
 char *RKNextNoneWhite(const char *string) {

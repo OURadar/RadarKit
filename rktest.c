@@ -774,7 +774,10 @@ int main(int argc, const char **argv) {
     if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
         RKSetWantColor(false);
     }
- 
+
+    // Show framework name & version
+    RKShowName();
+    
     // Initial a struct of user parameters
     UserParams *systemPreferences = systemPreferencesInit();
 

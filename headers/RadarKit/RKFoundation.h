@@ -96,6 +96,7 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix);
 int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]);
 
 // Common numeric output
+void RKShowName(void);
 void RKShowTypeSizes(void);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);

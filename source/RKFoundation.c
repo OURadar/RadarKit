@@ -214,18 +214,21 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
     // Find the last '.'
     memset(symbol, 0, RKMaximumSymbolLength);
     char *e = NULL;
-    e = strstr(filename, ".");
+    e = strrchr(filename, '.');
     if (e == NULL) {
         e = (char *)filename + strlen(filename) - 1;
     }
-    while (*(e + 1) >= '0' && *(e + 1) <= '9') {
-        e = strstr(e + 1, ".");
-    }
+    #ifdef DEBUG_FINDSYMBOL
+    printf("- %s\n", e);
+    #endif
     // Find the previous '-'
     char *b = e;
     while (b != filename && *b != '-') {
         b--;
     }
+    #ifdef DEBUG_FINDSYMBOL
+    printf("- %s\n", b);
+    #endif
     if (b == filename) {
         fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
@@ -287,7 +290,11 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
         }
         if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
             //printf("  -> %s/%s\n", path, ent->d_name);
-            sprintf(list[k++], "%s/%s", path, ent->d_name);
+            if (strcmp(".", path)) {
+                sprintf(list[k++], "%s/%s", path, ent->d_name);
+            } else {
+                sprintf(list[k++], "%s", ent->d_name);
+            }
         }
     }
     closedir(dir);
@@ -328,6 +335,30 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 }
 
 #pragma mark - Screen Output
+
+void RKShowBanner(const char *title, const char *color) {
+    int k;
+    struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+    ioctl(0, TIOCGWINSZ, &terminalSize);
+    char message[terminalSize.ws_col + 32];
+    char padding[terminalSize.ws_col + 32];
+    
+    k = sprintf(padding, "%s", color);
+    k += RKStringCenterized(padding + k, "", terminalSize.ws_col);
+    k += sprintf(padding + k, RKNoColor);
+    
+    k = sprintf(message, "%s", color);
+    k += RKStringCenterized(message + k, title, terminalSize.ws_col);
+    k += sprintf(message + k, RKNoColor);
+    
+    printf("%s\n", padding);
+    printf("%s\n", message);
+    printf("%s\n", padding);
+}
+
+void RKShowName(void) {
+    RKShowBanner("RadarKit " _RKVersionString, RKRadarKitColor);
+}
 
 void RKShowTypeSizes(void) {
     SHOW_FUNCTION_NAME

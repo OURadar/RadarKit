@@ -18,6 +18,20 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.1.2  - 4/3/2019
+//         - Xcode project settings
+//         - New routines:
+//           - RKLastNPartsOfPath()
+//         - Bug fixes
+//
+//  2.1.1  - 4/1/2019
+//         - Added version display as banner
+//           - Added RKShowBanner()
+//           - Added RKStringCenterized()
+//         - Added product symbol color
+//         - Improved product symbol extraction from filename
+//         - Fixed a bug in gate count retrieval for scratch space processing
+//
 //  2.1    - 3/7/2019
 //         - Added blib-sh search in the file handling script
 //         - Added Sh, Sv and SQI transmission to PyRadarKit
@@ -219,7 +233,7 @@
 
 /*!
  @framework RadarKit Framework Reference
- @author Boon Leng Cheong
+ @author Boonleng Cheong
  @abstract
  @discussion The RadarKit Framework provides the APIs and support for fundamental
  radar time-series data processing. It defines the base structure for base level

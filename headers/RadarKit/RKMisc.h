@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
@@ -79,7 +80,7 @@ RKUIntegerToCommaStyleString(sizeof(x)));
 printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
 "   " RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "\n", \
 RKUIntegerToCommaStyleString(sizeof(x)), \
-sizeof(x) % RKSIMDAlignSize == 0 ? "Tue" : "False");
+sizeof(x) % RKSIMDAlignSize == 0 ? "True" : "False");
 
 #if defined(__APPLE__)
 
@@ -141,6 +142,7 @@ char *RKFolderOfFilename(const char *);
 char *RKFileExtension(const char *);
 char *RKLastPartOfPath(const char *);
 char *RKLastTwoPartsOfPath(const char *);
+char *RKLastNPartsOfPath(const char *, const int n);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
 
@@ -148,6 +150,7 @@ char *RKSignalString(const int);
 
 int RKStripTail(char *);
 int RKIndentCopy(char *dst, char *src, const int width);
+int RKStringCenterized(char *dst, const char *src, const int width);
 char *RKNextNoneWhite(const char *);
 char *RKLastLine(const char *);
 
