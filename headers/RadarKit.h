@@ -18,6 +18,12 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.1.2  - 4/3/2019
+//         - Xcode project settings
+//         - New routines:
+//           - RKLastNPartsOfPath()
+//         - Bug fixes
+//
 //  2.1.1  - 4/1/2019
 //         - Added version display as banner
 //           - Added RKShowBanner()
