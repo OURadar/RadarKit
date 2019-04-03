@@ -517,7 +517,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = RK;
-				LastUpgradeCheck = 0930;
+				LastUpgradeCheck = 1020;
 				ORGANIZATIONNAME = "Boon Leng Cheong";
 				TargetAttributes = {
 					B5324D4E1AB8A5A000C00517 = {
@@ -538,10 +538,11 @@
 			};
 			buildConfigurationList = B50A81431AB89B6200E12E1F /* Build configuration list for PBXProject "RadarKit" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = B50A813F1AB89B6200E12E1F;
 			productRefGroup = B5324D501AB8A5A000C00517 /* Products */;
@@ -630,6 +631,7 @@
 		B50A81441AB89B6200E12E1F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -687,6 +689,7 @@
 		B50A81451AB89B6200E12E1F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;

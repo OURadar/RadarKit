@@ -2976,12 +2976,12 @@ void RKTestExperiment(void) {
 //    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
 //    printf("%p == %p\n", fwd, plan);
 
-    char filename[] = "../data/PX-20170220-050706-E2.4-Z.nc";
-    char symbol[8];
-    RKGetSymbolFromFilename(filename, symbol);
+    char filename[] = "/Users/boonleng/Documents/iRadar/data/PX-20170220-050706-E2.4-Z.nc";
+    //char symbol[8];
+    //RKGetSymbolFromFilename(filename, symbol);
     
-    printf("symbol = %s\n", symbol);
-    
+    //printf("symbol = %s\n", symbol);
+    printf("%s\n", RKLastNPartsOfPath(filename, 3));
 }
 
 #pragma mark -

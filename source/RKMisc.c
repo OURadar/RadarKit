@@ -533,17 +533,31 @@ char *RKLastTwoPartsOfPath(const char *path) {
             } while (a2 != NULL);
         }
     }
-    return a0;
+    return a0 + 1;
+}
+
+char *RKLastNPartsOfPath(const char *path, const int n) {
+    char *a = (char *)path + strlen(path);
+    int k = 0;
+    do {
+        if (*--a == '/') {
+            k++;
+        }
+    } while (a > path && k < n);
+    return a + 1;
 }
 
 char *RKFolderOfFilename(const char *filename) {
     static char folder[1024];
+    size_t len;
     char *s = strrchr((char *)filename, '/');
     if (s == NULL) {
+        len = 1;
         strcpy(folder, ".");
+    } else {
+        len = (size_t)(s - filename);
+        strncpy(folder, filename, len);
     }
-    size_t len = (size_t)(s - filename);
-    strncpy(folder, filename, len);
     folder[len] = '\0';
     return folder;
 }

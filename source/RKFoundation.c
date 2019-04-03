@@ -290,7 +290,11 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
         }
         if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
             //printf("  -> %s/%s\n", path, ent->d_name);
-            sprintf(list[k++], "%s/%s", path, ent->d_name);
+            if (strcmp(".", path)) {
+                sprintf(list[k++], "%s/%s", path, ent->d_name);
+            } else {
+                sprintf(list[k++], "%s", ent->d_name);
+            }
         }
     }
     closedir(dir);
