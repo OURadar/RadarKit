@@ -677,7 +677,7 @@ static void *momentCore(void *in) {
         config = &engine->configBuffer[E->header.configIndex];
 
         // Compute the range correction factor if needed.
-        if (ic != E->header.configIndex) {
+        if (ic != E->header.configIndex || ray->header.gateCount != space->gateCount) {
             ic = E->header.configIndex;
             // At this point, gateCount and gateSizeMeters is no longer of the raw pulses, they have been adjusted according to pulseToRayRatio
             space->gateCount = ray->header.gateCount;
