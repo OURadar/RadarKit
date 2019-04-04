@@ -74,6 +74,7 @@ char *RKTestByNumberDescription(const int indent) {
     "33 - Test waveform down-sampling\n"
     "34 - Test showing built-in waveform properties\n"
     "35 - Test showing waveform properties; -T35 WAVEFORM_FILE\n"
+    "36 - Test generating a hopping LFM\n"
     "\n"
     "40 - Pulse compression using simple cases\n"
     "41 - Calculating one ray using the Pulse Pair method\n"
@@ -204,6 +205,9 @@ void RKTestByNumber(const int number, const void *arg) {
                 exit(EXIT_FAILURE);
             }
             RKTestWaveformShowUserWaveformProperties((char *)arg);
+            break;
+        case 36:
+            RKTestWaveformHoppingLFM();
             break;
         case 40:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
@@ -1285,6 +1289,15 @@ void RKTestWaveformWrite(void) {
     }
 }
 
+void RKTestWaveformDownsampling(void) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
+    RKWaveformSummary(waveform);
+    
+    RKWaveformDecimate(waveform, 32);
+    RKWaveformSummary(waveform);
+}
+
 void RKTestWaveformShowProperties(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
@@ -1336,13 +1349,18 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     RKWaveformFree(waveform);
 }
 
-void RKTestWaveformDownsampling(void) {
+void RKTestWaveformHoppingLFM(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
-    RKWaveformSummary(waveform);
-    
-    RKWaveformDecimate(waveform, 32);
-    RKWaveformSummary(waveform);
+    const int N = 5;
+    int j = 0, k = 0;
+    int stride = RKBestStrideOfHops(N, true);
+    for (k = 0; k < N; k++) {
+        j += stride;
+        if (j >= N) {
+            j -= N;
+        }
+        printf("k = %d   j = %d\n", k, j);
+    }
 }
 
 #pragma mark - Radar Signal Processing
