@@ -185,7 +185,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Stream varrious data
                     user->streamsToRestore = user->streamsInProgress;
                     stream = RKStreamFromString(commandString + 1);
-                    RKLog("stream = %x / %x\n", stream, RKStreamSweepQ);
+                    //RKLog("%s %s stream = %x / %x\n", engine->name, O->name, stream, RKStreamSweepQ);
                     if (stream & RKStreamStatusTerminalChange) {
                         stream = user->streamsToRestore;
                         k = RKNextModuloS((user->textPreferences & RKTextPreferencesWindowSizeMask) >> 2, 5) << 2;
@@ -1221,25 +1221,28 @@ int socketStreamHandler(RKOperator *O) {
             float scale = 1.0f;
 
             // Default stride: k = 1
+            i = 0;
             k = 1;
             switch (user->ascopeMode) {
                 case 3:
                     // Show the waveform that was used through the forward sampling path
-                    pulseHeader.gateCount = MIN(RKMaximumGateCount, pulseHeader.gateCount);
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.gateCount);
                     if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
                         break;
                     }
                     i = 0;
                     gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
                     for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
-                        *userDataH++ = *c16DataH++;
-                        *userDataV++ = *c16DataV++;
+//                        *userDataH++ = *c16DataH++;
+//                        *userDataV++ = *c16DataV++;
+                        *userDataH++ = *c16DataH;
+                        *userDataV++ = *c16DataH++;
                         i++;
                     }
                     for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-                        userDataH->i   = 0;
+                        userDataH->i   = 20000;
                         userDataH++->q = 0;
-                        userDataV->i   = 0;
+                        userDataV->i   = 20000;
                         userDataV++->q = 0;
                         i++;
                     }
@@ -1255,9 +1258,9 @@ int socketStreamHandler(RKOperator *O) {
                         i++;
                     }
                     for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-                        userDataH->i   = 0;
+                        userDataH->i   = 20000;
                         userDataH++->q = 0;
-                        userDataV->i   = 0;
+                        userDataV->i   = 20000;
                         userDataV++->q = 0;
                         i++;
                     }
@@ -1276,13 +1279,17 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV->i   = (int16_t)(scale * yV->i);
                         userDataV++->q = (int16_t)(scale * yV++->q);
                     }
+//                    RKLog("%s %s offset = %d / %d", engine->name, O->name,
+//                          (int)(userDataH - user->samples[0]),
+//                          (int)(userDataV - user->samples[1]));
                     break;
 
                 case 2:
                     // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from RKComplex samples
                     k = user->pulseDownSamplingRatio;
                 
-                    pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
+                    //pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.downSampledGateCount / k);
                     pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
 
                     gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
@@ -1303,7 +1310,7 @@ int socketStreamHandler(RKOperator *O) {
                 
                 default:
                     // Down-sampled once (k = 1) I/Q data from Int16C samples
-                    pulseHeader.gateCount = MIN(pulseHeader.gateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.downSampledGateCount / k);
                     pulseHeader.gateSizeMeters *= (float)k;
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
@@ -1323,6 +1330,7 @@ int socketStreamHandler(RKOperator *O) {
             #endif
 
             size = pulseHeader.gateCount * sizeof(RKInt16C);
+            //RKLog("%s %s %d vs %d / %d\n", engine->name, O->name, pulseHeader.gateCount, i, user->pulseDownSamplingRatio);
             
             O->delimTx.type = RKNetworkPacketTypePulseData;
             O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
