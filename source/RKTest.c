@@ -1986,10 +1986,10 @@ void *RKTestTransceiverRunLoop(void *input) {
             // Go through both polarizations
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                RKInt16C *S = waveform->iSamples[w];
                 // Some random pattern for testing
                 k = rand() % transceiver->gateCount;
-                RKInt16C *S = waveform->iSamples[w];
-                
+                // Populate the pulse
                 for (g = 1; g < waveform->depth; g++) {
                     noise = rn[k];
                     X->i = S->i + noise;
