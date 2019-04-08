@@ -230,7 +230,7 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
     printf("- %s\n", b);
     #endif
     if (b == filename) {
-        fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
+        RKLog("RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
         return false;
     }
@@ -249,7 +249,7 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
         e--;
     } while (*e != '-' && e > filename);
     if (e == filename) {
-        fprintf(stderr, "RKGetPrefixFromFilename() Unable to find filename prefix.\n");
+        RKLog("RKGetPrefixFromFilename() Unable to find filename prefix.\n");
         *prefix = '\0';
         return false;
     }
