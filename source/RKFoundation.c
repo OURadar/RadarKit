@@ -267,17 +267,21 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     DIR *dir;
     struct dirent *ent;
 
+    strcpy(list[0], filename);
+    
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
     //printf("path -> %s\n", path);
     if ((dir = opendir(path)) == NULL) {
-        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        RKLog("RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         return 0;
     }
     // Use prefix to match the file pattern
     r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
     if (r == false) {
-        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        RKLog("RKListFilesWithSamePrefix() Not a standard filename. Early return.\n");
         return 0;
     }
     char *ext = RKFileExtension(filename);

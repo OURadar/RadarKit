@@ -59,7 +59,8 @@ char *RKTestByNumberDescription(const int indent) {
     "14 - Test generating text for buffer overview\n"
     "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILENAME\n"
     "16 - Test reading a netcdf file using RKProductRead(); -T16 FILENAME\n"
-    "17 - Test reading using RKProductCollectionInitWithFilename()\n"
+    "17 - Test reading multiple netcdf files using RKProductCollectionInitWithFilename()\n"
+    "18 - Test writing a netcdf file using RKProductFileWriterNC()\n"
     "\n"
     "20 - SIMD quick test\n"
     "21 - SIMD test with numbers shown\n"
@@ -165,6 +166,9 @@ void RKTestByNumber(const int number, const void *arg) {
                 exit(EXIT_FAILURE);
             }
             RKProductCollectionInitWithFilename((char *)arg);
+            break;
+        case 18:
+            RKTestProductWrite();
             break;
         case 20:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -723,6 +727,50 @@ void RKTestProductRead(const char *file) {
     if (product) {
         RKProductFree(product);
     }
+}
+
+void RKTestProductWrite(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    RKProduct *product;
+    RKProductBufferAlloc(&product, 1, 360, 8);
+    product->desc.type = RKProductTypePPI;
+    sprintf(product->desc.name, "Reflectivity");
+    sprintf(product->desc.unit, "dBZ");
+    sprintf(product->desc.colormap, "Reflectivity");
+    sprintf(product->header.radarName, "RadarKit");
+    product->header.latitude = 35.23682;
+    product->header.longitude = -97.46381;
+    product->header.heading = 0.0;
+    product->header.wavelength = 0.0314;
+    product->header.sweepElevation = 2.4;
+    product->header.rayCount = 360;
+    product->header.gateCount = 8;
+    product->header.gateSizeMeters = 7500.0;
+    product->header.prf[0] = 1000;
+    product->header.isPPI = true;
+    product->header.startTime = 201443696;
+    product->header.endTime = 201443696 + 10;
+    float az = 90.0;
+    for (k = 0; k < 360; k++) {
+        product->startAzimuth[k] = az;
+        if (az >= 359.0) {
+            az = az - 359.0;
+        } else {
+            az += 1.0;
+        }
+        product->endAzimuth[k] = az;
+        product->startElevation[k] = 2.4;
+        product->endElevation[k] = 2.4;
+    }
+    float *v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = (float)(k % 15) * 5.0 - 5.0;
+        }
+    }
+    RKProductFileWriterNC(product, "blank.nc");
+    RKProductBufferFree(product, 1);
 }
 
 #pragma mark -
@@ -2994,12 +3042,14 @@ void RKTestExperiment(void) {
 //    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
 //    printf("%p == %p\n", fwd, plan);
 
-    char filename[] = "/Users/boonleng/Documents/iRadar/data/PX-20170220-050706-E2.4-Z.nc";
+//    char filename[] = "/Users/boonleng/Documents/iRadar/data/PX-20170220-050706-E2.4-Z.nc";
     //char symbol[8];
     //RKGetSymbolFromFilename(filename, symbol);
     
     //printf("symbol = %s\n", symbol);
-    printf("%s\n", RKLastNPartsOfPath(filename, 3));
+//    printf("%s\n", RKLastNPartsOfPath(filename, 3));
+    
+
 }
 
 #pragma mark -
