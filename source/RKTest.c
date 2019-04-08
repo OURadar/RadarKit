@@ -732,6 +732,7 @@ void RKTestProductRead(const char *file) {
 void RKTestProductWrite(void) {
     SHOW_FUNCTION_NAME
     int g, k;
+    float *v;
     RKProduct *product;
     RKProductBufferAlloc(&product, 1, 360, 8);
     product->desc.type = RKProductTypePPI;
@@ -763,8 +764,14 @@ void RKTestProductWrite(void) {
         product->startElevation[k] = 2.4;
         product->endElevation[k] = 2.4;
     }
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = NAN;
+        }
+    }
     RKProductFileWriterNC(product, "blank.nc");
-    float *v = product->data;
+    v = product->data;
     for (k = 0; k < 360; k++) {
         for (g = 0; g < 8; g++) {
             *v++ = (float)(k % 15) * 5.0 - 5.0;
