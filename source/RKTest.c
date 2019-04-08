@@ -763,13 +763,14 @@ void RKTestProductWrite(void) {
         product->startElevation[k] = 2.4;
         product->endElevation[k] = 2.4;
     }
+    RKProductFileWriterNC(product, "blank.nc");
     float *v = product->data;
     for (k = 0; k < 360; k++) {
         for (g = 0; g < 8; g++) {
             *v++ = (float)(k % 15) * 5.0 - 5.0;
         }
     }
-    RKProductFileWriterNC(product, "blank.nc");
+    RKProductFileWriterNC(product, "rainbow.nc");
     RKProductBufferFree(product, 1);
 }
 
