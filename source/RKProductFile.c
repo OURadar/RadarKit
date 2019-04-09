@@ -557,7 +557,7 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
     uint32_t rayCount = 0;
     uint32_t gateCount = 0;
 
-    printf("count = %d\n", productCollection->count);
+    //printf("count = %d\n", productCollection->count);
     
     if (productCollection->count == 0 && RKFilenameExists(firstFilename)) {
         productCollection->count = 1;

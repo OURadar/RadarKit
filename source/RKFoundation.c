@@ -271,7 +271,7 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
-    printf("path -> %s\n", path);
+    //printf("path -> %s\n", path);
     if ((dir = opendir(path)) == NULL) {
         //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         RKLog("RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
