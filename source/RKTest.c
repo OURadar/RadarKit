@@ -3057,7 +3057,16 @@ void RKTestExperiment(void) {
     //printf("symbol = %s\n", symbol);
 //    printf("%s\n", RKLastNPartsOfPath(filename, 3));
     
-
+//    const char filename[] = "PX1000/PX-20180724-212617-E2.0-Z.nc";
+    const char filename[] = "P";
+//    char symbol[8];
+//    bool found = RKGetSymbolFromFilename(filename, symbol);
+//    printf("%s\n", filename);
+//    printf("%s\n", RKVariableInString("found", &found, RKValueTypeBool));
+    char list[16][RKMaximumPathLength];
+    RKProductCollection *productCollection = (RKProductCollection *)malloc(sizeof(RKProductCollection));
+    productCollection->count = RKListFilesWithSamePrefix(filename, list);
+    free(productCollection);
 }
 
 #pragma mark -
