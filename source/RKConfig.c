@@ -135,6 +135,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 w2 = 0;
                 w3 = 0;
                 for (j = 0; j < newConfig->filterCount; j++) {
+                    newConfig->pw[j] = (uint32_t)(1.0e9 * waveform->depth / waveform->fs);
+                    RKLog("pw[%d] = %d ns\n", j, newConfig->pw[j]);
                     w0 = MAX(w0, (int)log10f((float)newConfig->filterAnchors[j].inputOrigin));
                     w1 = MAX(w1, (int)log10f((float)newConfig->filterAnchors[j].outputOrigin));
                     w2 = MAX(w2, (int)log10f((float)newConfig->filterAnchors[j].maxDataLength));
