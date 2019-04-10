@@ -266,43 +266,45 @@ static void *systemInspectorRunLoop(void *in) {
 
             // Report a health status
             health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
-            k = sprintf(FFTPlanUsage, "{");
-            for (j = 0; j < radar->fftModule->count; j++) {
-                k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
-                             radar->fftModule->plans[j].size,
-                             radar->fftModule->plans[j].count);
+            if (health) {
+                k = sprintf(FFTPlanUsage, "{");
+                for (j = 0; j < radar->fftModule->count; j++) {
+                    k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
+                                 radar->fftModule->plans[j].size,
+                                 radar->fftModule->plans[j].count);
+                }
+                k += sprintf(FFTPlanUsage + k, "}");
+                if (k > RKStatusStringLength * 3 / 4) {
+                    RKLog("Warning. Too little head room in FFTPlanUsage (%d / %d).\n", k, RKStatusStringLength);
+                }
+                config = RKGetLatestConfig(radar);
+                sprintf(health->string, "{"
+                        "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
+                        "\"Processors\":{\"Value\":true,\"Enum\":0}, "
+                        "\"Measured PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
+                        "\"Noise\":[%.3f,%.3f], "
+                        "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
+                        "\"rayRate\":%.3f, "
+                        "\"FFTPlanUsage\":%s"
+                        "}",
+                        transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
+                        pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
+                        healthOkay ? "true" : "false", radar->healthRelay ? (healthOkay ? healthEnum : RKStatusEnumFault) : RKStatusEnumNotWired,
+                        networkOkay ? "true" : "false", networkEnum,
+                        radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
+                        radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        config->noise[0], config->noise[1],
+                        RKIntegerToCommaStyleString((long)round(positionRate)), rayRate,
+                        FFTPlanUsage
+                        );
+                RKSetHealthReady(radar, health);
             }
-            k += sprintf(FFTPlanUsage + k, "}");
-            if (k > RKStatusStringLength * 3 / 4) {
-                RKLog("Warning. Too little head room in FFTPlanUsage (%d / %d).\n", k, RKStatusStringLength);
-            }
-            config = RKGetLatestConfig(radar);
-            sprintf(health->string, "{"
-                    "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Processors\":{\"Value\":true,\"Enum\":0}, "
-                    "\"Measured PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
-                    "\"Noise\":[%.3f,%.3f], "
-                    "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
-                    "\"rayRate\":%.3f, "
-                    "\"FFTPlanUsage\":%s"
-                    "}",
-                    transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
-                    pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
-                    healthOkay ? "true" : "false", radar->healthRelay ? (healthOkay ? healthEnum : RKStatusEnumFault) : RKStatusEnumNotWired,
-                    networkOkay ? "true" : "false", networkEnum,
-                    radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
-                    radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    config->noise[0], config->noise[1],
-                    RKIntegerToCommaStyleString((long)round(positionRate)), rayRate,
-                    FFTPlanUsage
-                    );
-            RKSetHealthReady(radar, health);
 
             // Get the latest consolidated health
             health = RKGetLatestHealth(radar);

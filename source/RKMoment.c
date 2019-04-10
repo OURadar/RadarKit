@@ -686,15 +686,18 @@ static void *momentCore(void *in) {
             // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
             // The number 60 is for conversion of range from meters to kilometers in the range correction term.
             space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
-            if (engine->verbose > 1) {
+            // Call the calibrator to derive range calibration, ZCal and DCal
+            engine->calibrator(space, config);
+            if (engine->verbose) {
                 RKLog("%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
                       engine->name, me->name,
                       config->filterCount,
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
+                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain = %.2f   samplingAdj = %.2f\n",
+                      engine->name, me->name,
+                      config->systemZCal[0], config->ZCal[0][0], config->filterAnchors[0].sensitivityGain, space->samplingAdjustment);
             }
-            // Call the calibrator to derive range calibration, ZCal and DCal
-            engine->calibrator(space, config);
             // The rest of the constants
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];

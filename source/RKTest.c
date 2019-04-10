@@ -2181,30 +2181,32 @@ void *RKTestTransceiverRunLoop(void *input) {
             volt = 1.0f * nn / RAND_MAX + 11.5f;
             room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
             health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
-            sprintf(health->string,
-                    "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
-                    "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                    "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                    "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                    "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                    "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                    "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
-                    "\"TransceiverCounter\": %ld}",
-                    RKStatusEnumActive,
-                    RKStatusEnumNormal,
-                    RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
-                    temp, RKStatusFromTemperatureForCE(temp),
-                    volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                    room, RKStatusFromTemperatureForComputers(room),
-                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
-                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
-                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                    transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
-                    transceiver->counter);
-            RKSetHealthReady(radar, health);
+            if (health) {
+                sprintf(health->string,
+                        "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
+                        "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                        "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
+                        "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                        "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                        "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                        "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
+                        "\"TransceiverCounter\": %ld}",
+                        RKStatusEnumActive,
+                        RKStatusEnumNormal,
+                        RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+                        temp, RKStatusFromTemperatureForCE(temp),
+                        volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                        room, RKStatusFromTemperatureForComputers(room),
+                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
+                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                        transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
+                        transceiver->counter);
+                RKSetHealthReady(radar, health);
+            }
         }
 
         // Wait to simulate the PRF
@@ -2636,6 +2638,10 @@ void *RKTestPedestalRunLoop(void *input) {
 
         // Get a vacation position to fill it in with the latest reading
         RKPosition *position = RKGetVacantPosition(radar);
+        if (position == NULL) {
+            usleep(1000);
+            continue;
+        }
         position->tic = tic++;
         position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
@@ -2670,21 +2676,23 @@ void *RKTestPedestalRunLoop(void *input) {
         // Report health
         if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-            sprintf(health->string, "{"
-                    "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
-                    "}",
-                    position->azimuthDegrees, RKStatusEnumNormal,
-                    position->elevationDegrees, RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
-            RKSetHealthReady(radar, health);
+            if (health) {
+                sprintf(health->string, "{"
+                        "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                        "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                        "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
+                        "}",
+                        position->azimuthDegrees, RKStatusEnumNormal,
+                        position->elevationDegrees, RKStatusEnumNormal,
+                        RKStatusEnumNormal,
+                        RKStatusEnumNormal,
+                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
+                RKSetHealthReady(radar, health);
+            }
         }
         
         // Posiiton change
@@ -2899,24 +2907,26 @@ void *RKTestHealthRelayRunLoop(void *input) {
         longitude = (double)rand() * 8.0e-6f / RAND_MAX - 97.4349928;
         heading = (double)rand() * 0.2 / RAND_MAX + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
-        sprintf(health->string, "{"
-                "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-                "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-                "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
-                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
-                "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
-                "}",
-                RKStatusEnumNormal,
-                RKStatusEnumNormal,
-                latitude,
-                longitude,
-                heading,
-                powerH, RKStatusEnumNormal,
-                powerV, RKStatusEnumNormal);
-        RKSetHealthReady(radar, health);
+        if (health) {
+            sprintf(health->string, "{"
+                    "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+                    "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+                    "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
+                    "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
+                    "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
+                    "}",
+                    RKStatusEnumNormal,
+                    RKStatusEnumNormal,
+                    latitude,
+                    longitude,
+                    heading,
+                    powerH, RKStatusEnumNormal,
+                    powerV, RKStatusEnumNormal);
+            RKSetHealthReady(radar, health);
+        }
 
         // Wait to simulate sampling time
         n = 0;
