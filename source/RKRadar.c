@@ -1381,10 +1381,12 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     // Make a copy for the config buffer. Senstivity gain should not change!
     if (waveform->filterCounts[0] > 0 && waveform->filterCounts[0] <= 4) {
         RKWaveform *waveformDecimate = RKWaveformCopy(waveform);
+        const uint32_t pulseWidth = (uint32_t)(1.0e9 * waveform->depth /  waveform->fs);
         RKWaveformDecimate(waveformDecimate, radar->desc.pulseToRayRatio);
         RKAddConfig(radar,
                     RKConfigKeyWaveform, waveformDecimate,
                     RKConfigKeyWaveformCalibration, waveformCalibration,
+                    RKConfigKeyPulseWidth, pulseWidth,
                     RKConfigKeyNull);
         RKWaveformFree(waveformDecimate);
     } else {
