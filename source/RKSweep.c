@@ -604,7 +604,7 @@ void RKSweepEngineSetHandleFilesScript(RKSweepEngine *engine, const char *script
     }
 }
 
-void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, int (*routine)(RKProduct *, char *)) {
+void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, int (*routine)(RKProduct *, const char *)) {
     engine->productRecorder = routine;
 }
 
