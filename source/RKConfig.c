@@ -161,6 +161,13 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                             newConfig->filterAnchors[j].sensitivityGain);
                 }
                 break;
+            case RKConfigKeyPulseWidth:
+                n = (uint32_t)va_arg(args, uint32_t);
+                for (j = 0; j < newConfig->filterCount; j++) {
+                    newConfig->pw[j] = n;
+                }
+                sprintf(stringBuffer[0], "PulseWidth = %u ns", newConfig->pw[0]);
+                break;
             case RKConfigKeyWaveformName:
                 strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
                 sprintf(stringBuffer[0], "Waveform = '%s'", newConfig->waveform);

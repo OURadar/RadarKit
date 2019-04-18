@@ -59,7 +59,8 @@ char *RKTestByNumberDescription(const int indent) {
     "14 - Test generating text for buffer overview\n"
     "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILENAME\n"
     "16 - Test reading a netcdf file using RKProductRead(); -T16 FILENAME\n"
-    "17 - Test reading using RKProductCollectionInitWithFilename()\n"
+    "17 - Test reading multiple netcdf files using RKProductCollectionInitWithFilename()\n"
+    "18 - Test writing a netcdf file using RKProductFileWriterNC()\n"
     "\n"
     "20 - SIMD quick test\n"
     "21 - SIMD test with numbers shown\n"
@@ -165,6 +166,9 @@ void RKTestByNumber(const int number, const void *arg) {
                 exit(EXIT_FAILURE);
             }
             RKProductCollectionInitWithFilename((char *)arg);
+            break;
+        case 18:
+            RKTestProductWrite();
             break;
         case 20:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -723,6 +727,58 @@ void RKTestProductRead(const char *file) {
     if (product) {
         RKProductFree(product);
     }
+}
+
+void RKTestProductWrite(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    float *v;
+    RKProduct *product;
+    RKProductBufferAlloc(&product, 1, 360, 8);
+    product->desc.type = RKProductTypePPI;
+    sprintf(product->desc.name, "Reflectivity");
+    sprintf(product->desc.unit, "dBZ");
+    sprintf(product->desc.colormap, "Reflectivity");
+    sprintf(product->header.radarName, "RadarKit");
+    product->header.latitude = 35.23682;
+    product->header.longitude = -97.46381;
+    product->header.heading = 0.0;
+    product->header.wavelength = 0.0314;
+    product->header.sweepElevation = 2.4;
+    product->header.rayCount = 360;
+    product->header.gateCount = 8;
+    product->header.gateSizeMeters = 7500.0;
+    product->header.prf[0] = 1000;
+    product->header.isPPI = true;
+    product->header.startTime = 201443696;
+    product->header.endTime = 201443696 + 10;
+    float az = 90.0;
+    for (k = 0; k < 360; k++) {
+        product->startAzimuth[k] = az;
+        if (az >= 359.0) {
+            az = az - 359.0;
+        } else {
+            az += 1.0;
+        }
+        product->endAzimuth[k] = az;
+        product->startElevation[k] = 2.4;
+        product->endElevation[k] = 2.4;
+    }
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = NAN;
+        }
+    }
+    RKProductFileWriterNC(product, "blank.nc");
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = (float)(k % 15) * 5.0 - 5.0;
+        }
+    }
+    RKProductFileWriterNC(product, "rainbow.nc");
+    RKProductBufferFree(product, 1);
 }
 
 #pragma mark -
@@ -2125,30 +2181,32 @@ void *RKTestTransceiverRunLoop(void *input) {
             volt = 1.0f * nn / RAND_MAX + 11.5f;
             room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
             health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
-            sprintf(health->string,
-                    "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
-                    "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                    "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                    "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                    "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                    "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                    "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
-                    "\"TransceiverCounter\": %ld}",
-                    RKStatusEnumActive,
-                    RKStatusEnumNormal,
-                    RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
-                    temp, RKStatusFromTemperatureForCE(temp),
-                    volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                    room, RKStatusFromTemperatureForComputers(room),
-                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
-                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
-                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                    transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
-                    transceiver->counter);
-            RKSetHealthReady(radar, health);
+            if (health) {
+                sprintf(health->string,
+                        "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
+                        "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                        "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
+                        "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                        "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                        "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                        "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
+                        "\"TransceiverCounter\": %ld}",
+                        RKStatusEnumActive,
+                        RKStatusEnumNormal,
+                        RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+                        temp, RKStatusFromTemperatureForCE(temp),
+                        volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                        room, RKStatusFromTemperatureForComputers(room),
+                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
+                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                        transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
+                        transceiver->counter);
+                RKSetHealthReady(radar, health);
+            }
         }
 
         // Wait to simulate the PRF
@@ -2580,6 +2638,10 @@ void *RKTestPedestalRunLoop(void *input) {
 
         // Get a vacation position to fill it in with the latest reading
         RKPosition *position = RKGetVacantPosition(radar);
+        if (position == NULL) {
+            usleep(1000);
+            continue;
+        }
         position->tic = tic++;
         position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
@@ -2614,21 +2676,23 @@ void *RKTestPedestalRunLoop(void *input) {
         // Report health
         if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-            sprintf(health->string, "{"
-                    "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
-                    "}",
-                    position->azimuthDegrees, RKStatusEnumNormal,
-                    position->elevationDegrees, RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
-            RKSetHealthReady(radar, health);
+            if (health) {
+                sprintf(health->string, "{"
+                        "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                        "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                        "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
+                        "}",
+                        position->azimuthDegrees, RKStatusEnumNormal,
+                        position->elevationDegrees, RKStatusEnumNormal,
+                        RKStatusEnumNormal,
+                        RKStatusEnumNormal,
+                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
+                RKSetHealthReady(radar, health);
+            }
         }
         
         // Posiiton change
@@ -2843,24 +2907,26 @@ void *RKTestHealthRelayRunLoop(void *input) {
         longitude = (double)rand() * 8.0e-6f / RAND_MAX - 97.4349928;
         heading = (double)rand() * 0.2 / RAND_MAX + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
-        sprintf(health->string, "{"
-                "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-                "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-                "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
-                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
-                "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
-                "}",
-                RKStatusEnumNormal,
-                RKStatusEnumNormal,
-                latitude,
-                longitude,
-                heading,
-                powerH, RKStatusEnumNormal,
-                powerV, RKStatusEnumNormal);
-        RKSetHealthReady(radar, health);
+        if (health) {
+            sprintf(health->string, "{"
+                    "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+                    "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+                    "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
+                    "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
+                    "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
+                    "}",
+                    RKStatusEnumNormal,
+                    RKStatusEnumNormal,
+                    latitude,
+                    longitude,
+                    heading,
+                    powerH, RKStatusEnumNormal,
+                    powerV, RKStatusEnumNormal);
+            RKSetHealthReady(radar, health);
+        }
 
         // Wait to simulate sampling time
         n = 0;
@@ -2994,12 +3060,23 @@ void RKTestExperiment(void) {
 //    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
 //    printf("%p == %p\n", fwd, plan);
 
-    char filename[] = "/Users/boonleng/Documents/iRadar/data/PX-20170220-050706-E2.4-Z.nc";
+//    char filename[] = "/Users/boonleng/Documents/iRadar/data/PX-20170220-050706-E2.4-Z.nc";
     //char symbol[8];
     //RKGetSymbolFromFilename(filename, symbol);
     
     //printf("symbol = %s\n", symbol);
-    printf("%s\n", RKLastNPartsOfPath(filename, 3));
+//    printf("%s\n", RKLastNPartsOfPath(filename, 3));
+    
+//    const char filename[] = "PX1000/PX-20180724-212617-E2.0-Z.nc";
+    const char filename[] = "P";
+//    char symbol[8];
+//    bool found = RKGetSymbolFromFilename(filename, symbol);
+//    printf("%s\n", filename);
+//    printf("%s\n", RKVariableInString("found", &found, RKValueTypeBool));
+    char list[16][RKMaximumPathLength];
+    RKProductCollection *productCollection = (RKProductCollection *)malloc(sizeof(RKProductCollection));
+    productCollection->count = RKListFilesWithSamePrefix(filename, list);
+    free(productCollection);
 }
 
 #pragma mark -

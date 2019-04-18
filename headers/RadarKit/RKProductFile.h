@@ -24,7 +24,7 @@
 
 void RKProductDimensionsFromFile(const char *, uint32_t *rayCount, uint32_t *gateCount);
 
-int RKProductFileWriterNC(RKProduct *, char *);
+int RKProductFileWriterNC(RKProduct *, const char *);
 RKProduct *RKProductFileReaderNC(const char *, const bool);
 void RKProductReadFileIntoBuffer(RKProduct *buffer, const char *, const bool);
 

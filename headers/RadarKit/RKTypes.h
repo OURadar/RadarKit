@@ -594,6 +594,7 @@ enum RKConfigKey {
     RKConfigKeyDualPRF,
     RKConfigKeyPulseGateCount,
     RKConfigKeyPulseGateSize,
+    RKConfigKeyPulseWidth,
     RKConfigKeyWaveform,
     RKConfigKeyWaveformId,
     RKConfigKeyWaveformName,
