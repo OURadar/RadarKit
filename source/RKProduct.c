@@ -33,6 +33,11 @@ size_t RKProductBufferAlloc(RKProduct **buffer, const uint32_t depth, const uint
         product->endElevation = (RKFloat *)malloc(headSize);
         product->data = (RKFloat *)malloc(dataSize);
         product->capacity = capacity;
+        memset(product->startAzimuth, 0, headSize);
+        memset(product->endAzimuth, 0, headSize);
+        memset(product->startElevation, 0, headSize);
+        memset(product->endElevation, 0, headSize);
+        memset(product->data, 0, dataSize);
         product->totalBufferSize = (uint32_t)sizeof(RKProduct) + 4 * headSize + dataSize;
         size += product->totalBufferSize;
     }

@@ -230,7 +230,7 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
     printf("- %s\n", b);
     #endif
     if (b == filename) {
-        fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
+        RKLog("RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
         return false;
     }
@@ -248,8 +248,8 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
     do {
         e--;
     } while (*e != '-' && e > filename);
-    if (e == filename) {
-        fprintf(stderr, "RKGetPrefixFromFilename() Unable to find filename prefix.\n");
+    if (e <= filename) {
+        RKLog("RKGetPrefixFromFilename() Unable to find filename prefix.\n");
         *prefix = '\0';
         return false;
     }
@@ -267,17 +267,21 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     DIR *dir;
     struct dirent *ent;
 
+    strcpy(list[0], filename);
+    
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
     //printf("path -> %s\n", path);
     if ((dir = opendir(path)) == NULL) {
-        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        RKLog("RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         return 0;
     }
     // Use prefix to match the file pattern
     r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
     if (r == false) {
-        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        RKLog("RKListFilesWithSamePrefix() Not a standard filename. Early return.\n");
         return 0;
     }
     char *ext = RKFileExtension(filename);

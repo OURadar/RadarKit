@@ -116,6 +116,7 @@ void RKTestGetCountry(void);
 void RKTestBufferOverviewText(const char *);
 void RKTestSweepRead(const char *);
 void RKTestProductRead(const char *);
+void RKTestProductWrite(void);
 
 #pragma mark - DSP Tests
 
