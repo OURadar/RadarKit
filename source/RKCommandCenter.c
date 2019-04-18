@@ -250,11 +250,10 @@ int socketCommandHandler(RKOperator *O) {
                     break;
 
                 case 'x':
-                    user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
+                    user->ascopeMode = RKNextModuloS(user->ascopeMode, 3);
                     RKLog("%s %s AScope mode %d : %s\n", engine->name, O->name, user->ascopeMode,
-                          user->ascopeMode == 3 ? "Raw I/Q + Filter + Output" :
-                          (user->ascopeMode == 2 ? "Down-sampled twice from RKComplex buffer" :
-                           (user->ascopeMode == 1 ? "Down-sampled twice from RKInt16C buffer" : "Down-sampled once from RKInt16C buffer")));
+                          user->ascopeMode == 2 ? "Raw I/Q + Filter + Output" :
+                          (user->ascopeMode == 1 ? "Down-sampled twice from RKComplex buffer" : "Down-sampled once from RKInt16C buffer"));
                     sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -1224,7 +1223,7 @@ int socketStreamHandler(RKOperator *O) {
             i = 0;
             k = 1;
             switch (user->ascopeMode) {
-                case 3:
+                case 2:
                     // Show the waveform that was used through the forward sampling path
                     pulseHeader.gateCount = MIN(4096, pulseHeader.gateCount);
                     if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
@@ -1284,7 +1283,7 @@ int socketStreamHandler(RKOperator *O) {
 //                          (int)(userDataV - user->samples[1]));
                     break;
 
-                case 2:
+                case 1:
                     // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from RKComplex samples
                     k = user->pulseDownSamplingRatio;
                 
@@ -1304,19 +1303,14 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     break;
                 
-                case 1:
-                    // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from Int16C samples
-                    k = user->pulseDownSamplingRatio;
-                
                 default:
                     // Down-sampled once (k = 1) I/Q data from Int16C samples
-                    pulseHeader.gateCount = MIN(4096, pulseHeader.downSampledGateCount / k);
-                    pulseHeader.gateSizeMeters *= (float)k;
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.pulseWidthSampleCount + 10);
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
                         *userDataV++ = *c16DataV;
-                        c16DataH += k;
-                        c16DataV += k;
+                        c16DataH++;
+                        c16DataV++;
                     }
                     break;
             }
@@ -1400,7 +1394,7 @@ int socketInitialHandler(RKOperator *O) {
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->asciiArtStride = 4;
-    user->ascopeMode = 2;
+    user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);

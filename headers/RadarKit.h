@@ -18,6 +18,12 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.1.4  - 4/18/2019
+//         - Removed AScope mode 2, renamed others
+//           - Mode 0 - Raw I/Q (default)
+//           - Mode 1 - Compressed I/Q (out to usable range)
+//           - Mode 2 - Debugging mode, raw I/Q + template + raw data
+//
 //  2.1.3  - 4/18/2019
 //         - Usable gates reduced by blind range
 //         - Added gate count check for calibration numbers
