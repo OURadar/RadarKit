@@ -18,6 +18,13 @@
 //           - LFM frequency hopping
 //           - Mapping coefficients to product files
 //
+//  2.1.3  - 4/18/2019
+//         - Usable gates reduced by blind range
+//         - Added gate count check for calibration numbers
+//         - Added RKConfigKeyPulseWidth
+//         - Added test 18 - Test writing using RKProductFileWriteNC()
+//         - Bug fix: RKGetPrefixFromFilename() with 1 char
+//
 //  2.1.2  - 4/3/2019
 //         - Xcode project settings
 //         - New routines:
