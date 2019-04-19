@@ -1408,15 +1408,27 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
 void RKTestWaveformHoppingLFM(void) {
     SHOW_FUNCTION_NAME
     const int N = 5;
-    int j = 0, k = 0;
+    int i, j = 0, k = 0;
     int stride = RKBestStrideOfHops(N, true);
+    float fl, fh, fc;
+    const float fs = 50.0e6;
+    const float bw = 20.0e6;
+    const float sbw = bw / (float)N;
+    
     for (k = 0; k < N; k++) {
         j += stride;
         if (j >= N) {
             j -= N;
         }
-        printf("k = %d   j = %d\n", k, j);
+        i = j - N / 2;
+        fl = ((float)i - 0.5) * sbw;
+        fh = ((float)i + 0.5) * sbw;
+        printf("k = %d   j = %d -> %+2d [%+6.2f %+6.2f]\n", k, j, i, 1.0e-6 * fl, 1.0e-6 * fh);
     }
+    // Say we have 20-MHz, 4-MHz on each hop
+    // Frequency span: [-10, -6], [-6, -2], [-2, +2], [+2, +6], [+6, +10]
+    // Hop Identifier:    (0)        (1)       (2)       (3)       (4)
+    
 }
 
 #pragma mark - Radar Signal Processing
