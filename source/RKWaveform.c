@@ -334,28 +334,47 @@ RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double 
     }
 
     int i, j = 0, k = 0;
-    int stride = RKBestStrideOfHops(count, true);
-    float fl, fh;
+    int stride = RKBestStrideOfHops(count, false);
+    float fl, fu;
     const double sbw = bandwidth / (double)count;
-    
-    //RKWaveform *waveform = RKWaveformInitWithCountAndDepth(N, depth);
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
     
+    waveform->fs = fs;
+    waveform->type = RKWaveformTypeIsComplex;
+    k = sprintf(waveform->name, "c%2.0f%02d", 1.0e-6 * bandwidth, count);
+    if (pulsewidth < 1.0) {
+        sprintf(waveform->name + k, ".%.0f", round(10.0 * pulsewidth));
+    } else if (pulsewidth >= 1.0 && fmod(pulsewidth, 1.0) < 0.1) {
+        sprintf(waveform->name + k, "%02.0f", pulsewidth);
+    } else {
+        sprintf(waveform->name + k, "%04.1f", pulsewidth);
+    }
+
     // Test with BW 20-MHz, count = 5 ==> SBW = 4-MHz for each hop
     // Frequency span: [-10, -6], [-6, -2], [-2, +2], [+2, +6], [+6, +10]
     // Hop Identifier:     (0)       (1)       (2)       (3)       (4)
-    // Hop Anchor    :    (-2)      (-1)       (0)      (+1)      (+2)
-    
+    // Hop Anchor = i:    (-2)      (-1)       (0)      (+1)      (+2)
+    // Some variables:
+    // fl = lower bound frequency of the subband
+    // fh = upper bound frequency of the subband
+    // kappa = rate of frequency change
+    // beta = argument for exp() / cos()-sin() pair
     double beta, kappa, omega, theta;
     for (k = 0; k < waveform->count; k++) {
         i = j - count / 2;
         fl = ((double)i - 0.5) * sbw;
-        fh = ((double)i + 0.5) * sbw;
-        printf("k = %d   j = %d -> %+2d [%+6.2f %+6.2f]\n", k, j, i, 1.0e-6 * fl, 1.0e-6 * fh);
+        fu = ((double)i + 0.5) * sbw;
+        printf("k = %d   j = %d -> i = %+2d = [%+6.2f %+6.2f] MHz\n", k, j, i, 1.0e-6 * fl, 1.0e-6 * fu);
         omega = 2.0 * M_PI * fl / fs;
         theta = omega * (double)(waveform->depth / 2);
         kappa = 2.0 * M_PI * sbw / pulsewidth / (fs * fs);
+        waveform->filterCounts[k] = 1;
+        waveform->filterAnchors[k][0].name = i;
+        waveform->filterAnchors[k][0].origin = 0;
+        waveform->filterAnchors[k][0].length = waveform->depth;
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;
+        waveform->filterAnchors[k][0].subCarrierFrequency = omega;
         RKInt16C *w = waveform->iSamples[k];
         RKComplex *x = waveform->samples[k];
         for (i = 0; i < waveform->depth; i++) {
@@ -367,6 +386,7 @@ RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double 
             x++;
             w++;
         }
+        // Get ready for the next frequency when we are in odd index
         if (k % 2 == 1) {
             j += stride;
             if (j >= count) {
