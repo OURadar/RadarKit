@@ -1407,8 +1407,8 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
 
 void RKTestWaveformHoppingLFM(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsFrequencyHoppingChirp(50.0e6, 20.0e6, 1.0e-6, 5);
-    
+    RKWaveform *waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 20.0e6, 1.5e-6, 5);
+    RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 }
 

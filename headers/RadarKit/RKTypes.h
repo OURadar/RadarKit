@@ -244,6 +244,8 @@ typedef union rk_filter_anchor {
         float         sensitivityGain;                                         // Sensitivity gain due to longer/efficient waveforms (dB)
         float         filterGain;                                              // Filter gain from the filter coefficients, should be 0.0 (dB)
         float         fullScale;                                               // Scaling factor to get to full scale
+        float         lowerBoundFrequency;                                     // For house Keeping only
+        float         upperBoundFrequency;                                     // For house Keeping only
     };
     char bytes[64];
 } RKFilterAnchor;
@@ -817,7 +819,8 @@ enum RKWaveformType {
     RKWaveformTypeLinearFrequencyModulation      = (1 << 3),                   //
     RKWaveformTypeTimeFrequencyMultiplexing      = (1 << 4),                   //
     RKWaveformTypeFromFile                       = (1 << 5),                   //
-    RKWaveformTypeFlatAnchors                    = (1 << 6)                    // Frequency hopping has multiple waveforms but the anchors are identical
+    RKWaveformTypeFlatAnchors                    = (1 << 6),                   // Frequency hopping has multiple waveforms but the anchors are identical
+    RKWaveformTypeFrequencyHoppingChirp          = (1 << 7)                    //
 };
 
 typedef uint32_t RKEventType;
