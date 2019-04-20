@@ -82,9 +82,9 @@ RKWaveform *RKWaveformInitAsImpulse(void);
 RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth);
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
 RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count);
-
 RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth, const double pulsewidth);
+RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double bandwidth, const double pulsewidth, const int count);
 
 RKResult RKWaveformAppendWaveform(RKWaveform *, const RKWaveform *appendix, const uint32_t transitionSamples);
 RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...);

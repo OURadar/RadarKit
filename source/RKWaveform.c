@@ -327,6 +327,61 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     return waveform;
 }
 
+RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double bandwidth, const double pulsewidth, const int count) {
+    uint32_t depth = (uint32_t)round(pulsewidth * fs);
+    if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
+        RKLog("Info. Waveform depth %.2f us --> %.2f us due to rounding @ fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
+    }
+
+    int i, j = 0, k = 0;
+    int stride = RKBestStrideOfHops(count, true);
+    float fl, fh;
+    const double sbw = bandwidth / (double)count;
+    
+    //RKWaveform *waveform = RKWaveformInitWithCountAndDepth(N, depth);
+    
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
+    
+    // Test with BW 20-MHz, count = 5 ==> SBW = 4-MHz for each hop
+    // Frequency span: [-10, -6], [-6, -2], [-2, +2], [+2, +6], [+6, +10]
+    // Hop Identifier:     (0)       (1)       (2)       (3)       (4)
+    // Hop Anchor    :    (-2)      (-1)       (0)      (+1)      (+2)
+    
+    double beta, kappa, omega, theta;
+    for (k = 0; k < waveform->count; k++) {
+        i = j - count / 2;
+        fl = ((double)i - 0.5) * sbw;
+        fh = ((double)i + 0.5) * sbw;
+        printf("k = %d   j = %d -> %+2d [%+6.2f %+6.2f]\n", k, j, i, 1.0e-6 * fl, 1.0e-6 * fh);
+        omega = 2.0 * M_PI * fl / fs;
+        theta = omega * (double)(waveform->depth / 2);
+        kappa = 2.0 * M_PI * sbw / pulsewidth / (fs * fs);
+        RKInt16C *w = waveform->iSamples[k];
+        RKComplex *x = waveform->samples[k];
+        for (i = 0; i < waveform->depth; i++) {
+            beta = omega * i + 0.5 * kappa * i * i;
+            x->i = cosf(beta);
+            x->q = sinf(beta);
+            w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
+            w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
+            x++;
+            w++;
+        }
+        if (k % 2 == 1) {
+            j += stride;
+            if (j >= count) {
+                j -= count;
+            }
+        }
+    }
+    RKWaveformNormalizeNoiseGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
+    
+    return waveform;
+}
+
+#pragma mark - Tile / Concatenate / Repeat
+
 RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *appendix, const uint32_t transitionSamples) {
     
     if (waveform->fs != appendix->fs) {
