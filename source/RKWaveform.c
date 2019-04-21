@@ -471,7 +471,7 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
 }
 
 RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...) {
-    int k;
+    int j, k;
     va_list args;
     RKFloat *w;
     RKInt16C *x;
@@ -499,17 +499,19 @@ RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ..
     }
     g = sqrt(waveform->depth / g);
 
-    w = window;
-    x = waveform->iSamples[0];
-    y = waveform->samples[0];
-    for (k = 0; k < waveform->depth; k++) {
-        x->i = (int16_t)((RKFloat)x->i * *w);
-        x->q = (int16_t)((RKFloat)x->q * *w);
-        y->i *= (*w * g);
-        y->q *= (*w * g);
-        w++;
-        x++;
-        y++;
+    for (j = 0; j < waveform->count; j++) {
+        w = window;
+        x = waveform->iSamples[j];
+        y = waveform->samples[j];
+        for (k = 0; k < waveform->depth; k++) {
+            x->i = (int16_t)((RKFloat)x->i * *w);
+            x->q = (int16_t)((RKFloat)x->q * *w);
+            y->i *= (*w * g);
+            y->q *= (*w * g);
+            w++;
+            x++;
+            y++;
+        }
     }
 
     free(window);
@@ -955,7 +957,6 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w3 + 1,
                 w4 + 5);
     }
-    //printf("%s\n", format);
     // Now we show the summary
     RKLog("Waveform '%s' (%s)   depth = %d x %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
           waveform->name,

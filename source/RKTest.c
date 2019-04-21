@@ -1363,7 +1363,6 @@ void RKTestWaveformShowProperties(void) {
 
     RKWaveformDownConvert(waveform);
     RKWaveformSummary(waveform);
-
     RKWaveformFree(waveform);
 
     printf("\n");
@@ -1375,7 +1374,6 @@ void RKTestWaveformShowProperties(void) {
 
     RKWaveformDownConvert(waveform);
     RKWaveformSummary(waveform);
-
     RKWaveformFree(waveform);
 
     printf("\n");
@@ -1408,6 +1406,8 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
 void RKTestWaveformHoppingLFM(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 20.0e6, 1.5e-6, 5);
+    RKWaveformSummary(waveform);
+    RKWaveformDecimate(waveform, 4);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 }
