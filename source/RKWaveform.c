@@ -242,7 +242,7 @@ RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const d
 
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
-    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, bandwidth);
     return waveform;
 }
 
@@ -478,8 +478,10 @@ void RKWaveformSingleTone(RKWaveform *waveform, const double fs, const double fc
     RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
 }
 
-void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double pulsewidth, const double bandwidth) {
+void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
     int i;
+
+    const double pulsewidth = waveform->depth / fs;
 
     // Other parameters
     waveform->fc = fc;

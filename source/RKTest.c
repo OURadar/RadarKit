@@ -2023,7 +2023,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
 
-
     // g gate index
     // j sample index
     // k pseudo-random sequence to choose the pre-defined random numbers
@@ -2363,7 +2362,6 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     double bandwidth;
     double pulsewidth;
     double value;
-    unsigned int pulsewidthSampleCount;
 
     RKWaveform *waveform = NULL;
     char string[RKMaximumPathLength];
@@ -2480,26 +2478,27 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             } else {
                 c++;
             }
-            if ((*c == 's' || *c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
-                // Something like s01, t02, q05, etc.
-                strcpy(string, c);
-                RKStripTail(string);
+            if (*c == 's' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
+                // Something like s01, s02, etc.
                 pulsewidth = 1.0e-6 * atof(c + 1);
-                pulsewidthSampleCount = pulsewidth * transceiver->fs;
                 RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
-                waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
-                if (*c == 's') {
-                    // Rectangular single tone
-                    RKWaveformSingleTone(waveform, transceiver->fs, 0.0);
-                } else if (*c == 't') {
-                    // Rectangular single tone at 0.1 MHz
-                    RKWaveformSingleTone(waveform, transceiver->fs, 0.1e6);
+                waveform = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, pulsewidth);
+            } else if ((*c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
+                // Something like t0101, t0102, q0201, q0205, etc.
+                string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
+                bandwidth = 1.0e6 * atof(string);
+                pulsewidth = 1.0e-6 * atof(c + 3);
+                RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
+                if (*c == 't') {
+                    // Rectangular single tone at (bandwidth) MHz
+                    waveform = RKWaveformInitAsSingleTone(transceiver->fs, bandwidth, pulsewidth);
                 } else if (*c == 'q') {
                     // LFM at half of the bandwidth capacity
-                    RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
+                    waveform = RKWaveformInitAsLinearFrequencyModulation(transceiver->fs, -0.5 * bandwidth, pulsewidth, bandwidth);
+                    if (bandwidth > transceiver->fs) {
+                        RKLog("%s Warning. Aliasing.   bandwidth = %.2f MHz > fs = %.2f MHz\n", transceiver->name, 1.0e-6 * bandwidth, 1.0e-6 * transceiver->fs);
+                    }
                 }
-                // Override the waveform name
-                strncpy(waveform->name, c, RKNameLength);
             } else if (*c == 'h' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
                 // Something like h1005, h2007, etc.
                 string[0] = c[1]; string[1] = c[2]; string[2] = '\0';

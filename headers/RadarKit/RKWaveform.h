@@ -91,7 +91,7 @@ RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ..
 
 void RKWaveformOnes(RKWaveform *);
 void RKWaveformSingleTone(RKWaveform *, const double fs, const double fc);
-void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double pulsewidth, const double bandwidth);
+void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double bandwidth);
 void RKWaveformFrequencyHops(RKWaveform *, const double fs, const double fc, const double bandwidth);
 void RKWaveformFrequencyHoppingChirp(RKWaveform *, const double fs, const double fc, const double bandwidth);
 
