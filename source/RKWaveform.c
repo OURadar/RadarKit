@@ -236,7 +236,6 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
 RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
     RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
-    sprintf(waveform->name, "s%02.0f", 1.0e-6 * fs);
     return waveform;
 }
 
@@ -526,7 +525,7 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 //
 void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
     int i, k, n;
-    double f, omega, psi, pw;
+    double f, omega, psi, pulsewidth;
     RKComplex *x;
     RKInt16C *w;
     
@@ -546,13 +545,15 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
             k = sprintf(waveform->name, "s");
         }
     }
-    pw = 1.0e6 * waveform->depth / waveform->fs;
-    if (pw < 1.0) {
-        sprintf(waveform->name + k, ".%.0f", round(10.0 * pw));
-    } else if (pw >= 1.0) {
-        sprintf(waveform->name + k, "%02.0f", pw);
+    pulsewidth = waveform->depth / waveform->fs;
+    if (pulsewidth < 1.0e-6) {
+        sprintf(waveform->name + k, ".%.0f", round(10.0e6 * pulsewidth));
+    } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
+        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
+    } else {
+        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
     }
-    
+
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
     
     // A good sequence can be achieved through a modulo sequence.
@@ -606,12 +607,12 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
 
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHoppingChirp;
-    // c[bb][cc][wwww]
-    // c201100.5 = 20 MHz, 11 hops, 0.5us
-    // c200501   = 20 MHz, 5 hops, 1.0us
-    // c200501.5 = 20 MHz, 5 hops, 1.5us
-    // c200502   = 20M Hz, 5 hops, 2.0us
-    k = sprintf(waveform->name, "i%02.0f%02d", 1.0e-6 * bandwidth, count);
+    // k[bb][cc][wwww]
+    // k201100.5 = 20 MHz, 11 hops, 0.5us
+    // k200501   = 20 MHz, 5 hops, 1.0us
+    // k200501.5 = 20 MHz, 5 hops, 1.5us
+    // k200502   = 20M Hz, 5 hops, 2.0us
+    k = sprintf(waveform->name, "k%02.0f%02d", 1.0e-6 * bandwidth, count);
     if (pulsewidth < 1.0e-6) {
         sprintf(waveform->name + k, ".%.1f", round(10.0e6 * pulsewidth));
     } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
@@ -636,10 +637,9 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
         i = j - count / 2;
         fl = ((double)i - 0.5) * sbw + fc;
         fu = ((double)i + 0.5) * sbw + fc;
-        //printf("k = %d   j = %d -> i = %+2d = [%+6.2f %+6.2f] MHz\n", k, j, i, 1.0e-6 * fl, 1.0e-6 * fu);
         omega = 2.0 * M_PI * fl / fs;
-        theta = omega * (double)(waveform->depth / 2);
         kappa = 2.0 * M_PI * sbw / pulsewidth / (fs * fs);
+        theta = omega * (double)(waveform->depth / 2) + 0.5 * kappa * pow((double)(waveform->depth / 2), 2.0);
         waveform->filterCounts[k] = 1;
         waveform->filterAnchors[k][0].name = j;
         waveform->filterAnchors[k][0].origin = 0;
