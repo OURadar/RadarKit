@@ -484,10 +484,12 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     waveform->fc = fc;
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeLinearFrequencyModulation;
-    if (bandwidth == 0.0) {
-        sprintf(waveform->name, "s%02d", (int)(1.0e6 * pulsewidth));
+    if (bandwidth == 0.0 && fc == 0.0) {
+        sprintf(waveform->name, "s%02.0f", 1.0e6 * pulsewidth);
+    } else if (bandwidth == 0.0) {
+        sprintf(waveform->name, "t%02.0f%02.0f", 1.0e-6 * fc, 1.0e6 * pulsewidth);
     } else if (bandwidth >= 1.0e6 && bandwidth < 100.0e6f) {
-        sprintf(waveform->name, "q%02d", (int)(1.0e6 * pulsewidth));
+        sprintf(waveform->name, "q%02.0f%02.0f", 1.0e-6 * bandwidth, 1.0e6 * pulsewidth);
     } else {
         sprintf(waveform->name, "lfm");
     }
