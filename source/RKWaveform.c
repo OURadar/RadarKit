@@ -236,6 +236,7 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
 RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
     RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
+//    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, 0.0);
     return waveform;
 }
 
@@ -535,6 +536,7 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
     const bool sequential = false;
     
     waveform->fs = fs;
+    waveform->fc = fc;
     waveform->type = RKWaveformTypeIsComplex;
     if (bandwidth > 0.0) {
         waveform->type |= RKWaveformTypeFrequencyHopping;
@@ -608,6 +610,7 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
     const double pulsewidth = waveform->depth / fs;
 
     waveform->fs = fs;
+    waveform->fc = fc;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHoppingChirp;
     // k[bb][cc][wwww]
     // k201100.5 = 20 MHz, 11 hops, 0.5us

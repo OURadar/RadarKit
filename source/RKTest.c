@@ -1357,7 +1357,7 @@ void RKTestWaveformDownsampling(void) {
 void RKTestWaveformShowProperties(void) {
     SHOW_FUNCTION_NAME
     //RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
-    RKWaveform *waveform = RKWaveformInitAsSingleTone(160.0e6, 50.0e6, 1.0e-6);
+    RKWaveform *waveform = RKWaveformInitAsSingleTone(160.0e6, 1.0e6, 1.0e-6);
     RKWaveformSummary(waveform);
 
     printf("\n");
