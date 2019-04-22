@@ -1552,7 +1552,7 @@ int RKSetMomentProcessorToSpectralMoment(RKRadar *radar) {
     return RKResultSuccess;
 }
 
-int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *)) {
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, const char *)) {
     RKSweepEngineSetProductRecorder(radar->sweepEngine, productRecorder);
     return RKResultSuccess;
 }

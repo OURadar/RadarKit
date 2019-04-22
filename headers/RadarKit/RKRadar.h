@@ -255,7 +255,7 @@ int RKSetMomentProcessorToPulsePairStaggeredPRT(RKRadar *);
 int RKSetMomentProcessorToSpectralMoment(RKRadar *);
 
 // Moment recorder (RadarKit uses netcdf by default)
-int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, char *));
+int RKSetProductRecorder(RKRadar *radar, int (*productRecorder)(RKProduct *, const char *));
 
 // Pulse ring filter (FIR / IIR ground clutter filter)
 int RKSetPulseRingFilterByType(RKRadar *, RKFilterType, const uint32_t);
