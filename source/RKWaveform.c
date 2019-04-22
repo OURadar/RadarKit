@@ -954,8 +954,8 @@ void RKWaveformSummary(RKWaveform *waveform) {
     } else {
         sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   %%+6.3f rad/s\n",
                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
-                waveform->filterCounts[k] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[k] - 1) + 1,
-                (int)log10f((float)waveform->filterCounts[k]) + 1,
+                waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
+                (int)log10f((float)waveform->filterCounts[0]) + 1,
                 w0 + 1,
                 w1 + 1,
                 w2 + 1,
