@@ -75,7 +75,6 @@ char *RKTestByNumberDescription(const int indent) {
     "33 - Test waveform down-sampling\n"
     "34 - Test showing built-in waveform properties\n"
     "35 - Test showing waveform properties; -T35 WAVEFORM_FILE\n"
-    "36 - Test generating a hopping chirp\n"
     "\n"
     "40 - Pulse compression using simple cases\n"
     "41 - Calculating one ray using the Pulse Pair method\n"
@@ -209,9 +208,6 @@ void RKTestByNumber(const int number, const void *arg) {
                 exit(EXIT_FAILURE);
             }
             RKTestWaveformShowUserWaveformProperties((char *)arg);
-            break;
-        case 36:
-            RKTestWaveformHoppingChirp();
             break;
         case 40:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
@@ -1369,12 +1365,6 @@ void RKTestWaveformShowProperties(void) {
 
     printf("\n");
 
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
     waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 2.0e-6, 1.0e6);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
@@ -1386,32 +1376,7 @@ void RKTestWaveformShowProperties(void) {
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 
-//    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-//    RKWaveformSummary(waveform);
-//
-//    printf("\n");
-//
-//    RKWaveformDownConvert(waveform);
-//    RKWaveformSummary(waveform);
-//    RKWaveformFree(waveform);
-//
-//    printf("\n");
-//
-//    waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
-//    RKWaveformSummary(waveform);
-//    RKWaveformFree(waveform);
-}
-
-void RKTestWaveformShowUserWaveformProperties(const char *filename) {
-    SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitFromFile(filename);
-    RKWaveformSummary(waveform);
-    RKWaveformFree(waveform);
-}
-
-void RKTestWaveformHoppingChirp(void) {
-    SHOW_FUNCTION_NAME
-    RKWaveform *waveform;
+    printf("\n");
     
     waveform = RKWaveformInitAsFrequencyHops(200.0e6, 0.0, 1.0e-6, 20.0e6, 5);
     RKWaveformSummary(waveform);
@@ -1421,15 +1386,47 @@ void RKTestWaveformHoppingChirp(void) {
     RKWaveformDecimate(waveform, 4);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
+    
+    printf("\n");
+    
+    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.5e-6, 5);
+    RKWaveformSummary(waveform);
+    
+    printf("\n");
+    
+    RKWaveformDecimate(waveform, 4);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    if (!RKFilenameExists("waveforms/ofm.rkwav")) {
+        return;
+    }
 
     printf("\n");
 
-    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.5e-6, 5);
+    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
     RKWaveformSummary(waveform);
 
     printf("\n");
 
-    RKWaveformDecimate(waveform, 4);
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    if (!RKFilenameExists("waveforms/barker03.rkwav")) {
+        return;
+    }
+
+    printf("\n");
+
+    waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+}
+
+void RKTestWaveformShowUserWaveformProperties(const char *filename) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitFromFile(filename);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 }

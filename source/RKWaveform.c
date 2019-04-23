@@ -235,8 +235,7 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
 
 RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
-    RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
-//    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, 0.0);
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, 0.0);
     return waveform;
 }
 
