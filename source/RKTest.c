@@ -1356,8 +1356,9 @@ void RKTestWaveformDownsampling(void) {
 
 void RKTestWaveformShowProperties(void) {
     SHOW_FUNCTION_NAME
-    //RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
-    RKWaveform *waveform = RKWaveformInitAsSingleTone(160.0e6, 1.0e6, 1.0e-6);
+    RKWaveform *waveform;
+    
+    waveform = RKWaveformInitAsSingleTone(160.0e6, 1.0e6, 1.0e-6);
     RKWaveformSummary(waveform);
 
     printf("\n");
@@ -1367,17 +1368,6 @@ void RKTestWaveformShowProperties(void) {
     RKWaveformFree(waveform);
 
     printf("\n");
-
-//    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-//    RKWaveformSummary(waveform);
-//
-//    printf("\n");
-//
-//    RKWaveformDownConvert(waveform);
-//    RKWaveformSummary(waveform);
-//    RKWaveformFree(waveform);
-//
-//    printf("\n");
 
     waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
     RKWaveformSummary(waveform);
@@ -1395,6 +1385,21 @@ void RKTestWaveformShowProperties(void) {
     RKWaveformDownConvert(waveform);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
+
+//    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+//    RKWaveformSummary(waveform);
+//
+//    printf("\n");
+//
+//    RKWaveformDownConvert(waveform);
+//    RKWaveformSummary(waveform);
+//    RKWaveformFree(waveform);
+//
+//    printf("\n");
+//
+//    waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+//    RKWaveformSummary(waveform);
+//    RKWaveformFree(waveform);
 }
 
 void RKTestWaveformShowUserWaveformProperties(const char *filename) {
@@ -1406,18 +1411,20 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
 
 void RKTestWaveformHoppingChirp(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 20.0e6, 1.5e-6, 5);
+    RKWaveform *waveform;
+    
+    waveform = RKWaveformInitAsFrequencyHops(200.0e6, 0.0, 1.0e-6, 20.0e6, 5);
     RKWaveformSummary(waveform);
-
+    
     printf("\n");
-
+    
     RKWaveformDecimate(waveform, 4);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 
     printf("\n");
-    
-    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 2.0e-6, 5);
+
+    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.5e-6, 5);
     RKWaveformSummary(waveform);
 
     printf("\n");
