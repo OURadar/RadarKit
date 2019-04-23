@@ -510,11 +510,11 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 
     RKInt16C *w = waveform->iSamples[0];
     RKComplex *x = waveform->samples[0];
-    double omega_c = 2.0 * M_PI * fc / fs;
-    double k = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
+    double omega = 2.0 * M_PI * fc / fs;
+    double kappa = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
     for (i = 0; i < waveform->depth; i++) {
-        x->i = cosf(omega_c * i + 0.5 * k * i * i);
-        x->q = sinf(omega_c * i + 0.5 * k * i * i);
+        x->i = cosf(omega * i + 0.5 * kappa * i * i);
+        x->q = sinf(omega * i + 0.5 * kappa * i * i);
         w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
         w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
         x++;
@@ -582,8 +582,8 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
         for (i = 0; i < waveform->depth; i++) {
             x->i = cos(omega * i - psi);
             x->q = sin(omega * i - psi);
-            w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
-            w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
+            w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
+            w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
             x++;
             w++;
         }
