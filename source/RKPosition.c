@@ -258,7 +258,7 @@ static void *pulseTagger(void *_in) {
         }
 
 		// Mode change also indicates a start
-		if ((marker1 & RKPositionFlagScanMode) != (marker0 & RKPositionFlagScanMode)) {
+		if ((marker1 & RKPositionFlagScanModeMask) != (marker0 & RKPositionFlagScanModeMask)) {
 			marker0 |= RKMarkerSweepBegin;
 		}
 
