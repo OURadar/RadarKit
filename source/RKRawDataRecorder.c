@@ -176,7 +176,6 @@ static void *pulseRecorder(void *in) {
             } else {
                 RKPreparePath(filename);
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
-                RKLog("%s config->i = %d", engine->name, fileHeader->config.i);
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
             }
