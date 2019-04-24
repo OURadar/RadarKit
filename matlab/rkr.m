@@ -1,6 +1,6 @@
-filename = blib('choosefile', '~/Downloads', '*.rkr');
-if ~exist('showAnimation', 'var'), showAnimation = true; end
-if ~exist('generatePNG', 'var'), generatePNG = true; end
+if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rkr'); end
+if ~exist('showAnimation', 'var'), showAnimation = false; end
+if ~exist('generatePNG', 'var'), generatePNG = false; end
 
 dat = iqread(filename);
 
