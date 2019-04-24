@@ -1389,7 +1389,7 @@ void RKTestWaveformShowProperties(void) {
     
     printf("\n");
     
-    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.5e-6, 5);
+    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.6e-6, 5);
     RKWaveformSummary(waveform);
     
     printf("\n");
