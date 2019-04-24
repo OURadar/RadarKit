@@ -21,6 +21,7 @@
 //         - Added RKWaveformInitAsFrequencyHoppingChirp()
 //         - Redefined RKPositionFlag for pedzy 2.0.
 //           - Added end of volume flag
+//         - Updated MATLAB reader for raw data buildNo >= 2
 //
 //  2.1.4  - 4/18/2019
 //         - Removed AScope mode 2, renamed others

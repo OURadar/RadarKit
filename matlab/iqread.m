@@ -57,7 +57,7 @@ classdef iqread
                         'uint8',  [1 self.constants.RKNameLength], 'name_raw'; ...
                         'uint8',  [1 self.constants.RKNameLength], 'filePrefix_raw'; ...
                         'uint8',  [1 self.constants.RKMaximumPathLength], 'dataPath_raw'});
-            elseif self.header.buildNo == 2
+            elseif self.header.buildNo >= 2
                 h = memmapfile(self.filename, ...
                     'Offset', self.constants.RKNameLength + 4, ...    % RKNameLength * (char) + (uint32_t)
                     'Repeat', 1, ...
@@ -127,7 +127,7 @@ classdef iqread
                 self.header.config = c.data;
                 self.header.config.waveform = deblank(char(self.header.config.waveform_raw));
                 self.header.config.vcpDefinition = deblank(char(self.header.config.vcpDefinition_raw));
-            elseif self.header.buildNo == 2
+            elseif self.header.buildNo >= 2
                 % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfig
                 offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc;
                 c = memmapfile(self.filename, ...
