@@ -40,7 +40,7 @@
 #define _RKVersionBranch ""
 #endif
 
-#define _RKVersionString "2.1.3" _RKVersionBranch
+#define _RKVersionString "2.2" _RKVersionBranch
 
 //
 // Memory Blocks
@@ -401,18 +401,18 @@ enum RKPositionFlag {
     RKPositionFlagAzimuthError       = (1 << 2),
     RKPositionFlagAzimuthSweep       = (1 << 8),
     RKPositionFlagAzimuthPoint       = (1 << 9),
-    RKPositionFlagAzimuthMode        = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
     RKPositionFlagAzimuthComplete    = (1 << 10),
     RKPositionFlagElevationEnabled   = (1 << 16),
     RKPositionFlagElevationSafety    = (1 << 17),
     RKPositionFlagElevationError     = (1 << 18),
     RKPositionFlagElevationSweep     = (1 << 24),
     RKPositionFlagElevationPoint     = (1 << 25),
-    RKPositionFlagElevationMode      = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
     RKPositionFlagElevationComplete  = (1 << 26),
     RKPositionFlagScanActive         = (1 << 28),
-    RKPositionFlagScanMode           = (RKPositionFlagAzimuthMode | RKPositionFlagElevationMode),
     RKPositionFlagVCPActive          = (1 << 29),
+    RKPositionFlagAzimuthModeMask    = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
+    RKPositionFlagElevationModeMask  = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
+    RKPositionFlagScanModeMask       = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask),
     RKPositionFlagHardwareMask       = 0x3FFFFFFF,
     RKPositionFlagUsed               = (1 << 30),
     RKPositionFlagReady              = (1 << 31)
@@ -425,7 +425,6 @@ enum RKHeadingType {
     RKHeadingTypeAdd180,
     RKHeadingTypeAdd270
 };
-
 
 typedef uint32_t RKStatusFlag;
 enum RKStatusFlag {

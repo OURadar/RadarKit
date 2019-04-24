@@ -15,8 +15,12 @@
 //           - v3.0 - Cloud communication (reverse relay)
 //           - Task, event, sequence of tasks
 //         - Minor:
-//           - LFM frequency hopping
 //           - Mapping coefficients to product files
+//
+//  2.2    - 4/30/2019
+//         - Added RKWaveformInitAsFrequencyHoppingChirp()
+//         - Redefined RKPositionFlag for pedzy 2.0.
+//           - Added end of volume flag
 //
 //  2.1.4  - 4/18/2019
 //         - Removed AScope mode 2, renamed others
