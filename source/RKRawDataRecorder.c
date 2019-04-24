@@ -63,6 +63,7 @@ static void *pulseRecorder(void *in) {
     memset(fileHeader, 0, sizeof(RKFileHeader));
     sprintf(fileHeader->preface, "RadarKit/RawIQ");
     fileHeader->buildNo = 2;
+    memcpy(&fileHeader->desc, engine->radarDescription, sizeof(RKRadarDesc));
     fileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
     fileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
     fileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
@@ -175,6 +176,7 @@ static void *pulseRecorder(void *in) {
             } else {
                 RKPreparePath(filename);
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
+                RKLog("%s config->i = %d", engine->name, fileHeader->config.i);
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
             }
