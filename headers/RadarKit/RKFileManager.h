@@ -57,7 +57,6 @@
 #define RKFileManagerRawDataRatio          800
 #define RKFileManagerMomentDataRatio       400
 #define RKFileManagerHealthDataRatio       10
-#define RKFileManagerLogDataRatio          1
 #define RKFileManagerDefaultLogAgeInDays   30
 
 typedef struct rk_file_remover RKFileRemover;
@@ -91,8 +90,11 @@ struct rk_file_manager {
     RKRadarDesc                      *radarDescription;                   // This takes precedence over dataPath[] if both are set
     uint8_t                          verbose;                             // Verbosity level
     char                             dataPath[RKMaximumFolderPathLength]; // Can be empty. In this case all folders are relative to the path where it is executed
-    size_t                           usagelimit;                          // Overall usage limit in bytes
+    size_t                           usagelimit;                          // Overall usage limit in bytes if no user limits are set
     int                              maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
+    size_t                           userRawDataUsageLimit;               // User set raw data usage limit
+    size_t                           userMomentDataUsageLimit;            // User set moment data usage limit
+    size_t                           userHealthDataUsageLimit;            // User set health data usage limit
 
     // Program set variables
     uint64_t                         tic;
@@ -113,8 +115,11 @@ void RKFileManagerFree(RKFileManager *);
 void RKFileManagerSetVerbose(RKFileManager *, const int);
 void RKFileManagerSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
 void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
-void RKFileManagerSetDiskUsageLimit(RKFileManager *, const size_t );
+void RKFileManagerSetDiskUsageLimit(RKFileManager *, const size_t);
 void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *, const int age);
+void RKFileManagerSetRawDataLimit(RKFileManager *, const size_t);
+void RKFileManagerSetMomentDataLimit(RKFileManager *, const size_t);
+void RKFileManagerSetHealthDataLimit(RKFileManager *, const size_t);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);

@@ -438,7 +438,13 @@ static void *folderWatcher(void *in) {
         1,
         0
     };
-
+    const size_t userLimits[] = {
+        0,
+        0,
+        0,
+        0
+    };
+    
 #else
 
     const int capacities[] = {
@@ -453,7 +459,13 @@ static void *folderWatcher(void *in) {
         RKFileManagerHealthDataRatio,
         0
     };
-
+    const size_t userLimits[] = {
+        engine->userRawDataUsageLimit,
+        engine->userMomentDataUsageLimit,
+        engine->userHealthDataUsageLimit,
+        0
+    };
+    
 #endif
     
     const size_t sumOfLimits = limits[0] + limits[1] + limits[2];
@@ -482,7 +494,11 @@ static void *folderWatcher(void *in) {
             snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s", folders[k]);
         }
         
-        worker->limit = engine->usagelimit * limits[k] / sumOfLimits;
+        if (userLimits[k]) {
+            worker->limit = userLimits[k];
+        } else {
+            worker->limit = engine->usagelimit * limits[k] / sumOfLimits;
+        }
 
         // Workers that actually remove the files (and folders)
         if (pthread_create(&worker->tid, NULL, fileRemover, worker) != 0) {
@@ -527,8 +543,6 @@ static void *folderWatcher(void *in) {
                 }
                 if (fileStat.st_ctime < now - longTime) {
                     RKLog("%s Removing %s ...\n", engine->name, string);
-                    //snprintf(string, RKMaximumPathLength - 1, "rm -f %s/%s", logPath, dir->d_name);
-                    //system(string);
                     remove(string);
                 }
             }
@@ -598,12 +612,25 @@ void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age) {
     engine->maximumLogAgeInDays = age;
 }
 
+void RKFileManagerSetRawDataLimit(RKFileManager *engine, const size_t limit) {
+    engine->userRawDataUsageLimit = limit;
+}
+
+void RKFileManagerSetMomentDataLimit(RKFileManager *engine, const size_t limit) {
+    engine->userMomentDataUsageLimit = limit;
+}
+
+void RKFileManagerSetHealthDataLimit(RKFileManager *engine, const size_t limit) {
+    engine->userHealthDataUsageLimit = limit;
+}
+
 #pragma mark - Interactions
 
 int RKFileManagerStart(RKFileManager *engine) {
     // File manager is always assumed wired, dataPath may be empty
     engine->state |= RKEngineStateProperlyWired;
-    if (engine->usagelimit == 0) {
+    if (engine->userRawDataUsageLimit == 0 && engine->userMomentDataUsageLimit == 0 && engine->userHealthDataUsageLimit == 0 &&
+        engine->usagelimit == 0) {
         engine->usagelimit = RKFileManagerDefaultUsageLimit;
         RKLog("%s Usage limit not set, use default %s%s B%s (%s %s)\n",
               engine->name,
