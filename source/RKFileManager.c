@@ -605,22 +605,42 @@ void RKFileManagerSetPathToMonitor(RKFileManager *engine, const char *path) {
 }
 
 void RKFileManagerSetDiskUsageLimit(RKFileManager *engine, const size_t limit) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Data limit can only be set before it is started.\n", engine->name);
+        return;
+    }
     engine->usagelimit = limit;
 }
 
 void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *engine, const int age) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Data limit can only be set before it is started.\n", engine->name);
+        return;
+    }
     engine->maximumLogAgeInDays = age;
 }
 
 void RKFileManagerSetRawDataLimit(RKFileManager *engine, const size_t limit) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Data limit can only be set before it is started.\n", engine->name);
+        return;
+    }
     engine->userRawDataUsageLimit = limit;
 }
 
 void RKFileManagerSetMomentDataLimit(RKFileManager *engine, const size_t limit) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Data limit can only be set before it is started.\n", engine->name);
+        return;
+    }
     engine->userMomentDataUsageLimit = limit;
 }
 
 void RKFileManagerSetHealthDataLimit(RKFileManager *engine, const size_t limit) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Data limit can only be set before it is started.\n", engine->name);
+        return;
+    }
     engine->userHealthDataUsageLimit = limit;
 }
 
