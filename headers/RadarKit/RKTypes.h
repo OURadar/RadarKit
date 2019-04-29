@@ -394,29 +394,54 @@ enum RKValueType {
     RKValueTypeIdentifier = RKValueTypeUInt64
 };
 
+typedef uint32_t RKPositionFlagV1;
+enum RKPositionFlagV1 {
+    RKPositionFlagV1Vacant             = 0,
+    RKPositionFlagV1AzimuthEnabled     = 1,            //  0 - EN
+    RKPositionFlagV1AzimuthSafety      = (1 << 1),     //  1
+    RKPositionFlagV1AzimuthError       = (1 << 2),     //  2
+    RKPositionFlagV1AzimuthSweep       = (1 << 8),     //  8
+    RKPositionFlagV1AzimuthPoint       = (1 << 9),     //  9
+    RKPositionFlagV1AzimuthComplete    = (1 << 10),    // 10
+    RKPositionFlagV1ElevationEnabled   = (1 << 16),    //  0 - EN
+    RKPositionFlagV1ElevationSafety    = (1 << 17),    //  1
+    RKPositionFlagV1ElevationError     = (1 << 18),    //  2
+    RKPositionFlagV1ElevationSweep     = (1 << 24),    //  8
+    RKPositionFlagV1ElevationPoint     = (1 << 25),    //  9
+    RKPositionFlagV1ElevationComplete  = (1 << 26),    // 10
+    RKPositionFlagV1ScanActive         = (1 << 28),
+    RKPositionFlagV1VCPActive          = (1 << 29),
+    RKPositionFlagV1HardwareMask       = 0x3FFFFFFF,
+    RKPositionFlagV1Used               = (1 << 30),
+    RKPositionFlagV1Ready              = (1 << 31),
+    RKPositionFlagV1AzimuthModeMask    = (RKPositionFlagV1AzimuthSweep | RKPositionFlagV1AzimuthPoint),
+    RKPositionFlagV1ElevationModeMask  = (RKPositionFlagV1ElevationSweep | RKPositionFlagV1ElevationPoint),
+    RKPositionFlagV1ScanModeMask       = (RKPositionFlagV1AzimuthModeMask | RKPositionFlagV1ElevationModeMask)
+};
+
 typedef uint32_t RKPositionFlag;
 enum RKPositionFlag {
     RKPositionFlagVacant             = 0,
-    RKPositionFlagAzimuthEnabled     = 1,
-    RKPositionFlagAzimuthSafety      = (1 << 1),
-    RKPositionFlagAzimuthError       = (1 << 2),
-    RKPositionFlagAzimuthSweep       = (1 << 8),
-    RKPositionFlagAzimuthPoint       = (1 << 9),
-    RKPositionFlagAzimuthComplete    = (1 << 10),
-    RKPositionFlagElevationEnabled   = (1 << 16),
-    RKPositionFlagElevationSafety    = (1 << 17),
-    RKPositionFlagElevationError     = (1 << 18),
-    RKPositionFlagElevationSweep     = (1 << 24),
-    RKPositionFlagElevationPoint     = (1 << 25),
-    RKPositionFlagElevationComplete  = (1 << 26),
+    RKPositionFlagAzimuthEnabled     = 1,            //  0 - EN
+    RKPositionFlagAzimuthSafety      = (1 << 1),     //  1
+    RKPositionFlagAzimuthError       = (1 << 2),     //  2
+    RKPositionFlagAzimuthSweep       = (1 << 8),     //  8
+    RKPositionFlagAzimuthPoint       = (1 << 9),     //  9
+    RKPositionFlagAzimuthComplete    = (1 << 10),    // 10
+    RKPositionFlagElevationEnabled   = (1 << 16),    //  0 - EN
+    RKPositionFlagElevationSafety    = (1 << 17),    //  1
+    RKPositionFlagElevationError     = (1 << 18),    //  2
+    RKPositionFlagElevationSweep     = (1 << 24),    //  8
+    RKPositionFlagElevationPoint     = (1 << 25),    //  9
+    RKPositionFlagElevationComplete  = (1 << 26),    // 10
     RKPositionFlagScanActive         = (1 << 28),
     RKPositionFlagVCPActive          = (1 << 29),
-    RKPositionFlagAzimuthModeMask    = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
-    RKPositionFlagElevationModeMask  = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
-    RKPositionFlagScanModeMask       = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask),
     RKPositionFlagHardwareMask       = 0x3FFFFFFF,
     RKPositionFlagUsed               = (1 << 30),
-    RKPositionFlagReady              = (1 << 31)
+    RKPositionFlagReady              = (1 << 31),
+    RKPositionFlagAzimuthModeMask    = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
+    RKPositionFlagElevationModeMask  = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
+    RKPositionFlagScanModeMask       = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)
 };
 
 typedef uint32_t RKHeadingType;
