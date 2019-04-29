@@ -294,13 +294,13 @@ static void *fileRemover(void *in) {
     RKLog(">%s %s Started.   mem = %s B   capacity = %s\n",
           engine->name, me->name, RKUIntegerToCommaStyleString(mem), RKUIntegerToCommaStyleString(me->capacity));
     RKLog(">%s %s Path = %s\n", engine->name, me->name, me->path);
-    if (me->usage > 10 * 1024 * 1024) {
+    if (me->limit > 10 * 1024 * 1024) {
         RKLog(">%s %s Listed.  count = %s   usage = %s / %s MB (%.2f %%)\n", engine->name, me->name,
               RKIntegerToCommaStyleString(me->count),
               RKUIntegerToCommaStyleString(me->usage / 1024 / 1024),
               RKUIntegerToCommaStyleString(me->limit / 1024 / 1024),
               100.0f * me->usage / me->limit);
-    } else if (me->usage > 10 * 1024) {
+    } else if (me->limit > 10 * 1024) {
         RKLog(">%s %s Listed.  count = %s   usage = %s / %s KB (%.2f %%)\n", engine->name, me->name,
               RKIntegerToCommaStyleString(me->count),
               RKUIntegerToCommaStyleString(me->usage / 1024),

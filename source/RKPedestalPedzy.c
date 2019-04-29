@@ -191,10 +191,10 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
 }
 
 int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
-    RKPedestalPedzy *me = (RKPedestalPedzy *)input;
-    if (me == NULL) {
+    if (input == NULL) {
         return RKResultNoRadar;
     }
+    RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
@@ -240,10 +240,10 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 }
 
 int RKPedestalPedzyFree(RKPedestal input) {
-    RKPedestalPedzy *me = (RKPedestalPedzy *)input;
-    if (me == NULL) {
+    if (input == NULL) {
         return RKResultNoRadar;
     }
+    RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClientFree(me->client);
     free(me);
     return RKResultSuccess;
