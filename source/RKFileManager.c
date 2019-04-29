@@ -335,13 +335,13 @@ static void *fileRemover(void *in) {
             sprintf(path, "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
             if (engine->verbose) {
 				if (indexedStats[me->index].size > 1.0e9) {
-					RKLog("%s %s Removing %s (%s GB)", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-9f * indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s GB) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-9f * (float)indexedStats[me->index].size));
 				} else if (indexedStats[me->index].size > 1.0e6) {
-					RKLog("%s %s Removing %s (%s MB)", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-6f * indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s MB) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-6f * (float)indexedStats[me->index].size));
 				} else if (indexedStats[me->index].size > 1.0e3) {
-					RKLog("%s %s Removing %s (%s KB)", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-3f * indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s KB) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-3f * (float)indexedStats[me->index].size));
 				} else {
-					RKLog("%s %s Removing %s (%s B)", engine->name, me->name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s B) ...\n", engine->name, me->name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
 				}
             }
             if (!strlen(parentFolder)) {
@@ -351,7 +351,7 @@ static void *fileRemover(void *in) {
             remove(path);
             me->usage -= indexedStats[me->index].size;
             me->index++;
-			if (engine->verbose > 1) {
+			if (engine->verbose) {
 				RKLog("%s %s Usage -> %s B / %s B\n", engine->name, me->name, RKUIntegerToCommaStyleString(me->usage), RKUIntegerToCommaStyleString(me->limit));
 			}
 
@@ -359,7 +359,7 @@ static void *fileRemover(void *in) {
             if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {
                 sprintf(path, "%s/%s", me->path, parentFolder);
                 if (isFolderEmpty(path)) {
-                    RKLog("%s %s Removing folder %s that is empty.\n", engine->name, me->name, path);
+                    RKLog("%s %s Removing folder %s that is empty ...\n", engine->name, me->name, path);
                     sprintf(command, "rm -rf %s", path);
                     k = system(command);
                     if (k) {
@@ -379,7 +379,7 @@ static void *fileRemover(void *in) {
                     }
                 } else {
                     if (engine->verbose) {
-                        RKLog("%s %s Refreshing file list.\n", engine->name, me->name);
+                        RKLog("%s %s Refreshing file list ...\n", engine->name, me->name);
                     }
                     refreshFileList(me);
                 }
