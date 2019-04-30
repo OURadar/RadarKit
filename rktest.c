@@ -41,6 +41,7 @@ typedef struct user_params {
     double                   systemPCal;                                         // System calibration for P
     double                   noise[2];                                           // System noise level
     double                   SNRThreshold;                                       // SNR threshold for moment processors
+    unsigned int             diskUsageLimitGB;                                   // Disk usage limit
     RKControl                controls[RKMaximumControlCount];                    // Controls for GUI
     RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];    // Waveform specific calibration factors
     uint8_t                  engineVerbose[128];                                 // Letter A = 65, 'z' = 122
@@ -305,24 +306,25 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     if (verb) {
         RKLog("Reading user preferences ...\n");
     }
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",         user->desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKMaximumPrefixLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",     user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod", user->momentMethod,    RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",   user->ringFilter,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeFloat, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",   user->systemZCal,      RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",   &user->systemDCal,     RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",        user->noise,           RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold", &user->SNRThreshold,   RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",    &user->goCommand,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",  &user->stopCommand,    RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",    &user->ignoreGPS,      RKParameterTypeBool, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",             user->desc.name,            RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",       user->desc.filePrefix,      RKParameterTypeString, RKMaximumPrefixLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",         user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",        user->pedzyHost,            RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",       user->tweetaHost,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",     user->momentMethod,         RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",       user->ringFilter,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",         &user->desc.latitude,       RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",        &user->desc.longitude,      RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",          &user->desc.heading,        RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",       user->systemZCal,           RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",       &user->systemDCal,          RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",       &user->systemPCal,          RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",            user->noise,                RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",     &user->SNRThreshold,        RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DiskUsageLimitGB", &user->diskUsageLimitGB,    RKParameterTypeUInt,   1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",        &user->goCommand,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",      &user->stopCommand,         RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",        &user->ignoreGPS,           RKParameterTypeBool, 1);
     
     // Shortcuts
     k = 0;
@@ -667,8 +669,11 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                                   systemPreferences->coresForPulseRingFilter,
                                   systemPreferences->coresForMomentProcessor);
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
-        //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
         RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
+        if (systemPreferences->diskUsageLimitGB) {
+            RKLog("Setting disk usage limit to %s GB ...\n", RKIntegerToCommaStyleString(systemPreferences->diskUsageLimitGB));
+            RKFileManagerSetDiskUsageLimit(myRadar->fileManager, (size_t)systemPreferences->diskUsageLimitGB * (1 << 30));
+        }
     }
 
     // General attributes
@@ -798,7 +803,7 @@ int main(int argc, const char **argv) {
     } else {
         RKSetWantScreenOutput(false);
     }
-    printf("rootDataFolder = %s\n", rkGlobalParameters.rootDataFolder);
+    //printf("rootDataFolder = %s\n", rkGlobalParameters.rootDataFolder);
 
     // Initialize a radar object
     myRadar = RKInitWithDesc(systemPreferences->desc);
@@ -891,8 +896,6 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", "tar.xz");
-        
         // Radar going live
         RKGoLive(myRadar);
 

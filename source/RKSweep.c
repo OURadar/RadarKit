@@ -96,7 +96,7 @@ static void *sweepManager(void *in) {
               sweep->header.config.sweepElevation,
               S->header.startElevation , E->header.endElevation,
               S->header.startAzimuth   , E->header.endAzimuth,
-              S->header.marker & 0xFF, E->header.marker & 0xFF,
+              S->header.marker & 0xFF  , E->header.marker & 0xFF,
               RKIntegerToCommaStyleString(sweep->header.gateCount),
               rkGlobalParameters.showColor && sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
               sweep->header.rayCount,
@@ -769,7 +769,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
     RKBaseMomentList overallMomentList = 0;
 
-    //RKLog(">%s %p %p %p ... %p\n", engine->name, rays[0], rays[1], rays[2], rays[n - 1]);
+    RKLog(">%s n = %d   %p %p %p ... %p\n", engine->name, n, rays[0], rays[1], rays[2], rays[n - 1]);
 
     // Consolidate some other information and check consistencies
     uint8_t gateCountWarningCount = 0;
