@@ -1676,6 +1676,9 @@ int RKGoLive(RKRadar *radar) {
                     RKConfigKeyNull);
     }
 
+    // Now we declare the radar is live
+    radar->state |= RKRadarStateLive;
+    
     // Health Relay
     if (radar->healthRelayInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
@@ -1744,9 +1747,6 @@ int RKGoLive(RKRadar *radar) {
         radar->masterController = radar->transceiver;
         radar->masterControllerExec = radar->transceiverExec;
     }
-
-    // Now we declare the radar is live
-    radar->state |= RKRadarStateLive;
 
     // Show the udpated memory usage
     if (radar->desc.initFlags & RKInitFlagVerbose) {
