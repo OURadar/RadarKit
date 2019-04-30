@@ -2613,13 +2613,13 @@ void *RKTestPedestalRunLoop(void *input) {
     RKRadar *radar = pedestal->radar;
     
     float azimuth = 0.0f;
-    float elevation = 3.0f;
+    float elevation = 0.0f;
     double dt = 0.0;
     struct timeval t0, t1;
     unsigned long tic = 19760520;
-    bool scanStartEndPPI = true;
-    bool scanStartRHI = true;
-    bool scanEndRHI = true;
+    bool scanStartEndPPI = false;
+    bool scanStartRHI = false;
+    bool scanEndRHI = false;
     bool elTransition = false;
 
     pedestal->state |= RKEngineStateWantActive;
@@ -2659,16 +2659,19 @@ void *RKTestPedestalRunLoop(void *input) {
         position->azimuthDegrees = azimuth;
         position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
         position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
-        position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
+        position->flag |= RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
 
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             position->sweepElevationDegrees = pedestal->scanElevation;
             position->sweepAzimuthDegrees = 0.0f;
-            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+            position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
             position->sweepAzimuthDegrees = pedestal->scanAzimuth;
             position->sweepElevationDegrees = 0.0f;
-            position->flag |= RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+            position->flag |= RKPositionFlagScanActive | RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+        } else {
+            position->sweepAzimuthDegrees = 0.0f;
+            position->sweepElevationDegrees = 0.0f;
         }
         if (scanStartEndPPI) {
             scanStartEndPPI = false;
