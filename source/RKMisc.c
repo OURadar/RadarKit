@@ -396,7 +396,7 @@ char *RKFloatToCommaStyleString(const double num) {
     } else if (isnan(num)) {
         sprintf(intString, "nan");
     } else if (isinf(num)) {
-        if (num > 0) {
+        if (num > 0.0) {
             sprintf(intString, "+inf");
         } else {
             sprintf(intString, "-inf");

@@ -103,6 +103,9 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
 }
 
 int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *response) {
+    if (input == NULL) {
+        return RKResultNoRadar;
+    }
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
@@ -146,6 +149,9 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
 }
 
 int RKHealthRelayTweetaFree(RKHealthRelay input) {
+    if (input == NULL) {
+        return RKResultNoRadar;
+    }
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClientFree(me->client);
     free(me);
