@@ -36,6 +36,8 @@
 		B565B5451E5A4623000C8503 /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5441E5A4623000C8503 /* bessi.c */; };
 		B56A750B20BB01C500E8B6E9 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5A5A3372277821500A6690C /* makewave.c in Sources */ = {isa = PBXBuildFile; fileRef = B5A5A32B227781DB00A6690C /* makewave.c */; };
+		B5A5A3382279D42D00A6690C /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; };
 		B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B2058A20E43128007D48E0 /* RKSweepFile.c */; };
 		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; };
@@ -88,6 +90,15 @@
 
 /* Begin PBXCopyFilesBuildPhase section */
 		B56AB0A820A8826900E73AE9 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		B5A5A32E2277820700A6690C /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -150,6 +161,8 @@
 		B56AB0A520A732DC00E73AE9 /* pref.conf */ = {isa = PBXFileReference; lastKnownFileType = text; path = pref.conf; sourceTree = "<group>"; };
 		B56AB0AA20A8826900E73AE9 /* SimpleEmulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SimpleEmulator; sourceTree = BUILT_PRODUCTS_DIR; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
+		B5A5A32B227781DB00A6690C /* makewave.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = makewave.c; sourceTree = SOURCE_ROOT; };
+		B5A5A3302277820700A6690C /* MakeWave */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MakeWave; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5B2058820E43117007D48E0 /* RKSweepFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepFile.h; path = headers/RadarKit/RKSweepFile.h; sourceTree = "<group>"; };
 		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
@@ -220,6 +233,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B5A5A32D2277820700A6690C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5A5A3382279D42D00A6690C /* libRadarKit.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B5C1F3411AB9C118004F88CD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -271,6 +292,7 @@
 				B5C1F3441AB9C118004F88CD /* RadarKitTest */,
 				B56AB0AA20A8826900E73AE9 /* SimpleEmulator */,
 				B5DFFDBA222DB42E005CF6B3 /* ProductHeader */,
+				B5A5A3302277820700A6690C /* MakeWave */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -348,6 +370,7 @@
 			children = (
 				B5E7CB11210A4AD100D381ED /* rktest.c */,
 				B5DFFDB5222DB40E005CF6B3 /* rknchead.c */,
+				B5A5A32B227781DB00A6690C /* makewave.c */,
 			);
 			path = Programs;
 			sourceTree = "<group>";
@@ -476,6 +499,23 @@
 			productReference = B56AB0AA20A8826900E73AE9 /* SimpleEmulator */;
 			productType = "com.apple.product-type.tool";
 		};
+		B5A5A32F2277820700A6690C /* MakeWave */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B5A5A3342277820700A6690C /* Build configuration list for PBXNativeTarget "MakeWave" */;
+			buildPhases = (
+				B5A5A32C2277820700A6690C /* Sources */,
+				B5A5A32D2277820700A6690C /* Frameworks */,
+				B5A5A32E2277820700A6690C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MakeWave;
+			productName = makeWave;
+			productReference = B5A5A3302277820700A6690C /* MakeWave */;
+			productType = "com.apple.product-type.tool";
+		};
 		B5C1F3431AB9C118004F88CD /* RadarKitTest */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitTest" */;
@@ -527,6 +567,10 @@
 						CreatedOnToolsVersion = 9.3.1;
 						ProvisioningStyle = Automatic;
 					};
+					B5A5A32F2277820700A6690C = {
+						CreatedOnToolsVersion = 10.2.1;
+						ProvisioningStyle = Automatic;
+					};
 					B5C1F3431AB9C118004F88CD = {
 						CreatedOnToolsVersion = 6.1;
 					};
@@ -553,6 +597,7 @@
 				B5C1F3431AB9C118004F88CD /* RadarKitTest */,
 				B56AB0A920A8826900E73AE9 /* SimpleEmulator */,
 				B5DFFDB9222DB42E005CF6B3 /* ProductHeader */,
+				B5A5A32F2277820700A6690C /* MakeWave */,
 			);
 		};
 /* End PBXProject section */
@@ -606,6 +651,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5E7CB14210A4AD800D381ED /* simple-emulator.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B5A5A32C2277820700A6690C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5A5A3372277821500A6690C /* makewave.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -897,6 +950,73 @@
 			};
 			name = Release;
 		};
+		B5A5A3352277820700A6690C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		B5A5A3362277820700A6690C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 		B5C1F3481AB9C118004F88CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1072,6 +1192,15 @@
 			buildConfigurations = (
 				B56AB0AE20A8826A00E73AE9 /* Debug */,
 				B56AB0AF20A8826A00E73AE9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B5A5A3342277820700A6690C /* Build configuration list for PBXNativeTarget "MakeWave" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5A5A3352277820700A6690C /* Debug */,
+				B5A5A3362277820700A6690C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
