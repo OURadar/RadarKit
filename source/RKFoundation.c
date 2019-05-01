@@ -355,6 +355,7 @@ void RKShowBanner(const char *title, const char *color) {
     k += RKStringCenterized(message + k, title, terminalSize.ws_col);
     k += sprintf(message + k, RKNoColor);
     
+    printf("\r");
     printf("%s\n", padding);
     printf("%s\n", message);
     printf("%s\n", padding);
