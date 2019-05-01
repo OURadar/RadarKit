@@ -103,7 +103,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     } else if (product->header.isRHI) {
         nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "RHI");
     } else {
-        nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "Unknown");
+        nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 7, "Unknown");
     }
     tmpf = product->header.latitude;
     nc_put_att_float(ncid, NC_GLOBAL, "Latitude", NC_FLOAT, 1, &tmpf);
