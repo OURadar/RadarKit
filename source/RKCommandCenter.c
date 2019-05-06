@@ -1001,43 +1001,83 @@ int socketStreamHandler(RKOperator *O) {
                 sweepHeader.baseMomentList = RKBaseMomentListNone;
                 if ((user->streams & RKStreamSweepZ) && (productList & RKBaseMomentListProductZ)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductZ;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Z,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepV) && (productList & RKBaseMomentListProductV)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductV;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " V,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepW) && (productList & RKBaseMomentListProductW)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductW;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " W,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepD) && (productList & RKBaseMomentListProductD)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductD;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " D,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepP) && (productList & RKBaseMomentListProductP)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductP;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " P,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepR) && (productList & RKBaseMomentListProductR)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductR;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " R,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepK) && (productList & RKBaseMomentListProductK)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductK;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " K,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepQ) && (productList & RKBaseMomentListProductQ)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductQ;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Q,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepSh) && (productList & RKBaseMomentListProductSh)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductSh;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Sh,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepSv) && (productList & RKBaseMomentListProductSv)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductSv;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Sv,");
+                    }
                 }
                 // Remove the last ','
                 if (i > 1) {
