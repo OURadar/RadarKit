@@ -1272,10 +1272,10 @@ int socketStreamHandler(RKOperator *O) {
                     i = 0;
                     gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
                     for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
-//                        *userDataH++ = *c16DataH++;
-//                        *userDataV++ = *c16DataV++;
-                        *userDataH++ = *c16DataH;
-                        *userDataV++ = *c16DataH++;
+                        *userDataH++ = *c16DataH++;
+                        *userDataV++ = *c16DataV++;
+//                        *userDataH++ = *c16DataH;
+//                        *userDataV++ = *c16DataH++;
                         i++;
                     }
                     for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {

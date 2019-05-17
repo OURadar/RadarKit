@@ -70,9 +70,9 @@ typedef struct RKGlobalParameterStruct {
     bool             showColor;                                  // Show colors
     pthread_mutex_t  mutex;                                      // Mutual exclusive access
     FILE             *stream;                                    // Secondary output stream, can be NULL
-} RKGlobalParamters;
+} RKGlobalParameters;
 
-extern RKGlobalParamters rkGlobalParameters;
+extern RKGlobalParameters rkGlobalParameters;
 extern const char * const rkResultStrings[];
 
 #pragma mark - Common Functions
