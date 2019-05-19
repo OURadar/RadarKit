@@ -157,7 +157,7 @@ RKIdentifier RKIdentifierFromString(const char *);
 int RKSimpleEngineFree(RKSimpleEngine *);
 
 // FIFO command queue
-RKCommandQueue *RKCommandQueueInit(const uint8_t depth);
+RKCommandQueue *RKCommandQueueInit(const uint8_t, const bool);
 RKCommand *RKCommandQueuePop(RKCommandQueue *);
 int RKCommandQueuePush(RKCommandQueue *, const RKCommand *);
 

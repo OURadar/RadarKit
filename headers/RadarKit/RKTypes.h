@@ -1341,6 +1341,7 @@ typedef struct rk_command_queue {
     bool                 nonblocking;                                          // Non-blocking operations
     RKCommand            *buffer;                                              // Buffer
     pthread_mutex_t      lock;                                                 // Mutually exclusive access lock
+    uint32_t             tic;
 } RKCommandQueue;
 
 #pragma pack(pop)

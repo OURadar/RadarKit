@@ -187,6 +187,9 @@ void RKTestByNumber(const int number, const void *arg) {
         case 25:
             RKTestRingFilterShowCoefficients();
             break;
+        case 26:
+            RKTestCommandQueue();
+            break;
         case 30:
             RKTestMakeHops();
             break;
@@ -3030,6 +3033,45 @@ int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
 }
 
 #pragma mark - Others
+
+static void *pushLoop(void *in) {
+    RKCommandQueue *queue = (RKCommandQueue *)in;
+    const char name[] = "<head>";
+    RKCommand command;
+    RKLog("%s Started.   queue @ %p\n", name, queue);
+    for (int k = 0; k < 10; k++) {
+        sprintf(command, "t %d", k);
+        RKCommandQueuePush(queue, &command);
+        RKLog("%s Command '%s' pushed.\n", name, command);
+        usleep(200000);
+    }
+    return NULL;
+}
+
+static void *popLoop(void *in) {
+    RKCommandQueue *queue = (RKCommandQueue *)in;
+    const char name[] = "<tail>";
+    RKLog("%s Started.   queue @ %p\n", name, queue);
+    do {
+        RKCommand *command = RKCommandQueuePop(queue);
+        if (command) {
+            RKLog("%s Command '%s' popped.\n", name, command);
+        } else {
+            usleep(10000);
+        }
+    } while (queue->tic < 10);
+    return NULL;
+}
+
+void RKTestCommandQueue(void) {
+    pthread_t tidPush, tidPop;
+    RKCommandQueue *queue = RKCommandQueueInit(8, true);
+    queue->nonblocking = true;
+    pthread_create(&tidPush, NULL, pushLoop, queue);
+    pthread_create(&tidPop, NULL, popLoop, queue);
+    pthread_join(tidPush, NULL);
+    pthread_join(tidPop, NULL);
+}
 
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME

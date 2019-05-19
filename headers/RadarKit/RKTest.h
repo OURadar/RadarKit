@@ -166,6 +166,7 @@ int RKTestHealthRelayFree(RKHealthRelay);
 
 #pragma mark -
 
+void RKTestCommandQueue(void);
 void RKTestSingleCommand(void);
 void RKTestExperiment(void);
 
