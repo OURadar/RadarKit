@@ -969,31 +969,31 @@ typedef struct rk_nodal_health {
 //
 typedef union rk_position {
     struct {
-        RKIdentifier        i;                                                // Counter
-        uint64_t            tic;                                              // Time tic
-        RKFourByte          rawElevation;                                     // Raw elevation readout
-        RKFourByte          rawAzimuth;                                       // Raw azimuth readout
-        RKFourByte          rawElevationVelocity;                             // Raw velocity of elevation readout
-        RKFourByte          rawAzimuthVelocity;                               // Raw velocity of azimuth readout
-        RKFourByte          rawElevationStatus;                               // Raw status of elevation readout
-        RKFourByte          rawAzimuthStatus;                                 // Raw status of azimuth readout
-        uint8_t             queueSize;                                        // Queue size of the readout buffer
-        uint8_t             elevationMode;                                    // Positioning mode of elevation
-        uint8_t             azimuthMode;                                      // Positioning mode of azimuth
-        uint8_t             sequence;                                         // DEBUG command sequence
-        RKPositionFlag      flag;                                             // Position flag
-        float               elevationDegrees;                                 // Decoded elevation
-        float               azimuthDegrees;                                   // Decoded elevation
-        float               elevationVelocityDegreesPerSecond;                // Decoded velocity of elevation
-        float               azimuthVelocityDegreesPerSecond;                  // Decoded velocity of azimuth
-        float               elevationCounter;                                 // Progress counter (of target) of the elevation
-        float               elevationTarget;                                  // Targeted progress counter of the elevation
-        float               azimuthCounter;                                   // Progress counter (of target) of the azimuth
-        float               azimuthTarget;                                    // Targeted progress counter of the azimuth
-        float               sweepElevationDegrees;                            // Set elevation for current sweep
-        float               sweepAzimuthDegrees;                              // Set azimuth for current sweep
-        struct timeval      time;                                             // Time in struct timeval
-        double              timeDouble;                                       // Time in double;
+        RKIdentifier        i;                                                 // Counter
+        uint64_t            tic;                                               // Time tic
+        RKFourByte          rawElevation;                                      // Raw elevation readout
+        RKFourByte          rawAzimuth;                                        // Raw azimuth readout
+        RKFourByte          rawElevationVelocity;                              // Raw velocity of elevation readout
+        RKFourByte          rawAzimuthVelocity;                                // Raw velocity of azimuth readout
+        RKFourByte          rawElevationStatus;                                // Raw status of elevation readout
+        RKFourByte          rawAzimuthStatus;                                  // Raw status of azimuth readout
+        uint8_t             queueSize;                                         // Queue size of the readout buffer
+        uint8_t             elevationMode;                                     // Positioning mode of elevation
+        uint8_t             azimuthMode;                                       // Positioning mode of azimuth
+        uint8_t             sequence;                                          // DEBUG command sequence
+        RKPositionFlag      flag;                                              // Position flag
+        float               elevationDegrees;                                  // Decoded elevation
+        float               azimuthDegrees;                                    // Decoded elevation
+        float               elevationVelocityDegreesPerSecond;                 // Decoded velocity of elevation
+        float               azimuthVelocityDegreesPerSecond;                   // Decoded velocity of azimuth
+        float               elevationCounter;                                  // Progress counter (of target) of the elevation
+        float               elevationTarget;                                   // Targeted progress counter of the elevation
+        float               azimuthCounter;                                    // Progress counter (of target) of the azimuth
+        float               azimuthTarget;                                     // Targeted progress counter of the azimuth
+        float               sweepElevationDegrees;                             // Set elevation for current sweep
+        float               sweepAzimuthDegrees;                               // Set azimuth for current sweep
+        struct timeval      time;                                              // Time in struct timeval
+        double              timeDouble;                                        // Time in double;
     };
     RKByte               bytes[128];
 } RKPosition;
@@ -1002,36 +1002,36 @@ typedef union rk_position {
 // Pulse header
 //
 typedef struct rk_pulse_header {
-    RKIdentifier        i;                                                    // Identity counter
-    RKIdentifier        n;                                                    // Network counter, may be useful to indicate packet loss
-    uint64_t            t;                                                    // A clean clock-related tic count
-    RKPulseStatus       s;                                                    // Status flag
-    uint32_t            capacity;                                             // Allocated capacity
-    uint32_t            gateCount;                                            // Number of range gates
-    uint32_t            downSampledGateCount;                                 // Number of range gates after down-sampling
-    RKMarker            marker;                                               // Position Marker
-    uint32_t            pulseWidthSampleCount;                                // Pulsewidth
-    struct timeval      time;                                                 // UNIX time in seconds since 1970/1/1 12:00am
-    double              timeDouble;                                           // Time in double representation
-    RKFourByte          rawAzimuth;                                           // Raw azimuth reading, which may take up to 4 bytes
-    RKFourByte          rawElevation;                                         // Raw elevation reading, which may take up to 4 bytes
-    uint16_t            configIndex;                                          // Operating configuration index
-    uint16_t            configSubIndex;                                       // Operating configuration sub-index
-    uint16_t            azimuthBinIndex;                                      // Ray bin
-    float               gateSizeMeters;                                       // Size of range gates
-    float               elevationDegrees;                                     // Elevation in degrees
-    float               azimuthDegrees;                                       // Azimuth in degrees
-    float               elevationVelocityDegreesPerSecond;                    // Velocity of elevation in degrees / second
-    float               azimuthVelocityDegreesPerSecond;                      // Velocity of azimuth in degrees / second
+    RKIdentifier        i;                                                     // Identity counter
+    RKIdentifier        n;                                                     // Network counter, may be useful to indicate packet loss
+    uint64_t            t;                                                     // A clean clock-related tic count
+    RKPulseStatus       s;                                                     // Status flag
+    uint32_t            capacity;                                              // Allocated capacity
+    uint32_t            gateCount;                                             // Number of range gates
+    uint32_t            downSampledGateCount;                                  // Number of range gates after down-sampling
+    RKMarker            marker;                                                // Position Marker
+    uint32_t            pulseWidthSampleCount;                                 // Pulsewidth
+    struct timeval      time;                                                  // UNIX time in seconds since 1970/1/1 12:00am
+    double              timeDouble;                                            // Time in double representation
+    RKFourByte          rawAzimuth;                                            // Raw azimuth reading, which may take up to 4 bytes
+    RKFourByte          rawElevation;                                          // Raw elevation reading, which may take up to 4 bytes
+    uint16_t            configIndex;                                           // Operating configuration index
+    uint16_t            configSubIndex;                                        // Operating configuration sub-index
+    uint16_t            azimuthBinIndex;                                       // Ray bin
+    float               gateSizeMeters;                                        // Size of range gates
+    float               elevationDegrees;                                      // Elevation in degrees
+    float               azimuthDegrees;                                        // Azimuth in degrees
+    float               elevationVelocityDegreesPerSecond;                     // Velocity of elevation in degrees / second
+    float               azimuthVelocityDegreesPerSecond;                       // Velocity of azimuth in degrees / second
 } RKPulseHeader;
 
 //
 // Pulse parameters for matched filters (pulseCompressionCore)
 //
 typedef struct rk_pulse_parameters {
-    uint32_t             filterCounts[2];
-    uint32_t             planIndices[2][RKMaximumFilterCount];
-    uint32_t             planSizes[2][RKMaximumFilterCount];
+    uint32_t             filterCounts[2];                                      //
+    uint32_t             planIndices[2][RKMaximumFilterCount];                 //
+    uint32_t             planSizes[2][RKMaximumFilterCount];                   //
 } RKPulseParameters;
 
 //
@@ -1042,12 +1042,12 @@ typedef struct rk_pulse_parameters {
 typedef struct rk_pulse {
     union {
         struct {
-            RKPulseHeader        header;
-            RKPulseParameters    parameters;
-        };
-        RKByte               headerBytes[RKPulseHeaderPaddedSize];
-    };
-    RKByte               data[0];
+            RKPulseHeader        header;                                       //
+            RKPulseParameters    parameters;                                   //
+        };                                                                     //
+        RKByte               headerBytes[RKPulseHeaderPaddedSize];             //
+    };                                                                         //
+    RKByte               data[0];                                              //
 } RKPulse;
 
 //
@@ -1303,35 +1303,45 @@ typedef struct rk_waveform {
 } RKWaveform;
 
 typedef struct rk_waveform_cal {
-    uint32_t             uid;                                                   // A unique identifier
-    RKName               name;                                                  // A string description
-    uint8_t              count;                                                 // The number of tones in this waveform
-    RKFloat              ZCal[RKMaximumFilterCount][2];                         // Calibration factor for individual tone
-    RKFloat              DCal[RKMaximumFilterCount];                            // Calibration factor for individual tone
-    RKFloat              PCal[RKMaximumFilterCount];                            // Calibration factor for individual tone
+    uint32_t             uid;                                                  // A unique identifier
+    RKName               name;                                                 // A string description
+    uint8_t              count;                                                // The number of tones in this waveform
+    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Calibration factor for individual tone
+    RKFloat              DCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
+    RKFloat              PCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
 } RKWaveformCalibration;
 
 typedef struct rk_waveform_response {
-    uint32_t             count;                                                 // Number of combinations (at most 3 for now)
-    uint32_t             length;                                                // Length of each filter
-    RKFloat              **amplitudeResponse;                                   // An array of amplitudes of [count][length] (dB)
-    RKFloat              **phaseResponse;                                       // An array of phases of [count][length] (radians)
+    uint32_t             count;                                                // Number of combinations (at most 3 for now)
+    uint32_t             length;                                               // Length of each filter
+    RKFloat              **amplitudeResponse;                                  // An array of amplitudes of [count][length] (dB)
+    RKFloat              **phaseResponse;                                      // An array of phases of [count][length] (radians)
 } RKWaveformResponse;
 
 typedef struct rk_iir_filter {
-    RKName               name;                                                  // String description of the filter
-    RKFilterType         type;                                                  // Built-in type
-    uint32_t             bLength;                                               // Length of b's
-    uint32_t             aLength;                                               // Length of a's
-    RKComplex            B[RKMaximumIIRFilterTaps];                             // Coefficient b's
-    RKComplex            A[RKMaximumIIRFilterTaps];                             // Coefficient a's
+    RKName               name;                                                 // String description of the filter
+    RKFilterType         type;                                                 // Built-in type
+    uint32_t             bLength;                                              // Length of b's
+    uint32_t             aLength;                                              // Length of a's
+    RKComplex            B[RKMaximumIIRFilterTaps];                            // Coefficient b's
+    RKComplex            A[RKMaximumIIRFilterTaps];                            // Coefficient a's
 } RKIIRFilter;
 
 typedef struct rk_task {
-    RKCommand            command;                                               // A ocmmand string for RKRadarExecute()
-    double               timeout;                                               // Maximum time for completion
-    RKEventType          endingEvent;                                           // Ending event that indicates completion of the task
+    RKCommand            command;                                              // A ocmmand string for RKRadarExecute()
+    double               timeout;                                              // Maximum time for completion
+    RKEventType          endingEvent;                                          // Ending event that indicates completion of the task
 } RKTask;
+
+typedef struct rk_command_queue {
+    uint8_t              head;                                                 // Head index (for push)
+    uint8_t              tail;                                                 // Tail index (for pop)
+    uint8_t              count;                                                // Number of elements that can be popped
+    uint8_t              depth;                                                // Buffer depth
+    bool                 nonblocking;                                          // Non-blocking operations
+    RKCommand            *buffer;                                              // Buffer
+    pthread_mutex_t      lock;                                                 // Mutually exclusive access lock
+} RKCommandQueue;
 
 #pragma pack(pop)
 

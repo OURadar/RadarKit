@@ -1619,4 +1619,3 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         }
     }
 }
-
