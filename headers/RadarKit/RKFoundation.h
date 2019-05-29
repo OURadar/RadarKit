@@ -156,4 +156,9 @@ RKIdentifier RKIdentifierFromString(const char *);
 // Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);
 
+// FIFO command queue
+RKCommandQueue *RKCommandQueueInit(const uint8_t, const bool);
+RKCommand *RKCommandQueuePop(RKCommandQueue *);
+int RKCommandQueuePush(RKCommandQueue *, const RKCommand *);
+
 #endif /* defined(__RadarKit_RKFoundation__) */

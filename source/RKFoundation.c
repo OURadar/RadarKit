@@ -1652,3 +1652,51 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
     return RKResultSuccess;
 }
 
+#pragma mark - Command queue
+
+RKCommandQueue *RKCommandQueueInit(const uint8_t depth, const bool nonblocking) {
+    RKCommandQueue *queue = (RKCommandQueue *)malloc(sizeof(RKCommandQueue));
+    if (queue == NULL) {
+        RKLog("Error. Unable to allocate command queue.\n");
+        return NULL;
+    }
+    memset(queue, 0, sizeof(RKCommandQueue));
+    queue->depth = depth;
+    queue->nonblocking = nonblocking;
+    queue->buffer = (RKCommand *)malloc(queue->depth * sizeof(RKCommand));
+    if (queue->buffer == NULL) {
+        RKLog("Error. Unable to allocate command queue.\n");
+        free(queue);
+        return NULL;
+    }
+    pthread_mutex_init(&queue->lock, NULL);
+    return queue;
+}
+
+RKCommand *RKCommandQueuePop(RKCommandQueue *queue) {
+    if (queue->count == 0) {
+        if (queue->nonblocking) {
+            return NULL;
+        } else {
+            do {
+                usleep(1000);
+            } while (queue->count == 0);
+        }
+    }
+    RKCommand *command = &queue->buffer[queue->tail];
+    queue->tail = RKNextModuloS(queue->tail, queue->depth);
+    pthread_mutex_lock(&queue->lock);
+    queue->count--;
+    pthread_mutex_unlock(&queue->lock);
+    return command;
+}
+
+int RKCommandQueuePush(RKCommandQueue *queue, const RKCommand *command) {
+    memcpy(&queue->buffer[queue->head], command, sizeof(RKCommand));
+    queue->head = RKNextModuloS(queue->head, queue->depth);
+    pthread_mutex_lock(&queue->lock);
+    queue->count++;
+    pthread_mutex_unlock(&queue->lock);
+    queue->tic++;
+    return RKResultSuccess;
+}
