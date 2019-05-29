@@ -121,9 +121,11 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
         }
         waveform->type = groupHeader.type;
         waveform->filterCounts[k] = groupHeader.filterCounts;
-        r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
-        if (r == 0) {
-            RKLog("Error. Unable to read filter anchors from %s\n", filename);
+        for (j = 0; j < waveform->filterCounts[k]; j++) {
+            r = fread(&waveform->filterAnchors[k][j], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
+            if (r == 0) {
+                RKLog("Error. Unable to read filter anchors from %s\n", filename);
+            }
         }
         // Output data from the first filter is allowed up to the maximum
         waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;

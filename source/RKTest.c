@@ -3066,7 +3066,6 @@ static void *popLoop(void *in) {
 void RKTestCommandQueue(void) {
     pthread_t tidPush, tidPop;
     RKCommandQueue *queue = RKCommandQueueInit(8, true);
-    queue->nonblocking = true;
     pthread_create(&tidPush, NULL, pushLoop, queue);
     pthread_create(&tidPop, NULL, popLoop, queue);
     pthread_join(tidPush, NULL);
