@@ -1421,7 +1421,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamProductAll;
     user->access |= RKStreamSweepAll;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
-    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x50;
+    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize80x40;
     user->terminalSize.ws_col = 120;
     user->terminalSize.ws_row = 50;
     user->radar = engine->radars[0];
