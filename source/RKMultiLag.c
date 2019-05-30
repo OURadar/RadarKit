@@ -139,15 +139,23 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 	RKFloat num, den, wsc;
 
     for (p = 0; p < 2; p++) {
-		for (k = 0; k < gateCount; k++) {
+        for (k = 0; k < gateCount; k++) {
             // Derive some criteria for censoring and lag selection
-			space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
+            space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
             space->Q[p][k] = space->aR[p][1][k] / space->aR[p][0][k];
-			if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
-				space->mask[k] = RKMomentMaskCensored;
-			} else {
-				space->mask[k] = space->userLagChoice;
-			}
+            if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold || space->Q[p][k] < space->SQIThreshold) {
+                space->mask[k] = RKMomentMaskCensored;
+            } else {
+                space->mask[k] = space->userLagChoice;
+            }
+        }
+        // Simple erossion
+        for (k = 0; k < gateCount - 1; k++) {
+            if (space->mask[k] == RKMomentMaskCensored || space->mask[k + 1] == RKMomentMaskCensored) {
+                space->mask[k] = RKMomentMaskCensored;
+            }
+        }
+		for (k = 0; k < gateCount; k++) {
 			if (space->mask[k] == RKMomentMaskCensored) {
 				space->Z[p][k] = NAN;
 				space->V[p][k] = NAN;

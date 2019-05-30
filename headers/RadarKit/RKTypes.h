@@ -631,6 +631,7 @@ enum RKConfigKey {
     RKConfigKeySystemPCal,
     RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
+    RKConfigKeySQIThreshold,
     RKConfigKeyVCPDefinition,
     RKConfigKeyPulseRingFilterGateCount,
     RKConfigKeyTotalNumberOfKeys
@@ -937,6 +938,7 @@ typedef struct rk_config {
     RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
     RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
     RKFloat              SNRThreshold;                                         // Censor SNR (dB)
+    RKFloat              SQIThreshold;                                         // Censor SQI
     RKName               waveform;                                             // Waveform name
     char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
 } RKConfig;
@@ -1262,6 +1264,7 @@ typedef union rk_product_header {
         RKFloat              DCal[RKMaximumFilterCount];                       // Waveform ZDR calibration (dB)
         RKFloat              PCal[RKMaximumFilterCount];                       // Waveform phase calibration (rad)
         RKFloat              SNRThreshold;                                     // Censor SNR (dB)
+        RKFloat              SQIThreshold;                                     // Censor SQI
         RKName               waveform;                                         // Waveform name
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
         char                 suggestedFilename[RKMaximumPathLength];           // RadarKit suggested fullpath filename

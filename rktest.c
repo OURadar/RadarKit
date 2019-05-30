@@ -36,11 +36,12 @@ typedef struct user_params {
     bool                     simulate;                                           // Run with transceiver simulator
     bool                     ignoreGPS;                                          // Ignore GPS from health relay
     uint32_t                 ringFilterGateCount;                                // Number of range gates to apply ring filter
-    double                   systemZCal[2];                                      // System calibration for Z
-    double                   systemDCal;                                         // System calibration for D
-    double                   systemPCal;                                         // System calibration for P
-    double                   noise[2];                                           // System noise level
-    double                   SNRThreshold;                                       // SNR threshold for moment processors
+    float                    systemZCal[2];                                      // System calibration for Z
+    float                    systemDCal;                                         // System calibration for D
+    float                    systemPCal;                                         // System calibration for P
+    float                    noise[2];                                           // System noise level
+    float                    SNRThreshold;                                       // SNR threshold for moment processors
+    float                    SQIThreshold;                                       // SQI threshold for moment processors
     unsigned int             diskUsageLimitGB;                                   // Disk usage limit
     RKControl                controls[RKMaximumControlCount];                    // Controls for GUI
     RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];    // Waveform specific calibration factors
@@ -316,11 +317,12 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",         &user->desc.latitude,       RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",        &user->desc.longitude,      RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",          &user->desc.heading,        RKParameterTypeFloat,  1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",       user->systemZCal,           RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",       &user->systemDCal,          RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",       &user->systemPCal,          RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",            user->noise,                RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",     &user->SNRThreshold,        RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",       user->systemZCal,           RKParameterTypeFloat, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",       &user->systemDCal,          RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",       &user->systemPCal,          RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",            user->noise,                RKParameterTypeFloat, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",     &user->SNRThreshold,        RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SQIThreshold",     &user->SQIThreshold,        RKParameterTypeFloat, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DiskUsageLimitGB", &user->diskUsageLimitGB,    RKParameterTypeUInt,   1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",        &user->goCommand,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",      &user->stopCommand,         RKParameterTypeString, RKNameLength);
@@ -744,6 +746,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
+                RKConfigKeySQIThreshold, systemPreferences->SQIThreshold,
                 RKConfigKeyPulseRingFilterGateCount, 1000,
                 RKConfigKeyNull);
 

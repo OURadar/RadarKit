@@ -88,6 +88,7 @@ typedef struct rk_moment_scratch {
     RKFloat                          *dcal;                                    // Calibration offset to D
     RKFloat                          *pcal;                                    // Calibration offset to P (radians)
     RKFloat                          SNRThreshold;                             // SNR threshold for masking
+    RKFloat                          SQIThreshold;                             // SQI threshold for masking
     RKFloat                          *rcor[2];                                 // Reflectivity range correction factor
     RKFloat                          *S[2];                                    // Signal
     RKFloat                          *Z[2];                                    // Reflectivity in dB

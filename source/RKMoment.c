@@ -170,13 +170,14 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);
     float SNR;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
+    float SQIThreshold = space->SQIThreshold;
     // Masking based on SNR
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         SNR = *Si / space->noise[0];
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
         *To++ = 10.0f * log10f(*Ti++);
         *Qo++ = *Qi;
-        if (SNR > SNRThreshold) {
+        if (SNR > SNRThreshold && *Qi > SQIThreshold) {
             *Zo++ = *Zi;
             *Vo++ = *Vi;
             *Wo++ = *Wi;
@@ -702,6 +703,7 @@ static void *momentCore(void *in) {
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
             space->SNRThreshold = config->SNRThreshold;
+            space->SQIThreshold = config->SQIThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
             space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
