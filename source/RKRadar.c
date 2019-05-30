@@ -1672,7 +1672,7 @@ int RKGoLive(RKRadar *radar) {
                     RKConfigKeySystemDCal, -0.01,
                     RKConfigKeySystemPCal, 0.01,
                     RKConfigKeySNRThreshold, 0.0,
-                    RKConfigKeySQIThreshold, 0.7,
+                    RKConfigKeySQIThreshold, 0.25,
                     RKConfigKeyPulseRingFilterGateCount, 1000,
                     RKConfigKeyNull);
     }
@@ -2114,6 +2114,17 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         RKSoftRestart(radar);
                         sprintf(string, "ACK. Soft restart executed." RKEOL);
                         break;
+                    case 'q':
+                        k = sscanf(&commandString[2], "%lf", &fval1);
+                        if (k == 1) {
+                            RKAddConfig(radar, RKConfigKeySQIThreshold, fval1, RKConfigKeyNull);
+                            sprintf(string, "ACK. SQI threshold set to %.2f" RKEOL, fval1);
+                        } else {
+                            sprintf(string, "ACK. Current SQI threshold is %.2f" RKEOL, config->SQIThreshold);
+                        }
+                        break;
+                    case 's':
+                        // 'ds' - DSP threshold in SNR dB
                     case 't':
                         // 'dt' - DSP threshold in SNR dB
                         k = sscanf(&commandString[2], "%lf", &fval1);

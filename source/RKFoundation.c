@@ -1691,7 +1691,7 @@ RKCommand *RKCommandQueuePop(RKCommandQueue *queue) {
     return command;
 }
 
-int RKCommandQueuePush(RKCommandQueue *queue, const RKCommand *command) {
+int RKCommandQueuePush(RKCommandQueue *queue, RKCommand *command) {
     memcpy(&queue->buffer[queue->head], command, sizeof(RKCommand));
     queue->head = RKNextModuloS(queue->head, queue->depth);
     pthread_mutex_lock(&queue->lock);
