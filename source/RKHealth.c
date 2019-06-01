@@ -189,25 +189,45 @@ static void *healthConsolidator(void *_in) {
                 longitude = atof(stringValue);
             }
         }
-        if (isnan(latitude) || isnan(longitude) || isnan(heading) || (desc->initFlags & RKInitFlagIgnoreGPS)) {
+        if (isnan(heading) || (desc->initFlags & RKInitFlagIgnoreHeading)) {
             // If there is also supplied GPS, replace the enum of the GPS readings to not wired
             RKReplaceEnumOfKey(string, "heading", RKStatusEnumNotWired);
+            // Concatenate with heading values if GPS values are not reported
+            i += sprintf(string + i,
+                         "\"Heading Override\":{\"Value\":true,\"Enum\":0}, "
+                         "\"Sys Heading\":{\"Value\":\"%.2f deg\",\"Enum\":0}, ",
+                         desc->heading);
+            
+        } else {
+            if (engine->verbose > 1) {
+                RKLog("%s MAG:  heading = %.2f\n", engine->name, heading);
+            }
+            // Only update if it is significant, assume compass accuracy < 1.0 deg. Let's do half of that.
+            if (fabsf(desc->heading - heading) > 1.0f) {
+                if (headingChangeCount++ > 3) {
+                    desc->heading = heading;
+                    RKLog("%s Heading update.   heading = %.2f degree\n", engine->name, desc->heading);
+                    headingChangeCount = 0;
+                }
+            } else {
+                headingChangeCount = 0;
+            }
+        }
+        if (isnan(latitude) || isnan(longitude) || (desc->initFlags & RKInitFlagIgnoreGPS)) {
+            // If there is also supplied GPS, replace the enum of the GPS readings to not wired
             RKReplaceEnumOfKey(string, "latitude", RKStatusEnumNotWired);
             RKReplaceEnumOfKey(string, "longitude", RKStatusEnumNotWired);
-
             // Concatenate with latitude, longitude and heading values if GPS values are not reported
             i += sprintf(string + i,
                          "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
                          "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                          "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                         "\"Sys Heading\":{\"Value\":\"%.2f deg\",\"Enum\":0}, "
                          "\"LocationFromDescriptor\":true, ",
                          desc->latitude,
-                         desc->longitude,
-                         desc->heading);
+                         desc->longitude);
         } else {
             if (engine->verbose > 1) {
-                RKLog("%s GPS:  latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, latitude, longitude, heading);
+                RKLog("%s GPS:  latitude = %.7f   longitude = %.7f\n", engine->name, latitude, longitude);
             }
             // Only update if it is significant, GPS accuracy < 7.8 m ~ 7.0e-5 deg. Let's do half of that.
             if ((fabs(desc->latitude - latitude) > 3.5e-5 || fabs(desc->longitude - longitude) > 3.5e-5)) {
@@ -220,17 +240,7 @@ static void *healthConsolidator(void *_in) {
             } else {
                 locationChangeCount = 0;
             }
-            if (fabsf(desc->heading - heading) > 1.0f) {
-                if (headingChangeCount++ > 3) {
-                    desc->heading = heading;
-                    RKLog("%s GPS update.   heading = %.2f degree\n", engine->name, desc->heading);
-                    headingChangeCount = 0;
-                }
-            } else {
-                headingChangeCount = 0;
-            }
         }
-        
         sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
 
         // Replace some quoted logical values, e.g., true -> "True"
