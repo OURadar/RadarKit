@@ -1160,7 +1160,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "U"
     };
     RKName names[] = {
-        "Corrected_Intensity",
+        "Intensity",
         "Radial_Velocity",
         "Width",
         "Differential_Reflectivity",

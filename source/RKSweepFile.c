@@ -72,7 +72,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
     // Substitute symbol with the ones I know
     char symbols[][RKNameLength] = {"Z", "V", "W", "D", "P", "R", "K"};
     RKName productNames[] = {
-        "Corrected_Intensity",
+        "Intensity",
         "Radial_Velocity",
         "Width",
         "Differential_Reflectivity",
