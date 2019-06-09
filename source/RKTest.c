@@ -61,6 +61,7 @@ char *RKTestByNumberDescription(const int indent) {
     "16 - Test reading a netcdf file using RKProductRead(); -T16 FILENAME\n"
     "17 - Test reading multiple netcdf files using RKProductCollectionInitWithFilename()\n"
     "18 - Test writing a netcdf file using RKProductFileWriterNC()\n"
+    "19 - Test RKTestReviseLogicalValues()\n"
     "\n"
     "20 - SIMD quick test\n"
     "21 - SIMD test with numbers shown\n"
@@ -168,6 +169,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 18:
             RKTestProductWrite();
+            break;
+        case 19:
+            RKTestReviseLogicalValues();
             break;
         case 20:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -778,6 +782,18 @@ void RKTestProductWrite(void) {
     }
     RKProductFileWriterNC(product, "rainbow.nc");
     RKProductBufferFree(product, 1);
+}
+
+void RKTestReviseLogicalValues(void) {
+    char string[] = "{"
+    "\"Transceiver\":{\"Value\":\"TRUE\", \"Enum\":0}, "
+    "\"Pedestal\":{\"Value\":\"True\", \"Enum\":0}, "
+    "\"Health Relay\":{\"Value\":\"true\", \"Enum\":0}, "
+    "\"Pedestal\":\"True\", "
+    "}";
+    printf("string = %s\n", string);
+    RKReviseLogicalValues(string);
+    printf("  -> %s\n", string);
 }
 
 #pragma mark -

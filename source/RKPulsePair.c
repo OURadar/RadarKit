@@ -167,9 +167,9 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     //  ACF
     //
 
-    RKIQZ Xl = {NULL, NULL};
-    RKIQZ Xm = {NULL, NULL};
-    RKIQZ Xn = {NULL, NULL};
+    RKIQZ Xl;
+    RKIQZ Xm;
+    RKIQZ Xn;
     RKVec *s0i = NULL;
     RKVec *s0q = NULL;
     RKVec *s1i = NULL;

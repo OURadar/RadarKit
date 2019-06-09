@@ -117,6 +117,7 @@ void RKTestBufferOverviewText(const char *);
 void RKTestSweepRead(const char *);
 void RKTestProductRead(const char *);
 void RKTestProductWrite(void);
+void RKTestReviseLogicalValues(void);
 
 #pragma mark - DSP Tests
 

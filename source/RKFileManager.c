@@ -70,30 +70,34 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
     int k = 0;
     struct dirent *dir;
     struct stat status;
+    if (list == NULL) {
+        fprintf(stderr, "list cannot be NULL.\n");
+        return -1;
+    }
     DIR *did = opendir(path);
-    char pathname[RKMaximumPathLength];
     if (did == NULL) {
         if (errno != ENOENT) {
             // It is possible that the root storage folder is empty, in this case errno = ENOENT is okay.
             fprintf(stderr, "Error opening directory %s  errno = %d\n", path, errno);
         }
-        return -1;
+        return -2;
     }
+    char pathname[RKMaximumPathLength];
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {
         if (dir->d_type == DT_UNKNOWN && dir->d_name[0] != '.') {
             //sprintf(pathname, "%s/%s", path, dir->d_name);
             int r = sprintf(pathname, "%s/", path);
-            (void)strncpy(pathname + r, dir->d_name, RKMaximumPathLength - r - 1);
+            strncpy(pathname + r, dir->d_name, RKMaximumPathLength - r - 1);
             lstat(pathname, &status);
             if ((type == DT_REG && S_ISREG(status.st_mode)) ||
                 (type == DT_DIR && S_ISDIR(status.st_mode))) {
                 //snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
-                (void)strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
+                strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
                 k++;
             }
         } else if (dir->d_type == type && dir->d_name[0] != '.') {
             //snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
-            (void)strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
+            strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
             k++;
         }
     }
@@ -134,6 +138,10 @@ static void refreshFileList(RKFileRemover *me) {
     RKPathname *folders = (RKPathname *)me->folders;
     RKPathname *filenames = (RKPathname *)me->filenames;
     RKIndexedStat *indexedStats = (RKIndexedStat *)me->indexedStats;
+    if (indexedStats == NULL) {
+        RKLog("%s Not properly allocated.\n", me->name);
+        return;
+    }
 
     me->index = 0;
     me->count = 0;
@@ -258,6 +266,7 @@ static void *fileRemover(void *in) {
     RKPathname *folders = (RKPathname *)malloc(bytes);
     if (folders == NULL) {
         RKLog("%s %s Error. Unable to allocate space for folder list.\n", engine->name, me->name);
+        return (void *)-1;
     }
     memset(folders, 0, bytes);
     mem += bytes;
@@ -266,6 +275,8 @@ static void *fileRemover(void *in) {
     RKPathname *filenames = (RKPathname *)malloc(bytes);
     if (filenames == NULL) {
         RKLog("%s %s Error. Unable to allocate space for file list.\n", engine->name, me->name);
+        free(folders);
+        return (void *)-2;
     }
     memset(filenames, 0, bytes);
     mem += bytes;
@@ -274,6 +285,9 @@ static void *fileRemover(void *in) {
     RKIndexedStat *indexedStats = (RKIndexedStat *)malloc(bytes);
     if (indexedStats == NULL) {
         RKLog("%s %s Error. Unable to allocate space for indexed stats.\n", engine->name, me->name);
+        free(folders);
+        free(filenames);
+        return (void *)-2;
     }
     memset(indexedStats, 0, bytes);
     mem += bytes;

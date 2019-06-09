@@ -79,6 +79,12 @@ static void *sweepManager(void *in) {
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
+    // Check a few things
+    if (engine->productBuffer == NULL) {
+        RKLog("%s Unexpected NULL memory.\n", engine->name);
+        return NULL;
+    }
+    
     // Collect rays that belong to a sweep to a scratch space
     RKSweep *sweep = RKSweepCollect(engine, scratchSpaceIndex);
     if (sweep == NULL) {

@@ -630,7 +630,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     }
     if (user->simulate == true) {
         if (user->prf == 0) {
-            user->prf = 1000;
+            user->prf = 1000.0f;
         }
     } else {
         if (!(user->desc.initFlags == RKInitFlagRelay)) {

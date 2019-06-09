@@ -595,9 +595,10 @@ int socketStreamHandler(RKOperator *O) {
                 user->timeLastOut = time;
                 user->ticForStatusStream++;
             } else if (engine->verbose) {
-                RKLog("%s %s No ray for ASCII art.  user->rayIndex = %d   endIndex = %d  %lld\n",
-                      engine->name, O->name, user->rayIndex, endIndex, ray->header.i);
-            }
+                // Ray is NULL
+                RKLog("%s %s No ray for ASCII art.  user->rayIndex = %d   endIndex = %d\n",
+                      engine->name, O->name, user->rayIndex, endIndex);
+            } // if (ray) ...
         }
 
         // Send another set of controls if the radar controls have changed.
@@ -1260,8 +1261,6 @@ int socketStreamHandler(RKOperator *O) {
             float scale = 1.0f;
 
             // Default stride: k = 1
-            i = 0;
-            k = 1;
             switch (user->ascopeMode) {
                 case 2:
                     // Show the waveform that was used through the forward sampling path
@@ -1329,7 +1328,6 @@ int socketStreamHandler(RKOperator *O) {
                     pulseHeader.gateCount = MIN(4096, pulseHeader.downSampledGateCount / k);
                     pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
 
-                    gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
                     scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[0][0].length);
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);

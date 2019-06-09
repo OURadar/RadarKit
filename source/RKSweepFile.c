@@ -150,11 +150,16 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
 
             // A scratch space for netcdf API
             scratch = (void *)malloc(rayCount * capacity * sizeof(float));
+            if (scratch == NULL) {
+                RKLog("Error. Unable to allocate memory for a scratch space.\n");
+                return NULL;
+            }
 
             // Allocate the return object
             sweep = (RKSweep *)malloc(sizeof(RKSweep));
             if (sweep == NULL) {
                 RKLog("Error. Unable to allocate memory.\n");
+                free(scratch);
                 return NULL;
             }
             memset(sweep, 0, sizeof(RKSweep));

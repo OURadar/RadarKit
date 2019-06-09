@@ -290,14 +290,14 @@ void RKReviseLogicalValues(char *string) {
         sprintf(token, "true");
         memmove(token + 4, token + 6, strlen(token + 6));
         memset(token + 4 + strlen(token + 6), '\0', 2 * sizeof(char));
-        token = strcasestr(string, "\"true\"");
+        token = strcasestr(token + 6, "\"true\"");
     }
     token = strcasestr(string, "\"false\"");
     while (token) {
         sprintf(token, "false");
         memmove(token + 5, token + 7, strlen(token + 7));
         memset(token + 5 + strlen(token + 7), '\0', 2 * sizeof(char));
-        token = strcasestr(string, "\"false\"");
+        token = strcasestr(token + 7, "\"false\"");
     }
 }
 

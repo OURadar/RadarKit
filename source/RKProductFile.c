@@ -568,6 +568,7 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
         RKLog("Found %d products   rayCount = %u   gateCount = %u\n", productCollection->count, rayCount, gateCount);
     } else {
         RKLog("RKProductCollectionInitWithFilename() Inconsistent state. Returning ...\n");
+        free(productCollection);
         return NULL;
     }
 

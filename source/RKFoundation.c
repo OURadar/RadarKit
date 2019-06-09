@@ -349,11 +349,11 @@ void RKShowBanner(const char *title, const char *color) {
     
     k = sprintf(padding, "%s", color);
     k += RKStringCenterized(padding + k, "", terminalSize.ws_col);
-    k += sprintf(padding + k, RKNoColor);
+    sprintf(padding + k, RKNoColor);
     
     k = sprintf(message, "%s", color);
     k += RKStringCenterized(message + k, title, terminalSize.ws_col);
-    k += sprintf(message + k, RKNoColor);
+    sprintf(message + k, RKNoColor);
     
     printf("\r");
     printf("%s\n", padding);
@@ -1463,6 +1463,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *sks;
     uint8_t type;
     uint8_t subType;
+    bool earlyReturn = false;
 
     char *str = (char *)malloc(L + 1);
     char *key = (char *)malloc(RKMaximumStringLength);
@@ -1471,22 +1472,40 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *subObj = (char *)malloc(RKMaximumStringLength);
     if (str == NULL) {
         RKLog("Error allocating memory for str.\n");
-        return false;
+        earlyReturn = true;
     }
     if (key == NULL) {
         RKLog("Error allocating memory for key.\n");
-        return false;
+        earlyReturn = true;
     }
     if (obj == NULL) {
         RKLog("Error allocating memory for obj.\n");
-        return false;
+        earlyReturn = true;
     }
     if (subKey == NULL) {
         RKLog("Error allocating memory for subKey.\n");
-        return false;
+        earlyReturn = true;
     }
     if (subObj == NULL) {
         RKLog("Error allocating memory for subObj.\n");
+        earlyReturn = true;
+    }
+    if (earlyReturn) {
+        if (str) {
+            free(str);
+        }
+        if (key) {
+            free(key);
+        }
+        if (obj) {
+            free(obj);
+        }
+        if (subKey) {
+            free(subKey);
+        }
+        if (subObj) {
+            free(subObj);
+        }
         return false;
     }
     *key = '\0';

@@ -81,8 +81,6 @@ int RKBestStrideOfHopsV1(const int hopCount, const bool showNumbers) {
     bool used[hopCount];
     int u;
     for (i = 1; i < hopCount; i++) {
-        n = 0;
-        score = 0.0f;
         m1 = hopCount;
         m2 = hopCount;
         m3 = hopCount;
@@ -162,6 +160,11 @@ static int _RKBestStrideOfHops(const int hopCount, const int bestStride) {
     const float a = 1.00f, b = 0.25f;
     bool used[hopCount];
     int u;
+    
+    if (hopCount == 0) {
+        return 0;
+    }
+    
     for (i = 1; i < hopCount; i++) {
         // Figure out how many steps until the hop sequence is complete, i.e., return to the origin
         n = 0;
@@ -574,11 +577,11 @@ void RKFFTModuleFree(RKFFTModule *module) {
 RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
     int k;
     RKFloat q, s, phi;
-    RKComplex omega;
-    const int halfCount = count / 2;
-    const RKFloat twoPi = 1.0f / (RKFloat)count * 2.0f * M_PI;
+    RKComplex omega = {.i = 0.0f, .q = 0.0f};
     RKGaussian gauss = {.A = 0.0f, .mu = 0.0f, .sigma = 0.0f};
-    
+    const RKFloat twoPi = 1.0f / (RKFloat)count * 2.0f * M_PI;
+    const int halfCount = count / 2;
+
     s = 0.0f;
     RKComplex *yy = y;
     for (k = 0; k < count; k++) {

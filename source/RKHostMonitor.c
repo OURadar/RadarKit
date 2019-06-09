@@ -128,6 +128,7 @@ static void *hostPinger(void *in) {
         RKLog("%s %s Error. Unable to resolve %s.", engine->name, me->name, engine->hosts[c]);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
+        free(buff);
         return NULL;
     }
     memset(&targetAddress, 0, sizeof(struct sockaddr_in));
@@ -145,6 +146,7 @@ static void *hostPinger(void *in) {
         }
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
+        free(buff);
         return NULL;
     }
     int hold = 1;
@@ -152,18 +154,21 @@ static void *hostPinger(void *in) {
         RKLog("%s %s Error. Failed in setsockopt() IP_RECVTTL.\n", engine->name, me->name);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
+        free(buff);
         return NULL;
     }
     if (setsockopt(sd, IPPROTO_IP, IP_TTL, &value, sizeof(value))) {
         RKLog("%s %s Error. Failed in setsockopt().\n", engine->name, me->name);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
+        free(buff);
         return NULL;
     }
     if (fcntl(sd, F_SETFL, O_NONBLOCK)) {
         RKLog("%s %s Error. Failed in fcntl().\n", engine->name, me->name);
         me->hostStatus = RKHostStatusUnknown;
         me->tic = 2;
+        free(buff);
         return NULL;
     }
     

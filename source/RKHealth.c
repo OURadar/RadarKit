@@ -243,7 +243,7 @@ static void *healthConsolidator(void *_in) {
         }
         sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
 
-        // Replace some quoted logical values, e.g., true -> "True"
+        // Replace some quoted logical values, e.g., "TRUE", "True", "true", etc. -> true
         RKReviseLogicalValues(string);
 
         health->flag = RKHealthFlagReady;
