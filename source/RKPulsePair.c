@@ -286,7 +286,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             r2q++;
         }
 
-        // Go through the even pulses for mX and R(0)
+        // Go through the rest of the pulses for mX and R(0)
         for (n = 3; n < count; n++) {
             Xl = Xm;
             Xm = Xn;

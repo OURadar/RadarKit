@@ -164,31 +164,36 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexV);
     float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexW);
     float *Qi = space->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
+    float *Oi = space->Q[1];
     float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseMomentIndexD);
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseMomentIndexP);
     float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);
-    float SNR;
+    float SNRh, SNRv;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     float SQIThreshold = space->SQIThreshold;
-    // Masking based on SNR
+    // Masking based on SNR and SQI
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
-        SNR = *Si / space->noise[0];
+        SNRh = *Si / space->noise[0];
+        SNRv = *Ti / space->noise[1];
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
-        *To++ = 10.0f * log10f(*Ti++);
+        *To++ = 10.0f * log10f(*Ti++) - 80.0f;
         *Qo++ = *Qi;
-        if (SNR > SNRThreshold && *Qi > SQIThreshold) {
+        if (SNRh > SNRThreshold && *Qi > SQIThreshold) {
             *Zo++ = *Zi;
             *Vo++ = *Vi;
             *Wo++ = *Wi;
+        } else {
+            *Zo++ = NAN;
+            *Vo++ = NAN;
+            *Wo++ = NAN;
+        }
+        if (SNRh > SNRThreshold && SNRv > SNRThreshold && *Qi > SQIThreshold && *Oi > SQIThreshold) {
             *Do++ = *Di;
             *Po++ = *Pi;
             *Ko++ = *Ki;
             *Ro++ = *Ri;
         } else {
-            *Zo++ = NAN;
-            *Vo++ = NAN;
-            *Wo++ = NAN;
             *Do++ = NAN;
             *Po++ = NAN;
             *Ko++ = NAN;
@@ -198,6 +203,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
         Vi++;
         Wi++;
         Qi++;
+        Oi++;
         Di++;
         Pi++;
         Ki++;
