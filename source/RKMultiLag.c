@@ -143,13 +143,13 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
             // Derive some criteria for censoring and lag selection
             space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
             space->Q[p][k] = space->aR[p][1][k] / space->aR[p][0][k];
-            if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold || space->Q[p][k] < space->SQIThreshold) {
+            if (space->SNR[p][k] < space->SNRThreshold || space->Q[p][k] < space->SQIThreshold) {
                 space->mask[k] = RKMomentMaskCensored;
             } else {
                 space->mask[k] = space->userLagChoice;
             }
         }
-        // Simple erossion
+        // Simple erossion: censor current cell if the next cell is censored
         for (k = 0; k < gateCount - 1; k++) {
             if (space->mask[k] == RKMomentMaskCensored || space->mask[k + 1] == RKMomentMaskCensored) {
                 space->mask[k] = RKMomentMaskCensored;
@@ -204,6 +204,15 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 				space->W[p][k] = space->widthFactor * wsc * sqrtf(num - den);
 			}
 		} // for (k = 0; k < gateCount ...)
+    }
+    // Polarimetric censor mask
+    for (k = 0; k < gateCount; k++) {
+        if (space->SNR[0][k] < space->SNRThreshold || space->Q[0][k] < space->SQIThreshold ||
+            space->SNR[1][k] < space->SNRThreshold || space->Q[1][k] < space->SQIThreshold) {
+            space->mask[k] = RKMomentMaskCensored;
+        } else {
+            space->mask[k] = space->userLagChoice;
+        }
     }
     // Note: (k = j - lagCount + 1) was used for C[j] = lag k; So, lag-0 is stored at index (lagCount - 1), e.g., For lagCount = 3, C in [-2, -1, 0, 1, 2], C(lag-0) @ 2
 	RKFloat *Ci = space->C[lagCount - 1].i;
