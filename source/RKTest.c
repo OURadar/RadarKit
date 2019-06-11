@@ -37,6 +37,11 @@ static void RKTestCallback(void *in) {
     RKLog("%s I am a callback function.\n", engine->name);
 }
 
+// Compare two filenames alphabetically
+static int string_cmp_by_filename(const void *a, const void *b) {
+    return strcmp((char *)a, (char *)b);
+}
+
 #pragma mark - Test Wrapper and Help Text
 
 char *RKTestByNumberDescription(const int indent) {
@@ -1930,6 +1935,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKRadar *radar = transceiver->radar;
     
     int j, k, p, s, w;
+    char *c;
 
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
@@ -1951,6 +1957,56 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     
     transceiver->state |= RKEngineStateActive;
     
+    // Open the folder, build a list of files
+    char *filelist = malloc(1024 * RKMaximumPathLength * sizeof(char));
+    if (filelist == NULL) {
+        RKLog("%s Error. Unable allocate memory.\n", transceiver->name);
+        return (void *)-1;
+    }
+    struct dirent *dir;
+    struct stat status;
+    DIR *did = opendir(transceiver->playbackFolder);
+    if (did == NULL) {
+        if (errno != ENOENT) {
+            // It is possible that the root storage folder is empty, in this case errno = ENOENT is okay.
+            RKLog("%s Error opening directory %s  errno = %d\n", transceiver->name, transceiver->playbackFolder, errno);
+        }
+        return (void *)-2;
+    }
+    k = 0;
+    char pathname[RKMaximumPathLength];
+    while ((dir = readdir(did)) != NULL && k < 1024) {
+        if (dir->d_name[0] == '.') {
+            continue;
+        }
+        snprintf(pathname, RKMaximumPathLength, "%s/%s", transceiver->playbackFolder, dir->d_name);
+        if (dir->d_type == DT_UNKNOWN) {
+            // Some OS reports regular file as unknown, need to us lstat() to determine the type
+            lstat(pathname, &status);
+            if (!S_ISREG(status.st_mode)) {
+                continue;
+            }
+        } else if (dir->d_type != DT_REG) {
+            continue;
+        }
+        c = strrchr(pathname, '.');
+        if (c == NULL) {
+            continue;
+        }
+        if (strcmp(".rkr", c)) {
+            continue;
+        }
+        strcpy(filelist + k * RKMaximumPathLength, pathname);
+        k++;
+    }
+    closedir(did);
+    const int count = k;
+    // Sort the list by name (should be in time numbers)
+    qsort(filelist, count, RKMaximumPathLength, string_cmp_by_filename);
+   for (k = 0; k < count; k++) {
+        printf("%d %s\n", k, filelist + k * RKMaximumPathLength);
+    }
+ 
     // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
     s = 0;
     transceiver->state |= RKEngineStateSleep0;
@@ -1962,7 +2018,8 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     }
     transceiver->state ^= RKEngineStateSleep0;
     
-    RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+    
+    // RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
     
 //    gettimeofday(&t1, NULL);
 //    gettimeofday(&t2, NULL);
@@ -2369,6 +2426,10 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                 case 'D':
                     // Playback from a folder with rkr files
                     strcpy(transceiver->playbackFolder, sv);
+                    k = (int)strlen(transceiver->playbackFolder);
+                    if (transceiver->playbackFolder[k - 1] == '/') {
+                        transceiver->playbackFolder[k - 1] = '\0';
+                    }
                     RKLog("%s Playback from folder %s\n", transceiver->name, transceiver->playbackFolder);
                     break;
                 case 'F':

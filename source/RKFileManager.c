@@ -130,6 +130,7 @@ static bool isFolderEmpty(const char *path) {
     return true;
 }
 
+
 static void refreshFileList(RKFileRemover *me) {
     int j, k;
     struct stat fileStat;
