@@ -1925,6 +1925,63 @@ void RKTestCacheWrite(void) {
 
 #pragma mark - Transceiver Emulator
 
+void *RKTestTransceiverPlaybackRunLoop(void *input) {
+    RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
+    RKRadar *radar = transceiver->radar;
+    
+    int j, k, p, s, w;
+
+    // Update the engine state
+    transceiver->state |= RKEngineStateWantActive;
+    transceiver->state &= ~RKEngineStateActivating;
+
+    // Retrieve parameters from file
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd =
+    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+    
+    double periodTotal;
+
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
+    
+    // Use a counter that mimics microsecond increments
+    RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    
+    transceiver->state |= RKEngineStateActive;
+    
+    // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
+    s = 0;
+    transceiver->state |= RKEngineStateSleep0;
+    while (!(radar->state & RKRadarStateLive)) {
+        usleep(10000);
+        if (++s % 10 == 0 && transceiver->verbose > 1) {
+            RKLog("%s sleep 0/%.1f s\n", transceiver->name, (float)s * 0.01f);
+        }
+    }
+    transceiver->state ^= RKEngineStateSleep0;
+    
+    RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+    
+//    gettimeofday(&t1, NULL);
+//    gettimeofday(&t2, NULL);
+    
+    // g gate index
+    // j sample index
+    // k pseudo-random sequence to choose the pre-defined random numbers
+    w = 0;   // waveform index
+    while (transceiver->state & RKEngineStateWantActive) {
+        
+        periodTotal = 0.0;
+        
+        usleep(10000);
+    }
+
+    transceiver->state ^= RKEngineStateActive;
+    return NULL;
+}
+
 //
 // The transceiver emulator only has minimal functionality to get things going
 // This isn't meant to fully simulate actual target returns
@@ -1944,6 +2001,18 @@ void *RKTestTransceiverRunLoop(void *input) {
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
 
+    // Derive some calculated parameters
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd =
+    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
+    transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
+    transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
+    
     // Show some info
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
@@ -2279,7 +2348,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
                      (transceiver->gateCount >= 8000 ? 25.0e6 :
                      (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
-    transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
     transceiver->prt = 0.001;
     transceiver->sprt = 1;
     //transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
@@ -2298,6 +2366,11 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         while ((se = strchr(sb, ' ')) != NULL) {
             sv = se + 1;
             switch (*sb) {
+                case 'D':
+                    // Playback from a folder with rkr files
+                    strcpy(transceiver->playbackFolder, sv);
+                    RKLog("%s Playback from folder %s\n", transceiver->name, transceiver->playbackFolder);
+                    break;
                 case 'F':
                     transceiver->fs = atof(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
@@ -2353,21 +2426,16 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         }
     }
     
-    // Derive some calculated parameters
-    transceiver->periodEven = transceiver->prt;
-    transceiver->periodOdd =
-    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
-    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
-     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
-    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
-    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
-    transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
-    transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
-
     transceiver->state |= RKEngineStateActivating;
-    if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
-        RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
+    if (strlen(transceiver->playbackFolder)) {
+        RKLog("%s Launching playback run loop ...\n", transceiver->name);
+        if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverPlaybackRunLoop, transceiver)) {
+            RKLog("%s. Unable to create transceiver playback run loop.\n", transceiver->name);
+        }
+    } else {
+        if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
+            RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
+        }
     }
     while (!(transceiver->state & RKEngineStateActive)) {
         usleep(10000);

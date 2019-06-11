@@ -679,11 +679,17 @@
 					"${SRCROOT}/headers",
 					"-fPIC",
 					"-mfpmath=sse",
+					"-msse",
+					"-msse2",
+					"-msse3",
+					"-msse4",
+					"-msse4.1",
 				);
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
 					"-lm",
 					"-lnetcdf",
+					"-lz",
 				);
 			};
 			name = Debug;
@@ -735,11 +741,17 @@
 					"${SRCROOT}/headers",
 					"-fPIC",
 					"-mfpmath=sse",
+					"-msse",
+					"-msse2",
+					"-msse3",
+					"-msse4",
+					"-msse4.1",
 				);
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
 					"-lm",
 					"-lnetcdf",
+					"-lz",
 				);
 			};
 			name = Release;

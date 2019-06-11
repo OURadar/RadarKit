@@ -46,6 +46,7 @@ typedef struct user_params {
     RKControl                controls[RKMaximumControlCount];                    // Controls for GUI
     RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];    // Waveform specific calibration factors
     uint8_t                  engineVerbose[128];                                 // Letter A = 65, 'z' = 122
+    char                     playbackFolder[RKMaximumFolderPathLength];          // Playback folder
 } UserParams;
 
 // Global variables
@@ -376,6 +377,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     struct option long_options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
+        {"dir"               , required_argument, NULL, 'D'},
         {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
@@ -452,6 +454,13 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'C':
                 user->desc.initFlags |= RKInitFlagShowClockOffset;
+                break;
+            case 'D':
+                if (optarg == NULL) {
+                    RKLog("Playback folder without folder.\n");
+                    exit(EXIT_FAILURE);
+                }
+                strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
                 break;
             case 'P':
                 user->port = atoi(optarg);
@@ -854,6 +863,9 @@ int main(int argc, const char **argv) {
         }
         if (systemPreferences->sleepInterval) {
             k += sprintf(cmd + k, " z %d", systemPreferences->sleepInterval);
+        }
+        if (strlen(systemPreferences->playbackFolder)) {
+            k += sprintf(cmd + k, " D %s", systemPreferences->playbackFolder);
         }
         if (systemPreferences->verbose > 1) {
             RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, k, RKIntegerToCommaStyleString(RKMaximumStringLength));

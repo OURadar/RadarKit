@@ -343,17 +343,34 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 void RKShowBanner(const char *title, const char *color) {
     int k;
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
-    ioctl(0, TIOCGWINSZ, &terminalSize);
+    if (terminalSize.ws_col == 0 && terminalSize.ws_row == 0) {
+        terminalSize.ws_col = 80;
+        terminalSize.ws_row = 24;
+    } else {
+        ioctl(0, TIOCGWINSZ, &terminalSize);
+    }
     char message[terminalSize.ws_col + 32];
     char padding[terminalSize.ws_col + 32];
     
-    k = sprintf(padding, "%s", color);
+    if (rkGlobalParameters.showColor) {
+        k = sprintf(padding, "%s", color);
+    } else {
+        k = 0;
+    }
     k += RKStringCenterized(padding + k, "", terminalSize.ws_col);
-    sprintf(padding + k, RKNoColor);
-    
-    k = sprintf(message, "%s", color);
+    if (rkGlobalParameters.showColor) {
+        sprintf(padding + k, RKNoColor);
+    }
+
+    if (rkGlobalParameters.showColor) {
+        k = sprintf(message, "%s", color);
+    } else {
+        k = 0;
+    }
     k += RKStringCenterized(message + k, title, terminalSize.ws_col);
-    sprintf(message + k, RKNoColor);
+    if (rkGlobalParameters.showColor) {
+        sprintf(message + k, RKNoColor);
+    }
     
     printf("\r");
     printf("%s\n", padding);

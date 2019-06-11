@@ -62,7 +62,7 @@ typedef struct rk_test_transceiver {
     double         periodOdd;
     long           ticEven;
     long           ticOdd;
-
+    char           playbackFolder[RKMaximumFolderPathLength];
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {
