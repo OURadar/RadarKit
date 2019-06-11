@@ -17,6 +17,20 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
+//  2.3    - 6/xx/2019
+//         - I/Q data playback
+//         - Introduced hopping chirp waveforms
+//         - Introduced individual storage limits
+//         - Introduced command queues
+//         - Introduced SQIThreshold
+//         - Introduced ignoreHeading flag
+//         - Updated hopping chirp, summary, etc.
+//         - Updated RKWaveformApplyWindow() for count > 1
+//         - Updated MATLAB reader for buildNo 3
+//         - Updated TFM waveform files
+//         - Fxed waveform name in waveform files
+//         - General dead storage removal
+//
 //  2.2    - 4/30/2019
 //         - Added RKWaveformInitAsFrequencyHoppingChirp()
 //         - Redefined RKPositionFlag for pedzy 2.0.

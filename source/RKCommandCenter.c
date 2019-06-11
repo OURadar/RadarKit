@@ -1340,7 +1340,7 @@ int socketStreamHandler(RKOperator *O) {
                     break;
                 
                 default:
-                    // Down-sampled once (k = 1) I/Q data from Int16C samples
+                    // I/Q data from Int16C samples
                     pulseHeader.gateCount = MIN(4096, pulseHeader.pulseWidthSampleCount + 10);
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;

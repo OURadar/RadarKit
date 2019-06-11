@@ -914,32 +914,40 @@ int main(int argc, const char **argv) {
         // Radar going live
         RKGoLive(myRadar);
 
-        RKLog("Setting a waveform ...\n");
-        //RKExecuteCommand(myRadar, "t w x", NULL);
-        RKExecuteCommand(myRadar, "t w s01", NULL);
-        //RKExecuteCommand(myRadar, "t w ofm", NULL);
-        //RKExecuteCommand(myRadar, "t w q02", NULL);
-        //RKExecuteCommand(myRadar, "t w q10", NULL);
-        //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
-        //RKExecuteCommand(myRadar, "t w h2005", NULL);
-        //RKExecuteCommand(myRadar, "t w h0507", NULL);
-        //RKSetWaveformToImpulse(myRadar);
+        // Simulation mode
+        if (strlen(systemPreferences->playbackFolder) == 0) {
+            RKLog("Setting a waveform ...\n");
+            //RKExecuteCommand(myRadar, "t w x", NULL);
+            RKExecuteCommand(myRadar, "t w s01", NULL);
+            //RKExecuteCommand(myRadar, "t w ofm", NULL);
+            //RKExecuteCommand(myRadar, "t w q02", NULL);
+            //RKExecuteCommand(myRadar, "t w q10", NULL);
+            //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
+            //RKExecuteCommand(myRadar, "t w h2005", NULL);
+            //RKExecuteCommand(myRadar, "t w h0507", NULL);
+            //RKSetWaveformToImpulse(myRadar);
+            
+            RKLog("Starting a new PPI ...\n");
+            if (systemPreferences->prf <= 20.0f) {
+                RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
+            } else if (systemPreferences->prf <= 100.0f) {
+                RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
+            } else {
+                RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
+            }
 
-        RKLog("Starting a new PPI ...\n");
-        if (systemPreferences->prf <= 20.0f) {
-            RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
-        } else if (systemPreferences->prf <= 100.0f) {
-            RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
+            RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
+
+            // Wait indefinitely until something happens through a user command through the command center
+            RKWaitWhileActive(myRadar);
+            
+            RKFileMonitorFree(preferenceFileMonitor);
         } else {
-            RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
+            // Wait indefinitely until something happens through a user command through the command center
+            RKWaitWhileActive(myRadar);
         }
 
-        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
-        // Wait indefinitely until something happens through a user command through the command center
-        RKWaitWhileActive(myRadar);
-    
-        RKFileMonitorFree(preferenceFileMonitor);
 
     } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
 

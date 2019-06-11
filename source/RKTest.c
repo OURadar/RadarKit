@@ -2024,13 +2024,43 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
 //    gettimeofday(&t1, NULL);
 //    gettimeofday(&t2, NULL);
     
-    // g gate index
-    // j sample index
-    // k pseudo-random sequence to choose the pre-defined random numbers
-    w = 0;   // waveform index
+    FILE *fid;
+    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
+    if (fileHeader == NULL) {
+        RKLog("%s Error. Unable to allocated memory.\n");
+        return (void *)-3;
+    }
+    
+    k = 0;   // k file index from the filelist
     while (transceiver->state & RKEngineStateWantActive) {
+        RKLog("%s Opening filelist[%d] %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
+        fid = fopen(filelist + k * RKMaximumPathLength, "rb");
+        if (fid == NULL) {
+            RKLog("%s Error. Unable to open file %d %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
+            usleep(100000);
+            continue;
+        }
+        fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+        //RKLog("%s", transceiver->name);
+        RKLog("%s Waveform %s", transceiver->name, fileHeader->config.waveform);
+        RKAddConfig(radar,
+                    RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
+                    RKConfigKeySystemZCal, fileHeader->config.systemZCal[0], fileHeader->config.systemZCal[1],
+                    RKConfigKeySystemDCal, fileHeader->config.systemDCal,
+                    RKConfigKeySystemPCal, fileHeader->config.systemPCal,
+                    RKConfigKeySNRThreshold, fileHeader->config.SNRThreshold,
+                    RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
+                    RKConfigKeyPulseRingFilterGateCount, fileHeader->config.pulseRingFilterGateCount,
+                    RKConfigKeyNull);
+        fclose(fid);
+        
+        for (j = 0; j < 100 && transceiver->state & RKEngineStateWantActive; j++) {
+            usleep(10000);
+        }
         
         periodTotal = 0.0;
+        
+        k = RKNextModuloS(k, count);
         
         usleep(10000);
     }
