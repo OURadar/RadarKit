@@ -343,11 +343,11 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 void RKShowBanner(const char *title, const char *color) {
     int k;
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
-    if (terminalSize.ws_col == 0 && terminalSize.ws_row == 0) {
+    k = ioctl(0, TIOCGWINSZ, &terminalSize);
+    //fprintf(stderr, "k = %d   %d x %d\n", k, terminalSize.ws_col, terminalSize.ws_row);
+    if (k != 0 || (terminalSize.ws_col == 0 && terminalSize.ws_row == 0)) {
         terminalSize.ws_col = 80;
         terminalSize.ws_row = 24;
-    } else {
-        ioctl(0, TIOCGWINSZ, &terminalSize);
     }
     char message[terminalSize.ws_col + 32];
     char padding[terminalSize.ws_col + 32];
@@ -393,8 +393,16 @@ void RKShowTypeSizes(void) {
     rkGlobalParameters.stream = stdout;
     
     SHOW_SIZE(void *)
+    SHOW_SIZE(char)
+    SHOW_SIZE(short)
     SHOW_SIZE(int)
+    SHOW_SIZE(long)
+    SHOW_SIZE(long long)
+    SHOW_SIZE(unsigned char)
+    SHOW_SIZE(unsigned short)
     SHOW_SIZE(unsigned int)
+    SHOW_SIZE(unsigned long)
+    SHOW_SIZE(unsigned long long)
     SHOW_SIZE(int8_t)
     SHOW_SIZE(uint8_t)
     SHOW_SIZE(int16_t)
@@ -403,14 +411,13 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(uint32_t)
     SHOW_SIZE(int64_t)
     SHOW_SIZE(uint64_t)
-    SHOW_SIZE(long)
-    SHOW_SIZE(long long)
-    SHOW_SIZE(unsigned long)
-    SHOW_SIZE(unsigned long long)
+    SHOW_SIZE(struct sockaddr)
+    SHOW_SIZE(struct sockaddr_in)
     SHOW_SIZE(RKByte)
     SHOW_SIZE(RKFloat)
     SHOW_SIZE(RKInt16C)
     SHOW_SIZE(RKComplex)
+    SHOW_SIZE(RKVec)
     SHOW_SIZE(RKRadarDesc)
     SHOW_SIZE(RKConfig)
     SHOW_SIZE(RKHealth)
@@ -430,8 +437,6 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKStatus)
     SHOW_SIZE(RKFileMonitor)
     SHOW_SIZE(RKFilterAnchor)
-    SHOW_SIZE(struct sockaddr)
-    SHOW_SIZE(struct sockaddr_in)
     SHOW_SIZE(RKWaveform)
     SHOW_SIZE(RKWaveformCalibration)
     SHOW_SIZE(RKProductDesc)

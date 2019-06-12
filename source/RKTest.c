@@ -1934,8 +1934,9 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
     
-    int j, k, p, s, w;
-    char *c;
+    int j, k, s;
+    char *c, string[RKMaximumStringLength];
+    double periodTotal;
 
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
@@ -1947,8 +1948,6 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
     (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
-    
-    double periodTotal;
 
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
     
@@ -2003,7 +2002,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     const int count = k;
     // Sort the list by name (should be in time numbers)
     qsort(filelist, count, RKMaximumPathLength, string_cmp_by_filename);
-   for (k = 0; k < count; k++) {
+    for (k = 0; k < count; k++) {
         printf("%d %s\n", k, filelist + k * RKMaximumPathLength);
     }
  
@@ -2052,6 +2051,16 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                     RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
                     RKConfigKeyPulseRingFilterGateCount, fileHeader->config.pulseRingFilterGateCount,
                     RKConfigKeyNull);
+        sprintf(string, "waveforms/%s", fileHeader->config.waveform);
+        if (!RKFilenameExists(string)) {
+            RKLog("%s Error. Waveform does not exist in my collection.\n", transceiver->name, string);
+            fclose(fid);
+            continue;
+        }
+        RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
+        
+        transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
+        
         fclose(fid);
         
         for (j = 0; j < 100 && transceiver->state & RKEngineStateWantActive; j++) {
@@ -2066,6 +2075,9 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     }
 
     transceiver->state ^= RKEngineStateActive;
+    
+    free(filelist);
+    
     return NULL;
 }
 

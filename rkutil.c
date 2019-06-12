@@ -1,9 +1,9 @@
 //
 //  main.c
-//  RadarKitTest
+//  RadarKit Utility
 //
-//  Created by Boon Leng Cheong
-//  Copyright (c) 2016-2018 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong
+//  Copyright (c) 2016-2019 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>
@@ -62,8 +62,10 @@ void *exitAfterAWhile(void *s) {
 #pragma mark - Local Functions
 
 static void showHelp() {
-    printf("RadarKit Test Program\n\n"
-           "rktest [options]\n\n"
+    char name[] = __FILE__;
+    *strrchr(name, '.') = '\0';
+    printf("RadarKit Utility\n\n"
+           "%s [options]\n\n"
            "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
@@ -143,6 +145,7 @@ static void showHelp() {
            "          s - Sweep engine\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
+           "         Tests a specific component of the RadarKit framework.\n"
            "%s"
            "\n"
            "EXAMPLES:\n"
@@ -164,8 +167,10 @@ static void showHelp() {
            "    -T50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
-           "rktest (RadarKit %s)\n\n",
-           RKTestByNumberDescription(10),
+           "%s (RadarKit %s)\n\n",
+           name,
+           RKTestByNumberDescription(9),
+           name,
            RKVersionString());
 }
 
@@ -784,8 +789,10 @@ int main(int argc, const char **argv) {
 
     int k;
     RKCommand cmd = "";
+    char name[] = __FILE__;
+    *strrchr(name, '.') = '\0';
 
-    RKSetProgramName("rktest");
+    RKSetProgramName(name);
 
     char *term = getenv("TERM");
     if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {

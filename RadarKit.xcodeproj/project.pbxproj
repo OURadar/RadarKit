@@ -50,7 +50,7 @@
 		B5DFFDC2222DB5FA005CF6B3 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B5E6D94C1E1C4A1200DFBBA9 /* RKPosition.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D94B1E1C4A1200DFBBA9 /* RKPosition.h */; };
 		B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */; };
-		B5E7CB12210A4AD100D381ED /* rktest.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E7CB11210A4AD100D381ED /* rktest.c */; };
+		B5E7CB12210A4AD100D381ED /* rkutil.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E7CB11210A4AD100D381ED /* rkutil.c */; };
 		B5E7CB14210A4AD800D381ED /* simple-emulator.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E7CB13210A4AD800D381ED /* simple-emulator.c */; };
 		B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */; };
 		B5EE832C20DFB9D400681E29 /* RKProductFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832B20DFB9D400681E29 /* RKProductFile.c */; };
@@ -155,7 +155,7 @@
 		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
 		B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHealthLogger.h; path = headers/RadarKit/RKHealthLogger.h; sourceTree = "<group>"; };
-		B5C1F3441AB9C118004F88CD /* RadarKitTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RadarKitTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5C1F3441AB9C118004F88CD /* RadarKitUtility */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RadarKitUtility; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5C1F3501AB9C917004F88CD /* RKPulseCompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKPulseCompression.h; path = headers/RadarKit/RKPulseCompression.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B5C1F3551AB9CB69004F88CD /* RKWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKWindow.h; path = headers/RadarKit/RKWindow.h; sourceTree = SOURCE_ROOT; };
 		B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKDSP.h; path = headers/RadarKit/RKDSP.h; sourceTree = SOURCE_ROOT; };
@@ -167,7 +167,7 @@
 		B5DFFDBA222DB42E005CF6B3 /* ProductHeader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ProductHeader; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E6D94B1E1C4A1200DFBBA9 /* RKPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPosition.h; path = headers/RadarKit/RKPosition.h; sourceTree = "<group>"; };
 		B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPedestalPedzy.h; path = headers/RadarKit/RKPedestalPedzy.h; sourceTree = SOURCE_ROOT; };
-		B5E7CB11210A4AD100D381ED /* rktest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rktest.c; sourceTree = SOURCE_ROOT; };
+		B5E7CB11210A4AD100D381ED /* rkutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rkutil.c; sourceTree = SOURCE_ROOT; };
 		B5E7CB13210A4AD800D381ED /* simple-emulator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "simple-emulator.c"; sourceTree = SOURCE_ROOT; };
 		B5E7CB15210D155B00D381ED /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKRadarRelay.h; path = headers/RadarKit/RKRadarRelay.h; sourceTree = "<group>"; };
@@ -269,7 +269,7 @@
 			isa = PBXGroup;
 			children = (
 				B5324D4F1AB8A5A000C00517 /* libRadarKit.a */,
-				B5C1F3441AB9C118004F88CD /* RadarKitTest */,
+				B5C1F3441AB9C118004F88CD /* RadarKitUtility */,
 				B56AB0AA20A8826900E73AE9 /* SimpleEmulator */,
 				B5DFFDBA222DB42E005CF6B3 /* ProductHeader */,
 			);
@@ -281,8 +281,8 @@
 			children = (
 				B5324DDF1AB8D9F100C00517 /* RKTypes.h */,
 				B53AE7EC1D88824400364467 /* RKMisc.h */,
-				B5324DDB1AB8D9F100C00517 /* RKFoundation.h */,
 				B55E437C1DB66682003C40CF /* RKSIMD.h */,
+				B5324DDB1AB8D9F100C00517 /* RKFoundation.h */,
 				B5DD6F261E1F400E00FAE2E3 /* RKClock.h */,
 				B55F5F261E2D206300FA8B2E /* RKConfig.h */,
 				B5324DDC1AB8D9F100C00517 /* RKNetwork.h */,
@@ -347,7 +347,7 @@
 		B5C1F3451AB9C118004F88CD /* Programs */ = {
 			isa = PBXGroup;
 			children = (
-				B5E7CB11210A4AD100D381ED /* rktest.c */,
+				B5E7CB11210A4AD100D381ED /* rkutil.c */,
 				B5DFFDB5222DB40E005CF6B3 /* rknchead.c */,
 				B5A5A32B227781DB00A6690C /* makewave.c */,
 			);
@@ -358,8 +358,8 @@
 			isa = PBXGroup;
 			children = (
 				B525FEF31FB0B6A400C5195C /* RKMisc.c */,
-				B5FFD4641FB0B5C300319453 /* RKFoundation.c */,
 				B5FFD4711FB0B5C500319453 /* RKSIMD.c */,
+				B5FFD4641FB0B5C300319453 /* RKFoundation.c */,
 				B5FFD4791FB0B5C600319453 /* RKClock.c */,
 				B5FFD47A1FB0B5C600319453 /* RKConfig.c */,
 				B5FFD46D1FB0B5C400319453 /* RKNetwork.c */,
@@ -478,9 +478,9 @@
 			productReference = B56AB0AA20A8826900E73AE9 /* SimpleEmulator */;
 			productType = "com.apple.product-type.tool";
 		};
-		B5C1F3431AB9C118004F88CD /* RadarKitTest */ = {
+		B5C1F3431AB9C118004F88CD /* RadarKitUtility */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitTest" */;
+			buildConfigurationList = B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitUtility" */;
 			buildPhases = (
 				B5C1F3401AB9C118004F88CD /* Sources */,
 				B5C1F3411AB9C118004F88CD /* Frameworks */,
@@ -490,9 +490,9 @@
 			);
 			dependencies = (
 			);
-			name = RadarKitTest;
+			name = RadarKitUtility;
 			productName = RadarKitTest;
-			productReference = B5C1F3441AB9C118004F88CD /* RadarKitTest */;
+			productReference = B5C1F3441AB9C118004F88CD /* RadarKitUtility */;
 			productType = "com.apple.product-type.tool";
 		};
 		B5DFFDB9222DB42E005CF6B3 /* ProductHeader */ = {
@@ -552,7 +552,7 @@
 			projectRoot = "";
 			targets = (
 				B5324D4E1AB8A5A000C00517 /* RadarKit */,
-				B5C1F3431AB9C118004F88CD /* RadarKitTest */,
+				B5C1F3431AB9C118004F88CD /* RadarKitUtility */,
 				B56AB0A920A8826900E73AE9 /* SimpleEmulator */,
 				B5DFFDB9222DB42E005CF6B3 /* ProductHeader */,
 			);
@@ -615,7 +615,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5E7CB12210A4AD100D381ED /* rktest.c in Sources */,
+				B5E7CB12210A4AD100D381ED /* rkutil.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1090,7 +1090,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitTest" */ = {
+		B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitUtility" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B5C1F3481AB9C118004F88CD /* Debug */,
