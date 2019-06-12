@@ -552,37 +552,37 @@ enum RKInitFlag {
 
 typedef uint32_t RKBaseMomentList;
 enum RKBaseMomentList {
-    RKBaseMomentListNone                = 0,                                  // None
-    RKBaseMomentListDisplayZ            = 1,                                  // Display Z - Reflectivity dBZ
-    RKBaseMomentListDisplayV            = (1 << 1),                           // Display V - Velocity
-    RKBaseMomentListDisplayW            = (1 << 2),                           // Display W - Width
-    RKBaseMomentListDisplayD            = (1 << 3),                           // Display D - Differential Reflectivity
-    RKBaseMomentListDisplayP            = (1 << 4),                           // Display P - PhiDP
-    RKBaseMomentListDisplayR            = (1 << 5),                           // Display R - RhoHV
-    RKBaseMomentListDisplayK            = (1 << 6),                           // Display K - KDP
-    RKBaseMomentListDisplaySh           = (1 << 7),                           // Display Sh - Signal from H channel
-    RKBaseMomentListDisplaySv           = (1 << 8),                           // Display Sv - Signal from V channel
-    RKBaseMomentListDisplayQ            = (1 << 9),                           // Display SQI - Signal Quality Index
-    RKBaseMomentListDisplayZVWDPR       = 0x0000003F,                         // Display All without K, Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRK      = 0x0000007F,                         // Display All without Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRKS     = 0x000001FF,                         // Display All without Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRKSQ    = 0x000003FF,                         // Display All
-    RKBaseMomentListDisplayAll          = 0x000003FF,                         // Display All (same as above)
-    RKBaseMomentListProductZ            = (1 << 16),                          // Data of Z
-    RKBaseMomentListProductV            = (1 << 17),                          // Data of V
-    RKBaseMomentListProductW            = (1 << 18),                          // Data of W
-    RKBaseMomentListProductD            = (1 << 19),                          // Data of D
-    RKBaseMomentListProductP            = (1 << 20),                          // Data of P
-    RKBaseMomentListProductR            = (1 << 21),                          // Data of R
-    RKBaseMomentListProductK            = (1 << 22),                          // Data of K
-    RKBaseMomentListProductSh           = (1 << 23),                          // Data of Sh
-    RKBaseMomentListProductSv           = (1 << 24),                          // Data of Sv
-    RKBaseMomentListProductQ            = (1 << 25),                          // Data of Q
-    RKBaseMomentListProductZVWDPR       = 0x003F0000,                         // Base moment data without K, Sh, Sv and Q
-    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                         // Base moment data without Sh, Sv and Q
-    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000,                         // All data without Q
-    RKBaseMomentListProductZVWDPRKSQ    = 0x03FF0000,                         // All data
-    RKBaseMomentListProductAll          = 0x03FF0000                          // All data (same as above)
+    RKBaseMomentListNone                = 0,                                   // None
+    RKBaseMomentListDisplayZ            = 1,                                   // Display Z - Reflectivity dBZ
+    RKBaseMomentListDisplayV            = (1 << 1),                            // Display V - Velocity
+    RKBaseMomentListDisplayW            = (1 << 2),                            // Display W - Width
+    RKBaseMomentListDisplayD            = (1 << 3),                            // Display D - Differential Reflectivity
+    RKBaseMomentListDisplayP            = (1 << 4),                            // Display P - PhiDP
+    RKBaseMomentListDisplayR            = (1 << 5),                            // Display R - RhoHV
+    RKBaseMomentListDisplayK            = (1 << 6),                            // Display K - KDP
+    RKBaseMomentListDisplaySh           = (1 << 7),                            // Display Sh - Signal from H channel
+    RKBaseMomentListDisplaySv           = (1 << 8),                            // Display Sv - Signal from V channel
+    RKBaseMomentListDisplayQ            = (1 << 9),                            // Display SQI - Signal Quality Index
+    RKBaseMomentListDisplayZVWDPR       = 0x0000003F,                          // Display All without K, Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRK      = 0x0000007F,                          // Display All without Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRKS     = 0x000001FF,                          // Display All without Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRKSQ    = 0x000003FF,                          // Display All
+    RKBaseMomentListDisplayAll          = 0x000003FF,                          // Display All (same as above)
+    RKBaseMomentListProductZ            = (1 << 16),                           // Data of Z
+    RKBaseMomentListProductV            = (1 << 17),                           // Data of V
+    RKBaseMomentListProductW            = (1 << 18),                           // Data of W
+    RKBaseMomentListProductD            = (1 << 19),                           // Data of D
+    RKBaseMomentListProductP            = (1 << 20),                           // Data of P
+    RKBaseMomentListProductR            = (1 << 21),                           // Data of R
+    RKBaseMomentListProductK            = (1 << 22),                           // Data of K
+    RKBaseMomentListProductSh           = (1 << 23),                           // Data of Sh
+    RKBaseMomentListProductSv           = (1 << 24),                           // Data of Sv
+    RKBaseMomentListProductQ            = (1 << 25),                           // Data of Q
+    RKBaseMomentListProductZVWDPR       = 0x003F0000,                          // Base moment data without K, Sh, Sv and Q
+    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                          // Base moment data without Sh, Sv and Q
+    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000,                          // All data without Q
+    RKBaseMomentListProductZVWDPRKSQ    = 0x03FF0000,                          // All data
+    RKBaseMomentListProductAll          = 0x03FF0000                           // All data (same as above)
 };
 
 typedef uint32_t RKBaseMomentIndex;
