@@ -18,12 +18,12 @@
 //           - Mapping coefficients to product files
 //
 //  2.3    - 6/xx/2019
-//         - I/Q data playback
-//         - Introduced hopping chirp waveforms
-//         - Introduced individual storage limits
-//         - Introduced command queues
-//         - Introduced SQIThreshold
-//         - Introduced ignoreHeading flag
+//         - Added I/Q data playback
+//         - Added hopping chirp waveforms
+//         - Added individual storage limits
+//         - Added command queues
+//         - Added SQIThreshold
+//         - Added ignoreHeading flag
 //         - Updated hopping chirp, summary, etc.
 //         - Updated RKWaveformApplyWindow() for count > 1
 //         - Updated MATLAB reader for buildNo 3
