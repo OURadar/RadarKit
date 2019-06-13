@@ -466,6 +466,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     exit(EXIT_FAILURE);
                 }
                 strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
+                RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'P':
                 user->port = atoi(optarg);

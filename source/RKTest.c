@@ -1936,8 +1936,16 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     
     int j, k, s;
     char *c, string[RKMaximumStringLength];
+    long fpos, fsize;
+    long tic = 0;
     double periodTotal;
+    struct timeval t0, t1;
+    bool even = true;
 
+    RKFileHeader *fileHeader = &transceiver->fileHeaderCache;
+    RKPulseHeader *pulseHeader = &transceiver->pulseHeaderCache;
+    uint32_t gateCount;
+    
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
@@ -2003,7 +2011,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     // Sort the list by name (should be in time numbers)
     qsort(filelist, count, RKMaximumPathLength, string_cmp_by_filename);
     for (k = 0; k < count; k++) {
-        printf("%d %s\n", k, filelist + k * RKMaximumPathLength);
+        RKLog(">%s %d. %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
     }
  
     // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
@@ -2017,31 +2025,48 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     }
     transceiver->state ^= RKEngineStateSleep0;
     
-    
     // RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
     
-//    gettimeofday(&t1, NULL);
-//    gettimeofday(&t2, NULL);
+    gettimeofday(&t1, NULL);
     
     FILE *fid;
-    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    if (fileHeader == NULL) {
-        RKLog("%s Error. Unable to allocated memory.\n");
-        return (void *)-3;
-    }
-    
+
     k = 0;   // k file index from the filelist
     while (transceiver->state & RKEngineStateWantActive) {
-        RKLog("%s Opening filelist[%d] %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
+        RKLog("%s Opening filelist[%d] %s\n", transceiver->name, k, RKLastPartOfPath(filelist + k * RKMaximumPathLength));
         fid = fopen(filelist + k * RKMaximumPathLength, "rb");
         if (fid == NULL) {
             RKLog("%s Error. Unable to open file %d %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
             usleep(100000);
             continue;
         }
+        j = fseek(fid, 0L, SEEK_END);
+        if (j == 0) {
+            fsize = ftell(fid);
+        } else {
+            RKLog("%s Error. Unable to tell the file size.\n", transceiver->name);
+            fsize = 0;
+        }
+        fpos = 0;
+        rewind(fid);
         fread(fileHeader, sizeof(RKFileHeader), 1, fid);
         //RKLog("%s", transceiver->name);
+
         RKLog("%s Waveform %s", transceiver->name, fileHeader->config.waveform);
+        sprintf(string, "waveforms/%s.rkwav", fileHeader->config.waveform);
+        if (!RKFilenameExists(string)) {
+            RKLog("%s Error. Waveform %s does not exist in my collection.\n", transceiver->name, string);
+            fclose(fid);
+            continue;
+        }
+        RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
+        
+        transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
+        transceiver->prt = 1.0f / fileHeader->config.prf[0];
+        
+        RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
+              transceiver->name, 1.0e3f * transceiver->prt, RKIntegerToCommaStyleString(fileHeader->config.prf[0]));
+        
         RKAddConfig(radar,
                     RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
                     RKConfigKeySystemZCal, fileHeader->config.systemZCal[0], fileHeader->config.systemZCal[1],
@@ -2050,16 +2075,64 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                     RKConfigKeySNRThreshold, fileHeader->config.SNRThreshold,
                     RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
                     RKConfigKeyPulseRingFilterGateCount, fileHeader->config.pulseRingFilterGateCount,
+                    RKConfigKeyWaveform, transceiver->waveformCache[0],
+                    RKConfigKeyPRF, fileHeader->config.prf[0],
+                    RKConfigKeySweepElevation, fileHeader->config.sweepElevation,
+                    RKConfigKeySweepAzimuth, fileHeader->config.sweepAzimuth,
                     RKConfigKeyNull);
-        sprintf(string, "waveforms/%s", fileHeader->config.waveform);
-        if (!RKFilenameExists(string)) {
-            RKLog("%s Error. Waveform does not exist in my collection.\n", transceiver->name, string);
-            fclose(fid);
-            continue;
-        }
-        RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
         
-        transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
+        transceiver->periodOdd = transceiver->periodEven = transceiver->prt;
+        transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
+        RKLog("%s Using chunkSize = %d\n", transceiver->name, transceiver->chunkSize);
+
+        while (transceiver->state & RKEngineStateWantActive && fpos < fsize) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            if (pulse == NULL) {
+                RKLog("%s Error. No vacant pulse for storage.\n", transceiver->name);
+                break;
+            }
+            fread(pulseHeader, sizeof(RKPulseHeader), 1, fid);
+            gateCount = MIN(pulse->header.capacity, pulseHeader->gateCount);
+            fread(RKGetInt16CDataFromPulse(pulse, 0), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid);
+            fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
+            fread(RKGetInt16CDataFromPulse(pulse, 1), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid);
+            fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
+            
+            pulse->header.gateSizeMeters = pulseHeader->gateSizeMeters;
+            pulse->header.gateCount = gateCount;
+            pulse->header.rawAzimuth = pulseHeader->rawAzimuth;
+            pulse->header.rawElevation = pulseHeader->rawElevation;
+            pulse->header.azimuthDegrees = pulseHeader->azimuthDegrees;
+            pulse->header.elevationDegrees = pulseHeader->elevationDegrees;
+            pulse->header.azimuthVelocityDegreesPerSecond = pulseHeader->azimuthVelocityDegreesPerSecond;
+            pulse->header.elevationVelocityDegreesPerSecond = pulseHeader->elevationVelocityDegreesPerSecond;
+            
+            //        RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
+            //                                RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
+            //                                RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
+            //                                RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,
+            //                                RKConfigKeyPulseGateCount, pulse->header.gateCount,
+            //                                RKConfigKeyPositionMarker, marker0,
+            
+            if (pulseHeader->marker & RKMarkerSweepBegin) {
+                RKLog("%s Sweep begin.\n", transceiver->name);
+                RKAddConfig(radar,
+                            RKConfigKeyPulseGateCount, pulseHeader->gateCount,
+                            RKConfigKeyPulseGateSize, pulseHeader->gateSizeMeters,
+                            RKConfigKeyNull);
+            }
+            
+            pulse->header.configIndex = radar->configIndex;
+
+            RKSetPulseReady(radar, pulse);
+            
+            RKLog("%s pulse->header.s = %04x  marker = %04x gateCount = %d\n", transceiver->name, pulseHeader->marker, pulseHeader->s, gateCount);
+            
+            fpos = ftell(fid);
+            even = !even;
+            tic++;
+            usleep(100000);
+        }
         
         fclose(fid);
         

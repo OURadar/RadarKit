@@ -575,16 +575,28 @@ char *RKFileExtension(const char *filename) {
 
 char *RKPathStringByExpandingTilde(const char *path) {
     static char fullpath[1024];
-    if (path[0] == '~') {
+    int k;
+    char *c = (char *)path;
+    while (*c == ' ') {
+        c++;
+    }
+    if (*c == '~') {
         char *home = getenv("HOME");
         if (home != NULL) {
-            snprintf(fullpath, 1024, "%s/%s", getenv("HOME"), path);
+            k = snprintf(fullpath, 1024, "%s", getenv("HOME"));
+            k--;
+            if (fullpath[k] == '/') {
+                fullpath[k] = '\0';
+            } else {
+                k++;
+            }
+            snprintf(fullpath + k, 1024 - k, "/%s", c + 2);
         } else {
             fprintf(stderr, "Error. HOME environmental variable not set.\n");
-            snprintf(fullpath, 1024, "%s", path);
+            snprintf(fullpath, 1024, "%s", c);
         }
     } else {
-        snprintf(fullpath, 1024, "%s", path);
+        snprintf(fullpath, 1024, "%s", c);
     }
     return fullpath;
 }

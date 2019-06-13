@@ -63,6 +63,9 @@ typedef struct rk_test_transceiver {
     long           ticEven;
     long           ticOdd;
     char           playbackFolder[RKMaximumFolderPathLength];
+    RKFileHeader   fileHeaderCache;
+    RKPulseHeader  pulseHeaderCache;
+    RKByte         dump[1024 * 1024];
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {

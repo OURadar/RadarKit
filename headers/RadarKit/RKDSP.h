@@ -100,7 +100,7 @@ typedef struct rk_moment_scratch {
     RKFloat                          *PhiDP;                                   // Differential phase PhiDP
     RKFloat                          *RhoHV;                                   // Cross-correlation coefficient RhoHV
     RKFloat                          *KDP;                                     // Specific phase KDP
-    int8_t                           *mask;                                    // Mask for censoring
+    uint8_t                          *mask;                                    // Mask for censoring
     RKFFTModule                      *fftModule;                               // A reference to the common FFT module
     fftwf_complex                    **inBuffer;                               //
     fftwf_complex                    **outBuffer;                              //

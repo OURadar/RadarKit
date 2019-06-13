@@ -8,6 +8,14 @@
 
 #include <RadarKit/RKMoment.h>
 
+typedef int8_t RKCellMask;
+enum RKCellMask {
+    RKCellMaskNull     = 0,
+    RKCellMaskKeepH    = 1,
+    RKCellMaskKeepV    = (1 << 1),
+    RKCellMaskKeepBoth = RKCellMaskKeepH | RKCellMaskKeepV
+};
+
 // Internal Functions
 
 static void RKMomentUpdateStatusString(RKMomentEngine *);
@@ -172,6 +180,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     float SNRh, SNRv;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
     float SQIThreshold = space->SQIThreshold;
+    uint8_t *mask = space->mask;
     // Masking based on SNR and SQI
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         SNRh = *Si / space->noise[0];
@@ -179,7 +188,32 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
         *To++ = 10.0f * log10f(*Ti++) - 80.0f;
         *Qo++ = *Qi;
+        *mask = RKCellMaskNull;
         if (SNRh > SNRThreshold && *Qi > SQIThreshold) {
+            *mask |= RKCellMaskKeepH;
+        }
+        if (SNRv > SNRThreshold && *Oi > SQIThreshold) {
+            *mask |= RKCellMaskKeepV;
+        }
+        mask++;
+        Qi++;
+        Oi++;
+    }
+    // Simple despecking: censor the current cell if the next cell is censored
+    mask = space->mask;
+    for (k = 0; k < MIN(space->capacity, space->gateCount) - 1; k++) {
+        if (!(*(mask + 1) & RKCellMaskKeepH)) {
+            *mask &= ~RKCellMaskKeepH;
+        }
+        if (!(*(mask + 1) & RKCellMaskKeepV)) {
+            *mask &= ~RKCellMaskKeepV;
+        }
+        mask++;
+    }
+    // Now we copy out the values based on mask
+    mask = space->mask;
+    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
+        if (*mask & RKCellMaskKeepH) {
             *Zo++ = *Zi;
             *Vo++ = *Vi;
             *Wo++ = *Wi;
@@ -188,7 +222,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
             *Vo++ = NAN;
             *Wo++ = NAN;
         }
-        if (SNRh > SNRThreshold && SNRv > SNRThreshold && *Qi > SQIThreshold && *Oi > SQIThreshold) {
+        if (*mask == RKCellMaskKeepBoth) {
             *Do++ = *Di;
             *Po++ = *Pi;
             *Ko++ = *Ki;
@@ -199,11 +233,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
             *Ko++ = NAN;
             *Ro++ = NAN;
         }
+        mask++;
         Zi++;
         Vi++;
         Wi++;
-        Qi++;
-        Oi++;
         Di++;
         Pi++;
         Ki++;
