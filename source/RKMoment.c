@@ -452,8 +452,8 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     bytes++;
     bytes *= space->capacity * sizeof(RKFloat);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, space->capacity * sizeof(int8_t)));
-    bytes += space->capacity * sizeof(int8_t);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, space->capacity * sizeof(uint8_t)));
+    bytes += space->capacity * sizeof(uint8_t);
     space->inBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
     space->outBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
     bytes += 2 * space->capacity * sizeof(fftwf_complex *);

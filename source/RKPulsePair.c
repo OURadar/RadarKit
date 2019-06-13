@@ -162,6 +162,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    //printf("gateCount = %d   K = %d\n", gateCount, K);
 
     //
     //  ACF

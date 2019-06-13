@@ -1789,6 +1789,7 @@ void RKTestMomentProcessorSpeed(void) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
+        pulse->header.downSampledGateCount = pulseCapacity;
         X = RKGetComplexDataFromPulse(pulse, 0);
         Y = RKGetSplitComplexDataFromPulse(pulse, 0);
         for (j = 0; j < pulseCapacity; j++) {
