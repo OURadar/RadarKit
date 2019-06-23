@@ -467,7 +467,8 @@ void RKPreparePath(const char *filename) {
         fprintf(stderr, "RKPreparePath() unable to continue.\n");
         return;
     }
-    strncpy(path, filename, 1023);
+    path[1023] = '\0';
+    strncpy(path, filename, 1024);
     char *c = strrchr(path, '/');
     if (c == NULL) {
         free(path);

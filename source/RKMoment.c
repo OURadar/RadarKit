@@ -744,7 +744,7 @@ static void *momentCore(void *in) {
             space->SNRThreshold = config->SNRThreshold;
             space->SQIThreshold = config->SQIThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
-            RKLog("%s PRF = %s Hz -> Va = %.2f m/s\n", engine->name, RKFloatToCommaStyleString(config->prf[0]), space->velocityFactor);
+            RKLog("%s PRF = %s Hz -> Va = %.2f m/s/rad\n", engine->name, RKFloatToCommaStyleString(config->prf[0]), space->velocityFactor);
             space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
             if (engine->verbose > 1) {
