@@ -533,15 +533,18 @@ void RKTestFileManager(void) {
     RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
     RKFileManagerSetVerbose(fileManager, 3);
     
-    RKLog("Warning. All data will be erased!\n");
-    printf("Press Enter to continue ... or Ctrl-C to terminate.\n");
+    RKLog("Warning. All data in moment folder will be erased!\n");
+    printf("Press Enter to continue ... 'n' to keep moment files, or Ctrl-C to terminate.\n");
     
-    if (system("rm -rf data/moment") == -1) {
-        RKLog("Error. Failed during system().\n");
+    j = getchar();
+    
+    //printf("j = %d = %c\n", j, j);
+    if (j != 'n' && j != 'N') {
+        if (system("rm -rf data/moment") == -1) {
+            RKLog("Error. Failed during system().\n");
+        }
     }
-    
-    getchar();
-    
+
     RKFileManagerStart(fileManager);
     
     e = 0;

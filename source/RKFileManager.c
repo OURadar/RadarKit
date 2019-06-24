@@ -159,9 +159,9 @@ static void refreshFileList(RKFileRemover *me) {
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
 
     if (me->parent->verbose > 2) {
-        RKLog("%s Folders:\n", me->parent->name);
+        RKLog("%s %s Folders (%d):\n", me->parent->name, me->name, folderCount);
         for (k = 0; k < folderCount; k++) {
-            RKLog(">%s %s/%s\n", me->parent->name, me->path, folders[k]);
+            RKLog(">%s %s  %d. %s/%s\n", me->parent->name, me->name, k, me->path, folders[k]);
         }
     }
 
@@ -169,11 +169,14 @@ static void refreshFileList(RKFileRemover *me) {
     for (j = 0, k = 0; k < folderCount && me->count < me->capacity; k++) {
         sprintf(string, "%s/%s", me->path, folders[k]);
         int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, string);
+        RKLog("%s %s %s (%d)\n", me->parent->name, me->name, string, count);
         if (count < 0) {
-            RKLog("%s Error. Unable to list files in %s\n", me->parent->name, string);
+            RKLog("%s %s Error. Unable to list files in %s\n", me->parent->name, me->name, string);
             return;
+        } else if (count == me->capacity) {
+            RKLog("%s %s Warning. Insufficient capacity. Unexpected results may occur\n", me->parent->name, me->name);
         }
-        me->count += count;
+        me->count = MIN(me->count + count, me->capacity);
         for (; j < me->count; j++) {
             sprintf(string, "%s/%s/%s", me->path, folders[k], filenames[j]);
             stat(string, &fileStat);
@@ -192,7 +195,7 @@ static void refreshFileList(RKFileRemover *me) {
     if (me->parent->verbose > 2) {
         RKLog("%s %s Files (%s):\n", me->parent->name, me->name, RKIntegerToCommaStyleString(me->count));
         for (k = 0; k < me->count; k++) {
-            RKLog(">%s %5s. %s/%s/%s  %zu %d %d\n", me->parent->name,
+            RKLog(">%s %s %5s. %s/%s/%s  %zu %d i%d\n", me->parent->name, me->name,
                   RKIntegerToCommaStyleString(k),
                   me->parent->dataPath, folders[indexedStats[k].folderId], filenames[indexedStats[k].index],
                   indexedStats[k].time, indexedStats[k].folderId, indexedStats[k].index);
@@ -205,7 +208,7 @@ static void refreshFileList(RKFileRemover *me) {
     } else {
         if (folderCount == 1) {
             RKLog("%s %s Warning. Too many files in '%s'.\n", me->parent->name, me->name, me->path);
-            RKLog("%s %s Warning. Unexpected erasures may occur.\n", me->parent->name, me->name);
+            RKLog("%s %s Warning. Unexpected file removals may occur.\n", me->parent->name, me->name);
         }
         // Re-calculate the usage
         me->usage = 0;
@@ -350,13 +353,13 @@ static void *fileRemover(void *in) {
             sprintf(path, "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
             if (engine->verbose) {
 				if (indexedStats[me->index].size > 1.0e9) {
-					RKLog("%s %s Removing %s (%s GB) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-9f * (float)indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s GB, i%d) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-9f * (float)indexedStats[me->index].size), indexedStats[me->index].index);
 				} else if (indexedStats[me->index].size > 1.0e6) {
-					RKLog("%s %s Removing %s (%s MB) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-6f * (float)indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s MB, i%d) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-6f * (float)indexedStats[me->index].size), indexedStats[me->index].index);
 				} else if (indexedStats[me->index].size > 1.0e3) {
-					RKLog("%s %s Removing %s (%s KB) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-3f * (float)indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s KB, i%d) ...\n", engine->name, me->name, path, RKFloatToCommaStyleString(1.0e-3f * (float)indexedStats[me->index].size), indexedStats[me->index].index);
 				} else {
-					RKLog("%s %s Removing %s (%s B) ...\n", engine->name, me->name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size));
+					RKLog("%s %s Removing %s (%s B, i%d) ...\n", engine->name, me->name, path, RKUIntegerToCommaStyleString(indexedStats[me->index].size), indexedStats[me->index].index);
 				}
             }
             if (!strlen(parentFolder)) {
@@ -462,10 +465,16 @@ static void *folderWatcher(void *in) {
     
 #else
 
+//    const int capacities[] = {
+//        24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
+//        24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
+//        24 * 60 * 3,                      // Assume a file every minute, 3 folders
+//        0
+//    };
     const int capacities[] = {
-        24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
-        24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
-        24 * 60 * 3,                      // Assume a file every minute, 3 folders
+        100,               // Assume a file every 2 seconds, 2 folders
+        100,               // Assume 8 files every 2 seconds, 2 folders
+        100,               // Assume a file every minute, 3 folders
         0
     };
     const size_t limits[] = {
@@ -795,7 +804,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     me->usage += fileStat.st_size;
     
     if (engine->verbose > 2) {
-        RKLog("%s Added '%s'   %s B  k%d\n", engine->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
+        RKLog("%s %s Added '%s'   %s B  ik%d\n", engine->name, me->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
     }
     
     me->count = RKNextModuloS(me->count, me->capacity);
