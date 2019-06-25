@@ -12,13 +12,12 @@
 #define RKFileManagerLogFileListCapacity     1000
 
 // The way RadarKit names the files should be relatively short:
-// Folder: YYYYMMDD
+// Folder: YYYYMMDD                              ( 6 chars)
 // IQData: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.rkr     (33 chars)
 // Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X-Z.nc    (34 chars)
 // Moment: XXXXXX-YYYYMMDD-HHMMSS-EXXX.X.tar.xx  (36 chars)
 // Health: XXXXXX-YYYYMMDD-HHMMSS.json           (27 chars)
 // Log   : XXXXXX-YYYYMMDD.log                   (19 chars)
-//#define RKFileManagerFilenameLength               38
 
 #define RKFileManagerFilenameLength                 (RKMaximumSymbolLength + 25 + RKMaximumFileExtensionLength)
 
@@ -169,7 +168,7 @@ static void refreshFileList(RKFileRemover *me) {
     for (j = 0, k = 0; k < folderCount && me->count < me->capacity; k++) {
         sprintf(string, "%s/%s", me->path, folders[k]);
         int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, string);
-        RKLog("%s %s %s (%d)\n", me->parent->name, me->name, string, count);
+        RKLog("%s %s %s (%s files)\n", me->parent->name, me->name, string, RKIntegerToCommaStyleString(count));
         if (count < 0) {
             RKLog("%s %s Error. Unable to list files in %s\n", me->parent->name, me->name, string);
             return;
