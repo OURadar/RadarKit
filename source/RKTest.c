@@ -1967,7 +1967,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
     
     // Use a counter that mimics microsecond increments
-    RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    //RKSetPulseTicsPerSeconds(radar, 1.0e6);
     
     transceiver->state |= RKEngineStateActive;
     

@@ -6,7 +6,7 @@
 //  Expected file structure from RadarKit:
 //
 //
-//  Three major folders with structure A:
+//  Three major folders (IQ, moment, and health) with structure A:
 //
 //  .../rootDataFolder/iq/20170401/RK-20170401-012345-E1.0.rkr
 //                                 RK-20170401-012346-E2.0.rkr

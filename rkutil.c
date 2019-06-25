@@ -465,6 +465,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     RKLog("Playback folder without folder.\n");
                     exit(EXIT_FAILURE);
                 }
+                user->simulate = false;
+                user->desc.initFlags = RKInitFlagIQPlayback;
                 strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
@@ -648,7 +650,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             user->prf = 1000.0f;
         }
     } else {
-        if (!(user->desc.initFlags == RKInitFlagRelay)) {
+        if (!(user->desc.initFlags == RKInitFlagRelay) && !(user->desc.initFlags == RKInitFlagIQPlayback)) {
             fprintf(stderr, "No options specified. Don't want to do anything?\n");
             exit(EXIT_FAILURE);
         }
@@ -851,9 +853,9 @@ int main(int argc, const char **argv) {
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
+    // Now we use the framework.
     if (systemPreferences->simulate) {
 
-        // Now we use the frame work.
         // Build a series of options for transceiver, only pass down the relevant parameters
         k = 0;
         if (systemPreferences->fs) {
@@ -871,9 +873,6 @@ int main(int argc, const char **argv) {
         }
         if (systemPreferences->sleepInterval) {
             k += sprintf(cmd + k, " z %d", systemPreferences->sleepInterval);
-        }
-        if (strlen(systemPreferences->playbackFolder)) {
-            k += sprintf(cmd + k, " D %s", systemPreferences->playbackFolder);
         }
         if (systemPreferences->verbose > 1) {
             RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, k, RKIntegerToCommaStyleString(RKMaximumStringLength));
@@ -923,41 +922,34 @@ int main(int argc, const char **argv) {
         RKGoLive(myRadar);
 
         // Simulation mode
-        if (strlen(systemPreferences->playbackFolder) == 0) {
-            RKLog("Setting a waveform ...\n");
-            //RKExecuteCommand(myRadar, "t w x", NULL);
-            RKExecuteCommand(myRadar, "t w s01", NULL);
-            //RKExecuteCommand(myRadar, "t w ofm", NULL);
-            //RKExecuteCommand(myRadar, "t w q02", NULL);
-            //RKExecuteCommand(myRadar, "t w q10", NULL);
-            //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
-            //RKExecuteCommand(myRadar, "t w h2005", NULL);
-            //RKExecuteCommand(myRadar, "t w h0507", NULL);
-            //RKSetWaveformToImpulse(myRadar);
-            
-            RKLog("Starting a new PPI ...\n");
-            if (systemPreferences->prf <= 20.0f) {
-                RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
-            } else if (systemPreferences->prf <= 100.0f) {
-                RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
-            } else {
-                RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
-            }
-
-            RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
-
-            // Wait indefinitely until something happens through a user command through the command center
-            RKWaitWhileActive(myRadar);
-            
-            RKFileMonitorFree(preferenceFileMonitor);
+        RKLog("Setting a waveform ...\n");
+        //RKExecuteCommand(myRadar, "t w x", NULL);
+        RKExecuteCommand(myRadar, "t w s01", NULL);
+        //RKExecuteCommand(myRadar, "t w ofm", NULL);
+        //RKExecuteCommand(myRadar, "t w q02", NULL);
+        //RKExecuteCommand(myRadar, "t w q10", NULL);
+        //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
+        //RKExecuteCommand(myRadar, "t w h2005", NULL);
+        //RKExecuteCommand(myRadar, "t w h0507", NULL);
+        //RKSetWaveformToImpulse(myRadar);
+        
+        RKLog("Starting a new PPI ...\n");
+        if (systemPreferences->prf <= 20.0f) {
+            RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
+        } else if (systemPreferences->prf <= 100.0f) {
+            RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
         } else {
-            // Wait indefinitely until something happens through a user command through the command center
-            RKWaitWhileActive(myRadar);
+            RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
         }
 
+        RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
+        // Wait indefinitely until something happens through a user command through the command center
+        RKWaitWhileActive(myRadar);
+        
+        RKFileMonitorFree(preferenceFileMonitor);
 
-    } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
+    } else if (systemPreferences->desc.initFlags == RKInitFlagRelay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, systemPreferences->relayHost);
         RKSetRecordingLevel(myRadar, 0);
@@ -971,6 +963,25 @@ int main(int argc, const char **argv) {
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
         
+    } else if (systemPreferences->desc.initFlags == RKInitFlagIQPlayback) {
+
+        // Build a series of options for transceiver, only pass down the relevant parameters
+        k = 0;
+        if (strlen(systemPreferences->playbackFolder)) {
+            k += sprintf(cmd + k, " D %s", systemPreferences->playbackFolder);
+        }
+        RKSetTransceiver(myRadar,
+                         (void *)cmd,
+                         RKTestTransceiverInit,
+                         RKTestTransceiverExec,
+                         RKTestTransceiverFree);
+
+        // Radar going live
+        RKGoLive(myRadar);
+
+        // Wait indefinitely until something happens through a user command through the command center
+        RKWaitWhileActive(myRadar);
+
     } else {
         
         RKSetWantScreenOutput(true);

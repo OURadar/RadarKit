@@ -528,26 +528,29 @@ enum RKRayStatus {
 
 typedef uint32_t RKInitFlag;
 enum RKInitFlag {
-    RKInitFlagNone                   = 0,
-    RKInitFlagVerbose                = 0x0001,
-    RKInitFlagVeryVerbose            = 0x0002,
-    RKInitFlagVeryVeryVerbose        = 0x0004,
-    RKInitFlagShowClockOffset        = 0x0008,
-    RKInitFlagManuallyAssignCPU      = 0x0010,
-    RKInitFlagIgnoreGPS              = 0x0020,
-    RKInitFlagIgnoreHeading          = 0x0040,
-    RKInitFlagReserved4              = 0x0080,
-    RKInitFlagAllocStatusBuffer      = 0x0100,                                 // 1 << 8
-    RKInitFlagAllocConfigBuffer      = 0x0200,                                 // 1 << 9
-    RKInitFlagAllocRawIQBuffer       = 0x0400,                                 // 1 << 10
-    RKInitFlagAllocPositionBuffer    = 0x0800,                                 // 1 << 11
-    RKInitFlagAllocMomentBuffer      = 0x1000,                                 // 1 << 12
-    RKInitFlagAllocHealthBuffer      = 0x2000,                                 // 1 << 13
-    RKInitFlagAllocHealthNodes       = 0x4000,                                 // 1 << 14
-    RKInitFlagSignalProcessor        = 0x8000,                                 // 1 << 15
-    RKInitFlagRelay                  = 0x7703,                                 // Everything = 0xFF00 - 0x8000(DSP) - 0x0800(Pos)
-    RKInitFlagAllocEverything        = 0xFF01,
-    RKInitFlagAllocEverythingQuiet   = 0xFF00,
+    RKInitFlagNone                      = 0,
+    RKInitFlagVerbose                   = 0x00000001,
+    RKInitFlagVeryVerbose               = 0x00000002,
+    RKInitFlagVeryVeryVerbose           = 0x00000004,
+    RKInitFlagShowClockOffset           = 0x00000008,
+    RKInitFlagManuallyAssignCPU         = 0x00000010,
+    RKInitFlagIgnoreGPS                 = 0x00000020,
+    RKInitFlagIgnoreHeading             = 0x00000040,
+    RKInitFlagReserved4                 = 0x00000080,
+    RKInitFlagAllocStatusBuffer         = 0x00000100,                          // 1 << 8
+    RKInitFlagAllocConfigBuffer         = 0x00000200,                          // 1 << 9
+    RKInitFlagAllocRawIQBuffer          = 0x00000400,                          // 1 << 10
+    RKInitFlagAllocPositionBuffer       = 0x00000800,                          // 1 << 11
+    RKInitFlagAllocMomentBuffer         = 0x00001000,                          // 1 << 12
+    RKInitFlagAllocHealthBuffer         = 0x00002000,                          // 1 << 13
+    RKInitFlagAllocHealthNodes          = 0x00004000,                          // 1 << 14
+    RKInitFlagReserved1                 = 0x00008000,                          // 1 << 15
+    RKInitFlagPulsePositionCombiner     = 0x00010000,                          // 1 << 16
+    RKInitFlagSignalProcessor           = 0x00020000,                          // 1 << 17
+    RKInitFlagRelay                     = 0x00007703,                          // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
+    RKInitFlagIQPlayback                = 0x00027701,                          // 37F00(All) - 800(Pos) - 100000(PPC)
+    RKInitFlagAllocEverything           = 0x00037F01,
+    RKInitFlagAllocEverythingQuiet      = 0x00037F00,
 };
 
 typedef uint32_t RKBaseMomentList;

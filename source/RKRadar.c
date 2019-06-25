@@ -71,11 +71,13 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
     // Memory usage of various internal engines
     size += radar->fileManager->memoryUsage;
     size += radar->hostMonitor->memoryUsage;
-    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+    if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
         size += 2 * sizeof(RKClock);
+        size += radar->positionEngine->memoryUsage;
+    }
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         size += radar->pulseCompressionEngine->memoryUsage;
         size += radar->pulseRingFilterEngine->memoryUsage;
-        size += radar->positionEngine->memoryUsage;
         size += radar->momentEngine->memoryUsage;
         size += radar->healthEngine->memoryUsage;
         if (radar->systemInspector) {
@@ -112,7 +114,7 @@ static void *systemInspectorRunLoop(void *in) {
 
     RKConfig *config;
     RKHealth *health;
-    RKPosition *position0, *position1;
+    RKPosition *position0 = NULL, *position1 = NULL;
     RKPulse *pulse0, *pulse1;
     RKRay *ray0, *ray1;
     double positionRate = 0.0, pulseRate = 0.0, rayRate = 0.0;
@@ -191,40 +193,64 @@ static void *systemInspectorRunLoop(void *in) {
         //  - Compute the number of samples (buffer depth / 8) over the period (delta t)
 
         // Position
-        index = RKPreviousNModuloS(radar->positionIndex, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth);
-        position0 = &radar->positions[index];
-        index = RKPreviousNModuloS(index, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth);
-        position1 = &radar->positions[index];
-        dt = position0->timeDouble - position1->timeDouble;
-        if (dt) {
-            positionRate = (double)(radar->desc.positionBufferDepth / 8) / dt;
+        if (radar->positions) {
+            index = RKPreviousNModuloS(radar->positionIndex, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth);
+            position0 = &radar->positions[index];
+            index = RKPreviousNModuloS(index, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth);
+            position1 = &radar->positions[index];
+            dt = position0->timeDouble - position1->timeDouble;
+            if (dt) {
+                positionRate = (double)(radar->desc.positionBufferDepth / 8) / dt;
+            }
         }
 
         // Pulse
-        index = RKPreviousNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
-        pulse0 = RKGetPulseFromBuffer(radar->pulses, index);
-        index = RKPreviousNModuloS(index, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
-        pulse1 = RKGetPulseFromBuffer(radar->pulses, index);
-        dt = pulse0->header.timeDouble - pulse1->header.timeDouble;
-        if (dt) {
-            pulseRate = (double)(radar->desc.pulseBufferDepth / 8) / dt;
+        if (radar->pulses) {
+            index = RKPreviousNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
+            pulse0 = RKGetPulseFromBuffer(radar->pulses, index);
+            index = RKPreviousNModuloS(index, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
+            pulse1 = RKGetPulseFromBuffer(radar->pulses, index);
+            dt = pulse0->header.timeDouble - pulse1->header.timeDouble;
+            if (dt) {
+                pulseRate = (double)(radar->desc.pulseBufferDepth / 8) / dt;
+            }
         }
 
         // Ray
-        index = RKPreviousNModuloS(radar->rayIndex, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
-        ray0 = RKGetRayFromBuffer(radar->rays, index);
-        index = RKPreviousNModuloS(index, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
-        ray1 = RKGetRayFromBuffer(radar->rays, index);
-        dt = ray0->header.startTimeDouble - ray1->header.startTimeDouble;
-        if (dt) {
-            rayRate = (double)(radar->desc.rayBufferDepth / 8) / dt;
+        if (radar->rays) {
+            index = RKPreviousNModuloS(radar->rayIndex, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
+            ray0 = RKGetRayFromBuffer(radar->rays, index);
+            index = RKPreviousNModuloS(index, radar->desc.rayBufferDepth / 8, radar->desc.rayBufferDepth);
+            ray1 = RKGetRayFromBuffer(radar->rays, index);
+            dt = ray0->header.startTimeDouble - ray1->header.startTimeDouble;
+            if (dt) {
+                rayRate = (double)(radar->desc.rayBufferDepth / 8) / dt;
+            }
         }
 
+        // Only do this if the radar has a pulse position combiner
+        if (radar->positions && radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
+            pedestalOkay = positionRate == 0.0f ? false : true;
+            // Position active / standby
+            health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                pedestalEnum = RKStatusEnumStandby;
+            } else {
+                if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
+                    RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
+                    pedestalEnum = RKStatusEnumActive;
+                } else {
+                    pedestalEnum = RKStatusEnumStandby;
+                }
+            }
+        }
+        
         // Only do this if the radar is a signal processor
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             // General Health
             transceiverOkay = pulseRate == 0.0f ? false : true;
-            pedestalOkay = positionRate == 0.0f ? false : true;
+            pedestalOkay = true;
             healthOkay = radar->healthRelay ? (tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true) : false;
             networkOkay = radar->hostMonitor->allReachable ? true : false;
             networkEnum =
@@ -239,20 +265,6 @@ static void *systemInspectorRunLoop(void *in) {
                 transceiverEnum = RKStatusEnumStandby;
             } else {
                 transceiverEnum = RKStatusEnumNormal;
-            }
-
-            // Position active / standby
-            health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
-            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                pedestalEnum = RKStatusEnumStandby;
-            } else {
-                if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
-                    RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
-                    pedestalEnum = RKStatusEnumActive;
-                } else {
-                    pedestalEnum = RKStatusEnumStandby;
-                }
             }
 
             // Tweeta health
@@ -767,9 +779,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->memoryUsage += radar->fileManager->memoryUsage;
     radar->state |= RKRadarStateFileManagerInitialized;
 
-    // Signal processor marries pulse and position data, process for moment, etc.
+    // Pulse position combiner marries pulse and position data
     RKName tmpName;
-    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+    if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
         // Clocks
         if (radar->desc.pulseSmoothFactor > 0) {
             radar->pulseClock = RKClockInitWithSize(radar->desc.pulseSmoothFactor + 1000, radar->desc.pulseSmoothFactor);
@@ -798,7 +810,19 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
         RKLog("Position latency = %.3e s\n", radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);
-        
+
+        // Position engine
+        radar->positionEngine = RKPositionEngineInit();
+        RKPositionEngineSetInputOutputBuffers(radar->positionEngine, &radar->desc,
+                                              radar->positions, &radar->positionIndex,
+                                              radar->configs, &radar->configIndex,
+                                              radar->pulses, &radar->pulseIndex);
+        radar->memoryUsage += radar->positionEngine->memoryUsage;
+        radar->state |= RKRadarStatePositionEngineInitialized;
+    }
+
+    // Signal processor performs pulse compression, calculates moment, etc.
+    if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // FFT module
         radar->fftModule = RKFFTModuleInit(radar->desc.pulseCapacity, radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0);
         radar->memoryUsage += sizeof(RKFFTModule);
@@ -819,15 +843,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                                                      radar->pulses, &radar->pulseIndex);
         radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
         radar->state |= RKRadarStatePulseRingFilterEngineInitialized;
-
-        // Position engine
-        radar->positionEngine = RKPositionEngineInit();
-        RKPositionEngineSetInputOutputBuffers(radar->positionEngine, &radar->desc,
-                                              radar->positions, &radar->positionIndex,
-                                              radar->configs, &radar->configIndex,
-                                              radar->pulses, &radar->pulseIndex);
-        radar->memoryUsage += radar->positionEngine->memoryUsage;
-        radar->state |= RKRadarStatePositionEngineInitialized;
 
         // Moment engine
         radar->momentEngine = RKMomentEngineInit();
@@ -1630,6 +1645,9 @@ int RKGoLive(RKRadar *radar) {
     // Start the engines
     RKFileManagerStart(radar->fileManager);
     RKHostMonitorStart(radar->hostMonitor);
+    if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
+        RKPositionEngineStart(radar->positionEngine);
+    }
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         if (radar->desc.initFlags & RKInitFlagManuallyAssignCPU) {
             // Main thread uses 1 CPU. Start the others from 1.
@@ -1649,7 +1667,6 @@ int RKGoLive(RKRadar *radar) {
         // Now, we start the engines
         RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
         RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
-        RKPositionEngineStart(radar->positionEngine);
         RKMomentEngineStart(radar->momentEngine);
         RKHealthEngineStart(radar->healthEngine);
         // After all the engines started, we monitor them. This engine should be stopped before stopping the engines.

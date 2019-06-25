@@ -56,7 +56,7 @@ static time_t timeFromFilename(const char *filename) {
     }
     hhmmss++;
     if (hhmmss - yyyymmdd > 9) {
-        // Filename may have changed
+        // Filenames that do not follow the pattern XXXXXX-YYYYMMDD-HHMMSS-EXX.XX-PPPPPPPP.EEEEEEEE
         RKLog("Warning. Unexpected file pattern.\n");
         return 0;
     }
@@ -129,7 +129,6 @@ static bool isFolderEmpty(const char *path) {
     return true;
 }
 
-
 static void refreshFileList(RKFileRemover *me) {
     int j, k;
     struct stat fileStat;
@@ -182,7 +181,6 @@ static void refreshFileList(RKFileRemover *me) {
             indexedStats[j].index = j;
             indexedStats[j].folderId = k;
             indexedStats[j].time = timeFromFilename(filenames[j]);
-            //indexedStats[j].time = fileStat.st_ctime;
             indexedStats[j].size = fileStat.st_size;
             me->usage += fileStat.st_size;
         }
@@ -205,11 +203,12 @@ static void refreshFileList(RKFileRemover *me) {
     if (me->count < me->capacity) {
         me->reusable = true;
     } else {
+        me->reusable = false;
         if (folderCount == 1) {
             RKLog("%s %s Warning. Too many files in '%s'.\n", me->parent->name, me->name, me->path);
             RKLog("%s %s Warning. Unexpected file removals may occur.\n", me->parent->name, me->name);
         }
-        // Re-calculate the usage
+        // Re-calculate the usage since all slots have been used but there were still more files
         me->usage = 0;
         for (k = 0; k < folderCount; k++) {
             struct dirent *dir;
@@ -796,7 +795,6 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
 
     indexedStats[k].index = k;
     indexedStats[k].folderId = folderId;
-    //indexedStats[k].time = fileStat.st_ctime;
     indexedStats[k].time = timeFromFilename(filenames[k]);
     indexedStats[k].size = fileStat.st_size;
     
