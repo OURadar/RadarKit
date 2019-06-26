@@ -244,6 +244,8 @@ static void *systemInspectorRunLoop(void *in) {
                     pedestalEnum = RKStatusEnumStandby;
                 }
             }
+        } else {
+            pedestalEnum = RKStatusEnumInvalid;
         }
         
         // Only do this if the radar is a signal processor
@@ -2937,27 +2939,31 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
         m = sprintf(text, "\033[1;1H\033[2J");
         
         // Position
-        c = RKIntegerToCommaStyleString(radar->desc.positionBufferSize);
-        s = strlen(c);
-        if (terminalSize.ws_row > 25) {
-            m += sprintf(text + m, "Position Buffer (%s B)\n", c);
-            memset(text + m, '-', s + 20);
-            m += s + 20;
-            *(text + m++) = '\n';
-            n += 4;
+        if (radar->positions) {
+            c = RKIntegerToCommaStyleString(radar->desc.positionBufferSize);
+            s = strlen(c);
+            if (terminalSize.ws_row > 25) {
+                m += sprintf(text + m, "Position Buffer (%s B)\n", c);
+                memset(text + m, '-', s + 20);
+                m += s + 20;
+                *(text + m++) = '\n';
+                n += 4;
+            } else {
+                m += sprintf(text + m, "\033[4mPosition Buffer (%s B)\033[24m\n", c);
+                n += 3;
+            }
+            k = slice * MAX(1, (terminalSize.ws_row - 16) / 8);
+            positionStride = MAX(1, (radar->desc.positionBufferDepth + k - 1) / k);
+            //RKLog("%s", RKVariableInString("positionStride", &positionStride, RKValueTypeInt));
+            for (j = 0, k = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
+                m += sprintf(text + m, format, k, MIN(k + positionStride * slice, radar->desc.positionBufferDepth));
+                k += positionStride * slice;
+                n++;
+            }
         } else {
-            m += sprintf(text + m, "\033[4mPosition Buffer (%s B)\033[24m\n", c);
-            n += 3;
-        }
-        k = slice * MAX(1, (terminalSize.ws_row - 16) / 8);
-        positionStride = MAX(1, (radar->desc.positionBufferDepth + k - 1) / k);
-        //RKLog("%s", RKVariableInString("positionStride", &positionStride, RKValueTypeInt));
-        for (j = 0, k = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
-            m += sprintf(text + m, format, k, MIN(k + positionStride * slice, radar->desc.positionBufferDepth));
-            k += positionStride * slice;
             n++;
         }
-
+        
         // Pulse buffer
         c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
         s = strlen(c);
@@ -3057,44 +3063,48 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
     w = 2 * w + 3;
 
     uint32_t s0, s1;
-    n = 2;
-    if (terminalSize.ws_row > 25) {
-        n++;
-    }
-    k = 0;
-    for (j = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
-        // Move the cursor
-        m += sprintf(text + m, "\033[%d;%dH", n, w);
-        s1 = (uint32_t)-1;
-        for (i = 0; i < slice && k < radar->desc.positionBufferDepth; i++, k += positionStride) {
-            position = &radar->positions[k];
-            s0 = position->flag;
-            if (flag & RKTextPreferencesShowColor) {
-                if (s0 & RKPositionFlagUsed) {
-                    if (s0 == s1) {
-                        *(text + m++) = m3;
-                    } else {
-                        m += sprintf(text + m, "%s%c", c3, m3);
-                    }
-                } else if (s0 & RKPositionFlagReady) {
-                    if (s0 == s1) {
-                        *(text + m++) = m1;
-                    } else {
-                        m += sprintf(text + m, "%s%c", c1, m1);
-                    }
-                } else {
-                    if (s0 == s1) {
-                        *(text + m++) = m0;
-                    } else {
-                        m += sprintf(text + m, "%s%c", c0, m0);
-                    }
-                }
-                s1 = s0;
-            } else {
-                *(text + m++) = s0 & RKPositionFlagUsed ? m3 : (s0 & RKPositionFlagReady ? m1 : m0);
-            }
+    if (radar->positions) {
+        n = 2;
+        if (terminalSize.ws_row > 25) {
+            n++;
         }
-        n++;
+        k = 0;
+        for (j = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
+            // Move the cursor
+            m += sprintf(text + m, "\033[%d;%dH", n, w);
+            s1 = (uint32_t)-1;
+            for (i = 0; i < slice && k < radar->desc.positionBufferDepth; i++, k += positionStride) {
+                position = &radar->positions[k];
+                s0 = position->flag;
+                if (flag & RKTextPreferencesShowColor) {
+                    if (s0 & RKPositionFlagUsed) {
+                        if (s0 == s1) {
+                            *(text + m++) = m3;
+                        } else {
+                            m += sprintf(text + m, "%s%c", c3, m3);
+                        }
+                    } else if (s0 & RKPositionFlagReady) {
+                        if (s0 == s1) {
+                            *(text + m++) = m1;
+                        } else {
+                            m += sprintf(text + m, "%s%c", c1, m1);
+                        }
+                    } else {
+                        if (s0 == s1) {
+                            *(text + m++) = m0;
+                        } else {
+                            m += sprintf(text + m, "%s%c", c0, m0);
+                        }
+                    }
+                    s1 = s0;
+                } else {
+                    *(text + m++) = s0 & RKPositionFlagUsed ? m3 : (s0 & RKPositionFlagReady ? m1 : m0);
+                }
+            }
+            n++;
+        }
+    } else {
+        n = 0;
     }
 
     n += 2;

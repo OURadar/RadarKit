@@ -409,8 +409,12 @@ int socketStreamHandler(RKOperator *O) {
         if (k == RKStreamStatusPositions) {
             // Stream "0" - Positions
             user->streamsInProgress = RKStreamStatusPositions;
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
-                         RKPositionEnginePositionString(user->radar->positionEngine));
+            if (user->radar->positionEngine) {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                             RKPositionEnginePositionString(user->radar->positionEngine));
+            } else {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "No position engine" RKEOL);
+            }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);

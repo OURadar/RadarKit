@@ -2133,25 +2133,27 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
 
             RKSetPulseReady(radar, pulse);
             
-            RKLog("%s pulse->header.s = %04x  marker = %04x gateCount = %d\n", transceiver->name, pulseHeader->marker, pulseHeader->s, gateCount);
+//            RKLog("%s pulse->header.s = %04x  marker = %04x gateCount = %d\n", transceiver->name, pulseHeader->marker, pulseHeader->s, gateCount);
             
             fpos = ftell(fid);
             even = !even;
             tic++;
-            usleep(100000);
+            
+            if (j++ == transceiver->chunkSize) {
+                gettimeofday(&t0, NULL);
+                //j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
+                j = 10000;
+                usleep(j);
+                t1 = t0;
+                j = 0;
+            }
         }
         
         fclose(fid);
         
-        for (j = 0; j < 100 && transceiver->state & RKEngineStateWantActive; j++) {
-            usleep(10000);
-        }
-        
         periodTotal = 0.0;
         
         k = RKNextModuloS(k, count);
-        
-        usleep(10000);
     }
 
     transceiver->state ^= RKEngineStateActive;
