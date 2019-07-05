@@ -40,7 +40,7 @@ int RKLog(const char *whatever, ...) {
         free(msg);
         return 1;
     }
-    if (rkGlobalParameters.dailyLog) {
+    if (rkGlobalParameters.logTimeOnly) {
         if (whatever[0] == '>') {
             i += sprintf(msg, "             ");
         } else {
@@ -166,6 +166,7 @@ void RKSetWantScreenOutput(const bool yes) {
 
 void RKSetUseDailyLog(const bool dailyLog) {
     rkGlobalParameters.dailyLog = dailyLog;
+    rkGlobalParameters.logTimeOnly = true;
 }
 
 int RKSetProgramName(const char *name) {
