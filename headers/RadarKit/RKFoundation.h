@@ -66,8 +66,9 @@
 typedef struct RKGlobalParameterStruct {
     char             program[32];                                // Name of the program in log
     char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
+    char             logFolder[RKMaximumPathLength - 80];        // Log folder. This has priority, otherwise, logs are in {rootDataFolder}/log
     char             rootDataFolder[RKMaximumPathLength - 80];   // Root folder where iq, moment health and log files are stored
-    bool             dailyLog;                                   // Daily mode where log file is /{rootDataFolder}/log/YYYYMMDD.log
+    bool             dailyLog;                                   // Daily mode where log file is {logFolder}/YYYYMMDD.log
     bool             showColor;                                  // Show colors
     pthread_mutex_t  mutex;                                      // Mutual exclusive access
     FILE             *stream;                                    // Secondary output stream, can be NULL

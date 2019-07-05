@@ -120,7 +120,9 @@ int RKLog(const char *whatever, ...) {
     // Write the string to a file if specified
     FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
-        if (strlen(rkGlobalParameters.rootDataFolder)) {
+        if (strlen(rkGlobalParameters.logFolder)) {
+            i = sprintf(filename, "%s/%s-", rkGlobalParameters.logFolder, rkGlobalParameters.program);
+        } else if (strlen(rkGlobalParameters.rootDataFolder)) {
             i = sprintf(filename, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
         } else {
             i = 0;
@@ -131,8 +133,13 @@ int RKLog(const char *whatever, ...) {
         }
         logFileID = fopen(filename, "a");
     } else if (strlen(rkGlobalParameters.logfile)) {
-        RKPreparePath(rkGlobalParameters.logfile);
-        logFileID = fopen(rkGlobalParameters.logfile, "a");
+        if (strlen(rkGlobalParameters.logFolder)) {
+            sprintf(filename, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
+        } else {
+            strcpy(filename, rkGlobalParameters.logfile);
+        }
+        RKPreparePath(filename);
+        logFileID = fopen(filename, "a");
     }
     if (logFileID) {
         fprintf(logFileID, "%s", msg);
