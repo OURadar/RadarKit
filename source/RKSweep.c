@@ -395,8 +395,9 @@ static void *rayGatherer(void *in) {
               engine->fileHandlingScript,
               rkGlobalParameters.showColor ? "\033[23;24m" : "",
               engine->fileHandlingScriptProperties & RKScriptPropertyProduceArchive ? " --> " : "",
-              engine->fileHandlingScriptProperties & RKScriptPropertyProduceTarXz ? ".tar.xz" :
-              (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTgz ? ".tgz" : ".zip"));
+              engine->fileHandlingScriptProperties & RKScriptPropertyProduceArchive ?
+              (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTarXz ? ".tar.xz" :
+               (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTgz ? ".tgz" : ".zip")) : "");
     }
     RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
 

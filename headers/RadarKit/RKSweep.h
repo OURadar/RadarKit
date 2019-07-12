@@ -41,7 +41,6 @@ struct rk_sweep_engine {
     bool                             doNotWrite;
     bool                             convertToDegrees;
     bool                             hasFileHandlingScript;
-    //char                             handleFilesScriptArchivedFileExtension[RKMaximumFileExtensionLength];
     char                             fileHandlingScript[RKMaximumPathLength];
     RKScriptProperty                 fileHandlingScriptProperties;
     RKFileManager                    *fileManager;
