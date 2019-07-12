@@ -389,7 +389,7 @@ static void *rayGatherer(void *in) {
         engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
     }
 
-    if (strlen(engine->fileHandlingScript)) {
+    if (engine->hasFileHandlingScript) {
         RKLog(">%s Handle files using '%s%s%s'%s%s\n", engine->name,
               rkGlobalParameters.showColor ? "\033[3;4m" : "",
               engine->fileHandlingScript,
@@ -613,14 +613,10 @@ void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
 }
 
 void RKSweepEngineSetFilesHandlingScript(RKSweepEngine *engine, const char *script, const RKScriptProperty flag) {
-//    if (strlen(archivedFileExtension) > RKMaximumFileExtensionLength - 1) {
-//        RKLog("Error. Archived file extension %s is too long. Maximum = %d. Recompile.\n", RKMaximumFileExtensionLength, archivedFileExtension);
-//        exit(EXIT_FAILURE);
-//    }
     if (RKFilenameExists(script)) {
         engine->hasFileHandlingScript = true;
+        engine->fileHandlingScriptProperties = flag;
         strcpy(engine->fileHandlingScript, script);
-//        strcpy(engine->handleFilesScriptArchivedFileExtension, archivedFileExtension);
     } else {
         RKLog("%s Error. File handler script does not exist.\n", engine->name);
     }
