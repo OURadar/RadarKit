@@ -688,7 +688,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                                   systemPreferences->coresForPulseRingFilter,
                                   systemPreferences->coresForMomentProcessor);
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
+        RKSweepEngineSetFilesHandlingScript(myRadar->sweepEngine, "scripts/handlefiles.sh", RKScriptPropertyProduceTarXz);
         if (systemPreferences->diskUsageLimitGB) {
             RKLog("Setting disk usage limit to %s GB ...\n", RKIntegerToCommaStyleString(systemPreferences->diskUsageLimitGB));
             RKFileManagerSetDiskUsageLimit(myRadar->fileManager, (size_t)systemPreferences->diskUsageLimitGB * (1 << 30));

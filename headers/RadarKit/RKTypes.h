@@ -658,6 +658,16 @@ enum RKHealthNode {
     RKHealthNodeInvalid = (RKHealthNode) - 1
 };
 
+typedef uint8_t RKScriptProperty;
+enum RKScriptProperty {
+    RKScriptPropertyNull            = 0,
+    RKScriptPropertyProduceZip      = (1),
+    RKScriptPropertyProduceTgz      = (1 << 1),
+    RKScriptPropertyProduceTarXz    = (1 << 2),
+    RKScriptPropertyProduceArchive  = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz),
+    RKScriptPropertyRemoveNCFiles   = (1 << 3)
+};
+
 //
 // Typical progression:
 //
