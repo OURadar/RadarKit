@@ -474,12 +474,6 @@ static void *folderWatcher(void *in) {
         24 * 60 * 30,                     // Assume a file every minute, 30 folders
         0
     };
-//    const int capacities[] = {
-//        100,               // Assume a file every 2 seconds, 2 folders
-//        100,               // Assume 8 files every 2 seconds, 2 folders
-//        100,               // Assume a file every minute, 3 folders
-//        0
-//    };
     const size_t limits[] = {
         RKFileManagerRawDataRatio,
         RKFileManagerMomentDataRatio,

@@ -56,7 +56,7 @@
 #define RKFileManagerDefaultUsageLimit     (size_t)1024 * 1024 * 1024 * 1024 * 12 / 10
 #define RKFileManagerRawDataRatio          800
 #define RKFileManagerMomentDataRatio       400
-#define RKFileManagerHealthDataRatio       10
+#define RKFileManagerHealthDataRatio       25
 #define RKFileManagerDefaultLogAgeInDays   30
 
 typedef struct rk_file_remover RKFileRemover;
