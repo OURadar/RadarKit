@@ -136,6 +136,14 @@ static void builtInCompressor(RKCompressionScratch *scratch) {
 
     bound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->maxDataLength + filterAnchor->length);
 
+#if DEBUG_PULSE_COMPRESSION
+
+    if (pulse->header.i % 1000 == 0) {
+        RKLog("---- filter %d   o= %d   gateCount = %d   bound = %d\n", filterAnchor->name, filterAnchor->inputOrigin, pulse->header.gateCount, bound);
+    }
+
+#endif
+
     for (p = 0; p < 2; p++) {
         // Copy and convert the samples
         RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
@@ -434,6 +442,12 @@ static void *pulseCompressionCore(void *_in) {
             pulse->parameters.filterCounts[0] = j;
             pulse->parameters.filterCounts[1] = j;
             pulse->header.pulseWidthSampleCount = blindGateCount;
+            #ifdef DEBUG_IQ
+            if (pulse->header.i % 1000 == 0) {
+                RKLog("-- %d --> %d\n", pulse->header.gateCount, pulse->header.gateCount - blindGateCount);
+            }
+            #endif
+            pulse->header.gateCount -= blindGateCount;
             pulse->header.s |= RKPulseStatusCompressed;
         }
 

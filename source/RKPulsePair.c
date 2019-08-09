@@ -162,14 +162,15 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    //printf("gateCount = %d   K = %d\n", gateCount, K);
 
     //
     //  ACF
     //
 
-    RKIQZ Xl = {NULL, NULL};
-    RKIQZ Xm = {NULL, NULL};
-    RKIQZ Xn = {NULL, NULL};
+    RKIQZ Xl;
+    RKIQZ Xm;
+    RKIQZ Xn;
     RKVec *s0i = NULL;
     RKVec *s0q = NULL;
     RKVec *s1i = NULL;
@@ -286,7 +287,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             r2q++;
         }
 
-        // Go through the even pulses for mX and R(0)
+        // Go through the rest of the pulses for mX and R(0)
         for (n = 3; n < count; n++) {
             Xl = Xm;
             Xm = Xn;

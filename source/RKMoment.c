@@ -8,6 +8,14 @@
 
 #include <RadarKit/RKMoment.h>
 
+typedef int8_t RKCellMask;
+enum RKCellMask {
+    RKCellMaskNull     = 0,
+    RKCellMaskKeepH    = 1,
+    RKCellMaskKeepV    = (1 << 1),
+    RKCellMaskKeepBoth = RKCellMaskKeepH | RKCellMaskKeepV
+};
+
 // Internal Functions
 
 static void RKMomentUpdateStatusString(RKMomentEngine *);
@@ -164,39 +172,71 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexV);
     float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexW);
     float *Qi = space->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
+    float *Oi = space->Q[1];
     float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseMomentIndexD);
     float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseMomentIndexP);
     float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);
-    float SNR;
+    float SNRh, SNRv;
     float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
-    // Masking based on SNR
+    float SQIThreshold = space->SQIThreshold;
+    uint8_t *mask = space->mask;
+    // Masking based on SNR and SQI
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
-        SNR = *Si / space->noise[0];
+        SNRh = *Si / space->noise[0];
+        SNRv = *Ti / space->noise[1];
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
-        *To++ = 10.0f * log10f(*Ti++);
+        *To++ = 10.0f * log10f(*Ti++) - 80.0f;
         *Qo++ = *Qi;
-        if (SNR > SNRThreshold) {
+        *mask = RKCellMaskNull;
+        if (SNRh > SNRThreshold && *Qi > SQIThreshold) {
+            *mask |= RKCellMaskKeepH;
+        }
+        if (SNRv > SNRThreshold && *Oi > SQIThreshold) {
+            *mask |= RKCellMaskKeepV;
+        }
+        mask++;
+        Qi++;
+        Oi++;
+    }
+    // Simple despecking: censor the current cell if the next cell is censored
+    mask = space->mask;
+    for (k = 0; k < MIN(space->capacity, space->gateCount) - 1; k++) {
+        if (!(*(mask + 1) & RKCellMaskKeepH)) {
+            *mask &= ~RKCellMaskKeepH;
+        }
+        if (!(*(mask + 1) & RKCellMaskKeepV)) {
+            *mask &= ~RKCellMaskKeepV;
+        }
+        mask++;
+    }
+    // Now we copy out the values based on mask
+    mask = space->mask;
+    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
+        if (*mask & RKCellMaskKeepH) {
             *Zo++ = *Zi;
             *Vo++ = *Vi;
             *Wo++ = *Wi;
+        } else {
+            *Zo++ = NAN;
+            *Vo++ = NAN;
+            *Wo++ = NAN;
+        }
+        if (*mask == RKCellMaskKeepBoth) {
             *Do++ = *Di;
             *Po++ = *Pi;
             *Ko++ = *Ki;
             *Ro++ = *Ri;
         } else {
-            *Zo++ = NAN;
-            *Vo++ = NAN;
-            *Wo++ = NAN;
             *Do++ = NAN;
             *Po++ = NAN;
             *Ko++ = NAN;
             *Ro++ = NAN;
         }
+        mask++;
         Zi++;
         Vi++;
         Wi++;
-        Qi++;
         Di++;
         Pi++;
         Ki++;
@@ -412,8 +452,8 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     bytes++;
     bytes *= space->capacity * sizeof(RKFloat);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, space->capacity * sizeof(int8_t)));
-    bytes += space->capacity * sizeof(int8_t);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKSIMDAlignSize, space->capacity * sizeof(uint8_t)));
+    bytes += space->capacity * sizeof(uint8_t);
     space->inBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
     space->outBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
     bytes += 2 * space->capacity * sizeof(fftwf_complex *);
@@ -526,7 +566,7 @@ static void *momentCore(void *in) {
     RKRay *ray;
     RKPulse *pulse;
     RKConfig *config;
-    RKScratch *space;
+    RKScratch *space = NULL;
     
     // Allocate local resources and keep track of the total allocation
     pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
@@ -677,7 +717,7 @@ static void *momentCore(void *in) {
         config = &engine->configBuffer[E->header.configIndex];
 
         // Compute the range correction factor if needed.
-        if (ic != E->header.configIndex) {
+        if (ic != E->header.configIndex || ray->header.gateCount != space->gateCount) {
             ic = E->header.configIndex;
             // At this point, gateCount and gateSizeMeters is no longer of the raw pulses, they have been adjusted according to pulseToRayRatio
             space->gateCount = ray->header.gateCount;
@@ -686,20 +726,25 @@ static void *momentCore(void *in) {
             // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
             // The number 60 is for conversion of range from meters to kilometers in the range correction term.
             space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
-            if (engine->verbose > 1) {
+            // Call the calibrator to derive range calibration, ZCal and DCal
+            engine->calibrator(space, config);
+            if (engine->verbose) {
                 RKLog("%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
                       engine->name, me->name,
                       config->filterCount,
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
+                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain = %.2f   samplingAdj = %.2f\n",
+                      engine->name, me->name,
+                      config->systemZCal[0], config->ZCal[0][0], config->filterAnchors[0].sensitivityGain, space->samplingAdjustment);
             }
-            // Call the calibrator to derive range calibration, ZCal and DCal
-            engine->calibrator(space, config);
             // The rest of the constants
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
             space->SNRThreshold = config->SNRThreshold;
+            space->SQIThreshold = config->SQIThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength * config->prf[0] / M_PI;
+            RKLog("%s PRF = %s Hz -> Va = %.2f m/s/rad\n", engine->name, RKFloatToCommaStyleString(config->prf[0]), space->velocityFactor);
             space->widthFactor = engine->radarDescription->wavelength * config->prf[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
             if (engine->verbose > 1) {

@@ -11,6 +11,7 @@
 
 #include <RadarKit/RKTypes.h>
 #include <RadarKit/RKMisc.h>
+#include <RadarKit/RKSIMD.h>
 
 #define RKDefaultLogfile                 "messages.log"
 #define RKEOL                            "\r\n"
@@ -65,14 +66,16 @@
 typedef struct RKGlobalParameterStruct {
     char             program[32];                                // Name of the program in log
     char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
+    char             logFolder[RKMaximumPathLength - 80];        // Log folder. This has priority, otherwise, logs are in {rootDataFolder}/log
     char             rootDataFolder[RKMaximumPathLength - 80];   // Root folder where iq, moment health and log files are stored
-    bool             dailyLog;                                   // Daily mode where log file is /{rootDataFolder}/log/YYYYMMDD.log
+    bool             logTimeOnly;                                // Time stamp of log entries
+    bool             dailyLog;                                   // Daily mode where log file is {logFolder}/YYYYMMDD.log
     bool             showColor;                                  // Show colors
     pthread_mutex_t  mutex;                                      // Mutual exclusive access
     FILE             *stream;                                    // Secondary output stream, can be NULL
-} RKGlobalParamters;
+} RKGlobalParameters;
 
-extern RKGlobalParamters rkGlobalParameters;
+extern RKGlobalParameters rkGlobalParameters;
 extern const char * const rkResultStrings[];
 
 #pragma mark - Common Functions
@@ -155,5 +158,10 @@ RKIdentifier RKIdentifierFromString(const char *);
 
 // Simple engine
 int RKSimpleEngineFree(RKSimpleEngine *);
+
+// FIFO command queue
+RKCommandQueue *RKCommandQueueInit(const uint8_t, const bool);
+RKCommand *RKCommandQueuePop(RKCommandQueue *);
+int RKCommandQueuePush(RKCommandQueue *, RKCommand *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

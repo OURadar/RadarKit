@@ -185,7 +185,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Stream varrious data
                     user->streamsToRestore = user->streamsInProgress;
                     stream = RKStreamFromString(commandString + 1);
-                    RKLog("stream = %x / %x\n", stream, RKStreamSweepQ);
+                    //RKLog("%s %s stream = %x / %x\n", engine->name, O->name, stream, RKStreamSweepQ);
                     if (stream & RKStreamStatusTerminalChange) {
                         stream = user->streamsToRestore;
                         k = RKNextModuloS((user->textPreferences & RKTextPreferencesWindowSizeMask) >> 2, 5) << 2;
@@ -250,11 +250,10 @@ int socketCommandHandler(RKOperator *O) {
                     break;
 
                 case 'x':
-                    user->ascopeMode = RKNextModuloS(user->ascopeMode, 4);
+                    user->ascopeMode = RKNextModuloS(user->ascopeMode, 3);
                     RKLog("%s %s AScope mode %d : %s\n", engine->name, O->name, user->ascopeMode,
-                          user->ascopeMode == 3 ? "Raw I/Q + Filter + Output" :
-                          (user->ascopeMode == 2 ? "Down-sampled twice from RKComplex buffer" :
-                           (user->ascopeMode == 1 ? "Down-sampled twice from RKInt16C buffer" : "Down-sampled once from RKInt16C buffer")));
+                          user->ascopeMode == 2 ? "Raw I/Q + Filter + Output" :
+                          (user->ascopeMode == 1 ? "Down-sampled twice from RKComplex buffer" : "Down-sampled once from RKInt16C buffer"));
                     sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -410,8 +409,12 @@ int socketStreamHandler(RKOperator *O) {
         if (k == RKStreamStatusPositions) {
             // Stream "0" - Positions
             user->streamsInProgress = RKStreamStatusPositions;
-            k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
-                         RKPositionEnginePositionString(user->radar->positionEngine));
+            if (user->radar->positionEngine) {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                             RKPositionEnginePositionString(user->radar->positionEngine));
+            } else {
+                k = snprintf(user->string, RKMaximumStringLength - 1, "No position engine" RKEOL);
+            }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -596,9 +599,10 @@ int socketStreamHandler(RKOperator *O) {
                 user->timeLastOut = time;
                 user->ticForStatusStream++;
             } else if (engine->verbose) {
-                RKLog("%s %s No ray for ASCII art.  user->rayIndex = %d   endIndex = %d  %lld\n",
-                      engine->name, O->name, user->rayIndex, endIndex, ray->header.i);
-            }
+                // Ray is NULL
+                RKLog("%s %s No ray for ASCII art.  user->rayIndex = %d   endIndex = %d\n",
+                      engine->name, O->name, user->rayIndex, endIndex);
+            } // if (ray) ...
         }
 
         // Send another set of controls if the radar controls have changed.
@@ -1002,43 +1006,83 @@ int socketStreamHandler(RKOperator *O) {
                 sweepHeader.baseMomentList = RKBaseMomentListNone;
                 if ((user->streams & RKStreamSweepZ) && (productList & RKBaseMomentListProductZ)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductZ;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Z,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepV) && (productList & RKBaseMomentListProductV)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductV;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " V,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepW) && (productList & RKBaseMomentListProductW)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductW;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " W,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepD) && (productList & RKBaseMomentListProductD)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductD;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " D,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepP) && (productList & RKBaseMomentListProductP)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductP;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " P,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepR) && (productList & RKBaseMomentListProductR)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductR;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " R,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepK) && (productList & RKBaseMomentListProductK)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductK;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " K,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepQ) && (productList & RKBaseMomentListProductQ)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductQ;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Q,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepSh) && (productList & RKBaseMomentListProductSh)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductSh;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Sh,");
+                    }
                 }
                 if ((user->streams & RKStreamSweepSv) && (productList & RKBaseMomentListProductSv)) {
                     sweepHeader.baseMomentList |= RKBaseMomentListProductSv;
-                    i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
+                    if (rkGlobalParameters.showColor) {
+                        i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
+                    } else {
+                        i += sprintf(user->scratch + i, " Sv,");
+                    }
                 }
                 // Remove the last ','
                 if (i > 1) {
@@ -1221,25 +1265,24 @@ int socketStreamHandler(RKOperator *O) {
             float scale = 1.0f;
 
             // Default stride: k = 1
-            k = 1;
             switch (user->ascopeMode) {
-                case 3:
+                case 2:
                     // Show the waveform that was used through the forward sampling path
-                    pulseHeader.gateCount = MIN(RKMaximumGateCount, pulseHeader.gateCount);
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.gateCount);
                     if (!(user->radar->desc.initFlags & RKInitFlagSignalProcessor)) {
                         break;
                     }
                     i = 0;
                     gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
-                    for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                    for (k = 0; k < MIN(1000, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                         *userDataH++ = *c16DataH++;
                         *userDataV++ = *c16DataV++;
                         i++;
                     }
-                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-                        userDataH->i   = 0;
+                    for (; k < MIN(1010, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                        userDataH->i   = 20000;
                         userDataH++->q = 0;
-                        userDataV->i   = 0;
+                        userDataV->i   = 20000;
                         userDataV++->q = 0;
                         i++;
                     }
@@ -1247,17 +1290,17 @@ int socketStreamHandler(RKOperator *O) {
                     // Show the filter that was used as matched filter
                     yH = user->radar->pulseCompressionEngine->filters[gid][0];
                     yV = user->radar->pulseCompressionEngine->filters[gid][0];
-                    for (k = 0; k < MIN(400, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                    for (k = 0; k < MIN(1000, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                         userDataH->i   = (int16_t)(scale * yH->i);
                         userDataH++->q = (int16_t)(scale * yH++->q);
                         userDataV->i   = (int16_t)(scale * yV->i);
                         userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
-                    for (; k < MIN(410, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-                        userDataH->i   = 0;
+                    for (; k < MIN(1010, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                        userDataH->i   = 20000;
                         userDataH++->q = 0;
-                        userDataV->i   = 0;
+                        userDataV->i   = 20000;
                         userDataV++->q = 0;
                         i++;
                     }
@@ -1276,16 +1319,19 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV->i   = (int16_t)(scale * yV->i);
                         userDataV++->q = (int16_t)(scale * yV++->q);
                     }
+//                    RKLog("%s %s offset = %d / %d", engine->name, O->name,
+//                          (int)(userDataH - user->samples[0]),
+//                          (int)(userDataV - user->samples[1]));
                     break;
 
-                case 2:
+                case 1:
                     // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from RKComplex samples
                     k = user->pulseDownSamplingRatio;
                 
-                    pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
+                    //pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.downSampledGateCount / k);
                     pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
 
-                    gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
                     scale = 1.0f / sqrtf((float)user->radar->pulseCompressionEngine->filterAnchors[0][0].length);
                     yH = RKGetComplexDataFromPulse(pulse, 0);
                     yV = RKGetComplexDataFromPulse(pulse, 1);
@@ -1297,19 +1343,14 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     break;
                 
-                case 1:
-                    // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from Int16C samples
-                    k = user->pulseDownSamplingRatio;
-                
                 default:
-                    // Down-sampled once (k = 1) I/Q data from Int16C samples
-                    pulseHeader.gateCount = MIN(pulseHeader.gateCount / k, RKMaximumGateCount);
-                    pulseHeader.gateSizeMeters *= (float)k;
+                    // I/Q data from Int16C samples
+                    pulseHeader.gateCount = MIN(4096, pulseHeader.pulseWidthSampleCount + 10);
                     for (i = 0; i < pulseHeader.gateCount; i++) {
                         *userDataH++ = *c16DataH;
                         *userDataV++ = *c16DataV;
-                        c16DataH += k;
-                        c16DataV += k;
+                        c16DataH++;
+                        c16DataV++;
                     }
                     break;
             }
@@ -1323,6 +1364,7 @@ int socketStreamHandler(RKOperator *O) {
             #endif
 
             size = pulseHeader.gateCount * sizeof(RKInt16C);
+            //RKLog("%s %s %d vs %d / %d\n", engine->name, O->name, pulseHeader.gateCount, i, user->pulseDownSamplingRatio);
             
             O->delimTx.type = RKNetworkPacketTypePulseData;
             O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
@@ -1381,7 +1423,7 @@ int socketInitialHandler(RKOperator *O) {
     user->access |= RKStreamProductAll;
     user->access |= RKStreamSweepAll;
     user->access |= RKStreamDisplayIQ | RKStreamProductIQ;
-    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize120x50;
+    user->textPreferences = RKTextPreferencesShowColor | RKTextPreferencesWindowSize80x40;
     user->terminalSize.ws_col = 120;
     user->terminalSize.ws_row = 50;
     user->radar = engine->radars[0];
@@ -1392,7 +1434,7 @@ int socketInitialHandler(RKOperator *O) {
     }
     user->pulseDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / 1000, 1);
     user->asciiArtStride = 4;
-    user->ascopeMode = 2;
+    user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
@@ -1577,4 +1619,3 @@ void RKCommandCenterSkipToCurrent(RKCommandCenter *engine, RKRadar *radar) {
         }
     }
 }
-

@@ -88,6 +88,7 @@ typedef struct rk_moment_scratch {
     RKFloat                          *dcal;                                    // Calibration offset to D
     RKFloat                          *pcal;                                    // Calibration offset to P (radians)
     RKFloat                          SNRThreshold;                             // SNR threshold for masking
+    RKFloat                          SQIThreshold;                             // SQI threshold for masking
     RKFloat                          *rcor[2];                                 // Reflectivity range correction factor
     RKFloat                          *S[2];                                    // Signal
     RKFloat                          *Z[2];                                    // Reflectivity in dB
@@ -99,7 +100,7 @@ typedef struct rk_moment_scratch {
     RKFloat                          *PhiDP;                                   // Differential phase PhiDP
     RKFloat                          *RhoHV;                                   // Cross-correlation coefficient RhoHV
     RKFloat                          *KDP;                                     // Specific phase KDP
-    int8_t                           *mask;                                    // Mask for censoring
+    uint8_t                          *mask;                                    // Mask for censoring
     RKFFTModule                      *fftModule;                               // A reference to the common FFT module
     fftwf_complex                    **inBuffer;                               //
     fftwf_complex                    **outBuffer;                              //

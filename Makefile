@@ -41,7 +41,7 @@ OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
 RKLIB = libradarkit.a
 
-PROGS = rktest simple-emulator rknchead
+PROGS = rkutil simple-emulator rknchead
 
 # The command echo from macOS and Ubuntu needs no -e
 ECHO_FLAG = -e
@@ -74,7 +74,6 @@ else
 	LDFLAGS += -lrt
 endif
 
-#all: $(RKLIB) install rktest
 all: showinfo $(RKLIB) $(PROGS)
 
 showinfo:

@@ -40,13 +40,13 @@ struct rk_sweep_engine {
     uint8_t                          verbose;
     bool                             doNotWrite;
     bool                             convertToDegrees;
-    bool                             hasHandleFilesScript;
-    char                             handleFilesScriptArchivedFileExtension[RKMaximumFileExtensionLength];
-    char                             handleFilesScript[RKMaximumPathLength];
+    bool                             hasFileHandlingScript;
+    char                             fileHandlingScript[RKMaximumPathLength];
+    RKScriptProperty                 fileHandlingScriptProperties;
     RKFileManager                    *fileManager;
     uint32_t                         productTimeoutSeconds;
     char                             productFileExtension[RKMaximumFileExtensionLength];
-    int                              (*productRecorder)(RKProduct *, char *);
+    int                              (*productRecorder)(RKProduct *, const char *);
 
     // Program set variables
     pthread_t                        tidRayGatherer;
@@ -77,8 +77,8 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKProduct *productBuffer, uint32_t *productIndex);
 void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
-void RKSweepEngineSetHandleFilesScript(RKSweepEngine *, const char *script, const char *archivedFileExtension);
-void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(RKProduct *, char *));
+void RKSweepEngineSetFilesHandlingScript(RKSweepEngine *, const char *, const RKScriptProperty);
+void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(RKProduct *, const char *));
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);

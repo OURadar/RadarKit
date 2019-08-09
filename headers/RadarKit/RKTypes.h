@@ -40,7 +40,7 @@
 #define _RKVersionBranch ""
 #endif
 
-#define _RKVersionString "2.1.2" _RKVersionBranch
+#define _RKVersionString "2.2" _RKVersionBranch
 
 //
 // Memory Blocks
@@ -62,6 +62,7 @@
 
 #pragma mark - Constants
 
+#define RKRawDataBuildNo                     4                                 //
 #define RKBufferSSlotCount                   10                                // Status
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   50                                // Health
@@ -244,6 +245,8 @@ typedef union rk_filter_anchor {
         float         sensitivityGain;                                         // Sensitivity gain due to longer/efficient waveforms (dB)
         float         filterGain;                                              // Filter gain from the filter coefficients, should be 0.0 (dB)
         float         fullScale;                                               // Scaling factor to get to full scale
+        float         lowerBoundFrequency;                                     // For house Keeping only
+        float         upperBoundFrequency;                                     // For house Keeping only
     };
     char bytes[64];
 } RKFilterAnchor;
@@ -391,29 +394,54 @@ enum RKValueType {
     RKValueTypeIdentifier = RKValueTypeUInt64
 };
 
+typedef uint32_t RKPositionFlagV1;
+enum RKPositionFlagV1 {
+    RKPositionFlagV1Vacant             = 0,
+    RKPositionFlagV1AzimuthEnabled     = 1,            //  0 - EN
+    RKPositionFlagV1AzimuthSafety      = (1 << 1),     //  1
+    RKPositionFlagV1AzimuthError       = (1 << 2),     //  2
+    RKPositionFlagV1AzimuthSweep       = (1 << 8),     //  8
+    RKPositionFlagV1AzimuthPoint       = (1 << 9),     //  9
+    RKPositionFlagV1AzimuthComplete    = (1 << 10),    // 10
+    RKPositionFlagV1ElevationEnabled   = (1 << 16),    //  0 - EN
+    RKPositionFlagV1ElevationSafety    = (1 << 17),    //  1
+    RKPositionFlagV1ElevationError     = (1 << 18),    //  2
+    RKPositionFlagV1ElevationSweep     = (1 << 24),    //  8
+    RKPositionFlagV1ElevationPoint     = (1 << 25),    //  9
+    RKPositionFlagV1ElevationComplete  = (1 << 26),    // 10
+    RKPositionFlagV1ScanActive         = (1 << 28),
+    RKPositionFlagV1VCPActive          = (1 << 29),
+    RKPositionFlagV1HardwareMask       = 0x3FFFFFFF,
+    RKPositionFlagV1Used               = (1 << 30),
+    RKPositionFlagV1Ready              = (1 << 31),
+    RKPositionFlagV1AzimuthModeMask    = (RKPositionFlagV1AzimuthSweep | RKPositionFlagV1AzimuthPoint),
+    RKPositionFlagV1ElevationModeMask  = (RKPositionFlagV1ElevationSweep | RKPositionFlagV1ElevationPoint),
+    RKPositionFlagV1ScanModeMask       = (RKPositionFlagV1AzimuthModeMask | RKPositionFlagV1ElevationModeMask)
+};
+
 typedef uint32_t RKPositionFlag;
 enum RKPositionFlag {
     RKPositionFlagVacant             = 0,
-    RKPositionFlagAzimuthEnabled     = 1,
-    RKPositionFlagAzimuthSafety      = (1 << 1),
-    RKPositionFlagAzimuthError       = (1 << 2),
-    RKPositionFlagAzimuthSweep       = (1 << 8),
-    RKPositionFlagAzimuthPoint       = (1 << 9),
-    RKPositionFlagAzimuthMode        = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
-    RKPositionFlagAzimuthComplete    = (1 << 10),
-    RKPositionFlagElevationEnabled   = (1 << 16),
-    RKPositionFlagElevationSafety    = (1 << 17),
-    RKPositionFlagElevationError     = (1 << 18),
-    RKPositionFlagElevationSweep     = (1 << 24),
-    RKPositionFlagElevationPoint     = (1 << 25),
-    RKPositionFlagElevationMode      = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
-    RKPositionFlagElevationComplete  = (1 << 26),
+    RKPositionFlagAzimuthEnabled     = 1,            //  0 - EN
+    RKPositionFlagAzimuthSafety      = (1 << 1),     //  1
+    RKPositionFlagAzimuthError       = (1 << 2),     //  2
+    RKPositionFlagAzimuthSweep       = (1 << 8),     //  8
+    RKPositionFlagAzimuthPoint       = (1 << 9),     //  9
+    RKPositionFlagAzimuthComplete    = (1 << 10),    // 10
+    RKPositionFlagElevationEnabled   = (1 << 16),    //  0 - EN
+    RKPositionFlagElevationSafety    = (1 << 17),    //  1
+    RKPositionFlagElevationError     = (1 << 18),    //  2
+    RKPositionFlagElevationSweep     = (1 << 24),    //  8
+    RKPositionFlagElevationPoint     = (1 << 25),    //  9
+    RKPositionFlagElevationComplete  = (1 << 26),    // 10
     RKPositionFlagScanActive         = (1 << 28),
-    RKPositionFlagScanMode           = (RKPositionFlagAzimuthMode | RKPositionFlagElevationMode),
     RKPositionFlagVCPActive          = (1 << 29),
     RKPositionFlagHardwareMask       = 0x3FFFFFFF,
     RKPositionFlagUsed               = (1 << 30),
-    RKPositionFlagReady              = (1 << 31)
+    RKPositionFlagReady              = (1 << 31),
+    RKPositionFlagAzimuthModeMask    = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
+    RKPositionFlagElevationModeMask  = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
+    RKPositionFlagScanModeMask       = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)
 };
 
 typedef uint32_t RKHeadingType;
@@ -423,7 +451,6 @@ enum RKHeadingType {
     RKHeadingTypeAdd180,
     RKHeadingTypeAdd270
 };
-
 
 typedef uint32_t RKStatusFlag;
 enum RKStatusFlag {
@@ -501,61 +528,64 @@ enum RKRayStatus {
 
 typedef uint32_t RKInitFlag;
 enum RKInitFlag {
-    RKInitFlagNone                   = 0,
-    RKInitFlagVerbose                = 0x0001,
-    RKInitFlagVeryVerbose            = 0x0002,
-    RKInitFlagVeryVeryVerbose        = 0x0004,
-    RKInitFlagShowClockOffset        = 0x0008,
-    RKInitFlagManuallyAssignCPU      = 0x0010,
-    RKInitFlagIgnoreGPS              = 0x0020,
-    RKInitFlagReserved3              = 0x0040,
-    RKInitFlagReserved4              = 0x0080,
-    RKInitFlagAllocStatusBuffer      = 0x0100,                                 // 1 << 8
-    RKInitFlagAllocConfigBuffer      = 0x0200,                                 // 1 << 9
-    RKInitFlagAllocRawIQBuffer       = 0x0400,                                 // 1 << 10
-    RKInitFlagAllocPositionBuffer    = 0x0800,                                 // 1 << 11
-    RKInitFlagAllocMomentBuffer      = 0x1000,                                 // 1 << 12
-    RKInitFlagAllocHealthBuffer      = 0x2000,                                 // 1 << 13
-    RKInitFlagAllocHealthNodes       = 0x4000,                                 // 1 << 14
-    RKInitFlagSignalProcessor        = 0x8000,                                 // 1 << 15
-    RKInitFlagRelay                  = 0x7703,                                 // Everything = 0xFF00 - 0x8000(DSP) - 0x0800(Pos)
-    RKInitFlagAllocEverything        = 0xFF01,
-    RKInitFlagAllocEverythingQuiet   = 0xFF00,
+    RKInitFlagNone                      = 0,
+    RKInitFlagVerbose                   = 0x00000001,
+    RKInitFlagVeryVerbose               = 0x00000002,
+    RKInitFlagVeryVeryVerbose           = 0x00000004,
+    RKInitFlagShowClockOffset           = 0x00000008,
+    RKInitFlagManuallyAssignCPU         = 0x00000010,
+    RKInitFlagIgnoreGPS                 = 0x00000020,
+    RKInitFlagIgnoreHeading             = 0x00000040,
+    RKInitFlagReserved4                 = 0x00000080,
+    RKInitFlagAllocStatusBuffer         = 0x00000100,                          // 1 << 8
+    RKInitFlagAllocConfigBuffer         = 0x00000200,                          // 1 << 9
+    RKInitFlagAllocRawIQBuffer          = 0x00000400,                          // 1 << 10
+    RKInitFlagAllocPositionBuffer       = 0x00000800,                          // 1 << 11
+    RKInitFlagAllocMomentBuffer         = 0x00001000,                          // 1 << 12
+    RKInitFlagAllocHealthBuffer         = 0x00002000,                          // 1 << 13
+    RKInitFlagAllocHealthNodes          = 0x00004000,                          // 1 << 14
+    RKInitFlagReserved1                 = 0x00008000,                          // 1 << 15
+    RKInitFlagPulsePositionCombiner     = 0x00010000,                          // 1 << 16
+    RKInitFlagSignalProcessor           = 0x00020000,                          // 1 << 17
+    RKInitFlagRelay                     = 0x00007703,                          // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
+    RKInitFlagIQPlayback                = 0x00027701,                          // 37F00(All) - 800(Pos) - 100000(PPC)
+    RKInitFlagAllocEverything           = 0x00037F01,
+    RKInitFlagAllocEverythingQuiet      = 0x00037F00,
 };
 
 typedef uint32_t RKBaseMomentList;
 enum RKBaseMomentList {
-    RKBaseMomentListNone                = 0,                                  // None
-    RKBaseMomentListDisplayZ            = 1,                                  // Display Z - Reflectivity dBZ
-    RKBaseMomentListDisplayV            = (1 << 1),                           // Display V - Velocity
-    RKBaseMomentListDisplayW            = (1 << 2),                           // Display W - Width
-    RKBaseMomentListDisplayD            = (1 << 3),                           // Display D - Differential Reflectivity
-    RKBaseMomentListDisplayP            = (1 << 4),                           // Display P - PhiDP
-    RKBaseMomentListDisplayR            = (1 << 5),                           // Display R - RhoHV
-    RKBaseMomentListDisplayK            = (1 << 6),                           // Display K - KDP
-    RKBaseMomentListDisplaySh           = (1 << 7),                           // Display Sh - Signal from H channel
-    RKBaseMomentListDisplaySv           = (1 << 8),                           // Display Sv - Signal from V channel
-    RKBaseMomentListDisplayQ            = (1 << 9),                           // Display SQI - Signal Quality Index
-    RKBaseMomentListDisplayZVWDPR       = 0x0000003F,                         // Display All without K, Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRK      = 0x0000007F,                         // Display All without Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRKS     = 0x000001FF,                         // Display All without Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRKSQ    = 0x000003FF,                         // Display All
-    RKBaseMomentListDisplayAll          = 0x000003FF,                         // Display All (same as above)
-    RKBaseMomentListProductZ            = (1 << 16),                          // Data of Z
-    RKBaseMomentListProductV            = (1 << 17),                          // Data of V
-    RKBaseMomentListProductW            = (1 << 18),                          // Data of W
-    RKBaseMomentListProductD            = (1 << 19),                          // Data of D
-    RKBaseMomentListProductP            = (1 << 20),                          // Data of P
-    RKBaseMomentListProductR            = (1 << 21),                          // Data of R
-    RKBaseMomentListProductK            = (1 << 22),                          // Data of K
-    RKBaseMomentListProductSh           = (1 << 23),                          // Data of Sh
-    RKBaseMomentListProductSv           = (1 << 24),                          // Data of Sv
-    RKBaseMomentListProductQ            = (1 << 25),                          // Data of Q
-    RKBaseMomentListProductZVWDPR       = 0x003F0000,                         // Base moment data without K, Sh, Sv and Q
-    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                         // Base moment data without Sh, Sv and Q
-    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000,                         // All data without Q
-    RKBaseMomentListProductZVWDPRKSQ    = 0x03FF0000,                         // All data
-    RKBaseMomentListProductAll          = 0x03FF0000                          // All data (same as above)
+    RKBaseMomentListNone                = 0,                                   // None
+    RKBaseMomentListDisplayZ            = 1,                                   // Display Z - Reflectivity dBZ
+    RKBaseMomentListDisplayV            = (1 << 1),                            // Display V - Velocity
+    RKBaseMomentListDisplayW            = (1 << 2),                            // Display W - Width
+    RKBaseMomentListDisplayD            = (1 << 3),                            // Display D - Differential Reflectivity
+    RKBaseMomentListDisplayP            = (1 << 4),                            // Display P - PhiDP
+    RKBaseMomentListDisplayR            = (1 << 5),                            // Display R - RhoHV
+    RKBaseMomentListDisplayK            = (1 << 6),                            // Display K - KDP
+    RKBaseMomentListDisplaySh           = (1 << 7),                            // Display Sh - Signal from H channel
+    RKBaseMomentListDisplaySv           = (1 << 8),                            // Display Sv - Signal from V channel
+    RKBaseMomentListDisplayQ            = (1 << 9),                            // Display SQI - Signal Quality Index
+    RKBaseMomentListDisplayZVWDPR       = 0x0000003F,                          // Display All without K, Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRK      = 0x0000007F,                          // Display All without Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRKS     = 0x000001FF,                          // Display All without Sh, Sv and Q
+    RKBaseMomentListDisplayZVWDPRKSQ    = 0x000003FF,                          // Display All
+    RKBaseMomentListDisplayAll          = 0x000003FF,                          // Display All (same as above)
+    RKBaseMomentListProductZ            = (1 << 16),                           // Data of Z
+    RKBaseMomentListProductV            = (1 << 17),                           // Data of V
+    RKBaseMomentListProductW            = (1 << 18),                           // Data of W
+    RKBaseMomentListProductD            = (1 << 19),                           // Data of D
+    RKBaseMomentListProductP            = (1 << 20),                           // Data of P
+    RKBaseMomentListProductR            = (1 << 21),                           // Data of R
+    RKBaseMomentListProductK            = (1 << 22),                           // Data of K
+    RKBaseMomentListProductSh           = (1 << 23),                           // Data of Sh
+    RKBaseMomentListProductSv           = (1 << 24),                           // Data of Sv
+    RKBaseMomentListProductQ            = (1 << 25),                           // Data of Q
+    RKBaseMomentListProductZVWDPR       = 0x003F0000,                          // Base moment data without K, Sh, Sv and Q
+    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                          // Base moment data without Sh, Sv and Q
+    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000,                          // All data without Q
+    RKBaseMomentListProductZVWDPRKSQ    = 0x03FF0000,                          // All data
+    RKBaseMomentListProductAll          = 0x03FF0000                           // All data (same as above)
 };
 
 typedef uint32_t RKBaseMomentIndex;
@@ -594,6 +624,7 @@ enum RKConfigKey {
     RKConfigKeyDualPRF,
     RKConfigKeyPulseGateCount,
     RKConfigKeyPulseGateSize,
+    RKConfigKeyPulseWidth,
     RKConfigKeyWaveform,
     RKConfigKeyWaveformId,
     RKConfigKeyWaveformName,
@@ -603,6 +634,7 @@ enum RKConfigKey {
     RKConfigKeySystemPCal,
     RKConfigKeyWaveformCalibration,
     RKConfigKeySNRThreshold,
+    RKConfigKeySQIThreshold,
     RKConfigKeyVCPDefinition,
     RKConfigKeyPulseRingFilterGateCount,
     RKConfigKeyTotalNumberOfKeys
@@ -624,6 +656,16 @@ enum RKHealthNode {
     RKHealthNodeUser8,
     RKHealthNodeCount,
     RKHealthNodeInvalid = (RKHealthNode) - 1
+};
+
+typedef uint8_t RKScriptProperty;
+enum RKScriptProperty {
+    RKScriptPropertyNull            = 0,
+    RKScriptPropertyProduceZip      = (1),
+    RKScriptPropertyProduceTgz      = (1 << 1),
+    RKScriptPropertyProduceTarXz    = (1 << 2),
+    RKScriptPropertyProduceArchive  = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz),
+    RKScriptPropertyRemoveNCFiles   = (1 << 3)
 };
 
 //
@@ -816,7 +858,8 @@ enum RKWaveformType {
     RKWaveformTypeLinearFrequencyModulation      = (1 << 3),                   //
     RKWaveformTypeTimeFrequencyMultiplexing      = (1 << 4),                   //
     RKWaveformTypeFromFile                       = (1 << 5),                   //
-    RKWaveformTypeFlatAnchors                    = (1 << 6)                    // Frequency hopping has multiple waveforms but the anchors are identical
+    RKWaveformTypeFlatAnchors                    = (1 << 6),                   // Frequency hopping has multiple waveforms but the anchors are identical
+    RKWaveformTypeFrequencyHoppingChirp          = (1 << 7)                    //
 };
 
 typedef uint32_t RKEventType;
@@ -908,6 +951,7 @@ typedef struct rk_config {
     RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
     RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
     RKFloat              SNRThreshold;                                         // Censor SNR (dB)
+    RKFloat              SQIThreshold;                                         // Censor SQI
     RKName               waveform;                                             // Waveform name
     char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
 } RKConfig;
@@ -940,31 +984,31 @@ typedef struct rk_nodal_health {
 //
 typedef union rk_position {
     struct {
-        RKIdentifier        i;                                                // Counter
-        uint64_t            tic;                                              // Time tic
-        RKFourByte          rawElevation;                                     // Raw elevation readout
-        RKFourByte          rawAzimuth;                                       // Raw azimuth readout
-        RKFourByte          rawElevationVelocity;                             // Raw velocity of elevation readout
-        RKFourByte          rawAzimuthVelocity;                               // Raw velocity of azimuth readout
-        RKFourByte          rawElevationStatus;                               // Raw status of elevation readout
-        RKFourByte          rawAzimuthStatus;                                 // Raw status of azimuth readout
-        uint8_t             queueSize;                                        // Queue size of the readout buffer
-        uint8_t             elevationMode;                                    // Positioning mode of elevation
-        uint8_t             azimuthMode;                                      // Positioning mode of azimuth
-        uint8_t             sequence;                                         // DEBUG command sequence
-        RKPositionFlag      flag;                                             // Position flag
-        float               elevationDegrees;                                 // Decoded elevation
-        float               azimuthDegrees;                                   // Decoded elevation
-        float               elevationVelocityDegreesPerSecond;                // Decoded velocity of elevation
-        float               azimuthVelocityDegreesPerSecond;                  // Decoded velocity of azimuth
-        float               elevationCounter;                                 // Progress counter (of target) of the elevation
-        float               elevationTarget;                                  // Targeted progress counter of the elevation
-        float               azimuthCounter;                                   // Progress counter (of target) of the azimuth
-        float               azimuthTarget;                                    // Targeted progress counter of the azimuth
-        float               sweepElevationDegrees;                            // Set elevation for current sweep
-        float               sweepAzimuthDegrees;                              // Set azimuth for current sweep
-        struct timeval      time;                                             // Time in struct timeval
-        double              timeDouble;                                       // Time in double;
+        RKIdentifier        i;                                                 // Counter
+        uint64_t            tic;                                               // Time tic
+        RKFourByte          rawElevation;                                      // Raw elevation readout
+        RKFourByte          rawAzimuth;                                        // Raw azimuth readout
+        RKFourByte          rawElevationVelocity;                              // Raw velocity of elevation readout
+        RKFourByte          rawAzimuthVelocity;                                // Raw velocity of azimuth readout
+        RKFourByte          rawElevationStatus;                                // Raw status of elevation readout
+        RKFourByte          rawAzimuthStatus;                                  // Raw status of azimuth readout
+        uint8_t             queueSize;                                         // Queue size of the readout buffer
+        uint8_t             elevationMode;                                     // Positioning mode of elevation
+        uint8_t             azimuthMode;                                       // Positioning mode of azimuth
+        uint8_t             sequence;                                          // DEBUG command sequence
+        RKPositionFlag      flag;                                              // Position flag
+        float               elevationDegrees;                                  // Decoded elevation
+        float               azimuthDegrees;                                    // Decoded elevation
+        float               elevationVelocityDegreesPerSecond;                 // Decoded velocity of elevation
+        float               azimuthVelocityDegreesPerSecond;                   // Decoded velocity of azimuth
+        float               elevationCounter;                                  // Progress counter (of target) of the elevation
+        float               elevationTarget;                                   // Targeted progress counter of the elevation
+        float               azimuthCounter;                                    // Progress counter (of target) of the azimuth
+        float               azimuthTarget;                                     // Targeted progress counter of the azimuth
+        float               sweepElevationDegrees;                             // Set elevation for current sweep
+        float               sweepAzimuthDegrees;                               // Set azimuth for current sweep
+        struct timeval      time;                                              // Time in struct timeval
+        double              timeDouble;                                        // Time in double;
     };
     RKByte               bytes[128];
 } RKPosition;
@@ -973,36 +1017,36 @@ typedef union rk_position {
 // Pulse header
 //
 typedef struct rk_pulse_header {
-    RKIdentifier        i;                                                    // Identity counter
-    RKIdentifier        n;                                                    // Network counter, may be useful to indicate packet loss
-    uint64_t            t;                                                    // A clean clock-related tic count
-    RKPulseStatus       s;                                                    // Status flag
-    uint32_t            capacity;                                             // Allocated capacity
-    uint32_t            gateCount;                                            // Number of range gates
-    uint32_t            downSampledGateCount;                                 // Number of range gates after down-sampling
-    RKMarker            marker;                                               // Position Marker
-    uint32_t            pulseWidthSampleCount;                                // Pulsewidth
-    struct timeval      time;                                                 // UNIX time in seconds since 1970/1/1 12:00am
-    double              timeDouble;                                           // Time in double representation
-    RKFourByte          rawAzimuth;                                           // Raw azimuth reading, which may take up to 4 bytes
-    RKFourByte          rawElevation;                                         // Raw elevation reading, which may take up to 4 bytes
-    uint16_t            configIndex;                                          // Operating configuration index
-    uint16_t            configSubIndex;                                       // Operating configuration sub-index
-    uint16_t            azimuthBinIndex;                                      // Ray bin
-    float               gateSizeMeters;                                       // Size of range gates
-    float               elevationDegrees;                                     // Elevation in degrees
-    float               azimuthDegrees;                                       // Azimuth in degrees
-    float               elevationVelocityDegreesPerSecond;                    // Velocity of elevation in degrees / second
-    float               azimuthVelocityDegreesPerSecond;                      // Velocity of azimuth in degrees / second
+    RKIdentifier        i;                                                     // Identity counter
+    RKIdentifier        n;                                                     // Network counter, may be useful to indicate packet loss
+    uint64_t            t;                                                     // A clean clock-related tic count
+    RKPulseStatus       s;                                                     // Status flag
+    uint32_t            capacity;                                              // Allocated capacity
+    uint32_t            gateCount;                                             // Number of range gates
+    uint32_t            downSampledGateCount;                                  // Number of range gates after down-sampling
+    RKMarker            marker;                                                // Position Marker
+    uint32_t            pulseWidthSampleCount;                                 // Pulsewidth
+    struct timeval      time;                                                  // UNIX time in seconds since 1970/1/1 12:00am
+    double              timeDouble;                                            // Time in double representation
+    RKFourByte          rawAzimuth;                                            // Raw azimuth reading, which may take up to 4 bytes
+    RKFourByte          rawElevation;                                          // Raw elevation reading, which may take up to 4 bytes
+    uint16_t            configIndex;                                           // Operating configuration index
+    uint16_t            configSubIndex;                                        // Operating configuration sub-index
+    uint16_t            azimuthBinIndex;                                       // Ray bin
+    float               gateSizeMeters;                                        // Size of range gates
+    float               elevationDegrees;                                      // Elevation in degrees
+    float               azimuthDegrees;                                        // Azimuth in degrees
+    float               elevationVelocityDegreesPerSecond;                     // Velocity of elevation in degrees / second
+    float               azimuthVelocityDegreesPerSecond;                       // Velocity of azimuth in degrees / second
 } RKPulseHeader;
 
 //
 // Pulse parameters for matched filters (pulseCompressionCore)
 //
 typedef struct rk_pulse_parameters {
-    uint32_t             filterCounts[2];
-    uint32_t             planIndices[2][RKMaximumFilterCount];
-    uint32_t             planSizes[2][RKMaximumFilterCount];
+    uint32_t             filterCounts[2];                                      //
+    uint32_t             planIndices[2][RKMaximumFilterCount];                 //
+    uint32_t             planSizes[2][RKMaximumFilterCount];                   //
 } RKPulseParameters;
 
 //
@@ -1013,12 +1057,12 @@ typedef struct rk_pulse_parameters {
 typedef struct rk_pulse {
     union {
         struct {
-            RKPulseHeader        header;
-            RKPulseParameters    parameters;
-        };
-        RKByte               headerBytes[RKPulseHeaderPaddedSize];
-    };
-    RKByte               data[0];
+            RKPulseHeader        header;                                       //
+            RKPulseParameters    parameters;                                   //
+        };                                                                     //
+        RKByte               headerBytes[RKPulseHeaderPaddedSize];             //
+    };                                                                         //
+    RKByte               data[0];                                              //
 } RKPulse;
 
 //
@@ -1233,6 +1277,7 @@ typedef union rk_product_header {
         RKFloat              DCal[RKMaximumFilterCount];                       // Waveform ZDR calibration (dB)
         RKFloat              PCal[RKMaximumFilterCount];                       // Waveform phase calibration (rad)
         RKFloat              SNRThreshold;                                     // Censor SNR (dB)
+        RKFloat              SQIThreshold;                                     // Censor SQI
         RKName               waveform;                                         // Waveform name
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
         char                 suggestedFilename[RKMaximumPathLength];           // RadarKit suggested fullpath filename
@@ -1274,35 +1319,46 @@ typedef struct rk_waveform {
 } RKWaveform;
 
 typedef struct rk_waveform_cal {
-    uint32_t             uid;                                                   // A unique identifier
-    RKName               name;                                                  // A string description
-    uint8_t              count;                                                 // The number of tones in this waveform
-    RKFloat              ZCal[RKMaximumFilterCount][2];                         // Calibration factor for individual tone
-    RKFloat              DCal[RKMaximumFilterCount];                            // Calibration factor for individual tone
-    RKFloat              PCal[RKMaximumFilterCount];                            // Calibration factor for individual tone
+    uint32_t             uid;                                                  // A unique identifier
+    RKName               name;                                                 // A string description
+    uint8_t              count;                                                // The number of tones in this waveform
+    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Calibration factor for individual tone
+    RKFloat              DCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
+    RKFloat              PCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
 } RKWaveformCalibration;
 
 typedef struct rk_waveform_response {
-    uint32_t             count;                                                 // Number of combinations (at most 3 for now)
-    uint32_t             length;                                                // Length of each filter
-    RKFloat              **amplitudeResponse;                                   // An array of amplitudes of [count][length] (dB)
-    RKFloat              **phaseResponse;                                       // An array of phases of [count][length] (radians)
+    uint32_t             count;                                                // Number of combinations (at most 3 for now)
+    uint32_t             length;                                               // Length of each filter
+    RKFloat              **amplitudeResponse;                                  // An array of amplitudes of [count][length] (dB)
+    RKFloat              **phaseResponse;                                      // An array of phases of [count][length] (radians)
 } RKWaveformResponse;
 
 typedef struct rk_iir_filter {
-    RKName               name;                                                  // String description of the filter
-    RKFilterType         type;                                                  // Built-in type
-    uint32_t             bLength;                                               // Length of b's
-    uint32_t             aLength;                                               // Length of a's
-    RKComplex            B[RKMaximumIIRFilterTaps];                             // Coefficient b's
-    RKComplex            A[RKMaximumIIRFilterTaps];                             // Coefficient a's
+    RKName               name;                                                 // String description of the filter
+    RKFilterType         type;                                                 // Built-in type
+    uint32_t             bLength;                                              // Length of b's
+    uint32_t             aLength;                                              // Length of a's
+    RKComplex            B[RKMaximumIIRFilterTaps];                            // Coefficient b's
+    RKComplex            A[RKMaximumIIRFilterTaps];                            // Coefficient a's
 } RKIIRFilter;
 
 typedef struct rk_task {
-    RKCommand            command;                                               // A ocmmand string for RKRadarExecute()
-    double               timeout;                                               // Maximum time for completion
-    RKEventType          endingEvent;                                           // Ending event that indicates completion of the task
+    RKCommand            command;                                              // A ocmmand string for RKRadarExecute()
+    double               timeout;                                              // Maximum time for completion
+    RKEventType          endingEvent;                                          // Ending event that indicates completion of the task
 } RKTask;
+
+typedef struct rk_command_queue {
+    uint8_t              head;                                                 // Head index (for push)
+    uint8_t              tail;                                                 // Tail index (for pop)
+    uint8_t              count;                                                // Number of elements that can be popped
+    uint8_t              depth;                                                // Buffer depth
+    bool                 nonblocking;                                          // Non-blocking operations
+    RKCommand            *buffer;                                              // Buffer
+    pthread_mutex_t      lock;                                                 // Mutually exclusive access lock
+    uint32_t             tic;
+} RKCommandQueue;
 
 #pragma pack(pop)
 

@@ -62,7 +62,10 @@ typedef struct rk_test_transceiver {
     double         periodOdd;
     long           ticEven;
     long           ticOdd;
-
+    char           playbackFolder[RKMaximumFolderPathLength];
+    RKFileHeader   fileHeaderCache;
+    RKPulseHeader  pulseHeaderCache;
+    RKByte         dump[1024 * 1024];
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {
@@ -116,6 +119,8 @@ void RKTestGetCountry(void);
 void RKTestBufferOverviewText(const char *);
 void RKTestSweepRead(const char *);
 void RKTestProductRead(const char *);
+void RKTestProductWrite(void);
+void RKTestReviseLogicalValues(void);
 
 #pragma mark - DSP Tests
 
@@ -166,6 +171,7 @@ int RKTestHealthRelayFree(RKHealthRelay);
 
 #pragma mark -
 
+void RKTestCommandQueue(void);
 void RKTestSingleCommand(void);
 void RKTestExperiment(void);
 

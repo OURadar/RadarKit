@@ -71,7 +71,7 @@ Follow these steps to get the project
 4. Try the test program to simulate a Level-1 system.
 
     ```shell
-    rktest -vs1
+    rkutil -vs1
     ```
    
 5. (Some Linux) Add the following line to /etc/sysctl.conf
@@ -604,13 +604,13 @@ This is a command the master controller issues when everything should stop.
 
 This is a command the master controller issues for checking if the component wants to report opereate (1) or standby (0)
 
-RadarKit Test Program
+RadarKit Utility Program
 ===
 
 A test program is provided to assess if everything can run properly with your system. Call it with a _help_ option to show all the available options.
 
 ```
-rktest --help
+rkutil --help
 ```
 
 ### RadarKit Performance Test
@@ -618,7 +618,7 @@ rktest --help
 Some performance tests are implemented to get an idea of the number of workers to use. Here's an example output from the RaXPol main host:
 
 ```
-marina:~/radarkit root$ rktest -T51
+marina:~/radarkit root$ rkutil -T51
 ===========================
 RKTestPulseCompressionSpeed
 ===========================
@@ -628,7 +628,7 @@ RKTestPulseCompressionSpeed
                     Test 2 -> 0.220 ms / pulse
                     Time for each pulse (8,192 gates) = 0.220 ms / pulse (Best of 3)
                     Speed: 4541.07 pulses / sec
-marina:~/radarkit root$ rktest -T52
+marina:~/radarkit root$ rkutil -T52
 ==========================
 RKTestMomentProcessorSpeed
 ==========================

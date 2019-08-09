@@ -100,7 +100,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-    RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
+    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
 
     waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
@@ -235,14 +235,13 @@ RKWaveform *RKWaveformInitAsImpulse(void) {
 
 RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
-    RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
-    sprintf(waveform->name, "s%02.0f", 1.0e-6 * fs);
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, 0.0);
     return waveform;
 }
 
 RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, (uint32_t)round(pulsewidth * fs));
-    RKWaveformLinearFrequencyModulation(waveform, fs, fc, pulsewidth, bandwidth);
+    RKWaveformLinearFrequencyModulation(waveform, fs, fc, bandwidth);
     return waveform;
 }
 
@@ -316,7 +315,8 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     RKWaveform *waveform = RKWaveformInitAsLinearFrequencyModulation(fs, fc, pulsewidth, 0.5 * bandwidth);
     RKWaveformApplyWindow(waveform, RKWindowTypeTukey, 0.05);
     // Say bandwidth = 4 MHz. Going atmost from -2 to 0 MHz, fc @ -1 MHz
-    RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
+    //RKWaveform *fill = RKWaveformInitAsFrequencyHops(fs, fc - 0.25 * bandwidth, 2.0e-6, 0.0, 1);
+    RKWaveform *fill = RKWaveformInitAsSingleTone(fs, fc - 0.25 * bandwidth, 2.0e-6);
     RKWaveformApplyWindow(fill, RKWindowTypeHamming);
     // Expand waveform by the fill pulse
     RKWaveformAppendWaveform(waveform, fill, 10);
@@ -326,6 +326,18 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     waveform->fc = fc;
     return waveform;
 }
+
+RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double fc, const double bandwidth, const double pulsewidth, const int count) {
+    uint32_t depth = (uint32_t)round(pulsewidth * fs);
+    if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
+        RKLog("Info. Waveform depth %.2f us --> %.2f us due to rounding @ fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
+    }
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
+    RKWaveformFrequencyHoppingChirp(waveform, fs, fc, bandwidth);
+    return waveform;
+}
+
+#pragma mark - Tile / Concatenate / Repeat
 
 RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *appendix, const uint32_t transitionSamples) {
     
@@ -385,7 +397,7 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
 }
 
 RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...) {
-    int k;
+    int j, k;
     va_list args;
     RKFloat *w;
     RKInt16C *x;
@@ -413,17 +425,19 @@ RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ..
     }
     g = sqrt(waveform->depth / g);
 
-    w = window;
-    x = waveform->iSamples[0];
-    y = waveform->samples[0];
-    for (k = 0; k < waveform->depth; k++) {
-        x->i = (int16_t)((RKFloat)x->i * *w);
-        x->q = (int16_t)((RKFloat)x->q * *w);
-        y->i *= (*w * g);
-        y->q *= (*w * g);
-        w++;
-        x++;
-        y++;
+    for (j = 0; j < waveform->count; j++) {
+        w = window;
+        x = waveform->iSamples[j];
+        y = waveform->samples[j];
+        for (k = 0; k < waveform->depth; k++) {
+            x->i = (int16_t)((RKFloat)x->i * *w);
+            x->q = (int16_t)((RKFloat)x->q * *w);
+            y->i *= (*w * g);
+            y->q *= (*w * g);
+            w++;
+            x++;
+            y++;
+        }
     }
 
     free(window);
@@ -463,22 +477,17 @@ void RKWaveformSingleTone(RKWaveform *waveform, const double fs, const double fc
     RKWaveformFrequencyHops(waveform, fs, fc, 0.0);
 }
 
-//
-// This is actually hop pairs: f0, f0, f1, f1, f2, f2, ... around fc
-//
-void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
-    int i, k, n;
-    double f, omega, psi, pw;
-    RKComplex *x;
-    RKInt16C *w;
+void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
+    int i, k;
+    double beta, kappa, omega, theta;
 
-    const bool sequential = false;
-
+    // Other parameters
+    waveform->fc = fc;
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex;
     if (bandwidth > 0.0) {
-        waveform->type |= RKWaveformTypeFrequencyHopping;
-        k = sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, waveform->count == 1 ? 1 : waveform->count / 2);
+        waveform->type |= RKWaveformTypeLinearFrequencyModulation;
+        k = sprintf(waveform->name, "q%02.0f", 1.0e-6 * bandwidth);
     } else {
         waveform->type |= RKWaveformTypeSingleTone;
         if (fc > 0.0) {
@@ -487,67 +496,13 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
             k = sprintf(waveform->name, "s");
         }
     }
-    pw = 1.0e6 * waveform->depth / waveform->fs;
-    if (pw < 1.0) {
-        sprintf(waveform->name + k, ".%.0f", round(10.0 * pw));
-    } else if (pw >= 1.0) {
-        sprintf(waveform->name + k, "%02.0f", pw);
-    }
-
-    const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
-
-    // A good sequence can be achieved through a modulo sequence.
-    int stride = RKBestStrideOfHops(waveform->count / 2, false);
-
-    n = 0;
-    for (k = 0; k < waveform->count; k++) {
-        f = delta * (double)n - 0.5 * bandwidth + fc;
-        omega = 2.0 * M_PI * f / fs;
-        psi = omega * (double)(waveform->depth / 2);
-        waveform->filterCounts[k] = 1;
-        waveform->filterAnchors[k][0].name = n;
-        waveform->filterAnchors[k][0].origin = 0;
-        waveform->filterAnchors[k][0].length = waveform->depth;
-        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;   // Can be replaced with actual depth later
-        waveform->filterAnchors[k][0].subCarrierFrequency = omega;
-        //RKLog(">f[%d] = %+5.1f MHz   omega = %.3f   n = %d", k, 1.0e-6 * f, omega, n);
-        x = waveform->samples[k];
-        w = waveform->iSamples[k];
-        for (i = 0; i < waveform->depth; i++) {
-            x->i = cos(omega * i - psi);
-            x->q = sin(omega * i - psi);
-            w->i = (int16_t)(RKWaveformDigitalAmplitude * x->i);
-            w->q = (int16_t)(RKWaveformDigitalAmplitude * x->q);
-            x++;
-            w++;
-        }
-        // Get ready for the next frequency when we are in odd index
-        if (k % 2 == 1) {
-            if (sequential) {
-                n = ((k + 1) / 2);
-            } else {
-                n = RKNextNModuloS(n, stride, waveform->count / 2);
-            }
-        }
-    }
-
-    RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
-}
-
-void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, const double fc, const double pulsewidth, const double bandwidth) {
-    int i;
-
-    // Other parameters
-    waveform->fc = fc;
-    waveform->fs = fs;
-    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeLinearFrequencyModulation;
-    if (bandwidth == 0.0) {
-        sprintf(waveform->name, "s%02d", (int)(1.0e6 * pulsewidth));
-    } else if (bandwidth >= 1.0e6 && bandwidth < 100.0e6f) {
-        sprintf(waveform->name, "q%02d", (int)(1.0e6 * pulsewidth));
+    const double pulsewidth = waveform->depth / waveform->fs;
+    if (pulsewidth < 1.0e-6) {
+        sprintf(waveform->name + k, ".%.0f", round(10.0e6 * pulsewidth));
+    } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
+        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
     } else {
-        sprintf(waveform->name, "lfm");
+        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
     }
 
     waveform->filterCounts[0] = 1;
@@ -563,11 +518,13 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
 
     RKInt16C *w = waveform->iSamples[0];
     RKComplex *x = waveform->samples[0];
-    double omega_c = 2.0 * M_PI * fc / fs;
-    double k = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
+    omega = 2.0 * M_PI * fc / fs;
+    kappa = 2.0 * M_PI * bandwidth / pulsewidth / (fs * fs);
+    theta = omega * (double)(waveform->depth / 2) + 0.5 * kappa * pow((double)(waveform->depth / 2), 2.0);
     for (i = 0; i < waveform->depth; i++) {
-        x->i = cosf(omega_c * i + 0.5 * k * i * i);
-        x->q = sinf(omega_c * i + 0.5 * k * i * i);
+        beta = omega * i + 0.5 * kappa * i * i - theta;
+        x->i = cosf(beta);
+        x->q = sinf(beta);
         w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
         w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
         x++;
@@ -576,6 +533,150 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     RKWaveformNormalizeNoiseGain(waveform);
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return;
+}
+
+//
+// This is actually hop pairs: f0, f0, f1, f1, f2, f2, ... around fc
+//
+void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
+    int i, j, k;
+    double f, beta, omega, theta;
+    RKComplex *x;
+    RKInt16C *w;
+    
+    const int count = waveform->count == 1 ? 1 : waveform->count / 2;
+
+    waveform->fs = fs;
+    waveform->fc = fc;
+    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHopping;
+    // h[bb][cc][wwww]
+    // h201100.5 = 20 MHz, 11 hops, 0.5us
+    // h200501   = 20 MHz,  5 hops, 1.0us
+    // h200501.5 = 20 MHz,  5 hops, 1.5us
+    // h200502   = 20 MHz,  5 hops, 2.0us
+    k = sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, count);
+    const double pulsewidth = waveform->depth / waveform->fs;
+    if (pulsewidth < 1.0e-6) {
+        sprintf(waveform->name + k, ".%.0f", round(10.0e6 * pulsewidth));
+    } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
+        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
+    } else {
+        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
+    }
+
+    const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
+    
+    // Find the best stride to hop
+    int stride = RKBestStrideOfHops(waveform->count / 2, false);
+    
+    // Some variables:
+    // omega = discrete frequency
+    // beta = argument for exp() / cos()-sin() pair
+    for (j = 0, k = 0; k < waveform->count; k++) {
+        f = delta * (double)j - 0.5 * bandwidth + fc;
+        omega = 2.0 * M_PI * f / fs;
+        theta = omega * (double)(waveform->depth / 2);
+        waveform->filterCounts[k] = 1;
+        waveform->filterAnchors[k][0].name = j;
+        waveform->filterAnchors[k][0].origin = 0;
+        waveform->filterAnchors[k][0].length = waveform->depth;
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;   // Can be replaced with actual depth later
+        waveform->filterAnchors[k][0].subCarrierFrequency = omega;
+        //RKLog(">f[%d] = %+5.1f MHz   omega = %.3f   n = %d", k, 1.0e-6 * f, omega, n);
+        x = waveform->samples[k];
+        w = waveform->iSamples[k];
+        for (i = 0; i < waveform->depth; i++) {
+            beta = omega * i - theta;
+            x->i = cos(beta);
+            x->q = sin(beta);
+            w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
+            w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
+            x++;
+            w++;
+        }
+        // Get ready for the next frequency when we are in odd index
+        if (k % 2 == 1) {
+            j = RKNextNModuloS(j, stride, count);
+        }
+    }
+    RKWaveformNormalizeNoiseGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
+}
+
+void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
+    int i, j, k;
+    double fl, fu, beta, kappa, omega, theta;
+    RKComplex *x;
+    RKInt16C *w;
+
+    const int count = waveform->count == 1 ? 1 : waveform->count / 2;
+
+    waveform->fc = fc;
+    waveform->fs = fs;
+    waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeFrequencyHoppingChirp;
+    // k[bb][cc][wwww]
+    // k201100.5 = 20 MHz, 11 hops, 0.5us
+    // k200501   = 20 MHz,  5 hops, 1.0us
+    // k200501.5 = 20 MHz,  5 hops, 1.5us
+    // k200502   = 20 MHz,  5 hops, 2.0us
+    k = sprintf(waveform->name, "k%02.0f%02d", 1.0e-6 * bandwidth, count);
+    const double pulsewidth = waveform->depth / fs;
+    if (pulsewidth < 1.0e-6) {
+        sprintf(waveform->name + k, ".%.1f", round(10.0e6 * pulsewidth));
+    } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
+        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
+    } else {
+        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
+    }
+    
+    const double sub = bandwidth / (double)count;
+
+    // Find the best stride to hop
+    int stride = RKBestStrideOfHops(count, false);
+    
+    // Test with BW 20-MHz, count = 5 ==> SBW = 4-MHz for each hop
+    // Frequency span: [-10, -6], [-6, -2], [-2, +2], [+2, +6], [+6, +10]
+    // Hop Identifier:     (0)       (1)       (2)       (3)       (4)
+    // Hop Anchor = i:    (-2)      (-1)       (0)      (+1)      (+2)
+    // Some variables:
+    // fl = lower bound frequency of the subband
+    // fh = upper bound frequency of the subband
+    // omega = discrete frequency
+    // kappa = rate of frequency change
+    // beta = argument for exp() / cos()-sin() pair
+    for (j = 0, k = 0; k < waveform->count; k++) {
+        i = j - count / 2;
+        fl = ((double)i - 0.5) * sub + fc;
+        fu = ((double)i + 0.5) * sub + fc;
+        omega = 2.0 * M_PI * fl / fs;
+        kappa = 2.0 * M_PI * sub / pulsewidth / (fs * fs);
+        theta = omega * (double)(waveform->depth / 2) + 0.5 * kappa * pow((double)(waveform->depth / 2), 2.0);
+        waveform->filterCounts[k] = 1;
+        waveform->filterAnchors[k][0].name = j;
+        waveform->filterAnchors[k][0].origin = 0;
+        waveform->filterAnchors[k][0].length = waveform->depth;
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;
+        waveform->filterAnchors[k][0].subCarrierFrequency = 0.0;
+        waveform->filterAnchors[k][0].lowerBoundFrequency = fl;
+        waveform->filterAnchors[k][0].upperBoundFrequency = fu;
+        x = waveform->samples[k];
+        w = waveform->iSamples[k];
+        for (i = 0; i < waveform->depth; i++) {
+            beta = omega * i + 0.5 * kappa * i * i - theta;
+            x->i = cos(beta);
+            x->q = sin(beta);
+            w->i = (int16_t)rintf(RKWaveformDigitalAmplitude * x->i);
+            w->q = (int16_t)rintf(RKWaveformDigitalAmplitude * x->q);
+            x++;
+            w++;
+        }
+        // Get ready for the next frequency when we are in odd index
+        if (k % 2 == 1) {
+            j = RKNextNModuloS(j, stride, count);
+        }
+    }
+    RKWaveformNormalizeNoiseGain(waveform);
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 #pragma mark - Generic Manipulation
@@ -829,24 +930,40 @@ void RKWaveformSummary(RKWaveform *waveform) {
     int j, k;
     char format[RKMaximumStringLength];
     // Go through all waveforms and filters of each waveform to build the proper format width
+    int w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0, w5 = 0;
     for (k = 0; k < waveform->count; k++) {
-        int w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             w0 = MAX(w0, (int)log10f((float)waveform->filterAnchors[k][j].length));
             w1 = MAX(w1, (int)log10f((float)waveform->filterAnchors[k][j].inputOrigin));
             w2 = MAX(w2, (int)log10f((float)waveform->filterAnchors[k][j].outputOrigin));
             w3 = MAX(w3, (int)log10f((float)waveform->filterAnchors[k][j].maxDataLength));
             w4 = MAX(w4, (int)log10f(fabs(waveform->filterAnchors[k][j].sensitivityGain)));
+            w5 = MAX(w5, MAX((int)log10f(fabs(1.0e-6 * waveform->filterAnchors[k][j].lowerBoundFrequency)),
+                             (int)log10f(fabs(1.0e-6 * waveform->filterAnchors[k][j].upperBoundFrequency))));
         }
-        // Add a space for each comma
-        w0 += (w0 / 3);
-        w1 += (w1 / 3);
-        w2 += (w2 / 3);
-        w3 += (w3 / 3);
+    }
+    // Add a space for each comma
+    w0 += (w0 / 3);
+    w1 += (w1 / 3);
+    w2 += (w2 / 3);
+    w3 += (w3 / 3);
+    if (waveform->type & RKWaveformTypeFrequencyHoppingChirp) {
+        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (n:%%d l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   [ %%+%d.1f - %%+%d.1f ] MHz\n",
+                waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
+                waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0]) + 1,
+                (int)log10f((float)waveform->filterCounts[0]) + 1,
+                w0 + 1,
+                w1 + 1,
+                w2 + 1,
+                w3 + 1,
+                w4 + 5,
+                w5 + 4,
+                w5 + 4);
+    } else {
         sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   %%+6.3f rad/s\n",
-                (int)log10f((float)waveform->count) + 1,
-                (int)log10f((float)waveform->filterCounts[k] + 1),
-                (int)log10f((float)waveform->filterCounts[k] + 1),
+                waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
+                waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
+                (int)log10f((float)waveform->filterCounts[0]) + 1,
                 w0 + 1,
                 w1 + 1,
                 w2 + 1,
@@ -876,14 +993,27 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 waveform->filterAnchors[k][j].filterGain - g < -0.1f) {
                 RKLog(">Error. Filter gain is not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)", waveform->filterAnchors[k][j].filterGain, g);
             }
-            RKLog(format,
-                  k, j, waveform->filterCounts[k],
-                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
-                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
-                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
-                  RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
-                  waveform->filterAnchors[k][j].sensitivityGain,
-                  waveform->filterAnchors[k][j].subCarrierFrequency);
+            if (waveform->type & RKWaveformTypeFrequencyHoppingChirp) {
+                RKLog(format,
+                      k, j, waveform->filterCounts[k], waveform->filterAnchors[k][j].name,
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
+                      waveform->filterAnchors[k][j].sensitivityGain,
+                      1.0e-6 * waveform->filterAnchors[k][j].lowerBoundFrequency,
+                      1.0e-6 * waveform->filterAnchors[k][j].upperBoundFrequency
+                      );
+            } else {
+                RKLog(format,
+                      k, j, waveform->filterCounts[k],
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
+                      waveform->filterAnchors[k][j].sensitivityGain,
+                      waveform->filterAnchors[k][j].subCarrierFrequency);
+            }
         }
     }
 }

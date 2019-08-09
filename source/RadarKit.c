@@ -8,9 +8,10 @@
 #include <RadarKit.h>
 
 // Global variables
-RKGlobalParamters rkGlobalParameters = {
+RKGlobalParameters rkGlobalParameters = {
     .program = {"radar"},
     .logfile = {RKDefaultLogfile},
+    .logFolder = {""},
     .rootDataFolder = RKDefaultDataPath,
     .dailyLog = false,
     .showColor = true,

@@ -32,7 +32,7 @@ static int get_global_float_att(const int ncid, const nc_type type, const char *
     return nc_get_att_double(ncid, NC_GLOBAL, att, (double *)dest);
 }
 
-int RKProductFileWriterNC(RKProduct *product, char *filename) {
+int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     int j;
     int ncid;
     int dimensionIds[2];
@@ -47,7 +47,9 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     float *x;
 
     // Open a file
-    if ((j = nc_create(product->header.suggestedFilename, NC_MODE, &ncid)) > 0) {
+    //if ((j = nc_create(product->header.suggestedFilename, NC_MODE, &ncid)) > 0) {
+    if ((j = nc_create(filename, NC_MODE, &ncid)) > 0) {
+        RKLog("Error. Unable to create %s", filename);
         return RKResultFailedToOpenFileForProduct;
     }
    
@@ -101,7 +103,7 @@ int RKProductFileWriterNC(RKProduct *product, char *filename) {
     } else if (product->header.isRHI) {
         nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "RHI");
     } else {
-        nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 3, "Unknown");
+        nc_put_att_text(ncid, NC_GLOBAL, "ScanType", 7, "Unknown");
     }
     tmpf = product->header.latitude;
     nc_put_att_float(ncid, NC_GLOBAL, "Latitude", NC_FLOAT, 1, &tmpf);
@@ -554,9 +556,21 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
 
     uint32_t rayCount = 0;
     uint32_t gateCount = 0;
-    RKProductDimensionsFromFile(firstFilename, &rayCount, &gateCount);
+
+    //printf("count = %d\n", productCollection->count);
     
-    RKLog("Found %d products   rayCount = %u   gateCount = %u\n", productCollection->count, rayCount, gateCount);
+    if (productCollection->count == 0 && RKFilenameExists(firstFilename)) {
+        productCollection->count = 1;
+        RKProductDimensionsFromFile(firstFilename, &rayCount, &gateCount);
+        RKLog("Found 1 product   rayCount = %u   gateCount = %u\n", rayCount, gateCount);
+    } else if (productCollection->count > 0) {
+        RKProductDimensionsFromFile(firstFilename, &rayCount, &gateCount);
+        RKLog("Found %d products   rayCount = %u   gateCount = %u\n", productCollection->count, rayCount, gateCount);
+    } else {
+        RKLog("RKProductCollectionInitWithFilename() Inconsistent state. Returning ...\n");
+        free(productCollection);
+        return NULL;
+    }
 
     RKProductBufferAlloc(&productCollection->products, productCollection->count, rayCount, gateCount);
     for (k = 0; k < productCollection->count; k++) {

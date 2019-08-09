@@ -6,7 +6,7 @@
 //  Expected file structure from RadarKit:
 //
 //
-//  Three major folders with structure A:
+//  Three major folders (IQ, moment, and health) with structure A:
 //
 //  .../rootDataFolder/iq/20170401/RK-20170401-012345-E1.0.rkr
 //                                 RK-20170401-012346-E2.0.rkr
@@ -54,10 +54,9 @@
 #include <RadarKit/RKFoundation.h>
 
 #define RKFileManagerDefaultUsageLimit     (size_t)1024 * 1024 * 1024 * 1024 * 12 / 10
-#define RKFileManagerRawDataRatio          500
-#define RKFileManagerMomentDataRatio       1000
-#define RKFileManagerHealthDataRatio       10
-#define RKFileManagerLogDataRatio          1
+#define RKFileManagerRawDataRatio          8
+#define RKFileManagerMomentDataRatio       4
+#define RKFileManagerHealthDataRatio       1
 #define RKFileManagerDefaultLogAgeInDays   30
 
 typedef struct rk_file_remover RKFileRemover;
@@ -91,8 +90,11 @@ struct rk_file_manager {
     RKRadarDesc                      *radarDescription;                   // This takes precedence over dataPath[] if both are set
     uint8_t                          verbose;                             // Verbosity level
     char                             dataPath[RKMaximumFolderPathLength]; // Can be empty. In this case all folders are relative to the path where it is executed
-    size_t                           usagelimit;                          // Overall usage limit in bytes
+    size_t                           usagelimit;                          // Overall usage limit in bytes if no user limits are set
     int                              maximumLogAgeInDays;                 // Maximum number of days to keep logs in .../rootDataFolder/log/
+    size_t                           userRawDataUsageLimit;               // User set raw data usage limit
+    size_t                           userMomentDataUsageLimit;            // User set moment data usage limit
+    size_t                           userHealthDataUsageLimit;            // User set health data usage limit
 
     // Program set variables
     uint64_t                         tic;
@@ -113,8 +115,11 @@ void RKFileManagerFree(RKFileManager *);
 void RKFileManagerSetVerbose(RKFileManager *, const int);
 void RKFileManagerSetInputOutputBuffer(RKFileManager *, RKRadarDesc *);
 void RKFileManagerSetPathToMonitor(RKFileManager *, const char *);
-void RKFileManagerSetDiskUsageLimit(RKFileManager *, const size_t );
+void RKFileManagerSetDiskUsageLimit(RKFileManager *, const size_t);
 void RKFileManagerSetMaximumLogAgeInDays(RKFileManager *, const int age);
+void RKFileManagerSetRawDataLimit(RKFileManager *, const size_t);
+void RKFileManagerSetMomentDataLimit(RKFileManager *, const size_t);
+void RKFileManagerSetHealthDataLimit(RKFileManager *, const size_t);
 
 int RKFileManagerStart(RKFileManager *);
 int RKFileManagerStop(RKFileManager *);

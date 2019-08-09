@@ -118,22 +118,24 @@ static void *pedestalHealth(void *in) {
             elEnum = RKStatusEnumNormal;
         }
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-        double rate = RKGetPositionUpdateRate(radar);
-        sprintf(health->string,
-                "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
-                "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
-                "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
-                "\"Pedestal Update\":\"%.3f Hz\", "
-                "\"PedestalHealthEnd\":0}",
-                azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
-                elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
-                vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
-                azPosition, azEnum,
-                elPosition, elEnum,
-                rate);
-        RKSetHealthReady(radar, health);
+        if (health) {
+            double rate = RKGetPositionUpdateRate(radar);
+            sprintf(health->string,
+                    "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
+                    "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
+                    "\"Pedestal Update\":\"%.3f Hz\", "
+                    "\"PedestalHealthEnd\":0}",
+                    azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
+                    elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
+                    vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
+                    azPosition, azEnum,
+                    elPosition, elEnum,
+                    rate);
+            RKSetHealthReady(radar, health);
+        }
         usleep(200000);
     }
     return (void *)NULL;
@@ -189,6 +191,9 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
 }
 
 int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
+    if (input == NULL) {
+        return RKResultNoRadar;
+    }
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
     if (client->verbose > 1) {
@@ -235,6 +240,9 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 }
 
 int RKPedestalPedzyFree(RKPedestal input) {
+    if (input == NULL) {
+        return RKResultNoRadar;
+    }
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClientFree(me->client);
     free(me);

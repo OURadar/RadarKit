@@ -1,9 +1,9 @@
 //
 //  main.c
-//  RadarKitTest
+//  RadarKit Utility
 //
-//  Created by Boon Leng Cheong
-//  Copyright (c) 2016-2018 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong
+//  Copyright (c) 2016-2019 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>
@@ -36,14 +36,17 @@ typedef struct user_params {
     bool                     simulate;                                           // Run with transceiver simulator
     bool                     ignoreGPS;                                          // Ignore GPS from health relay
     uint32_t                 ringFilterGateCount;                                // Number of range gates to apply ring filter
-    double                   systemZCal[2];                                      // System calibration for Z
-    double                   systemDCal;                                         // System calibration for D
-    double                   systemPCal;                                         // System calibration for P
-    double                   noise[2];                                           // System noise level
-    double                   SNRThreshold;                                       // SNR threshold for moment processors
+    float                    systemZCal[2];                                      // System calibration for Z
+    float                    systemDCal;                                         // System calibration for D
+    float                    systemPCal;                                         // System calibration for P
+    float                    noise[2];                                           // System noise level
+    float                    SNRThreshold;                                       // SNR threshold for moment processors
+    float                    SQIThreshold;                                       // SQI threshold for moment processors
+    unsigned int             diskUsageLimitGB;                                   // Disk usage limit
     RKControl                controls[RKMaximumControlCount];                    // Controls for GUI
     RKWaveformCalibration    calibrations[RKMaximumWaveformCalibrationCount];    // Waveform specific calibration factors
     uint8_t                  engineVerbose[128];                                 // Letter A = 65, 'z' = 122
+    char                     playbackFolder[RKMaximumFolderPathLength];          // Playback folder
 } UserParams;
 
 // Global variables
@@ -59,8 +62,10 @@ void *exitAfterAWhile(void *s) {
 #pragma mark - Local Functions
 
 static void showHelp() {
-    printf("RadarKit Test Program\n\n"
-           "rktest [options]\n\n"
+    char name[] = __FILE__;
+    *strrchr(name, '.') = '\0';
+    printf("RadarKit Utility\n\n"
+           "%s [options]\n\n"
            "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
@@ -140,6 +145,7 @@ static void showHelp() {
            "          s - Sweep engine\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
+           "         Tests a specific component of the RadarKit framework.\n"
            "%s"
            "\n"
            "EXAMPLES:\n"
@@ -161,8 +167,10 @@ static void showHelp() {
            "    -T50\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
-           "rktest (RadarKit %s)\n\n",
-           RKTestByNumberDescription(10),
+           "%s (RadarKit %s)\n\n",
+           name,
+           RKTestByNumberDescription(9),
+           name,
            RKVersionString());
 }
 
@@ -305,24 +313,26 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     if (verb) {
         RKLog("Reading user preferences ...\n");
     }
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",         user->desc.name,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",   user->desc.filePrefix, RKParameterTypeString, RKMaximumPrefixLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",     user->desc.dataPath,   RKParameterTypeString, RKMaximumPathLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",    user->pedzyHost,       RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",   user->tweetaHost,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod", user->momentMethod,    RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",   user->ringFilter,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",     &user->desc.latitude,  RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",    &user->desc.longitude, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",      &user->desc.heading,   RKParameterTypeFloat, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",   user->systemZCal,      RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",   &user->systemDCal,     RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",   &user->systemPCal,     RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",        user->noise,           RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold", &user->SNRThreshold,   RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",    &user->goCommand,      RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",  &user->stopCommand,    RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",    &user->ignoreGPS,      RKParameterTypeBool, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Name",             user->desc.name,            RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "FilePrefix",       user->desc.filePrefix,      RKParameterTypeString, RKMaximumPrefixLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",         user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",        user->pedzyHost,            RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",       user->tweetaHost,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",     user->momentMethod,         RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",       user->ringFilter,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",         &user->desc.latitude,       RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",        &user->desc.longitude,      RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",          &user->desc.heading,        RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",       user->systemZCal,           RKParameterTypeFloat, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",       &user->systemDCal,          RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",       &user->systemPCal,          RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",            user->noise,                RKParameterTypeFloat, 2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",     &user->SNRThreshold,        RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SQIThreshold",     &user->SQIThreshold,        RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DiskUsageLimitGB", &user->diskUsageLimitGB,    RKParameterTypeUInt,   1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",        &user->goCommand,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",      &user->stopCommand,         RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",        &user->ignoreGPS,           RKParameterTypeBool, 1);
     
     // Shortcuts
     k = 0;
@@ -372,6 +382,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     struct option long_options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
+        {"dir"               , required_argument, NULL, 'D'},
         {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
@@ -448,6 +459,16 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'C':
                 user->desc.initFlags |= RKInitFlagShowClockOffset;
+                break;
+            case 'D':
+                if (optarg == NULL) {
+                    RKLog("Playback folder without folder.\n");
+                    exit(EXIT_FAILURE);
+                }
+                user->simulate = false;
+                user->desc.initFlags = RKInitFlagIQPlayback;
+                strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
+                RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'P':
                 user->port = atoi(optarg);
@@ -626,10 +647,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     }
     if (user->simulate == true) {
         if (user->prf == 0) {
-            user->prf = 1000;
+            user->prf = 1000.0f;
         }
     } else {
-        if (!(user->desc.initFlags == RKInitFlagRelay)) {
+        if (!(user->desc.initFlags == RKInitFlagRelay) && !(user->desc.initFlags == RKInitFlagIQPlayback)) {
             fprintf(stderr, "No options specified. Don't want to do anything?\n");
             exit(EXIT_FAILURE);
         }
@@ -667,8 +688,11 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                                   systemPreferences->coresForPulseRingFilter,
                                   systemPreferences->coresForMomentProcessor);
         RKSetRecordingLevel(myRadar, systemPreferences->recordLevel);
-        //RKSetDataUsageLimit(myRadar, (size_t)20 * (1 << 30));
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", ".tar.xz");
+        RKSweepEngineSetFilesHandlingScript(myRadar->sweepEngine, "scripts/handlefiles.sh", RKScriptPropertyProduceTarXz);
+        if (systemPreferences->diskUsageLimitGB) {
+            RKLog("Setting disk usage limit to %s GB ...\n", RKIntegerToCommaStyleString(systemPreferences->diskUsageLimitGB));
+            RKFileManagerSetDiskUsageLimit(myRadar->fileManager, (size_t)systemPreferences->diskUsageLimitGB * (1 << 30));
+        }
     }
 
     // General attributes
@@ -739,6 +763,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
+                RKConfigKeySQIThreshold, systemPreferences->SQIThreshold,
                 RKConfigKeyPulseRingFilterGateCount, 1000,
                 RKConfigKeyNull);
 
@@ -767,8 +792,10 @@ int main(int argc, const char **argv) {
 
     int k;
     RKCommand cmd = "";
+    char name[] = __FILE__;
+    *strrchr(name, '.') = '\0';
 
-    RKSetProgramName("rktest");
+    RKSetProgramName(name);
 
     char *term = getenv("TERM");
     if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
@@ -798,7 +825,7 @@ int main(int argc, const char **argv) {
     } else {
         RKSetWantScreenOutput(false);
     }
-    printf("rootDataFolder = %s\n", rkGlobalParameters.rootDataFolder);
+    //printf("rootDataFolder = %s\n", rkGlobalParameters.rootDataFolder);
 
     // Initialize a radar object
     myRadar = RKInitWithDesc(systemPreferences->desc);
@@ -826,9 +853,9 @@ int main(int argc, const char **argv) {
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
 
+    // Now we use the framework.
     if (systemPreferences->simulate) {
 
-        // Now we use the frame work.
         // Build a series of options for transceiver, only pass down the relevant parameters
         k = 0;
         if (systemPreferences->fs) {
@@ -891,11 +918,10 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        RKSweepEngineSetHandleFilesScript(myRadar->sweepEngine, "scripts/handlefiles.sh", "tar.xz");
-        
         // Radar going live
         RKGoLive(myRadar);
 
+        // Simulation mode
         RKLog("Setting a waveform ...\n");
         //RKExecuteCommand(myRadar, "t w x", NULL);
         RKExecuteCommand(myRadar, "t w s01", NULL);
@@ -906,7 +932,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
-
+        
         RKLog("Starting a new PPI ...\n");
         if (systemPreferences->prf <= 20.0f) {
             RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
@@ -920,10 +946,10 @@ int main(int argc, const char **argv) {
 
         // Wait indefinitely until something happens through a user command through the command center
         RKWaitWhileActive(myRadar);
-    
+        
         RKFileMonitorFree(preferenceFileMonitor);
 
-    } else if (systemPreferences->desc.initFlags & RKInitFlagRelay) {
+    } else if (systemPreferences->desc.initFlags == RKInitFlagRelay) {
 
         RKRadarRelaySetHost(myRadar->radarRelay, systemPreferences->relayHost);
         RKSetRecordingLevel(myRadar, 0);
@@ -937,6 +963,25 @@ int main(int argc, const char **argv) {
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
         
+    } else if (systemPreferences->desc.initFlags == RKInitFlagIQPlayback) {
+
+        // Build a series of options for transceiver, only pass down the relevant parameters
+        k = 0;
+        if (strlen(systemPreferences->playbackFolder)) {
+            k += sprintf(cmd + k, " D %s", systemPreferences->playbackFolder);
+        }
+        RKSetTransceiver(myRadar,
+                         (void *)cmd,
+                         RKTestTransceiverInit,
+                         RKTestTransceiverExec,
+                         RKTestTransceiverFree);
+
+        // Radar going live
+        RKGoLive(myRadar);
+
+        // Wait indefinitely until something happens through a user command through the command center
+        RKWaitWhileActive(myRadar);
+
     } else {
         
         RKSetWantScreenOutput(true);

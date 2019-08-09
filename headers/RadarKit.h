@@ -15,8 +15,40 @@
 //           - v3.0 - Cloud communication (reverse relay)
 //           - Task, event, sequence of tasks
 //         - Minor:
-//           - LFM frequency hopping
 //           - Mapping coefficients to product files
+//
+//  2.3    - 6/xx/2019
+//         - Added I/Q data playback
+//         - Added hopping chirp waveforms
+//         - Added individual storage limits
+//         - Added command queues
+//         - Added SQIThreshold
+//         - Added ignoreHeading flag
+//         - Updated hopping chirp, summary, etc.
+//         - Updated RKWaveformApplyWindow() for count > 1
+//         - Updated MATLAB reader for buildNo 3
+//         - Updated TFM waveform files
+//         - Fxed waveform name in waveform files
+//         - General dead storage removal
+//
+//  2.2    - 4/30/2019
+//         - Added RKWaveformInitAsFrequencyHoppingChirp()
+//         - Redefined RKPositionFlag for pedzy 2.0.
+//           - Added end of volume flag
+//         - Updated MATLAB reader for raw data buildNo >= 2
+//
+//  2.1.4  - 4/18/2019
+//         - Removed AScope mode 2, renamed others
+//           - Mode 0 - Raw I/Q (default)
+//           - Mode 1 - Compressed I/Q (out to usable range)
+//           - Mode 2 - Debugging mode, raw I/Q + template + raw data
+//
+//  2.1.3  - 4/18/2019
+//         - Usable gates reduced by blind range
+//         - Added gate count check for calibration numbers
+//         - Added RKConfigKeyPulseWidth
+//         - Added test 18 - Test writing using RKProductFileWriteNC()
+//         - Bug fix: RKGetPrefixFromFilename() with 1 char
 //
 //  2.1.2  - 4/3/2019
 //         - Xcode project settings

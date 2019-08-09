@@ -37,6 +37,11 @@ static void RKTestCallback(void *in) {
     RKLog("%s I am a callback function.\n", engine->name);
 }
 
+// Compare two filenames alphabetically
+static int string_cmp_by_filename(const void *a, const void *b) {
+    return strcmp((char *)a, (char *)b);
+}
+
 #pragma mark - Test Wrapper and Help Text
 
 char *RKTestByNumberDescription(const int indent) {
@@ -59,7 +64,9 @@ char *RKTestByNumberDescription(const int indent) {
     "14 - Test generating text for buffer overview\n"
     "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILENAME\n"
     "16 - Test reading a netcdf file using RKProductRead(); -T16 FILENAME\n"
-    "17 - Test reading using RKProductCollectionInitWithFilename()\n"
+    "17 - Test reading multiple netcdf files using RKProductCollectionInitWithFilename()\n"
+    "18 - Test writing a netcdf file using RKProductFileWriterNC()\n"
+    "19 - Test RKTestReviseLogicalValues()\n"
     "\n"
     "20 - SIMD quick test\n"
     "21 - SIMD test with numbers shown\n"
@@ -165,6 +172,12 @@ void RKTestByNumber(const int number, const void *arg) {
             }
             RKProductCollectionInitWithFilename((char *)arg);
             break;
+        case 18:
+            RKTestProductWrite();
+            break;
+        case 19:
+            RKTestReviseLogicalValues();
+            break;
         case 20:
             RKTestSIMD(RKTestSIMDFlagNull);
             break;
@@ -182,6 +195,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 25:
             RKTestRingFilterShowCoefficients();
+            break;
+        case 26:
+            RKTestCommandQueue();
             break;
         case 30:
             RKTestMakeHops();
@@ -520,15 +536,18 @@ void RKTestFileManager(void) {
     RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
     RKFileManagerSetVerbose(fileManager, 3);
     
-    RKLog("Warning. All data will be erased!\n");
-    printf("Press Enter to continue ... or Ctrl-C to terminate.\n");
+    RKLog("Warning. All data in moment folder will be erased!\n");
+    printf("Press Enter to continue ... 'n' to keep moment files, or Ctrl-C to terminate.\n");
     
-    if (system("rm -rf data/moment") == -1) {
-        RKLog("Error. Failed during system().\n");
+    j = getchar();
+    
+    //printf("j = %d = %c\n", j, j);
+    if (j != 'n' && j != 'N') {
+        if (system("rm -rf data/moment") == -1) {
+            RKLog("Error. Failed during system().\n");
+        }
     }
-    
-    getchar();
-    
+
     RKFileManagerStart(fileManager);
     
     e = 0;
@@ -722,6 +741,70 @@ void RKTestProductRead(const char *file) {
     if (product) {
         RKProductFree(product);
     }
+}
+
+void RKTestProductWrite(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    float *v;
+    RKProduct *product;
+    RKProductBufferAlloc(&product, 1, 360, 8);
+    product->desc.type = RKProductTypePPI;
+    sprintf(product->desc.name, "Reflectivity");
+    sprintf(product->desc.unit, "dBZ");
+    sprintf(product->desc.colormap, "Reflectivity");
+    sprintf(product->header.radarName, "RadarKit");
+    product->header.latitude = 35.23682;
+    product->header.longitude = -97.46381;
+    product->header.heading = 0.0;
+    product->header.wavelength = 0.0314;
+    product->header.sweepElevation = 2.4;
+    product->header.rayCount = 360;
+    product->header.gateCount = 8;
+    product->header.gateSizeMeters = 7500.0;
+    product->header.prf[0] = 1000;
+    product->header.isPPI = true;
+    product->header.startTime = 201443696;
+    product->header.endTime = 201443696 + 10;
+    float az = 90.0;
+    for (k = 0; k < 360; k++) {
+        product->startAzimuth[k] = az;
+        if (az >= 359.0) {
+            az = az - 359.0;
+        } else {
+            az += 1.0;
+        }
+        product->endAzimuth[k] = az;
+        product->startElevation[k] = 2.4;
+        product->endElevation[k] = 2.4;
+    }
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = NAN;
+        }
+    }
+    RKProductFileWriterNC(product, "blank.nc");
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = (float)(k % 15) * 5.0 - 5.0;
+        }
+    }
+    RKProductFileWriterNC(product, "rainbow.nc");
+    RKProductBufferFree(product, 1);
+}
+
+void RKTestReviseLogicalValues(void) {
+    char string[] = "{"
+    "\"Transceiver\":{\"Value\":\"TRUE\", \"Enum\":0}, "
+    "\"Pedestal\":{\"Value\":\"True\", \"Enum\":0}, "
+    "\"Health Relay\":{\"Value\":\"true\", \"Enum\":0}, "
+    "\"Pedestal\":\"True\", "
+    "}";
+    printf("string = %s\n", string);
+    RKReviseLogicalValues(string);
+    printf("  -> %s\n", string);
 }
 
 #pragma mark -
@@ -1288,33 +1371,25 @@ void RKTestWaveformWrite(void) {
     }
 }
 
+void RKTestWaveformDownsampling(void) {
+    SHOW_FUNCTION_NAME
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
+    RKWaveformSummary(waveform);
+    
+    RKWaveformDecimate(waveform, 32);
+    RKWaveformSummary(waveform);
+}
+
 void RKTestWaveformShowProperties(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveform *waveform;
+    
+    waveform = RKWaveformInitAsSingleTone(160.0e6, 1.0e6, 1.0e-6);
     RKWaveformSummary(waveform);
 
     printf("\n");
 
     RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
-    RKWaveformSummary(waveform);
-
-    printf("\n");
-
-    RKWaveformDownConvert(waveform);
-    RKWaveformSummary(waveform);
-
-    RKWaveformFree(waveform);
-
-    printf("\n");
-
-    waveform = RKWaveformInitAsLinearFrequencyModulation(160.0e6, 50.0e6, 1.0e-6, 0.0);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
 
@@ -1330,6 +1405,53 @@ void RKTestWaveformShowProperties(void) {
     RKWaveformDownConvert(waveform);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
+
+    printf("\n");
+    
+    waveform = RKWaveformInitAsFrequencyHops(200.0e6, 0.0, 1.0e-6, 20.0e6, 5);
+    RKWaveformSummary(waveform);
+    
+    printf("\n");
+    
+    RKWaveformDecimate(waveform, 4);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+    
+    printf("\n");
+    
+    waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.6e-6, 5);
+    RKWaveformSummary(waveform);
+    
+    printf("\n");
+    
+    RKWaveformDecimate(waveform, 4);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    if (!RKFilenameExists("waveforms/ofm.rkwav")) {
+        return;
+    }
+
+    printf("\n");
+
+    waveform = RKWaveformInitFromFile("waveforms/ofm.rkwav");
+    RKWaveformSummary(waveform);
+
+    printf("\n");
+
+    RKWaveformDownConvert(waveform);
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
+
+    if (!RKFilenameExists("waveforms/barker03.rkwav")) {
+        return;
+    }
+
+    printf("\n");
+
+    waveform = RKWaveformInitFromFile("waveforms/barker03.rkwav");
+    RKWaveformSummary(waveform);
+    RKWaveformFree(waveform);
 }
 
 void RKTestWaveformShowUserWaveformProperties(const char *filename) {
@@ -1337,15 +1459,6 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     RKWaveform *waveform = RKWaveformInitFromFile(filename);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
-}
-
-void RKTestWaveformDownsampling(void) {
-    SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
-    RKWaveformSummary(waveform);
-    
-    RKWaveformDecimate(waveform, 32);
-    RKWaveformSummary(waveform);
 }
 
 #pragma mark - Radar Signal Processing
@@ -1500,7 +1613,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
         space->widthFactor = 1.0f;
         RKLog("Info. Multilag (N = %d).\n", space->userLagChoice);
     } else if (method == RKSpectralMoment) {
-        RKLog("Info. Spectral Moment.\n");
+        RKLog("Warning. Spectral Moment is incomplete.\n");
     } else {
         RKLog("Warning. Unknown method.\n");
         method = RKPulsePair;
@@ -1512,26 +1625,29 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
     RKName str;
 
     // Results for pulse-pair, pulse-pair for hops, multilag for lags 2, 3, and 4
-    RKFloat D[5][7] = {
-        { 1.7216, -2.5106, -1.9448,  -1.3558, -0.2018,  -0.9616},
-        { 2.2780,  2.6324,  2.7621,   2.3824,  3.1231,   2.3561},
-        { 4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},
-        { 2.7106, -8.4965, -7.8061,  -9.1933, -0.7019,  -8.4546},
-        { 3.7372, -4.2926, -4.1635,  -6.0751, -0.7788,  -5.9091}
+    RKFloat D[][7] = {
+        { 1.7216, -2.5106, -1.9448,  -1.3558, -0.2018,  -0.9616},  // pulse-pair
+        { 2.2780,  2.6324,  2.7621,   2.3824,  3.1231,   2.3561},  // pulse-pair for hops
+        { 4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},  // multilag 2
+        { 2.7106, -8.4965, -7.8061,  -9.1933, -0.7019,  -8.4546},  // multilag 3
+        { 3.7372, -4.2926, -4.1635,  -6.0751, -0.7788,  -5.9091},  // multilag 4
+        { 0.0000,  0.0000,  0.0000,   0.0000,  0.0000,   0.0000}   // spectral moment
     };
-    RKFloat P[5][7] = {
+    RKFloat P[][7] = {
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
         { 0.4155, -0.8567, -0.7188, -0.7400, -0.4405, -0.6962},
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
         { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
-        { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248}
+        { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
+        { 0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000}
     };
-    RKFloat R[5][7] = {
+    RKFloat R[][7] = {
         {0.9024, 0.7063, 0.8050, 0.7045, 0.8717, 0.7079},
         {0.9858, 0.8144, 0.8593, 0.9104, 0.9476, 0.9236},
         {1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
         {1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
-        {1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012}
+        {1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012},
+        {0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000}
     };
 
     // Select the row for the correct answer
@@ -1744,6 +1860,7 @@ void RKTestMomentProcessorSpeed(void) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = pulseCapacity;
+        pulse->header.downSampledGateCount = pulseCapacity;
         X = RKGetComplexDataFromPulse(pulse, 0);
         Y = RKGetSplitComplexDataFromPulse(pulse, 0);
         for (j = 0; j < pulseCapacity; j++) {
@@ -1888,6 +2005,232 @@ void RKTestCacheWrite(void) {
 
 #pragma mark - Transceiver Emulator
 
+void *RKTestTransceiverPlaybackRunLoop(void *input) {
+    RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
+    RKRadar *radar = transceiver->radar;
+    
+    int j, k, s;
+    char *c, string[RKMaximumStringLength];
+    long fpos, fsize;
+    long tic = 0;
+    double periodTotal;
+    struct timeval t0, t1;
+    bool even = true;
+
+    RKFileHeader *fileHeader = &transceiver->fileHeaderCache;
+    RKPulseHeader *pulseHeader = &transceiver->pulseHeaderCache;
+    uint32_t gateCount;
+    
+    // Update the engine state
+    transceiver->state |= RKEngineStateWantActive;
+    transceiver->state &= ~RKEngineStateActivating;
+
+    // Retrieve parameters from file
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd =
+    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+
+    RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
+    
+    // Use a counter that mimics microsecond increments
+    //RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    
+    transceiver->state |= RKEngineStateActive;
+    
+    // Open the folder, build a list of files
+    char *filelist = malloc(1024 * RKMaximumPathLength * sizeof(char));
+    if (filelist == NULL) {
+        RKLog("%s Error. Unable allocate memory.\n", transceiver->name);
+        return (void *)-1;
+    }
+    struct dirent *dir;
+    struct stat status;
+    DIR *did = opendir(transceiver->playbackFolder);
+    if (did == NULL) {
+        if (errno != ENOENT) {
+            // It is possible that the root storage folder is empty, in this case errno = ENOENT is okay.
+            RKLog("%s Error opening directory %s  errno = %d\n", transceiver->name, transceiver->playbackFolder, errno);
+        }
+        return (void *)-2;
+    }
+    k = 0;
+    char pathname[RKMaximumPathLength];
+    while ((dir = readdir(did)) != NULL && k < 1024) {
+        if (dir->d_name[0] == '.') {
+            continue;
+        }
+        snprintf(pathname, RKMaximumPathLength, "%s/%s", transceiver->playbackFolder, dir->d_name);
+        if (dir->d_type == DT_UNKNOWN) {
+            // Some OS reports regular file as unknown, need to us lstat() to determine the type
+            lstat(pathname, &status);
+            if (!S_ISREG(status.st_mode)) {
+                continue;
+            }
+        } else if (dir->d_type != DT_REG) {
+            continue;
+        }
+        c = strrchr(pathname, '.');
+        if (c == NULL) {
+            continue;
+        }
+        if (strcmp(".rkr", c)) {
+            continue;
+        }
+        strcpy(filelist + k * RKMaximumPathLength, pathname);
+        k++;
+    }
+    closedir(did);
+    const int count = k;
+    // Sort the list by name (should be in time numbers)
+    qsort(filelist, count, RKMaximumPathLength, string_cmp_by_filename);
+    for (k = 0; k < count; k++) {
+        RKLog(">%s %d. %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
+    }
+ 
+    // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
+    s = 0;
+    transceiver->state |= RKEngineStateSleep0;
+    while (!(radar->state & RKRadarStateLive)) {
+        usleep(10000);
+        if (++s % 10 == 0 && transceiver->verbose > 1) {
+            RKLog("%s sleep 0/%.1f s\n", transceiver->name, (float)s * 0.01f);
+        }
+    }
+    transceiver->state ^= RKEngineStateSleep0;
+    
+    // RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+    
+    gettimeofday(&t1, NULL);
+    
+    FILE *fid;
+
+    k = 0;   // k file index from the filelist
+    while (transceiver->state & RKEngineStateWantActive) {
+        RKLog("%s Opening filelist[%d] %s\n", transceiver->name, k, RKLastPartOfPath(filelist + k * RKMaximumPathLength));
+        fid = fopen(filelist + k * RKMaximumPathLength, "rb");
+        if (fid == NULL) {
+            RKLog("%s Error. Unable to open file %d %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
+            usleep(100000);
+            continue;
+        }
+        j = fseek(fid, 0L, SEEK_END);
+        if (j == 0) {
+            fsize = ftell(fid);
+        } else {
+            RKLog("%s Error. Unable to tell the file size.\n", transceiver->name);
+            fsize = 0;
+        }
+        fpos = 0;
+        rewind(fid);
+        fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+        //RKLog("%s", transceiver->name);
+
+        RKLog("%s Waveform %s", transceiver->name, fileHeader->config.waveform);
+        sprintf(string, "waveforms/%s.rkwav", fileHeader->config.waveform);
+        if (!RKFilenameExists(string)) {
+            RKLog("%s Error. Waveform %s does not exist in my collection.\n", transceiver->name, string);
+            fclose(fid);
+            continue;
+        }
+        RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
+        
+        transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
+        transceiver->prt = 1.0f / fileHeader->config.prf[0];
+        
+        RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
+              transceiver->name, 1.0e3f * transceiver->prt, RKIntegerToCommaStyleString(fileHeader->config.prf[0]));
+        
+        RKAddConfig(radar,
+                    RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
+                    RKConfigKeySystemZCal, fileHeader->config.systemZCal[0], fileHeader->config.systemZCal[1],
+                    RKConfigKeySystemDCal, fileHeader->config.systemDCal,
+                    RKConfigKeySystemPCal, fileHeader->config.systemPCal,
+                    RKConfigKeySNRThreshold, fileHeader->config.SNRThreshold,
+                    RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
+                    RKConfigKeyPulseRingFilterGateCount, fileHeader->config.pulseRingFilterGateCount,
+                    RKConfigKeyWaveform, transceiver->waveformCache[0],
+                    RKConfigKeyPRF, fileHeader->config.prf[0],
+                    RKConfigKeySweepElevation, fileHeader->config.sweepElevation,
+                    RKConfigKeySweepAzimuth, fileHeader->config.sweepAzimuth,
+                    RKConfigKeyNull);
+        
+        transceiver->periodOdd = transceiver->periodEven = transceiver->prt;
+        transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
+        RKLog("%s Using chunkSize = %d\n", transceiver->name, transceiver->chunkSize);
+
+        while (transceiver->state & RKEngineStateWantActive && fpos < fsize) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            if (pulse == NULL) {
+                RKLog("%s Error. No vacant pulse for storage.\n", transceiver->name);
+                break;
+            }
+            fread(pulseHeader, sizeof(RKPulseHeader), 1, fid);
+            gateCount = MIN(pulse->header.capacity, pulseHeader->gateCount);
+            fread(RKGetInt16CDataFromPulse(pulse, 0), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid);
+            fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
+            fread(RKGetInt16CDataFromPulse(pulse, 1), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid);
+            fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
+            
+            pulse->header.gateSizeMeters = pulseHeader->gateSizeMeters;
+            pulse->header.gateCount = gateCount;
+            pulse->header.rawAzimuth = pulseHeader->rawAzimuth;
+            pulse->header.rawElevation = pulseHeader->rawElevation;
+            pulse->header.azimuthDegrees = pulseHeader->azimuthDegrees;
+            pulse->header.elevationDegrees = pulseHeader->elevationDegrees;
+            pulse->header.azimuthVelocityDegreesPerSecond = pulseHeader->azimuthVelocityDegreesPerSecond;
+            pulse->header.elevationVelocityDegreesPerSecond = pulseHeader->elevationVelocityDegreesPerSecond;
+            
+            //        RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
+            //                                RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
+            //                                RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
+            //                                RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,
+            //                                RKConfigKeyPulseGateCount, pulse->header.gateCount,
+            //                                RKConfigKeyPositionMarker, marker0,
+            
+            if (pulseHeader->marker & RKMarkerSweepBegin) {
+                RKLog("%s Sweep begin.\n", transceiver->name);
+                RKAddConfig(radar,
+                            RKConfigKeyPulseGateCount, pulseHeader->gateCount,
+                            RKConfigKeyPulseGateSize, pulseHeader->gateSizeMeters,
+                            RKConfigKeyNull);
+            }
+            
+            pulse->header.configIndex = radar->configIndex;
+
+            RKSetPulseReady(radar, pulse);
+            
+//            RKLog("%s pulse->header.s = %04x  marker = %04x gateCount = %d\n", transceiver->name, pulseHeader->marker, pulseHeader->s, gateCount);
+            
+            fpos = ftell(fid);
+            even = !even;
+            tic++;
+            
+            if (j++ == transceiver->chunkSize) {
+                gettimeofday(&t0, NULL);
+                //j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
+                j = 10000;
+                usleep(j);
+                t1 = t0;
+                j = 0;
+            }
+        }
+        
+        fclose(fid);
+        
+        periodTotal = 0.0;
+        
+        k = RKNextModuloS(k, count);
+    }
+
+    transceiver->state ^= RKEngineStateActive;
+    
+    free(filelist);
+    
+    return NULL;
+}
+
 //
 // The transceiver emulator only has minimal functionality to get things going
 // This isn't meant to fully simulate actual target returns
@@ -1907,6 +2250,18 @@ void *RKTestTransceiverRunLoop(void *input) {
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
 
+    // Derive some calculated parameters
+    transceiver->periodEven = transceiver->prt;
+    transceiver->periodOdd =
+    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
+    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
+     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
+    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
+    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
+    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
+    transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
+    transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
+    
     // Show some info
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
@@ -2009,7 +2364,6 @@ void *RKTestTransceiverRunLoop(void *input) {
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
 
-
     // g gate index
     // j sample index
     // k pseudo-random sequence to choose the pre-defined random numbers
@@ -2036,10 +2390,10 @@ void *RKTestTransceiverRunLoop(void *input) {
             // Go through both polarizations
             for (p = 0; p < 2; p++) {
                 RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                RKInt16C *S = waveform->iSamples[w];
                 // Some random pattern for testing
                 k = rand() % transceiver->gateCount;
-                RKInt16C *S = waveform->iSamples[w];
-                
+                // Populate the pulse
                 for (g = 1; g < waveform->depth; g++) {
                     noise = rn[k];
                     X->i = S->i + noise;
@@ -2175,30 +2529,32 @@ void *RKTestTransceiverRunLoop(void *input) {
             volt = 1.0f * nn / RAND_MAX + 11.5f;
             room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
             health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
-            sprintf(health->string,
-                    "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
-                    "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                    "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                    "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                    "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                    "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                    "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
-                    "\"TransceiverCounter\": %ld}",
-                    RKStatusEnumActive,
-                    RKStatusEnumNormal,
-                    RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
-                    temp, RKStatusFromTemperatureForCE(temp),
-                    volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                    room, RKStatusFromTemperatureForComputers(room),
-                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
-                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
-                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                    transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
-                    transceiver->counter);
-            RKSetHealthReady(radar, health);
+            if (health) {
+                sprintf(health->string,
+                        "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
+                        "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                        "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
+                        "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                        "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                        "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                        "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
+                        "\"TransceiverCounter\": %ld}",
+                        RKStatusEnumActive,
+                        RKStatusEnumNormal,
+                        RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+                        temp, RKStatusFromTemperatureForCE(temp),
+                        volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                        room, RKStatusFromTemperatureForComputers(room),
+                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
+                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                        transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
+                        transceiver->counter);
+                RKSetHealthReady(radar, health);
+            }
         }
 
         // Wait to simulate the PRF
@@ -2241,10 +2597,10 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->fs = transceiver->gateCount >= 16000 ? 50.0e6 :
                      (transceiver->gateCount >= 8000 ? 25.0e6 :
                      (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
-    transceiver->gateSizeMeters = 1.5e3 / transceiver->fs;
     transceiver->prt = 0.001;
     transceiver->sprt = 1;
-    transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
+    //transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
+    transceiver->waveformCache[0] = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, 1.0e-6);
     sprintf(transceiver->waveformCache[0]->name, "s01");
 
     // Parse out input parameters
@@ -2259,6 +2615,15 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         while ((se = strchr(sb, ' ')) != NULL) {
             sv = se + 1;
             switch (*sb) {
+                case 'D':
+                    // Playback from a folder with rkr files
+                    strcpy(transceiver->playbackFolder, sv);
+                    k = (int)strlen(transceiver->playbackFolder);
+                    if (transceiver->playbackFolder[k - 1] == '/') {
+                        transceiver->playbackFolder[k - 1] = '\0';
+                    }
+                    RKLog("%s Playback from folder %s\n", transceiver->name, transceiver->playbackFolder);
+                    break;
                 case 'F':
                     transceiver->fs = atof(sv);
                     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
@@ -2314,21 +2679,16 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         }
     }
     
-    // Derive some calculated parameters
-    transceiver->periodEven = transceiver->prt;
-    transceiver->periodOdd =
-    transceiver->sprt == 2 ? transceiver->prt * 3.0 / 2.0 :
-    (transceiver->sprt == 3 ? transceiver->prt * 4.0 / 3.0 :
-     (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
-    transceiver->ticEven = (long)(transceiver->periodEven * 1.0e6);
-    transceiver->ticOdd = (long)(transceiver->periodOdd * 1.0e6);
-    transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
-    transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
-    transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
-
     transceiver->state |= RKEngineStateActivating;
-    if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
-        RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
+    if (strlen(transceiver->playbackFolder)) {
+        RKLog("%s Launching playback run loop ...\n", transceiver->name);
+        if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverPlaybackRunLoop, transceiver)) {
+            RKLog("%s. Unable to create transceiver playback run loop.\n", transceiver->name);
+        }
+    } else {
+        if (pthread_create(&transceiver->tidRunLoop, NULL, RKTestTransceiverRunLoop, transceiver)) {
+            RKLog("%s. Unable to create transceiver run loop.\n", transceiver->name);
+        }
     }
     while (!(transceiver->state & RKEngineStateActive)) {
         usleep(10000);
@@ -2346,7 +2706,6 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     double bandwidth;
     double pulsewidth;
     double value;
-    unsigned int pulsewidthSampleCount;
 
     RKWaveform *waveform = NULL;
     char string[RKMaximumPathLength];
@@ -2463,26 +2822,27 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             } else {
                 c++;
             }
-            if ((*c == 's' || *c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
-                // Something like s01, t02, q05, etc.
-                strcpy(string, c);
-                RKStripTail(string);
+            if (*c == 's' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
+                // Something like s01, s02, etc.
                 pulsewidth = 1.0e-6 * atof(c + 1);
-                pulsewidthSampleCount = pulsewidth * transceiver->fs;
                 RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
-                waveform = RKWaveformInitWithCountAndDepth(1, pulsewidthSampleCount);
-                if (*c == 's') {
-                    // Rectangular single tone
-                    RKWaveformSingleTone(waveform, transceiver->fs, 0.0);
-                } else if (*c == 't') {
-                    // Rectangular single tone at 0.1 MHz
-                    RKWaveformSingleTone(waveform, transceiver->fs, 0.1e6);
+                waveform = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, pulsewidth);
+            } else if ((*c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
+                // Something like t0101, t0102, q0201, q0205, etc.
+                string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
+                bandwidth = 1.0e6 * atof(string);
+                pulsewidth = 1.0e-6 * atof(c + 3);
+                RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
+                if (*c == 't') {
+                    // Rectangular single tone at (bandwidth) MHz
+                    waveform = RKWaveformInitAsSingleTone(transceiver->fs, bandwidth, pulsewidth);
                 } else if (*c == 'q') {
                     // LFM at half of the bandwidth capacity
-                    RKWaveformLinearFrequencyModulation(waveform, transceiver->fs, -0.25 * transceiver->fs, pulsewidth, 0.5 * transceiver->fs);
+                    waveform = RKWaveformInitAsLinearFrequencyModulation(transceiver->fs, -0.5 * bandwidth, pulsewidth, bandwidth);
+                    if (bandwidth > transceiver->fs) {
+                        RKLog("%s Warning. Aliasing.   bandwidth = %.2f MHz > fs = %.2f MHz\n", transceiver->name, 1.0e-6 * bandwidth, 1.0e-6 * transceiver->fs);
+                    }
                 }
-                // Override the waveform name
-                strncpy(waveform->name, c, RKNameLength);
             } else if (*c == 'h' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
                 // Something like h1005, h2007, etc.
                 string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
@@ -2593,13 +2953,13 @@ void *RKTestPedestalRunLoop(void *input) {
     RKRadar *radar = pedestal->radar;
     
     float azimuth = 0.0f;
-    float elevation = 3.0f;
+    float elevation = 0.0f;
     double dt = 0.0;
     struct timeval t0, t1;
     unsigned long tic = 19760520;
-    bool scanStartEndPPI = true;
-    bool scanStartRHI = true;
-    bool scanEndRHI = true;
+    bool scanStartEndPPI = false;
+    bool scanStartRHI = false;
+    bool scanEndRHI = false;
     bool elTransition = false;
 
     pedestal->state |= RKEngineStateWantActive;
@@ -2630,21 +2990,28 @@ void *RKTestPedestalRunLoop(void *input) {
 
         // Get a vacation position to fill it in with the latest reading
         RKPosition *position = RKGetVacantPosition(radar);
+        if (position == NULL) {
+            usleep(1000);
+            continue;
+        }
         position->tic = tic++;
         position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
         position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
         position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
-        position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
+        position->flag |= RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
 
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             position->sweepElevationDegrees = pedestal->scanElevation;
             position->sweepAzimuthDegrees = 0.0f;
-            position->flag |= RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+            position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
             position->sweepAzimuthDegrees = pedestal->scanAzimuth;
             position->sweepElevationDegrees = 0.0f;
-            position->flag |= RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+            position->flag |= RKPositionFlagScanActive | RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+        } else {
+            position->sweepAzimuthDegrees = 0.0f;
+            position->sweepElevationDegrees = 0.0f;
         }
         if (scanStartEndPPI) {
             scanStartEndPPI = false;
@@ -2664,21 +3031,23 @@ void *RKTestPedestalRunLoop(void *input) {
         // Report health
         if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
-            sprintf(health->string, "{"
-                    "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
-                    "}",
-                    position->azimuthDegrees, RKStatusEnumNormal,
-                    position->elevationDegrees, RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
-                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
-            RKSetHealthReady(radar, health);
+            if (health) {
+                sprintf(health->string, "{"
+                        "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                        "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                        "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
+                        "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
+                        "}",
+                        position->azimuthDegrees, RKStatusEnumNormal,
+                        position->elevationDegrees, RKStatusEnumNormal,
+                        RKStatusEnumNormal,
+                        RKStatusEnumNormal,
+                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
+                RKSetHealthReady(radar, health);
+            }
         }
         
         // Posiiton change
@@ -2893,24 +3262,26 @@ void *RKTestHealthRelayRunLoop(void *input) {
         longitude = (double)rand() * 8.0e-6f / RAND_MAX - 97.4349928;
         heading = (double)rand() * 0.2 / RAND_MAX + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
-        sprintf(health->string, "{"
-                "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-                "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-                "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
-                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
-                "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
-                "}",
-                RKStatusEnumNormal,
-                RKStatusEnumNormal,
-                latitude,
-                longitude,
-                heading,
-                powerH, RKStatusEnumNormal,
-                powerV, RKStatusEnumNormal);
-        RKSetHealthReady(radar, health);
+        if (health) {
+            sprintf(health->string, "{"
+                    "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
+                    "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
+                    "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
+                    "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                    "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
+                    "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
+                    "}",
+                    RKStatusEnumNormal,
+                    RKStatusEnumNormal,
+                    latitude,
+                    longitude,
+                    heading,
+                    powerH, RKStatusEnumNormal,
+                    powerV, RKStatusEnumNormal);
+            RKSetHealthReady(radar, health);
+        }
 
         // Wait to simulate sampling time
         n = 0;
@@ -3000,6 +3371,44 @@ int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
 
 #pragma mark - Others
 
+static void *pushLoop(void *in) {
+    RKCommandQueue *queue = (RKCommandQueue *)in;
+    const char name[] = "<head>";
+    RKCommand command;
+    RKLog("%s Started.   queue @ %p\n", name, queue);
+    for (int k = 0; k < 10; k++) {
+        sprintf(command, "t %d", k);
+        RKCommandQueuePush(queue, &command);
+        RKLog("%s Command '%s' pushed.\n", name, command);
+        usleep(200000);
+    }
+    return NULL;
+}
+
+static void *popLoop(void *in) {
+    RKCommandQueue *queue = (RKCommandQueue *)in;
+    const char name[] = "<tail>";
+    RKLog("%s Started.   queue @ %p\n", name, queue);
+    do {
+        RKCommand *command = RKCommandQueuePop(queue);
+        if (command) {
+            RKLog("%s Command '%s' popped.\n", name, command);
+        } else {
+            usleep(10000);
+        }
+    } while (queue->tic < 10);
+    return NULL;
+}
+
+void RKTestCommandQueue(void) {
+    pthread_t tidPush, tidPop;
+    RKCommandQueue *queue = RKCommandQueueInit(8, true);
+    pthread_create(&tidPush, NULL, pushLoop, queue);
+    pthread_create(&tidPop, NULL, popLoop, queue);
+    pthread_join(tidPush, NULL);
+    pthread_join(tidPop, NULL);
+}
+
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
 }
@@ -3031,25 +3440,12 @@ void RKTestExperiment(void) {
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
-    
-//    fftwf_complex *in, *out;
-//    uint32_t planSize = 1 << 8;
-//    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
-//    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, planSize * sizeof(fftwf_complex)))
-//
-//    fftwf_plan fwd = fftwf_plan_dft_1d(planSize, in, in, FFTW_FORWARD, FFTW_MEASURE);
-//
-//    fftwf_plan plan = fwd;
-//
-//    printf("sizeof(fftwf_plan) = %d\n", (int)sizeof(fftwf_plan));
-//    printf("%p == %p\n", fwd, plan);
-
-    char filename[] = "/Users/boonleng/Documents/iRadar/data/PX-20170220-050706-E2.4-Z.nc";
-    //char symbol[8];
-    //RKGetSymbolFromFilename(filename, symbol);
-    
-    //printf("symbol = %s\n", symbol);
-    printf("%s\n", RKLastNPartsOfPath(filename, 3));
+    RKSetUseDailyLog(true);
+    int k = 0;
+    while (1) {
+        RKLog("Fake removing file k = %d ...\n", k++);
+        usleep(1000);
+    }
 }
 
 #pragma mark -

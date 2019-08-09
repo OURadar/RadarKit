@@ -6,22 +6,25 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "Please supply a filename.\n");
         return EXIT_FAILURE;
     }
-
-    RKSetWantScreenOutput(true);
     
     char filename[1024];
+    struct timeval s, e;
+
     strcpy(filename, argv[1]);
     
-    for (int i = 0; i < 10; i++) {
-    
-        printf("Filename = %s\n", filename);
-        
-        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename);
+    RKSetWantScreenOutput(true);
 
+    int k = 0;
+    gettimeofday(&s, NULL);
+    for (int i = 0; i < 500; i++) {
+        printf("Trial #%04d   Filename = %s\n", i, filename);
+        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename);
+        k += collection->count;
         RKProductCollectionFree(collection);
-    
-        sleep(1);
     }
+    gettimeofday(&e, NULL);
+    double dt = RKTimevalDiff(e, s);
+    RKLog("Elapsed time = %.3f s   (%s files / sec)\n", dt, RKFloatToCommaStyleString((double)k / dt));
     
     return EXIT_SUCCESS;
 }

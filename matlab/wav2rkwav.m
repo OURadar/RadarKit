@@ -10,20 +10,12 @@ wav = single(wav);
 wav = [real(wav); imag(wav)];
 samples = int16(65000 * wav);
 
-filename = 'xx.rkwav';
+filename = 'tone.rkwav';
 
 
 name = zeros(1, 256, 'uint8');
 name(1:2) = 'xx';
 
-%% 
-% fwrite(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
-% h = memmapfile(filename, ...
-%     'Offset', 0, ...
-%     'Repeat', 1, ...
-%     'Format', { ...
-%         'uint8', [1, 256], 'name'; ...
-%         'uint8', [1, 1], 'groupCount'});
 fid = fopen(filename, 'w');
 if (fid < 0)
     error('Unable to open file')

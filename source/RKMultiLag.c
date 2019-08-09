@@ -9,8 +9,7 @@
 #include <RadarKit/RKMultiLag.h>
 
 enum RKMomentMask {
-	RKMomentMaskCensored = -1,
-	RKMomentMaskNormal = 1,
+	RKMomentMaskNormal = 0,
 	RKMomentMaskLag1 = 1,
 	RKMomentMaskLag2 = 2,
 	RKMomentMaskLag3 = 3,
@@ -132,6 +131,11 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
         space->gC[n] = expf(w * space->gC[n]);
     }
 
+    // For now, all cells use the same lag choice
+    for (k = 0; k < gateCount; k++) {
+        space->mask[k] = space->userLagChoice;
+    }
+
     //
     //  ACF & CCF to moments
     //
@@ -139,21 +143,12 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 	RKFloat num, den, wsc;
 
     for (p = 0; p < 2; p++) {
-		for (k = 0; k < gateCount; k++) {
+        for (k = 0; k < gateCount; k++) {
             // Derive some criteria for censoring and lag selection
-			space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
+            space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
             space->Q[p][k] = space->aR[p][1][k] / space->aR[p][0][k];
-			if (space->SNR[0][k] < space->SNRThreshold || space->SNR[1][k] < space->SNRThreshold) {
-				space->mask[k] = RKMomentMaskCensored;
-			} else {
-				space->mask[k] = space->userLagChoice;
-			}
-			if (space->mask[k] == RKMomentMaskCensored) {
-				space->Z[p][k] = NAN;
-				space->V[p][k] = NAN;
-				space->W[p][k] = NAN;
-				continue;
-			}
+        }
+		for (k = 0; k < gateCount; k++) {
 			switch (space->mask[k]) {
 				default:
 				case RKMomentMaskNormal:
@@ -201,13 +196,6 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 	RKFloat *Ci = space->C[lagCount - 1].i;
 	RKFloat *Cq = space->C[lagCount - 1].q;
     for (k = 0; k < gateCount; k++) {
-		if (space->mask[k] == RKMomentMaskCensored) {
-			space->ZDR[k] = NAN;
-			space->PhiDP[k] = NAN;
-			space->RhoHV[k] = NAN;
-			space->KDP[k] = NAN;
-			continue;
-		}
 		switch (space->mask[k]) {
 			default:
 			case RKMomentMaskNormal:

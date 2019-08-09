@@ -290,14 +290,14 @@ void RKReviseLogicalValues(char *string) {
         sprintf(token, "true");
         memmove(token + 4, token + 6, strlen(token + 6));
         memset(token + 4 + strlen(token + 6), '\0', 2 * sizeof(char));
-        token = strcasestr(string, "\"true\"");
+        token = strcasestr(token + 6, "\"true\"");
     }
     token = strcasestr(string, "\"false\"");
     while (token) {
         sprintf(token, "false");
         memmove(token + 5, token + 7, strlen(token + 7));
         memset(token + 5 + strlen(token + 7), '\0', 2 * sizeof(char));
-        token = strcasestr(string, "\"false\"");
+        token = strcasestr(token + 7, "\"false\"");
     }
 }
 
@@ -396,7 +396,7 @@ char *RKFloatToCommaStyleString(const double num) {
     } else if (isnan(num)) {
         sprintf(intString, "nan");
     } else if (isinf(num)) {
-        if (num > 0) {
+        if (num > 0.0) {
             sprintf(intString, "+inf");
         } else {
             sprintf(intString, "-inf");
@@ -467,7 +467,8 @@ void RKPreparePath(const char *filename) {
         fprintf(stderr, "RKPreparePath() unable to continue.\n");
         return;
     }
-    strncpy(path, filename, 1023);
+    path[1023] = '\0';
+    strncpy(path, filename, 1024);
     char *c = strrchr(path, '/');
     if (c == NULL) {
         free(path);
@@ -575,16 +576,28 @@ char *RKFileExtension(const char *filename) {
 
 char *RKPathStringByExpandingTilde(const char *path) {
     static char fullpath[1024];
-    if (path[0] == '~') {
+    int k;
+    char *c = (char *)path;
+    while (*c == ' ') {
+        c++;
+    }
+    if (*c == '~') {
         char *home = getenv("HOME");
         if (home != NULL) {
-            snprintf(fullpath, 1024, "%s/%s", getenv("HOME"), path);
+            k = snprintf(fullpath, 1024, "%s", getenv("HOME"));
+            k--;
+            if (fullpath[k] == '/') {
+                fullpath[k] = '\0';
+            } else {
+                k++;
+            }
+            snprintf(fullpath + k, 1024 - k, "/%s", c + 2);
         } else {
             fprintf(stderr, "Error. HOME environmental variable not set.\n");
-            snprintf(fullpath, 1024, "%s", path);
+            snprintf(fullpath, 1024, "%s", c);
         }
     } else {
-        snprintf(fullpath, 1024, "%s", path);
+        snprintf(fullpath, 1024, "%s", c);
     }
     return fullpath;
 }

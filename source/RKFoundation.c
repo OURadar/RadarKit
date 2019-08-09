@@ -40,7 +40,7 @@ int RKLog(const char *whatever, ...) {
         free(msg);
         return 1;
     }
-    if (rkGlobalParameters.dailyLog) {
+    if (rkGlobalParameters.logTimeOnly) {
         if (whatever[0] == '>') {
             i += sprintf(msg, "             ");
         } else {
@@ -120,7 +120,9 @@ int RKLog(const char *whatever, ...) {
     // Write the string to a file if specified
     FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
-        if (strlen(rkGlobalParameters.rootDataFolder)) {
+        if (strlen(rkGlobalParameters.logFolder)) {
+            i = sprintf(filename, "%s/%s-", rkGlobalParameters.logFolder, rkGlobalParameters.program);
+        } else if (strlen(rkGlobalParameters.rootDataFolder)) {
             i = sprintf(filename, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
         } else {
             i = 0;
@@ -131,8 +133,13 @@ int RKLog(const char *whatever, ...) {
         }
         logFileID = fopen(filename, "a");
     } else if (strlen(rkGlobalParameters.logfile)) {
-        RKPreparePath(rkGlobalParameters.logfile);
-        logFileID = fopen(rkGlobalParameters.logfile, "a");
+        if (strlen(rkGlobalParameters.logFolder)) {
+            sprintf(filename, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
+        } else {
+            strcpy(filename, rkGlobalParameters.logfile);
+        }
+        RKPreparePath(filename);
+        logFileID = fopen(filename, "a");
     }
     if (logFileID) {
         fprintf(logFileID, "%s", msg);
@@ -159,6 +166,7 @@ void RKSetWantScreenOutput(const bool yes) {
 
 void RKSetUseDailyLog(const bool dailyLog) {
     rkGlobalParameters.dailyLog = dailyLog;
+    rkGlobalParameters.logTimeOnly = true;
 }
 
 int RKSetProgramName(const char *name) {
@@ -230,7 +238,7 @@ bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
     printf("- %s\n", b);
     #endif
     if (b == filename) {
-        fprintf(stderr, "RKGetSymbolFromFilename() Unable to find product symbol.\n");
+        RKLog("RKGetSymbolFromFilename() Unable to find product symbol.\n");
         *symbol = '-';
         return false;
     }
@@ -248,8 +256,8 @@ bool RKGetPrefixFromFilename(const char *filename, char *prefix) {
     do {
         e--;
     } while (*e != '-' && e > filename);
-    if (e == filename) {
-        fprintf(stderr, "RKGetPrefixFromFilename() Unable to find filename prefix.\n");
+    if (e <= filename) {
+        RKLog("RKGetPrefixFromFilename() Unable to find filename prefix.\n");
         *prefix = '\0';
         return false;
     }
@@ -267,17 +275,21 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     DIR *dir;
     struct dirent *ent;
 
+    strcpy(list[0], filename);
+    
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
     //printf("path -> %s\n", path);
     if ((dir = opendir(path)) == NULL) {
-        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
+        RKLog("RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         return 0;
     }
     // Use prefix to match the file pattern
     r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
     if (r == false) {
-        fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
+        RKLog("RKListFilesWithSamePrefix() Not a standard filename. Early return.\n");
         return 0;
     }
     char *ext = RKFileExtension(filename);
@@ -339,18 +351,36 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 void RKShowBanner(const char *title, const char *color) {
     int k;
     struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
-    ioctl(0, TIOCGWINSZ, &terminalSize);
+    k = ioctl(0, TIOCGWINSZ, &terminalSize);
+    //fprintf(stderr, "k = %d   %d x %d\n", k, terminalSize.ws_col, terminalSize.ws_row);
+    if (k != 0 || (terminalSize.ws_col == 0 && terminalSize.ws_row == 0)) {
+        terminalSize.ws_col = 80;
+        terminalSize.ws_row = 24;
+    }
     char message[terminalSize.ws_col + 32];
     char padding[terminalSize.ws_col + 32];
     
-    k = sprintf(padding, "%s", color);
+    if (rkGlobalParameters.showColor) {
+        k = sprintf(padding, "%s", color);
+    } else {
+        k = 0;
+    }
     k += RKStringCenterized(padding + k, "", terminalSize.ws_col);
-    k += sprintf(padding + k, RKNoColor);
-    
-    k = sprintf(message, "%s", color);
+    if (rkGlobalParameters.showColor) {
+        sprintf(padding + k, RKNoColor);
+    }
+
+    if (rkGlobalParameters.showColor) {
+        k = sprintf(message, "%s", color);
+    } else {
+        k = 0;
+    }
     k += RKStringCenterized(message + k, title, terminalSize.ws_col);
-    k += sprintf(message + k, RKNoColor);
+    if (rkGlobalParameters.showColor) {
+        sprintf(message + k, RKNoColor);
+    }
     
+    printf("\r");
     printf("%s\n", padding);
     printf("%s\n", message);
     printf("%s\n", padding);
@@ -371,8 +401,16 @@ void RKShowTypeSizes(void) {
     rkGlobalParameters.stream = stdout;
     
     SHOW_SIZE(void *)
+    SHOW_SIZE(char)
+    SHOW_SIZE(short)
     SHOW_SIZE(int)
+    SHOW_SIZE(long)
+    SHOW_SIZE(long long)
+    SHOW_SIZE(unsigned char)
+    SHOW_SIZE(unsigned short)
     SHOW_SIZE(unsigned int)
+    SHOW_SIZE(unsigned long)
+    SHOW_SIZE(unsigned long long)
     SHOW_SIZE(int8_t)
     SHOW_SIZE(uint8_t)
     SHOW_SIZE(int16_t)
@@ -381,14 +419,13 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(uint32_t)
     SHOW_SIZE(int64_t)
     SHOW_SIZE(uint64_t)
-    SHOW_SIZE(long)
-    SHOW_SIZE(long long)
-    SHOW_SIZE(unsigned long)
-    SHOW_SIZE(unsigned long long)
+    SHOW_SIZE(struct sockaddr)
+    SHOW_SIZE(struct sockaddr_in)
     SHOW_SIZE(RKByte)
     SHOW_SIZE(RKFloat)
     SHOW_SIZE(RKInt16C)
     SHOW_SIZE(RKComplex)
+    SHOW_SIZE(RKVec)
     SHOW_SIZE(RKRadarDesc)
     SHOW_SIZE(RKConfig)
     SHOW_SIZE(RKHealth)
@@ -408,8 +445,6 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKStatus)
     SHOW_SIZE(RKFileMonitor)
     SHOW_SIZE(RKFilterAnchor)
-    SHOW_SIZE(struct sockaddr)
-    SHOW_SIZE(struct sockaddr_in)
     SHOW_SIZE(RKWaveform)
     SHOW_SIZE(RKWaveformCalibration)
     SHOW_SIZE(RKProductDesc)
@@ -1155,7 +1190,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "U"
     };
     RKName names[] = {
-        "Corrected_Intensity",
+        "Intensity",
         "Radial_Velocity",
         "Width",
         "Differential_Reflectivity",
@@ -1458,6 +1493,7 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *sks;
     uint8_t type;
     uint8_t subType;
+    bool earlyReturn = false;
 
     char *str = (char *)malloc(L + 1);
     char *key = (char *)malloc(RKMaximumStringLength);
@@ -1466,22 +1502,40 @@ bool RKFindCondition(const char *string, const RKStatusEnum target, const bool s
     char *subObj = (char *)malloc(RKMaximumStringLength);
     if (str == NULL) {
         RKLog("Error allocating memory for str.\n");
-        return false;
+        earlyReturn = true;
     }
     if (key == NULL) {
         RKLog("Error allocating memory for key.\n");
-        return false;
+        earlyReturn = true;
     }
     if (obj == NULL) {
         RKLog("Error allocating memory for obj.\n");
-        return false;
+        earlyReturn = true;
     }
     if (subKey == NULL) {
         RKLog("Error allocating memory for subKey.\n");
-        return false;
+        earlyReturn = true;
     }
     if (subObj == NULL) {
         RKLog("Error allocating memory for subObj.\n");
+        earlyReturn = true;
+    }
+    if (earlyReturn) {
+        if (str) {
+            free(str);
+        }
+        if (key) {
+            free(key);
+        }
+        if (obj) {
+            free(obj);
+        }
+        if (subKey) {
+            free(subKey);
+        }
+        if (subObj) {
+            free(subObj);
+        }
         return false;
     }
     *key = '\0';
@@ -1647,3 +1701,51 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
     return RKResultSuccess;
 }
 
+#pragma mark - Command queue
+
+RKCommandQueue *RKCommandQueueInit(const uint8_t depth, const bool nonblocking) {
+    RKCommandQueue *queue = (RKCommandQueue *)malloc(sizeof(RKCommandQueue));
+    if (queue == NULL) {
+        RKLog("Error. Unable to allocate command queue.\n");
+        return NULL;
+    }
+    memset(queue, 0, sizeof(RKCommandQueue));
+    queue->depth = depth;
+    queue->nonblocking = nonblocking;
+    queue->buffer = (RKCommand *)malloc(queue->depth * sizeof(RKCommand));
+    if (queue->buffer == NULL) {
+        RKLog("Error. Unable to allocate command queue.\n");
+        free(queue);
+        return NULL;
+    }
+    pthread_mutex_init(&queue->lock, NULL);
+    return queue;
+}
+
+RKCommand *RKCommandQueuePop(RKCommandQueue *queue) {
+    if (queue->count == 0) {
+        if (queue->nonblocking) {
+            return NULL;
+        } else {
+            do {
+                usleep(1000);
+            } while (queue->count == 0);
+        }
+    }
+    RKCommand *command = &queue->buffer[queue->tail];
+    queue->tail = RKNextModuloS(queue->tail, queue->depth);
+    pthread_mutex_lock(&queue->lock);
+    queue->count--;
+    pthread_mutex_unlock(&queue->lock);
+    return command;
+}
+
+int RKCommandQueuePush(RKCommandQueue *queue, RKCommand *command) {
+    memcpy(&queue->buffer[queue->head], command, sizeof(RKCommand));
+    queue->head = RKNextModuloS(queue->head, queue->depth);
+    pthread_mutex_lock(&queue->lock);
+    queue->count++;
+    pthread_mutex_unlock(&queue->lock);
+    queue->tic++;
+    return RKResultSuccess;
+}

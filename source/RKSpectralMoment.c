@@ -8,11 +8,14 @@
 
 #include <RadarKit/RKSpectralMoment.h>
 
+//
+// NOTE: This function is incomplete
+//
 int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 
     int g, j, k, p;
 
-    RKPulse *pulse = pulses[0];
+    RKPulse *pulse;
     int offt = MIN(space->fftModule->count, (int)ceilf(log2f((float)pulseCount * 1.2f)));
     int planSize = space->fftModule->plans[offt].size;
 
