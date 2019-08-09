@@ -1753,7 +1753,7 @@ void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), co
     };
     int g;
     for (g = 0; g < sizeof(vr) / sizeof(float); g++) {
-        printf("vr[%d] = %.4f\n", g, vr[g]);
+        printf("g = %d    vr[g] = %.4f    wr[g] = %.4f    spec[g] = %.4f, %.4f, ...\n", g, vr[g], wd[g], spec[g][0], spec[g][1]);
     }
 }
 

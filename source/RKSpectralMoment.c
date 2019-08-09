@@ -3,7 +3,7 @@
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 10/8/18.
-//  Copyright (c) 2018 Boon Leng Cheong. All rights reserved.
+//  Copyright (c) 2018-2019 Boon Leng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKSpectralMoment.h>
@@ -16,8 +16,14 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
     int g, j, k, p;
 
     RKPulse *pulse;
+    
+    // Always choose an order that is slightly higher
     int offt = MIN(space->fftModule->count, (int)ceilf(log2f((float)pulseCount * 1.2f)));
     int planSize = space->fftModule->plans[offt].size;
+    
+    RKLog("%s -> %s",
+          RKVariableInString("offt", &offt, RKValueTypeInt),
+          RKVariableInString("planSize", &planSize, RKValueTypeInt));
 
     fftwf_complex *in;
     RKFloat A, phi, q, omegaI, omegaQ;
@@ -34,10 +40,10 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
     //RKPulsePair(space, pulses, pulseCount);
     
     for (p = 0; p < 2; p++) {
-        // I know, there are other ways to get the data in. It would see me like doing least
-        // number of RKGetComplexDataFromPulse() calls would be beneficial but through real
-        // world tests, it has been validated that the selected method is the most efficient
-        // method despite repeated calls of RKGetComplexDataFromPulse().
+        // I know, there are other ways to get the data in. Intuitively, one would expect Method 1,
+        // which has less number of RKGetComplexDataFromPulse() calls would be beneficial but through
+        // some real world tests, it has been validated that Method 2 is the more efficient despite
+        // repeated calls of RKGetComplexDataFromPulse().
         //
         // Method 1:
         //
