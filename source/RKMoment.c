@@ -353,7 +353,13 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
 }
 
 static void zeroOutRay(RKRay *ray) {
-    memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+    //memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+    RKFloat *f = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
+    for (int k = 0; k < RKBaseMomentCount * ray->header.capacity; k++) {
+        *f++ = NAN;
+    }
+    uint8_t *u = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
+    memset(u, 0, RKBaseMomentCount * sizeof(uint8_t));
 }
 
 static void buildInCalibrator(RKScratch *space, RKConfig *config) {
