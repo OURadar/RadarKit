@@ -22,7 +22,8 @@ pulses = single(pulses);
 
 %%
 N = 6;
-ng = min(size(pulses, 1), 30);
+% ng = min(size(pulses, 1), 30);
+ng = min(size(pulses, 1), 800);
 ns = min(size(pulses, 2), 500);
 
 t_fast = (1:ng) / 50;
@@ -39,7 +40,7 @@ xlim([0 100])
 %%
 figure(2)
 clf
-M = 10;
+M = 6;
 FIG.ax = zeros(M * N, 1);
 FIG.pl = zeros(M * N, 3);
 FIG.ht = zeros(M * N, 1);
