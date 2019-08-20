@@ -172,7 +172,7 @@ static void refreshFileList(RKFileRemover *me) {
             RKLog("%s %s Error. Unable to list files in %s\n", me->parent->name, me->name, string);
             return;
         } else if (count == me->capacity - me->count) {
-            RKLog("%s %s Warning. Insufficient capacity. Unexpected results may occur\n", me->parent->name, me->name);
+            RKLog("%s %s Info. At capacity. Suggest keeping less data on main host.\n", me->parent->name, me->name);
         }
         me->count += count;
         if (me->count > me->capacity) {
@@ -469,9 +469,9 @@ static void *folderWatcher(void *in) {
 #else
 
     const int capacities[] = {
-        24 * 3600 / 2 * 2,                // Assume a file every 2 seconds, 2 folders
-        24 * 3600 / 2 * 8 * 2,            // Assume 8 files every 2 seconds, 2 folders
-        24 * 60 * 30,                     // Assume a file every minute, 30 folders
+        24 * 3600 / 2 * 3,                // Assume a file every 2 seconds, 3 folders
+        24 * 3600 / 2 * 8 * 3,            // Assume 8 files every 2 seconds, 3 folders
+        24 * 60 * 50,                     // Assume a file every minute, 50 folders
         0
     };
     const size_t limits[] = {
