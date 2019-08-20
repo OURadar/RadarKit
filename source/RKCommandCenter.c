@@ -1274,15 +1274,15 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     i = 0;
                     gid = pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount;
-                    for (k = 0; k < MIN(1000, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                    for (k = 0; k < MIN(2000, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                         *userDataH++ = *c16DataH++;
                         *userDataV++ = *c16DataV++;
                         i++;
                     }
-                    for (; k < MIN(1010, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
-                        userDataH->i   = 20000;
+                    for (j = 0; k < MIN(2005, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 5); j++, k++) {
+                        userDataH->i   = 10000 * (3 - abs(j - 2));
                         userDataH++->q = 0;
-                        userDataV->i   = 20000;
+                        userDataV->i   = 10000 * (3 - abs(j - 2));
                         userDataV++->q = 0;
                         i++;
                     }
@@ -1290,14 +1290,14 @@ int socketStreamHandler(RKOperator *O) {
                     // Show the filter that was used as matched filter
                     yH = user->radar->pulseCompressionEngine->filters[gid][0];
                     yV = user->radar->pulseCompressionEngine->filters[gid][0];
-                    for (k = 0; k < MIN(1000, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
+                    for (k = 0; k < MIN(2000, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length); k++) {
                         userDataH->i   = (int16_t)(scale * yH->i);
                         userDataH++->q = (int16_t)(scale * yH++->q);
                         userDataV->i   = (int16_t)(scale * yV->i);
                         userDataV++->q = (int16_t)(scale * yV++->q);
                         i++;
                     }
-                    for (; k < MIN(1010, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 3); k++) {
+                    for (; k < MIN(2005, user->radar->pulseCompressionEngine->filterAnchors[gid][0].length + 5); k++) {
                         userDataH->i   = 20000;
                         userDataH++->q = 0;
                         userDataV->i   = 20000;

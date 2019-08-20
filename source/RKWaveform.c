@@ -100,7 +100,7 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     }
     
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-    RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
+    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
 
     waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
