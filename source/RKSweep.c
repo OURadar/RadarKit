@@ -787,7 +787,9 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
     RKBaseMomentList overallMomentList = 0;
 
-    RKLog(">%s n = %d   %p %p %p ... %p\n", engine->name, n, rays[0], rays[1], rays[2], rays[n - 1]);
+    if (engine->verbose > 2) {
+        RKLog(">%s n = %d   %p %p %p ... %p\n", engine->name, n, rays[0], rays[1], rays[2], rays[n - 1]);
+    }
 
     // Consolidate some other information and check consistencies
     uint8_t gateCountWarningCount = 0;
