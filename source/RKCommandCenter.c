@@ -1428,7 +1428,7 @@ int socketInitialHandler(RKOperator *O) {
     user->terminalSize.ws_row = 50;
     user->radar = engine->radars[0];
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
-        user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 1000, 1);
+        user->rayDownSamplingRatio = (uint16_t)MAX(user->radar->desc.pulseCapacity / user->radar->desc.pulseToRayRatio / 500, 1);
     } else {
         user->rayDownSamplingRatio = 1;
     }
