@@ -21,7 +21,9 @@ pulses = permute(pulses, [2 4 3 1]);
 pulses = single(pulses);
 
 %%
-N = 6;
+N = 4;   % Number of rows
+M = 6;   % Number of filters
+
 % ng = min(size(pulses, 1), 30);
 ng = min(size(pulses, 1), 800);
 ns = min(size(pulses, 2), 500);
@@ -40,12 +42,18 @@ xlim([0 100])
 %%
 figure(2)
 clf
-M = 6;
 FIG.ax = zeros(M * N, 1);
 FIG.pl = zeros(M * N, 3);
 FIG.ht = zeros(M * N, 1);
+
+% Compute the next pulse index that have rem(i, M) = 0
+offset = 0;
+if rem(dat.pulses(1).i, M) > 0
+    offset = M - rem(dat.pulses(1).i, M);
+end
+
 for ii = 1 : M * N
-    k = ii;
+    k = ii + offset;
     ix = rem(ii - 1, M);
     iy = N - 1 - floor((ii - 1) / M);
     FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);
@@ -56,13 +64,18 @@ for ii = 1 : M * N
     grid on
     if iy == 0, xlabel('Time (us)'); else, set(gca, 'XTickLabel', []); end
     if ix == 0, ylabel('Amplitude'); else, set(gca, 'YTickLabel', []); end
-    FIG.ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
-    ylim(35000 * [-1 1])
+    %FIG.ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
+    iw = rem(int32(dat.pulses(k).i), M);
+    iw2 = idivide(iw, 2);
+    FIG.ht(ii) = text(0.9 * t_fast(end), -12000, sprintf('[n:%d i:%d] / [%d / %d]', dat.pulses(k).n, dat.pulses(k).i, iw, iw2));
+    ylim(15000 * [-1 1])
 end
-blib('bsizewin', gcf, [2500 1080])
+% blib('bsizewin', gcf, [2500 1080])
+blib('bsizewin', gcf, [1440 700])
 set(gcf, 'Menubar', 'None');
 set(FIG.ht, 'HorizontalAlignment', 'Right');
 lp = linkprop(FIG.ax, {'XLim', 'YLim'});
+xlim([0 t_fast(ng)])
 
 if (showAnimation) 
     %%
