@@ -1044,6 +1044,7 @@ typedef struct rk_pulse_header {
 // Pulse parameters for matched filters (pulseCompressionCore)
 //
 typedef struct rk_pulse_parameters {
+    uint32_t             gid;                                                  //
     uint32_t             filterCounts[2];                                      //
     uint32_t             planIndices[2][RKMaximumFilterCount];                 //
     uint32_t             planSizes[2][RKMaximumFilterCount];                   //

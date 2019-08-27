@@ -395,6 +395,7 @@ static void *pulseCompressionCore(void *_in) {
         // Filter group id
         const int gid = engine->filterGid[i0];
         //printf("pulse i = %u   gid = %d\n", (uint32_t)pulse->header.i, gid);
+        pulse->parameters.gid = gid;
 
         // Now we process / skip
         if (gid < 0 || gid >= engine->filterGroupCount || engine->state & RKEngineStateMemoryChange) {
