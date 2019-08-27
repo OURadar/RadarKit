@@ -35,6 +35,7 @@ typedef struct rk_user {
     uint32_t                         commandCount;                                                 // Counter of command
     uint32_t                         controlFirstUID;                                              // UUID of the first control
     uint32_t                         scratchSpaceIndex;                                            // The index to the scratch space to use
+    uint32_t                         transmitWaveIndex;                                            // The index to the filter of the pulse (for AScope use)
     RKTextPreferences                textPreferences;                                              // Text preference for terminal output
     struct winsize                   terminalSize;                                                 // Terminal window size of the user
     uint16_t                         pulseDownSamplingRatio;                                       // Additional down-sampling ratio for pulse live stream

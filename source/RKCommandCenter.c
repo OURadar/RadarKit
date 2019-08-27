@@ -1236,7 +1236,16 @@ int socketStreamHandler(RKOperator *O) {
         } else {
             endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);
         }
+        // Roll back a little so that(pulse index % waveform count) matches the desired waveIndex
+        s = 0;
         pulse = RKGetPulseFromBuffer(user->radar->pulses, endIndex);
+        while (pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount != user->transmitWaveIndex && s++ < user->radar->pulseCompressionEngine->filterGroupCount) {
+            endIndex = RKPreviousModuloS(endIndex, user->radar->desc.pulseBufferDepth);
+            pulse = RKGetPulseFromBuffer(user->radar->pulses, endIndex);
+        }
+        //printf("wi = %d  %d\n", user->transmitWaveIndex, (int)pulse->header.i % user->radar->pulseCompressionEngine->filterGroupCount);
+        user->transmitWaveIndex = RKNextModuloS(user->transmitWaveIndex, user->radar->pulseCompressionEngine->filterGroupCount);
+        //pulse = RKGetPulseFromBuffer(user->radar->pulses, endIndex);
         s = 0;
         while (!(pulse->header.s & RKPulseStatusProcessed) && s++ < 100) {
             usleep(1000);
