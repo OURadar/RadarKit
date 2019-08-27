@@ -607,7 +607,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             n = 2;
         }
         j = 0;
-        char summ[80] = "";
+        char summ[800] = "";
         for (; n < count; n += 2) {
             sprintf(summ + strlen(summ), " %d/%d", (int)(pulses[n]->header.i % 4), pulse->parameters.gid);
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
@@ -615,6 +615,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], gateCount, 1);                                                // R[k] += X[n] * X[n - k]'
             j++;
         }
+        RKLog("p = %d   %s\n", p, summ);
         RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                                             // R[1] /= j   (unbiased)
         RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                                                // aR[1] = abs(R[1])
 
