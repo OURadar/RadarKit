@@ -154,7 +154,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "RangeFolded", NC_FLOAT, 1, &tmpf);
     put_global_text_att(ncid, "RadarParameters", "PRF PulseWidth MaximumRange");
     put_global_text_att(ncid, "PRF-unit", "Hertz");
-    tmpi = product->header.prf[0];
+    tmpi = (int)product->header.prf[0];
     nc_put_att_int(ncid, NC_GLOBAL, "PRF-value", NC_INT, 1, &tmpi);
     put_global_text_att(ncid, "PulseWidth-unit", "MicroSeconds");
     tmpf = (float)product->header.pw[0] * 0.001f;
@@ -419,8 +419,8 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     }
     r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
     if (r == NC_NOERR) {
-        product->header.prf[0] = iv;
-        if (product->header.prf[0] == 0) {
+        product->header.prf[0] = (RKFloat)iv;
+        if (product->header.prf[0] == 0.0f) {
             RKLog("Warning. Recorded PRF = 0 Hz.\n");
         }
     } else {
@@ -463,7 +463,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
               RKVariableInString("unit", product->desc.unit, RKValueTypeString));
         RKLog("%s m   %s us",
               RKVariableInString("wavelength", &product->header.wavelength, RKValueTypeFloat),
-              RKVariableInString("pulsewidth", &product->header.pw[0], RKValueTypeUInt32));
+              RKVariableInString("pulsewidth", &product->header.pw[0], RKValueTypeFloat));
         RKLog("%s   %s   %s\n",
               RKVariableInString("rayCount", RKIntegerToCommaStyleString(product->header.rayCount), RKValueTypeNumericString),
               RKVariableInString("gateCount", RKIntegerToCommaStyleString(product->header.gateCount), RKValueTypeNumericString),

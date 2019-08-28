@@ -212,8 +212,8 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
             }
             r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
             if (r == NC_NOERR) {
-                sweep->header.config.prf[0] = iv;
-                if (sweep->header.config.prf[0] == 0) {
+                sweep->header.config.prf[0] = (RKFloat)iv;
+                if (sweep->header.config.prf[0] == 0.0f) {
                     RKLog("Warning. Recorded PRF = 0 Hz.\n");
                 }
             } else {

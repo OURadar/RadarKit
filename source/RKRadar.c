@@ -312,7 +312,7 @@ static void *systemInspectorRunLoop(void *in) {
                         networkOkay ? "true" : "false", networkEnum,
                         radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - (double)config->prf[0]) / config->prf[0] < 0.1 ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - config->prf[0]) / config->prf[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
                         config->noise[0], config->noise[1],
                         RKIntegerToCommaStyleString((long)round(positionRate)), rayRate,
                         FFTPlanUsage

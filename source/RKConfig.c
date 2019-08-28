@@ -162,11 +162,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 }
                 break;
             case RKConfigKeyPulseWidth:
-                n = (uint32_t)va_arg(args, uint32_t);
-                for (j = 0; j < newConfig->filterCount; j++) {
-                    newConfig->pw[j] = n;
+                newConfig->pw[0] = (RKFloat)va_arg(args, double);
+                for (j = 1; j < newConfig->filterCount; j++) {
+                    newConfig->pw[j] = newConfig->pw[0];
                 }
-                sprintf(stringBuffer[0], "PulseWidth = %s ns", RKIntegerToCommaStyleString(newConfig->pw[0]));
+                sprintf(stringBuffer[0], "PulseWidth = %s ns", RKFloatToCommaStyleString(newConfig->pw[0]));
                 break;
             case RKConfigKeyWaveformName:
                 strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
