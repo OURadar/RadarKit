@@ -891,6 +891,12 @@ enum RKFilterType {
     RKFilterTypeTest1
 };
 
+typedef uint8_t RKRawDataType;
+enum RKRawDataType {
+    RKRawDataTypeFromTransceiver,                                              // Raw straight from the transceiver
+    RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression
+};
+
 #pragma mark - Structure Definitions
 
 //
@@ -1155,6 +1161,7 @@ typedef union rk_file_header {
         uint32_t             buildNo;                                          //
         RKRadarDesc          desc;                                             //
         RKConfig             config;                                           //
+        RKRawDataType        dataType;                                         //
     };                                                                         //
     RKByte               bytes[4096];                                          //
 } RKFileHeader;

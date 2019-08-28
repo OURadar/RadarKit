@@ -164,8 +164,13 @@ static void *pulseRecorder(void *in) {
             i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-            sprintf(filename + i, ".rkr");
-            
+            if (engine->recordType == RKRawDataTypeFromTransceiver) {
+                sprintf(filename + i, ".rkr");
+            } else {
+                sprintf(filename + i, ".rkc");
+            }
+            fileHeader->dataType = engine->recordType;
+
             n = 0;
             
             if (engine->verbose > 1) {
@@ -185,9 +190,15 @@ static void *pulseRecorder(void *in) {
         if (engine->doNotWrite) {
             len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
         } else if (engine->fd) {
-            len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
-            len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
-            len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+            if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
+                len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
+                len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
+                len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+            } else {
+                len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
+                len += RKRawDataRecorderCacheWrite(engine, RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex));
+                len += RKRawDataRecorderCacheWrite(engine, RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex));
+            }
         }
         pulseCount++;
 
@@ -241,6 +252,7 @@ RKRawDataRecorder *RKRawDataRecorderInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorDataRecorder) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKRawDataRecorderSetCacheSize(engine, RKRawDataRecorderDefaultCacheSize);
     engine->state = RKEngineStateAllocated;
+    engine->recordType = RKRawDataTypeAfterMatchedFilter;
     engine->maximumRecordDepth = RKRawDataRecorderDefaultMaximumRecorderDepth;
     engine->memoryUsage = sizeof(RKRawDataRecorder) + engine->cacheSize;
     return engine;

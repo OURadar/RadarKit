@@ -21,6 +21,7 @@ struct rk_data_recorder {
     // User set variables
     RKName                           name;
     RKRadarDesc                      *radarDescription;
+    RKRawDataType                    recordType;
     RKBuffer                         pulseBuffer;                    // Buffer of raw pulses
     uint32_t                         *pulseIndex;                    // The refence index to watch for
     RKConfig                         *configBuffer;
