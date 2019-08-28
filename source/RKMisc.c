@@ -350,21 +350,20 @@ char *RKIntegerToCommaStyleString(const long long num) {
     sprintf(string, "%lld", num);
     if (num < 1000) {
         return string;
-    } else {
-        k = (int)(strlen(string) - 1) / 3;
-        i = (int)(strlen(string) + k);
-        j = 1;
-        string[i] = '\0';
-        while (i > 0) {
-            i--;
-            string[i] = string[i - k];
-            if (j > 3) {
-                j = 0;
-                string[i] = ',';
-                k--;
-            }
-            j++;
+    }
+    k = (int)(strlen(string) - 1) / 3;
+    i = (int)(strlen(string) + k);
+    j = 1;
+    string[i] = '\0';
+    while (i > 0) {
+        i--;
+        string[i] = string[i - k];
+        if (j > 3) {
+            j = 0;
+            string[i] = ',';
+            k--;
         }
+        j++;
     }
     return string;
 }
@@ -387,22 +386,38 @@ char *RKIntegerToHexStyleString(const long long num) {
 //  Float to string with 3-digit grouping
 //
 char *RKFloatToCommaStyleString(const double num) {
-    char *intString = RKIntegerToCommaStyleString((long)num);
-    if (isfinite(num)) {
-        if (num < 0.0 && num > -1.0) {
-            sprintf(intString, "-0");
-        }
-        snprintf(intString + strlen(intString), 32 - strlen(intString), ".%03.0f", 1000.0f * fabs(num - trunc(num)));
-    } else if (isnan(num)) {
-        sprintf(intString, "nan");
-    } else if (isinf(num)) {
-        if (num > 0.0) {
-            sprintf(intString, "+inf");
-        } else {
-            sprintf(intString, "-inf");
-        }
+    int i, j, k;
+    static int ibuf = 0;
+    static char stringBuffer[16][32];
+    char *string = stringBuffer[ibuf];
+    
+    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    
+    sprintf(string, "%.3f", num);
+    if (num < 1000.0) {
+        return string;
     }
-    return intString;
+    k = (int)(strlen(string) - 5) / 3;
+    i = (int)(strlen(string) + k);
+    j = 1;
+    string[i] = '\0';
+    string[i - 1] = string[i - k - 1];
+    string[i - 2] = string[i - k - 2];
+    string[i - 3] = string[i - k - 3];
+    string[i - 4] = '.';
+    i -= 4;
+
+    while (i > 0) {
+        i--;
+        string[i] = string[i - k];
+        if (j > 3) {
+            j = 0;
+            string[i] = ',';
+            k--;
+        }
+        j++;
+    }
+    return string;
 }
 
 #pragma mark - Time

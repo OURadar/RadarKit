@@ -298,6 +298,10 @@ void RKTestPrettyStrings(void) {
     f = +INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
     f = -INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
     f = NAN;       printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 1000.0;    printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 20000.0;   printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 400000.0;  printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 1234567.8; printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
     printf("\n");
     char *c;
     bool tf = true; printf("%s\n", RKVariableInString("tf", &tf, RKValueTypeBool));
@@ -756,27 +760,27 @@ void RKTestProductWrite(void) {
     sprintf(product->header.radarName, "RadarKit");
     product->header.latitude = 35.23682;
     product->header.longitude = -97.46381;
-    product->header.heading = 0.0;
-    product->header.wavelength = 0.0314;
-    product->header.sweepElevation = 2.4;
+    product->header.heading = 0.0f;
+    product->header.wavelength = 0.0314f;
+    product->header.sweepElevation = 2.4f;
     product->header.rayCount = 360;
     product->header.gateCount = 8;
-    product->header.gateSizeMeters = 7500.0;
-    product->header.prf[0] = 1000;
+    product->header.gateSizeMeters = 7500.0f;
+    product->header.prt[0] = 1.0e-3f;
     product->header.isPPI = true;
     product->header.startTime = 201443696;
     product->header.endTime = 201443696 + 10;
-    float az = 90.0;
+    float az = 90.0f;
     for (k = 0; k < 360; k++) {
         product->startAzimuth[k] = az;
-        if (az >= 359.0) {
-            az = az - 359.0;
+        if (az >= 359.0f) {
+            az = az - 359.0f;
         } else {
-            az += 1.0;
+            az += 1.0f;
         }
         product->endAzimuth[k] = az;
-        product->startElevation[k] = 2.4;
-        product->endElevation[k] = 2.4;
+        product->startElevation[k] = 2.4f;
+        product->endElevation[k] = 2.4f;
     }
     v = product->data;
     for (k = 0; k < 360; k++) {
@@ -788,7 +792,7 @@ void RKTestProductWrite(void) {
     v = product->data;
     for (k = 0; k < 360; k++) {
         for (g = 0; g < 8; g++) {
-            *v++ = (float)(k % 15) * 5.0 - 5.0;
+            *v++ = (float)(k % 15) * 5.0f - 5.0f;
         }
     }
     RKProductFileWriterNC(product, "rainbow.nc");
@@ -2137,10 +2141,10 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
         
         transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
-        transceiver->prt = 1.0f / fileHeader->config.prf[0];
+        transceiver->prt = fileHeader->config.prt[0];
         
         RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
-              transceiver->name, 1.0e3f * transceiver->prt, RKIntegerToCommaStyleString(fileHeader->config.prf[0]));
+              transceiver->name, 1.0e3f * transceiver->prt, RKIntegerToCommaStyleString(fileHeader->config.prt[0]));
         
         RKAddConfig(radar,
                     RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
@@ -2151,7 +2155,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                     RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
                     RKConfigKeyPulseRingFilterGateCount, fileHeader->config.pulseRingFilterGateCount,
                     RKConfigKeyWaveform, transceiver->waveformCache[0],
-                    RKConfigKeyPRF, fileHeader->config.prf[0],
+                    RKConfigKeyPRF, 1.0 / fileHeader->config.prt[0],
                     RKConfigKeySweepElevation, fileHeader->config.sweepElevation,
                     RKConfigKeySweepAzimuth, fileHeader->config.sweepAzimuth,
                     RKConfigKeyNull);
@@ -2359,7 +2363,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     }
     transceiver->state ^= RKEngineStateSleep0;
 
-    RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+    RKAddConfig(radar, RKConfigKeyPRF, 1.0 / transceiver->prt, RKConfigKeyNull);
 
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
@@ -2789,7 +2793,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.1 / transceiver->prt));
             value = 1.5e8 * transceiver->prt;
             transceiver->gateCount = MIN(transceiver->gateCapacity, value / transceiver->gateSizeMeters);
-            RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
+            RKAddConfig(radar, RKConfigKeyPRF, 1.0f / transceiver->prt, RKConfigKeyNull);
             if (radar->desc.initFlags & RKInitFlagVerbose) {
                 RKLog("%s PRT = %s ms   gateCount = %s\n", transceiver->name,
                       RKFloatToCommaStyleString(1.0e3 * transceiver->prt),

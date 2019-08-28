@@ -212,16 +212,17 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
             }
             r = nc_get_att_int(ncid, NC_GLOBAL, "PRF-value", &iv);
             if (r == NC_NOERR) {
-                sweep->header.config.prf[0] = (RKFloat)iv;
-                if (sweep->header.config.prf[0] == 0.0f) {
-                    RKLog("Warning. Recorded PRF = 0 Hz.\n");
+                if (iv == 0) {
+                    RKLog("Warning. Recorded PRF = 0 Hz, assuming 1000 Hz.\n");
+                    iv = 1000;
                 }
+                sweep->header.config.prt[0] = 1.0f / (RKFloat)iv;
             } else {
                 RKLog("Warning. No PRF information found.\n");
             }
             r = nc_get_att_float(ncid, NC_GLOBAL, "Nyquist_Vel-value", &fv);
             if (r == NC_NOERR) {
-                sweep->header.desc.wavelength = 4.0f * fv / (RKFloat)sweep->header.config.prf[0];
+                sweep->header.desc.wavelength = 4.0f * fv * (RKFloat)sweep->header.config.prt[0];
                 RKLog("Radar wavelength = %.4f m\n", sweep->header.desc.wavelength);
             }
 

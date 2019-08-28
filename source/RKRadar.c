@@ -312,7 +312,7 @@ static void *systemInspectorRunLoop(void *in) {
                         networkOkay ? "true" : "false", networkEnum,
                         radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
                         radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - config->prf[0]) / config->prf[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - 1.0f / config->prt[0]) * config->prt[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
                         config->noise[0], config->noise[1],
                         RKIntegerToCommaStyleString((long)round(positionRate)), rayRate,
                         FFTPlanUsage
@@ -1398,7 +1398,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     // Make a copy for the config buffer. Senstivity gain should not change!
     if (waveform->filterCounts[0] > 0 && waveform->filterCounts[0] <= 4) {
         RKWaveform *waveformDecimate = RKWaveformCopy(waveform);
-        const uint32_t pulseWidth = (uint32_t)(1.0e9 * waveform->depth /  waveform->fs);
+        const double pulseWidth = (double)waveform->depth / waveform->fs;
         RKWaveformDecimate(waveformDecimate, radar->desc.pulseToRayRatio);
         RKAddConfig(radar,
                     RKConfigKeyWaveform, waveformDecimate,

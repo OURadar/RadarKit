@@ -86,7 +86,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     for (k = 0; k < product->header.filterCount; k++) {
         memcpy(&product->header.filterAnchors[k], &sweep->header.config.filterAnchors[k], sizeof(RKFilterAnchor));
         product->header.pw[k] = sweep->header.config.pw[k];
-        product->header.prf[k] = sweep->header.config.prf[k];
+        product->header.prt[k] = sweep->header.config.prt[k];
     }
     product->header.noise[0] = sweep->header.config.noise[0];
     product->header.noise[1] = sweep->header.config.noise[1];

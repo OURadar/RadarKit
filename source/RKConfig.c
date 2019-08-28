@@ -62,17 +62,24 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         rkGlobalParameters.showColor ? RKNoColor : "",
                         RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));
                 break;
+            case RKConfigKeyPRT:
+                newConfig->prt[0] = (RKFloat)va_arg(args, double);
+                printf("=== args = %.6f --> %.6f\n", newConfig->prt[0], 1.0 / (double)newConfig->prt[0]);
+                if (newConfig->prt[0] != oldConfig->prt[0]) {
+                    sprintf(stringBuffer[0], "PRT = %s ms", RKFloatToCommaStyleString(1.0e3f * newConfig->prt[0]));
+                }
+                break;
             case RKConfigKeyPRF:
-                newConfig->prf[0] = (RKFloat)va_arg(args, double);
-                if (newConfig->prf[0] != oldConfig->prf[0]) {
-                    sprintf(stringBuffer[0], "PRF = %s Hz", RKFloatToCommaStyleString(newConfig->prf[0]));
+                newConfig->prt[0] = (RKFloat)(1.0 / va_arg(args, double));
+                if (newConfig->prt[0] != oldConfig->prt[0]) {
+                    sprintf(stringBuffer[0], "PRF = %s Hz **", RKFloatToCommaStyleString(1.0f / newConfig->prt[0]));
                 }
                 break;
             case RKConfigKeyDualPRF:
-                newConfig->prf[0] = (RKFloat)va_arg(args, double);
-                newConfig->prf[1] = (RKFloat)va_arg(args, double);
-                if (newConfig->prf[0] != oldConfig->prf[0] || newConfig->prf[1] != oldConfig->prf[1]) {
-                    sprintf(stringBuffer[0], "Dual PRF = %s / %s Hz", RKFloatToCommaStyleString(newConfig->prf[0]), RKFloatToCommaStyleString(newConfig->prf[1]));
+                newConfig->prt[0] = (RKFloat)(1.0 / va_arg(args, double));
+                newConfig->prt[1] = (RKFloat)(1.0 / va_arg(args, double));
+                if (newConfig->prt[0] != oldConfig->prt[0] || newConfig->prt[1] != oldConfig->prt[1]) {
+                    sprintf(stringBuffer[0], "Dual PRF = %s / %s Hz", RKFloatToCommaStyleString(newConfig->prt[0]), RKFloatToCommaStyleString(newConfig->prt[1]));
                 }
                 break;
             case RKConfigKeyPulseGateCount:
@@ -166,7 +173,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 for (j = 1; j < newConfig->filterCount; j++) {
                     newConfig->pw[j] = newConfig->pw[0];
                 }
-                sprintf(stringBuffer[0], "PulseWidth = %s ns", RKFloatToCommaStyleString(newConfig->pw[0]));
+                sprintf(stringBuffer[0], "PulseWidth = %s us", RKFloatToCommaStyleString(1.0e6 * newConfig->pw[0]));
                 break;
             case RKConfigKeyWaveformName:
                 strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);

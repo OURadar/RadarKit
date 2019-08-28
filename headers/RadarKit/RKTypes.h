@@ -390,6 +390,14 @@ enum RKValueType {
     RKValueTypeDouble,
     RKValueTypeString,
     RKValueTypeNumericString,
+    RKValueTYpeFloatMultipliedBy1k,
+    RKValueTYpeFloatMultipliedBy1M,
+    RKValueTYpeFloatDividedBy1k,
+    RKValueTYpeFloatDividedBy1M,
+    RKValueTYpeDoubleMultipliedBy1k,
+    RKValueTYpeDoubleMultipliedBy1M,
+    RKValueTYpeDoubleDividedBy1k,
+    RKValueTYpeDoubleDividedBy1M,
     RKValueTypeProductId = RKValueTypeInt8,
     RKValueTypeIdentifier = RKValueTypeUInt64
 };
@@ -620,6 +628,7 @@ enum RKConfigKey {
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
     RKConfigKeyPositionMarker,
+    RKConfigKeyPRT,
     RKConfigKeyPRF,
     RKConfigKeyDualPRF,
     RKConfigKeyPulseGateCount,
@@ -937,8 +946,8 @@ typedef struct rk_config {
     RKMarker             startMarker;                                          // Marker of the latest start ray
     uint8_t              filterCount;                                          // Number of filters
     RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level
-    RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (ns)
-    RKFloat              prf[RKMaximumFilterCount];                            // Pulse repetition frequency (Hz)
+    RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
+    RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
     uint32_t             pulseGateCount;                                       // Number of range gates
     RKFloat              pulseGateSize;                                        // Size of range gate (m)
     uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
@@ -1268,8 +1277,8 @@ typedef union rk_product_header {
         bool                 isRHI;                                            // RHI indicator
         uint8_t              filterCount;                                      // Number of filters
         RKFilterAnchor       filterAnchors[RKMaximumFilterCount];              // Filter anchors
-        RKFloat              pw[RKMaximumFilterCount];                         // Pulse width (ns)
-        RKFloat              prf[RKMaximumFilterCount];                        // Pulse repetition frequency (Hz)
+        RKFloat              prt[RKMaximumFilterCount];                        // Pulse repetition time (s)
+        RKFloat              pw[RKMaximumFilterCount];                         // Pulse width (s)
         RKFloat              noise[2];                                         // Noise floor (ADU)
         RKFloat              systemZCal[2];                                    // System-wide Z calibration (dB)
         RKFloat              systemDCal;                                       // System-wide ZDR calibration (dB)

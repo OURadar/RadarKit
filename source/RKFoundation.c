@@ -670,6 +670,30 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeDouble:
             c = RKFloatToCommaStyleString(d);
             break;
+        case RKValueTYpeFloatDividedBy1k:
+            d = f;
+        case RKValueTYpeDoubleDividedBy1k:
+            d = 1.0e-3 * d;
+            c = RKFloatToCommaStyleString(d);
+            break;
+        case RKValueTYpeFloatDividedBy1M:
+            d = f;
+        case RKValueTYpeDoubleDividedBy1M:
+            d = 1.0e-6 * d;
+            c = RKFloatToCommaStyleString(d);
+            break;
+        case RKValueTYpeFloatMultipliedBy1k:
+            d = f;
+        case RKValueTYpeDoubleMultipliedBy1k:
+            d = 1.0e3 * d;
+            c = RKFloatToCommaStyleString(d);
+            break;
+        case RKValueTYpeFloatMultipliedBy1M:
+            d = f;
+        case RKValueTYpeDoubleMultipliedBy1M:
+            d = 1.0e6 * d;
+            c = RKFloatToCommaStyleString(d);
+            break;
         case RKValueTypeNumericString:
         default:
             break;
