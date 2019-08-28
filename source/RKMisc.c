@@ -347,8 +347,8 @@ char *RKIntegerToCommaStyleString(const long long num) {
 
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
 
-    sprintf(string, "%lld", num);
-    if (num < 1000) {
+    i = sprintf(string, "%lld", num);
+    if (i <= 3) {
         return string;
     }
     k = (int)(strlen(string) - 1) / 3;
@@ -393,8 +393,8 @@ char *RKFloatToCommaStyleString(const double num) {
     
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
     
-    sprintf(string, "%.3f", num);
-    if (num < 1000.0) {
+    i = sprintf(string, "%.3f", num);
+    if (i <= 7) {
         return string;
     }
     k = (int)(strlen(string) - 5) / 3;

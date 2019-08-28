@@ -290,18 +290,18 @@ void RKTestTerminalColors(void) {
 void RKTestPrettyStrings(void) {
     SHOW_FUNCTION_NAME
     int k;
-    float f;
+    RKFloat f;
     printf("\n");
     for (k = 1020; k < (1 << 30); k += k ^ 2) {
         printf("k = %11d -> %s\n", k, RKIntegerToCommaStyleString(k));
     }
-    f = +INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = -INFINITY; printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = NAN;       printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 1000.0;    printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 20000.0;   printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 400000.0;  printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 1234567.8; printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = +INFINITY;  printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = -INFINITY;  printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = NAN;        printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 1000.0f;    printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 20000.0f;   printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 400000.0f;  printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 1234567.8f; printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
     printf("\n");
     char *c;
     bool tf = true; printf("%s\n", RKVariableInString("tf", &tf, RKValueTypeBool));
