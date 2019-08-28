@@ -25,7 +25,7 @@ N = 4;   % Number of rows
 M = 6;   % Number of filters
 
 % ng = min(size(pulses, 1), 30);
-ng = min(size(pulses, 1), 800);
+ng = min(size(pulses, 1), 1900);
 ns = min(size(pulses, 2), 500);
 
 t_fast = (1:ng) / 50;
