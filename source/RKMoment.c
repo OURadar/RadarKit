@@ -577,7 +577,7 @@ static void *momentCore(void *in) {
     // Allocate local resources and keep track of the total allocation
     pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(RKFloat);
-    size_t mem = RKScratchAlloc(&space, capacity, engine->processorLagCount, engine->processorFFTOrder, engine->verbose > 3);
+    size_t mem = RKScratchAlloc(&space, capacity, RKMaximumLagCount, engine->processorFFTOrder, engine->verbose > 3);
     if (space == NULL) {
         RKLog("%s %s Error. Unable to allocate resources for duty cycle calculation\n", engine->name, me->name);
         exit(EXIT_FAILURE);
