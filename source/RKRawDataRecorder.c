@@ -188,7 +188,11 @@ static void *pulseRecorder(void *in) {
         
         // Actual cache and write happen here.
         if (engine->doNotWrite) {
-            len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
+            if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
+                len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
+            } else {
+                len += sizeof(RKPulseHeader) + 2 * pulse->header.downSampledGateCount * sizeof(RKComplex);
+            }
         } else if (engine->fd) {
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
                 len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
