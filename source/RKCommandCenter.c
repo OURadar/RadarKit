@@ -89,6 +89,12 @@ int socketCommandHandler(RKOperator *O) {
             // There is no need to send a response. The delegate function socketStreamHandler sends a beacon periodically
         } else if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             k = 0;
+            while (user->radar == NULL) {
+                usleep(100000);
+                if (++k % 10 == 0 && engine->verbose > 1) {
+                    RKLog("%s sleep 1/%.1f s   radar->state = 0x%04x\n", engine->name, (float)k * 0.1f, user->radar->state);
+                }
+            }
             while (!(user->radar->state & RKRadarStateLive)) {
                 usleep(100000);
                 if (++k % 10 == 0 && engine->verbose > 1) {
