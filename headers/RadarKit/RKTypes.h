@@ -938,7 +938,7 @@ typedef struct rk_config {
     uint8_t              filterCount;                                          // Number of filters
     RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level
     uint32_t             pw[RKMaximumFilterCount];                             // Pulse width (ns)
-    uint32_t             prf[RKMaximumFilterCount];                            // Pulse repetition frequency (Hz)
+    RKFloat              prf[RKMaximumFilterCount];                            // Pulse repetition frequency (Hz)
     uint32_t             pulseGateCount;                                       // Number of range gates
     RKFloat              pulseGateSize;                                        // Size of range gate (m)
     uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter

@@ -63,14 +63,14 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));
                 break;
             case RKConfigKeyPRF:
-                newConfig->prf[0] = va_arg(args, uint32_t);
+                newConfig->prf[0] = (RKFloat)va_arg(args, double);
                 if (newConfig->prf[0] != oldConfig->prf[0]) {
                     sprintf(stringBuffer[0], "PRF = %s Hz", RKFloatToCommaStyleString(newConfig->prf[0]));
                 }
                 break;
             case RKConfigKeyDualPRF:
-                newConfig->prf[0] = va_arg(args, uint32_t);
-                newConfig->prf[1] = va_arg(args, uint32_t);
+                newConfig->prf[0] = (RKFloat)va_arg(args, double);
+                newConfig->prf[1] = (RKFloat)va_arg(args, double);
                 if (newConfig->prf[0] != oldConfig->prf[0] || newConfig->prf[1] != oldConfig->prf[1]) {
                     sprintf(stringBuffer[0], "Dual PRF = %s / %s Hz", RKFloatToCommaStyleString(newConfig->prf[0]), RKFloatToCommaStyleString(newConfig->prf[1]));
                 }
