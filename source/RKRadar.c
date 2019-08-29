@@ -2364,10 +2364,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     }
                 }
                 if (string) {
-                    sprintf(string, "ACK. IQ data recorder is %s." RKEOL,
+                    sprintf(string, "ACK. Recorder is %s." RKEOL,
                             radar->rawDataRecorder->record == false ? "set to standby" :
                             (radar->rawDataRecorder->rawDataType == RKRawDataTypeFromTransceiver ? "recording raw I/Q" :
-                             (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording compressed I/Q" : "in unknown state")));
+                             (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording I/Q" : "in unknown state")));
                 }
                 break;
                 
