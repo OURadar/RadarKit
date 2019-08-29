@@ -242,10 +242,8 @@ static void *sweepManager(void *in) {
             if (!(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
             }
-        } else {
-            if (engine->verbose > 1) {
-                RKLog("%s Skipping %s ...\n", engine->name, filename);
-            }
+        } else if (engine->verbose > 1) {
+            RKLog("%s Skipping %s ...\n", engine->name, filename);
         }
         
         // Make a summary for logging
@@ -600,10 +598,6 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
     engine->productIndex      = productIndex;
     engine->state |= RKEngineStateProperlyWired;
 }
-
-//void RKSweepEngineSetDoNotWrite(RKSweepEngine *engine, const bool value) {
-//    engine->record = !value;
-//}
 
 void RKSweepEngineSetRecord(RKSweepEngine *engine, const bool value) {
     engine->record = value;

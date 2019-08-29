@@ -88,25 +88,23 @@ static void *healthLogger(void *in) {
         timeStruct = gmtime(&unixTime);
         if (min != timeStruct->tm_min) {
             min = timeStruct->tm_min;
-            if (engine->doNotWrite) {
+            if (engine->record && engine->fid) {
+                fclose(engine->fid);
+                if (engine->verbose) {
+                    RKLog("%s Recorded %s\n", engine->name, filename);
+                }
+                // Notify file manager of a new addition
+                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
+            } else {
                 if (engine->verbose && strlen(filename)) {
                     RKLog("%s Skipped %s\n", engine->name, filename);
-                }
-            } else {
-                if (engine->fid != NULL) {
-                    fclose(engine->fid);
-                    if (engine->verbose) {
-                        RKLog("%s Recorded %s\n", engine->name, filename);
-                    }
-                    // Notify file manager of a new addition
-                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
                 }
             }
             i = sprintf(filename, "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
             i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
             i += sprintf(filename + i, "/%s-", desc->filePrefix);
             strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
-            if (!engine->doNotWrite) {
+            if (engine->record) {
                 RKPreparePath(filename);
                 engine->fid = fopen(filename, "w");
                 if (engine->fid == NULL) {
@@ -114,7 +112,7 @@ static void *healthLogger(void *in) {
                 }
             }
         }
-        if (engine->fid != NULL) {
+        if (engine->fid) {
             fprintf(engine->fid, "%s\n", health->string);
         }
 
@@ -175,8 +173,8 @@ void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *engine, RKRadarDesc *de
     engine->state |= RKEngineStateProperlyWired;
 }
 
-void RKHealthLoggerSetDoNotWrite(RKHealthLogger *engine, const bool value) {
-    engine->doNotWrite = value;
+void RKHealthLoggerSetRecord(RKHealthLogger *engine, const bool value) {
+    engine->record = value;
 }
 
 #pragma mark - Interactions

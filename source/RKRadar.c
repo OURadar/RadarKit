@@ -1324,13 +1324,6 @@ int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
     return RKResultSuccess;
 }
 
-//int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
-//    RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
-//    RKSweepEngineSetRecord(radar->sweepEngine, !doNotWrite);
-//    RKRawDataRecorderSetRecord(radar->rawDataRecorder, !doNotWrite);
-//    return RKResultSuccess;
-//}
-
 int RKSetRecordingLevel(RKRadar *radar, const int level) {
     // Perhaps use a numeric string 100, 110, etc.
     RKLog("Raw data recording: %s\n", level == 2 ? "Raw from transceiver" : (level == 1 ? "Compressed I/Q" : "No"));
@@ -1340,16 +1333,18 @@ int RKSetRecordingLevel(RKRadar *radar, const int level) {
             RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeFromTransceiver);
             RKRawDataRecorderSetRecord(radar->rawDataRecorder, true);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
+            RKHealthLoggerSetRecord(radar->healthLogger, true);
             break;
         case 1:
             RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeAfterMatchedFilter);
             RKRawDataRecorderSetRecord(radar->rawDataRecorder, true);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
+            RKHealthLoggerSetRecord(radar->healthLogger, true);
             break;
         default:
             RKRawDataRecorderSetRecord(radar->rawDataRecorder, false);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
-            //RKHealthLoggerSetDoNotWrite(radar->healthLogger, true);
+            RKHealthLoggerSetRecord(radar->healthLogger, true);
             break;
     }
     return RKResultSuccess;
