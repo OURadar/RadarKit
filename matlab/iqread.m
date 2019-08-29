@@ -170,7 +170,12 @@ classdef iqread
                 offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc + self.constants.RKConfig;
                 fseek(fid, offset, 'bof');
                 self.header.dataType = fread(fid, 1, 'uint8');
-                fprintf('dataType = %d\n', self.header.dataType);
+                if self.header.dataType == 2
+                    str = 'compressed';
+                else
+                    str = 'raw';
+                end
+                fprintf('dataType = %d (%s)\n', self.header.dataType, str);
             elseif self.header.buildNo >= 2
                 % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfig
                 offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc;

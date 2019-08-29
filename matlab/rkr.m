@@ -1,4 +1,4 @@
-if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rkc'); end
+if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rk*'); end
 if ~exist('showAnimation', 'var'), showAnimation = false; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
 
