@@ -231,7 +231,7 @@ classdef iqread
                 end
                 self.header.config.waveform = deblank(char(c3.data.waveform_raw));
                 self.header.config.vcpDefinition = deblank(char(c3.data.vcpDefinition_raw));
-                self.header.dataType = 0;
+                self.header.dataType = 1;
             elseif self.header.buildNo == 1
                 c = memmapfile(self.filename, ...
                     'Offset', self.constants.RKNameLength + 4 + self.constants.RKRadarDesc, ... % RKNameLength * (char) + (uint32_t) + (RKRadarDesc)
@@ -255,7 +255,7 @@ classdef iqread
                 self.header.config = c.data;
                 self.header.config.waveform = deblank(char(self.header.config.waveform_raw));
                 self.header.config.vcpDefinition = deblank(char(self.header.config.vcpDefinition_raw));
-                self.header.dataType = 0;
+                self.header.dataType = 1;
             end
 
             % Partially read the very first pulse

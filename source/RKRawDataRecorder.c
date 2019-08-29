@@ -48,7 +48,7 @@ static void *pulseRecorder(void *in) {
     
     struct timeval t0, t1;
 
-    bool doNotWrite = engine->doNotWrite;
+    bool record = engine->record;
 
     RKPulse *pulse;
     RKConfig *config;
@@ -126,12 +126,12 @@ static void *pulseRecorder(void *in) {
         engine->state |= RKEngineStateWritingFile;
 
         // Assess the configIndex, or if we reached the maximum pulse count for a file; or when user just decided to start/stop recording
-        if (j != pulse->header.configIndex || n >= engine->maximumRecordDepth || doNotWrite != engine->doNotWrite) {
+        if (j != pulse->header.configIndex || n >= engine->maximumRecordDepth || record != engine->record) {
             j = pulse->header.configIndex;
             config = &engine->configBuffer[pulse->header.configIndex];
             
             // Close the current file
-            if (engine->doNotWrite && doNotWrite) {
+            if (!engine->record && !record) {
                 if (strlen(filename)) {
                     RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
                           engine->name,
@@ -140,22 +140,20 @@ static void *pulseRecorder(void *in) {
                           RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
                           len > 1000000000 ? "G" : "M");
                 }
-            } else {
-                if (engine->fd != 0) {
-                    len += RKRawDataRecorderCacheFlush(engine);
-                    close(engine->fd);
-                    RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
-                          engine->name,
-                          rkGlobalParameters.showColor ? RKGreenColor : "",
-                          rkGlobalParameters.showColor ? RKNoColor : "",
-                          filename,
-                          RKIntegerToCommaStyleString(n),
-                          RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
-                          len > 1000000000 ? "G" : "M");
-                    engine->fd = 0;
-                    // Notify file manager of a new addition
-                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
-                }
+            } else if (engine->fd != 0) {
+                len += RKRawDataRecorderCacheFlush(engine);
+                close(engine->fd);
+                RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
+                      engine->name,
+                      rkGlobalParameters.showColor ? RKGreenColor : "",
+                      rkGlobalParameters.showColor ? RKNoColor : "",
+                      filename,
+                      RKIntegerToCommaStyleString(n),
+                      RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
+                      len > 1000000000 ? "G" : "M");
+                engine->fd = 0;
+                // Notify file manager of a new addition
+                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
             }
             
             // New file
@@ -164,36 +162,30 @@ static void *pulseRecorder(void *in) {
             i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
             i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-            if (engine->recordType == RKRawDataTypeFromTransceiver) {
+            if (engine->rawDataType == RKRawDataTypeFromTransceiver) {
                 sprintf(filename + i, ".rkr");
             } else {
                 sprintf(filename + i, ".rkc");
             }
-            fileHeader->dataType = engine->recordType;
+            fileHeader->dataType = engine->rawDataType;
 
             n = 0;
             
             if (engine->verbose > 1) {
                 RKLog("%s New I/Q %s ...\n", engine->name, filename);
             }
-            if (engine->doNotWrite) {
-                len = sizeof(RKFileHeader);
-            } else {
+            if (engine->rawDataType) {
                 RKPreparePath(filename);
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
+            } else {
+                len = sizeof(RKFileHeader);
             }
         }
         
         // Actual cache and write happen here.
-        if (engine->doNotWrite) {
-            if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
-                len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
-            } else {
-                len += sizeof(RKPulseHeader) + 2 * pulse->header.downSampledGateCount * sizeof(RKComplex);
-            }
-        } else if (engine->fd) {
+        if (engine->record && engine->fd) {
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
                 len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
                 len += RKRawDataRecorderCacheWrite(engine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
@@ -202,6 +194,12 @@ static void *pulseRecorder(void *in) {
                 len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));
                 len += RKRawDataRecorderCacheWrite(engine, RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex));
                 len += RKRawDataRecorderCacheWrite(engine, RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex));
+            }
+        } else {
+            if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
+                len += sizeof(RKPulseHeader) + 2 * pulse->header.gateCount * sizeof(RKInt16C);
+            } else {
+                len += sizeof(RKPulseHeader) + 2 * pulse->header.downSampledGateCount * sizeof(RKComplex);
             }
         }
         pulseCount++;
@@ -233,7 +231,7 @@ static void *pulseRecorder(void *in) {
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
-        doNotWrite = engine->doNotWrite;
+        record = engine->record;
         n++;
     }
     
@@ -256,7 +254,7 @@ RKRawDataRecorder *RKRawDataRecorderInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorDataRecorder) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKRawDataRecorderSetCacheSize(engine, RKRawDataRecorderDefaultCacheSize);
     engine->state = RKEngineStateAllocated;
-    engine->recordType = RKRawDataTypeAfterMatchedFilter;
+    engine->rawDataType = RKRawDataTypeAfterMatchedFilter;
     engine->maximumRecordDepth = RKRawDataRecorderDefaultMaximumRecorderDepth;
     engine->memoryUsage = sizeof(RKRawDataRecorder) + engine->cacheSize;
     return engine;
@@ -288,8 +286,12 @@ void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDe
     engine->state |= RKEngineStateProperlyWired;
 }
 
-void RKRawDataRecorderSetDoNotWrite(RKRawDataRecorder *engine, const bool value) {
-    engine->doNotWrite = value;
+void RKRawDataRecorderSetRecord(RKRawDataRecorder *engine, const bool value) {
+    engine->record = value;
+}
+
+void RKRawDataRecorderSetRawDataType(RKRawDataRecorder *engine, const RKRawDataType type) {
+    engine->rawDataType = type;
 }
 
 void RKRawDataRecorderSetMaximumRecordDepth(RKRawDataRecorder *engine, const uint32_t depth) {

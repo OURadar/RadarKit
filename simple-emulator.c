@@ -49,7 +49,7 @@ int main(int argc, const char * argv[]) {
     
     // Set some properties of the radar
     RKSetVerbosity(myRadar, 1);
-    RKSetRecordingLevel(myRadar, 0);
+    RKSetRecordingLevel(myRadar, 2);
     RKSetProcessingCoreCounts(myRadar, 2, 2, 2);
     
     // Add some control buttons

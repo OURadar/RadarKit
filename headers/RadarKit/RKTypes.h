@@ -40,7 +40,7 @@
 #define _RKVersionBranch ""
 #endif
 
-#define _RKVersionString "2.3" _RKVersionBranch
+#define _RKVersionString "2.3.1" _RKVersionBranch
 
 //
 // Memory Blocks
@@ -893,6 +893,7 @@ enum RKFilterType {
 
 typedef uint8_t RKRawDataType;
 enum RKRawDataType {
+    RKRawDataTypeNull,                                                         // No recording
     RKRawDataTypeFromTransceiver,                                              // Raw straight from the transceiver
     RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression
 };

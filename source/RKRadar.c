@@ -310,7 +310,7 @@ static void *systemInspectorRunLoop(void *in) {
                         pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
                         healthOkay ? "true" : "false", radar->healthRelay ? (healthOkay ? healthEnum : RKStatusEnumFault) : RKStatusEnumNotWired,
                         networkOkay ? "true" : "false", networkEnum,
-                        radar->rawDataRecorder->doNotWrite ? "false" : "true", radar->rawDataRecorder->doNotWrite ? RKStatusEnumStandby: RKStatusEnumNormal,
+                        radar->rawDataRecorder->record ? "true" : "false", radar->rawDataRecorder->record ? RKStatusEnumNormal : RKStatusEnumStandby,
                         radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
                         RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - 1.0f / config->prt[0]) * config->prt[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
                         config->noise[0], config->noise[1],
@@ -1324,34 +1324,34 @@ int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
     return RKResultSuccess;
 }
 
-int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
-    RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
-    //RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
-    RKSweepEngineSetRecord(radar->sweepEngine, !doNotWrite);
-    RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, doNotWrite);
-    return RKResultSuccess;
-}
+//int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
+//    RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
+//    RKSweepEngineSetRecord(radar->sweepEngine, !doNotWrite);
+//    RKRawDataRecorderSetRecord(radar->rawDataRecorder, !doNotWrite);
+//    return RKResultSuccess;
+//}
 
 int RKSetRecordingLevel(RKRadar *radar, const int level) {
-    RKLog("Raw data recording: %s\n", level > 1 ? "true" : "false");
-    RKLog("Product recording: %s\n", level > 0 ? "true" : "false");
+    // Perhaps use a numeric string 100, 110, etc.
+    RKLog("Raw data recording: %s\n", level == 2 ? "Raw from transceiver" : (level == 1 ? "Compressed I/Q" : "No"));
+    RKLog("Product recording: %s\n", level > -1 ? "True" : "False");
     switch (level) {
-        case 0:
-            RKHealthLoggerSetDoNotWrite(radar->healthLogger, true);
+        case 2:
+            RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeFromTransceiver);
+            RKRawDataRecorderSetRecord(radar->rawDataRecorder, true);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
-            RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, true);
             break;
         case 1:
-            RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, true);
+            RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeAfterMatchedFilter);
+            RKRawDataRecorderSetRecord(radar->rawDataRecorder, true);
+            RKSweepEngineSetRecord(radar->sweepEngine, true);
             break;
         default:
+            RKRawDataRecorderSetRecord(radar->rawDataRecorder, false);
+            RKSweepEngineSetRecord(radar->sweepEngine, true);
+            //RKHealthLoggerSetDoNotWrite(radar->healthLogger, true);
             break;
     }
-    return RKResultSuccess;
-}
-
-int RKToggleRawDataRecorderMode(RKRadar *radar) {
-    radar->rawDataRecorder->doNotWrite = !radar->rawDataRecorder->doNotWrite;
     return RKResultSuccess;
 }
 
@@ -2050,7 +2050,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     case 'c':
                         RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
                         RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
-                        sprintf(string, "ACK. Buffers cleared." RKEOL);
+                        if (string) {
+                            sprintf(string, "ACK. Buffers cleared." RKEOL);
+                        }
                         break;
                     case 'f':
                         // 'df' - DSP filter
@@ -2059,19 +2061,27 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             filterType = ival;
                             RKLog("type = %u   u32 = %u\n", filterType, u32);
                             RKSetPulseRingFilterByType(radar, filterType, u32);
-                            sprintf(string, "ACK. Ring filter %u gateCount %s." RKEOL, filterType, RKIntegerToCommaStyleString(u32));
+                            if (string) {
+                                sprintf(string, "ACK. Ring filter %u gateCount %s." RKEOL, filterType, RKIntegerToCommaStyleString(u32));
+                            }
                         } else if (k == 1) {
                             filterType = ival;
                             if ((RKFilterType)filterType == RKFilterTypeNull) {
                                 RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
-                                sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                                if (string) {
+                                    sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                                }
                             } else {
                                 RKSetPulseRingFilterByType(radar, filterType, 0);
-                                sprintf(string, "ACK. Ring filter %u." RKEOL, filterType);
+                                if (string) {
+                                    sprintf(string, "ACK. Ring filter %u." RKEOL, filterType);
+                                }
                             }
                         } else {
                             RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
-                            sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                            if (string) {
+                                sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                            }
                         }
                         break;
                     case 'm':
@@ -2081,30 +2091,42 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             switch (ival) {
                                 case 1:
                                     RKSetMomentProcessorToPulsePairHop(radar);
-                                    sprintf(string, "ACK. Moment processor set to PulsePairHop." RKEOL);
+                                    if (string) {
+                                        sprintf(string, "ACK. Moment processor set to PulsePairHop." RKEOL);
+                                    }
                                     break;
                                 case 2:
                                     RKSetMomentProcessorToMultiLag(radar, 2);
-                                    sprintf(string, "ACK. Moment processor set to MultiLag-2." RKEOL);
+                                    if (string) {
+                                        sprintf(string, "ACK. Moment processor set to MultiLag-2." RKEOL);
+                                    }
                                     break;
                                 case 3:
                                     RKSetMomentProcessorToMultiLag(radar, 3);
-                                    sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                    if (string) {
+                                        sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                    }
                                     break;
                                 case 4:
                                     RKSetMomentProcessorToMultiLag(radar, 4);
-                                    sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                    if (string) {
+                                        sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                    }
                                     break;
                                 case 5:
                                     RKSetMomentProcessorToSpectralMoment(radar);
-                                    sprintf(string, "ACK. Moment processor set to SpectralMoment." RKEOL);
+                                    if (string) {
+                                        sprintf(string, "ACK. Moment processor set to SpectralMoment." RKEOL);
+                                    }
                                     break;
                                 default:
                                     RKSetMomentProcessorToPulsePair(radar);
-                                    sprintf(string, "ACK. Moment processor set to PulsePair." RKEOL);
+                                    if (string) {
+                                        sprintf(string, "ACK. Moment processor set to PulsePair." RKEOL);
+                                    }
                                     break;
                             }
-                        } else {
+                        } else if (string) {
                             sprintf(string, "ACK. Current moment processor is %s" RKEOL,
                                     radar->momentEngine->processor == &RKPulsePair ? "PulsePair" :
                                     (radar->momentEngine->processor == &RKPulsePairHop ? "PulsePairHop" :
@@ -2119,10 +2141,12 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         k = sscanf(&commandString[2], "%lf %lf", &fval1, &fval2);
                         if (k == 2) {
                             RKAddConfig(radar, RKConfigKeySystemNoise, fval1, fval2, RKConfigKeyNull);
-                            sprintf(string, "ACK. Noise set to %.4f, %.4f" RKEOL, fval1, fval2);
-                        } else if (k == -1) {
+                            if (string) {
+                                sprintf(string, "ACK. Noise set to %.4f, %.4f" RKEOL, fval1, fval2);
+                            }
+                        } else if (k == -1 && string) {
                             sprintf(string, "ACK. Current noise is %.4f %.4f" RKEOL, config->noise[0], config->noise[1]);
-                        } else {
+                        } else if (string) {
                             sprintf(string, "NAK. Must have two paramters  (k = %d)." RKEOL, k);
                         }
                         break;
@@ -2132,14 +2156,18 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     case 'r':
                         // 'dr' - Restart DSP engines
                         RKSoftRestart(radar);
-                        sprintf(string, "ACK. Soft restart executed." RKEOL);
+                        if (string) {
+                            sprintf(string, "ACK. Soft restart executed." RKEOL);
+                        }
                         break;
                     case 'q':
                         k = sscanf(&commandString[2], "%lf", &fval1);
                         if (k == 1) {
                             RKAddConfig(radar, RKConfigKeySQIThreshold, fval1, RKConfigKeyNull);
-                            sprintf(string, "ACK. SQI threshold set to %.2f" RKEOL, fval1);
-                        } else {
+                            if (string) {
+                                sprintf(string, "ACK. SQI threshold set to %.2f" RKEOL, fval1);
+                            }
+                        } else if (string) {
                             sprintf(string, "ACK. Current SQI threshold is %.2f" RKEOL, config->SQIThreshold);
                         }
                         break;
@@ -2150,8 +2178,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         k = sscanf(&commandString[2], "%lf", &fval1);
                         if (k == 1) {
                             RKAddConfig(radar, RKConfigKeySNRThreshold, fval1, RKConfigKeyNull);
-                            sprintf(string, "ACK. SNR threshold set to %.2f dB" RKEOL, fval1);
-                        } else {
+                            if (string) {
+                                sprintf(string, "ACK. SNR threshold set to %.2f dB" RKEOL, fval1);
+                            }
+                        } else if (string) {
                             sprintf(string, "ACK. Current SNR threshold is %.2f dB" RKEOL, config->SNRThreshold);
                         }
                         break;
@@ -2162,6 +2192,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 
             case 'h':
                 if (strlen(commandString) == 1 || !strncmp(commandString, "help", 4)) {
+                    if (string == NULL) {
+                        RKLog("Trying to get help without providing string? Tell my father.\n");
+                        break;
+                    }
                     k = sprintf(string,
                                 "Help\n"
                                 "====\n"
@@ -2269,7 +2303,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 
                     // Forward to health relay
                     if (strlen(commandString) < 2) {
-                        sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                        if (string) {
+                            sprintf(string, "NAK. Empty command to health relay. Ignoring ..." RKEOL);
+                        }
                         //RKOperatorSendCommandResponse(O, string);
                         break;
                     }
@@ -2284,7 +2320,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
             case 'p':
                 // Pass everything to pedestal
                 if (strlen(commandString) < 2) {
-                    sprintf(string, "NAK. Empty command to pedestal." RKEOL);
+                    if (string) {
+                        sprintf(string, "NAK. Empty command to pedestal. Ignoring ..." RKEOL);
+                    }
                     break;
                 }
                 k = 0;
@@ -2297,7 +2335,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
             case 't':
                 // Pass everything to transceiver
                 if (strlen(commandString) < 2) {
-                    sprintf(string, "NAK. Empty command to transceiver." RKEOL);
+                    if (string) {
+                        sprintf(string, "NAK. Empty command to transceiver. Ignoring ..." RKEOL);
+                    }
                     break;
                 }
                 k = 0;
@@ -2308,9 +2348,29 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 break;
 
             case 'r':
-                radar->rawDataRecorder->doNotWrite = !radar->rawDataRecorder->doNotWrite;
-                sprintf(string, "ACK. IQ data recorder set to %s." RKEOL, radar->rawDataRecorder->doNotWrite ? "standby" : "active");
-                //RKOperatorSendCommandResponse(O, string);
+                radar->rawDataRecorder->record = !radar->rawDataRecorder->record;
+                if (strlen(commandString) > 1) {
+                    k = 0;
+                    do {
+                        k++;
+                    } while (commandString[k] == ' ');
+                    if (commandString[k] == '0') {
+                        radar->rawDataRecorder->rawDataType = RKRawDataTypeFromTransceiver;
+                        radar->rawDataRecorder->record = true;
+                    } else if (commandString[k] == '1') {
+                        radar->rawDataRecorder->rawDataType = RKRawDataTypeAfterMatchedFilter;
+                        radar->rawDataRecorder->record = true;
+                    } else {
+                        radar->rawDataRecorder->rawDataType = RKRawDataTypeNull;
+                        radar->rawDataRecorder->record = false;
+                    }
+                }
+                if (string) {
+                    sprintf(string, "ACK. IQ data recorder is %s." RKEOL,
+                            radar->rawDataRecorder->record == false ? "set to standby" :
+                            (radar->rawDataRecorder->rawDataType == RKRawDataTypeFromTransceiver ? "recording raw I/Q" :
+                             (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording compressed I/Q" : "in unknown state")));
+                }
                 break;
                 
             case 'b':  // Button event
@@ -2318,14 +2378,18 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
             case 'z':  // Stop everything
                 // Passed to the master controller
                 if (radar->masterController == NULL) {
-                    sprintf(string, "NAK. Not ready." RKEOL);
+                    if (string) {
+                        sprintf(string, "NAK. Not ready." RKEOL);
+                    }
                 } else {
                     radar->masterControllerExec(radar->masterController, commandString, string);
                 }
                 break;
                 
             default:
-                snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);
+                if (string) {
+                    snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);
+                }
                 break;
         } // switch ...
     }
@@ -2850,7 +2914,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     k += RADAR_VARIABLE_OFFSET(buffer + k, positionIndex);
     k += RADAR_VARIABLE_OFFSET(buffer + k, pulseIndex);
     k += RADAR_VARIABLE_OFFSET(buffer + k, rayIndex);
-    k += RADAR_VARIABLE_OFFSET(buffer + k, rawDataRecorder->doNotWrite);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, rawDataRecorder->record);
     k += RADAR_VARIABLE_OFFSET(buffer + k, positionEngine);
     k += RADAR_VARIABLE_OFFSET(buffer + k, pulseCompressionEngine->verbose);
     k += RADAR_VARIABLE_OFFSET(buffer + k, momentEngine);

@@ -75,7 +75,6 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileMan
                                        RKConfig *configBuffer,   uint32_t *configIndex,
                                        RKBuffer rayBuffer,       uint32_t *rayIndex,
                                        RKProduct *productBuffer, uint32_t *productIndex);
-//void RKSweepEngineSetDoNotWrite(RKSweepEngine *, const bool);
 void RKSweepEngineSetRecord(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetFilesHandlingScript(RKSweepEngine *, const char *, const RKScriptProperty);

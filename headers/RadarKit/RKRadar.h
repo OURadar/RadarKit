@@ -228,7 +228,6 @@ int RKSetVerbosityUsingArray(RKRadar *, const uint8_t *);
 int RKSetDataPath(RKRadar *, const char *);
 int RKSetDataUsageLimit(RKRadar *, const size_t limit);
 int RKSetRecordingLevel(RKRadar *, const int);
-int RKToggleRawDataRecorderMode(RKRadar *);
 
 // Some operating parameters
 int RKSetWaveform(RKRadar *, RKWaveform *);

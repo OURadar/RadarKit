@@ -597,7 +597,9 @@ static void *momentCore(void *in) {
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
-
+    RKConfig *previousConfig = (RKConfig *)malloc(sizeof(RKConfig));
+    mem += sizeof(RKConfig);
+    
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
@@ -614,9 +616,6 @@ static void *momentCore(void *in) {
 
     // Configuration index
     uint32_t ic = 0;
-
-    // Gate size in meters for range correction
-    //RKFloat gateSizeMeters = 0.0f;
 
     // The latest index in the dutyCycle buffer
     int d0 = 0;
@@ -734,15 +733,24 @@ static void *momentCore(void *in) {
             space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
             // Call the calibrator to derive range calibration, ZCal and DCal
             engine->calibrator(space, config);
-            if (engine->verbose) {
-                RKLog("%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
-                      engine->name, me->name,
-                      config->filterCount,
-                      RKIntegerToCommaStyleString(ray->header.capacity),
-                      ic);
-                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain = %.2f   samplingAdj = %.2f\n",
-                      engine->name, me->name,
-                      config->systemZCal[0], config->ZCal[0][0], config->filterAnchors[0].sensitivityGain, space->samplingAdjustment);
+            // Check if the config is identical to the previous one it has seen
+            bool configHasChanged =
+            previousConfig->prt[0] != config->prt[0] ||
+            previousConfig->SNRThreshold != config->SNRThreshold ||
+            previousConfig->SQIThreshold != config->SQIThreshold ||
+            previousConfig->filterCount != config->filterCount ||
+            previousConfig->systemDCal != config->systemDCal ||
+            previousConfig->systemPCal != config->systemPCal;
+            for (p = 0; p < 2; p++) {
+                configHasChanged |=
+                previousConfig->noise[p] != config->noise[p] &&
+                previousConfig->systemZCal[p] != config->systemZCal[p];
+                for (k = 0; k < config->filterCount; k++) {
+                    configHasChanged |=
+                    previousConfig->filterAnchors[k].length != config->filterAnchors[k].length &&
+                    previousConfig->filterAnchors[k].inputOrigin != config->filterAnchors[k].inputOrigin &&
+                    previousConfig->filterAnchors[k].outputOrigin != config->filterAnchors[k].outputOrigin;
+                }
             }
             // The rest of the constants
             space->noise[0] = config->noise[0];
@@ -750,22 +758,40 @@ static void *momentCore(void *in) {
             space->SNRThreshold = config->SNRThreshold;
             space->SQIThreshold = config->SQIThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength / config->prt[0] / M_PI;
-            RKLog("%s PRF = %s Hz -> Va = %.2f m/s/rad\n", engine->name, RKFloatToCommaStyleString(1.0f / config->prt[0]), space->velocityFactor);
             space->widthFactor = engine->radarDescription->wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
-            if (engine->verbose > 1) {
-                for (p = 0; p < 2; p++) {
-                    RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
-                          engine->name, me->name, k,
-                          p == 0 ? "H" : (p == 1 ? "V" : "-"),
-                          config->systemZCal[p],
-                          config->ZCal[k][p],
-                          config->filterAnchors[k].sensitivityGain,
-                          space->samplingAdjustment,
-                          config->ZCal[k][p] + config->systemZCal[p] - config->filterAnchors[k].sensitivityGain - space->samplingAdjustment,
-                          config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+            // Show the info only if config has changed
+            if (engine->verbose && configHasChanged) {
+                pthread_mutex_lock(&engine->mutex);
+                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain = %.2f   samplingAdj = %.2f\n",
+                      engine->name, me->name,
+                      config->systemZCal[0], config->ZCal[0][0], config->filterAnchors[0].sensitivityGain, space->samplingAdjustment);
+                RKLog(">%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
+                      engine->name, me->name,
+                      config->filterCount,
+                      RKIntegerToCommaStyleString(ray->header.capacity),
+                      ic);
+                RKLog(">%s %s PRF = %s Hz -> Va = %.2f m/s/rad\n",
+                      engine->name, me->name,
+                      RKFloatToCommaStyleString(1.0f / config->prt[0]), space->velocityFactor);
+                if (engine->verbose > 1) {
+                    for (p = 0; p < 2; p++) {
+                        for (k = 0; k < config->filterCount; k++) {
+                            RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
+                                  engine->name, me->name, k,
+                                  p == 0 ? "H" : (p == 1 ? "V" : "-"),
+                                  config->systemZCal[p],
+                                  config->ZCal[k][p],
+                                  config->filterAnchors[k].sensitivityGain,
+                                  space->samplingAdjustment,
+                                  config->ZCal[k][p] + config->systemZCal[p] - config->filterAnchors[k].sensitivityGain - space->samplingAdjustment,
+                                  config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+                        }
+                    }
                 }
+                pthread_mutex_unlock(&engine->mutex);
             }
+            memcpy(previousConfig, config, sizeof(RKConfig));
         }
 
         // Consolidate the pulse marker into ray marker
