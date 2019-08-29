@@ -2,12 +2,12 @@ if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rk
 if ~exist('showAnimation', 'var'), showAnimation = false; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
 
-% dat = iqread(filename);
+dat = iqread(filename);
 
 fprintf('Rearranging data ...\n');
 
-%%
-disp(dat.pulses(1))
+%
+% disp(dat.pulses(1))
 
 % Original data in I/Q, gate, channel, pulse count
 pulses = cat(4, dat.pulses(:).iq);

@@ -907,6 +907,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Other resources
     pthread_mutex_init(&radar->mutex, NULL);
+    
+    // Recording level 0 - moment and health only
+    RKSetRecordingLevel(radar, 0);
 
     // Total memory usage
     RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",
@@ -1326,8 +1329,8 @@ int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
 
 int RKSetRecordingLevel(RKRadar *radar, const int level) {
     // Perhaps use a numeric string 100, 110, etc.
-    RKLog("Raw data recording: %s\n", level == 2 ? "Raw from transceiver" : (level == 1 ? "Compressed I/Q" : "No"));
-    RKLog("Product recording: %s\n", level > -1 ? "True" : "False");
+    //RKLog("Raw data recording: %s\n", level == 2 ? "Raw from transceiver" : (level == 1 ? "Compressed I/Q" : "No"));
+    //RKLog("Product recording: %s\n", level > -1 ? "True" : "False");
     switch (level) {
         case 2:
             RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeFromTransceiver);

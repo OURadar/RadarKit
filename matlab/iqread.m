@@ -106,7 +106,7 @@ classdef iqread
             self.header.desc.dataPath = deblank(char(self.header.desc.dataPath_raw));
             
             % Header->config
-            if self.header.buildNo >= 4
+            if self.header.buildNo >= 5
                 % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfig
                 offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc;
                 c = memmapfile(self.filename, ...
@@ -274,7 +274,8 @@ classdef iqread
             end
             
             % Pulses
-            if self.header.dataType == 1
+            if self.header.dataType == 2
+                % Compressed I/Q
                 m = memmapfile(self.filename, ...
                     'Offset', self.constants.RKFileHeaderSize, ...
                     'Repeat', maxPulse, ...
@@ -303,6 +304,7 @@ classdef iqread
                         'single', [1 1], 'azimuthVelocityDegreesPerSecond'; ...
                         'single', [2 downSampledGateCount 2], 'iq'});
             else
+                % Raw I/Q straight from the transceiver
                 m = memmapfile(self.filename, ...
                     'Offset', self.constants.RKFileHeaderSize, ...
                     'Repeat', maxPulse, ...
