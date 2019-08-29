@@ -290,13 +290,6 @@ void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDe
 
 void RKRawDataRecorderSetDoNotWrite(RKRawDataRecorder *engine, const bool value) {
     engine->doNotWrite = value;
-//    RKRawDataRecorderCacheFlush(engine);
-//    close(engine->fd);
-//    if (engine->verbose) {
-//        RKLog("%s Recorded %s (%s pulses, %s GB)\n", engine->name, filename, RKIntegerToCommaStyleString(n), RKFloatToCommaStyleString(1.0e-9f * (len + engine->cacheWriteIndex)));
-//    }
-//    // Notify file manager of a new addition
-//    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
 }
 
 void RKRawDataRecorderSetMaximumRecordDepth(RKRawDataRecorder *engine, const uint32_t depth) {

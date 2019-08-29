@@ -1326,7 +1326,8 @@ int RKSetDataUsageLimit(RKRadar *radar, const size_t limit) {
 
 int RKSetDoNotWrite(RKRadar *radar, const bool doNotWrite) {
     RKHealthLoggerSetDoNotWrite(radar->healthLogger, doNotWrite);
-    RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
+    //RKSweepEngineSetDoNotWrite(radar->sweepEngine, doNotWrite);
+    RKSweepEngineSetRecord(radar->sweepEngine, !doNotWrite);
     RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, doNotWrite);
     return RKResultSuccess;
 }
@@ -1337,7 +1338,7 @@ int RKSetRecordingLevel(RKRadar *radar, const int level) {
     switch (level) {
         case 0:
             RKHealthLoggerSetDoNotWrite(radar->healthLogger, true);
-            RKSweepEngineSetDoNotWrite(radar->sweepEngine, true);
+            RKSweepEngineSetRecord(radar->sweepEngine, true);
             RKRawDataRecorderSetDoNotWrite(radar->rawDataRecorder, true);
             break;
         case 1:

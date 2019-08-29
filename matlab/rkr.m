@@ -1,8 +1,8 @@
-if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rkr'); end
+if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rkc'); end
 if ~exist('showAnimation', 'var'), showAnimation = false; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
 
-dat = iqread(filename);
+% dat = iqread(filename);
 
 fprintf('Rearranging data ...\n');
 
@@ -28,7 +28,18 @@ M = 6;   % Number of filters
 ng = min(size(pulses, 1), 1900);
 ns = min(size(pulses, 2), 500);
 
-t_fast = (1:ng) / 50;
+if dat.header.buildNo >= 4
+    if dat.header.dataType == 1
+        % Compressed IQ
+        dt = double(dat.header.desc.pulseToRayRatio) * double(dat.header.config.pulseGateSize) * 2 / 3.0e2;
+    else
+        % Raw IQ
+        dt = double(dat.header.config.pulseGateSize) * 2 / 3.0e2;
+    end  
+else
+    dt = 1 / 50;
+end
+t_fast = (1:ng) * dt;
 t_slow = (1:ns) / 100;
 
 figure(1)
@@ -64,10 +75,10 @@ for ii = 1 : M * N
     grid on
     if iy == 0, xlabel('Time (us)'); else, set(gca, 'XTickLabel', []); end
     if ix == 0, ylabel('Amplitude'); else, set(gca, 'YTickLabel', []); end
-    %FIG.ht(ii) = text(0.9 * t_fast(end), -10000, sprintf('%d / %d / %d', dat.pulses(k).n, dat.pulses(k).i, floor(rem(int32(dat.pulses(k).i), M) / 2) - 5));
     iw = rem(int32(dat.pulses(k).i), M);
     iw2 = idivide(iw, 2);
-    FIG.ht(ii) = text(0.9 * t_fast(end), -12000, sprintf('[n:%d i:%d] / [%d / %d]', dat.pulses(k).n, dat.pulses(k).i, iw, iw2));
+    str = sprintf('[n:%d i:%d] / [%d / %d]', dat.pulses(k).n, dat.pulses(k).i, iw, iw2);
+    FIG.ht(ii) = text(0.9 * t_fast(end), -12000, str);
     ylim(15000 * [-1 1])
 end
 % blib('bsizewin', gcf, [2500 1080])
