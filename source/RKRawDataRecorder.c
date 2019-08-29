@@ -131,16 +131,7 @@ static void *pulseRecorder(void *in) {
             config = &engine->configBuffer[pulse->header.configIndex];
             
             // Close the current file
-            if (!engine->record && !record) {
-                if (strlen(filename)) {
-                    RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
-                          engine->name,
-                          filename,
-                          RKIntegerToCommaStyleString(n),
-                          RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
-                          len > 1000000000 ? "G" : "M");
-                }
-            } else if (engine->fd != 0) {
+            if (record && engine->fd) {
                 len += RKRawDataRecorderCacheFlush(engine);
                 close(engine->fd);
                 RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
@@ -154,6 +145,15 @@ static void *pulseRecorder(void *in) {
                 engine->fd = 0;
                 // Notify file manager of a new addition
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
+            } else {
+                if (strlen(filename)) {
+                    RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
+                          engine->name,
+                          filename,
+                          RKIntegerToCommaStyleString(n),
+                          RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
+                          len > 1000000000 ? "G" : "M");
+                }
             }
             
             // New file

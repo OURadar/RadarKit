@@ -91,7 +91,11 @@ static void *healthLogger(void *in) {
             if (engine->record && engine->fid) {
                 fclose(engine->fid);
                 if (engine->verbose) {
-                    RKLog("%s Recorded %s\n", engine->name, filename);
+                    RKLog("%s %sRecorded%s %s\n",
+                          engine->name,
+                          rkGlobalParameters.showColor ? RKGreenColor : "",
+                          rkGlobalParameters.showColor ? RKNoColor : "",
+                          filename);
                 }
                 // Notify file manager of a new addition
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);

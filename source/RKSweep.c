@@ -188,6 +188,7 @@ static void *sweepManager(void *in) {
     }
 
     int summarySize = 0;
+    bool filenameTooLong;
 
     // Product recording
     for (p = 0; p < engine->radarDescription->productBufferDepth; p++) {
@@ -210,6 +211,7 @@ static void *sweepManager(void *in) {
         // Full filename with symbol and extension
         sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
         strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength - 80);
+        filenameTooLong = strlen(sweep->header.filename) > 45;
 
         // Keep concatenating the filename into filelist
         if (engine->hasFileHandlingScript) {
@@ -249,8 +251,11 @@ static void *sweepManager(void *in) {
         // Make a summary for logging
         if (p == 0) {
             // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
-            summarySize = sprintf(summary, rkGlobalParameters.showColor ? "%s ...%s-" RKYellowColor "%s" RKNoColor ".%s" : "%s ...%s-%s.%s",
-                                  engine->record ? "Created" : "Skipped", RKLastTwoPartsOfPath(sweep->header.filename), product->desc.symbol, engine->productFileExtension);
+            summarySize = sprintf(summary, rkGlobalParameters.showColor ? RKGreenColor "%s" RKNoColor " %s%s-" RKYellowColor "%s" RKNoColor ".%s" : "%s %s%s-%s.%s",
+                                  engine->record ? "Recorded": "Skipped",
+                                  filenameTooLong ? "..." : "",
+                                  filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
+                                  product->desc.symbol, engine->productFileExtension);
         } else {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
