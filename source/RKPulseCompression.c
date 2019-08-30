@@ -132,31 +132,32 @@ static void builtInCompressor(RKCompressionScratch *scratch) {
     fftwf_complex *out = scratch->outBuffer;
 
     int i, p;
-    int bound;
+    int inBound, outBound;
 
-    bound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
+    inBound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
+    outBound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
 
 #if DEBUG_PULSE_COMPRESSION
 
     if (pulse->header.i % 1000 == 0) {
-        RKLog("---- filter %d   o= %d   gateCount = %d   bound = %d\n", filterAnchor->name, filterAnchor->inputOrigin, pulse->header.gateCount, bound);
+        RKLog("---- filter %d   o= %d   gateCount = %d   bound = %d\n", filterAnchor->name, filterAnchor->inputOrigin, pulse->header.gateCount, inBound);
     }
 
 #endif
 
     for (p = 0; p < 2; p++) {
-        // Copy and convert the samples
+       // Copy and convert the samples
         RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
         X += filterAnchor->inputOrigin;
         if (filterAnchor->inputOrigin % RKSIMDAlignSize == 0) {
-            RKSIMD_Int2Complex(X, (RKComplex *)in, bound);
+            RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
         } else {
-            RKSIMD_Int2Complex_reg(X, (RKComplex *)in, bound);
+            RKSIMD_Int2Complex_reg(X, (RKComplex *)in, inBound);
         }
 
         // Zero pad the input; a filter is always zero-padded in the setter function.
-        if (scratch->planSize > bound) {
-            memset(in[bound], 0, (scratch->planSize - bound) * sizeof(fftwf_complex));
+        if (scratch->planSize > inBound) {
+            memset(in + inBound, 0, (scratch->planSize - inBound) * sizeof(fftwf_complex));
         }
 
         fftwf_execute_dft(scratch->planForwardInPlace, in, in);
@@ -205,15 +206,13 @@ static void builtInCompressor(RKCompressionScratch *scratch) {
 
         //printf("idft(out) =\n"); RKPulseCompressionShowBuffer(out, 8);
 
-        bound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
-
         RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
         RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
         Y += filterAnchor->outputOrigin;
         Z.i += filterAnchor->outputOrigin;
         Z.q += filterAnchor->outputOrigin;
         fftwf_complex *o = out;
-        for (i = 0; i < bound; i++) {
+        for (i = 0; i < outBound; i++) {
             Y->i = (*o)[0];
             Y++->q = (*o)[1];
             *Z.i++ = (*o)[0];
