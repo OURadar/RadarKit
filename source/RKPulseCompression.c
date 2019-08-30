@@ -134,7 +134,7 @@ static void builtInCompressor(RKCompressionScratch *scratch) {
     int i, p;
     int bound;
 
-    bound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->maxDataLength + filterAnchor->length);
+    bound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
 
 #if DEBUG_PULSE_COMPRESSION
 
