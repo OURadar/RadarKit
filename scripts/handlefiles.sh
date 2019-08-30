@@ -2,7 +2,7 @@
 
 SEARCH_LOC=(${HOME}/blib-sh ${HOME}/Developer/blib-sh)
 
-trap 'echo "Be patient"' INT
+trap 'echo -e "\nBe patient"' INT
 
 HAS_BLIB=0
 for folder in ${SEARCH_LOC[*]}; do

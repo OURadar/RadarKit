@@ -1542,6 +1542,12 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
     RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
+    if (radar->pulseRingFilterEngine->useFilter &&
+        radar->pulseRingFilterEngine->filter.type >= RKFilterTypeElliptical1 &&
+        radar->pulseRingFilterEngine->filter.type <= RKFilterTypeElliptical4) {
+        RKLog("Ring filter incompatible with Pulse Pair for Frequency Hopping, disabling ...");
+        RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
+    }
     return RKResultSuccess;
 }
 
