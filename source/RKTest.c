@@ -1462,6 +1462,17 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitFromFile(filename);
     RKWaveformSummary(waveform);
+    
+    printf("\n");
+
+    RKWaveformDecimate(waveform, 8);
+    RKWaveformSummary(waveform);
+    
+    printf("\n");
+    
+    RKWaveformDecimate(waveform, 15);
+    RKWaveformSummary(waveform);
+
     RKWaveformFree(waveform);
 }
 

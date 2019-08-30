@@ -709,11 +709,16 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
         for (k = 0; k < waveform->filterCounts[l]; k++) {
             waveform->filterAnchors[l][k].origin /= stride;
             waveform->filterAnchors[l][k].length /= stride;
+            if (waveform->filterAnchors[l][k].inputOrigin % stride) {
+                waveform->filterAnchors[l][k].inputOrigin += stride;
+            }
             waveform->filterAnchors[l][k].inputOrigin /= stride;
+            if (waveform->filterAnchors[l][k].outputOrigin % stride) {
+                waveform->filterAnchors[l][k].outputOrigin += stride;
+            }
             waveform->filterAnchors[l][k].outputOrigin /= stride;
-            // Account for the odd length ended in another range
-            if (waveform->filterAnchors[l][k].maxDataLength % 2 != 0) {
-                waveform->filterAnchors[l][k].maxDataLength++;
+            if (waveform->filterAnchors[l][k].maxDataLength % stride) {
+                waveform->filterAnchors[l][k].maxDataLength += stride;
             }
             waveform->filterAnchors[l][k].maxDataLength /= stride;
             waveform->filterAnchors[l][k].subCarrierFrequency *= stride;
