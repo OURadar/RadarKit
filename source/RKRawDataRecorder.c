@@ -174,7 +174,7 @@ static void *pulseRecorder(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s New I/Q %s ...\n", engine->name, filename);
             }
-            if (engine->rawDataType) {
+            if (engine->record) {
                 RKPreparePath(filename);
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
