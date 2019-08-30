@@ -366,6 +366,7 @@ static void buildInCalibrator(RKScratch *space, RKConfig *config) {
     int i, k, p;
     RKFloat r = 0.0f;
     for (k = 0; k < config->filterCount; k++) {
+        //RKLog("calibrator: %d ... %d\n", config->filterAnchors[k].outputOrigin, MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, space->gateCount));
         for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, space->gateCount); i++) {
             r = (RKFloat)i * space->gateSizeMeters;
             for (p = 0; p < 2; p++) {
