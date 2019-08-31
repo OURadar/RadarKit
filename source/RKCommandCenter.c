@@ -1164,7 +1164,6 @@ int socketStreamHandler(RKOperator *O) {
 
                     gettimeofday(&timevalTx, NULL);
 
-                    RKLog("%s %s sent.\n", engine->name, O->name);
                     // Offset scratch by one to get rid of the very first space character
                     RKLog("%s %s Sweep @ %s sent (%s)\n", engine->name, O->name,
                           RKVariableInString("configId", &sweepHeader.config.i, RKValueTypeIdentifier), user->scratch + 1);
