@@ -175,9 +175,10 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "ZCalV2-dB", floatType, 1, &product->header.ZCal[1][1]);
     nc_put_att_float(ncid, NC_GLOBAL, "DCal1-dB", floatType, 1, &product->header.DCal[0]);
     nc_put_att_float(ncid, NC_GLOBAL, "DCal2-dB", floatType, 1, &product->header.DCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "PCal1-Degrees", floatType, 1, &product->header.PCal[0]);
-    nc_put_att_float(ncid, NC_GLOBAL, "PCal2-Degrees", floatType, 1, &product->header.PCal[1]);
-    nc_put_att_float(ncid, NC_GLOBAL, "CensorThreshold-dB", floatType, 1, &product->header.SNRThreshold);
+    nc_put_att_float(ncid, NC_GLOBAL, "PCal1-Radians", floatType, 1, &product->header.PCal[0]);
+    nc_put_att_float(ncid, NC_GLOBAL, "PCal2-Radians", floatType, 1, &product->header.PCal[1]);
+    nc_put_att_float(ncid, NC_GLOBAL, "SNRThreshold-dB", floatType, 1, &product->header.SNRThreshold);
+    nc_put_att_float(ncid, NC_GLOBAL, "SQIThreshold-dB", floatType, 1, &product->header.SQIThreshold);
     put_global_text_att(ncid, "RadarKit-VCP-Definition", product->header.vcpDefinition);
     put_global_text_att(ncid, "Waveform", product->header.waveform);
     put_global_text_att(ncid, "CreatedBy", "RadarKit v" _RKVersionString);
@@ -441,18 +442,19 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     get_global_float_att(ncid, floatType, "NoiseV-ADU", &product->header.noise[1]);
     get_global_float_att(ncid, floatType, "SystemZCalH-dB", &product->header.systemZCal[0]);
     get_global_float_att(ncid, floatType, "SystemZCalV-dB", &product->header.systemZCal[1]);
-    get_global_float_att(ncid, floatType, "SystemDCal-Degrees", &product->header.systemDCal);
-    get_global_float_att(ncid, floatType, "SystemPCal-Degrees", &product->header.systemPCal);
+    get_global_float_att(ncid, floatType, "SystemDCal-dB", &product->header.systemDCal);
+    get_global_float_att(ncid, floatType, "SystemPCal-Radians", &product->header.systemPCal);
     get_global_float_att(ncid, floatType, "ZCalH1-dB", &product->header.ZCal[0][0]);
     get_global_float_att(ncid, floatType, "ZCalV1-dB", &product->header.ZCal[1][0]);
     get_global_float_att(ncid, floatType, "ZCalH2-dB", &product->header.ZCal[0][1]);
     get_global_float_att(ncid, floatType, "ZCalV2-dB", &product->header.ZCal[1][1]);
     get_global_float_att(ncid, floatType, "DCal1-dB", &product->header.DCal[0]);
     get_global_float_att(ncid, floatType, "DCal2-dB", &product->header.DCal[1]);
-    get_global_float_att(ncid, floatType, "PCal1-Degrees", &product->header.PCal[0]);
-    get_global_float_att(ncid, floatType, "PCal2-Degrees", &product->header.PCal[1]);
-    get_global_float_att(ncid, floatType, "CensorThreshold-dB", &product->header.SNRThreshold);
-    
+    get_global_float_att(ncid, floatType, "PCal1-Radians", &product->header.PCal[0]);
+    get_global_float_att(ncid, floatType, "PCal2-Radians", &product->header.PCal[1]);
+    get_global_float_att(ncid, floatType, "SNRThreshold-dB", &product->header.SNRThreshold);
+    get_global_float_att(ncid, floatType, "SQIThreshold-dB", &product->header.SQIThreshold);
+
     if (showInfo) {
         RKLog("%s   (%s%s%s)\n",
               RKVariableInString("filename", filename, RKValueTypeString),
@@ -559,8 +561,6 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
     uint32_t rayCount = 0;
     uint32_t gateCount = 0;
 
-    //printf("count = %d\n", productCollection->count);
-    
     if (productCollection->count == 0 && RKFilenameExists(firstFilename)) {
         productCollection->count = 1;
         RKProductDimensionsFromFile(firstFilename, &rayCount, &gateCount);
