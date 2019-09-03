@@ -186,11 +186,11 @@ static void *systemInspectorRunLoop(void *in) {
         // Derive the acquisition rate of position, pulse and ray
         // Note, each acquisition rate is computed with its own timeval since they come in bursts, we may get no update in an iteration
         // Basic idea:
-        //  - Get the index that is about 1/8 buffer depth behind the current index
+        //  - Get the index that is about 1 / N buffer depth behind the current index
         //  - Get the position / pulse / ray of that index
-        //  - Get another index that is about another 1/8 buffer depth behind the previous index
+        //  - Get another index that is about another 1 / N buffer depth behind the previous index
         //  - Get the position / pulse / ray of that index
-        //  - Compute the number of samples (buffer depth / 8) over the period (delta t)
+        //  - Compute the number of samples (buffer depth / N) over the period (delta t)
 
         // Position
         if (radar->positions) {
@@ -206,13 +206,13 @@ static void *systemInspectorRunLoop(void *in) {
 
         // Pulse
         if (radar->pulses) {
-            index = RKPreviousNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
+            index = RKPreviousNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth / 4, radar->desc.pulseBufferDepth);
             pulse0 = RKGetPulseFromBuffer(radar->pulses, index);
-            index = RKPreviousNModuloS(index, radar->desc.pulseBufferDepth / 8, radar->desc.pulseBufferDepth);
+            index = RKPreviousNModuloS(index, radar->desc.pulseBufferDepth / 4, radar->desc.pulseBufferDepth);
             pulse1 = RKGetPulseFromBuffer(radar->pulses, index);
             dt = pulse0->header.timeDouble - pulse1->header.timeDouble;
             if (dt) {
-                pulseRate = (double)(radar->desc.pulseBufferDepth / 8) / dt;
+                pulseRate = (double)(radar->desc.pulseBufferDepth / 4) / dt;
             }
         }
 
