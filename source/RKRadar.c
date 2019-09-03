@@ -1803,7 +1803,15 @@ int RKStart(RKRadar *radar) {
 //     None
 //
 int RKWaitWhileActive(RKRadar *radar) {
+    char buffer[RKMaximumStringLength];
     while (radar->active) {
+        fgets(buffer, sizeof(buffer), stdin);
+        if (feof(stdin) && radar->tic > 2) {
+            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                RKLog("EOF (Ctrl-D) detected.\n");
+            }
+            RKStop(radar);
+        }
         usleep(100000);
         radar->tic++;
     }
