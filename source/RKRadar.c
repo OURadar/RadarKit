@@ -1804,14 +1804,20 @@ int RKStart(RKRadar *radar) {
 //
 int RKWaitWhileActive(RKRadar *radar) {
     char buffer[RKMaximumStringLength];
+    bool isForeground = tcgetpgrp(STDIN_FILENO) == getpgrp();
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Process is in %s", isForeground ? "foreground" : "background");
+    }
     while (radar->active) {
-        fgets(buffer, sizeof(buffer), stdin);
-        if (feof(stdin) && radar->tic > 2) {
-            fprintf(stderr, "\n");
-            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-                RKLog("EOF (Ctrl-D) detected.\n");
+        if (isForeground) {
+            fgets(buffer, sizeof(buffer), stdin);
+            if (feof(stdin) && radar->tic > 2) {
+                fprintf(stderr, "\n");
+                if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                    RKLog("EOF (Ctrl-D) detected.\n");
+                }
+                RKStop(radar);
             }
-            RKStop(radar);
         }
         usleep(100000);
         radar->tic++;
