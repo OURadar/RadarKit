@@ -1807,6 +1807,7 @@ int RKWaitWhileActive(RKRadar *radar) {
     while (radar->active) {
         fgets(buffer, sizeof(buffer), stdin);
         if (feof(stdin) && radar->tic > 2) {
+            fprintf(stderr, "\n");
             if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                 RKLog("EOF (Ctrl-D) detected.\n");
             }

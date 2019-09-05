@@ -258,7 +258,9 @@ static void handleSignals(int signal) {
         return;
     }
     fprintf(stderr, "\n");
-    RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
+    if (myRadar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
+    }
     pthread_t t;
     pthread_create(&t, NULL, exitAfterAWhile, NULL);
     RKStop(myRadar);
@@ -323,12 +325,12 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",         &user->desc.latitude,       RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",        &user->desc.longitude,      RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",          &user->desc.heading,        RKParameterTypeFloat,  1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",       user->systemZCal,           RKParameterTypeFloat, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",       &user->systemDCal,          RKParameterTypeFloat, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",       &user->systemPCal,          RKParameterTypeFloat, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",            user->noise,                RKParameterTypeFloat, 2);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",     &user->SNRThreshold,        RKParameterTypeFloat, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SQIThreshold",     &user->SQIThreshold,        RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",       user->systemZCal,           RKParameterTypeFloat,  2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",       &user->systemDCal,          RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",       &user->systemPCal,          RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",            user->noise,                RKParameterTypeFloat,  2);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",     &user->SNRThreshold,        RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "SQIThreshold",     &user->SQIThreshold,        RKParameterTypeFloat,  1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DiskUsageLimitGB", &user->diskUsageLimitGB,    RKParameterTypeUInt,   1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",        &user->goCommand,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",      &user->stopCommand,         RKParameterTypeString, RKNameLength);
