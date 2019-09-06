@@ -894,8 +894,8 @@ enum RKFilterType {
 typedef uint8_t RKRawDataType;
 enum RKRawDataType {
     RKRawDataTypeNull,                                                         // No recording
-    RKRawDataTypeFromTransceiver,                                              // Raw straight from the transceiver
-    RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression
+    RKRawDataTypeFromTransceiver,                                              // Raw straight from the digital transceiver (RKInt16C)
+    RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression (RKFloat)
 };
 
 #pragma mark - Structure Definitions
