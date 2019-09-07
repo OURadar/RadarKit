@@ -78,7 +78,7 @@ for ii = 1 : M * N
     FIG.pl(ii, :) = plot(...
         t_fast, 1e-4 * real(pulses(1:ng, k, 2)), ...
         t_fast, 1e-4 * imag(pulses(1:ng, k, 2)), ...
-        t_fast, 1e-4 * abs(pulses(1:ng, k, 2)));
+        t_fast, 1e-4 * abs(pulses(1:ng, k, 2)), 'LineWidth', 1.5);
     grid on
     if iy == 0, xlabel('Time (us)'); else, set(gca, 'XTickLabel', []); end
     if ix == 0, ylabel('Amplitude'); else, set(gca, 'YTickLabel', []); end
@@ -89,7 +89,7 @@ for ii = 1 : M * N
     ylim(1.19 * [-1 1])
 end
 % blib('bsizewin', gcf, [2500 1080])
-blib('bsizewin', gcf, [1440 700])
+blib('bsizewin', gcf, [1600 890])
 set(gcf, 'Menubar', 'None');
 set(FIG.ht, 'HorizontalAlignment', 'Right');
 lp = linkprop(FIG.ax, {'XLim', 'YLim'});
