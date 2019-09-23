@@ -483,7 +483,7 @@ void RKPreparePath(const char *filename) {
         return;
     }
     path[1023] = '\0';
-    strncpy(path, filename, 1024);
+    strncpy(path, filename, 1023);
     char *c = strrchr(path, '/');
     if (c == NULL) {
         free(path);
