@@ -54,7 +54,7 @@ RKRadar *myRadar = NULL;
 
 // Functions
 void *exitAfterAWhile(void *s) {
-    sleep(2);
+    sleep(3);
     RKLog("Forced exit.\n");
     exit(EXIT_SUCCESS);
 }
