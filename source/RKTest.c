@@ -2068,6 +2068,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             // It is possible that the root storage folder is empty, in this case errno = ENOENT is okay.
             RKLog("%s Error opening directory %s  errno = %d\n", transceiver->name, transceiver->playbackFolder, errno);
         }
+        free(filelist);
         return (void *)-2;
     }
     k = 0;

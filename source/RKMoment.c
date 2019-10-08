@@ -599,6 +599,7 @@ static void *momentCore(void *in) {
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
     RKConfig *previousConfig = (RKConfig *)malloc(sizeof(RKConfig));
+    memset(previousConfig, 0, sizeof(RKConfig));
     mem += sizeof(RKConfig);
     
     // Initialize some end-of-loop variables
@@ -894,6 +895,7 @@ static void *momentCore(void *in) {
     }
     
     RKScratchFree(space);
+    free(previousConfig);
     free(busyPeriods);
     free(fullPeriods);
 

@@ -972,6 +972,9 @@ int main(int argc, const char **argv) {
         if (strlen(systemPreferences->playbackFolder)) {
             k += sprintf(cmd + k, " D %s", systemPreferences->playbackFolder);
         }
+        if (k == 0 && cmd[0] != '\0') {
+            RKLog("I could crash here at k = %d && cmd[0] = %c\n", k, cmd[0]);
+        }
         RKSetTransceiver(myRadar,
                          (void *)cmd,
                          RKTestTransceiverInit,
