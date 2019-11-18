@@ -445,8 +445,8 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     get_global_float_att(ncid, floatType, "SystemDCal-dB", &product->header.systemDCal);
     get_global_float_att(ncid, floatType, "SystemPCal-Radians", &product->header.systemPCal);
     get_global_float_att(ncid, floatType, "ZCalH1-dB", &product->header.ZCal[0][0]);
-    get_global_float_att(ncid, floatType, "ZCalV1-dB", &product->header.ZCal[1][0]);
     get_global_float_att(ncid, floatType, "ZCalH2-dB", &product->header.ZCal[0][1]);
+    get_global_float_att(ncid, floatType, "ZCalV1-dB", &product->header.ZCal[1][0]);
     get_global_float_att(ncid, floatType, "ZCalV2-dB", &product->header.ZCal[1][1]);
     get_global_float_att(ncid, floatType, "DCal1-dB", &product->header.DCal[0]);
     get_global_float_att(ncid, floatType, "DCal2-dB", &product->header.DCal[1]);
