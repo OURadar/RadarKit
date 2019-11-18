@@ -519,7 +519,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = RK;
-				LastUpgradeCheck = 1100;
+				LastUpgradeCheck = 1120;
 				ORGANIZATIONNAME = "Boon Leng Cheong";
 				TargetAttributes = {
 					B5324D4E1AB8A5A000C00517 = {
