@@ -167,7 +167,9 @@ static void refreshFileList(RKFileRemover *me) {
     for (j = 0, k = 0; k < folderCount && me->count < me->capacity; k++) {
         sprintf(string, "%s/%s", me->path, folders[k]);
         int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, string);
-        RKLog("%s %s %s (%s files)\n", me->parent->name, me->name, string, RKIntegerToCommaStyleString(count));
+        if (me->parent->verbose > 1) {
+            RKLog("%s %s %s (%s files)\n", me->parent->name, me->name, string, RKIntegerToCommaStyleString(count));
+        }
         if (count < 0) {
             RKLog("%s %s Error. Unable to list files in %s\n", me->parent->name, me->name, string);
             return;
