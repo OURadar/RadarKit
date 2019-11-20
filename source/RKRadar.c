@@ -167,11 +167,13 @@ static void *systemInspectorRunLoop(void *in) {
                 RKLog("%s %s B   %s B\n", engine->name,
                       RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
                       RKVariableInString("rusage", &mem, RKValueTypeLong));
-                dxduPosition = 1.0 / radar->positionClock->dx;
-                dxduPulse = 1.0 / radar->pulseClock->dx;
-                RKLog(">%s %s   %s", engine->name,
-                      RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
-                      RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
+                if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
+                    dxduPosition = 1.0 / radar->positionClock->dx;
+                    dxduPulse = 1.0 / radar->pulseClock->dx;
+                    RKLog(">%s %s   %s", engine->name,
+                          RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
+                          RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
+                }
                 RKLog(">%s %s Hz   %s Hz   %s Hz\n",
                       engine->name,
                       RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),

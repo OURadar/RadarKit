@@ -2154,9 +2154,18 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         
         transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
         transceiver->prt = fileHeader->config.prt[0];
-        
         RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
-              transceiver->name, 1.0e3f * transceiver->prt, RKIntegerToCommaStyleString(fileHeader->config.prt[0]));
+              transceiver->name,
+              1.0e3 * transceiver->prt,
+              RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
+        
+        if (transceiver->prt <= 1.0e-4 || transceiver->prt > 0.1) {
+            transceiver->prt = CLAMP(transceiver->prt, 1.0e-4, 0.1);
+            RKLog("%s Info. Overriding PRT --> %.2f ms (PRF = %s Hz)\n",
+                  transceiver->name,
+                  1.0e3 * transceiver->prt,
+                  RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
+        }
         
         RKAddConfig(radar,
                     RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
@@ -2173,7 +2182,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                     RKConfigKeyNull);
         
         transceiver->periodOdd = transceiver->periodEven = transceiver->prt;
-        transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
+        transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)round(0.05 / transceiver->prt));
         RKLog("%s Using chunkSize = %d\n", transceiver->name, transceiver->chunkSize);
 
         while (transceiver->state & RKEngineStateWantActive && fpos < fsize) {
@@ -3456,12 +3465,34 @@ void RKTestExperiment(void) {
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
-    RKSetUseDailyLog(true);
-    int k = 0;
-    while (1) {
-        RKLog("Fake removing file k = %d ...\n", k++);
-        usleep(1000);
+    
+    // Modify a few bytes
+    FILE *fid = fopen("/Users/boonleng/Downloads/rkr/PX10K-20190827-203331.rkr", "r+");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file.\n");
+        return;
     }
+    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
+    fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    
+    RKLog("PRT = %.4e\n", fileHeader->config.prt[0]);
+    RKLog("SNRThreshold = %.4f dB\n", fileHeader->config.SNRThreshold);
+    RKLog("SQIThreshold = %.4f\n", fileHeader->config.SQIThreshold);
+
+    RKPulseHeader *pulseHeader = (RKPulseHeader *)malloc(sizeof(RKPulseHeader));
+    fread(pulseHeader, sizeof(RKPulseHeader), 1, fid);
+    
+    RKLog("RKPulse capacity / gateCount = %u / %u\n", pulseHeader->capacity, pulseHeader->gateCount);
+    
+    // Change some values
+    fileHeader->config.prt[0] = 1.0 / 1450.0;
+    
+    rewind(fid);
+    fwrite(fileHeader, sizeof(RKFileHeader), 1, fid);
+
+    // Forward to the end of file
+    fseek(fid, 0L, SEEK_END);
+    fclose(fid);
 }
 
 #pragma mark -

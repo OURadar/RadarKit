@@ -40,7 +40,7 @@
 #define _RKVersionBranch ""
 #endif
 
-#define _RKVersionString "2.3.1" _RKVersionBranch
+#define _RKVersionString "2.4" _RKVersionBranch
 
 //
 // Memory Blocks
@@ -147,6 +147,8 @@
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
+
+#define CLAMP(x, lo, hi)     MIN(MAX((x), (lo)), (hi))
 
 #define RKFilterAnchorDefault                           {{.length = 1, .maxDataLength = RKMaximumGateCount, .filterGain = 1.0f}}
 #define RKFilterAnchorDefaultWithMaxDataLength(x)       {{.length = 1, .maxDataLength = (x), .filterGain = 1.0f}}
