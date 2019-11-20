@@ -148,14 +148,14 @@
 		B565B53F1E5A3E23000C8503 /* RKWaveform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKWaveform.h; path = headers/RadarKit/RKWaveform.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B565B5441E5A4623000C8503 /* bessi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bessi.c; path = source/bessi.c; sourceTree = "<group>"; };
 		B56AB0A520A732DC00E73AE9 /* pref.conf */ = {isa = PBXFileReference; lastKnownFileType = text; path = pref.conf; sourceTree = "<group>"; };
-		B56AB0AA20A8826900E73AE9 /* SimpleEmulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SimpleEmulator; sourceTree = BUILT_PRODUCTS_DIR; };
+		B56AB0AA20A8826900E73AE9 /* Simple Emulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Simple Emulator"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B5A5A32B227781DB00A6690C /* makewave.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = makewave.c; sourceTree = SOURCE_ROOT; };
 		B5B2058820E43117007D48E0 /* RKSweepFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepFile.h; path = headers/RadarKit/RKSweepFile.h; sourceTree = "<group>"; };
 		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
 		B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKHealthLogger.h; path = headers/RadarKit/RKHealthLogger.h; sourceTree = "<group>"; };
-		B5C1F3441AB9C118004F88CD /* RadarKitUtility */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RadarKitUtility; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5C1F3441AB9C118004F88CD /* RadarKit Utility */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "RadarKit Utility"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5C1F3501AB9C917004F88CD /* RKPulseCompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKPulseCompression.h; path = headers/RadarKit/RKPulseCompression.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B5C1F3551AB9CB69004F88CD /* RKWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKWindow.h; path = headers/RadarKit/RKWindow.h; sourceTree = SOURCE_ROOT; };
 		B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKDSP.h; path = headers/RadarKit/RKDSP.h; sourceTree = SOURCE_ROOT; };
@@ -164,7 +164,7 @@
 		B5DD6F261E1F400E00FAE2E3 /* RKClock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKClock.h; path = headers/RadarKit/RKClock.h; sourceTree = "<group>"; };
 		B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMultiLag.h; path = headers/RadarKit/RKMultiLag.h; sourceTree = "<group>"; };
 		B5DFFDB5222DB40E005CF6B3 /* rknchead.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rknchead.c; sourceTree = SOURCE_ROOT; };
-		B5DFFDBA222DB42E005CF6B3 /* ProductHeader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ProductHeader; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5DFFDBA222DB42E005CF6B3 /* Product Header */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Product Header"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E6D94B1E1C4A1200DFBBA9 /* RKPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPosition.h; path = headers/RadarKit/RKPosition.h; sourceTree = "<group>"; };
 		B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPedestalPedzy.h; path = headers/RadarKit/RKPedestalPedzy.h; sourceTree = SOURCE_ROOT; };
 		B5E7CB11210A4AD100D381ED /* rkutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rkutil.c; sourceTree = SOURCE_ROOT; };
@@ -269,9 +269,9 @@
 			isa = PBXGroup;
 			children = (
 				B5324D4F1AB8A5A000C00517 /* libRadarKit.a */,
-				B5C1F3441AB9C118004F88CD /* RadarKitUtility */,
-				B56AB0AA20A8826900E73AE9 /* SimpleEmulator */,
-				B5DFFDBA222DB42E005CF6B3 /* ProductHeader */,
+				B5C1F3441AB9C118004F88CD /* RadarKit Utility */,
+				B56AB0AA20A8826900E73AE9 /* Simple Emulator */,
+				B5DFFDBA222DB42E005CF6B3 /* Product Header */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -461,9 +461,9 @@
 			productReference = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		B56AB0A920A8826900E73AE9 /* SimpleEmulator */ = {
+		B56AB0A920A8826900E73AE9 /* Simple Emulator */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "SimpleEmulator" */;
+			buildConfigurationList = B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "Simple Emulator" */;
 			buildPhases = (
 				B56AB0A620A8826900E73AE9 /* Sources */,
 				B56AB0A720A8826900E73AE9 /* Frameworks */,
@@ -473,14 +473,14 @@
 			);
 			dependencies = (
 			);
-			name = SimpleEmulator;
+			name = "Simple Emulator";
 			productName = SimpleEmulator;
-			productReference = B56AB0AA20A8826900E73AE9 /* SimpleEmulator */;
+			productReference = B56AB0AA20A8826900E73AE9 /* Simple Emulator */;
 			productType = "com.apple.product-type.tool";
 		};
-		B5C1F3431AB9C118004F88CD /* RadarKitUtility */ = {
+		B5C1F3431AB9C118004F88CD /* RadarKit Utility */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitUtility" */;
+			buildConfigurationList = B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKit Utility" */;
 			buildPhases = (
 				B5C1F3401AB9C118004F88CD /* Sources */,
 				B5C1F3411AB9C118004F88CD /* Frameworks */,
@@ -490,14 +490,14 @@
 			);
 			dependencies = (
 			);
-			name = RadarKitUtility;
+			name = "RadarKit Utility";
 			productName = RadarKitTest;
-			productReference = B5C1F3441AB9C118004F88CD /* RadarKitUtility */;
+			productReference = B5C1F3441AB9C118004F88CD /* RadarKit Utility */;
 			productType = "com.apple.product-type.tool";
 		};
-		B5DFFDB9222DB42E005CF6B3 /* ProductHeader */ = {
+		B5DFFDB9222DB42E005CF6B3 /* Product Header */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B5DFFDBE222DB42E005CF6B3 /* Build configuration list for PBXNativeTarget "ProductHeader" */;
+			buildConfigurationList = B5DFFDBE222DB42E005CF6B3 /* Build configuration list for PBXNativeTarget "Product Header" */;
 			buildPhases = (
 				B5DFFDB6222DB42E005CF6B3 /* Sources */,
 				B5DFFDB7222DB42E005CF6B3 /* Frameworks */,
@@ -507,9 +507,9 @@
 			);
 			dependencies = (
 			);
-			name = ProductHeader;
+			name = "Product Header";
 			productName = ProductHeader;
-			productReference = B5DFFDBA222DB42E005CF6B3 /* ProductHeader */;
+			productReference = B5DFFDBA222DB42E005CF6B3 /* Product Header */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -552,9 +552,9 @@
 			projectRoot = "";
 			targets = (
 				B5324D4E1AB8A5A000C00517 /* RadarKit */,
-				B5C1F3431AB9C118004F88CD /* RadarKitUtility */,
-				B56AB0A920A8826900E73AE9 /* SimpleEmulator */,
-				B5DFFDB9222DB42E005CF6B3 /* ProductHeader */,
+				B5C1F3431AB9C118004F88CD /* RadarKit Utility */,
+				B56AB0A920A8826900E73AE9 /* Simple Emulator */,
+				B5DFFDB9222DB42E005CF6B3 /* Product Header */,
 			);
 		};
 /* End PBXProject section */
@@ -1083,7 +1083,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "SimpleEmulator" */ = {
+		B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "Simple Emulator" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B56AB0AE20A8826A00E73AE9 /* Debug */,
@@ -1092,7 +1092,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKitUtility" */ = {
+		B5C1F34A1AB9C118004F88CD /* Build configuration list for PBXNativeTarget "RadarKit Utility" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B5C1F3481AB9C118004F88CD /* Debug */,
@@ -1101,7 +1101,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B5DFFDBE222DB42E005CF6B3 /* Build configuration list for PBXNativeTarget "ProductHeader" */ = {
+		B5DFFDBE222DB42E005CF6B3 /* Build configuration list for PBXNativeTarget "Product Header" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B5DFFDBF222DB42E005CF6B3 /* Debug */,
