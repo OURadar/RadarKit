@@ -2131,13 +2131,14 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             usleep(100000);
             continue;
         }
-        j = fseek(fid, 0L, SEEK_END);
-        if (j == 0) {
-            fsize = ftell(fid);
-        } else {
+        if (fseek(fid, 0L, SEEK_END)) {
             RKLog("%s Error. Unable to tell the file size.\n", transceiver->name);
             fsize = 0;
+        } else {
+            fsize = ftell(fid);
+            RKLog("%s File size = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(fsize));
         }
+        j = 0;
         fpos = 0;
         rewind(fid);
         fread(fileHeader, sizeof(RKFileHeader), 1, fid);
@@ -2242,11 +2243,20 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             }
         }
         
+        fpos = ftell(fid);
+        RKLog("%s Pulse count = %s   fpos = %s   fsize = %s\n", transceiver->name,
+              RKUIntegerToCommaStyleString(j),
+              RKUIntegerToCommaStyleString(fpos),
+              RKUIntegerToCommaStyleString(fsize));
         fclose(fid);
         
         periodTotal = 0.0;
         
-        k = RKNextModuloS(k, count);
+        //k = RKNextModuloS(k, count);
+        k++;
+        if (k == count) {
+            break;
+        }
     }
 
     transceiver->state ^= RKEngineStateActive;
