@@ -2235,8 +2235,8 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             
             if (j++ == transceiver->chunkSize) {
                 gettimeofday(&t0, NULL);
-                //j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
-                j = 10000;
+                j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
+//                j = 10000;
                 usleep(j);
                 t1 = t0;
                 j = 0;
