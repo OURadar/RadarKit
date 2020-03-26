@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "B5DFFDB9222DB42E005CF6B3"
-               BuildableName = "ProductHeader"
-               BlueprintName = "ProductHeader"
+               BuildableName = "Product Header"
+               BlueprintName = "Product Header"
                ReferencedContainer = "container:RadarKit.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -31,8 +31,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B5DFFDB9222DB42E005CF6B3"
-            BuildableName = "ProductHeader"
-            BlueprintName = "ProductHeader"
+            BuildableName = "Product Header"
+            BlueprintName = "Product Header"
             ReferencedContainer = "container:RadarKit.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -54,8 +54,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B5DFFDB9222DB42E005CF6B3"
-            BuildableName = "ProductHeader"
-            BlueprintName = "ProductHeader"
+            BuildableName = "Product Header"
+            BlueprintName = "Product Header"
             ReferencedContainer = "container:RadarKit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -77,8 +77,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B5DFFDB9222DB42E005CF6B3"
-            BuildableName = "ProductHeader"
-            BlueprintName = "ProductHeader"
+            BuildableName = "Product Header"
+            BlueprintName = "Product Header"
             ReferencedContainer = "container:RadarKit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
