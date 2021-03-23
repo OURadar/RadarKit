@@ -495,7 +495,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     pthread_mutex_init(&engine->mutex, NULL);
-    RKHostMonitorAddHost(engine, "arrc.ou.edu");
+    RKHostMonitorAddHost(engine, "www.ou.edu");
     RKHostMonitorAddHost(engine, "8.8.8.8");
     return engine;
 }
