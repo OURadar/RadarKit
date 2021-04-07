@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B56AB0A920A8826900E73AE9"
-               BuildableName = "Simple Emulator"
-               BlueprintName = "Simple Emulator"
+               BlueprintIdentifier = "B5DD4EDB261DF97C004BACB9"
+               BuildableName = "Product Generator"
+               BlueprintName = "Product Generator"
                ReferencedContainer = "container:RadarKit.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -31,7 +31,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -44,12 +44,18 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B56AB0A920A8826900E73AE9"
-            BuildableName = "Simple Emulator"
-            BlueprintName = "Simple Emulator"
+            BlueprintIdentifier = "B5DD4EDB261DF97C004BACB9"
+            BuildableName = "Product Generator"
+            BlueprintName = "Product Generator"
             ReferencedContainer = "container:RadarKit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "/Users/boonleng/Downloads/RAXPOL-20210324-192623.rkc"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -61,9 +67,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B56AB0A920A8826900E73AE9"
-            BuildableName = "Simple Emulator"
-            BlueprintName = "Simple Emulator"
+            BlueprintIdentifier = "B5DD4EDB261DF97C004BACB9"
+            BuildableName = "Product Generator"
+            BlueprintName = "Product Generator"
             ReferencedContainer = "container:RadarKit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -218,7 +218,7 @@ void RKReplaceAllValuesOfKey(char *string, const char *key, int value) {
         while (*s != '\0' && (*s == '"' || *s == ' ' || *s == ':')) {
             s++;
         }
-        if (s == '\0') {
+        if (*s == '\0') {
             break;
         }
         e = s;
