@@ -41,7 +41,7 @@ OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
 RKLIB = libradarkit.a
 
-PROGS = rkutil simple-emulator rknchead
+PROGS = rkutil simple-emulator rknchead pgen
 
 # The command echo from macOS and Ubuntu needs no -e
 ECHO_FLAG = -e
