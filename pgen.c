@@ -35,6 +35,11 @@ int main(int argc, const char **argv) {
         RKLog("Error. Unable to open file %s", filename);
     }
     
+    fread(header, sizeof(RKFileHeader), 1, fid);
+    printf("header->desc.name = '%s'\n", header->desc.name);
+    printf("header->desc.latitude = %.6f\n", header->desc.latitude);
+    printf("header->desc.longitude = %.6f\n", header->desc.longitude);
+
     fclose(fid);
     free(header);
 
