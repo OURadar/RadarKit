@@ -58,6 +58,10 @@ int main(int argc, const char **argv) {
     RKProduct *products;
     size_t bytes;
     
+    int i0;
+    int i1 = 0;
+    int count = 0;
+    
     bytes = RKPulseBufferAlloc(&pulseBuffer, header->desc.pulseCapacity, RKMaximumPulsesPerRay);
     if (bytes == 0 || pulseBuffer == NULL) {
         RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
@@ -67,18 +71,42 @@ int main(int argc, const char **argv) {
           RKUIntegerToCommaStyleString(bytes),
           RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
           RKIntegerToCommaStyleString(header->desc.pulseCapacity));
+
+    RKMarker marker = header->config.startMarker;
+    
+    printf("sweep.Elevation = %.2f\n", header->config.sweepElevation);
+    printf("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+
     int k;
-    for (k = 0; k < 10; k++) {
-        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, 0);
+    int m = 0;
+    for (k = 0; k < 40; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
 
         fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
         fread(RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
         fread(RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
 
-        printf("pulse (EL %.2f, AZ %.2f) %s x %.2fm\n",
+        if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
+            i0 = (int)floorf(pulse->header.azimuthDegrees);
+        } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
+            i0 = (int)floorf(pulse->header.elevationDegrees);
+        } else {
+            i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
+        }
+
+        m = 0;
+        if (i1 != i0 || count == RKMaximumPulsesPerRay) {
+            i1 = i0;
+            m = 1;
+        }
+        printf("pulse (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %d %s\n",
                pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-               pulse->header.gateSizeMeters * header->desc.pulseToRayRatio);
+               pulse->header.gateSizeMeters * header->desc.pulseToRayRatio,
+               i0, pulse->header.azimuthBinIndex,
+               pulse->header.marker,
+               m ? "*" : ""
+               );
     }
 
     fclose(fid);
