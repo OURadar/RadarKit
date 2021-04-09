@@ -34,7 +34,15 @@ int main(int argc, const char **argv) {
     if (fid == NULL) {
         RKLog("Error. Unable to open file %s", filename);
     }
-    
+    long fsize;
+    if (fseek(fid, 0L, SEEK_END)) {
+        RKLog("Error. Unable to tell the file size.\n");
+        fsize = 0;
+    } else {
+        fsize = ftell(fid);
+        RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(fsize));
+    }
+    rewind(fid);
     fread(header, sizeof(RKFileHeader), 1, fid);
     
     printf("header:\n");
@@ -79,10 +87,14 @@ int main(int argc, const char **argv) {
 
     int k;
     int m = 0;
-    for (k = 0; k < 40; k++) {
+    size_t r = 0;
+    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
 
-        fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
+        r = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
+        if (r != 1) {
+            break;
+        }
         fread(RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
         fread(RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
 
@@ -98,15 +110,29 @@ int main(int argc, const char **argv) {
         if (i1 != i0 || count == RKMaximumPulsesPerRay) {
             i1 = i0;
             m = 1;
+            
+            // Process ...
+            //
+            
+            k = 0;
         }
-        printf("pulse (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %d %s\n",
+        printf("pulse (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %d %s%s%s\n",
                pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                pulse->header.gateSizeMeters * header->desc.pulseToRayRatio,
                i0, pulse->header.azimuthBinIndex,
                pulse->header.marker,
-               m ? "*" : ""
+               m ? "*" : "",
+               pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
+               pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
                );
+    }
+    printf("r = %zu / %s / %s\n",
+           r,
+           RKUIntegerToCommaStyleString(ftell(fid)),
+           RKUIntegerToCommaStyleString(fsize));
+    if (ftell(fid) != fsize) {
+        RKLog("Warning. There is leftover in the file.");
     }
 
     fclose(fid);
