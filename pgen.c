@@ -44,7 +44,7 @@ int main(int argc, const char **argv) {
     }
     rewind(fid);
     fread(header, sizeof(RKFileHeader), 1, fid);
-    
+
     printf("header:\n");
     printf("->%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
     printf("->desc.name = '%s'\n", header->desc.name);
@@ -53,6 +53,7 @@ int main(int argc, const char **argv) {
     printf("->desc.longitude = %.6f\n", header->desc.longitude);
     printf("\n");
     printf("->config.waveform = '%s'\n", header->config.waveform);
+    printf("->config.prt = %.1f ms / %.1f ms\n", 1.0e3 * header->config.prt[0], 1.0e3 * header->config.prt[1]);
     printf("\n");
     printf("->desc.pulseCapacity = %u\n", header->desc.pulseCapacity);
     printf("->desc.pulseToRayRatio = %u\n", header->desc.pulseToRayRatio);
@@ -87,8 +88,12 @@ int main(int argc, const char **argv) {
 
     int k;
     int m = 0;
-    size_t r = 0;
-    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
+    size_t r = 0, tr;
+    char timestr[32];
+    time_t startTime;
+    suseconds_t usec = 0;
+    
+    for (k = 0; k < MIN(10, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
 
         r = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
@@ -116,7 +121,14 @@ int main(int argc, const char **argv) {
             
             k = 0;
         }
-        printf("pulse (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %d %s%s%s\n",
+        startTime = pulse->header.time.tv_sec;
+        
+        tr = strftime(timestr, 24, "%T", gmtime(&startTime));
+        tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
+        
+        printf("pulse %s (%06d) (%" PRIu64 ") (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %d %s%s%s\n",
+               timestr, pulse->header.time.tv_usec - usec,
+               pulse->header.i,
                pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                pulse->header.gateSizeMeters * header->desc.pulseToRayRatio,
@@ -126,6 +138,8 @@ int main(int argc, const char **argv) {
                pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
                pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
                );
+
+        usec = pulse->header.time.tv_usec;
     }
     printf("r = %zu / %s / %s\n",
            r,
