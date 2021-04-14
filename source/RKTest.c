@@ -2091,7 +2091,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         if (c == NULL) {
             continue;
         }
-        if (strcmp(".rkr", c)) {
+        if (strcmp(".rkr", c) && strcmp(".rkc", c)) {
             continue;
         }
         strcpy(filelist + k * RKMaximumPathLength, pathname);

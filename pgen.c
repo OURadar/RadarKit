@@ -1,5 +1,20 @@
 #include <RadarKit.h>
 
+// Make some private functions available
+
+int prepareScratch(RKScratch *);
+int makeRayFromScratch(RKScratch *, RKRay *);
+size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool);
+void RKScratchFree(RKScratch *);
+
+#pragma mark - Main
+
+//
+//
+//  M A I N
+//
+//
+
 int main(int argc, const char **argv) {
 
     if (argc < 2) {
@@ -62,6 +77,8 @@ int main(int argc, const char **argv) {
            header->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
            (header->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
 
+    RKScratch *scratch;
+    
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
     RKProduct *products;
@@ -81,6 +98,10 @@ int main(int argc, const char **argv) {
           RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
           RKIntegerToCommaStyleString(header->desc.pulseCapacity));
 
+    const int pulseCount = 10;
+    
+    size_t mem = RKScratchAlloc(&scratch, header->desc.pulseCapacity, 3, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    
     RKMarker marker = header->config.startMarker;
     
     printf("sweep.Elevation = %.2f\n", header->config.sweepElevation);
@@ -93,7 +114,7 @@ int main(int argc, const char **argv) {
     time_t startTime;
     suseconds_t usec = 0;
     
-    for (k = 0; k < MIN(10, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
+    for (k = 0; k < MIN(100, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
 
         r = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
@@ -115,11 +136,6 @@ int main(int argc, const char **argv) {
         if (i1 != i0 || count == RKMaximumPulsesPerRay) {
             i1 = i0;
             m = 1;
-            
-            // Process ...
-            //
-            
-            k = 0;
         }
         startTime = pulse->header.time.tv_sec;
         
@@ -138,6 +154,15 @@ int main(int argc, const char **argv) {
                pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
                pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
                );
+        
+        // Process ...
+        if (m == 1 && k > 3) {
+            printf("Processing ray ... k = %d\n", k);
+            
+            
+            
+            k = 0;
+        }
 
         usec = pulse->header.time.tv_usec;
     }
