@@ -31,7 +31,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/boonleng/Downloads/RAXPOL-20210324-192623.rkc"
+            argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192623.rkc"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

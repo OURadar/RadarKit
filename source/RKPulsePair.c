@@ -543,7 +543,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 
     // Get the start pulse to know the capacity
     RKPulse *pulse = pulses[0];
-    const uint32_t capacity = pulse->header.capacity;
+    //const uint32_t capacity = pulse->header.capacity;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
@@ -555,9 +555,9 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     for (p = 0; p < 2; p++) {
 
         // Initializes the storage
-        RKZeroOutIQZ(&space->mX[p], capacity);
-        RKZeroOutIQZ(&space->R[p][0], capacity);
-        RKZeroOutIQZ(&space->R[p][1], capacity);
+        RKZeroOutIQZ(&space->mX[p], gateCount);
+        RKZeroOutIQZ(&space->R[p][0], gateCount);
+        RKZeroOutIQZ(&space->R[p][1], gateCount);
 
         // Go through the even pulses for mX and R(0)
         n = 0;
@@ -622,7 +622,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     }
 
     // Cross-channel
-    RKZeroOutIQZ(&space->C[0], capacity);
+    RKZeroOutIQZ(&space->C[0], gateCount);
 
     //
     //  CCF
