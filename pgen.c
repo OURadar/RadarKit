@@ -42,9 +42,10 @@ int main(int argc, const char **argv) {
     
     int i, k, p, r;
     bool m = false;
-    char *c;
     size_t rsize = 0, tr;
-    char timestr[32];
+    uint32_t u32 = 0;
+    char *c, timestr[32];
+
     time_t startTime;
     suseconds_t usec = 0;
     
@@ -86,22 +87,16 @@ int main(int argc, const char **argv) {
     rewind(fid);
     fread(header, sizeof(RKFileHeader), 1, fid);
 
-    printf("header:\n");
-    printf("->%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
-    printf("->desc.name = '%s'\n", header->desc.name);
-    printf("\n");
-    printf("->desc.latitude = %.6f\n", header->desc.latitude);
-    printf("->desc.longitude = %.6f\n", header->desc.longitude);
-    printf("\n");
-    printf("->config.waveform = '%s'\n", header->config.waveform);
-    printf("->config.prt = %.1f ms / %.1f ms\n", 1.0e3 * header->config.prt[0], 1.0e3 * header->config.prt[1]);
-    printf("\n");
-    printf("->desc.pulseCapacity = %u\n", header->desc.pulseCapacity);
-    printf("->desc.pulseToRayRatio = %u\n", header->desc.pulseToRayRatio);
-    printf("->desc.productBufferDepth = %u\n", header->desc.productBufferDepth);
-    printf("->desc.wavelength = %.2f m\n", header->desc.wavelength);
-    printf("\n");
-    printf("->dataType = '%s'\n",
+//    RKLog(">%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
+    RKLog(">desc.name = '%s'\n", header->desc.name);
+    RKLog(">desc.latitude, desc.longitude = %.6f,  %.6f\n", header->desc.latitude, header->desc.longitude);
+    RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(header->desc.pulseCapacity));
+    RKLog(">desc.pulseToRayRatio = %u\n", header->desc.pulseToRayRatio);
+    RKLog(">desc.productBufferDepth = %u\n", header->desc.productBufferDepth);
+    RKLog(">desc.wavelength = %.4f m\n", header->desc.wavelength);
+    RKLog(">config.waveform = '%s'\n", header->config.waveform);
+    RKLog(">config.prt = %.1f ms / %.1f ms\n", 1.0e3 * header->config.prt[0], 1.0e3 * header->config.prt[1]);
+    RKLog("dataType = '%s'\n",
            header->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
            (header->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
 
@@ -118,7 +113,8 @@ int main(int argc, const char **argv) {
     int i0;
     int i1 = 0;
     int count = 0;
-    
+    size_t mem = 0;
+
     c = strrchr(filename, '.');
     if (c == NULL) {
         RKLog("Error. No file extension.");
@@ -128,7 +124,6 @@ int main(int argc, const char **argv) {
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)header->desc.pulseCapacity / header->desc.pulseToRayRatio * sizeof(RKFloat) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
 
-    uint32_t u32 = 0;
     if (!strcmp(".rkr", c)) {
         u32 = header->desc.pulseCapacity;
     } else if (!strcmp(".rkc", c)) {
@@ -137,33 +132,44 @@ int main(int argc, const char **argv) {
         RKLog("Error. Unable to handle extension %s", c);
         exit(EXIT_FAILURE);
     }
-    
     const uint32_t pulseCapacity = u32;
     bytes = RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, RKMaximumPulsesPerRay);
     if (bytes == 0 || pulseBuffer == NULL) {
         RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
         exit(EXIT_FAILURE);
     }
+    mem += bytes;
     RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
           RKUIntegerToCommaStyleString(bytes),
           RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
           RKIntegerToCommaStyleString(pulseCapacity));
     
-    printf("rayCapacity = %s\n", RKIntegerToCommaStyleString(rayCapacity));
-    bytes = RKRayBufferAlloc(&rayBuffer, rayCapacity, 400);
+    u32 = 400;
+    bytes = RKRayBufferAlloc(&rayBuffer, rayCapacity, u32);
     if (bytes == 0 || rayBuffer == NULL) {
         RKLog("Error. Unable to allocate memory for rays.\n");
         exit(EXIT_FAILURE);
     }
+    mem += bytes;
+    RKLog("Ray buffer occupies %s B  (%s rays x %s gates)\n",
+          RKUIntegerToCommaStyleString(bytes),
+          RKIntegerToCommaStyleString(u32),
+          RKIntegerToCommaStyleString(rayCapacity));
 
     bytes = RKProductBufferAlloc(&products, header->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
     if (bytes == 0 || products == NULL) {
         RKLog("Error. Unable to allocate memory for products.\n");
         exit(EXIT_FAILURE);
     }
+    mem += bytes;
 
     const int maxPulseCount = 100;
-    size_t mem = RKScratchAlloc(&space, rayCapacity, 3, (uint8_t)ceilf(log2f((float)maxPulseCount)), true);
+    bytes = RKScratchAlloc(&space, rayCapacity, 3, (uint8_t)ceilf(log2f((float)maxPulseCount)), true);
+    if (bytes == 0 || space == NULL) {
+        RKLog("Error. Unable to allocate memory for scratch space.\n");
+        exit(EXIT_FAILURE);
+    }
+    mem += bytes;
 
     // Config changed, propagate parameters to scratch space
     RKConfig *config = &header->config;
@@ -183,19 +189,23 @@ int main(int argc, const char **argv) {
     space->widthFactor = header->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
 
-    printf("space->gateCount = %d\b", space->gateCount);
-    printf("space->mask @ %p\b", space->mask);
+    //RKLog("space->gateCount = %s\n", RKIntegerToCommaStyleString(space->gateCount));
+    //RKLog("space->mask @ %016p\n", space->mask);
     
-    printf("memory use = %s\n", RKIntegerToCommaStyleString(mem));
+    RKLog("Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
     RKMarker marker = header->config.startMarker;
     
-    printf("sweep.Elevation = %.2f\n", header->config.sweepElevation);
-    printf("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+    RKLog("sweep.Elevation = %.2f\n", header->config.sweepElevation);
+    RKLog("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+    RKLog("noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
+    RKLog("SNRThreshold = %.2f dB\n", space->SNRThreshold);
+    RKLog("SQIThreshold = %.2f\n", space->SQIThreshold);
 
     p = 0;
     r = 0;
-    for (k = 0; k < MIN(50, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
+    int verbose = 1;
+    for (k = 0; k < MIN(100, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         pulses[p] = pulse;
 
@@ -224,24 +234,25 @@ int main(int argc, const char **argv) {
         tr = strftime(timestr, 24, "%T", gmtime(&startTime));
         tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
         
-        printf("pulse %s (%06d) (%" PRIu64 ") (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %d %s%s%s\n",
-               timestr, pulse->header.time.tv_usec - usec,
-               pulse->header.i,
-               pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
-               RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-               pulse->header.gateSizeMeters * header->desc.pulseToRayRatio,
-               i0, pulse->header.azimuthBinIndex,
-               pulse->header.marker,
-               m ? "*" : "",
-               pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
-               pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
-               );
-        
+        if (verbose > 1) {
+            printf("pulse %s (%06d) (%" PRIu64 ") (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %02x %s%s%s\n",
+                   timestr, pulse->header.time.tv_usec - usec,
+                   pulse->header.i,
+                   pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
+                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                   pulse->header.gateSizeMeters * header->desc.pulseToRayRatio,
+                   i0, pulse->header.azimuthBinIndex,
+                   pulse->header.marker,
+                   m ? "*" : "",
+                   pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
+                   pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
+                   );
+        }
         // Process ...
         if (m == true && p >= 3) {
             space->gateCount = pulse->header.downSampledGateCount;
 
-            printf("Processing ray ... k = %d   p = %d   mask @ %p   g = %d / %d\n", k, p, space->mask, space->gateCount, space->capacity);
+            printf("Processing ray ... k = %d   p = %d   r = %d   g = %d / %d\n", k, p, r, space->gateCount, space->capacity);
 
             RKPulsePairHop(space, pulses, p);
             ray = RKGetRayFromBuffer(rayBuffer, r);
@@ -254,8 +265,8 @@ int main(int argc, const char **argv) {
         usec = pulse->header.time.tv_usec;
         p++;
     }
-    printf("r = %zu / %s / %s\n",
-           rsize,
+    printf("r = %d / %s / %s\n",
+           r,
            RKUIntegerToCommaStyleString(ftell(fid)),
            RKUIntegerToCommaStyleString(fsize));
     if (ftell(fid) != fsize) {
