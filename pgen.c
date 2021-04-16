@@ -70,7 +70,7 @@ int main(int argc, const char **argv) {
 //    RKLog("Elapsed time = %.3f s   (%s files / sec)\n", dt, RKFloatToCommaStyleString((double)k / dt));
     
     gettimeofday(&s, NULL);
-    RKFileHeader *header = (RKFileHeader *)malloc(sizeof(RKFileHeader));
+    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
     
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
@@ -85,20 +85,20 @@ int main(int argc, const char **argv) {
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(fsize));
     }
     rewind(fid);
-    fread(header, sizeof(RKFileHeader), 1, fid);
+    fread(fileHeader, sizeof(RKFileHeader), 1, fid);
 
 //    RKLog(">%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
-    RKLog(">desc.name = '%s'\n", header->desc.name);
-    RKLog(">desc.latitude, desc.longitude = %.6f,  %.6f\n", header->desc.latitude, header->desc.longitude);
-    RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(header->desc.pulseCapacity));
-    RKLog(">desc.pulseToRayRatio = %u\n", header->desc.pulseToRayRatio);
-    RKLog(">desc.productBufferDepth = %u\n", header->desc.productBufferDepth);
-    RKLog(">desc.wavelength = %.4f m\n", header->desc.wavelength);
-    RKLog(">config.waveform = '%s'\n", header->config.waveform);
-    RKLog(">config.prt = %.1f ms / %.1f ms\n", 1.0e3 * header->config.prt[0], 1.0e3 * header->config.prt[1]);
+    RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
+    RKLog(">desc.latitude, desc.longitude = %.6f,  %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
+    RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
+    RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
+    RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
+    RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
+    RKLog(">config.waveform = '%s'\n", fileHeader->config.waveform);
+    RKLog(">config.prt = %.1f ms / %.1f ms\n", 1.0e3 * fileHeader->config.prt[0], 1.0e3 * fileHeader->config.prt[1]);
     RKLog("dataType = '%s'\n",
-           header->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-           (header->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+           fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+           (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
 
     RKScratch *space;
     
@@ -122,10 +122,10 @@ int main(int argc, const char **argv) {
     }
     
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
-    const uint32_t rayCapacity = ((uint32_t)ceilf((float)header->desc.pulseCapacity / header->desc.pulseToRayRatio * sizeof(RKFloat) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
+    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio * sizeof(RKFloat) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
 
     if (!strcmp(".rkr", c)) {
-        u32 = header->desc.pulseCapacity;
+        u32 = fileHeader->desc.pulseCapacity;
     } else if (!strcmp(".rkc", c)) {
         u32 = rayCapacity;
     } else {
@@ -156,7 +156,7 @@ int main(int argc, const char **argv) {
           RKIntegerToCommaStyleString(u32),
           RKIntegerToCommaStyleString(rayCapacity));
 
-    bytes = RKProductBufferAlloc(&products, header->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
+    bytes = RKProductBufferAlloc(&products, fileHeader->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
     if (bytes == 0 || products == NULL) {
         RKLog("Error. Unable to allocate memory for products.\n");
         exit(EXIT_FAILURE);
@@ -172,31 +172,30 @@ int main(int argc, const char **argv) {
     mem += bytes;
 
     // Config changed, propagate parameters to scratch space
-    RKConfig *config = &header->config;
-    space->gateCount = rayCapacity;
-    space->gateSizeMeters = header->config.pulseGateSize;
+    RKConfig *config = &fileHeader->config;
+    space->gateSizeMeters = fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio;
     // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
     // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
     // The number 60 is for conversion of range from meters to kilometers in the range correction term.
-    space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * header->desc.pulseToRayRatio)) + 60.0f;
+    space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * fileHeader->desc.pulseToRayRatio)) + 60.0f;
     buildInCalibrator(space, config);
     // The rest of the constants
     space->noise[0] = config->noise[0];
     space->noise[1] = config->noise[1];
     space->SNRThreshold = config->SNRThreshold;
     space->SQIThreshold = config->SQIThreshold;
-    space->velocityFactor = 0.25f * header->desc.wavelength / config->prt[0] / M_PI;
-    space->widthFactor = header->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
+    space->velocityFactor = 0.25f * fileHeader->desc.wavelength / config->prt[0] / M_PI;
+    space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
 
     //RKLog("space->gateCount = %s\n", RKIntegerToCommaStyleString(space->gateCount));
     //RKLog("space->mask @ %016p\n", space->mask);
-    
+
     RKLog("Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
-    RKMarker marker = header->config.startMarker;
+    RKMarker marker = fileHeader->config.startMarker;
     
-    RKLog("sweep.Elevation = %.2f\n", header->config.sweepElevation);
+    RKLog("sweep.Elevation = %.2f\n", fileHeader->config.sweepElevation);
     RKLog("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
     RKLog("noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
     RKLog("SNRThreshold = %.2f dB\n", space->SNRThreshold);
@@ -240,7 +239,7 @@ int main(int argc, const char **argv) {
                    pulse->header.i,
                    pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                    RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                   pulse->header.gateSizeMeters * header->desc.pulseToRayRatio,
+                   pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
                    i0, pulse->header.azimuthBinIndex,
                    pulse->header.marker,
                    m ? "*" : "",
@@ -251,13 +250,13 @@ int main(int argc, const char **argv) {
         // Process ...
         if (m == true && p >= 3) {
             space->gateCount = pulse->header.downSampledGateCount;
+            //space->gateSizeMeters = pulse->header.gateSizeMeters * header->desc.pulseToRayRatio;
 
             printf("Processing ray ... k = %d   p = %d   r = %d   g = %d / %d\n", k, p, r, space->gateCount, space->capacity);
 
             RKPulsePairHop(space, pulses, p);
             ray = RKGetRayFromBuffer(rayBuffer, r);
             makeRayFromScratch(space, ray);
-            
             p = 0;
             r++;
         }
@@ -274,7 +273,7 @@ int main(int argc, const char **argv) {
     }
 
     fclose(fid);
-    free(header);
+    free(fileHeader);
 
     gettimeofday(&e, NULL);
     double dt = RKTimevalDiff(e, s);
