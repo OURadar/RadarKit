@@ -92,7 +92,7 @@ int main(int argc, const char **argv) {
 
 //    RKLog(">%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
     RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
-    RKLog(">desc.latitude, desc.longitude = %.6f,  %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
+    RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
     RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
     RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
     RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
@@ -150,8 +150,7 @@ int main(int argc, const char **argv) {
           RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
           RKIntegerToCommaStyleString(pulseCapacity));
     
-    u32 = 400;
-    bytes = RKRayBufferAlloc(&rayBuffer, rayCapacity, u32);
+    bytes = RKRayBufferAlloc(&rayBuffer, rayCapacity, RKMaximumRaysPerSweep);
     if (bytes == 0 || rayBuffer == NULL) {
         RKLog("Error. Unable to allocate memory for rays.\n");
         exit(EXIT_FAILURE);
@@ -159,17 +158,21 @@ int main(int argc, const char **argv) {
     mem += bytes;
     RKLog("Ray buffer occupies %s B  (%s rays x %s gates)\n",
           RKUIntegerToCommaStyleString(bytes),
-          RKIntegerToCommaStyleString(u32),
+          RKIntegerToCommaStyleString(RKMaximumRaysPerSweep),
           RKIntegerToCommaStyleString(rayCapacity));
 
-    bytes = RKProductBufferAlloc(&products, fileHeader->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
+    bytes = RKProductBufferAlloc(&products, fileHeader->desc.productBufferDepth, RKMaximumRaysPerSweep, config->pulseGateCount / fileHeader->desc.pulseToRayRatio);
     if (bytes == 0 || products == NULL) {
         RKLog("Error. Unable to allocate memory for products.\n");
         exit(EXIT_FAILURE);
     }
+    RKLog("Product buffer occupies %s B  (%s rays x %s gates)\n",
+          RKUIntegerToCommaStyleString(bytes),
+          RKIntegerToCommaStyleString(RKMaximumRaysPerSweep),
+          RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
     mem += bytes;
 
-    const int maxPulseCount = 100;
+    const int maxPulseCount = RKMaximumPulsesPerRay;
     bytes = RKScratchAlloc(&space, rayCapacity, 3, (uint8_t)ceilf(log2f((float)maxPulseCount)), true);
     if (bytes == 0 || space == NULL) {
         RKLog("Error. Unable to allocate memory for scratch space.\n");
@@ -200,7 +203,7 @@ int main(int argc, const char **argv) {
 
     RKMarker marker = fileHeader->config.startMarker;
     
-    RKLog("sweep.Elevation = %.2f\n", config->sweepElevation);
+    RKLog("sweep.Elevation = %.2f deg\n", config->sweepElevation);
     RKLog("noise = %.2f, %.2f ADU^2\n", config->noise[0], space->noise[1]);
     RKLog("SNRThreshold = %.2f dB\n", config->SNRThreshold);
     RKLog("SQIThreshold = %.2f\n", config->SQIThreshold);
@@ -258,8 +261,25 @@ int main(int argc, const char **argv) {
         // Process ...
         if (m) {
             if (p >= 3) {
+                RKPulse *S = pulses[0];
+                RKPulse *E = pulses[p - 1];
+
+                // Get a ray from the buffer, set the ray headers
+                RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
+                ray->header.startTime       = S->header.time;
+                ray->header.startTimeDouble = S->header.timeDouble;
+                ray->header.startAzimuth    = S->header.azimuthDegrees;
+                ray->header.startElevation  = S->header.elevationDegrees;
+                ray->header.endTime         = E->header.time;
+                ray->header.endTimeDouble   = E->header.timeDouble;
+                ray->header.endAzimuth      = E->header.azimuthDegrees;
+                ray->header.endElevation    = E->header.elevationDegrees;
+                ray->header.configIndex     = E->header.configIndex;
+                ray->header.gateCount       = E->header.downSampledGateCount;
+                ray->header.gateSizeMeters  = E->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio;
+
+                // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
-                //space->gateSizeMeters = pulse->header.gateSizeMeters * header->desc.pulseToRayRatio;
 
                 printf("ray[%3d] p = %d   (E %5.2f, A %6.2f-%6.2f)   k = %6s   g = %s / %s\n",
                        r, p,
@@ -271,8 +291,6 @@ int main(int argc, const char **argv) {
                        RKIntegerToCommaStyleString(space->capacity));
 
                 RKPulsePairHop(space, pulses, p);
-
-                RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
                 makeRayFromScratch(space, ray);
                 
                 rays[r++] = ray;
@@ -301,5 +319,52 @@ int main(int argc, const char **argv) {
     double dt = RKTimevalDiff(e, s);
     RKLog("Elapsed time = %.3f s\n", dt);
 
+    // Allocate a sweep object
+    if (true) {
+        RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
+        if (sweep == NULL) {
+            RKLog("Error. Unable to allocate memory.\n");
+            exit(EXIT_FAILURE);
+        }
+        memset(sweep, 0, sizeof(RKSweep));
+
+        // Pick the start, transition and end rays
+        k = 0;
+        RKRay *S = rays[0];
+        RKRay *T = rays[1];
+        RKRay *E = rays[r - 1];
+
+        // Populate the contents
+        sweep->header.rayCount = r;
+        sweep->header.gateCount = S->header.gateCount;
+        sweep->header.gateSizeMeters = S->header.gateSizeMeters;
+        sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
+        sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
+        //sweep->header.baseMomentList = overallMomentList;
+        sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+        sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
+
+        memcpy(&sweep->header.desc, &fileHeader->desc, sizeof(RKRadarDesc));
+        memcpy(&sweep->header.config, config, sizeof(RKConfig));
+        memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
+        // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
+        //k = sprintf(sweep->header.filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
+        //    k += strftime(sweep->header.filename + k, 10, "%Y%m%d", gmtime(&sweep->header.startTime));
+        k = sprintf(sweep->header.filename, "/Users/boonleng/Downloads/raxpol/");
+        k += sprintf(sweep->header.filename + k, "/%s-", fileHeader->desc.filePrefix);
+        k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
+        if (sweep->header.isPPI) {
+            k += sprintf(sweep->header.filename + k, "-E%.1f", sweep->header.config.sweepElevation);
+        } else if (sweep->header.isRHI) {
+            k += sprintf(sweep->header.filename + k, "-A%.1f", sweep->header.config.sweepAzimuth);
+        } else {
+            k += sprintf(sweep->header.filename + k, "-N%03d", sweep->header.rayCount);
+        }
+        if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
+            RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
+        }
+        RKLog("Output %s\n", sweep->header.filename);
+    }
+    
     return EXIT_SUCCESS;
 }
