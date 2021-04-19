@@ -86,6 +86,9 @@ int main(int argc, const char **argv) {
     }
     rewind(fid);
     fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    RKLog("dataType = '%s'\n",
+           fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+           (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
 
 //    RKLog(">%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
     RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
@@ -94,11 +97,16 @@ int main(int argc, const char **argv) {
     RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
     RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
     RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-    RKLog(">config.waveform = '%s'\n", fileHeader->config.waveform);
-    RKLog(">config.prt = %.1f ms / %.1f ms\n", 1.0e3 * fileHeader->config.prt[0], 1.0e3 * fileHeader->config.prt[1]);
-    RKLog("dataType = '%s'\n",
-           fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-           (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+
+    RKConfig *config = &fileHeader->config;
+    RKLog(">config.waveform = '%s'\n", config->waveform);
+    RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n", 1.0e3f * config->prt[0], RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+    RKLog(">config.pulseGateCount = %s --> %s\n",
+          RKIntegerToCommaStyleString(config->pulseGateCount),
+          RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
+    RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
+          config->pulseGateSize,
+          config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
 
     RKScratch *space;
     
@@ -171,8 +179,7 @@ int main(int argc, const char **argv) {
     }
     mem += bytes;
 
-    // Config changed, propagate parameters to scratch space
-    RKConfig *config = &fileHeader->config;
+    // Propagate RKConfig parameters to scratch space
     space->gateSizeMeters = fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio;
     // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
     // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
@@ -195,15 +202,15 @@ int main(int argc, const char **argv) {
 
     RKMarker marker = fileHeader->config.startMarker;
     
-    RKLog("sweep.Elevation = %.2f\n", fileHeader->config.sweepElevation);
+    RKLog("sweep.Elevation = %.2f\n", config->sweepElevation);
+    RKLog("noise = %.2f, %.2f ADU^2\n", config->noise[0], space->noise[1]);
+    RKLog("SNRThreshold = %.2f dB\n", config->SNRThreshold);
+    RKLog("SQIThreshold = %.2f\n", config->SQIThreshold);
     RKLog("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
-    RKLog("noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
-    RKLog("SNRThreshold = %.2f dB\n", space->SNRThreshold);
-    RKLog("SQIThreshold = %.2f\n", space->SQIThreshold);
 
     p = 0;
     r = 0;
-    int verbose = 1;
+    int verbose = 2;
     for (k = 0; k < MIN(100, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         pulses[p] = pulse;
@@ -252,7 +259,10 @@ int main(int argc, const char **argv) {
             space->gateCount = pulse->header.downSampledGateCount;
             //space->gateSizeMeters = pulse->header.gateSizeMeters * header->desc.pulseToRayRatio;
 
-            printf("Processing ray ... k = %d   p = %d   r = %d   g = %d / %d\n", k, p, r, space->gateCount, space->capacity);
+            printf("Processing ray ... k = %d   p = %d   r = %d   g = %s / %s\n",
+                   k, p, r,
+                   RKIntegerToCommaStyleString(space->gateCount),
+                   RKIntegerToCommaStyleString(space->capacity));
 
             RKPulsePairHop(space, pulses, p);
             ray = RKGetRayFromBuffer(rayBuffer, r);
