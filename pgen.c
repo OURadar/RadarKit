@@ -40,7 +40,7 @@ int main(int argc, const char **argv) {
         return EXIT_FAILURE;
     }
     
-    int i, k, p, r;
+    int k, p, r;
     bool m = false;
     size_t rsize = 0, tr;
     uint32_t u32 = 0;
@@ -57,17 +57,6 @@ int main(int argc, const char **argv) {
     RKSetWantScreenOutput(true);
 
     RKLog("Opening file %s ...", filename);
-//    int k = 0;
-//    gettimeofday(&s, NULL);
-//    for (int i = 0; i < 500; i++) {
-//        printf("Trial #%04d   Filename = %s\n", i, filename);
-//        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename);
-//        k += collection->count;
-//        RKProductCollectionFree(collection);
-//    }
-//    gettimeofday(&e, NULL);
-//    double dt = RKTimevalDiff(e, s);
-//    RKLog("Elapsed time = %.3f s   (%s files / sec)\n", dt, RKFloatToCommaStyleString((double)k / dt));
     
     gettimeofday(&s, NULL);
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
@@ -320,7 +309,7 @@ int main(int argc, const char **argv) {
     RKLog("Elapsed time = %.3f s\n", dt);
 
     // Allocate a sweep object
-    if (true) {
+    if (r > 0) {
         RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
         if (sweep == NULL) {
             RKLog("Error. Unable to allocate memory.\n");
@@ -331,8 +320,34 @@ int main(int argc, const char **argv) {
         // Pick the start, transition and end rays
         k = 0;
         RKRay *S = rays[0];
-        RKRay *T = rays[1];
+//        RKRay *T = rays[1];
         RKRay *E = rays[r - 1];
+
+        // Consolidate some other information and check consistencies
+        RKBaseMomentList overallMomentList = 0;
+        uint8_t gateCountWarningCount = 0;
+        uint8_t gateSizeWarningCount = 0;
+        for (k = 0; k < r; k++) {
+            overallMomentList |= rays[k]->header.baseMomentList;
+            if (rays[k]->header.gateCount != S->header.gateCount) {
+                if (++gateCountWarningCount < 5) {
+                    RKLog("Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
+                          RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
+                          RKIntegerToCommaStyleString(S->header.gateCount));
+                } else if (gateCountWarningCount == 5) {
+                    RKLog("Warning. Inconsistent gateCount more than 5 rays / sweep.\n");
+                }
+            }
+            if (rays[k]->header.gateSizeMeters != S->header.gateSizeMeters) {
+                if (++gateSizeWarningCount < 5) {
+                    RKLog("Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
+                          RKIntegerToCommaStyleString(k), RKFloatToCommaStyleString(rays[k]->header.gateSizeMeters),
+                          RKFloatToCommaStyleString(S->header.gateSizeMeters));
+                } else if (gateSizeWarningCount == 5) {
+                    RKLog("Warning. Inconsistent gateSize more than 5 rays / sweep.\n");
+                }
+            }
+        }
 
         // Populate the contents
         sweep->header.rayCount = r;
@@ -340,10 +355,14 @@ int main(int argc, const char **argv) {
         sweep->header.gateSizeMeters = S->header.gateSizeMeters;
         sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
         sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
-        //sweep->header.baseMomentList = overallMomentList;
+        sweep->header.baseMomentList = overallMomentList;
         sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
         sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
 
+        if (verbose > 1) {
+            RKLog("momentList = %016xh\n", overallMomentList);
+        }
+        
         memcpy(&sweep->header.desc, &fileHeader->desc, sizeof(RKRadarDesc));
         memcpy(&sweep->header.config, config, sizeof(RKConfig));
         memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
@@ -364,7 +383,11 @@ int main(int argc, const char **argv) {
             RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
         }
         RKLog("Output %s\n", sweep->header.filename);
+
+        RKSweepFree(sweep);
     }
     
+    RKPulseBufferFree(pulseBuffer);
+    RKRayBufferFree(rayBuffer);
     return EXIT_SUCCESS;
 }
