@@ -107,21 +107,19 @@ int main(int argc, const char **argv) {
     RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
           config->pulseGateSize,
           config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-
-    RKScratch *space;
     
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
+    RKPulse *pulses[RKMaximumPulsesPerRay];
+    RKRay *rays[RKMaximumRaysPerSweep];
     RKProduct *products;
-    size_t bytes;
-    
-    RKPulse *pulses[50];
-    RKRay *ray;
+    RKScratch *space;
     
     int i0;
     int i1 = 0;
     int count = 0;
     size_t mem = 0;
+    size_t bytes;
 
     c = strrchr(filename, '.');
     if (c == NULL) {
@@ -210,17 +208,18 @@ int main(int argc, const char **argv) {
 
     p = 0;
     r = 0;
-    int verbose = 2;
-    for (k = 0; k < MIN(100, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
+    int verbose = 1;
+    for (k = 0; k < MIN(10000, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        pulses[p] = pulse;
 
         rsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
         if (rsize != 1) {
             break;
         }
+        // Read H and V data into channels 0 and 1, respectively
         fread(RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
         fread(RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
+        pulses[p++] = pulse;
 
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
             i0 = (int)floorf(pulse->header.azimuthDegrees);
@@ -233,7 +232,9 @@ int main(int argc, const char **argv) {
         m = false;
         if (i1 != i0 || count == RKMaximumPulsesPerRay) {
             i1 = i0;
-            m = true;
+            if (k > 0) {
+                m = true;
+            }
         }
         startTime = pulse->header.time.tv_sec;
         
@@ -255,24 +256,35 @@ int main(int argc, const char **argv) {
                    );
         }
         // Process ...
-        if (m == true && p >= 3) {
-            space->gateCount = pulse->header.downSampledGateCount;
-            //space->gateSizeMeters = pulse->header.gateSizeMeters * header->desc.pulseToRayRatio;
+        if (m) {
+            if (p >= 3) {
+                space->gateCount = pulse->header.downSampledGateCount;
+                //space->gateSizeMeters = pulse->header.gateSizeMeters * header->desc.pulseToRayRatio;
 
-            printf("Processing ray ... k = %d   p = %d   r = %d   g = %s / %s\n",
-                   k, p, r,
-                   RKIntegerToCommaStyleString(space->gateCount),
-                   RKIntegerToCommaStyleString(space->capacity));
+                printf("ray[%3d] p = %d   (E %5.2f, A %6.2f-%6.2f)   k = %6s   g = %s / %s\n",
+                       r, p,
+                       pulses[0]->header.elevationDegrees,
+                       pulses[0]->header.azimuthDegrees,
+                       pulses[p-1]->header.azimuthDegrees,
+                       RKIntegerToCommaStyleString(k),
+                       RKIntegerToCommaStyleString(space->gateCount),
+                       RKIntegerToCommaStyleString(space->capacity));
 
-            RKPulsePairHop(space, pulses, p);
-            ray = RKGetRayFromBuffer(rayBuffer, r);
-            makeRayFromScratch(space, ray);
-            p = 0;
-            r++;
+                RKPulsePairHop(space, pulses, p);
+
+                RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
+                makeRayFromScratch(space, ray);
+                
+                rays[r++] = ray;
+            }
+            // Use the end pulse as the start pulse of next ray
+            memcpy(RKGetComplexDataFromPulse(pulses[0], 0), RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex));
+            memcpy(RKGetComplexDataFromPulse(pulses[0], 1), RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex));
+            memcpy(pulses[0], pulse, sizeof(RKPulse));
+            p = 1;
         }
 
         usec = pulse->header.time.tv_usec;
-        p++;
     }
     printf("r = %d / %s / %s\n",
            r,
