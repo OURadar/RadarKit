@@ -102,7 +102,7 @@ int main(int argc, const char **argv) {
     RKBuffer rayBuffer;
     RKPulse *pulses[RKMaximumPulsesPerRay];
     RKRay *rays[RKMaximumRaysPerSweep];
-    RKProduct *products;
+    RKProduct *product;
     RKScratch *space;
     
     int i0;
@@ -150,15 +150,13 @@ int main(int argc, const char **argv) {
           RKUIntegerToCommaStyleString(bytes),
           RKIntegerToCommaStyleString(RKMaximumRaysPerSweep),
           RKIntegerToCommaStyleString(rayCapacity));
-    const uint8_t productBufferDepth = __builtin_popcount(momentList);
-    bytes = RKProductBufferAlloc(&products, productBufferDepth, RKMaximumRaysPerSweep, config->pulseGateCount / fileHeader->desc.pulseToRayRatio);
-    if (bytes == 0 || products == NULL) {
+    bytes = RKProductBufferAlloc(&product, 1, RKMaximumRaysPerSweep, config->pulseGateCount / fileHeader->desc.pulseToRayRatio);
+    if (bytes == 0 || product == NULL) {
         RKLog("Error. Unable to allocate memory for products.\n");
         exit(EXIT_FAILURE);
     }
-    RKLog("Product buffer occupies %s B  (%s products)\n",
-          RKUIntegerToCommaStyleString(bytes),
-          RKIntegerToCommaStyleString(fileHeader->desc.productBufferDepth));
+    RKLog("Product buffer occupies %s B\n",
+          RKUIntegerToCommaStyleString(bytes));
     mem += bytes;
     const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
     bytes = RKScratchAlloc(&space, rayCapacity, 3, fftOrder, true);
@@ -167,7 +165,7 @@ int main(int argc, const char **argv) {
         exit(EXIT_FAILURE);
     }
     mem += bytes;
-    
+
     char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
     if (rkGlobalParameters.showColor) {
         sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
@@ -384,7 +382,7 @@ int main(int argc, const char **argv) {
         //k = sprintf(sweep->header.filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
         //    k += strftime(sweep->header.filename + k, 10, "%Y%m%d", gmtime(&sweep->header.startTime));
         k = sprintf(sweep->header.filename, "/Users/boonleng/Downloads/raxpol/");
-        k += sprintf(sweep->header.filename + k, "/%s-", fileHeader->desc.filePrefix);
+        k += sprintf(sweep->header.filename + k, "%s-", fileHeader->desc.filePrefix);
         k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
         if (sweep->header.isPPI) {
             k += sprintf(sweep->header.filename + k, "-E%.1f", sweep->header.config.sweepElevation);
@@ -396,87 +394,86 @@ int main(int argc, const char **argv) {
         if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
             RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
         }
-        RKLog("Output %s\n", sweep->header.filename);
-        
-        int productCount = __builtin_popcount(sweep->header.baseMomentList & momentList);
-        RKLog("productCount = %d\n", productCount);
+        //RKLog("Output %s\n", sweep->header.filename);
 
-//        RKName name;
-//        RKName unit;
-//        RKName symbol;
-//        RKName colormap;
-//        RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-//        RKBaseMomentIndex momentIndex = 0;
-//        for (p = 0; p < productCount; p++) {
-//            // Get the symbol, name, unit, colormap, etc. from the product list
-//            RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
-//            // Build a product description
-//            RKProductDesc productDescription;
-//            memset(&productDescription, 0, sizeof(RKProductDesc));
-//            strcpy(productDescription.name, name);
-//            strcpy(productDescription.unit, unit);
-//            strcpy(productDescription.symbol, symbol);
-//            strcpy(productDescription.colormap, colormap);
-//            // Special treatment for RhoHV: A three count piece-wise function
-//            if (momentIndex == RKBaseMomentIndexR) {
-//                productDescription.pieceCount = 3;
-//                productDescription.w[0] = 1000.0f;
-//                productDescription.b[0] = -824.0f;
-//                productDescription.l[0] = 0.93f;
-//                productDescription.w[1] = 300.0f;
-//                productDescription.b[1] = -173.0f;
-//                productDescription.l[1] = 0.7f;
-//                productDescription.w[2] = 52.8571f;
-//                productDescription.b[2] = 0.0f;
-//                productDescription.l[2] = 0.0f;
-//                productDescription.mininimumValue = 0.0f;
-//                productDescription.maximumValue = 1.05f;
-//            } else {
-//                switch (momentIndex) {
-//                    case RKBaseMomentIndexZ:
-//                        RKZLHMAC
-//                        break;
-//                    case RKBaseMomentIndexV:
-//                        RKV2LHMAC
-//                        break;
-//                    case RKBaseMomentIndexW:
-//                        RKWLHMAC
-//                        break;
-//                    case RKBaseMomentIndexD:
-//                        RKDLHMAC
-//                        break;
-//                    case RKBaseMomentIndexP:
-//                        RKPLHMAC
-//                        break;
-//                    case RKBaseMomentIndexK:
-//                        RKKLHMAC
-//                        break;
-//                    default:
-//                        break;
-//                }
-//                productDescription.pieceCount = 1;
-//                productDescription.mininimumValue = lhma[0];
-//                productDescription.maximumValue = lhma[1];
-//                productDescription.w[0] = lhma[2];
-//                productDescription.b[0] = lhma[3];
-//                productDescription.l[0] = 0.0f;
-//            }
-//        }
+        // Initialize a list based on desired moment list
+        RKBaseMomentList list = sweep->header.baseMomentList & momentList;
+        RKName name;
+        RKName unit;
+        RKName symbol;
+        RKName colormap;
+        RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        RKBaseMomentIndex momentIndex = 0;
 
         // Base products
-//        char filename[256];
-//        for (p = 0; p < productCount; p++) {
-//            RKProduct *product = &products[p];
-//            RKProductInitFromSweep(product, sweep);
-//            sprintf(filename, "%s-%s.nc", sweep->header.filename, );
-//            RKProductFileWriterNC(product, sweep->header.filename);
-//        }
+        int productCount = __builtin_popcount(list);
+        RKLog("productCount = %d\n", productCount);
+        for (p = 0; p < productCount; p++) {
+            // Get the symbol, name, unit, colormap, etc. from the product list
+            RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &list);
+            // Build a product description
+            RKProductDesc productDescription;
+            memset(&productDescription, 0, sizeof(RKProductDesc));
+            strcpy(productDescription.name, name);
+            strcpy(productDescription.unit, unit);
+            strcpy(productDescription.symbol, symbol);
+            strcpy(productDescription.colormap, colormap);
+            // Special treatment for RhoHV: A three count piece-wise function
+            if (momentIndex == RKBaseMomentIndexR) {
+                productDescription.pieceCount = 3;
+                productDescription.w[0] = 1000.0f;
+                productDescription.b[0] = -824.0f;
+                productDescription.l[0] = 0.93f;
+                productDescription.w[1] = 300.0f;
+                productDescription.b[1] = -173.0f;
+                productDescription.l[1] = 0.7f;
+                productDescription.w[2] = 52.8571f;
+                productDescription.b[2] = 0.0f;
+                productDescription.l[2] = 0.0f;
+                productDescription.mininimumValue = 0.0f;
+                productDescription.maximumValue = 1.05f;
+            } else {
+                switch (momentIndex) {
+                    case RKBaseMomentIndexZ:
+                        RKZLHMAC
+                        break;
+                    case RKBaseMomentIndexV:
+                        RKV2LHMAC
+                        break;
+                    case RKBaseMomentIndexW:
+                        RKWLHMAC
+                        break;
+                    case RKBaseMomentIndexD:
+                        RKDLHMAC
+                        break;
+                    case RKBaseMomentIndexP:
+                        RKPLHMAC
+                        break;
+                    case RKBaseMomentIndexK:
+                        RKKLHMAC
+                        break;
+                    default:
+                        break;
+                }
+                productDescription.pieceCount = 1;
+                productDescription.mininimumValue = lhma[0];
+                productDescription.maximumValue = lhma[1];
+                productDescription.w[0] = lhma[2];
+                productDescription.b[0] = lhma[3];
+                productDescription.l[0] = 0.0f;
+            }
+            product->desc = productDescription;
+            RKProductInitFromSweep(product, sweep);
+            sprintf(product->header.suggestedFilename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
+            RKProductFileWriterNC(product, product->header.suggestedFilename);
+            RKLog("%d %s\n", p, product->header.suggestedFilename);
+        }
         RKSweepFree(sweep);
     }
     
     RKPulseBufferFree(pulseBuffer);
     RKRayBufferFree(rayBuffer);
-    RKProductBufferFree(products, productBufferDepth);
+    RKProductBufferFree(product, 1);
     RKScratchFree(space);
     
     return EXIT_SUCCESS;
