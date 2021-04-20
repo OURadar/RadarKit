@@ -173,6 +173,7 @@ int main(int argc, const char **argv) {
     }
 
     // Propagate RKConfig parameters to scratch space
+    space->gateCount = rayCapacity;
     space->gateSizeMeters = fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio;
     // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
     // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
@@ -188,16 +189,23 @@ int main(int argc, const char **argv) {
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
 
+    space->SNRThreshold = -3.0f;
+    space->SQIThreshold = 0.0f;
+
+    float *t;
+    t = space->rcor[0]; printf("rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
+    t = space->dcal; printf("dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
+        
     RKLog("Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
     RKMarker marker = fileHeader->config.startMarker;
     
     RKLog("sweep.Elevation = %.2f deg\n", config->sweepElevation);
-    RKLog("noise = %.2f, %.2f ADU^2\n", config->noise[0], space->noise[1]);
-    RKLog("SNRThreshold = %.2f dB\n", config->SNRThreshold);
-    RKLog("SQIThreshold = %.2f\n", config->SQIThreshold);
+    RKLog("noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
+    RKLog("SNRThreshold = %.2f dB\n", space->SNRThreshold);
+    RKLog("SQIThreshold = %.2f\n", space->SQIThreshold);
     RKLog("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
-
+    
     p = 0;
     r = 0;
     int verbose = 1;
@@ -283,12 +291,15 @@ int main(int argc, const char **argv) {
 
                 // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
-                RKPulsePairHop(space, pulses, p);
+                //RKPulsePairHop(space, pulses, p);
+                RKPulsePair(space, pulses, p);
                 makeRayFromScratch(space, ray);
                 rays[r++] = ray;
 
                 // Summary of this ray
-                printf("%05d ray[%3d] p = %d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s\n",
+                RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
+                float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
+                printf("%05d ray[%3d] p = %d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
                        k, r, p,
                        config->sweepElevation, config->sweepAzimuth,
                        (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
@@ -297,8 +308,10 @@ int main(int argc, const char **argv) {
                        (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
                        RKIntegerToCommaStyleString(space->gateCount),
                        ray->header.marker,
-                       ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
-                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
+                       ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
+                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
+                       data[0], data[10], data[100], data[250], data[500],
+                       cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
             }
             // Use the end pulse as the start pulse of next ray
             memcpy(RKGetComplexDataFromPulse(pulses[0], 0), RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex));
