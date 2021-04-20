@@ -40,7 +40,7 @@ int main(int argc, const char **argv) {
         return EXIT_FAILURE;
     }
     
-    int k, p, r;
+    int i, k, p, r;
     bool m = false;
     size_t rsize = 0, tr;
     uint32_t u32 = 0;
@@ -55,6 +55,7 @@ int main(int argc, const char **argv) {
     strcpy(filename, argv[1]);
     
     RKSetWantScreenOutput(true);
+    RKSetWantColor(false);
 
     RKLog("Opening file %s ...", filename);
     
@@ -161,13 +162,19 @@ int main(int argc, const char **argv) {
           RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
     mem += bytes;
 
-    const int maxPulseCount = RKMaximumPulsesPerRay;
-    bytes = RKScratchAlloc(&space, rayCapacity, 3, (uint8_t)ceilf(log2f((float)maxPulseCount)), true);
+    const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
+    bytes = RKScratchAlloc(&space, rayCapacity, 3, fftOrder, true);
     if (bytes == 0 || space == NULL) {
         RKLog("Error. Unable to allocate memory for scratch space.\n");
         exit(EXIT_FAILURE);
     }
     mem += bytes;
+    
+    char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
+    if (rkGlobalParameters.showColor) {
+        sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
+        sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
+    }
 
     // Propagate RKConfig parameters to scratch space
     space->gateSizeMeters = fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio;
@@ -184,9 +191,6 @@ int main(int argc, const char **argv) {
     space->velocityFactor = 0.25f * fileHeader->desc.wavelength / config->prt[0] / M_PI;
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
-
-    //RKLog("space->gateCount = %s\n", RKIntegerToCommaStyleString(space->gateCount));
-    //RKLog("space->mask @ %016p\n", space->mask);
 
     RKLog("Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
@@ -253,6 +257,16 @@ int main(int argc, const char **argv) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
 
+                // Beamwidth
+                float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
+                float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+
+                // Consolidate the pulse marker into ray marker
+                marker = RKMarkerNull;
+                for (i = 0; i < p; i++) {
+                    marker |= pulses[i]->header.marker;
+                }
+
                 // Get a ray from the buffer, set the ray headers
                 RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
                 ray->header.startTime       = S->header.time;
@@ -266,23 +280,29 @@ int main(int argc, const char **argv) {
                 ray->header.configIndex     = E->header.configIndex;
                 ray->header.gateCount       = E->header.downSampledGateCount;
                 ray->header.gateSizeMeters  = E->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio;
+                ray->header.sweepElevation  = config->sweepElevation;
+                ray->header.sweepAzimuth    = config->sweepAzimuth;
+                ray->header.pulseCount      = p;
+                ray->header.marker          = marker;
 
                 // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
-
-                printf("ray[%3d] p = %d   (E %5.2f, A %6.2f-%6.2f)   k = %6s   g = %s / %s\n",
-                       r, p,
-                       pulses[0]->header.elevationDegrees,
-                       pulses[0]->header.azimuthDegrees,
-                       pulses[p-1]->header.azimuthDegrees,
-                       RKIntegerToCommaStyleString(k),
-                       RKIntegerToCommaStyleString(space->gateCount),
-                       RKIntegerToCommaStyleString(space->capacity));
-
                 RKPulsePairHop(space, pulses, p);
                 makeRayFromScratch(space, ray);
-                
                 rays[r++] = ray;
+
+                // Summary of this ray
+                printf("%05d ray[%3d] p = %d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s\n",
+                       k, r, p,
+                       config->sweepElevation, config->sweepAzimuth,
+                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                       RKIntegerToCommaStyleString(space->gateCount),
+                       ray->header.marker,
+                       ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
+                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
             }
             // Use the end pulse as the start pulse of next ray
             memcpy(RKGetComplexDataFromPulse(pulses[0], 0), RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex));
@@ -293,10 +313,7 @@ int main(int argc, const char **argv) {
 
         usec = pulse->header.time.tv_usec;
     }
-    printf("r = %d / %s / %s\n",
-           r,
-           RKUIntegerToCommaStyleString(ftell(fid)),
-           RKUIntegerToCommaStyleString(fsize));
+    RKLog("r = %d / %s / %s\n", r, RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(fsize));
     if (ftell(fid) != fsize) {
         RKLog("Warning. There is leftover in the file.");
     }
@@ -319,34 +336,37 @@ int main(int argc, const char **argv) {
 
         // Pick the start, transition and end rays
         k = 0;
-        RKRay *S = rays[0];
+        RKRay *S = rays[k];
 //        RKRay *T = rays[1];
-        RKRay *E = rays[r - 1];
+        RKRay *E = rays[k + r - 1];
 
         // Consolidate some other information and check consistencies
         RKBaseMomentList overallMomentList = 0;
         uint8_t gateCountWarningCount = 0;
         uint8_t gateSizeWarningCount = 0;
-        for (k = 0; k < r; k++) {
-            overallMomentList |= rays[k]->header.baseMomentList;
-            if (rays[k]->header.gateCount != S->header.gateCount) {
+        for (i = k + 1; i < k  + r - 1; i++) {
+            overallMomentList |= rays[i]->header.baseMomentList;
+            if (rays[i]->header.gateCount != S->header.gateCount) {
                 if (++gateCountWarningCount < 5) {
                     RKLog("Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
-                          RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
+                          RKIntegerToCommaStyleString(i), RKIntegerToCommaStyleString(rays[i]->header.gateCount),
                           RKIntegerToCommaStyleString(S->header.gateCount));
                 } else if (gateCountWarningCount == 5) {
                     RKLog("Warning. Inconsistent gateCount more than 5 rays / sweep.\n");
                 }
             }
-            if (rays[k]->header.gateSizeMeters != S->header.gateSizeMeters) {
+            if (rays[i]->header.gateSizeMeters != S->header.gateSizeMeters) {
                 if (++gateSizeWarningCount < 5) {
                     RKLog("Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
-                          RKIntegerToCommaStyleString(k), RKFloatToCommaStyleString(rays[k]->header.gateSizeMeters),
+                          RKIntegerToCommaStyleString(i), RKFloatToCommaStyleString(rays[i]->header.gateSizeMeters),
                           RKFloatToCommaStyleString(S->header.gateSizeMeters));
                 } else if (gateSizeWarningCount == 5) {
                     RKLog("Warning. Inconsistent gateSize more than 5 rays / sweep.\n");
                 }
             }
+        }
+        if (verbose > 1) {
+            RKLog("momentList = %016xh\n", overallMomentList);
         }
 
         // Populate the contents
@@ -358,11 +378,7 @@ int main(int argc, const char **argv) {
         sweep->header.baseMomentList = overallMomentList;
         sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
         sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
-
-        if (verbose > 1) {
-            RKLog("momentList = %016xh\n", overallMomentList);
-        }
-        
+        sweep->header.external = true;
         memcpy(&sweep->header.desc, &fileHeader->desc, sizeof(RKRadarDesc));
         memcpy(&sweep->header.config, config, sizeof(RKConfig));
         memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
@@ -384,10 +400,14 @@ int main(int argc, const char **argv) {
         }
         RKLog("Output %s\n", sweep->header.filename);
 
+        RKProductInitFromSweep(products, <#const RKSweep *#>)
         RKSweepFree(sweep);
     }
     
     RKPulseBufferFree(pulseBuffer);
     RKRayBufferFree(rayBuffer);
+    RKProductBufferFree(products, fileHeader->desc.productBufferDepth);
+    RKScratchFree(space);
+    
     return EXIT_SUCCESS;
 }
