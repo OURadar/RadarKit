@@ -53,7 +53,7 @@ int main(int argc, const char **argv) {
         return EXIT_FAILURE;
     }
     
-    int i, j, k, p, r;
+    int i = 0, j = 0, k = 0, p = 0, r = 0;
     bool m = false;
     uint32_t u32 = 0;
     char *c, timestr[32];
@@ -228,8 +228,14 @@ int main(int argc, const char **argv) {
             if (x == NULL || z.i == NULL || z.q == NULL) {
                 RKLog("Error. Unexpected behavior from pulse buffer %p %p %p\n", x, z.i, z.q);
             }
+            for (i = 0; i < pulseCapacity; i++) {
+                z.i[i] = x[i].i;
+                z.q[i] = x[i].q;
+            }
         }
     }
+    RKLog("Pulse buffer okay.  p = %d   j = %d   i = %d\n", p, j, i);
+
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
@@ -255,35 +261,21 @@ int main(int argc, const char **argv) {
         } else {
             i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
         }
-        if (verbose > 1) {
-            int du = (int)(pulse->header.time.tv_usec - usec);
-            if (du < 0) {
-                du += 1000000;
-            }
-            printf("%05d/%06" PRIu64 "/%05d pulse %s(%06d)   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
-                   k, pulse->header.i, p, timestr, du,
-                   pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
-                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                   pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
-                   i0, pulse->header.azimuthBinIndex,
-                   pulse->header.marker,
-                   m ? "*" : "",
-                   pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
-                   pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
-                   );
-        }
         // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
         for (j = 0; j < 2; j++) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
             rsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
             if (rsize != pulse->header.downSampledGateCount || rsize > pulseCapacity) {
-                RKLog("Error. This should not happen.  rsize = %s\n", RKIntegerToCommaStyleString(rsize));
+                RKLog("Error. This should not happen.  rsize = %s != %s || > %s\n",
+                      RKIntegerToCommaStyleString(rsize),
+                      RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                      RKIntegerToCommaStyleString(pulseCapacity));
             }
-//            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-//                z.i[i] = x[i].i;
-//                z.q[i] = x[i].q;
-//            }
+            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+                z.i[i] = x[i].i;
+                z.q[i] = x[i].q;
+            }
         }
         pulses[p++] = pulse;
         // Mark for process later
@@ -296,6 +288,23 @@ int main(int argc, const char **argv) {
             if (p > 0) {
                 m = true;
             }
+        }
+        if (verbose > 1) {
+            int du = (int)(pulse->header.time.tv_usec - usec);
+            if (du < 0) {
+                du += 1000000;
+            }
+            printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
+                   k, pulse->header.i, p, timestr, du,
+                   pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
+                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                   pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
+                   i0, pulse->header.azimuthBinIndex,
+                   pulse->header.marker,
+                   m ? "*" : "",
+                   pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
+                   pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
+                   );
         }
         // Process ...
         if (m) {
@@ -359,40 +368,46 @@ int main(int argc, const char **argv) {
                        ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
                        data[0], data[10], data[100], data[250], data[500],
                        cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
+            } else if (p > 1) {
+                RKPulse *S = pulses[0];
+                RKPulse *E = pulses[p - 1];
+
+                // Beamwidth
+                float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
+                float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+
+                // Consolidate the pulse marker into ray marker
+                marker = RKMarkerNull;
+                for (i = 0; i < p; i++) {
+                    marker |= pulses[i]->header.marker;
+                }
+
+                // Timestamp
+                startTime = S->header.time.tv_sec;
+                tr = strftime(timestr, 24, "%T", gmtime(&startTime));
+                tr += sprintf(timestr + tr, ".%06d", (int)S->header.time.tv_usec);
+                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
+                       k, r, timestr, p,
+                       config->sweepElevation, config->sweepAzimuth,
+                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                       RKIntegerToCommaStyleString(S->header.downSampledGateCount),
+                       marker);
             }
             // Use the end pulse as the start pulse of next ray
-            memcpy(RKGetComplexDataFromPulse(pulses[0], 0), RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex));
-            memcpy(RKGetComplexDataFromPulse(pulses[0], 1), RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex));
+            for (j = 0; j < 2; j++) {
+                RKComplex *x = RKGetComplexDataFromPulse(pulses[0], j);
+                RKIQZ z = RKGetSplitComplexDataFromPulse(pulses[0], j);
+                memcpy(x, RKGetComplexDataFromPulse(pulse, j), pulse->header.downSampledGateCount * sizeof(RKComplex));
+                for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+                    z.i[i] = x[i].i;
+                    z.q[i] = x[i].q;
+                }
+            }
             memcpy(pulses[0], pulse, sizeof(RKPulse));
             p = 1;
-//        } else if (p == RKMaximumPulsesPerRay) {
-//            RKPulse *S = pulses[0];
-//            RKPulse *E = pulses[p - 1];
-//
-//            // Beamwidth
-//            float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
-//            float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
-//
-//            // Consolidate the pulse marker into ray marker
-//            marker = RKMarkerNull;
-//            for (i = 0; i < p; i++) {
-//                marker |= pulses[i]->header.marker;
-//            }
-//
-//            // Timestamp
-//            startTime = S->header.time.tv_sec;
-//            tr = strftime(timestr, 24, "%T", gmtime(&startTime));
-//            tr += sprintf(timestr + tr, ".%06d", (int)S->header.time.tv_usec);
-//            printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
-//                   k, r, timestr, p,
-//                   config->sweepElevation, config->sweepAzimuth,
-//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
-//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
-//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
-//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
-//                   RKIntegerToCommaStyleString(S->header.downSampledGateCount),
-//                   marker);
-//            p = 0;
         }
         usec = pulse->header.time.tv_usec;
     }
