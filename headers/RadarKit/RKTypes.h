@@ -40,7 +40,7 @@
 #define _RKVersionBranch ""
 #endif
 
-#define _RKVersionString "2.4" _RKVersionBranch
+#define _RKVersionString "2.5" _RKVersionBranch
 
 //
 // Memory Blocks
@@ -1252,18 +1252,19 @@ typedef struct rk_file_monitor {                                               /
 
 typedef union rk_product_desc {                                                // A 1-KB struct that describes a product
     struct {                                                                   //
-        uint32_t         key;                                                  // A unique key to identify the product routine
-        RKName           name;                                                 // Name of the product
-        RKName           unit;                                                 // Unit of the product
-        RKName           colormap;                                             // Colormap of the product for the UI
-        char             symbol[8];                                            // Product symbol
-        RKProductType    type;                                                 // RKProductType
-        uint32_t         pieceCount;                                           // Count of piece-wise function that maps data to color index
-        RKFloat          w[16];                                                // Data to color index weight (piece-wise function)
-        RKFloat          b[16];                                                // Data to color index bias (piece-wise function)
-        RKFloat          l[16];                                                // The lower bound of each piece
-        RKFloat          mininimumValue;                                       // Minimum value
-        RKFloat          maximumValue;                                         // Maximum value
+        uint32_t             key;                                              // A unique key to identify the product routine
+        RKName               name;                                             // Name of the product
+        RKName               unit;                                             // Unit of the product
+        RKName               colormap;                                         // Colormap of the product for the UI
+        char                 symbol[8];                                        // Product symbol
+        RKBaseMomentIndex    index;                                            // Base moment index
+        RKProductType        type;                                             // RKProductType
+        uint32_t             pieceCount;                                       // Count of piece-wise function that maps data to color index
+        RKFloat              w[16];                                            // Data to color index weight (piece-wise function)
+        RKFloat              b[16];                                            // Data to color index bias (piece-wise function)
+        RKFloat              l[16];                                            // The lower bound of each piece
+        RKFloat              mininimumValue;                                   // Minimum value
+        RKFloat              maximumValue;                                     // Maximum value
     };
     RKByte bytes[1024];
 } RKProductDesc;

@@ -139,7 +139,8 @@ int RKFileMonitorFree(RKFileMonitor *);
 RKStream RKStreamFromString(const char *);
 char *RKStringOfStream(RKStream);
 int RKStringFromStream(char *, RKStream);
-int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *, RKBaseMomentList *);
+//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *, RKBaseMomentList *);
+RKProductDesc RKGetNextProductDescription(RKBaseMomentList *);
 
 // Parser, enum, strings
 size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);

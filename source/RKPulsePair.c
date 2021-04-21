@@ -157,10 +157,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     //
 
     int n, j, k, p;
-
-    // Get the start pulse to know the capacity
-    RKPulse *pulse = pulses[0];
-    const uint32_t gateCount = pulse->header.downSampledGateCount;
+    const uint32_t gateCount = space->gateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     //printf("gateCount = %d   K = %d\n", gateCount, K);
 
@@ -541,15 +538,15 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
 
     int n, j, k, p;
 
-    // Get the start pulse to know the capacity
-    RKPulse *pulse = pulses[0];
-    //const uint32_t capacity = pulse->header.capacity;
-    const uint32_t gateCount = pulse->header.downSampledGateCount;
+    const uint32_t gateCount = space->gateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
     //
     //  ACF
     //
+
+    // Get the start pulse
+    RKPulse *pulse = pulses[0];
 
     // Go through each polarization
     for (p = 0; p < 2; p++) {

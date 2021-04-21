@@ -40,7 +40,7 @@ int main(int argc, const char **argv) {
         return EXIT_FAILURE;
     }
     
-    int i, k, p, r;
+    int i, j, k, p, r;
     bool m = false;
     size_t rsize = 0, tr;
     uint32_t u32 = 0;
@@ -53,7 +53,8 @@ int main(int argc, const char **argv) {
     struct timeval s, e;
 
     strcpy(filename, argv[1]);
-    
+    int verbose = 1;
+
     RKSetWantScreenOutput(true);
     RKSetWantColor(false);
 
@@ -189,13 +190,14 @@ int main(int argc, const char **argv) {
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
 
-    space->SNRThreshold = -3.0f;
-    space->SQIThreshold = 0.0f;
+    space->SNRThreshold = 0.0f;
+    space->SQIThreshold = 0.5f;
 
-    float *t;
-    t = space->rcor[0]; printf("rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
-    t = space->dcal; printf("dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
-        
+    if (verbose > 1) {
+        float *t;
+        t = space->rcor[0]; printf("rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
+        t = space->dcal;    printf("dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
+    }
     RKLog("Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
     RKMarker marker = fileHeader->config.startMarker;
@@ -208,7 +210,6 @@ int main(int argc, const char **argv) {
     
     p = 0;
     r = 0;
-    int verbose = 1;
     for (k = 0; k < MIN(10000, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
 
@@ -216,9 +217,16 @@ int main(int argc, const char **argv) {
         if (rsize != 1) {
             break;
         }
-        // Read H and V data into channels 0 and 1, respectively
-        fread(RKGetComplexDataFromPulse(pulse, 0), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
-        fread(RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex), 1, fid);
+        // Read H and V data into channels 0 and 1, respectively. Also, don't forget to make a copy to split-complex storage
+        for (j = 0; j < 2; j++) {
+            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+            fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
+            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+                z.i[i] = x[i].i;
+                z.q[i] = x[i].q;
+            }
+        }
         pulses[p++] = pulse;
 
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
@@ -291,16 +299,20 @@ int main(int argc, const char **argv) {
 
                 // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
-                //RKPulsePairHop(space, pulses, p);
-                RKPulsePair(space, pulses, p);
+                RKPulsePairHop(space, pulses, p);
                 makeRayFromScratch(space, ray);
                 rays[r++] = ray;
 
                 // Summary of this ray
                 RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
                 float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-                printf("%05d ray[%3d] p = %d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
-                       k, r, p,
+
+                startTime = ray->header.startTime.tv_sec;
+                tr = strftime(timestr, 24, "%T", gmtime(&startTime));
+                tr += sprintf(timestr + tr, ".%06d", (int)ray->header.startTime.tv_usec);
+
+                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
+                       k, r, timestr, p,
                        config->sweepElevation, config->sweepAzimuth,
                        (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
                        (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
@@ -346,7 +358,6 @@ int main(int argc, const char **argv) {
         // Pick the start, transition and end rays
         k = 0;
         RKRay *S = rays[k];
-//        RKRay *T = rays[1];
         RKRay *E = rays[k + r - 1];
 
         // Consolidate some other information and check consistencies
@@ -409,78 +420,20 @@ int main(int argc, const char **argv) {
         }
         //RKLog("Output %s\n", sweep->header.filename);
 
-        // Initialize a list based on desired moment list
+        // Initialize a list based on desired moment list. This variable will become all zeros after the next for-loop
         RKBaseMomentList list = sweep->header.baseMomentList & momentList;
-        RKName name;
-        RKName unit;
-        RKName symbol;
-        RKName colormap;
-        RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-        RKBaseMomentIndex momentIndex = 0;
 
         // Base products
         int productCount = __builtin_popcount(list);
         RKLog("productCount = %d\n", productCount);
         for (p = 0; p < productCount; p++) {
-            // Get the symbol, name, unit, colormap, etc. from the product list
-            RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &list);
-            // Build a product description
-            RKProductDesc productDescription;
-            memset(&productDescription, 0, sizeof(RKProductDesc));
-            strcpy(productDescription.name, name);
-            strcpy(productDescription.unit, unit);
-            strcpy(productDescription.symbol, symbol);
-            strcpy(productDescription.colormap, colormap);
-            // Special treatment for RhoHV: A three count piece-wise function
-            if (momentIndex == RKBaseMomentIndexR) {
-                productDescription.pieceCount = 3;
-                productDescription.w[0] = 1000.0f;
-                productDescription.b[0] = -824.0f;
-                productDescription.l[0] = 0.93f;
-                productDescription.w[1] = 300.0f;
-                productDescription.b[1] = -173.0f;
-                productDescription.l[1] = 0.7f;
-                productDescription.w[2] = 52.8571f;
-                productDescription.b[2] = 0.0f;
-                productDescription.l[2] = 0.0f;
-                productDescription.mininimumValue = 0.0f;
-                productDescription.maximumValue = 1.05f;
-            } else {
-                switch (momentIndex) {
-                    case RKBaseMomentIndexZ:
-                        RKZLHMAC
-                        break;
-                    case RKBaseMomentIndexV:
-                        RKV2LHMAC
-                        break;
-                    case RKBaseMomentIndexW:
-                        RKWLHMAC
-                        break;
-                    case RKBaseMomentIndexD:
-                        RKDLHMAC
-                        break;
-                    case RKBaseMomentIndexP:
-                        RKPLHMAC
-                        break;
-                    case RKBaseMomentIndexK:
-                        RKKLHMAC
-                        break;
-                    default:
-                        break;
-                }
-                productDescription.pieceCount = 1;
-                productDescription.mininimumValue = lhma[0];
-                productDescription.maximumValue = lhma[1];
-                productDescription.w[0] = lhma[2];
-                productDescription.b[0] = lhma[3];
-                productDescription.l[0] = 0.0f;
-            }
-            product->desc = productDescription;
+            product->desc = RKGetNextProductDescription(&list);
             RKProductInitFromSweep(product, sweep);
             sprintf(product->header.suggestedFilename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
             RKProductFileWriterNC(product, product->header.suggestedFilename);
             RKLog("%d %s\n", p, product->header.suggestedFilename);
         }
+
         RKSweepFree(sweep);
     }
     

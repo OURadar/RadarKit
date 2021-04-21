@@ -321,68 +321,10 @@ static void *rayGatherer(void *in) {
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
-    RKName name;
-    RKName unit;
-    RKName symbol;
-    RKName colormap;
-    RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    RKBaseMomentIndex momentIndex = 0;
     RKBaseMomentList momentList = engine->baseMomentList;
     const int productCount = __builtin_popcount(momentList);
     for (p = 0; p < productCount; p++) {
-        // Get the symbol, name, unit, colormap, etc. from the product list
-        RKGetNextProductDescription(symbol, name, unit, colormap, &momentIndex, &momentList);
-        // Build a product description
-        RKProductDesc productDescription;
-        memset(&productDescription, 0, sizeof(RKProductDesc));
-        strcpy(productDescription.name, name);
-        strcpy(productDescription.unit, unit);
-        strcpy(productDescription.symbol, symbol);
-        strcpy(productDescription.colormap, colormap);
-        // Special treatment for RhoHV: A three count piece-wise function
-        if (momentIndex == RKBaseMomentIndexR) {
-            productDescription.pieceCount = 3;
-            productDescription.w[0] = 1000.0f;
-            productDescription.b[0] = -824.0f;
-            productDescription.l[0] = 0.93f;
-            productDescription.w[1] = 300.0f;
-            productDescription.b[1] = -173.0f;
-            productDescription.l[1] = 0.7f;
-            productDescription.w[2] = 52.8571f;
-            productDescription.b[2] = 0.0f;
-            productDescription.l[2] = 0.0f;
-            productDescription.mininimumValue = 0.0f;
-            productDescription.maximumValue = 1.05f;
-        } else {
-            switch (momentIndex) {
-                case RKBaseMomentIndexZ:
-                    RKZLHMAC
-                    break;
-                case RKBaseMomentIndexV:
-                    RKV2LHMAC
-                    break;
-                case RKBaseMomentIndexW:
-                    RKWLHMAC
-                    break;
-                case RKBaseMomentIndexD:
-                    RKDLHMAC
-                    break;
-                case RKBaseMomentIndexP:
-                    RKPLHMAC
-                    break;
-                case RKBaseMomentIndexK:
-                    RKKLHMAC
-                    break;
-                default:
-                    break;
-            }
-            productDescription.pieceCount = 1;
-            productDescription.mininimumValue = lhma[0];
-            productDescription.maximumValue = lhma[1];
-            productDescription.w[0] = lhma[2];
-            productDescription.b[0] = lhma[3];
-            productDescription.l[0] = 0.0f;
-        }
+        RKProductDesc productDescription = RKGetNextProductDescription(&momentList);
         engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
     }
 

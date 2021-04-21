@@ -1196,9 +1196,12 @@ char *RKStringOfStream(RKStream stream) {
     return string;
 }
 
-int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *index, RKBaseMomentList *list) {
+//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *index, RKBaseMomentList *list) {
+RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
+    RKProductDesc desc;
+    memset(&desc, 0, sizeof(RKProductDesc));
     if (list == NULL || *list == 0) {
-        return RKResultNullInput;
+        return desc;
     }
     RKName symbols[] = {
         "Z",
@@ -1211,7 +1214,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Sh",
         "Sv",
         "Q",
-        "U"
+        "-"
     };
     RKName names[] = {
         "Intensity",
@@ -1224,7 +1227,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Signal_Power_H",
         "Signal_Power_V",
         "SQI",
-        "Uknown"
+        "-"
     };
     RKName units[] = {
         "dBZ",
@@ -1237,7 +1240,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "dBm",
         "dBm",
         "Unitless",
-        "Undefined"
+        "-"
     };
     RKName colormaps[] = {
         "Reflectivity",
@@ -1250,7 +1253,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         "Power",
         "Power",
         "SQI",
-        "Default"
+        "-"
     };
     RKBaseMomentList baseMoments[] = {
         RKBaseMomentListProductZ,
@@ -1274,6 +1277,7 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
         RKBaseMomentIndexR,
         RKBaseMomentIndexK,
         RKBaseMomentIndexSh,
+        RKBaseMomentIndexSv,
         RKBaseMomentIndexQ,
         0
     };
@@ -1301,25 +1305,60 @@ int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colo
     }
     if (k < 0) {
         RKLog("Unable to get description for k = %d\n", k);
-        return RKResultNullInput;
+        return desc;
     }
-    if (symbol) {
-        sprintf(symbol, "%s", symbols[k]);
-    }
-    if (name) {
-        sprintf(name, "%s", names[k]);
-    }
-    if (unit) {
-        sprintf(unit, "%s", units[k]);
-    }
-    if (colormap) {
-        sprintf(colormap, "%s", colormaps[k]);
-    }
-    if (index) {
-        *index = baseMomentIndices[k];
+    strncpy(desc.name, names[k], sizeof(RKName));
+    strncpy(desc.unit, units[k], sizeof(RKName));
+    strncpy(desc.colormap, colormaps[k], sizeof(RKName));
+    strncpy(desc.symbol, symbols[k], 8);
+    desc.index = baseMomentIndices[k];
+    // Special treatment for RhoHV: A three count piece-wise function
+    RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    if (desc.index == RKBaseMomentIndexR) {
+        desc.pieceCount = 3;
+        desc.w[0] = 1000.0f;
+        desc.b[0] = -824.0f;
+        desc.l[0] = 0.93f;
+        desc.w[1] = 300.0f;
+        desc.b[1] = -173.0f;
+        desc.l[1] = 0.7f;
+        desc.w[2] = 52.8571f;
+        desc.b[2] = 0.0f;
+        desc.l[2] = 0.0f;
+        desc.mininimumValue = 0.0f;
+        desc.maximumValue = 1.05f;
+    } else {
+        switch (desc.index) {
+            case RKBaseMomentIndexZ:
+                RKZLHMAC
+                break;
+            case RKBaseMomentIndexV:
+                RKV2LHMAC
+                break;
+            case RKBaseMomentIndexW:
+                RKWLHMAC
+                break;
+            case RKBaseMomentIndexD:
+                RKDLHMAC
+                break;
+            case RKBaseMomentIndexP:
+                RKPLHMAC
+                break;
+            case RKBaseMomentIndexK:
+                RKKLHMAC
+                break;
+            default:
+                break;
+        }
+        desc.pieceCount = 1;
+        desc.mininimumValue = lhma[0];
+        desc.maximumValue = lhma[1];
+        desc.w[0] = lhma[2];
+        desc.b[0] = lhma[3];
+        desc.l[0] = 0.0f;
     }
     *list ^= baseMoments[k];
-    return RKResultSuccess;
+    return desc;
 }
 
 #pragma mark - JSON Stuff
