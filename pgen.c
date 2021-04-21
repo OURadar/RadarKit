@@ -347,16 +347,12 @@ int main(int argc, const char **argv) {
                 makeRayFromScratch(space, ray);
                 rays[r++] = ray;
 
-                // Summary of this ray
-                RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
-                float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-
                 // Timestamp
                 startTime = ray->header.startTime.tv_sec;
                 tr = strftime(timestr, 24, "%T", gmtime(&startTime));
                 tr += sprintf(timestr + tr, ".%06d", (int)ray->header.startTime.tv_usec);
 
-                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
+                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s\n",
                        k, r, timestr, p,
                        config->sweepElevation, config->sweepAzimuth,
                        (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
@@ -366,9 +362,23 @@ int main(int argc, const char **argv) {
                        RKIntegerToCommaStyleString(space->gateCount),
                        ray->header.marker,
                        ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
-                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
-                       data[0], data[10], data[100], data[250], data[500],
-                       cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
+                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ");
+                // data
+//                RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
+//                float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
+//                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
+//                       k, r, timestr, p,
+//                       config->sweepElevation, config->sweepAzimuth,
+//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+//                       RKIntegerToCommaStyleString(space->gateCount),
+//                       ray->header.marker,
+//                       ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
+//                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
+//                       data[0], data[10], data[100], data[250], data[500],
+//                       cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
             } else if (p > 1) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
