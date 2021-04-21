@@ -35,6 +35,19 @@ static void buildInCalibrator(RKScratch *space, RKConfig *config) {
 
 int main(int argc, const char **argv) {
 
+    char name[] = __FILE__;
+    *strrchr(name, '.') = '\0';
+
+    RKSetProgramName(name);
+
+    char *term = getenv("TERM");
+    if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
+        RKSetWantColor(false);
+    }
+
+    // Show framework name & version
+    RKShowName();
+
     if (argc < 2) {
         fprintf(stderr, "Please supply a filename.\n");
         return EXIT_FAILURE;
@@ -42,18 +55,22 @@ int main(int argc, const char **argv) {
     
     int i, j, k, p, r;
     bool m = false;
-    size_t rsize = 0, tr;
     uint32_t u32 = 0;
     char *c, timestr[32];
+    int i0, i1 = -1;
+    size_t mem = 0;
+    size_t bytes;
+    size_t rsize = 0, tr;
 
     time_t startTime;
     suseconds_t usec = 0;
     
     char filename[1024];
+    long filesize;
     struct timeval s, e;
 
     strcpy(filename, argv[1]);
-    int verbose = 1;
+    int verbose = 2;
 
     RKSetWantScreenOutput(true);
     RKSetWantColor(false);
@@ -66,14 +83,14 @@ int main(int argc, const char **argv) {
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to open file %s", filename);
+        exit(EXIT_FAILURE);
     }
-    long fsize;
     if (fseek(fid, 0L, SEEK_END)) {
         RKLog("Error. Unable to tell the file size.\n");
-        fsize = 0;
+        filesize = 0;
     } else {
-        fsize = ftell(fid);
-        RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(fsize));
+        filesize = ftell(fid);
+        RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
     }
     rewind(fid);
     fread(fileHeader, sizeof(RKFileHeader), 1, fid);
@@ -106,12 +123,6 @@ int main(int argc, const char **argv) {
     RKProduct *product;
     RKScratch *space;
     
-    int i0;
-    int i1 = 0;
-    int count = 0;
-    size_t mem = 0;
-    size_t bytes;
-
     c = strrchr(filename, '.');
     if (c == NULL) {
         RKLog("Error. No file extension.");
@@ -160,7 +171,7 @@ int main(int argc, const char **argv) {
           RKUIntegerToCommaStyleString(bytes));
     mem += bytes;
     const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
-    bytes = RKScratchAlloc(&space, rayCapacity, 3, fftOrder, true);
+    bytes = RKScratchAlloc(&space, rayCapacity, RKMaximumLagCount, fftOrder, false);
     if (bytes == 0 || space == NULL) {
         RKLog("Error. Unable to allocate memory for scratch space.\n");
         exit(EXIT_FAILURE);
@@ -208,27 +219,35 @@ int main(int argc, const char **argv) {
     RKLog("SQIThreshold = %.2f\n", space->SQIThreshold);
     RKLog("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
     
-    p = 0;
-    r = 0;
-    for (k = 0; k < MIN(10000, RKRawDataRecorderDefaultMaximumRecorderDepth); k++) {
+    // Test pulse buffer
+    for (p = 0; p < RKMaximumPulsesPerRay; p++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-
-        rsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
-        if (rsize != 1) {
-            break;
-        }
-        // Read H and V data into channels 0 and 1, respectively. Also, don't forget to make a copy to split-complex storage
         for (j = 0; j < 2; j++) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-            fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-                z.i[i] = x[i].i;
-                z.q[i] = x[i].q;
+            if (x == NULL || z.i == NULL || z.q == NULL) {
+                RKLog("Error. Unexpected behavior from pulse buffer %p %p %p\n", x, z.i, z.q);
             }
         }
-        pulses[p++] = pulse;
-
+    }
+    p = 0;    // total pulses per ray
+    r = 0;    // total rays per sweep
+    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
+        // Pulse header
+        rsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
+        if (rsize != 1) {
+            RKLog("Error reading pulse header.\n");
+            break;
+        }
+        if (pulse->header.downSampledGateCount > pulseCapacity) {
+            RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
+                  RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                  RKIntegerToCommaStyleString(pulseCapacity));
+        }
+        startTime = pulse->header.time.tv_sec;
+        tr = strftime(timestr, 24, "%T", gmtime(&startTime));
+        tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
             i0 = (int)floorf(pulse->header.azimuthDegrees);
         } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
@@ -236,23 +255,13 @@ int main(int argc, const char **argv) {
         } else {
             i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
         }
-
-        m = false;
-        if (i1 != i0 || count == RKMaximumPulsesPerRay) {
-            i1 = i0;
-            if (k > 0) {
-                m = true;
-            }
-        }
-        startTime = pulse->header.time.tv_sec;
-        
-        tr = strftime(timestr, 24, "%T", gmtime(&startTime));
-        tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
-        
         if (verbose > 1) {
-            printf("pulse %s (%06d) (%" PRIu64 ") (EL %.2f, AZ %.2f) %s x %.2fm %d/%d %02x %s%s%s\n",
-                   timestr, pulse->header.time.tv_usec - usec,
-                   pulse->header.i,
+            int du = (int)(pulse->header.time.tv_usec - usec);
+            if (du < 0) {
+                du += 1000000;
+            }
+            printf("%05d/%06" PRIu64 "/%05d pulse %s(%06d)   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
+                   k, pulse->header.i, p, timestr, du,
                    pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                    RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                    pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
@@ -262,6 +271,31 @@ int main(int argc, const char **argv) {
                    pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
                    pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
                    );
+        }
+        // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
+        for (j = 0; j < 2; j++) {
+            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+            rsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
+            if (rsize != pulse->header.downSampledGateCount || rsize > pulseCapacity) {
+                RKLog("Error. This should not happen.  rsize = %s\n", RKIntegerToCommaStyleString(rsize));
+            }
+//            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+//                z.i[i] = x[i].i;
+//                z.q[i] = x[i].q;
+//            }
+        }
+        pulses[p++] = pulse;
+        // Mark for process later
+        m = false;
+        if (i1 != i0 || p == RKMaximumPulsesPerRay) {
+            if (verbose > 1) {
+                RKLog("i1 = %d   i0 = %d   p = %s\n", i1, i0, RKIntegerToCommaStyleString(p));
+            }
+            i1 = i0;
+            if (p > 0) {
+                m = true;
+            }
         }
         // Process ...
         if (m) {
@@ -307,6 +341,7 @@ int main(int argc, const char **argv) {
                 RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
                 float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
 
+                // Timestamp
                 startTime = ray->header.startTime.tv_sec;
                 tr = strftime(timestr, 24, "%T", gmtime(&startTime));
                 tr += sprintf(timestr + tr, ".%06d", (int)ray->header.startTime.tv_usec);
@@ -330,12 +365,42 @@ int main(int argc, const char **argv) {
             memcpy(RKGetComplexDataFromPulse(pulses[0], 1), RKGetComplexDataFromPulse(pulse, 1), pulse->header.downSampledGateCount * sizeof(RKComplex));
             memcpy(pulses[0], pulse, sizeof(RKPulse));
             p = 1;
+//        } else if (p == RKMaximumPulsesPerRay) {
+//            RKPulse *S = pulses[0];
+//            RKPulse *E = pulses[p - 1];
+//
+//            // Beamwidth
+//            float deltaAzimuth   = RKGetMinorSectorInDegrees(S->header.azimuthDegrees,   E->header.azimuthDegrees);
+//            float deltaElevation = RKGetMinorSectorInDegrees(S->header.elevationDegrees, E->header.elevationDegrees);
+//
+//            // Consolidate the pulse marker into ray marker
+//            marker = RKMarkerNull;
+//            for (i = 0; i < p; i++) {
+//                marker |= pulses[i]->header.marker;
+//            }
+//
+//            // Timestamp
+//            startTime = S->header.time.tv_sec;
+//            tr = strftime(timestr, 24, "%T", gmtime(&startTime));
+//            tr += sprintf(timestr + tr, ".%06d", (int)S->header.time.tv_usec);
+//            printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
+//                   k, r, timestr, p,
+//                   config->sweepElevation, config->sweepAzimuth,
+//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+//                   (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+//                   RKIntegerToCommaStyleString(S->header.downSampledGateCount),
+//                   marker);
+//            p = 0;
         }
-
         usec = pulse->header.time.tv_usec;
     }
-    RKLog("r = %d / %s / %s\n", r, RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(fsize));
-    if (ftell(fid) != fsize) {
+    RKLog("r = %d    fpos = %s / %s   k = %s\n",
+          r,
+          RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
+          RKIntegerToCommaStyleString(k));
+    if (ftell(fid) != filesize) {
         RKLog("Warning. There is leftover in the file.");
     }
 
