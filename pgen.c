@@ -70,7 +70,7 @@ int main(int argc, const char **argv) {
     struct timeval s, e;
 
     strcpy(filename, argv[1]);
-    int verbose = 2;
+    int verbose = 1;
 
     RKSetWantScreenOutput(true);
     RKSetWantColor(false);
@@ -132,11 +132,11 @@ int main(int argc, const char **argv) {
     const RKBaseMomentList momentList = RKBaseMomentListProductZVWDPR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
-    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio * sizeof(RKFloat) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
+    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
     if (!strcmp(".rkr", c)) {
         u32 = fileHeader->desc.pulseCapacity;
     } else if (!strcmp(".rkc", c)) {
-        u32 = rayCapacity;
+        u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(int16_t);
     } else {
         RKLog("Error. Unable to handle extension %s", c);
         exit(EXIT_FAILURE);
@@ -243,9 +243,10 @@ int main(int argc, const char **argv) {
         // Pulse header
         rsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
         if (rsize != 1) {
-            RKLog("Error reading pulse header.\n");
             break;
         }
+        // Restore pulse capacity variable since we are not using whatever that was recorded in the file (radar)
+        pulse->header.capacity = pulseCapacity;
         if (pulse->header.downSampledGateCount > pulseCapacity) {
             RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
@@ -406,7 +407,7 @@ int main(int argc, const char **argv) {
                     z.q[i] = x[i].q;
                 }
             }
-            memcpy(pulses[0], pulse, sizeof(RKPulse));
+            memcpy(pulses[0], pulse, sizeof(RKPulseHeader));
             p = 1;
         }
         usec = pulse->header.time.tv_usec;
