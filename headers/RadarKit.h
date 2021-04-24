@@ -2,7 +2,7 @@
 //  RadarKit.h
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 3/17/15.
+//  Created by Boonleng Cheong on 3/17/15.
 //
 
 //
@@ -17,7 +17,13 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
-//  2.3    - 6/xx/2019
+//  2.4    - 4/25/2021
+//         - Added RKCalibrator module
+//         - Renamed RKSweep.h to RKSweepEngine.h
+//         - Renamed RKMoment.h to RKMomentEngine.h
+//         - Renamed RKPosition.h to RKPositionEngine.h
+//
+//  2.3    - 6/30/2019
 //         - Added I/Q data playback
 //         - Added hopping chirp waveforms
 //         - Added individual storage limits

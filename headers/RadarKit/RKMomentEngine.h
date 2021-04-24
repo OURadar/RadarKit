@@ -93,4 +93,4 @@ int RKMomentEngineStop(RKMomentEngine *);
 
 char *RKMomentEngineStatusString(RKMomentEngine *);
 
-#endif /* defined(___RadarKit_RKMoment__) */
+#endif /* defined(__RadarKit_Moment_Engine__) */

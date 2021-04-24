@@ -6,7 +6,7 @@
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKMoment.h>
+#include <RadarKit/RKMomentEngine.h>
 
 typedef int8_t RKCellMask;
 enum RKCellMask {
@@ -360,22 +360,6 @@ static void zeroOutRay(RKRay *ray) {
     }
     uint8_t *u = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
     memset(u, 0, RKBaseMomentCount * sizeof(uint8_t));
-}
-
-static void buildInCalibrator(RKScratch *space, RKConfig *config) {
-    int i, k, p;
-    RKFloat r = 0.0f;
-    for (k = 0; k < config->filterCount; k++) {
-        //RKLog("calibrator: %d ... %d\n", config->filterAnchors[k].outputOrigin, MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, space->gateCount));
-        for (i = config->filterAnchors[k].outputOrigin; i < MIN(config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength, space->gateCount); i++) {
-            r = (RKFloat)i * space->gateSizeMeters;
-            for (p = 0; p < 2; p++) {
-                space->rcor[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - config->filterAnchors[k].sensitivityGain - space->samplingAdjustment;
-            }
-            space->dcal[i] = config->systemDCal + config->DCal[k];
-            space->pcal[i] = RKSingleWrapTo2PI(config->systemPCal + config->PCal[k]);
-        }
-    }
 }
 
 #pragma mark - Scratch Space
@@ -1159,7 +1143,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->processor = &RKPulsePairHop;
-    engine->calibrator = &buildInCalibrator;
+    engine->calibrator = &RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;
     engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
     engine->memoryUsage = sizeof(RKMomentEngine);

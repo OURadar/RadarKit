@@ -15,10 +15,11 @@
 #include <RadarKit/RKClock.h>
 #include <RadarKit/RKConfig.h>
 #include <RadarKit/RKHealth.h>
-#include <RadarKit/RKPosition.h>
+#include <RadarKit/RKCalibrator.h>
+#include <RadarKit/RKPositionEngine.h>
 #include <RadarKit/RKPulseCompression.h>
 #include <RadarKit/RKPulseRingFilter.h>
-#include <RadarKit/RKMoment.h>
+#include <RadarKit/RKMomentEngine.h>
 #include <RadarKit/RKHealthLogger.h>
 #include <RadarKit/RKRawDataRecorder.h>
 #include <RadarKit/RKSweepEngine.h>
