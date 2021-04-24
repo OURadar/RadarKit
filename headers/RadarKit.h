@@ -18,6 +18,7 @@
 //           - Mapping coefficients to product files
 //
 //  2.4    - 4/25/2021
+//         - Raw data build no 6
 //         - Added RKCalibrator module
 //         - Renamed RKSweep.h to RKSweepEngine.h
 //         - Renamed RKMoment.h to RKMomentEngine.h

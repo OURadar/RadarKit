@@ -55,7 +55,7 @@
 
 #pragma mark - Constants
 
-#define RKRawDataBuildNo                     5                                 //
+#define RKRawDataBuildNo                     6                                 //
 #define RKBufferSSlotCount                   10                                // Status
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   50                                // Health
