@@ -631,6 +631,7 @@ enum RKConfigKey {
     RKConfigKeyPulseGateSize,
     RKConfigKeyPulseWidth,
     RKConfigKeyWaveform,
+    RKConfigKeyWaveformDecimate,
     RKConfigKeyWaveformId,
     RKConfigKeyWaveformName,
     RKConfigKeySystemNoise,
@@ -1025,8 +1026,8 @@ typedef struct rk_config {
     float                sweepElevation;                                       // Sweep elevation angle (degrees)
     float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
     RKMarker             startMarker;                                          // Marker of the latest start ray
-    uint8_t              filterCount;                                          // Number of filters
-    RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level
+    uint8_t              filterCount;                                          // Number of filters (redundant info of waveformDecimate)
+    RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level (redundant info of waveformDecimate)
     RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
     RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
     uint32_t             pulseGateCount;                                       // Number of range gates
@@ -1045,6 +1046,7 @@ typedef struct rk_config {
     char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
     RKName               waveformName;                                         // Waveform name
     RKWaveform           *waveform;                                            // Reference to the waveform storage
+    RKWaveform           *waveformDecimate;                                    // Reference to the waveform storage in Level-II sampling rate
 } RKConfig;
 
 //
@@ -1383,7 +1385,7 @@ typedef union rk_product_header {
         RKFloat              PCal[RKMaximumFilterCount];                       // Waveform phase calibration (rad)
         RKFloat              SNRThreshold;                                     // Censor SNR (dB)
         RKFloat              SQIThreshold;                                     // Censor SQI
-        RKName               waveform;                                         // Waveform name
+        RKName               waveformName;                                     // Waveform name
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
         char                 suggestedFilename[RKMaximumPathLength];           // RadarKit suggested fullpath filename
     };

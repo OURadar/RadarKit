@@ -135,6 +135,7 @@ struct rk_radar {
     // Internal copies of things
     //
     RKWaveform                       *waveform;
+    RKWaveform                       *waveformDecimate;
     RKIIRFilter                      *filter;
     //
     // Hardware protocols for controls

@@ -619,6 +619,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'w':
                 user->recordLevel++;
+                printf("user->recordLevel = %d\n", user->recordLevel);
                 break;
             case 'z':
                 if (optarg) {
@@ -770,7 +771,8 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeyNull);
 
     // Force waveform reload to propagate the new waveform calibration values
-    RKSetWaveform(myRadar, myRadar->waveform);
+//    RKLog("waveform %p\n", myRadar->waveform);
+//    RKSetWaveform(myRadar, myRadar->waveform);
 }
 
 static void handlePreferenceFileUpdate(void *in) {

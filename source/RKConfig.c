@@ -132,10 +132,19 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyWaveform:
                 waveform = (RKWaveform *)va_arg(args, void *);
                 if (waveform == NULL || waveform->filterCounts[0] == 0) {
+                    RKLog("Bad input for RKConfigKeyWaveform\n");
                     return;
                 }
+                newConfig->waveform = waveform;
+                break;
+            case RKConfigKeyWaveformDecimate:
+                waveform = (RKWaveform *)va_arg(args, void *);
+                if (waveform == NULL || waveform->filterCounts[0] == 0) {
+                    RKLog("Bad input for RKConfigKeyWaveformDecimate\n");
+                    return;
+                }
+                newConfig->waveformDecimate = waveform;
                 newConfig->filterCount = waveform->filterCounts[0];
-                strncpy(newConfig->waveformName, waveform->name, RKNameLength - 1);
                 memcpy(newConfig->filterAnchors, waveform->filterAnchors[0], waveform->filterCounts[0] * sizeof(RKFilterAnchor));
                 w0 = 0;
                 w1 = 0;

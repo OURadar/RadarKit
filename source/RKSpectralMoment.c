@@ -21,9 +21,9 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
     int offt = MIN(space->fftModule->count, (int)ceilf(log2f((float)pulseCount * 1.2f)));
     int planSize = space->fftModule->plans[offt].size;
     
-    RKLog("%s -> %s",
-          RKVariableInString("offt", &offt, RKValueTypeInt),
-          RKVariableInString("planSize", &planSize, RKValueTypeInt));
+    //RKLog("%s -> %s",
+    //      RKVariableInString("offt", &offt, RKValueTypeInt),
+    //      RKVariableInString("planSize", &planSize, RKValueTypeInt));
 
     fftwf_complex *in;
     RKFloat A, phi, q, omegaI, omegaQ;

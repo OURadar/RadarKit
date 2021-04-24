@@ -180,7 +180,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "SNRThreshold-dB", floatType, 1, &product->header.SNRThreshold);
     nc_put_att_float(ncid, NC_GLOBAL, "SQIThreshold-dB", floatType, 1, &product->header.SQIThreshold);
     put_global_text_att(ncid, "RadarKit-VCP-Definition", product->header.vcpDefinition);
-    put_global_text_att(ncid, "Waveform", product->header.waveform);
+    put_global_text_att(ncid, "Waveform", product->header.waveformName);
     put_global_text_att(ncid, "CreatedBy", "RadarKit v" _RKVersionString);
     put_global_text_att(ncid, "ContactInformation", "https://arrc.ou.edu");
 
@@ -376,7 +376,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
         product->header.isRHI = true;
     }
     getGlobalTextAttribute(product->header.radarName, "radarName-value", ncid);
-    getGlobalTextAttribute(product->header.waveform, "Waveform", ncid);
+    getGlobalTextAttribute(product->header.waveformName, "Waveform", ncid);
     getGlobalTextAttribute(product->header.vcpDefinition, "RadarKit-VCP-Definition", ncid);
     
     r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &product->header.latitude);

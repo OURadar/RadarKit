@@ -913,6 +913,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Recording level 0 - moment and health only
     RKSetRecordingLevel(radar, 0);
 
+    // Give the radar an impulse waveform
+    RKSetWaveformToImpulse(radar);
+    
     // Total memory usage
     RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
@@ -1362,17 +1365,23 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         return RKResultNoPulseCompressionEngine;
     }
     if (waveform == NULL) {
+        RKLog("Error. Supplied waveform is NULL\n");
         return RKResultFailedToSetWaveform;
     }
     if (waveform->count > 1 && waveform->filterCounts[0] != waveform->filterCounts[1]) {
         RKLog("Error. Different filter count in different waveform is not supported. (%d, %d)\n", waveform->filterCounts[0], waveform->filterCounts[1]);
         return RKResultFailedToSetWaveform;
     }
-    RKWaveform *oldWaveform = radar->waveform;
-    radar->waveform = RKWaveformCopy(waveform);
-    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-        RKLog("Waveform '%s' cached.\n", waveform->name);
+    if (waveform->filterCounts[0] <= 0 || waveform->filterCounts[0] > 4) {
+        RKLog("Error. Multiplexing = %d filters has not been implemented. Reverting to impulse filter.\n", waveform->filterCounts[0]);
+        return RKSetWaveformToImpulse(radar);
     }
+    RKWaveform *oldWaveform = radar->waveform;
+    RKWaveform *oldWaveformDecimate = radar->waveformDecimate;
+    const double pulseWidth = (double)waveform->depth / waveform->fs;
+    radar->waveform = RKWaveformCopy(waveform);
+    radar->waveformDecimate = RKWaveformCopy(waveform);
+    RKWaveformDecimate(radar->waveformDecimate, radar->desc.pulseToRayRatio);
     int j, k, r;
     RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
     for (k = 0; k < waveform->count; k++) {
@@ -1396,24 +1405,25 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
             break;
         }
     }
-    // Make a copy for the config buffer. Senstivity gain should not change!
-    if (waveform->filterCounts[0] > 0 && waveform->filterCounts[0] <= 4) {
-        RKWaveform *waveformDecimate = RKWaveformCopy(waveform);
-        const double pulseWidth = (double)waveform->depth / waveform->fs;
-        RKWaveformDecimate(waveformDecimate, radar->desc.pulseToRayRatio);
-        RKAddConfig(radar,
-                    RKConfigKeyWaveform, waveformDecimate,
-                    RKConfigKeyWaveformCalibration, waveformCalibration,
-                    RKConfigKeyPulseWidth, pulseWidth,
-                    RKConfigKeyNull);
-        RKWaveformFree(waveformDecimate);
-    } else {
-        RKLog("Error. Multiplexing = %d filters has not been implemented. Reverting to impulse filter.\n", waveform->filterCounts[0]);
-        RKSetWaveformToImpulse(radar);
+    // Send the waveform pointers to config buffer
+    RKAddConfig(radar,
+                RKConfigKeyWaveform, radar->waveform,
+                RKConfigKeyWaveformDecimate, radar->waveformDecimate,
+                RKConfigKeyWaveformCalibration, waveformCalibration,
+                RKConfigKeyPulseWidth, pulseWidth,
+                RKConfigKeyNull);
+    if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+        RKLog("Waveform '%s' cached.\n", waveform->name);
+    }
+    if (oldWaveformDecimate != NULL) {
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("Freeing radar->waveformDecimate cache ...\n");
+        }
+        RKWaveformFree(oldWaveformDecimate);
     }
     if (oldWaveform != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-            RKLog("Freeing RKWaveform cache ...\n");
+            RKLog("Freeing radar->waveform cache ...\n");
         }
         RKWaveformFree(oldWaveform);
     }
@@ -1449,21 +1459,19 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
         RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
     }
     RKWaveform *waveform = RKWaveformInitAsImpulse();
-    RKAddConfig(radar, RKConfigKeyWaveform, waveform, RKConfigKeyNull);
-    RKWaveformFree(waveform);
-    return RKResultSuccess;
+    return RKSetWaveform(radar, waveform);;
 }
 
-int RKSetWaveformTo121(RKRadar *radar) {
-    if (radar->pulseCompressionEngine == NULL) {
-        return RKResultNoPulseCompressionEngine;
-    }
-    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
-    }
-    return RKResultSuccess;
-}
+//int RKSetWaveformTo121(RKRadar *radar) {
+//    if (radar->pulseCompressionEngine == NULL) {
+//        return RKResultNoPulseCompressionEngine;
+//    }
+//    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+//    if (radar->desc.initFlags & RKInitFlagVerbose) {
+//        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+//    }
+//    return RKResultSuccess;
+//}
 
 int RKSetPRF(RKRadar *radar, const uint32_t prf) {
     RKAddConfig(radar, RKConfigKeyPRF, prf, RKConfigKeyNull);

@@ -2020,6 +2020,10 @@ void RKTestCacheWrite(void) {
 
 #pragma mark - Transceiver Emulator
 
+//
+// WARNING: Broken
+//
+
 void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
