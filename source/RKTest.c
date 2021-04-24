@@ -67,33 +67,34 @@ char *RKTestByNumberDescription(const int indent) {
     "17 - Test reading multiple netcdf files using RKProductCollectionInitWithFilename()\n"
     "18 - Test writing a netcdf file using RKProductFileWriterNC()\n"
     "19 - Test RKTestReviseLogicalValues()\n"
+    "20 - Test reading an rkc file; -T20 FILENAME\n"
     "\n"
-    "20 - SIMD quick test\n"
-    "21 - SIMD test with numbers shown\n"
-    "22 - Show window types\n"
-    "23 - Hilbert transform\n"
-    "24 - Optimize FFT performance and generate an fft-wisdom file\n"
-    "25 - Show ring filter coefficients\n"
+    "30 - SIMD quick test\n"
+    "31 - SIMD test with numbers shown\n"
+    "32 - Show window types\n"
+    "33 - Hilbert transform\n"
+    "34 - Optimize FFT performance and generate an fft-wisdom file\n"
+    "35 - Show ring filter coefficients\n"
     "\n"
-    "30 - Make a frequency hopping sequence\n"
-    "31 - Make a TFM waveform\n"
-    "32 - Generate a waveform file\n"
-    "33 - Test waveform down-sampling\n"
-    "34 - Test showing built-in waveform properties\n"
-    "35 - Test showing waveform properties; -T35 WAVEFORM_FILE\n"
+    "40 - Make a frequency hopping sequence\n"
+    "41 - Make a TFM waveform\n"
+    "42 - Generate a waveform file\n"
+    "43 - Test waveform down-sampling\n"
+    "44 - Test showing built-in waveform properties\n"
+    "45 - Test showing waveform properties; -T35 WAVEFORM_FILE\n"
     "\n"
-    "40 - Pulse compression using simple cases\n"
-    "41 - Calculating one ray using the Pulse Pair method\n"
-    "42 - Calculating one ray using the Pulse Pair Hop method\n"
-    "43 - Calculating one ray using the Multi-Lag method with L = 2\n"
-    "44 - Calculating one ray using the Multt-Lag method with L = 3\n"
-    "45 - Calculating one ray using the Multi-Lag method with L = 4\n"
-    "46 - Calculating one ray using the Spectral Moment method\n"
+    "50 - Pulse compression using simple cases\n"
+    "51 - Calculating one ray using the Pulse Pair method\n"
+    "52 - Calculating one ray using the Pulse Pair Hop method\n"
+    "53 - Calculating one ray using the Multi-Lag method with L = 2\n"
+    "54 - Calculating one ray using the Multt-Lag method with L = 3\n"
+    "55 - Calculating one ray using the Multi-Lag method with L = 4\n"
+    "56 - Calculating one ray using the Spectral Moment method\n"
     "\n"
-    "50 - Measure the speed of SIMD calculations\n"
-    "51 - Measure the speed of pulse compression\n"
-    "52 - Measure the speed of various moment methods\n"
-    "53 - Measure the speed of cached write\n";
+    "60 - Measure the speed of SIMD calculations\n"
+    "61 - Measure the speed of pulse compression\n"
+    "62 - Measure the speed of various moment methods\n"
+    "63 - Measure the speed of cached write\n";
     RKIndentCopy(text, helpText, indent);
     if (strlen(text) > 3000) {
         fprintf(stderr, "Warning. Approaching limit. (%lu)\n", strlen(text));
@@ -179,85 +180,92 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestReviseLogicalValues();
             break;
         case 20:
-            RKTestSIMD(RKTestSIMDFlagNull);
-            break;
-        case 21:
-            RKTestSIMD(RKTestSIMDFlagShowNumbers);
-            break;
-        case 22:
-            RKTestWindow();
-            break;
-        case 23:
-            RKTestHilbertTransform();
-            break;
-        case 24:
-            RKTestWriteFFTWisdom();
-            break;
-        case 25:
-            RKTestRingFilterShowCoefficients();
-            break;
-        case 26:
-            RKTestCommandQueue();
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKTestReadIQ((char *)arg);
             break;
         case 30:
-            RKTestMakeHops();
+            RKTestSIMD(RKTestSIMDFlagNull);
             break;
         case 31:
-            RKTestWaveformTFM();
+            RKTestSIMD(RKTestSIMDFlagShowNumbers);
             break;
         case 32:
-            RKTestWaveformWrite();
+            RKTestWindow();
             break;
         case 33:
-            RKTestWaveformDownsampling();
+            RKTestHilbertTransform();
             break;
         case 34:
-            RKTestWaveformShowProperties();
+            RKTestWriteFFTWisdom();
             break;
         case 35:
+            RKTestRingFilterShowCoefficients();
+            break;
+        case 36:
+            RKTestCommandQueue();
+            break;
+        case 40:
+            RKTestMakeHops();
+            break;
+        case 41:
+            RKTestWaveformTFM();
+            break;
+        case 42:
+            RKTestWaveformWrite();
+            break;
+        case 43:
+            RKTestWaveformDownsampling();
+            break;
+        case 44:
+            RKTestWaveformShowProperties();
+            break;
+        case 45:
             if (arg == NULL) {
                 RKLog("No filename given.\n");
                 exit(EXIT_FAILURE);
             }
             RKTestWaveformShowUserWaveformProperties((char *)arg);
             break;
-        case 40:
+        case 50:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
             break;
-        case 41:
+        case 51:
             RKTestOneRay(RKPulsePair, 0);
             break;
-        case 42:
+        case 52:
             RKTestOneRay(RKPulsePairHop, 0);
             break;
-        case 43:
+        case 53:
             RKTestOneRay(RKMultiLag, 2);
             break;
-        case 44:
+        case 54:
             RKTestOneRay(RKMultiLag, 3);
             break;
-        case 45:
+        case 55:
             RKTestOneRay(RKMultiLag, 4);
             break;
-        case 46:
+        case 56:
             RKTestOneRay(RKSpectralMoment, 0);
             break;
-        case 47:
+        case 57:
             RKTestOneRaySpectra(RKSpectralMoment, 0);
             break;
-        case 50:
+        case 60:
             RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
             break;
-        case 51:
+        case 61:
             RKTestPulseCompressionSpeed();
             break;
-        case 52:
+        case 62:
             RKTestMomentProcessorSpeed();
             break;
-        case 53:
+        case 63:
             RKTestCacheWrite();
             break;
-        case 60:
+        case 99:
             RKTestExperiment();
             break;
         default:
@@ -800,6 +808,7 @@ void RKTestProductWrite(void) {
 }
 
 void RKTestReviseLogicalValues(void) {
+    SHOW_FUNCTION_NAME
     char string[] = "{"
     "\"Transceiver\":{\"Value\":\"TRUE\", \"Enum\":0}, "
     "\"Pedestal\":{\"Value\":\"True\", \"Enum\":0}, "
@@ -809,6 +818,26 @@ void RKTestReviseLogicalValues(void) {
     printf("string = %s\n", string);
     RKReviseLogicalValues(string);
     printf("  -> %s\n", string);
+}
+
+void RKTestReadIQ(const char *filename) {
+    SHOW_FUNCTION_NAME
+    printf("filename = %s\n", filename);
+    FILE *fid = fopen(filename, "r");
+    if (fid == NULL) {
+        fprintf(stderr, "Error opening file %s\n", filename);
+        return;
+    }
+    size_t c;
+    RKFileHeader fileHeader;
+    c = fread(&fileHeader, sizeof(RKFileHeader), 1, fid);
+    printf("c = %zu\n", c);
+    printf("buildNo = %d\n", fileHeader.buildNo);
+    if (fileHeader.buildNo < 6) {
+        printf("I am not backward compatible. Sorry\n");
+        return;
+    }
+    fclose(fid);
 }
 
 #pragma mark -
