@@ -57,6 +57,8 @@
 		B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */; };
 		B5EE832C20DFB9D400681E29 /* RKProductFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832B20DFB9D400681E29 /* RKProductFile.c */; };
 		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
+		B5FA38EA26346214008C0454 /* RKCalibrator.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FA38E926346214008C0454 /* RKCalibrator.h */; };
+		B5FA38F126346299008C0454 /* RKCalibrator.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FA38F026346299008C0454 /* RKCalibrator.c */; };
 		B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FAD8D120DE943B00E0A767 /* RKProduct.h */; };
 		B5FAD8D420DE945500E0A767 /* RKProduct.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FAD8D320DE945500E0A767 /* RKProduct.c */; };
 		B5FFD47B1FB0B5C600319453 /* RKRawDataRecorder.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FFD45E1FB0B5C200319453 /* RKRawDataRecorder.c */; };
@@ -197,6 +199,8 @@
 		B5EE832B20DFB9D400681E29 /* RKProductFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKProductFile.c; path = source/RKProductFile.c; sourceTree = "<group>"; };
 		B5EE832D20DFBC4F00681E29 /* RKProductFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKProductFile.h; path = headers/RadarKit/RKProductFile.h; sourceTree = "<group>"; };
 		B5F5AE3A1DBF994200CF643F /* RKTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKTest.h; path = headers/RadarKit/RKTest.h; sourceTree = "<group>"; };
+		B5FA38E926346214008C0454 /* RKCalibrator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKCalibrator.h; path = headers/RadarKit/RKCalibrator.h; sourceTree = "<group>"; };
+		B5FA38F026346299008C0454 /* RKCalibrator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKCalibrator.c; path = source/RKCalibrator.c; sourceTree = "<group>"; };
 		B5FAD8D120DE943B00E0A767 /* RKProduct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKProduct.h; path = headers/RadarKit/RKProduct.h; sourceTree = "<group>"; };
 		B5FAD8D320DE945500E0A767 /* RKProduct.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKProduct.c; path = source/RKProduct.c; sourceTree = "<group>"; };
 		B5FFD45E1FB0B5C200319453 /* RKRawDataRecorder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKRawDataRecorder.c; path = source/RKRawDataRecorder.c; sourceTree = "<group>"; };
@@ -331,6 +335,7 @@
 				B5B5196B1DCA87BD00470924 /* RKPulsePair.h */,
 				B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */,
 				B548350F216B9E280066FA0D /* RKSpectralMoment.h */,
+				B5FA38E926346214008C0454 /* RKCalibrator.h */,
 				B52E45C21D91749C00FC1113 /* RKMoment.h */,
 				B55F5F191E2C8F9600FA8B2E /* RKSweep.h */,
 				B5B2058820E43117007D48E0 /* RKSweepFile.h */,
@@ -408,6 +413,7 @@
 				B5FFD4671FB0B5C300319453 /* RKPulsePair.c */,
 				B5FFD45F1FB0B5C200319453 /* RKMultiLag.c */,
 				B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */,
+				B5FA38F026346299008C0454 /* RKCalibrator.c */,
 				B5FFD46B1FB0B5C400319453 /* RKMoment.c */,
 				B5FFD46E1FB0B5C400319453 /* RKSweep.c */,
 				B5B2058A20E43128007D48E0 /* RKSweepFile.c */,
@@ -452,6 +458,7 @@
 				B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */,
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
 				B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */,
+				B5FA38EA26346214008C0454 /* RKCalibrator.h in Headers */,
 				B5E6D94C1E1C4A1200DFBBA9 /* RKPosition.h in Headers */,
 				B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */,
 				B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */,
@@ -642,6 +649,7 @@
 				B5FFD47F1FB0B5C600319453 /* RKClient.c in Sources */,
 				B565B5451E5A4623000C8503 /* bessi.c in Sources */,
 				B5FFD48F1FB0B5C600319453 /* RKTest.c in Sources */,
+				B5FA38F126346299008C0454 /* RKCalibrator.c in Sources */,
 				B5FFD4901FB0B5C600319453 /* RKCommandCenter.c in Sources */,
 				B5FFD4881FB0B5C600319453 /* RKMoment.c in Sources */,
 				B5FFD4961FB0B5C600319453 /* RKClock.c in Sources */,
