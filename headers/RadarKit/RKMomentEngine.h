@@ -1,13 +1,13 @@
 //
-//  RKMoment.h
+//  RKMomentEngine.h
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 9/20/15.
 //  Copyright (c) 2015 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_Moment__
-#define __RadarKit_Moment__
+#ifndef __RadarKit_Moment_Engine__
+#define __RadarKit_Moment_Engine__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>

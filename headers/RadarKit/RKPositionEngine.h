@@ -1,8 +1,8 @@
 //
-//  RKPosition.h
+//  RKPositionEngine.h
 //  RadarKit
 //
-//  RKPosition provides a wrapper to interact with RadarKit, tag each raw time-series pulse with a set
+//  RKPositionEngine is a state machine that collects and tags each raw time-series pulse with a set
 //  of proper position that contains azimuth and elevation. It manages the run-loop that continuously
 //  monitor the incoming position read, where you would supply the actual read function to interpret
 //  the binary stream, decode the stream into an RKPosition slot, which is supplied. Each call of the
@@ -41,8 +41,8 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_Position__
-#define __RadarKit_Position__
+#ifndef __RadarKit_Position_Engine__
+#define __RadarKit_Position_Engine__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKConfig.h>

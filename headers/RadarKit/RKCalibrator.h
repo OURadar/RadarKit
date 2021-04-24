@@ -12,6 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
 
-
+int RKCalibratorSimple();
 
 #endif

@@ -6,7 +6,7 @@
 //  Copyright © 2017 Boon Leng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKSweep.h>
+#include <RadarKit/RKSweepEngine.h>
 
 // Internal Functions
 

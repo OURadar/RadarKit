@@ -21,7 +21,7 @@
 #include <RadarKit/RKMoment.h>
 #include <RadarKit/RKHealthLogger.h>
 #include <RadarKit/RKRawDataRecorder.h>
-#include <RadarKit/RKSweep.h>
+#include <RadarKit/RKSweepEngine.h>
 #include <RadarKit/RKProduct.h>
 #include <RadarKit/RKWaveform.h>
 #include <RadarKit/RKPreference.h>

@@ -490,7 +490,7 @@ RKHostMonitor *RKHostMonitorInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKHostMonitor));
-    sprintf(engine->name, "%s<NetworkAssessor>%s",
+    sprintf(engine->name, "%s<InternetMonitor>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHostMonitor) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
