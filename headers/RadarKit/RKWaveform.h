@@ -15,62 +15,6 @@
 #define RKWaveformDefaultDepth       1024
 #define RKWaveformDigitalAmplitude   32000.0
 
-// ----
-//  File header
-//  - name
-//  - group count
-//  - global depth
-// ----
-//
-// ----
-//  RKWaveFileGroup (0)
-//  - type
-//  - depth
-//  - filter count
-// ----
-//
-// ----
-//  - (RKFilterAnchor) x filter count
-//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
-// ---
-//
-// ----
-//  RKWaveFileGroup (1)
-//  - type
-//  - depth
-//  - filter count
-// ----
-//
-// ----
-//  - (RKFilterAnchor) x filter count
-//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
-// ---
-//
-
-#pragma pack(push, 1)
-
-typedef union rk_wave_file_header {
-    struct {
-        char            name[256];
-        uint8_t         groupCount;
-        uint32_t        depth;
-        double          fc;
-        double          fs;
-    };
-    char bytes[512];
-} RKWaveFileHeader;
-
-typedef union rk_wave_file_group {
-    struct {
-        RKWaveformType  type;
-        uint32_t        depth;
-        uint32_t        filterCounts;
-    };
-    char bytes[32];
-} RKWaveFileGroup;
-
-#pragma pack(pop)
-
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
 RKWaveform *RKWaveformInitFromFile(const char *filename);
 RKWaveform *RKWaveformInit(void);
@@ -99,8 +43,11 @@ void RKWaveformDecimate(RKWaveform *, const int);
 void RKWaveformConjuate(RKWaveform *);
 void RKWaveformDownConvert(RKWaveform *);
 
-void RKWaveformWrite(RKWaveform *, const char *);
 void RKWaveformNormalizeNoiseGain(RKWaveform *);
 void RKWaveformSummary(RKWaveform *);
+
+size_t RKWaveformWriteToReference(RKWaveform *, FILE *);
+RKResult RKWaveformWriteFile(RKWaveform *, const char *);
+RKWaveform *RKWaveformReadFromReference(FILE *);
 
 #endif

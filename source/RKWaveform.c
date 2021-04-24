@@ -85,95 +85,13 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
 }
 
 RKWaveform *RKWaveformInitFromFile(const char *filename) {
-    int j, k;
-    size_t r;
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to read wave file %s\n", filename);
         return NULL;
     }
-    RKWaveFileHeader fileHeader;
-    RKWaveFileGroup groupHeader;
-    r = fread(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
-    if (r == 0) {
-        RKLog("Error. No file header from %s.\n", filename);
-    }
-    
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
-    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
-
-    waveform->fc = fileHeader.fc;
-    waveform->fs = fileHeader.fs;
-    strncpy(waveform->name, fileHeader.name, RKNameLength);
-    
-    for (k = 0; k < fileHeader.groupCount; k++) {
-        // Read in the waveform of each group
-        r = fread(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
-        if (r == 0) {
-            RKLog("Error. Failed reading group header from %s.\n", filename);
-        }
-        // RKLog("groupHeader.depth = %d\n", groupHeader.depth);
-        if (waveform->depth < groupHeader.depth) {
-            RKLog("Error. Unable to fit %s into supplied buffer. (%s < %s) @ group %d\n", filename,
-                  RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(groupHeader.depth), k);
-            RKWaveformFree(waveform);
-            fclose(fid);
-            return NULL;
-        }
-        waveform->type = groupHeader.type;
-        waveform->filterCounts[k] = groupHeader.filterCounts;
-        r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
-        if (r == 0) {
-            RKLog("Error. Unable to read filter anchors from %s\n", filename);
-        }
-        // Output data from the first filter is allowed up to the maximum
-        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;
-        for (j = 0; j < waveform->filterCounts[k]; j++) {
-            if (waveform->filterAnchors[k][j].length > waveform->depth) {
-                RKLog("Error. This waveform is invalid.  length = %s > depth %s\n",
-                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
-                      RKIntegerToCommaStyleString(waveform->depth));
-                RKWaveformFree(waveform);
-                fclose(fid);
-                return NULL;
-            }
-            if (waveform->filterAnchors[k][j].origin > RKMaximumGateCount) {
-                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKMaximumGateCount)\n",
-                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].origin),
-                      RKIntegerToCommaStyleString(RKMaximumGateCount));
-                RKWaveformFree(waveform);
-                fclose(fid);
-                return NULL;
-            }
-            if (waveform->filterAnchors[k][j].inputOrigin > RKMaximumGateCount) {
-                RKLog("Error. This waveform is invalid.  inputOrigin = %s > %s (RKMaximumGateCount)\n",
-                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
-                      RKIntegerToCommaStyleString(RKMaximumGateCount));
-                RKWaveformFree(waveform);
-                fclose(fid);
-                return NULL;
-            }
-            if (waveform->filterAnchors[k][j].outputOrigin > RKMaximumGateCount) {
-                RKLog("Error. This waveform is invalid.  outputOrigin = %s > %s (RKMaximumGateCount)\n",
-                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
-                      RKIntegerToCommaStyleString(RKMaximumGateCount));
-                RKWaveformFree(waveform);
-                fclose(fid);
-                return NULL;
-            }
-        }
-        r = fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
-        if (r == 0) {
-            RKLog("Error. Failed reading complex samples from %s.\n", filename);
-        }
-        r = fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
-        if (r == 0) {
-            RKLog("Error. Failed reading int16 samples from %s.\n", filename);
-        }
-    }
+    RKWaveform *waveform = RKWaveformReadFromReference(fid);
     fclose(fid);
-
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
@@ -828,84 +746,6 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 
 #pragma mark - Others
 
-// ----
-//  File header
-//  - name
-//  - group count
-//  - global depth
-// ----
-//
-// ----
-//  RKWaveFileGroup (0)
-//  - type
-//  - depth (may be different in the future)
-//  - filter count
-// ----
-//
-// ----
-//  - (RKFilterAnchor) x filter count
-//  - depth x sizeof(RKComplex)
-//  - depth x sizeof(RKInt16C)
-// ---
-//
-// ----
-//  RKWaveFileGroup (1)
-//  - type
-//  - depth
-//  - filter count
-// ----
-//
-// ----
-//  - (RKFilterAnchor) x filter count
-//  - depth x sizeof(RKComplex)
-//  - depth x sizeof(RKInt16C)
-// ---
-//
-
-void RKWaveformWrite(RKWaveform *waveform, const char *filename) {
-    int k;
-    RKWaveFileHeader fileHeader;
-    RKWaveFileGroup groupHeader;
-
-    memset(&fileHeader, 0, sizeof(RKWaveFileHeader));
-    memset(&groupHeader, 0, sizeof(RKWaveFileGroup));
-
-    // Get the path created if it doesn't exist
-    RKPreparePath(filename);
-    FILE *fid = fopen(filename, "w");
-    if (fid == NULL) {
-        RKLog("Error. Unable to write wave file %s\n", filename);
-        return;
-    }
-    char *lastPart = strchr(filename, '/');
-    if (lastPart == NULL) {
-        strcpy(fileHeader.name, filename);
-    } else {
-        strcpy(fileHeader.name, lastPart + 1);
-    }
-    // File header
-    fileHeader.groupCount = waveform->count;
-    fileHeader.depth = waveform->depth;
-    fileHeader.fc = waveform->fc;
-    fileHeader.fs = waveform->fs;
-    strcpy(fileHeader.name, waveform->name);
-    fwrite(&fileHeader, sizeof(RKWaveFileHeader), 1, fid);
-    // Go through all groups
-    for (k = 0; k < waveform->count; k++) {
-        // Group header
-        groupHeader.type = waveform->type;
-        groupHeader.depth = waveform->depth;
-        groupHeader.filterCounts = waveform->filterCounts[k];
-        fwrite(&groupHeader, sizeof(RKWaveFileGroup), 1, fid);
-        // Filter anchors
-        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
-        // Waveform samples
-        fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
-        fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
-    }
-    fclose(fid);
-}
-
 void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
     int i, j, k;
     RKFloat gain;
@@ -1022,4 +862,181 @@ void RKWaveformSummary(RKWaveform *waveform) {
             }
         }
     }
+}
+
+#pragma mark - File
+
+// ----
+//  RKWaveGlobalHeader
+//  - name
+//  - group count
+//  - global depth
+// ----
+//
+// ----
+//  RKWaveGroupHeader (0)
+//  - type
+//  - depth
+//  - filter count
+// ----
+//
+// ----
+//  - (RKFilterAnchor) x filter count
+//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+// ---
+//
+// ----
+//  RKWaveGroupHeader (1)
+//  - type
+//  - depth
+//  - filter count
+// ----
+//
+// ----
+//  - (RKFilterAnchor) x filter count
+//  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
+// ---
+//
+
+size_t RKWaveformWriteToReference(RKWaveform *waveform, FILE *fid) {
+    int k;
+    size_t bytes = 0;
+    RKWaveGlobalHeader fileHeader;
+    RKWaveGroupHeader groupHeader;
+    memset(&fileHeader, 0, sizeof(RKWaveGlobalHeader));
+    memset(&groupHeader, 0, sizeof(RKWaveGroupHeader));
+    // File header
+    fileHeader.groupCount = waveform->count;
+    fileHeader.depth = waveform->depth;
+    fileHeader.fc = waveform->fc;
+    fileHeader.fs = waveform->fs;
+    strcpy(fileHeader.name, waveform->name);
+    fwrite(&fileHeader, sizeof(RKWaveGlobalHeader), 1, fid);
+    bytes += sizeof(RKWaveGlobalHeader);
+    // Go through all groups
+    for (k = 0; k < waveform->count; k++) {
+        // Group header
+        groupHeader.type = waveform->type;
+        groupHeader.depth = waveform->depth;
+        groupHeader.filterCounts = waveform->filterCounts[k];
+        fwrite(&groupHeader, sizeof(RKWaveGroupHeader), 1, fid);
+        bytes += sizeof(RKWaveGroupHeader);
+        // Filter anchors
+        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
+        bytes += groupHeader.filterCounts * sizeof(RKFilterAnchor);
+        // Waveform samples
+        fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
+        bytes += groupHeader.depth * sizeof(RKComplex);
+        fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
+        bytes += groupHeader.depth * sizeof(RKInt16C);
+    }
+    return bytes;
+}
+
+RKResult RKWaveformWriteFile(RKWaveform *waveform, const char *filename) {
+    // Get the path created if it doesn't exist
+    RKPreparePath(filename);
+    FILE *fid = fopen(filename, "w");
+    if (fid == NULL) {
+        RKLog("Error. Unable to write wave file %s\n", filename);
+        return RKResultFailedToOpenFileForWriting;
+    }
+    if (strlen(waveform->name) == 0) {
+        char *lastPart = strchr(filename, '/');
+        if (lastPart == NULL) {
+            strcpy(waveform->name, filename);
+        } else {
+            strcpy(waveform->name, lastPart + 1);
+        }
+    }
+    RKWaveformWriteToReference(waveform, fid);
+    fclose(fid);
+    return RKResultSuccess;
+}
+
+RKWaveform *RKWaveformReadFromReference(FILE *fid) {
+    int j, k;
+    size_t r;
+    RKWaveGlobalHeader fileHeader;
+    RKWaveGroupHeader groupHeader;
+    r = fread(&fileHeader, sizeof(RKWaveGlobalHeader), 1, fid);
+    if (r == 0) {
+        RKLog("Error. No file header from %p.\n", fid);
+    }
+    
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
+    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
+
+    waveform->fc = fileHeader.fc;
+    waveform->fs = fileHeader.fs;
+    strncpy(waveform->name, fileHeader.name, RKNameLength);
+    
+    for (k = 0; k < fileHeader.groupCount; k++) {
+        // Read in the waveform of each group
+        r = fread(&groupHeader, sizeof(RKWaveGroupHeader), 1, fid);
+        if (r == 0) {
+            RKLog("Error. Failed reading group header from %p.\n", fid);
+            return NULL;
+        }
+        // RKLog("groupHeader.depth = %d\n", groupHeader.depth);
+        if (waveform->depth < groupHeader.depth) {
+            RKLog("Error. Unable to fit %p into supplied buffer. (%s < %s) @ group %d\n", fid,
+                  RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(groupHeader.depth), k);
+            RKWaveformFree(waveform);
+            return NULL;
+        }
+        waveform->type = groupHeader.type;
+        waveform->filterCounts[k] = groupHeader.filterCounts;
+        r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
+        if (r == 0) {
+            RKLog("Error. Unable to read filter anchors from %p\n", fid);
+            return NULL;
+        }
+        // Output data from the first filter is allowed up to the maximum
+        waveform->filterAnchors[k][0].maxDataLength = RKMaximumGateCount;
+        for (j = 0; j < waveform->filterCounts[k]; j++) {
+            if (waveform->filterAnchors[k][j].length > waveform->depth) {
+                RKLog("Error. This waveform is invalid.  length = %s > depth %s\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].length),
+                      RKIntegerToCommaStyleString(waveform->depth));
+                RKWaveformFree(waveform);
+                fclose(fid);
+                return NULL;
+            }
+            if (waveform->filterAnchors[k][j].origin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  origin = %s > %s (RKMaximumGateCount)\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].origin),
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
+                RKWaveformFree(waveform);
+                fclose(fid);
+                return NULL;
+            }
+            if (waveform->filterAnchors[k][j].inputOrigin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  inputOrigin = %s > %s (RKMaximumGateCount)\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
+                RKWaveformFree(waveform);
+                fclose(fid);
+                return NULL;
+            }
+            if (waveform->filterAnchors[k][j].outputOrigin > RKMaximumGateCount) {
+                RKLog("Error. This waveform is invalid.  outputOrigin = %s > %s (RKMaximumGateCount)\n",
+                      RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
+                      RKIntegerToCommaStyleString(RKMaximumGateCount));
+                RKWaveformFree(waveform);
+                fclose(fid);
+                return NULL;
+            }
+        }
+        r = fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
+        if (r == 0) {
+            RKLog("Error. Failed reading complex samples from %p.\n", fid);
+        }
+        r = fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+        if (r == 0) {
+            RKLog("Error. Failed reading int16 samples from %p.\n", fid);
+        }
+    }
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
+    return waveform;
 }

@@ -318,6 +318,7 @@ N(RKResultFailedToOpenFileForProduct) \
 N(RKResultClientNotConnected) \
 N(RKResultFileManagerInconsistentFolder) \
 N(RKResultFailedToExpandWaveform) \
+N(RKResultFailedToOpenFileForWriting) \
 N(RKResultRadarNotLive) \
 N(RKResultNoRadar)
 
@@ -938,6 +939,84 @@ typedef struct rk_radar_desc {
     char                 dataPath[RKMaximumFolderPathLength];                  // Root path for the data files
 } RKRadarDesc;
 
+typedef struct rk_waveform {
+    int                  count;                                                // Number of groups
+    int                  depth;                                                // Maximum number of samples
+    double               fc;                                                   // Carrier frequency (Hz)
+    double               fs;                                                   // Sampling frequency (Hz)
+    RKWaveformType       type;                                                 // Various type of waveforms
+    RKName               name;                                                 // Waveform name in plain string
+    RKComplex            *samples[RKMaximumFilterGroups];                      // Samples up to amplitude of 1.0
+    RKInt16C             *iSamples[RKMaximumFilterGroups];                     // 16-bit full-scale equivalence of the waveforms
+    uint32_t             filterCounts[RKMaximumFilterGroups];                  // Number of filters to applied to each waveform, see filterAnchors
+    RKFilterAnchorGroup  filterAnchors[RKMaximumFilterGroups];                 // Filter anchors of each sub-waveform for de-multiplexing
+} RKWaveform;
+
+typedef union rk_wave_file_header {
+    struct {
+        char            name[256];
+        uint8_t         groupCount;
+        uint32_t        depth;
+        double          fc;
+        double          fs;
+    };
+    char bytes[512];
+} RKWaveGlobalHeader;
+
+typedef union rk_wave_file_group {
+    struct {
+        RKWaveformType  type;
+        uint32_t        depth;
+        uint32_t        filterCounts;
+    };
+    char bytes[32];
+} RKWaveGroupHeader;
+
+typedef struct rk_waveform_cal {
+    uint32_t             uid;                                                  // A unique identifier
+    RKName               name;                                                 // A string description
+    uint8_t              count;                                                // The number of tones in this waveform
+    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Calibration factor for individual tone
+    RKFloat              DCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
+    RKFloat              PCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
+} RKWaveformCalibration;
+
+typedef struct rk_waveform_response {
+    uint32_t             count;                                                // Number of combinations (at most 3 for now)
+    uint32_t             length;                                               // Length of each filter
+    RKFloat              **amplitudeResponse;                                  // An array of amplitudes of [count][length] (dB)
+    RKFloat              **phaseResponse;                                      // An array of phases of [count][length] (radians)
+} RKWaveformResponse;
+
+//
+// A running configuration buffer (version 1, see below for updated version)
+//
+typedef struct rk_config_v1 {
+    RKIdentifier         i;                                                    // Identity counter
+    float                sweepElevation;                                       // Sweep elevation angle (degrees)
+    float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
+    RKMarker             startMarker;                                          // Marker of the latest start ray
+    uint8_t              filterCount;                                          // Number of filters
+    RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level
+    RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
+    RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
+    uint32_t             pulseGateCount;                                       // Number of range gates
+    RKFloat              pulseGateSize;                                        // Size of range gate (m)
+    uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
+    uint32_t             waveformId[RKMaximumFilterCount];                     // Transmit waveform
+    RKFloat              noise[2];                                             // Noise floor (ADU)
+    RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
+    RKFloat              systemDCal;                                           // System-wide ZDR calibration (dB)
+    RKFloat              systemPCal;                                           // System-wide phase calibration (rad)
+    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Waveform Z calibration (dB)
+    RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
+    RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
+    RKFloat              SNRThreshold;                                         // Censor SNR (dB)
+    RKFloat              SQIThreshold;                                         // Censor SQI
+    RKName               waveform;                                             // Waveform name
+    char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
+} RKConfigV1;
+
 //
 // A running configuration buffer
 //
@@ -963,8 +1042,9 @@ typedef struct rk_config {
     RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
     RKFloat              SNRThreshold;                                         // Censor SNR (dB)
     RKFloat              SQIThreshold;                                         // Censor SQI
-    RKName               waveform;                                             // Waveform name
     char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
+    RKName               waveformName;                                         // Waveform name
+    RKWaveform           *waveform;                                            // Reference to the waveform storage
 } RKConfig;
 
 //
@@ -1151,6 +1231,17 @@ typedef struct rk_sweep {
 //
 // File header of raw I/Q data
 //
+typedef union rk_file_header_v1 {
+    struct {
+        RKName               preface;                                          //
+        uint32_t             buildNo;                                          //
+        RKRadarDesc          desc;                                             //
+        RKConfigV1           config;                                           //
+        RKRawDataType        dataType;                                         //
+    };                                                                         //
+    RKByte               bytes[4096];                                          //
+} RKFileHeaderV1;
+
 typedef union rk_file_header {
     struct {
         RKName               preface;                                          //
@@ -1318,35 +1409,6 @@ typedef struct rk_product_collection {
     uint32_t             count;                                                // Number of products
     RKProduct            *products;                                            // Products
 } RKProductCollection;
-
-typedef struct rk_waveform {
-    int                  count;                                                // Number of groups
-    int                  depth;                                                // Maximum number of samples
-    double               fc;                                                   // Carrier frequency (Hz)
-    double               fs;                                                   // Sampling frequency (Hz)
-    RKWaveformType       type;                                                 // Various type of waveforms
-    RKName               name;                                                 // Waveform name in plain string
-    RKComplex            *samples[RKMaximumFilterGroups];                      // Samples up to amplitude of 1.0
-    RKInt16C             *iSamples[RKMaximumFilterGroups];                     // 16-bit full-scale equivalence of the waveforms
-    uint32_t             filterCounts[RKMaximumFilterGroups];                  // Number of filters to applied to each waveform, see filterAnchors
-    RKFilterAnchorGroup  filterAnchors[RKMaximumFilterGroups];                 // Filter anchors of each sub-waveform for de-multiplexing
-} RKWaveform;
-
-typedef struct rk_waveform_cal {
-    uint32_t             uid;                                                  // A unique identifier
-    RKName               name;                                                 // A string description
-    uint8_t              count;                                                // The number of tones in this waveform
-    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Calibration factor for individual tone
-    RKFloat              DCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
-    RKFloat              PCal[RKMaximumFilterCount];                           // Calibration factor for individual tone
-} RKWaveformCalibration;
-
-typedef struct rk_waveform_response {
-    uint32_t             count;                                                // Number of combinations (at most 3 for now)
-    uint32_t             length;                                               // Length of each filter
-    RKFloat              **amplitudeResponse;                                  // An array of amplitudes of [count][length] (dB)
-    RKFloat              **phaseResponse;                                      // An array of phases of [count][length] (radians)
-} RKWaveformResponse;
 
 typedef struct rk_iir_filter {
     RKName               name;                                                 // String description of the filter

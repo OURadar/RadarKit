@@ -1346,7 +1346,7 @@ void RKTestWaveformTFM(void) {
     const char filename[] = "waveforms/test-tfm.rkwav";
     RKWaveform *waveform = RKWaveformInitAsFakeTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
     RKWaveformSummary(waveform);
-    RKWaveformWrite(waveform, filename);
+    RKWaveformWriteFile(waveform, filename);
     RKWaveformFree(waveform);
 }
 
@@ -1358,7 +1358,7 @@ void RKTestWaveformWrite(void) {
     char filename[160];
     snprintf(filename, 159, "waveforms/%s.rkwav", waveform->name);
     RKLog("Creating waveform file '%s' ...\n", filename);
-    RKWaveformWrite(waveform, filename);
+    RKWaveformWriteFile(waveform, filename);
 
     RKLog("Reading waveform file '%s' ...\n", filename);
     RKWaveform *loadedWaveform = RKWaveformInitFromFile(filename);
@@ -2145,7 +2145,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         //RKLog("%s", transceiver->name);
 
         RKLog("%s Waveform %s", transceiver->name, fileHeader->config.waveform);
-        sprintf(string, "waveforms/%s.rkwav", fileHeader->config.waveform);
+        sprintf(string, "waveforms/%s.rkwav", fileHeader->config.waveformName);
         if (!RKFilenameExists(string)) {
             RKLog("%s Error. Waveform %s does not exist in my collection.\n", transceiver->name, string);
             fclose(fid);

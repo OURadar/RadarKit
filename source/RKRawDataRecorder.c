@@ -176,15 +176,40 @@ static void *pulseRecorder(void *in) {
             }
             if (engine->record) {
                 RKPreparePath(filename);
+                // 4-KB raw data file header
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
+                fileHeader->config.waveform = NULL;
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
+                RKWaveform *waveform = config->waveform;
+                RKWaveGlobalHeader waveGlobalHeader;
+                RKWaveGroupHeader waveGroupHeader;
+                memset(&waveGlobalHeader, 0, sizeof(RKWaveGlobalHeader));
+                memset(&waveGroupHeader, 0, sizeof(RKWaveGroupHeader));
+                waveGlobalHeader.groupCount = waveform->count;
+                waveGlobalHeader.depth = waveform->depth;
+                waveGlobalHeader.fc = waveform->fc;
+                waveGlobalHeader.fs = waveform->fs;
+                strcpy(waveGlobalHeader.name, waveform->name);
+                // 512-B wave header
+                len += RKRawDataRecorderCacheWrite(engine, &waveGlobalHeader, sizeof(RKWaveGlobalHeader));
+                for (i = 0; i < waveform->count; i++) {
+                    waveGroupHeader.type = waveform->type;
+                    waveGroupHeader.depth = waveform->depth;
+                    waveGroupHeader.filterCounts = waveform->filterCounts[i];
+                    // 32-B wave group header
+                    len += RKRawDataRecorderCacheWrite(engine, &waveGroupHeader, sizeof(RKWaveGroupHeader));
+                    len += RKRawDataRecorderCacheWrite(engine, waveform->filterAnchors[i], waveGroupHeader.filterCounts * sizeof(RKFilterAnchor));
+                    // Waveform samples (flexible size)
+                    len += RKRawDataRecorderCacheWrite(engine, waveform->samples[i], waveGroupHeader.depth * sizeof(RKComplex));
+                    len += RKRawDataRecorderCacheWrite(engine, waveform->iSamples[i], waveGroupHeader.depth * sizeof(RKInt16C));
+                }
             } else {
                 len = sizeof(RKFileHeader);
             }
         }
         
-        // Actual cache and write happen here.
+        // Pulse to write cache
         if (engine->record && engine->fd) {
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
                 len += RKRawDataRecorderCacheWrite(engine, &pulse->header, sizeof(RKPulseHeader));

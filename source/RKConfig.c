@@ -135,7 +135,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     return;
                 }
                 newConfig->filterCount = waveform->filterCounts[0];
-                strncpy(newConfig->waveform, waveform->name, RKNameLength - 1);
+                strncpy(newConfig->waveformName, waveform->name, RKNameLength - 1);
                 memcpy(newConfig->filterAnchors, waveform->filterAnchors[0], waveform->filterCounts[0] * sizeof(RKFilterAnchor));
                 w0 = 0;
                 w1 = 0;
@@ -176,8 +176,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 sprintf(stringBuffer[0], "PulseWidth = %s us", RKFloatToCommaStyleString(1.0e6 * newConfig->pw[0]));
                 break;
             case RKConfigKeyWaveformName:
-                strncpy(newConfig->waveform, va_arg(args, char *), RKNameLength - 1);
-                sprintf(stringBuffer[0], "Waveform = '%s'", newConfig->waveform);
+                strncpy(newConfig->waveformName, va_arg(args, char *), RKNameLength - 1);
+                sprintf(stringBuffer[0], "Waveform = '%s'", newConfig->waveformName);
                 break;
             case RKConfigKeyWaveformCalibration:
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
