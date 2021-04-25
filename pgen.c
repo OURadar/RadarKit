@@ -18,8 +18,14 @@ void RKScratchFree(RKScratch *);
 int main(int argc, const char **argv) {
 
     char name[] = __FILE__;
-    *strrchr(name, '.') = '\0';
-
+    char *c = strchr(name, '/');
+    if (c) {
+        strcpy(name, c);
+    }
+    c = strrchr(name, '.');
+    if (c) {
+        *c = '\0';
+    }
     RKSetProgramName(name);
 
     char *term = getenv("TERM");
@@ -36,13 +42,11 @@ int main(int argc, const char **argv) {
     }
     
     int i = 0, j = 0, k = 0, p = 0, r = 0;
-    bool m = false;
     uint32_t u32 = 0;
     char timestr[32];
+    bool m = false;
     int i0, i1 = -1;
-    size_t mem = 0;
-    size_t bytes;
-    size_t readsize = 0, tr;
+    size_t readsize, bytes, mem = 0;
 
     time_t startTime;
     suseconds_t usec = 0;
@@ -71,7 +75,6 @@ int main(int argc, const char **argv) {
     }
     if (fseek(fid, 0L, SEEK_END)) {
         RKLog("Error. Unable to tell the file size.\n");
-        filesize = 0;
     } else {
         filesize = ftell(fid);
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
@@ -259,8 +262,8 @@ int main(int argc, const char **argv) {
                   RKIntegerToCommaStyleString(pulseCapacity));
         }
         startTime = pulse->header.time.tv_sec;
-        tr = strftime(timestr, 24, "%T", gmtime(&startTime));
-        tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
+        bytes = strftime(timestr, 24, "%T", gmtime(&startTime));
+        sprintf(timestr + bytes, ".%06d", (int)pulse->header.time.tv_usec);
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
             i0 = (int)floorf(pulse->header.azimuthDegrees);
         } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
