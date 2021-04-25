@@ -7,6 +7,13 @@ int makeRayFromScratch(RKScratch *, RKRay *);
 size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool);
 void RKScratchFree(RKScratch *);
 
+#pragma mark - Functions
+
+static void timeval2str(char *timestr, const struct timeval time) {
+    size_t bytes = strftime(timestr, 9, "%T", gmtime(&time.tv_sec));
+    snprintf(timestr + bytes, 6, ".%04d", (int)time.tv_usec / 100);
+}
+
 #pragma mark - Main
 
 //
@@ -18,9 +25,9 @@ void RKScratchFree(RKScratch *);
 int main(int argc, const char **argv) {
 
     char name[] = __FILE__;
-    char *c = strchr(name, '/');
+    char *c = strrchr(name, '/');
     if (c) {
-        strcpy(name, c);
+        strncpy(name, c + 1, sizeof(name) - 1);
     }
     c = strrchr(name, '.');
     if (c) {
@@ -43,16 +50,15 @@ int main(int argc, const char **argv) {
     
     int i = 0, j = 0, k = 0, p = 0, r = 0;
     uint32_t u32 = 0;
-    char timestr[32];
+    char timestr[16];
     bool m = false;
     int i0, i1 = -1;
     size_t readsize, bytes, mem = 0;
 
-    time_t startTime;
     suseconds_t usec = 0;
     
     char filename[1024];
-    long filesize;
+    long filesize = 0;
     struct timeval s, e;
 
     strcpy(filename, argv[1]);
@@ -261,9 +267,7 @@ int main(int argc, const char **argv) {
                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                   RKIntegerToCommaStyleString(pulseCapacity));
         }
-        startTime = pulse->header.time.tv_sec;
-        bytes = strftime(timestr, 24, "%T", gmtime(&startTime));
-        sprintf(timestr + bytes, ".%06d", (int)pulse->header.time.tv_usec);
+        timeval2str(timestr, pulse->header.time);
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
             i0 = (int)floorf(pulse->header.azimuthDegrees);
         } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
@@ -357,18 +361,17 @@ int main(int argc, const char **argv) {
                 rays[r++] = ray;
 
                 // Timestamp
-                startTime = ray->header.startTime.tv_sec;
-                tr = strftime(timestr, 24, "%T", gmtime(&startTime));
-                tr += sprintf(timestr + tr, ".%06d", (int)ray->header.startTime.tv_usec);
+                timeval2str(timestr, ray->header.startTime);
 
                 if (verbose == 1) {
-                    RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s\n",
-                           k, r, timestr, p,
+                    RKLog(">%05d r=%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05x  %s%s\n",
+                           k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                           p,
                            RKIntegerToCommaStyleString(space->gateCount),
                            ray->header.marker,
                            ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
@@ -377,13 +380,14 @@ int main(int argc, const char **argv) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
                     float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-                    printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
-                           k, r, timestr, p,
+                    printf("%05d r=%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
+                           k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                           p,
                            RKIntegerToCommaStyleString(space->gateCount),
                            ray->header.marker,
                            ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
@@ -406,9 +410,7 @@ int main(int argc, const char **argv) {
                 }
 
                 // Timestamp
-                startTime = S->header.time.tv_sec;
-                tr = strftime(timestr, 24, "%T", gmtime(&startTime));
-                tr += sprintf(timestr + tr, ".%06d", (int)S->header.time.tv_usec);
+                timeval2str(timestr, S->header.time);
                 RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
                        k, r, timestr, p,
                        config->sweepElevation, config->sweepAzimuth,
