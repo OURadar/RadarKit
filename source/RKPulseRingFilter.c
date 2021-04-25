@@ -2,8 +2,8 @@
 //  RKPulseRingFilter.c
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 11/11/17.
-//  Copyright (c) 2015-2018 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 11/11/17.
+//  Copyright (c) 2015-2018 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKPulseRingFilter.h>

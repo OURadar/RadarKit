@@ -2,7 +2,7 @@
 //  RKTypes.h
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 3/17/15.
+//  Created by Boonleng Cheong on 3/17/15.
 //
 
 #ifndef __RadarKit_Types__

@@ -1,7 +1,7 @@
 //
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 9/14/16.
+//  Created by Boonleng Cheong on 9/14/16.
 //
 //
 

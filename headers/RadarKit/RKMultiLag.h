@@ -2,8 +2,8 @@
 //  RKMultiLag.h
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 1/2/17.
-//  Copyright (c) 2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 1/2/17.
+//  Copyright (c) 2017 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_MultiLag__

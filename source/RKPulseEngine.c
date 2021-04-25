@@ -2,8 +2,8 @@
 //  RKPulseEngine.c
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 3/18/15.
-//  Copyright (c) 2015-2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 3/18/15.
+//  Copyright (c) 2015-2017 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKPulseEngine.h>

@@ -8,7 +8,7 @@
 //
 //  IMPORTANT: If RKFloat is double, more (a lot more) work will be needed.
 //
-//  Created by Boon Leng Cheong on 10/18/16.
+//  Created by Boonleng Cheong on 10/18/16.
 //
 //
 

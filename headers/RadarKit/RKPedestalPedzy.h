@@ -5,8 +5,8 @@
 //  This is an example implementation of hardware interaction through RKPedestal
 //  Many features here are specific the pedzy and may not apply to your situations
 //
-//  Created by Boon Leng Cheong on 1/3/17.
-//  Copyright © 2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 1/3/17.
+//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_PedestalPedzy__

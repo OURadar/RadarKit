@@ -2,7 +2,7 @@
 //  RKFoundation
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 9/13/16.
+//  Created by Boonleng Cheong on 9/13/16.
 //
 //
 

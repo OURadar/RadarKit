@@ -2,8 +2,8 @@
 //  RK___.h
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 2/19/17.
-//  Copyright © Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 2/19/17.
+//  Copyright © Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_XXX__

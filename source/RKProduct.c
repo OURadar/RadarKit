@@ -2,8 +2,8 @@
 //  RKProduct.c
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 6/23/18.
-//  Copyright © Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 6/23/18.
+//  Copyright © Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKProduct.h>

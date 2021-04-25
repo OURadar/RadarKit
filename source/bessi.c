@@ -9,7 +9,7 @@
 //
 // Credits all go to the original author(s)
 //
-// Boon Leng Cheong
+// Boonleng Cheong
 // 3/29/2012
 //
 

@@ -2,7 +2,7 @@
 //  RKSIMD.h
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 10/18/16.
+//  Created by Boonleng Cheong on 10/18/16.
 //
 //
 

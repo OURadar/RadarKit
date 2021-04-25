@@ -2,8 +2,8 @@
 //  main.c
 //  SimpleEmulator
 //
-//  Created by Boon Leng Cheong on 5/13/18.
-//  Copyright © 2018 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 5/13/18.
+//  Copyright © 2018 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>

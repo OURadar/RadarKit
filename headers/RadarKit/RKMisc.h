@@ -5,7 +5,7 @@
 //  Technically these functions are not part of the RadarKit framework. They can be
 //  used independently outside of RadarKit.
 //
-//  Created by Boon Leng Cheong on 11/4/15.
+//  Created by Boonleng Cheong on 11/4/15.
 //
 //
 

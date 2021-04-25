@@ -5,8 +5,8 @@
 //  NOTE: This module was started for FIR/IIR filters but it would
 //  probably never be used so this engine is mostly doing nothing.
 //
-//  Created by Boon Leng Cheong on 11/11/17.
-//  Copyright (c) 2015-2018 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 11/11/17.
+//  Copyright (c) 2015-2018 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_PulseRingFilter__

@@ -6,8 +6,8 @@
 //  from a hardware digital transceiver. It receives samples through a network socket,
 //  which have been organized by another RadarKit.
 //
-//  Created by Boon Leng Cheong on 4/11/17.
-//  Copyright © 2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 4/11/17.
+//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_RadarRelay__

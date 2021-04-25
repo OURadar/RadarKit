@@ -44,8 +44,8 @@
 //                                      :
 //
 //
-//  Created by Boon Leng Cheong on 3/11/17.
-//  Copyright © 2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 3/11/17.
+//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_FileManager__

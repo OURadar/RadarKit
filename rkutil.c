@@ -3,7 +3,7 @@
 //  RadarKit Utility
 //
 //  Created by Boonleng Cheong
-//  Copyright (c) 2016-2019 Boon Leng Cheong. All rights reserved.
+//  Copyright (c) 2016-2019 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>

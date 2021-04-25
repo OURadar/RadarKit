@@ -2,15 +2,15 @@
 //  RKPosition.c
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 1/3/17.
-//  Copyright © 2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 1/3/17.
+//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKPosition.h>
 
 // Internal functions
 
-static void RKPositionnUpdateStatusString(RKPositionEngine *);
+static void RKPositionnEngineUpdateStatusString(RKPositionEngine *);
 static void *pulseTagger(void *);
 
 // Implementations
@@ -25,7 +25,7 @@ static void *pulseTagger(void *);
 (x & RKPositionFlagElevationError ? "\033[91m" :                \
 (x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[93m"))
 
-static void RKPositionnUpdateStatusString(RKPositionEngine *engine) {
+static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     int i;
     char *string;
 
@@ -292,7 +292,7 @@ static void *pulseTagger(void *_in) {
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
             engine->processedPulseIndex = k;
-            RKPositionnUpdateStatusString(engine);
+            RKPositionnEngineUpdateStatusString(engine);
         }
 
         if (engine->verbose > 2) {

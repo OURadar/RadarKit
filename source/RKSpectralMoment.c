@@ -2,8 +2,8 @@
 //  RKSpectralMoment.c
 //  RadarKit
 //
-//  Created by Boon Leng Cheong on 10/8/18.
-//  Copyright (c) 2018-2019 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 10/8/18.
+//  Copyright (c) 2018-2019 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKSpectralMoment.h>

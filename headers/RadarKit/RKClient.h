@@ -6,8 +6,8 @@
 //  Most changes are to accomodate the design philosophy of RadarKit.
 //  RKClient and PortClient are not interchangeable!
 //
-//  Created by Boon Leng Cheong on 1/4/17.
-//  Copyright © 2017 Boon Leng Cheong. All rights reserved.
+//  Created by Boonleng Cheong on 1/4/17.
+//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_Client__
