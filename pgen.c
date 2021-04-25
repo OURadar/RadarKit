@@ -38,11 +38,11 @@ int main(int argc, const char **argv) {
     int i = 0, j = 0, k = 0, p = 0, r = 0;
     bool m = false;
     uint32_t u32 = 0;
-    char *c, timestr[32];
+    char timestr[32];
     int i0, i1 = -1;
     size_t mem = 0;
     size_t bytes;
-    size_t rsize = 0, tr;
+    size_t readsize = 0, tr;
 
     time_t startTime;
     suseconds_t usec = 0;
@@ -101,46 +101,49 @@ int main(int argc, const char **argv) {
     RKLog(">fileHeader.dataType = '%s'\n",
            fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
            (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
-
-//    RKLog(">%s\n", RKVariableInString("desc.name", &header->desc.name, RKValueTypeString));
     RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
     RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
     RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
     RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
     RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
     RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-    RKLog(">config.waveform = '%s'\n", config->waveformName);
-    RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n", 1.0e3f * config->prt[0], RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+    RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
+    RKLog(">config.filterCount = %d\n", config->filterCount);
+    RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
+          1.0e3f * config->prt[0],
+          RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+    RKLog(">config.pw = %.2f us\n", 1.0e-6 * config->pw[0]);
     RKLog(">config.pulseGateCount = %s --> %s\n",
           RKIntegerToCommaStyleString(config->pulseGateCount),
           RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
     RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
           config->pulseGateSize,
           config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-    
+    RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
+    RKLog(">config.systemZCal = %.2f, %.2f ADU^2\n", config->systemZCal[0], config->systemZCal[1]);
+    RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
+    RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
+    RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
+    RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
+    RKLog(">config.waveformName = '%s'\n", config->waveformName);
+
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
     RKPulse *pulses[RKMaximumPulsesPerRay];
     RKRay *rays[RKMaximumRaysPerSweep];
     RKProduct *product;
     RKScratch *space;
-    
-    c = strrchr(filename, '.');
-    if (c == NULL) {
-        RKLog("Error. No file extension.");
-        exit(EXIT_FAILURE);
-    }
-    
+
     const RKBaseMomentList momentList = RKBaseMomentListProductZVWDPR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
-    if (!strcmp(".rkr", c)) {
+    if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
         u32 = fileHeader->desc.pulseCapacity;
-    } else if (!strcmp(".rkc", c)) {
+    } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
         u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(int16_t);
     } else {
-        RKLog("Error. Unable to handle extension %s", c);
+        RKLog("Error. Unable to handle dataType %d", fileHeader->dataType);
         exit(EXIT_FAILURE);
     }
     const uint32_t pulseCapacity = u32;
@@ -203,7 +206,7 @@ int main(int argc, const char **argv) {
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
     space->SNRThreshold = 0.0f;
-    space->SQIThreshold = 0.5f;
+    space->SQIThreshold = config->SQIThreshold;
 
     if (verbose > 1) {
         float *t;
@@ -213,8 +216,8 @@ int main(int argc, const char **argv) {
     RKLog(">Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
     RKMarker marker = fileHeader->config.startMarker;
-    
-    RKLog("sweep.Elevation = %.2f deg\n", config->sweepElevation);
+
+    RKLog("Processing Parameters:\n");
     RKLog(">noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
     RKLog(">SNRThreshold = %.2f dB\n", space->SNRThreshold);
     RKLog(">SQIThreshold = %.2f\n", space->SQIThreshold);
@@ -244,11 +247,11 @@ int main(int argc, const char **argv) {
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         // Pulse header
-        rsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
-        if (rsize != 1) {
+        readsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
+        if (readsize != 1) {
             break;
         }
-        // Restore pulse capacity variable since we are not using whatever that was recorded in the file (radar)
+        // Restore pulse capacity variable since we are not using whatever that was recorded in the file (during operation)
         pulse->header.capacity = pulseCapacity;
         if (pulse->header.downSampledGateCount > pulseCapacity) {
             RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
@@ -269,10 +272,10 @@ int main(int argc, const char **argv) {
         for (j = 0; j < 2; j++) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-            rsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-            if (rsize != pulse->header.downSampledGateCount || rsize > pulseCapacity) {
+            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
+            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
                 RKLog("Error. This should not happen.  rsize = %s != %s || > %s\n",
-                      RKIntegerToCommaStyleString(rsize),
+                      RKIntegerToCommaStyleString(readsize),
                       RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                       RKIntegerToCommaStyleString(pulseCapacity));
             }
@@ -355,33 +358,36 @@ int main(int argc, const char **argv) {
                 tr = strftime(timestr, 24, "%T", gmtime(&startTime));
                 tr += sprintf(timestr + tr, ".%06d", (int)ray->header.startTime.tv_usec);
 
-                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s\n",
-                       k, r, timestr, p,
-                       config->sweepElevation, config->sweepAzimuth,
-                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
-                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
-                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
-                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
-                       RKIntegerToCommaStyleString(space->gateCount),
-                       ray->header.marker,
-                       ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
-                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ");
-                // data
-//                RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
-//                float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-//                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
-//                       k, r, timestr, p,
-//                       config->sweepElevation, config->sweepAzimuth,
-//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
-//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
-//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
-//                       (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
-//                       RKIntegerToCommaStyleString(space->gateCount),
-//                       ray->header.marker,
-//                       ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
-//                       ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
-//                       data[0], data[10], data[100], data[250], data[500],
-//                       cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
+                if (verbose == 1) {
+                    RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s\n",
+                           k, r, timestr, p,
+                           config->sweepElevation, config->sweepAzimuth,
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                           RKIntegerToCommaStyleString(space->gateCount),
+                           ray->header.marker,
+                           ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
+                           ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ");
+                } else if (verbose > 1) {
+                    // Show with some data
+                    RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
+                    float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
+                    printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
+                           k, r, timestr, p,
+                           config->sweepElevation, config->sweepAzimuth,
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                           (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                           RKIntegerToCommaStyleString(space->gateCount),
+                           ray->header.marker,
+                           ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
+                           ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
+                           data[0], data[10], data[100], data[250], data[500],
+                           cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
+                }
             } else if (p > 1) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
@@ -400,7 +406,7 @@ int main(int argc, const char **argv) {
                 startTime = S->header.time.tv_sec;
                 tr = strftime(timestr, 24, "%T", gmtime(&startTime));
                 tr += sprintf(timestr + tr, ".%06d", (int)S->header.time.tv_usec);
-                printf("%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
+                RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
                        k, r, timestr, p,
                        config->sweepElevation, config->sweepAzimuth,
                        (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
@@ -431,6 +437,8 @@ int main(int argc, const char **argv) {
           RKIntegerToCommaStyleString(k));
     if (ftell(fid) != filesize) {
         RKLog("Warning. There is leftover in the file.");
+    } else if (r == 0) {
+        RKLog("No rays generated. Perhaps this is a transition file.\n");
     }
 
     fclose(fid);

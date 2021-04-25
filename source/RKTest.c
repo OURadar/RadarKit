@@ -822,13 +822,20 @@ void RKTestReviseLogicalValues(void) {
 
 void RKTestReadIQ(const char *filename) {
     SHOW_FUNCTION_NAME
+    int i, j, k, p = 0;
+    size_t tr;
+    time_t startTime;
+    size_t filesize, readsize, bytes, mem = 0;
+    char timestr[32];
+    uint32_t u32;
+    RKBuffer pulseBuffer;
+
     printf("filename = %s\n", filename);
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         fprintf(stderr, "Error opening file %s\n", filename);
         return;
     }
-    size_t filesize, readsize, bytes, mem = 0;
     if (fseek(fid, 0L, SEEK_END)) {
         RKLog("Error. Unable to tell the file size.\n");
         filesize = 0;
@@ -837,52 +844,71 @@ void RKTestReadIQ(const char *filename) {
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
     }
     rewind(fid);
+
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
+    RKWaveform *waveform = fileHeader->config.waveform;
+    RKConfig *config = &fileHeader->config;
+
     readsize = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
     printf("buildNo = %d\n", fileHeader->buildNo);
-    if (fileHeader->buildNo < 6) {
-        printf("I am not backward compatible. Sorry\n");
+    if (fileHeader->buildNo <= 4) {
+        RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
         return;
+    } else if (fileHeader->buildNo == 5) {
+        rewind(fid);
+        RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
+        fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
+        fileHeader->dataType = fileHeaderV1->dataType;
+        fileHeader->desc = fileHeaderV1->desc;
+        memcpy(&fileHeader->config, &fileHeaderV1->config, sizeof(RKConfigV1));
+        fileHeader->config.waveform = NULL;
+        fileHeader->config.waveformDecimate = NULL;
+        free(fileHeaderV1);
+    } else {
+        waveform = RKWaveformReadFromReference(fid);
+        fileHeader->config.waveform = waveform;
+        fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
+        RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
     }
-    printf("desc.name = '%s'\n", fileHeader->desc.name);
-    printf("desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
-    printf("desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
-    printf("desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
-    printf("desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
-    printf("desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-
-    RKConfig *config = &fileHeader->config;
-    printf("config.prt = %.3f ms (PRF = %s Hz)\n", 1.0e3f * config->prt[0], RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
-    printf("config.pulseGateCount = %s --> %s\n",
-           RKIntegerToCommaStyleString(config->pulseGateCount),
-           RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
-    printf("config.pulseGateSize = %.3f m --> %.3f m\n",
-           config->pulseGateSize,
-           config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-
-    RKWaveform *waveform = RKWaveformReadFromReference(fid);
+    RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+    RKLog(">fileHeader.dataType = '%s'\n",
+           fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+           (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+    RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
+    RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
+    RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
+    RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
+    RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
+    RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
+    RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
+    RKLog(">config.filterCount = %d\n", config->filterCount);
+    RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
+          1.0e3f * config->prt[0],
+          RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+    RKLog(">config.pw = %.2f us\n", 1.0e-6 * config->pw[0]);
+    RKLog(">config.pulseGateCount = %s --> %s\n",
+          RKIntegerToCommaStyleString(config->pulseGateCount),
+          RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
+    RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
+          config->pulseGateSize,
+          config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
+    RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
+    RKLog(">config.systemZCal = %.2f, %.2f ADU^2\n", config->systemZCal[0], config->systemZCal[1]);
+    RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
+    RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
+    RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
+    RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
+    RKLog(">config.waveformName = '%s'\n", config->waveformName);
     RKWaveformSummary(waveform);
-    
-    config->waveform = waveform;
-
-    RKBuffer pulseBuffer;
-    char *c, timestr[32];
-    uint32_t u32;
-    
-    c = strrchr(filename, '.');
-    if (c == NULL) {
-        RKLog("Error. No file extension.");
-        exit(EXIT_FAILURE);
-    }
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
-    if (!strcmp(".rkr", c)) {
+    if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
         u32 = fileHeader->desc.pulseCapacity;
-    } else if (!strcmp(".rkc", c)) {
+    } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
         u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(int16_t);
     } else {
-        RKLog("Error. Unable to handle extension %s", c);
+        RKLog("Error. Unable to handle dataType %d", fileHeader->dataType);
         exit(EXIT_FAILURE);
     }
     const uint32_t pulseCapacity = u32;
@@ -902,10 +928,6 @@ void RKTestReadIQ(const char *filename) {
         sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
         sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
-
-    int i, j, k, p = 0;
-    size_t tr;
-    time_t startTime;
 
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, 0);

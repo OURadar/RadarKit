@@ -52,6 +52,10 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
+            argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192607.rkc"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192623.rkc"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -61,13 +65,13 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192539.rkc"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
-            key = ""
-            value = ""
+            key = "TERM"
+            value = "Xcode"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
