@@ -194,7 +194,7 @@ static void *pulseRecorder(void *in) {
                 waveGlobalHeader->fc = waveform->fc;
                 waveGlobalHeader->fs = waveform->fs;
                 strcpy(waveGlobalHeader->name, waveform->name);
-                len += RKRawDataRecorderCacheWrite(engine, &waveGlobalHeader, sizeof(RKWaveGlobalHeader));
+                len += RKRawDataRecorderCacheWrite(engine, waveGlobalHeader, sizeof(RKWaveGlobalHeader));
                 for (i = 0; i < waveform->count; i++) {
                     // 32-B wave group header
                     waveGroupHeader->type = waveform->type;

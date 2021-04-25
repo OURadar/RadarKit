@@ -89,7 +89,7 @@ int main(int argc, const char **argv) {
     RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
 
     RKConfig *config = &fileHeader->config;
-    RKLog(">config.waveform = '%s'\n", config->waveform);
+    RKLog(">config.waveform = '%s'\n", config->waveformName);
     RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n", 1.0e3f * config->prt[0], RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
     RKLog(">config.pulseGateCount = %s --> %s\n",
           RKIntegerToCommaStyleString(config->pulseGateCount),

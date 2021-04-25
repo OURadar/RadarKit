@@ -828,16 +828,137 @@ void RKTestReadIQ(const char *filename) {
         fprintf(stderr, "Error opening file %s\n", filename);
         return;
     }
-    size_t c;
-    RKFileHeader fileHeader;
-    c = fread(&fileHeader, sizeof(RKFileHeader), 1, fid);
-    printf("c = %zu\n", c);
-    printf("buildNo = %d\n", fileHeader.buildNo);
-    if (fileHeader.buildNo < 6) {
+    size_t filesize, readsize, bytes, mem = 0;
+    if (fseek(fid, 0L, SEEK_END)) {
+        RKLog("Error. Unable to tell the file size.\n");
+        filesize = 0;
+    } else {
+        filesize = ftell(fid);
+        RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
+    }
+    rewind(fid);
+    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
+    readsize = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    printf("buildNo = %d\n", fileHeader->buildNo);
+    if (fileHeader->buildNo < 6) {
         printf("I am not backward compatible. Sorry\n");
         return;
     }
+    printf("desc.name = '%s'\n", fileHeader->desc.name);
+    printf("desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
+    printf("desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
+    printf("desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
+    printf("desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
+    printf("desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
+
+    RKConfig *config = &fileHeader->config;
+    printf("config.prt = %.3f ms (PRF = %s Hz)\n", 1.0e3f * config->prt[0], RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+    printf("config.pulseGateCount = %s --> %s\n",
+           RKIntegerToCommaStyleString(config->pulseGateCount),
+           RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
+    printf("config.pulseGateSize = %.3f m --> %.3f m\n",
+           config->pulseGateSize,
+           config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
+
+    RKWaveform *waveform = RKWaveformReadFromReference(fid);
+    RKWaveformSummary(waveform);
+    
+    config->waveform = waveform;
+
+    RKBuffer pulseBuffer;
+    char *c, timestr[32];
+    uint32_t u32;
+    
+    c = strrchr(filename, '.');
+    if (c == NULL) {
+        RKLog("Error. No file extension.");
+        exit(EXIT_FAILURE);
+    }
+
+    // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
+    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
+    if (!strcmp(".rkr", c)) {
+        u32 = fileHeader->desc.pulseCapacity;
+    } else if (!strcmp(".rkc", c)) {
+        u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(int16_t);
+    } else {
+        RKLog("Error. Unable to handle extension %s", c);
+        exit(EXIT_FAILURE);
+    }
+    const uint32_t pulseCapacity = u32;
+    bytes = RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, 1);
+    if (bytes == 0 || pulseBuffer == NULL) {
+        RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
+        exit(EXIT_FAILURE);
+    }
+    mem += bytes;
+    RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
+          RKUIntegerToCommaStyleString(bytes),
+          RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
+          RKIntegerToCommaStyleString(pulseCapacity));
+
+    char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
+    if (rkGlobalParameters.showColor) {
+        sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
+        sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
+    }
+
+    int i, j, k, p = 0;
+    size_t tr;
+    time_t startTime;
+
+    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, 0);
+        // Pulse header
+        readsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
+        if (readsize != 1) {
+            break;
+        }
+        // Restore pulse capacity variable since we are not using whatever that was recorded in the file (radar)
+        pulse->header.capacity = pulseCapacity;
+        if (pulse->header.downSampledGateCount > pulseCapacity) {
+            printf("Error. Pulse contains %s gates / %s capacity allocated.\n",
+                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                   RKIntegerToCommaStyleString(pulseCapacity));
+        }
+        startTime = pulse->header.time.tv_sec;
+        tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
+        tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
+        // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
+        for (j = 0; j < 2; j++) {
+            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
+            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
+                printf("Error. This should not happen.  readsize = %s != %s || > %s\n",
+                       RKIntegerToCommaStyleString(readsize),
+                       RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                       RKIntegerToCommaStyleString(pulseCapacity));
+            }
+            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+                z.i[i] = x[i].i;
+                z.q[i] = x[i].q;
+            }
+        }
+        if (p % 100 == 0) {
+            printf("p:%06d/%06" PRIu64 " %s  E%5.2f, A%6.2f  %s x %.1f m\n", p, pulse->header.i, timestr,
+                   pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
+                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                   pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio);
+        }
+        p++;
+    }
+    printf("fpos = %s / %s   k = %s\n",
+          RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
+          RKIntegerToCommaStyleString(k));
+    if (ftell(fid) != filesize) {
+        printf("Warning. There is leftover in the file.");
+    }
+
     fclose(fid);
+
+    RKWaveformFree(waveform);
+    free(fileHeader);
 }
 
 #pragma mark -

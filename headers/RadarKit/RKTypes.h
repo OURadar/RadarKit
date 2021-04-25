@@ -1246,11 +1246,12 @@ typedef union rk_file_header_v1 {
 
 typedef union rk_file_header {
     struct {
-        RKName               preface;                                          //
-        uint32_t             buildNo;                                          //
+        RKName               preface;                                          // 128 B
+        uint32_t             buildNo;                                          //   4 B
+        RKRawDataType        dataType;                                         //   1 B
+        uint8_t              reserved[123];                                    // 123 B = 256 B
         RKRadarDesc          desc;                                             //
         RKConfig             config;                                           //
-        RKRawDataType        dataType;                                         //
     };                                                                         //
     RKByte               bytes[4096];                                          //
 } RKFileHeader;
