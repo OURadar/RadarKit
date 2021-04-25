@@ -76,7 +76,7 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
         size += radar->positionEngine->memoryUsage;
     }
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
-        size += radar->pulseCompressionEngine->memoryUsage;
+        size += radar->pulseEngine->memoryUsage;
         size += radar->pulseRingFilterEngine->memoryUsage;
         size += radar->momentEngine->memoryUsage;
         size += radar->healthEngine->memoryUsage;
@@ -143,11 +143,11 @@ static void *systemInspectorRunLoop(void *in) {
         RKStatus *status = RKGetVacantStatus(radar);
         radar->memoryUsage = RKGetRadarMemoryUsage(radar);
         status->memoryUsage = radar->memoryUsage;
-        if (radar->pulseCompressionEngine->state & RKEngineStateActive) {
-            status->pulseMonitorLag = radar->pulseCompressionEngine->lag * 100 / radar->desc.pulseBufferDepth;
-            for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseCompressionEngine->coreCount); k++) {
-                status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].lag);
-                status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseCompressionEngine->workers[k].dutyCycle);
+        if (radar->pulseEngine->state & RKEngineStateActive) {
+            status->pulseMonitorLag = radar->pulseEngine->lag * 100 / radar->desc.pulseBufferDepth;
+            for (k = 0; k < MIN(RKProcessorStatusPulseCoreCount, radar->pulseEngine->coreCount); k++) {
+                status->pulseCoreLags[k] = (uint8_t)(99.49f * radar->pulseEngine->workers[k].lag);
+                status->pulseCoreUsage[k] = (uint8_t)(99.49f * radar->pulseEngine->workers[k].dutyCycle);
             }
         }
         if (radar->momentEngine->state & RKEngineStateActive) {
@@ -832,12 +832,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += sizeof(RKFFTModule);
         
         // Pulse compression engine
-        radar->pulseCompressionEngine = RKPulseCompressionEngineInit();
-        RKPulseCompressionEngineSetInputOutputBuffers(radar->pulseCompressionEngine, &radar->desc,
+        radar->pulseEngine = RKPulseEngineInit();
+        RKPulseEngineSetInputOutputBuffers(radar->pulseEngine, &radar->desc,
                                                       radar->configs, &radar->configIndex,
                                                       radar->pulses, &radar->pulseIndex);
-        RKPulseCompressionEngineSetFFTModule(radar->pulseCompressionEngine, radar->fftModule);
-        radar->memoryUsage += radar->pulseCompressionEngine->memoryUsage;
+        RKPulseEngineSetFFTModule(radar->pulseEngine, radar->fftModule);
+        radar->memoryUsage += radar->pulseEngine->memoryUsage;
         radar->state |= RKRadarStatePulseCompressionEngineInitialized;
 
         // Pulse ring filter engine
@@ -1051,8 +1051,8 @@ int RKFree(RKRadar *radar) {
         radar->fftModule = NULL;
     }
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
-        RKPulseCompressionEngineFree(radar->pulseCompressionEngine);
-        radar->pulseCompressionEngine = NULL;
+        RKPulseEngineFree(radar->pulseEngine);
+        radar->pulseEngine = NULL;
     }
     if (radar->state & RKRadarStatePulseRingFilterEngineInitialized) {
         RKPulseRingFilterEngineFree(radar->pulseRingFilterEngine);
@@ -1214,18 +1214,18 @@ int RKSetHealthRelay(RKRadar *radar,
 #pragma mark - Before-Live Properties
 
 int RKSetProcessingCoreCounts(RKRadar *radar,
-                              const uint8_t pulseCompressionCoreCount,
+                              const uint8_t pulseEngineCoreCount,
                               const uint8_t pulseRingFilterCoreCount,
-                              const uint8_t momentProcessorCoreCount) {
-    if (radar->pulseCompressionEngine == NULL) {
+                              const uint8_t momentEngineCoreCount) {
+    if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
     if (radar->state & RKRadarStateLive) {
         return RKResultUnableToChangeCoreCounts;
     }
-    RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, pulseCompressionCoreCount);
+    RKPulseEngineSetCoreCount(radar->pulseEngine, pulseEngineCoreCount);
     RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, pulseRingFilterCoreCount);
-    RKMomentEngineSetCoreCount(radar->momentEngine, momentProcessorCoreCount);
+    RKMomentEngineSetCoreCount(radar->momentEngine, momentEngineCoreCount);
     return RKResultSuccess;
 }
 
@@ -1258,8 +1258,8 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
     if (radar->positionEngine) {
         RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     }
-    if (radar->pulseCompressionEngine) {
-        RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, verbose);
+    if (radar->pulseEngine) {
+        RKPulseEngineSetVerbose(radar->pulseEngine, verbose);
     }
     if (radar->pulseRingFilterEngine) {
         RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, verbose);
@@ -1305,7 +1305,7 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
                 RKMomentEngineSetVerbose(radar->momentEngine, array[k]);
                 break;
             case 'p':
-                RKPulseCompressionEngineSetVerbose(radar->pulseCompressionEngine, array[k]);
+                RKPulseEngineSetVerbose(radar->pulseEngine, array[k]);
                 break;
             case 'r':
                 RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, array[k]);
@@ -1360,7 +1360,7 @@ int RKSetRecordingLevel(RKRadar *radar, const int level) {
 
 // NOTE: It is possible to call this function as RKSetWaveform(radar, radar->waveform);
 int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
-    if (radar->pulseCompressionEngine == NULL) {
+    if (radar->pulseEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
     }
@@ -1383,11 +1383,11 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     radar->waveformDecimate = RKWaveformCopy(waveform);
     RKWaveformDecimate(radar->waveformDecimate, radar->desc.pulseToRayRatio);
     int j, k, r;
-    RKPulseCompressionResetFilters(radar->pulseCompressionEngine);
+    RKPulseEngineResetFilters(radar->pulseEngine);
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            r = RKPulseCompressionSetFilter(radar->pulseCompressionEngine,
+            r = RKPulseEngineSetFilter(radar->pulseEngine,
                                             filter,
                                             waveform->filterAnchors[k][j],
                                             k,
@@ -1428,7 +1428,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKWaveformFree(oldWaveform);
     }
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+        RKPulseEngineFilterSummary(radar->pulseEngine);
     }
     if (radar->state & RKRadarStateLive) {
         RKClockReset(radar->pulseClock);
@@ -1441,7 +1441,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
 // arbitrary waveform generator.
 //
 int RKSetWaveformByFilename(RKRadar *radar, const char *filename) {
-    if (radar->pulseCompressionEngine == NULL) {
+    if (radar->pulseEngine == NULL) {
         RKLog("Error. No pulse compression engine.\n");
         return RKResultNoPulseCompressionEngine;
     }
@@ -1451,24 +1451,24 @@ int RKSetWaveformByFilename(RKRadar *radar, const char *filename) {
 }
 
 int RKSetWaveformToImpulse(RKRadar *radar) {
-    if (radar->pulseCompressionEngine == NULL) {
+    if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+    RKPulseEngineSetFilterToImpulse(radar->pulseEngine);
     if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+        RKPulseEngineFilterSummary(radar->pulseEngine);
     }
     RKWaveform *waveform = RKWaveformInitAsImpulse();
     return RKSetWaveform(radar, waveform);;
 }
 
 //int RKSetWaveformTo121(RKRadar *radar) {
-//    if (radar->pulseCompressionEngine == NULL) {
+//    if (radar->pulseEngine == NULL) {
 //        return RKResultNoPulseCompressionEngine;
 //    }
-//    RKPulseCompressionSetFilterTo121(radar->pulseCompressionEngine);
+//    RKPulseEngineSetFilterTo121(radar->pulseEngine);
 //    if (radar->desc.initFlags & RKInitFlagVerbose) {
-//        RKPulseCompressionFilterSummary(radar->pulseCompressionEngine);
+//        RKPulseEngineFilterSummary(radar->pulseEngine);
 //    }
 //    return RKResultSuccess;
 //}
@@ -1503,10 +1503,10 @@ int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConf
 }
 
 int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
-    if (radar->pulseCompressionEngine == NULL) {
+    if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    radar->pulseCompressionEngine->compressor = compressor;
+    radar->pulseEngine->compressor = compressor;
     return RKResultSuccess;
 }
 
@@ -1669,20 +1669,20 @@ int RKGoLive(RKRadar *radar) {
         if (radar->desc.initFlags & RKInitFlagManuallyAssignCPU) {
             // Main thread uses 1 CPU. Start the others from 1.
             uint8_t o = 1;
-            if (o + radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
+            if (o + radar->pulseEngine->coreCount + radar->momentEngine->coreCount > radar->processorCount) {
                 RKLog("Info. Not enough physical cores (%d / %d). Core counts will be adjusted.\n",
-                      radar->pulseCompressionEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
-                RKPulseCompressionEngineSetCoreCount(radar->pulseCompressionEngine, MAX(1, radar->processorCount / 2));
+                      radar->pulseEngine->coreCount + radar->momentEngine->coreCount, radar->processorCount);
+                RKPulseEngineSetCoreCount(radar->pulseEngine, MAX(1, radar->processorCount / 2));
                 RKPulseRingFilterEngineSetCoreCount(radar->pulseRingFilterEngine, MAX(1, radar->processorCount / 2));
                 RKMomentEngineSetCoreCount(radar->momentEngine, MAX(1, radar->processorCount / 2 - 1));
-                RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseCompressionEngine->coreCount);
+                RKMomentEngineSetCoreOrigin(radar->momentEngine, o + radar->pulseEngine->coreCount);
             }
             // For now, pulse compression and ring filter engines both share the same cores
-            RKPulseCompressionEngineSetCoreOrigin(radar->pulseCompressionEngine, o);
+            RKPulseEngineSetCoreOrigin(radar->pulseEngine, o);
             RKPulseRingFilterEngineSetCoreOrigin(radar->pulseRingFilterEngine, o);
         }
         // Now, we start the engines
-        RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+        RKPulseEngineStart(radar->pulseEngine);
         RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
         RKMomentEngineStart(radar->momentEngine);
         RKHealthEngineStart(radar->healthEngine);
@@ -1906,7 +1906,7 @@ int RKStop(RKRadar *radar) {
         radar->state ^= RKRadarStateHostMonitorInitialized;
     }
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
-        RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+        RKPulseEngineStop(radar->pulseEngine);
         radar->state ^= RKRadarStatePulseCompressionEngineInitialized;
     }
     if (radar->state & RKRadarStatePulseRingFilterEngineInitialized) {
@@ -1971,7 +1971,7 @@ int RKSoftRestart(RKRadar *radar) {
     RKMomentEngineStop(radar->momentEngine);
     RKPositionEngineStop(radar->positionEngine);
     RKPulseRingFilterEngineStop(radar->pulseRingFilterEngine);
-    RKPulseCompressionEngineStop(radar->pulseCompressionEngine);
+    RKPulseEngineStop(radar->pulseEngine);
 
     // Reset all major indices
     radar->statusIndex = 0;
@@ -2016,7 +2016,7 @@ int RKSoftRestart(RKRadar *radar) {
     }
 
     // Start them again
-    RKPulseCompressionEngineStart(radar->pulseCompressionEngine);
+    RKPulseEngineStart(radar->pulseEngine);
     RKPulseRingFilterEngineStart(radar->pulseRingFilterEngine);
     RKPositionEngineStart(radar->positionEngine);
     RKMomentEngineStart(radar->momentEngine);
@@ -2470,12 +2470,12 @@ void RKMeasureNoise(RKRadar *radar) {
     }
     // Avoid data before this offset to exclude the transient effects right after transmit pulse
     int origin = 0;
-    for (k = 0; k < radar->pulseCompressionEngine->filterCounts[0]; k++) {
-        origin += radar->pulseCompressionEngine->filterAnchors[0][k].length;
+    for (k = 0; k < radar->pulseEngine->filterCounts[0]; k++) {
+        origin += radar->pulseEngine->filterAnchors[0][k].length;
     }
     // Add another tail (fill pulse width)
     if (k > 0) {
-        origin += 2 * radar->pulseCompressionEngine->filterAnchors[0][k - 1].length;
+        origin += 2 * radar->pulseEngine->filterAnchors[0][k - 1].length;
     }
     // Account for down-sampling stride in PulseCompressionEngine
     origin /= MAX(1, radar->desc.pulseToRayRatio);
@@ -2947,7 +2947,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     k += RADAR_VARIABLE_OFFSET(buffer + k, rayIndex);
     k += RADAR_VARIABLE_OFFSET(buffer + k, rawDataRecorder->record);
     k += RADAR_VARIABLE_OFFSET(buffer + k, positionEngine);
-    k += RADAR_VARIABLE_OFFSET(buffer + k, pulseCompressionEngine->verbose);
+    k += RADAR_VARIABLE_OFFSET(buffer + k, pulseEngine->verbose);
     k += RADAR_VARIABLE_OFFSET(buffer + k, momentEngine);
     if (text == NULL) {
         printf("%s", buffer);

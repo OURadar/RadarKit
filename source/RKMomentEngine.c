@@ -621,7 +621,7 @@ static void *momentCore(void *in) {
     me->tic++;
 
     //
-    // Same as in RKPulseCompression.c
+    // Same as in RKPulseEngine.c
     //
     // free   busy       free   busy
     // .......|||||||||||.......|||||||||
@@ -967,7 +967,7 @@ static void *pulseGatherer(void *_in) {
 
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
-    // See RKPulseCompression.c
+    // See RKPulseEngine.c
     engine->state |= RKEngineStateSleep0;
     for (c = 0; c < engine->coreCount; c++) {
         while (engine->workers[c].tic == 0) {

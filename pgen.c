@@ -218,10 +218,10 @@ int main(int argc, const char **argv) {
     RKMarker marker = fileHeader->config.startMarker;
 
     RKLog("Processing Parameters:\n");
-    RKLog(">noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
-    RKLog(">SNRThreshold = %.2f dB\n", space->SNRThreshold);
-    RKLog(">SQIThreshold = %.2f\n", space->SQIThreshold);
-    RKLog(">marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+    RKLog(">space.noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
+    RKLog(">space.SNRThreshold = %.2f dB\n", space->SNRThreshold);
+    RKLog(">space.SQIThreshold = %.2f\n", space->SQIThreshold);
+    RKLog("Initial marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
     
     // Test pulse buffer
     for (p = 0; p < RKMaximumPulsesPerRay; p++) {

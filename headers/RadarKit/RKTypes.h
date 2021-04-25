@@ -1134,7 +1134,7 @@ typedef struct rk_pulse_header {
 } RKPulseHeader;
 
 //
-// Pulse parameters for matched filters (pulseCompressionCore)
+// Pulse parameters for matched filters (pulseEngineCore)
 //
 typedef struct rk_pulse_parameters {
     uint32_t             gid;                                                  //

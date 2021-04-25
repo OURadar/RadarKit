@@ -23,6 +23,7 @@
 //         - Renamed RKSweep.h to RKSweepEngine.h
 //         - Renamed RKMoment.h to RKMomentEngine.h
 //         - Renamed RKPosition.h to RKPositionEngine.h
+//         - Renamed RKPulseCompression.h to RKPulseEngine.h
 //
 //  2.3    - 6/30/2019
 //         - Added I/Q data playback
@@ -204,7 +205,7 @@
 //         - Added RKClearControls(), RKConcludeControls()
 //         - Send updated controls
 //
-//  1.2.4  - Improved efficiency of RKPulseCompression
+//  1.2.4  - Improved efficiency of RKPulseEngine
 //         - Reordered RKTest modules
 //
 //  1.2.3  - 12/7/2017

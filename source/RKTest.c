@@ -1681,19 +1681,19 @@ void RKTestPulseCompression(RKTestFlag flag) {
         switch (k) {
             default:
                 // Default is impulse [1];
-                RKPulseCompressionSetFilterToImpulse(radar->pulseCompressionEngine);
+                RKPulseEngineSetFilterToImpulse(radar->pulseEngine);
                 break;
             case 1:
                 // Two-tap running average [1, 1]
-                RKPulseCompressionSetFilterTo11(radar->pulseCompressionEngine);
+                RKPulseEngineSetFilterTo11(radar->pulseEngine);
                 break;
             case 2:
                 // Change filter to filter #2: [1 + 1i]
-                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter2, anchor2, 0, 0);
+                RKPulseEngineSetFilter(radar->pulseEngine, filter2, anchor2, 0, 0);
                 break;
             case 3:
                 // Change filter to filter #3
-                RKPulseCompressionSetFilter(radar->pulseCompressionEngine, filter3, anchor3, 0, 0);
+                RKPulseEngineSetFilter(radar->pulseEngine, filter3, anchor3, 0, 0);
                 break;
         }
 
@@ -1718,7 +1718,7 @@ void RKTestPulseCompression(RKTestFlag flag) {
             usleep(1000);
         }
 
-        F = &radar->pulseCompressionEngine->filters[0][0][0];
+        F = &radar->pulseEngine->filters[0][0][0];
         Y = RKGetComplexDataFromPulse(pulse, 0);
         Z = RKGetSplitComplexDataFromPulse(pulse, 0);
 

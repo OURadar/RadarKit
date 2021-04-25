@@ -1,13 +1,13 @@
 //
-//  RKPulseCompression.h
+//  RKPulseEngine.h
 //  RadarKit
 //
 //  Created by Boon Leng Cheong on 3/18/15.
 //  Copyright (c) 2015-2017 Boon Leng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_PulseCompression__
-#define __RadarKit_PulseCompression__
+#ifndef __RadarKit_Pulse_Engine__
+#define __RadarKit_Pulse_Engine__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
@@ -16,16 +16,16 @@
 //extern "C" {
 //#endif
 
-typedef struct rk_pulse_compression_worker RKPulseCompressionWorker;
-typedef struct rk_pulse_compression_engine RKPulseCompressionEngine;
+typedef struct rk_pulse_worker RKPulseWorker;
+typedef struct rk_pulse_engine RKPulseEngine;
 
-typedef int RKPulseCompressionPlanIndex[RKMaximumFilterCount];
+typedef int RKPulseEnginePlanIndex[RKMaximumFilterCount];
 
-struct rk_pulse_compression_worker {
+struct rk_pulse_worker {
     RKShortName                      name;
     int                              id;
     pthread_t                        tid;                                      // Thread ID
-    RKPulseCompressionEngine         *parent;                                  // Parent engine reference
+    RKPulseEngine                    *parent;                                  // Parent engine reference
 
     char                             semaphoreName[32];
     uint64_t                         tic;                                      // Tic count
@@ -36,7 +36,7 @@ struct rk_pulse_compression_worker {
     sem_t                            *sem;
 };
 
-struct rk_pulse_compression_engine {
+struct rk_pulse_engine {
     // User set variables
     RKName                           name;
     RKRadarDesc                      *radarDescription;
@@ -57,8 +57,8 @@ struct rk_pulse_compression_engine {
 
     // Program set variables
     int                              *filterGid;
-    RKPulseCompressionPlanIndex      *planIndices;
-    RKPulseCompressionWorker         *workers;
+    RKPulseEnginePlanIndex      *planIndices;
+    RKPulseWorker                    *workers;
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  mutex;
 
@@ -74,39 +74,39 @@ struct rk_pulse_compression_engine {
     size_t                           memoryUsage;
 };
 
-RKPulseCompressionEngine *RKPulseCompressionEngineInit(void);
-void RKPulseCompressionEngineFree(RKPulseCompressionEngine *);
+RKPulseEngine *RKPulseEngineInit(void);
+void RKPulseEngineFree(RKPulseEngine *);
 
-void RKPulseCompressionEngineSetVerbose(RKPulseCompressionEngine *, const int);
-void RKPulseCompressionEngineSetInputOutputBuffers(RKPulseCompressionEngine *, const RKRadarDesc *,
-                                                   RKConfig *configBuffer, uint32_t *configIndex,
-                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex);
-void RKPulseCompressionEngineSetFFTModule(RKPulseCompressionEngine *, RKFFTModule *);
-void RKPulseCompressionEngineSetCoreCount(RKPulseCompressionEngine *, const uint8_t);
-void RKPulseCompressionEngineSetCoreOrigin(RKPulseCompressionEngine *, const uint8_t);
+void RKPulseEngineSetVerbose(RKPulseEngine *, const int);
+void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *, const RKRadarDesc *,
+                                        RKConfig *configBuffer, uint32_t *configIndex,
+                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex);
+void RKPulseEngineSetFFTModule(RKPulseEngine *, RKFFTModule *);
+void RKPulseEngineSetCoreCount(RKPulseEngine *, const uint8_t);
+void RKPulseEngineSetCoreOrigin(RKPulseEngine *, const uint8_t);
 
-int RKPulseCompressionResetFilters(RKPulseCompressionEngine *);
-int RKPulseCompressionSetFilterCountOfGroup(RKPulseCompressionEngine *, const int group, const int count);
-int RKPulseCompressionSetFilterGroupCount(RKPulseCompressionEngine *, const int groupCount);
-int RKPulseCompressionSetFilter(RKPulseCompressionEngine *,
+int RKPulseEngineResetFilters(RKPulseEngine *);
+int RKPulseEngineSetFilterCountOfGroup(RKPulseEngine *, const int group, const int count);
+int RKPulseEngineSetFilterGroupCount(RKPulseEngine *, const int groupCount);
+int RKPulseEngineSetFilter(RKPulseEngine *,
                                 const RKComplex *filter,
                                 const RKFilterAnchor anchor,
                                 const int group,
                                 const int index);
-int RKPulseCompressionSetFilterToImpulse(RKPulseCompressionEngine *);
-int RKPulseCompressionSetFilterTo121(RKPulseCompressionEngine *);
-int RKPulseCompressionSetFilterTo11(RKPulseCompressionEngine *);
+int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
+int RKPulseEngineSetFilterTo121(RKPulseEngine *);
+int RKPulseEngineSetFilterTo11(RKPulseEngine *);
 
-int RKPulseCompressionEngineStart(RKPulseCompressionEngine *);
-int RKPulseCompressionEngineStop(RKPulseCompressionEngine *);
+int RKPulseEngineStart(RKPulseEngine *);
+int RKPulseEngineStop(RKPulseEngine *);
 
-char *RKPulseCompressionEngineStatusString(RKPulseCompressionEngine *);
-char *RKPulseCompressionEnginePulseString(RKPulseCompressionEngine *);
-void RKPulseCompressionFilterSummary(RKPulseCompressionEngine *);
-void RKPulseCompressionShowBuffer(fftwf_complex *, const int);
+char *RKPulseEngineStatusString(RKPulseEngine *);
+char *RKPulseEnginePulseString(RKPulseEngine *);
+void RKPulseEngineFilterSummary(RKPulseEngine *);
+void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
 //#ifdef __cplusplus
 //}
 //#endif
 
-#endif /* defined(__RadarKit_RKPulseCompression__) */
+#endif /* defined(__RadarKit_Pulse_Engine__) */
