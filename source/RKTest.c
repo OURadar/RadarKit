@@ -1527,7 +1527,7 @@ void RKTestWaveformWrite(void) {
 
 void RKTestWaveformDownsampling(void) {
     SHOW_FUNCTION_NAME
-    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e6);
+    RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e-6);
     RKWaveformSummary(waveform);
     
     RKWaveformDecimate(waveform, 32);

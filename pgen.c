@@ -61,7 +61,9 @@ int main(int argc, const char **argv) {
     
     gettimeofday(&s, NULL);
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    
+    RKWaveform *waveform = fileHeader->config.waveform;
+    RKConfig *config = &fileHeader->config;
+
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to open file %s", filename);
@@ -76,7 +78,27 @@ int main(int argc, const char **argv) {
     }
     rewind(fid);
     fread(fileHeader, sizeof(RKFileHeader), 1, fid);
-    RKLog("dataType = '%s'\n",
+    if (fileHeader->buildNo <= 4) {
+        RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
+        exit(EXIT_FAILURE);
+    } else if (fileHeader->buildNo == 5) {
+        rewind(fid);
+        RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
+        fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
+        fileHeader->dataType = fileHeaderV1->dataType;
+        fileHeader->desc = fileHeaderV1->desc;
+        memcpy(&fileHeader->config, &fileHeaderV1->config, sizeof(RKConfigV1));
+        fileHeader->config.waveform = NULL;
+        fileHeader->config.waveformDecimate = NULL;
+        free(fileHeaderV1);
+    } else {
+        waveform = RKWaveformReadFromReference(fid);
+        fileHeader->config.waveform = waveform;
+        fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
+        RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
+    }
+    RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+    RKLog(">fileHeader.dataType = '%s'\n",
            fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
            (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
 
@@ -87,8 +109,6 @@ int main(int argc, const char **argv) {
     RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
     RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
     RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-
-    RKConfig *config = &fileHeader->config;
     RKLog(">config.waveform = '%s'\n", config->waveformName);
     RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n", 1.0e3f * config->prt[0], RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
     RKLog(">config.pulseGateCount = %s --> %s\n",
@@ -140,7 +160,7 @@ int main(int argc, const char **argv) {
         exit(EXIT_FAILURE);
     }
     mem += bytes;
-    RKLog("Ray buffer occupies %s B  (%s rays x %s gates)\n",
+    RKLog(">Ray buffer occupies %s B  (%s rays x %s gates)\n",
           RKUIntegerToCommaStyleString(bytes),
           RKIntegerToCommaStyleString(RKMaximumRaysPerSweep),
           RKIntegerToCommaStyleString(rayCapacity));
@@ -149,7 +169,7 @@ int main(int argc, const char **argv) {
         RKLog("Error. Unable to allocate memory for products.\n");
         exit(EXIT_FAILURE);
     }
-    RKLog("Product buffer occupies %s B\n",
+    RKLog(">Product buffer occupies %s B\n",
           RKUIntegerToCommaStyleString(bytes));
     mem += bytes;
     const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
@@ -182,24 +202,23 @@ int main(int argc, const char **argv) {
     space->velocityFactor = 0.25f * fileHeader->desc.wavelength / config->prt[0] / M_PI;
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
-
     space->SNRThreshold = 0.0f;
     space->SQIThreshold = 0.5f;
 
     if (verbose > 1) {
         float *t;
-        t = space->rcor[0]; printf("rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
-        t = space->dcal;    printf("dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
+        t = space->rcor[0]; RKLog(">rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
+        t = space->dcal;    RKLog(">dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
     }
-    RKLog("Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
+    RKLog(">Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
 
     RKMarker marker = fileHeader->config.startMarker;
     
     RKLog("sweep.Elevation = %.2f deg\n", config->sweepElevation);
-    RKLog("noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
-    RKLog("SNRThreshold = %.2f dB\n", space->SNRThreshold);
-    RKLog("SQIThreshold = %.2f\n", space->SQIThreshold);
-    RKLog("marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+    RKLog(">noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
+    RKLog(">SNRThreshold = %.2f dB\n", space->SNRThreshold);
+    RKLog(">SQIThreshold = %.2f\n", space->SQIThreshold);
+    RKLog(">marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
     
     // Test pulse buffer
     for (p = 0; p < RKMaximumPulsesPerRay; p++) {
@@ -216,7 +235,9 @@ int main(int argc, const char **argv) {
             }
         }
     }
-    RKLog("Pulse buffer okay.  p = %d   j = %d   i = %d\n", p, j, i);
+    if (p == RKMaximumPulsesPerRay && i == pulseCapacity) {
+        RKLog("Pulse buffer okay.  p = %d / %d   i = %d / %d\n", p, RKMaximumPulsesPerRay, i, pulseCapacity);
+    }
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep

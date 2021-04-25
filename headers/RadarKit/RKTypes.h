@@ -1043,8 +1043,8 @@ typedef struct rk_config {
     RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
     RKFloat              SNRThreshold;                                         // Censor SNR (dB)
     RKFloat              SQIThreshold;                                         // Censor SQI
-    char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
     RKName               waveformName;                                         // Waveform name
+    char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
     RKWaveform           *waveform;                                            // Reference to the waveform storage
     RKWaveform           *waveformDecimate;                                    // Reference to the waveform storage in Level-II sampling rate
 } RKConfig;

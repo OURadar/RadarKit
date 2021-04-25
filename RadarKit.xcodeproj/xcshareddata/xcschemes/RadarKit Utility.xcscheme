@@ -66,7 +66,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-vs1"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-vs2"
@@ -82,6 +82,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-w"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-T43"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

@@ -423,7 +423,6 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     } else {
         sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
     }
-
     waveform->filterCounts[0] = 1;
 
     // Filter parameters
@@ -806,7 +805,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w5 + 4,
                 w5 + 4);
     } else {
-        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   %%+6.3f rad/s\n",
+        sprintf(format, "> - Filter[%%%dd][%%%dd/%%%dd] @ (l:%%%ds)   X @ (i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   %%+6.3f rad/sam\n",
                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
                 waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
                 (int)log10f((float)waveform->filterCounts[0]) + 1,

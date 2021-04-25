@@ -62,7 +62,7 @@ static void *pulseRecorder(void *in) {
 
     RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
     memset(fileHeader, 0, sizeof(RKFileHeader));
-    sprintf(fileHeader->preface, "RadarKit/RawIQ");
+    sprintf(fileHeader->preface, "RadarKit/IQ");
     fileHeader->buildNo = RKRawDataBuildNo;
     memcpy(&fileHeader->desc, engine->radarDescription, sizeof(RKRadarDesc));
     fileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
