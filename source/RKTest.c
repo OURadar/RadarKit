@@ -49,25 +49,25 @@ char *RKTestByNumberDescription(const int indent) {
     char helpText[] =
     " 0 - Show types\n"
     " 1 - Show colors\n"
-    " 2 - Test pretty strings\n"
-    " 3 - Test modulo-math macros\n"
-    " 4 - Test parsing comma delimited values\n"
-    " 5 - Test parsing values in a JSON string\n"
-    " 6 - Test initializing a file manager - RKFileManagerInit()\n"
-    " 7 - Test reading a preference file - RKPreferenceInit()\n"
-    " 8 - Test counting files using RKCountFilesInPath()\n"
-    " 9 - Test the file monitor module - RKFileMonitor()\n"
-    "10 - Test the internet monitor module - RKHostMonitorInit()\n"
-    "11 - Test initializing a radar system - RKRadarInit()\n"
-    "12 - Test converting a temperature reading to status\n"
-    "13 - Test getting a country name from position\n"
-    "14 - Test generating text for buffer overview\n"
-    "15 - Test reading a netcdf file using RKSweepRead(); -T15 FILENAME\n"
-    "16 - Test reading a netcdf file using RKProductRead(); -T16 FILENAME\n"
-    "17 - Test reading multiple netcdf files using RKProductCollectionInitWithFilename()\n"
-    "18 - Test writing a netcdf file using RKProductFileWriterNC()\n"
-    "19 - Test RKTestReviseLogicalValues()\n"
-    "20 - Test reading an rkc file; -T20 FILENAME\n"
+    " 2 - Pretty strings\n"
+    " 3 - Modulo-math macros\n"
+    " 4 - Parse comma delimited values\n"
+    " 5 - Parse values in a JSON string\n"
+    " 6 - File manager - RKFileManagerInit()\n"
+    " 7 - Read the preference file - RKPreferenceInit()\n"
+    " 8 - Count files using RKCountFilesInPath()\n"
+    " 9 - File monitor module - RKFileMonitor()\n"
+    "10 - Internet monitor module - RKHostMonitorInit()\n"
+    "11 - Initialize a simple radar system - RKRadarInit()\n"
+    "12 - Convert a temperature reading to status\n"
+    "13 - Get a country name from position\n"
+    "14 - Generating text for buffer overview\n"
+    "15 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
+    "16 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
+    "17 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
+    "18 - Write a netcdf file using RKProductFileWriterNC()\n"
+    "19 - RKTestReviseLogicalValues()\n"
+    "20 - Reading a .rkc file; -T20 FILENAME\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -89,7 +89,7 @@ char *RKTestByNumberDescription(const int indent) {
     "53 - Calculating one ray using the Multi-Lag method with L = 2\n"
     "54 - Calculating one ray using the Multt-Lag method with L = 3\n"
     "55 - Calculating one ray using the Multi-Lag method with L = 4\n"
-    "56 - Calculating one ray using the Spectral Moment method\n"
+    "56 - Calculating one ray using the Spectral Moment method (** WIP **)\n"
     "\n"
     "60 - Measure the speed of SIMD calculations\n"
     "61 - Measure the speed of pulse compression\n"
@@ -830,7 +830,7 @@ void RKTestReadIQ(const char *filename) {
     uint32_t u32;
     RKBuffer pulseBuffer;
 
-    printf("filename = %s\n", filename);
+    RKLog("Opening file %s ...\n", filename);
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         fprintf(stderr, "Error opening file %s\n", filename);
@@ -846,11 +846,10 @@ void RKTestReadIQ(const char *filename) {
     rewind(fid);
 
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    RKWaveform *waveform = fileHeader->config.waveform;
     RKConfig *config = &fileHeader->config;
+    RKWaveform *waveform = NULL;
 
     readsize = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
-    printf("buildNo = %d\n", fileHeader->buildNo);
     if (fileHeader->buildNo <= 4) {
         RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
         return;
@@ -899,7 +898,9 @@ void RKTestReadIQ(const char *filename) {
     RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
     RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
     RKLog(">config.waveformName = '%s'\n", config->waveformName);
-    RKWaveformSummary(waveform);
+    if (waveform) {
+        RKWaveformSummary(waveform);
+    }
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
@@ -978,8 +979,9 @@ void RKTestReadIQ(const char *filename) {
     }
 
     fclose(fid);
-
-    RKWaveformFree(waveform);
+    if (waveform) {
+        RKWaveformFree(waveform);
+    }
     free(fileHeader);
 }
 

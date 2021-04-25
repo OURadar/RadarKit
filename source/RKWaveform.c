@@ -774,6 +774,10 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
 void RKWaveformSummary(RKWaveform *waveform) {
     int j, k;
     char format[RKMaximumStringLength];
+    if (waveform == NULL) {
+        RKLog("RKWaveformSummary() Input cannot be NULL.\n");
+        return;
+    }
     // Go through all waveforms and filters of each waveform to build the proper format width
     int w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0, w5 = 0;
     for (k = 0; k < waveform->count; k++) {
