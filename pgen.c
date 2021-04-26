@@ -100,15 +100,19 @@ void proc(UserParams *arg) {
         RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
               1.0e3f * config->prt[0],
               RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
-        RKLog(">config.pw = %.2f us\n", 1.0e-6 * config->pw[0]);
-        RKLog(">config.pulseGateCount = %s --> %s\n",
+        RKLog(">config.pw = %.2f us (dr = %s m)\n",
+              1.0e6 * config->pw[0],
+              RKFloatToCommaStyleString(0.5 * 3.0e8 * config->pw[0]));
+        RKLog(">config.pulseGateCount = %s -- (/ %d) --> %s\n",
               RKIntegerToCommaStyleString(config->pulseGateCount),
+              fileHeader->desc.pulseToRayRatio,
               RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
-        RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
+        RKLog(">config.pulseGateSize = %.3f m -- (x %d) --> %.3f m\n",
               config->pulseGateSize,
+              fileHeader->desc.pulseToRayRatio,
               config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
         RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
-        RKLog(">config.systemZCal = %.2f, %.2f ADU^2\n", config->systemZCal[0], config->systemZCal[1]);
+        RKLog(">config.systemZCal = %.2f, %.2f dB\n", config->systemZCal[0], config->systemZCal[1]);
         RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
         RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
         RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
@@ -221,7 +225,9 @@ void proc(UserParams *arg) {
         RKLog(">space.noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
         RKLog(">space.SNRThreshold = %.2f dB%s\n", space->SNRThreshold, isfinite(arg->SNRThreshold) ? " (user)" : "");
         RKLog(">space.SQIThreshold = %.2f%s\n", space->SQIThreshold, isfinite(arg->SQIThreshold) ? " (user)" : "");
-        RKLog("Initial marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+        if (arg->verbose > 1) {
+            RKLog("Initial marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+        }
     }
     // Test pulse buffer
     if (arg->verbose > 1) {
@@ -431,10 +437,10 @@ void proc(UserParams *arg) {
         }
         usec = pulse->header.time.tv_usec;
     }
-    RKLog("r = %d    fpos = %s / %s   k = %s\n",
-          r,
+    RKLog("fpos = %s / %s   pulse count = %s   ray count = %s\n",
           RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
-          RKIntegerToCommaStyleString(k));
+          RKIntegerToCommaStyleString(k),
+          RKIntegerToCommaStyleString(r));
     if (ftell(fid) != filesize) {
         RKLog("Warning. There is leftover in the file.");
     } else if (r == 0) {
