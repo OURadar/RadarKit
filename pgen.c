@@ -1,4 +1,13 @@
 #include <RadarKit.h>
+#include <getopt.h>
+
+//
+
+// User parameters in a struct
+typedef struct user_params {
+    char filename[256];
+    int verbose;
+} UserParams;
 
 // Make some private functions available
 
@@ -9,44 +18,18 @@ void RKScratchFree(RKScratch *);
 
 #pragma mark - Functions
 
+static void showHelp() {
+    char name[] = __FILE__;
+    RKShowName();
+    printf("%s\n", name);
+}
+
 static void timeval2str(char *timestr, const struct timeval time) {
     size_t bytes = strftime(timestr, 9, "%T", gmtime(&time.tv_sec));
     snprintf(timestr + bytes, 6, ".%04d", (int)time.tv_usec / 100);
 }
 
-#pragma mark - Main
-
-//
-//
-//  M A I N
-//
-//
-
-int main(int argc, const char **argv) {
-
-    char name[] = __FILE__;
-    char *c = strrchr(name, '/');
-    if (c) {
-        strncpy(name, c + 1, sizeof(name) - 1);
-    }
-    c = strrchr(name, '.');
-    if (c) {
-        *c = '\0';
-    }
-    RKSetProgramName(name);
-
-    char *term = getenv("TERM");
-    if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
-        RKSetWantColor(false);
-    }
-
-    // Show framework name & version
-    RKShowName();
-
-    if (argc < 2) {
-        fprintf(stderr, "Please supply a filename.\n");
-        return EXIT_FAILURE;
-    }
+void proc(UserParams *arg) {
     
     int i = 0, j = 0, k = 0, p = 0, r = 0;
     uint32_t u32 = 0;
@@ -57,26 +40,19 @@ int main(int argc, const char **argv) {
 
     suseconds_t usec = 0;
     
-    char filename[1024];
     long filesize = 0;
     struct timeval s, e;
 
-    strcpy(filename, argv[1]);
-    int verbose = 1;
-
-    RKSetWantScreenOutput(true);
-    RKSetWantColor(false);
-
-    RKLog("Opening file %s ...", filename);
+    RKLog("Opening file %s ...", arg->filename);
     
     gettimeofday(&s, NULL);
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
     RKWaveform *waveform = fileHeader->config.waveform;
     RKConfig *config = &fileHeader->config;
 
-    FILE *fid = fopen(filename, "r");
+    FILE *fid = fopen(arg->filename, "r");
     if (fid == NULL) {
-        RKLog("Error. Unable to open file %s", filename);
+        RKLog("Error. Unable to open file %s", arg->filename);
         exit(EXIT_FAILURE);
     }
     if (fseek(fid, 0L, SEEK_END)) {
@@ -217,7 +193,7 @@ int main(int argc, const char **argv) {
     space->SNRThreshold = 0.0f;
     space->SQIThreshold = config->SQIThreshold;
 
-    if (verbose > 1) {
+    if (arg->verbose > 1) {
         float *t;
         t = space->rcor[0]; RKLog(">rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
         t = space->dcal;    RKLog(">dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
@@ -295,7 +271,7 @@ int main(int argc, const char **argv) {
         // Mark for process later
         m = false;
         if (i1 != i0 || p == RKMaximumPulsesPerRay) {
-            if (verbose > 1) {
+            if (arg->verbose > 1) {
                 RKLog("i1 = %d   i0 = %d   p = %s\n", i1, i0, RKIntegerToCommaStyleString(p));
             }
             i1 = i0;
@@ -303,7 +279,7 @@ int main(int argc, const char **argv) {
                 m = true;
             }
         }
-        if (verbose > 1) {
+        if (arg->verbose > 1) {
             int du = (int)(pulse->header.time.tv_usec - usec);
             if (du < 0) {
                 du += 1000000;
@@ -363,7 +339,7 @@ int main(int argc, const char **argv) {
                 // Timestamp
                 timeval2str(timestr, ray->header.startTime);
 
-                if (verbose == 1) {
+                if (arg->verbose == 1) {
                     RKLog(">%05d r=%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05x  %s%s\n",
                            k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
@@ -376,7 +352,7 @@ int main(int argc, const char **argv) {
                            ray->header.marker,
                            ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
                            ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ");
-                } else if (verbose > 1) {
+                } else if (arg->verbose > 1) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
                     float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
@@ -492,7 +468,7 @@ int main(int argc, const char **argv) {
                 }
             }
         }
-        if (verbose > 1) {
+        if (arg->verbose > 1) {
             RKLog("momentList = %016xh\n", overallMomentList);
         }
 
@@ -549,5 +525,88 @@ int main(int argc, const char **argv) {
     RKProductBufferFree(product, 1);
     RKScratchFree(space);
     
-    return EXIT_SUCCESS;
+    return;
+}
+
+#pragma mark - Main
+
+//
+//
+//  M A I N
+//
+//
+
+int main(int argc, const char **argv) {
+
+    int k, s;
+    char str[1024];
+    char name[] = __FILE__;
+    char *c = strrchr(name, '/');
+    if (c) {
+        strncpy(name, c + 1, sizeof(name) - 1);
+    }
+    c = strrchr(name, '.');
+    if (c) {
+        *c = '\0';
+    }
+    RKSetProgramName(name);
+    RKSetWantColor(false);
+    RKSetWantScreenOutput(true);
+
+    char *term = getenv("TERM");
+    if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
+        RKSetWantColor(false);
+    }
+
+    // Show framework name & version
+    RKShowName();
+
+    if (argc < 2) {
+        fprintf(stderr, "Please supply a filename.\n");
+        return EXIT_FAILURE;
+    }
+
+    // A struct to collect user input
+    UserParams *arg = (UserParams *)malloc(sizeof(UserParams));
+    
+    // Command line options
+    struct option options[] = {
+        {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
+        {"help"              , no_argument      , NULL, 'h'},
+        {"verbose"           , no_argument,       NULL, 'v'},
+        {0, 0, 0, 0}
+    };
+    s = 0;
+    for (k = 0; k < sizeof(options); k++) {
+        struct option *o = &options[k];
+        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+    }
+    optind = 1;
+    int opt, ind = 0;
+    while ((opt = getopt_long(argc, (char * const *)argv, str, options, &ind)) != -1) {
+        switch (opt) {
+            case 'A':
+                break;
+            case 'h':
+                showHelp();
+                break;
+            case 'v':
+                arg->verbose++;
+                break;
+            default:
+                break;
+        }
+    }
+
+    printf("str = %s   ind = %d   optind = %d\n", str, ind, optind);
+    printf("argc = %d   argv = %s\n", argc, argv[2]);
+    
+    optind = MIN(argc - 1, optind);
+    strcpy(arg->filename, argv[optind]);
+    
+    printf("arg->verbose = %d\n", arg->verbose);
+
+//    proc(arg);
+    
+    free(arg);
 }
