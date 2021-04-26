@@ -7,6 +7,8 @@
 typedef struct user_params {
     char filename[256];
     int verbose;
+    float SNRThreshold;
+    float SQIThreshold;
 } UserParams;
 
 // Make some private functions available
@@ -82,35 +84,37 @@ void proc(UserParams *arg) {
         fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
         RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
     }
-    RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
-    RKLog(">fileHeader.dataType = '%s'\n",
-           fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-           (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
-    RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
-    RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
-    RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
-    RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
-    RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
-    RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-    RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
-    RKLog(">config.filterCount = %d\n", config->filterCount);
-    RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
-          1.0e3f * config->prt[0],
-          RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
-    RKLog(">config.pw = %.2f us\n", 1.0e-6 * config->pw[0]);
-    RKLog(">config.pulseGateCount = %s --> %s\n",
-          RKIntegerToCommaStyleString(config->pulseGateCount),
-          RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
-    RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
-          config->pulseGateSize,
-          config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-    RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
-    RKLog(">config.systemZCal = %.2f, %.2f ADU^2\n", config->systemZCal[0], config->systemZCal[1]);
-    RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
-    RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
-    RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
-    RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
-    RKLog(">config.waveformName = '%s'\n", config->waveformName);
+    if (arg->verbose) {
+        RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+        RKLog(">fileHeader.dataType = '%s'\n",
+               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+               (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+        RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
+        RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
+        RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
+        RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
+        RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
+        RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
+        RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
+        RKLog(">config.filterCount = %d\n", config->filterCount);
+        RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
+              1.0e3f * config->prt[0],
+              RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+        RKLog(">config.pw = %.2f us\n", 1.0e-6 * config->pw[0]);
+        RKLog(">config.pulseGateCount = %s --> %s\n",
+              RKIntegerToCommaStyleString(config->pulseGateCount),
+              RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
+        RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
+              config->pulseGateSize,
+              config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
+        RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
+        RKLog(">config.systemZCal = %.2f, %.2f ADU^2\n", config->systemZCal[0], config->systemZCal[1]);
+        RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
+        RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
+        RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
+        RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
+        RKLog(">config.waveformName = '%s'\n", config->waveformName);
+    }
 
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
@@ -138,27 +142,33 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
     mem += bytes;
-    RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
-          RKUIntegerToCommaStyleString(bytes),
-          RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
-          RKIntegerToCommaStyleString(pulseCapacity));
+    if (arg->verbose > 1) {
+        RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
+              RKUIntegerToCommaStyleString(bytes),
+              RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
+              RKIntegerToCommaStyleString(pulseCapacity));
+    }
     bytes = RKRayBufferAlloc(&rayBuffer, rayCapacity, RKMaximumRaysPerSweep);
     if (bytes == 0 || rayBuffer == NULL) {
         RKLog("Error. Unable to allocate memory for rays.\n");
         exit(EXIT_FAILURE);
     }
     mem += bytes;
-    RKLog(">Ray buffer occupies %s B  (%s rays x %s gates)\n",
-          RKUIntegerToCommaStyleString(bytes),
-          RKIntegerToCommaStyleString(RKMaximumRaysPerSweep),
-          RKIntegerToCommaStyleString(rayCapacity));
+    if (arg->verbose > 1) {
+        RKLog(">Ray buffer occupies %s B  (%s rays x %s gates)\n",
+              RKUIntegerToCommaStyleString(bytes),
+              RKIntegerToCommaStyleString(RKMaximumRaysPerSweep),
+              RKIntegerToCommaStyleString(rayCapacity));
+    }
     bytes = RKProductBufferAlloc(&product, 1, RKMaximumRaysPerSweep, config->pulseGateCount / fileHeader->desc.pulseToRayRatio);
     if (bytes == 0 || product == NULL) {
         RKLog("Error. Unable to allocate memory for products.\n");
         exit(EXIT_FAILURE);
     }
-    RKLog(">Product buffer occupies %s B\n",
-          RKUIntegerToCommaStyleString(bytes));
+    if (arg->verbose > 1) {
+        RKLog(">Product buffer occupies %s B\n",
+              RKUIntegerToCommaStyleString(bytes));
+    }
     mem += bytes;
     const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
     bytes = RKScratchAlloc(&space, rayCapacity, RKMaximumLagCount, fftOrder, false);
@@ -190,41 +200,48 @@ void proc(UserParams *arg) {
     space->velocityFactor = 0.25f * fileHeader->desc.wavelength / config->prt[0] / M_PI;
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
-    space->SNRThreshold = 0.0f;
-    space->SQIThreshold = config->SQIThreshold;
-
+    
     if (arg->verbose > 1) {
         float *t;
         t = space->rcor[0]; RKLog(">rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
         t = space->dcal;    RKLog(">dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
+        RKLog(">Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
     }
-    RKLog(">Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
-
     RKMarker marker = fileHeader->config.startMarker;
 
-    RKLog("Processing Parameters:\n");
-    RKLog(">space.noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
-    RKLog(">space.SNRThreshold = %.2f dB\n", space->SNRThreshold);
-    RKLog(">space.SQIThreshold = %.2f\n", space->SQIThreshold);
-    RKLog("Initial marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
-    
+    // Override some parameters with user supplied values
+    if (isfinite(arg->SNRThreshold)) {
+        space->SNRThreshold = arg->SNRThreshold;
+    }
+    if (isfinite(arg->SQIThreshold)) {
+        space->SQIThreshold = arg->SQIThreshold;
+    }
+    if (arg->verbose) {
+        RKLog("Processing Parameters:\n");
+        RKLog(">space.noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
+        RKLog(">space.SNRThreshold = %.2f dB%s\n", space->SNRThreshold, isfinite(arg->SNRThreshold) ? " (user)" : "");
+        RKLog(">space.SQIThreshold = %.2f%s\n", space->SQIThreshold, isfinite(arg->SQIThreshold) ? " (user)" : "");
+        RKLog("Initial marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
+    }
     // Test pulse buffer
-    for (p = 0; p < RKMaximumPulsesPerRay; p++) {
-        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        for (j = 0; j < 2; j++) {
-            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-            if (x == NULL || z.i == NULL || z.q == NULL) {
-                RKLog("Error. Unexpected behavior from pulse buffer %p %p %p\n", x, z.i, z.q);
-            }
-            for (i = 0; i < pulseCapacity; i++) {
-                z.i[i] = x[i].i;
-                z.q[i] = x[i].q;
+    if (arg->verbose > 1) {
+        for (p = 0; p < RKMaximumPulsesPerRay; p++) {
+            RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
+            for (j = 0; j < 2; j++) {
+                RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+                RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+                if (x == NULL || z.i == NULL || z.q == NULL) {
+                    RKLog("Error. Unexpected behavior from pulse buffer %p %p %p\n", x, z.i, z.q);
+                }
+                for (i = 0; i < pulseCapacity; i++) {
+                    z.i[i] = x[i].i;
+                    z.q[i] = x[i].q;
+                }
             }
         }
-    }
-    if (p == RKMaximumPulsesPerRay && i == pulseCapacity) {
-        RKLog("Pulse buffer okay.  p = %d / %d   i = %d / %d\n", p, RKMaximumPulsesPerRay, i, pulseCapacity);
+        if (p == RKMaximumPulsesPerRay && i == pulseCapacity) {
+            RKLog("Pulse buffer checked.  p = %d / %d   i = %d / %d\n", p, RKMaximumPulsesPerRay, i, pulseCapacity);
+        }
     }
 
     p = 0;    // total pulses per ray
@@ -339,7 +356,7 @@ void proc(UserParams *arg) {
                 // Timestamp
                 timeval2str(timestr, ray->header.startTime);
 
-                if (arg->verbose == 1) {
+                if (arg->verbose == 2) {
                     RKLog(">%05d r=%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05x  %s%s\n",
                            k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
@@ -352,7 +369,7 @@ void proc(UserParams *arg) {
                            ray->header.marker,
                            ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
                            ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ");
-                } else if (arg->verbose > 1) {
+                } else if (arg->verbose > 2) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
                     float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
@@ -386,16 +403,18 @@ void proc(UserParams *arg) {
                 }
 
                 // Timestamp
-                timeval2str(timestr, S->header.time);
-                RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
-                       k, r, timestr, p,
-                       config->sweepElevation, config->sweepAzimuth,
-                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
-                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
-                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
-                       (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
-                       RKIntegerToCommaStyleString(S->header.downSampledGateCount),
-                       marker);
+                if (arg->verbose > 1) {
+                    timeval2str(timestr, S->header.time);
+                    RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
+                           k, r, timestr, p,
+                           config->sweepElevation, config->sweepAzimuth,
+                           (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
+                           (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
+                           (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? E->header.elevationDegrees : E->header.azimuthDegrees,
+                           (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? deltaElevation : deltaAzimuth,
+                           RKIntegerToCommaStyleString(S->header.downSampledGateCount),
+                           marker);
+                }
             }
             // Use the end pulse as the start pulse of next ray
             for (j = 0; j < 2; j++) {
@@ -508,13 +527,17 @@ void proc(UserParams *arg) {
 
         // Base products
         int productCount = __builtin_popcount(list);
-        RKLog("productCount = %d\n", productCount);
+        if (arg->verbose) {
+            RKLog("productCount = %d\n", productCount);
+        }
         for (p = 0; p < productCount; p++) {
             product->desc = RKGetNextProductDescription(&list);
             RKProductInitFromSweep(product, sweep);
             sprintf(product->header.suggestedFilename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
             RKProductFileWriterNC(product, product->header.suggestedFilename);
-            RKLog("%d %s\n", p, product->header.suggestedFilename);
+            if (arg->verbose) {
+                RKLog("%d %s\n", p, product->header.suggestedFilename);
+            }
         }
 
         RKSweepFree(sweep);
@@ -550,17 +573,12 @@ int main(int argc, const char **argv) {
         *c = '\0';
     }
     RKSetProgramName(name);
-    RKSetWantColor(false);
     RKSetWantScreenOutput(true);
 
     char *term = getenv("TERM");
     if (term == NULL || (strcasestr(term, "color") == NULL && strcasestr(term, "ansi") == NULL)) {
         RKSetWantColor(false);
     }
-
-    // Show framework name & version
-    RKShowName();
-
     if (argc < 2) {
         fprintf(stderr, "Please supply a filename.\n");
         return EXIT_FAILURE;
@@ -568,16 +586,21 @@ int main(int argc, const char **argv) {
 
     // A struct to collect user input
     UserParams *arg = (UserParams *)malloc(sizeof(UserParams));
+    memset(arg, 0, sizeof(UserParams));
+    arg->SNRThreshold = NAN;
+    arg->SQIThreshold = NAN;
     
     // Command line options
     struct option options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"help"              , no_argument      , NULL, 'h'},
-        {"verbose"           , no_argument,       NULL, 'v'},
+        {"snr"               , required_argument, NULL, 's'},
+        {"sqi"               , required_argument, NULL, 'q'},
+        {"verbose"           , no_argument      , NULL, 'v'},
         {0, 0, 0, 0}
     };
     s = 0;
-    for (k = 0; k < sizeof(options); k++) {
+    for (k = 0; k < sizeof(options) / sizeof(struct option); k++) {
         struct option *o = &options[k];
         s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
     }
@@ -589,6 +612,12 @@ int main(int argc, const char **argv) {
                 break;
             case 'h':
                 showHelp();
+                exit(EXIT_SUCCESS);
+            case 'q':
+                arg->SQIThreshold = atof(optarg);
+                break;
+            case 's':
+                arg->SNRThreshold = atof(optarg);
                 break;
             case 'v':
                 arg->verbose++;
@@ -597,16 +626,25 @@ int main(int argc, const char **argv) {
                 break;
         }
     }
-
-    printf("str = %s   ind = %d   optind = %d\n", str, ind, optind);
-    printf("argc = %d   argv = %s\n", argc, argv[2]);
-    
     optind = MIN(argc - 1, optind);
     strcpy(arg->filename, argv[optind]);
-    
-    printf("arg->verbose = %d\n", arg->verbose);
 
-//    proc(arg);
+    if (arg->verbose > 1) {
+        printf("str = %s   ind = %d   optind = %d\n", str, ind, optind);
+        printf("argc = %d   argv[%d] = %s\n", argc, optind, argv[optind]);
+        printf("arg->verbose = %d\n", arg->verbose);
+        printf("arg->filename = %s\n", arg->filename);
+    }
+
+    // Show framework name & version
+    if (arg->verbose) {
+        RKShowName();
+    }
+
+    // Now we process
+    proc(arg);
     
     free(arg);
+    
+    exit(EXIT_SUCCESS);
 }
