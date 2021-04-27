@@ -825,8 +825,9 @@ void RKTestReadIQ(const char *filename) {
     int i, j, k, p = 0;
     size_t tr;
     time_t startTime;
-    size_t filesize, readsize, bytes, mem = 0;
+    size_t readsize, bytes, mem = 0;
     char timestr[32];
+    long filesize = 0;
     uint32_t u32;
     RKBuffer pulseBuffer;
 
@@ -838,7 +839,6 @@ void RKTestReadIQ(const char *filename) {
     }
     if (fseek(fid, 0L, SEEK_END)) {
         RKLog("Error. Unable to tell the file size.\n");
-        filesize = 0;
     } else {
         filesize = ftell(fid);
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
