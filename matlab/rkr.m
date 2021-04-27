@@ -25,37 +25,47 @@ N = 4;   % Number of rows
 M = 1;   % Number of filters
 
 % ng = min(size(pulses, 1), 30);
-ng = min(size(pulses, 1), 1900);
-ns = min(size(pulses, 2), 500);
+ng = min(size(pulses, 1), 1600);
+ns = min(size(pulses, 2), 8000);
 
 % Compute dt sampling interval in us
 if dat.header.buildNo >= 4
     if dat.header.dataType == 1
         % Raw IQ straight from the transceiver
-        dt = double(dat.header.config.pulseGateSize) * 2 / 3.0e2;
+        dr = double(dat.header.config.pulseGateSize);
+        dt = dr * 2 / 3.0e2;
     elseif dat.header.dataType == 2
         % Compressed IQ
-        dt = double(dat.header.desc.pulseToRayRatio) * double(dat.header.config.pulseGateSize) * 2 / 3.0e2;
+        dr = double(dat.header.desc.pulseToRayRatio) * double(dat.header.config.pulseGateSize);
+        dt = dr * 2 / 3.0e2;
     else
         fprintf('Inconsistency detected. This should not happen\n');
         % Assume 50-MHz sampling
+        dr = 30;
         dt = 1 / 50;
     end  
 else
     % Assume 50-MHz sampling
+    dr = 30;
     dt = 1 / 50;
 end
+
+ds = floor(ns / 800);
+
+r_fast = (1:ng) * dr;
 t_fast = (1:ng) * dt;
-t_slow = (1:ns) / 100;
+t_slow = (1:ds:ns) * dat.header.config.prt(1);
 
 % Initialize a figure
 figure(1)
 clf
-imagesc(20 * log10(abs(pulses(1:ng, 1:ns, 2))))
+imagesc(t_slow, 1.0e-3 * r_fast, 20 * log10(abs(pulses(1:ng, 1:ds:ns, 2))))
+xlabel('Time (ms)')
+ylabel('Range (km)')
 set(gca, 'YDir', 'Normal')
 colorbar
-blib('bsizewin', gcf, [800 400])
-xlim([0 100])
+blib('bsizewin', gcf, [800 600])
+caxis([10 40])
 
 %%
 figure(2)
