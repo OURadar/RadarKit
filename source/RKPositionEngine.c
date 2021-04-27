@@ -6,7 +6,7 @@
 //  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKPosition.h>
+#include <RadarKit/RKPositionEngine.h>
 
 // Internal functions
 
