@@ -10,7 +10,8 @@ classdef iqread
             'RKMaximumPrefixLength', 8, ...
             'RKMaximumFolderPathLength', 768, ...
             'RKRadarDesc', 1072, ...
-            'RKConfig', 1441, ...
+            'RKConfigV1', 1441, ...
+            'RKConfig', 1457, ...
             'RKMaximumCommandLength', 512, ...
             'RKMaxFilterCount', 8, ...
             'RKPulseHeaderPaddedSize', 256);
@@ -31,11 +32,17 @@ classdef iqread
                 error('Unable to open file.');
             end
 
-            % Header
+            % The very first two: (RKName preface) and (uint32_t buildNo)
             self.header.preface = fread(fid, [1 self.constants.RKNameLength], 'char=>char');
             self.header.buildNo = fread(fid, 1, 'uint32');
             
-            % Header->desc
+            % Third component: (RKRawDataType dataType)
+            if self.header.buildNo >= 5
+                self.header.dataType = fread(fid, 1, 'uint8');
+                fseek(fid, 123, 'cof');
+            end
+            
+            % Radar description: (RKRadarDesc desc)
             if self.header.buildNo >= 2
                 h = memmapfile(self.filename, ...
                     'Offset', self.constants.RKNameLength + 4, ...    % RKNameLength * (char) + (uint32_t)
@@ -107,8 +114,13 @@ classdef iqread
             
             % Header->config
             if self.header.buildNo >= 5
-                % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfig
-                offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc;
+                if self.header.buildNo == 5
+                    % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfigV1
+                    offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc;
+                else
+                    % (RKName) + (uint32_t) + (uint8_t) + (uint8_t * 123) + (RKRadarDesc) --> RKConfig
+                    offset = self.constants.RKNameLength + 4 + 1 + 123 + self.constants.RKRadarDesc;
+                end
                 c = memmapfile(self.filename, ...
                     'Offset', offset, ...
                     'Repeat', 1, ...
@@ -166,10 +178,14 @@ classdef iqread
                 end
                 self.header.config.waveform = deblank(char(c3.data.waveform_raw));
                 self.header.config.vcpDefinition = deblank(char(c3.data.vcpDefinition_raw));
-                % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfig --> RKRawDataType
-                offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc + self.constants.RKConfig;
-                fseek(fid, offset, 'bof');
-                self.header.dataType = fread(fid, 1, 'uint8');
+                if self.header.buildNo == 5
+                    % (RKName) + (uint32_t) + (RKRadarDesc) + RKConfigV1 --> RKRawDataType
+                    offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc + self.constants.RKConfigV1;
+                    fseek(fid, offset, 'bof');
+                    self.header.dataType = fread(fid, 1, 'uint8');
+                else
+                    % (RKName) + (uint32_t) + (uint8_t) + (uint8_t * 123) + (RKRadarDesc) + RKConfig
+                end
                 if self.header.dataType == 2
                     str = 'compressed';
                 else
@@ -177,7 +193,7 @@ classdef iqread
                 end
                 fprintf('dataType = %d (%s)\n', self.header.dataType, str);
             elseif self.header.buildNo >= 2
-                % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfig
+                % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfigV1
                 offset = self.constants.RKNameLength + 4 + self.constants.RKRadarDesc;
                 c = memmapfile(self.filename, ...
                     'Offset', offset, ...
@@ -261,6 +277,10 @@ classdef iqread
                 self.header.config.waveform = deblank(char(self.header.config.waveform_raw));
                 self.header.config.vcpDefinition = deblank(char(self.header.config.vcpDefinition_raw));
                 self.header.dataType = 1;
+            end
+
+            if self.header.buildNo >= 6
+                % Read in the waveform
             end
 
             % Partially read the very first pulse

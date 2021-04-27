@@ -84,41 +84,6 @@ void proc(UserParams *arg) {
         fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
         RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
     }
-    if (arg->verbose) {
-        RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
-        RKLog(">fileHeader.dataType = '%s'\n",
-               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-               (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
-        RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
-        RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
-        RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
-        RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
-        RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
-        RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-        RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
-        RKLog(">config.filterCount = %d\n", config->filterCount);
-        RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
-              1.0e3f * config->prt[0],
-              RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
-        RKLog(">config.pw = %.2f us (dr = %s m)\n",
-              1.0e6 * config->pw[0],
-              RKFloatToCommaStyleString(0.5 * 3.0e8 * config->pw[0]));
-        RKLog(">config.pulseGateCount = %s -- (/ %d) --> %s\n",
-              RKIntegerToCommaStyleString(config->pulseGateCount),
-              fileHeader->desc.pulseToRayRatio,
-              RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
-        RKLog(">config.pulseGateSize = %.3f m -- (x %d) --> %.3f m\n",
-              config->pulseGateSize,
-              fileHeader->desc.pulseToRayRatio,
-              config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-        RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
-        RKLog(">config.systemZCal = %.2f, %.2f dB\n", config->systemZCal[0], config->systemZCal[1]);
-        RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
-        RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
-        RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
-        RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
-        RKLog(">config.waveformName = '%s'\n", config->waveformName);
-    }
 
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
@@ -181,6 +146,46 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
     mem += bytes;
+
+    if (arg->verbose) {
+        long fpos = ftell(fid);
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
+        fread(pulse, sizeof(RKPulseHeader), 1, fid);
+        fseek(fid, fpos, SEEK_SET);
+        RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+        RKLog(">fileHeader.dataType = '%s'\n",
+               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+               (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+        RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
+        RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
+        RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
+        RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
+        RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
+        RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
+        RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
+        RKLog(">config.filterCount = %d\n", config->filterCount);
+        RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
+              1.0e3f * config->prt[0],
+              RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
+        RKLog(">config.pw = %.2f us (dr = %s m)\n",
+              1.0e6 * config->pw[0],
+              RKFloatToCommaStyleString(0.5 * 3.0e8 * config->pw[0]));
+        RKLog(">config.pulseGateCount = %s -- (/ %d) --> %s\n",
+              RKIntegerToCommaStyleString(config->pulseGateCount),
+              fileHeader->desc.pulseToRayRatio,
+              RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
+        RKLog(">config.pulseGateSize = %.3f m -- (x %d) --> %.3f m\n",
+              config->pulseGateSize,
+              fileHeader->desc.pulseToRayRatio,
+              config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
+        RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
+        RKLog(">config.systemZCal = %.2f, %.2f dB\n", config->systemZCal[0], config->systemZCal[1]);
+        RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
+        RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
+        RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
+        RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
+        RKLog(">config.waveformName = '%s'\n", config->waveformName);
+    }
 
     char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
     if (rkGlobalParameters.showColor) {
@@ -265,6 +270,9 @@ void proc(UserParams *arg) {
             RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                   RKIntegerToCommaStyleString(pulseCapacity));
+        }
+        if (p == 0) {
+            RKLog("pulse[0].downSampledGateCount = %d\n", pulse->header.downSampledGateCount);
         }
         timeval2str(timestr, pulse->header.time);
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {

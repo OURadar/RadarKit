@@ -1,4 +1,4 @@
-if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads', '*.rk*'); end
+if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads/raxpol', '*.rk*'); end
 if ~exist('showAnimation', 'var'), showAnimation = false; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
 
@@ -95,7 +95,7 @@ set(FIG.ht, 'HorizontalAlignment', 'Right');
 lp = linkprop(FIG.ax, {'XLim', 'YLim'});
 xlim([0 t_fast(ng)])
 
-if (showAnimation) 
+if (showAnimation)
     %%
     jj = 1; 
     while (jj < size(pulses, 2))
