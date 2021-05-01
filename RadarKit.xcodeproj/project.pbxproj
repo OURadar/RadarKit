@@ -163,6 +163,7 @@
 		B53AE7EC1D88824400364467 /* RKMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMisc.h; path = headers/RadarKit/RKMisc.h; sourceTree = "<group>"; };
 		B548350F216B9E280066FA0D /* RKSpectralMoment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSpectralMoment.h; path = headers/RadarKit/RKSpectralMoment.h; sourceTree = "<group>"; };
 		B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSpectralMoment.c; path = source/RKSpectralMoment.c; sourceTree = "<group>"; };
+		B54FBF36263D8C4C00E2A65A /* entitlements */ = {isa = PBXFileReference; lastKnownFileType = folder; path = entitlements; sourceTree = "<group>"; };
 		B55E437C1DB66682003C40CF /* RKSIMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKSIMD.h; path = headers/RadarKit/RKSIMD.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B55F5F191E2C8F9600FA8B2E /* RKSweepEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepEngine.h; path = headers/RadarKit/RKSweepEngine.h; sourceTree = "<group>"; };
 		B55F5F261E2D206300FA8B2E /* RKConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKConfig.h; path = headers/RadarKit/RKConfig.h; sourceTree = "<group>"; };
@@ -186,7 +187,6 @@
 		B5C1F3631AB9CD34004F88CD /* RKRawDataRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKRawDataRecorder.h; path = headers/RadarKit/RKRawDataRecorder.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B5DD4ED7261DF94B004BACB9 /* pgen.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = pgen.c; sourceTree = SOURCE_ROOT; };
 		B5DD4EDC261DF97C004BACB9 /* Product Generator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Product Generator"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B5DD4F1A261DFF37004BACB9 /* Product Generator.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = "Product Generator.entitlements"; path = "Product Generator/Product Generator.entitlements"; sourceTree = "<group>"; };
 		B5DD6F261E1F400E00FAE2E3 /* RKClock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKClock.h; path = headers/RadarKit/RKClock.h; sourceTree = "<group>"; };
 		B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKMultiLag.h; path = headers/RadarKit/RKMultiLag.h; sourceTree = "<group>"; };
 		B5DFFDB5222DB40E005CF6B3 /* rknchead.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rknchead.c; sourceTree = SOURCE_ROOT; };
@@ -287,7 +287,6 @@
 		B50A813F1AB89B6200E12E1F = {
 			isa = PBXGroup;
 			children = (
-				B5DD4F1A261DFF37004BACB9 /* Product Generator.entitlements */,
 				B536146A1DC533F500DA5F70 /* README.md */,
 				B5324D8B1AB8CC4200C00517 /* Makefile */,
 				B56AB0A520A732DC00E73AE9 /* pref.conf */,
@@ -298,6 +297,7 @@
 				B5C1F3451AB9C118004F88CD /* Programs */,
 				B56AB0AB20A8826900E73AE9 /* SimpleEmulator */,
 				B5E7CB15210D155B00D381ED /* scripts */,
+				B54FBF36263D8C4C00E2A65A /* entitlements */,
 				B5324D501AB8A5A000C00517 /* Products */,
 				B508EA711FB3FC6500A6A83C /* Frameworks */,
 			);
@@ -1098,7 +1098,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "Product Generator/Product Generator.entitlements";
+				CODE_SIGN_ENTITLEMENTS = entitlements/pgen.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
@@ -1138,7 +1138,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "Product Generator/Product Generator.entitlements";
+				CODE_SIGN_ENTITLEMENTS = entitlements/pgen.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;

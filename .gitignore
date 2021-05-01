@@ -15,8 +15,8 @@ core.*
 # Folders
 __pycache__
 data
-moment
 waveforms
+entitlements
 
 # Programs, etc.
 radar
