@@ -277,22 +277,6 @@ void proc(UserParams *arg) {
         } else {
             i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
         }
-        // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
-//        for (j = 0; j < 2; j++) {
-//            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-//            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-//            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-//            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
-//                RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
-//                      RKIntegerToCommaStyleString(readsize),
-//                      RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-//                      RKIntegerToCommaStyleString(pulseCapacity));
-//            }
-//            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-//                z.i[i] = x[i].i;
-//                z.q[i] = x[i].q;
-//            }
-//        }
         pulses[p++] = pulse;
         // Mark for process later
         m = false;
