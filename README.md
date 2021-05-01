@@ -3,7 +3,7 @@ RadarKit
 
 First of all, many thanks for your interest in the framework! :smile: :thumbsup: :punch:
 
-The RadarKit is a straight C framework. This is a toolkit that abstracts various components of a radar signal processor. Mainly, the real-time operations of data collection, data transportation through network, rudimentary processing from raw I/Q data to _base moment_ products. The main idea is to have developers only implement the interface between a _digital transceiver_, a _pedestal_, and a generic _health relay_. The RadarKit framework combines all of these information, generates radar product files, provides live data and display streams, and redirects the control commands to the hardware.
+The RadarKit framework is a straight C framework. This is a library toolkit that abstracts various components of a radar signal processor. Mainly, the real-time operations of data collection, data fusion, transportation through network, and rudimentary processing from raw I/Q data to _base moment_ products. The main goal is to let developers only worry about implementing the interface between a _digital transceiver_, a _pedestal_, and a generic _health relay_. The RadarKit framework combines all of these information, generates radar products, provides live data and display streams, and redirects the control commands to the hardware.
 
 ## System Requirements
 - Processors capable of SSE, SSE2, SSE3
@@ -40,7 +40,7 @@ Follow these steps to get the project
     yum install fftw-devel netcdf-devel
     ```
     
-    ##### Mac OS X #####
+    ##### macOS X #####
     
     I use [Homebrew] as my package manager for macOS. I highly recommend it.
     
@@ -102,7 +102,7 @@ Follow these steps to get the project
 [Homebrew]: http://brew.sh
 
 
-## Basic Usage for a Radar Host
+## Basic Usage on a Radar Host
 
 1. Initialize an `RKRadar` object (although RadarKit is not an objective implementation but it is easier to think this way). Supply the necessary _tranceiver_ routines and _pedestal_ routines. The _health relay_ is omitted here for simplicity.
 
