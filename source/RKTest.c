@@ -1518,7 +1518,7 @@ void RKTestMakeHops(void) {
 void RKTestWaveformTFM(void) {
     SHOW_FUNCTION_NAME
     const char filename[] = "waveforms/test-tfm.rkwav";
-    RKWaveform *waveform = RKWaveformInitAsFakeTimeFrequencyMultiplexing(2.0, 1.0, 0.5, 100);
+    RKWaveform *waveform = RKWaveformInitAsFakeTimeFrequencyMultiplexing();
     RKWaveformSummary(waveform);
     RKWaveformWriteFile(waveform, filename);
     RKWaveformFree(waveform);
@@ -1541,12 +1541,16 @@ void RKTestWaveformWrite(void) {
     RKWaveformFree(waveform);
     RKWaveformFree(loadedWaveform);
 
-    RKLog("Removing waveform file ...\n");
-    if (remove(filename)) {
-        RKLog("Error removing file '%s'.\n", filename);
-    } else {
-        RKLog("Done.\n");
+    printf("Remove the waveform file? (y/n) [y]:");
+    
+    int j = getchar();
+    if (j == 10 || j == 'y' || j == 'Y') {
+        RKLog("Removing waveform file ...\n");
+        if (remove(filename)) {
+            RKLog("Error removing file '%s'.\n", filename);
+        }
     }
+    RKLog("Done.\n");
 }
 
 void RKTestWaveformDownsampling(void) {
@@ -2572,7 +2576,10 @@ void *RKTestTransceiverRunLoop(void *input) {
     }
     transceiver->state ^= RKEngineStateSleep0;
 
-    RKAddConfig(radar, RKConfigKeyPRF, 1.0 / transceiver->prt, RKConfigKeyNull);
+    RKAddConfig(radar,
+                RKConfigKeyWaveform, transceiver->waveformCache[0],
+                RKConfigKeyPRF, 1.0 / transceiver->prt,
+                RKConfigKeyNull);
 
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
@@ -2812,9 +2819,10 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                      (transceiver->gateCount >= 4000 ? 10.0e6 : 5.0e6));
     transceiver->prt = 0.001;
     transceiver->sprt = 1;
-    //transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 0.0, 1);
+//    transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 20.0e6, 5);
     transceiver->waveformCache[0] = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, 1.0e-6);
-    sprintf(transceiver->waveformCache[0]->name, "s01");
+//    sprintf(transceiver->waveformCache[0]->name, "s01");
+//    RKWaveformSummary(transceiver->waveformCache[0]);
 
     // Parse out input parameters
     if (input) {

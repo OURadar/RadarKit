@@ -164,24 +164,24 @@ RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const dou
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count) {
+RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int hops) {
     uint32_t depth = (uint32_t)round(pulsewidth * fs);
     if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
         RKLog("Info. Waveform depth %.2f us --> %.2f us due to rounding @ fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
     }
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count == 1 ? 1 : 2 * count, depth);
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(hops == 1 ? 1 : 2 * hops, depth);
     RKWaveformFrequencyHops(waveform, fs, fc, bandwidth);
     return waveform;
 }
 
-RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount) {
+RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(void) {
     int i, j;
-    const uint32_t longPulseWidth = 300;
-    const uint32_t shortPulseWidth = 10;
-    const uint32_t transitionWidth = 30;
+    const uint32_t longPulseWidth = 500 * 8;
+    const uint32_t shortPulseWidth = 50 * 8;
+    const uint32_t transitionWidth = 100 * 8;
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
 
-    waveform->fs = fs;
+    waveform->fs = 80.0e6;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeTimeFrequencyMultiplexing;
     sprintf(waveform->name, "tfm-fake");
 
@@ -870,14 +870,14 @@ void RKWaveformSummary(RKWaveform *waveform) {
 #pragma mark - File
 
 // ----
-//  RKWaveGlobalHeader
+//  RKWaveFileGlobalHeader
 //  - name
 //  - group count
 //  - global depth
 // ----
 //
 // ----
-//  RKWaveGroupHeader (0)
+//  RKWaveFileGroupHeader (0)
 //  - type
 //  - depth
 //  - filter count
@@ -889,7 +889,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
 // ---
 //
 // ----
-//  RKWaveGroupHeader (1)
+//  RKWaveFileGroupHeader (1)
 //  - type
 //  - depth
 //  - filter count
@@ -904,29 +904,29 @@ void RKWaveformSummary(RKWaveform *waveform) {
 size_t RKWaveformWriteToReference(RKWaveform *waveform, FILE *fid) {
     int k;
     size_t bytes = 0;
-    RKWaveGlobalHeader fileHeader;
-    RKWaveGroupHeader groupHeader;
-    memset(&fileHeader, 0, sizeof(RKWaveGlobalHeader));
-    memset(&groupHeader, 0, sizeof(RKWaveGroupHeader));
+    RKWaveFileGlobalHeader fileHeader;
+    RKWaveFileGroupHeader groupHeader;
+    memset(&fileHeader, 0, sizeof(RKWaveFileGlobalHeader));
+    memset(&groupHeader, 0, sizeof(RKWaveFileGroupHeader));
     // File header
-    fileHeader.groupCount = waveform->count;
+    fileHeader.count = waveform->count;
     fileHeader.depth = waveform->depth;
     fileHeader.fc = waveform->fc;
     fileHeader.fs = waveform->fs;
     strcpy(fileHeader.name, waveform->name);
-    fwrite(&fileHeader, sizeof(RKWaveGlobalHeader), 1, fid);
-    bytes += sizeof(RKWaveGlobalHeader);
+    fwrite(&fileHeader, sizeof(RKWaveFileGlobalHeader), 1, fid);
+    bytes += sizeof(RKWaveFileGlobalHeader);
     // Go through all groups
     for (k = 0; k < waveform->count; k++) {
         // Group header
         groupHeader.type = waveform->type;
         groupHeader.depth = waveform->depth;
-        groupHeader.filterCounts = waveform->filterCounts[k];
-        fwrite(&groupHeader, sizeof(RKWaveGroupHeader), 1, fid);
-        bytes += sizeof(RKWaveGroupHeader);
+        groupHeader.filterCount = waveform->filterCounts[k];
+        fwrite(&groupHeader, sizeof(RKWaveFileGroupHeader), 1, fid);
+        bytes += sizeof(RKWaveFileGroupHeader);
         // Filter anchors
-        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCounts, fid);
-        bytes += groupHeader.filterCounts * sizeof(RKFilterAnchor);
+        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCount, fid);
+        bytes += groupHeader.filterCount * sizeof(RKFilterAnchor);
         // Waveform samples
         fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
         bytes += groupHeader.depth * sizeof(RKComplex);
@@ -960,23 +960,23 @@ RKResult RKWaveformWriteFile(RKWaveform *waveform, const char *filename) {
 RKWaveform *RKWaveformReadFromReference(FILE *fid) {
     int j, k;
     size_t r;
-    RKWaveGlobalHeader fileHeader;
-    RKWaveGroupHeader groupHeader;
-    r = fread(&fileHeader, sizeof(RKWaveGlobalHeader), 1, fid);
+    RKWaveFileGlobalHeader fileHeader;
+    RKWaveFileGroupHeader groupHeader;
+    r = fread(&fileHeader, sizeof(RKWaveFileGlobalHeader), 1, fid);
     if (r == 0) {
         RKLog("Error. No file header from %p.\n", fid);
     }
     
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.groupCount, fileHeader.depth);
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.count, fileHeader.depth);
     //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
 
     waveform->fc = fileHeader.fc;
     waveform->fs = fileHeader.fs;
     strncpy(waveform->name, fileHeader.name, RKNameLength);
     
-    for (k = 0; k < fileHeader.groupCount; k++) {
+    for (k = 0; k < fileHeader.count; k++) {
         // Read in the waveform of each group
-        r = fread(&groupHeader, sizeof(RKWaveGroupHeader), 1, fid);
+        r = fread(&groupHeader, sizeof(RKWaveFileGroupHeader), 1, fid);
         if (r == 0) {
             RKLog("Error. Failed reading group header from %p.\n", fid);
             return NULL;
@@ -989,7 +989,7 @@ RKWaveform *RKWaveformReadFromReference(FILE *fid) {
             return NULL;
         }
         waveform->type = groupHeader.type;
-        waveform->filterCounts[k] = groupHeader.filterCounts;
+        waveform->filterCounts[k] = groupHeader.filterCount;
         r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
         if (r == 0) {
             RKLog("Error. Unable to read filter anchors from %p\n", fid);

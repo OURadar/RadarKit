@@ -16,28 +16,28 @@
 #define RKWaveformDigitalAmplitude   32000.0
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
-RKWaveform *RKWaveformInitFromFile(const char *filename);
+RKWaveform *RKWaveformInitFromFile(const char *);
 RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);
 
 RKWaveform *RKWaveformCopy(RKWaveform *);
 
 RKWaveform *RKWaveformInitAsImpulse(void);
-RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth);
-RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pulsewidth, const double bandwidth);
-RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int count);
-RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(const double fs, const double bandwidth, const double stride, const int filterCount);
-RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bandwidth, const double pulsewidth);
-RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double fc, const double bandwidth, const double pulsewidth, const int count);
+RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pw);
+RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const double fc, const double pw, const double bw);
+RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pw, const double bw, const int hops);
+RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(void);
+RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bw, const double pw);
+RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double fc, const double bw, const double pw, const int count);
 
 RKResult RKWaveformAppendWaveform(RKWaveform *, const RKWaveform *appendix, const uint32_t transitionSamples);
 RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...);
 
 void RKWaveformOnes(RKWaveform *);
 void RKWaveformSingleTone(RKWaveform *, const double fs, const double fc);
-void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double bandwidth);
-void RKWaveformFrequencyHops(RKWaveform *, const double fs, const double fc, const double bandwidth);
-void RKWaveformFrequencyHoppingChirp(RKWaveform *, const double fs, const double fc, const double bandwidth);
+void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double bw);
+void RKWaveformFrequencyHops(RKWaveform *, const double fs, const double fc, const double bw);
+void RKWaveformFrequencyHoppingChirp(RKWaveform *, const double fs, const double fc, const double bw);
 
 void RKWaveformDecimate(RKWaveform *, const int);
 void RKWaveformConjuate(RKWaveform *);

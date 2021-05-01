@@ -69,8 +69,8 @@ static void *pulseRecorder(void *in) {
     fileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
     fileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
 
-    RKWaveGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveGlobalHeader));
-    RKWaveGroupHeader *waveGroupHeader = (void *)malloc(sizeof(RKWaveGroupHeader));
+    RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
+    RKWaveFileGroupHeader *waveGroupHeader = (void *)malloc(sizeof(RKWaveFileGroupHeader));
 
 	// Update the engine state
 	engine->state |= RKEngineStateWantActive;
@@ -136,17 +136,21 @@ static void *pulseRecorder(void *in) {
             waveform = config->waveform;
 
             // Close the current file
-            if (record && engine->fd) {
+            if (engine->fd) {
                 len += RKRawDataRecorderCacheFlush(engine);
                 close(engine->fd);
-                RKLog("%s %sRecorded%s %s (%s pulses, %s %sB)\n",
+                RKLog("%s %sRecorded%s %s (%s pulses, %s %sB) w%d\n",
                       engine->name,
                       rkGlobalParameters.showColor ? RKGreenColor : "",
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       filename,
                       RKIntegerToCommaStyleString(n),
                       RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
-                      len > 1000000000 ? "G" : "M");
+                      len > 1000000000 ? "G" : "M",
+                      engine->fileWriteCount);
+                if (engine->fileWriteCount == 0) {
+                    remove(filename);
+                }
                 engine->fd = 0;
                 // Notify file manager of a new addition
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
@@ -185,31 +189,32 @@ static void *pulseRecorder(void *in) {
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 fileHeader->config.waveform = NULL;
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
+                engine->fileWriteCount = 0;
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
                 // 512-B wave header
-                memset(waveGlobalHeader, 0, sizeof(RKWaveGlobalHeader));
-                memset(waveGroupHeader, 0, sizeof(RKWaveGroupHeader));
-                waveGlobalHeader->groupCount = waveform->count;
+                memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
+                memset(waveGroupHeader, 0, sizeof(RKWaveFileGroupHeader));
+                waveGlobalHeader->count = waveform->count;
                 waveGlobalHeader->depth = waveform->depth;
                 waveGlobalHeader->fc = waveform->fc;
                 waveGlobalHeader->fs = waveform->fs;
                 strcpy(waveGlobalHeader->name, waveform->name);
-                len += RKRawDataRecorderCacheWrite(engine, waveGlobalHeader, sizeof(RKWaveGlobalHeader));
+                len += RKRawDataRecorderCacheWrite(engine, waveGlobalHeader, sizeof(RKWaveFileGlobalHeader));
                 for (i = 0; i < waveform->count; i++) {
                     // 32-B wave group header
                     waveGroupHeader->type = waveform->type;
                     waveGroupHeader->depth = waveform->depth;
-                    waveGroupHeader->filterCounts = waveform->filterCounts[i];
-                    len += RKRawDataRecorderCacheWrite(engine, waveGroupHeader, sizeof(RKWaveGroupHeader));
-                    len += RKRawDataRecorderCacheWrite(engine, waveform->filterAnchors[i], waveGroupHeader->filterCounts * sizeof(RKFilterAnchor));
+                    waveGroupHeader->filterCount = waveform->filterCounts[i];
+                    len += RKRawDataRecorderCacheWrite(engine, waveGroupHeader, sizeof(RKWaveFileGroupHeader));
+                    len += RKRawDataRecorderCacheWrite(engine, waveform->filterAnchors[i], waveGroupHeader->filterCount * sizeof(RKFilterAnchor));
                     // Waveform samples (flexible size)
                     len += RKRawDataRecorderCacheWrite(engine, waveform->samples[i], waveGroupHeader->depth * sizeof(RKComplex));
                     len += RKRawDataRecorderCacheWrite(engine, waveform->iSamples[i], waveGroupHeader->depth * sizeof(RKInt16C));
                 }
             } else {
-                len = sizeof(RKFileHeader) + sizeof(RKWaveGlobalHeader)
-                    + waveform->count * (sizeof(RKWaveGroupHeader)
-                                         + waveGroupHeader->filterCounts * (sizeof(RKFilterAnchor) + waveGroupHeader->depth * (sizeof(RKComplex) + sizeof(RKInt16C))));
+                len = sizeof(RKFileHeader) + sizeof(RKWaveFileGlobalHeader)
+                    + waveform->count * (sizeof(RKWaveFileGroupHeader)
+                                         + waveGroupHeader->filterCount * (sizeof(RKFilterAnchor) + waveGroupHeader->depth * (sizeof(RKComplex) + sizeof(RKInt16C))));
             }
         }
         
@@ -263,7 +268,15 @@ static void *pulseRecorder(void *in) {
         record = engine->record;
         n++;
     }
-    
+
+    if (engine->fd) {
+        close(engine->fd);
+        engine->fd = 0;
+        if (engine->fileWriteCount == 0) {
+            remove(filename);
+        }
+    }
+
     free(fileHeader);
     free(waveGlobalHeader);
     free(waveGroupHeader);
@@ -416,6 +429,7 @@ size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payloa
         memcpy(engine->cache + engine->cacheWriteIndex, payload, lastChunkSize);
         remainingSize = size - lastChunkSize;
         writtenSize = (uint32_t)write(engine->fd, engine->cache, engine->cacheSize);
+        engine->fileWriteCount++;
         if (writtenSize != engine->cacheSize) {
             RKLog("%s Error in write().   writtenSize = %s\n", RKIntegerToCommaStyleString((long)writtenSize));
         }
@@ -423,6 +437,7 @@ size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payloa
         engine->cacheWriteIndex = 0;
         if (remainingSize >= engine->cacheSize) {
             writtenSize += (uint32_t)write(engine->fd, (char *)(payload + lastChunkSize), remainingSize);
+            engine->fileWriteCount++;
             return writtenSize;
         }
     }
@@ -437,5 +452,6 @@ size_t RKRawDataRecorderCacheFlush(RKRawDataRecorder *engine) {
     }
     size_t writtenSize = write(engine->fd, engine->cache, engine->cacheWriteIndex);
     engine->cacheWriteIndex = 0;
+    engine->fileWriteCount++;
     return writtenSize;
 }

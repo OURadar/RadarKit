@@ -439,13 +439,15 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE_SIMD(ray->headerBytes)
     SHOW_SIZE(RKSweep)
     SHOW_SIZE(sweep->header)
-    SHOW_SIZE(RKFileHeader)
     SHOW_SIZE(RKPreferenceObject)
     SHOW_SIZE(RKControl)
     SHOW_SIZE(RKStatus)
     SHOW_SIZE(RKFileMonitor)
     SHOW_SIZE(RKFilterAnchor)
     SHOW_SIZE(RKWaveform)
+    SHOW_SIZE(RKFileHeader)
+    SHOW_SIZE(RKWaveFileGlobalHeader)
+    SHOW_SIZE(RKWaveFileGroupHeader)
     SHOW_SIZE(RKWaveformCalibration)
     SHOW_SIZE(RKProductDesc)
     SHOW_SIZE(RKProductHeader)
@@ -834,6 +836,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
     return data;
 }
 
+// Clear the pulse
 int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
     for (uint32_t k = 0; k < slots; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(buffer, k);
@@ -841,6 +844,45 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
         pulse->header.i = -(uint64_t)slots + k;
         pulse->header.gateCount = 0;
         memset(pulse->data, 0, 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat)));
+    }
+    return RKResultSuccess;
+}
+
+// Read pulse from a file reference
+int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid) {
+    int i, j;
+    size_t readsize;
+    uint32_t gateCount = 0;
+    const uint32_t capacity = pulse->header.capacity;
+    // Pulse header
+    readsize = fread(pulse, sizeof(RKPulseHeader), 1, fid);
+    if (readsize == 0) {
+        return RKResultNothingToRead;
+    }
+    pulse->header.capacity = capacity;
+    // Pulse payload: H and V data into channels 0 and 1, respectively. Duplicate to split-complex storage
+    for (j = 0; j < 2; j++) {
+        RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+        RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+        if (type == RKRawDataTypeFromTransceiver) {
+            gateCount = pulse->header.gateCount;
+        } else if (type == RKRawDataTypeAfterMatchedFilter) {
+            gateCount = pulse->header.downSampledGateCount;
+        } else {
+            return RKResultRawDataTypeUndefined;
+        }
+        readsize = fread(x, sizeof(RKComplex), gateCount, fid);
+        if (readsize != gateCount) {
+            RKLog("Error in RKReadPulseFromFileReference() readsize = %s != %s || > %s\n",
+                  RKIntegerToCommaStyleString(readsize),
+                  RKIntegerToCommaStyleString(gateCount),
+                  RKIntegerToCommaStyleString(capacity));
+            return RKResultTooBig;
+        }
+        for (i = 0; i < gateCount; i++) {
+            z.i[i] = x[i].i;
+            z.q[i] = x[i].q;
+        }
     }
     return RKResultSuccess;
 }

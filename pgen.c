@@ -38,10 +38,8 @@ void proc(UserParams *arg) {
     char timestr[16];
     bool m = false;
     int i0, i1 = -1;
-    size_t readsize, bytes, mem = 0;
-
+    size_t bytes, mem = 0;
     suseconds_t usec = 0;
-    
     long filesize = 0;
     struct timeval s, e;
 
@@ -66,7 +64,7 @@ void proc(UserParams *arg) {
     rewind(fid);
     fread(fileHeader, sizeof(RKFileHeader), 1, fid);
     if (fileHeader->buildNo <= 4) {
-        RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
+        RKLog("Error. Sorry but I am not programmed to read buildNo = %d. Ask my father.\n", fileHeader->buildNo);
         exit(EXIT_FAILURE);
     } else if (fileHeader->buildNo == 5) {
         rewind(fid);
@@ -150,7 +148,7 @@ void proc(UserParams *arg) {
     if (arg->verbose) {
         long fpos = ftell(fid);
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        fread(pulse, sizeof(RKPulseHeader), 1, fid);
+        RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         fseek(fid, fpos, SEEK_SET);
         RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
         RKLog(">fileHeader.dataType = '%s'\n",
@@ -185,6 +183,9 @@ void proc(UserParams *arg) {
         RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
         RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
         RKLog(">config.waveformName = '%s'\n", config->waveformName);
+        if (fileHeader->buildNo > 5) {
+            RKWaveformSummary(waveform);
+        }
     }
 
     char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
@@ -255,21 +256,27 @@ void proc(UserParams *arg) {
         }
     }
 
+    //printf("fpos = %s\n", RKUIntegerToCommaStyleString(ftell(fid)));
+
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         // Pulse header
-        readsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
-        if (readsize != 1) {
-            break;
-        }
+//        readsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
+//        if (readsize != 1) {
+//            break;
+//        }
         // Restore pulse capacity variable since we are not using whatever that was recorded in the file (during operation)
-        pulse->header.capacity = pulseCapacity;
-        if (pulse->header.downSampledGateCount > pulseCapacity) {
-            RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
-                  RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                  RKIntegerToCommaStyleString(pulseCapacity));
+//        pulse->header.capacity = pulseCapacity;
+//        if (pulse->header.downSampledGateCount > pulseCapacity) {
+//            RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
+//                  RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+//                  RKIntegerToCommaStyleString(pulseCapacity));
+//        }
+        j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
+        if (j != RKResultSuccess) {
+            break;
         }
         if (p == 0) {
             RKLog("pulse[0].downSampledGateCount = %d\n", pulse->header.downSampledGateCount);
@@ -283,21 +290,21 @@ void proc(UserParams *arg) {
             i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
         }
         // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
-        for (j = 0; j < 2; j++) {
-            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
-                RKLog("Error. This should not happen.  rsize = %s != %s || > %s\n",
-                      RKIntegerToCommaStyleString(readsize),
-                      RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                      RKIntegerToCommaStyleString(pulseCapacity));
-            }
-            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-                z.i[i] = x[i].i;
-                z.q[i] = x[i].q;
-            }
-        }
+//        for (j = 0; j < 2; j++) {
+//            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+//            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+//            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
+//            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
+//                RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
+//                      RKIntegerToCommaStyleString(readsize),
+//                      RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+//                      RKIntegerToCommaStyleString(pulseCapacity));
+//            }
+//            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+//                z.i[i] = x[i].i;
+//                z.q[i] = x[i].q;
+//            }
+//        }
         pulses[p++] = pulse;
         // Mark for process later
         m = false;
@@ -371,7 +378,7 @@ void proc(UserParams *arg) {
                 timeval2str(timestr, ray->header.startTime);
 
                 if (arg->verbose == 2) {
-                    RKLog(">%05d r=%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05x  %s%s\n",
+                    printf("P:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s\n",
                            k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
@@ -387,7 +394,7 @@ void proc(UserParams *arg) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
                     float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-                    printf("%05d r=%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05x  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
+                    printf("p:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
                            k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
