@@ -320,6 +320,8 @@ N(RKResultFileManagerInconsistentFolder) \
 N(RKResultFailedToExpandWaveform) \
 N(RKResultFailedToOpenFileForWriting) \
 N(RKResultRadarNotLive) \
+N(RKResultRawDataTypeUndefined) \
+N(RKResultNothingToRead) \
 N(RKResultNoRadar)
 
 #define N(x) x,
@@ -941,12 +943,12 @@ typedef struct rk_radar_desc {
 } RKRadarDesc;
 
 typedef struct rk_waveform {
+    RKName               name;                                                 // Waveform name in plain string
+    RKWaveformType       type;                                                 // Various type of waveforms
     int                  count;                                                // Number of groups
     int                  depth;                                                // Maximum number of samples
     double               fc;                                                   // Carrier frequency (Hz)
     double               fs;                                                   // Sampling frequency (Hz)
-    RKWaveformType       type;                                                 // Various type of waveforms
-    RKName               name;                                                 // Waveform name in plain string
     RKComplex            *samples[RKMaximumFilterGroups];                      // Samples up to amplitude of 1.0
     RKInt16C             *iSamples[RKMaximumFilterGroups];                     // 16-bit full-scale equivalence of the waveforms
     uint32_t             filterCounts[RKMaximumFilterGroups];                  // Number of filters to applied to each waveform, see filterAnchors
@@ -955,23 +957,34 @@ typedef struct rk_waveform {
 
 typedef union rk_wave_file_header {
     struct {
-        char            name[256];
-        uint8_t         groupCount;
-        uint32_t        depth;
-        double          fc;
-        double          fs;
+        RKName          name;                                                  // Waveform name
+        uint8_t         count;                                                 // Count of groups
+        uint32_t        depth;                                                 // Sum of all depths
+        double          fc;                                                    // Carrier frequency
+        double          fs;                                                    // Sampling frequency
     };
     char bytes[512];
-} RKWaveGlobalHeader;
+} RKWaveFileGlobalHeader;
+
+typedef union rk_wave_file_header_v1 {
+    struct {
+        char            name[256];                                             // Waveform name
+        uint8_t         count;                                                 // Count of groups
+        uint32_t        depth;                                                 // Sum of all depths
+        double          fc;                                                    // Carrier frequency
+        double          fs;                                                    // Sampling frequency
+    };
+    char bytes[512];
+} RKWaveFileGlobalHeaderV1;
 
 typedef union rk_wave_file_group {
     struct {
-        RKWaveformType  type;
-        uint32_t        depth;
-        uint32_t        filterCounts;
+        RKWaveformType  type;                                                  // Waveform type
+        uint32_t        depth;                                                 // Waveform depth
+        uint32_t        filterCount;                                           // Count of filters
     };
-    char bytes[32];
-} RKWaveGroupHeader;
+    char bytes[64];
+} RKWaveFileGroupHeader;
 
 typedef struct rk_waveform_cal {
     uint32_t             uid;                                                  // A unique identifier
@@ -1234,7 +1247,7 @@ typedef struct rk_sweep {
 // File header of raw I/Q data
 //
 typedef union rk_file_header_v1 {
-    struct {
+    struct {                                                                   // Up to buildNo 5
         RKName               preface;                                          //
         uint32_t             buildNo;                                          //
         RKRadarDesc          desc;                                             //

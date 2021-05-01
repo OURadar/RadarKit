@@ -56,8 +56,16 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192607.rkc"
+            argument = "-v"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/boonleng/Developer/radarkit/data/iq/20210430/RK-20210430-140228.rkc"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192607.rkc"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192623.rkc"
