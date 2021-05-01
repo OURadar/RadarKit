@@ -17,6 +17,10 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
+//  2.4.1  - 5/1/2021
+//         - Added RKReadPulseFromFileReference()
+//         - Updated MATLAB iqread.m to support n-group waveforms
+//
 //  2.4    - 4/25/2021
 //         - Raw data build no 6
 //         - Added RKCalibrator module
