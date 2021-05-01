@@ -84,6 +84,7 @@ static void *pulseTagger(void *_in) {
     
     int i, j, k, s;
     uint16_t c0, c1;
+    uint32_t gateCount;
 	struct timeval t0, t1;
 
 	RKPulse *pulse;
@@ -124,6 +125,9 @@ static void *pulseTagger(void *_in) {
 
     c0 = *engine->configIndex;
     c1 = RKPreviousModuloS(c0, engine->radarDescription->configBufferDepth);
+    
+    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
+    gateCount = pulse->header.gateCount;
 
     // Set the pulse to have position
     j = 0;   // position index
@@ -274,6 +278,13 @@ static void *pulseTagger(void *_in) {
                                     RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,
                                     RKConfigKeyPulseGateCount, pulse->header.gateCount,
                                     RKConfigKeyPositionMarker, marker0,
+                                    RKConfigKeyNull);
+        }
+
+        if (gateCount != pulse->header.gateCount) {
+            gateCount = pulse->header.gateCount;
+            RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
+                                    RKConfigKeyPulseGateCount, pulse->header.gateCount,
                                     RKConfigKeyNull);
         }
 

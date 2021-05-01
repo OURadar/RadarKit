@@ -119,6 +119,13 @@ static void *pulseRecorder(void *in) {
             break;
         }
 
+//        RKLog("%s pulse->header.i = %d   C%d  %s x %.1fm\n",
+//              engine->name,
+//              pulse->header.i, pulse->header.configIndex,
+//              RKIntegerToCommaStyleString(pulse->header.gateCount),
+//              RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+//              pulse->header.gateSizeMeters * engine->radarDescription->pulseToRayRatio);
+
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         if (!isfinite(engine->lag)) {
@@ -192,6 +199,7 @@ static void *pulseRecorder(void *in) {
                 fileHeader->config.waveform = NULL;
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 engine->fileWriteCount = 0;
+                engine->cacheWriteIndex = 0;
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
                 // 512-B wave header
                 strcpy(waveGlobalHeader->name, waveform->name);

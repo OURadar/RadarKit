@@ -2708,6 +2708,12 @@ void *RKTestTransceiverRunLoop(void *input) {
 #endif
 
             RKSetPulseHasData(radar, pulse);
+//            RKLog("%s pulse->header.i = %d   C%d  %s x %.1fm\n",
+//                  transceiver->name,
+//                  pulse->header.i, pulse->header.configIndex,
+//                  RKIntegerToCommaStyleString(pulse->header.gateCount),
+//                  RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+//                  pulse->header.gateSizeMeters * transceiver->radar->desc.pulseToRayRatio);
 
             if (even) {
                 tic += transceiver->ticEven;
@@ -2872,6 +2878,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                     break;
                 case 'g':
                     transceiver->gateCount = atoi(sv);
+                    RKLog("%s %s", transceiver->name, RKVariableInString("transceiver->gateCount", &transceiver->gateCount, RKValueTypeInt));
                     uint32_t capacity = RKGetPulseCapacity(radar);
                     if (transceiver->gateCount > capacity) {
                         RKLog("%s Warning. gateCount %s will be clamped to the capacity %s\n",

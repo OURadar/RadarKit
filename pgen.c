@@ -5,6 +5,7 @@
 
 // User parameters in a struct
 typedef struct user_params {
+    char directory[256];
     char filename[256];
     int verbose;
     float SNRThreshold;
@@ -294,8 +295,9 @@ void proc(UserParams *arg) {
             if (du < 0) {
                 du += 1000000;
             }
-            printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
+            printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
                    k, pulse->header.i, p, timestr, du,
+                   pulse->header.configIndex,
                    pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                    RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                    pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
@@ -586,6 +588,7 @@ int main(int argc, const char **argv) {
     // Command line options
     struct option options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
+        {"dir"               , required_argument, NULL, 'd'},
         {"help"              , no_argument      , NULL, 'h'},
         {"snr"               , required_argument, NULL, 's'},
         {"sqi"               , required_argument, NULL, 'q'},
@@ -602,6 +605,9 @@ int main(int argc, const char **argv) {
     while ((opt = getopt_long(argc, (char * const *)argv, str, options, &ind)) != -1) {
         switch (opt) {
             case 'A':
+                break;
+            case 'd':
+                strcpy(arg->directory, optarg);
                 break;
             case 'h':
                 showHelp();
@@ -626,6 +632,7 @@ int main(int argc, const char **argv) {
         printf("str = %s   ind = %d   optind = %d\n", str, ind, optind);
         printf("argc = %d   argv[%d] = %s\n", argc, optind, argv[optind]);
         printf("arg->verbose = %d\n", arg->verbose);
+        printf("arg->directory = %s\n", arg->directory);
         printf("arg->filename = %s\n", arg->filename);
     }
 
