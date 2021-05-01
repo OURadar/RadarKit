@@ -262,24 +262,12 @@ void proc(UserParams *arg) {
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        // Pulse header
-//        readsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
-//        if (readsize != 1) {
-//            break;
-//        }
-        // Restore pulse capacity variable since we are not using whatever that was recorded in the file (during operation)
-//        pulse->header.capacity = pulseCapacity;
-//        if (pulse->header.downSampledGateCount > pulseCapacity) {
-//            RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
-//                  RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-//                  RKIntegerToCommaStyleString(pulseCapacity));
-//        }
         j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         if (j != RKResultSuccess) {
             break;
         }
         if (p == 0) {
-            RKLog("pulse[0].downSampledGateCount = %d\n", pulse->header.downSampledGateCount);
+            RKLog("pulse[0].downSampledGateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
         }
         timeval2str(timestr, pulse->header.time);
         if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {

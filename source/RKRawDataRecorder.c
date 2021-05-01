@@ -139,6 +139,7 @@ static void *pulseRecorder(void *in) {
             if (engine->fd) {
                 len += RKRawDataRecorderCacheFlush(engine);
                 close(engine->fd);
+                engine->fd = 0;
                 RKLog("%s %sRecorded%s %s (%s pulses, %s %sB) w%d\n",
                       engine->name,
                       rkGlobalParameters.showColor ? RKGreenColor : "",
@@ -151,7 +152,6 @@ static void *pulseRecorder(void *in) {
                 if (engine->fileWriteCount == 0) {
                     remove(filename);
                 }
-                engine->fd = 0;
                 // Notify file manager of a new addition
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
             } else {
@@ -183,7 +183,7 @@ static void *pulseRecorder(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s New I/Q %s ...\n", engine->name, filename);
             }
-            if (engine->record) {
+            if (engine->record && config->i > 1003) {
                 RKPreparePath(filename);
                 // 4-KB raw data file header
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
