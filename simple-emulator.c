@@ -1,6 +1,6 @@
 //
-//  main.c
-//  SimpleEmulator
+//  simple-emulator.c
+//  RadarKit
 //
 //  Created by Boonleng Cheong on 5/13/18.
 //  Copyright (c) 2018-2021 Boonleng Cheong. All rights reserved.
