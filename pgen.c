@@ -8,6 +8,7 @@ typedef struct user_params {
     char directory[256];
     char filename[256];
     int verbose;
+    bool output;
     float SNRThreshold;
     float SQIThreshold;
 } UserParams;
@@ -529,9 +530,11 @@ void proc(UserParams *arg) {
             product->desc = RKGetNextProductDescription(&list);
             RKProductInitFromSweep(product, sweep);
             sprintf(product->header.suggestedFilename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
-            RKProductFileWriterNC(product, product->header.suggestedFilename);
+            if (arg->output) {
+                RKProductFileWriterNC(product, product->header.suggestedFilename);
+            }
             if (arg->verbose) {
-                RKLog("%d %s\n", p, product->header.suggestedFilename);
+                RKLog(">%d: %s%s\n", p, product->header.suggestedFilename, arg->output ? "" : " -");
             }
         }
 
@@ -584,12 +587,14 @@ int main(int argc, const char **argv) {
     memset(arg, 0, sizeof(UserParams));
     arg->SNRThreshold = NAN;
     arg->SQIThreshold = NAN;
+    arg->output = true;
     
     // Command line options
     struct option options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"dir"               , required_argument, NULL, 'd'},
         {"help"              , no_argument      , NULL, 'h'},
+        {"no-output"         , no_argument      , NULL, 'n'},
         {"snr"               , required_argument, NULL, 's'},
         {"sqi"               , required_argument, NULL, 'q'},
         {"verbose"           , no_argument      , NULL, 'v'},
@@ -612,6 +617,9 @@ int main(int argc, const char **argv) {
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
+            case 'n':
+                arg->output = false;
+                break;
             case 'q':
                 arg->SQIThreshold = atof(optarg);
                 break;
@@ -634,6 +642,7 @@ int main(int argc, const char **argv) {
         printf("arg->verbose = %d\n", arg->verbose);
         printf("arg->directory = %s\n", arg->directory);
         printf("arg->filename = %s\n", arg->filename);
+        printf("arg->output = %s\n", arg->output ? "true" : "false");
     }
 
     // Show framework name & version

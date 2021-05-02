@@ -1701,6 +1701,7 @@ int RKGoLive(RKRadar *radar) {
     // Add a dummy config to get things started if there hasn't been one from the user
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
+                    RKConfigKeyPRF, 1000,
                     RKConfigKeySystemNoise, 0.1, 0.1,
                     RKConfigKeySystemZCal, -27.0, -27.0,
                     RKConfigKeySystemDCal, -0.01,
@@ -2729,7 +2730,6 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
-    pulse->header.configIndex = radar->configIndex;
     if (radar->state & RKRadarStateLive) {
         pulse->header.i += radar->desc.pulseBufferDepth;
         radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);

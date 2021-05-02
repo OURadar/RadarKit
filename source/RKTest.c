@@ -2576,10 +2576,10 @@ void *RKTestTransceiverRunLoop(void *input) {
     }
     transceiver->state ^= RKEngineStateSleep0;
 
-    RKAddConfig(radar,
-                RKConfigKeyWaveform, transceiver->waveformCache[0],
-                RKConfigKeyPRF, 1.0 / transceiver->prt,
-                RKConfigKeyNull);
+//    RKAddConfig(radar,
+//                RKConfigKeyWaveform, transceiver->waveformCache[0],
+//                RKConfigKeyPRF, 1.0 / transceiver->prt,
+//                RKConfigKeyNull);
 
     gettimeofday(&t1, NULL);
     gettimeofday(&t2, NULL);
@@ -2827,7 +2827,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
     transceiver->sprt = 1;
 //    transceiver->waveformCache[0] = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, 1.0e-6, 20.0e6, 5);
     transceiver->waveformCache[0] = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, 1.0e-6);
-//    sprintf(transceiver->waveformCache[0]->name, "s01");
 //    RKWaveformSummary(transceiver->waveformCache[0]);
 
     // Parse out input parameters
@@ -2878,7 +2877,6 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
                     break;
                 case 'g':
                     transceiver->gateCount = atoi(sv);
-                    RKLog("%s %s", transceiver->name, RKVariableInString("transceiver->gateCount", &transceiver->gateCount, RKValueTypeInt));
                     uint32_t capacity = RKGetPulseCapacity(radar);
                     if (transceiver->gateCount > capacity) {
                         RKLog("%s Warning. gateCount %s will be clamped to the capacity %s\n",
@@ -2946,6 +2944,10 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             sprintf(response, "NAK. No I/Q processors yet." RKEOL);
         }
         return RKResultFailedToExecuteCommand;
+    }
+    
+    if (transceiver->verbose) {
+        RKLog("%s %s", transceiver->name, RKVariableInString("command", command, RKValueTypeString));
     }
     
     switch (command[0]) {

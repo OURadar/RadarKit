@@ -72,7 +72,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyPRF:
                 newConfig->prt[0] = (RKFloat)(1.0 / va_arg(args, double));
                 if (newConfig->prt[0] != oldConfig->prt[0]) {
-                    sprintf(stringBuffer[0], "PRF = %s Hz **", RKFloatToCommaStyleString(1.0f / newConfig->prt[0]));
+                    sprintf(stringBuffer[0], "PRF = %s Hz **", RKIntegerToCommaStyleString((int)roundf(1.0f / newConfig->prt[0])));
                 }
                 break;
             case RKConfigKeyDualPRF:
@@ -137,7 +137,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 }
                 newConfig->waveform = waveform;
                 strncpy(newConfig->waveformName, waveform->name, RKNameLength - 1);
-                sprintf(stringBuffer[0], "%s", RKVariableInString("Waveform", waveform->name, RKValueTypeString));
+                sprintf(stringBuffer[0], "Waveform = '%s'", waveform->name);
                 break;
             case RKConfigKeyWaveformDecimate:
                 waveform = (RKWaveform *)va_arg(args, void *);
@@ -169,7 +169,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         w1 + 1,
                         w2 + 1,
                         w3 + 5);
-                sprintf(stringBuffer[0], "%s", RKVariableInString("WaveformDecimate", waveform->name, RKValueTypeString));
+                sprintf(stringBuffer[0], "WaveformDecimate = '%s'", waveform->name);
                 for (j = 0; j < newConfig->filterCount; j++) {
                     sprintf(stringBuffer[j + 1], format,
                             j, newConfig->filterCount,
@@ -264,7 +264,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Update the identifier and the buffer index
     newConfig->i = configId;
     *configIndex = RKNextModuloS(*configIndex, configBufferDepth);
-    
+
     pthread_mutex_unlock(&rkGlobalParameters.mutex);
 }
 
