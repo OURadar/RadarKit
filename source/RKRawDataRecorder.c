@@ -176,10 +176,11 @@ static void *pulseRecorder(void *in) {
             
             // New file
             time_t startTime = pulse->header.time.tv_sec;
-            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
-            i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
-            i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
+            i = snprintf(filename, RKMaximumPathLength - RKMaximumPrefixLength - 30, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
+            i += strftime(filename + i, 9, "%Y%m%d", gmtime(&startTime));
+            i += snprintf(filename + i, RKMaximumPrefixLength + 2, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+            i += snprintf(filename + i, 5, ".%03d", (int)pulse->header.time.tv_usec / 1000);
             if (engine->rawDataType == RKRawDataTypeFromTransceiver) {
                 sprintf(filename + i, ".rkr");
             } else {
