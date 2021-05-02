@@ -3,7 +3,7 @@
 //  SimpleEmulator
 //
 //  Created by Boonleng Cheong on 5/13/18.
-//  Copyright © 2018 Boonleng Cheong. All rights reserved.
+//  Copyright (c) 2018-2021 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit.h>

@@ -295,7 +295,6 @@
 				B5FFD45B1FB0B59B00319453 /* Source */,
 				B565B5431E5A4605000C8503 /* Imported */,
 				B5C1F3451AB9C118004F88CD /* Programs */,
-				B56AB0AB20A8826900E73AE9 /* SimpleEmulator */,
 				B5E7CB15210D155B00D381ED /* scripts */,
 				B54FBF36263D8C4C00E2A65A /* entitlements */,
 				B5324D501AB8A5A000C00517 /* Products */,
@@ -377,20 +376,13 @@
 			name = Imported;
 			sourceTree = "<group>";
 		};
-		B56AB0AB20A8826900E73AE9 /* SimpleEmulator */ = {
-			isa = PBXGroup;
-			children = (
-				B5E7CB13210A4AD800D381ED /* simple-emulator.c */,
-			);
-			name = SimpleEmulator;
-			sourceTree = "<group>";
-		};
 		B5C1F3451AB9C118004F88CD /* Programs */ = {
 			isa = PBXGroup;
 			children = (
+				B5DD4ED7261DF94B004BACB9 /* pgen.c */,
 				B5E7CB11210A4AD100D381ED /* rkutil.c */,
 				B5DFFDB5222DB40E005CF6B3 /* rknchead.c */,
-				B5DD4ED7261DF94B004BACB9 /* pgen.c */,
+				B5E7CB13210A4AD800D381ED /* simple-emulator.c */,
 			);
 			name = Programs;
 			sourceTree = "<group>";

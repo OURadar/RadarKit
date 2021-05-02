@@ -206,7 +206,7 @@ static void *healthConsolidator(void *_in) {
             if (fabsf(desc->heading - heading) > 1.0f) {
                 if (headingChangeCount++ > 3) {
                     desc->heading = heading;
-                    RKLog("%s Heading update.   heading = %.2f degree\n", engine->name, desc->heading);
+                    RKLog("%s Heading update   heading = %.2f degree\n", engine->name, desc->heading);
                     headingChangeCount = 0;
                 }
             } else {
