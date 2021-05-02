@@ -27,6 +27,7 @@
 		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B548350F216B9E280066FA0D /* RKSpectralMoment.h */; };
 		B5483512216B9E8F0066FA0D /* RKSpectralMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */; };
+		B5592B55263F51680000CF04 /* owav2wav.c in Sources */ = {isa = PBXBuildFile; fileRef = B5592B4B263F50860000CF04 /* owav2wav.c */; };
 		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
 		B55F5F1A1E2C8F9600FA8B2E /* RKSweepEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweepEngine.h */; };
 		B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F261E2D206300FA8B2E /* RKConfig.h */; };
@@ -92,6 +93,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		B5592B56263F51720000CF04 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B50A81401AB89B6200E12E1F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B5324D4E1AB8A5A000C00517;
+			remoteInfo = RadarKit;
+		};
 		B5DD4EE9261DF988004BACB9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B50A81401AB89B6200E12E1F /* Project object */;
@@ -102,6 +110,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		B5592B4E263F513E0000CF04 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		B56AB0A820A8826900E73AE9 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -164,6 +181,8 @@
 		B548350F216B9E280066FA0D /* RKSpectralMoment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSpectralMoment.h; path = headers/RadarKit/RKSpectralMoment.h; sourceTree = "<group>"; };
 		B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSpectralMoment.c; path = source/RKSpectralMoment.c; sourceTree = "<group>"; };
 		B54FBF36263D8C4C00E2A65A /* entitlements */ = {isa = PBXFileReference; lastKnownFileType = folder; path = entitlements; sourceTree = "<group>"; };
+		B5592B4B263F50860000CF04 /* owav2wav.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = owav2wav.c; sourceTree = "<group>"; };
+		B5592B50263F513E0000CF04 /* owav2wav */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = owav2wav; sourceTree = BUILT_PRODUCTS_DIR; };
 		B55E437C1DB66682003C40CF /* RKSIMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKSIMD.h; path = headers/RadarKit/RKSIMD.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		B55F5F191E2C8F9600FA8B2E /* RKSweepEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepEngine.h; path = headers/RadarKit/RKSweepEngine.h; sourceTree = "<group>"; };
 		B55F5F261E2D206300FA8B2E /* RKConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKConfig.h; path = headers/RadarKit/RKConfig.h; sourceTree = "<group>"; };
@@ -242,6 +261,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B5592B4D263F513E0000CF04 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B56AB0A720A8826900E73AE9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -295,7 +321,6 @@
 				B5FFD45B1FB0B59B00319453 /* Source */,
 				B565B5431E5A4605000C8503 /* Imported */,
 				B5C1F3451AB9C118004F88CD /* Programs */,
-				B56AB0AB20A8826900E73AE9 /* SimpleEmulator */,
 				B5E7CB15210D155B00D381ED /* scripts */,
 				B54FBF36263D8C4C00E2A65A /* entitlements */,
 				B5324D501AB8A5A000C00517 /* Products */,
@@ -311,6 +336,7 @@
 				B56AB0AA20A8826900E73AE9 /* Simple Emulator */,
 				B5DFFDBA222DB42E005CF6B3 /* Product Header */,
 				B5DD4EDC261DF97C004BACB9 /* Product Generator */,
+				B5592B50263F513E0000CF04 /* owav2wav */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -377,20 +403,14 @@
 			name = Imported;
 			sourceTree = "<group>";
 		};
-		B56AB0AB20A8826900E73AE9 /* SimpleEmulator */ = {
-			isa = PBXGroup;
-			children = (
-				B5E7CB13210A4AD800D381ED /* simple-emulator.c */,
-			);
-			name = SimpleEmulator;
-			sourceTree = "<group>";
-		};
 		B5C1F3451AB9C118004F88CD /* Programs */ = {
 			isa = PBXGroup;
 			children = (
+				B5DD4ED7261DF94B004BACB9 /* pgen.c */,
 				B5E7CB11210A4AD100D381ED /* rkutil.c */,
 				B5DFFDB5222DB40E005CF6B3 /* rknchead.c */,
-				B5DD4ED7261DF94B004BACB9 /* pgen.c */,
+				B5E7CB13210A4AD800D381ED /* simple-emulator.c */,
+				B5592B4B263F50860000CF04 /* owav2wav.c */,
 			);
 			name = Programs;
 			sourceTree = "<group>";
@@ -505,6 +525,24 @@
 			productReference = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		B5592B4F263F513E0000CF04 /* owav2wav */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B5592B52263F513E0000CF04 /* Build configuration list for PBXNativeTarget "owav2wav" */;
+			buildPhases = (
+				B5592B4C263F513E0000CF04 /* Sources */,
+				B5592B4D263F513E0000CF04 /* Frameworks */,
+				B5592B4E263F513E0000CF04 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B5592B57263F51720000CF04 /* PBXTargetDependency */,
+			);
+			name = owav2wav;
+			productName = owav2wav;
+			productReference = B5592B50263F513E0000CF04 /* owav2wav */;
+			productType = "com.apple.product-type.tool";
+		};
 		B56AB0A920A8826900E73AE9 /* Simple Emulator */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B56AB0B020A8826A00E73AE9 /* Build configuration list for PBXNativeTarget "Simple Emulator" */;
@@ -587,6 +625,11 @@
 					B5324D4E1AB8A5A000C00517 = {
 						CreatedOnToolsVersion = 6.1;
 					};
+					B5592B4F263F513E0000CF04 = {
+						CreatedOnToolsVersion = 12.5;
+						DevelopmentTeam = 33Q44947M2;
+						ProvisioningStyle = Automatic;
+					};
 					B56AB0A920A8826900E73AE9 = {
 						CreatedOnToolsVersion = 9.3.1;
 						ProvisioningStyle = Automatic;
@@ -623,6 +666,7 @@
 				B56AB0A920A8826900E73AE9 /* Simple Emulator */,
 				B5DFFDB9222DB42E005CF6B3 /* Product Header */,
 				B5DD4EDB261DF97C004BACB9 /* Product Generator */,
+				B5592B4F263F513E0000CF04 /* owav2wav */,
 			);
 		};
 /* End PBXProject section */
@@ -672,6 +716,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B5592B4C263F513E0000CF04 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5592B55263F51680000CF04 /* owav2wav.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B56AB0A620A8826900E73AE9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -707,6 +759,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		B5592B57263F51720000CF04 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B5324D4E1AB8A5A000C00517 /* RadarKit */;
+			targetProxy = B5592B56263F51720000CF04 /* PBXContainerItemProxy */;
+		};
 		B5DD4EEA261DF988004BACB9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B5324D4E1AB8A5A000C00517 /* RadarKit */;
@@ -930,6 +987,75 @@
 				OTHER_CFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "/include/$(PROJECT_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		B5592B53263F513E0000CF04 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 33Q44947M2;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		B5592B54263F513E0000CF04 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 33Q44947M2;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -1242,6 +1368,15 @@
 			buildConfigurations = (
 				B5324D521AB8A5A000C00517 /* Debug */,
 				B5324D531AB8A5A000C00517 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B5592B52263F513E0000CF04 /* Build configuration list for PBXNativeTarget "owav2wav" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5592B53263F513E0000CF04 /* Debug */,
+				B5592B54263F513E0000CF04 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

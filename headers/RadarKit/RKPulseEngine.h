@@ -57,7 +57,7 @@ struct rk_pulse_engine {
 
     // Program set variables
     int                              *filterGid;
-    RKPulseEnginePlanIndex      *planIndices;
+    RKPulseEnginePlanIndex           *planIndices;
     RKPulseWorker                    *workers;
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  mutex;

@@ -71,6 +71,8 @@ static void *pulseRecorder(void *in) {
 
     RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
     RKWaveFileGroupHeader *waveGroupHeader = (void *)malloc(sizeof(RKWaveFileGroupHeader));
+    memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
+    memset(waveGroupHeader, 0, sizeof(RKWaveFileGroupHeader));
 
 	// Update the engine state
 	engine->state |= RKEngineStateWantActive;
@@ -116,6 +118,13 @@ static void *pulseRecorder(void *in) {
         if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
+
+//        RKLog("%s pulse->header.i = %d   C%d  %s x %.1fm\n",
+//              engine->name,
+//              pulse->header.i, pulse->header.configIndex,
+//              RKIntegerToCommaStyleString(pulse->header.gateCount),
+//              RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+//              pulse->header.gateSizeMeters * engine->radarDescription->pulseToRayRatio);
 
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
@@ -167,10 +176,11 @@ static void *pulseRecorder(void *in) {
             
             // New file
             time_t startTime = pulse->header.time.tv_sec;
-            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
-            i += strftime(filename + i, 16, "%Y%m%d", gmtime(&startTime));
-            i += sprintf(filename + i, "/%s-", engine->radarDescription->filePrefix);
+            i = snprintf(filename, RKMaximumPathLength - RKMaximumPrefixLength - 30, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
+            i += strftime(filename + i, 9, "%Y%m%d", gmtime(&startTime));
+            i += snprintf(filename + i, RKMaximumPrefixLength + 2, "/%s-", engine->radarDescription->filePrefix);
             i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+            i += snprintf(filename + i, 5, ".%03d", (int)pulse->header.time.tv_usec / 1000);
             if (engine->rawDataType == RKRawDataTypeFromTransceiver) {
                 sprintf(filename + i, ".rkr");
             } else {
@@ -179,7 +189,7 @@ static void *pulseRecorder(void *in) {
             fileHeader->dataType = engine->rawDataType;
 
             n = 0;
-            
+
             if (engine->verbose > 1) {
                 RKLog("%s New I/Q %s ...\n", engine->name, filename);
             }
@@ -190,15 +200,14 @@ static void *pulseRecorder(void *in) {
                 fileHeader->config.waveform = NULL;
                 engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
                 engine->fileWriteCount = 0;
+                engine->cacheWriteIndex = 0;
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
                 // 512-B wave header
-                memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
-                memset(waveGroupHeader, 0, sizeof(RKWaveFileGroupHeader));
+                strcpy(waveGlobalHeader->name, waveform->name);
                 waveGlobalHeader->count = waveform->count;
                 waveGlobalHeader->depth = waveform->depth;
                 waveGlobalHeader->fc = waveform->fc;
                 waveGlobalHeader->fs = waveform->fs;
-                strcpy(waveGlobalHeader->name, waveform->name);
                 len += RKRawDataRecorderCacheWrite(engine, waveGlobalHeader, sizeof(RKWaveFileGlobalHeader));
                 for (i = 0; i < waveform->count; i++) {
                     // 32-B wave group header
@@ -212,9 +221,13 @@ static void *pulseRecorder(void *in) {
                     len += RKRawDataRecorderCacheWrite(engine, waveform->iSamples[i], waveGroupHeader->depth * sizeof(RKInt16C));
                 }
             } else {
-                len = sizeof(RKFileHeader) + sizeof(RKWaveFileGlobalHeader)
-                    + waveform->count * (sizeof(RKWaveFileGroupHeader)
-                                         + waveGroupHeader->filterCount * (sizeof(RKFilterAnchor) + waveGroupHeader->depth * (sizeof(RKComplex) + sizeof(RKInt16C))));
+                len = sizeof(RKFileHeader) + sizeof(RKWaveFileGlobalHeader);
+                for (i = 0; i < waveform->count; i++) {
+                    len += sizeof(RKWaveFileGroupHeader);
+                    len += waveform->filterCounts[i] * sizeof(RKFilterAnchor);
+                    len += waveform->depth * sizeof(RKComplex);
+                    len += waveform->depth * sizeof(RKInt16C);
+                }
             }
         }
         

@@ -761,6 +761,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     
     // Refresh all system calibration
     RKAddConfig(myRadar,
+                RKConfigKeyPRF, systemPreferences->prf,
                 RKConfigKeySystemNoise, systemPreferences->noise[0], systemPreferences->noise[1],
                 RKConfigKeySystemZCal, systemPreferences->systemZCal[0], systemPreferences->systemZCal[1],
                 RKConfigKeySystemDCal, systemPreferences->systemDCal,
@@ -934,6 +935,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w q10", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         RKExecuteCommand(myRadar, "t w h2005", NULL);
+        //RKExecuteCommand(myRadar, "t w h200502", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
         

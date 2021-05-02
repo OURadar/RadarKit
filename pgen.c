@@ -5,8 +5,10 @@
 
 // User parameters in a struct
 typedef struct user_params {
-    char filename[256];
+    char directory[RKMaximumFolderPathLength];
+    char filename[RKNameLength];
     int verbose;
+    bool output;
     float SNRThreshold;
     float SQIThreshold;
 } UserParams;
@@ -23,7 +25,36 @@ void RKScratchFree(RKScratch *);
 static void showHelp() {
     char name[] = __FILE__;
     RKShowName();
-    printf("%s\n", name);
+    *strrchr(name, '.') = '\0';
+    printf("Product Generator\n\n"
+           "%s [options]\n\n"
+           "OPTIONS:\n"
+           "     Unless specifically stated, all options are interpreted in sequence. Some\n"
+           "     options can be specified multiples times for repetitions. For example, the\n"
+           "     verbosity is increased by repeating the option multiple times.\n"
+           "\n"
+           "  -d (--dir) " UNDERLINE("value") "\n"
+           "         Specifies the directory to store the output files.\n"
+           "\n"
+           "  -h (--help)\n"
+           "         Shows this help text.\n"
+           "\n"
+           "  -n (--no-output)\n"
+           "         No output will be produced. Just do a dry run.\n"
+           "\n"
+           "  -v (--verbose)\n"
+           "         Increases verbosity level, which can be specified multiple times.\n"
+           "\n"
+           "EXAMPLES:\n"
+           "    Here are some examples of typical configurations.\n"
+           "\n"
+           "    -vn\n"
+           "         Runs the program in verbose, and no-output mode.\n"
+           "\n"
+           "%s (RadarKit %s)\n\n",
+           name,
+           name,
+           RKVersionString());
 }
 
 static void timeval2str(char *timestr, const struct timeval time) {
@@ -266,7 +297,7 @@ void proc(UserParams *arg) {
         if (j != RKResultSuccess) {
             break;
         }
-        if (p == 0) {
+        if (p == 0 && arg->verbose) {
             RKLog("pulse[0].downSampledGateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
         }
         timeval2str(timestr, pulse->header.time);
@@ -277,27 +308,11 @@ void proc(UserParams *arg) {
         } else {
             i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
         }
-        // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
-//        for (j = 0; j < 2; j++) {
-//            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-//            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-//            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-//            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
-//                RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
-//                      RKIntegerToCommaStyleString(readsize),
-//                      RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-//                      RKIntegerToCommaStyleString(pulseCapacity));
-//            }
-//            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-//                z.i[i] = x[i].i;
-//                z.q[i] = x[i].q;
-//            }
-//        }
         pulses[p++] = pulse;
         // Mark for process later
         m = false;
         if (i1 != i0 || p == RKMaximumPulsesPerRay) {
-            if (arg->verbose > 1) {
+            if (arg->verbose > 2) {
                 RKLog("i1 = %d   i0 = %d   p = %s\n", i1, i0, RKIntegerToCommaStyleString(p));
             }
             i1 = i0;
@@ -305,13 +320,14 @@ void proc(UserParams *arg) {
                 m = true;
             }
         }
-        if (arg->verbose > 1) {
+        if (arg->verbose > 2) {
             int du = (int)(pulse->header.time.tv_usec - usec);
             if (du < 0) {
                 du += 1000000;
             }
-            printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
+            printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
                    k, pulse->header.i, p, timestr, du,
+                   pulse->header.configIndex,
                    pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                    RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                    pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
@@ -324,7 +340,7 @@ void proc(UserParams *arg) {
         }
         // Process ...
         if (m) {
-            if (p >= 3) {
+            if (p >= 2) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
 
@@ -360,11 +376,9 @@ void proc(UserParams *arg) {
                 space->gateCount = pulse->header.downSampledGateCount;
                 RKPulsePairHop(space, pulses, p);
                 makeRayFromScratch(space, ray);
-                rays[r++] = ray;
 
                 // Timestamp
                 timeval2str(timestr, ray->header.startTime);
-
                 if (arg->verbose == 2) {
                     printf("P:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s\n",
                            k, r, timestr,
@@ -397,6 +411,9 @@ void proc(UserParams *arg) {
                            data[0], data[10], data[100], data[250], data[500],
                            cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
                 }
+                
+                // Collect the ray
+                rays[r++] = ray;
             } else if (p > 1) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
@@ -440,10 +457,12 @@ void proc(UserParams *arg) {
         }
         usec = pulse->header.time.tv_usec;
     }
-    RKLog("fpos = %s / %s   pulse count = %s   ray count = %s\n",
-          RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
-          RKIntegerToCommaStyleString(k),
-          RKIntegerToCommaStyleString(r));
+    if (arg->verbose) {
+        RKLog("fpos = %s / %s   pulse count = %s   ray count = %s\n",
+              RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
+              RKIntegerToCommaStyleString(k),
+              RKIntegerToCommaStyleString(r));
+    }
     if (ftell(fid) != filesize) {
         RKLog("Warning. There is leftover in the file.");
     } else if (r == 0) {
@@ -514,17 +533,19 @@ void proc(UserParams *arg) {
         memcpy(&sweep->header.config, config, sizeof(RKConfig));
         memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
         // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
-        //k = sprintf(sweep->header.filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
-        //    k += strftime(sweep->header.filename + k, 10, "%Y%m%d", gmtime(&sweep->header.startTime));
-        k = sprintf(sweep->header.filename, "/Users/boonleng/Downloads/raxpol/");
-        k += sprintf(sweep->header.filename + k, "%s-", fileHeader->desc.filePrefix);
+        if (arg->directory[0] == '\0') {
+            k = sprintf(sweep->header.filename, "%s%s%s/", fileHeader->desc.dataPath, fileHeader->desc.dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
+            k += strftime(sweep->header.filename + k, 10, "%Y%m%d/", gmtime(&sweep->header.startTime));
+        } else {
+            k = sprintf(sweep->header.filename, "%s/", arg->directory);
+        }
         k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
         if (sweep->header.isPPI) {
-            k += sprintf(sweep->header.filename + k, "-E%.1f", sweep->header.config.sweepElevation);
+            k += snprintf(sweep->header.filename + k, 7, "-E%.1f", sweep->header.config.sweepElevation);
         } else if (sweep->header.isRHI) {
-            k += sprintf(sweep->header.filename + k, "-A%.1f", sweep->header.config.sweepAzimuth);
+            k += snprintf(sweep->header.filename + k, 7, "-A%.1f", sweep->header.config.sweepAzimuth);
         } else {
-            k += sprintf(sweep->header.filename + k, "-N%03d", sweep->header.rayCount);
+            k += snprintf(sweep->header.filename + k, 7, "-N%03d", sweep->header.rayCount);
         }
         if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
             RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
@@ -536,17 +557,15 @@ void proc(UserParams *arg) {
 
         // Base products
         int productCount = __builtin_popcount(list);
-        if (arg->verbose) {
-            RKLog("productCount = %d\n", productCount);
-        }
+        RKLog("productCount = %d\n", productCount);
         for (p = 0; p < productCount; p++) {
             product->desc = RKGetNextProductDescription(&list);
             RKProductInitFromSweep(product, sweep);
             sprintf(product->header.suggestedFilename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
-            RKProductFileWriterNC(product, product->header.suggestedFilename);
-            if (arg->verbose) {
-                RKLog("%d %s\n", p, product->header.suggestedFilename);
+            if (arg->output) {
+                RKProductFileWriterNC(product, product->header.suggestedFilename);
             }
+            RKLog(">%d: %s%s\n", p, product->header.suggestedFilename, arg->output ? "" : " -");
         }
 
         RKSweepFree(sweep);
@@ -598,11 +617,14 @@ int main(int argc, const char **argv) {
     memset(arg, 0, sizeof(UserParams));
     arg->SNRThreshold = NAN;
     arg->SQIThreshold = NAN;
+    arg->output = true;
     
     // Command line options
     struct option options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
+        {"dir"               , required_argument, NULL, 'd'},
         {"help"              , no_argument      , NULL, 'h'},
+        {"no-output"         , no_argument      , NULL, 'n'},
         {"snr"               , required_argument, NULL, 's'},
         {"sqi"               , required_argument, NULL, 'q'},
         {"verbose"           , no_argument      , NULL, 'v'},
@@ -619,9 +641,15 @@ int main(int argc, const char **argv) {
         switch (opt) {
             case 'A':
                 break;
+            case 'd':
+                strcpy(arg->directory, optarg);
+                break;
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
+            case 'n':
+                arg->output = false;
+                break;
             case 'q':
                 arg->SQIThreshold = atof(optarg);
                 break;
@@ -637,12 +665,20 @@ int main(int argc, const char **argv) {
     }
     optind = MIN(argc - 1, optind);
     strcpy(arg->filename, argv[optind]);
+    if (strlen(arg->directory)) {
+        c = strrchr(arg->directory, '/');
+        if (c) {
+            *c = '\0';
+        }
+    }
 
     if (arg->verbose > 1) {
         printf("str = %s   ind = %d   optind = %d\n", str, ind, optind);
         printf("argc = %d   argv[%d] = %s\n", argc, optind, argv[optind]);
         printf("arg->verbose = %d\n", arg->verbose);
+        printf("arg->directory = %s\n", arg->directory);
         printf("arg->filename = %s\n", arg->filename);
+        printf("arg->output = %s\n", arg->output ? "true" : "false");
     }
 
     // Show framework name & version
