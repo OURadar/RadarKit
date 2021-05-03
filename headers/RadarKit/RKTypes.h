@@ -71,7 +71,7 @@
 #define RKBaseMomentCount                    10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
-#define RKMaximumWaveformCount              22                                // Maximum waveform group count
+#define RKMaximumWaveformCount               22                                // Maximum waveform group count
 #define RKWorkerDutyCycleBufferDepth         1000                              //
 #define RKMaximumPulsesPerRay                2000                              //
 #define RKMaximumRaysPerSweep                1500                              // 1440 is 0.25-deg. This should be plenty
