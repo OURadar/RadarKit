@@ -5,14 +5,14 @@ VERBOSE=0
 
 # Show help text
 function showHelp() {
-    echo "${0#*/} [-n] [-v] FILENAME"
-    echo ""
-    echo "    -n   no execution, just show commands"
-    echo "    -v   increases verbosity"
-    echo ""
-    echo "Boonleng Cheong"
-    echo "Advanced Radar Research Center"
-    echo "The University of Oklahoma"
+	echo "${0#*/} [-n] [-v] FILENAME"
+	echo ""
+	echo "    -n   no execution, just show commands"
+	echo "    -v   increases verbosity"
+	echo ""
+	echo "Boonleng Cheong"
+	echo "Advanced Radar Research Center"
+	echo "The University of Oklahoma"
 }
 
 ##############
@@ -23,31 +23,31 @@ function showHelp() {
 
 
 while getopts 'hnv' OPTION; do
-    case "${OPTION}" in
-        c)
-            COUNT=${OPTARG}
-            ;;
-        h)
-            showHelp
-            exit 0
-            ;;
-        n)
-            RUN=0
-            ;;
-        v)
-            VERBOSE=$((VERBOSE+1))
-            ;;
-        ?)
-            echo "Uknown"
-            exit 1
-            ;;
-    esac
+	case "${OPTION}" in
+		c)
+			COUNT=${OPTARG}
+			;;
+		h)
+			showHelp
+			exit 0
+			;;
+		n)
+			RUN=0
+			;;
+		v)
+			VERBOSE=$((VERBOSE+1))
+			;;
+		?)
+			echo "Uknown"
+			exit 1
+			;;
+	esac
 done
 shift "$((OPTIND - 1))"
 
 dst="${1%/*}"
 echo $"dst = ${dst}"
-cmd="pgen ${1}"
+cmd="~/Developer/radarkit/pgen ${1}"
 if [ ${VERBOSE} -gt 0 ]; then
 	echo "${cmd}"
 fi

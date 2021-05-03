@@ -67,8 +67,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
     memset(waveform, 0, sizeof(RKWaveform));
     waveform->count = count;
     waveform->depth = depth;
-    if (count > RKMaximumFilterGroups) {
-        waveform->count = RKMaximumFilterGroups;
+    if (count > RKMaximumWaveformCount) {
+        waveform->count = RKMaximumWaveformCount;
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
@@ -872,28 +872,19 @@ void RKWaveformSummary(RKWaveform *waveform) {
 // ----
 //  RKWaveFileGlobalHeader
 //  - name
-//  - group count
-//  - global depth
-// ----
-//
-// ----
-//  RKWaveFileGroupHeader (0)
-//  - type
+//  - count
 //  - depth
-//  - filter count
-// ----
+//  - type
+//  - fc
+//  - fs
+//  - filterCounts[RKMaximumWaveformCount]
+//  -
+// ---- ... sizeof(RKWaveFileGlobalHeader)
 //
-// ----
+// ---
 //  - (RKFilterAnchor) x filter count
 //  - depth x [sizeof(RKComplex) + sizeof(RKIntC)]
 // ---
-//
-// ----
-//  RKWaveFileGroupHeader (1)
-//  - type
-//  - depth
-//  - filter count
-// ----
 //
 // ----
 //  - (RKFilterAnchor) x filter count
@@ -904,35 +895,40 @@ void RKWaveformSummary(RKWaveform *waveform) {
 size_t RKWaveformWriteToReference(RKWaveform *waveform, FILE *fid) {
     int k;
     size_t bytes = 0;
-    RKWaveFileGlobalHeader fileHeader;
-    RKWaveFileGroupHeader groupHeader;
-    memset(&fileHeader, 0, sizeof(RKWaveFileGlobalHeader));
-    memset(&groupHeader, 0, sizeof(RKWaveFileGroupHeader));
+    if (waveform->count > RKMaximumWaveformCount) {
+        RKLog("Error. Waveform count = %d exceeds the maximum %d\n", waveform->count, RKMaximumWaveformCount);
+        return 0;
+    }
+    RKWaveFileGlobalHeader *fileHeader = (RKWaveFileGlobalHeader *)malloc(sizeof(RKWaveFileGlobalHeader));
+    if (fileHeader == NULL) {
+        RKLog("Error. Unable to allocate memory for fileHeader.\n");
+        return 0;
+    }
+    memset(fileHeader, 0, sizeof(RKWaveFileGlobalHeader));
     // File header
-    fileHeader.count = waveform->count;
-    fileHeader.depth = waveform->depth;
-    fileHeader.fc = waveform->fc;
-    fileHeader.fs = waveform->fs;
-    strcpy(fileHeader.name, waveform->name);
-    fwrite(&fileHeader, sizeof(RKWaveFileGlobalHeader), 1, fid);
+    strcpy(fileHeader->name, waveform->name);
+    fileHeader->count = waveform->count;
+    fileHeader->depth = waveform->depth;
+    fileHeader->type = waveform->type;
+    fileHeader->fc = waveform->fc;
+    fileHeader->fs = waveform->fs;
+    for (k = 0; k < waveform->count; k++) {
+        fileHeader->filterCounts[k] = waveform->filterCounts[k];
+    }
+    fwrite(fileHeader, sizeof(RKWaveFileGlobalHeader), 1, fid);
     bytes += sizeof(RKWaveFileGlobalHeader);
     // Go through all groups
     for (k = 0; k < waveform->count; k++) {
-        // Group header
-        groupHeader.type = waveform->type;
-        groupHeader.depth = waveform->depth;
-        groupHeader.filterCount = waveform->filterCounts[k];
-        fwrite(&groupHeader, sizeof(RKWaveFileGroupHeader), 1, fid);
-        bytes += sizeof(RKWaveFileGroupHeader);
         // Filter anchors
-        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), groupHeader.filterCount, fid);
-        bytes += groupHeader.filterCount * sizeof(RKFilterAnchor);
+        fwrite(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
+        bytes += sizeof(RKFilterAnchor) * waveform->filterCounts[k];
         // Waveform samples
-        fwrite(waveform->samples[k], sizeof(RKComplex), groupHeader.depth, fid);
-        bytes += groupHeader.depth * sizeof(RKComplex);
-        fwrite(waveform->iSamples[k], sizeof(RKInt16C), groupHeader.depth, fid);
-        bytes += groupHeader.depth * sizeof(RKInt16C);
+        fwrite(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
+        bytes += sizeof(RKComplex) * waveform->depth;
+        fwrite(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+        bytes += sizeof(RKInt16C) * waveform->depth;
     }
+    free(fileHeader);
     return bytes;
 }
 
@@ -960,37 +956,21 @@ RKResult RKWaveformWriteFile(RKWaveform *waveform, const char *filename) {
 RKWaveform *RKWaveformReadFromReference(FILE *fid) {
     int j, k;
     size_t r;
-    RKWaveFileGlobalHeader fileHeader;
-    RKWaveFileGroupHeader groupHeader;
-    r = fread(&fileHeader, sizeof(RKWaveFileGlobalHeader), 1, fid);
+    RKWaveFileGlobalHeader *fileHeader = (RKWaveFileGlobalHeader *)malloc(sizeof(RKWaveFileGlobalHeader));
+    r = fread(fileHeader, sizeof(RKWaveFileGlobalHeader), 1, fid);
     if (r == 0) {
         RKLog("Error. No file header from %p.\n", fid);
     }
-    
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader.count, fileHeader.depth);
-    //RKLog("fileHeader.groupCount = %d   fileHeader.depth = %d\n", fileHeader.groupCount, fileHeader.depth);
-
-    waveform->fc = fileHeader.fc;
-    waveform->fs = fileHeader.fs;
-    strncpy(waveform->name, fileHeader.name, RKNameLength);
-    
-    for (k = 0; k < fileHeader.count; k++) {
-        // Read in the waveform of each group
-        r = fread(&groupHeader, sizeof(RKWaveFileGroupHeader), 1, fid);
-        if (r == 0) {
-            RKLog("Error. Failed reading group header from %p.\n", fid);
-            return NULL;
-        }
-        // RKLog("groupHeader.depth = %d\n", groupHeader.depth);
-        if (waveform->depth < groupHeader.depth) {
-            RKLog("Error. Unable to fit %p into supplied buffer. (%s < %s) @ group %d\n", fid,
-                  RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(groupHeader.depth), k);
-            RKWaveformFree(waveform);
-            return NULL;
-        }
-        waveform->type = groupHeader.type;
-        waveform->filterCounts[k] = groupHeader.filterCount;
-        r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader->count, fileHeader->depth);
+    strncpy(waveform->name, fileHeader->name, RKNameLength);
+    waveform->type = fileHeader->type;
+    waveform->fc = fileHeader->fc;
+    waveform->fs = fileHeader->fs;
+    for (k = 0; k < waveform->count; k++) {
+        waveform->filterCounts[k] = fileHeader->filterCounts[k];
+    }
+    for (k = 0; k < waveform->count; k++) {
+        r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), fileHeader->filterCounts[k], fid);
         if (r == 0) {
             RKLog("Error. Unable to read filter anchors from %p\n", fid);
             return NULL;
@@ -1041,5 +1021,6 @@ RKWaveform *RKWaveformReadFromReference(FILE *fid) {
         }
     }
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
+    free(fileHeader);
     return waveform;
 }

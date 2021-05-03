@@ -16,7 +16,6 @@ core.*
 __pycache__
 data
 waveforms
-entitlements
 
 # Programs, etc.
 radar

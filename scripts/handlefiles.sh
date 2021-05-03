@@ -6,20 +6,20 @@ trap 'echo -e "\nBe patient"' INT
 
 HAS_BLIB=0
 for folder in ${SEARCH_LOC[*]}; do
-    if [[ -f ${folder}/blib.sh ]]; then
-        HAS_BLIB=1
-        . ${folder}/blib.sh
-    fi
+	if [[ -f ${folder}/blib.sh ]]; then
+		HAS_BLIB=1
+		. ${folder}/blib.sh
+	fi
 done
 
 if [ ${HAS_BLIB} ]; then
-    if [ -d "/data/log" ]; then
-        LOGFILE="/data/log/handlefiles-$(date +%Y%m%d).log"
-    elif [ -d "data/log" ]; then
-        LOGFILE="data/log/handlefiles-$(date +%Y%m%d).log"
-    else
-        LOGFILE="${HOME}/handlefiles.log"
-    fi
+	if [ -d "/data/log" ]; then
+		LOGFILE="/data/log/handlefiles-$(date +%Y%m%d).log"
+	elif [ -d "data/log" ]; then
+		LOGFILE="data/log/handlefiles-$(date +%Y%m%d).log"
+	else
+		LOGFILE="${HOME}/handlefiles.log"
+	fi
 fi
 
 # Use the first file (usually the XXXXXX-Z.nc) as template for the archive filename
@@ -45,5 +45,5 @@ eval $cmd
 cd - > /dev/null
 
 if [ ${HAS_BLIB} ]; then
-    log ${afile}
+	log ${afile}
 fi

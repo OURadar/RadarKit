@@ -934,8 +934,8 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
-        RKExecuteCommand(myRadar, "t w h2005", NULL);
-        //RKExecuteCommand(myRadar, "t w h200502", NULL);
+        //RKExecuteCommand(myRadar, "t w h2005", NULL);
+        RKExecuteCommand(myRadar, "t w h200502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
         
