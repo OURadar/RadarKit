@@ -164,7 +164,7 @@ static void showHelp() {
            "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
            "\n"
-           "    -T50\n"
+           "    -T60\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
            "%s (RadarKit %s)\n\n",
@@ -933,9 +933,10 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
+        RKExecuteCommand(myRadar, "t w h040502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
-        RKExecuteCommand(myRadar, "t w h200502.5", NULL);
+        //RKExecuteCommand(myRadar, "t w h200502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
         

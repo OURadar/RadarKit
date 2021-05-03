@@ -340,7 +340,9 @@ void proc(UserParams *arg) {
         } else {
             more = false;
             m = true;
-            RKLog("EOF p = %d\n", p);
+            if (arg->verbose > 1) {
+                RKLog("EOF p = %d\n", p);
+            }
         }
         // Process ...
         if (m) {

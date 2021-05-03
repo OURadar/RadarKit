@@ -81,7 +81,7 @@ char *RKTestByNumberDescription(const int indent) {
     "42 - Generate a waveform file\n"
     "43 - Test waveform down-sampling\n"
     "44 - Test showing built-in waveform properties\n"
-    "45 - Test showing waveform properties; -T35 WAVEFORM_FILE\n"
+    "45 - Test showing waveform properties; -T45 WAVEFORM_FILE\n"
     "\n"
     "50 - Pulse compression using simple cases\n"
     "51 - Calculating one ray using the Pulse Pair method\n"

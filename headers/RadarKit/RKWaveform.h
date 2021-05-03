@@ -29,6 +29,7 @@ RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, cons
 RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(void);
 RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const double fc, const double bw, const double pw);
 RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double fc, const double bw, const double pw, const int count);
+RKWaveform *RKWaveformInitFromString(const char *);
 
 RKResult RKWaveformAppendWaveform(RKWaveform *, const RKWaveform *appendix, const uint32_t transitionSamples);
 RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...);
