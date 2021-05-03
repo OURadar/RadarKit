@@ -22,7 +22,7 @@ classdef iqread
     end
     properties
         filename = '';
-        header = struct('preface', [], 'buildNo', 6, 'desc', [], 'config', [], 'waveform', []);
+        header = struct('preface', [], 'buildNo', 6, 'dataType', [], 'desc', [], 'config', [], 'waveform', []);
         pulses = []
     end
     methods
@@ -209,9 +209,10 @@ classdef iqread
                     self.header.waveform.filterCounts = self.header.waveform.filterCounts(1:self.header.waveform.count);
                     self.header.waveform.name = deblank(char(self.header.waveform.name));
                     offset = offset + self.constants.RKWaveFileGlobalHeader;
+                    filters = [];
                     tones = [];
                     for i = 1:self.header.waveform.count
-                        gfilt = [];
+                        tmp = [];
                         for j = 1:self.header.waveform.filterCounts(i)
                             % Read in RKFilterAnchor
                             w = memmapfile(self.filename, ...
@@ -232,10 +233,11 @@ classdef iqread
                                     'single', [1 1], 'upperBoundFrequency'; ...
                                     'uint8',  [1 16], 'padding'});
                             % Combine the waveform groups
-                            gfilt = cat(1, gfilt, w.data);
+                            tmp = cat(1, tmp, w.data);
                             offset = offset + self.constants.RKFilterAnchorSize;
                         end
-                        gfilt = rmfield(gfilt, 'padding');
+                        tmp = rmfield(tmp, 'padding');
+                        filters = cat(1, filters, tmp);
                         % Read in the samples
                         depth = double(self.header.waveform.depth);
                         w2 = memmapfile(self.filename, ...
@@ -249,10 +251,9 @@ classdef iqread
                         y = w2.data.iSamples;
                         gsamp = struct('samples', permute(complex(x(1, :), x(2, :)), [2 1]), ...
                                    'iSamples', permute(complex(y(1, :), y(2, :)), [2 1]));
-                        tone = cell2struct([struct2cell(gfilt); struct2cell(gsamp)], ...
-                                              [fieldnames(gfilt); fieldnames(gsamp)]);
-                        tones = cat(1, tones, tone);
+                        tones = cat(1, tones, gsamp);
                     end
+                    self.header.waveform.filters = filters;
                     self.header.waveform.tones = tones;
                 elseif self.header.buildNo == 5
                     % (RKName) + (uint32_t) + (RKRadarDesc) + RKConfigV1 --> RKRawDataType
@@ -260,12 +261,14 @@ classdef iqread
                     fseek(fid, offset, 'bof');
                     self.header.dataType = fread(fid, 1, 'uint8');
                 end
-                % if self.header.dataType == 2
-                %     str = 'compressed';
-                % else
-                %     str = 'raw';
-                % end
-                % fprintf('dataType = %d (%s)\n', self.header.dataType, str);
+                if self.header.dataType == 1
+                    str = 'raw';
+                elseif self.header.dataType == 2
+                    str = 'compressed';
+                else
+                    str = 'unknown';
+                end
+                self.header.dataType = str;
             elseif self.header.buildNo >= 2 && self.header.buildNo < 5
                 % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfigV1
                 offset = self.constants.RKName + 4 + self.constants.RKRadarDesc;

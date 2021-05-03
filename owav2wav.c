@@ -46,7 +46,7 @@ int main(int argc, const char * argv[]) {
         RKSetWantColor(false);
     }
 
-    FILE *fid = fopen("/Users/boonleng/Developer/radarkit/old-waveforms/ofm.rkwav", "r");
+    FILE *fid = fopen("/Users/boonleng/Developer/radarkit/old-waveforms/ofmd.rkwav", "r");
     if (fid == NULL) {
         RKLog("Error. Unable to open file.\n");
     }
@@ -103,7 +103,7 @@ int main(int argc, const char * argv[]) {
 
     RKLog("Generating new file ...\n");
 
-    char filename[] = "/Users/boonleng/Developer/radarkit/waveforms/ofm.rkwav";
+    char filename[] = "/Users/boonleng/Developer/radarkit/waveforms/ofmd.rkwav";
     RKWaveformWriteFile(waveform, filename);
     RKWaveformFree(waveform);
 
