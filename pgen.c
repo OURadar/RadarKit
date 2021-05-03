@@ -68,6 +68,7 @@ void proc(UserParams *arg) {
     uint32_t u32 = 0;
     char timestr[16];
     bool m = false;
+    bool more = true;
     int i0, i1 = -1;
     size_t bytes, mem = 0;
     suseconds_t usec = 0;
@@ -291,52 +292,55 @@ void proc(UserParams *arg) {
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
-    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
+    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth && more; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
-        if (j != RKResultSuccess) {
-            break;
-        }
-        if (p == 0 && arg->verbose) {
-            RKLog("pulse[0].downSampledGateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
-        }
-        timeval2str(timestr, pulse->header.time);
-        if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
-            i0 = (int)floorf(pulse->header.azimuthDegrees);
-        } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
-            i0 = (int)floorf(pulse->header.elevationDegrees);
-        } else {
-            i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
-        }
-        pulses[p++] = pulse;
-        // Mark for process later
-        m = false;
-        if (i1 != i0 || p == RKMaximumPulsesPerRay) {
+        if (j == RKResultSuccess) {
+            if (p == 0 && arg->verbose) {
+                RKLog("pulse[0].downSampledGateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
+            }
+            timeval2str(timestr, pulse->header.time);
+            if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
+                i0 = (int)floorf(pulse->header.azimuthDegrees);
+            } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
+                i0 = (int)floorf(pulse->header.elevationDegrees);
+            } else {
+                i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
+            }
+            pulses[p++] = pulse;
+            // Mark for process later
+            m = false;
+            if (i1 != i0 || p == RKMaximumPulsesPerRay) {
+                if (arg->verbose > 2) {
+                    RKLog("i1 = %d   i0 = %d   p = %s\n", i1, i0, RKIntegerToCommaStyleString(p));
+                }
+                i1 = i0;
+                if (p > 0) {
+                    m = true;
+                }
+            }
             if (arg->verbose > 2) {
-                RKLog("i1 = %d   i0 = %d   p = %s\n", i1, i0, RKIntegerToCommaStyleString(p));
+                int du = (int)(pulse->header.time.tv_usec - usec);
+                if (du < 0) {
+                    du += 1000000;
+                }
+                printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
+                       k, pulse->header.i, p, timestr, du,
+                       pulse->header.configIndex,
+                       pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
+                       RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                       pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
+                       i0, pulse->header.azimuthBinIndex,
+                       pulse->header.marker,
+                       m ? "*" : "",
+                       pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
+                       pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
+                       );
             }
-            i1 = i0;
-            if (p > 0) {
-                m = true;
-            }
-        }
-        if (arg->verbose > 2) {
-            int du = (int)(pulse->header.time.tv_usec - usec);
-            if (du < 0) {
-                du += 1000000;
-            }
-            printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
-                   k, pulse->header.i, p, timestr, du,
-                   pulse->header.configIndex,
-                   pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
-                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                   pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
-                   i0, pulse->header.azimuthBinIndex,
-                   pulse->header.marker,
-                   m ? "*" : "",
-                   pulse->header.marker & RKMarkerSweepBegin ? "S" : "",
-                   pulse->header.marker & RKMarkerSweepEnd ? "E" : ""
-                   );
+        } else {
+            more = false;
+            m = true;
+            RKLog("EOF p = %d\n", p);
         }
         // Process ...
         if (m) {
@@ -454,7 +458,7 @@ void proc(UserParams *arg) {
             }
             memcpy(pulses[0], pulse, sizeof(RKPulseHeader));
             p = 1;
-        }
+        } // if (m) ...
         usec = pulse->header.time.tv_usec;
     }
     if (arg->verbose) {
