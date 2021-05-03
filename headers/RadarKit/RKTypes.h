@@ -959,33 +959,13 @@ typedef union rk_wave_file_header {
     struct {
         RKName          name;                                                  // Waveform name
         uint8_t         count;                                                 // Count of groups
-        uint32_t        depth;                                                 // Sum of all depths
-        RKWaveformType  type;                                                  // Various type of waveforms
+        uint32_t        depth;                                                 // Waveform depth
+        RKWaveformType  type;                                                  // Waveform type
         double          fc;                                                    // Carrier frequency
         double          fs;                                                    // Sampling frequency
     };
     char bytes[512];
 } RKWaveFileGlobalHeader;
-
-typedef union rk_wave_file_header_v1 {
-    struct {
-        char            name[256];                                             // Waveform name
-        uint8_t         count;                                                 // Count of groups / tones
-        uint32_t        depth;                                                 // Sum of all depths
-        double          fc;                                                    // Carrier frequency
-        double          fs;                                                    // Sampling frequency
-    };
-    char bytes[512];
-} RKWaveFileGlobalHeaderV1;
-
-typedef union rk_wave_file_group {
-    struct {
-        RKWaveformType  type;                                                  // Waveform type of this tone
-        uint32_t        depth;                                                 // Waveform depth
-        uint32_t        filterCount;                                           // Count of filters
-    };
-    char bytes[32];
-} RKWaveFileGroupHeader;
 
 typedef struct rk_waveform_cal {
     uint32_t             uid;                                                  // A unique identifier

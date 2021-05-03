@@ -447,7 +447,6 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKWaveform)
     SHOW_SIZE(RKFileHeader)
     SHOW_SIZE(RKWaveFileGlobalHeader)
-    SHOW_SIZE(RKWaveFileGroupHeader)
     SHOW_SIZE(RKWaveformCalibration)
     SHOW_SIZE(RKProductDesc)
     SHOW_SIZE(RKProductHeader)

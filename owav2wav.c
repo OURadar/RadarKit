@@ -1,5 +1,29 @@
 #include <RadarKit.h>
 
+#pragma pack(push, 1)
+
+typedef union rk_wave_file_header_v1 {
+    struct {
+        char            name[256];                                             // Waveform name
+        uint8_t         count;                                                 // Count of groups / tones
+        uint32_t        depth;                                                 // Waveform depth
+        double          fc;                                                    // Carrier frequency
+        double          fs;                                                    // Sampling frequency
+    };
+    char bytes[512];
+} RKWaveFileGlobalHeaderV1;
+
+typedef union rk_wave_file_group_v1 {
+    struct {
+        RKWaveformType  type;                                                  // Waveform type of this tone
+        uint32_t        depth;                                                 // Waveform depth
+        uint32_t        filterCount;                                           // Count of filters
+    };
+    char bytes[32];
+} RKWaveFileGroupHeaderV1;
+
+#pragma pack(pop)
+
 #pragma mark - Main
 
 //
@@ -20,23 +44,24 @@ int main(int argc, const char * argv[]) {
         RKSetWantColor(false);
     }
 
-    FILE *fid = fopen("old-waveforms/ofmd.rkwav", "r");
+    FILE *fid = fopen("old-waveforms/ofm.rkwav", "r");
     if (fid == NULL) {
         RKLog("Error. Unable to open file.\n");
     }
     
     RKWaveFileGlobalHeaderV1 *fileHeader = (RKWaveFileGlobalHeaderV1 *)malloc(sizeof(RKWaveFileGlobalHeaderV1));
-    RKWaveFileGroupHeader *groupHeader = (RKWaveFileGroupHeader *)malloc(sizeof(RKWaveFileGroupHeader));
+    RKWaveFileGroupHeaderV1 *groupHeader = (RKWaveFileGroupHeaderV1 *)malloc(sizeof(RKWaveFileGroupHeaderV1));
     
     r = fread(fileHeader, sizeof(RKWaveFileGlobalHeaderV1), 1, fid);
     
+    RKLog("count = %d   depth = %d\n", fileHeader->count, fileHeader->depth);
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader->count, fileHeader->depth);
     waveform->fc = fileHeader->fc;
     waveform->fs = fileHeader->fs;
     strncpy(waveform->name, fileHeader->name, RKNameLength);
 
     for (k = 0; k < fileHeader->count; k++) {
-        fread(groupHeader, sizeof(RKWaveFileGroupHeader), 1, fid);
+        fread(groupHeader, sizeof(RKWaveFileGroupHeaderV1), 1, fid);
         if (k == 0) {
             waveform->type = groupHeader->type;
         }
@@ -73,7 +98,7 @@ int main(int argc, const char * argv[]) {
     free(groupHeader);
     free(fileHeader);
 
-    char filename[] = "waveforms/ofmd.rkwav";
+    char filename[] = "waveforms/ofm.rkwav";
     RKWaveformWriteFile(waveform, filename);
     RKWaveformFree(waveform);
 
